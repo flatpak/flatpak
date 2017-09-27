@@ -5091,6 +5091,98 @@ apply_extra_data (FlatpakDir          *self,
   return TRUE;
 }
 
+static GHashTable *
+flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
+                                    FlatpakKinds kinds,
+                                    GError     **error);
+
+static GPtrArray *
+find_matching_refs (GHashTable *refs,
+                    const char   *opt_name,
+                    const char   *opt_branch,
+                    const char   *opt_arch,
+                    FlatpakKinds  kinds,
+                    GError      **error);
+
+static gboolean
+refresh_ldconfig_on_back_references (FlatpakDir    *self,
+                                     const char    *ref,
+                                     GCancellable  *cancellable,
+                                     GError       **error)
+{
+  size_t i;
+  g_auto(GStrv) deployed_ids = NULL;
+  g_autoptr(GHashTable) local_refs = NULL;
+  g_auto(GStrv) ref_parts = NULL;
+  g_autoptr(GPtrArray) refs_on_arch = NULL;
+
+  ref_parts = g_strsplit (ref, "/", -1);
+  if (strcmp (ref_parts[0], "runtime") == 0)
+    {
+      local_refs = flatpak_dir_get_all_installed_refs(self, FLATPAK_KINDS_APP, error);
+      if (local_refs == NULL)
+        return FALSE;
+
+      refs_on_arch = find_matching_refs (local_refs, NULL, NULL, ref_parts[2], FLATPAK_KINDS_APP, error);
+      if (refs_on_arch == NULL)
+        return FALSE;
+
+      for (i = 0; i < refs_on_arch->len; ++i)
+        {
+          g_auto(GStrv) groups = NULL;
+          char* back_ref;
+          size_t j;
+          gboolean depends = FALSE;
+          gchar* runtime;
+          g_autoptr(GFile) deploy_base = NULL;
+          g_autoptr(GFile) deploy_path = NULL;
+          g_autoptr(GKeyFile) metakey = NULL;
+
+          back_ref = (char*)g_ptr_array_index(refs_on_arch, i);
+
+          deploy_base = flatpak_dir_get_deploy_dir (self, back_ref);
+          deploy_path = g_file_get_child (deploy_base, "active");
+          if (deploy_path == NULL)
+            return FALSE;
+          metakey = get_metakey(deploy_path, cancellable, error);
+          if (metakey == NULL)
+            return FALSE;
+
+          runtime = g_key_file_get_string(metakey, FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_RUNTIME, NULL);
+          if (runtime != NULL) {
+            if (strcmp(runtime, ref_parts[1]) == 0) {
+              depends = TRUE;
+            }
+          }
+          if (!depends)
+            {
+              groups = g_key_file_get_groups (metakey, NULL);
+              for (j = 0; groups[j] != NULL; j++)
+                {
+                  if (g_str_has_prefix (groups[j], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))
+                    {
+                      char *extension;
+                      extension = groups[j] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION);
+                      if (strcmp (extension, ref_parts[1]) == 0)
+                        {
+                          depends = TRUE;
+                          break ;
+                        }
+                    }
+                }
+            }
+
+          if (depends)
+            {
+              g_debug ("Refreshing ldconfigcache for %s", back_ref);
+              refresh_ldconfig (self, deploy_path, back_ref, cancellable, error);
+            }
+        }
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_deploy (FlatpakDir          *self,
                     const char          *origin,
@@ -5492,6 +5584,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
     return FALSE;
 
   if (!flatpak_dir_set_active (self, ref, checkout_basename, cancellable, error))
+    return FALSE;
+
+  if (!refresh_ldconfig_on_back_references (self, ref, cancellable, error))
     return FALSE;
 
   return TRUE;
