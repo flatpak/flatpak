@@ -14,6 +14,10 @@ pkg_install() {
     yum -y install "$@"
 }
 
+pkg_install_testing() {
+    yum -y install --enablerepo=updates-testing "$@"
+}
+
 pkg_install_if_os() {
     os=$1
     shift
