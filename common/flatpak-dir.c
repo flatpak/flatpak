@@ -7092,6 +7092,25 @@ flatpak_dir_prune (FlatpakDir   *self,
   if (error == NULL)
     error = &local_error;
 
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      const char *installation = flatpak_dir_get_id (self);
+      FlatpakSystemHelper *system_helper = flatpak_dir_get_system_helper (self);
+
+      /* If we don't have the system helper, we'll have to try and just remove
+       * the ref as an unprivileged user, which might fail later */
+      if (system_helper)
+        {
+          if (!flatpak_system_helper_call_prune_local_repo_sync (system_helper,
+                                                                 installation ? installation : "",
+                                                                 cancellable,
+                                                                 error))
+            return FALSE;
+        }
+
+      return TRUE;
+    }
+
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     goto out;
 
