@@ -6967,6 +6967,23 @@ flatpak_dir_undeploy_all (FlatpakDir   *self,
   return TRUE;
 }
 
+/**
+ * flatpak_dir_remove_ref:
+ *
+ * @self: a #FlatpakDir
+ * @remote_name: the name of the remote
+ * @ref: the flatpak ref to remove
+ * @cancellable: (nullable) (optional): a #GCancellable
+ * @error: a #GError
+ *
+ * Remove the flatpak ref given by @remote_name:@ref from the underlying
+ * OSTree repo. Attempting to remove a ref that is currently deployed
+ * is an error, you need to uninstall the flatpak first. Note that this does
+ * not remove the objects bound to @ref from the disk, you will need to
+ * call flatpak_dir_prune() to do that.
+ *
+ * Returns: %TRUE if removing the ref succeeded, %FALSE otherwise.
+ */
 gboolean
 flatpak_dir_remove_ref (FlatpakDir   *self,
                         const char   *remote_name,
@@ -8089,20 +8106,19 @@ filter_out_deployed_refs (FlatpakDir *self,
 /**
  * flatpak_dir_cleanup_undeployed_refs:
  *
- * Find all flatpak refs in the local repository which have not been deloyed
+ * @self: a #FlatpakDir
+ * @cancellable: (nullable) (optional): a #GCancellable
+ * @error: a #GError
+ *
+ * Find all flatpak refs in the local repository which have not been deployed
  * in the dir and remove them from the repository. You might want to call this
  * function if you pulled refs into the dir but then decided that you did
  * not want to deploy them for some reason. Note that this does not prune
  * objects bound to the cleaned up refs from the underlying OSTree repository,
- * you should consider using flatpak_dir_prune to do that.
- *
- * @self: a #FlatpakDir
- * @cancellable: (allow-none): a #GCancellable
- * @error: (allow-none): a #GError
+ * you should consider using flatpak_dir_prune() to do that.
  *
  * Since: 0.10.0
- * Returns: (transfer-full): %TRUE if cleaning up the refs suceeded, %FALSE
- *                           otherwise
+ * Returns: %TRUE if cleaning up the refs suceeded, %FALSE otherwise
  */
 gboolean
 flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
