@@ -117,6 +117,10 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="PruneLocalRepo">
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
   </interface>
 
 </node>
