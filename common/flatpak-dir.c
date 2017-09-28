@@ -45,6 +45,7 @@
 #include "flatpak-utils.h"
 #include "flatpak-oci-registry.h"
 #include "flatpak-run.h"
+#include "flatpak-transaction-log.h"
 
 #include "errno.h"
 
@@ -4981,6 +4982,31 @@ apply_extra_data (FlatpakDir          *self,
   return TRUE;
 }
 
+static GFile *
+transaction_log_path_for_dir (FlatpakDir *dir)
+{
+  return g_file_get_child (dir->basedir, "transactions.log");
+}
+
+static gboolean
+log_deploy_event (FlatpakDir    *self,
+                  const gchar   *ref,
+                  const gchar   *origin,
+                  const gchar   *commit,
+                  GCancellable  *cancellable,
+                  GError       **error)
+{
+  g_autoptr(GFile) path = transaction_log_path_for_dir (self);
+  g_autoptr(FlatpakTransactionLog) log = flatpak_transaction_log_new (path);
+
+  return flatpak_transaction_log_commit_deploy_event (log,
+                                                      ref,
+                                                      origin,
+                                                      commit,
+                                                      cancellable,
+                                                      error);
+}
+
 gboolean
 flatpak_dir_deploy (FlatpakDir          *self,
                     const char          *origin,
@@ -5021,6 +5047,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GVariant) commit_metadata = NULL;
   GVariantBuilder metadata_builder;
   g_auto(GLnxLockFile) lock = { 0, };
+  g_autoptr(GError) my_error = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -5380,6 +5407,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   if (!flatpak_dir_set_active (self, ref, checkout_basename, cancellable, error))
     return FALSE;
+
+  if (!log_deploy_event (self, ref, origin, checksum, cancellable, &my_error))
+    {
+      g_warning ("Failed to log deploy event: %s", my_error->message);
+      g_clear_error (&my_error);
+    }
 
   return TRUE;
 }
@@ -6487,6 +6520,18 @@ flatpak_dir_update (FlatpakDir          *self,
   return TRUE;
 }
 
+static gboolean
+log_uninstall_event (FlatpakDir   *self,
+                     const gchar  *ref,
+                     GCancellable *cancellable,
+                     GError       **error)
+{
+  g_autoptr(GFile) path = transaction_log_path_for_dir (self);
+  g_autoptr(FlatpakTransactionLog) log = flatpak_transaction_log_new (path);
+
+  return flatpak_transaction_log_commit_uninstall_event (log, ref, cancellable, error);
+}
+
 gboolean
 flatpak_dir_uninstall (FlatpakDir          *self,
                        const char          *ref,
@@ -6504,6 +6549,7 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   g_autoptr(GVariant) deploy_data = NULL;
   gboolean keep_ref = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
   gboolean force_remove = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
+  g_autoptr(GError) logging_error = NULL;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
@@ -6588,6 +6634,12 @@ flatpak_dir_uninstall (FlatpakDir          *self,
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    _("%s branch %s is not installed"), name, parts[3]);
+    }
+
+  if (!log_uninstall_event (self, ref, cancellable, &logging_error))
+    {
+      g_warning ("Failed to log uninstallation: %s", logging_error->message);
+      g_clear_error (&logging_error);
     }
 
   return TRUE;

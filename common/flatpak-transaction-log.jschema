@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "type": "object",
+    "title": "Log Event",
+    "description": "An event that occurred during a Flatpak Installation's lifetime",
+    "properties": {
+        "event": {
+            "description": "The machine-readable name of the event",
+            "type": "string"
+        },
+        "commit": {
+            "description": "The OSTree commit for this flatpak",
+            "type": "string"
+        },
+        "ref": {
+            "description": "The flatpak ref that was affected",
+            "type": "string"
+        },
+        "commit": {
+            "description": "The flatpak remote for the affected ref",
+            "type": "string"
+        }
+    },
+    "required": ["event"]
+}
