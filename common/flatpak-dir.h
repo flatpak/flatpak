@@ -491,6 +491,9 @@ gboolean    flatpak_dir_prune (FlatpakDir   *self,
 gboolean    flatpak_dir_cleanup_removed (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error);
+gboolean    flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
+                                                 GCancellable *cancellable,
+                                                 GError      **error);
 gboolean    flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
                                                const char   *type,
                                                const char   *name_prefix,
