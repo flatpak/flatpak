@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-09-27 00:31+0200\n"
-"PO-Revision-Date: 2017-09-09 14:26+0200\n"
+"PO-Revision-Date: 2017-09-28 17:54+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -1827,7 +1827,7 @@ msgstr "Nepodporovaný uri dodatečných dat %s"
 #: common/flatpak-dir.c:2451
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
-msgstr ""
+msgstr "Chyba během načítání místních dodatečných dat %s: %s"
 
 #: common/flatpak-dir.c:2454
 #, c-format
@@ -1950,14 +1950,14 @@ msgid "While trying to apply extra data: "
 msgstr "Během pokusu o aplikaci dodatečných dat: "
 
 #: common/flatpak-dir.c:5216
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid deployed ref %s: "
-msgstr "Neplatný identifikátor pid %s"
+msgstr ""
 
 #: common/flatpak-dir.c:5223
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid commit ref %s: "
-msgstr "Neplatný identifikátor pid %s"
+msgstr ""
 
 #: common/flatpak-dir.c:5231
 #, c-format
@@ -2013,19 +2013,19 @@ msgid "Nothing matches %s"
 msgstr "Nic nevyhovuje názvu %s"
 
 #: common/flatpak-dir.c:7794
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find ref %s%s%s%s%s"
-msgstr "Nemohu nalézt %s%s%s%s%s ve vzdáleném repozitáři %s"
+msgstr "Nemohu nalézt ref %s%s%s%s%s"
 
 #: common/flatpak-dir.c:7836
-#, fuzzy, c-format
+#, c-format
 msgid "Error searching remote %s: %s"
-msgstr "Chyba: Selhalo %s %s: %s\n"
+msgstr "Chyba během prohledávání vzdáleného repozitáře %s: %s"
 
 #: common/flatpak-dir.c:7881
-#, fuzzy, c-format
+#, c-format
 msgid "Error searching local repository: %s"
-msgstr "Nechat ref v lokálním repozitáři"
+msgstr "Chyba během prohledávání místního repozitáře: %s"
 
 #: common/flatpak-dir.c:8002
 #, c-format
