@@ -350,6 +350,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   add_args (argv_array,
             "--setenv", "FLATPAK_DEST", dest,
+            "--setenv", "FLATPAK_ID", id,
+            "--setenv", "FLATPAK_ARCH", runtime_ref_parts[2],
             NULL);
 
   app_context = flatpak_app_compute_permissions (metakey,
