@@ -155,6 +155,7 @@ FlatpakExports *flatpak_exports_from_context (FlatpakContext *context,
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 
 gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
+                                          GArray       *fd_array,
                                           char       ***envp_p,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,

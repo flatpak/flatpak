@@ -376,7 +376,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   envp = flatpak_run_apply_env_vars (envp, app_context);
 
   if (!custom_usr && !(is_extension && !is_app_extension) &&
-      !flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
+      !flatpak_run_add_extension_args (argv_array, NULL, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
   if (!flatpak_run_add_environment_args (argv_array, NULL, &envp, app_info_path, run_flags, id,
