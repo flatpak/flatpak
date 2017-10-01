@@ -18,7 +18,18 @@
   along with systemd; If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-/* Missing glibc definitions to access certain kernel APIs */
+/* Missing glibc definitions to access certain kernel APIs.
+   This file is last updated from systemd git:
+
+   commit 71e5200f94b22589922704aa4abdf95d4fe2e528
+   Author:     Daniel Mack <daniel@zonque.org>
+   AuthorDate: Tue Oct 18 17:57:10 2016 +0200
+   Commit:     Lennart Poettering <lennart@poettering.net>
+   CommitDate: Fri Sep 22 15:24:54 2017 +0200
+
+   Add abstraction model for BPF programs
+*/
+
 
 #if !HAVE_DECL_RENAMEAT2
 #  ifndef __NR_renameat2
@@ -26,6 +37,8 @@
 #      define __NR_renameat2 316
 #    elif defined __arm__
 #      define __NR_renameat2 382
+#    elif defined __aarch64__
+#      define __NR_renameat2 276
 #    elif defined _MIPS_SIM
 #      if _MIPS_SIM == _MIPS_SIM_ABI32
 #        define __NR_renameat2 4351
@@ -38,6 +51,12 @@
 #      endif
 #    elif defined __i386__
 #      define __NR_renameat2 353
+#    elif defined __powerpc64__
+#      define __NR_renameat2 357
+#    elif defined __s390__ || defined __s390x__
+#      define __NR_renameat2 347
+#    elif defined __arc__
+#      define __NR_renameat2 276
 #    else
 #      warning "__NR_renameat2 unknown for your architecture"
 #    endif
@@ -46,6 +65,45 @@
 static inline int renameat2(int oldfd, const char *oldname, int newfd, const char *newname, unsigned flags) {
 #  ifdef __NR_renameat2
         return syscall(__NR_renameat2, oldfd, oldname, newfd, newname, flags);
+#  else
+        errno = ENOSYS;
+        return -1;
+#  endif
+}
+#endif
+
+#if !HAVE_DECL_MEMFD_CREATE
+#  ifndef __NR_memfd_create
+#    if defined __x86_64__
+#      define __NR_memfd_create 319
+#    elif defined __arm__
+#      define __NR_memfd_create 385
+#    elif defined __aarch64__
+#      define __NR_memfd_create 279
+#    elif defined __s390__
+#      define __NR_memfd_create 350
+#    elif defined _MIPS_SIM
+#      if _MIPS_SIM == _MIPS_SIM_ABI32
+#        define __NR_memfd_create 4354
+#      endif
+#      if _MIPS_SIM == _MIPS_SIM_NABI32
+#        define __NR_memfd_create 6318
+#      endif
+#      if _MIPS_SIM == _MIPS_SIM_ABI64
+#        define __NR_memfd_create 5314
+#      endif
+#    elif defined __i386__
+#      define __NR_memfd_create 356
+#    elif defined __arc__
+#      define __NR_memfd_create 279
+#    else
+#      warning "__NR_memfd_create unknown for your architecture"
+#    endif
+#  endif
+
+static inline int memfd_create(const char *name, unsigned int flags) {
+#  ifdef __NR_memfd_create
+        return syscall(__NR_memfd_create, name, flags);
 #  else
         errno = ENOSYS;
         return -1;

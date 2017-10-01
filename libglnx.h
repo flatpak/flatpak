@@ -25,6 +25,7 @@
 G_BEGIN_DECLS
 
 #include <glnx-macros.h>
+#include <glnx-missing.h>
 #include <glnx-local-alloc.h>
 #include <glnx-backport-autocleanups.h>
 #include <glnx-backports.h>
