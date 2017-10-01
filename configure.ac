@@ -158,6 +158,7 @@ else
 fi
 
 AC_CHECK_FUNCS(fdwalk)
+LIBGLNX_CONFIGURE
 
 AC_CHECK_HEADER([sys/xattr.h], [], [AC_MSG_ERROR([You must have sys/xattr.h from glibc])])
 AC_CHECK_HEADER([sys/capability.h], have_caps=yes, [AC_MSG_ERROR([sys/capability.h header not found])])
