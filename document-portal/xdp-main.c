@@ -421,7 +421,10 @@ validate_fd (int fd,
 
   /* For apps we translate /app and /usr to the installed locations.
      Also, we need to rewrite to drop the /newroot prefix added by
-     bubblewrap for other files to work. */
+     bubblewrap for other files to work.  See
+     https://github.com/projectatomic/bubblewrap/pull/172
+     for a bit more information on the /newroot issue.
+  */
   app_path = g_key_file_get_string (app_info, FLATPAK_METADATA_GROUP_INSTANCE,
                                     FLATPAK_METADATA_KEY_APP_PATH, NULL);
   runtime_path = g_key_file_get_string (app_info,
@@ -430,23 +433,32 @@ validate_fd (int fd,
                                         NULL);
   if (app_path != NULL || runtime_path != NULL)
     {
+      gboolean had_newroot_prefix = g_str_has_prefix (path_buffer, "/newroot/");
+      const char *tmp_path_buf;
+      if (had_newroot_prefix)
+        tmp_path_buf = path_buffer + strlen ("/newroot");
+      else
+        tmp_path_buf = path_buffer;
       if (app_path != NULL &&
-          g_str_has_prefix (path_buffer, "/newroot/app/"))
+          g_str_has_prefix (tmp_path_buf, "/app/"))
         {
-          char *rel_path = path_buffer + strlen ("/newroot/app/");
+          const char *rel_path = tmp_path_buf + strlen ("/app/");
           g_autofree char *real_path = g_build_filename (app_path, rel_path, NULL);
           strncpy (path_buffer, real_path, PATH_MAX);
         }
       else if (runtime_path != NULL &&
-               g_str_has_prefix (path_buffer, "/newroot/usr/"))
+               g_str_has_prefix (path_buffer, "/usr/"))
         {
-          char *rel_path = path_buffer + strlen ("/newroot/usr/");
+          const char *rel_path = tmp_path_buf + strlen ("/usr/");
           g_autofree char *real_path = g_build_filename (runtime_path, rel_path, NULL);
           strncpy (path_buffer, real_path, PATH_MAX);
         }
-      else if (g_str_has_prefix (path_buffer, "/newroot/"))
+      else if (had_newroot_prefix)
         {
-          char *rel_path = path_buffer + strlen ("/newroot");
+          /* Create a separate copy to avoid memcpy-type issues where
+           * source and destination overlap.
+           */
+          const char *rel_path = strdupa (tmp_path_buf);
           g_strlcpy (path_buffer, rel_path, PATH_MAX);
         }
     }
