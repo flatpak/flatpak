@@ -1874,30 +1874,6 @@ add_args (GPtrArray *argv_array, ...)
   va_end (args);
 }
 
-/* Initialize @tmpf in anonymous mode, write @str to @tmpf, and lseek() back to
- * the start. See also similar uses in e.g. rpm-ostree for running dracut.
- */
-static gboolean
-write_tmpfile_seek_start (GLnxTmpfile *tmpf,
-                          const char  *str,
-                          size_t       len,
-                          GError     **error)
-{
-  /* We use an anonymous fd (i.e. O_EXCL) since we don't want
-   * the target container to potentially be able to re-link it.  A
-   * good next step here would be to use memfd_create() and seal.
-   */
-  if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, tmpf, error))
-    return FALSE;
-  if (len == -1)
-    len = strlen (str);
-  if (glnx_loop_write (tmpf->fd, str, len) < 0)
-    return glnx_throw_errno_prefix (error, "write");
-  if (lseek (tmpf->fd, 0, SEEK_SET) < 0)
-    return glnx_throw_errno_prefix (error, "lseek");
-  return TRUE;
-}
-
 static void
 add_args_data_fd (GPtrArray *argv_array,
                   GArray    *fd_array,
@@ -1914,9 +1890,65 @@ add_args_data_fd (GPtrArray *argv_array,
             NULL);
 }
 
+
+/* If memfd_create() is available, generate a sealed memfd with contents of
+ * @str. Otherwise use an O_TMPFILE @tmpf in anonymous mode, write @str to
+ * @tmpf, and lseek() back to the start. See also similar uses in e.g.
+ * rpm-ostree for running dracut.
+ */
+static gboolean
+buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
+                                   const char  *name,
+                                   const char  *str,
+                                   size_t       len,
+                                   GError     **error)
+{
+  if (len == -1)
+    len = strlen (str);
+  glnx_fd_close int memfd = memfd_create (name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
+  int fd; /* Unowned */
+  if (memfd != -1)
+    {
+      fd = memfd;
+    }
+  else
+    {
+      /* We use an anonymous fd (i.e. O_EXCL) since we don't want
+       * the target container to potentially be able to re-link it.  A
+       * good next step here would be to use memfd_create() and seal.
+       */
+      if (!G_IN_SET (errno, ENOSYS, EOPNOTSUPP))
+        return glnx_throw_errno_prefix (error, "memfd_create");
+      if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, tmpf, error))
+        return FALSE;
+      fd = tmpf->fd;
+    }
+  if (ftruncate (fd, len) < 0)
+    return glnx_throw_errno_prefix (error, "ftruncate");
+  if (glnx_loop_write (fd, str, len) < 0)
+    return glnx_throw_errno_prefix (error, "write");
+  if (lseek (fd, 0, SEEK_SET) < 0)
+    return glnx_throw_errno_prefix (error, "lseek");
+  if (memfd != -1)
+    {
+      if (fcntl (memfd, F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE | F_SEAL_SEAL) < 0)
+        return glnx_throw_errno_prefix (error, "fcntl(F_ADD_SEALS)");
+      /* The other values can stay default */
+      tmpf->fd = glnx_steal_fd (&memfd);
+      tmpf->initialized = TRUE;
+    }
+  return TRUE;
+}
+
+/* Given a buffer @content of size @content_size, generate a fd (memfd if available)
+ * of the data.  The @name parameter is used by memfd_create() as a debugging aid;
+ * it has no semantic meaning.  The bwrap command line will inject it into the target
+ * container as @path.
+ */
 static gboolean
 add_args_data (GPtrArray *argv_array,
                GArray    *fd_array,
+               const char *name,
                const char *content,
                gssize content_size,
                const char *path,
@@ -1924,7 +1956,7 @@ add_args_data (GPtrArray *argv_array,
 {
   g_auto(GLnxTmpfile) args_tmpf  = { 0, };
 
-  if (!write_tmpfile_seek_start (&args_tmpf, content, content_size, error))
+  if (!buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, name, content, content_size, error))
     return FALSE;
 
   add_args_data_fd (argv_array, fd_array,
@@ -2050,7 +2082,8 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
       g_autofree char *pulse_server = g_strdup_printf ("unix:/run/user/%d/pulse/native", getuid ());
       g_autofree char *config_path = g_strdup_printf ("/run/user/%d/pulse/config", getuid ());
 
-      if (!add_args_data (argv_array, fd_array, client_config, -1, config_path, NULL))
+      /* FIXME - error handling */
+      if (!add_args_data (argv_array, fd_array, "pulseaudio", client_config, -1, config_path, NULL))
         return;
 
       add_args (argv_array,
@@ -2333,7 +2366,7 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
               g_autofree char *ld_so_conf_file = g_strdup_printf ("%s-%03d-%s.conf", parts[0], ++count, ext->installed_id);
               g_autofree char *ld_so_conf_file_path = g_build_filename ("/run/flatpak/ld.so.conf.d", ld_so_conf_file, NULL);
 
-              if (!add_args_data (argv_array, fd_array,
+              if (!add_args_data (argv_array, fd_array, "ld-so-conf",
                                   contents, -1, ld_so_conf_file_path, error))
                 return FALSE;
             }
@@ -3163,7 +3196,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
         g_build_filename (flatpak_file_get_path_cached (app_id_dir),
                           "config/user-dirs.dirs", NULL);
 
-      add_args_data (argv_array, fd_array,
+      add_args_data (argv_array, fd_array, "xdg-config-dirs",
                      xdg_dirs_conf->str, xdg_dirs_conf->len, path, NULL);
     }
 
@@ -4151,7 +4184,7 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
   }
 
   bwrap_args_data = join_args (bwrap_args, &bwrap_args_len);
-  if (!write_tmpfile_seek_start (&args_tmpf, bwrap_args_data, bwrap_args_len, error))
+  if (!buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, "bwrap-args", bwrap_args_data, bwrap_args_len, error))
     return FALSE;
 
   g_ptr_array_insert (argv, i++, g_strdup (flatpak_get_bwrap ()));
@@ -4605,10 +4638,10 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
               "--symlink", "usr/etc", "/etc",
               NULL);
 
-  if (!add_args_data (argv_array, fd_array, passwd_contents, -1, "/etc/passwd", error))
+  if (!add_args_data (argv_array, fd_array, "passwd", passwd_contents, -1, "/etc/passwd", error))
     return FALSE;
 
-  if (!add_args_data (argv_array, fd_array, group_contents, -1, "/etc/group", error))
+  if (!add_args_data (argv_array, fd_array, "group", group_contents, -1, "/etc/group", error))
     return FALSE;
 
   if (g_file_test ("/etc/machine-id", G_FILE_TEST_EXISTS))
@@ -4934,7 +4967,7 @@ add_ld_so_conf (GPtrArray      *argv_array,
     "/app/lib\n"
     "include /run/flatpak/ld.so.conf.d/runtime-*.conf\n";
 
-  return add_args_data (argv_array, fd_array,
+  return add_args_data (argv_array, fd_array, "ld-so-conf",
                         contents, -1, "/etc/ld.so.conf", error);
 }
 
@@ -5328,7 +5361,7 @@ flatpak_run_app (const char     *app_ref,
     gsize len;
     g_autofree char *args = join_args (argv_array, &len);
 
-    if (!write_tmpfile_seek_start (&arg_tmpf, args, len, error))
+    if (!buffer_to_sealed_memfd_or_tmpfile (&arg_tmpf, "bwrap-args", args, len, error))
       return FALSE;
 
     add_args_data_fd (real_argv_array, fd_array,
