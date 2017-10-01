@@ -2296,7 +2296,7 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
           g_autofree char *tmp_path = NULL;
           g_autofree char *fd_str = NULL;
           g_autofree char *ld_path = g_build_filename (full_directory, ext->add_ld_path, NULL);
-          g_autofree char *contents = g_strconcat("include ", ld_path, "\n", NULL);
+          g_autofree char *contents = g_strconcat(ld_path, "\n", NULL);
 
           fd = g_file_open_tmp ("flatpak-ld_so_conf-XXXXXX.conf", &tmp_path, NULL);
           if (fd == -1)
