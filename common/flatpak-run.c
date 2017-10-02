@@ -2261,10 +2261,12 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                 char       ***envp_p,
                                 GKeyFile     *metakey,
                                 const char   *full_ref,
+                                char        **extensions_out,
                                 GCancellable *cancellable,
                                 GError      **error)
 {
   g_auto(GStrv) parts = NULL;
+  g_autoptr(GString) used_extensions = g_string_new ("");
   gboolean is_app;
   GList *extensions, *l;
   g_autoptr(GHashTable) mounted_tmpfs =
@@ -2289,6 +2291,15 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
       g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
       g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
       int i;
+
+      if (used_extensions->len > 0)
+	g_string_append (used_extensions, ";");
+      g_string_append (used_extensions, ext->installed_id);
+      g_string_append (used_extensions, "=");
+      if (ext->commit != NULL)
+	g_string_append (used_extensions, ext->commit);
+      else
+	g_string_append (used_extensions, "local");
 
       if (ext->needs_tmpfs)
         {
@@ -2354,6 +2365,9 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
     }
 
   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
+
+  if (extensions_out)
+    *extensions_out = g_string_free (g_steal_pointer (&used_extensions), FALSE);
 
   return TRUE;
 }
@@ -3691,8 +3705,10 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                GArray         *fd_array,
                                GFile          *app_files,
                                GVariant       *app_deploy_data,
+			       const char     *app_extensions,
                                GFile          *runtime_files,
                                GVariant       *runtime_deploy_data,
+			       const char     *runtime_extensions,
                                const char     *app_id,
                                const char     *app_branch,
                                const char     *runtime_ref,
@@ -3738,12 +3754,18 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   if (app_deploy_data)
     g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                            FLATPAK_METADATA_KEY_APP_COMMIT, flatpak_deploy_data_get_commit (app_deploy_data));
+  if (app_extensions && *app_extensions != 0)
+    g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                           FLATPAK_METADATA_KEY_APP_EXTENSIONS, app_extensions);
   runtime_path = g_file_get_path (runtime_files);
   g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                          FLATPAK_METADATA_KEY_RUNTIME_PATH, runtime_path);
   if (runtime_deploy_data)
     g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                            FLATPAK_METADATA_KEY_RUNTIME_COMMIT, flatpak_deploy_data_get_commit (runtime_deploy_data));
+  if (runtime_extensions && *runtime_extensions != 0)
+    g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                           FLATPAK_METADATA_KEY_RUNTIME_EXTENSIONS, runtime_extensions);
   if (app_branch != NULL)
     g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                            FLATPAK_METADATA_KEY_BRANCH, app_branch);
@@ -4855,6 +4877,8 @@ flatpak_run_app (const char     *app_ref,
   g_auto(GStrv) app_ref_parts = NULL;
   g_autofree char *commandline = NULL;
   g_autofree char *doc_mount_path = NULL;
+  g_autofree char *app_extensions = NULL;
+  g_autofree char *runtime_extensions = NULL;
 
   app_ref_parts = flatpak_decompose_ref (app_ref, error);
   if (app_ref_parts == NULL)
@@ -4984,18 +5008,18 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
+  if (metakey != NULL &&
+      !flatpak_run_add_extension_args (argv_array, &envp, metakey, app_ref, &app_extensions, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, &runtime_extensions, cancellable, error))
+    return FALSE;
+
   if (!flatpak_run_add_app_info_args (argv_array, fd_array,
-                                      app_files, app_deploy_data,
-                                      runtime_files, runtime_deploy_data,
+                                      app_files, app_deploy_data, app_extensions,
+                                      runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_ref_parts[1], app_ref_parts[3],
                                       runtime_ref, app_context, &app_info_path, error))
-    return FALSE;
-
-  if (metakey != NULL &&
-      !flatpak_run_add_extension_args (argv_array, &envp, metakey, app_ref, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
   add_document_portal_args (argv_array, app_ref_parts[1], &doc_mount_path);
