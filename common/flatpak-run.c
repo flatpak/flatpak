@@ -1921,6 +1921,44 @@ create_tmp_fd (const char *contents,
 }
 
 static void
+add_args_data_fd (GPtrArray *argv_array,
+                  GArray    *fd_array,
+                  const char *op,
+                  int fd,
+                  const char *path_optional)
+{
+  g_autofree char *fd_str = NULL;
+
+  fd_str = g_strdup_printf ("%d", fd);
+  if (fd_array)
+    g_array_append_val (fd_array, fd);
+
+  add_args (argv_array,
+            op, fd_str, path_optional,
+            NULL);
+}
+
+static gboolean
+add_args_data (GPtrArray *argv_array,
+               GArray    *fd_array,
+               const char *content,
+               gssize content_size,
+               const char *path,
+               GError **error)
+{
+  int fd;
+
+  fd = create_tmp_fd (content, content_size, error);
+  if (fd == -1)
+    return FALSE;
+
+  add_args_data_fd (argv_array, fd_array,
+                    "--bind-data", fd, path);
+  return TRUE;
+}
+
+
+static void
 flatpak_run_add_x11_args (GPtrArray *argv_array,
                           GArray    *fd_array,
                           char    ***envp_p,
@@ -1975,17 +2013,13 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
               int tmp_fd = dup (fd);
               if (tmp_fd != -1)
                 {
-                  g_autofree char *tmp_fd_str = g_strdup_printf ("%d", tmp_fd);
                   g_autofree char *dest = g_strdup_printf ("/run/user/%d/Xauthority", getuid ());
 
                   write_xauth (d, output);
-                  add_args (argv_array,
-                            "--bind-data", tmp_fd_str, dest,
-                            NULL);
-                  if (fd_array)
-                    g_array_append_val (fd_array, tmp_fd);
-                  *envp_p = g_environ_setenv (*envp_p, "XAUTHORITY", dest, TRUE);
+                  add_args_data_fd (argv_array, fd_array,
+                                    "--bind-data", tmp_fd, dest);
 
+                  *envp_p = g_environ_setenv (*envp_p, "XAUTHORITY", dest, TRUE);
                 }
 
               fclose (output);
@@ -2046,20 +2080,12 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
       g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/pulse/native", getuid ());
       g_autofree char *pulse_server = g_strdup_printf ("unix:/run/user/%d/pulse/native", getuid ());
       g_autofree char *config_path = g_strdup_printf ("/run/user/%d/pulse/config", getuid ());
-      int fd;
-      g_autofree char *fd_str = NULL;
 
-      fd = create_tmp_fd (client_config, -1, NULL);
-      if (fd == -1)
+      if (!add_args_data (argv_array, fd_array, client_config, -1, config_path, NULL))
         return;
-
-      fd_str = g_strdup_printf ("%d", fd);
-      if (fd_array)
-        g_array_append_val (fd_array, fd);
 
       add_args (argv_array,
                 "--bind", pulseaudio_socket, sandbox_socket_path,
-                "--bind-data", fd_str, config_path,
                 NULL);
 
       *envp_p = g_environ_setenv (*envp_p, "PULSE_SERVER", pulse_server, TRUE);
@@ -3090,30 +3116,12 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
     }
   else if (xdg_dirs_conf->len > 0 && app_id_dir != NULL)
     {
-      g_autofree char *tmp_path = NULL;
-      g_autofree char *path = NULL;
-      int fd;
+      g_autofree char *path =
+        g_build_filename (flatpak_file_get_path_cached (app_id_dir),
+                          "config/user-dirs.dirs", NULL);
 
-      fd = g_file_open_tmp ("flatpak-user-dir-XXXXXX.dirs", &tmp_path, NULL);
-      if (fd >= 0)
-        {
-          close (fd);
-          if (g_file_set_contents (tmp_path, xdg_dirs_conf->str, xdg_dirs_conf->len, NULL))
-            {
-              int tmp_fd = open (tmp_path, O_RDONLY);
-              unlink (tmp_path);
-              if (tmp_fd != -1)
-                {
-                  g_autofree char *tmp_fd_str = g_strdup_printf ("%d", tmp_fd);
-                  if (fd_array)
-                    g_array_append_val (fd_array, tmp_fd);
-                  path = g_build_filename (flatpak_file_get_path_cached (app_id_dir),
-                                           "config/user-dirs.dirs", NULL);
-
-                  add_args (argv_array, "--file", tmp_fd_str, path, NULL);
-                }
-            }
-        }
+      add_args_data (argv_array, fd_array,
+                     xdg_dirs_conf->str, xdg_dirs_conf->len, path, NULL);
     }
 
   flatpak_run_add_x11_args (argv_array, fd_array, envp_p,
@@ -3694,8 +3702,6 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   int fd, fd2;
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime_path = NULL;
-  g_autofree char *fd_str = NULL;
-  g_autofree char *fd2_str = NULL;
   g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
   const char *group;
 
@@ -3782,17 +3788,11 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
 
   unlink (tmp_path);
 
-  fd_str = g_strdup_printf ("%d", fd);
-  fd2_str = g_strdup_printf ("%d", fd2);
-  if (fd_array)
-    {
-      g_array_append_val (fd_array, fd);
-      g_array_append_val (fd_array, fd2);
-    }
-
+  add_args_data_fd (argv_array, fd_array,
+                    "--file", fd, "/.flatpak-info");
+  add_args_data_fd (argv_array, fd_array,
+                    "--ro-bind-data", fd2, "/.flatpak-info");
   add_args (argv_array,
-            "--file", fd_str, "/.flatpak-info",
-            "--ro-bind-data", fd2_str, "/.flatpak-info",
             "--symlink", "../../../.flatpak-info", old_dest,
             NULL);
 
@@ -4121,8 +4121,6 @@ add_dbus_proxy_args (GPtrArray *argv_array,
 
   if (sync_fds[0] == -1)
     {
-      g_autofree char *fd_str = NULL;
-
       if (pipe (sync_fds) < 0)
         {
           g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
@@ -4130,8 +4128,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
           return FALSE;
         }
 
-      fd_str = g_strdup_printf ("%d", sync_fds[0]);
-      add_args (argv_array, "--sync-fd", fd_str, NULL);
+      add_args_data_fd (argv_array, NULL,
+                        "--sync-fd", sync_fds[0], NULL);
     }
 
   proxy = g_getenv ("FLATPAK_DBUSPROXY");
@@ -4319,7 +4317,6 @@ setup_seccomp (GPtrArray  *argv_array,
   };
   int i, r;
   glnx_fd_close int fd = -1;
-  g_autofree char *fd_str = NULL;
   g_autofree char *path = NULL;
 
   seccomp = seccomp_init (SCMP_ACT_ALLOW);
@@ -4432,13 +4429,8 @@ setup_seccomp (GPtrArray  *argv_array,
 
   lseek (fd, 0, SEEK_SET);
 
-  fd_str = g_strdup_printf ("%d", fd);
-  if (fd_array)
-    g_array_append_val (fd_array, fd);
-
-  add_args (argv_array,
-            "--seccomp", fd_str,
-            NULL);
+  add_args_data_fd (argv_array, fd_array,
+                    "--seccomp", fd, NULL);
 
   fd = -1; /* Don't close on success */
 
@@ -4458,11 +4450,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   const char *usr_links[] = {"lib", "lib32", "lib64", "bin", "sbin"};
   g_autofree char *run_dir = g_strdup_printf ("/run/user/%d", getuid ());
   int i;
-  int passwd_fd = -1;
-  g_autofree char *passwd_fd_str = NULL;
   g_autofree char *passwd_contents = NULL;
-  int group_fd = -1;
-  g_autofree char *group_fd_str = NULL;
   g_autofree char *group_contents = NULL;
   struct group *g = getgrgid (getgid ());
   gulong pers;
@@ -4477,21 +4465,10 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                                      g_get_home_dir (),
                                      DEFAULT_SHELL);
 
-  if ((passwd_fd = create_tmp_fd (passwd_contents, -1, error)) < 0)
-    return FALSE;
-  passwd_fd_str = g_strdup_printf ("%d", passwd_fd);
-  if (fd_array)
-    g_array_append_val (fd_array, passwd_fd);
-
   group_contents = g_strdup_printf ("%s:x:%d:%s\n"
                                     "nfsnobody:x:65534:\n",
                                     g->gr_name,
                                     getgid (), g_get_user_name ());
-  if ((group_fd = create_tmp_fd (group_contents, -1, error)) < 0)
-    return FALSE;
-  group_fd_str = g_strdup_printf ("%d", group_fd);
-  if (fd_array)
-    g_array_append_val (fd_array, group_fd);
 
   add_args (argv_array,
             "--unshare-pid",
@@ -4520,10 +4497,11 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
               "--symlink", "usr/etc", "/etc",
               NULL);
 
-  add_args (argv_array,
-            "--bind-data", passwd_fd_str, "/etc/passwd",
-            "--bind-data", group_fd_str, "/etc/group",
-            NULL);
+  if (!add_args_data (argv_array, fd_array, passwd_contents, -1, "/etc/passwd", error))
+    return FALSE;
+
+  if (!add_args_data (argv_array, fd_array, group_contents, -1, "/etc/group", error))
+    return FALSE;
 
   if (g_file_test ("/etc/machine-id", G_FILE_TEST_EXISTS))
     add_args (argv_array, "--ro-bind", "/etc/machine-id", "/etc/machine-id", NULL);
@@ -5040,19 +5018,14 @@ flatpak_run_app (const char     *app_ref,
   {
     gsize len;
     int arg_fd;
-    g_autofree char *arg_fd_str = NULL;
     g_autofree char *args = join_args (argv_array, &len);
 
     arg_fd = create_tmp_fd (args, len, error);
     if (arg_fd < 0)
       return FALSE;
 
-    arg_fd_str = g_strdup_printf ("%d", arg_fd);
-    g_array_append_val (fd_array, arg_fd);
-
-    add_args (real_argv_array,
-              "--args", arg_fd_str,
-              NULL);
+    add_args_data_fd (real_argv_array, fd_array,
+                      "--args", arg_fd, NULL);
   }
 
   g_ptr_array_add (real_argv_array, g_strdup (command));
