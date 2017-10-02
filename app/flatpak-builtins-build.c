@@ -108,6 +108,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   gboolean is_extension = FALSE;
   gboolean is_app_extension = FALSE;
   g_autofree char *app_info_path = NULL;
+  g_autofree char *runtime_extensions = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
 
   context = g_option_context_new (_("DIRECTORY [COMMAND [args...]] - Build in directory"));
@@ -368,22 +369,22 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   flatpak_context_allow_host_fs (app_context);
   flatpak_context_merge (app_context, arg_context);
 
+  envp = flatpak_run_get_minimal_env (TRUE);
+  envp = flatpak_run_apply_env_vars (envp, app_context);
+
+  if (!custom_usr && !(is_extension && !is_app_extension) &&
+      !flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, &runtime_extensions, cancellable, error))
+    return FALSE;
+
   if (!flatpak_run_add_app_info_args (argv_array,
                                       NULL,
-                                      app_files, NULL,
-                                      runtime_files, runtime_deploy_data,
+                                      app_files, NULL, NULL,
+                                      runtime_files, runtime_deploy_data, runtime_extensions,
                                       id, NULL,
                                       runtime_ref,
                                       app_context,
                                       &app_info_path,
                                       error))
-    return FALSE;
-
-  envp = flatpak_run_get_minimal_env (TRUE);
-  envp = flatpak_run_apply_env_vars (envp, app_context);
-
-  if (!custom_usr && !(is_extension && !is_app_extension) &&
-      !flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
   if (!flatpak_run_add_environment_args (argv_array, NULL, &envp, app_info_path, run_flags, id,

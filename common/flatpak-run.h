@@ -51,10 +51,12 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_GROUP_INSTANCE "Instance"
 #define FLATPAK_METADATA_KEY_APP_PATH "app-path"
 #define FLATPAK_METADATA_KEY_APP_COMMIT "app-commit"
+#define FLATPAK_METADATA_KEY_APP_EXTENSIONS "app-extensions"
 #define FLATPAK_METADATA_KEY_BRANCH "branch"
 #define FLATPAK_METADATA_KEY_FLATPAK_VERSION "flatpak-version"
 #define FLATPAK_METADATA_KEY_RUNTIME_PATH "runtime-path"
 #define FLATPAK_METADATA_KEY_RUNTIME_COMMIT "runtime-commit"
+#define FLATPAK_METADATA_KEY_RUNTIME_EXTENSIONS "runtime-extensions"
 #define FLATPAK_METADATA_KEY_SESSION_BUS_PROXY "session-bus-proxy"
 #define FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY "system-bus-proxy"
 
@@ -160,6 +162,7 @@ gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                           char       ***envp_p,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,
+					  char        **extensions_out,
                                           GCancellable *cancellable,
                                           GError      **error);
 gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
@@ -199,8 +202,10 @@ gboolean flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                         GArray         *fd_array,
                                         GFile          *app_files,
                                         GVariant       *app_deploy_data,
+					const char     *app_extensions,
                                         GFile          *runtime_files,
                                         GVariant       *runtime_deploy_data,
+					const char     *runtime_extensions,
                                         const char     *app_id,
                                         const char     *app_branch,
                                         const char     *runtime_ref,
