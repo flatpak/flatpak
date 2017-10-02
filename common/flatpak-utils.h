@@ -386,6 +386,7 @@ typedef struct
 {
   char *id;
   char *installed_id;
+  char *commit;
   char *ref;
   char *directory;
   char *files_path;

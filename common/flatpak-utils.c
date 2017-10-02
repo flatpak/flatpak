@@ -4040,6 +4040,7 @@ flatpak_extension_free (FlatpakExtension *extension)
 {
   g_free (extension->id);
   g_free (extension->installed_id);
+  g_free (extension->commit);
   g_free (extension->ref);
   g_free (extension->directory);
   g_free (extension->files_path);
@@ -4068,9 +4069,11 @@ flatpak_extension_new (const char *id,
                        const char *subdir_suffix,
                        char **merge_dirs,
                        GFile *files,
+		       GFile *deploy_dir,
                        gboolean is_unmaintained)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
+  g_autoptr(GVariant) deploy_data = NULL;
 
   ext->id = g_strdup (id);
   ext->installed_id = g_strdup (extension);
@@ -4081,6 +4084,13 @@ flatpak_extension_new (const char *id,
   ext->subdir_suffix = g_strdup (subdir_suffix);
   ext->merge_dirs = g_strdupv (merge_dirs);
   ext->is_unmaintained = is_unmaintained;
+
+  if (deploy_dir)
+    {
+      deploy_data = flatpak_load_deploy_data (deploy_dir, NULL, NULL);
+      if (deploy_data)
+	ext->commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+    }
 
   if (is_unmaintained)
     ext->priority = 1000;
@@ -4159,6 +4169,7 @@ add_extension (GKeyFile   *metakey,
   g_autofree char *ref = NULL;
   gboolean is_unmaintained = FALSE;
   g_autoptr(GFile) files = NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
 
   if (directory == NULL)
     return res;
@@ -4168,7 +4179,11 @@ add_extension (GKeyFile   *metakey,
   files = flatpak_find_unmaintained_extension_dir_if_exists (extension, arch, branch, NULL);
 
   if (files == NULL)
-    files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
+    {
+      deploy_dir = flatpak_find_deploy_dir_for_ref (ref, NULL, NULL, NULL);
+      if (deploy_dir)
+        files = g_file_get_child (deploy_dir, "files");
+    }
   else
     is_unmaintained = TRUE;
 
@@ -4177,7 +4192,7 @@ add_extension (GKeyFile   *metakey,
     {
       if (flatpak_extension_matches_reason (extension, enable_if, TRUE))
         {
-          ext = flatpak_extension_new (extension, extension, ref, directory, add_ld_path, subdir_suffix, merge_dirs, files, is_unmaintained);
+          ext = flatpak_extension_new (extension, extension, ref, directory, add_ld_path, subdir_suffix, merge_dirs, files, deploy_dir, is_unmaintained);
           res = g_list_prepend (res, ext);
         }
     }
@@ -4195,11 +4210,15 @@ add_extension (GKeyFile   *metakey,
         {
           g_autofree char *extended_dir = g_build_filename (directory, refs[j] + strlen (prefix), NULL);
           g_autofree char *dir_ref = g_build_filename ("runtime", refs[j], arch, branch, NULL);
-          g_autoptr(GFile) subdir_files = flatpak_find_files_dir_for_ref (dir_ref, NULL, NULL);
+	  g_autoptr(GFile) subdir_deploy_dir = NULL;
+          g_autoptr(GFile) subdir_files = NULL;
+	  subdir_deploy_dir = flatpak_find_deploy_dir_for_ref (dir_ref, NULL, NULL, NULL);
+	  if (subdir_deploy_dir)
+	    subdir_files = g_file_get_child (subdir_deploy_dir, "files");
 
           if (subdir_files && flatpak_extension_matches_reason (refs[j], enable_if, TRUE))
             {
-              ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, add_ld_path, subdir_suffix, merge_dirs, subdir_files, FALSE);
+              ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, add_ld_path, subdir_suffix, merge_dirs, subdir_files, subdir_deploy_dir, FALSE);
               ext->needs_tmpfs = TRUE;
               res = g_list_prepend (res, ext);
             }
@@ -4215,7 +4234,7 @@ add_extension (GKeyFile   *metakey,
 
           if (subdir_files && flatpak_extension_matches_reason (unmaintained_refs[j], enable_if, TRUE))
             {
-              ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref, extended_dir, add_ld_path, subdir_suffix, merge_dirs, subdir_files, TRUE);
+              ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref, extended_dir, add_ld_path, subdir_suffix, merge_dirs, subdir_files, NULL, TRUE);
               ext->needs_tmpfs = TRUE;
               res = g_list_prepend (res, ext);
             }
