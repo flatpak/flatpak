@@ -91,6 +91,10 @@ static GVariant *fetch_remote_summary_file (FlatpakDir    *self,
                                             GCancellable  *cancellable,
                                             GError       **error);
 
+static GVariant * flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
+                                                       GCancellable *cancellable,
+                                                       GError      **error);
+
 typedef struct
 {
   GBytes *bytes;
@@ -253,6 +257,45 @@ GFile *
 flatpak_deploy_get_dir (FlatpakDeploy *deploy)
 {
   return g_object_ref (deploy->dir);
+}
+
+GVariant *
+flatpak_load_deploy_data (GFile *deploy_dir,
+                          GCancellable *cancellable,
+                          GError      **error)
+{
+  g_autoptr(GFile) data_file = NULL;
+  g_autoptr(GError) my_error = NULL;
+  char *data = NULL;
+  gsize data_size;
+
+  data_file = g_file_get_child (deploy_dir, "deploy");
+  if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, &my_error))
+    {
+      if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
+
+      return flatpak_create_deploy_data_from_old (deploy_dir,
+                                                  cancellable, error);
+    }
+
+  return g_variant_ref_sink (g_variant_new_from_data (FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT,
+                                                      data, data_size,
+                                                      FALSE, g_free, data));
+}
+
+
+GVariant *
+flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  return flatpak_load_deploy_data (deploy->dir,
+                                   cancellable,
+                                   error);
 }
 
 GFile *
@@ -1346,8 +1389,7 @@ get_old_subpaths (GFile        *deploy_base,
 }
 
 static GVariant *
-flatpak_create_deploy_data_from_old (FlatpakDir   *self,
-                                     GFile        *deploy_dir,
+flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
                                      GCancellable *cancellable,
                                      GError      **error)
 {
@@ -1383,10 +1425,6 @@ flatpak_dir_get_deploy_data (FlatpakDir   *self,
                              GError      **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(GFile) data_file = NULL;
-  g_autoptr(GError) my_error = NULL;
-  char *data = NULL;
-  gsize data_size;
 
   deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
   if (deploy_dir == NULL)
@@ -1396,22 +1434,9 @@ flatpak_dir_get_deploy_data (FlatpakDir   *self,
       return NULL;
     }
 
-  data_file = g_file_get_child (deploy_dir, "deploy");
-  if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, &my_error))
-    {
-      if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        {
-          g_propagate_error (error, g_steal_pointer (&my_error));
-          return NULL;
-        }
-
-      return flatpak_create_deploy_data_from_old (self, deploy_dir,
-                                                  cancellable, error);
-    }
-
-  return g_variant_ref_sink (g_variant_new_from_data (FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT,
-                                                      data, data_size,
-                                                      FALSE, g_free, data));
+  return flatpak_load_deploy_data (deploy_dir,
+                                   cancellable,
+                                   error);
 }
 
 
