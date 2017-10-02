@@ -70,6 +70,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
+  g_autoptr(GVariant) runtime_deploy_data = NULL;
   g_autoptr(FlatpakDeploy) extensionof_deploy = NULL;
   g_autoptr(GFile) var = NULL;
   g_autoptr(GFile) usr = NULL;
@@ -205,6 +206,10 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     {
       runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
       if (runtime_deploy == NULL)
+        return FALSE;
+
+      runtime_deploy_data = flatpak_deploy_get_deploy_data (runtime_deploy, cancellable, error);
+      if (runtime_deploy_data == NULL)
         return FALSE;
 
       runtime_metakey = flatpak_deploy_get_metadata (runtime_deploy);
@@ -365,8 +370,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   if (!flatpak_run_add_app_info_args (argv_array,
                                       NULL,
-                                      app_files,
-                                      runtime_files,
+                                      app_files, NULL,
+                                      runtime_files, runtime_deploy_data,
                                       id, NULL,
                                       runtime_ref,
                                       app_context,

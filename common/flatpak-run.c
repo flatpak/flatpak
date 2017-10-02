@@ -3690,7 +3690,9 @@ gboolean
 flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                GArray         *fd_array,
                                GFile          *app_files,
+                               GVariant       *app_deploy_data,
                                GFile          *runtime_files,
+                               GVariant       *runtime_deploy_data,
                                const char     *app_id,
                                const char     *app_branch,
                                const char     *runtime_ref,
@@ -3733,9 +3735,15 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
       g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                              FLATPAK_METADATA_KEY_APP_PATH, app_path);
     }
+  if (app_deploy_data)
+    g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                           FLATPAK_METADATA_KEY_APP_COMMIT, flatpak_deploy_data_get_commit (app_deploy_data));
   runtime_path = g_file_get_path (runtime_files);
   g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                          FLATPAK_METADATA_KEY_RUNTIME_PATH, runtime_path);
+  if (runtime_deploy_data)
+    g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                           FLATPAK_METADATA_KEY_RUNTIME_COMMIT, flatpak_deploy_data_get_commit (runtime_deploy_data));
   if (app_branch != NULL)
     g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                            FLATPAK_METADATA_KEY_BRANCH, app_branch);
@@ -4822,6 +4830,8 @@ flatpak_run_app (const char     *app_ref,
                  GError        **error)
 {
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
+  g_autoptr(GVariant) runtime_deploy_data = NULL;
+  g_autoptr(GVariant) app_deploy_data = NULL;
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
@@ -4862,6 +4872,10 @@ flatpak_run_app (const char     *app_ref,
   else
     {
       const gchar *key;
+
+      app_deploy_data = flatpak_deploy_get_deploy_data (app_deploy, cancellable, error);
+      if (app_deploy_data == NULL)
+        return FALSE;
 
       if ((flags & FLATPAK_RUN_FLAG_DEVEL) != 0)
         key = FLATPAK_METADATA_KEY_SDK;
@@ -4915,6 +4929,10 @@ flatpak_run_app (const char     *app_ref,
   if (runtime_deploy == NULL)
     return FALSE;
 
+  runtime_deploy_data = flatpak_deploy_get_deploy_data (runtime_deploy, cancellable, error);
+  if (runtime_deploy_data == NULL)
+    return FALSE;
+
   runtime_metakey = flatpak_deploy_get_metadata (runtime_deploy);
 
   app_context = flatpak_app_compute_permissions (metakey, runtime_metakey, error);
@@ -4966,7 +4984,10 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
-  if (!flatpak_run_add_app_info_args (argv_array, fd_array, app_files, runtime_files, app_ref_parts[1], app_ref_parts[3],
+  if (!flatpak_run_add_app_info_args (argv_array, fd_array,
+                                      app_files, app_deploy_data,
+                                      runtime_files, runtime_deploy_data,
+                                      app_ref_parts[1], app_ref_parts[3],
                                       runtime_ref, app_context, &app_info_path, error))
     return FALSE;
 
