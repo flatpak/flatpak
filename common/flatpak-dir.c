@@ -9864,6 +9864,7 @@ add_related (FlatpakDir *self,
   gboolean download;
   gboolean delete = autodelete;
   g_auto(GStrv) ref_parts = g_strsplit (extension_ref, "/", -1);
+  g_autoptr(GFile) unmaintained_path = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, extension_ref, NULL, NULL);
 
@@ -9875,6 +9876,19 @@ add_related (FlatpakDir *self,
   download =
     flatpak_extension_matches_reason (ref_parts[1], download_if, !no_autodownload) ||
     deploy_data != NULL;
+
+  /* Don't download if there is an unmaintained extension already installed */
+  unmaintained_path =
+    flatpak_find_unmaintained_extension_dir_if_exists (ref_parts[1],
+                                                       ref_parts[2],
+                                                       ref_parts[3], NULL);
+  if (unmaintained_path != NULL && deploy_data == NULL)
+    {
+      g_debug ("Skipping related extension ‘%s’ because it is already "
+               "installed as an unmaintained extension in ‘%s’.",
+               ref_parts[1], g_file_get_path (unmaintained_path));
+      download = FALSE;
+    }
 
   if (g_str_has_suffix (extension, ".Debug"))
     {
