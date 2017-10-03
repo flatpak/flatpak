@@ -4468,6 +4468,32 @@ setup_seccomp (GPtrArray  *argv_array,
 }
 #endif
 
+static void
+flatpak_run_setup_usr_links (GPtrArray      *argv_array,
+                             GFile          *runtime_files)
+{
+  const char *usr_links[] = {"lib", "lib32", "lib64", "bin", "sbin"};
+  int i;
+
+  if (runtime_files == NULL)
+    return;
+
+  for (i = 0; i < G_N_ELEMENTS (usr_links); i++)
+    {
+      const char *subdir = usr_links[i];
+      g_autoptr(GFile) runtime_subdir = g_file_get_child (runtime_files, subdir);
+      if (g_file_query_exists (runtime_subdir, NULL))
+        {
+          g_autofree char *link = g_strconcat ("usr/", subdir, NULL);
+          g_autofree char *dest = g_strconcat ("/", subdir, NULL);
+          add_args (argv_array,
+                    "--symlink", link, dest,
+                    NULL);
+        }
+    }
+}
+
+
 gboolean
 flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                              GArray         *fd_array,
@@ -4477,9 +4503,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                              FlatpakRunFlags flags,
                              GError        **error)
 {
-  const char *usr_links[] = {"lib", "lib32", "lib64", "bin", "sbin"};
   g_autofree char *run_dir = g_strdup_printf ("/run/user/%d", getuid ());
-  int i;
   g_autofree char *passwd_contents = NULL;
   g_autofree char *group_contents = NULL;
   struct group *g = getgrgid (getgid ());
@@ -4605,19 +4629,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                 NULL);
     }
 
-  for (i = 0; runtime_files != NULL && i < G_N_ELEMENTS (usr_links); i++)
-    {
-      const char *subdir = usr_links[i];
-      g_autoptr(GFile) runtime_subdir = g_file_get_child (runtime_files, subdir);
-      if (g_file_query_exists (runtime_subdir, NULL))
-        {
-          g_autofree char *link = g_strconcat ("usr/", subdir, NULL);
-          g_autofree char *dest = g_strconcat ("/", subdir, NULL);
-          add_args (argv_array,
-                    "--symlink", link, dest,
-                    NULL);
-        }
-    }
+  flatpak_run_setup_usr_links (argv_array, runtime_files);
 
   pers = PER_LINUX;
 
