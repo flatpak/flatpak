@@ -91,6 +91,10 @@ static GVariant *fetch_remote_summary_file (FlatpakDir    *self,
                                             GCancellable  *cancellable,
                                             GError       **error);
 
+static GVariant * flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
+                                                       GCancellable *cancellable,
+                                                       GError      **error);
+
 typedef struct
 {
   GBytes *bytes;
@@ -253,6 +257,45 @@ GFile *
 flatpak_deploy_get_dir (FlatpakDeploy *deploy)
 {
   return g_object_ref (deploy->dir);
+}
+
+GVariant *
+flatpak_load_deploy_data (GFile *deploy_dir,
+                          GCancellable *cancellable,
+                          GError      **error)
+{
+  g_autoptr(GFile) data_file = NULL;
+  g_autoptr(GError) my_error = NULL;
+  char *data = NULL;
+  gsize data_size;
+
+  data_file = g_file_get_child (deploy_dir, "deploy");
+  if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, &my_error))
+    {
+      if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
+
+      return flatpak_create_deploy_data_from_old (deploy_dir,
+                                                  cancellable, error);
+    }
+
+  return g_variant_ref_sink (g_variant_new_from_data (FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT,
+                                                      data, data_size,
+                                                      FALSE, g_free, data));
+}
+
+
+GVariant *
+flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  return flatpak_load_deploy_data (deploy->dir,
+                                   cancellable,
+                                   error);
 }
 
 GFile *
@@ -1346,8 +1389,7 @@ get_old_subpaths (GFile        *deploy_base,
 }
 
 static GVariant *
-flatpak_create_deploy_data_from_old (FlatpakDir   *self,
-                                     GFile        *deploy_dir,
+flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
                                      GCancellable *cancellable,
                                      GError      **error)
 {
@@ -1383,10 +1425,6 @@ flatpak_dir_get_deploy_data (FlatpakDir   *self,
                              GError      **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(GFile) data_file = NULL;
-  g_autoptr(GError) my_error = NULL;
-  char *data = NULL;
-  gsize data_size;
 
   deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
   if (deploy_dir == NULL)
@@ -1396,22 +1434,9 @@ flatpak_dir_get_deploy_data (FlatpakDir   *self,
       return NULL;
     }
 
-  data_file = g_file_get_child (deploy_dir, "deploy");
-  if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, &my_error))
-    {
-      if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        {
-          g_propagate_error (error, g_steal_pointer (&my_error));
-          return NULL;
-        }
-
-      return flatpak_create_deploy_data_from_old (self, deploy_dir,
-                                                  cancellable, error);
-    }
-
-  return g_variant_ref_sink (g_variant_new_from_data (FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT,
-                                                      data, data_size,
-                                                      FALSE, g_free, data));
+  return flatpak_load_deploy_data (deploy_dir,
+                                   cancellable,
+                                   error);
 }
 
 
@@ -1682,7 +1707,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   glnx_fd_close int dfd = -1;
   g_autoptr(GFileInfo) file_info = NULL;
   g_autofree char *tmpname = g_strdup (".active-XXXXXX");
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
 
   /* Keep a shared repo lock to avoid prunes removing objects we're relying on
    * while we do the checkout. This could happen if the ref changes after we
@@ -1841,7 +1866,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
-      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      g_auto(GLnxLockFile) child_repo_lock = { 0, };
       FlatpakSystemHelper *system_helper;
       gboolean is_oci;
       g_autoptr(GFile) child_repo_file = NULL;
@@ -2900,7 +2925,7 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
 #endif
   const OstreeRepoFinderResult * const *results;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
 
   /* If @opt_results is set, @opt_rev must be. */
   g_return_val_if_fail (opt_results == NULL || opt_rev != NULL, FALSE);
@@ -3199,7 +3224,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(GVariant) new_commit = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   gboolean ret = FALSE;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
@@ -5020,7 +5045,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   gboolean created_extra_data = FALSE;
   g_autoptr(GVariant) commit_metadata = NULL;
   GVariantBuilder metadata_builder;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -5392,7 +5417,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) old_deploy_dir = NULL;
   gboolean created_deploy_base = FALSE;
@@ -5465,7 +5490,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            GError      **error)
 {
   g_autoptr(GVariant) old_deploy_data = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   g_autofree const char **old_subpaths = NULL;
   g_autofree char *old_active = NULL;
   const char *old_origin;
@@ -5700,7 +5725,7 @@ flatpak_dir_install (FlatpakDir          *self,
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
-      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      g_auto(GLnxLockFile) child_repo_lock = { 0, };
       const char *installation = flatpak_dir_get_id (self);
       const char *empty_subpaths[] = {NULL};
       const char **subpaths;
@@ -6319,7 +6344,7 @@ flatpak_dir_update (FlatpakDir          *self,
     {
       const char *installation = flatpak_dir_get_id (self);
       g_autoptr(OstreeRepo) child_repo = NULL;
-      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      g_auto(GLnxLockFile) child_repo_lock = { 0, };
       FlatpakSystemHelper *system_helper;
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
@@ -6500,7 +6525,7 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   gboolean is_app;
   const char *name;
   g_auto(GStrv) parts = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GVariant) deploy_data = NULL;
   gboolean keep_ref = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
   gboolean force_remove = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
@@ -6967,6 +6992,23 @@ flatpak_dir_undeploy_all (FlatpakDir   *self,
   return TRUE;
 }
 
+/**
+ * flatpak_dir_remove_ref:
+ *
+ * @self: a #FlatpakDir
+ * @remote_name: the name of the remote
+ * @ref: the flatpak ref to remove
+ * @cancellable: (nullable) (optional): a #GCancellable
+ * @error: a #GError
+ *
+ * Remove the flatpak ref given by @remote_name:@ref from the underlying
+ * OSTree repo. Attempting to remove a ref that is currently deployed
+ * is an error, you need to uninstall the flatpak first. Note that this does
+ * not remove the objects bound to @ref from the disk, you will need to
+ * call flatpak_dir_prune() to do that.
+ *
+ * Returns: %TRUE if removing the ref succeeded, %FALSE otherwise.
+ */
 gboolean
 flatpak_dir_remove_ref (FlatpakDir   *self,
                         const char   *remote_name,
@@ -6974,7 +7016,33 @@ flatpak_dir_remove_ref (FlatpakDir   *self,
                         GCancellable *cancellable,
                         GError      **error)
 {
-  if (!ostree_repo_set_ref_immediate (self->repo, remote_name, ref, NULL, cancellable, error))
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      const char *installation = flatpak_dir_get_id (self);
+      FlatpakSystemHelper *system_helper = flatpak_dir_get_system_helper (self);
+
+      /* If we don't have the system helper, we'll have to try and just remove
+       * the ref as an unprivileged user, which might fail later */
+      if (system_helper)
+        {
+          if (!flatpak_system_helper_call_remove_local_ref_sync (system_helper,
+                                                                 remote_name,
+                                                                 ref,
+                                                                 installation ? installation : "",
+                                                                 cancellable,
+                                                                 error))
+            return FALSE;
+        }
+
+      return TRUE;
+    }
+
+  if (!ostree_repo_set_ref_immediate (self->repo,
+                                      remote_name,
+                                      ref,
+                                      NULL,
+                                      cancellable,
+                                      error))
     return FALSE;
 
   return TRUE;
@@ -7044,10 +7112,29 @@ flatpak_dir_prune (FlatpakDir   *self,
   g_autofree char *formatted_freed_size = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GError) lock_error = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
 
   if (error == NULL)
     error = &local_error;
+
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      const char *installation = flatpak_dir_get_id (self);
+      FlatpakSystemHelper *system_helper = flatpak_dir_get_system_helper (self);
+
+      /* If we don't have the system helper, we'll have to try and just remove
+       * the ref as an unprivileged user, which might fail later */
+      if (system_helper)
+        {
+          if (!flatpak_system_helper_call_prune_local_repo_sync (system_helper,
+                                                                 installation ? installation : "",
+                                                                 cancellable,
+                                                                 error))
+            return FALSE;
+        }
+
+      return TRUE;
+    }
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -7571,6 +7658,11 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
   return TRUE;
 }
 
+typedef enum {
+  FIND_MATCHING_REFS_FLAGS_NONE = 0,
+  FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE = (1 << 0),
+} FindMatchingRefsFlags;
+
 /* Guarantees to return refs which are decomposable. */
 static GPtrArray *
 find_matching_refs (GHashTable *refs,
@@ -7578,6 +7670,7 @@ find_matching_refs (GHashTable *refs,
                     const char   *opt_branch,
                     const char   *opt_arch,
                     FlatpakKinds  kinds,
+                    FindMatchingRefsFlags flags,
                     GError      **error)
 {
   g_autoptr(GPtrArray) matched_refs = NULL;
@@ -7637,7 +7730,10 @@ find_matching_refs (GHashTable *refs,
       if (opt_branch != NULL && strcmp (opt_branch, parts[3]) != 0)
         continue;
 
-      g_ptr_array_add (matched_refs, g_steal_pointer (&ref));
+      if (flags & FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE)
+        g_ptr_array_add (matched_refs, g_strdup (key));
+      else
+        g_ptr_array_add (matched_refs, g_steal_pointer (&ref));
     }
 
   return g_steal_pointer (&matched_refs);
@@ -7666,8 +7762,13 @@ find_matching_ref (GHashTable *refs,
       g_autoptr(GPtrArray) matched_refs = NULL;
       int j;
 
-      matched_refs = find_matching_refs (refs, name, opt_branch, arches[i],
-                                         kinds, error);
+      matched_refs = find_matching_refs (refs,
+                                         name,
+                                         opt_branch,
+                                         arches[i],
+                                         kinds,
+                                         FIND_MATCHING_REFS_FLAGS_NONE,
+                                         error);
       if (matched_refs == NULL)
         return NULL;
 
@@ -7740,8 +7841,13 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
                                      &remote_refs, cancellable, error))
     return NULL;
 
-  matched_refs = find_matching_refs (remote_refs, name, opt_branch,
-                                      opt_arch, kinds, error);
+  matched_refs = find_matching_refs (remote_refs,
+                                     name,
+                                     opt_branch,
+                                     opt_arch,
+                                     kinds,
+                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                     error);
   if (matched_refs == NULL)
     return NULL;
 
@@ -7946,8 +8052,13 @@ flatpak_dir_find_installed_refs (FlatpakDir *self,
   if (local_refs == NULL)
     return NULL;
 
-  matched_refs = find_matching_refs (local_refs, opt_name, opt_branch,
-                                      opt_arch, kinds, error);
+  matched_refs = find_matching_refs (local_refs,
+                                     opt_name,
+                                     opt_branch,
+                                     opt_arch,
+                                     kinds,
+                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                     error);
   if (matched_refs == NULL)
     return NULL;
 
@@ -8001,6 +8112,100 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                _("%s %s not installed"), opt_name ? opt_name : "*unspecified*", opt_branch ? opt_branch : "master");
   return NULL;
+}
+
+/* Given a list of refs in local_refspecs, remove any refs that have already
+ * been deployed and return a new GPtrArray containing only the undeployed
+ * refs. This is used by flatpak_dir_cleanup_undeployed_refs to determine
+ * which undeployed refs need to be removed from the local repository.
+ *
+ * Returns: (transfer-full): A #GPtrArray
+ */
+static GPtrArray *
+filter_out_deployed_refs (FlatpakDir *self,
+                          GPtrArray  *local_refspecs,
+                          GError    **error)
+{
+  g_autoptr(GPtrArray) undeployed_refs = g_ptr_array_new_full (local_refspecs->len, g_free);
+  gsize i;
+
+  for (i = 0; i < local_refspecs->len; ++i)
+    {
+      const gchar *refspec = g_ptr_array_index (local_refspecs, i);
+      g_autofree gchar *ref = NULL;
+      g_autoptr(GVariant) deploy_data = NULL;
+
+      if (!ostree_parse_refspec (refspec, NULL, &ref, error))
+        return FALSE;
+
+      deploy_data = flatpak_dir_get_deploy_data (self, ref, NULL, NULL);
+
+      if (!deploy_data)
+        g_ptr_array_add (undeployed_refs, g_strdup (refspec));
+    }
+
+  return g_steal_pointer (&undeployed_refs);
+}
+
+/**
+ * flatpak_dir_cleanup_undeployed_refs:
+ *
+ * @self: a #FlatpakDir
+ * @cancellable: (nullable) (optional): a #GCancellable
+ * @error: a #GError
+ *
+ * Find all flatpak refs in the local repository which have not been deployed
+ * in the dir and remove them from the repository. You might want to call this
+ * function if you pulled refs into the dir but then decided that you did
+ * not want to deploy them for some reason. Note that this does not prune
+ * objects bound to the cleaned up refs from the underlying OSTree repository,
+ * you should consider using flatpak_dir_prune() to do that.
+ *
+ * Since: 0.10.0
+ * Returns: %TRUE if cleaning up the refs suceeded, %FALSE otherwise
+ */
+gboolean
+flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
+                                     GCancellable *cancellable,
+                                     GError       **error)
+{
+  g_autoptr(GHashTable) local_refspecs = NULL;
+  g_autoptr(GPtrArray)  local_flatpak_refspecs = NULL;
+  g_autoptr(GPtrArray) undeployed_refs = NULL;
+  gsize i = 0;
+
+  if (!ostree_repo_list_refs (self->repo, NULL, &local_refspecs, cancellable, error))
+    return FALSE;
+
+  local_flatpak_refspecs = find_matching_refs (local_refspecs,
+                                               NULL, NULL, NULL,
+                                               FLATPAK_KINDS_APP |
+                                               FLATPAK_KINDS_RUNTIME,
+                                               FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE,
+                                               error);
+
+  if (!local_flatpak_refspecs)
+    return FALSE;
+
+  undeployed_refs = filter_out_deployed_refs (self, local_flatpak_refspecs, error);
+
+  if (!undeployed_refs)
+    return FALSE;
+
+  for (; i < undeployed_refs->len; ++i)
+    {
+      const char *refspec = g_ptr_array_index (undeployed_refs, i);
+      g_autofree gchar *remote = NULL;
+      g_autofree gchar *ref = NULL;
+
+      if (!ostree_parse_refspec (refspec, &remote, &ref, error))
+        return FALSE;
+
+      if (!flatpak_dir_remove_ref (self, remote, ref, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 static FlatpakDir *
@@ -9136,7 +9341,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
-      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      g_auto(GLnxLockFile) child_repo_lock = { 0, };
       const char *installation = flatpak_dir_get_id (self);
       const char *subpaths[] = {NULL};
       g_autofree char *child_repo_path = NULL;

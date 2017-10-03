@@ -176,6 +176,12 @@ guint64             flatpak_deploy_data_get_installed_size (GVariant *deploy_dat
 const char *        flatpak_deploy_data_get_alt_id (GVariant *deploy_data);
 
 GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
+GVariant *     flatpak_load_deploy_data (GFile *deploy_dir,
+                                         GCancellable *cancellable,
+                                         GError      **error);
+GVariant *     flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
+                                               GCancellable *cancellable,
+                                               GError      **error);
 GFile *        flatpak_deploy_get_files (FlatpakDeploy *deploy);
 FlatpakContext *flatpak_deploy_get_overrides (FlatpakDeploy *deploy);
 GKeyFile *     flatpak_deploy_get_metadata (FlatpakDeploy *deploy);
@@ -491,6 +497,9 @@ gboolean    flatpak_dir_prune (FlatpakDir   *self,
 gboolean    flatpak_dir_cleanup_removed (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error);
+gboolean    flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
+                                                 GCancellable *cancellable,
+                                                 GError      **error);
 gboolean    flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
                                                const char   *type,
                                                const char   *name_prefix,

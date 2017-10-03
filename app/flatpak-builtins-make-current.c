@@ -48,7 +48,7 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   const char *pref;
   const char *default_branch = NULL;
   g_autofree char *ref = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;

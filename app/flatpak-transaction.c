@@ -634,10 +634,11 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
   for (i = 0; remotes[i] != NULL; i++)
     {
       char *remote = remotes[i];
+      g_autoptr(GError) my_error = NULL;
 
       g_debug ("Updating remote metadata for %s", remote);
-      if (!flatpak_dir_update_remote_configuration (self->dir, remote, cancellable, error))
-        return FALSE;
+      if (!flatpak_dir_update_remote_configuration (self->dir, remote, cancellable, &my_error))
+        g_printerr("Error updating remote metadata for '%s': %s\n", remote, my_error->message);
     }
 
   /* Reload changed configuration */
