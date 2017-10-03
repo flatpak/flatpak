@@ -1552,6 +1552,74 @@ out:
   return ret;
 }
 
+/* This atomically replaces a symlink with a new value, removing the
+ * existing symlink target, if any. This is atomic in the sense that
+ * we're guaranteed to remove any existing symlink target (once),
+ * independent of how many processes do the same operation in
+ * parallele. However, it is still possible that we remove the old and
+ * then fail to create the new symlink for some reason, ending up with
+ * neither the old or the new target. That is fine if the reason for
+ * the symlink is keeping a cache though.
+ */
+gboolean
+flatpak_switch_symlink_and_remove (const char *symlink_path,
+                                   const char *target,
+                                   GError **error)
+{
+  g_autofree char *symlink_dir = g_path_get_dirname (symlink_path);
+  int try;
+
+  for (try = 0; try < 100; try++)
+    {
+      g_autofree char *tmp_path = NULL;
+      int fd;
+
+      /* Try to atomically create the symlink */
+      if (TEMP_FAILURE_RETRY (symlink (target, symlink_path)) == 0)
+        return TRUE;
+
+      if (errno != EEXIST)
+        {
+          /* Unexpected failure, bail */
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+
+      /* The symlink existed, move it to a temporary name atomically, and remove target
+         if that succeeded. */
+      tmp_path = g_build_filename (symlink_dir, ".switched-symlink-XXXXXX", NULL);
+
+      fd = g_mkstemp_full (tmp_path, O_RDWR, 0644);
+      if (fd == -1)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+      close (fd);
+
+      if (TEMP_FAILURE_RETRY (rename (symlink_path, tmp_path)) == 0)
+        {
+          /* The move succeeded, now we can remove the old target */
+          g_autofree char *old_target = flatpak_resolve_link (tmp_path, error);
+          if (old_target == NULL)
+            return FALSE;
+          unlink (old_target);
+        }
+      else if (errno != ENOENT)
+        {
+          glnx_set_error_from_errno (error);
+          unlink (tmp_path);
+          return -1;
+        }
+      unlink (tmp_path);
+
+      /* An old target was removed, try again */
+    }
+
+  return flatpak_fail (error, "flatpak_switch_symlink_and_remove looped too many times");
+}
+
+
 /* Based on g_mkstemp from glib */
 
 gint
