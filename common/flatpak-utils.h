@@ -286,6 +286,10 @@ flatpak_auto_lock_helper (GMutex *mutex)
   return mutex;
 }
 
+gboolean
+flatpak_switch_symlink_and_remove (const char *symlink_path,
+                                   const char *target,
+                                   GError **error);
 gint flatpak_mkstempat (int    dir_fd,
                         gchar *tmpl,
                         int    flags,
