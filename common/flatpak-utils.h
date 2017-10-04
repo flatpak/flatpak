@@ -705,4 +705,6 @@ typedef void (*FlatpakProgressCallback)(const char *status,
 OstreeAsyncProgress *flatpak_progress_new (FlatpakProgressCallback progress,
                                            gpointer                progress_data);
 
+void flatpak_log_dir_access (FlatpakDir *dir);
+
 #endif /* __FLATPAK_UTILS_H__ */
