@@ -1362,6 +1362,7 @@ flatpak_find_deploy_for_ref (const char   *ref,
   g_autoptr(GError) my_error = NULL;
 
   user_dir = flatpak_dir_get_user ();
+  flatpak_log_dir_access (user_dir);
   system_dirs = flatpak_dir_get_system_list (cancellable, error);
   if (system_dirs == NULL)
     return NULL;
@@ -1377,6 +1378,7 @@ flatpak_find_deploy_for_ref (const char   *ref,
         {
           FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
 
+          flatpak_log_dir_access (system_dir);
           g_clear_error (&my_error);
           deploy = flatpak_dir_load_deployed (system_dir, ref, NULL, cancellable, &my_error);
         }
@@ -6434,4 +6436,21 @@ flatpak_progress_new (FlatpakProgressCallback progress,
     g_object_set_data (G_OBJECT (ostree_progress), "update-frequency", GUINT_TO_POINTER (FLATPAK_CLI_UPDATE_FREQUENCY));
 
   return ostree_progress;
+}
+
+void
+flatpak_log_dir_access (FlatpakDir *dir)
+{
+  if (dir != NULL)
+    {
+      GFile *dir_path = NULL;
+      g_autofree char *dir_path_str = NULL;
+      g_autofree char *dir_name = NULL;
+
+      dir_path = flatpak_dir_get_path (dir);
+      if (dir_path != NULL)
+        dir_path_str = g_file_get_path (dir_path);
+      dir_name = flatpak_dir_get_name (dir);
+      g_debug ("Opening %s flatpak installation at path %s", dir_name, dir_path_str);
+    }
 }
