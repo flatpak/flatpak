@@ -61,6 +61,8 @@ typedef void (*FlatpakLoadUriProgress) (guint64 downloaded_bytes,
  */
 #define flatpak_fail glnx_throw
 
+void flatpak_debug2 (const char *format, ...) G_GNUC_PRINTF(1, 2);
+
 gint flatpak_strcmp0_ptr (gconstpointer a,
                           gconstpointer b);
 
