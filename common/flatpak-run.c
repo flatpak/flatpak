@@ -5112,6 +5112,7 @@ flatpak_run_app (const char     *app_ref,
   int ld_so_fd = -1;
   g_autoptr(GFile) runtime_ld_so_conf = NULL;
   gboolean generate_ld_so_conf = TRUE;
+  gboolean use_ld_so_cache = TRUE;
   struct stat s;
 
   app_ref_parts = flatpak_decompose_ref (app_ref, error);
@@ -5215,7 +5216,7 @@ flatpak_run_app (const char     *app_ref,
     }
 
   envp = g_get_environ ();
-  envp = flatpak_run_apply_env_default (envp, TRUE);
+  envp = flatpak_run_apply_env_default (envp, use_ld_so_cache);
   envp = flatpak_run_apply_env_vars (envp, app_context);
 
   add_args (argv_array,
@@ -5234,10 +5235,10 @@ flatpak_run_app (const char     *app_ref,
               NULL);
 
   if (metakey != NULL &&
-      !flatpak_run_add_extension_args (argv_array, fd_array, &envp, metakey, app_ref, TRUE, &app_extensions, cancellable, error))
+      !flatpak_run_add_extension_args (argv_array, fd_array, &envp, metakey, app_ref, use_ld_so_cache, &app_extensions, cancellable, error))
     return FALSE;
 
-  if (!flatpak_run_add_extension_args (argv_array, fd_array, &envp, runtime_metakey, runtime_ref, TRUE, &runtime_extensions, cancellable, error))
+  if (!flatpak_run_add_extension_args (argv_array, fd_array, &envp, runtime_metakey, runtime_ref, use_ld_so_cache, &runtime_extensions, cancellable, error))
     return FALSE;
 
   runtime_ld_so_conf = g_file_resolve_relative_path (runtime_files, "etc/ld.so.conf");
