@@ -4935,9 +4935,10 @@ add_ld_so_conf (GPtrArray      *argv_array,
                 GError        **error)
 {
   const char *contents =
-    "include /run/flatpak/ld.so.conf.d/*.conf\n"
+    "include /run/flatpak/ld.so.conf.d/app-*.conf\n"
     "include /app/etc/ld.so.conf\n"
-    "/app/lib\n";
+    "/app/lib\n"
+    "include /run/flatpak/ld.so.conf.d/runtime-*.conf\n";
 
   return add_args_data (argv_array, fd_array,
                         contents, -1, "/etc/ld.so.conf", error);
