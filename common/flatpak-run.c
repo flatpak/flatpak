@@ -5148,6 +5148,8 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(FlatpakExports) exports = NULL;
   g_auto(GStrv) app_ref_parts = NULL;
   g_autofree char *commandline = NULL;
+  int commandline_2_start;
+  g_autofree char *commandline2 = NULL;
   g_autofree char *doc_mount_path = NULL;
   g_autofree char *app_extensions = NULL;
   g_autofree char *runtime_extensions = NULL;
@@ -5383,6 +5385,8 @@ flatpak_run_app (const char     *app_ref,
                       "--args", arg_fd, NULL);
   }
 
+  commandline_2_start = real_argv_array->len;
+
   g_ptr_array_add (real_argv_array, g_strdup (command));
   if (!add_rest_args (app_ref_parts[1], exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
                       doc_mount_path,
@@ -5390,9 +5394,11 @@ flatpak_run_app (const char     *app_ref,
     return FALSE;
 
   g_ptr_array_add (real_argv_array, NULL);
+  g_ptr_array_add (argv_array, NULL);
 
-  commandline = flatpak_quote_argv ((const char **) real_argv_array->pdata);
-  flatpak_debug2 ("Running '%s'", commandline);
+  commandline = flatpak_quote_argv ((const char **) argv_array->pdata);
+  commandline2 = flatpak_quote_argv (((const char **) real_argv_array->pdata) + commandline_2_start);
+  flatpak_debug2 ("Running '%s %s'", commandline, commandline2);
 
   if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
     {
