@@ -4138,7 +4138,7 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
 
   {
     g_autofree char *commandline = flatpak_quote_argv ((const char **) bwrap_args->pdata);
-    g_debug ("bwrap args '%s'", commandline);
+    flatpak_debug2 ("bwrap args '%s'", commandline);
   }
 
   bwrap_args_data = join_args (bwrap_args, &bwrap_args_len);
@@ -4244,7 +4244,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
     return FALSE;
 
   commandline = flatpak_quote_argv ((const char **) dbus_proxy_argv->pdata);
-  g_debug ("Running '%s'", commandline);
+  flatpak_debug2 ("Running '%s'", commandline);
 
   spawn_data.sync_fd = sync_fds[1];
   spawn_data.app_info_fd = app_info_fd;
@@ -5010,7 +5010,7 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
   g_ptr_array_add (argv_array, NULL);
 
   commandline = flatpak_quote_argv ((const char **) argv_array->pdata);
-  g_debug ("Running ldconfig: '%s'", commandline);
+  flatpak_debug2 ("Running: '%s'", commandline);
 
   combined_fd_array = g_array_new (FALSE, TRUE, sizeof (int));
   g_array_append_vals (combined_fd_array, base_fd_array->data, base_fd_array->len);
@@ -5340,7 +5340,7 @@ flatpak_run_app (const char     *app_ref,
   g_ptr_array_add (real_argv_array, NULL);
 
   commandline = flatpak_quote_argv ((const char **) real_argv_array->pdata);
-  g_debug ("Running '%s'", commandline);
+  flatpak_debug2 ("Running '%s'", commandline);
 
   if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
     {
