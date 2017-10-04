@@ -2198,6 +2198,7 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   g_auto(GStrv) parts = NULL;
   gboolean is_app;
   GList *extensions, *l;
+  g_autoptr(GString) ld_library_path = g_string_new ("");
   g_autoptr(GHashTable) mounted_tmpfs =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   g_autoptr(GHashTable) created_symlink =
@@ -2246,15 +2247,9 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
       if (ext->add_ld_path)
         {
           g_autofree char *ld_path = g_build_filename (full_directory, ext->add_ld_path, NULL);
-          const gchar *old_ld_path = g_environ_getenv (*envp_p, "LD_LIBRARY_PATH");
-          g_autofree char *new_ld_path = NULL;
-
-          if (old_ld_path != NULL)
-            new_ld_path = g_strconcat (old_ld_path, ":", ld_path, NULL);
-          else
-            new_ld_path = g_strdup (new_ld_path);
-
-          *envp_p = g_environ_setenv (*envp_p, "LD_LIBRARY_PATH", new_ld_path , TRUE);
+          if (ld_library_path->len != 0)
+            g_string_append (ld_library_path, ":");
+          g_string_append (ld_library_path, ld_path);
         }
 
       for (i = 0; ext->merge_dirs != NULL && ext->merge_dirs[i] != NULL; i++)
@@ -2285,6 +2280,27 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
     }
 
   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
+
+  if (ld_library_path->len != 0)
+    {
+      const gchar *old_ld_path = g_environ_getenv (*envp_p, "LD_LIBRARY_PATH");
+
+      if (old_ld_path != NULL && *old_ld_path != 0)
+        {
+          if (is_app)
+            {
+              g_string_append (ld_library_path, ":");
+              g_string_append (ld_library_path, old_ld_path);
+            }
+          else
+            {
+              g_string_prepend (ld_library_path, ":");
+              g_string_prepend (ld_library_path, old_ld_path);
+            }
+        }
+
+      *envp_p = g_environ_setenv (*envp_p, "LD_LIBRARY_PATH", ld_library_path->str , TRUE);
+    }
 
   return TRUE;
 }
