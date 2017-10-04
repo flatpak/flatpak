@@ -291,6 +291,7 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
       g_auto(GStrv) user_runtime = NULL;
 
       user_dir =flatpak_dir_get_user ();
+      flatpak_log_dir_access (user_dir);
       if (!find_refs_for_dir (user_dir, app ? &user_app : NULL, runtime ? &user_runtime : NULL, cancellable, error))
         return FALSE;
       g_ptr_array_add (refs_array, refs_data_new (user_dir, user_app, user_runtime));
@@ -311,6 +312,8 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
           g_auto(GStrv) apps = NULL;
           g_auto(GStrv) runtimes = NULL;
 
+          flatpak_log_dir_access (dir);
+
           if (!find_refs_for_dir (dir, app ? &apps : NULL, runtime ? &runtimes : NULL, cancellable, error))
             return FALSE;
           g_ptr_array_add (refs_array, refs_data_new (dir, apps, runtimes));
@@ -325,6 +328,7 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
           g_auto(GStrv) system_runtime = NULL;
 
           system_dir = flatpak_dir_get_system_default ();
+          flatpak_log_dir_access (system_dir);
           if (!find_refs_for_dir (system_dir, app ? &system_app : NULL, runtime ? &system_runtime : NULL, cancellable, error))
             return FALSE;
           g_ptr_array_add (refs_array, refs_data_new (system_dir, system_app, system_runtime));
@@ -345,6 +349,7 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
                 continue;
 
               system_dir = flatpak_dir_get_system_by_id (installations[i], cancellable, error);
+              flatpak_log_dir_access (system_dir);
               if (system_dir == NULL)
                 return FALSE;
 

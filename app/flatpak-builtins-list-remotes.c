@@ -116,6 +116,8 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
       FlatpakDir *dir = g_ptr_array_index (dirs, j);
       g_auto(GStrv) remotes = NULL;
 
+      flatpak_log_dir_access (dir);
+
       remotes = flatpak_dir_list_remotes (dir, cancellable, error);
       if (remotes == NULL)
         return FALSE;

@@ -219,6 +219,12 @@ flatpak_option_context_parse (GOptionContext     *context,
   if (!g_option_context_parse (context, argc, argv, error))
     return FALSE;
 
+  if (opt_verbose)
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+
+  if (opt_ostree_verbose)
+    g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+
   if (opt_version)
     {
       g_print ("%s\n", PACKAGE_STRING);
@@ -268,13 +274,9 @@ flatpak_option_context_parse (GOptionContext     *context,
       if (!(flags & FLATPAK_BUILTIN_FLAG_NO_REPO) &&
           !flatpak_dir_ensure_repo (dir, cancellable, error))
         return FALSE;
+
+      flatpak_log_dir_access (dir);
     }
-
-  if (opt_verbose)
-    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
-
-  if (opt_ostree_verbose)
-    g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
   if (out_dir)
     *out_dir = g_steal_pointer (&dir);
