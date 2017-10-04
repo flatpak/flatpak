@@ -2266,6 +2266,16 @@ flatpak_add_bus_filters (GPtrArray      *dbus_proxy_argv,
     }
 }
 
+static int
+flatpak_extension_compare_by_path (gconstpointer  _a,
+                                   gconstpointer  _b)
+{
+  const FlatpakExtension *a = _a;
+  const FlatpakExtension *b = _b;
+
+  return g_strcmp0 (a->directory, b->directory);
+}
+
 gboolean
 flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                 GArray       *fd_array,
@@ -2280,7 +2290,8 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   g_auto(GStrv) parts = NULL;
   g_autoptr(GString) used_extensions = g_string_new ("");
   gboolean is_app;
-  GList *extensions, *l;
+  GList *extensions, *path_sorted_extensions, *l;
+  g_autoptr(GString) ld_library_path = g_string_new ("");
   int count = 0;
   g_autoptr(GHashTable) mounted_tmpfs =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -2296,26 +2307,18 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   extensions = flatpak_list_extensions (metakey,
                                         parts[2], parts[3]);
 
-  for (l = extensions; l != NULL; l = l->next)
+  /* First we apply all the bindings, they are sorted alphabetically in order for parent directory
+     to be mounted before child directories */
+  path_sorted_extensions = g_list_copy (extensions);
+  path_sorted_extensions = g_list_sort (path_sorted_extensions, flatpak_extension_compare_by_path);
+
+  for (l = path_sorted_extensions; l != NULL; l = l->next)
     {
       FlatpakExtension *ext = l->data;
       g_autofree char *directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
       g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
-      /* We prepend app or runtime and a counter in order to get the include order correct for the conf files */
-      g_autofree char *ld_so_conf_file = g_strdup_printf ("%s-%03d-%s.conf", parts[0], ++count, ext->installed_id);
-      g_autofree char *ld_so_conf_file_path = g_build_filename ("/run/flatpak/ld.so.conf.d", ld_so_conf_file, NULL);
-      int i;
-
-      if (used_extensions->len > 0)
-	g_string_append (used_extensions, ";");
-      g_string_append (used_extensions, ext->installed_id);
-      g_string_append (used_extensions, "=");
-      if (ext->commit != NULL)
-	g_string_append (used_extensions, ext->commit);
-      else
-	g_string_append (used_extensions, "local");
 
       if (ext->needs_tmpfs)
         {
@@ -2338,6 +2341,27 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
         add_args (argv_array,
                   "--lock-file", ref,
                   NULL);
+    }
+
+  g_list_free (path_sorted_extensions);
+
+  /* Then apply library directories and file merging, in extension prio order */
+
+  for (l = extensions; l != NULL; l = l->next)
+    {
+      FlatpakExtension *ext = l->data;
+      g_autofree char *directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
+      g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
+      int i;
+
+      if (used_extensions->len > 0)
+        g_string_append (used_extensions, ";");
+      g_string_append (used_extensions, ext->installed_id);
+      g_string_append (used_extensions, "=");
+      if (ext->commit != NULL)
+        g_string_append (used_extensions, ext->commit);
+      else
+        g_string_append (used_extensions, "local");
 
       if (ext->add_ld_path)
         {
@@ -2346,6 +2370,9 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
           if (use_ld_so_cache)
             {
               g_autofree char *contents = g_strconcat (ld_path, "\n", NULL);
+              /* We prepend app or runtime and a counter in order to get the include order correct for the conf files */
+              g_autofree char *ld_so_conf_file = g_strdup_printf ("%s-%03d-%s.conf", parts[0], ++count, ext->installed_id);
+              g_autofree char *ld_so_conf_file_path = g_build_filename ("/run/flatpak/ld.so.conf.d", ld_so_conf_file, NULL);
 
               if (!add_args_data (argv_array, fd_array,
                                   contents, -1, ld_so_conf_file_path, error))
@@ -2353,14 +2380,9 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
             }
           else
             {
-              const gchar *old_ld_path = g_environ_getenv (*envp_p, "LD_LIBRARY_PATH");
-              g_autofree char *new_ld_path = NULL;
-              if (old_ld_path != NULL)
-                new_ld_path = g_strconcat (old_ld_path, ":", ld_path, NULL);
-              else
-                new_ld_path = g_strdup (ld_path);
-
-              *envp_p = g_environ_setenv (*envp_p, "LD_LIBRARY_PATH", new_ld_path , TRUE);
+              if (ld_library_path->len != 0)
+                g_string_append (ld_library_path, ":");
+              g_string_append (ld_library_path, ld_path);
             }
         }
 
@@ -2392,6 +2414,27 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
     }
 
   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
+
+  if (ld_library_path->len != 0)
+    {
+      const gchar *old_ld_path = g_environ_getenv (*envp_p, "LD_LIBRARY_PATH");
+
+      if (old_ld_path != NULL && *old_ld_path != 0)
+        {
+          if (is_app)
+            {
+              g_string_append (ld_library_path, ":");
+              g_string_append (ld_library_path, old_ld_path);
+            }
+          else
+            {
+              g_string_prepend (ld_library_path, ":");
+              g_string_prepend (ld_library_path, old_ld_path);
+            }
+        }
+
+      *envp_p = g_environ_setenv (*envp_p, "LD_LIBRARY_PATH", ld_library_path->str , TRUE);
+    }
 
   if (extensions_out)
     *extensions_out = g_string_free (g_steal_pointer (&used_extensions), FALSE);
@@ -4935,9 +4978,10 @@ add_ld_so_conf (GPtrArray      *argv_array,
                 GError        **error)
 {
   const char *contents =
-    "include /run/flatpak/ld.so.conf.d/*.conf\n"
+    "include /run/flatpak/ld.so.conf.d/app-*.conf\n"
     "include /app/etc/ld.so.conf\n"
-    "/app/lib\n";
+    "/app/lib\n"
+    "include /run/flatpak/ld.so.conf.d/runtime-*.conf\n";
 
   return add_args_data (argv_array, fd_array,
                         contents, -1, "/etc/ld.so.conf", error);
@@ -5111,6 +5155,7 @@ flatpak_run_app (const char     *app_ref,
   int ld_so_fd = -1;
   g_autoptr(GFile) runtime_ld_so_conf = NULL;
   gboolean generate_ld_so_conf = TRUE;
+  gboolean use_ld_so_cache = TRUE;
   struct stat s;
 
   app_ref_parts = flatpak_decompose_ref (app_ref, error);
@@ -5214,7 +5259,7 @@ flatpak_run_app (const char     *app_ref,
     }
 
   envp = g_get_environ ();
-  envp = flatpak_run_apply_env_default (envp, TRUE);
+  envp = flatpak_run_apply_env_default (envp, use_ld_so_cache);
   envp = flatpak_run_apply_env_vars (envp, app_context);
 
   add_args (argv_array,
@@ -5233,10 +5278,10 @@ flatpak_run_app (const char     *app_ref,
               NULL);
 
   if (metakey != NULL &&
-      !flatpak_run_add_extension_args (argv_array, fd_array, &envp, metakey, app_ref, TRUE, &app_extensions, cancellable, error))
+      !flatpak_run_add_extension_args (argv_array, fd_array, &envp, metakey, app_ref, use_ld_so_cache, &app_extensions, cancellable, error))
     return FALSE;
 
-  if (!flatpak_run_add_extension_args (argv_array, fd_array, &envp, runtime_metakey, runtime_ref, TRUE, &runtime_extensions, cancellable, error))
+  if (!flatpak_run_add_extension_args (argv_array, fd_array, &envp, runtime_metakey, runtime_ref, use_ld_so_cache, &runtime_extensions, cancellable, error))
     return FALSE;
 
   runtime_ld_so_conf = g_file_resolve_relative_path (runtime_files, "etc/ld.so.conf");
