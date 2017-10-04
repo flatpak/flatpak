@@ -42,6 +42,8 @@ static gboolean opt_gl_drivers;
 static gboolean opt_user;
 static char *opt_installation;
 
+static gboolean is_in_complete;
+
 typedef struct
 {
   const char *name;
@@ -219,11 +221,15 @@ flatpak_option_context_parse (GOptionContext     *context,
   if (!g_option_context_parse (context, argc, argv, error))
     return FALSE;
 
-  if (opt_verbose)
-    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+  /* We never want verbose output in the complete case, that breaks completion */
+  if (!is_in_complete)
+    {
+      if (opt_verbose)
+        g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
-  if (opt_ostree_verbose)
-    g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+      if (opt_ostree_verbose)
+        g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+    }
 
   if (opt_version)
     {
@@ -411,6 +417,8 @@ complete (int    argc,
   FlatpakCommand *command;
   FlatpakCompletion *completion;
   const char *command_name = NULL;
+
+  is_in_complete = TRUE;
 
   completion = flatpak_completion_new (argv[2], argv[3], argv[4]);
   if (completion == NULL)
