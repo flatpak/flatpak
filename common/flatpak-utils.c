@@ -77,6 +77,22 @@ flatpak_error_quark (void)
   return (GQuark) quark_volatile;
 }
 
+void
+flatpak_debug2 (const char *format, ...)
+{
+  va_list var_args;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+  va_start (var_args, format);
+  g_logv (G_LOG_DOMAIN"2",
+          G_LOG_LEVEL_DEBUG,
+          format, var_args);
+  va_end (var_args);
+#pragma GCC diagnostic pop
+
+}
+
 GFile *
 flatpak_file_new_tmp_in (GFile *dir,
                          const char *template,
