@@ -6252,8 +6252,9 @@ flatpak_terminal_progress_cb (const char *status,
   if (!term->inited)
     {
       struct winsize w;
-      ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-      term->n_columns = w.ws_col;
+      term->n_columns = 80;
+      if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
+        term->n_columns = w.ws_col;
       term->last_width = 0;
       term->inited = 1;
     }
