@@ -2187,6 +2187,16 @@ flatpak_add_bus_filters (GPtrArray      *dbus_proxy_argv,
     }
 }
 
+static int
+flatpak_extension_compare_by_path (gconstpointer  _a,
+                                   gconstpointer  _b)
+{
+  const FlatpakExtension *a = _a;
+  const FlatpakExtension *b = _b;
+
+  return g_strcmp0 (a->directory, b->directory);
+}
+
 gboolean
 flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                 char       ***envp_p,
@@ -2197,7 +2207,7 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
 {
   g_auto(GStrv) parts = NULL;
   gboolean is_app;
-  GList *extensions, *l;
+  GList *extensions, *path_sorted_extensions, *l;
   g_autoptr(GString) ld_library_path = g_string_new ("");
   g_autoptr(GHashTable) mounted_tmpfs =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -2213,14 +2223,18 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   extensions = flatpak_list_extensions (metakey,
                                         parts[2], parts[3]);
 
-  for (l = extensions; l != NULL; l = l->next)
+  /* First we apply all the bindings, they are sorted alphabetically in order for parent directory
+     to be mounted before child directories */
+  path_sorted_extensions = g_list_copy (extensions);
+  path_sorted_extensions = g_list_sort (path_sorted_extensions, flatpak_extension_compare_by_path);
+
+  for (l = path_sorted_extensions; l != NULL; l = l->next)
     {
       FlatpakExtension *ext = l->data;
       g_autofree char *directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
       g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
-      int i;
 
       if (ext->needs_tmpfs)
         {
@@ -2243,6 +2257,18 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
         add_args (argv_array,
                   "--lock-file", ref,
                   NULL);
+    }
+
+  g_list_free (path_sorted_extensions);
+
+  /* Then apply library directories and file merging, in extension prio order */
+
+  for (l = extensions; l != NULL; l = l->next)
+    {
+      FlatpakExtension *ext = l->data;
+      g_autofree char *directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
+      g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
+      int i;
 
       if (ext->add_ld_path)
         {
