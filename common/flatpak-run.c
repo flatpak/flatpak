@@ -5285,7 +5285,7 @@ flatpak_run_app (const char     *app_ref,
     return FALSE;
 
   runtime_ld_so_conf = g_file_resolve_relative_path (runtime_files, "etc/ld.so.conf");
-  if (lstat (flatpak_file_get_path_cached (runtime_ld_so_conf), &s) != 0)
+  if (lstat (flatpak_file_get_path_cached (runtime_ld_so_conf), &s) == 0)
     generate_ld_so_conf = S_ISREG (s.st_mode) && s.st_size == 0;
 
   /* At this point we have the minimal argv set up, with just the app, runtime and extensions.
