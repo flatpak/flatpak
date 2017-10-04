@@ -33,7 +33,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
 
-static gboolean opt_verbose;
+static int opt_verbose;
 static gboolean opt_ostree_verbose;
 static gboolean opt_version;
 static gboolean opt_default_arch;
@@ -41,6 +41,8 @@ static gboolean opt_supported_arches;
 static gboolean opt_gl_drivers;
 static gboolean opt_user;
 static char *opt_installation;
+
+static gboolean is_in_complete;
 
 typedef struct
 {
@@ -102,8 +104,19 @@ static FlatpakCommand commands[] = {
   { NULL }
 };
 
+static gboolean
+opt_verbose_cb (const gchar *option_name,
+                const gchar *value,
+                gpointer     data,
+                GError     **error)
+{
+  opt_verbose++;
+  return TRUE;
+}
+
+
 GOptionEntry global_entries[] = {
-  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, N_("Print debug information during command processing"), NULL },
+  { "verbose", 'v', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, &opt_verbose_cb, N_("Print debug information during command processing, -vv for more detail"), NULL },
   { "ostree-verbose", 0, 0, G_OPTION_ARG_NONE, &opt_ostree_verbose, N_("Print OSTree debug information during command processing"), NULL },
   { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, N_("Show help options"), NULL, NULL },
   { NULL }
@@ -219,11 +232,17 @@ flatpak_option_context_parse (GOptionContext     *context,
   if (!g_option_context_parse (context, argc, argv, error))
     return FALSE;
 
-  if (opt_verbose)
-    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+  /* We never want verbose output in the complete case, that breaks completion */
+  if (!is_in_complete)
+    {
+      if (opt_verbose > 0)
+        g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+      if (opt_verbose > 1)
+        g_log_set_handler (G_LOG_DOMAIN "2", G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
-  if (opt_ostree_verbose)
-    g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+      if (opt_ostree_verbose)
+        g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+    }
 
   if (opt_version)
     {
@@ -411,6 +430,8 @@ complete (int    argc,
   FlatpakCommand *command;
   FlatpakCompletion *completion;
   const char *command_name = NULL;
+
+  is_in_complete = TRUE;
 
   completion = flatpak_completion_new (argv[2], argv[3], argv[4]);
   if (completion == NULL)
