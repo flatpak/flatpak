@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-27 00:31+0200\n"
-"PO-Revision-Date: 2017-09-26 11:39+0200\n"
+"POT-Creation-Date: 2017-10-01 03:24+0000\n"
+"PO-Revision-Date: 2017-10-01 13:47+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -366,12 +366,12 @@ msgstr ""
 msgid "No extension point matching %s in %s"
 msgstr "Brak punktu rozszerzeń pasującego do %s w %s"
 
-#: app/flatpak-builtins-build.c:397
+#: app/flatpak-builtins-build.c:399
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Brak „=” w opcji montowania dowiązania „%s”"
 
-#: app/flatpak-builtins-build.c:423 common/flatpak-run.c:5085
+#: app/flatpak-builtins-build.c:425 common/flatpak-run.c:5085
 msgid "Unable to start app"
 msgstr "Nie można uruchomić programu"
 
@@ -1764,7 +1764,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:469 common/flatpak-dir.c:1084
 #: common/flatpak-dir.c:1395 common/flatpak-dir.c:1431
-#: common/flatpak-dir.c:1453 common/flatpak-dir.c:9917
+#: common/flatpak-dir.c:1453 common/flatpak-dir.c:10097
 #: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
 #, c-format
 msgid "%s not installed"
@@ -2048,59 +2048,59 @@ msgstr "Nie zainstalowano %s gałęzi %s"
 msgid "%s branch %s not installed"
 msgstr "Nie zainstalowano %s gałęzi %s"
 
-#: common/flatpak-dir.c:7717
+#: common/flatpak-dir.c:7793
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Nic nie pasuje do %s"
 
-#: common/flatpak-dir.c:7794
+#: common/flatpak-dir.c:7875
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Nie można odnaleźć odniesienia %s%s%s%s%s"
 
-#: common/flatpak-dir.c:7836
+#: common/flatpak-dir.c:7917
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Błąd podczas wyszukiwania repozytorium %s: %s"
 
-#: common/flatpak-dir.c:7881
+#: common/flatpak-dir.c:7962
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Błąd podczas wyszukiwania lokalnego repozytorium: %s"
 
-#: common/flatpak-dir.c:8002
+#: common/flatpak-dir.c:8088
 #, c-format
 msgid "%s %s not installed"
 msgstr "Nie zainstalowano %s %s"
 
-#: common/flatpak-dir.c:8075
+#: common/flatpak-dir.c:8255
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Nie można odnaleźć instalacji %s"
 
-#: common/flatpak-dir.c:8604
+#: common/flatpak-dir.c:8784
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Już zainstalowano środowisko wykonawcze %s, gałąź %s"
 
-#: common/flatpak-dir.c:8605
+#: common/flatpak-dir.c:8785
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Już zainstalowano program %s, gałąź %s"
 
-#: common/flatpak-dir.c:9064
+#: common/flatpak-dir.c:9244
 msgid "Remote title not set"
 msgstr "Nie ustawiono tytułu repozytorium"
 
-#: common/flatpak-dir.c:9086
+#: common/flatpak-dir.c:9266
 msgid "Remote default-branch not set"
 msgstr "Nie ustawiono domyślnej gałęzi repozytorium"
 
-#: common/flatpak-dir.c:9580
+#: common/flatpak-dir.c:9760
 msgid "No flatpak cache in remote summary"
 msgstr "Brak pamięci podręcznej Flatpak w podsumowaniu repozytorium"
 
-#: common/flatpak-dir.c:9590
+#: common/flatpak-dir.c:9770
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
@@ -2318,7 +2318,7 @@ msgstr "Instalacja podpisanego programu"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:24
 #: system-helper/org.freedesktop.Flatpak.policy.in:41
-#: system-helper/org.freedesktop.Flatpak.policy.in:103
+#: system-helper/org.freedesktop.Flatpak.policy.in:118
 msgid "Authentication is required to install software"
 msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
 
@@ -2343,7 +2343,7 @@ msgstr "Aktualizacja podpisanego programu"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:59
 #: system-helper/org.freedesktop.Flatpak.policy.in:77
-#: system-helper/org.freedesktop.Flatpak.policy.in:154
+#: system-helper/org.freedesktop.Flatpak.policy.in:169
 msgid "Authentication is required to update software"
 msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie"
 
@@ -2369,28 +2369,39 @@ msgid "Authentication is required to update remote info"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby zaktualizować informacje o repozytorium"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:102
+#. SECURITY:
+#. - Normal users do not need authentication to modify the
+#. OSTree repository
+#: system-helper/org.freedesktop.Flatpak.policy.in:106
+msgid "Update system repository"
+msgstr "Aktualizacja repozytorium systemu"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:107
+msgid "Authentication is required to update the system repository"
+msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować repozytorium systemu"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:117
 msgid "Install bundle"
 msgstr "Instalacja pakietu"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:113
+#: system-helper/org.freedesktop.Flatpak.policy.in:128
 msgid "Uninstall runtime"
 msgstr "Odinstalowanie środowiska wykonawczego"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:114
-#: system-helper/org.freedesktop.Flatpak.policy.in:125
+#: system-helper/org.freedesktop.Flatpak.policy.in:129
+#: system-helper/org.freedesktop.Flatpak.policy.in:140
 msgid "Authentication is required to uninstall software"
 msgstr "Wymagane jest uwierzytelnienie, aby odinstalować oprogramowanie"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:124
+#: system-helper/org.freedesktop.Flatpak.policy.in:139
 msgid "Uninstall app"
 msgstr "Odinstalowanie programu"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:135
+#: system-helper/org.freedesktop.Flatpak.policy.in:150
 msgid "Configure Remote"
 msgstr "Konfiguracja repozytorium"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:136
+#: system-helper/org.freedesktop.Flatpak.policy.in:151
 msgid "Authentication is required to configure software repositories"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby skonfigurować repozytoria oprogramowania"
@@ -2401,6 +2412,6 @@ msgstr ""
 #. to update the system when unattended.
 #. - Changing this to anything other than 'yes' will break unattended
 #. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:153
+#: system-helper/org.freedesktop.Flatpak.policy.in:168
 msgid "Update appstream"
 msgstr "Aktualizacja danych AppStream"
