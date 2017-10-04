@@ -2894,6 +2894,13 @@ static const struct {const char *env;
   {"XDG_DATA_DIRS", "/app/share:/usr/share"},
   {"SHELL", "/bin/sh"},
   {"TMPDIR", NULL}, /* Unset TMPDIR as it may not exist in the sandbox */
+
+  /* Some env vars are common enough and will affect the sandbox badly
+     if set on the host. We clear these always. */
+  {"PYTHONPATH", NULL},
+  {"PERLLIB", NULL},
+  {"PERL5LIB", NULL},
+  {"XCURSOR_PATH", NULL},
 };
 
 static const struct {const char *env;
