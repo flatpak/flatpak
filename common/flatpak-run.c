@@ -2303,9 +2303,6 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
       g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
-      /* We prepend app or runtime and a counter in order to get the include order correct for the conf files */
-      g_autofree char *ld_so_conf_file = g_strdup_printf ("%s-%03d-%s.conf", parts[0], ++count, ext->installed_id);
-      g_autofree char *ld_so_conf_file_path = g_build_filename ("/run/flatpak/ld.so.conf.d", ld_so_conf_file, NULL);
       int i;
 
       if (used_extensions->len > 0)
@@ -2346,6 +2343,9 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
           if (use_ld_so_cache)
             {
               g_autofree char *contents = g_strconcat (ld_path, "\n", NULL);
+              /* We prepend app or runtime and a counter in order to get the include order correct for the conf files */
+              g_autofree char *ld_so_conf_file = g_strdup_printf ("%s-%03d-%s.conf", parts[0], ++count, ext->installed_id);
+              g_autofree char *ld_so_conf_file_path = g_build_filename ("/run/flatpak/ld.so.conf.d", ld_so_conf_file, NULL);
 
               if (!add_args_data (argv_array, fd_array,
                                   contents, -1, ld_so_conf_file_path, error))
