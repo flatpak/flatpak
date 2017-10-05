@@ -141,14 +141,14 @@ glnx_renameat2_exchange (int olddirfd, const char *oldpath,
 #endif
 
   /* Fallback */
-  { const char *old_tmp_name = glnx_strjoina (oldpath, ".XXXXXX");
-
+  { char *old_tmp_name_buf = glnx_strjoina (oldpath, ".XXXXXX");
     /* This obviously isn't race-free, but doing better gets tricky, since if
      * we're here the kernel isn't likely to support RENAME_NOREPLACE either.
      * Anyways, upgrade the kernel. Failing that, avoid use of this function in
      * shared subdirectories like /tmp.
      */
-    glnx_gen_temp_name (old_tmp_name);
+    glnx_gen_temp_name (old_tmp_name_buf);
+    const char *old_tmp_name = old_tmp_name_buf;
 
     /* Move old out of the way */
     if (renameat (olddirfd, oldpath, olddirfd, old_tmp_name) < 0)
