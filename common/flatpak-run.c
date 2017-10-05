@@ -1905,9 +1905,9 @@ add_args_data_fd (GPtrArray *argv_array,
                   int fd,
                   const char *path_optional)
 {
-  g_autofree char *fd_str = NULL;
+  g_return_if_fail (fd_array);
 
-  fd_str = g_strdup_printf ("%d", fd);
+  g_autofree char *fd_str = g_strdup_printf ("%d", fd);
   if (fd_array)
     g_array_append_val (fd_array, fd);
 
