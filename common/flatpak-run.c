@@ -1874,60 +1874,28 @@ add_args (GPtrArray *argv_array, ...)
   va_end (args);
 }
 
-static int
-create_tmp_fd (const char *contents,
-               gssize      length,
-               GError    **error)
+/* Initialize @tmpf in anonymous mode, write @str to @tmpf, and lseek() back to
+ * the start. See also similar uses in e.g. rpm-ostree for running dracut.
+ */
+static gboolean
+write_tmpfile_seek_start (GLnxTmpfile *tmpf,
+                          const char  *str,
+                          size_t       len,
+                          GError     **error)
 {
-  char template[] = "/tmp/tmp_fd_XXXXXX";
-  int fd;
-
-  if (length < 0)
-    length = strlen (contents);
-
-  fd = g_mkstemp (template);
-  if (fd < 0)
-    {
-      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                           _("Failed to create temporary file"));
-      return -1;
-    }
-
-  if (unlink (template) != 0)
-    {
-      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                           _("Failed to unlink temporary file"));
-      close (fd);
-      return -1;
-    }
-
-  while (length > 0)
-    {
-      gssize s;
-
-      s = write (fd, contents, length);
-
-      if (s < 0)
-        {
-          int saved_errno = errno;
-          if (saved_errno == EINTR)
-            continue;
-
-          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (saved_errno),
-                               _("Failed to write to temporary file"));
-          close (fd);
-          return -1;
-        }
-
-      g_assert (s <= length);
-
-      contents += s;
-      length -= s;
-    }
-
-  lseek (fd, 0, SEEK_SET);
-
-  return fd;
+  /* We use an anonymous fd (i.e. O_EXCL) since we don't want
+   * the target container to potentially be able to re-link it.  A
+   * good next step here would be to use memfd_create() and seal.
+   */
+  if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, tmpf, error))
+    return FALSE;
+  if (len == -1)
+    len = strlen (str);
+  if (glnx_loop_write (tmpf->fd, str, len) < 0)
+    return glnx_throw_errno_prefix (error, "write");
+  if (lseek (tmpf->fd, 0, SEEK_SET) < 0)
+    return glnx_throw_errno_prefix (error, "lseek");
+  return TRUE;
 }
 
 static void
@@ -1956,17 +1924,15 @@ add_args_data (GPtrArray *argv_array,
                const char *path,
                GError **error)
 {
-  int fd;
+  g_auto(GLnxTmpfile) args_tmpf  = { 0, };
 
-  fd = create_tmp_fd (content, content_size, error);
-  if (fd == -1)
+  if (!write_tmpfile_seek_start (&args_tmpf, content, content_size, error))
     return FALSE;
 
   add_args_data_fd (argv_array, fd_array,
-                    "--bind-data", fd, path);
+                    "--bind-data", glnx_steal_fd (&args_tmpf.fd), path);
   return TRUE;
 }
-
 
 static void
 flatpak_run_add_x11_args (GPtrArray *argv_array,
@@ -1999,7 +1965,6 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
       const char *display_nr = &display[1];
       const char *display_nr_end = display_nr;
       g_autofree char *d = NULL;
-      g_autofree char *tmp_path = NULL;
 
       while (g_ascii_isdigit (*display_nr_end))
         display_nr_end++;
@@ -2013,14 +1978,15 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
       *envp_p = g_environ_setenv (*envp_p, "DISPLAY", ":99.0", TRUE);
 
 #ifdef ENABLE_XAUTH
-      int fd;
-      fd = g_file_open_tmp ("flatpak-xauth-XXXXXX", &tmp_path, NULL);
-      if (fd >= 0)
+      g_auto(GLnxTmpfile) xauth_tmpf  = { 0, };
+
+      if (glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, &xauth_tmpf, NULL))
         {
-          FILE *output = fdopen (fd, "wb");
+          FILE *output = fdopen (xauth_tmpf.fd, "wb");
           if (output != NULL)
             {
-              int tmp_fd = dup (fd);
+	      /* fd is now owned by output, steal it from the tmpfile */
+              int tmp_fd = dup (glnx_steal_fd (&xauth_tmpf.fd));
               if (tmp_fd != -1)
                 {
                   g_autofree char *dest = g_strdup_printf ("/run/user/%d/Xauthority", getuid ());
@@ -2033,14 +1999,9 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
                 }
 
               fclose (output);
-              unlink (tmp_path);
 
               if (tmp_fd != -1)
                 lseek (tmp_fd, 0, SEEK_SET);
-            }
-          else
-            {
-              close (fd);
             }
         }
 #endif
@@ -4127,7 +4088,7 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
   struct dirent *dent;
   g_autoptr(GPtrArray) bwrap_args = g_ptr_array_new_with_free_func (g_free);
   gsize bwrap_args_len;
-  glnx_fd_close int bwrap_args_fd = -1;
+  g_auto(GLnxTmpfile) args_tmpf  = { 0, };
   g_autofree char *bwrap_args_data = NULL;
   g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy/", NULL);
 
@@ -4192,17 +4153,14 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
   }
 
   bwrap_args_data = join_args (bwrap_args, &bwrap_args_len);
-  bwrap_args_fd = create_tmp_fd (bwrap_args_data, bwrap_args_len, error);
-  if (bwrap_args_fd < 0)
+  if (!write_tmpfile_seek_start (&args_tmpf, bwrap_args_data, bwrap_args_len, error))
     return FALSE;
 
   g_ptr_array_insert (argv, i++, g_strdup (flatpak_get_bwrap ()));
   g_ptr_array_insert (argv, i++, g_strdup ("--args"));
-  g_ptr_array_insert (argv, i++, g_strdup_printf ("%d", bwrap_args_fd));
+  g_ptr_array_insert (argv, i++, g_strdup_printf ("%d", args_tmpf.fd));
 
-  *bwrap_fd_out = bwrap_args_fd;
-  bwrap_args_fd = -1; /* Steal it */
-
+  *bwrap_fd_out = glnx_steal_fd (&args_tmpf.fd);
   return TRUE;
 }
 
@@ -4451,8 +4409,7 @@ setup_seccomp (GPtrArray  *argv_array,
     AF_NETLINK + 1, /* Last gets CMP_GE, so order is important */
   };
   int i, r;
-  glnx_fd_close int fd = -1;
-  g_autofree char *path = NULL;
+  g_auto(GLnxTmpfile) seccomp_tmpf  = { 0, };
 
   seccomp = seccomp_init (SCMP_ACT_ALLOW);
   if (!seccomp)
@@ -4553,21 +4510,16 @@ setup_seccomp (GPtrArray  *argv_array,
         seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, family));
     }
 
-  fd = g_file_open_tmp ("flatpak-seccomp-XXXXXX", &path, error);
-  if (fd == -1)
+  if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, &seccomp_tmpf, error))
     return FALSE;
 
-  unlink (path);
-
-  if (seccomp_export_bpf (seccomp, fd) != 0)
+  if (seccomp_export_bpf (seccomp, seccomp_tmpf.fd) != 0)
     return flatpak_fail (error, "Failed to export bpf");
 
-  lseek (fd, 0, SEEK_SET);
+  lseek (seccomp_tmpf.fd, 0, SEEK_SET);
 
   add_args_data_fd (argv_array, fd_array,
-                    "--seccomp", fd, NULL);
-
-  fd = -1; /* Don't close on success */
+                    "--seccomp", glnx_steal_fd (&seccomp_tmpf.fd), NULL);
 
   return TRUE;
 }
@@ -4772,6 +4724,7 @@ clear_fd (gpointer data)
     close (*fd_p);
 }
 
+/* Unset FD_CLOEXEC on the array of fds passed in @user_data */
 static void
 child_setup (gpointer user_data)
 {
@@ -5135,6 +5088,7 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
+  g_auto(GLnxTmpfile) arg_tmpf = { 0, };
   g_autoptr(GArray) fd_array = NULL;
   g_autoptr(GPtrArray) real_argv_array = NULL;
   g_auto(GStrv) envp = NULL;
@@ -5374,15 +5328,13 @@ flatpak_run_app (const char     *app_ref,
 
   {
     gsize len;
-    int arg_fd;
     g_autofree char *args = join_args (argv_array, &len);
 
-    arg_fd = create_tmp_fd (args, len, error);
-    if (arg_fd < 0)
+    if (!write_tmpfile_seek_start (&arg_tmpf, args, len, error))
       return FALSE;
 
     add_args_data_fd (real_argv_array, fd_array,
-                      "--args", arg_fd, NULL);
+                      "--args", glnx_steal_fd (&arg_tmpf.fd), NULL);
   }
 
   commandline_2_start = real_argv_array->len;
@@ -5413,6 +5365,8 @@ flatpak_run_app (const char     *app_ref,
     }
   else
     {
+      /* Ensure we unset O_CLOEXEC */
+      child_setup (fd_array);
       if (execvpe (flatpak_get_bwrap (), (char **) real_argv_array->pdata, envp) == -1)
         {
           g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
