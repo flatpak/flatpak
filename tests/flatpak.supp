@@ -20,6 +20,16 @@
    fun:ostree_repo_static_delta_generate
 }
 
+# ioctl FICLONE is apparently not supported
+{
+   ignore_ioctl_ficlone
+   Memcheck:Param
+   ioctl(generic)
+   fun:ioctl
+   fun:glnx_regfile_copy_bytes
+   fun:glnx_file_copy_at
+}
+
 # There seem to be some leaks in "ostree pull", lets just ignore them for now
 {
   ignore_ostree_pull1
