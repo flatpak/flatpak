@@ -65,6 +65,14 @@ add_args (GPtrArray *argv_array, ...)
   va_end (args);
 }
 
+static void
+clear_fd (gpointer data)
+{
+  int *fd_p = data;
+  if (fd_p != NULL && *fd_p != -1)
+    close (*fd_p);
+}
+
 gboolean
 flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -89,6 +97,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(GArray) fd_array = NULL;
   g_auto(GStrv) envp = NULL;
   gsize metadata_size;
   const char *directory = NULL;
@@ -295,6 +304,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     }
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
+  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
+  g_array_set_clear_func (fd_array, clear_fd);
   g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
 
   run_flags =
@@ -373,11 +384,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   envp = flatpak_run_apply_env_vars (envp, app_context);
 
   if (!custom_usr && !(is_extension && !is_app_extension) &&
-      !flatpak_run_add_extension_args (argv_array, NULL, &envp, runtime_metakey, runtime_ref, FALSE, &runtime_extensions, cancellable, error))
+      !flatpak_run_add_extension_args (argv_array, fd_array, &envp, runtime_metakey, runtime_ref, FALSE, &runtime_extensions, cancellable, error))
     return FALSE;
 
   if (!flatpak_run_add_app_info_args (argv_array,
-                                      NULL,
+                                      fd_array,
                                       app_files, NULL, NULL,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       id, NULL,
@@ -387,7 +398,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       error))
     return FALSE;
 
-  if (!flatpak_run_add_environment_args (argv_array, NULL, &envp, app_info_path, run_flags, id,
+  if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp, app_info_path, run_flags, id,
                                          app_context, app_id_dir, NULL, cancellable, error))
     return FALSE;
 
