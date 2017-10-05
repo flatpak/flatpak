@@ -40,6 +40,7 @@ static char **opt_extra_data;
 static char **opt_extensions;
 static char **opt_metadata;
 static gboolean opt_no_exports;
+static int opt_extension_prio = -10000;
 static char *opt_sdk;
 static char *opt_runtime;
 
@@ -49,6 +50,7 @@ static GOptionEntry options[] = {
   { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, N_("Don't process exports"), NULL },
   { "extra-data", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data, N_("Extra data info") },
   { "extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extensions, N_("Add extension point info"),  N_("NAME=VARIABLE[=VALUE]") },
+  { "extension-priority", 0, 0, G_OPTION_ARG_INT, &opt_extension_prio, N_("Set extension priority (only for extensions)"), N_("0") },
   { "sdk", 0, 0, G_OPTION_ARG_STRING, &opt_sdk, N_("Change the sdk used for the app"),  N_("SDK") },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_metadata, N_("Set generic metadata option"),  N_("GROUP=KEY[=VALUE]") },
@@ -484,6 +486,11 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
 
       g_key_file_set_string (keyfile, groupname, elements[1], elements[2] ? elements[2] : "true");
     }
+
+
+  if (opt_extension_prio != -10000)
+    g_key_file_set_integer (keyfile, FLATPAK_METADATA_GROUP_EXTENSION_OF,
+			    FLATPAK_METADATA_KEY_PRIORITY, opt_extension_prio);
 
   if (!g_key_file_save_to_file (keyfile, path, error))
     goto out;
