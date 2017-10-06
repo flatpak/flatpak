@@ -73,6 +73,22 @@ clear_fd (gpointer data)
     close (*fd_p);
 }
 
+/* Unset FD_CLOEXEC on the array of fds passed in @user_data */
+static void
+child_setup (gpointer user_data)
+{
+  GArray *fd_array = user_data;
+  int i;
+
+  /* If no fd_array was specified, don't care. */
+  if (fd_array == NULL)
+    return;
+
+  /* Otherwise, mark not - close-on-exec all the fds in the array */
+  for (i = 0; i < fd_array->len; i++)
+    fcntl (g_array_index (fd_array, int, i), F_SETFD, 0);
+}
+
 gboolean
 flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -326,7 +342,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   /* Never set up an a11y bus for builds */
   run_flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
 
-  if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, app_id_dir, runtime_ref_parts[2],
+  if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, runtime_ref_parts[2],
                                     run_flags, error))
     return FALSE;
 
@@ -436,6 +452,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (argv_array, NULL);
 
+  /* Ensure we unset O_CLOEXEC */
+  child_setup (fd_array);
   if (execvpe (flatpak_get_bwrap (), (char **) argv_array->pdata, envp) == -1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
