@@ -299,7 +299,7 @@ glnx_fstatat (int           dfd,
  * glnx_fstatat_allow_noent:
  * @dfd: Directory FD to stat beneath
  * @path: Path to stat beneath @dfd
- * @buf: (out caller-allocates): Return location for stat details
+ * @buf: (out caller-allocates) (allow-none): Return location for stat details
  * @flags: Flags to pass to fstatat()
  * @error: Return location for a #GError, or %NULL
  *
@@ -318,7 +318,8 @@ glnx_fstatat_allow_noent (int               dfd,
                           int               flags,
                           GError          **error)
 {
-  if (TEMP_FAILURE_RETRY (fstatat (dfd, path, out_buf, flags)) != 0)
+  struct stat stbuf;
+  if (TEMP_FAILURE_RETRY (fstatat (dfd, path, out_buf ?: &stbuf, flags)) != 0)
     {
       if (errno != ENOENT)
         {

@@ -161,6 +161,16 @@ test_fstatat (void)
     return;
   g_assert_cmpint (errno, ==, ENOENT);
   g_assert_no_error (local_error);
+
+  /* test NULL parameter for stat */
+  if (!glnx_fstatat_allow_noent (AT_FDCWD, ".", NULL, 0, error))
+    return;
+  g_assert_cmpint (errno, ==, 0);
+  g_assert_no_error (local_error);
+  if (!glnx_fstatat_allow_noent (AT_FDCWD, "nosuchfile", NULL, 0, error))
+    return;
+  g_assert_cmpint (errno, ==, ENOENT);
+  g_assert_no_error (local_error);
 }
 
 static void
