@@ -382,8 +382,7 @@ _glnx_tmpdir_free (GLnxTmpDir *tmpd,
   if (!(tmpd && tmpd->initialized))
     return TRUE;
   g_assert_cmpint (tmpd->fd, !=, -1);
-  (void) close (tmpd->fd);
-  tmpd->fd = -1;
+  glnx_close_fd (&tmpd->fd);
   g_assert (tmpd->path);
   g_assert_cmpint (tmpd->src_dfd, !=, -1);
   g_autofree char *path = tmpd->path; /* Take ownership */

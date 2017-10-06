@@ -42,14 +42,30 @@ glnx_local_obj_unref (void *v)
 }
 #define glnx_unref_object __attribute__ ((cleanup(glnx_local_obj_unref)))
 
-static inline void
-glnx_cleanup_close_fdp (int *fdp)
+static inline int
+glnx_steal_fd (int *fdp)
 {
-  int fd, errsv;
+  int fd = *fdp;
+  *fdp = -1;
+  return fd;
+}
+
+/**
+ * glnx_close_fd:
+ * @fdp: Pointer to fd
+ *
+ * Effectively `close (glnx_steal_fd (&fd))`.  Also
+ * asserts that `close()` did not raise `EBADF` - encountering
+ * that error is usually a critical bug in the program.
+ */
+static inline void
+glnx_close_fd (int *fdp)
+{
+  int errsv;
 
   g_assert (fdp);
 
-  fd = *fdp;
+  int fd = glnx_steal_fd (fdp);
   if (fd >= 0)
     {
       errsv = errno;
@@ -62,16 +78,14 @@ glnx_cleanup_close_fdp (int *fdp)
 /**
  * glnx_fd_close:
  *
+ * Deprecated in favor of `glnx_autofd`.
+ */
+#define glnx_fd_close __attribute__((cleanup(glnx_close_fd)))
+/**
+ * glnx_autofd:
+ *
  * Call close() on a variable location when it goes out of scope.
  */
-#define glnx_fd_close __attribute__((cleanup(glnx_cleanup_close_fdp)))
-
-static inline int
-glnx_steal_fd (int *fdp)
-{
-  int fd = *fdp;
-  *fdp = -1;
-  return fd;
-}
+#define glnx_autofd __attribute__((cleanup(glnx_close_fd)))
 
 G_END_DECLS
