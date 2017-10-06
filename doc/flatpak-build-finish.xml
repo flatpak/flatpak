@@ -345,7 +345,8 @@ key=v1;v2;
 
                 <listitem><para>
                   Set the priority (library override order) of the extension point.
-		  Only useful for extensions.
+                  Only useful for extensions. 0 is the default, and higher value means higher
+                  priority.
                 </para></listitem>
             </varlistentry>
 
