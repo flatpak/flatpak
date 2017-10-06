@@ -40,7 +40,7 @@ static char **opt_extra_data;
 static char **opt_extensions;
 static char **opt_metadata;
 static gboolean opt_no_exports;
-static int opt_extension_prio = -10000;
+static int opt_extension_prio = G_MININT;
 static char *opt_sdk;
 static char *opt_runtime;
 
@@ -488,7 +488,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
     }
 
 
-  if (opt_extension_prio != -10000)
+  if (opt_extension_prio != G_MININT)
     g_key_file_set_integer (keyfile, FLATPAK_METADATA_GROUP_EXTENSION_OF,
 			    FLATPAK_METADATA_KEY_PRIORITY, opt_extension_prio);
 
