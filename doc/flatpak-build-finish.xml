@@ -341,6 +341,16 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--extension-priority=VALUE</option></term>
+
+                <listitem><para>
+                  Set the priority (library override order) of the extension point.
+                  Only useful for extensions. 0 is the default, and higher value means higher
+                  priority.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--extra-data=NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:URL</option></term>
 
                 <listitem><para>
