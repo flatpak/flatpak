@@ -3083,7 +3083,10 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
 
           g_mkdir_with_parents (src, 0755);
 
-          add_bind_arg (argv_array, "--bind", src, dest);
+          /* We stick to add_args instead of add_bind_arg because persisted
+           * folders don't need to exist outside the chroot.
+           */
+          add_args (argv_array, "--bind", src, dest, NULL);
         }
     }
 
