@@ -25,7 +25,11 @@ mkdir -p ${DIR}/usr/bin
 mkdir -p ${DIR}/usr/lib
 ln -s ../lib ${DIR}/usr/lib64
 ln -s ../lib ${DIR}/usr/lib32
-cp `which ldconfig` ${DIR}/usr/bin
+if test -f /sbin/ldconfig.real; then
+    cp /sbin/ldconfig.real ${DIR}/usr/bin/ldconfig
+else
+    cp `which ldconfig` ${DIR}/usr/bin
+fi
 T=`mktemp`
 for i in $@; do
     I=`which $i`
