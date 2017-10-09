@@ -1905,7 +1905,7 @@ buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
 {
   if (len == -1)
     len = strlen (str);
-  glnx_fd_close int memfd = memfd_create (name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
+  glnx_autofd int memfd = memfd_create (name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
   int fd; /* Unowned */
   if (memfd != -1)
     {
@@ -4236,8 +4236,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   const char *proxy;
   g_autofree char *commandline = NULL;
   DbusProxySpawnData spawn_data;
-  glnx_fd_close int app_info_fd = -1;
-  glnx_fd_close int bwrap_args_fd = -1;
+  glnx_autofd int app_info_fd = -1;
+  glnx_autofd int bwrap_args_fd = -1;
   g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
 
   if (!has_args (session_dbus_proxy_argv) &&
@@ -4991,7 +4991,7 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
   g_auto(GStrv) envp = NULL;
   g_autofree char *commandline = NULL;
   int exit_status;
-  glnx_fd_close int ld_so_fd = -1;
+  glnx_autofd int ld_so_fd = -1;
   g_autoptr(GFile) ld_so_dir = NULL;
 
   if (app_id_dir)

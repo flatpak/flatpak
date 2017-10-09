@@ -1500,7 +1500,7 @@ flatpak_dir_ensure_path (FlatpakDir   *self,
       g_autoptr(GFile) parent = g_file_get_parent (self->basedir);
       if (!flatpak_mkdir_p (parent, cancellable, error))
         return FALSE;
-      glnx_fd_close int parent_dfd = -1;
+      glnx_autofd int parent_dfd = -1;
       if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (parent), TRUE,
                            &parent_dfd, error))
         return FALSE;
@@ -1704,7 +1704,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   g_autoptr(GError) tmp_error = NULL;
   g_autofree char *checkout_dir_path = NULL;
   OstreeRepoCheckoutAtOptions options = { 0, };
-  glnx_fd_close int dfd = -1;
+  glnx_autofd int dfd = -1;
   g_autoptr(GFileInfo) file_info = NULL;
   g_autofree char *tmpname = g_strdup (".active-XXXXXX");
   g_auto(GLnxLockFile) lock = { 0, };
@@ -4048,7 +4048,7 @@ export_ini_file (int           parent_fd,
                  GCancellable *cancellable,
                  GError      **error)
 {
-  glnx_fd_close int desktop_fd = -1;
+  glnx_autofd int desktop_fd = -1;
   g_autofree char *tmpfile_name = g_strdup_printf ("export-ini-XXXXXX");
   g_autoptr(GOutputStream) out_stream = NULL;
   g_autofree gchar *data = NULL;
@@ -4161,7 +4161,7 @@ export_mime_file (int           parent_fd,
                   GCancellable *cancellable,
                   GError      **error)
 {
-  glnx_fd_close int desktop_fd = -1;
+  glnx_autofd int desktop_fd = -1;
   g_autofree char *tmpfile_name = g_strdup_printf ("export-mime-XXXXXX");
   g_autoptr(GOutputStream) out_stream = NULL;
   g_autofree gchar *data = NULL;
@@ -4211,7 +4211,7 @@ export_desktop_file (const char   *app,
                      GError      **error)
 {
   gboolean ret = FALSE;
-  glnx_fd_close int desktop_fd = -1;
+  glnx_autofd int desktop_fd = -1;
   g_autofree char *tmpfile_name = g_strdup_printf ("export-desktop-XXXXXX");
   g_autoptr(GOutputStream) out_stream = NULL;
   g_autofree gchar *data = NULL;
@@ -4513,7 +4513,7 @@ export_dir (int           source_parent_fd,
   int res;
 
   g_auto(GLnxDirFdIterator) source_iter = {0};
-  glnx_fd_close int destination_dfd = -1;
+  glnx_autofd int destination_dfd = -1;
   struct dirent *dent;
 
   if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
@@ -5034,7 +5034,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   guint64 installed_size = 0;
   OstreeRepoCheckoutAtOptions options = { 0, };
   const char *checksum;
-  glnx_fd_close int checkoutdir_dfd = -1;
+  glnx_autofd int checkoutdir_dfd = -1;
   g_autoptr(GFile) tmp_dir_template = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autofree char *tmp_dir_path = NULL;
@@ -6805,7 +6805,7 @@ out:
 static gboolean
 dir_is_locked (GFile *dir)
 {
-  glnx_fd_close int ref_fd = -1;
+  glnx_autofd int ref_fd = -1;
   struct flock lock = {0};
 
   g_autoptr(GFile) reffile = NULL;
@@ -9713,9 +9713,9 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
       if (has_changed)
         {
           g_autoptr(GBytes) bytes = g_variant_get_data_as_bytes (summary);
-          glnx_fd_close int summary_fd = -1;
+          glnx_autofd int summary_fd = -1;
           g_autofree char *summary_path = NULL;
-          glnx_fd_close int summary_sig_fd = -1;
+          glnx_autofd int summary_sig_fd = -1;
           g_autofree char *summary_sig_path = NULL;
           FlatpakSystemHelper *system_helper;
           const char *installation;

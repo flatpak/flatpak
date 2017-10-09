@@ -370,7 +370,7 @@ static int
 xdp_inode_open_dir_fd (XdpInode *dir)
 {
   struct stat st_buf;
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
 
   g_assert (dir->dirname != NULL);
 
@@ -439,7 +439,7 @@ static XdpInode *
 xdp_inode_unlink_child (XdpInode *dir, const char *filename)
 {
   XdpInode *child_inode;
-  glnx_fd_close int dir_fd = -1;
+  glnx_autofd int dir_fd = -1;
 
   AUTOLOCK (inodes);
   child_inode = xdp_inode_lookup_child_unlocked (dir, filename);
@@ -472,7 +472,7 @@ xdp_inode_rename_child (XdpInode   *dir,
 {
   g_autoptr(XdpInode) src_inode = NULL;
   g_autoptr(XdpInode) dst_inode = NULL;
-  glnx_fd_close int dir_fd = -1;
+  glnx_autofd int dir_fd = -1;
   int res;
 
   AUTOLOCK (inodes);
@@ -632,9 +632,9 @@ xdp_inode_create_file (XdpInode   *dir,
   g_autofree char *backing_filename = NULL;
   g_autofree char *trunc_filename = NULL;
   gboolean is_doc;
-  glnx_fd_close int dir_fd = -1;
-  glnx_fd_close int fd = -1;
-  glnx_fd_close int trunc_fd = -1;
+  glnx_autofd int dir_fd = -1;
+  glnx_autofd int fd = -1;
+  glnx_autofd int trunc_fd = -1;
 
   g_assert (dir->type == XDP_INODE_APP_DOC_DIR || dir->type == XDP_INODE_DOC_DIR);
 
@@ -899,7 +899,7 @@ xdp_inode_stat (XdpInode    *inode,
           }
         else
           {
-            glnx_fd_close int dir_fd = xdp_inode_open_dir_fd (inode->parent);
+            glnx_autofd int dir_fd = xdp_inode_open_dir_fd (inode->parent);
 
             if (dir_fd == -1)
               res = -1;
@@ -1850,7 +1850,7 @@ xdp_fuse_setattr (fuse_req_t             req,
             }
           else
             {
-              glnx_fd_close int dir_fd = xdp_inode_open_dir_fd (inode->parent);
+              glnx_autofd int dir_fd = xdp_inode_open_dir_fd (inode->parent);
               if (dir_fd == -1 ||
                   truncateat (dir_fd, inode->backing_filename, attr->st_size) != 0)
                 res = errno;

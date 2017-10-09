@@ -98,7 +98,7 @@ flatpak_file_new_tmp_in (GFile *dir,
                          const char *template,
                          GError        **error)
 {
-  glnx_fd_close int tmp_fd = -1;
+  glnx_autofd int tmp_fd = -1;
   g_autofree char *tmpl = g_build_filename (flatpak_file_get_path_cached (dir), template, NULL);
 
   tmp_fd = g_mkstemp_full (tmpl, O_RDWR, 0644);
@@ -1419,7 +1419,7 @@ overlay_symlink_tree_dir (int           source_parent_fd,
   int res;
 
   g_auto(GLnxDirFdIterator) source_iter = { 0 };
-  glnx_fd_close int destination_dfd = -1;
+  glnx_autofd int destination_dfd = -1;
   struct dirent *dent;
 
   if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
@@ -1735,8 +1735,8 @@ static GKeyFile *
 parse_app_id_from_fileinfo (int pid)
 {
   g_autofree char *root_path = NULL;
-  glnx_fd_close int root_fd = -1;
-  glnx_fd_close int info_fd = -1;
+  glnx_autofd int root_fd = -1;
+  glnx_autofd int info_fd = -1;
   struct stat stat_buf;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GMappedFile) mapped = NULL;
@@ -3090,7 +3090,7 @@ GVariant *
 flatpak_repo_load_summary (OstreeRepo *repo,
                            GError **error)
 {
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
   g_autoptr(GMappedFile) mfile = NULL;
   g_autoptr(GBytes) bytes = NULL;
 
@@ -5166,7 +5166,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       FlatpakOciDescriptor *layer = manifest->layers[i];
       OstreeRepoImportArchiveOptions opts = { 0, };
       g_autoptr(FlatpakAutoArchiveRead) a = NULL;
-      glnx_fd_close int layer_fd = -1;
+      glnx_autofd int layer_fd = -1;
       g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
       const char *layer_checksum;
 
@@ -5264,7 +5264,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
 {
   gboolean reusing_dir = FALSE;
   g_autofree char *tmpdir_name = NULL;
-  glnx_fd_close int tmpdir_fd = -1;
+  glnx_autofd int tmpdir_fd = -1;
 
   g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
 
@@ -5275,7 +5275,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
   while (tmpdir_name == NULL)
     {
       struct dirent *dent;
-      glnx_fd_close int existing_tmpdir_fd = -1;
+      glnx_autofd int existing_tmpdir_fd = -1;
       g_autoptr(GError) local_error = NULL;
       g_autofree char *lock_name = NULL;
 
