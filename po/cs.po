@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-10-09 12:40+0200\n"
-"PO-Revision-Date: 2017-09-28 17:54+0200\n"
+"PO-Revision-Date: 2017-10-09 22:38+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -561,11 +561,11 @@ msgstr "NÁZEV=PROMĚNNÁ[=HODNOTA]"
 
 #: app/flatpak-builtins-build-finish.c:53
 msgid "Set extension priority (only for extensions)"
-msgstr ""
+msgstr "Nastavit prioritu rozšíření (pouze pro rozšíření)"
 
 #: app/flatpak-builtins-build-finish.c:53
 msgid "0"
-msgstr ""
+msgstr "0"
 
 #: app/flatpak-builtins-build-finish.c:54
 msgid "Change the sdk used for the app"
@@ -1189,11 +1189,11 @@ msgstr " - Vypsat instalované aplikace a/nebo prostředí"
 
 #: app/flatpak-builtins-list-remotes.c:46
 msgid "Show remote details"
-msgstr "Zobrazit detaily prostředí"
+msgstr "Zobrazit detaily vzdáleného repozitáře"
 
 #: app/flatpak-builtins-list-remotes.c:47
 msgid "Show disabled remotes"
-msgstr "Zobrazit zakázané prostředí"
+msgstr "Zobrazit zakázané vzdálené repozitáře"
 
 #: app/flatpak-builtins-list-remotes.c:59
 msgid " - List remote repositories"
@@ -1647,9 +1647,9 @@ msgid "Print information about a repo"
 msgstr "Vypsat informace o repozitáři"
 
 #: app/flatpak-main.c:119
-#, fuzzy
 msgid "Print debug information during command processing, -vv for more detail"
-msgstr "Vypsat ladící informace během zpracovávání příkazu"
+msgstr ""
+"Vypsat ladící informace během zpracovávání příkazu, -vv pro více detailů"
 
 #: app/flatpak-main.c:120
 msgid "Print OSTree debug information during command processing"
@@ -2259,9 +2259,9 @@ msgid "Failed to sync with dbus proxy"
 msgstr "Selhala synchronizace s dbus proxy"
 
 #: common/flatpak-run.c:5069
-#, fuzzy, c-format
+#, c-format
 msgid "ldconfig failed, exit status %d"
-msgstr "apply_extra skript selhal, návratová hodnota %d"
+msgstr "ldconfig selhal, návratová hodnota %d"
 
 #: common/flatpak-utils.c:2900
 msgid "No extra data sources"
@@ -2332,14 +2332,12 @@ msgstr "K aktualizaci vzdálených informací je vyžadováno ověření"
 #. - Normal users do not need authentication to modify the
 #. OSTree repository
 #: system-helper/org.freedesktop.Flatpak.policy.in:106
-#, fuzzy
 msgid "Update system repository"
-msgstr "Aktualizovat soubor shrnutí v repozitáři"
+msgstr "Aktualizovat systémový repozitář"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:107
-#, fuzzy
 msgid "Authentication is required to update the system repository"
-msgstr "K aktualizaci vzdálených informací je vyžadováno ověření"
+msgstr "K aktualizaci systémového repozitáře je vyžadováno ověření"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:117
 msgid "Install bundle"
