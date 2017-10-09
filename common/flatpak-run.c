@@ -1914,8 +1914,7 @@ buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
   else
     {
       /* We use an anonymous fd (i.e. O_EXCL) since we don't want
-       * the target container to potentially be able to re-link it.  A
-       * good next step here would be to use memfd_create() and seal.
+       * the target container to potentially be able to re-link it.
        */
       if (!G_IN_SET (errno, ENOSYS, EOPNOTSUPP))
         return glnx_throw_errno_prefix (error, "memfd_create");
