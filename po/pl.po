@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-10-09 12:40+0200\n"
-"PO-Revision-Date: 2017-10-01 13:47+0200\n"
+"PO-Revision-Date: 2017-10-09 16:40+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -571,11 +571,11 @@ msgstr "NAZWA=ZMIENNA[=WARTOŚĆ]"
 
 #: app/flatpak-builtins-build-finish.c:53
 msgid "Set extension priority (only for extensions)"
-msgstr ""
+msgstr "Ustawia priorytet rozszerzenia (tylko dla rozszerzeń)"
 
 #: app/flatpak-builtins-build-finish.c:53
 msgid "0"
-msgstr ""
+msgstr "0"
 
 #: app/flatpak-builtins-build-finish.c:54
 msgid "Change the sdk used for the app"
@@ -1683,9 +1683,10 @@ msgid "Print information about a repo"
 msgstr "Wyświetla informacje o repozytorium"
 
 #: app/flatpak-main.c:119
-#, fuzzy
 msgid "Print debug information during command processing, -vv for more detail"
-msgstr "Wyświetla informacje debugowania podczas przetwarzania poleceń"
+msgstr ""
+"Wyświetla informacje debugowania podczas przetwarzania poleceń, -vv "
+"wyświetla więcej"
 
 #: app/flatpak-main.c:120
 msgid "Print OSTree debug information during command processing"
@@ -2301,9 +2302,9 @@ msgid "Failed to sync with dbus proxy"
 msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 
 #: common/flatpak-run.c:5069
-#, fuzzy, c-format
+#, c-format
 msgid "ldconfig failed, exit status %d"
-msgstr "Skrypt „apply_extra” się nie powiódł, stan wyjścia %d"
+msgstr "ldconfig się nie powiodło, stan wyjścia %d"
 
 #: common/flatpak-utils.c:2900
 msgid "No extra data sources"
@@ -2417,12 +2418,3 @@ msgstr ""
 #: system-helper/org.freedesktop.Flatpak.policy.in:168
 msgid "Update appstream"
 msgstr "Aktualizacja danych AppStream"
-
-#~ msgid "Failed to create temporary file"
-#~ msgstr "Utworzenie pliku tymczasowego się nie powiodło"
-
-#~ msgid "Failed to unlink temporary file"
-#~ msgstr "Odwiązanie pliku tymczasowego się nie powiodło"
-
-#~ msgid "Failed to write to temporary file"
-#~ msgstr "Zapisanie do pliku tymczasowego się nie powiodło"
