@@ -378,7 +378,7 @@ validate_parent_dir (const char *path,
 {
   g_autofree char *dirname = NULL;
   g_autofree char *name = NULL;
-  glnx_fd_close int dir_fd = -1;
+  glnx_autofd int dir_fd = -1;
   struct stat real_st_buf;
 
   /* We open the parent directory and do the stat in that, so that we have
@@ -884,7 +884,7 @@ portal_lookup (GDBusMethodInvocation *invocation,
 {
   const char *filename;
   char path_buffer[PATH_MAX + 1];
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
   struct stat st_buf, real_parent_st_buf;
   g_auto(GStrv) ids = NULL;
   g_autofree char *id = NULL;

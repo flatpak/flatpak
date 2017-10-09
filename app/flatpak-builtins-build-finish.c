@@ -70,7 +70,7 @@ export_dir (int           source_parent_fd,
   int res;
 
   g_auto(GLnxDirFdIterator) source_iter = {0};
-  glnx_fd_close int destination_dfd = -1;
+  glnx_autofd int destination_dfd = -1;
   struct dirent *dent;
 
   if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
