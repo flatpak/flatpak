@@ -216,7 +216,7 @@ local_open_file (int dfd,
                  GCancellable *cancellable,
                  GError **error)
 {
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
   struct stat tmp_st_buf;
 
   do
@@ -255,7 +255,7 @@ local_load_file (int dfd,
                  GCancellable *cancellable,
                  GError **error)
 {
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
   struct stat st_buf;
   GBytes *bytes;
   g_autofree char *current_etag = NULL;
@@ -389,7 +389,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
                                   GError **error)
 {
   g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
-  glnx_fd_close int local_dfd = -1;
+  glnx_autofd int local_dfd = -1;
   int dfd;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GBytes) oci_layout_bytes = NULL;
@@ -668,7 +668,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
                                     GError               **error)
 {
   g_autofree char *subpath = NULL;
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
 
   g_assert (self->valid);
 
@@ -777,7 +777,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
   if (source_registry->dfd != -1)
     {
-      glnx_fd_close int src_fd = -1;
+      glnx_autofd int src_fd = -1;
 
       src_fd = local_open_file (source_registry->dfd, subpath, NULL, cancellable, error);
       if (src_fd == -1)
