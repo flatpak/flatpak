@@ -1,3 +1,28 @@
+Major changes in 0.9.99
+=======================
+
+ * Requires ostree 2017.12 for important pull stability fix
+ * New libflatpak API: flatpak_dir_cleanup_undeployed_refs, flatpak_installation_prune_local_repo,
+    flatpak_installation_remove_local_ref_sync, flatpak_installation_cleanup_local_refs_sync
+ * build: FLATPAK_ID and FLATPAK_ARCH are now set in the environment when building
+ * update: Don't fail the entire update if some remote fails to update its metadata
+ * run: /.flatpak-info now lists exact commits and extensions in use
+ * run: We now use a per-app ld.so.cache file whenn running. This should speed things up,
+   and allows ldconfig to report the correct results.
+ * The verbose mode was changed into two levels, use -vv to show the more detailed info, which
+   currently only contains the full bubblewrap argument lists.
+ * run: Some common problematic host environment variables are now unset in the sandbox
+   (PYTHONPATH, PERLLIB, PERL5LIB and XCURSOR_PATH)
+ * run: Fixed failure when a higher prio extensions depended on a lower prio one.
+ * run: The extension ld path order is now: app extensions, app, runtime extension, runtime.
+   This was previously incorrect in that the app could override app extensions.
+ * Extensions are now not downloaded if a matching unmaintained extension is already installed
+ * Preemptive changes to handle new bubblewrap change which doesn't user /newroot
+ * document portal: Disable debug spew that was accidentally enabled
+ * build-finish: New --extension-priority option
+ * run: Fix regression in --persist in 0.9.98
+ * run: Use sealed memfds (instead of just temporary files) when passing data to bubblewrap
+
 Major changes in 0.9.98.2
 =========================
 
