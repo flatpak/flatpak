@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-27 00:31+0200\n"
+"POT-Creation-Date: 2017-10-09 12:40+0200\n"
 "PO-Revision-Date: 2017-06-24 15:47+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
@@ -150,7 +150,7 @@ msgstr "Слід вказати РОЗТАШУВАННЯ"
 #: app/flatpak-builtins-document-list.c:70
 #: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:111
 #: app/flatpak-builtins-install.c:265 app/flatpak-builtins-install.c:399
-#: app/flatpak-builtins-list.c:377 app/flatpak-builtins-list-remotes.c:66
+#: app/flatpak-builtins-list.c:382 app/flatpak-builtins-list-remotes.c:66
 #: app/flatpak-builtins-ls-remote.c:84 app/flatpak-builtins-make-current.c:67
 #: app/flatpak-builtins-override.c:66
 msgid "Too many arguments"
@@ -339,36 +339,36 @@ msgstr ""
 msgid "Export application homedir directory to build"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:112
+#: app/flatpak-builtins-build.c:139
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
 msgstr "КАТАЛОГ [КОМАНДА [аргументи...]] - Зібрати у каталозі"
 
-#: app/flatpak-builtins-build.c:135 app/flatpak-builtins-build-finish.c:526
+#: app/flatpak-builtins-build.c:162 app/flatpak-builtins-build-finish.c:533
 msgid "DIRECTORY must be specified"
 msgstr "Слід вказати КАТАЛОГ"
 
-#: app/flatpak-builtins-build.c:146 app/flatpak-builtins-build-export.c:721
+#: app/flatpak-builtins-build.c:173 app/flatpak-builtins-build-export.c:721
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr ""
 "Каталог збирання %s не ініціалізовано, скористайтеся командою flatpak build-"
 "init"
 
-#: app/flatpak-builtins-build.c:165
+#: app/flatpak-builtins-build.c:192
 msgid "metadata invalid, not application or runtime"
 msgstr "некоректні метадані, немає програми або середовища виконання"
 
-#: app/flatpak-builtins-build.c:261
+#: app/flatpak-builtins-build.c:292
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Немає точки розширення, яка відповідає %s у %s"
 
-#: app/flatpak-builtins-build.c:397
+#: app/flatpak-builtins-build.c:432
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
-#: app/flatpak-builtins-build.c:423 common/flatpak-run.c:5085
+#: app/flatpak-builtins-build.c:460 common/flatpak-run.c:5406
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -526,74 +526,82 @@ msgid "LOCATION and DIRECTORY must be specified"
 msgstr "Слід вказати РОЗТАШУВАННЯ і КАТАЛОГ"
 
 #: app/flatpak-builtins-build-export.c:738
-#: app/flatpak-builtins-build-finish.c:554
+#: app/flatpak-builtins-build-finish.c:561
 msgid "No name specified in the metadata"
 msgstr "У метаданих не вказано назви"
 
-#: app/flatpak-builtins-build-finish.c:47
+#: app/flatpak-builtins-build-finish.c:48
 msgid "Command to set"
 msgstr "Команда для встановлення"
 
-#: app/flatpak-builtins-build-finish.c:47 app/flatpak-builtins-run.c:53
-#: app/flatpak-main.c:146
+#: app/flatpak-builtins-build-finish.c:48 app/flatpak-builtins-run.c:53
+#: app/flatpak-main.c:159
 msgid "COMMAND"
 msgstr "КОМАНДА"
 
-#: app/flatpak-builtins-build-finish.c:48
+#: app/flatpak-builtins-build-finish.c:49
 msgid "Flatpak version to require"
 msgstr "Версія Flatpak, яку слід вимагати"
 
-#: app/flatpak-builtins-build-finish.c:48
+#: app/flatpak-builtins-build-finish.c:49
 msgid "MAJOR.MINOR.MICRO"
 msgstr "ОСНОВНА.ДРУГОРЯДНА.ТРЕТЬОРЯДНА"
 
-#: app/flatpak-builtins-build-finish.c:49
+#: app/flatpak-builtins-build-finish.c:50
 msgid "Don't process exports"
 msgstr "Не обробляти експортування"
 
-#: app/flatpak-builtins-build-finish.c:50
+#: app/flatpak-builtins-build-finish.c:51
 msgid "Extra data info"
 msgstr "Відомості щодо додаткових даних"
 
-#: app/flatpak-builtins-build-finish.c:51
+#: app/flatpak-builtins-build-finish.c:52
 msgid "Add extension point info"
 msgstr "Додати дані щодо точки розширення"
 
-#: app/flatpak-builtins-build-finish.c:51
+#: app/flatpak-builtins-build-finish.c:52
 msgid "NAME=VARIABLE[=VALUE]"
 msgstr "НАЗВА=ЗМІННА[=ЗНАЧЕННЯ]"
 
-#: app/flatpak-builtins-build-finish.c:52
+#: app/flatpak-builtins-build-finish.c:53
+msgid "Set extension priority (only for extensions)"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:53
+msgid "0"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:54
 msgid "Change the sdk used for the app"
 msgstr "Змінити sdk, що використовується для програми"
 
-#: app/flatpak-builtins-build-finish.c:52
+#: app/flatpak-builtins-build-finish.c:54
 msgid "SDK"
 msgstr "SDK"
 
-#: app/flatpak-builtins-build-finish.c:53
+#: app/flatpak-builtins-build-finish.c:55
 msgid "Change the runtime used for the app"
 msgstr "Змінити середовище виконання, що використовується для програми"
 
-#: app/flatpak-builtins-build-finish.c:53 app/flatpak-builtins-build-init.c:50
+#: app/flatpak-builtins-build-finish.c:55 app/flatpak-builtins-build-init.c:50
 #: app/flatpak-builtins-run.c:56
 msgid "RUNTIME"
 msgstr "СЕРЕДОВИЩЕ ВИКОНАННЯ"
 
-#: app/flatpak-builtins-build-finish.c:54
+#: app/flatpak-builtins-build-finish.c:56
 msgid "Set generic metadata option"
 msgstr "Встановити параметр загальних метаданих"
 
-#: app/flatpak-builtins-build-finish.c:54
+#: app/flatpak-builtins-build-finish.c:56
 msgid "GROUP=KEY[=VALUE]"
 msgstr "ГРУПА=КЛЮЧ[=ЗНАЧЕННЯ]"
 
-#: app/flatpak-builtins-build-finish.c:431
+#: app/flatpak-builtins-build-finish.c:433
 #, c-format
 msgid "Too few elements in --extra-data argument %s"
 msgstr "Замало елементів у аргументі --extra-data %s"
 
-#: app/flatpak-builtins-build-finish.c:463
+#: app/flatpak-builtins-build-finish.c:465
 #, c-format
 msgid ""
 "Too few elements in --metadata argument %s, format should be "
@@ -602,7 +610,7 @@ msgstr ""
 "Замало елементів у аргументі --metadata %s; слід використовувати формат "
 "ГРУПА=КЛЮЧ[=ЗНАЧЕННЯ]]"
 
-#: app/flatpak-builtins-build-finish.c:478
+#: app/flatpak-builtins-build-finish.c:480
 #, c-format
 msgid ""
 "Too few elements in --extension argument %s, format should be "
@@ -611,21 +619,21 @@ msgstr ""
 "Замало елементів у аргументі --extension %s, слід вказувати у форматі "
 "НАЗВА=ЗМІННА[=ЗНАЧЕННЯ]"
 
-#: app/flatpak-builtins-build-finish.c:516
+#: app/flatpak-builtins-build-finish.c:523
 msgid "DIRECTORY - Finalize a build directory"
 msgstr "КАТАЛОГ — завершити обробку каталогу збирання"
 
-#: app/flatpak-builtins-build-finish.c:538
+#: app/flatpak-builtins-build-finish.c:545
 #, c-format
 msgid "Build directory %s not initialized"
 msgstr "Каталог збирання %s не ініціалізовано"
 
-#: app/flatpak-builtins-build-finish.c:559
+#: app/flatpak-builtins-build-finish.c:566
 #, c-format
 msgid "Build directory %s already finalized"
 msgstr "Каталог збирання %s вже завершено"
 
-#: app/flatpak-builtins-build-finish.c:572
+#: app/flatpak-builtins-build-finish.c:579
 msgid "Please review the exported files and the metadata\n"
 msgstr "Будь ласка, перегляньте експортовані файли і метадані\n"
 
@@ -1192,7 +1200,7 @@ msgstr "Розмір встановленого"
 msgid "Options"
 msgstr "Параметри"
 
-#: app/flatpak-builtins-list.c:370
+#: app/flatpak-builtins-list.c:375
 msgid " - List installed apps and/or runtimes"
 msgstr " - Вивести список встановлених програм і/або середовищ виконання"
 
@@ -1507,33 +1515,33 @@ msgid "[REF...] - Update applications or runtimes"
 msgstr "[НАЗВА…] - Оновити програми або середовища виконання"
 
 #. translators: please keep the leading space
-#: app/flatpak-main.c:59
+#: app/flatpak-main.c:61
 msgid " Manage installed apps and runtimes"
 msgstr " Керування встановленими програмами і середовищами виконання"
 
-#: app/flatpak-main.c:60
+#: app/flatpak-main.c:62
 msgid "Install an application or runtime"
 msgstr "Встановити програму або середовище виконання"
 
-#: app/flatpak-main.c:61
+#: app/flatpak-main.c:63
 msgid "Update an installed application or runtime"
 msgstr "Оновити встановлену програму або середовище виконання"
 
-#: app/flatpak-main.c:62
+#: app/flatpak-main.c:64
 msgid "Uninstall an installed application or runtime"
 msgstr "Вилучити встановлену програму або середовище виконання"
 
-#: app/flatpak-main.c:63
+#: app/flatpak-main.c:65
 msgid "List installed apps and/or runtimes"
 msgstr "Вивести список встановлених програм і/або середовищ виконання"
 
-#: app/flatpak-main.c:64
+#: app/flatpak-main.c:66
 msgid "Show info for installed app or runtime"
 msgstr ""
 "Показати інформацію щодо встановленої програми або середовища виконання"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:67
+#: app/flatpak-main.c:69
 msgid ""
 "\n"
 " Running applications"
@@ -1541,24 +1549,24 @@ msgstr ""
 "\n"
 " Запущені програми"
 
-#: app/flatpak-main.c:68
+#: app/flatpak-main.c:70
 msgid "Run an application"
 msgstr "Запустити програму"
 
-#: app/flatpak-main.c:69
+#: app/flatpak-main.c:71
 msgid "Override permissions for an application"
 msgstr "Перевизначити права доступу для програми"
 
-#: app/flatpak-main.c:70
+#: app/flatpak-main.c:72
 msgid "Specify default version to run"
 msgstr "Вказати типову версію для запуску"
 
-#: app/flatpak-main.c:71
+#: app/flatpak-main.c:73
 msgid "Enter the namespace of a running application"
 msgstr "Введіть простір назв для запущеної програми"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:74
+#: app/flatpak-main.c:76
 msgid ""
 "\n"
 " Manage file access"
@@ -1566,24 +1574,24 @@ msgstr ""
 "\n"
 " Керування доступом до файлів"
 
-#: app/flatpak-main.c:75
+#: app/flatpak-main.c:77
 msgid "Grant an application access to a specific file"
 msgstr "Надати програмі доступ до вказаного файла"
 
-#: app/flatpak-main.c:76
+#: app/flatpak-main.c:78
 msgid "Revoke access to a specific file"
 msgstr "Відкликати доступ до вказаного файла"
 
-#: app/flatpak-main.c:77
+#: app/flatpak-main.c:79
 msgid "Show information about a specific file"
 msgstr "Показати інформацію щодо вказаного файла"
 
-#: app/flatpak-main.c:78
+#: app/flatpak-main.c:80
 msgid "List exported files"
 msgstr "Вивести список експортованих файлів"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:81
+#: app/flatpak-main.c:83
 msgid ""
 "\n"
 " Manage remote repositories"
@@ -1591,28 +1599,28 @@ msgstr ""
 "\n"
 " Керування віддаленими сховищами"
 
-#: app/flatpak-main.c:82
+#: app/flatpak-main.c:84
 msgid "List all configured remotes"
 msgstr "Вивести список усіх налаштованих віддалених сховищ"
 
-#: app/flatpak-main.c:83
+#: app/flatpak-main.c:85
 msgid "Add a new remote repository (by URL)"
 msgstr "Додати нове віддалене сховище (за адресою)"
 
-#: app/flatpak-main.c:84
+#: app/flatpak-main.c:86
 msgid "Modify properties of a configured remote"
 msgstr "Змінити властивості налаштованого віддаленого сховища"
 
-#: app/flatpak-main.c:85
+#: app/flatpak-main.c:87
 msgid "Delete a configured remote"
 msgstr "Вилучити налаштоване віддалене сховище"
 
-#: app/flatpak-main.c:87
+#: app/flatpak-main.c:89
 msgid "List contents of a configured remote"
 msgstr "Вивести список вмісту налаштованого віддаленого сховища"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:90
+#: app/flatpak-main.c:92
 msgid ""
 "\n"
 " Build applications"
@@ -1620,104 +1628,105 @@ msgstr ""
 "\n"
 " Зібрати програми"
 
-#: app/flatpak-main.c:91
+#: app/flatpak-main.c:93
 msgid "Initialize a directory for building"
 msgstr "Ініціалізувати каталог для збирання"
 
-#: app/flatpak-main.c:92
+#: app/flatpak-main.c:94
 msgid "Run a build command inside the build dir"
 msgstr "Виконати команду збирання у каталозі збирання"
 
-#: app/flatpak-main.c:93
+#: app/flatpak-main.c:95
 msgid "Finish a build dir for export"
 msgstr "Завершити каталог збирання для експортування"
 
-#: app/flatpak-main.c:94
+#: app/flatpak-main.c:96
 msgid "Export a build dir to a repository"
 msgstr "Експортувати каталог збирання до сховища"
 
-#: app/flatpak-main.c:95
+#: app/flatpak-main.c:97
 msgid "Create a bundle file from a build directory"
 msgstr "Створити файл пакунка з каталогу збирання"
 
-#: app/flatpak-main.c:96
+#: app/flatpak-main.c:98
 msgid "Import a bundle file"
 msgstr "Імпортувати файл пакунка"
 
-#: app/flatpak-main.c:97
+#: app/flatpak-main.c:99
 msgid "Sign an application or runtime"
 msgstr "Підписати програму або середовище виконання"
 
-#: app/flatpak-main.c:98
+#: app/flatpak-main.c:100
 msgid "Update the summary file in a repository"
 msgstr "Оновити файл резюме у сховищі"
 
-#: app/flatpak-main.c:99
+#: app/flatpak-main.c:101
 msgid "Create new commit based on existing ref"
 msgstr "Створити внесок на основі наявного посилання"
 
-#: app/flatpak-main.c:100
+#: app/flatpak-main.c:102
 msgid "Print information about a repo"
 msgstr "Вивести інформація щодо сховища"
 
-#: app/flatpak-main.c:106
-msgid "Print debug information during command processing"
+#: app/flatpak-main.c:119
+#, fuzzy
+msgid "Print debug information during command processing, -vv for more detail"
 msgstr "Вивести діагностичні дані під час обробки команди"
 
-#: app/flatpak-main.c:107
+#: app/flatpak-main.c:120
 msgid "Print OSTree debug information during command processing"
 msgstr "Вивести діагностичні дані OSTree під час обробки команди"
 
-#: app/flatpak-main.c:108
+#: app/flatpak-main.c:121
 msgid "Show help options"
 msgstr "Показати параметри доступ до довідки"
 
-#: app/flatpak-main.c:113
+#: app/flatpak-main.c:126
 msgid "Print version information and exit"
 msgstr "Показати дані щодо версії і завершити роботу"
 
-#: app/flatpak-main.c:114
+#: app/flatpak-main.c:127
 msgid "Print default arch and exit"
 msgstr "Вивести дані щодо типової архітектури і завершити роботу"
 
-#: app/flatpak-main.c:115
+#: app/flatpak-main.c:128
 msgid "Print supported arches and exit"
 msgstr "Вивести список підтримуваних архітектур і завершити роботу"
 
-#: app/flatpak-main.c:116
+#: app/flatpak-main.c:129
 msgid "Print active gl drivers and exit"
 msgstr "Вивести дані щодо активних драйверів gl і завершити роботу"
 
-#: app/flatpak-main.c:121
+#: app/flatpak-main.c:134
 msgid "Work on user installations"
 msgstr "Працювати над встановленим користувачем"
 
-#: app/flatpak-main.c:122
+#: app/flatpak-main.c:135
 msgid "Work on system-wide installations (default)"
 msgstr "Працювати над загальносистемними встановленими даними (типово)"
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:136
 msgid "Work on a specific system-wide installation"
 msgstr "Працювати із вказаним загальносистемним встановленням"
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:136
 msgid "NAME"
 msgstr "НАЗВА"
 
-#: app/flatpak-main.c:149
+#: app/flatpak-main.c:162
 msgid "Builtin Commands:"
 msgstr "Вбудовані команди:"
 
-#: app/flatpak-main.c:367
+#: app/flatpak-main.c:388
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Невідома команда «%s»"
 
-#: app/flatpak-main.c:375
+#: app/flatpak-main.c:396
 msgid "No command specified"
 msgstr "Команду не вказано"
 
-#: app/flatpak-main.c:491
+#: app/flatpak-main.c:514
 msgid "error:"
 msgstr "помилка:"
 
@@ -1746,10 +1755,10 @@ msgstr ""
 "Потрібного середовища виконання %s у налаштованому віддаленому сховищі не "
 "знайдено.\n"
 
-#: app/flatpak-transaction.c:469 common/flatpak-dir.c:1084
-#: common/flatpak-dir.c:1395 common/flatpak-dir.c:1431
-#: common/flatpak-dir.c:1453 common/flatpak-dir.c:9917
-#: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
+#: app/flatpak-transaction.c:469 common/flatpak-dir.c:1127
+#: common/flatpak-dir.c:1433 common/flatpak-dir.c:1456
+#: common/flatpak-dir.c:1478 common/flatpak-dir.c:10136
+#: common/flatpak-utils.c:1272 common/flatpak-utils.c:1366
 #, c-format
 msgid "%s not installed"
 msgstr "%s не встановлено"
@@ -1769,356 +1778,356 @@ msgstr "%s вже встановлено, пропускаємо\n"
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s потребує новішої версії flatpak (%s)"
 
-#: app/flatpak-transaction.c:703
+#: app/flatpak-transaction.c:704
 msgid "install"
 msgstr "встановити"
 
-#: app/flatpak-transaction.c:704
+#: app/flatpak-transaction.c:705
 #, c-format
 msgid "Installing: %s from %s\n"
 msgstr "Встановлюємо: %s з %s\n"
 
-#: app/flatpak-transaction.c:720
+#: app/flatpak-transaction.c:721
 msgid "update"
 msgstr "оновити"
 
-#: app/flatpak-transaction.c:728
+#: app/flatpak-transaction.c:729
 #, c-format
 msgid "Updating: %s from %s\n"
 msgstr "Оновлюємо: %s з %s\n"
 
-#: app/flatpak-transaction.c:748
+#: app/flatpak-transaction.c:749
 #, c-format
 msgid "Now at %s.\n"
 msgstr "Зараз %s.\n"
 
-#: app/flatpak-transaction.c:754
+#: app/flatpak-transaction.c:755
 msgid "No updates.\n"
 msgstr "Немає оновлень.\n"
 
-#: app/flatpak-transaction.c:772
+#: app/flatpak-transaction.c:773
 msgid "install bundle"
 msgstr "встановити пакунок"
 
-#: app/flatpak-transaction.c:773
+#: app/flatpak-transaction.c:774
 #, c-format
 msgid "Installing: %s from bundle %s\n"
 msgstr "Встановлюємо: %s з пакунка %s\n"
 
-#: app/flatpak-transaction.c:785
+#: app/flatpak-transaction.c:786
 #, c-format
 msgid "Warning: Failed to %s %s: %s\n"
 msgstr "Попередження: не вдалося виконати дію %s %s: %s\n"
 
-#: app/flatpak-transaction.c:790
+#: app/flatpak-transaction.c:791
 #, c-format
 msgid "Error: Failed to %s %s: %s\n"
 msgstr "Помилка: не вдалося виконати дію %s %s: %s\n"
 
-#: app/flatpak-transaction.c:795
+#: app/flatpak-transaction.c:796
 msgid "One or more operations failed"
 msgstr "Помилка під час виконання однієї або декількох дій"
 
-#: common/flatpak-dir.c:972
+#: common/flatpak-dir.c:1015
 #, c-format
 msgid "No overrides found for %s"
 msgstr "Не знайдено перевизначень для %s"
 
-#: common/flatpak-dir.c:1586
+#: common/flatpak-dir.c:1611
 #, c-format
 msgid "While opening repository %s: "
 msgstr "Під час спроби відкрити сховище %s: "
 
-#: common/flatpak-dir.c:1745 common/flatpak-dir.c:5084
+#: common/flatpak-dir.c:1770 common/flatpak-dir.c:5109
 msgid "Can't create deploy directory"
 msgstr "Не вдалося створити каталог розгортання"
 
-#: common/flatpak-dir.c:2425
+#: common/flatpak-dir.c:2450
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Некоректна сума sha256 для адреси додаткових даних %s"
 
-#: common/flatpak-dir.c:2430
+#: common/flatpak-dir.c:2455
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Порожня назва для адреси додаткових даних %s"
 
-#: common/flatpak-dir.c:2437
+#: common/flatpak-dir.c:2462
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Непідтримувана адреса додаткових даних %s"
 
-#: common/flatpak-dir.c:2451
+#: common/flatpak-dir.c:2476
 #, fuzzy, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Не вдалося прочитати внесок %s: "
 
-#: common/flatpak-dir.c:2454
+#: common/flatpak-dir.c:2479
 #, fuzzy, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Помилковий розмір додаткових даних %s"
 
-#: common/flatpak-dir.c:2469
+#: common/flatpak-dir.c:2494
 #, c-format
 msgid "While downloading %s: "
 msgstr "Під час спроби отримання %s: "
 
-#: common/flatpak-dir.c:2476
+#: common/flatpak-dir.c:2501
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Помилковий розмір додаткових даних %s"
 
-#: common/flatpak-dir.c:2487
+#: common/flatpak-dir.c:2512
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Некоректна контрольна сума додаткових даних, %s"
 
-#: common/flatpak-dir.c:2743
+#: common/flatpak-dir.c:2768
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s, внесок %s вже встановлено"
 
-#: common/flatpak-dir.c:3072 common/flatpak-dir.c:3386
+#: common/flatpak-dir.c:3097 common/flatpak-dir.c:3411
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Під час отримання %s з віддаленого сховища %s: "
 
-#: common/flatpak-dir.c:3271
+#: common/flatpak-dir.c:3296
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "Не вдалося знайти %s у віддаленому сховищі %s"
 
-#: common/flatpak-dir.c:3944
+#: common/flatpak-dir.c:3969
 msgid "Not enough memory"
 msgstr "Не вистачає пам'яті"
 
-#: common/flatpak-dir.c:3963
+#: common/flatpak-dir.c:3988
 msgid "Failed to read from exported file"
 msgstr "Не вдалося виконати читання з експортованого файла"
 
-#: common/flatpak-dir.c:4154
+#: common/flatpak-dir.c:4179
 msgid "Error reading mimetype xml file"
 msgstr "Помилка під час читання файла xml типу MIME"
 
-#: common/flatpak-dir.c:4159
+#: common/flatpak-dir.c:4184
 msgid "Invalid mimetype xml file"
 msgstr "Некоректний файл xml типу MIME"
 
-#: common/flatpak-dir.c:4701
+#: common/flatpak-dir.c:4726
 msgid "While getting detached metadata: "
 msgstr "Під час спроби отримання від’єднаних метаданих: "
 
-#: common/flatpak-dir.c:4719
+#: common/flatpak-dir.c:4744
 msgid "While creating extradir: "
 msgstr "Під час створення каталогу додаткових даних: "
 
-#: common/flatpak-dir.c:4740
+#: common/flatpak-dir.c:4765
 msgid "Invalid sha256 for extra data"
 msgstr "Некоректна контрольна сума sha256 для додаткових даних"
 
-#: common/flatpak-dir.c:4769
+#: common/flatpak-dir.c:4794
 msgid "Wrong size for extra data"
 msgstr "Помилковий розмір додаткових даних"
 
-#: common/flatpak-dir.c:4773
+#: common/flatpak-dir.c:4798
 msgid "Invalid checksum for extra data"
 msgstr "Некоректна контрольна сума додаткових даних"
 
-#: common/flatpak-dir.c:4782
+#: common/flatpak-dir.c:4807
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "Під час записування файла додаткових даних «%s»: "
 
-#: common/flatpak-dir.c:4966
+#: common/flatpak-dir.c:4991
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "Помилка скрипту apply_extra, стан виходу %d"
 
-#: common/flatpak-dir.c:5043
+#: common/flatpak-dir.c:5068
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Під час спроби визначити посилання %s: "
 
-#: common/flatpak-dir.c:5058
+#: common/flatpak-dir.c:5083
 #, c-format
 msgid "%s is not available"
 msgstr "%s недоступний"
 
-#: common/flatpak-dir.c:5073 common/flatpak-dir.c:5411
-#: common/flatpak-dir.c:6179 common/flatpak-dir.c:6192
-#: common/flatpak-dir.c:6268
+#: common/flatpak-dir.c:5098 common/flatpak-dir.c:5436
+#: common/flatpak-dir.c:6204 common/flatpak-dir.c:6217
+#: common/flatpak-dir.c:6293
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "Гілку %s %s вже встановлено"
 
-#: common/flatpak-dir.c:5092
+#: common/flatpak-dir.c:5117
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Не вдалося прочитати внесок %s: "
 
-#: common/flatpak-dir.c:5112
+#: common/flatpak-dir.c:5137
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Під час спроби вивантаження %s до %s: "
 
-#: common/flatpak-dir.c:5137 common/flatpak-dir.c:5168
+#: common/flatpak-dir.c:5162 common/flatpak-dir.c:5193
 msgid "While trying to checkout metadata subpath: "
 msgstr "Під час спроби вивантаження підшляху метаданих: "
 
-#: common/flatpak-dir.c:5178
+#: common/flatpak-dir.c:5203
 msgid "While trying to remove existing extra dir: "
 msgstr "Під час спроби вилучення наявного додаткового каталогу: "
 
-#: common/flatpak-dir.c:5189
+#: common/flatpak-dir.c:5214
 msgid "While trying to apply extra data: "
 msgstr "Під час спроби застосування додаткових даних: "
 
-#: common/flatpak-dir.c:5216
+#: common/flatpak-dir.c:5241
 #, fuzzy, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Некоректний pid %s"
 
-#: common/flatpak-dir.c:5223
+#: common/flatpak-dir.c:5248
 #, fuzzy, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Некоректний pid %s"
 
-#: common/flatpak-dir.c:5231
+#: common/flatpak-dir.c:5256
 #, fuzzy, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5239
+#: common/flatpak-dir.c:5264
 #, fuzzy, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5247
+#: common/flatpak-dir.c:5272
 #, fuzzy, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5253
+#: common/flatpak-dir.c:5278
 #, fuzzy, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5259
+#: common/flatpak-dir.c:5284
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5278
+#: common/flatpak-dir.c:5303
 msgid "Deployed metadata does not match commit"
 msgstr "Розміщені метадані не відповідають внеску"
 
-#: common/flatpak-dir.c:6040
+#: common/flatpak-dir.c:6065
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Цю версію %s вже встановлено"
 
-#: common/flatpak-dir.c:6047
+#: common/flatpak-dir.c:6072
 msgid "Can't change remote during bundle install"
 msgstr "Не можна змінювати сховище під час встановлення пакунка"
 
-#: common/flatpak-dir.c:6590
+#: common/flatpak-dir.c:6615
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s, гілка %s не встановлено"
 
-#: common/flatpak-dir.c:6834
+#: common/flatpak-dir.c:6859
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "%s, гілка %s не встановлено"
 
-#: common/flatpak-dir.c:7717
+#: common/flatpak-dir.c:7818
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Немає відповідників %s"
 
-#: common/flatpak-dir.c:7794
+#: common/flatpak-dir.c:7900
 #, fuzzy, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Не вдалося знайти %s%s%s%s%s у віддаленому сховищі %s"
 
-#: common/flatpak-dir.c:7836
+#: common/flatpak-dir.c:7942
 #, fuzzy, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Помилка: не вдалося виконати дію %s %s: %s\n"
 
-#: common/flatpak-dir.c:7881
+#: common/flatpak-dir.c:7987
 #, fuzzy, c-format
 msgid "Error searching local repository: %s"
 msgstr "Зберігати посилання у локальному сховищі"
 
-#: common/flatpak-dir.c:8002
+#: common/flatpak-dir.c:8113
 #, c-format
 msgid "%s %s not installed"
 msgstr "Не встановлено %s %s"
 
-#: common/flatpak-dir.c:8075
+#: common/flatpak-dir.c:8280
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Не вдалося знайти встановлення %s"
 
-#: common/flatpak-dir.c:8604
+#: common/flatpak-dir.c:8809
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Середовище виконання %s, гілка %s вже встановлено"
 
-#: common/flatpak-dir.c:8605
+#: common/flatpak-dir.c:8810
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Програму %s, гілка %s вже встановлено"
 
-#: common/flatpak-dir.c:9064
+#: common/flatpak-dir.c:9269
 msgid "Remote title not set"
 msgstr "Заголовок віддаленого сховища не встановлено"
 
-#: common/flatpak-dir.c:9086
+#: common/flatpak-dir.c:9291
 msgid "Remote default-branch not set"
 msgstr "Не встановлено типову гілку віддаленого сховища"
 
-#: common/flatpak-dir.c:9580
+#: common/flatpak-dir.c:9785
 msgid "No flatpak cache in remote summary"
 msgstr "У резюме сховища немає кешу flatpak"
 
-#: common/flatpak-dir.c:9590
+#: common/flatpak-dir.c:9795
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Немає запису %s у кеші flatpak резюме сховища "
 
-#: common/flatpak-run.c:257
+#: common/flatpak-run.c:258
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Невідомий тип спільного ресурсу %s, коректними типами є такі: %s"
 
-#: common/flatpak-run.c:292
+#: common/flatpak-run.c:293
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Невідомий тип правил %s, коректними типами є такі: %s"
 
-#: common/flatpak-run.c:330
+#: common/flatpak-run.c:331
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr "Некоректна назва D-Bus, %s\n"
 
-#: common/flatpak-run.c:343
+#: common/flatpak-run.c:344
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Невідомий тип сокета, %s, коректними типами є такі: %s"
 
-#: common/flatpak-run.c:372
+#: common/flatpak-run.c:373
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Невідомий тип пристрою, %s. Коректними типами є %s"
 
-#: common/flatpak-run.c:400
+#: common/flatpak-run.c:401
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Невідомий тип можливості %s, коректними типами є такі: %s"
 
-#: common/flatpak-run.c:773
+#: common/flatpak-run.c:774
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, home, xdg-"
@@ -2127,165 +2136,158 @@ msgstr ""
 "Невідоме розташування файлової системи, %s, коректними розташуваннями є "
 "такі: host, home, xdg-*[/...], ~/dir, /dir"
 
-#: common/flatpak-run.c:1039
+#: common/flatpak-run.c:1040
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Некоректне форматування середовища, %s"
 
-#: common/flatpak-run.c:1179
+#: common/flatpak-run.c:1180
 msgid "Share with host"
 msgstr "Надати спільний доступ вузлу"
 
-#: common/flatpak-run.c:1179 common/flatpak-run.c:1180
+#: common/flatpak-run.c:1180 common/flatpak-run.c:1181
 msgid "SHARE"
 msgstr "СПІЛЬНИЙ РЕСУРС"
 
-#: common/flatpak-run.c:1180
+#: common/flatpak-run.c:1181
 msgid "Unshare with host"
 msgstr "Скасувати надання спільного ресурсу вузлу"
 
-#: common/flatpak-run.c:1181
+#: common/flatpak-run.c:1182
 msgid "Expose socket to app"
 msgstr "Відкрити сокет програмі"
 
-#: common/flatpak-run.c:1181 common/flatpak-run.c:1182
+#: common/flatpak-run.c:1182 common/flatpak-run.c:1183
 msgid "SOCKET"
 msgstr "СОКЕТ"
 
-#: common/flatpak-run.c:1182
+#: common/flatpak-run.c:1183
 msgid "Don't expose socket to app"
 msgstr "Не відкривати сокет програми"
 
-#: common/flatpak-run.c:1183
+#: common/flatpak-run.c:1184
 msgid "Expose device to app"
 msgstr "Відкрити пристрій програмі"
 
-#: common/flatpak-run.c:1183 common/flatpak-run.c:1184
+#: common/flatpak-run.c:1184 common/flatpak-run.c:1185
 msgid "DEVICE"
 msgstr "ПРИСТРІЙ"
 
-#: common/flatpak-run.c:1184
+#: common/flatpak-run.c:1185
 msgid "Don't expose device to app"
 msgstr "Не відкривати пристрій програмі"
 
-#: common/flatpak-run.c:1185
+#: common/flatpak-run.c:1186
 msgid "Allow feature"
 msgstr "Увімкнути можливість"
 
-#: common/flatpak-run.c:1185 common/flatpak-run.c:1186
+#: common/flatpak-run.c:1186 common/flatpak-run.c:1187
 msgid "FEATURE"
 msgstr "МОЖЛИВІСТЬ"
 
-#: common/flatpak-run.c:1186
+#: common/flatpak-run.c:1187
 msgid "Don't allow feature"
 msgstr "Вимкнути можливість"
 
-#: common/flatpak-run.c:1187
+#: common/flatpak-run.c:1188
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Відкрити файлову систему програмі (:ro — лише для читання)"
 
-#: common/flatpak-run.c:1187
+#: common/flatpak-run.c:1188
 msgid "FILESYSTEM[:ro]"
 msgstr "ФАЙЛОВА_СИСТЕМА[:ro]"
 
-#: common/flatpak-run.c:1188
+#: common/flatpak-run.c:1189
 msgid "Don't expose filesystem to app"
 msgstr "Не відкривати файлову систему програмі"
 
-#: common/flatpak-run.c:1188
+#: common/flatpak-run.c:1189
 msgid "FILESYSTEM"
 msgstr "ФАЙЛОВА СИСТЕМА"
 
-#: common/flatpak-run.c:1189
+#: common/flatpak-run.c:1190
 msgid "Set environment variable"
 msgstr "Встановити змінну середовища"
 
-#: common/flatpak-run.c:1189
+#: common/flatpak-run.c:1190
 msgid "VAR=VALUE"
 msgstr "ЗМІННА=ЗНАЧЕННЯ"
 
-#: common/flatpak-run.c:1190
+#: common/flatpak-run.c:1191
 msgid "Allow app to own name on the session bus"
 msgstr "Дозволити програмі бути власником назви на каналі сеансу"
 
-#: common/flatpak-run.c:1190 common/flatpak-run.c:1191
-#: common/flatpak-run.c:1192 common/flatpak-run.c:1193
+#: common/flatpak-run.c:1191 common/flatpak-run.c:1192
+#: common/flatpak-run.c:1193 common/flatpak-run.c:1194
 msgid "DBUS_NAME"
 msgstr "НАЗВА_DBUS"
 
-#: common/flatpak-run.c:1191
+#: common/flatpak-run.c:1192
 msgid "Allow app to talk to name on the session bus"
 msgstr "Дозволити програмі обмінюватися даними з назвою на каналі сеансу"
 
-#: common/flatpak-run.c:1192
+#: common/flatpak-run.c:1193
 msgid "Allow app to own name on the system bus"
 msgstr "Дозволити програмі бути власником назви на каналі системи"
 
-#: common/flatpak-run.c:1193
+#: common/flatpak-run.c:1194
 msgid "Allow app to talk to name on the system bus"
 msgstr "Дозволити програмі обмінюватися даними з назвою на каналі системи"
 
-#: common/flatpak-run.c:1194
+#: common/flatpak-run.c:1195
 msgid "Add generic policy option"
 msgstr "Додати параметр загальних правил"
 
-#: common/flatpak-run.c:1194 common/flatpak-run.c:1195
+#: common/flatpak-run.c:1195 common/flatpak-run.c:1196
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ПІДСИСТЕМА.КЛЮЧ=ЗНАЧЕННЯ"
 
-#: common/flatpak-run.c:1195
+#: common/flatpak-run.c:1196
 msgid "Remove generic policy option"
 msgstr "Вилучити параметр загальних правил"
 
-#: common/flatpak-run.c:1196
+#: common/flatpak-run.c:1197
 msgid "Persist home directory"
 msgstr "Примусово встановити домашній каталог"
 
-#: common/flatpak-run.c:1196
+#: common/flatpak-run.c:1197
 msgid "FILENAME"
 msgstr "НАЗВА ФАЙЛА"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:1198
+#: common/flatpak-run.c:1199
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Не вимагати запущеного сеансу (без створення cgroup)"
 
-#: common/flatpak-run.c:1882
-msgid "Failed to create temporary file"
-msgstr "Не вдалося створити тимчасовий файл"
-
-#: common/flatpak-run.c:1889
-msgid "Failed to unlink temporary file"
-msgstr "Не вдалося відв’язати тимчасовий файл"
-
-#: common/flatpak-run.c:1907
-msgid "Failed to write to temporary file"
-msgstr "Не вдалося виконати запис до тимчасового файла"
-
-#: common/flatpak-run.c:3707
+#: common/flatpak-run.c:3830
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Не вдалося відкрити тимчасовий файл flatpak-info: %s"
 
-#: common/flatpak-run.c:3769 common/flatpak-run.c:3779
+#: common/flatpak-run.c:3904 common/flatpak-run.c:3914
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Не вдалося відкрити тимчасовий файл: %s"
 
-#: common/flatpak-run.c:4129
+#: common/flatpak-run.c:4253
 msgid "Unable to create sync pipe"
 msgstr "Не вдалося створити канал синхронізації"
 
-#: common/flatpak-run.c:4156
+#: common/flatpak-run.c:4280
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Не вдалося відкрити файл інформації щодо програми: %s"
 
-#: common/flatpak-run.c:4186
+#: common/flatpak-run.c:4310
 msgid "Failed to sync with dbus proxy"
 msgstr "Не вдалося виконати синхронізацію із проміжним D-Bus"
 
-#: common/flatpak-utils.c:2814
+#: common/flatpak-run.c:5069
+#, fuzzy, c-format
+msgid "ldconfig failed, exit status %d"
+msgstr "Помилка скрипту apply_extra, стан виходу %d"
+
+#: common/flatpak-utils.c:2900
 msgid "No extra data sources"
 msgstr "Немає джерел додаткових даних"
 
@@ -2300,7 +2302,7 @@ msgstr "Встановлення підписаної програми"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:24
 #: system-helper/org.freedesktop.Flatpak.policy.in:41
-#: system-helper/org.freedesktop.Flatpak.policy.in:103
+#: system-helper/org.freedesktop.Flatpak.policy.in:118
 msgid "Authentication is required to install software"
 msgstr "Для встановлення програмного забезпечення слід пройти розпізнавання"
 
@@ -2325,7 +2327,7 @@ msgstr "Оновлення підписаної програми"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:59
 #: system-helper/org.freedesktop.Flatpak.policy.in:77
-#: system-helper/org.freedesktop.Flatpak.policy.in:154
+#: system-helper/org.freedesktop.Flatpak.policy.in:169
 msgid "Authentication is required to update software"
 msgstr "Для оновлення програмного забезпечення слід пройти розпізнавання"
 
@@ -2350,28 +2352,41 @@ msgstr "Оновити віддалені метадані"
 msgid "Authentication is required to update remote info"
 msgstr "Для оновлення даних віддаленого сховища слід пройти розпізнавання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:102
+#. SECURITY:
+#. - Normal users do not need authentication to modify the
+#. OSTree repository
+#: system-helper/org.freedesktop.Flatpak.policy.in:106
+#, fuzzy
+msgid "Update system repository"
+msgstr "Оновити файл резюме у сховищі"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:107
+#, fuzzy
+msgid "Authentication is required to update the system repository"
+msgstr "Для оновлення даних віддаленого сховища слід пройти розпізнавання"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:117
 msgid "Install bundle"
 msgstr "Встановити пакунок"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:113
+#: system-helper/org.freedesktop.Flatpak.policy.in:128
 msgid "Uninstall runtime"
 msgstr "Вилучення середовища виконання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:114
-#: system-helper/org.freedesktop.Flatpak.policy.in:125
+#: system-helper/org.freedesktop.Flatpak.policy.in:129
+#: system-helper/org.freedesktop.Flatpak.policy.in:140
 msgid "Authentication is required to uninstall software"
 msgstr "Для вилучення програмного забезпечення слід пройти розпізнавання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:124
+#: system-helper/org.freedesktop.Flatpak.policy.in:139
 msgid "Uninstall app"
 msgstr "Вилучити програму"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:135
+#: system-helper/org.freedesktop.Flatpak.policy.in:150
 msgid "Configure Remote"
 msgstr "Налаштовування сховищ"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:136
+#: system-helper/org.freedesktop.Flatpak.policy.in:151
 msgid "Authentication is required to configure software repositories"
 msgstr ""
 "Для налаштовування сховище програмного забезпечення слід пройти розпізнавання"
@@ -2382,9 +2397,18 @@ msgstr ""
 #. to update the system when unattended.
 #. - Changing this to anything other than 'yes' will break unattended
 #. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:153
+#: system-helper/org.freedesktop.Flatpak.policy.in:168
 msgid "Update appstream"
 msgstr "Оновлення appstream"
+
+#~ msgid "Failed to create temporary file"
+#~ msgstr "Не вдалося створити тимчасовий файл"
+
+#~ msgid "Failed to unlink temporary file"
+#~ msgstr "Не вдалося відв’язати тимчасовий файл"
+
+#~ msgid "Failed to write to temporary file"
+#~ msgstr "Не вдалося виконати запис до тимчасового файла"
 
 #~ msgid "REMOTE must be specified"
 #~ msgstr "Має бути вказано СХОВИЩЕ"

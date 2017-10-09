@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-27 00:31+0200\n"
+"POT-Creation-Date: 2017-10-09 12:40+0200\n"
 "PO-Revision-Date: 2017-01-23 18:19+0100\n"
 "Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
@@ -149,7 +149,7 @@ msgstr "UMIESTNENIE musí byť určené"
 #: app/flatpak-builtins-document-list.c:70
 #: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:111
 #: app/flatpak-builtins-install.c:265 app/flatpak-builtins-install.c:399
-#: app/flatpak-builtins-list.c:377 app/flatpak-builtins-list-remotes.c:66
+#: app/flatpak-builtins-list.c:382 app/flatpak-builtins-list-remotes.c:66
 #: app/flatpak-builtins-ls-remote.c:84 app/flatpak-builtins-make-current.c:67
 #: app/flatpak-builtins-override.c:66
 msgid "Too many arguments"
@@ -338,35 +338,35 @@ msgstr ""
 msgid "Export application homedir directory to build"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:112
+#: app/flatpak-builtins-build.c:139
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
 msgstr "ADRESÁR [PRÍKAZ [parametre...]] - Zostavenie v adresári"
 
-#: app/flatpak-builtins-build.c:135 app/flatpak-builtins-build-finish.c:526
+#: app/flatpak-builtins-build.c:162 app/flatpak-builtins-build-finish.c:533
 msgid "DIRECTORY must be specified"
 msgstr "ADRESÁR musí byť určený"
 
-#: app/flatpak-builtins-build.c:146 app/flatpak-builtins-build-export.c:721
+#: app/flatpak-builtins-build.c:173 app/flatpak-builtins-build-export.c:721
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:165
+#: app/flatpak-builtins-build.c:192
 #, fuzzy
 msgid "metadata invalid, not application or runtime"
 msgstr "Podpíše aplikáciu alebo prostredie"
 
-#: app/flatpak-builtins-build.c:261
+#: app/flatpak-builtins-build.c:292
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:397
+#: app/flatpak-builtins-build.c:432
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:423 common/flatpak-run.c:5085
+#: app/flatpak-builtins-build.c:460 common/flatpak-run.c:5406
 msgid "Unable to start app"
 msgstr "Nie je možné spustiť aplikáciu"
 
@@ -521,103 +521,111 @@ msgid "LOCATION and DIRECTORY must be specified"
 msgstr ""
 
 #: app/flatpak-builtins-build-export.c:738
-#: app/flatpak-builtins-build-finish.c:554
+#: app/flatpak-builtins-build-finish.c:561
 msgid "No name specified in the metadata"
 msgstr "Nie je určený žiadny názov v metaúdajoch"
 
-#: app/flatpak-builtins-build-finish.c:47
+#: app/flatpak-builtins-build-finish.c:48
 msgid "Command to set"
 msgstr "Príkaz, ktorý sa má nastaviť"
 
-#: app/flatpak-builtins-build-finish.c:47 app/flatpak-builtins-run.c:53
-#: app/flatpak-main.c:146
+#: app/flatpak-builtins-build-finish.c:48 app/flatpak-builtins-run.c:53
+#: app/flatpak-main.c:159
 msgid "COMMAND"
 msgstr "PRÍKAZ"
 
-#: app/flatpak-builtins-build-finish.c:48
+#: app/flatpak-builtins-build-finish.c:49
 msgid "Flatpak version to require"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:48
+#: app/flatpak-builtins-build-finish.c:49
 msgid "MAJOR.MINOR.MICRO"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:49
+#: app/flatpak-builtins-build-finish.c:50
 msgid "Don't process exports"
 msgstr "Nespracuje exporty"
 
-#: app/flatpak-builtins-build-finish.c:50
+#: app/flatpak-builtins-build-finish.c:51
 msgid "Extra data info"
 msgstr "Informácie o údajoch navyše"
 
-#: app/flatpak-builtins-build-finish.c:51
+#: app/flatpak-builtins-build-finish.c:52
 msgid "Add extension point info"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:51
+#: app/flatpak-builtins-build-finish.c:52
 msgid "NAME=VARIABLE[=VALUE]"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:52
-msgid "Change the sdk used for the app"
-msgstr ""
-
-#: app/flatpak-builtins-build-finish.c:52
-msgid "SDK"
+#: app/flatpak-builtins-build-finish.c:53
+msgid "Set extension priority (only for extensions)"
 msgstr ""
 
 #: app/flatpak-builtins-build-finish.c:53
+msgid "0"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:54
+msgid "Change the sdk used for the app"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:54
+msgid "SDK"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:55
 msgid "Change the runtime used for the app"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:53 app/flatpak-builtins-build-init.c:50
+#: app/flatpak-builtins-build-finish.c:55 app/flatpak-builtins-build-init.c:50
 #: app/flatpak-builtins-run.c:56
 msgid "RUNTIME"
 msgstr "PROSTREDIE"
 
-#: app/flatpak-builtins-build-finish.c:54
+#: app/flatpak-builtins-build-finish.c:56
 msgid "Set generic metadata option"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:54
+#: app/flatpak-builtins-build-finish.c:56
 msgid "GROUP=KEY[=VALUE]"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:431
+#: app/flatpak-builtins-build-finish.c:433
 #, c-format
 msgid "Too few elements in --extra-data argument %s"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:463
+#: app/flatpak-builtins-build-finish.c:465
 #, c-format
 msgid ""
 "Too few elements in --metadata argument %s, format should be "
 "GROUP=KEY[=VALUE]]"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:478
+#: app/flatpak-builtins-build-finish.c:480
 #, c-format
 msgid ""
 "Too few elements in --extension argument %s, format should be "
 "NAME=VAR[=VALUE]"
 msgstr ""
 
-#: app/flatpak-builtins-build-finish.c:516
+#: app/flatpak-builtins-build-finish.c:523
 #, fuzzy
 msgid "DIRECTORY - Finalize a build directory"
 msgstr "ADRESÁR [PRÍKAZ [parametre...]] - Zostavenie v adresári"
 
-#: app/flatpak-builtins-build-finish.c:538
+#: app/flatpak-builtins-build-finish.c:545
 #, c-format
 msgid "Build directory %s not initialized"
 msgstr "Adresár zostavenia %s nie je inicializovaný"
 
-#: app/flatpak-builtins-build-finish.c:559
+#: app/flatpak-builtins-build-finish.c:566
 #, c-format
 msgid "Build directory %s already finalized"
 msgstr "Adresár zostavenia %s je už uzavretý"
 
-#: app/flatpak-builtins-build-finish.c:572
+#: app/flatpak-builtins-build-finish.c:579
 msgid "Please review the exported files and the metadata\n"
 msgstr ""
 
@@ -1182,7 +1190,7 @@ msgstr "Nainštalovanie podpísaného prostredia"
 msgid "Options"
 msgstr ""
 
-#: app/flatpak-builtins-list.c:370
+#: app/flatpak-builtins-list.c:375
 msgid " - List installed apps and/or runtimes"
 msgstr ""
 
@@ -1500,33 +1508,33 @@ msgid "[REF...] - Update applications or runtimes"
 msgstr "Podpíše aplikáciu alebo rozhranie"
 
 #. translators: please keep the leading space
-#: app/flatpak-main.c:59
+#: app/flatpak-main.c:61
 msgid " Manage installed apps and runtimes"
 msgstr " Správa nainštalovaných aplikácií a prostredí"
 
-#: app/flatpak-main.c:60
+#: app/flatpak-main.c:62
 #, fuzzy
 msgid "Install an application or runtime"
 msgstr "Podpíše aplikáciu alebo rozhranie"
 
-#: app/flatpak-main.c:61
+#: app/flatpak-main.c:63
 msgid "Update an installed application or runtime"
 msgstr ""
 
-#: app/flatpak-main.c:62
+#: app/flatpak-main.c:64
 msgid "Uninstall an installed application or runtime"
 msgstr ""
 
-#: app/flatpak-main.c:63
+#: app/flatpak-main.c:65
 msgid "List installed apps and/or runtimes"
 msgstr ""
 
-#: app/flatpak-main.c:64
+#: app/flatpak-main.c:66
 msgid "Show info for installed app or runtime"
 msgstr ""
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:67
+#: app/flatpak-main.c:69
 msgid ""
 "\n"
 " Running applications"
@@ -1534,24 +1542,24 @@ msgstr ""
 "\n"
 "Spúšťanie aplikácií"
 
-#: app/flatpak-main.c:68
+#: app/flatpak-main.c:70
 msgid "Run an application"
 msgstr "Spustí aplikáciu"
 
-#: app/flatpak-main.c:69
+#: app/flatpak-main.c:71
 msgid "Override permissions for an application"
 msgstr ""
 
-#: app/flatpak-main.c:70
+#: app/flatpak-main.c:72
 msgid "Specify default version to run"
 msgstr ""
 
-#: app/flatpak-main.c:71
+#: app/flatpak-main.c:73
 msgid "Enter the namespace of a running application"
 msgstr ""
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:74
+#: app/flatpak-main.c:76
 msgid ""
 "\n"
 " Manage file access"
@@ -1559,24 +1567,24 @@ msgstr ""
 "\n"
 "Správa prístupu k súborom"
 
-#: app/flatpak-main.c:75
+#: app/flatpak-main.c:77
 msgid "Grant an application access to a specific file"
 msgstr "Udelí aplikácii prístup k určenému súboru"
 
-#: app/flatpak-main.c:76
+#: app/flatpak-main.c:78
 msgid "Revoke access to a specific file"
 msgstr ""
 
-#: app/flatpak-main.c:77
+#: app/flatpak-main.c:79
 msgid "Show information about a specific file"
 msgstr ""
 
-#: app/flatpak-main.c:78
+#: app/flatpak-main.c:80
 msgid "List exported files"
 msgstr ""
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:81
+#: app/flatpak-main.c:83
 msgid ""
 "\n"
 " Manage remote repositories"
@@ -1584,28 +1592,28 @@ msgstr ""
 "\n"
 "Správa vzdialených repozitárov"
 
-#: app/flatpak-main.c:82
+#: app/flatpak-main.c:84
 msgid "List all configured remotes"
 msgstr "Zoznam všetkých konfigurovaných vzdialených repozitárov"
 
-#: app/flatpak-main.c:83
+#: app/flatpak-main.c:85
 msgid "Add a new remote repository (by URL)"
 msgstr ""
 
-#: app/flatpak-main.c:84
+#: app/flatpak-main.c:86
 msgid "Modify properties of a configured remote"
 msgstr ""
 
-#: app/flatpak-main.c:85
+#: app/flatpak-main.c:87
 msgid "Delete a configured remote"
 msgstr ""
 
-#: app/flatpak-main.c:87
+#: app/flatpak-main.c:89
 msgid "List contents of a configured remote"
 msgstr ""
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:90
+#: app/flatpak-main.c:92
 msgid ""
 "\n"
 " Build applications"
@@ -1613,108 +1621,109 @@ msgstr ""
 "\n"
 "Zostavenie aplikácií"
 
-#: app/flatpak-main.c:91
+#: app/flatpak-main.c:93
 msgid "Initialize a directory for building"
 msgstr ""
 
-#: app/flatpak-main.c:92
+#: app/flatpak-main.c:94
 msgid "Run a build command inside the build dir"
 msgstr ""
 
-#: app/flatpak-main.c:93
+#: app/flatpak-main.c:95
 msgid "Finish a build dir for export"
 msgstr ""
 
-#: app/flatpak-main.c:94
+#: app/flatpak-main.c:96
 msgid "Export a build dir to a repository"
 msgstr "Exportuje adresár zostavenia do repozitára"
 
-#: app/flatpak-main.c:95
+#: app/flatpak-main.c:97
 msgid "Create a bundle file from a build directory"
 msgstr "Vytvorí balík z adresára zostavenia"
 
-#: app/flatpak-main.c:96
+#: app/flatpak-main.c:98
 msgid "Import a bundle file"
 msgstr "Importuje súbor balíka"
 
-#: app/flatpak-main.c:97
+#: app/flatpak-main.c:99
 msgid "Sign an application or runtime"
 msgstr "Podpíše aplikáciu alebo prostredie"
 
-#: app/flatpak-main.c:98
+#: app/flatpak-main.c:100
 msgid "Update the summary file in a repository"
 msgstr "Aktualizuje súbor zhrnutia v repozitári"
 
-#: app/flatpak-main.c:99
+#: app/flatpak-main.c:101
 msgid "Create new commit based on existing ref"
 msgstr ""
 
-#: app/flatpak-main.c:100
+#: app/flatpak-main.c:102
 #, fuzzy
 msgid "Print information about a repo"
 msgstr "Vypíše informácie o verzii a skončí"
 
-#: app/flatpak-main.c:106
-msgid "Print debug information during command processing"
+#: app/flatpak-main.c:119
+#, fuzzy
+msgid "Print debug information during command processing, -vv for more detail"
 msgstr "Vypíše ladiace informácie počas spracovávania príkazu"
 
-#: app/flatpak-main.c:107
+#: app/flatpak-main.c:120
 #, fuzzy
 msgid "Print OSTree debug information during command processing"
 msgstr "Vypíše ladiace informácie počas spracovávania príkazu"
 
-#: app/flatpak-main.c:108
+#: app/flatpak-main.c:121
 msgid "Show help options"
 msgstr "Zobrazí voľby pomocníka"
 
-#: app/flatpak-main.c:113
+#: app/flatpak-main.c:126
 msgid "Print version information and exit"
 msgstr "Vypíše informácie o verzii a skončí"
 
-#: app/flatpak-main.c:114
+#: app/flatpak-main.c:127
 msgid "Print default arch and exit"
 msgstr "Vypíše predvolenú architektúru a skončí"
 
-#: app/flatpak-main.c:115
+#: app/flatpak-main.c:128
 msgid "Print supported arches and exit"
 msgstr "Vypíše podporované architektúry a skončí"
 
-#: app/flatpak-main.c:116
+#: app/flatpak-main.c:129
 #, fuzzy
 msgid "Print active gl drivers and exit"
 msgstr "Vypíše podporované architektúry a skončí"
 
-#: app/flatpak-main.c:121
+#: app/flatpak-main.c:134
 msgid "Work on user installations"
 msgstr ""
 
-#: app/flatpak-main.c:122
+#: app/flatpak-main.c:135
 msgid "Work on system-wide installations (default)"
 msgstr ""
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:136
 msgid "Work on a specific system-wide installation"
 msgstr ""
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:136
 #, fuzzy
 msgid "NAME"
 msgstr "NÁZOV_SÚBORU"
 
-#: app/flatpak-main.c:149
+#: app/flatpak-main.c:162
 msgid "Builtin Commands:"
 msgstr "Vstavané príkazy:"
 
-#: app/flatpak-main.c:367
+#: app/flatpak-main.c:388
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Neznámy príkaz „%s“"
 
-#: app/flatpak-main.c:375
+#: app/flatpak-main.c:396
 msgid "No command specified"
 msgstr "Nebol určený žiadny príkaz"
 
-#: app/flatpak-main.c:491
+#: app/flatpak-main.c:514
 msgid "error:"
 msgstr "chyba:"
 
@@ -1742,10 +1751,10 @@ msgstr ""
 msgid "The required runtime %s was not found in a configured remote.\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:469 common/flatpak-dir.c:1084
-#: common/flatpak-dir.c:1395 common/flatpak-dir.c:1431
-#: common/flatpak-dir.c:1453 common/flatpak-dir.c:9917
-#: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
+#: app/flatpak-transaction.c:469 common/flatpak-dir.c:1127
+#: common/flatpak-dir.c:1433 common/flatpak-dir.c:1456
+#: common/flatpak-dir.c:1478 common/flatpak-dir.c:10136
+#: common/flatpak-utils.c:1272 common/flatpak-utils.c:1366
 #, c-format
 msgid "%s not installed"
 msgstr ""
@@ -1765,524 +1774,517 @@ msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 msgid "%s needs a later flatpak version (%s)"
 msgstr ""
 
-#: app/flatpak-transaction.c:703
+#: app/flatpak-transaction.c:704
 msgid "install"
 msgstr ""
 
-#: app/flatpak-transaction.c:704
+#: app/flatpak-transaction.c:705
 #, c-format
 msgid "Installing: %s from %s\n"
 msgstr "Inštalovanie: %s z %s\n"
 
-#: app/flatpak-transaction.c:720
+#: app/flatpak-transaction.c:721
 #, fuzzy
 msgid "update"
 msgstr "Žiadne aktualizácie.\n"
 
-#: app/flatpak-transaction.c:728
+#: app/flatpak-transaction.c:729
 #, c-format
 msgid "Updating: %s from %s\n"
 msgstr "Aktualizovanie: %s z %s\n"
 
-#: app/flatpak-transaction.c:748
+#: app/flatpak-transaction.c:749
 #, c-format
 msgid "Now at %s.\n"
 msgstr "Teraz na začlenení %s.\n"
 
-#: app/flatpak-transaction.c:754
+#: app/flatpak-transaction.c:755
 msgid "No updates.\n"
 msgstr "Žiadne aktualizácie.\n"
 
-#: app/flatpak-transaction.c:772
+#: app/flatpak-transaction.c:773
 msgid "install bundle"
 msgstr ""
 
-#: app/flatpak-transaction.c:773
+#: app/flatpak-transaction.c:774
 #, c-format
 msgid "Installing: %s from bundle %s\n"
 msgstr "Inštalovanie: %s z balíka %s\n"
 
-#: app/flatpak-transaction.c:785
+#: app/flatpak-transaction.c:786
 #, c-format
 msgid "Warning: Failed to %s %s: %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:790
+#: app/flatpak-transaction.c:791
 #, c-format
 msgid "Error: Failed to %s %s: %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:795
+#: app/flatpak-transaction.c:796
 #, fuzzy
 msgid "One or more operations failed"
 msgstr "Jedna alebo viacero aktualizácií zlyhali"
 
-#: common/flatpak-dir.c:972
+#: common/flatpak-dir.c:1015
 #, c-format
 msgid "No overrides found for %s"
 msgstr ""
 
-#: common/flatpak-dir.c:1586
+#: common/flatpak-dir.c:1611
 #, c-format
 msgid "While opening repository %s: "
 msgstr "Počas otvárania repozitára %s: "
 
-#: common/flatpak-dir.c:1745 common/flatpak-dir.c:5084
+#: common/flatpak-dir.c:1770 common/flatpak-dir.c:5109
 msgid "Can't create deploy directory"
 msgstr ""
 
-#: common/flatpak-dir.c:2425
+#: common/flatpak-dir.c:2450
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:2430
+#: common/flatpak-dir.c:2455
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:2437
+#: common/flatpak-dir.c:2462
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:2451
+#: common/flatpak-dir.c:2476
 #, fuzzy, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Zlyhalo čítanie začlenenia %s: "
 
-#: common/flatpak-dir.c:2454
+#: common/flatpak-dir.c:2479
 #, fuzzy, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Nesprávna veľkosť pre údaje navyše %s"
 
-#: common/flatpak-dir.c:2469
+#: common/flatpak-dir.c:2494
 #, fuzzy, c-format
 msgid "While downloading %s: "
 msgstr "Počas otvárania repozitára %s: "
 
-#: common/flatpak-dir.c:2476
+#: common/flatpak-dir.c:2501
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Nesprávna veľkosť pre údaje navyše %s"
 
-#: common/flatpak-dir.c:2487
+#: common/flatpak-dir.c:2512
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr ""
 
-#: common/flatpak-dir.c:2743
+#: common/flatpak-dir.c:2768
 #, fuzzy, c-format
 msgid "%s commit %s already installed"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:3072 common/flatpak-dir.c:3386
+#: common/flatpak-dir.c:3097 common/flatpak-dir.c:3411
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:3271
+#: common/flatpak-dir.c:3296
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "Nedá sa nájsť %s vo vzdialenom repozitári %s"
 
-#: common/flatpak-dir.c:3944
+#: common/flatpak-dir.c:3969
 msgid "Not enough memory"
 msgstr "Nedostatok pamäte"
 
-#: common/flatpak-dir.c:3963
+#: common/flatpak-dir.c:3988
 msgid "Failed to read from exported file"
 msgstr "Zlyhalo čítanie z exportovaného súboru"
 
-#: common/flatpak-dir.c:4154
+#: common/flatpak-dir.c:4179
 msgid "Error reading mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:4159
+#: common/flatpak-dir.c:4184
 msgid "Invalid mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:4701
+#: common/flatpak-dir.c:4726
 msgid "While getting detached metadata: "
 msgstr ""
 
-#: common/flatpak-dir.c:4719
+#: common/flatpak-dir.c:4744
 msgid "While creating extradir: "
 msgstr ""
 
-#: common/flatpak-dir.c:4740
+#: common/flatpak-dir.c:4765
 msgid "Invalid sha256 for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:4769
+#: common/flatpak-dir.c:4794
 msgid "Wrong size for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:4773
+#: common/flatpak-dir.c:4798
 msgid "Invalid checksum for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:4782
+#: common/flatpak-dir.c:4807
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr ""
 
-#: common/flatpak-dir.c:4966
+#: common/flatpak-dir.c:4991
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr ""
 
-#: common/flatpak-dir.c:5043
+#: common/flatpak-dir.c:5068
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:5058
+#: common/flatpak-dir.c:5083
 #, c-format
 msgid "%s is not available"
 msgstr "Aplikácia %s nie je dostupná"
 
-#: common/flatpak-dir.c:5073 common/flatpak-dir.c:5411
-#: common/flatpak-dir.c:6179 common/flatpak-dir.c:6192
-#: common/flatpak-dir.c:6268
+#: common/flatpak-dir.c:5098 common/flatpak-dir.c:5436
+#: common/flatpak-dir.c:6204 common/flatpak-dir.c:6217
+#: common/flatpak-dir.c:6293
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:5092
+#: common/flatpak-dir.c:5117
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Zlyhalo čítanie začlenenia %s: "
 
-#: common/flatpak-dir.c:5112
+#: common/flatpak-dir.c:5137
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:5137 common/flatpak-dir.c:5168
+#: common/flatpak-dir.c:5162 common/flatpak-dir.c:5193
 msgid "While trying to checkout metadata subpath: "
 msgstr ""
 
-#: common/flatpak-dir.c:5178
+#: common/flatpak-dir.c:5203
 msgid "While trying to remove existing extra dir: "
 msgstr "Počas pokusu o odstránenie existujúceho adresára navyše: "
 
-#: common/flatpak-dir.c:5189
+#: common/flatpak-dir.c:5214
 msgid "While trying to apply extra data: "
 msgstr "Počas pokusu o aplikáciu údajov navyše: "
 
-#: common/flatpak-dir.c:5216
+#: common/flatpak-dir.c:5241
 #, fuzzy, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Neplatný identifikátor pid %s"
 
-#: common/flatpak-dir.c:5223
+#: common/flatpak-dir.c:5248
 #, fuzzy, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Neplatný identifikátor pid %s"
 
-#: common/flatpak-dir.c:5231
+#: common/flatpak-dir.c:5256
 #, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5239
+#: common/flatpak-dir.c:5264
 #, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5247
+#: common/flatpak-dir.c:5272
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5253
+#: common/flatpak-dir.c:5278
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5259
+#: common/flatpak-dir.c:5284
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5278
+#: common/flatpak-dir.c:5303
 msgid "Deployed metadata does not match commit"
 msgstr ""
 
-#: common/flatpak-dir.c:6040
+#: common/flatpak-dir.c:6065
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Táto verzia aplikácie %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:6047
+#: common/flatpak-dir.c:6072
 msgid "Can't change remote during bundle install"
 msgstr ""
 
-#: common/flatpak-dir.c:6590
+#: common/flatpak-dir.c:6615
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "Aplikácia %s vetva %s nie je nainštalovaná"
 
-#: common/flatpak-dir.c:6834
+#: common/flatpak-dir.c:6859
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "Aplikácia %s vetva %s nie je nainštalovaná"
 
-#: common/flatpak-dir.c:7717
+#: common/flatpak-dir.c:7818
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Nič nevyhovuje názvu %s"
 
-#: common/flatpak-dir.c:7794
+#: common/flatpak-dir.c:7900
 #, fuzzy, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Nedá sa nájsť %s%s%s%s%s vo vzdialenom repozitári %s"
 
-#: common/flatpak-dir.c:7836
+#: common/flatpak-dir.c:7942
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:7881
+#: common/flatpak-dir.c:7987
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:8002
+#: common/flatpak-dir.c:8113
 #, c-format
 msgid "%s %s not installed"
 msgstr "Aplikácia %s %s nie je nainštalovaná"
 
-#: common/flatpak-dir.c:8075
+#: common/flatpak-dir.c:8280
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Nepodarilo sa nájsť inštaláciu %s"
 
-#: common/flatpak-dir.c:8604
+#: common/flatpak-dir.c:8809
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Prostredie %s, vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:8605
+#: common/flatpak-dir.c:8810
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Aplikácia %s, vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:9064
+#: common/flatpak-dir.c:9269
 msgid "Remote title not set"
 msgstr ""
 
-#: common/flatpak-dir.c:9086
+#: common/flatpak-dir.c:9291
 #, fuzzy
 msgid "Remote default-branch not set"
 msgstr "Vypíše predvolenú architektúru a skončí"
 
-#: common/flatpak-dir.c:9580
+#: common/flatpak-dir.c:9785
 msgid "No flatpak cache in remote summary"
 msgstr ""
 
-#: common/flatpak-dir.c:9590
+#: common/flatpak-dir.c:9795
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
 
-#: common/flatpak-run.c:257
+#: common/flatpak-run.c:258
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:292
+#: common/flatpak-run.c:293
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:330
+#: common/flatpak-run.c:331
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr ""
 
-#: common/flatpak-run.c:343
+#: common/flatpak-run.c:344
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:372
+#: common/flatpak-run.c:373
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:400
+#: common/flatpak-run.c:401
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:773
+#: common/flatpak-run.c:774
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, home, xdg-"
 "*[/...], ~/dir, /dir"
 msgstr ""
 
-#: common/flatpak-run.c:1039
+#: common/flatpak-run.c:1040
 #, c-format
 msgid "Invalid env format %s"
 msgstr ""
 
-#: common/flatpak-run.c:1179
+#: common/flatpak-run.c:1180
 msgid "Share with host"
 msgstr "Zdieľa s hostiteľom"
 
-#: common/flatpak-run.c:1179 common/flatpak-run.c:1180
+#: common/flatpak-run.c:1180 common/flatpak-run.c:1181
 msgid "SHARE"
 msgstr ""
 
-#: common/flatpak-run.c:1180
+#: common/flatpak-run.c:1181
 msgid "Unshare with host"
 msgstr ""
 
-#: common/flatpak-run.c:1181
+#: common/flatpak-run.c:1182
 msgid "Expose socket to app"
 msgstr ""
 
-#: common/flatpak-run.c:1181 common/flatpak-run.c:1182
+#: common/flatpak-run.c:1182 common/flatpak-run.c:1183
 msgid "SOCKET"
 msgstr "SOKET"
 
-#: common/flatpak-run.c:1182
+#: common/flatpak-run.c:1183
 msgid "Don't expose socket to app"
 msgstr ""
 
-#: common/flatpak-run.c:1183
+#: common/flatpak-run.c:1184
 msgid "Expose device to app"
 msgstr ""
 
-#: common/flatpak-run.c:1183 common/flatpak-run.c:1184
+#: common/flatpak-run.c:1184 common/flatpak-run.c:1185
 msgid "DEVICE"
 msgstr "ZARIADENIE"
 
-#: common/flatpak-run.c:1184
+#: common/flatpak-run.c:1185
 msgid "Don't expose device to app"
 msgstr ""
 
-#: common/flatpak-run.c:1185
+#: common/flatpak-run.c:1186
 msgid "Allow feature"
 msgstr "Umožní funkciu"
 
-#: common/flatpak-run.c:1185 common/flatpak-run.c:1186
+#: common/flatpak-run.c:1186 common/flatpak-run.c:1187
 msgid "FEATURE"
 msgstr "FUNKCIA"
 
-#: common/flatpak-run.c:1186
+#: common/flatpak-run.c:1187
 msgid "Don't allow feature"
 msgstr "Neumožní funkciu"
 
-#: common/flatpak-run.c:1187
+#: common/flatpak-run.c:1188
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr ""
 
-#: common/flatpak-run.c:1187
+#: common/flatpak-run.c:1188
 msgid "FILESYSTEM[:ro]"
 msgstr ""
 
-#: common/flatpak-run.c:1188
+#: common/flatpak-run.c:1189
 msgid "Don't expose filesystem to app"
 msgstr ""
 
-#: common/flatpak-run.c:1188
+#: common/flatpak-run.c:1189
 msgid "FILESYSTEM"
 msgstr "SYSTÉM_SÚBOROV"
 
-#: common/flatpak-run.c:1189
+#: common/flatpak-run.c:1190
 msgid "Set environment variable"
 msgstr ""
 
-#: common/flatpak-run.c:1189
+#: common/flatpak-run.c:1190
 msgid "VAR=VALUE"
 msgstr ""
 
-#: common/flatpak-run.c:1190
+#: common/flatpak-run.c:1191
 msgid "Allow app to own name on the session bus"
 msgstr ""
 
-#: common/flatpak-run.c:1190 common/flatpak-run.c:1191
-#: common/flatpak-run.c:1192 common/flatpak-run.c:1193
+#: common/flatpak-run.c:1191 common/flatpak-run.c:1192
+#: common/flatpak-run.c:1193 common/flatpak-run.c:1194
 msgid "DBUS_NAME"
 msgstr "NÁZOV_DBUS"
 
-#: common/flatpak-run.c:1191
+#: common/flatpak-run.c:1192
 msgid "Allow app to talk to name on the session bus"
 msgstr ""
 
-#: common/flatpak-run.c:1192
+#: common/flatpak-run.c:1193
 msgid "Allow app to own name on the system bus"
 msgstr ""
 
-#: common/flatpak-run.c:1193
+#: common/flatpak-run.c:1194
 msgid "Allow app to talk to name on the system bus"
 msgstr ""
 
-#: common/flatpak-run.c:1194
+#: common/flatpak-run.c:1195
 msgid "Add generic policy option"
 msgstr ""
 
-#: common/flatpak-run.c:1194 common/flatpak-run.c:1195
+#: common/flatpak-run.c:1195 common/flatpak-run.c:1196
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-run.c:1195
+#: common/flatpak-run.c:1196
 msgid "Remove generic policy option"
 msgstr ""
 
-#: common/flatpak-run.c:1196
+#: common/flatpak-run.c:1197
 msgid "Persist home directory"
 msgstr ""
 
-#: common/flatpak-run.c:1196
+#: common/flatpak-run.c:1197
 msgid "FILENAME"
 msgstr "NÁZOV_SÚBORU"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:1198
+#: common/flatpak-run.c:1199
 msgid "Don't require a running session (no cgroups creation)"
 msgstr ""
 
-#: common/flatpak-run.c:1882
-msgid "Failed to create temporary file"
-msgstr "Zlyhalo vytvorenie dočasného súboru"
-
-#: common/flatpak-run.c:1889
-msgid "Failed to unlink temporary file"
-msgstr ""
-
-#: common/flatpak-run.c:1907
-msgid "Failed to write to temporary file"
-msgstr "Zlyhal zápis dočasného súboru"
-
-#: common/flatpak-run.c:3707
+#: common/flatpak-run.c:3830
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Zlyhalo otvorenie dočasného súboru flatpak-info"
 
-#: common/flatpak-run.c:3769 common/flatpak-run.c:3779
+#: common/flatpak-run.c:3904 common/flatpak-run.c:3914
 #, fuzzy, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Zlyhalo otvorenie súboru temp"
 
-#: common/flatpak-run.c:4129
+#: common/flatpak-run.c:4253
 msgid "Unable to create sync pipe"
 msgstr ""
 
-#: common/flatpak-run.c:4156
+#: common/flatpak-run.c:4280
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Zlyhalo otvorenie súboru s informáciami o aplikácii: %s"
 
-#: common/flatpak-run.c:4186
+#: common/flatpak-run.c:4310
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
-#: common/flatpak-utils.c:2814
+#: common/flatpak-run.c:5069
+#, c-format
+msgid "ldconfig failed, exit status %d"
+msgstr ""
+
+#: common/flatpak-utils.c:2900
 msgid "No extra data sources"
 msgstr "Žiadne zdroje údajov navyše"
 
@@ -2297,7 +2299,7 @@ msgstr "Nainštalovanie podpísanej aplikácie"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:24
 #: system-helper/org.freedesktop.Flatpak.policy.in:41
-#: system-helper/org.freedesktop.Flatpak.policy.in:103
+#: system-helper/org.freedesktop.Flatpak.policy.in:118
 msgid "Authentication is required to install software"
 msgstr "Na inštaláciu softvéru sa vyžaduje overenie totožnosti"
 
@@ -2322,7 +2324,7 @@ msgstr "Aktualizovanie podpísanej aplikácie"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:59
 #: system-helper/org.freedesktop.Flatpak.policy.in:77
-#: system-helper/org.freedesktop.Flatpak.policy.in:154
+#: system-helper/org.freedesktop.Flatpak.policy.in:169
 msgid "Authentication is required to update software"
 msgstr "Na aktualizáciu softvéru sa vyžaduje overenie totožnosti"
 
@@ -2349,29 +2351,42 @@ msgstr "Použije alternatívny súbor pre metaúdaje"
 msgid "Authentication is required to update remote info"
 msgstr "Na aktualizáciu softvéru sa vyžaduje overenie totožnosti"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:102
+#. SECURITY:
+#. - Normal users do not need authentication to modify the
+#. OSTree repository
+#: system-helper/org.freedesktop.Flatpak.policy.in:106
+#, fuzzy
+msgid "Update system repository"
+msgstr "Aktualizuje súbor zhrnutia v repozitári"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:107
+#, fuzzy
+msgid "Authentication is required to update the system repository"
+msgstr "Na aktualizáciu softvéru sa vyžaduje overenie totožnosti"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:117
 msgid "Install bundle"
 msgstr "Nainštalovanie balíka"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:113
+#: system-helper/org.freedesktop.Flatpak.policy.in:128
 msgid "Uninstall runtime"
 msgstr "Odinštalovanie prostredia"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:114
-#: system-helper/org.freedesktop.Flatpak.policy.in:125
+#: system-helper/org.freedesktop.Flatpak.policy.in:129
+#: system-helper/org.freedesktop.Flatpak.policy.in:140
 msgid "Authentication is required to uninstall software"
 msgstr "Na odinštalovanie softvéru sa vyžaduje overenie totožnosti"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:124
+#: system-helper/org.freedesktop.Flatpak.policy.in:139
 #, fuzzy
 msgid "Uninstall app"
 msgstr "Odinštalovanie prostredia"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:135
+#: system-helper/org.freedesktop.Flatpak.policy.in:150
 msgid "Configure Remote"
 msgstr "Konfigurácia vzdialeného repozitára"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:136
+#: system-helper/org.freedesktop.Flatpak.policy.in:151
 msgid "Authentication is required to configure software repositories"
 msgstr ""
 "Na konfiguráciu softvérových repozitárov sa vyžaduje overenie totožnosti"
@@ -2382,9 +2397,15 @@ msgstr ""
 #. to update the system when unattended.
 #. - Changing this to anything other than 'yes' will break unattended
 #. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:153
+#: system-helper/org.freedesktop.Flatpak.policy.in:168
 msgid "Update appstream"
 msgstr ""
+
+#~ msgid "Failed to create temporary file"
+#~ msgstr "Zlyhalo vytvorenie dočasného súboru"
+
+#~ msgid "Failed to write to temporary file"
+#~ msgstr "Zlyhal zápis dočasného súboru"
 
 #, fuzzy
 #~ msgid "Downloading %s"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-10-04 03:24+0000\n"
+"POT-Creation-Date: 2017-10-09 12:40+0200\n"
 "PO-Revision-Date: 2017-10-04 15:39+0700\n"
 "Last-Translator: Kukuh Syafaat <syafaatkukuh@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -145,7 +145,7 @@ msgstr "LOKASI harus ditentukan"
 #: app/flatpak-builtins-document-list.c:70
 #: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:111
 #: app/flatpak-builtins-install.c:265 app/flatpak-builtins-install.c:399
-#: app/flatpak-builtins-list.c:377 app/flatpak-builtins-list-remotes.c:66
+#: app/flatpak-builtins-list.c:382 app/flatpak-builtins-list-remotes.c:66
 #: app/flatpak-builtins-ls-remote.c:84 app/flatpak-builtins-make-current.c:67
 #: app/flatpak-builtins-override.c:66
 msgid "Too many arguments"
@@ -334,34 +334,34 @@ msgstr "Bunuh proses saat proses induk mati"
 msgid "Export application homedir directory to build"
 msgstr "Ekspor direktori homedir aplikasi untuk membangun"
 
-#: app/flatpak-builtins-build.c:114
+#: app/flatpak-builtins-build.c:139
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
 msgstr "DIREKTORI [PERINTAH [argumen ...]] - Bangun di direktori"
 
-#: app/flatpak-builtins-build.c:137 app/flatpak-builtins-build-finish.c:526
+#: app/flatpak-builtins-build.c:162 app/flatpak-builtins-build-finish.c:533
 msgid "DIRECTORY must be specified"
 msgstr "DIREKTORI harus ditentukan"
 
-#: app/flatpak-builtins-build.c:148 app/flatpak-builtins-build-export.c:721
+#: app/flatpak-builtins-build.c:173 app/flatpak-builtins-build-export.c:721
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "Direktori bangun %s tidak diinisialisasi, gunakan flatpak build-init"
 
-#: app/flatpak-builtins-build.c:167
+#: app/flatpak-builtins-build.c:192
 msgid "metadata invalid, not application or runtime"
 msgstr "metadata tidak valid, bukan aplikasi atau runtime"
 
-#: app/flatpak-builtins-build.c:267
+#: app/flatpak-builtins-build.c:292
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Tidak ada titik ekstensi %s yang cocok pada %s"
 
-#: app/flatpak-builtins-build.c:405
+#: app/flatpak-builtins-build.c:432
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Kehilangan '=' pada opsi kait bind '%s'"
 
-#: app/flatpak-builtins-build.c:431 common/flatpak-run.c:5103
+#: app/flatpak-builtins-build.c:460 common/flatpak-run.c:5406
 msgid "Unable to start app"
 msgstr "Tidak dapat memulai aplikasi"
 
@@ -518,74 +518,82 @@ msgid "LOCATION and DIRECTORY must be specified"
 msgstr "LOKASI dan DIREKTORI harus ditentukan"
 
 #: app/flatpak-builtins-build-export.c:738
-#: app/flatpak-builtins-build-finish.c:554
+#: app/flatpak-builtins-build-finish.c:561
 msgid "No name specified in the metadata"
 msgstr "Tidak ada nama yang ditentukan dalam metadata"
 
-#: app/flatpak-builtins-build-finish.c:47
+#: app/flatpak-builtins-build-finish.c:48
 msgid "Command to set"
 msgstr "Perintah yang akan diatur"
 
-#: app/flatpak-builtins-build-finish.c:47 app/flatpak-builtins-run.c:53
-#: app/flatpak-main.c:146
+#: app/flatpak-builtins-build-finish.c:48 app/flatpak-builtins-run.c:53
+#: app/flatpak-main.c:159
 msgid "COMMAND"
 msgstr "PERINTAH"
 
-#: app/flatpak-builtins-build-finish.c:48
+#: app/flatpak-builtins-build-finish.c:49
 msgid "Flatpak version to require"
 msgstr "Versi Flatpak membutuhkan"
 
-#: app/flatpak-builtins-build-finish.c:48
+#: app/flatpak-builtins-build-finish.c:49
 msgid "MAJOR.MINOR.MICRO"
 msgstr "MAYOR.MINOR.MIKRO"
 
-#: app/flatpak-builtins-build-finish.c:49
+#: app/flatpak-builtins-build-finish.c:50
 msgid "Don't process exports"
 msgstr "Jangan memproses ekspor"
 
-#: app/flatpak-builtins-build-finish.c:50
+#: app/flatpak-builtins-build-finish.c:51
 msgid "Extra data info"
 msgstr "Info data ekstra"
 
-#: app/flatpak-builtins-build-finish.c:51
+#: app/flatpak-builtins-build-finish.c:52
 msgid "Add extension point info"
 msgstr "Menambahkan info titik ekstensi"
 
-#: app/flatpak-builtins-build-finish.c:51
+#: app/flatpak-builtins-build-finish.c:52
 msgid "NAME=VARIABLE[=VALUE]"
 msgstr "NAMA=VARIABEL[=NILAI]"
 
-#: app/flatpak-builtins-build-finish.c:52
+#: app/flatpak-builtins-build-finish.c:53
+msgid "Set extension priority (only for extensions)"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:53
+msgid "0"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:54
 msgid "Change the sdk used for the app"
 msgstr "Ubah SDK yang digunakan untuk aplikasi"
 
-#: app/flatpak-builtins-build-finish.c:52
+#: app/flatpak-builtins-build-finish.c:54
 msgid "SDK"
 msgstr "SDK"
 
-#: app/flatpak-builtins-build-finish.c:53
+#: app/flatpak-builtins-build-finish.c:55
 msgid "Change the runtime used for the app"
 msgstr "Ubah runtime yang digunakan untuk aplikasi"
 
-#: app/flatpak-builtins-build-finish.c:53 app/flatpak-builtins-build-init.c:50
+#: app/flatpak-builtins-build-finish.c:55 app/flatpak-builtins-build-init.c:50
 #: app/flatpak-builtins-run.c:56
 msgid "RUNTIME"
 msgstr "RUNTIME"
 
-#: app/flatpak-builtins-build-finish.c:54
+#: app/flatpak-builtins-build-finish.c:56
 msgid "Set generic metadata option"
 msgstr "Atur pilihan metadata generik"
 
-#: app/flatpak-builtins-build-finish.c:54
+#: app/flatpak-builtins-build-finish.c:56
 msgid "GROUP=KEY[=VALUE]"
 msgstr "GRUP=KUNCI[=VALUE]"
 
-#: app/flatpak-builtins-build-finish.c:431
+#: app/flatpak-builtins-build-finish.c:433
 #, c-format
 msgid "Too few elements in --extra-data argument %s"
 msgstr "Terlalu sedikit elemen dalam --extra-data argumen %s"
 
-#: app/flatpak-builtins-build-finish.c:463
+#: app/flatpak-builtins-build-finish.c:465
 #, c-format
 msgid ""
 "Too few elements in --metadata argument %s, format should be "
@@ -594,7 +602,7 @@ msgstr ""
 "Terlalu sedikit elemen dalam argumen --metadata %s, format seharusnya "
 "GRUP=KUNCI[=NILAI]]"
 
-#: app/flatpak-builtins-build-finish.c:478
+#: app/flatpak-builtins-build-finish.c:480
 #, c-format
 msgid ""
 "Too few elements in --extension argument %s, format should be "
@@ -603,21 +611,21 @@ msgstr ""
 "Too few elements in --metadata argument %s, format should be "
 "NAMA=VAR[=NILAI]]"
 
-#: app/flatpak-builtins-build-finish.c:516
+#: app/flatpak-builtins-build-finish.c:523
 msgid "DIRECTORY - Finalize a build directory"
 msgstr "DIREKTORI - Finalisasi direktori bangun"
 
-#: app/flatpak-builtins-build-finish.c:538
+#: app/flatpak-builtins-build-finish.c:545
 #, c-format
 msgid "Build directory %s not initialized"
 msgstr "Direktori bangun %s tidak diinisialisasi"
 
-#: app/flatpak-builtins-build-finish.c:559
+#: app/flatpak-builtins-build-finish.c:566
 #, c-format
 msgid "Build directory %s already finalized"
 msgstr "Direktori bangun %s sudah diselesaikan"
 
-#: app/flatpak-builtins-build-finish.c:572
+#: app/flatpak-builtins-build-finish.c:579
 msgid "Please review the exported files and the metadata\n"
 msgstr "Harap tinjau berkas yang diekspor dan metadata\n"
 
@@ -1179,7 +1187,7 @@ msgstr "Ukuran terpasang"
 msgid "Options"
 msgstr "Opsi"
 
-#: app/flatpak-builtins-list.c:370
+#: app/flatpak-builtins-list.c:375
 msgid " - List installed apps and/or runtimes"
 msgstr " - Daftar aplikasi dan/atau runtimes yang terpasang"
 
@@ -1494,32 +1502,32 @@ msgid "[REF...] - Update applications or runtimes"
 msgstr "[REF...] - Perbarui aplikasi atau runtime"
 
 #. translators: please keep the leading space
-#: app/flatpak-main.c:59
+#: app/flatpak-main.c:61
 msgid " Manage installed apps and runtimes"
 msgstr " Mengelola aplikasi dan runtime yang terpasang"
 
-#: app/flatpak-main.c:60
+#: app/flatpak-main.c:62
 msgid "Install an application or runtime"
 msgstr "Pasang aplikasi atau runtime"
 
-#: app/flatpak-main.c:61
+#: app/flatpak-main.c:63
 msgid "Update an installed application or runtime"
 msgstr "Perbarui aplikasi yang terpasang atau runtime"
 
-#: app/flatpak-main.c:62
+#: app/flatpak-main.c:64
 msgid "Uninstall an installed application or runtime"
 msgstr "Hapus aplikasi yang terpasang atau runtime"
 
-#: app/flatpak-main.c:63
+#: app/flatpak-main.c:65
 msgid "List installed apps and/or runtimes"
 msgstr "Daftar aplikasi dan/atau runtime yang terpasang"
 
-#: app/flatpak-main.c:64
+#: app/flatpak-main.c:66
 msgid "Show info for installed app or runtime"
 msgstr "Tampilkan info untuk aplikasi yang terpasang atau runtime"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:67
+#: app/flatpak-main.c:69
 msgid ""
 "\n"
 " Running applications"
@@ -1527,24 +1535,24 @@ msgstr ""
 "\n"
 " Menjalankan aplikasi"
 
-#: app/flatpak-main.c:68
+#: app/flatpak-main.c:70
 msgid "Run an application"
 msgstr "Menjalankan aplikasi"
 
-#: app/flatpak-main.c:69
+#: app/flatpak-main.c:71
 msgid "Override permissions for an application"
 msgstr "Timpa perizinan untuk aplikasi"
 
-#: app/flatpak-main.c:70
+#: app/flatpak-main.c:72
 msgid "Specify default version to run"
 msgstr "Tentukan versi bawaan untuk dijalankan"
 
-#: app/flatpak-main.c:71
+#: app/flatpak-main.c:73
 msgid "Enter the namespace of a running application"
 msgstr "Masukkan namespace aplikasi yang sedang berjalan"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:74
+#: app/flatpak-main.c:76
 msgid ""
 "\n"
 " Manage file access"
@@ -1552,24 +1560,24 @@ msgstr ""
 "\n"
 " Kelola akses berkas"
 
-#: app/flatpak-main.c:75
+#: app/flatpak-main.c:77
 msgid "Grant an application access to a specific file"
 msgstr "Berikan akses aplikasi ke berkas tertentu"
 
-#: app/flatpak-main.c:76
+#: app/flatpak-main.c:78
 msgid "Revoke access to a specific file"
 msgstr "Cabut akses ke berkas tertentu"
 
-#: app/flatpak-main.c:77
+#: app/flatpak-main.c:79
 msgid "Show information about a specific file"
 msgstr "Tampilkan informasi tentang berkas tertentu"
 
-#: app/flatpak-main.c:78
+#: app/flatpak-main.c:80
 msgid "List exported files"
 msgstr "Daftar berkas yang diekspor"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:81
+#: app/flatpak-main.c:83
 msgid ""
 "\n"
 " Manage remote repositories"
@@ -1577,28 +1585,28 @@ msgstr ""
 "\n"
 " Kelola repositori remote"
 
-#: app/flatpak-main.c:82
+#: app/flatpak-main.c:84
 msgid "List all configured remotes"
 msgstr "Daftar semua remote yang dikonfigurasi"
 
-#: app/flatpak-main.c:83
+#: app/flatpak-main.c:85
 msgid "Add a new remote repository (by URL)"
 msgstr "Tambahkan repositori remote baru (menurut URL)"
 
-#: app/flatpak-main.c:84
+#: app/flatpak-main.c:86
 msgid "Modify properties of a configured remote"
 msgstr "Modifikasi properti dari remote yang terkonfigurasi"
 
-#: app/flatpak-main.c:85
+#: app/flatpak-main.c:87
 msgid "Delete a configured remote"
 msgstr "Hapus remote yang terkonfigurasi"
 
-#: app/flatpak-main.c:87
+#: app/flatpak-main.c:89
 msgid "List contents of a configured remote"
 msgstr "Daftar isi dari remote yang terkonfigurasi"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:90
+#: app/flatpak-main.c:92
 msgid ""
 "\n"
 " Build applications"
@@ -1606,104 +1614,105 @@ msgstr ""
 "\n"
 " Bangun aplikasi"
 
-#: app/flatpak-main.c:91
+#: app/flatpak-main.c:93
 msgid "Initialize a directory for building"
 msgstr "Inisialisasi direktori untuk membangun"
 
-#: app/flatpak-main.c:92
+#: app/flatpak-main.c:94
 msgid "Run a build command inside the build dir"
 msgstr "Jalankan perintah bangun di dalam direktori bangun"
 
-#: app/flatpak-main.c:93
+#: app/flatpak-main.c:95
 msgid "Finish a build dir for export"
 msgstr "Selesaikan direktori bangun untuk ekspor"
 
-#: app/flatpak-main.c:94
+#: app/flatpak-main.c:96
 msgid "Export a build dir to a repository"
 msgstr "Ekspor direktori bangun ke repositori"
 
-#: app/flatpak-main.c:95
+#: app/flatpak-main.c:97
 msgid "Create a bundle file from a build directory"
 msgstr "Buat berkas bundel dari direktori bangun"
 
-#: app/flatpak-main.c:96
+#: app/flatpak-main.c:98
 msgid "Import a bundle file"
 msgstr "Impor berkas bundel"
 
-#: app/flatpak-main.c:97
+#: app/flatpak-main.c:99
 msgid "Sign an application or runtime"
 msgstr "Menandatangani sebuah aplikasi atau runtime"
 
-#: app/flatpak-main.c:98
+#: app/flatpak-main.c:100
 msgid "Update the summary file in a repository"
 msgstr "Perbarui berkas ringkasan dalam repositori"
 
-#: app/flatpak-main.c:99
+#: app/flatpak-main.c:101
 msgid "Create new commit based on existing ref"
 msgstr "Buat komit baru berdasarkan ref yang ada"
 
-#: app/flatpak-main.c:100
+#: app/flatpak-main.c:102
 msgid "Print information about a repo"
 msgstr "Cetak informasi tentang repo"
 
-#: app/flatpak-main.c:106
-msgid "Print debug information during command processing"
+#: app/flatpak-main.c:119
+#, fuzzy
+msgid "Print debug information during command processing, -vv for more detail"
 msgstr "Cetak informasi awakutu selama pemrosesan perintah"
 
-#: app/flatpak-main.c:107
+#: app/flatpak-main.c:120
 msgid "Print OSTree debug information during command processing"
 msgstr "Cetak informasi awakutu OSTree selama pemrosesan perintah"
 
-#: app/flatpak-main.c:108
+#: app/flatpak-main.c:121
 msgid "Show help options"
 msgstr "Tampilkan opsi bantuan"
 
-#: app/flatpak-main.c:113
+#: app/flatpak-main.c:126
 msgid "Print version information and exit"
 msgstr "Cetak informasi versi dan keluar"
 
-#: app/flatpak-main.c:114
+#: app/flatpak-main.c:127
 msgid "Print default arch and exit"
 msgstr "Cetak arsitektur bawaan dan keluar"
 
-#: app/flatpak-main.c:115
+#: app/flatpak-main.c:128
 msgid "Print supported arches and exit"
 msgstr "Cetak arsitektur yang didukung dan keluar"
 
-#: app/flatpak-main.c:116
+#: app/flatpak-main.c:129
 msgid "Print active gl drivers and exit"
 msgstr "Cetak penggerak gl aktif dan keluar"
 
-#: app/flatpak-main.c:121
+#: app/flatpak-main.c:134
 msgid "Work on user installations"
 msgstr "Bekerja pada pemasangan pengguna"
 
-#: app/flatpak-main.c:122
+#: app/flatpak-main.c:135
 msgid "Work on system-wide installations (default)"
 msgstr "Bekerja pada pemasangan di seluruh sistem (bawaan)"
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:136
 msgid "Work on a specific system-wide installation"
 msgstr "Bekerja pada pemasangan seluruh sistem yang spesifik"
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:136
 msgid "NAME"
 msgstr "NAMA"
 
-#: app/flatpak-main.c:149
+#: app/flatpak-main.c:162
 msgid "Builtin Commands:"
 msgstr "Perintah Terpasang:"
 
-#: app/flatpak-main.c:367
+#: app/flatpak-main.c:388
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Perintah tidak dikenal '%s'"
 
-#: app/flatpak-main.c:375
+#: app/flatpak-main.c:396
 msgid "No command specified"
 msgstr "Tidak ada perintah yang ditentukan"
 
-#: app/flatpak-main.c:491
+#: app/flatpak-main.c:514
 msgid "error:"
 msgstr "galat:"
 
@@ -1733,8 +1742,8 @@ msgstr ""
 
 #: app/flatpak-transaction.c:469 common/flatpak-dir.c:1127
 #: common/flatpak-dir.c:1433 common/flatpak-dir.c:1456
-#: common/flatpak-dir.c:1478 common/flatpak-dir.c:10122
-#: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
+#: common/flatpak-dir.c:1478 common/flatpak-dir.c:10136
+#: common/flatpak-utils.c:1272 common/flatpak-utils.c:1366
 #, c-format
 msgid "%s not installed"
 msgstr "%s tidak terpasang"
@@ -2075,37 +2084,37 @@ msgstr "Tidak ada cache flatpak dalam ringkasan remote"
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Tidak ada entri untuk %s dalam ringkasan remote cache flatpak "
 
-#: common/flatpak-run.c:257
+#: common/flatpak-run.c:258
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Tipe berbagi %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-run.c:292
+#: common/flatpak-run.c:293
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Tipe kebijakan %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-run.c:330
+#: common/flatpak-run.c:331
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr "Nama dbus %s tidak valid\n"
 
-#: common/flatpak-run.c:343
+#: common/flatpak-run.c:344
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Tipe soket %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-run.c:372
+#: common/flatpak-run.c:373
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Tipe perangkat %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-run.c:400
+#: common/flatpak-run.c:401
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Tipe fitur %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-run.c:773
+#: common/flatpak-run.c:774
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, home, xdg-"
@@ -2114,165 +2123,158 @@ msgstr ""
 "Lokasi sistem berkas %s tidak diketahui, lokasi yang valid adalah: host, "
 "home, xdg-*[/...], ~/dir, /dir"
 
-#: common/flatpak-run.c:1039
+#: common/flatpak-run.c:1040
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Format env tidak valid %s"
 
-#: common/flatpak-run.c:1179
+#: common/flatpak-run.c:1180
 msgid "Share with host"
 msgstr "Berbagi dengan host"
 
-#: common/flatpak-run.c:1179 common/flatpak-run.c:1180
+#: common/flatpak-run.c:1180 common/flatpak-run.c:1181
 msgid "SHARE"
 msgstr "BERBAGI"
 
-#: common/flatpak-run.c:1180
+#: common/flatpak-run.c:1181
 msgid "Unshare with host"
 msgstr "Tidak berbagi dengan host"
 
-#: common/flatpak-run.c:1181
+#: common/flatpak-run.c:1182
 msgid "Expose socket to app"
 msgstr "Ekspos soket ke aplikasi"
 
-#: common/flatpak-run.c:1181 common/flatpak-run.c:1182
+#: common/flatpak-run.c:1182 common/flatpak-run.c:1183
 msgid "SOCKET"
 msgstr "SOKET"
 
-#: common/flatpak-run.c:1182
+#: common/flatpak-run.c:1183
 msgid "Don't expose socket to app"
 msgstr "Jangan ekspos soket ke aplikasi"
 
-#: common/flatpak-run.c:1183
+#: common/flatpak-run.c:1184
 msgid "Expose device to app"
 msgstr "Ekspos perangkat ke aplikasi"
 
-#: common/flatpak-run.c:1183 common/flatpak-run.c:1184
+#: common/flatpak-run.c:1184 common/flatpak-run.c:1185
 msgid "DEVICE"
 msgstr "PERANGKAT"
 
-#: common/flatpak-run.c:1184
+#: common/flatpak-run.c:1185
 msgid "Don't expose device to app"
 msgstr "Jangan ekspos perangkat ke aplikasi"
 
-#: common/flatpak-run.c:1185
+#: common/flatpak-run.c:1186
 msgid "Allow feature"
 msgstr "Izinkan fitur"
 
-#: common/flatpak-run.c:1185 common/flatpak-run.c:1186
+#: common/flatpak-run.c:1186 common/flatpak-run.c:1187
 msgid "FEATURE"
 msgstr "FITUR"
 
-#: common/flatpak-run.c:1186
+#: common/flatpak-run.c:1187
 msgid "Don't allow feature"
 msgstr "Jangan izinkan fitur"
 
-#: common/flatpak-run.c:1187
+#: common/flatpak-run.c:1188
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Ekspos sistem berkas ke aplikasi (:ro untuk hanya baca)"
 
-#: common/flatpak-run.c:1187
+#: common/flatpak-run.c:1188
 msgid "FILESYSTEM[:ro]"
 msgstr "SISTEMBERKAS[:ro]"
 
-#: common/flatpak-run.c:1188
+#: common/flatpak-run.c:1189
 msgid "Don't expose filesystem to app"
 msgstr "Jangan ekspos sistem berkas ke aplikasi"
 
-#: common/flatpak-run.c:1188
+#: common/flatpak-run.c:1189
 msgid "FILESYSTEM"
 msgstr "SISTEMBERKAS"
 
-#: common/flatpak-run.c:1189
+#: common/flatpak-run.c:1190
 msgid "Set environment variable"
 msgstr "Atur variabel lingkungan"
 
-#: common/flatpak-run.c:1189
+#: common/flatpak-run.c:1190
 msgid "VAR=VALUE"
 msgstr "VAR=NILAI"
 
-#: common/flatpak-run.c:1190
+#: common/flatpak-run.c:1191
 msgid "Allow app to own name on the session bus"
 msgstr "Izinkan aplikasi memiliki nama di bus sesi"
 
-#: common/flatpak-run.c:1190 common/flatpak-run.c:1191
-#: common/flatpak-run.c:1192 common/flatpak-run.c:1193
+#: common/flatpak-run.c:1191 common/flatpak-run.c:1192
+#: common/flatpak-run.c:1193 common/flatpak-run.c:1194
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-run.c:1191
+#: common/flatpak-run.c:1192
 msgid "Allow app to talk to name on the session bus"
 msgstr "Izinkan aplikasi berbicara dengan nama di bus sesi"
 
-#: common/flatpak-run.c:1192
+#: common/flatpak-run.c:1193
 msgid "Allow app to own name on the system bus"
 msgstr "Izinkan aplikasi memiliki nama di bus sistem"
 
-#: common/flatpak-run.c:1193
+#: common/flatpak-run.c:1194
 msgid "Allow app to talk to name on the system bus"
 msgstr "Izinkan aplikasi berbicara dengan nama di bus sistem"
 
-#: common/flatpak-run.c:1194
+#: common/flatpak-run.c:1195
 msgid "Add generic policy option"
 msgstr "Tambahkan opsi kebijakan umum"
 
-#: common/flatpak-run.c:1194 common/flatpak-run.c:1195
+#: common/flatpak-run.c:1195 common/flatpak-run.c:1196
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSISTEM.KUNCI=NILAI"
 
-#: common/flatpak-run.c:1195
+#: common/flatpak-run.c:1196
 msgid "Remove generic policy option"
 msgstr "Hapus opsi kebijakan umum"
 
-#: common/flatpak-run.c:1196
+#: common/flatpak-run.c:1197
 msgid "Persist home directory"
 msgstr "Direktori home yang tetap"
 
-#: common/flatpak-run.c:1196
+#: common/flatpak-run.c:1197
 msgid "FILENAME"
 msgstr "NAMABERKAS"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:1198
+#: common/flatpak-run.c:1199
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Tidak memerlukan sesi berjalan (tidak ada pembuatan cgroups)"
 
-#: common/flatpak-run.c:1882
-msgid "Failed to create temporary file"
-msgstr "Gagal membuat berkas sementara"
-
-#: common/flatpak-run.c:1889
-msgid "Failed to unlink temporary file"
-msgstr "Gagal menghapus tautan berkas sementara"
-
-#: common/flatpak-run.c:1907
-msgid "Failed to write to temporary file"
-msgstr "Gagal menulis ke berkas sementara"
-
-#: common/flatpak-run.c:3731
+#: common/flatpak-run.c:3830
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Gagal membuka berkas temporer flatpak-info: %s"
 
-#: common/flatpak-run.c:3805 common/flatpak-run.c:3815
+#: common/flatpak-run.c:3904 common/flatpak-run.c:3914
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Gagal membuka berkas temporer: %s"
 
-#: common/flatpak-run.c:4157
+#: common/flatpak-run.c:4253
 msgid "Unable to create sync pipe"
 msgstr "Tidak dapat membuat pipa sinkronisasi"
 
-#: common/flatpak-run.c:4184
+#: common/flatpak-run.c:4280
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Gagal membuka berkas info aplikasi: %s"
 
-#: common/flatpak-run.c:4214
+#: common/flatpak-run.c:4310
 msgid "Failed to sync with dbus proxy"
 msgstr "Gagal melakukan sinkronisasi dengan proksi dbus"
 
-#: common/flatpak-utils.c:2814
+#: common/flatpak-run.c:5069
+#, fuzzy, c-format
+msgid "ldconfig failed, exit status %d"
+msgstr "Skrip apply_extra gagal, status keluar %d"
+
+#: common/flatpak-utils.c:2900
 msgid "No extra data sources"
 msgstr "Tidak ada sumber data tambahan"
 
@@ -2382,6 +2384,15 @@ msgstr "Otentikasi diperlukan untuk mengkonfigurasi repositori perangkat lunak"
 #: system-helper/org.freedesktop.Flatpak.policy.in:168
 msgid "Update appstream"
 msgstr "Perbarui appstream"
+
+#~ msgid "Failed to create temporary file"
+#~ msgstr "Gagal membuat berkas sementara"
+
+#~ msgid "Failed to unlink temporary file"
+#~ msgstr "Gagal menghapus tautan berkas sementara"
+
+#~ msgid "Failed to write to temporary file"
+#~ msgstr "Gagal menulis ke berkas sementara"
 
 #~ msgid "REMOTE must be specified"
 #~ msgstr "REMOTE harus ditentukan"
