@@ -8524,7 +8524,8 @@ create_origin_remote_config (OstreeRepo   *repo,
   group = g_strdup_printf ("remote \"%s\"", remote);
 
   g_key_file_set_string (new_config, group, "url", url ? url : "");
-  g_key_file_set_string (new_config, group, "xa.title", title);
+  if (title)
+    g_key_file_set_string (new_config, group, "xa.title", title);
   g_key_file_set_string (new_config, group, "xa.noenumerate", "true");
   g_key_file_set_string (new_config, group, "xa.prio", "0");
   /* Don’t enable summary verification if a collection ID is set, as collection
