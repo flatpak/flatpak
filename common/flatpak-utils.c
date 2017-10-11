@@ -6218,6 +6218,48 @@ flatpak_completion_free (FlatpakCompletion *completion)
   g_free (completion);
 }
 
+/* In this NULL means don't care about these paths, while
+   an empty array means match anything */
+char **
+flatpak_subpaths_merge (char **subpaths1,
+                        char **subpaths2)
+{
+  GPtrArray *array;
+  int i;
+
+  /* Maybe either (or both) is unspecified */
+  if (subpaths1 == NULL)
+    return g_strdupv (subpaths2);
+  if (subpaths2 == NULL)
+    return g_strdupv (subpaths1);
+
+  /* Check for any "everything" match */
+  if (subpaths1[0] == NULL)
+    return g_strdupv (subpaths1);
+  if (subpaths2[0] == NULL)
+    return g_strdupv (subpaths2);
+
+  /* Combine both */
+  array = g_ptr_array_new ();
+
+  for (i = 0; subpaths1[i] != NULL; i++)
+    {
+      if (!flatpak_g_ptr_array_contains_string (array, subpaths1[i]))
+        g_ptr_array_add (array, g_strdup (subpaths1[i]));
+    }
+
+  for (i = 0; subpaths2[i] != NULL; i++)
+    {
+      if (!flatpak_g_ptr_array_contains_string (array, subpaths2[i]))
+        g_ptr_array_add (array, g_strdup (subpaths2[i]));
+    }
+
+  g_ptr_array_sort (array, flatpak_strcmp0_ptr);
+  g_ptr_array_add (array, NULL);
+
+  return (char **)g_ptr_array_free (array, FALSE);
+}
+
 char *
 flatpak_get_lang_from_locale (const char *locale)
 {
