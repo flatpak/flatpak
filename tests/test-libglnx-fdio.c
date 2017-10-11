@@ -177,7 +177,6 @@ static void
 test_filecopy (void)
 {
   _GLNX_TEST_DECLARE_ERROR(local_error, error);
-  g_auto(GLnxTmpfile) tmpf = { 0, };
   const char foo[] = "foo";
   struct stat stbuf;
 
