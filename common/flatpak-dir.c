@@ -1643,6 +1643,28 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
 }
 
 gboolean
+flatpak_dir_set_config (FlatpakDir *self,
+                        const char *key,
+                        const char *value,
+                        GError    **error)
+{
+  GKeyFile *config = ostree_repo_copy_config (self->repo);
+
+  if (value == NULL)
+    g_key_file_remove_key (config, "core", key, NULL);
+  else
+    g_key_file_set_value (config, "core", key, value);
+
+  if (!ostree_repo_write_config (self->repo, config, error))
+    return FALSE;
+
+  if (!ostree_repo_reload_config (self->repo, NULL, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 flatpak_dir_mark_changed (FlatpakDir *self,
                           GError    **error)
 {

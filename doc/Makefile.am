@@ -25,6 +25,7 @@ man1 = \
 	flatpak-remote-modify.1		\
 	flatpak-remote-ls.1		\
 	flatpak-install.1		\
+	flatpak-config.1		\
 	flatpak-update.1		\
 	flatpak-uninstall.1		\
 	flatpak-list.1			\

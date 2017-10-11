@@ -1,0 +1,145 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-config">
+
+    <refentryinfo>
+        <title>flatpak config</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak config</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-config</refname>
+        <refpurpose>Manage configuration</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak config</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">KEY</arg>
+                <arg choice="plain">VALUE</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Show and modify current configuration
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--list</option></term>
+
+                <listitem><para>
+                    Print all keys and their values
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--set</option></term>
+
+                <listitem><para>
+                    Set key KEY to VALUE
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--unset</option></term>
+
+                <listitem><para>
+                    Unset key KEY
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--get</option></term>
+
+                <listitem><para>
+                  Print value of KEY.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Configure per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Configure system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Configure the system-wide installation
+                    specified by <arg choice="plain">NAME</arg> among those defined in
+                    <filename>/etc/flatpak/installations.d/</filename>. Using
+                    <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
+                </para></listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak config --set language sv;en;fi</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+        </para>
+
+    </refsect1>
+
+</refentry>

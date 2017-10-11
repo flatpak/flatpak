@@ -20,6 +20,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-uninstall.c \
 	app/flatpak-builtins-list.c \
 	app/flatpak-builtins-info.c \
+	app/flatpak-builtins-config.c \
 	app/flatpak-builtins-run.c \
 	app/flatpak-builtins-enter.c \
 	app/flatpak-builtins-build-init.c \
