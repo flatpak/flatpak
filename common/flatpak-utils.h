@@ -87,6 +87,9 @@ gboolean flatpak_extension_matches_reason (const char *extension_id,
 
 const char * flatpak_get_bwrap (void);
 
+char **flatpak_subpaths_merge (char **subpaths1,
+                               char **subpaths2);
+
 char *flatpak_get_lang_from_locale (const char *locale);
 char **flatpak_get_current_locale_langs (void);
 
