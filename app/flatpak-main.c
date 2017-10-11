@@ -64,6 +64,7 @@ static FlatpakCommand commands[] = {
   { "uninstall", N_("Uninstall an installed application or runtime"), flatpak_builtin_uninstall, flatpak_complete_uninstall },
   { "list", N_("List installed apps and/or runtimes"), flatpak_builtin_list, flatpak_complete_list },
   { "info", N_("Show info for installed app or runtime"), flatpak_builtin_info, flatpak_complete_info },
+  { "config", N_("Configure flatpak"), flatpak_builtin_config, flatpak_complete_config },
 
    /* translators: please keep the leading newline and space */
   { N_("\n Running applications") },

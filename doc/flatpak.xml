@@ -190,6 +190,13 @@
                     Show information for an installed application or runtime.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-config</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Manage flatpak configuration.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
 

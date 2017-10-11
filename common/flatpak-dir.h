@@ -309,6 +309,10 @@ gboolean    flatpak_dir_recreate_repo (FlatpakDir   *self,
 gboolean    flatpak_dir_ensure_repo (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
+gboolean    flatpak_dir_set_config (FlatpakDir *self,
+                                    const char *key,
+                                    const char *value,
+                                    GError    **error);
 gboolean    flatpak_dir_mark_changed (FlatpakDir *self,
                                       GError    **error);
 gboolean    flatpak_dir_remove_appstream (FlatpakDir   *self,
