@@ -40,6 +40,7 @@ typedef enum {
 struct FlatpakTransactionOp {
   char *remote;
   char *ref;
+  /* NULL means unspecified (normally keep whatever was there before), [] means force everything */
   char **subpaths;
   char *commit;
   GFile *bundle;
@@ -267,13 +268,8 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
   op = g_hash_table_lookup (self->refs, ref);
   if (op != NULL)
     {
-      /* Only override subpaths if already specified,
-         we always want the un-subpathed to win if specified. */
-      if (op->subpaths != NULL && op->subpaths[0] != NULL && subpaths != NULL)
-        {
-          g_strfreev (op->subpaths);
-          op->subpaths = g_strdupv ((char **)subpaths);
-        }
+      g_auto(GStrv) old_subpaths = op->subpaths;
+      op->subpaths = flatpak_subpaths_merge (old_subpaths, (char **)subpaths);
 
       return op;
     }
@@ -676,14 +672,6 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
           if (dir_ref_is_installed (self->dir, op->ref, NULL, &deploy_data))
             {
-              g_autofree const char **current_subpaths = NULL;
-
-              /* When we update a dependency, we always inherit the subpaths
-                 rather than use the default. */
-              g_strfreev (op->subpaths);
-              current_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
-              op->subpaths = g_strdupv ((char **)current_subpaths);
-
               /* Don't use the remote from related ref on update, always use
                  the current remote. */
               g_free (op->remote);
