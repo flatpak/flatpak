@@ -318,16 +318,12 @@ glnx_fstatat_allow_noent (int               dfd,
                           int               flags,
                           GError          **error)
 {
-  struct stat stbuf;
-  if (TEMP_FAILURE_RETRY (fstatat (dfd, path, out_buf ?: &stbuf, flags)) != 0)
+  G_GNUC_UNUSED struct stat unused_stbuf;
+  if (TEMP_FAILURE_RETRY (fstatat (dfd, path, out_buf ? out_buf : &unused_stbuf, flags)) != 0)
     {
       if (errno != ENOENT)
-        {
-          int errsv = errno;
-          (void) glnx_throw_errno_prefix (error, "fstatat(%s)", path);
-          errno = errsv;
-          return FALSE;
-        }
+        return glnx_throw_errno_prefix (error, "fstatat(%s)", path);
+      /* Note we preserve errno as ENOENT */
     }
   else
     errno = 0;
