@@ -6218,37 +6218,58 @@ flatpak_completion_free (FlatpakCompletion *completion)
   g_free (completion);
 }
 
-char **
-flatpak_get_current_locale_subpaths (void)
+char *
+flatpak_get_lang_from_locale (const char *locale)
 {
-  const gchar * const *langs = g_get_language_names ();
-  GPtrArray *subpaths = g_ptr_array_new ();
+  g_autofree char *lang = g_strdup (locale);
+  char *c;
+
+  c = strchr (lang, '@');
+  if (c != NULL)
+    *c = 0;
+  c = strchr (lang, '_');
+  if (c != NULL)
+    *c = 0;
+  c = strchr (lang, '.');
+  if (c != NULL)
+    *c = 0;
+
+  if (strcmp (lang, "C") == 0)
+    return NULL;
+
+  return g_steal_pointer (&lang);
+}
+
+gboolean
+flatpak_g_ptr_array_contains_string (GPtrArray *array, const char *str)
+{
+  int i ;
+  for (i = 0; i < array->len; i++)
+    {
+      if (strcmp (g_ptr_array_index(array, i), str) == 0)
+        return TRUE;
+    }
+  return FALSE;
+}
+
+char **
+flatpak_get_current_locale_langs (void)
+{
+  const gchar * const *locales = g_get_language_names ();
+  GPtrArray *langs = g_ptr_array_new ();
   int i;
 
-  for (i = 0; langs[i] != NULL; i++)
+  for (i = 0; locales[i] != NULL; i++)
     {
-      g_autofree char *dir = g_strconcat ("/", langs[i], NULL);
-      char *c;
-
-      c = strchr (dir, '@');
-      if (c != NULL)
-        *c = 0;
-      c = strchr (dir, '_');
-      if (c != NULL)
-        *c = 0;
-      c = strchr (dir, '.');
-      if (c != NULL)
-        *c = 0;
-
-      if (strcmp (dir, "/C") == 0)
-        continue;
-
-      g_ptr_array_add (subpaths, g_steal_pointer (&dir));
+      char *lang = flatpak_get_lang_from_locale (locales[i]);
+      if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
+        g_ptr_array_add (langs, lang);
     }
 
-  g_ptr_array_add (subpaths, NULL);
+  g_ptr_array_sort (langs, flatpak_strcmp0_ptr);
+  g_ptr_array_add (langs, NULL);
 
-  return (char **)g_ptr_array_free (subpaths, FALSE);
+  return (char **)g_ptr_array_free (langs, FALSE);
 }
 
 #define BAR_LENGTH 20

@@ -10260,16 +10260,12 @@ get_accounts_dbus_proxy (void)
 }
 
 static char **
-get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
+get_locale_langs_from_accounts_dbus (GDBusProxy *proxy)
 {
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_interface_name = "org.freedesktop.Accounts.User";
-  char **object_path = NULL;
-  GList *langs = NULL;
-  GList *l = NULL;
-  g_autoptr(GString) langs_cache = g_string_new (NULL);
-  g_autoptr(GPtrArray) subpaths = g_ptr_array_new ();
-  gboolean use_full_language = FALSE;
+  char **object_paths = NULL;
+  g_autoptr(GPtrArray) langs = g_ptr_array_new ();
   int i;
   g_autoptr(GVariant) ret = NULL;
 
@@ -10283,11 +10279,11 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
   if (ret != NULL)
     g_variant_get (ret,
                    "(^ao)",
-                   &object_path);
+                   &object_paths);
 
-  if (object_path != NULL)
+  if (object_paths != NULL)
     {
-      for (i = 0; object_path[i] != NULL; i++)
+      for (i = 0; object_paths[i] != NULL; i++)
         {
           g_autoptr(GDBusProxy) accounts_proxy = NULL;
           g_autoptr(GVariant) value = NULL;
@@ -10296,7 +10292,7 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
                                                           G_DBUS_PROXY_FLAGS_NONE,
                                                           NULL,
                                                           accounts_bus_name,
-                                                          object_path[i],
+                                                          object_paths[i],
                                                           accounts_interface_name,
                                                           NULL,
                                                           NULL);
@@ -10305,84 +10301,95 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
             {
               value = g_dbus_proxy_get_cached_property (accounts_proxy, "Language");
               if (value != NULL)
-                langs = g_list_append (langs, g_variant_dup_string (value, NULL));
+                {
+                  const char *locale = g_variant_get_string (value, NULL);
+                  g_autofree char *lang = NULL;
+
+                  if (strcmp (locale, "") == 0)
+                    return NULL; /* At least one user with no defined language, fall back to all languages */
+
+                  lang = flatpak_get_lang_from_locale (locale);
+                  if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
+                    g_ptr_array_add (langs, g_steal_pointer (&lang));
+                }
             }
         }
   }
 
-  for (l = langs; l != NULL; l = l->next)
+  if (langs->len == 0)
+    return NULL; /* No defined languages, fall back to all languages */
+
+  g_ptr_array_sort (langs, flatpak_strcmp0_ptr);
+  g_ptr_array_add (langs, NULL);
+
+  return (char **)g_ptr_array_free (g_steal_pointer (&langs), FALSE);
+}
+
+static int
+cmpstringp (const void *p1, const void *p2)
+{
+  return strcmp (*(char * const *) p1, *(char * const *) p2);
+}
+
+static char **
+sort_strv (char **strv)
+{
+  qsort (strv, g_strv_length (strv), sizeof (const char *), cmpstringp);
+  return strv;
+}
+
+char **
+flatpak_dir_get_default_locale_languages (FlatpakDir *self)
+{
+  char **langs = NULL;
+
+  if (flatpak_dir_is_user (self))
+    return flatpak_get_current_locale_langs ();
+
+  /* If proxy is not NULL, it means that AccountService exists
+   * and gets the list of languages from AccountService. */
+  g_autoptr(GDBusProxy) proxy = get_accounts_dbus_proxy ();
+  if (proxy != NULL)
+    langs = get_locale_langs_from_accounts_dbus (proxy);
+
+  /* Iif langs is NULL, it means using all languages */
+  if (langs == NULL)
+    langs = g_new0 (char *, 1);
+
+  return langs;
+}
+
+char **
+flatpak_dir_get_locale_languages (FlatpakDir *self)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+
+  if (config)
     {
-      g_autofree char *dir = g_strconcat ("/", l->data, NULL);
-      char *c;
-
-      c = strchr (dir, '@');
-      if (c != NULL)
-        *c = 0;
-      c = strchr (dir, '_');
-      if (c != NULL)
-        *c = 0;
-      c = strchr (dir, '.');
-      if (c != NULL)
-        *c = 0;
-
-      if (strcmp (dir, "/C") == 0)
-        continue;
-
-      /* handle language == "" */
-      if (strcmp (dir, "/") == 0)
-        {
-          use_full_language = TRUE;
-          break;
-        }
-
-      /* filter duplicate language */
-      if (g_strrstr (langs_cache->str, dir) == NULL)
-        {
-          g_string_append (langs_cache, dir);
-          g_string_append_c (langs_cache, ':');
-          g_ptr_array_add (subpaths, g_steal_pointer (&dir));
-        }
+      char **langs = g_key_file_get_string_list (config, "core", "xa.languages", NULL, NULL);
+      if (langs)
+        return sort_strv (langs);
     }
 
-  if (langs == NULL)
-    return NULL;
-
-  g_list_free_full (langs, g_free);
-
-  g_ptr_array_add (subpaths, NULL);
-
-  if (use_full_language)
-    return NULL;
-  else
-    return (char **)g_ptr_array_free (g_steal_pointer (&subpaths), FALSE);
+  return flatpak_dir_get_default_locale_languages (self);
 }
 
 char **
 flatpak_dir_get_locale_subpaths (FlatpakDir *self)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
-  char **subpaths = NULL;
+  char **subpaths = flatpak_dir_get_locale_languages (self);
+  int i;
 
-  if (config)
-    subpaths = g_key_file_get_string_list (config, "core", "xa.languages", NULL, NULL);
-
-  if (!subpaths)
+  /* Convert languages to paths */
+  for (i = 0; subpaths[i] != NULL; i++)
     {
-      if (flatpak_dir_is_user (self))
-        subpaths = flatpak_get_current_locale_subpaths ();
-      else
+      char *lang = subpaths[i];
+      /* For backwards compat with old xa.languages we support the configuration having slashes already */
+      if (*lang != '/')
         {
-          /* If proxy is not NULL, it means that AccountService exists
-           * and gets the list of languages from AccountService. */
-          g_autoptr(GDBusProxy) proxy = get_accounts_dbus_proxy ();
-          if (proxy != NULL)
-            subpaths = get_locale_subpaths_from_accounts_dbus (proxy);
-
-          /* If subpaths is NULL, it means using all languages */
-          if (subpaths == NULL)
-            subpaths = g_new0 (char *, 1);
+          subpaths[i] = g_strconcat ("/", lang, NULL);
+          g_free (lang);
         }
     }
-
   return subpaths;
 }

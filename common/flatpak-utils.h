@@ -87,7 +87,8 @@ gboolean flatpak_extension_matches_reason (const char *extension_id,
 
 const char * flatpak_get_bwrap (void);
 
-char ** flatpak_get_current_locale_subpaths (void);
+char *flatpak_get_lang_from_locale (const char *locale);
+char **flatpak_get_current_locale_langs (void);
 
 void flatpak_migrate_from_xdg_app (void);
 
@@ -253,6 +254,8 @@ g_key_file_save_to_file (GKeyFile    *key_file,
   return success;
 }
 #endif
+
+gboolean flatpak_g_ptr_array_contains_string (GPtrArray *array, const char *str);
 
 /* Returns the first string in subset that is not in strv */
 static inline const gchar *
