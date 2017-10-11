@@ -9852,21 +9852,6 @@ flatpak_related_free (FlatpakRelated *self)
   g_free (self);
 }
 
-static gboolean
-string_in_array (GPtrArray *array,
-                 const char *str)
-{
-  int i;
-
-  for (i = 0; i < array->len; i++)
-    {
-      if (strcmp (g_ptr_array_index (array, i), str) == 0)
-        return TRUE;
-    }
-
-  return FALSE;
-}
-
 static void
 add_related (FlatpakDir *self,
              GPtrArray *related,
@@ -9881,8 +9866,8 @@ add_related (FlatpakDir *self,
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
-  g_autoptr(GPtrArray) subpaths = g_ptr_array_new_with_free_func (g_free);
-  int i;
+  g_auto(GStrv) extra_subpaths = NULL;
+  g_auto(GStrv) subpaths = NULL;
   FlatpakRelated *rel;
   gboolean download;
   gboolean delete = autodelete;
@@ -9926,34 +9911,21 @@ add_related (FlatpakDir *self,
   if (g_str_has_suffix (extension, ".Locale"))
     locale_subset = TRUE;
 
-  if (old_subpaths)
-    {
-      for (i = 0; old_subpaths[i] != NULL; i++)
-        g_ptr_array_add (subpaths, g_strdup (old_subpaths[i]));
-    }
-
   if (locale_subset)
     {
-      g_autofree char ** current_subpaths = flatpak_dir_get_locale_subpaths (self);
-      for (i = 0; current_subpaths[i] != NULL; i++)
-        {
-          g_autofree char *subpath = current_subpaths[i];
-
-          if (!string_in_array (subpaths, subpath))
-            g_ptr_array_add (subpaths, g_steal_pointer (&subpath));
-        }
+      extra_subpaths = flatpak_dir_get_locale_subpaths (self);
 
       /* Always remove locale */
       delete = TRUE;
     }
 
-  g_ptr_array_add (subpaths, NULL);
+  subpaths = flatpak_subpaths_merge ((char **)old_subpaths, extra_subpaths);
 
   rel = g_new0 (FlatpakRelated, 1);
   rel->collection_id = g_strdup (extension_collection_id);
   rel->ref = g_strdup (extension_ref);
   rel->commit = g_strdup (checksum);
-  rel->subpaths = (char **)g_ptr_array_free (g_steal_pointer (&subpaths), FALSE);
+  rel->subpaths = g_steal_pointer (&subpaths);
   rel->download = download;
   rel->delete = delete;
 
