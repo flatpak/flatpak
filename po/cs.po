@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-10-09 12:40+0200\n"
-"PO-Revision-Date: 2017-10-09 22:38+0200\n"
+"PO-Revision-Date: 2017-10-14 00:44+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -1517,6 +1517,10 @@ msgstr "Vypsat instalované aplikace a/nebo prostředí"
 #: app/flatpak-main.c:66
 msgid "Show info for installed app or runtime"
 msgstr "Zobrazit informace pro nainstalovanou aplikaci či prostředí"
+
+#: app/flatpak-main.c:67
+msgid "Configure flatpak"
+msgstr "Nastavit flatpak"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:69
