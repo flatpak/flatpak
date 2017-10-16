@@ -136,11 +136,11 @@ export_dir (int           source_parent_fd,
 
           if (!flatpak_has_name_prefix (dent->d_name, required_prefix))
             {
-              g_print ("Not exporting %s, wrong prefix\n", source_printable);
+              g_print (_("Not exporting %s, wrong prefix\n"), source_printable);
               continue;
             }
 
-          g_print ("Exporting %s\n", source_printable);
+          g_print (_("Exporting %s\n"), source_printable);
 
           if (!glnx_file_copy_at (source_iter.fd, dent->d_name, &stbuf,
                                   destination_dfd, dent->d_name,
@@ -381,7 +381,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
                 {
                   if (command != NULL)
                     {
-                      g_print ("More than one executable found\n");
+                      g_print (_("More than one executable found\n"));
                       break;
                     }
                   command = g_strdup (g_file_info_get_name (child_info));
@@ -392,12 +392,12 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
 
           if (command)
             {
-              g_print ("Using %s as command\n", command);
+              g_print (_("Using %s as command\n"), command);
               g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_COMMAND, command);
             }
           else
             {
-              g_print ("No executable found\n");
+              g_print (_("No executable found\n"));
             }
         }
     }

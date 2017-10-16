@@ -581,13 +581,13 @@ flatpak_migrate_from_xdg_app (void)
   if (!g_file_test (dest, G_FILE_TEST_EXISTS) &&
       g_file_test (source, G_FILE_TEST_EXISTS))
     {
-      g_print ("Migrating %s to %s\n", source, dest);
+      g_print (_("Migrating %s to %s\n"), source, dest);
       if (rename (source, dest) != 0)
         {
           if (errno != ENOENT &&
               errno != ENOTEMPTY &&
               errno != EEXIST)
-            g_print ("Error during migration: %s\n", g_strerror (errno));
+            g_print (_("Error during migration: %s\n"), g_strerror (errno));
         }
     }
 }
@@ -6514,7 +6514,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 
       estimating = TRUE;
 
-      g_string_append_printf (buf, "Downloading metadata: %u/(estimating) %s",
+      g_string_append_printf (buf, _("Downloading metadata: %u/(estimating) %s"),
                               fetched, formatted_bytes_total_transferred);
 
       /* Go up to 5% until the metadata is all fetched */
@@ -6538,7 +6538,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
           total = total_delta_part_size - fetched_delta_part_size + total_extra_data_bytes;
           formatted_bytes_total = g_format_size_full (total, 0);
 
-          g_string_append_printf (buf, "Downloading: %s/%s",
+          g_string_append_printf (buf, _("Downloading: %s/%s"),
                                   formatted_bytes_total_transferred,
                                   formatted_bytes_total);
         }
@@ -6558,12 +6558,12 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
           if (downloading_extra_data)
             {
               g_autofree gchar *formatted_bytes_total = g_format_size_full (total, 0);;
-              g_string_append_printf (buf, "Downloading extra data: %s/%s",
+              g_string_append_printf (buf, _("Downloading extra data: %s/%s"),
                                       formatted_bytes_total_transferred,
                                       formatted_bytes_total);
             }
           else
-            g_string_append_printf (buf, "Downloading files: %d/%d %s",
+            g_string_append_printf (buf, _("Downloading files: %d/%d %s"),
                                     fetched, requested, formatted_bytes_total_transferred);
         }
 
