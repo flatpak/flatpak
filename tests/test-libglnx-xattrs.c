@@ -82,7 +82,7 @@ do_write_run (GLnxDirFdIterator *dfd_iter, GError **error)
     {
       guint32 randname_v = g_random_int ();
       g_autofree char *randname = g_strdup_printf ("file%u", randname_v);
-      glnx_fd_close int fd = -1;
+      glnx_autofd int fd = -1;
 
     again:
       fd = openat (dfd_iter->fd, randname, O_CREAT | O_EXCL, 0644);
@@ -113,7 +113,7 @@ do_write_run (GLnxDirFdIterator *dfd_iter, GError **error)
           if (!dent)
             break;
 
-          glnx_fd_close int fd = -1;
+          glnx_autofd int fd = -1;
           if (!glnx_openat_rdonly (dfd_iter->fd, dent->d_name, FALSE, &fd, error))
             return FALSE;
 
@@ -157,7 +157,7 @@ do_read_run (GLnxDirFdIterator *dfd_iter,
       if (!dent)
         break;
 
-      glnx_fd_close int fd = -1;
+      glnx_autofd int fd = -1;
       if (!glnx_openat_rdonly (dfd_iter->fd, dent->d_name, FALSE, &fd, error))
         return FALSE;
 

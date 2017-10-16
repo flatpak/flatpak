@@ -61,7 +61,7 @@
  */
 gboolean
 glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_lock, GError **error) {
-        glnx_fd_close int fd = -1;
+        glnx_autofd int fd = -1;
         g_autofree char *t = NULL;
         int r;
 

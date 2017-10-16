@@ -84,7 +84,7 @@ glnx_shutil_rm_rf_at (int                   dfd,
                       GCancellable         *cancellable,
                       GError              **error)
 {
-  glnx_fd_close int target_dfd = -1;
+  glnx_autofd int target_dfd = -1;
   g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
 
   dfd = glnx_dirfd_canonicalize (dfd);

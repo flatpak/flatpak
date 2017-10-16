@@ -175,11 +175,7 @@ glnx_tmpfile_clear (GLnxTmpfile *tmpf)
     return;
   if (!tmpf->initialized)
     return;
-  if (tmpf->fd != -1)
-    {
-      if (close (tmpf->fd) < 0)
-        g_assert (errno != EBADF);
-    }
+  glnx_close_fd (&tmpf->fd);
   /* If ->path is set, we're likely aborting due to an error. Clean it up */
   if (tmpf->path)
     {
@@ -196,7 +192,7 @@ open_tmpfile_core (int dfd, const char *subpath,
                    GError **error)
 {
   const guint mode = 0600;
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
   int count;
 
   dfd = glnx_dirfd_canonicalize (dfd);
@@ -576,7 +572,7 @@ glnx_file_get_contents_utf8_at (int                   dfd,
 {
   dfd = glnx_dirfd_canonicalize (dfd);
 
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
   if (!glnx_openat_rdonly (dfd, subpath, TRUE, &fd, error))
     return NULL;
 
@@ -933,7 +929,7 @@ glnx_file_copy_at (int                   src_dfd,
 
   /* Regular file path below here */
 
-  glnx_fd_close int src_fd = -1;
+  glnx_autofd int src_fd = -1;
   if (!glnx_openat_rdonly (src_dfd, src_subpath, FALSE, &src_fd, error))
     return FALSE;
 

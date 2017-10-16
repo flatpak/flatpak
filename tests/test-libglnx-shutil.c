@@ -32,7 +32,7 @@ static void
 test_mkdir_p_enoent (void)
 {
   _GLNX_TEST_DECLARE_ERROR(local_error, error);
-  glnx_fd_close int dfd = -1;
+  glnx_autofd int dfd = -1;
 
   if (!glnx_ensure_dir (AT_FDCWD, "test", 0755, error))
     return;

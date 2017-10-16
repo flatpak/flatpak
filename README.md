@@ -37,7 +37,7 @@ applicable.
 
 For local allocation macros, you should start using the `g_auto`
 macros from GLib.  A backport is included in libglnx.  There are a few
-APIs not defined in GLib yet, such as `glnx_fd_close`.
+APIs not defined in GLib yet, such as `glnx_autofd`.
 
 `gs_transfer_out_value` is replaced by `g_steal_pointer`.
 

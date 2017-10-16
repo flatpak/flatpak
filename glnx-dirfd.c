@@ -99,7 +99,7 @@ glnx_dirfd_iterator_init_at (int                     dfd,
                              GLnxDirFdIterator      *out_dfd_iter,
                              GError                **error)
 {
-  glnx_fd_close int fd = -1;
+  glnx_autofd int fd = -1;
   if (!glnx_opendirat (dfd, path, follow, &fd, error))
     return FALSE;
 
@@ -326,7 +326,7 @@ glnx_mkdtempat (int dfd, const char *tmpl, int mode,
         }
 
       /* And open it */
-      glnx_fd_close int ret_dfd = -1;
+      glnx_autofd int ret_dfd = -1;
       if (!glnx_opendirat (dfd, path, FALSE, &ret_dfd, error))
         {
           /* If we fail to open, let's try to clean up */
