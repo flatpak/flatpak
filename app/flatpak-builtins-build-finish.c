@@ -490,7 +490,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
 
   if (opt_extension_prio != G_MININT)
     g_key_file_set_integer (keyfile, FLATPAK_METADATA_GROUP_EXTENSION_OF,
-			    FLATPAK_METADATA_KEY_PRIORITY, opt_extension_prio);
+                            FLATPAK_METADATA_KEY_PRIORITY, opt_extension_prio);
 
   if (!g_key_file_save_to_file (keyfile, path, error))
     goto out;

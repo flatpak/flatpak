@@ -2014,7 +2014,7 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
           FILE *output = fdopen (xauth_tmpf.fd, "wb");
           if (output != NULL)
             {
-	      /* fd is now owned by output, steal it from the tmpfile */
+              /* fd is now owned by output, steal it from the tmpfile */
               int tmp_fd = dup (glnx_steal_fd (&xauth_tmpf.fd));
               if (tmp_fd != -1)
                 {
@@ -3804,10 +3804,10 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                GArray         *fd_array,
                                GFile          *app_files,
                                GVariant       *app_deploy_data,
-			       const char     *app_extensions,
+                               const char     *app_extensions,
                                GFile          *runtime_files,
                                GVariant       *runtime_deploy_data,
-			       const char     *runtime_extensions,
+                               const char     *runtime_extensions,
                                const char     *app_id,
                                const char     *app_branch,
                                const char     *runtime_ref,
