@@ -19,15 +19,15 @@
 # Boston, MA 02111-1307, USA.
 
 if [ -n "${G_TEST_SRCDIR:-}" ]; then
-  test_srcdir="${G_TEST_SRCDIR}"
+    test_srcdir="${G_TEST_SRCDIR}"
 else
-  test_srcdir=$(dirname $0)
+    test_srcdir=$(dirname $0)
 fi
 
 if [ -n "${G_TEST_BUILDDIR:-}" ]; then
-  test_builddir="${G_TEST_BUILDDIR}"
+    test_builddir="${G_TEST_BUILDDIR}"
 else
-  test_builddir=$(dirname $0)
+    test_builddir=$(dirname $0)
 fi
 
 assert_not_reached () {
@@ -42,8 +42,8 @@ test_tmpdir=$(pwd)
 if ! test -f .testtmp; then
     files=$(ls)
     if test -n "${files}"; then
-	ls -l
-	assert_not_reached "test tmpdir=${test_tmpdir} is not empty; run this test via \`make check TESTS=\`, not directly"
+        ls -l
+        assert_not_reached "test tmpdir=${test_tmpdir} is not empty; run this test via \`make check TESTS=\`, not directly"
     fi
     # Remember that this is an acceptable test $(pwd), for the benefit of
     # C and JS tests which may source this file again
@@ -151,7 +151,7 @@ assert_file_has_mode () {
 
 assert_not_has_dir () {
     if test -d "$1"; then
-	echo 1>&2 "Directory '$1' exists"; exit 1
+        echo 1>&2 "Directory '$1' exists"; exit 1
     fi
 }
 

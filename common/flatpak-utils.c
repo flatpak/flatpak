@@ -4156,7 +4156,7 @@ flatpak_extension_new (const char *id,
                        const char *subdir_suffix,
                        char **merge_dirs,
                        GFile *files,
-		       GFile *deploy_dir,
+                       GFile *deploy_dir,
                        gboolean is_unmaintained)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
@@ -4176,7 +4176,7 @@ flatpak_extension_new (const char *id,
     {
       deploy_data = flatpak_load_deploy_data (deploy_dir, NULL, NULL);
       if (deploy_data)
-	ext->commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+        ext->commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }
 
   if (is_unmaintained)
@@ -4297,11 +4297,11 @@ add_extension (GKeyFile   *metakey,
         {
           g_autofree char *extended_dir = g_build_filename (directory, refs[j] + strlen (prefix), NULL);
           g_autofree char *dir_ref = g_build_filename ("runtime", refs[j], arch, branch, NULL);
-	  g_autoptr(GFile) subdir_deploy_dir = NULL;
+          g_autoptr(GFile) subdir_deploy_dir = NULL;
           g_autoptr(GFile) subdir_files = NULL;
-	  subdir_deploy_dir = flatpak_find_deploy_dir_for_ref (dir_ref, NULL, NULL, NULL);
-	  if (subdir_deploy_dir)
-	    subdir_files = g_file_get_child (subdir_deploy_dir, "files");
+          subdir_deploy_dir = flatpak_find_deploy_dir_for_ref (dir_ref, NULL, NULL, NULL);
+          if (subdir_deploy_dir)
+            subdir_files = g_file_get_child (subdir_deploy_dir, "files");
 
           if (subdir_files && flatpak_extension_matches_reason (refs[j], enable_if, TRUE))
             {

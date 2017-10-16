@@ -2058,10 +2058,10 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
         case HANDLE_PASS:
 handle_pass:
           if (client_message_generates_reply (header))
-	    {
-	      if (expecting_reply == EXPECTED_REPLY_NONE)
-		expecting_reply = EXPECTED_REPLY_NORMAL;
-	    }
+            {
+              if (expecting_reply == EXPECTED_REPLY_NONE)
+                expecting_reply = EXPECTED_REPLY_NORMAL;
+            }
 
           break;
 
@@ -2083,7 +2083,7 @@ handle_hide:
                 error = "org.freedesktop.DBus.Error.ServiceUnknown";
 
               buffer = get_error_for_roundtrip (client, header, error);
-	      expecting_reply = EXPECTED_REPLY_REWRITE;
+              expecting_reply = EXPECTED_REPLY_REWRITE;
             }
           else
             {
@@ -2103,8 +2103,8 @@ handle_deny:
                 g_print ("*DENIED* (ping)\n");
 
               buffer = get_error_for_roundtrip (client, header,
-						"org.freedesktop.DBus.Error.AccessDenied");
-	      expecting_reply = EXPECTED_REPLY_REWRITE;
+                                                "org.freedesktop.DBus.Error.AccessDenied");
+              expecting_reply = EXPECTED_REPLY_REWRITE;
             }
           else
             {
@@ -2272,12 +2272,12 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
             }
 
           /* We filter all NameOwnerChanged signal according to the policy */
-	  if (message_is_name_owner_changed (client, header))
-	    {
-	      if (should_filter_name_owner_changed (client, buffer))
-		g_clear_pointer (&buffer, buffer_unref);
-	    }
-	}
+          if (message_is_name_owner_changed (client, header))
+            {
+              if (should_filter_name_owner_changed (client, buffer))
+                g_clear_pointer (&buffer, buffer_unref);
+            }
+        }
 
       /* All incoming broadcast signals are filtered according to policy */
       if (header->type == G_DBUS_MESSAGE_TYPE_SIGNAL && header->destination == NULL)
