@@ -45,19 +45,19 @@ print_info (GVariant *meta)
   g_autoptr(GVariant) gpg_keys = NULL;
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
-    g_print ("Title: %s\n", title);
+    g_print (_("Title: %s\n"), title);
 
   if (g_variant_lookup (meta, "collection-id", "&s", &collection_id))
-    g_print ("Collection ID: %s\n", collection_id);
+    g_print (_("Collection ID: %s\n"), collection_id);
 
   if (g_variant_lookup (meta, "xa.default-branch", "&s", &default_branch))
-    g_print ("Default branch: %s\n", default_branch);
+    g_print (_("Default branch: %s\n"), default_branch);
 
   if (g_variant_lookup (meta, "xa.redirect-url", "&s", &redirect_url))
-    g_print ("Redirect URL: %s\n", redirect_url);
+    g_print (_("Redirect URL: %s\n"), redirect_url);
 
   if (g_variant_lookup (meta, "xa.collection-id", "&s", &redirect_collection_id))
-    g_print ("Redirect collection ID: %s\n", redirect_collection_id);
+    g_print (_("Redirect collection ID: %s\n"), redirect_collection_id);
 
   if ((gpg_keys = g_variant_lookup_value (meta, "xa.gpg-keys", G_VARIANT_TYPE_BYTESTRING)) != NULL)
     {
@@ -65,7 +65,7 @@ print_info (GVariant *meta)
       gsize gpg_size = g_variant_get_size (gpg_keys);
       g_autofree gchar *gpg_data_checksum = g_compute_checksum_for_data (G_CHECKSUM_SHA256, gpg_data, gpg_size);
 
-      g_print ("GPG key hash: %s\n", gpg_data_checksum);
+      g_print (_("GPG key hash: %s\n"), gpg_data_checksum);
     }
 
   cache = g_variant_lookup_value (meta, "xa.cache", NULL);
@@ -74,7 +74,7 @@ print_info (GVariant *meta)
       g_autoptr(GVariant) refdata = NULL;
 
       refdata = g_variant_get_variant (cache);
-      g_print ("%zd branches\n", g_variant_n_children (refdata));
+      g_print (_("%zd branches\n"), g_variant_n_children (refdata));
     }
 }
 

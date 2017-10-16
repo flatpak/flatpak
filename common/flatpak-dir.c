@@ -7196,7 +7196,7 @@ flatpak_dir_prune (FlatpakDir   *self,
   /* There was an issue in ostree where for local pulls we don't get a .commitpartial (now fixed),
      which caused errors when pruning. We print these here, but don't stop processing. */
   if (local_error != NULL)
-    g_print ("Pruning repo failed: %s", local_error->message);
+    g_print (_("Pruning repo failed: %s"), local_error->message);
 
   return ret;
 
@@ -7816,7 +7816,7 @@ find_matching_ref (GHashTable *refs,
 
       /* Nothing to do other than reporting the different choices */
       g_autoptr(GString) err = g_string_new ("");
-      g_string_printf (err, "Multiple branches available for %s, you must specify one of: ", name);
+      g_string_printf (err, _("Multiple branches available for %s, you must specify one of: "), name);
       g_ptr_array_sort (matched_refs, flatpak_strcmp0_ptr);
       for (j = 0; j < matched_refs->len; j++)
         {

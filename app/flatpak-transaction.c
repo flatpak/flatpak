@@ -291,7 +291,7 @@ ask_for_remote (FlatpakTransaction *self, const char **remotes)
   if (self->no_interaction)
     {
       chosen = 1;
-      g_print ("Found in remote %s\n", remotes[0]);
+      g_print (_("Found in remote %s\n"), remotes[0]);
     }
   else if (n_remotes == 1)
     {
@@ -489,7 +489,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         metadata = remote_metadata;
       else
         {
-          g_print ("Warning: Can't find dependencies: %s\n", local_error->message);
+          g_print (_("Warning: Can't find dependencies: %s\n"), local_error->message);
           g_clear_error (&local_error);
         }
     }
@@ -516,7 +516,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
       if (required_version)
         {
           if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
-            g_print ("Invalid require-flatpak argument %s\n", required_version);
+            g_print (_("Invalid require-flatpak argument %s\n"), required_version);
           else
             {
               if (required_major > PACKAGE_MAJOR_VERSION ||
@@ -634,7 +634,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 
       g_debug ("Updating remote metadata for %s", remote);
       if (!flatpak_dir_update_remote_configuration (self->dir, remote, cancellable, &my_error))
-        g_printerr("Error updating remote metadata for '%s': %s\n", remote, my_error->message);
+        g_printerr (_("Error updating remote metadata for '%s': %s\n"), remote, my_error->message);
     }
 
   /* Reload changed configuration */

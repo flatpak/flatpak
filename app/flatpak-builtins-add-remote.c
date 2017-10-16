@@ -208,14 +208,14 @@ load_options (const char *filename,
 
       if (bytes == NULL)
         {
-          g_printerr ("Can't load uri %s: %s\n", filename, error->message);
+          g_printerr (_("Can't load uri %s: %s\n"), filename, error->message);
           exit (1);
         }
 
       options_data = g_bytes_get_data (bytes, &options_size);
       if (!g_key_file_load_from_data (keyfile, options_data, options_size, 0, &error))
         {
-          g_printerr ("Can't load uri %s: %s\n", filename, error->message);
+          g_printerr (_("Can't load uri %s: %s\n"), filename, error->message);
           exit (1);
         }
     }
@@ -223,7 +223,7 @@ load_options (const char *filename,
     {
       if (!g_key_file_load_from_file (keyfile, filename, 0, &error))
         {
-          g_printerr ("Can't load file %s: %s\n", filename, error->message);
+          g_printerr (_("Can't load file %s: %s\n"), filename, error->message);
           exit (1);
         }
     }
@@ -231,7 +231,7 @@ load_options (const char *filename,
 
   if (!g_key_file_has_group (keyfile, FLATPAK_REPO_GROUP))
     {
-      g_printerr ("Invalid file format");
+      g_printerr (_("Invalid file format"));
       exit (1);
     }
 
@@ -239,7 +239,7 @@ load_options (const char *filename,
                                    FLATPAK_REPO_VERSION_KEY, NULL);
   if (version != NULL && strcmp (version, "1") != 0)
     {
-      g_printerr ("Invalid version %s, only 1 supported", version);
+      g_printerr (_("Invalid version %s, only 1 supported"), version);
       exit (1);
     }
 
@@ -283,7 +283,7 @@ load_options (const char *filename,
       decoded = g_base64_decode (str, &decoded_len);
       if (decoded_len < 10) /* Check some minimal size so we don't get crap */
         {
-          g_printerr ("Invalid gpg key");
+          g_printerr (_("Invalid gpg key"));
           exit (1);
         }
 

@@ -253,7 +253,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       /* Don't create a new commit if this is the same tree */
       if (!opt_force && dst_parent_root != NULL && g_file_equal (dst_parent_root, src_ref_root))
         {
-          g_print ("%s: no change\n", dst_ref);
+          g_print (_("%s: no change\n"), dst_ref);
           continue;
         }
 

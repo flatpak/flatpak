@@ -96,7 +96,7 @@ update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable
           g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
           if (!flatpak_dir_update_appstream (dir, remotes[i], opt_arch, &changed,
                                              progress, cancellable, &local_error))
-            g_printerr ("Error updating: %s\n", local_error->message);
+            g_printerr (_("Error updating: %s\n"), local_error->message);
           ostree_async_progress_finish (progress);
           flatpak_terminal_progress_end (&terminal_progress);
         }
@@ -153,7 +153,7 @@ flatpak_builtin_update (int           argc,
                                          opt_no_static_deltas, !opt_no_deps, !opt_no_related);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  g_print ("Looking for updates...\n");
+  g_print (_("Looking for updates...\n"));
 
   for (j = 0; j == 0 || j < n_prefs; j++)
     {

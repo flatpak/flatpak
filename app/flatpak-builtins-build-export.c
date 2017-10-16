@@ -338,7 +338,7 @@ validate_desktop_file (GFile *desktop_file,
   if (!subprocess)
     {
       if (!g_error_matches (local_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
-        g_print ("WARNING: Error running desktop-file-validate: %s\n", local_error->message);
+        g_print (_("WARNING: Error running desktop-file-validate: %s\n"), local_error->message);
 
       g_clear_error (&local_error);
       goto check_refs;
@@ -346,13 +346,13 @@ validate_desktop_file (GFile *desktop_file,
 
   if (!g_subprocess_communicate_utf8 (subprocess, NULL, NULL, &stdout_buf, &stderr_buf, &local_error))
     {
-      g_print ("WARNING: Error reading from desktop-file-validate: %s\n", local_error->message);
+      g_print (_("WARNING: Error reading from desktop-file-validate: %s\n"), local_error->message);
       g_clear_error (&local_error);
     }
 
   if (g_subprocess_get_if_exited (subprocess) &&
       g_subprocess_get_exit_status (subprocess) != 0)
-    g_print ("WARNING: Failed to validate desktop file %s: %s\n", path, stdout_buf);
+    g_print (_("WARNING: Failed to validate desktop file %s: %s\n"), path, stdout_buf);
 
 check_refs:
   /* Test that references to other files are valid */
@@ -367,7 +367,7 @@ check_refs:
                                    &local_error);
   if (!command)
     {
-      g_print ("WARNING: Can't find Exec key in %s: %s\n", path, local_error->message);
+      g_print (_("WARNING: Can't find Exec key in %s: %s\n"), path, local_error->message);
       g_clear_error (&local_error);
     }
 
@@ -375,14 +375,14 @@ check_refs:
 
   bin_file = convert_app_absolute_path (argv[0], files);
   if (!g_file_query_exists (bin_file, NULL))
-    g_print ("WARNING: Binary not found for Exec line in %s: %s\n", path, command);
+    g_print (_("WARNING: Binary not found for Exec line in %s: %s\n"), path, command);
 
   *icon = g_key_file_get_string (key_file,
                                  G_KEY_FILE_DESKTOP_GROUP,
                                  G_KEY_FILE_DESKTOP_KEY_ICON,
                                  NULL);
   if (*icon && !g_str_has_prefix (*icon, app_id))
-    g_print ("WARNING: Icon not matching app id in %s: %s\n", path, *icon);
+    g_print (_("WARNING: Icon not matching app id in %s: %s\n"), path, *icon);
 
   *activatable = g_key_file_get_boolean (key_file,
                                          G_KEY_FILE_DESKTOP_GROUP,
@@ -410,7 +410,7 @@ validate_icon (const char *icon,
   svg  = g_strconcat (icon, ".svg", NULL);
   if (!find_file_in_tree (icondir, png) &&
       !find_file_in_tree (icondir, svg))
-    g_print ("WARNING: Icon referenced in desktop file but not exported: %s\n", icon);
+    g_print (_("WARNING: Icon referenced in desktop file but not exported: %s\n"), icon);
 
   return TRUE;
 }
@@ -472,7 +472,7 @@ validate_service_file (GFile *service_file,
 
   bin_file = convert_app_absolute_path (argv[0], files);
   if (!g_file_query_exists (bin_file, NULL))
-    g_print ("WARNING: Binary not found for Exec line in %s: %s\n", path, command);
+    g_print (_("WARNING: Binary not found for Exec line in %s: %s\n"), path, command);
 
   return TRUE;
 }
@@ -967,12 +967,13 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   format_size = g_format_size (stats.content_bytes_written);
 
-  g_print ("Commit: %s\n", commit_checksum);
-  g_print ("Metadata Total: %u\n", stats.metadata_objects_total);
-  g_print ("Metadata Written: %u\n", stats.metadata_objects_written);
-  g_print ("Content Total: %u\n", stats.content_objects_total);
-  g_print ("Content Written: %u\n", stats.content_objects_written);
-  g_print ("Content Bytes Written: %" G_GUINT64_FORMAT " (%s)\n", stats.content_bytes_written, format_size);
+  g_print (_("Commit: %s\n"), commit_checksum);
+  g_print (_("Metadata Total: %u\n"), stats.metadata_objects_total);
+  g_print (_("Metadata Written: %u\n"), stats.metadata_objects_written);
+  g_print (_("Content Total: %u\n"), stats.content_objects_total);
+  g_print (_("Content Written: %u\n"), stats.content_objects_written);
+  g_print (_("Content Bytes Written:"));
+  g_print (" %" G_GUINT64_FORMAT " (%s)\n", stats.content_bytes_written, format_size);
 
   ret = TRUE;
 

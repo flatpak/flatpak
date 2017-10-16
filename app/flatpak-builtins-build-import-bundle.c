@@ -120,7 +120,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (commit_checksum == NULL)
     return NULL;
 
-  g_print ("Importing %s (%s)\n", target_ref, commit_checksum);
+  g_print (_("Importing %s (%s)\n"), target_ref, commit_checksum);
 
   return g_strdup (commit_checksum);
 }
@@ -148,7 +148,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
   else
     ref = bundle_ref;
 
-  g_print ("Importing %s (%s)\n", ref, to_checksum);
+  g_print (_("Importing %s (%s)\n"), ref, to_checksum);
   if (!flatpak_pull_from_bundle (repo, file,
                                  NULL, ref, FALSE,
                                  cancellable,
