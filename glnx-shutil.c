@@ -84,14 +84,12 @@ glnx_shutil_rm_rf_at (int                   dfd,
                       GCancellable         *cancellable,
                       GError              **error)
 {
-  glnx_autofd int target_dfd = -1;
-  g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
-
   dfd = glnx_dirfd_canonicalize (dfd);
 
+
   /* With O_NOFOLLOW first */
-  target_dfd = openat (dfd, path,
-                       O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+  glnx_autofd int target_dfd =
+    openat (dfd, path, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
 
   if (target_dfd == -1)
     {
@@ -110,6 +108,7 @@ glnx_shutil_rm_rf_at (int                   dfd,
     }
   else
     {
+      g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
       if (!glnx_dirfd_iterator_init_take_fd (&target_dfd, &dfd_iter, error))
         return FALSE;
 

@@ -191,9 +191,8 @@ open_tmpfile_core (int dfd, const char *subpath,
                    GLnxTmpfile *out_tmpf,
                    GError **error)
 {
+  /* Picked this to match mkstemp() */
   const guint mode = 0600;
-  glnx_autofd int fd = -1;
-  int count;
 
   dfd = glnx_dirfd_canonicalize (dfd);
 
@@ -204,33 +203,35 @@ open_tmpfile_core (int dfd, const char *subpath,
    * link_tmpfile() below to rename the result after writing the file
    * in full. */
 #if defined(O_TMPFILE) && !defined(DISABLE_OTMPFILE) && !defined(ENABLE_WRPSEUDO_COMPAT)
-  fd = openat (dfd, subpath, O_TMPFILE|flags, mode);
-  if (fd == -1 && !(G_IN_SET(errno, ENOSYS, EISDIR, EOPNOTSUPP)))
-    return glnx_throw_errno_prefix (error, "open(O_TMPFILE)");
-  if (fd != -1)
-    {
-      /* Workaround for https://sourceware.org/bugzilla/show_bug.cgi?id=17523
-       * See also https://github.com/ostreedev/ostree/issues/991
-       */
-      if (fchmod (fd, mode) < 0)
-        return glnx_throw_errno_prefix (error, "fchmod");
-      out_tmpf->initialized = TRUE;
-      out_tmpf->src_dfd = dfd; /* Copied; caller must keep open */
-      out_tmpf->fd = glnx_steal_fd (&fd);
-      out_tmpf->path = NULL;
-      return TRUE;
-    }
+  {
+    glnx_autofd int fd = openat (dfd, subpath, O_TMPFILE|flags, mode);
+    if (fd == -1 && !(G_IN_SET(errno, ENOSYS, EISDIR, EOPNOTSUPP)))
+      return glnx_throw_errno_prefix (error, "open(O_TMPFILE)");
+    if (fd != -1)
+      {
+        /* Workaround for https://sourceware.org/bugzilla/show_bug.cgi?id=17523
+         * See also https://github.com/ostreedev/ostree/issues/991
+         */
+        if (fchmod (fd, mode) < 0)
+          return glnx_throw_errno_prefix (error, "fchmod");
+        out_tmpf->initialized = TRUE;
+        out_tmpf->src_dfd = dfd; /* Copied; caller must keep open */
+        out_tmpf->fd = glnx_steal_fd (&fd);
+        out_tmpf->path = NULL;
+        return TRUE;
+      }
+  }
   /* Fallthrough */
 #endif
 
+  const guint count_max = 100;
   { g_autofree char *tmp = g_strconcat (subpath, "/tmp.XXXXXX", NULL);
-    const guint count_max = 100;
 
-    for (count = 0; count < count_max; count++)
+    for (int count = 0; count < count_max; count++)
       {
         glnx_gen_temp_name (tmp);
 
-        fd = openat (dfd, tmp, O_CREAT|O_EXCL|O_NOFOLLOW|O_NOCTTY|flags, mode);
+        glnx_autofd int fd = openat (dfd, tmp, O_CREAT|O_EXCL|O_NOFOLLOW|O_NOCTTY|flags, mode);
         if (fd < 0)
           {
             if (errno == EEXIST)
@@ -249,7 +250,7 @@ open_tmpfile_core (int dfd, const char *subpath,
       }
   }
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_EXISTS,
-               "Exhausted %u attempts to create temporary file", count);
+               "Exhausted %u attempts to create temporary file", count_max);
   return FALSE;
 }
 
@@ -359,9 +360,9 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
           char *dnbuf = strdupa (target);
           const char *dn = dirname (dnbuf);
           char *tmpname_buf = glnx_strjoina (dn, "/tmp.XXXXXX");
-          guint count;
-          const guint count_max = 100;
 
+          const guint count_max = 100;
+          guint count;
           for (count = 0; count < count_max; count++)
             {
               glnx_gen_temp_name (tmpname_buf);
@@ -602,17 +603,13 @@ glnx_readlinkat_malloc (int            dfd,
                         GCancellable  *cancellable,
                         GError       **error)
 {
-  size_t l = 100;
-
   dfd = glnx_dirfd_canonicalize (dfd);
 
+  size_t l = 100;
   for (;;)
     {
-      g_autofree char *c = NULL;
-      ssize_t n;
-
-      c = g_malloc (l);
-      n = TEMP_FAILURE_RETRY (readlinkat (dfd, subpath, c, l-1));
+      g_autofree char *c = g_malloc (l);
+      ssize_t n = TEMP_FAILURE_RETRY (readlinkat (dfd, subpath, c, l-1));
       if (n < 0)
         return glnx_null_throw_errno_prefix (error, "readlinkat");
 
@@ -682,18 +679,15 @@ copy_symlink_at (int                   src_dfd,
 int
 glnx_loop_write(int fd, const void *buf, size_t nbytes)
 {
-  const uint8_t *p = buf;
-
-  g_return_val_if_fail(fd >= 0, -1);
-  g_return_val_if_fail(buf, -1);
+  g_return_val_if_fail (fd >= 0, -1);
+  g_return_val_if_fail (buf, -1);
 
   errno = 0;
 
+  const uint8_t *p = buf;
   while (nbytes > 0)
     {
-      ssize_t k;
-
-      k = write(fd, p, nbytes);
+      ssize_t k = write(fd, p, nbytes);
       if (k < 0)
         {
           if (errno == EINTR)
