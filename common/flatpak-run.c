@@ -3076,6 +3076,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
             "/dev/dri",
             /* mali */
             "/dev/mali",
+            "/dev/mali0",
             "/dev/umplock",
             /* nvidia */
             "/dev/nvidiactl",
