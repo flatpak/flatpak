@@ -5303,7 +5303,7 @@ flatpak_run_app (const char     *app_ref,
 
   if (generate_ld_so_conf)
     {
-      if (!add_ld_so_conf(argv_array, fd_array, error))
+      if (!add_ld_so_conf (argv_array, fd_array, error))
         return FALSE;
     }
 
