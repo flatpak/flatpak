@@ -5290,8 +5290,7 @@ flatpak_run_app (const char     *app_ref,
                                   cancellable, error);
   if (ld_so_fd == -1)
     return FALSE;
-  if (fd_array)
-    g_array_append_val (fd_array, ld_so_fd);
+  g_array_append_val (fd_array, ld_so_fd);
 
   if (app_context->features & FLATPAK_CONTEXT_FEATURE_DEVEL)
     flags |= FLATPAK_RUN_FLAG_DEVEL;
