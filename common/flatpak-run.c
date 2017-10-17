@@ -4975,17 +4975,19 @@ add_ld_so_conf (GPtrArray      *argv_array,
 
 static int
 regenerate_ld_cache (GPtrArray      *base_argv_array,
-                     GArray         *base_fd_array,
                      GFile          *app_id_dir,
                      const char     *checksum,
                      GFile          *runtime_files,
                      gboolean        generate_ld_so_conf,
+                     GKeyFile       *metakey,
+                     GKeyFile       *runtime_metakey,
+                     const char     *app_ref,
+                     const char     *runtime_ref,
                      GCancellable   *cancellable,
                      GError        **error)
 {
   g_autoptr(GPtrArray) argv_array = NULL;
   g_autoptr(GArray) fd_array = NULL;
-  g_autoptr(GArray) combined_fd_array = NULL;
   g_autoptr(GFile) ld_so_cache = NULL;
   g_autofree char *sandbox_cache_path = NULL;
   g_auto(GStrv) envp = NULL;
@@ -5021,6 +5023,13 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
 
   envp = flatpak_run_get_minimal_env (FALSE, FALSE);
 
+  if (metakey != NULL &&
+      !flatpak_run_add_extension_args (argv_array, fd_array, &envp, metakey, app_ref, TRUE, NULL, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_run_add_extension_args (argv_array, fd_array, &envp, runtime_metakey, runtime_ref, TRUE, NULL, cancellable, error))
+    return FALSE;
+
   flatpak_run_setup_usr_links (argv_array, runtime_files);
 
   if (generate_ld_so_conf)
@@ -5049,15 +5058,11 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
   commandline = flatpak_quote_argv ((const char **) argv_array->pdata);
   flatpak_debug2 ("Running: '%s'", commandline);
 
-  combined_fd_array = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_append_vals (combined_fd_array, base_fd_array->data, base_fd_array->len);
-  g_array_append_vals (combined_fd_array, fd_array->data, fd_array->len);
-
   if (!g_spawn_sync (NULL,
                      (char **) argv_array->pdata,
                      envp,
                      G_SPAWN_SEARCH_PATH,
-                     child_setup, combined_fd_array,
+                     child_setup, fd_array,
                      NULL, NULL,
                      &exit_status,
                      error))
@@ -5121,6 +5126,7 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(GPtrArray) ldconfig_argv_array = NULL;
   g_auto(GLnxTmpfile) arg_tmpf = { 0, };
   g_autoptr(GArray) fd_array = NULL;
   g_autoptr(GPtrArray) real_argv_array = NULL;
@@ -5266,6 +5272,10 @@ flatpak_run_app (const char     *app_ref,
               "--dir", "/app",
               NULL);
 
+  ldconfig_argv_array = g_ptr_array_new_with_free_func (g_free);
+  for (i = 0; i < argv_array->len; i++)
+    g_ptr_array_add (ldconfig_argv_array, g_strdup (argv_array->pdata[i]));
+
   if (metakey != NULL &&
       !flatpak_run_add_extension_args (argv_array, fd_array, &envp, metakey, app_ref, use_ld_so_cache, &app_extensions, cancellable, error))
     return FALSE;
@@ -5281,12 +5291,15 @@ flatpak_run_app (const char     *app_ref,
      We can reuse this to generate the ld.so.cache (if needed) */
   checksum = calculate_ld_cache_checksum (app_deploy_data, runtime_deploy_data,
                                                   app_extensions, runtime_extensions);
-  ld_so_fd = regenerate_ld_cache (argv_array,
-                                  fd_array,
+  ld_so_fd = regenerate_ld_cache (ldconfig_argv_array,
                                   app_id_dir,
                                   checksum,
                                   runtime_files,
                                   generate_ld_so_conf,
+                                  metakey,
+                                  runtime_metakey,
+                                  app_ref,
+                                  runtime_ref,
                                   cancellable, error);
   if (ld_so_fd == -1)
     return FALSE;
