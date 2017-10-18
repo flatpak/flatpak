@@ -1,0 +1,39 @@
+# This PAPR file is mostly inspired by the one in projectatomic/rpm-ostree;
+# if making enhancements here, consider doing them there first.
+branches:
+    - master
+    - auto
+    - try
+
+required: true
+context: f26-primary
+
+# This test case wants an "unprivileged container with bubblewrap",
+# which we don't have right now; so just provision a VM and do a
+# docker --privileged run.
+host:
+  distro: fedora/26/atomic
+
+env:
+    # TODO: CFLAGS: Readd -fsanitize-undefined-trap-on-error -fsanitize=address after debugging
+    # https://github.com/flatpak/flatpak/pull/849#issuecomment-308483205
+    CFLAGS: '-fsanitize=undefined -O2 -Wp,-D_FORTIFY_SOURCE=2'
+    ASAN_OPTIONS: 'detect_leaks=0'  # Right now we're not fully clean, but this gets us use-after-free etc
+    # TODO when we're doing leak checks: G_SLICE: "always-malloc"
+
+# copy yum.repos.d to get any injected repos from the host, which
+# will point to a closer mirror
+tests:
+  - docker run --privileged --rm
+    -e "CFLAGS=${CFLAGS:-}"
+    -e "ASAN_OPTIONS=${ASAN_OPTIONS:-}"
+    -v /etc/yum.repos.d:/etc/yum.repos.d.host:ro
+    -v $(pwd):/srv/code -w /srv/code
+    registry.fedoraproject.org/fedora:26 /bin/sh -c
+    "cp -fv /etc/yum.repos.d{.host/*.repo,} &&
+     ./ci/build-check.sh"
+
+timeout: 30m
+
+artifacts:
+  - test-suite.log
