@@ -100,6 +100,42 @@ extern const char *flatpak_context_devices[];
 extern const char *flatpak_context_features[];
 extern const char *flatpak_context_shares[];
 
+typedef struct {
+  GPtrArray *argv;
+  GArray *fds;
+  GStrv envp;
+} FlatpakBwrap;
+
+FlatpakBwrap *flatpak_bwrap_new              (char         **env);
+void          flatpak_bwrap_free             (FlatpakBwrap  *bwrap);
+void          flatpak_bwrap_set_env          (FlatpakBwrap  *bwrap,
+                                              const char    *variable,
+                                              const char    *value,
+                                              gboolean       overwrite);
+void          flatpak_bwrap_unset_env        (FlatpakBwrap  *bwrap,
+                                              const char    *variable);
+void          flatpak_bwrap_add_args         (FlatpakBwrap  *bwrap,
+                                              ...);
+void          flatpak_bwrap_append_args      (FlatpakBwrap  *bwrap,
+                                              GPtrArray     *other_array);
+void          flatpak_bwrap_add_args_data_fd (FlatpakBwrap  *bwrap,
+                                              const char    *op,
+                                              int            fd,
+                                              const char    *path_optional);
+gboolean      flatpak_bwrap_add_args_data    (FlatpakBwrap  *bwrap,
+                                              const char    *name,
+                                              const char    *content,
+                                              gssize         content_size,
+                                              const char    *path,
+                                              GError       **error);
+void          flatpak_bwrap_add_bind_arg     (FlatpakBwrap  *bwrap,
+                                              const char    *type,
+                                              const char    *src,
+                                              const char    *dest);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakBwrap, flatpak_bwrap_free)
+
+
 FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
 void           flatpak_context_merge (FlatpakContext *context,
