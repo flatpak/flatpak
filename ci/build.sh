@@ -7,7 +7,7 @@ dn=$(dirname $0)
 . ${dn}/libbuild.sh
 
 pkg_install sudo which attr fuse \
-    libubsan libasan libtsan \
+    libubsan libasan libtsan elfutils-libelf-devel libdwarf-devel \
     elfutils git gettext-devel \
     /usr/bin/{update-mime-database,update-desktop-database,gtk-update-icon-cache}
 pkg_install_testing ostree-devel ostree
