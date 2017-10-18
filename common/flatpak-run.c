@@ -4951,6 +4951,123 @@ flatpak_context_load_for_app (const char     *app_id,
   return g_steal_pointer (&app_context);
 }
 
+FlatpakBwrap *
+flatpak_bwrap_new (char **env)
+{
+  FlatpakBwrap *bwrap = g_new0 (FlatpakBwrap, 1);
+
+  bwrap->argv = g_ptr_array_new_with_free_func (g_free);
+  bwrap->fds = g_array_new (FALSE, TRUE, sizeof (int));
+  g_array_set_clear_func (bwrap->fds, clear_fd);
+
+  if (env)
+    bwrap->envp = g_strdupv (env);
+  else
+    bwrap->envp = g_get_environ ();
+
+  return bwrap;
+}
+
+void
+flatpak_bwrap_free (FlatpakBwrap *bwrap)
+{
+  g_ptr_array_unref (bwrap->argv);
+  g_array_unref (bwrap->fds);
+  g_strfreev (bwrap->envp);
+  g_free (bwrap);
+}
+
+void
+flatpak_bwrap_set_env (FlatpakBwrap *bwrap,
+                       const char  *variable,
+                       const char  *value,
+                       gboolean      overwrite)
+{
+  bwrap->envp = g_environ_setenv (bwrap->envp, variable, value, overwrite);
+}
+
+void
+flatpak_bwrap_unset_env (FlatpakBwrap *bwrap,
+                         const char  *variable)
+{
+  bwrap->envp = g_environ_unsetenv (bwrap->envp, variable);
+}
+
+void
+flatpak_bwrap_add_args (FlatpakBwrap *bwrap, ...)
+{
+  va_list args;
+  const gchar *arg;
+
+  va_start (args, bwrap);
+  while ((arg = va_arg (args, const gchar *)))
+    g_ptr_array_add (bwrap->argv, g_strdup (arg));
+  va_end (args);
+}
+
+void
+flatpak_bwrap_append_args (FlatpakBwrap *bwrap,
+                           GPtrArray *other_array)
+{
+  int i;
+
+  for (i = 0; i < other_array->len; i++)
+    g_ptr_array_add (bwrap->argv, g_strdup (g_ptr_array_index (other_array, i)));
+}
+
+void
+flatpak_bwrap_add_args_data_fd (FlatpakBwrap *bwrap,
+                                const char *op,
+                                int fd,
+                                const char *path_optional)
+{
+  g_autofree char *fd_str = g_strdup_printf ("%d", fd);
+
+  g_array_append_val (bwrap->fds, fd);
+  flatpak_bwrap_add_args (bwrap,
+                          op, fd_str, path_optional,
+                          NULL);
+}
+
+
+/* Given a buffer @content of size @content_size, generate a fd (memfd if available)
+ * of the data.  The @name parameter is used by memfd_create() as a debugging aid;
+ * it has no semantic meaning.  The bwrap command line will inject it into the target
+ * container as @path.
+ */
+gboolean
+flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
+                             const char *name,
+                             const char *content,
+                             gssize content_size,
+                             const char *path,
+                             GError **error)
+{
+  g_auto(GLnxTmpfile) args_tmpf  = { 0, };
+
+  if (!buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, name, content, content_size, error))
+    return FALSE;
+
+  flatpak_bwrap_add_args_data_fd (bwrap, "--bind-data", glnx_steal_fd (&args_tmpf.fd), path);
+  return TRUE;
+}
+
+/* This resolves the target here rather than the destination, because
+   it may not resolve in bwrap setup due to absolute relative links
+   conflicting with /newroot root. */
+void
+flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
+                            const char *type,
+                            const char *src,
+                            const char *dest)
+{
+  g_autofree char *dest_real = realpath (dest, NULL);
+
+  if (dest_real)
+    flatpak_bwrap_add_args (bwrap, type, src, dest_real, NULL);
+}
+
+
 static char *
 calculate_ld_cache_checksum (GVariant *app_deploy_data,
                              GVariant *runtime_deploy_data,
