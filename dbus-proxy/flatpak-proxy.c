@@ -338,8 +338,6 @@ buffer_ref (Buffer *buffer)
   return buffer;
 }
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (Buffer, buffer_unref)
-
 static void
 free_side (ProxySide *side)
 {
