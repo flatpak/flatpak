@@ -4846,26 +4846,6 @@ extract_extra_data (FlatpakDir          *self,
 }
 
 static void
-add_args (GPtrArray *argv_array, ...)
-{
-  va_list args;
-  const gchar *arg;
-
-  va_start (args, argv_array);
-  while ((arg = va_arg (args, const gchar *)))
-    g_ptr_array_add (argv_array, g_strdup (arg));
-  va_end (args);
-}
-
-static void
-clear_fd (gpointer data)
-{
-  int *fd_p = data;
-  if (fd_p != NULL && *fd_p != -1)
-    close (*fd_p);
-}
-
-static void
 child_setup (gpointer user_data)
 {
   GArray *fd_array = user_data;
@@ -4894,17 +4874,16 @@ apply_extra_data (FlatpakDir          *self,
   g_autofree char *runtime = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
+  g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) apply_extra_file = NULL;
   g_autoptr(GFile) app_export_file = NULL;
   g_autoptr(GFile) extra_export_file = NULL;
   g_autoptr(GFile) extra_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
-  g_autoptr(GPtrArray) argv_array = NULL;
   g_auto(GStrv) runtime_ref_parts = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
-  g_autoptr(GArray) fd_array = NULL;
-  g_auto(GStrv) envp = NULL;
+  g_auto(GStrv) minimal_envp = NULL;
   int exit_status;
   const char *group = FLATPAK_METADATA_GROUP_APPLICATION;
   g_autoptr(GError) local_error = NULL;
@@ -4962,32 +4941,30 @@ apply_extra_data (FlatpakDir          *self,
   extra_files = g_file_get_child (app_files, "extra");
   extra_export_file = g_file_get_child (extra_files, "export");
 
-  argv_array = g_ptr_array_new_with_free_func (g_free);
-  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (fd_array, clear_fd);
-  g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
+  minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
+  bwrap = flatpak_bwrap_new (minimal_envp);
+  flatpak_bwrap_add_args (bwrap, flatpak_get_bwrap (), NULL);
 
   if (runtime_files)
-    add_args (argv_array,
-              "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
-            "--lock-file", "/usr/.ref",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
+                            "--lock-file", "/usr/.ref",
+                            NULL);
 
-  add_args (argv_array,
-            "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
-            "--bind", flatpak_file_get_path_cached (extra_files), "/app/extra",
-            "--chdir", "/app/extra",
-            NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
+                          "--bind", flatpak_file_get_path_cached (extra_files), "/app/extra",
+                          "--chdir", "/app/extra",
+                          NULL);
 
-  if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, NULL, runtime_ref_parts[2],
+  if (!flatpak_run_setup_base_argv (bwrap, runtime_files, NULL, runtime_ref_parts[2],
                                     FLATPAK_RUN_FLAG_NO_SESSION_HELPER,
                                     error))
     return FALSE;
 
   app_context = flatpak_context_new ();
 
-  envp = flatpak_run_get_minimal_env (FALSE, FALSE);
-  if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL,
+  if (!flatpak_run_add_environment_args (bwrap, NULL,
                                          FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
                                          FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
                                          FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY,
@@ -4995,17 +4972,17 @@ apply_extra_data (FlatpakDir          *self,
                                          app_context, NULL, NULL, cancellable, error))
     return FALSE;
 
-  g_ptr_array_add (argv_array, g_strdup ("/app/bin/apply_extra"));
+  g_ptr_array_add (bwrap->argv, g_strdup ("/app/bin/apply_extra"));
 
-  g_ptr_array_add (argv_array, NULL);
+  g_ptr_array_add (bwrap->argv, NULL);
 
   g_debug ("Running /app/bin/apply_extra ");
 
   if (!g_spawn_sync (NULL,
-                     (char **) argv_array->pdata,
-                     envp,
+                     (char **) bwrap->argv->pdata,
+                     bwrap->envp,
                      G_SPAWN_SEARCH_PATH,
-                     child_setup, fd_array,
+                     child_setup, bwrap->fds,
                      NULL, NULL,
                      &exit_status,
                      error))
