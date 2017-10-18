@@ -4877,7 +4877,16 @@ child_setup (gpointer user_data)
 
   /* Otherwise, mark not - close-on-exec all the fds in the array */
   for (i = 0; i < fd_array->len; i++)
-    fcntl (g_array_index (fd_array, int, i), F_SETFD, 0);
+    {
+      int fd = g_array_index (fd_array, int, i);
+
+      /* We also seek all fds to the start, because this lets
+         us use the same fd_array multiple times */
+      if (lseek (fd, 0, SEEK_SET) < 0)
+        g_printerr ("lseek error in child setup");
+
+      fcntl (fd, F_SETFD, 0);
+    }
 }
 
 static gboolean
