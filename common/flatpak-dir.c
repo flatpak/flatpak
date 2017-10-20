@@ -1646,6 +1646,17 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
   return TRUE;
 }
 
+char *
+flatpak_dir_get_config (FlatpakDir *self,
+                        const char *key,
+                        GError    **error)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  g_autofree char *ostree_key = g_strconcat ("xa.", key, NULL);
+
+  return g_key_file_get_string (config, "core", ostree_key, error);
+}
+
 gboolean
 flatpak_dir_set_config (FlatpakDir *self,
                         const char *key,
@@ -1653,6 +1664,7 @@ flatpak_dir_set_config (FlatpakDir *self,
                         GError    **error)
 {
   GKeyFile *config = ostree_repo_copy_config (self->repo);
+  g_autofree char *ostree_key = g_strconcat ("xa.", key, NULL);
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -1680,9 +1692,9 @@ flatpak_dir_set_config (FlatpakDir *self,
     }
 
   if (value == NULL)
-    g_key_file_remove_key (config, "core", key, NULL);
+    g_key_file_remove_key (config, "core", ostree_key, NULL);
   else
-    g_key_file_set_value (config, "core", key, value);
+    g_key_file_set_value (config, "core", ostree_key, value);
 
   if (!ostree_repo_write_config (self->repo, config, error))
     return FALSE;
