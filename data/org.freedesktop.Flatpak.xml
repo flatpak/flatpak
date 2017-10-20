@@ -103,6 +103,13 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="Configure">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='key' direction='in'/>
+      <arg type='s' name='value' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
     <method name="UpdateRemote">
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='remote' direction='in'/>

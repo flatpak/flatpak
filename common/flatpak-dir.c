@@ -1650,6 +1650,31 @@ flatpak_dir_set_config (FlatpakDir *self,
 {
   GKeyFile *config = ostree_repo_copy_config (self->repo);
 
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      FlatpakSystemHelper *system_helper;
+      FlatpakHelperConfigureFlags flags = 0;
+      const char *installation = flatpak_dir_get_id (self);
+
+      system_helper = flatpak_dir_get_system_helper (self);
+      g_assert (system_helper != NULL);
+
+      if (value == NULL)
+	{
+	  flags |= FLATPAK_HELPER_CONFIGURE_FLAGS_UNSET;
+	  value = "";
+	}
+
+      g_debug ("Calling system helper: Configure");
+      if (!flatpak_system_helper_call_configure_sync (system_helper,
+						      flags, key, value,
+						      installation ? installation : "",
+						      NULL, error))
+        return FALSE;
+
+      return TRUE;
+    }
+
   if (value == NULL)
     g_key_file_remove_key (config, "core", key, NULL);
   else
