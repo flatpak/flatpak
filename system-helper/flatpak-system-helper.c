@@ -678,6 +678,61 @@ handle_configure_remote (FlatpakSystemHelper *object,
 }
 
 static gboolean
+handle_configure (FlatpakSystemHelper *object,
+		  GDBusMethodInvocation *invocation,
+		  guint arg_flags,
+		  const gchar *arg_key,
+		  const gchar *arg_value,
+		  const gchar *arg_installation)
+{
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(GError) error = NULL;
+
+  g_debug ("Configure %u %s=%s %s", arg_flags, arg_key, arg_value, arg_installation);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_CONFIGURE_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_CONFIGURE_FLAGS_ALL));
+      return TRUE;
+    }
+
+  /* We only support this for now */
+  if (strcmp (arg_key, "xa.languages") != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported key: %s", arg_key);
+      return TRUE;
+    }
+
+  if ((arg_flags & FLATPAK_HELPER_CONFIGURE_FLAGS_UNSET) != 0)
+    arg_value = NULL;
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if (!flatpak_dir_set_config (system, arg_key, arg_value, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  flatpak_system_helper_complete_configure (object, invocation);
+
+  return TRUE;
+}
+
+static gboolean
 handle_update_remote (FlatpakSystemHelper *object,
                       GDBusMethodInvocation *invocation,
                       guint arg_flags,
@@ -970,6 +1025,16 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       polkit_details_insert (details, "remote", remote);
     }
+  else if (g_strcmp0 (method_name, "Configure") == 0)
+    {
+      const char *key;
+
+      g_variant_get_child (parameters, 1, "&s", &key);
+
+      action = "org.freedesktop.Flatpak.configure";
+
+      polkit_details_insert (details, "key", key);
+    }
   else if (g_strcmp0 (method_name, "UpdateRemote") == 0)
     {
       const char *remote;
@@ -1045,6 +1110,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-uninstall", G_CALLBACK (handle_uninstall), NULL);
   g_signal_connect (helper, "handle-install-bundle", G_CALLBACK (handle_install_bundle), NULL);
   g_signal_connect (helper, "handle-configure-remote", G_CALLBACK (handle_configure_remote), NULL);
+  g_signal_connect (helper, "handle-configure", G_CALLBACK (handle_configure), NULL);
   g_signal_connect (helper, "handle-update-remote", G_CALLBACK (handle_update_remote), NULL);
   g_signal_connect (helper, "handle-remove-local-ref", G_CALLBACK (handle_remove_local_ref), NULL);
   g_signal_connect (helper, "handle-prune-local-repo", G_CALLBACK (handle_prune_local_repo), NULL);
