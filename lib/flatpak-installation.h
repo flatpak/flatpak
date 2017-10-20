@@ -193,6 +193,15 @@ FLATPAK_EXTERN gboolean              flatpak_installation_update_remote_sync (Fl
                                                                               const char          *name,
                                                                               GCancellable        *cancellable,
                                                                               GError             **error);
+FLATPAK_EXTERN gboolean              flatpak_installation_set_config_sync (FlatpakInstallation *self,
+									   const char          *key,
+									   const char          *value,
+									   GCancellable        *cancellable,
+									   GError             **error);
+FLATPAK_EXTERN char *                flatpak_installation_get_config      (FlatpakInstallation *self,
+									   const char          *key,
+									   GCancellable        *cancellable,
+									   GError             **error);
 FLATPAK_EXTERN char *              flatpak_installation_load_app_overrides (FlatpakInstallation *self,
                                                                             const char          *app_id,
                                                                             GCancellable        *cancellable,
