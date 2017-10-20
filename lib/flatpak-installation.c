@@ -1092,6 +1092,68 @@ flatpak_installation_remove_remote (FlatpakInstallation *self,
 }
 
 /**
+ * flatpak_installation_set_config_sync:
+ * @self: a #FlatpakInstallation
+ * @key: the name of the key to set
+ * @value: the new value, or %NULL to unset
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Set a global configuration option for the installation, currently
+ * the only supported key is "languages", which is a comman-separated
+ * list of langue codes like "sv;en;pl", or "" to mean all languages.
+ *
+ * Returns: %TRUE if the option was set correctly
+ */
+gboolean
+flatpak_installation_set_config_sync (FlatpakInstallation *self,
+				      const char          *key,
+				      const char          *value,
+				      GCancellable        *cancellable,
+				      GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+     it has local changes */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_set_config (dir, key, value, error))
+    return FALSE;
+
+  /* Make sure we pick up the new config */
+  flatpak_installation_drop_caches (self, NULL, NULL);
+
+  return TRUE;
+}
+
+/**
+ * flatpak_installation_get_config:
+ * @self: a #FlatpakInstallation
+ * @key: the name of the key to get
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Get a global configuration option for the remote, see
+ * flatpak_installation_set_config_sync() for supported keys.
+ *
+ * Returns: The (newly allocated) value, or %NULL on error (%G_KEY_FILE_ERROR_KEY_NOT_FOUND error if key is not set)
+ */
+char *
+flatpak_installation_get_config (FlatpakInstallation *self,
+				 const char          *key,
+				 GCancellable        *cancellable,
+				 GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+
+  return flatpak_dir_get_config (dir, key, error);
+}
+
+/**
  * flatpak_installation_update_remote_sync:
  * @self: a #FlatpakInstallation
  * @name: the name of the remote to update
