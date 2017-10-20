@@ -316,6 +316,9 @@ gboolean    flatpak_dir_recreate_repo (FlatpakDir   *self,
 gboolean    flatpak_dir_ensure_repo (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
+char *      flatpak_dir_get_config (FlatpakDir *self,
+				    const char *key,
+				    GError    **error);
 gboolean    flatpak_dir_set_config (FlatpakDir *self,
                                     const char *key,
                                     const char *value,

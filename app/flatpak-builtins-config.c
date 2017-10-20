@@ -72,14 +72,13 @@ get_lang_default (FlatpakDir *dir)
 
 typedef struct {
   const char *name;
-  const char *ostree_name;
   char *(*parse)(const char *value);
   char *(*print)(const char *value);
   char *(*get_default)(FlatpakDir *dir);
 } ConfigKey;
 
 ConfigKey keys[] = {
-  { "languages", "xa.languages", parse_lang, print_lang, get_lang_default },
+  { "languages", parse_lang, print_lang, get_lang_default },
 };
 
 static ConfigKey *
@@ -100,10 +99,9 @@ get_config_key (const char *arg, GError **error)
 static char *
 print_config (FlatpakDir *dir, ConfigKey *key)
 {
-  GKeyFile *config = ostree_repo_get_config (flatpak_dir_get_repo (dir));
   g_autofree char *value = NULL;
 
-  value = g_key_file_get_string (config, "core", key->ostree_name, NULL);
+  value = flatpak_dir_get_config (dir, key->name, NULL);
   if (value == NULL)
     return g_strdup ("*unset*");
 
@@ -172,7 +170,7 @@ set_config (int argc, char **argv, FlatpakDir *dir, GCancellable *cancellable, G
     return FALSE;
 
   parsed = key->parse (argv[2]);
-  if (!flatpak_dir_set_config (dir, key->ostree_name, parsed, error))
+  if (!flatpak_dir_set_config (dir, key->name, parsed, error))
     return FALSE;
 
   return TRUE;
@@ -190,7 +188,7 @@ unset_config (int argc, char **argv, FlatpakDir *dir, GCancellable *cancellable,
   if (key == NULL)
     return FALSE;
 
-  if (!flatpak_dir_set_config (dir, key->ostree_name, argv[2], error))
+  if (!flatpak_dir_set_config (dir, key->name, argv[2], error))
     return FALSE;
 
   return TRUE;

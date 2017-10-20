@@ -705,7 +705,7 @@ handle_configure (FlatpakSystemHelper *object,
     }
 
   /* We only support this for now */
-  if (strcmp (arg_key, "xa.languages") != 0)
+  if (strcmp (arg_key, "languages") != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported key: %s", arg_key);
