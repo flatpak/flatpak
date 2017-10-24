@@ -6362,6 +6362,7 @@ flatpak_dir_update (FlatpakDir          *self,
   const char **subpaths = NULL;
   g_autofree char *url = NULL;
   FlatpakPullFlags flatpak_flags;
+  g_autofree const char **old_subpaths = NULL;
   gboolean is_oci;
 
   /* This and @results are calculated in check_for_update. @results will be
@@ -6376,10 +6377,14 @@ flatpak_dir_update (FlatpakDir          *self,
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
+
+  if (deploy_data != NULL)
+    old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+
   if (opt_subpaths)
     subpaths = opt_subpaths;
-  else if (deploy_data != NULL)
-    subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+  else
+    subpaths = old_subpaths;
 
   if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, error))
     return FALSE;
