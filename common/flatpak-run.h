@@ -116,6 +116,9 @@ void          flatpak_bwrap_unset_env        (FlatpakBwrap  *bwrap,
                                               const char    *variable);
 void          flatpak_bwrap_add_args         (FlatpakBwrap  *bwrap,
                                               ...);
+void          flatpak_bwrap_append_argsv     (FlatpakBwrap *bwrap,
+                                              char        **args,
+                                              int           len);
 void          flatpak_bwrap_append_args      (FlatpakBwrap  *bwrap,
                                               GPtrArray     *other_array);
 void          flatpak_bwrap_add_args_data_fd (FlatpakBwrap  *bwrap,

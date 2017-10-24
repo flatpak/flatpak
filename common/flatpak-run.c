@@ -4925,13 +4925,26 @@ flatpak_bwrap_add_args (FlatpakBwrap *bwrap, ...)
 }
 
 void
-flatpak_bwrap_append_args (FlatpakBwrap *bwrap,
-                           GPtrArray *other_array)
+flatpak_bwrap_append_argsv (FlatpakBwrap *bwrap,
+                            char **args,
+                            int len)
 {
   int i;
 
-  for (i = 0; i < other_array->len; i++)
-    g_ptr_array_add (bwrap->argv, g_strdup (g_ptr_array_index (other_array, i)));
+  if (len < 0)
+    len = g_strv_length (args);
+
+  for (i = 0; i < len; i++)
+    g_ptr_array_add (bwrap->argv, g_strdup (args[i]));
+}
+
+void
+flatpak_bwrap_append_args (FlatpakBwrap *bwrap,
+                           GPtrArray *other_array)
+{
+  flatpak_bwrap_append_argsv (bwrap,
+                              (char **)other_array->pdata,
+                              other_array->len);
 }
 
 void

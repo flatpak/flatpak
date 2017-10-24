@@ -422,9 +422,10 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                               NULL);
     }
 
-  g_ptr_array_add (bwrap->argv, g_strdup (command));
-  for (i = 2; i < rest_argc; i++)
-    g_ptr_array_add (bwrap->argv, g_strdup (argv[rest_argv_start + i]));
+  flatpak_bwrap_add_args (bwrap, command, NULL);
+  flatpak_bwrap_append_argsv (bwrap,
+                              &argv[rest_argv_start + 2],
+                              rest_argc - 2);
 
   g_ptr_array_add (bwrap->argv, NULL);
 
