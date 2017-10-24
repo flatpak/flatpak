@@ -6381,6 +6381,11 @@ flatpak_dir_update (FlatpakDir          *self,
   if (deploy_data != NULL)
     old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
 
+  /* If the existing pull is partial, disable static deltas. They can
+     break, because ostree assumes all old objects are locally available. */
+  if (old_subpaths && old_subpaths[0] != NULL)
+    flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+
   if (opt_subpaths)
     subpaths = opt_subpaths;
   else
