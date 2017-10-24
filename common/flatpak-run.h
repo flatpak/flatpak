@@ -100,6 +100,45 @@ extern const char *flatpak_context_devices[];
 extern const char *flatpak_context_features[];
 extern const char *flatpak_context_shares[];
 
+typedef struct {
+  GPtrArray *argv;
+  GArray *fds;
+  GStrv envp;
+} FlatpakBwrap;
+
+FlatpakBwrap *flatpak_bwrap_new              (char         **env);
+void          flatpak_bwrap_free             (FlatpakBwrap  *bwrap);
+void          flatpak_bwrap_set_env          (FlatpakBwrap  *bwrap,
+                                              const char    *variable,
+                                              const char    *value,
+                                              gboolean       overwrite);
+void          flatpak_bwrap_unset_env        (FlatpakBwrap  *bwrap,
+                                              const char    *variable);
+void          flatpak_bwrap_add_args         (FlatpakBwrap  *bwrap,
+                                              ...);
+void          flatpak_bwrap_append_argsv     (FlatpakBwrap *bwrap,
+                                              char        **args,
+                                              int           len);
+void          flatpak_bwrap_append_args      (FlatpakBwrap  *bwrap,
+                                              GPtrArray     *other_array);
+void          flatpak_bwrap_add_args_data_fd (FlatpakBwrap  *bwrap,
+                                              const char    *op,
+                                              int            fd,
+                                              const char    *path_optional);
+gboolean      flatpak_bwrap_add_args_data    (FlatpakBwrap  *bwrap,
+                                              const char    *name,
+                                              const char    *content,
+                                              gssize         content_size,
+                                              const char    *path,
+                                              GError       **error);
+void          flatpak_bwrap_add_bind_arg     (FlatpakBwrap  *bwrap,
+                                              const char    *type,
+                                              const char    *src,
+                                              const char    *dest);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakBwrap, flatpak_bwrap_free)
+
+
 FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
 void           flatpak_context_merge (FlatpakContext *context,
@@ -158,18 +197,14 @@ FlatpakExports *flatpak_exports_from_context (FlatpakContext *context,
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 
-gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
-                                          GArray       *fd_array,
-                                          char       ***envp_p,
+gboolean  flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,
                                           gboolean      use_ld_so_cache,
                                           char        **extensions_out,
                                           GCancellable *cancellable,
                                           GError      **error);
-gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
-                                           GArray         *fd_array,
-                                           char         ***envp_p,
+gboolean flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                            const char     *app_info_path,
                                            FlatpakRunFlags flags,
                                            const char     *app_id,
@@ -179,29 +214,26 @@ gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                            GCancellable *cancellable,
                                            GError      **error);
 char **  flatpak_run_get_minimal_env (gboolean devel, gboolean use_ld_so_cache);
-char **  flatpak_run_apply_env_default (char **envp, gboolean use_ld_so_cache);
-char **  flatpak_run_apply_env_appid (char **envp,
+void     flatpak_run_apply_env_default (FlatpakBwrap *bwrap, gboolean use_ld_so_cache);
+void     flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
                                       GFile *app_dir);
-char **  flatpak_run_apply_env_vars (char          **envp,
-                                     FlatpakContext *context);
+void      flatpak_run_apply_env_vars (FlatpakBwrap *bwrap,
+                                      FlatpakContext *context);
 FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                                  GKeyFile *runtime_metadata,
                                                  GError  **error);
-
 GFile *flatpak_get_data_dir (const char *app_id);
 GFile *flatpak_ensure_data_dir (const char   *app_id,
                                 GCancellable *cancellable,
                                 GError      **error);
 
-gboolean flatpak_run_setup_base_argv (GPtrArray      *argv_array,
-                                      GArray         *fd_array,
+gboolean flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                                       GFile          *runtime_files,
                                       GFile          *app_id_dir,
                                       const char     *arch,
                                       FlatpakRunFlags flags,
                                       GError        **error);
-gboolean flatpak_run_add_app_info_args (GPtrArray      *argv_array,
-                                        GArray         *fd_array,
+gboolean flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                         GFile          *app_files,
                                         GVariant       *app_deploy_data,
                                         const char     *app_extensions,

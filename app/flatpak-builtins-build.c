@@ -53,26 +53,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static void
-add_args (GPtrArray *argv_array, ...)
-{
-  va_list args;
-  const gchar *arg;
-
-  va_start (args, argv_array);
-  while ((arg = va_arg (args, const gchar *)))
-    g_ptr_array_add (argv_array, g_strdup (arg));
-  va_end (args);
-}
-
-static void
-clear_fd (gpointer data)
-{
-  int *fd_p = data;
-  if (fd_p != NULL && *fd_p != -1)
-    close (*fd_p);
-}
-
 /* Unset FD_CLOEXEC on the array of fds passed in @user_data */
 static void
 child_setup (gpointer user_data)
@@ -112,9 +92,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *extension_tmpfs_point = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
-  g_autoptr(GPtrArray) argv_array = NULL;
-  g_autoptr(GArray) fd_array = NULL;
-  g_auto(GStrv) envp = NULL;
+  g_autoptr(FlatpakBwrap) bwrap = NULL;
+  g_auto(GStrv) minimal_envp = NULL;
   gsize metadata_size;
   const char *directory = NULL;
   const char *command = "/bin/sh";
@@ -319,10 +298,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       extension_point = g_build_filename (bare_extension_point, x_subdir_suffix, NULL);
     }
 
-  argv_array = g_ptr_array_new_with_free_func (g_free);
-  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (fd_array, clear_fd);
-  g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
+  minimal_envp = flatpak_run_get_minimal_env (TRUE, FALSE);
+  bwrap = flatpak_bwrap_new (minimal_envp);
+  flatpak_bwrap_add_args (bwrap, flatpak_get_bwrap (), NULL);
 
   run_flags =
     FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER |
@@ -342,37 +320,37 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   /* Never set up an a11y bus for builds */
   run_flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
 
-  if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, runtime_ref_parts[2],
+  if (!flatpak_run_setup_base_argv (bwrap, runtime_files, app_id_dir, runtime_ref_parts[2],
                                     run_flags, error))
     return FALSE;
 
-  add_args (argv_array,
-            custom_usr ? "--bind" : "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
-            NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          custom_usr ? "--bind" : "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
+                          NULL);
 
   if (!custom_usr)
-    add_args (argv_array,
-              "--lock-file", "/usr/.ref",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--lock-file", "/usr/.ref",
+                            NULL);
 
   if (app_files)
-    add_args (argv_array,
-              app_files_ro ? "--ro-bind" : "--bind", flatpak_file_get_path_cached (app_files), "/app",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            app_files_ro ? "--ro-bind" : "--bind", flatpak_file_get_path_cached (app_files), "/app",
+                            NULL);
   else
-    add_args (argv_array,
-              "--dir", "/app",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--dir", "/app",
+                            NULL);
 
   if (extension_tmpfs_point)
-    add_args (argv_array,
-              "--tmpfs", extension_tmpfs_point,
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--tmpfs", extension_tmpfs_point,
+                            NULL);
 
   if (extension_point)
-    add_args (argv_array,
-              "--bind", flatpak_file_get_path_cached (res_files), extension_point,
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--bind", flatpak_file_get_path_cached (res_files), extension_point,
+                            NULL);
 
   if (extension_point)
     dest = extension_point;
@@ -381,7 +359,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   else
     dest = g_strdup ("/usr");
 
-  add_args (argv_array,
+  flatpak_bwrap_add_args (bwrap,
             "--setenv", "FLATPAK_DEST", dest,
             "--setenv", "FLATPAK_ID", id,
             "--setenv", "FLATPAK_ARCH", runtime_ref_parts[2],
@@ -396,15 +374,13 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   flatpak_context_allow_host_fs (app_context);
   flatpak_context_merge (app_context, arg_context);
 
-  envp = flatpak_run_get_minimal_env (TRUE, FALSE);
-  envp = flatpak_run_apply_env_vars (envp, app_context);
+  flatpak_run_apply_env_vars (bwrap, app_context);
 
   if (!custom_usr && !(is_extension && !is_app_extension) &&
-      !flatpak_run_add_extension_args (argv_array, fd_array, &envp, runtime_metakey, runtime_ref, FALSE, &runtime_extensions, cancellable, error))
+      !flatpak_run_add_extension_args (bwrap, runtime_metakey, runtime_ref, FALSE, &runtime_extensions, cancellable, error))
     return FALSE;
 
-  if (!flatpak_run_add_app_info_args (argv_array,
-                                      fd_array,
+  if (!flatpak_run_add_app_info_args (bwrap,
                                       app_files, NULL, NULL,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       id, NULL,
@@ -414,14 +390,14 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       error))
     return FALSE;
 
-  if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp, app_info_path, run_flags, id,
+  if (!flatpak_run_add_environment_args (bwrap, app_info_path, run_flags, id,
                                          app_context, app_id_dir, NULL, cancellable, error))
     return FALSE;
 
   /* After setup_base to avoid conflicts with /var symlinks */
-  add_args (argv_array,
-            "--bind", flatpak_file_get_path_cached (var), "/var",
-            NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          "--bind", flatpak_file_get_path_cached (var), "/var",
+                          NULL);
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
     {
@@ -434,27 +410,28 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
         }
 
       *split++ = 0;
-      add_args (argv_array,
-                "--bind", split, opt_bind_mounts[i],
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", split, opt_bind_mounts[i],
+                              NULL);
     }
 
   if (opt_build_dir != NULL)
     {
-      add_args (argv_array,
-                "--chdir", opt_build_dir,
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--chdir", opt_build_dir,
+                              NULL);
     }
 
-  g_ptr_array_add (argv_array, g_strdup (command));
-  for (i = 2; i < rest_argc; i++)
-    g_ptr_array_add (argv_array, g_strdup (argv[rest_argv_start + i]));
+  flatpak_bwrap_add_args (bwrap, command, NULL);
+  flatpak_bwrap_append_argsv (bwrap,
+                              &argv[rest_argv_start + 2],
+                              rest_argc - 2);
 
-  g_ptr_array_add (argv_array, NULL);
+  g_ptr_array_add (bwrap->argv, NULL);
 
   /* Ensure we unset O_CLOEXEC */
-  child_setup (fd_array);
-  if (execvpe (flatpak_get_bwrap (), (char **) argv_array->pdata, envp) == -1)
+  child_setup (bwrap->fds);
+  if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
                    _("Unable to start app"));

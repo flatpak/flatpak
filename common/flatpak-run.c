@@ -1854,15 +1854,6 @@ write_xauth (char *number, FILE *output)
 #endif /* ENABLE_XAUTH */
 
 static void
-append_args (GPtrArray *argv_array, GPtrArray *other_array)
-{
-  int i;
-
-  for (i = 0; i < other_array->len; i++)
-    g_ptr_array_add (argv_array, g_strdup (g_ptr_array_index (other_array, i)));
-}
-
-static void
 add_args (GPtrArray *argv_array, ...)
 {
   va_list args;
@@ -1939,34 +1930,8 @@ buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
   return TRUE;
 }
 
-/* Given a buffer @content of size @content_size, generate a fd (memfd if available)
- * of the data.  The @name parameter is used by memfd_create() as a debugging aid;
- * it has no semantic meaning.  The bwrap command line will inject it into the target
- * container as @path.
- */
-static gboolean
-add_args_data (GPtrArray *argv_array,
-               GArray    *fd_array,
-               const char *name,
-               const char *content,
-               gssize content_size,
-               const char *path,
-               GError **error)
-{
-  g_auto(GLnxTmpfile) args_tmpf  = { 0, };
-
-  if (!buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, name, content, content_size, error))
-    return FALSE;
-
-  add_args_data_fd (argv_array, fd_array,
-                    "--bind-data", glnx_steal_fd (&args_tmpf.fd), path);
-  return TRUE;
-}
-
 static void
-flatpak_run_add_x11_args (GPtrArray *argv_array,
-                          GArray    *fd_array,
-                          char    ***envp_p,
+flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
                           gboolean allowed)
 {
   g_autofree char *x11_socket = NULL;
@@ -1976,13 +1941,13 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
    * we have access to the host /tmp. If you request X access we'll put the right
    * thing in this anyway.
    */
-  add_args (argv_array,
-            "--tmpfs", "/tmp/.X11-unix",
-            NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          "--tmpfs", "/tmp/.X11-unix",
+                          NULL);
 
   if (!allowed)
     {
-      *envp_p = g_environ_unsetenv (*envp_p, "DISPLAY");
+      flatpak_bwrap_unset_env (bwrap, "DISPLAY");
       return;
     }
 
@@ -2001,10 +1966,10 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
       d = g_strndup (display_nr, display_nr_end - display_nr);
       x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", d);
 
-      add_args (argv_array,
-                "--bind", x11_socket, "/tmp/.X11-unix/X99",
-                NULL);
-      *envp_p = g_environ_setenv (*envp_p, "DISPLAY", ":99.0", TRUE);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", x11_socket, "/tmp/.X11-unix/X99",
+                              NULL);
+      flatpak_bwrap_set_env (bwrap, "DISPLAY", ":99.0", TRUE);
 
 #ifdef ENABLE_XAUTH
       g_auto(GLnxTmpfile) xauth_tmpf  = { 0, };
@@ -2021,10 +1986,9 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
                   g_autofree char *dest = g_strdup_printf ("/run/user/%d/Xauthority", getuid ());
 
                   write_xauth (d, output);
-                  add_args_data_fd (argv_array, fd_array,
-                                    "--bind-data", tmp_fd, dest);
+                  flatpak_bwrap_add_args_data_fd (bwrap, "--bind-data", tmp_fd, dest);
 
-                  *envp_p = g_environ_setenv (*envp_p, "XAUTHORITY", dest, TRUE);
+                  flatpak_bwrap_set_env (bwrap, "XAUTHORITY", dest, TRUE);
                 }
 
               fclose (output);
@@ -2037,14 +2001,13 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
     }
   else
     {
-      *envp_p = g_environ_unsetenv (*envp_p, "DISPLAY");
+      flatpak_bwrap_unset_env (bwrap, "DISPLAY");
     }
 
 }
 
 static void
-flatpak_run_add_wayland_args (GPtrArray *argv_array,
-                              char    ***envp_p)
+flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
 {
   const char *wayland_display;
   g_autofree char *wayland_socket = NULL;
@@ -2059,20 +2022,19 @@ flatpak_run_add_wayland_args (GPtrArray *argv_array,
 
   if (g_file_test (wayland_socket, G_FILE_TEST_EXISTS))
     {
-      add_args (argv_array,
-                "--bind", wayland_socket, sandbox_wayland_socket,
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", wayland_socket, sandbox_wayland_socket,
+                              NULL);
     }
 }
 
 static void
-flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
-                                 GArray    *fd_array,
-                                 char    ***envp_p)
+flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
 {
   g_autofree char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
 
-  *envp_p = g_environ_unsetenv (*envp_p, "PULSE_SERVER");
+  flatpak_bwrap_unset_env (bwrap, "PULSE_SERVER");
+
   if (g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
     {
       gboolean share_shm = FALSE; /* TODO: When do we add this? */
@@ -2082,35 +2044,35 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
       g_autofree char *config_path = g_strdup_printf ("/run/user/%d/pulse/config", getuid ());
 
       /* FIXME - error handling */
-      if (!add_args_data (argv_array, fd_array, "pulseaudio", client_config, -1, config_path, NULL))
+      if (!flatpak_bwrap_add_args_data (bwrap, "pulseaudio", client_config, -1, config_path, NULL))
         return;
 
-      add_args (argv_array,
-                "--bind", pulseaudio_socket, sandbox_socket_path,
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", pulseaudio_socket, sandbox_socket_path,
+                              NULL);
 
-      *envp_p = g_environ_setenv (*envp_p, "PULSE_SERVER", pulse_server, TRUE);
-      *envp_p = g_environ_setenv (*envp_p, "PULSE_CLIENTCONFIG", config_path, TRUE);
+      flatpak_bwrap_set_env (bwrap, "PULSE_SERVER", pulse_server, TRUE);
+      flatpak_bwrap_set_env (bwrap, "PULSE_CLIENTCONFIG", config_path, TRUE);
     }
 }
 
 static void
-flatpak_run_add_journal_args (GPtrArray *argv_array)
+flatpak_run_add_journal_args (FlatpakBwrap *bwrap)
 {
   g_autofree char *journal_socket_socket = g_strdup ("/run/systemd/journal/socket");
   g_autofree char *journal_stdout_socket = g_strdup ("/run/systemd/journal/stdout");
 
   if (g_file_test (journal_socket_socket, G_FILE_TEST_EXISTS))
     {
-      add_args (argv_array,
-                "--bind", journal_socket_socket, journal_socket_socket,
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", journal_socket_socket, journal_socket_socket,
+                              NULL);
     }
   if (g_file_test (journal_stdout_socket, G_FILE_TEST_EXISTS))
     {
-      add_args (argv_array,
-                "--bind", journal_stdout_socket, journal_stdout_socket,
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", journal_stdout_socket, journal_stdout_socket,
+                              NULL);
     }
 }
 
@@ -2135,8 +2097,7 @@ create_proxy_socket (char *template)
 
 static gboolean
 flatpak_run_add_system_dbus_args (FlatpakContext *context,
-                                  char         ***envp_p,
-                                  GPtrArray      *argv_array,
+                                  FlatpakBwrap   *bwrap,
                                   GPtrArray      *dbus_proxy_argv,
                                   gboolean        unrestricted)
 {
@@ -2151,10 +2112,10 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
 
   if (dbus_system_socket != NULL && unrestricted)
     {
-      add_args (argv_array,
-                "--bind", dbus_system_socket, "/run/dbus/system_bus_socket",
-                NULL);
-      *envp_p = g_environ_setenv (*envp_p, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", dbus_system_socket, "/run/dbus/system_bus_socket",
+                              NULL);
+      flatpak_bwrap_set_env (bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
       return TRUE;
     }
@@ -2175,10 +2136,10 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
       g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
 
 
-      add_args (argv_array,
-                "--bind", proxy_socket, "/run/dbus/system_bus_socket",
-                NULL);
-      *envp_p = g_environ_setenv (*envp_p, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", proxy_socket, "/run/dbus/system_bus_socket",
+                              NULL);
+      flatpak_bwrap_set_env (bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
       return TRUE;
     }
@@ -2186,8 +2147,7 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
 }
 
 static gboolean
-flatpak_run_add_session_dbus_args (GPtrArray *argv_array,
-                                   char    ***envp_p,
+flatpak_run_add_session_dbus_args (FlatpakBwrap *bwrap,
                                    GPtrArray *dbus_proxy_argv,
                                    gboolean   unrestricted)
 {
@@ -2202,11 +2162,10 @@ flatpak_run_add_session_dbus_args (GPtrArray *argv_array,
   dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_session_socket != NULL && unrestricted)
     {
-
-      add_args (argv_array,
-                "--bind", dbus_session_socket, sandbox_socket_path,
-                NULL);
-      *envp_p = g_environ_setenv (*envp_p, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", dbus_session_socket, sandbox_socket_path,
+                              NULL);
+      flatpak_bwrap_set_env (bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
       return TRUE;
     }
@@ -2220,10 +2179,10 @@ flatpak_run_add_session_dbus_args (GPtrArray *argv_array,
       g_ptr_array_add (dbus_proxy_argv, g_strdup (dbus_address));
       g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
 
-      add_args (argv_array,
-                "--bind", proxy_socket, sandbox_socket_path,
-                NULL);
-      *envp_p = g_environ_setenv (*envp_p, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", proxy_socket, sandbox_socket_path,
+                              NULL);
+      flatpak_bwrap_set_env (bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
       return TRUE;
     }
@@ -2268,9 +2227,7 @@ flatpak_extension_compare_by_path (gconstpointer  _a,
 }
 
 gboolean
-flatpak_run_add_extension_args (GPtrArray    *argv_array,
-                                GArray       *fd_array,
-                                char       ***envp_p,
+flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
                                 GKeyFile     *metakey,
                                 const char   *full_ref,
                                 gboolean      use_ld_so_cache,
@@ -2317,21 +2274,21 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
 
           if (g_hash_table_lookup (mounted_tmpfs, parent) == NULL)
             {
-              add_args (argv_array,
-                        "--tmpfs", parent,
-                        NULL);
+              flatpak_bwrap_add_args (bwrap,
+                                      "--tmpfs", parent,
+                                      NULL);
               g_hash_table_insert (mounted_tmpfs, g_steal_pointer (&parent), "mounted");
             }
         }
 
-      add_args (argv_array,
-                "--ro-bind", ext->files_path, full_directory,
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", ext->files_path, full_directory,
+                              NULL);
 
       if (g_file_test (real_ref, G_FILE_TEST_EXISTS))
-        add_args (argv_array,
-                  "--lock-file", ref,
-                  NULL);
+        flatpak_bwrap_add_args (bwrap,
+                                "--lock-file", ref,
+                                NULL);
     }
 
   g_list_free (path_sorted_extensions);
@@ -2365,8 +2322,8 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
               g_autofree char *ld_so_conf_file = g_strdup_printf ("%s-%03d-%s.conf", parts[0], ++count, ext->installed_id);
               g_autofree char *ld_so_conf_file_path = g_build_filename ("/run/flatpak/ld.so.conf.d", ld_so_conf_file, NULL);
 
-              if (!add_args_data (argv_array, fd_array, "ld-so-conf",
-                                  contents, -1, ld_so_conf_file_path, error))
+              if (!flatpak_bwrap_add_args_data (bwrap, "ld-so-conf",
+                                                contents, -1, ld_so_conf_file_path, error))
                 return FALSE;
             }
           else
@@ -2394,9 +2351,9 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
                   if (g_hash_table_lookup (created_symlink, symlink_path) == NULL)
                     {
                       g_autofree char *symlink = g_build_filename (directory, ext->merge_dirs[i], dent->d_name, NULL);
-                      add_args (argv_array,
-                                "--symlink", symlink, symlink_path,
-                                NULL);
+                      flatpak_bwrap_add_args (bwrap,
+                                              "--symlink", symlink, symlink_path,
+                                              NULL);
                       g_hash_table_insert (created_symlink, g_steal_pointer (&symlink_path), "created");
                     }
                 }
@@ -2408,7 +2365,7 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
 
   if (ld_library_path->len != 0)
     {
-      const gchar *old_ld_path = g_environ_getenv (*envp_p, "LD_LIBRARY_PATH");
+      const gchar *old_ld_path = g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH");
 
       if (old_ld_path != NULL && *old_ld_path != 0)
         {
@@ -2424,7 +2381,7 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
             }
         }
 
-      *envp_p = g_environ_setenv (*envp_p, "LD_LIBRARY_PATH", ld_library_path->str , TRUE);
+      flatpak_bwrap_set_env (bwrap, "LD_LIBRARY_PATH", ld_library_path->str , TRUE);
     }
 
   if (extensions_out)
@@ -2588,7 +2545,7 @@ path_is_symlink (const char *path)
 
 static void
 exports_add_bwrap_args (FlatpakExports *exports,
-                        GPtrArray *argv_array)
+                        FlatpakBwrap *bwrap)
 {
   guint n_keys;
   g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (exports->hash, &n_keys);
@@ -2614,7 +2571,7 @@ exports_add_bwrap_args (FlatpakExports *exports,
                 {
                   g_autofree char *parent = g_path_get_dirname (path);
                   g_autofree char *relative = make_relative (parent, resolved);
-                  add_args (argv_array, "--symlink", relative, path,  NULL);
+                  flatpak_bwrap_add_args (bwrap, "--symlink", relative, path,  NULL);
                 }
             }
         }
@@ -2626,21 +2583,21 @@ exports_add_bwrap_args (FlatpakExports *exports,
             {
               if (!path_parent_is_mapped (keys, n_keys, exports->hash, path))
                 /* If the parent is not mapped, it will be a tmpfs, no need to mount another one */
-                add_args (argv_array, "--dir", path, NULL);
+                flatpak_bwrap_add_args (bwrap, "--dir", path, NULL);
               else
-                add_args (argv_array, "--tmpfs", path, NULL);
+                flatpak_bwrap_add_args (bwrap, "--tmpfs", path, NULL);
             }
         }
       else if (ep->mode == FAKE_MODE_DIR)
         {
           if (path_is_dir (path))
-            add_args (argv_array, "--dir", path, NULL);
+            flatpak_bwrap_add_args (bwrap, "--dir", path, NULL);
         }
       else
         {
-          add_args (argv_array,
-                    (ep->mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
-                    path, path, NULL);
+          flatpak_bwrap_add_args (bwrap,
+                                  (ep->mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
+                                  path, path, NULL);
         }
     }
 }
@@ -2998,25 +2955,8 @@ flatpak_exports_from_context (FlatpakContext *context,
   return g_steal_pointer (&exports);
 }
 
-/* This resolves the target here rather than the destination, because
-   it may not resolve in bwrap setup due to absolute relative links
-   conflicting with /newroot root. */
-static void
-add_bind_arg (GPtrArray *argv_array,
-              const char *type,
-              const char *src,
-              const char *dest)
-{
-  g_autofree char *dest_real = realpath (dest, NULL);
-
-  if (dest_real)
-    add_args (argv_array, type, src, dest_real, NULL);
-}
-
 gboolean
-flatpak_run_add_environment_args (GPtrArray      *argv_array,
-                                  GArray         *fd_array,
-                                  char         ***envp_p,
+flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                   const char     *app_info_path,
                                   FlatpakRunFlags flags,
                                   const char     *app_id,
@@ -3048,26 +2988,26 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
  if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
       g_debug ("Disallowing ipc access");
-      add_args (argv_array, "--unshare-ipc", NULL);
+      flatpak_bwrap_add_args (bwrap, "--unshare-ipc", NULL);
     }
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0)
     {
       g_debug ("Disallowing network access");
-      add_args (argv_array, "--unshare-net", NULL);
+      flatpak_bwrap_add_args (bwrap, "--unshare-net", NULL);
     }
 
   if (context->devices & FLATPAK_CONTEXT_DEVICE_ALL)
     {
-      add_args (argv_array,
-                "--dev-bind", "/dev", "/dev",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--dev-bind", "/dev", "/dev",
+                              NULL);
     }
   else
     {
-      add_args (argv_array,
-                "--dev", "/dev",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--dev", "/dev",
+                              NULL);
       if (context->devices & FLATPAK_CONTEXT_DEVICE_DRI)
         {
           g_debug ("Allowing dri access");
@@ -3087,7 +3027,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
           for (i = 0; i < G_N_ELEMENTS(dri_devices); i++)
             {
               if (g_file_test (dri_devices[i], G_FILE_TEST_EXISTS))
-                add_args (argv_array, "--dev-bind", dri_devices[i], dri_devices[i], NULL);
+                flatpak_bwrap_add_args (bwrap, "--dev-bind", dri_devices[i], dri_devices[i], NULL);
             }
         }
 
@@ -3095,13 +3035,13 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
         {
           g_debug ("Allowing kvm access");
           if (g_file_test ("/dev/kvm", G_FILE_TEST_EXISTS))
-            add_args (argv_array, "--dev-bind", "/dev/kvm", "/dev/kvm", NULL);
+            flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/kvm", "/dev/kvm", NULL);
         }
     }
 
   export_paths_export_context (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
   if (app_id_dir != NULL)
-    *envp_p = flatpak_run_apply_env_appid (*envp_p, app_id_dir);
+    flatpak_run_apply_env_appid (bwrap, app_id_dir);
 
   if (!home_access)
     {
@@ -3116,10 +3056,10 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
 
           g_mkdir_with_parents (src, 0755);
 
-          /* We stick to add_args instead of add_bind_arg because persisted
+          /* We stick to flatpak_bwrap_add_args instead of flatpak_bwrap_add_bind_arg because persisted
            * folders don't need to exist outside the chroot.
            */
-          add_args (argv_array, "--bind", src, dest, NULL);
+          flatpak_bwrap_add_args (bwrap, "--bind", src, dest, NULL);
         }
     }
 
@@ -3132,9 +3072,9 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                 0700,
                                 NULL,
                                 NULL))
-        add_args (argv_array,
-                  "--bind", run_user_app_src, run_user_app_dst,
-                  NULL);
+        flatpak_bwrap_add_args (bwrap,
+                                "--bind", run_user_app_src, run_user_app_dst,
+                                NULL);
   }
 
   /* Hide the flatpak dir by default (unless explicitly made visible) */
@@ -3145,7 +3085,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   exports_path_dir (exports, g_get_home_dir ());
 
   /* This actually outputs the args for the hide/expose operations above */
-  exports_add_bwrap_args (exports, argv_array);
+  exports_add_bwrap_args (exports, bwrap);
 
   /* Special case subdirectories of the cache, config and data xdg
    * dirs.  If these are accessible explicilty, then we bind-mount
@@ -3175,9 +3115,9 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                   g_file_test (xdg_path, G_FILE_TEST_IS_REGULAR))
                 {
                   g_autofree char *xdg_path_in_app = g_file_get_path (app_version_subdir);
-                  add_bind_arg (argv_array,
-                                mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ? "--ro-bind" : "--bind",
-                                xdg_path, xdg_path_in_app);
+                  flatpak_bwrap_add_bind_arg (bwrap,
+                                              mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ? "--ro-bind" : "--bind",
+                                              xdg_path, xdg_path_in_app);
                 }
             }
         }
@@ -3191,7 +3131,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_autofree char *path = g_build_filename (flatpak_file_get_path_cached (app_id_dir),
                                                 "config/user-dirs.dirs", NULL);
       if (g_file_test (src_path, G_FILE_TEST_EXISTS))
-        add_bind_arg (argv_array, "--ro-bind", src_path, path);
+        flatpak_bwrap_add_bind_arg (bwrap, "--ro-bind", src_path, path);
     }
   else if (xdg_dirs_conf->len > 0 && app_id_dir != NULL)
     {
@@ -3199,36 +3139,36 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
         g_build_filename (flatpak_file_get_path_cached (app_id_dir),
                           "config/user-dirs.dirs", NULL);
 
-      add_args_data (argv_array, fd_array, "xdg-config-dirs",
-                     xdg_dirs_conf->str, xdg_dirs_conf->len, path, NULL);
+      flatpak_bwrap_add_args_data (bwrap, "xdg-config-dirs",
+                                   xdg_dirs_conf->str, xdg_dirs_conf->len, path, NULL);
     }
 
-  flatpak_run_add_x11_args (argv_array, fd_array, envp_p,
+  flatpak_run_add_x11_args (bwrap,
                             (context->sockets & FLATPAK_CONTEXT_SOCKET_X11) != 0);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
       g_debug ("Allowing wayland access");
-      flatpak_run_add_wayland_args (argv_array, envp_p);
+      flatpak_run_add_wayland_args (bwrap);
     }
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_PULSEAUDIO)
     {
       g_debug ("Allowing pulseaudio access");
-      flatpak_run_add_pulseaudio_args (argv_array, fd_array, envp_p);
+      flatpak_run_add_pulseaudio_args (bwrap);
     }
 
   unrestricted_session_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) != 0;
   if (unrestricted_session_bus)
     g_debug ("Allowing session-dbus access");
-  if (flatpak_run_add_session_dbus_args (argv_array, envp_p, session_bus_proxy_argv, unrestricted_session_bus) &&
+  if (flatpak_run_add_session_dbus_args (bwrap, session_bus_proxy_argv, unrestricted_session_bus) &&
       !unrestricted_session_bus && session_bus_proxy_argv)
     flatpak_add_bus_filters (session_bus_proxy_argv, context->session_bus_policy, app_id, context);
 
   unrestricted_system_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) != 0;
   if (unrestricted_system_bus)
     g_debug ("Allowing system-dbus access");
-  if (flatpak_run_add_system_dbus_args (context, envp_p, argv_array, system_bus_proxy_argv,
+  if (flatpak_run_add_system_dbus_args (context, bwrap, system_bus_proxy_argv,
                                         unrestricted_system_bus) &&
       !unrestricted_system_bus && system_bus_proxy_argv)
     flatpak_add_bus_filters (system_bus_proxy_argv, context->system_bus_policy, NULL, context);
@@ -3300,21 +3240,21 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
               g_ptr_array_add (a11y_bus_proxy_argv,
                                g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersAsync@/org/a11y/atspi/registry/deviceeventcontroller"));
 
-              add_args (argv_array,
-                        "--bind", proxy_socket, sandbox_socket_path,
-                        NULL);
-              *envp_p = g_environ_setenv (*envp_p, "AT_SPI_BUS_ADDRESS", sandbox_dbus_address, TRUE);
+              flatpak_bwrap_add_args (bwrap,
+                                      "--bind", proxy_socket, sandbox_socket_path,
+                                      NULL);
+              flatpak_bwrap_set_env (bwrap, "AT_SPI_BUS_ADDRESS", sandbox_dbus_address, TRUE);
             }
         }
     }
 
-  if (g_environ_getenv (*envp_p, "LD_LIBRARY_PATH") != NULL)
+  if (g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH") != NULL)
     {
       /* LD_LIBRARY_PATH is overridden for setuid helper, so pass it as cmdline arg */
-      add_args (argv_array,
-                "--setenv", "LD_LIBRARY_PATH", g_environ_getenv (*envp_p, "LD_LIBRARY_PATH"),
-                NULL);
-      *envp_p = g_environ_unsetenv (*envp_p, "LD_LIBRARY_PATH");
+      flatpak_bwrap_add_args (bwrap,
+                              "--setenv", "LD_LIBRARY_PATH", g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH"),
+                              NULL);
+      flatpak_bwrap_unset_env (bwrap, "LD_LIBRARY_PATH");
     }
 
   /* Must run this before spawning the dbus proxy, to ensure it
@@ -3327,7 +3267,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_clear_error (&my_error);
     }
 
-  if (!add_dbus_proxy_args (argv_array,
+  if (!add_dbus_proxy_args (bwrap->argv,
                             session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
                             system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
                             a11y_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0,
@@ -3483,19 +3423,17 @@ apply_exports (char **envp,
   return envp;
 }
 
-char **
-flatpak_run_apply_env_default (char **envp, gboolean use_ld_so_cache)
+void
+flatpak_run_apply_env_default (FlatpakBwrap *bwrap, gboolean use_ld_so_cache)
 {
-  envp = apply_exports (envp, default_exports, G_N_ELEMENTS (default_exports));
+  bwrap->envp = apply_exports (bwrap->envp, default_exports, G_N_ELEMENTS (default_exports));
 
   if (!use_ld_so_cache)
-    envp = apply_exports (envp, no_ld_so_cache_exports, G_N_ELEMENTS (no_ld_so_cache_exports));
-
-  return envp;
+    bwrap->envp = apply_exports (bwrap->envp, no_ld_so_cache_exports, G_N_ELEMENTS (no_ld_so_cache_exports));
 }
 
-char **
-flatpak_run_apply_env_appid (char **envp,
+void
+flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
                              GFile *app_dir)
 {
   g_autoptr(GFile) app_dir_data = NULL;
@@ -3505,15 +3443,13 @@ flatpak_run_apply_env_appid (char **envp,
   app_dir_data = g_file_get_child (app_dir, "data");
   app_dir_config = g_file_get_child (app_dir, "config");
   app_dir_cache = g_file_get_child (app_dir, "cache");
-  envp = g_environ_setenv (envp, "XDG_DATA_HOME", flatpak_file_get_path_cached (app_dir_data), TRUE);
-  envp = g_environ_setenv (envp, "XDG_CONFIG_HOME", flatpak_file_get_path_cached (app_dir_config), TRUE);
-  envp = g_environ_setenv (envp, "XDG_CACHE_HOME", flatpak_file_get_path_cached (app_dir_cache), TRUE);
-
-  return envp;
+  flatpak_bwrap_set_env (bwrap, "XDG_DATA_HOME", flatpak_file_get_path_cached (app_dir_data), TRUE);
+  flatpak_bwrap_set_env (bwrap, "XDG_CONFIG_HOME", flatpak_file_get_path_cached (app_dir_config), TRUE);
+  flatpak_bwrap_set_env (bwrap, "XDG_CACHE_HOME", flatpak_file_get_path_cached (app_dir_cache), TRUE);
 }
 
-char **
-flatpak_run_apply_env_vars (char **envp, FlatpakContext *context)
+void
+flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -3525,12 +3461,10 @@ flatpak_run_apply_env_vars (char **envp, FlatpakContext *context)
       const char *val = value;
 
       if (val && val[0] != 0)
-        envp = g_environ_setenv (envp, var, val, TRUE);
+        flatpak_bwrap_set_env (bwrap, var, val, TRUE);
       else
-        envp = g_environ_unsetenv (envp, var);
+        flatpak_bwrap_unset_env (bwrap, var);
     }
-
-  return envp;
 }
 
 GFile *
@@ -3684,7 +3618,7 @@ out:
 }
 
 static void
-add_font_path_args (GPtrArray *argv_array)
+add_font_path_args (FlatpakBwrap *bwrap)
 {
   g_autoptr(GFile) home = NULL;
   g_autoptr(GFile) user_font1 = NULL;
@@ -3696,9 +3630,9 @@ add_font_path_args (GPtrArray *argv_array)
 
   if (g_file_test (SYSTEM_FONTS_DIR, G_FILE_TEST_EXISTS))
     {
-      add_args (argv_array,
-                "--ro-bind", SYSTEM_FONTS_DIR, "/run/host/fonts",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", SYSTEM_FONTS_DIR, "/run/host/fonts",
+                              NULL);
     }
 
   system_cache_dirs = g_strsplit (SYSTEM_FONT_CACHE_DIRS, ":", 0);
@@ -3706,9 +3640,9 @@ add_font_path_args (GPtrArray *argv_array)
     {
       if (g_file_test (system_cache_dirs[i], G_FILE_TEST_EXISTS))
         {
-          add_args (argv_array,
-                    "--ro-bind", system_cache_dirs[i], "/run/host/fonts-cache",
-                    NULL);
+          flatpak_bwrap_add_args (bwrap,
+                                  "--ro-bind", system_cache_dirs[i], "/run/host/fonts-cache",
+                                  NULL);
           found_cache = TRUE;
           break;
         }
@@ -3718,10 +3652,10 @@ add_font_path_args (GPtrArray *argv_array)
     {
       /* We ensure these directories are never writable, or fontconfig
          will use them to write the default cache */
-      add_args (argv_array,
-                "--tmpfs", "/run/host/fonts-cache",
-                "--remount-ro", "/run/host/fonts-cache",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--tmpfs", "/run/host/fonts-cache",
+                              "--remount-ro", "/run/host/fonts-cache",
+                              NULL);
     }
 
   home = g_file_new_for_path (g_get_home_dir ());
@@ -3730,43 +3664,43 @@ add_font_path_args (GPtrArray *argv_array)
 
   if (g_file_query_exists (user_font1, NULL))
     {
-      add_args (argv_array,
-                "--ro-bind", flatpak_file_get_path_cached (user_font1), "/run/host/user-fonts",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", flatpak_file_get_path_cached (user_font1), "/run/host/user-fonts",
+                              NULL);
     }
   else if (g_file_query_exists (user_font2, NULL))
     {
-      add_args (argv_array,
-                "--ro-bind", flatpak_file_get_path_cached (user_font2), "/run/host/user-fonts",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", flatpak_file_get_path_cached (user_font2), "/run/host/user-fonts",
+                              NULL);
     }
 
   user_font_cache = g_file_resolve_relative_path (home, ".cache/fontconfig");
   if (g_file_query_exists (user_font_cache, NULL))
     {
-      add_args (argv_array,
-                "--ro-bind", flatpak_file_get_path_cached (user_font_cache), "/run/host/user-fonts-cache",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", flatpak_file_get_path_cached (user_font_cache), "/run/host/user-fonts-cache",
+                              NULL);
     }
   else
     {
       /* We ensure these directories are never writable, or fontconfig
          will use them to write the default cache */
-      add_args (argv_array,
-                "--tmpfs", "/run/host/user-fonts-cache",
-                "--remount-ro", "/run/host/user-fonts-cache",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--tmpfs", "/run/host/user-fonts-cache",
+                              "--remount-ro", "/run/host/user-fonts-cache",
+                              NULL);
     }
 }
 
 static void
-add_icon_path_args (GPtrArray *argv_array)
+add_icon_path_args (FlatpakBwrap *bwrap)
 {
   if (g_file_test ("/usr/share/icons", G_FILE_TEST_IS_DIR))
     {
-      add_args (argv_array,
-                "--ro-bind", "/usr/share/icons", "/run/host/share/icons",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", "/usr/share/icons", "/run/host/share/icons",
+                              NULL);
     }
 }
 
@@ -3801,8 +3735,7 @@ flatpak_app_compute_permissions (GKeyFile *app_metadata,
 }
 
 gboolean
-flatpak_run_add_app_info_args (GPtrArray      *argv_array,
-                               GArray         *fd_array,
+flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                GFile          *app_files,
                                GVariant       *app_deploy_data,
                                const char     *app_extensions,
@@ -3918,13 +3851,13 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
 
   unlink (tmp_path);
 
-  add_args_data_fd (argv_array, fd_array,
-                    "--file", fd, "/.flatpak-info");
-  add_args_data_fd (argv_array, fd_array,
-                    "--ro-bind-data", fd2, "/.flatpak-info");
-  add_args (argv_array,
-            "--symlink", "../../../.flatpak-info", old_dest,
-            NULL);
+  flatpak_bwrap_add_args_data_fd (bwrap,
+                                  "--file", fd, "/.flatpak-info");
+  flatpak_bwrap_add_args_data_fd (bwrap,
+                                  "--ro-bind-data", fd2, "/.flatpak-info");
+  flatpak_bwrap_add_args (bwrap,
+                          "--symlink", "../../../.flatpak-info", old_dest,
+                          NULL);
 
   if (app_info_path_out != NULL)
     *app_info_path_out = g_strdup_printf ("/proc/self/fd/%d", fd);
@@ -3934,7 +3867,7 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
 
 static void
 add_monitor_path_args (gboolean use_session_helper,
-                       GPtrArray *argv_array)
+                       FlatpakBwrap *bwrap)
 {
   g_autoptr(AutoFlatpakSessionHelper) session_helper = NULL;
   g_autofree char *monitor_path = NULL;
@@ -3954,13 +3887,13 @@ add_monitor_path_args (gboolean use_session_helper,
                                                         &monitor_path,
                                                         NULL, NULL))
     {
-      add_args (argv_array,
-                "--ro-bind", monitor_path, "/run/host/monitor",
-                "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
-                "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
-                "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
-                "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", monitor_path, "/run/host/monitor",
+                              "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
+                              "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
+                              "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
+                              "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
+                              NULL);
     }
   else
     {
@@ -3993,35 +3926,35 @@ add_monitor_path_args (gboolean use_session_helper,
 
           if (is_reachable)
             {
-              add_args (argv_array,
-                        "--symlink", localtime, "/etc/localtime",
-                        NULL);
+              flatpak_bwrap_add_args (bwrap,
+                                      "--symlink", localtime, "/etc/localtime",
+                                      NULL);
             }
           else
             {
-              add_args (argv_array,
-                        "--ro-bind", "/etc/localtime", "/etc/localtime",
-                        NULL);
+              flatpak_bwrap_add_args (bwrap,
+                                      "--ro-bind", "/etc/localtime", "/etc/localtime",
+                                      NULL);
             }
         }
 
       if (g_file_test ("/etc/resolv.conf", G_FILE_TEST_EXISTS))
-        add_args (argv_array,
-                  "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
-                  NULL);
+        flatpak_bwrap_add_args (bwrap,
+                                "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
+                                NULL);
       if (g_file_test ("/etc/host.conf", G_FILE_TEST_EXISTS))
-        add_args (argv_array,
-                  "--ro-bind", "/etc/host.conf", "/etc/host.conf",
-                  NULL);
+        flatpak_bwrap_add_args (bwrap,
+                                "--ro-bind", "/etc/host.conf", "/etc/host.conf",
+                                NULL);
       if (g_file_test ("/etc/hosts", G_FILE_TEST_EXISTS))
-        add_args (argv_array,
-                  "--ro-bind", "/etc/hosts", "/etc/hosts",
-                  NULL);
+        flatpak_bwrap_add_args (bwrap,
+                                "--ro-bind", "/etc/hosts", "/etc/hosts",
+                                NULL);
     }
 }
 
 static void
-add_document_portal_args (GPtrArray   *argv_array,
+add_document_portal_args (FlatpakBwrap *bwrap,
                           const char  *app_id,
                           char       **out_mount_path)
 {
@@ -4062,7 +3995,7 @@ add_document_portal_args (GPtrArray   *argv_array,
               src_path = g_strdup_printf ("%s/by-app/%s",
                                           doc_mount_path, app_id);
               dst_path = g_strdup_printf ("/run/user/%d/doc", getuid ());
-              add_args (argv_array, "--bind", src_path, dst_path, NULL);
+              flatpak_bwrap_add_args (bwrap, "--bind", src_path, dst_path, NULL);
             }
         }
     }
@@ -4336,8 +4269,7 @@ cleanup_seccomp (void *p)
 }
 
 static gboolean
-setup_seccomp (GPtrArray  *argv_array,
-               GArray     *fd_array,
+setup_seccomp (FlatpakBwrap *bwrap,
                const char *arch,
                gulong      allowed_personality,
                gboolean    multiarch,
@@ -4553,15 +4485,15 @@ setup_seccomp (GPtrArray  *argv_array,
 
   lseek (seccomp_tmpf.fd, 0, SEEK_SET);
 
-  add_args_data_fd (argv_array, fd_array,
-                    "--seccomp", glnx_steal_fd (&seccomp_tmpf.fd), NULL);
+  flatpak_bwrap_add_args_data_fd (bwrap,
+                                  "--seccomp", glnx_steal_fd (&seccomp_tmpf.fd), NULL);
 
   return TRUE;
 }
 #endif
 
 static void
-flatpak_run_setup_usr_links (GPtrArray      *argv_array,
+flatpak_run_setup_usr_links (FlatpakBwrap *bwrap,
                              GFile          *runtime_files)
 {
   const char *usr_links[] = {"lib", "lib32", "lib64", "bin", "sbin"};
@@ -4578,16 +4510,15 @@ flatpak_run_setup_usr_links (GPtrArray      *argv_array,
         {
           g_autofree char *link = g_strconcat ("usr/", subdir, NULL);
           g_autofree char *dest = g_strconcat ("/", subdir, NULL);
-          add_args (argv_array,
-                    "--symlink", link, dest,
-                    NULL);
+          flatpak_bwrap_add_args (bwrap,
+                                  "--symlink", link, dest,
+                                  NULL);
         }
     }
 }
 
 gboolean
-flatpak_run_setup_base_argv (GPtrArray      *argv_array,
-                             GArray         *fd_array,
+flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                              GFile          *runtime_files,
                              GFile          *app_id_dir,
                              const char     *arch,
@@ -4615,43 +4546,43 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                                     g->gr_name,
                                     getgid (), g_get_user_name ());
 
-  add_args (argv_array,
-            "--unshare-pid",
-            "--proc", "/proc",
-            "--dir", "/tmp",
-            "--dir", "/var/tmp",
-            "--dir", "/run/host",
-            "--dir", run_dir,
-            "--setenv", "XDG_RUNTIME_DIR", run_dir,
-            "--symlink", "../run", "/var/run",
-            "--ro-bind", "/sys/block", "/sys/block",
-            "--ro-bind", "/sys/bus", "/sys/bus",
-            "--ro-bind", "/sys/class", "/sys/class",
-            "--ro-bind", "/sys/dev", "/sys/dev",
-            "--ro-bind", "/sys/devices", "/sys/devices",
-            NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          "--unshare-pid",
+                          "--proc", "/proc",
+                          "--dir", "/tmp",
+                          "--dir", "/var/tmp",
+                          "--dir", "/run/host",
+                          "--dir", run_dir,
+                          "--setenv", "XDG_RUNTIME_DIR", run_dir,
+                          "--symlink", "../run", "/var/run",
+                          "--ro-bind", "/sys/block", "/sys/block",
+                          "--ro-bind", "/sys/bus", "/sys/bus",
+                          "--ro-bind", "/sys/class", "/sys/class",
+                          "--ro-bind", "/sys/dev", "/sys/dev",
+                          "--ro-bind", "/sys/devices", "/sys/devices",
+                          NULL);
 
   if (flags & FLATPAK_RUN_FLAG_DIE_WITH_PARENT)
-    add_args (argv_array,
-              "--die-with-parent",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--die-with-parent",
+                            NULL);
 
   if (flags & FLATPAK_RUN_FLAG_WRITABLE_ETC)
-    add_args (argv_array,
-              "--dir", "/usr/etc",
-              "--symlink", "usr/etc", "/etc",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--dir", "/usr/etc",
+                            "--symlink", "usr/etc", "/etc",
+                            NULL);
 
-  if (!add_args_data (argv_array, fd_array, "passwd", passwd_contents, -1, "/etc/passwd", error))
+  if (!flatpak_bwrap_add_args_data (bwrap, "passwd", passwd_contents, -1, "/etc/passwd", error))
     return FALSE;
 
-  if (!add_args_data (argv_array, fd_array, "group", group_contents, -1, "/etc/group", error))
+  if (!flatpak_bwrap_add_args_data (bwrap, "group", group_contents, -1, "/etc/group", error))
     return FALSE;
 
   if (g_file_test ("/etc/machine-id", G_FILE_TEST_EXISTS))
-    add_args (argv_array, "--ro-bind", "/etc/machine-id", "/etc/machine-id", NULL);
+    flatpak_bwrap_add_args (bwrap, "--ro-bind", "/etc/machine-id", "/etc/machine-id", NULL);
   else if (g_file_test ("/var/lib/dbus/machine-id", G_FILE_TEST_EXISTS))
-    add_args (argv_array, "--ro-bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
+    flatpak_bwrap_add_args (bwrap, "--ro-bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
 
   if (runtime_files)
     etc = g_file_get_child (runtime_files, "etc");
@@ -4695,11 +4626,11 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                   return FALSE;
                 }
               path_buffer[symlink_size] = 0;
-              add_args (argv_array, "--symlink", path_buffer, dest, NULL);
+              flatpak_bwrap_add_args (bwrap, "--symlink", path_buffer, dest, NULL);
             }
           else
             {
-              add_args (argv_array, "--bind", src, dest, NULL);
+              flatpak_bwrap_add_args (bwrap, "--bind", src, dest, NULL);
             }
         }
     }
@@ -4711,16 +4642,16 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
       g_autoptr(GFile) app_data_dir = g_file_get_child (app_id_dir, "data");
       g_autoptr(GFile) app_config_dir = g_file_get_child (app_id_dir, "config");
 
-      add_args (argv_array,
-                /* These are nice to have as a fixed path */
-                "--bind", flatpak_file_get_path_cached (app_cache_dir), "/var/cache",
-                "--bind", flatpak_file_get_path_cached (app_data_dir), "/var/data",
-                "--bind", flatpak_file_get_path_cached (app_config_dir), "/var/config",
-                "--bind", flatpak_file_get_path_cached (app_tmp_dir), "/var/tmp",
-                NULL);
+      flatpak_bwrap_add_args (bwrap,
+                              /* These are nice to have as a fixed path */
+                              "--bind", flatpak_file_get_path_cached (app_cache_dir), "/var/cache",
+                              "--bind", flatpak_file_get_path_cached (app_data_dir), "/var/data",
+                              "--bind", flatpak_file_get_path_cached (app_config_dir), "/var/config",
+                              "--bind", flatpak_file_get_path_cached (app_tmp_dir), "/var/tmp",
+                              NULL);
     }
 
-  flatpak_run_setup_usr_links (argv_array, runtime_files);
+  flatpak_run_setup_usr_links (bwrap, runtime_files);
 
   pers = PER_LINUX;
 
@@ -4735,8 +4666,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   personality (pers);
 
 #ifdef ENABLE_SECCOMP
-  if (!setup_seccomp (argv_array,
-                      fd_array,
+  if (!setup_seccomp (bwrap,
                       arch,
                       pers,
                       (flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0,
@@ -4746,7 +4676,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
 #endif
 
   if ((flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0)
-    add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, argv_array);
+    add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, bwrap);
 
   return TRUE;
 }
@@ -4951,6 +4881,136 @@ flatpak_context_load_for_app (const char     *app_id,
   return g_steal_pointer (&app_context);
 }
 
+FlatpakBwrap *
+flatpak_bwrap_new (char **env)
+{
+  FlatpakBwrap *bwrap = g_new0 (FlatpakBwrap, 1);
+
+  bwrap->argv = g_ptr_array_new_with_free_func (g_free);
+  bwrap->fds = g_array_new (FALSE, TRUE, sizeof (int));
+  g_array_set_clear_func (bwrap->fds, clear_fd);
+
+  if (env)
+    bwrap->envp = g_strdupv (env);
+  else
+    bwrap->envp = g_get_environ ();
+
+  return bwrap;
+}
+
+void
+flatpak_bwrap_free (FlatpakBwrap *bwrap)
+{
+  g_ptr_array_unref (bwrap->argv);
+  g_array_unref (bwrap->fds);
+  g_strfreev (bwrap->envp);
+  g_free (bwrap);
+}
+
+void
+flatpak_bwrap_set_env (FlatpakBwrap *bwrap,
+                       const char  *variable,
+                       const char  *value,
+                       gboolean      overwrite)
+{
+  bwrap->envp = g_environ_setenv (bwrap->envp, variable, value, overwrite);
+}
+
+void
+flatpak_bwrap_unset_env (FlatpakBwrap *bwrap,
+                         const char  *variable)
+{
+  bwrap->envp = g_environ_unsetenv (bwrap->envp, variable);
+}
+
+void
+flatpak_bwrap_add_args (FlatpakBwrap *bwrap, ...)
+{
+  va_list args;
+  const gchar *arg;
+
+  va_start (args, bwrap);
+  while ((arg = va_arg (args, const gchar *)))
+    g_ptr_array_add (bwrap->argv, g_strdup (arg));
+  va_end (args);
+}
+
+void
+flatpak_bwrap_append_argsv (FlatpakBwrap *bwrap,
+                            char **args,
+                            int len)
+{
+  int i;
+
+  if (len < 0)
+    len = g_strv_length (args);
+
+  for (i = 0; i < len; i++)
+    g_ptr_array_add (bwrap->argv, g_strdup (args[i]));
+}
+
+void
+flatpak_bwrap_append_args (FlatpakBwrap *bwrap,
+                           GPtrArray *other_array)
+{
+  flatpak_bwrap_append_argsv (bwrap,
+                              (char **)other_array->pdata,
+                              other_array->len);
+}
+
+void
+flatpak_bwrap_add_args_data_fd (FlatpakBwrap *bwrap,
+                                const char *op,
+                                int fd,
+                                const char *path_optional)
+{
+  g_autofree char *fd_str = g_strdup_printf ("%d", fd);
+
+  g_array_append_val (bwrap->fds, fd);
+  flatpak_bwrap_add_args (bwrap,
+                          op, fd_str, path_optional,
+                          NULL);
+}
+
+
+/* Given a buffer @content of size @content_size, generate a fd (memfd if available)
+ * of the data.  The @name parameter is used by memfd_create() as a debugging aid;
+ * it has no semantic meaning.  The bwrap command line will inject it into the target
+ * container as @path.
+ */
+gboolean
+flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
+                             const char *name,
+                             const char *content,
+                             gssize content_size,
+                             const char *path,
+                             GError **error)
+{
+  g_auto(GLnxTmpfile) args_tmpf  = { 0, };
+
+  if (!buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, name, content, content_size, error))
+    return FALSE;
+
+  flatpak_bwrap_add_args_data_fd (bwrap, "--bind-data", glnx_steal_fd (&args_tmpf.fd), path);
+  return TRUE;
+}
+
+/* This resolves the target here rather than the destination, because
+   it may not resolve in bwrap setup due to absolute relative links
+   conflicting with /newroot root. */
+void
+flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
+                            const char *type,
+                            const char *src,
+                            const char *dest)
+{
+  g_autofree char *dest_real = realpath (dest, NULL);
+
+  if (dest_real)
+    flatpak_bwrap_add_args (bwrap, type, src, dest_real, NULL);
+}
+
+
 static char *
 calculate_ld_cache_checksum (GVariant *app_deploy_data,
                              GVariant *runtime_deploy_data,
@@ -4970,8 +5030,7 @@ calculate_ld_cache_checksum (GVariant *app_deploy_data,
 }
 
 static gboolean
-add_ld_so_conf (GPtrArray      *argv_array,
-                GArray         *fd_array,
+add_ld_so_conf (FlatpakBwrap   *bwrap,
                 GError        **error)
 {
   const char *contents =
@@ -4980,8 +5039,8 @@ add_ld_so_conf (GPtrArray      *argv_array,
     "/app/lib\n"
     "include /run/flatpak/ld.so.conf.d/runtime-*.conf\n";
 
-  return add_args_data (argv_array, fd_array, "ld-so-conf",
-                        contents, -1, "/etc/ld.so.conf", error);
+  return flatpak_bwrap_add_args_data (bwrap, "ld-so-conf",
+                                      contents, -1, "/etc/ld.so.conf", error);
 }
 
 static int
@@ -4994,12 +5053,11 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
                      GCancellable   *cancellable,
                      GError        **error)
 {
-  g_autoptr(GPtrArray) argv_array = NULL;
-  g_autoptr(GArray) fd_array = NULL;
+  g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_autoptr(GArray) combined_fd_array = NULL;
   g_autoptr(GFile) ld_so_cache = NULL;
   g_autofree char *sandbox_cache_path = NULL;
-  g_auto(GStrv) envp = NULL;
+  g_auto(GStrv) minimal_envp = NULL;
   g_autofree char *commandline = NULL;
   int exit_status;
   glnx_autofd int ld_so_fd = -1;
@@ -5023,50 +5081,47 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
   if (!flatpak_mkdir_p (ld_so_dir, cancellable, error))
     return FALSE;
 
-  argv_array = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
-  append_args (argv_array, base_argv_array);
+  minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
+  bwrap = flatpak_bwrap_new (minimal_envp);
+  flatpak_bwrap_add_args (bwrap, flatpak_get_bwrap (), NULL);
 
-  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (fd_array, clear_fd);
+  flatpak_bwrap_append_args (bwrap, base_argv_array);
 
-  envp = flatpak_run_get_minimal_env (FALSE, FALSE);
-
-  flatpak_run_setup_usr_links (argv_array, runtime_files);
+  flatpak_run_setup_usr_links (bwrap, runtime_files);
 
   if (generate_ld_so_conf)
     {
-      if (!add_ld_so_conf(argv_array, fd_array, error))
+      if (!add_ld_so_conf (bwrap, error))
         return -1;
     }
   else
-    add_args (argv_array,
-              "--symlink", "../usr/etc/ld.so.conf", "/etc/ld.so.conf",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--symlink", "../usr/etc/ld.so.conf", "/etc/ld.so.conf",
+                            NULL);
 
   sandbox_cache_path = g_build_filename ("/run/ld-so-cache-dir", checksum, NULL);
 
-  add_args (argv_array,
-            "--unshare-pid",
-            "--unshare-ipc",
-            "--unshare-net",
-            "--proc", "/proc",
-            "--dev", "/dev",
-            "--bind", flatpak_file_get_path_cached (ld_so_dir), "/run/ld-so-cache-dir",
-            "ldconfig", "-X", "-C", sandbox_cache_path, NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          "--unshare-pid",
+                          "--unshare-ipc",
+                          "--unshare-net",
+                          "--proc", "/proc",
+                          "--dev", "/dev",
+                          "--bind", flatpak_file_get_path_cached (ld_so_dir), "/run/ld-so-cache-dir",
+                          "ldconfig", "-X", "-C", sandbox_cache_path, NULL);
 
-  g_ptr_array_add (argv_array, NULL);
+  g_ptr_array_add (bwrap->argv, NULL);
 
-  commandline = flatpak_quote_argv ((const char **) argv_array->pdata);
+  commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata);
   flatpak_debug2 ("Running: '%s'", commandline);
 
   combined_fd_array = g_array_new (FALSE, TRUE, sizeof (int));
   g_array_append_vals (combined_fd_array, base_fd_array->data, base_fd_array->len);
-  g_array_append_vals (combined_fd_array, fd_array->data, fd_array->len);
+  g_array_append_vals (combined_fd_array, bwrap->fds->data, bwrap->fds->len);
 
   if (!g_spawn_sync (NULL,
-                     (char **) argv_array->pdata,
-                     envp,
+                     (char **) bwrap->argv->pdata,
+                     bwrap->envp,
                      G_SPAWN_SEARCH_PATH,
                      child_setup, combined_fd_array,
                      NULL, NULL,
@@ -5131,11 +5186,9 @@ flatpak_run_app (const char     *app_ref,
   g_autofree char *runtime_ref = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
-  g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_auto(GLnxTmpfile) arg_tmpf = { 0, };
-  g_autoptr(GArray) fd_array = NULL;
   g_autoptr(GPtrArray) real_argv_array = NULL;
-  g_auto(GStrv) envp = NULL;
   const char *command = "/bin/sh";
   g_autoptr(GError) my_error = NULL;
   g_auto(GStrv) runtime_parts = NULL;
@@ -5162,9 +5215,7 @@ flatpak_run_app (const char     *app_ref,
   if (app_ref_parts == NULL)
     return FALSE;
 
-  argv_array = g_ptr_array_new_with_free_func (g_free);
-  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (fd_array, clear_fd);
+  bwrap = flatpak_bwrap_new (NULL);
 
   if (app_deploy == NULL)
     {
@@ -5258,30 +5309,29 @@ flatpak_run_app (const char     *app_ref,
         return FALSE;
     }
 
-  envp = g_get_environ ();
-  envp = flatpak_run_apply_env_default (envp, use_ld_so_cache);
-  envp = flatpak_run_apply_env_vars (envp, app_context);
+  flatpak_run_apply_env_default (bwrap, use_ld_so_cache);
+  flatpak_run_apply_env_vars (bwrap, app_context);
 
-  add_args (argv_array,
-            "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
-            "--lock-file", "/usr/.ref",
-            NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
+                          "--lock-file", "/usr/.ref",
+                          NULL);
 
   if (app_files != NULL)
-    add_args (argv_array,
-              "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
-              "--lock-file", "/app/.ref",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
+                            "--lock-file", "/app/.ref",
+                            NULL);
   else
-    add_args (argv_array,
-              "--dir", "/app",
-              NULL);
+    flatpak_bwrap_add_args (bwrap,
+                            "--dir", "/app",
+                            NULL);
 
   if (metakey != NULL &&
-      !flatpak_run_add_extension_args (argv_array, fd_array, &envp, metakey, app_ref, use_ld_so_cache, &app_extensions, cancellable, error))
+      !flatpak_run_add_extension_args (bwrap, metakey, app_ref, use_ld_so_cache, &app_extensions, cancellable, error))
     return FALSE;
 
-  if (!flatpak_run_add_extension_args (argv_array, fd_array, &envp, runtime_metakey, runtime_ref, use_ld_so_cache, &runtime_extensions, cancellable, error))
+  if (!flatpak_run_add_extension_args (bwrap, runtime_metakey, runtime_ref, use_ld_so_cache, &runtime_extensions, cancellable, error))
     return FALSE;
 
   runtime_ld_so_conf = g_file_resolve_relative_path (runtime_files, "etc/ld.so.conf");
@@ -5292,8 +5342,8 @@ flatpak_run_app (const char     *app_ref,
      We can reuse this to generate the ld.so.cache (if needed) */
   checksum = calculate_ld_cache_checksum (app_deploy_data, runtime_deploy_data,
                                                   app_extensions, runtime_extensions);
-  ld_so_fd = regenerate_ld_cache (argv_array,
-                                  fd_array,
+  ld_so_fd = regenerate_ld_cache (bwrap->argv,
+                                  bwrap->fds,
                                   app_id_dir,
                                   checksum,
                                   runtime_files,
@@ -5301,7 +5351,7 @@ flatpak_run_app (const char     *app_ref,
                                   cancellable, error);
   if (ld_so_fd == -1)
     return FALSE;
-  g_array_append_val (fd_array, ld_so_fd);
+  g_array_append_val (bwrap->fds, ld_so_fd);
 
   if (app_context->features & FLATPAK_CONTEXT_FEATURE_DEVEL)
     flags |= FLATPAK_RUN_FLAG_DEVEL;
@@ -5309,44 +5359,43 @@ flatpak_run_app (const char     *app_ref,
   if (app_context->features & FLATPAK_CONTEXT_FEATURE_MULTIARCH)
     flags |= FLATPAK_RUN_FLAG_MULTIARCH;
 
-  if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
+  if (!flatpak_run_setup_base_argv (bwrap, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
   if (generate_ld_so_conf)
     {
-      if (!add_ld_so_conf (argv_array, fd_array, error))
+      if (!add_ld_so_conf (bwrap, error))
         return FALSE;
     }
 
   if (ld_so_fd != -1)
     {
       /* Don't add to fd_array, its already there */
-      add_args_data_fd (argv_array, NULL, "--ro-bind-data", ld_so_fd, "/etc/ld.so.cache");
+      add_args_data_fd (bwrap->argv, NULL, "--ro-bind-data", ld_so_fd, "/etc/ld.so.cache");
     }
 
-  if (!flatpak_run_add_app_info_args (argv_array, fd_array,
+  if (!flatpak_run_add_app_info_args (bwrap,
                                       app_files, app_deploy_data, app_extensions,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_ref_parts[1], app_ref_parts[3],
                                       runtime_ref, app_context, &app_info_path, error))
     return FALSE;
 
-  add_document_portal_args (argv_array, app_ref_parts[1], &doc_mount_path);
+  add_document_portal_args (bwrap, app_ref_parts[1], &doc_mount_path);
 
-  if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp,
-                                         app_info_path, flags,
+  if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
                                          app_ref_parts[1], app_context, app_id_dir, &exports, cancellable, error))
     return FALSE;
 
-  flatpak_run_add_journal_args (argv_array);
-  add_font_path_args (argv_array);
-  add_icon_path_args (argv_array);
+  flatpak_run_add_journal_args (bwrap);
+  add_font_path_args (bwrap);
+  add_icon_path_args (bwrap);
 
-  add_args (argv_array,
-            /* Not in base, because we don't want this for flatpak build */
-            "--symlink", "/app/lib/debug/source", "/run/build",
-            "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
-            NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          /* Not in base, because we don't want this for flatpak build */
+                          "--symlink", "/app/lib/debug/source", "/run/build",
+                          "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
+                          NULL);
 
   if (custom_command)
     {
@@ -5371,12 +5420,12 @@ flatpak_run_app (const char     *app_ref,
 
   {
     gsize len;
-    g_autofree char *args = join_args (argv_array, &len);
+    g_autofree char *args = join_args (bwrap->argv, &len);
 
     if (!buffer_to_sealed_memfd_or_tmpfile (&arg_tmpf, "bwrap-args", args, len, error))
       return FALSE;
 
-    add_args_data_fd (real_argv_array, fd_array,
+    add_args_data_fd (real_argv_array, bwrap->fds,
                       "--args", glnx_steal_fd (&arg_tmpf.fd), NULL);
   }
 
@@ -5389,9 +5438,9 @@ flatpak_run_app (const char     *app_ref,
     return FALSE;
 
   g_ptr_array_add (real_argv_array, NULL);
-  g_ptr_array_add (argv_array, NULL);
+  g_ptr_array_add (bwrap->argv, NULL);
 
-  commandline = flatpak_quote_argv ((const char **) argv_array->pdata);
+  commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata);
   commandline2 = flatpak_quote_argv (((const char **) real_argv_array->pdata) + commandline_2_start);
   flatpak_debug2 ("Running '%s %s'", commandline, commandline2);
 
@@ -5399,9 +5448,9 @@ flatpak_run_app (const char     *app_ref,
     {
       if (!g_spawn_async (NULL,
                           (char **) real_argv_array->pdata,
-                          envp,
+                          bwrap->envp,
                           G_SPAWN_SEARCH_PATH,
-                          child_setup, fd_array,
+                          child_setup, bwrap->fds,
                           NULL,
                           error))
         return FALSE;
@@ -5409,8 +5458,8 @@ flatpak_run_app (const char     *app_ref,
   else
     {
       /* Ensure we unset O_CLOEXEC */
-      child_setup (fd_array);
-      if (execvpe (flatpak_get_bwrap (), (char **) real_argv_array->pdata, envp) == -1)
+      child_setup (bwrap->fds);
+      if (execvpe (flatpak_get_bwrap (), (char **) real_argv_array->pdata, bwrap->envp) == -1)
         {
           g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
                                _("Unable to start app"));
