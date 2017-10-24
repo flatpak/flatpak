@@ -6410,6 +6410,12 @@ flatpak_dir_update (FlatpakDir          *self,
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
+      /* If the existing pull is partial, disable static deltas. They can
+         break, because ostree doesn't look at the parent repo for
+         commitpartial state. */
+      if (old_subpaths && old_subpaths[0] != NULL)
+        flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+
       if (!flatpak_dir_ensure_repo (self, cancellable, error))
         return FALSE;
 
