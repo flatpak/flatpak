@@ -682,7 +682,7 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
       /* Must be owned by us */
       st_buf.st_uid == getuid () &&
       /* and not writeable by others */
-      (st_buf.st_mode & 0022) != 0)
+      (st_buf.st_mode & 0022) == 0)
     return g_file_new_for_path (path);
 
   path = g_strdup ("/var/tmp/flatpak-cache-XXXXXX");
