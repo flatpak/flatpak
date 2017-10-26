@@ -1,3 +1,18 @@
+Major changes in 0.10
+=====================
+
+This is the first release in a new series of stable releases called
+0.10.x. New features will be added to 0.11.x, and bugfixes will be
+backported to 0.10.x. During the early phase of the 0.10.x series we
+may also backport minor features, but we guarantee backwards
+compatibility.
+
+Changes since 0.9.99
+ * Added the flatpak config option which can set the language settings
+ * Fix issue where sometimes ld.so.conf were not generated
+ * /dev/mali0 is added to --device=dri
+ * Work around ostree static delta issues in some cases
+
 Major changes in 0.9.99
 =======================
 
