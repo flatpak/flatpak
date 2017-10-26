@@ -693,6 +693,7 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
       return NULL;
     }
 
+  unlink (symlink_path);
   if (symlink (path, symlink_path) != 0)
     {
       glnx_set_error_from_errno (error);
