@@ -6410,11 +6410,16 @@ flatpak_dir_update (FlatpakDir          *self,
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
-      /* If the existing pull is partial, disable static deltas. They can
-         break, because ostree doesn't look at the parent repo for
-         commitpartial state. */
-      if (old_subpaths && old_subpaths[0] != NULL)
-        flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+      if (!OSTREE_CHECK_VERSION(2017,13))
+        {
+          /* If the existing pull is partial, disable static deltas. They can
+           * break on ostree < 2017.13 which doesn't look at the parent repo for
+           * commitpartial state. This was fixed in
+           * https://github.com/ostreedev/ostree/commit/90ebd48f6aaf45c47b48c44354359f973dcf22a8
+           */
+          if (old_subpaths && old_subpaths[0] != NULL)
+            flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+        }
 
       if (!flatpak_dir_ensure_repo (self, cancellable, error))
         return FALSE;
