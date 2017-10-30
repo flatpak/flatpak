@@ -1,3 +1,21 @@
+Major changes in 0.8.8
+======================
+
+This is a minor security update, as well as an update to match
+some sandbox behaviours that were added to the 0.10.0 release.
+
+Changes:
+ * SECURITY: Forbit old-style eavesdropping in the dbus proxy
+ * Expose icons from host in /run/host/share/icons
+ * Ensure fontconfig caches are per-sandbox
+ * Some problematic env vars are no longer inherited from the host
+ * The LD_LIBRARY_PATH order is now correct for extensions with
+   different priorities.
+ * Extensions are now mounted in the correct orders, even if they
+   have different priorities, fixing steam.
+ * Disable debug spew in the document portal fuse filesystem
+ * Now works current version of ostree
+
 Major changes in 0.8.7
 ======================
 
