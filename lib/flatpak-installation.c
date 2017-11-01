@@ -215,18 +215,17 @@ flatpak_get_system_installations (GCancellable *cancellable,
     {
       g_autoptr(GError) local_error = NULL;
       FlatpakDir *install_dir = g_ptr_array_index (system_dirs, i);
-      FlatpakInstallation *installation = NULL;
+      g_autoptr(FlatpakInstallation) installation = NULL;
 
       installation = flatpak_installation_new_for_dir (g_object_ref (install_dir),
                                                        cancellable,
                                                        &local_error);
       if (installation != NULL)
-        g_ptr_array_add (installs, installation);
+        g_ptr_array_add (installs, g_steal_pointer (&installation));
       else
         {
+          /* Warn about the problem and continue without listing this installation. */
           g_warning ("Unable to create FlatpakInstallation for: %s", local_error->message);
-          g_propagate_error (error, g_steal_pointer (&local_error));
-          goto out;
         }
     }
 
