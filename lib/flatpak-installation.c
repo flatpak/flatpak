@@ -224,9 +224,8 @@ flatpak_get_system_installations (GCancellable *cancellable,
         g_ptr_array_add (installs, installation);
       else
         {
+          /* Warn about the problem and continue without listing this installation. */
           g_warning ("Unable to create FlatpakInstallation for: %s", local_error->message);
-          g_propagate_error (error, g_steal_pointer (&local_error));
-          goto out;
         }
     }
 
