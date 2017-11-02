@@ -25,29 +25,7 @@
 
 G_BEGIN_DECLS
 
-/* Set @error with G_IO_ERROR/G_IO_ERROR_FAILED.
- *
- * This function returns %FALSE so it can be used conveniently in a single
- * statement:
- *
- * ```
- *   if (strcmp (foo, "somevalue") != 0)
- *     return glnx_throw (error, "key must be somevalue, not '%s'", foo);
- * ```
- */
-static inline gboolean G_GNUC_PRINTF (2,3)
-glnx_throw (GError **error, const char *fmt, ...)
-{
-  if (error == NULL)
-    return FALSE;
-
-  va_list args;
-  va_start (args, fmt);
-  GError *new = g_error_new_valist (G_IO_ERROR, G_IO_ERROR_FAILED, fmt, args);
-  va_end (args);
-  g_propagate_error (error, g_steal_pointer (&new));
-  return FALSE;
-}
+gboolean glnx_throw (GError **error, const char *fmt, ...) G_GNUC_PRINTF (2,3);
 
 /* Like `glnx_throw ()`, but returns %NULL. */
 #define glnx_null_throw(error, args...) \
@@ -58,27 +36,7 @@ void glnx_real_set_prefix_error_va (GError     *error,
                                     const char *format,
                                     va_list     args) G_GNUC_PRINTF (2,0);
 
-/* Prepend to @error's message by `$prefix: ` where `$prefix` is computed via
- * printf @fmt. Returns %FALSE so it can be used conveniently in a single
- * statement:
- *
- * ```
- *   if (!function_that_fails (s, error))
- *     return glnx_throw_prefix (error, "while handling '%s'", s);
- * ```
- * */
-static inline gboolean G_GNUC_PRINTF (2,3)
-glnx_prefix_error (GError **error, const char *fmt, ...)
-{
-  if (error == NULL)
-    return FALSE;
-
-  va_list args;
-  va_start (args, fmt);
-  glnx_real_set_prefix_error_va (*error, fmt, args);
-  va_end (args);
-  return FALSE;
-}
+gboolean glnx_prefix_error (GError **error, const char *fmt, ...) G_GNUC_PRINTF (2,3);
 
 /* Like `glnx_prefix_error ()`, but returns %NULL. */
 #define glnx_prefix_error_null(error, args...) \
@@ -155,28 +113,7 @@ void glnx_real_set_prefix_error_from_errno_va (GError     **error,
                                                const char  *format,
                                                va_list      args) G_GNUC_PRINTF (3,0);
 
-/* Set @error using the value of `$prefix: g_strerror (errno)` where `$prefix`
- * is computed via printf @fmt.
- *
- * This function returns %FALSE so it can be used conveniently in a single
- * statement:
- *
- * ```
- *   return glnx_throw_errno_prefix (error, "unlinking %s", pathname);
- * ```
- */
-static inline gboolean G_GNUC_PRINTF (2,3)
-glnx_throw_errno_prefix (GError **error, const char *fmt, ...)
-{
-  int errsv = errno;
-  va_list args;
-  va_start (args, fmt);
-  glnx_real_set_prefix_error_from_errno_va (error, errsv, fmt, args);
-  va_end (args);
-  /* See comment above about preserving errno */
-  errno = errsv;
-  return FALSE;
-}
+gboolean glnx_throw_errno_prefix (GError **error, const char *fmt, ...) G_GNUC_PRINTF (2,3);
 
 /* Like glnx_throw_errno_prefix(), but yields a NULL pointer. */
 #define glnx_null_throw_errno_prefix(error, args...) \
