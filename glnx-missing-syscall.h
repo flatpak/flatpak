@@ -30,6 +30,7 @@
    Add abstraction model for BPF programs
 */
 
+#include "config.h"
 
 #if !HAVE_DECL_RENAMEAT2
 #  ifndef __NR_renameat2
