@@ -67,8 +67,8 @@ static FlatpakCommand commands[] = {
   { "config", N_("Configure flatpak"), flatpak_builtin_config, flatpak_complete_config },
 
    /* translators: please keep the leading newline and space */
-  { N_("\n Finding applications") },
-  { "search", N_("Search for applications"), flatpak_builtin_search, flatpak_complete_search },
+  { N_("\n Finding applications and runtimes") },
+  { "search", N_("Search for remote apps/runtimes"), flatpak_builtin_search, flatpak_complete_search },
 
    /* translators: please keep the leading newline and space */
   { N_("\n Running applications") },
