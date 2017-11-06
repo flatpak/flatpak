@@ -42,7 +42,8 @@ get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
 {
   GError *error = NULL;
   GPtrArray *ret = g_ptr_array_new_with_free_func (g_object_unref);
-  for (guint i = 0; i < dirs->len; ++i)
+  guint i,j;
+  for (i = 0; i < dirs->len; ++i)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
       g_autofree char *install_path = g_file_get_path (flatpak_dir_get_path (dir));
@@ -56,7 +57,7 @@ get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
       else if (remotes == NULL)
         continue;
 
-      for (guint j = 0; remotes[j]; ++j)
+      for (j = 0; remotes[j]; ++j)
         {
           g_autofree char *appstream_path = g_build_filename (install_path, "appstream", remotes[j],
                                                               flatpak_get_arch(), "active", "appstream.xml.gz",
@@ -110,7 +111,8 @@ match_result_new (AsApp *app, guint score)
 static void
 match_result_add_remote (MatchResult *self, const char *remote)
 {
-  for (guint i = 0; i < self->remotes->len; ++i)
+  guint i;
+  for (i = 0; i < self->remotes->len; ++i)
    {
      const char *remote_entry = g_ptr_array_index (self->remotes, i);
      if (!strcmp (remote, remote_entry))
@@ -136,7 +138,9 @@ static const char *
 get_comment_localized (AsApp *app)
 {
   const char * const * languages = g_get_language_names ();
-  for (gsize i = 0; languages[i]; ++i)
+  gsize i;
+
+  for (i = 0; languages[i]; ++i)
     {
       const char *comment = as_app_get_comment (app, languages[i]);
       if (comment != NULL)
@@ -152,12 +156,13 @@ print_app (MatchResult *res, FlatpakTablePrinter *printer)
   const char *version = release ? as_release_get_version (release) : NULL;
   const char *id = as_app_get_id_filename (res->app);
   const char *branch = as_app_get_branch (res->app);
+  guint i;
 
   flatpak_table_printer_add_column (printer, id);
   flatpak_table_printer_add_column (printer, version);
   flatpak_table_printer_add_column (printer, branch);
   flatpak_table_printer_add_column (printer, g_ptr_array_index (res->remotes, 0));
-  for (guint i = 1; i < res->remotes->len; ++i)
+  for (i = 1; i < res->remotes->len; ++i)
     flatpak_table_printer_append_with_comma (printer, g_ptr_array_index (res->remotes, i));
   flatpak_table_printer_add_column (printer, get_comment_localized (res->app));
   flatpak_table_printer_finish_row (printer);
@@ -189,15 +194,18 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
 
   const char *search_text = argv[1];
   GSList *matches = NULL;
+  guint j;
 
   // We want a store for each remote so we keep the remote information
   // as AsApp doesn't currently contain that information
   g_autoptr(GPtrArray) remote_stores = get_remote_stores (dirs, cancellable);
-  for (guint j = 0; j < remote_stores->len; ++j)
+  for (j = 0; j < remote_stores->len; ++j)
     {
       AsStore *store = g_ptr_array_index (remote_stores, j);
       GPtrArray *apps = as_store_get_apps (store);
-      for (guint i = 0; i < apps->len; ++i)
+      guint i;
+
+      for (i = 0; i < apps->len; ++i)
         {
           AsApp *app = g_ptr_array_index (apps, i);
           const guint score = as_app_search_matches (app, search_text);
