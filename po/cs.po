@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-10-26 10:55+0200\n"
-"PO-Revision-Date: 2017-10-26 20:02+0200\n"
+"PO-Revision-Date: 2017-11-05 19:44+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -1619,6 +1619,46 @@ msgstr "Povolit přesměrování souboru"
 msgid "APP [args...] - Run an app"
 msgstr "APLIKACE [argumenty...] - Spustit aplikaci"
 
+#: app/flatpak-builtins-search.c:35
+msgid "Search only user installations"
+msgstr "Prohledat pouze uživatelské instalace"
+
+#: app/flatpak-builtins-search.c:36
+msgid "Search only system-wide installations"
+msgstr "Prohledat pouze systémové instalace"
+
+#: app/flatpak-builtins-search.c:170
+msgid "TEXT - Search remote apps/runtimes for text"
+msgstr "TEXT - Vyhledat text ve vzdálených aplikacích/prostředích"
+
+#: app/flatpak-builtins-search.c:188
+msgid "TEXT must be specified"
+msgstr "TEXT musí být určen"
+
+#: app/flatpak-builtins-search.c:229
+msgid "Application ID"
+msgstr "ID aplikace"
+
+#: app/flatpak-builtins-search.c:230
+msgid "Version"
+msgstr "Verze"
+
+#: app/flatpak-builtins-search.c:231
+msgid "Branch"
+msgstr "Větev"
+
+#: app/flatpak-builtins-search.c:232
+msgid "Remotes"
+msgstr "Vzdálené repozitáře"
+
+#: app/flatpak-builtins-search.c:233
+msgid "Description"
+msgstr "Popis"
+
+#: app/flatpak-builtins-search.c:242
+msgid "No matches found"
+msgstr "Nenalezeny žádné shody"
+
 #: app/flatpak-builtins-uninstall.c:44
 msgid "Arch to uninstall"
 msgstr "Architektura k odinstalování"
@@ -1726,6 +1766,19 @@ msgstr "Zobrazit informace pro nainstalovanou aplikaci či prostředí"
 #: app/flatpak-main.c:67
 msgid "Configure flatpak"
 msgstr "Nastavit flatpak"
+
+#. translators: please keep the leading newline and space
+#: app/flatpak-main.c:70
+msgid ""
+"\n"
+" Finding applications and runtimes"
+msgstr ""
+"\n"
+" Vyhledávám aplikace a prostředí"
+
+#: app/flatpak-main.c:71
+msgid "Search for remote apps/runtimes"
+msgstr "Hledat vzdálené aplikace/prostředí"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:70
