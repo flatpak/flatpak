@@ -144,7 +144,16 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
           char *ref = key;
-          char *partial_ref = flatpak_make_valid_id_prefix (strchr (ref, '/') + 1);
+          char *partial_ref;
+          const char *slash = strchr (ref, '/');
+
+          if (slash == NULL)
+            {
+              g_debug ("Invalid remote ref %s", ref);
+              continue;
+            }
+
+          partial_ref = flatpak_make_valid_id_prefix (slash + 1);
           g_hash_table_insert (pref_hash, partial_ref, ref);
         }
 
