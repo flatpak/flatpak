@@ -39,6 +39,8 @@ static char *opt_build_dir;
 static char **opt_bind_mounts;
 static char *opt_sdk_dir;
 static char *opt_metadata;
+static gboolean opt_log_session_bus;
+static gboolean opt_log_system_bus;
 static gboolean opt_die_with_parent;
 static gboolean opt_with_appdir;
 
@@ -50,6 +52,8 @@ static GOptionEntry options[] = {
   { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, N_("Use alternative file for the metadata"), N_("FILE") },
   { "die-with-parent", 'p', 0, G_OPTION_ARG_NONE, &opt_die_with_parent, N_("Kill processes when the parent process dies"), NULL },
   { "with-appdir", 0, 0, G_OPTION_ARG_NONE, &opt_with_appdir, N_("Export application homedir directory to build"), NULL },
+  { "log-session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_session_bus, N_("Log session bus calls"), NULL },
+  { "log-system-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_system_bus, N_("Log system bus calls"), NULL },
   { NULL }
 };
 
@@ -316,6 +320,12 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   if (!flatpak_context_get_needs_system_bus_proxy (arg_context))
     run_flags |= FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY;
+
+  if (opt_log_session_bus)
+    run_flags |= FLATPAK_RUN_FLAG_LOG_SESSION_BUS;
+
+  if (opt_log_system_bus)
+    run_flags |= FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS;
 
   /* Never set up an a11y bus for builds */
   run_flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
