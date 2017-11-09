@@ -333,7 +333,7 @@ handle_suggested_remote_name (FlatpakDir *dir, GBytes *data, GError **error)
     return TRUE;
 
   if (opt_yes ||
-      flatpak_yes_no_prompt (_("The remote '%s', at location %s contains additional applications.\nDo you want to install other applications from here?"),
+      flatpak_yes_no_prompt (_("The remote '%s', at location %s contains additional applications.\nShould the remote be kept for future installations?"),
                              suggested_name, url))
     {
       if (opt_yes)
