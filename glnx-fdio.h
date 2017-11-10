@@ -29,12 +29,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/xattr.h>
-/* From systemd/src/shared/util.h */
-/* When we include libgen.h because we need dirname() we immediately
- * undefine basename() since libgen.h defines it as a macro to the XDG
- * version which is really broken. */
-#include <libgen.h>
-#undef basename
 
 #include <glnx-macros.h>
 #include <glnx-errors.h>
@@ -47,7 +41,14 @@ G_BEGIN_DECLS
 static inline
 const char *glnx_basename (const char *path)
 {
-  return (basename) (path);
+  gchar *base;
+
+  base = strrchr (path, G_DIR_SEPARATOR);
+
+  if (base)
+    return base + 1;
+
+  return path;
 }
 
 /* Utilities for standard FILE* */
