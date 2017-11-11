@@ -156,7 +156,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     {
       const char *ref = (char *)g_ptr_array_index (uninstall_refs, i);
       const char *pref = strchr (ref, '/') + 1;
-      g_print (_("Uninstalling %s\n"), pref);
+      g_print (_("Uninstalling: %s\n"), pref);
       if (!flatpak_dir_uninstall (dir, ref, flags,
                                   cancellable, error))
         return FALSE;
