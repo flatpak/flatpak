@@ -212,7 +212,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
           if (score == 0)
             {
               const char *app_id = as_app_get_id_filename (app);
-              if (g_strstr_len (app_id, -1, search_text) != NULL)
+              if (strcasestr (app_id, search_text) != NULL)
                 score = 50;
               else
                 continue;
