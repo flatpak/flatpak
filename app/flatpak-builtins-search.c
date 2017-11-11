@@ -208,9 +208,15 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
       for (i = 0; i < apps->len; ++i)
         {
           AsApp *app = g_ptr_array_index (apps, i);
-          const guint score = as_app_search_matches (app, search_text);
+          guint score = as_app_search_matches (app, search_text);
           if (score == 0)
-            continue;
+            {
+              const char *app_id = as_app_get_id_filename (app);
+              if (strcasestr (app_id, search_text) != NULL)
+                score = 50;
+              else
+                continue;
+            }
 
           // Avoid duplicate entries, but show multiple remotes
           GSList *list_entry = g_slist_find_custom (matches, app,
