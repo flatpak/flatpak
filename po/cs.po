@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-10-26 10:55+0200\n"
-"PO-Revision-Date: 2017-11-09 13:30+0100\n"
+"PO-Revision-Date: 2017-11-11 15:54+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -1688,6 +1688,11 @@ msgstr "Alespoň jeden REF musí být určen"
 msgid "Warning: Problem looking for related refs: %s\n"
 msgstr ""
 
+#: app/flatpak-builtins-uninstall.c:159
+#, c-format
+msgid "Uninstalling: %s\n"
+msgstr "Odstraňuji: %s\n"
+
 #: app/flatpak-builtins-update.c:53
 msgid "Arch to update for"
 msgstr "Architektura, pro kterou se má aktualizovat"
@@ -1774,7 +1779,7 @@ msgid ""
 " Finding applications and runtimes"
 msgstr ""
 "\n"
-" Vyhledávám aplikace a prostředí"
+" Vyhledávají se aplikace a prostředí"
 
 #: app/flatpak-main.c:71
 msgid "Search for remote apps/runtimes"
