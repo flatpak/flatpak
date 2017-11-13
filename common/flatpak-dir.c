@@ -7617,6 +7617,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     }
   else
     {
+      g_debug ("Fetching summary file for remote ‘%s’", name);
       if (!ostree_repo_remote_fetch_summary (self->repo, name,
                                              &summary, &summary_sig,
                                              cancellable,
