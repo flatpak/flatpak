@@ -356,7 +356,25 @@ key=v1;v2;
                 </para></listitem>
             </varlistentry>
 
-        </variablelist>
+            <varlistentry>
+                <term><option>--log-session-bus</option></term>
+
+                <listitem><para>
+                    Log session bus traffic. This can be useful to see what access you need to allow in
+                    your D-Bus policy.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--log-system-bus</option></term>
+
+                <listitem><para>
+                    Log system bus traffic. This can be useful to see what access you need to allow in
+                    your D-Bus policy.
+                </para></listitem>
+            </varlistentry>
+
+          </variablelist>
     </refsect1>
 
     <refsect1>
