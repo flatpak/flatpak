@@ -73,6 +73,10 @@
             Unless overridden with the --user or the --installation option, this command updates
             the default system-wide installation.
         </para>
+        <para>
+            If no REF is given, then all installed apps and runtimes in the installation is updates, as
+            well as appstream info for all remotes..
+        </para>
 
     </refsect1>
 
