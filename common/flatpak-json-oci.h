@@ -272,4 +272,47 @@ struct _FlatpakOciSignatureClass
 
 FlatpakOciSignature *flatpak_oci_signature_new (const char *digest, const char *ref);
 
+
+#define FLATPAK_TYPE_OCI_INDEX_RESPONSE flatpak_oci_index_response_get_type ()
+G_DECLARE_FINAL_TYPE (FlatpakOciIndexResponse, flatpak_oci_index_response, FLATPAK, OCI_INDEX_RESPONSE, FlatpakJson)
+
+typedef struct
+{
+  char *digest;
+  char *mediatype;
+  char *os;
+  char *architecture;
+  GHashTable *annotations;
+  GHashTable *labels;
+  char **tags;
+} FlatpakOciIndexImage;
+
+typedef struct
+{
+  char *digest;
+  char *mediatype;
+  char **tags;
+  FlatpakOciIndexImage **images;
+} FlatpakOciIndexImageList;
+
+typedef struct
+{
+  char *name;
+  FlatpakOciIndexImage **images;
+  FlatpakOciIndexImageList **lists;
+} FlatpakOciIndexRepository;
+
+struct _FlatpakOciIndexResponse
+{
+  FlatpakJson parent;
+
+  char *registry;
+  FlatpakOciIndexRepository **results;
+};
+
+struct _FlatpakOciIndexResponseClass
+{
+  FlatpakJsonClass parent_class;
+};
+
 #endif /* __FLATPAK_JSON_OCI_H__ */
