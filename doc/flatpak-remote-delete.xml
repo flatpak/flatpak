@@ -140,9 +140,9 @@
 
             <para>
                 <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-modify-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-list-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>flatpak-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             </para>
     </refsect1>
 
