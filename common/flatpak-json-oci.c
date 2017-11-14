@@ -939,3 +939,108 @@ flatpak_oci_signature_new (const char *digest, const char *ref)
 
   return signature;
 }
+
+G_DEFINE_TYPE (FlatpakOciIndexResponse, flatpak_oci_index_response, FLATPAK_TYPE_JSON);
+
+static void
+flatpak_oci_index_image_free (FlatpakOciIndexImage *self)
+{
+  g_free (self->digest);
+  g_free (self->mediatype);
+  g_free (self->os);
+  g_free (self->architecture);
+  g_strfreev (self->tags);
+  if (self->annotations)
+    g_hash_table_destroy (self->annotations);
+  if (self->labels)
+    g_hash_table_destroy (self->labels);
+  g_free (self);
+}
+
+static void
+flatpak_oci_index_image_list_free (FlatpakOciIndexImageList *self)
+{
+  int i;
+
+  g_free (self->digest);
+  g_free (self->mediatype);
+  g_strfreev (self->tags);
+  for (i = 0; self->images != NULL && self->images[i] != NULL; i++)
+    flatpak_oci_index_image_free (self->images[i]);
+  g_free (self->images);
+  g_free (self);
+}
+
+static void
+flatpak_oci_index_repository_free (FlatpakOciIndexRepository *self)
+{
+  int i;
+
+  g_free (self->name);
+  for (i = 0; self->images != NULL && self->images[i] != NULL; i++)
+    flatpak_oci_index_image_free (self->images[i]);
+  g_free (self->images);
+
+  for (i = 0; self->lists != NULL && self->lists[i] != NULL; i++)
+    flatpak_oci_index_image_list_free (self->lists[i]);
+  g_free (self->lists);
+
+  g_free (self);
+}
+
+static void
+flatpak_oci_index_response_finalize (GObject *object)
+{
+  FlatpakOciIndexResponse *self = (FlatpakOciIndexResponse *) object;
+  int i;
+
+  g_free (self->registry);
+  for (i = 0; self->results != NULL && self->results[i] != NULL; i++)
+    flatpak_oci_index_repository_free (self->results[i]);
+  g_free (self->results);
+
+  G_OBJECT_CLASS (flatpak_oci_index_response_parent_class)->finalize (object);
+}
+
+static void
+flatpak_oci_index_response_class_init (FlatpakOciIndexResponseClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
+  static FlatpakJsonProp image_props[] = {
+    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, digest, "Digest"),
+    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, mediatype, "MediaType"),
+    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, os, "OS"),
+    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, architecture, "Architecture"),
+    FLATPAK_JSON_STRMAP_PROP(FlatpakOciIndexImage, annotations, "Annotations"),
+    FLATPAK_JSON_STRMAP_PROP(FlatpakOciIndexImage, labels, "Labels"),
+    FLATPAK_JSON_STRV_PROP (FlatpakOciIndexImage, tags, "Tags"),
+    FLATPAK_JSON_LAST_PROP
+  };
+  static FlatpakJsonProp lists_props[] = {
+    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImageList, digest, "Digest"),
+    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexImageList, images, "Images", image_props),
+    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImageList, mediatype, "MediaType"),
+    FLATPAK_JSON_STRV_PROP (FlatpakOciIndexImageList, tags, "Tags"),
+    FLATPAK_JSON_LAST_PROP
+  };
+  static FlatpakJsonProp results_props[] = {
+    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexRepository, name, "Name"),
+    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexRepository, images, "Images", image_props),
+    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexRepository, lists, "Lists", lists_props),
+    FLATPAK_JSON_LAST_PROP
+  };
+  static FlatpakJsonProp props[] = {
+    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexResponse, registry, "Registry"),
+    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexResponse, results, "Results", results_props),
+    FLATPAK_JSON_LAST_PROP
+  };
+
+  object_class->finalize = flatpak_oci_index_response_finalize;
+  json_class->props = props;
+}
+
+static void
+flatpak_oci_index_response_init (FlatpakOciIndexResponse *self)
+{
+}
