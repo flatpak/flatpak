@@ -42,7 +42,7 @@
         <para>
             Updates applications and runtimes. <arg choice="plain">REF</arg> is a reference to the
             application or runtime to install. If no <arg choice="plain">REF</arg> is given, everything
-            is updated.
+            is updated, as well as appstream info for all remotes.
         </para>
         <para>
             Each <arg choice="plain">REF</arg> arguments is a full or partial indentifier in the
@@ -72,10 +72,6 @@
         <para>
             Unless overridden with the --user or the --installation option, this command updates
             the default system-wide installation.
-        </para>
-        <para>
-            If no REF is given, then all installed apps and runtimes in the installation is updates, as
-            well as appstream info for all remotes..
         </para>
 
     </refsect1>
