@@ -2547,7 +2547,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       else
         {
           ensure_soup_session (self);
-          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, NULL, NULL,
+          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, 0, NULL, NULL,
                                          extra_data_progress_report, &extra_data_progress,
                                          cancellable, error);
         }
@@ -2621,6 +2621,22 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
     }
 
   return TRUE;
+}
+
+static char *
+lookup_oci_registry_uri_from_summary (GVariant *summary,
+                                      GError **error)
+{
+  g_autoptr(GVariant) extensions = g_variant_get_child_value (summary, 1);
+  g_autofree char *registry_uri = NULL;
+
+  if (!g_variant_lookup (extensions, "xa.oci-registry-uri", "s", &registry_uri))
+    {
+      flatpak_fail (error, _("Remote OCI index has no registry uri"));
+      return NULL;
+    }
+
+  return g_steal_pointer (&registry_uri);
 }
 
 static char *
@@ -2806,6 +2822,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 {
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autofree char *oci_uri = NULL;
+  g_autofree char *registry_uri = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *latest_rev = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
@@ -2840,7 +2857,11 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
 
-  registry = flatpak_oci_registry_new (oci_uri, FALSE, -1, NULL, error);
+  registry_uri = lookup_oci_registry_uri_from_summary (summary, error);
+  if (registry_uri == NULL)
+    return FALSE;
+
+  registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, error);
   if (registry == NULL)
     return FALSE;
 
@@ -2885,6 +2906,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   g_autofree char *full_ref = NULL;
   g_autofree char *oci_uri = NULL;
+  g_autofree char *registry_uri = NULL;
+  g_autofree char *oci_repository = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *checksum = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
@@ -2915,6 +2938,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   metadata = g_variant_get_child_value (summary_element, 2);
   g_variant_lookup (metadata, "xa.oci-signature", "s", &signature_digest);
+  g_variant_lookup (metadata, "xa.oci-repository", "s", &oci_repository);
 
   oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
 
@@ -2922,12 +2946,16 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
     return TRUE;
 
-  registry = flatpak_oci_registry_new (oci_uri, FALSE, -1, NULL, error);
+  registry_uri = lookup_oci_registry_uri_from_summary (summary, error);
+  if (registry_uri == NULL)
+    return FALSE;
+
+  registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, error);
   if (registry == NULL)
     return FALSE;
 
-  versioned = flatpak_oci_registry_load_versioned (registry, oci_digest, NULL,
-                                                   cancellable, error);
+  versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
+						   NULL, cancellable, error);
   if (versioned == NULL)
     return FALSE;
 
@@ -2957,7 +2985,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_debug ("Pulling OCI image %s", oci_digest);
 
-  checksum = flatpak_pull_from_oci (repo, registry, oci_digest, FLATPAK_OCI_MANIFEST (versioned),
+  checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, FLATPAK_OCI_MANIFEST (versioned),
                                     remote, ref, signature_digest, oci_pull_progress_cb, progress, cancellable, error);
 
   if (progress)
@@ -7413,18 +7441,6 @@ flatpak_dir_cache_summary (FlatpakDir  *self,
   G_UNLOCK (cache);
 }
 
-
-static int
-compare_mdp (const void *a, const void *b)
-{
-  FlatpakOciManifestDescriptor *aa = *(FlatpakOciManifestDescriptor **)a;
-  FlatpakOciManifestDescriptor *bb = *(FlatpakOciManifestDescriptor **)b;
-  const char *ref_a = flatpak_oci_manifest_descriptor_get_ref (aa);
-  const char *ref_b = flatpak_oci_manifest_descriptor_get_ref (bb);
-
-  return g_strcmp0 (ref_a, ref_b);
-}
-
 static gboolean
 flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                      const char   *remote,
@@ -7432,20 +7448,12 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error)
 {
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autofree char *oci_uri = NULL;
-  g_autoptr(GVariantBuilder) refs_builder = NULL;
-  g_autoptr(GVariantBuilder) additional_metadata_builder = NULL;
-  g_autoptr(GVariantBuilder) summary_builder = NULL;
   g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GVariantBuilder) ref_data_builder = NULL;
-  g_autoptr(FlatpakOciIndex) index = NULL;
-  int i;
   g_autoptr(GFile) cache_dir = NULL;
   g_autoptr(GFile) summary_cache = NULL;
   g_autofree char *summary_name = NULL;
   g_autofree char *cache_etag = NULL;
-  g_autofree char *new_etag = NULL;
   g_autofree char *self_name = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GMappedFile) mfile = NULL;
@@ -7475,12 +7483,10 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
       g_variant_lookup (extensions, "xa.oci-etag", "s", &cache_etag);
     }
 
-  registry = flatpak_oci_registry_new (oci_uri, FALSE, -1, NULL, error);
-  if (registry == NULL)
-    return FALSE;
+  ensure_soup_session (self);
 
-  index = flatpak_oci_registry_load_index (registry, cache_etag, &new_etag, cancellable, &local_error);
-  if (index == NULL)
+  summary = flatpak_oci_index_fetch_summary (self->soup_session, oci_uri, cache_etag, cancellable, &local_error);
+  if (summary == NULL)
     {
       if (g_error_matches (local_error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED))
         {
@@ -7492,85 +7498,6 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
       g_propagate_error (error, g_steal_pointer (&local_error));
       return FALSE;
     }
-
-  refs_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(s(taya{sv}))"));
-  ref_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(tts)}"));
-  additional_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-
-  /* The summary has to be sorted by ref, so pre-sort the manifests */
-  if (index->manifests != NULL)
-    qsort (index->manifests, flatpak_oci_index_get_n_manifests (index), sizeof (FlatpakOciManifestDescriptor *), compare_mdp);
-
-  for (i = 0; index->manifests != NULL && index->manifests[i] != NULL; i++)
-    {
-      FlatpakOciManifestDescriptor *m = index->manifests[i];
-      FlatpakOciDescriptor *d = (FlatpakOciDescriptor *)m;
-      const char *ref;
-      const char *fake_commit;
-      guint64 installed_size = 0;
-      guint64 download_size = 0;
-      const char *installed_size_str;
-      const char *download_size_str;
-      const char *signature_digest;
-      const char *metadata_contents = NULL;
-      g_autoptr(GVariantBuilder) ref_metadata_builder = NULL;
-
-      ref = flatpak_oci_manifest_descriptor_get_ref (m);
-      if (ref == NULL)
-        continue;
-
-      metadata_contents = g_hash_table_lookup (d->annotations, "org.flatpak.metadata");
-      if (metadata_contents == NULL && !g_str_has_prefix (ref, "appstream/"))
-        continue; /* Not a flatpak, skip */
-
-      if (!g_str_has_prefix (d->digest, "sha256:"))
-        {
-          g_debug ("Ignoring digest type %s", d->digest);
-          continue;
-        }
-
-      fake_commit = d->digest + strlen ("sha256:");
-
-      installed_size_str = g_hash_table_lookup (d->annotations, "org.flatpak.installed-size");
-      if (installed_size_str)
-        installed_size = g_ascii_strtoull (installed_size_str, NULL, 10);
-
-      download_size_str = g_hash_table_lookup (d->annotations, "org.flatpak.download-size");
-      if (download_size_str)
-        download_size = g_ascii_strtoull (download_size_str, NULL, 10);
-
-      ref_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-
-      signature_digest = g_hash_table_lookup (d->annotations, "org.flatpak.signature-digest");
-      if (signature_digest)
-        g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.oci-signature",
-                               g_variant_new_string (signature_digest));
-
-      g_variant_builder_add_value (refs_builder,
-                                   g_variant_new ("(s(t@ay@a{sv}))", ref,
-                                                  0,
-                                                  ostree_checksum_to_bytes_v (fake_commit),
-                                                  g_variant_builder_end (ref_metadata_builder)));
-      g_variant_builder_add (ref_data_builder, "{s(tts)}",
-                             ref,
-                             GUINT64_TO_BE (installed_size),
-                             GUINT64_TO_BE (download_size),
-                             metadata_contents ? metadata_contents : "");
-
-    }
-
-  g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.cache",
-                         g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
-  if (new_etag)
-    g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.oci-etag",
-                           g_variant_new_string (new_etag));
-
-  summary_builder = g_variant_builder_new (OSTREE_SUMMARY_GVARIANT_FORMAT);
-
-  g_variant_builder_add_value (summary_builder, g_variant_builder_end (refs_builder));
-  g_variant_builder_add_value (summary_builder, g_variant_builder_end (additional_metadata_builder));
-
-  summary = g_variant_ref_sink (g_variant_builder_end (summary_builder));
 
   *out_summary = g_variant_get_data_as_bytes (summary);
 

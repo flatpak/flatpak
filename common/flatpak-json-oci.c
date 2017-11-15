@@ -750,7 +750,10 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
                                        GVariant *commit_data)
 {
   if (ref)
-    add_annotation (annotations,"org.opencontainers.image.ref.name", ref);
+    {
+      add_annotation (annotations,"org.opencontainers.image.ref.name", ref);
+      add_annotation (annotations,"org.flatpak.ref", ref);
+    }
 
   if (commit)
     add_annotation (annotations,"org.flatpak.commit", commit);
