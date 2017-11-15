@@ -9766,6 +9766,101 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
     return flatpak_dir_update_remote_configuration_for_repo_metadata (self, remote, summary, FALSE, NULL, cancellable, error);
 }
 
+
+static GBytes *
+flatpak_dir_fetch_remote_object (FlatpakDir   *self,
+                                 const char   *remote_name,
+                                 const char   *checksum,
+                                 const char   *type,
+                                 GCancellable *cancellable,
+                                 GError      **error)
+{
+  g_autofree char *base_url = NULL;
+  g_autofree char *object_url = NULL;
+  g_autofree char *part1 = NULL;
+  g_autofree char *part2 = NULL;
+
+  g_autoptr(GBytes) bytes = NULL;
+
+  if (!ostree_repo_remote_get_url (self->repo, remote_name, &base_url, error))
+    return NULL;
+
+  ensure_soup_session (self);
+
+  part1 = g_strndup (checksum, 2);
+  part2 = g_strdup_printf ("%s.%s", checksum + 2, type);
+
+  object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
+
+  bytes = flatpak_load_http_uri (self->soup_session, object_url, 0,
+                                 NULL, NULL, NULL, NULL,
+                                 cancellable, error);
+  if (bytes == NULL)
+    return NULL;
+
+  return g_steal_pointer (&bytes);
+}
+
+GVariant *
+flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
+                                 const char   *remote_name,
+                                 const char   *ref,
+                                 const char   *opt_commit,
+                                 char        **out_commit,
+                                 GCancellable *cancellable,
+                                 GError      **error)
+{
+  g_autoptr(GBytes) commit_bytes = NULL;
+  g_autoptr(GVariant) commit_variant = NULL;
+  g_autofree char *latest_commit = NULL;
+  g_autoptr(GVariant) commit_metadata = NULL;
+
+  if (opt_commit == NULL)
+    {
+      latest_commit = flatpak_dir_lookup_ref_from_summary (self, remote_name,
+                                                           ref, NULL, NULL,
+                                                           cancellable, error);
+      if (latest_commit == NULL)
+        return NULL;
+      opt_commit = latest_commit;
+    }
+
+  commit_bytes = flatpak_dir_fetch_remote_object (self, remote_name,
+                                                  opt_commit, "commit",
+                                                  cancellable, error);
+  if (commit_bytes == NULL)
+    return NULL;
+
+  commit_variant = g_variant_new_from_bytes (OSTREE_COMMIT_GVARIANT_FORMAT,
+                                             commit_bytes, FALSE);
+  g_variant_ref_sink (commit_variant);
+
+  if (!ostree_validate_structureof_commit (commit_variant, error))
+    return NULL;
+
+  commit_metadata = g_variant_get_child_value (commit_variant, 0);
+  if (ref != NULL)
+    {
+      const char *xa_ref = NULL;
+      g_autofree const char **commit_refs = NULL;
+
+      if ((g_variant_lookup (commit_metadata, "xa.ref", "s", &xa_ref) &&
+           g_strcmp0 (xa_ref, ref) != 0) ||
+          (g_variant_lookup (commit_metadata, "ostree.ref-binding", "^a&s", &commit_refs) &&
+           !g_strv_contains ((const char *const *) commit_refs, ref)))
+        {
+          flatpak_fail (error, "commit has no requested ref ‘%s’ in ref binding metadata",  ref);
+          return NULL;
+        }
+    }
+
+  if (out_commit)
+    *out_commit = g_strdup (opt_commit);
+
+  return g_steal_pointer (&commit_variant);
+}
+
+
 gboolean
 flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                              const char   *remote_name,
