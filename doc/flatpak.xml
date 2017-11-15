@@ -318,6 +318,13 @@
                     List contents of a configured remote repository.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remote-info</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Show information about a ref in a configured remote repository.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
         <para>Commands for building applications:</para>

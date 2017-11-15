@@ -13,6 +13,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-delete-remote.c \
 	app/flatpak-builtins-list-remotes.c \
 	app/flatpak-builtins-ls-remote.c \
+	app/flatpak-builtins-info-remote.c \
 	app/flatpak-builtins-install.c \
 	app/flatpak-builtins-override.c \
 	app/flatpak-builtins-make-current.c \

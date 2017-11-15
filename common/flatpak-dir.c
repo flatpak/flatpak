@@ -3429,7 +3429,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       g_autofree const char **commit_refs = NULL;
 
       if (!g_variant_lookup (new_commit_metadata,
-                             "ostree.ref-binding",
+                             OSTREE_COMMIT_META_KEY_REF_BINDING,
                              "^a&s",
                              &commit_refs))
         {
@@ -9779,7 +9779,6 @@ flatpak_dir_fetch_remote_object (FlatpakDir   *self,
   g_autofree char *object_url = NULL;
   g_autofree char *part1 = NULL;
   g_autofree char *part2 = NULL;
-
   g_autoptr(GBytes) bytes = NULL;
 
   if (!ostree_repo_remote_get_url (self->repo, remote_name, &base_url, error))
@@ -9844,9 +9843,9 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
       const char *xa_ref = NULL;
       g_autofree const char **commit_refs = NULL;
 
-      if ((g_variant_lookup (commit_metadata, "xa.ref", "s", &xa_ref) &&
+      if ((g_variant_lookup (commit_metadata, "xa.ref", "&s", &xa_ref) &&
            g_strcmp0 (xa_ref, ref) != 0) ||
-          (g_variant_lookup (commit_metadata, "ostree.ref-binding", "^a&s", &commit_refs) &&
+          (g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_REF_BINDING, "^a&s", &commit_refs) &&
            !g_strv_contains ((const char *const *) commit_refs, ref)))
         {
           flatpak_fail (error, "commit has no requested ref ‘%s’ in ref binding metadata",  ref);
