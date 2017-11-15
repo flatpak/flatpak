@@ -258,7 +258,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
       signature_digest = g_hash_table_lookup (desc->parent.annotations, "org.flatpak.signature-digest");
 
-      versioned = flatpak_oci_registry_load_versioned (registry, desc->parent.digest, NULL,
+      versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, NULL,
                                                        NULL, &error);
       if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
         {
@@ -267,7 +267,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
                                         arg_origin, arg_ref, signature_digest, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
@@ -443,7 +443,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
       signature_digest = g_hash_table_lookup (desc->parent.annotations, "org.flatpak.signature-digest");
 
-      versioned = flatpak_oci_registry_load_versioned (registry, desc->parent.digest, NULL,
+      versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, NULL,
                                                        NULL, &error);
       if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
         {
@@ -452,7 +452,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
                                         arg_origin, branch, signature_digest, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {

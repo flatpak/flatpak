@@ -4976,7 +4976,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
       !flatpak_oci_registry_mirror_blob (dst_registry, registry, signature_digest, NULL, NULL, cancellable, error))
     return FALSE;
 
-  versioned = flatpak_oci_registry_load_versioned (dst_registry, digest, &versioned_size, cancellable, error);
+  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, &versioned_size, cancellable, error);
   if (versioned == NULL)
     return FALSE;
 
@@ -5046,6 +5046,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 char *
 flatpak_pull_from_oci (OstreeRepo   *repo,
                        FlatpakOciRegistry *registry,
+                       const char *oci_repository,
                        const char *digest,
                        FlatpakOciManifest *manifest,
                        const char *remote,
@@ -5091,7 +5092,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
           return NULL;
         }
 
-      signature_bytes = flatpak_oci_registry_load_blob (registry, signature_digest, cancellable, error);
+      signature_bytes = flatpak_oci_registry_load_blob (registry, oci_repository, FALSE, signature_digest, cancellable, error);
       if (signature_bytes == NULL)
         return NULL;
 
@@ -5173,7 +5174,8 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       opts.autocreate_parents = TRUE;
       opts.ignore_unsupported_content = TRUE;
 
-      layer_fd = flatpak_oci_registry_download_blob (registry, layer->digest,
+      layer_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+						     layer->digest,
                                                      oci_layer_progress, &progress_data,
                                                      cancellable, error);
       if (layer_fd == -1)
@@ -5635,6 +5637,7 @@ flatpak_create_soup_session (const char *user_agent)
 GBytes *
 flatpak_load_http_uri (SoupSession *soup_session,
                        const char *uri,
+		       FlatpakHTTPFlags flags,
                        const char *etag,
                        char      **out_etag,
                        FlatpakLoadUriProgress progress,
@@ -5648,6 +5651,7 @@ flatpak_load_http_uri (SoupSession *soup_session,
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GString) content = g_string_new ("");
   LoadUriData data = { NULL };
+  SoupMessage *m;
 
   g_debug ("Loading %s using libsoup", uri);
 
@@ -5666,11 +5670,13 @@ flatpak_load_http_uri (SoupSession *soup_session,
   if (request == NULL)
     return NULL;
 
+  m = soup_request_http_get_message (request);
   if (etag)
-    {
-      SoupMessage *m = soup_request_http_get_message (request);
-      soup_message_headers_replace (m->request_headers, "If-None-Match", etag);
-    }
+    soup_message_headers_replace (m->request_headers, "If-None-Match", etag);
+
+  if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
+    soup_message_headers_replace (m->request_headers, "Accept",
+				  "application/vnd.oci.image.manifest.v1+json");
 
   soup_request_send_async (SOUP_REQUEST(request),
                            cancellable,
@@ -5699,6 +5705,7 @@ flatpak_load_http_uri (SoupSession *soup_session,
 gboolean
 flatpak_download_http_uri (SoupSession *soup_session,
                            const char   *uri,
+			   FlatpakHTTPFlags flags,
                            GOutputStream *out,
                            FlatpakLoadUriProgress progress,
                            gpointer      user_data,
@@ -5709,6 +5716,7 @@ flatpak_download_http_uri (SoupSession *soup_session,
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GMainContext) context = NULL;
   LoadUriData data = { NULL };
+  SoupMessage *m;
 
   g_debug ("Loading %s using libsoup", uri);
 
@@ -5726,6 +5734,11 @@ flatpak_download_http_uri (SoupSession *soup_session,
                                        uri, error);
   if (request == NULL)
     return FALSE;
+
+  m = soup_request_http_get_message (request);
+  if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
+    soup_message_headers_replace (m->request_headers, "Accept",
+				  "application/vnd.oci.image.manifest.v1+json");
 
   soup_request_send_async (SOUP_REQUEST(request),
                            cancellable,
