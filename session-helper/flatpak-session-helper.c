@@ -453,7 +453,7 @@ message_handler (const gchar   *log_domain,
 {
   /* Make this look like normal console output */
   if (log_level & G_LOG_LEVEL_DEBUG)
-    g_printerr ("XA: %s\n", message);
+    g_printerr ("F: %s\n", message);
   else
     g_printerr ("%s: %s\n", g_get_prgname (), message);
 }
