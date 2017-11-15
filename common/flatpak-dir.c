@@ -2628,6 +2628,7 @@ flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
                                      const char          *remote,
                                      const          char *ref,
                                      GVariant           **out_variant,
+                                     GVariant           **out_summary,
                                      GCancellable        *cancellable,
                                      GError             **error)
 {
@@ -2649,6 +2650,9 @@ flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
       flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote);
       return NULL;
     }
+
+  if (out_summary)
+    *out_summary = g_steal_pointer (&summary);
 
   return g_steal_pointer (&latest_rev);
 }
@@ -2761,7 +2765,7 @@ flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
       /* Look up the commit containing the latest repository metadata. */
       latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote_name,
                                                         OSTREE_REPO_METADATA_REF,
-                                                        NULL,
+                                                        NULL, NULL,
                                                         cancellable, error);
       if (latest_rev == NULL)
         return FALSE;
@@ -2807,6 +2811,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
+  g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *signature_digest = NULL;
   gboolean res;
@@ -2818,7 +2823,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
     return FALSE;
 
   /* We use the summary so that we can reuse any cached json */
-  latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element,
+  latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element, &summary,
                                                     cancellable, error);
   if (latest_rev == NULL)
     return FALSE;
@@ -2885,6 +2890,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
+  g_autoptr(GVariant) summary = NULL;
   g_autofree char *signature_digest = NULL;
   g_autofree char *latest_alt_commit = NULL;
   g_autoptr(GVariant) metadata = NULL;
@@ -2902,7 +2908,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   /* We use the summary so that we can reuse any cached json */
   latest_rev =
-    flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element,
+    flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element, &summary,
                                          cancellable, error);
   if (latest_rev == NULL)
     return FALSE;
@@ -3111,7 +3117,7 @@ flatpak_dir_pull (FlatpakDir          *self,
       else
 #endif  /* FLATPAK_ENABLE_P2P */
         {
-          rev = flatpak_dir_lookup_ref_from_summary (self, repository, ref, NULL, cancellable, error);
+          rev = flatpak_dir_lookup_ref_from_summary (self, repository, ref, NULL, NULL, cancellable, error);
           results = NULL;
         }
 
@@ -6314,7 +6320,7 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
     }
   else
     {
-      latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote_name, ref, NULL, NULL, error);
+      latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote_name, ref, NULL, NULL, NULL, error);
       if (latest_rev == NULL)
         return NULL;
     }
@@ -9397,7 +9403,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
    * This is how we implement caching. Ignore failure and pull the ref anyway. */
   checksum_from_summary = flatpak_dir_lookup_ref_from_summary (self, remote_name,
                                                                OSTREE_REPO_METADATA_REF,
-                                                               NULL, NULL, NULL);
+                                                               NULL, NULL, NULL, NULL);
   refspec = g_strdup_printf ("%s:%s", remote_name, OSTREE_REPO_METADATA_REF);
   if (!ostree_repo_resolve_rev (self->repo, refspec, TRUE, &checksum_from_repo, error))
     return FALSE;
