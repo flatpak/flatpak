@@ -346,6 +346,16 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--readonly</option></term>
+
+                <listitem><para>
+                  Mount the nomally writable destination directories read-only. This can
+                  be useful if you want to run something in the sandbox but guarantee that
+                  is doesn't affect the build results. For example tests.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--metadata=FILE</option></term>
 
                 <listitem><para>

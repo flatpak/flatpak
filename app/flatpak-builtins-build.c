@@ -43,9 +43,11 @@ static gboolean opt_log_session_bus;
 static gboolean opt_log_system_bus;
 static gboolean opt_die_with_parent;
 static gboolean opt_with_appdir;
+static gboolean opt_readonly;
 
 static GOptionEntry options[] = {
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Use Platform runtime rather than Sdk"), NULL },
+  { "readonly", 0, 0, G_OPTION_ARG_NONE, &opt_readonly, N_("Make destination readonly"), NULL },
   { "bind-mount", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_bind_mounts, N_("Add bind mount"), N_("DEST=SRC") },
   { "build-dir", 0, 0, G_OPTION_ARG_STRING, &opt_build_dir, N_("Start build in this directory"), N_("DIR") },
   { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, N_("Where to look for custom sdk dir (defaults to 'usr')"), N_("DIR") },
@@ -335,7 +337,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   flatpak_bwrap_add_args (bwrap,
-                          custom_usr ? "--bind" : "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
+                          (custom_usr && !opt_readonly)  ? "--bind" : "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
                           NULL);
 
   if (!custom_usr)
@@ -345,7 +347,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   if (app_files)
     flatpak_bwrap_add_args (bwrap,
-                            app_files_ro ? "--ro-bind" : "--bind", flatpak_file_get_path_cached (app_files), "/app",
+                            (app_files_ro || opt_readonly) ? "--ro-bind" : "--bind", flatpak_file_get_path_cached (app_files), "/app",
                             NULL);
   else
     flatpak_bwrap_add_args (bwrap,
