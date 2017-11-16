@@ -1888,12 +1888,7 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
 static const char *
 get_image_ref (FlatpakOciIndexImage *img)
 {
-  const char *ref;
-
-  ref = g_hash_table_lookup (img->annotations, "org.flatpak.ref");
-  if (ref == NULL)
-    ref = g_hash_table_lookup (img->annotations, "org.opencontainers.image.ref.name");
-  return ref;
+  return g_hash_table_lookup (img->annotations, "org.flatpak.ref");
 }
 
 typedef struct {
@@ -1924,7 +1919,6 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
   FlatpakOciIndexResponse *response;
   g_autoptr(SoupURI) registry_uri = NULL;
   g_autofree char *registry_uri_s = NULL;
-  g_autoptr(SoupURI) base_uri = NULL;
   int i;
   g_autoptr(GArray) images = g_array_new (FALSE, TRUE, sizeof (ImageInfo));
   g_autoptr(GVariantBuilder) refs_builder = NULL;
@@ -1933,6 +1927,8 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariantBuilder) ref_data_builder = NULL;
   g_autoptr(GString) index_uri = g_string_new (uri);
+  g_autoptr(SoupURI) soup_uri = NULL;
+  g_autofree char *query_uri = NULL;
 
   if (!g_str_has_suffix (index_uri->str, "/"))
     g_string_append_c (index_uri, '/');
@@ -1940,10 +1936,17 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
   if (!g_str_has_suffix (uri, "/index/"))
     g_string_append (index_uri, "index/");
 
-  g_string_append (index_uri, "/static?os=linux&tag=latest");
+  g_string_append (index_uri, "/static");
+  soup_uri = soup_uri_new (index_uri->str);
+  soup_uri_set_query_from_fields (soup_uri,
+				  "os", "linux",
+				  "tag", "latest",
+				  "annotation:org.flatpak.ref:exists", "1",
+				  NULL);
+  query_uri = soup_uri_to_string (soup_uri, FALSE);
 
   res = flatpak_load_http_uri (soup_session,
-                               index_uri->str,
+                               query_uri,
                                0, etag,
                                &new_etag, NULL, NULL,
                                cancellable, error);
@@ -1956,8 +1959,7 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
 
   response = (FlatpakOciIndexResponse *)json;
 
-  base_uri = soup_uri_new (index_uri->str);
-  registry_uri = soup_uri_new_with_base (base_uri, response->registry);
+  registry_uri = soup_uri_new_with_base (soup_uri, response->registry);
   registry_uri_s = soup_uri_to_string (registry_uri, FALSE);
 
   for (i = 0; response->results != NULL && response->results[i] != NULL; i++)
@@ -2074,6 +2076,9 @@ flatpak_oci_index_verify_ref (SoupSession *soup_session,
 {
   g_autoptr(GBytes) res = NULL;
   g_autoptr(FlatpakJson) json = NULL;
+  g_autoptr(SoupURI) soup_uri = NULL;
+  g_autofree char *query_uri = NULL;
+
   FlatpakOciIndexResponse *response;
   int i;
   g_autoptr(GString) index_uri = g_string_new (uri);
@@ -2084,11 +2089,17 @@ flatpak_oci_index_verify_ref (SoupSession *soup_session,
   if (!g_str_has_suffix (uri, "/index/"))
     g_string_append (index_uri, "index/");
 
-  g_string_append (index_uri, "/dynamic?os=linux&annotation:org.flatpak.ref=");
-  g_string_append (index_uri, ref);
+  g_string_append (index_uri, "/dynamic");
+
+  soup_uri = soup_uri_new (index_uri->str);
+  soup_uri_set_query_from_fields (soup_uri,
+				  "os", "linux",
+				  "annotation:org.flatpak.ref", ref,
+				  NULL);
+  query_uri = soup_uri_to_string (soup_uri, FALSE);
 
   res = flatpak_load_http_uri (soup_session,
-                               index_uri->str,
+                               query_uri,
                                0, NULL, NULL, NULL, NULL,
                                cancellable, error);
   if (res == NULL)
