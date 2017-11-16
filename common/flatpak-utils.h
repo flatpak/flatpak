@@ -387,6 +387,7 @@ char * flatpak_pull_from_oci (OstreeRepo   *repo,
 
 gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
                                         FlatpakOciRegistry *registry,
+                                        const char *oci_repository,
                                         const char *digest,
                                         FlatpakOciPullProgress progress_cb,
                                         gpointer progress_data,

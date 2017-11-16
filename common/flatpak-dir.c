@@ -2829,6 +2829,8 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
   g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *oci_repository = NULL;
   gboolean res;
 
   if (!ostree_repo_remote_get_url (self->repo,
@@ -2849,6 +2851,9 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                    _("%s commit %s already installed"), ref, latest_rev);
       return FALSE;
     }
+
+  metadata = g_variant_get_child_value (summary_element, 2);
+  g_variant_lookup (metadata, "xa.oci-repository", "s", &oci_repository);
 
   oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
 
@@ -2874,7 +2879,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   g_debug ("Mirroring OCI image %s", oci_digest);
 
-  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_digest, oci_pull_progress_cb,
+  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, oci_pull_progress_cb,
                                        progress, cancellable, error);
 
   if (progress)
@@ -5849,22 +5854,6 @@ flatpak_dir_install (FlatpakDir          *self,
         {
           /* Do nothing */
         }
-      else if ((!gpg_verify_summary && collection_id == NULL) || !gpg_verify)
-        {
-          /* The remote is not gpg verified, so we don't want to allow installation via
-             a download in the home directory, as there is no way to verify you're not
-             injecting anything into the remote. However, in the case of a remote
-             configured to a local filesystem we can just let the system helper do
-             the installation, as it can then avoid network i/o and be certain the
-             data comes from the right place.
-
-             If a collection ID is available, we can verify the refs in commit
-             metadata. */
-          if (g_str_has_prefix (url, "file:"))
-            helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
-          else
-            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
-        }
       else if (is_oci)
         {
           g_autoptr(FlatpakOciRegistry) registry = NULL;
@@ -5880,6 +5869,22 @@ flatpak_dir_install (FlatpakDir          *self,
 
           if (!flatpak_dir_mirror_oci (self, registry, remote_name, ref, NULL, progress, cancellable, error))
             return FALSE;
+        }
+      else if ((!gpg_verify_summary && collection_id == NULL) || !gpg_verify)
+        {
+          /* The remote is not gpg verified, so we don't want to allow installation via
+             a download in the home directory, as there is no way to verify you're not
+             injecting anything into the remote. However, in the case of a remote
+             configured to a local filesystem we can just let the system helper do
+             the installation, as it can then avoid network i/o and be certain the
+             data comes from the right place.
+
+             If a collection ID is available, we can verify the refs in commit
+             metadata. */
+          if (g_str_has_prefix (url, "file:"))
+            helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
+          else
+            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
         }
       else
         {

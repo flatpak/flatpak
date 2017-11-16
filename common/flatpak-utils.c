@@ -4954,6 +4954,7 @@ oci_layer_progress (guint64 downloaded_bytes,
 gboolean
 flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
                                FlatpakOciRegistry *registry,
+			       const char *oci_repository,
                                const char *digest,
                                FlatpakOciPullProgress progress_cb,
                                gpointer progress_user_data,
@@ -4968,7 +4969,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
   g_autoptr(FlatpakOciIndex) index = NULL;
   int i;
 
-  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, digest, NULL, NULL, cancellable, error))
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, cancellable, error))
     return FALSE;
 
   versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, &versioned_size, cancellable, error);
@@ -4986,7 +4987,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 
   if (manifest->config.digest != NULL)
     {
-      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, manifest->config.digest, NULL, NULL, cancellable, error))
+      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, NULL, NULL, cancellable, error))
         return FALSE;
     }
 
@@ -5006,7 +5007,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
 
-      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, layer->digest,
+      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, layer->digest,
                                              oci_layer_progress, &progress_data,
                                              cancellable, error))
         return FALSE;
@@ -5059,16 +5060,10 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
   GHashTable *annotations;
-  gboolean gpg_verify = FALSE;
   int i;
 
   g_assert (ref != NULL);
   g_assert (g_str_has_prefix (digest, "sha256:"));
-
-  if (remote &&
-      !ostree_repo_remote_get_gpg_verify (repo, remote,
-                                          &gpg_verify, error))
-    return NULL;
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   if (annotations)
