@@ -229,7 +229,6 @@ handle_deploy (FlatpakSystemHelper   *object,
       const FlatpakOciManifestDescriptor *desc;
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
       g_autofree char *checksum = NULL;
-      const char *signature_digest;
       g_autofree char *upstream_url = NULL;
       g_autoptr(SoupSession) soup_session = NULL;
 
@@ -437,7 +436,6 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       const FlatpakOciManifestDescriptor *desc;
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
       g_autofree char *checksum = NULL;
-      const char *signature_digest;
 
       registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
       if (registry == NULL)
