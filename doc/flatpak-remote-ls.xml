@@ -42,7 +42,7 @@
         <para>
             Shows runtimes and applications that are available in the
             remote repository with the name <arg choice="plain">REMOTE</arg>.
-            You can find all configured remote repositories with flatpak remote-list.
+            You can find all configured remote repositories with <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
         </para>
         <para>
             Unless overridden with the --user or --installation options, this command
