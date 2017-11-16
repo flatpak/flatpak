@@ -4954,8 +4954,8 @@ oci_layer_progress (guint64 downloaded_bytes,
 gboolean
 flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
                                FlatpakOciRegistry *registry,
+			       const char *oci_repository,
                                const char *digest,
-                               const char *signature_digest,
                                FlatpakOciPullProgress progress_cb,
                                gpointer progress_user_data,
                                GCancellable *cancellable,
@@ -4969,14 +4969,10 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
   g_autoptr(FlatpakOciIndex) index = NULL;
   int i;
 
-  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, digest, NULL, NULL, cancellable, error))
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, cancellable, error))
     return FALSE;
 
-  if (signature_digest &&
-      !flatpak_oci_registry_mirror_blob (dst_registry, registry, signature_digest, NULL, NULL, cancellable, error))
-    return FALSE;
-
-  versioned = flatpak_oci_registry_load_versioned (dst_registry, digest, &versioned_size, cancellable, error);
+  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, &versioned_size, cancellable, error);
   if (versioned == NULL)
     return FALSE;
 
@@ -4991,7 +4987,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 
   if (manifest->config.digest != NULL)
     {
-      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, manifest->config.digest, NULL, NULL, cancellable, error))
+      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, NULL, NULL, cancellable, error))
         return FALSE;
     }
 
@@ -5011,7 +5007,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
 
-      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, layer->digest,
+      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, layer->digest,
                                              oci_layer_progress, &progress_data,
                                              cancellable, error))
         return FALSE;
@@ -5029,11 +5025,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
-  if (signature_digest)
-    g_hash_table_replace (manifest_desc->annotations,
-                          g_strdup ("org.flatpak.signature-digest"),
-                          g_strdup (signature_digest));
-
   flatpak_oci_index_add_manifest (index, manifest_desc);
 
   if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
@@ -5046,11 +5037,11 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 char *
 flatpak_pull_from_oci (OstreeRepo   *repo,
                        FlatpakOciRegistry *registry,
+                       const char *oci_repository,
                        const char *digest,
                        FlatpakOciManifest *manifest,
                        const char *remote,
                        const char *ref,
-                       const char *signature_digest,
                        FlatpakOciPullProgress progress_cb,
                        gpointer progress_user_data,
                        GCancellable *cancellable,
@@ -5069,57 +5060,10 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
   GHashTable *annotations;
-  gboolean gpg_verify = FALSE;
   int i;
 
   g_assert (ref != NULL);
   g_assert (g_str_has_prefix (digest, "sha256:"));
-
-  if (remote &&
-      !ostree_repo_remote_get_gpg_verify (repo, remote,
-                                          &gpg_verify, error))
-    return NULL;
-
-  if (gpg_verify)
-    {
-      g_autoptr(GBytes) signature_bytes = NULL;
-      g_autoptr(FlatpakOciSignature) signature = NULL;
-
-      if (signature_digest == NULL)
-        {
-          flatpak_fail (error, "GPG verification enabled, but no OCI signature found");
-          return NULL;
-        }
-
-      signature_bytes = flatpak_oci_registry_load_blob (registry, signature_digest, cancellable, error);
-      if (signature_bytes == NULL)
-        return NULL;
-
-      signature = flatpak_oci_verify_signature (repo, remote, signature_bytes, error);
-      if (signature == NULL)
-        return NULL;
-
-      if (g_strcmp0 (signature->critical.type, FLATPAK_OCI_SIGNATURE_TYPE_FLATPAK) != 0)
-        {
-          flatpak_fail (error, "Invalid signature type %s", signature->critical.type);
-          return NULL;
-        }
-
-      if (g_strcmp0 (signature->critical.image.digest, digest) != 0)
-        {
-          flatpak_fail (error, "Invalid signature digest %s", signature->critical.image.digest);
-          return NULL;
-        }
-
-      if (g_strcmp0 (signature->critical.identity.ref, ref) != 0)
-        {
-          flatpak_fail (error, "Invalid signature ref %s", signature->critical.identity.ref);
-          return NULL;
-        }
-
-      /* Success! It is valid */
-      g_debug ("Verified OCI signature for %s %s", signature->critical.identity.ref, digest);
-    }
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   if (annotations)
@@ -5173,7 +5117,8 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       opts.autocreate_parents = TRUE;
       opts.ignore_unsupported_content = TRUE;
 
-      layer_fd = flatpak_oci_registry_download_blob (registry, layer->digest,
+      layer_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+						     layer->digest,
                                                      oci_layer_progress, &progress_data,
                                                      cancellable, error);
       if (layer_fd == -1)
@@ -5635,6 +5580,7 @@ flatpak_create_soup_session (const char *user_agent)
 GBytes *
 flatpak_load_http_uri (SoupSession *soup_session,
                        const char *uri,
+		       FlatpakHTTPFlags flags,
                        const char *etag,
                        char      **out_etag,
                        FlatpakLoadUriProgress progress,
@@ -5648,6 +5594,7 @@ flatpak_load_http_uri (SoupSession *soup_session,
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GString) content = g_string_new ("");
   LoadUriData data = { NULL };
+  SoupMessage *m;
 
   g_debug ("Loading %s using libsoup", uri);
 
@@ -5666,11 +5613,13 @@ flatpak_load_http_uri (SoupSession *soup_session,
   if (request == NULL)
     return NULL;
 
+  m = soup_request_http_get_message (request);
   if (etag)
-    {
-      SoupMessage *m = soup_request_http_get_message (request);
-      soup_message_headers_replace (m->request_headers, "If-None-Match", etag);
-    }
+    soup_message_headers_replace (m->request_headers, "If-None-Match", etag);
+
+  if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
+    soup_message_headers_replace (m->request_headers, "Accept",
+				  "application/vnd.oci.image.manifest.v1+json");
 
   soup_request_send_async (SOUP_REQUEST(request),
                            cancellable,
@@ -5699,6 +5648,7 @@ flatpak_load_http_uri (SoupSession *soup_session,
 gboolean
 flatpak_download_http_uri (SoupSession *soup_session,
                            const char   *uri,
+			   FlatpakHTTPFlags flags,
                            GOutputStream *out,
                            FlatpakLoadUriProgress progress,
                            gpointer      user_data,
@@ -5709,6 +5659,7 @@ flatpak_download_http_uri (SoupSession *soup_session,
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GMainContext) context = NULL;
   LoadUriData data = { NULL };
+  SoupMessage *m;
 
   g_debug ("Loading %s using libsoup", uri);
 
@@ -5726,6 +5677,11 @@ flatpak_download_http_uri (SoupSession *soup_session,
                                        uri, error);
   if (request == NULL)
     return FALSE;
+
+  m = soup_request_http_get_message (request);
+  if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
+    soup_message_headers_replace (m->request_headers, "Accept",
+				  "application/vnd.oci.image.manifest.v1+json");
 
   soup_request_send_async (SOUP_REQUEST(request),
                            cancellable,

@@ -46,6 +46,7 @@ struct FlatpakOciRegistry
 
   gboolean for_write;
   gboolean valid;
+  gboolean is_docker;
   char *uri;
   int tmp_dfd;
 
@@ -122,9 +123,9 @@ flatpak_oci_registry_set_property (GObject         *object,
 
 static void
 flatpak_oci_registry_get_property (GObject         *object,
-                                  guint            prop_id,
-                                  GValue          *value,
-                                  GParamSpec      *pspec)
+				   guint            prop_id,
+				   GValue          *value,
+				   GParamSpec      *pspec)
 {
   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (object);
 
@@ -192,10 +193,10 @@ flatpak_oci_registry_get_uri (FlatpakOciRegistry   *self)
 
 FlatpakOciRegistry *
 flatpak_oci_registry_new (const char *uri,
-                         gboolean for_write,
-                         int tmp_dfd,
-                         GCancellable *cancellable,
-                         GError **error)
+			  gboolean for_write,
+			  int tmp_dfd,
+			  GCancellable *cancellable,
+			  GError **error)
 {
   FlatpakOciRegistry *oci_registry;
 
@@ -306,7 +307,7 @@ remote_load_file (SoupSession *soup_session,
 
   uri_s = soup_uri_to_string (uri, FALSE);
   bytes = flatpak_load_http_uri (soup_session,
-                                 uri_s, etag, etag_out,
+                                 uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI, etag, etag_out,
                                  NULL, NULL,
                                  cancellable, error);
   if (bytes == NULL)
@@ -353,7 +354,7 @@ parse_json (GBytes *bytes, GCancellable *cancellable, GError **error)
 }
 
 static gboolean
-verify_oci_version (GBytes *oci_layout_bytes, GCancellable *cancellable, GError **error)
+verify_oci_version (GBytes *oci_layout_bytes, gboolean *not_json, GCancellable *cancellable, GError **error)
 {
   const char *version;
   g_autoptr(JsonNode) node = NULL;
@@ -361,8 +362,12 @@ verify_oci_version (GBytes *oci_layout_bytes, GCancellable *cancellable, GError 
 
   node = parse_json (oci_layout_bytes, cancellable, error);
   if (node == NULL)
-    return FALSE;
+    {
+      *not_json = TRUE;
+      return FALSE;
+    }
 
+  *not_json = FALSE;
   oci_layout = json_node_get_object (node);
 
   version = json_object_get_string_member (oci_layout, "imageLayoutVersion");
@@ -384,15 +389,16 @@ verify_oci_version (GBytes *oci_layout_bytes, GCancellable *cancellable, GError 
 
 static gboolean
 flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
-                                  gboolean for_write,
-                                  GCancellable *cancellable,
-                                  GError **error)
+				   gboolean for_write,
+				   GCancellable *cancellable,
+				   GError **error)
 {
   g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
   glnx_autofd int local_dfd = -1;
   int dfd;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GBytes) oci_layout_bytes = NULL;
+  gboolean not_json;
 
   if (self->dfd != -1)
     dfd = self->dfd;
@@ -450,7 +456,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
           return FALSE;
         }
     }
-  else if (!verify_oci_version (oci_layout_bytes, cancellable, error))
+  else if (!verify_oci_version (oci_layout_bytes, &not_json, cancellable, error))
     return FALSE;
 
   if (self->dfd == -1 && local_dfd != -1)
@@ -461,9 +467,9 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
 
 static gboolean
 flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
-                                   gboolean for_write,
-                                   GCancellable *cancellable,
-                                   GError **error)
+				    gboolean for_write,
+				    GCancellable *cancellable,
+				    GError **error)
 {
   g_autoptr(SoupURI) baseuri = NULL;
   g_autoptr(GBytes) oci_layout_bytes = NULL;
@@ -484,12 +490,25 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
       return FALSE;
     }
 
-  oci_layout_bytes = remote_load_file (self->soup_session, baseuri, "oci-layout", NULL, NULL, cancellable, error);
-  if (oci_layout_bytes == NULL)
-    return FALSE;
+  oci_layout_bytes = remote_load_file (self->soup_session, baseuri, "oci-layout", NULL, NULL, cancellable, NULL);
+  if (oci_layout_bytes != NULL)
+    {
+      g_autoptr(GError) local_error = NULL;
+      gboolean not_json;
 
-  if (!verify_oci_version (oci_layout_bytes, cancellable, error))
-    return FALSE;
+      if (!verify_oci_version (oci_layout_bytes, &not_json, cancellable, &local_error))
+	{
+	  if (not_json)
+	    self->is_docker = TRUE;
+	  else
+	    {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+	      return FALSE;
+	    }
+	}
+    }
+  else
+    self->is_docker = TRUE;
 
   self->base_uri = g_steal_pointer (&baseuri);
 
@@ -498,8 +517,8 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
 
 static gboolean
 flatpak_oci_registry_initable_init (GInitable     *initable,
-                                   GCancellable  *cancellable,
-                                   GError       **error)
+				    GCancellable  *cancellable,
+				    GError       **error)
 {
   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (initable);
   gboolean res;
@@ -632,9 +651,14 @@ splice_update_checksum (GOutputStream  *out,
 }
 
 static char *
-get_digest_subpath (const char *digest,
+get_digest_subpath (FlatpakOciRegistry *self,
+		    const char *repository,
+		    gboolean is_manifest,
+		    const char *digest,
                     GError **error)
 {
+  g_autoptr(GString) s = g_string_new ("");
+
   if (!g_str_has_prefix (digest, "sha256:"))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
@@ -642,7 +666,30 @@ get_digest_subpath (const char *digest,
       return NULL;
     }
 
-  return g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
+  if (self->is_docker)
+    g_string_append (s, "v2/");
+
+  if (repository)
+    {
+      g_string_append (s, repository);
+      g_string_append (s, "/");
+    }
+
+  if (self->is_docker)
+    {
+      if (is_manifest)
+	g_string_append (s, "manifests/");
+      else
+	g_string_append (s, "blobs/");
+      g_string_append (s, digest);
+    }
+  else
+    {
+      g_string_append (s, "blobs/sha256/");
+      g_string_append (s, digest + strlen ("sha256:"));
+    }
+
+  return g_string_free (g_steal_pointer (&s), FALSE);
 }
 
 static char *
@@ -661,6 +708,8 @@ checksum_fd (int fd, GCancellable *cancellable, GError **error)
 
 int
 flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
+				    const char            *repository,
+				    gboolean               manifest,
                                     const char            *digest,
                                     FlatpakLoadUriProgress progress_cb,
                                     gpointer               user_data,
@@ -672,7 +721,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
 
   g_assert (self->valid);
 
-  subpath = get_digest_subpath (digest, error);
+  subpath = get_digest_subpath (self, repository, manifest, digest, error);
   if (subpath == NULL)
     return -1;
 
@@ -713,7 +762,9 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
       if (fd == -1)
         return -1;
 
-      if (!flatpak_download_http_uri (self->soup_session, uri_s, out_stream,
+      if (!flatpak_download_http_uri (self->soup_session, uri_s,
+				      FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+				      out_stream,
                                       progress_cb, user_data,
                                       cancellable, error))
         return -1;
@@ -741,13 +792,16 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
 gboolean
 flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
                                   FlatpakOciRegistry    *source_registry,
+				  const char           *repository,
+				  gboolean              manifest,
                                   const char            *digest,
                                   FlatpakLoadUriProgress progress_cb,
                                   gpointer               user_data,
                                   GCancellable         *cancellable,
                                   GError              **error)
 {
-  g_autofree char *subpath = NULL;
+  g_autofree char *src_subpath = NULL;
+  g_autofree char *dst_subpath = NULL;
   g_auto(GLnxTmpfile) tmpf = { 0 };
   g_autoptr(GOutputStream) out_stream = NULL;
   struct stat stbuf;
@@ -762,12 +816,16 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       return FALSE;
     }
 
-  subpath = get_digest_subpath (digest, error);
-  if (subpath == NULL)
+  src_subpath = get_digest_subpath (source_registry, repository, manifest, digest, error);
+  if (src_subpath == NULL)
+    return FALSE;
+
+  dst_subpath = get_digest_subpath (self, NULL, manifest, digest, error);
+  if (dst_subpath == NULL)
     return FALSE;
 
   /* Check if its already available */
-  if (fstatat (self->dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
+  if (fstatat (self->dfd, dst_subpath, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
     return TRUE;
 
   if (!glnx_open_tmpfile_linkable_at (self->dfd, "blobs/sha256",
@@ -779,7 +837,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
     {
       glnx_autofd int src_fd = -1;
 
-      src_fd = local_open_file (source_registry->dfd, subpath, NULL, cancellable, error);
+      src_fd = local_open_file (source_registry->dfd, src_subpath, NULL, cancellable, error);
       if (src_fd == -1)
         return FALSE;
 
@@ -791,18 +849,19 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       g_autoptr(SoupURI) uri = NULL;
       g_autofree char *uri_s = NULL;
 
-      uri = soup_uri_new_with_base (source_registry->base_uri, subpath);
+      uri = soup_uri_new_with_base (source_registry->base_uri, src_subpath);
       if (uri == NULL)
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                       "Invalid relative url %s", subpath);
+                       "Invalid relative url %s", src_subpath);
           return FALSE;
         }
 
       out_stream = g_unix_output_stream_new (tmpf.fd, FALSE);
 
       uri_s = soup_uri_to_string (uri, FALSE);
-      if (!flatpak_download_http_uri (source_registry->soup_session, uri_s, out_stream,
+      if (!flatpak_download_http_uri (source_registry->soup_session, uri_s,
+				      FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
                                       progress_cb, user_data,
                                       cancellable, error))
         return FALSE;
@@ -826,7 +885,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
   if (!glnx_link_tmpfile_at (&tmpf,
                              GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST,
-                             self->dfd, subpath,
+                             self->dfd, dst_subpath,
                              error))
     return FALSE;
 
@@ -835,9 +894,11 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
 GBytes *
 flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
-                               const char         *digest,
-                               GCancellable       *cancellable,
-                               GError            **error)
+				const char          *repository,
+				gboolean             manifest,
+				const char          *digest,
+				GCancellable        *cancellable,
+				GError             **error)
 {
   g_autofree char *subpath = NULL;
   g_autoptr(GBytes) bytes = NULL;
@@ -845,11 +906,13 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
 
   g_assert (self->valid);
 
-  subpath = get_digest_subpath (digest, error);
+  subpath = get_digest_subpath (self, repository, manifest, digest, error);
   if (subpath == NULL)
     return NULL;
 
   bytes = flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
+  if (bytes == NULL)
+    return NULL;
 
   json_checksum = g_compute_checksum_for_bytes  (G_CHECKSUM_SHA256, bytes);
 
@@ -902,6 +965,7 @@ flatpak_oci_registry_store_json (FlatpakOciRegistry    *self,
 
 FlatpakOciVersioned *
 flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
+				     const char          *repository,
                                      const char          *digest,
                                      gsize               *out_size,
                                      GCancellable        *cancellable,
@@ -911,7 +975,7 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
 
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_blob (self, digest, cancellable, error);
+  bytes = flatpak_oci_registry_load_blob (self, repository, TRUE, digest, cancellable, error);
   if (bytes == NULL)
     return NULL;
 
@@ -1819,4 +1883,265 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
     return FALSE;
 
   return g_steal_pointer (&json);
+}
+
+static const char *
+get_image_ref (FlatpakOciIndexImage *img)
+{
+  return g_hash_table_lookup (img->annotations, "org.flatpak.ref");
+}
+
+typedef struct {
+  char *repository;
+  FlatpakOciIndexImage *image;
+} ImageInfo;
+
+static gint
+compare_image_by_ref (ImageInfo *a,
+                      ImageInfo *b)
+{
+  const char *a_ref = get_image_ref (a->image);
+  const char *b_ref = get_image_ref (b->image);
+
+  return g_strcmp0 (a_ref, b_ref);
+}
+
+GVariant *
+flatpak_oci_index_fetch_summary (SoupSession *soup_session,
+                                 const char *uri,
+                                 const char *etag,
+                                 GCancellable *cancellable,
+                                 GError **error)
+{
+  g_autoptr(GBytes) res = NULL;
+  g_autofree char *new_etag = NULL;
+  g_autoptr(FlatpakJson) json = NULL;
+  FlatpakOciIndexResponse *response;
+  g_autoptr(SoupURI) registry_uri = NULL;
+  g_autofree char *registry_uri_s = NULL;
+  int i;
+  g_autoptr(GArray) images = g_array_new (FALSE, TRUE, sizeof (ImageInfo));
+  g_autoptr(GVariantBuilder) refs_builder = NULL;
+  g_autoptr(GVariantBuilder) additional_metadata_builder = NULL;
+  g_autoptr(GVariantBuilder) summary_builder = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariantBuilder) ref_data_builder = NULL;
+  g_autoptr(GString) index_uri = g_string_new (uri);
+  g_autoptr(SoupURI) soup_uri = NULL;
+  g_autofree char *query_uri = NULL;
+
+  if (!g_str_has_suffix (index_uri->str, "/"))
+    g_string_append_c (index_uri, '/');
+
+  if (!g_str_has_suffix (uri, "/index/"))
+    g_string_append (index_uri, "index/");
+
+  g_string_append (index_uri, "/static");
+  soup_uri = soup_uri_new (index_uri->str);
+  soup_uri_set_query_from_fields (soup_uri,
+				  "os", "linux",
+				  "tag", "latest",
+				  "annotation:org.flatpak.ref:exists", "1",
+				  NULL);
+  query_uri = soup_uri_to_string (soup_uri, FALSE);
+
+  res = flatpak_load_http_uri (soup_session,
+                               query_uri,
+                               0, etag,
+                               &new_etag, NULL, NULL,
+                               cancellable, error);
+  if (res == NULL)
+    return NULL;
+
+  json = flatpak_json_from_bytes (res, FLATPAK_TYPE_OCI_INDEX_RESPONSE, error);
+  if (json == NULL)
+    return NULL;
+
+  response = (FlatpakOciIndexResponse *)json;
+
+  registry_uri = soup_uri_new_with_base (soup_uri, response->registry);
+  registry_uri_s = soup_uri_to_string (registry_uri, FALSE);
+
+  for (i = 0; response->results != NULL && response->results[i] != NULL; i++)
+    {
+      FlatpakOciIndexRepository *r = response->results[i];
+      int j;
+      ImageInfo info = { r->name };
+
+      for (j = 0; r->images != NULL && r->images[j] != NULL; j++)
+	{
+	  info.image = r->images[j];
+	  g_array_append_val (images, info);
+	}
+
+      for (j = 0; r->lists != NULL && r->lists[j] != NULL; j++)
+        {
+          FlatpakOciIndexImageList *list =  r->lists[j];
+          int k;
+
+          for (k = 0; list->images != NULL && list->images[k] != NULL; k++)
+	    {
+	      info.image = list->images[k];
+	      g_array_append_val (images, info);
+	    }
+        }
+    }
+
+  refs_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(s(taya{sv}))"));
+  ref_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(tts)}"));
+  additional_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+  /* The summary has to be sorted by ref */
+  g_array_sort (images, (GCompareFunc)compare_image_by_ref);
+
+  for (i = 0; i < images->len; i++)
+    {
+      ImageInfo *info = &g_array_index (images, ImageInfo, i);
+      FlatpakOciIndexImage *image = info->image;
+      const char *ref = get_image_ref (image);
+      const char *fake_commit;
+      guint64 installed_size = 0;
+      guint64 download_size = 0;
+      const char *installed_size_str;
+      const char *download_size_str;
+      const char *metadata_contents = NULL;
+      g_autoptr(GVariantBuilder) ref_metadata_builder = NULL;
+
+      if (ref == NULL)
+        continue;
+
+      metadata_contents = g_hash_table_lookup (image->annotations, "org.flatpak.metadata");
+      if (metadata_contents == NULL && !g_str_has_prefix (ref, "appstream/"))
+        continue; /* Not a flatpak, skip */
+
+      if (!g_str_has_prefix (image->digest, "sha256:"))
+        {
+          g_debug ("Ignoring digest type %s", image->digest);
+          continue;
+        }
+
+      fake_commit = image->digest + strlen ("sha256:");
+
+      installed_size_str = g_hash_table_lookup (image->annotations, "org.flatpak.installed-size");
+      if (installed_size_str)
+        installed_size = g_ascii_strtoull (installed_size_str, NULL, 10);
+
+      download_size_str = g_hash_table_lookup (image->annotations, "org.flatpak.download-size");
+      if (download_size_str)
+        download_size = g_ascii_strtoull (download_size_str, NULL, 10);
+
+      ref_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+      g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.oci-repository",
+			     g_variant_new_string (info->repository));
+
+      g_variant_builder_add_value (refs_builder,
+                                   g_variant_new ("(s(t@ay@a{sv}))", ref,
+                                                  0,
+                                                  ostree_checksum_to_bytes_v (fake_commit),
+                                                  g_variant_builder_end (ref_metadata_builder)));
+      g_variant_builder_add (ref_data_builder, "{s(tts)}",
+                             ref,
+                             GUINT64_TO_BE (installed_size),
+                             GUINT64_TO_BE (download_size),
+                             metadata_contents ? metadata_contents : "");
+    }
+
+  g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.cache",
+                         g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
+  if (new_etag)
+    g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.oci-etag",
+                           g_variant_new_string (new_etag));
+
+  g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.oci-registry-uri",
+                         g_variant_new_string (registry_uri_s));
+
+  summary_builder = g_variant_builder_new (OSTREE_SUMMARY_GVARIANT_FORMAT);
+
+  g_variant_builder_add_value (summary_builder, g_variant_builder_end (refs_builder));
+  g_variant_builder_add_value (summary_builder, g_variant_builder_end (additional_metadata_builder));
+
+  summary = g_variant_ref_sink (g_variant_builder_end (summary_builder));
+
+  return g_steal_pointer (&summary);
+}
+
+gboolean
+flatpak_oci_index_verify_ref (SoupSession *soup_session,
+			      const char *uri,
+			      const char *ref,
+			      const char *digest,
+			      GCancellable *cancellable,
+			      GError **error)
+{
+  g_autoptr(GBytes) res = NULL;
+  g_autoptr(FlatpakJson) json = NULL;
+  g_autoptr(SoupURI) soup_uri = NULL;
+  g_autofree char *query_uri = NULL;
+
+  FlatpakOciIndexResponse *response;
+  int i;
+  g_autoptr(GString) index_uri = g_string_new (uri);
+
+  if (!g_str_has_suffix (index_uri->str, "/"))
+    g_string_append_c (index_uri, '/');
+
+  if (!g_str_has_suffix (uri, "/index/"))
+    g_string_append (index_uri, "index/");
+
+  g_string_append (index_uri, "/dynamic");
+
+  soup_uri = soup_uri_new (index_uri->str);
+  soup_uri_set_query_from_fields (soup_uri,
+				  "os", "linux",
+				  "annotation:org.flatpak.ref", ref,
+				  NULL);
+  query_uri = soup_uri_to_string (soup_uri, FALSE);
+
+  res = flatpak_load_http_uri (soup_session,
+                               query_uri,
+                               0, NULL, NULL, NULL, NULL,
+                               cancellable, error);
+  if (res == NULL)
+    return FALSE;
+
+  json = flatpak_json_from_bytes (res, FLATPAK_TYPE_OCI_INDEX_RESPONSE, error);
+  if (json == NULL)
+    return FALSE;
+
+  response = (FlatpakOciIndexResponse *)json;
+
+  for (i = 0; response->results != NULL && response->results[i] != NULL; i++)
+    {
+      FlatpakOciIndexRepository *r = response->results[i];
+      int j;
+
+      for (j = 0; r->images != NULL && r->images[j] != NULL; j++)
+	{
+	  FlatpakOciIndexImage *image = r->images[j];
+	  const char *image_ref = get_image_ref (image);
+	  if (image_ref != NULL &&
+	      g_strcmp0 (image_ref, ref) == 0 &&
+	      g_strcmp0 (digest, image->digest) == 0)
+	    return TRUE;
+	}
+
+      for (j = 0; r->lists != NULL && r->lists[j] != NULL; j++)
+        {
+          FlatpakOciIndexImageList *list =  r->lists[j];
+          int k;
+
+          for (k = 0; list->images != NULL && list->images[k] != NULL; k++)
+	    {
+	      FlatpakOciIndexImage *image = list->images[k];
+	      const char *image_ref = get_image_ref (image);
+	      if (image_ref != NULL &&
+		  g_strcmp0 (image_ref, ref) == 0 &&
+		  g_strcmp0 (digest, image->digest) == 0)
+		return TRUE;
+	    }
+        }
+    }
+
+  return flatpak_fail (error, "No matching image for %s\n", ref);
 }

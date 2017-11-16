@@ -71,12 +71,16 @@ gboolean               flatpak_oci_registry_save_index           (FlatpakOciRegi
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
 int                    flatpak_oci_registry_download_blob        (FlatpakOciRegistry   *self,
+                                                                  const char           *repository,
+								  gboolean              manifest,
                                                                   const char           *digest,
                                                                   FlatpakLoadUriProgress progress_cb,
                                                                   gpointer               user_data,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
 GBytes             *   flatpak_oci_registry_load_blob            (FlatpakOciRegistry   *self,
+                                                                  const char           *repository,
+								  gboolean              manifest,
                                                                   const char           *digest,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
@@ -86,6 +90,8 @@ char *                 flatpak_oci_registry_store_blob           (FlatpakOciRegi
                                                                   GError              **error);
 gboolean               flatpak_oci_registry_mirror_blob          (FlatpakOciRegistry   *self,
                                                                   FlatpakOciRegistry   *source_registry,
+                                                                  const char           *repository,
+								  gboolean              manifest,
                                                                   const char           *digest,
                                                                   FlatpakLoadUriProgress progress_cb,
                                                                   gpointer               user_data,
@@ -96,6 +102,7 @@ FlatpakOciDescriptor * flatpak_oci_registry_store_json           (FlatpakOciRegi
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
 FlatpakOciVersioned *  flatpak_oci_registry_load_versioned       (FlatpakOciRegistry   *self,
+                                                                  const char           *repository,
                                                                   const char           *digest,
                                                                   gsize                *out_size,
                                                                   GCancellable         *cancellable,
@@ -125,5 +132,18 @@ FlatpakOciSignature *flatpak_oci_verify_signature (OstreeRepo *repo,
                                                    const char *remote_name,
                                                    GBytes *signature,
                                                    GError **error);
+
+GVariant *flatpak_oci_index_fetch_summary (SoupSession *soup_session,
+                                           const char *uri,
+                                           const char *etag,
+                                           GCancellable *cancellable,
+                                           GError **error);
+
+gboolean flatpak_oci_index_verify_ref (SoupSession *soup_session,
+				       const char *uri,
+				       const char *ref,
+				       const char *digest,
+				       GCancellable *cancellable,
+				       GError **error);
 
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */
