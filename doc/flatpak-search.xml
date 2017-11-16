@@ -55,7 +55,7 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Only search through remotes for the user.
+                    Only search through remotes in the per-user installation.
                 </para></listitem>
             </varlistentry>
 
@@ -63,7 +63,7 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Only search through remotes for the system.
+                    Only search through remotes in the default system-wide installation.
                 </para></listitem>
             </varlistentry>
 
