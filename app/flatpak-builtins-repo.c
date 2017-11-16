@@ -162,7 +162,7 @@ flatpak_builtin_repo (int argc, char **argv,
   g_autoptr(GFile) location = NULL;
   g_autoptr(GVariant) meta = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
-  const char *ostree_metadata_ref;
+  const char *ostree_metadata_ref = NULL;
   g_autofree char *ostree_metadata_checksum = NULL;
 
   context = g_option_context_new (_("LOCATION - Repository maintenance"));
