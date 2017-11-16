@@ -401,13 +401,16 @@ flatpak_oci_index_new (void)
 }
 
 static FlatpakOciManifestDescriptor *
-manifest_desc_for_desc (FlatpakOciDescriptor *src_descriptor)
+manifest_desc_for_desc (FlatpakOciDescriptor *src_descriptor, const char *ref)
 {
   FlatpakOciManifestDescriptor *desc;
 
   desc = flatpak_oci_manifest_descriptor_new ();
   flatpak_oci_descriptor_copy (src_descriptor, &desc->parent);
 
+  g_hash_table_replace (desc->parent.annotations,
+			g_strdup ("org.opencontainers.image.ref.name"),
+			g_strdup (ref));
   return desc;
 }
 
@@ -426,14 +429,14 @@ flatpak_oci_index_add_manifest (FlatpakOciIndex *self,
   int count;
 
   if (desc->annotations != NULL)
-    m_ref = g_hash_table_lookup (desc->annotations, "org.opencontainers.image.ref.name");
+    m_ref = g_hash_table_lookup (desc->annotations, "org.flatpak.ref");
 
   if (m_ref != NULL)
     flatpak_oci_index_remove_manifest (self, m_ref);
 
   count = flatpak_oci_index_get_n_manifests (self);
 
-  m = manifest_desc_for_desc (desc);
+  m = manifest_desc_for_desc (desc, m_ref);
   self->manifests = g_renew (FlatpakOciManifestDescriptor *, self->manifests, count + 2);
   self->manifests[count] = m;
   self->manifests[count+1] = NULL;
@@ -703,7 +706,7 @@ flatpak_oci_export_annotations (GHashTable *source,
                                 GHashTable *dest)
 {
   const char *keys[] = {
-    "org.opencontainers.image.ref.name",
+    "org.flatpak.ref",
     "org.flatpak.installed-size",
     "org.flatpak.download-size",
     "org.flatpak.metadata",
@@ -750,10 +753,7 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
                                        GVariant *commit_data)
 {
   if (ref)
-    {
-      add_annotation (annotations,"org.opencontainers.image.ref.name", ref);
-      add_annotation (annotations,"org.flatpak.ref", ref);
-    }
+    add_annotation (annotations,"org.flatpak.ref", ref);
 
   if (commit)
     add_annotation (annotations,"org.flatpak.commit", commit);
@@ -812,7 +812,7 @@ flatpak_oci_parse_commit_annotations (GHashTable *annotations,
   GHashTableIter iter;
   gpointer _key, _value;
 
-  oci_ref = g_hash_table_lookup (annotations, "org.opencontainers.image.ref.name");
+  oci_ref = g_hash_table_lookup (annotations, "org.flatpak.ref");
   if (oci_ref != NULL && out_ref != NULL && *out_ref == NULL)
     *out_ref = g_strdup (oci_ref);
 
