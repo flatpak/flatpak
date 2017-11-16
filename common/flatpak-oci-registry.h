@@ -90,6 +90,8 @@ char *                 flatpak_oci_registry_store_blob           (FlatpakOciRegi
                                                                   GError              **error);
 gboolean               flatpak_oci_registry_mirror_blob          (FlatpakOciRegistry   *self,
                                                                   FlatpakOciRegistry   *source_registry,
+                                                                  const char           *repository,
+								  gboolean              manifest,
                                                                   const char           *digest,
                                                                   FlatpakLoadUriProgress progress_cb,
                                                                   gpointer               user_data,
@@ -136,5 +138,12 @@ GVariant *flatpak_oci_index_fetch_summary (SoupSession *soup_session,
                                            const char *etag,
                                            GCancellable *cancellable,
                                            GError **error);
+
+gboolean flatpak_oci_index_verify_ref (SoupSession *soup_session,
+				       const char *uri,
+				       const char *ref,
+				       const char *digest,
+				       GCancellable *cancellable,
+				       GError **error);
 
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */

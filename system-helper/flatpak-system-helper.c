@@ -182,8 +182,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   no_deploy = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY) != 0;
   local_pull = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL) != 0;
 
-  deploy_dir = flatpak_dir_get_if_deployed (system, arg_ref,
-                                            NULL, NULL);
+  deploy_dir = flatpak_dir_get_if_deployed (system, arg_ref, NULL, NULL);
 
   if (deploy_dir)
     {
@@ -231,6 +230,20 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
       g_autofree char *checksum = NULL;
       const char *signature_digest;
+      g_autofree char *upstream_url = NULL;
+      g_autoptr(SoupSession) soup_session = NULL;
+
+      ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
+                                  arg_origin,
+                                  &upstream_url,
+                                  NULL);
+
+      if (upstream_url == NULL)
+	{
+	  g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+						 "Remote %s is disabled", arg_origin);
+	  return TRUE;
+	}
 
       registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
       if (registry == NULL)
@@ -264,6 +277,17 @@ handle_deploy (FlatpakSystemHelper   *object,
                                                  "Can't open child manifest");
           return TRUE;
         }
+
+      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+      if (!flatpak_oci_index_verify_ref (soup_session,
+					 upstream_url,
+					 arg_ref,
+					 desc->parent.digest,
+					 NULL, &error))
+	{
+	  g_dbus_method_invocation_return_gerror (invocation, error);
+	  return TRUE;
+	}
 
       checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
                                         arg_origin, arg_ref, NULL, NULL, NULL, &error);

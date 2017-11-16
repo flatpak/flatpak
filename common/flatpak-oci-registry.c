@@ -792,13 +792,16 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
 gboolean
 flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
                                   FlatpakOciRegistry    *source_registry,
+				  const char           *repository,
+				  gboolean              manifest,
                                   const char            *digest,
                                   FlatpakLoadUriProgress progress_cb,
                                   gpointer               user_data,
                                   GCancellable         *cancellable,
                                   GError              **error)
 {
-  g_autofree char *subpath = NULL;
+  g_autofree char *src_subpath = NULL;
+  g_autofree char *dst_subpath = NULL;
   g_auto(GLnxTmpfile) tmpf = { 0 };
   g_autoptr(GOutputStream) out_stream = NULL;
   struct stat stbuf;
@@ -813,12 +816,16 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       return FALSE;
     }
 
-  subpath = get_digest_subpath (self, NULL, FALSE, digest, error);
-  if (subpath == NULL)
+  src_subpath = get_digest_subpath (source_registry, repository, manifest, digest, error);
+  if (src_subpath == NULL)
+    return FALSE;
+
+  dst_subpath = get_digest_subpath (self, NULL, manifest, digest, error);
+  if (dst_subpath == NULL)
     return FALSE;
 
   /* Check if its already available */
-  if (fstatat (self->dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
+  if (fstatat (self->dfd, dst_subpath, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
     return TRUE;
 
   if (!glnx_open_tmpfile_linkable_at (self->dfd, "blobs/sha256",
@@ -830,7 +837,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
     {
       glnx_autofd int src_fd = -1;
 
-      src_fd = local_open_file (source_registry->dfd, subpath, NULL, cancellable, error);
+      src_fd = local_open_file (source_registry->dfd, src_subpath, NULL, cancellable, error);
       if (src_fd == -1)
         return FALSE;
 
@@ -842,11 +849,11 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       g_autoptr(SoupURI) uri = NULL;
       g_autofree char *uri_s = NULL;
 
-      uri = soup_uri_new_with_base (source_registry->base_uri, subpath);
+      uri = soup_uri_new_with_base (source_registry->base_uri, src_subpath);
       if (uri == NULL)
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                       "Invalid relative url %s", subpath);
+                       "Invalid relative url %s", src_subpath);
           return FALSE;
         }
 
@@ -878,7 +885,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
   if (!glnx_link_tmpfile_at (&tmpf,
                              GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST,
-                             self->dfd, subpath,
+                             self->dfd, dst_subpath,
                              error))
     return FALSE;
 
@@ -2055,4 +2062,75 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
   summary = g_variant_ref_sink (g_variant_builder_end (summary_builder));
 
   return g_steal_pointer (&summary);
+}
+
+gboolean
+flatpak_oci_index_verify_ref (SoupSession *soup_session,
+			      const char *uri,
+			      const char *ref,
+			      const char *digest,
+			      GCancellable *cancellable,
+			      GError **error)
+{
+  g_autoptr(GBytes) res = NULL;
+  g_autoptr(FlatpakJson) json = NULL;
+  FlatpakOciIndexResponse *response;
+  int i;
+  g_autoptr(GString) index_uri = g_string_new (uri);
+
+  if (!g_str_has_suffix (index_uri->str, "/"))
+    g_string_append_c (index_uri, '/');
+
+  if (!g_str_has_suffix (uri, "/index/"))
+    g_string_append (index_uri, "index/");
+
+  g_string_append (index_uri, "/dynamic?os=linux&annotation:org.flatpak.ref=");
+  g_string_append (index_uri, ref);
+
+  res = flatpak_load_http_uri (soup_session,
+                               index_uri->str,
+                               0, NULL, NULL, NULL, NULL,
+                               cancellable, error);
+  if (res == NULL)
+    return FALSE;
+
+  json = flatpak_json_from_bytes (res, FLATPAK_TYPE_OCI_INDEX_RESPONSE, error);
+  if (json == NULL)
+    return FALSE;
+
+  response = (FlatpakOciIndexResponse *)json;
+
+  for (i = 0; response->results != NULL && response->results[i] != NULL; i++)
+    {
+      FlatpakOciIndexRepository *r = response->results[i];
+      int j;
+
+      for (j = 0; r->images != NULL && r->images[j] != NULL; j++)
+	{
+	  FlatpakOciIndexImage *image = r->images[j];
+	  const char *image_ref = get_image_ref (image);
+	  if (image_ref != NULL &&
+	      g_strcmp0 (image_ref, ref) == 0 &&
+	      g_strcmp0 (digest, image->digest) == 0)
+	    return TRUE;
+	}
+
+      for (j = 0; r->lists != NULL && r->lists[j] != NULL; j++)
+        {
+          FlatpakOciIndexImageList *list =  r->lists[j];
+          int k;
+
+          for (k = 0; list->images != NULL && list->images[k] != NULL; k++)
+	    {
+	      FlatpakOciIndexImage *image = list->images[k];
+	      const char *image_ref = get_image_ref (image);
+	      if (image_ref != NULL &&
+		  g_strcmp0 (image_ref, ref) == 0 &&
+		  g_strcmp0 (digest, image->digest) == 0)
+		return TRUE;
+	    }
+        }
+    }
+
+  return flatpak_fail (error, "No matching image for %s\n", ref);
 }
