@@ -200,6 +200,19 @@
         </variablelist>
 
 
+        <para>Commands for finding applications and runtimes:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-search</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Search for applications and runtimes.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+
         <para>Commands for running applications:</para>
 
         <variablelist>
