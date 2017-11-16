@@ -96,7 +96,7 @@
                 <term><option>--show-details</option></term>
 
                 <listitem><para>
-                    Show more information each repository in addition to the name.
+                    Show more information for each repository in addition to the name.
                 </para></listitem>
             </varlistentry>
 
