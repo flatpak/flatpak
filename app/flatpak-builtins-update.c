@@ -251,6 +251,9 @@ flatpak_builtin_update (int           argc,
   if (!flatpak_transaction_run (transaction, FALSE, cancellable, error))
     return FALSE;
 
+  if (n_prefs == 0)
+    return update_appstream (dir, NULL, cancellable, error);
+
   return TRUE;
 }
 
