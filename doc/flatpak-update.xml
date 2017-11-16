@@ -47,7 +47,7 @@
 
         <para>
             Updates applications and runtimes. <arg choice="plain">REF</arg> is a reference to the
-            application or runtime to install. If no <arg choice="plain">REF</arg> is given, everything
+            application or runtime to update. If no <arg choice="plain">REF</arg> is given, everything
             is updated, as well as appstream info for all remotes.
         </para>
         <para>
@@ -59,9 +59,9 @@
             will list the alternatives.
         </para>
         <para>
-            By default this looks for both apps and runtime with the given <arg choice="plain">REF</arg> in
-            the specified <arg choice="plain">REMOTE</arg>, but you can limit this by using the --app or
-            --runtime option, or by supplying the initial element in the REF.
+            By default this looks for both apps and runtimes with the given <arg choice="plain">REF</arg>,
+            but you can limit this by using the --app or --runtime option, or by supplying the initial
+            element in the REF.
         </para>
         <para>
             Normally, this command updates the application to the tip
@@ -162,7 +162,7 @@
                 <term><option>--no-pull</option></term>
 
                 <listitem><para>
-                    Don't download the latest version, deploy it whatever is locally available.
+                    Don't download the latest version, deploy whatever is locally available.
                 </para></listitem>
             </varlistentry>
 
@@ -202,7 +202,7 @@
                 <term><option>--runtime</option></term>
 
                 <listitem><para>
-                    Only look for an runtime with the given name.
+                    Only look for a runtime with the given name.
                 </para></listitem>
             </varlistentry>
 

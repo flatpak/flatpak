@@ -70,7 +70,7 @@
             will list the alternatives.
         </para>
         <para>
-            By default this looks for both apps and runtime with the given <arg choice="plain">REF</arg> in
+            By default this looks for both apps and runtimes with the given <arg choice="plain">REF</arg> in
             the specified <arg choice="plain">REMOTE</arg>, but you can limit this by using the --app or
             --runtime option, or by supplying the initial element in the REF.
         </para>
