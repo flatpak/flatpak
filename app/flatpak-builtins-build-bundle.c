@@ -420,26 +420,6 @@ build_oci (OstreeRepo *repo, GFile *dir,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
-  if (opt_gpg_key_ids)
-    {
-      g_autoptr(FlatpakOciSignature) sig = flatpak_oci_signature_new (manifest_desc->digest, ref);
-      g_autoptr(GBytes) sig_bytes = flatpak_json_to_bytes (FLATPAK_JSON (sig));
-      g_autoptr(GBytes) res = NULL;
-      g_autofree char *signature_digest = NULL;
-
-      res = flatpak_oci_sign_data (sig_bytes, (const char **)opt_gpg_key_ids, opt_gpg_homedir, error);
-      if (res == NULL)
-        return FALSE;
-
-      signature_digest = flatpak_oci_registry_store_blob (registry, res, cancellable, error);
-      if (signature_digest == NULL)
-        return FALSE;
-
-      g_hash_table_replace (manifest_desc->annotations,
-                            g_strdup ("org.flatpak.signature-digest"),
-                            g_strdup (signature_digest));
-    }
-
   index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, NULL);
   if (index == NULL)
     index = flatpak_oci_index_new ();

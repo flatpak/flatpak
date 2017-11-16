@@ -256,8 +256,6 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      signature_digest = g_hash_table_lookup (desc->parent.annotations, "org.flatpak.signature-digest");
-
       versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, NULL,
                                                        NULL, &error);
       if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
@@ -268,7 +266,7 @@ handle_deploy (FlatpakSystemHelper   *object,
         }
 
       checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
-                                        arg_origin, arg_ref, signature_digest, NULL, NULL, NULL, &error);
+                                        arg_origin, arg_ref, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -441,8 +439,6 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      signature_digest = g_hash_table_lookup (desc->parent.annotations, "org.flatpak.signature-digest");
-
       versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, NULL,
                                                        NULL, &error);
       if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
@@ -453,7 +449,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
         }
 
       checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
-                                        arg_origin, branch, signature_digest, NULL, NULL, NULL, &error);
+                                        arg_origin, branch, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,

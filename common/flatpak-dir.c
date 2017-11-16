@@ -2829,8 +2829,6 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
   g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GVariant) metadata = NULL;
-  g_autofree char *signature_digest = NULL;
   gboolean res;
 
   if (!ostree_repo_remote_get_url (self->repo,
@@ -2844,9 +2842,6 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                                                     cancellable, error);
   if (latest_rev == NULL)
     return FALSE;
-
-  metadata = g_variant_get_child_value (summary_element, 2);
-  g_variant_lookup (metadata, "xa.oci-signature", "s", &signature_digest);
 
   if (skip_if_current_is != NULL && strcmp (latest_rev, skip_if_current_is) == 0)
     {
@@ -2879,7 +2874,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   g_debug ("Mirroring OCI image %s", oci_digest);
 
-  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_digest, signature_digest, oci_pull_progress_cb,
+  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_digest, oci_pull_progress_cb,
                                        progress, cancellable, error);
 
   if (progress)
@@ -2914,7 +2909,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
   g_autoptr(GVariant) summary = NULL;
-  g_autofree char *signature_digest = NULL;
   g_autofree char *latest_alt_commit = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *latest_rev = NULL;
@@ -2937,7 +2931,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     return FALSE;
 
   metadata = g_variant_get_child_value (summary_element, 2);
-  g_variant_lookup (metadata, "xa.oci-signature", "s", &signature_digest);
   g_variant_lookup (metadata, "xa.oci-repository", "s", &oci_repository);
 
   oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
@@ -2986,7 +2979,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_debug ("Pulling OCI image %s", oci_digest);
 
   checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, FLATPAK_OCI_MANIFEST (versioned),
-                                    remote, ref, signature_digest, oci_pull_progress_cb, progress, cancellable, error);
+                                    remote, ref, oci_pull_progress_cb, progress, cancellable, error);
 
   if (progress)
     ostree_async_progress_finish (progress);

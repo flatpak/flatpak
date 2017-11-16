@@ -1995,7 +1995,6 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
       guint64 download_size = 0;
       const char *installed_size_str;
       const char *download_size_str;
-      const char *signature_digest;
       const char *metadata_contents = NULL;
       g_autoptr(GVariantBuilder) ref_metadata_builder = NULL;
 
@@ -2026,11 +2025,6 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
 
       g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.oci-repository",
 			     g_variant_new_string (info->repository));
-
-      signature_digest = g_hash_table_lookup (image->annotations, "org.flatpak.signature-digest");
-      if (signature_digest)
-        g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.oci-signature",
-                               g_variant_new_string (signature_digest));
 
       g_variant_builder_add_value (refs_builder,
                                    g_variant_new ("(s(t@ay@a{sv}))", ref,

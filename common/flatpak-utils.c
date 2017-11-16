@@ -4955,7 +4955,6 @@ gboolean
 flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
                                FlatpakOciRegistry *registry,
                                const char *digest,
-                               const char *signature_digest,
                                FlatpakOciPullProgress progress_cb,
                                gpointer progress_user_data,
                                GCancellable *cancellable,
@@ -4970,10 +4969,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
   int i;
 
   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, digest, NULL, NULL, cancellable, error))
-    return FALSE;
-
-  if (signature_digest &&
-      !flatpak_oci_registry_mirror_blob (dst_registry, registry, signature_digest, NULL, NULL, cancellable, error))
     return FALSE;
 
   versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, &versioned_size, cancellable, error);
@@ -5029,11 +5024,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
-  if (signature_digest)
-    g_hash_table_replace (manifest_desc->annotations,
-                          g_strdup ("org.flatpak.signature-digest"),
-                          g_strdup (signature_digest));
-
   flatpak_oci_index_add_manifest (index, manifest_desc);
 
   if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
@@ -5051,7 +5041,6 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
                        FlatpakOciManifest *manifest,
                        const char *remote,
                        const char *ref,
-                       const char *signature_digest,
                        FlatpakOciPullProgress progress_cb,
                        gpointer progress_user_data,
                        GCancellable *cancellable,
@@ -5080,47 +5069,6 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       !ostree_repo_remote_get_gpg_verify (repo, remote,
                                           &gpg_verify, error))
     return NULL;
-
-  if (gpg_verify)
-    {
-      g_autoptr(GBytes) signature_bytes = NULL;
-      g_autoptr(FlatpakOciSignature) signature = NULL;
-
-      if (signature_digest == NULL)
-        {
-          flatpak_fail (error, "GPG verification enabled, but no OCI signature found");
-          return NULL;
-        }
-
-      signature_bytes = flatpak_oci_registry_load_blob (registry, oci_repository, FALSE, signature_digest, cancellable, error);
-      if (signature_bytes == NULL)
-        return NULL;
-
-      signature = flatpak_oci_verify_signature (repo, remote, signature_bytes, error);
-      if (signature == NULL)
-        return NULL;
-
-      if (g_strcmp0 (signature->critical.type, FLATPAK_OCI_SIGNATURE_TYPE_FLATPAK) != 0)
-        {
-          flatpak_fail (error, "Invalid signature type %s", signature->critical.type);
-          return NULL;
-        }
-
-      if (g_strcmp0 (signature->critical.image.digest, digest) != 0)
-        {
-          flatpak_fail (error, "Invalid signature digest %s", signature->critical.image.digest);
-          return NULL;
-        }
-
-      if (g_strcmp0 (signature->critical.identity.ref, ref) != 0)
-        {
-          flatpak_fail (error, "Invalid signature ref %s", signature->critical.identity.ref);
-          return NULL;
-        }
-
-      /* Success! It is valid */
-      g_debug ("Verified OCI signature for %s %s", signature->critical.identity.ref, digest);
-    }
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   if (annotations)
