@@ -34,6 +34,12 @@
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="opt" rep="repeat">REF</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak update</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">--appstream</arg>
+                <arg choice="opt">REMOTE</arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -188,7 +194,7 @@
                 <term><option>--appstream</option></term>
 
                 <listitem><para>
-                    Update appstream for the remote.
+                    Update appstream for <arg choice="plain">REMOTE</arg>, or all remotes if no remote is specified.
                 </para></listitem>
             </varlistentry>
 
