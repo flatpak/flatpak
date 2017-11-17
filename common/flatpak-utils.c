@@ -503,6 +503,34 @@ flatpak_get_gl_drivers (void)
   return (const char **)drivers;
 }
 
+static const char *
+flatpak_get_gtk_theme (void)
+{
+  static char *gtk_theme;
+
+  if (g_once_init_enter (&gtk_theme))
+    {
+      /* The schema may not be installed so check first */
+      GSettingsSchemaSource *source = g_settings_schema_source_get_default ();
+      g_autoptr(GSettingsSchema) schema = g_settings_schema_source_lookup (source,
+                                            "org.gnome.desktop.interface", FALSE);
+
+      if (schema == NULL)
+        g_once_init_leave (&gtk_theme, g_strdup (""));
+      else
+        {
+          /* GSettings is used to store the theme if you use Wayland or GNOME.
+           * TODO: Check XSettings Net/ThemeName for other desktops.
+           * We don't care about any other method (like settings.ini) because they
+           *   aren't passed through the sandbox anyway. */
+          g_autoptr(GSettings) settings = g_settings_new ("org.gnome.desktop.interface");
+          g_once_init_leave (&gtk_theme, g_settings_get_string (settings, "gtk-theme"));
+        }
+    }
+
+  return (const char*)gtk_theme;
+}
+
 gboolean
 flatpak_is_in_sandbox (void)
 {
@@ -4224,6 +4252,11 @@ flatpak_extension_matches_reason (const char *extension_id,
         }
 
       return FALSE;
+    }
+  else if (strcmp (reason, "active-gtk-theme") == 0)
+    {
+      const char *gtk_theme = flatpak_get_gtk_theme ();
+      return (strcmp (gtk_theme, extension_basename) == 0);
     }
 
   return FALSE;
