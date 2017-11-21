@@ -116,7 +116,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
   guint64 timestamp;
   g_autofree char *formatted_timestamp = NULL;
 
-  context = g_option_context_new (_(" REMOTE REF - Show information about installed application and/or runtime in a remote"));
+  context = g_option_context_new (_(" REMOTE REF - Show information about an application or runtime in a remote"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
