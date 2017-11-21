@@ -104,7 +104,7 @@
                 <term><option>--runtime</option></term>
 
                 <listitem><para>
-                    Assume that <arg choice="plain">REF</arg> is a runtimes if not explicitly specified.
+                    Assume that <arg choice="plain">REF</arg> is a runtime if not explicitly specified.
                 </para></listitem>
             </varlistentry>
 
@@ -112,7 +112,7 @@
                 <term><option>--app</option></term>
 
                 <listitem><para>
-                    Assume that <arg choice="plain">REF</arg> is an apps if not explicitly specified.
+                    Assume that <arg choice="plain">REF</arg> is an app if not explicitly specified.
                 </para></listitem>
             </varlistentry>
 
