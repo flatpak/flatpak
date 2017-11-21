@@ -612,6 +612,13 @@ char *   flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
                                                   const char   *remote,
                                                   GCancellable *cancellable,
                                                   GError      **error);
+GVariant * flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
+                                            const char   *remote_name,
+                                            const char   *ref,
+                                            const char   *opt_commit,
+                                            char        **out_commit,
+                                            GCancellable *cancellable,
+                                            GError      **error);
 gboolean flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                                   const char   *remote,
                                                   GCancellable *cancellable,
