@@ -33,6 +33,7 @@
 static char *monitor_dir;
 
 static GHashTable *client_pid_data_hash = NULL;
+static GHashTable *file_monitor_hash = NULL;
 static GDBusConnection *session_bus = NULL;
 
 typedef struct {
@@ -403,6 +404,19 @@ on_name_lost (GDBusConnection *connection,
   exit (1);
 }
 
+typedef struct {
+  const gchar *source;
+  GFileMonitor *monitor_source;
+} MonitorData;
+
+static void
+monitor_data_free (MonitorData *data)
+{
+  g_signal_handlers_disconnect_by_data (data->monitor_source, data);
+  g_object_unref (data->monitor_source);
+  g_free (data);
+}
+
 static void
 copy_file (const char *source,
            const char *target_dir)
@@ -425,12 +439,12 @@ file_changed (GFileMonitor     *monitor,
               GFile            *file,
               GFile            *other_file,
               GFileMonitorEvent event_type,
-              char             *source)
+              MonitorData      *data)
 {
   if (event_type != G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
     return;
 
-  copy_file (source, monitor_dir);
+  copy_file (data->source, monitor_dir);
 }
 
 static void
@@ -438,12 +452,21 @@ setup_file_monitor (const char *source)
 {
   GFile *s = g_file_new_for_path (source);
   GFileMonitor *monitor;
+  MonitorData *data = NULL;
 
   copy_file (source, monitor_dir);
 
   monitor = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, NULL);
-  if (monitor)
-    g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), (char *) source);
+  if (!monitor)
+    return;
+
+  data = g_new0 (MonitorData, 1);
+  data->source = source;
+  data->monitor_source = monitor;
+
+  g_hash_table_insert (file_monitor_hash, (char *) source, data);
+
+  g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), data);
 }
 
 static void
@@ -525,6 +548,8 @@ main (int    argc,
       g_printerr ("Can't find bus: %s\n", error->message);
       return 1;
     }
+
+  file_monitor_hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)monitor_data_free);
 
   monitor_dir = g_build_filename (g_get_user_runtime_dir (), "flatpak-monitor", NULL);
   if (g_mkdir_with_parents (monitor_dir, 0755) != 0)
