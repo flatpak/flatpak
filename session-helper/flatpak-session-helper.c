@@ -406,14 +406,22 @@ on_name_lost (GDBusConnection *connection,
 
 typedef struct {
   const gchar *source;
+  char *real;
   GFileMonitor *monitor_source;
+  GFileMonitor *monitor_real;
 } MonitorData;
 
 static void
 monitor_data_free (MonitorData *data)
 {
+  free (data->real);
   g_signal_handlers_disconnect_by_data (data->monitor_source, data);
   g_object_unref (data->monitor_source);
+  if (data->monitor_real)
+    {
+      g_signal_handlers_disconnect_by_data (data->monitor_real, data);
+      g_object_unref (data->monitor_real);
+    }
   g_free (data);
 }
 
@@ -444,6 +452,48 @@ file_changed (GFileMonitor     *monitor,
   if (event_type != G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
     return;
 
+  char *real = realpath (data->source, NULL);
+  if (real)
+    {
+      /* detect the case that the file's real path has changed and
+         re-add the monitor for the real file */
+      if (g_strcmp0 (data->source, real) &&
+          g_strcmp0 (data->real, real))
+       {
+          free (data->real);
+          data->real = real;
+
+          if (data->monitor_real)
+            {
+              g_signal_handlers_disconnect_by_data (data->monitor_real, data);
+              g_clear_object (&(data->monitor_real));
+            }
+
+          GFile *r = g_file_new_for_path (real);
+          data->monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, NULL);
+          if (data->monitor_real)
+            g_signal_connect (data->monitor_real, "changed", G_CALLBACK (file_changed), data);
+        }
+      else
+        {
+          /* detect the case that the source file is no longer a symlink and
+             remove the old real file monitor */
+          if (!g_strcmp0 (data->source, real))
+            {
+              free (data->real);
+              data->real = NULL;
+
+              if (data->monitor_real)
+                {
+                  g_signal_handlers_disconnect_by_data (data->monitor_real, data);
+                  g_clear_object (&(data->monitor_real));
+                }
+            }
+
+          free (real);
+        }
+    }
+
   copy_file (data->source, monitor_dir);
 }
 
@@ -451,22 +501,34 @@ static void
 setup_file_monitor (const char *source)
 {
   GFile *s = g_file_new_for_path (source);
-  GFileMonitor *monitor;
+  char *real;
+  GFileMonitor *monitor_source, *monitor_real = NULL;
   MonitorData *data = NULL;
 
   copy_file (source, monitor_dir);
 
-  monitor = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, NULL);
-  if (!monitor)
+  monitor_source = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, NULL);
+  if (!monitor_source)
     return;
+
+  real = realpath (source, NULL);
+  if (real && g_strcmp0 (source, real))
+    {
+      GFile *r = g_file_new_for_path (real);
+      monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, NULL);
+    }
 
   data = g_new0 (MonitorData, 1);
   data->source = source;
-  data->monitor_source = monitor;
+  data->real = real;
+  data->monitor_source = monitor_source;
+  data->monitor_real = monitor_real;
 
   g_hash_table_insert (file_monitor_hash, (char *) source, data);
 
-  g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), data);
+  g_signal_connect (monitor_source, "changed", G_CALLBACK (file_changed), data);
+  if (monitor_real)
+    g_signal_connect (monitor_real, "changed", G_CALLBACK (file_changed), data);
 }
 
 static void
