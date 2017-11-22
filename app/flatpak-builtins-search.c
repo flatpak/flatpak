@@ -30,10 +30,12 @@
 
 static gboolean opt_user;
 static gboolean opt_system;
+static char **opt_installations;
 
 static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Search only user installations"), NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Search only system-wide installations"), NULL },
+  { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Search specific system-wide installations"), NULL },
   { NULL }
 };
 
@@ -180,7 +182,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
     return FALSE;
 
   // Default: All system and user remotes
-  if (!opt_user && !opt_system)
+  if (!opt_user && !opt_system && opt_installations == NULL)
       opt_user = opt_system = TRUE;
 
   if (opt_user)
@@ -188,6 +190,26 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
 
   if (opt_system)
     g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
+
+  if (opt_installations != NULL)
+    {
+      int i = 0;
+
+      for (i = 0; opt_installations[i] != NULL; i++)
+        {
+          FlatpakDir *installation_dir = NULL;
+
+          /* Already included the default system installation. */
+          if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
+            continue;
+
+          installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
+          if (installation_dir == NULL)
+            return FALSE;
+
+          g_ptr_array_add (dirs, installation_dir);
+        }
+    }
 
   if (argc < 2)
     return usage_error (context, _("TEXT must be specified"), error);
