@@ -68,6 +68,17 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Show a system-wide installation by <arg choice="plain">NAME</arg> among
+                    those defined in <filename>/etc/flatpak/installations.d/</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-h</option></term>
                 <term><option>--help</option></term>
 
