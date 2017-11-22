@@ -427,9 +427,10 @@ file_changed (GFileMonitor     *monitor,
               GFileMonitorEvent event_type,
               char             *source)
 {
-  if (event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT ||
-      event_type == G_FILE_MONITOR_EVENT_CREATED)
-    copy_file (source, monitor_dir);
+  if (event_type != G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
+    return;
+
+  copy_file (source, monitor_dir);
 }
 
 static void
