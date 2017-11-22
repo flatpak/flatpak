@@ -48,8 +48,13 @@ get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
   for (i = 0; i < dirs->len; ++i)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
-      g_autofree char *install_path = g_file_get_path (flatpak_dir_get_path (dir));
-      g_auto(GStrv) remotes = flatpak_dir_list_enumerated_remotes (dir, cancellable, &error);
+      g_autofree char *install_path = NULL;
+      g_auto(GStrv) remotes = NULL;
+
+      flatpak_log_dir_access (dir);
+
+      install_path = g_file_get_path (flatpak_dir_get_path (dir));
+      remotes = flatpak_dir_list_enumerated_remotes (dir, cancellable, &error);
       if (error)
         {
           g_warning ("%s", error->message);
