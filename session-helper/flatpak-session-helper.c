@@ -33,7 +33,6 @@
 static char *monitor_dir;
 
 static GHashTable *client_pid_data_hash = NULL;
-static GHashTable *file_monitor_hash = NULL;
 static GDBusConnection *session_bus = NULL;
 
 typedef struct {
@@ -425,6 +424,8 @@ monitor_data_free (MonitorData *data)
   g_free (data);
 }
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (MonitorData, monitor_data_free)
+
 static void
 copy_file (const char *source,
            const char *target_dir)
@@ -497,7 +498,7 @@ file_changed (GFileMonitor     *monitor,
   copy_file (data->source, monitor_dir);
 }
 
-static void
+static MonitorData *
 setup_file_monitor (const char *source)
 {
   GFile *s = g_file_new_for_path (source);
@@ -509,7 +510,7 @@ setup_file_monitor (const char *source)
 
   monitor_source = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, NULL);
   if (!monitor_source)
-    return;
+    return NULL;
 
   real = realpath (source, NULL);
   if (real && g_strcmp0 (source, real))
@@ -524,11 +525,11 @@ setup_file_monitor (const char *source)
   data->monitor_source = monitor_source;
   data->monitor_real = monitor_real;
 
-  g_hash_table_insert (file_monitor_hash, (char *) source, data);
-
   g_signal_connect (monitor_source, "changed", G_CALLBACK (file_changed), data);
   if (monitor_real)
     g_signal_connect (monitor_real, "changed", G_CALLBACK (file_changed), data);
+
+  return data;
 }
 
 static void
@@ -562,6 +563,7 @@ main (int    argc,
     { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
     { NULL }
   };
+  g_autoptr(MonitorData) m_resolv_conf = NULL, m_host_conf = NULL, m_hosts = NULL, m_localtime = NULL;
 
   setlocale (LC_ALL, "");
 
@@ -611,8 +613,6 @@ main (int    argc,
       return 1;
     }
 
-  file_monitor_hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)monitor_data_free);
-
   monitor_dir = g_build_filename (g_get_user_runtime_dir (), "flatpak-monitor", NULL);
   if (g_mkdir_with_parents (monitor_dir, 0755) != 0)
     {
@@ -620,10 +620,10 @@ main (int    argc,
       exit (1);
     }
 
-  setup_file_monitor ("/etc/resolv.conf");
-  setup_file_monitor ("/etc/host.conf");
-  setup_file_monitor ("/etc/hosts");
-  setup_file_monitor ("/etc/localtime");
+  m_resolv_conf = setup_file_monitor ("/etc/resolv.conf");
+  m_host_conf   = setup_file_monitor ("/etc/host.conf");
+  m_hosts       = setup_file_monitor ("/etc/hosts");
+  m_localtime   = setup_file_monitor ("/etc/localtime");
 
   flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
   if (replace)
