@@ -293,12 +293,16 @@ flatpak_option_context_parse (GOptionContext     *context,
             return FALSE;
         }
 
-      if (!flatpak_dir_ensure_path (dir, cancellable, error))
-        return FALSE;
-
-      if (!(flags & FLATPAK_BUILTIN_FLAG_NO_REPO) &&
-          !flatpak_dir_ensure_repo (dir, cancellable, error))
-        return FALSE;
+      if (flags & FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO)
+        {
+          if (!flatpak_dir_maybe_ensure_repo (dir, cancellable, error))
+            return FALSE;
+        }
+      else
+        {
+          if (!flatpak_dir_ensure_repo (dir, cancellable, error))
+            return FALSE;
+        }
 
       flatpak_log_dir_access (dir);
     }
