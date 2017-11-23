@@ -8912,12 +8912,14 @@ flatpak_dir_list_remotes (FlatpakDir   *self,
                           GCancellable *cancellable,
                           GError      **error)
 {
-  char **res;
+  char **res = NULL;
 
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+  if (!flatpak_dir_maybe_ensure_repo (self, cancellable, error))
     return NULL;
 
-  res = ostree_repo_remote_list (self->repo, NULL);
+  if (self->repo)
+    res = ostree_repo_remote_list (self->repo, NULL);
+
   if (res == NULL)
     res = g_new0 (char *, 1); /* Return empty array, not error */
 
