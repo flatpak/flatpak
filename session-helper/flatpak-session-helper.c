@@ -455,52 +455,73 @@ file_changed (GFileMonitor     *monitor,
               GFile            *file,
               GFile            *other_file,
               GFileMonitorEvent event_type,
+              MonitorData      *data);
+
+static void
+update_real_monitor (MonitorData *data)
+{
+  char *real = realpath (data->source, NULL);
+  if (real == NULL)
+    {
+      g_debug ("unable to get real path to monitor host file %s: %s", data->source,
+               g_strerror (errno));
+      return;
+    }
+
+  /* source path matches real path, second monitor is not required, but an old
+   * one may still exist. set to NULL and compare to what we have. */
+  if (!g_strcmp0 (data->source, real))
+    {
+      free (real);
+      real = NULL;
+    }
+
+  /* no more work needed if the monitor we have matches the additional monitor
+     we need (including NULL == NULL) */
+  if (!g_strcmp0 (data->real, real))
+    {
+      free (real);
+      return;
+    }
+
+  /* otherwise we're not monitoring the right thing and need to remove
+     any old monitor and make a new one if needed */
+  free (data->real);
+  data->real = real;
+
+  if (data->monitor_real)
+    {
+      g_signal_handlers_disconnect_by_data (data->monitor_real, data);
+      g_clear_object (&(data->monitor_real));
+    }
+
+  if (!real)
+    return;
+
+  g_autoptr(GFile) r = g_file_new_for_path (real);
+  g_autoptr(GError) err = NULL;
+  data->monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, &err);
+  if (!data->monitor_real)
+    {
+      g_debug ("failed to monitor host file %s (real path of %s): %s",
+               real, data->source, err->message);
+      return;
+    }
+
+  g_signal_connect (data->monitor_real, "changed", G_CALLBACK (file_changed), data);
+}
+
+static void
+file_changed (GFileMonitor     *monitor,
+              GFile            *file,
+              GFile            *other_file,
+              GFileMonitorEvent event_type,
               MonitorData      *data)
 {
   if (event_type != G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
     return;
 
-  char *real = realpath (data->source, NULL);
-  if (real)
-    {
-      /* detect the case that the file's real path has changed and
-         re-add the monitor for the real file */
-      if (g_strcmp0 (data->source, real) &&
-          g_strcmp0 (data->real, real))
-       {
-          free (data->real);
-          data->real = real;
-
-          if (data->monitor_real)
-            {
-              g_signal_handlers_disconnect_by_data (data->monitor_real, data);
-              g_clear_object (&(data->monitor_real));
-            }
-
-          g_autoptr(GFile) r = g_file_new_for_path (real);
-          data->monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, NULL);
-          if (data->monitor_real)
-            g_signal_connect (data->monitor_real, "changed", G_CALLBACK (file_changed), data);
-        }
-      else
-        {
-          /* detect the case that the source file is no longer a symlink and
-             remove the old real file monitor */
-          if (!g_strcmp0 (data->source, real))
-            {
-              free (data->real);
-              data->real = NULL;
-
-              if (data->monitor_real)
-                {
-                  g_signal_handlers_disconnect_by_data (data->monitor_real, data);
-                  g_clear_object (&(data->monitor_real));
-                }
-            }
-
-          free (real);
-        }
-    }
+  update_real_monitor (data);
 
   copy_file (data->source, monitor_dir);
 }
@@ -509,32 +530,27 @@ static MonitorData *
 setup_file_monitor (const char *source)
 {
   g_autoptr(GFile) s = g_file_new_for_path (source);
-  char *real;
-  GFileMonitor *monitor_source, *monitor_real = NULL;
+  g_autoptr(GError) err = NULL;
+  GFileMonitor *monitor = NULL;
   MonitorData *data = NULL;
-
-  copy_file (source, monitor_dir);
-
-  monitor_source = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, NULL);
-  if (!monitor_source)
-    return NULL;
-
-  real = realpath (source, NULL);
-  if (real && g_strcmp0 (source, real))
-    {
-      g_autoptr(GFile) r = g_file_new_for_path (real);
-      monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, NULL);
-    }
 
   data = g_new0 (MonitorData, 1);
   data->source = source;
-  data->real = real;
-  data->monitor_source = monitor_source;
-  data->monitor_real = monitor_real;
 
-  g_signal_connect (monitor_source, "changed", G_CALLBACK (file_changed), data);
-  if (monitor_real)
-    g_signal_connect (monitor_real, "changed", G_CALLBACK (file_changed), data);
+  monitor = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, &err);
+  if (monitor)
+    {
+      data->monitor_source = monitor;
+      g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), data);
+    }
+  else
+    {
+      g_debug ("failed to monitor host file %s: %s", source, err->message);
+    }
+
+  update_real_monitor (data);
+
+  copy_file (source, monitor_dir);
 
   return data;
 }
