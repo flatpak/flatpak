@@ -403,6 +403,13 @@ on_name_lost (GDBusConnection *connection,
   exit (1);
 }
 
+/*
+ * In the case that the monitored file is a symlink, we set up a separate
+ * GFileMonitor for the real target of the link so that we don't miss updates
+ * to the linked file contents. This is critical in the case of resolv.conf
+ * which on stateless systems is often a symlink to a dyamically-generated
+ * or updated file in /run.
+ */
 typedef struct {
   const gchar *source;
   char *real;
