@@ -477,7 +477,7 @@ file_changed (GFileMonitor     *monitor,
               g_clear_object (&(data->monitor_real));
             }
 
-          GFile *r = g_file_new_for_path (real);
+          g_autoptr(GFile) r = g_file_new_for_path (real);
           data->monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, NULL);
           if (data->monitor_real)
             g_signal_connect (data->monitor_real, "changed", G_CALLBACK (file_changed), data);
@@ -508,7 +508,7 @@ file_changed (GFileMonitor     *monitor,
 static MonitorData *
 setup_file_monitor (const char *source)
 {
-  GFile *s = g_file_new_for_path (source);
+  g_autoptr(GFile) s = g_file_new_for_path (source);
   char *real;
   GFileMonitor *monitor_source, *monitor_real = NULL;
   MonitorData *data = NULL;
@@ -522,7 +522,7 @@ setup_file_monitor (const char *source)
   real = realpath (source, NULL);
   if (real && g_strcmp0 (source, real))
     {
-      GFile *r = g_file_new_for_path (real);
+      g_autoptr(GFile) r = g_file_new_for_path (real);
       monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, NULL);
     }
 
