@@ -68,6 +68,22 @@ maybe_print_space (gboolean *first)
     g_print (" ");
 }
 
+static gchar *
+format_timestamp (guint64  timestamp)
+{
+  GDateTime *dt;
+  gchar *str;
+
+  dt = g_date_time_new_from_unix_utc (timestamp);
+  if (dt == NULL)
+    return g_strdup ("?");
+
+  str = g_date_time_format (dt, "%Y-%m-%d %H:%M:%S +0000");
+  g_date_time_unref (dt);
+
+  return str;
+}
+
 gboolean
 flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -152,15 +168,37 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (friendly)
     {
-      const char *latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
+      g_autoptr(GVariant) commit_v = NULL;
+      guint64 timestamp;
+      g_autofree char *formatted_timestamp = NULL;
+      const gchar *subject = NULL;
+      const gchar *body = NULL;
+      g_autofree char *parent = NULL;
+      const char *latest;
+
+      latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
       if (latest == NULL)
         latest = _("ref not present in origin");
+
+      if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), commit, &commit_v, NULL, NULL))
+        {
+          g_variant_get (commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
+                         &subject, &body, NULL, NULL, NULL);
+          parent = ostree_commit_get_parent (commit_v);
+          timestamp = ostree_commit_get_timestamp (commit_v);
+          formatted_timestamp = format_timestamp (timestamp);
+        }
 
       g_print ("%s%s%s %s\n", on, _("Ref:"), off, ref);
       g_print ("%s%s%s %s\n", on, _("ID:"), off, parts[1]);
       g_print ("%s%s%s %s\n", on, _("Arch:"), off, parts[2]);
       g_print ("%s%s%s %s\n", on, _("Branch:"), off, parts[3]);
       g_print ("%s%s%s %s\n", on, _("Origin:"), off, origin ? origin : "-");
+      if (formatted_timestamp)
+        g_print ("%s%s%s %s\n", on, _("Date:"), off, formatted_timestamp);
+      if (subject)
+        g_print ("%s%s%s %s\n", on, _("Subject:"), off, subject);
+
       if (strcmp (commit, latest) != 0)
         {
           g_print ("%s%s%s %s\n", on, _("Active commit:"), off, commit);
@@ -170,6 +208,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         g_print ("%s%s%s %s\n", on, _("Commit:"), off, commit);
       if (alt_id)
         g_print ("%s%s%s %s\n", on, _("alt-id:"), off, alt_id);
+      g_print ("%s%s%s %s\n", on, _("Parent:"), off, parent ? parent : "-");
       g_print ("%s%s%s %s\n", on, _("Location:"), off, path);
       g_print ("%s%s%s %s\n", on, _("Installed size:"), off, formatted);
       if (strcmp (parts[0], "app") == 0)
