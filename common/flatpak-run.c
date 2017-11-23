@@ -2426,6 +2426,7 @@ typedef struct {
 
 struct _FlatpakExports {
   GHashTable *hash;
+  FlatpakFilesystemMode host_fs;
 };
 
 static void
@@ -2599,6 +2600,18 @@ exports_add_bwrap_args (FlatpakExports *exports,
                                   (ep->mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
                                   path, path, NULL);
         }
+    }
+
+  if (exports->host_fs != 0)
+    {
+      if (g_file_test ("/usr", G_FILE_TEST_IS_DIR))
+	flatpak_bwrap_add_args (bwrap,
+				(exports->host_fs == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
+				"/usr", "/run/host/usr", NULL);
+      if (g_file_test ("/etc", G_FILE_TEST_IS_DIR))
+	flatpak_bwrap_add_args (bwrap,
+				(exports->host_fs == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
+				"/etc", "/run/host/etc", NULL);
     }
 }
 
@@ -2844,6 +2857,7 @@ export_paths_export_context (FlatpakContext *context,
           closedir (dir);
         }
       exports_path_expose (exports, fs_mode, "/run/media");
+      exports->host_fs = fs_mode;
     }
 
   home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
