@@ -447,10 +447,22 @@ validate_fd (int fd,
           strncpy (path_buffer, real_path, PATH_MAX);
         }
       else if (runtime_path != NULL &&
-               g_str_has_prefix (path_buffer, "/usr/"))
+               g_str_has_prefix (tmp_path_buf, "/usr/"))
         {
           const char *rel_path = tmp_path_buf + strlen ("/usr/");
           g_autofree char *real_path = g_build_filename (runtime_path, rel_path, NULL);
+          strncpy (path_buffer, real_path, PATH_MAX);
+        }
+      else if (g_str_has_prefix (tmp_path_buf, "/run/host/usr/"))
+        {
+          const char *rel_path = tmp_path_buf + strlen ("/run/host/usr/");
+          g_autofree char *real_path = g_build_filename ("/usr", rel_path, NULL);
+          strncpy (path_buffer, real_path, PATH_MAX);
+        }
+      else if (g_str_has_prefix (tmp_path_buf, "/run/host/etc/"))
+        {
+          const char *rel_path = tmp_path_buf + strlen ("/run/host/etc/");
+          g_autofree char *real_path = g_build_filename ("/etc", rel_path, NULL);
           strncpy (path_buffer, real_path, PATH_MAX);
         }
       else if (had_newroot_prefix)
