@@ -71,8 +71,10 @@ get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
                                                               NULL);
           g_autoptr(GFile) appstream_file = g_file_new_for_path (appstream_path);
           g_autoptr(AsStore) store = as_store_new ();
+#if AS_CHECK_VERSION(0, 6, 1)
           // We want to see multiple versions/branches of same app-id's, e.g. org.gnome.Platform
           as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
+#endif
           as_store_from_file (store, appstream_file, NULL, cancellable, &error);
           if (error)
             {
@@ -135,6 +137,44 @@ compare_by_score (MatchResult *a, MatchResult *b, gpointer user_data)
   return (int)b->score - (int)a->score;
 }
 
+#if !AS_CHECK_VERSION(0, 6, 1)
+/* Roughly copied directly from appstream-glib */
+
+static const gchar *
+as_app_fix_unique_nullable (const gchar *tmp)
+{
+  if (tmp == NULL || tmp[0] == '\0')
+    return "*";
+  return tmp;
+}
+
+static char *
+as_app_get_unique_id (AsApp *app)
+{
+  const gchar *id_str = NULL;
+  const gchar *kind_str = NULL;
+  AsAppKind kind = as_app_get_kind (app);
+
+  if (kind != AS_APP_KIND_UNKNOWN)
+    kind_str = as_app_kind_to_string (kind);
+  id_str = as_app_get_id_no_prefix (app);
+  return g_strdup_printf ("%s/%s",
+           as_app_fix_unique_nullable (kind_str),
+           as_app_fix_unique_nullable (id_str));
+}
+
+static gboolean
+as_app_equal (AsApp *app1, AsApp *app2)
+{
+  if (app1 == app2)
+    return TRUE;
+
+  g_autofree char *app1_id = as_app_get_unique_id (app1);
+  g_autofree char *app2_id = as_app_get_unique_id (app2);
+  return strcmp (app1_id, app2_id) == 0;
+}
+#endif
+
 static int
 compare_apps (MatchResult *a, AsApp *b)
 {
@@ -162,12 +202,13 @@ print_app (MatchResult *res, FlatpakTablePrinter *printer)
   AsRelease *release = as_app_get_release_default (res->app);
   const char *version = release ? as_release_get_version (release) : NULL;
   const char *id = as_app_get_id_filename (res->app);
-  const char *branch = as_app_get_branch (res->app);
   guint i;
 
   flatpak_table_printer_add_column (printer, id);
   flatpak_table_printer_add_column (printer, version);
-  flatpak_table_printer_add_column (printer, branch);
+#if AS_CHECK_VERSION(0, 6, 1)
+  flatpak_table_printer_add_column (printer, as_app_get_branch (res->app));
+#endif
   flatpak_table_printer_add_column (printer, g_ptr_array_index (res->remotes, 0));
   for (i = 1; i < res->remotes->len; ++i)
     flatpak_table_printer_append_with_comma (printer, g_ptr_array_index (res->remotes, i));
@@ -269,7 +310,9 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
 
       flatpak_table_printer_set_column_title (printer, col++, _("Application ID"));
       flatpak_table_printer_set_column_title (printer, col++, _("Version"));
+#if AS_CHECK_VERSION(0, 6, 1)
       flatpak_table_printer_set_column_title (printer, col++, _("Branch"));
+#endif
       flatpak_table_printer_set_column_title (printer, col++, _("Remotes"));
       flatpak_table_printer_set_column_title (printer, col++, _("Description"));
       g_slist_foreach (matches, (GFunc)print_app, printer);
