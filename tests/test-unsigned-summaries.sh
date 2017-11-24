@@ -127,17 +127,9 @@ assert_file_has_content metadata "'ostree.ref-binding': <\['ostree-metadata'\]>"
 
 echo "ok 6 update repo metadata"
 
-# Try to update the app, which should pull the updated repository metadata as a
-# side effect. Before doing that, drop xa.title from the summary to check that
-# it’s actually coming from ostree-metadata.
-ostree --repo=repos/test summary --update
-assert_not_has_file repos/test/summary.sig
-ostree --repo=repos/test summary --view > summary
-assert_not_file_has_content summary '^xa.title: '
-
-#${FLATPAK} ${U} update org.test.App
+# Try to install the app again, which should pull the updated repository
+# metadata as a side effect.
 ${FLATPAK} ${U} install test-repo org.test.App master
 assert_file_has_content ${FL_DIR}/repo/config '^xa.title=New title$'
-# TODO: More
 
 echo "ok 7 pull updated repo metadata"
