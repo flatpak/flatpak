@@ -503,6 +503,17 @@ flatpak_get_gl_drivers (void)
   return (const char **)drivers;
 }
 
+static gboolean
+flatpak_get_have_intel_gpu (void)
+{
+  static int have_intel = -1;
+
+  if (have_intel == -1)
+    have_intel = g_file_test ("/sys/module/i915", G_FILE_TEST_EXISTS);
+
+  return have_intel;
+}
+
 static const char *
 flatpak_get_gtk_theme (void)
 {
@@ -4257,6 +4268,11 @@ flatpak_extension_matches_reason (const char *extension_id,
     {
       const char *gtk_theme = flatpak_get_gtk_theme ();
       return (strcmp (gtk_theme, extension_basename) == 0);
+    }
+  else if (strcmp (reason, "have-intel-gpu") == 0)
+    {
+      /* Used for Intel VAAPI driver extension */
+      return flatpak_get_have_intel_gpu ();
     }
 
   return FALSE;
