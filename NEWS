@@ -1,3 +1,28 @@
+Major changes in 0.10.1
+=======================
+
+ * New command "flatpak remote-info" shows information about applications
+   in a remote. In particular the --log operation shows the history and
+   can be used in combination with flatpak upate --commit=XYZ to roll
+   back to a previous version.
+ * New command "flatpak search" which allows you to search the appstream
+   data from the commandline.
+ * flatpak update now upates appstream data for all confured remotes, which
+   is important for search to work.
+ * Allow automatic installation of gtk themes matching the active theme.
+ * Handle the case when /etc/resolv.conf is a symlink
+ * /usr an /etc are now expose in /run/host in the app if the app has
+   full filesystem access.
+ * flatpak remote-add now works as a user when /var/lib/flatpak is empty,
+   allowing flatpak to work on stateless systems.
+ * Add support for flatpak build --log-session/system-bus, similar to
+   what flatpak run already does.
+ * flatpak build --readonly runs with the target directory (normally /app)
+   mounted read-only.
+ * Fall back to LD_LIBRARY_PATH if a runtime doesn't have /usr/bin/ldconfig.
+ * Updated the support for OCI remotes. This is work in progress and still
+   disabled by default though.
+
 Major changes in 0.10
 =====================
 
