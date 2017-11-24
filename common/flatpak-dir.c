@@ -1549,24 +1549,32 @@ flatpak_dir_recreate_repo (FlatpakDir   *self,
   return res;
 }
 
-gboolean
-flatpak_dir_ensure_repo (FlatpakDir   *self,
-                         GCancellable *cancellable,
-                         GError      **error)
+static gboolean
+_flatpak_dir_ensure_repo (FlatpakDir   *self,
+                          gboolean      allow_empty,
+                          GCancellable *cancellable,
+                          GError      **error)
 {
   g_autoptr(GFile) repodir = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
+  g_autoptr(GError) my_error = NULL;
   gboolean use_helper = FALSE;
 
   if (self->repo == NULL)
     {
-      if (!flatpak_dir_ensure_path (self, cancellable, error))
-        return FALSE;
+      if (!flatpak_dir_ensure_path (self, cancellable, &my_error))
+        {
+          if (allow_empty)
+            return TRUE;
+
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
 
       repodir = g_file_get_child (self->basedir, "repo");
       if (self->no_system_helper || self->user || getuid () == 0)
         {
-          repo = ostree_repo_new (repodir);
+          repo = system_ostree_repo_new (repodir);
         }
       else
         {
@@ -1597,9 +1605,14 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
           if (g_strcmp0 (mode_env, "user") == 0)
             mode = OSTREE_REPO_MODE_BARE_USER;
 
-          if (!ostree_repo_create (repo, mode, cancellable, error))
+          if (!ostree_repo_create (repo, mode, cancellable, &my_error))
             {
               flatpak_rm_rf (repodir, cancellable, NULL);
+
+              if (allow_empty)
+                return TRUE;
+
+              g_propagate_error (error, g_steal_pointer (&my_error));
               return FALSE;
             }
 
@@ -1645,6 +1658,22 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
     }
 
   return TRUE;
+}
+
+gboolean
+flatpak_dir_ensure_repo (FlatpakDir   *self,
+                         GCancellable *cancellable,
+                         GError      **error)
+{
+  return _flatpak_dir_ensure_repo (self, FALSE, cancellable, error);
+}
+
+gboolean
+flatpak_dir_maybe_ensure_repo (FlatpakDir   *self,
+                               GCancellable *cancellable,
+                               GError      **error)
+{
+  return _flatpak_dir_ensure_repo (self, TRUE, cancellable, error);
 }
 
 char *
@@ -8883,12 +8912,14 @@ flatpak_dir_list_remotes (FlatpakDir   *self,
                           GCancellable *cancellable,
                           GError      **error)
 {
-  char **res;
+  char **res = NULL;
 
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+  if (!flatpak_dir_maybe_ensure_repo (self, cancellable, error))
     return NULL;
 
-  res = ostree_repo_remote_list (self->repo, NULL);
+  if (self->repo)
+    res = ostree_repo_remote_list (self->repo, NULL);
+
   if (res == NULL)
     res = g_new0 (char *, 1); /* Return empty array, not error */
 

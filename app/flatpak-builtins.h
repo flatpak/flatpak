@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 
 typedef enum {
   FLATPAK_BUILTIN_FLAG_NO_DIR = 1 << 0,
-  FLATPAK_BUILTIN_FLAG_NO_REPO = 1 << 1,
+  FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO = 1 << 1,
 } FlatpakBuiltinFlags;
 
 gboolean flatpak_option_context_parse (GOptionContext     *context,
