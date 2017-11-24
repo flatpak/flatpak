@@ -751,6 +751,7 @@ flatpak_remote_new_from_ostree (OstreeRemote     *remote,
                                 OstreeRepoFinder *repo_finder,
                                 FlatpakDir       *dir)
 {
+  g_autofree gchar *url = NULL;
   FlatpakRemotePrivate *priv;
   FlatpakRemote *self = g_object_new (FLATPAK_TYPE_REMOTE,
                                       "name", ostree_remote_get_name (remote),
@@ -760,6 +761,10 @@ flatpak_remote_new_from_ostree (OstreeRemote     *remote,
   priv = flatpak_remote_get_instance_private (self);
   if (dir)
     priv->dir = g_object_ref (dir);
+
+  url = ostree_remote_get_url (remote);
+  if (url != NULL)
+    flatpak_remote_set_url (self, url);
 
   return self;
 }
