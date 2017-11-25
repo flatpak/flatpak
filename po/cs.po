@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-11-24 14:31+0100\n"
-"PO-Revision-Date: 2017-11-11 15:54+0100\n"
+"PO-Revision-Date: 2017-11-25 16:14+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -329,7 +329,7 @@ msgstr ""
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
-msgstr ""
+msgstr "Udělat cíl pouze pro čtení"
 
 #: app/flatpak-builtins-build.c:51
 msgid "Add bind mount"
@@ -1176,11 +1176,11 @@ msgstr "Původ:"
 
 #: app/flatpak-builtins-info.c:198 app/flatpak-builtins-info-remote.c:191
 msgid "Date:"
-msgstr ""
+msgstr "Datum:"
 
 #: app/flatpak-builtins-info.c:200 app/flatpak-builtins-info-remote.c:192
 msgid "Subject:"
-msgstr ""
+msgstr "Předmět:"
 
 #: app/flatpak-builtins-info.c:204
 msgid "Active commit:"
@@ -1201,7 +1201,7 @@ msgstr "alt-id:"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-info-remote.c:194
 msgid "Parent:"
-msgstr ""
+msgstr "Rodič:"
 
 #: app/flatpak-builtins-info.c:212
 msgid "Location:"
@@ -1230,7 +1230,7 @@ msgstr "Podcesty:"
 
 #: app/flatpak-builtins-info-remote.c:48
 msgid "Commit to show info for"
-msgstr ""
+msgstr "Commit, pro který zobrazit informace"
 
 #: app/flatpak-builtins-info-remote.c:48 app/flatpak-builtins-update.c:54
 msgid "COMMIT"
@@ -1243,43 +1243,42 @@ msgstr "Hledat aplikaci s určeným názvem"
 
 #: app/flatpak-builtins-info-remote.c:51
 msgid "Display log"
-msgstr ""
+msgstr "Zobrazit záznam"
 
 #: app/flatpak-builtins-info-remote.c:54
-#, fuzzy
 msgid "Show parent"
-msgstr "Zobrazit referenci"
+msgstr "Zobrazit rodiče"
 
 #: app/flatpak-builtins-info-remote.c:119
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
+" VZDÁLENÉ REF - Zobrazit informace o aplikaci nebo prostředí ve vzdáleném "
+"repozitáři"
 
 #: app/flatpak-builtins-info-remote.c:129 app/flatpak-builtins-install.c:491
 msgid "REMOTE and REF must be specified"
 msgstr "VZDÁLENÉ a REF musí být určeny"
 
 #: app/flatpak-builtins-info-remote.c:195
-#, fuzzy
 msgid "Download size:"
-msgstr "Stahovaná velikost"
+msgstr "Stahovaná velikost:"
 
 #: app/flatpak-builtins-info-remote.c:208
 msgid "History:"
-msgstr ""
+msgstr "Historie:"
 
 #: app/flatpak-builtins-info-remote.c:230
 msgid " Subject:"
-msgstr ""
+msgstr " Předmět:"
 
 #: app/flatpak-builtins-info-remote.c:231
 msgid " Date:"
-msgstr ""
+msgstr " Datum:"
 
 #: app/flatpak-builtins-info-remote.c:232
-#, fuzzy
 msgid " Commit:"
-msgstr "Commit:"
+msgstr " Commit:"
 
 #: app/flatpak-builtins-install.c:57
 msgid "Don't pull, only install from local cache"
@@ -1693,9 +1692,8 @@ msgid "Search only system-wide installations"
 msgstr "Prohledat pouze systémové instalace"
 
 #: app/flatpak-builtins-search.c:38
-#, fuzzy
 msgid "Search specific system-wide installations"
-msgstr "Zobrazit specifické systémové instalace"
+msgstr "Prohledat specifické systémové instalace"
 
 #: app/flatpak-builtins-search.c:182
 msgid "TEXT - Search remote apps/runtimes for text"
@@ -1931,9 +1929,8 @@ msgid "List contents of a configured remote"
 msgstr "Vypsat obsah nastaveného vzdáleného repozitáře"
 
 #: app/flatpak-main.c:95
-#, fuzzy
 msgid "Show information about a remote app or runtime"
-msgstr "Zobrazit informace pro nainstalovanou aplikaci či prostředí"
+msgstr "Zobrazit informace o vzdálené aplikaci či prostředí"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:98
