@@ -203,7 +203,7 @@ flatpak_complete_list_remotes (FlatpakCompletion *completion)
   switch (completion->argc)
     {
     case 0:
-    case 1: /* REMOTE */
+    case 1:
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
       flatpak_complete_options (completion, user_entries);
