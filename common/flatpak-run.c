@@ -288,10 +288,134 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
     }
 }
 
+static char *flatpak_run_get_pulseaudio_server_user_config(const char *path) {
+  g_autoptr(GFile) file = g_file_new_for_path (path);
+  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GFileInputStream) input_stream = NULL;
+  g_autoptr(GDataInputStream) data_stream = NULL;
+  size_t len;
+
+  input_stream = g_file_read (file, NULL, &my_error);
+  if (my_error) {
+    g_debug ("Pulseaudio user configuration file '%s': %s", path, my_error->message);
+    return NULL;
+  }
+  data_stream = g_data_input_stream_new (G_INPUT_STREAM(input_stream));
+
+  while (TRUE) {
+    g_autofree char *line = g_data_input_stream_read_line (data_stream, &len, NULL, &my_error);
+    if (my_error) {
+      g_debug ("Pulseaudio user configuration file '%s': %s", path, my_error->message);
+      return NULL;
+    }
+    if (line == NULL) {
+      break ;
+    }
+    g_strchug (line);
+    if ((*line  == '\0')
+        || (*line == ';')
+        || (*line == '#')) {
+    } else if (g_str_has_prefix (line, ".include ")) {
+      g_autofree char *rec_path = g_strdup(line+9);
+      g_strstrip (rec_path);
+      char *found = flatpak_run_get_pulseaudio_server_user_config(rec_path);
+      if (found) {
+        return found;
+      }
+    } else if (g_str_has_prefix (line, "[")) {
+      return NULL;
+    } else {
+      char** tokens = g_strsplit (line, "=", 2);
+      if ((tokens[0] == NULL) || (tokens[1] == NULL)) {
+        g_debug("Garbage found in %s", path);
+      } else {
+        g_strchomp(tokens[0]);
+        if (g_strcmp0 ("default-server", tokens[0]) == 0) {
+          g_strstrip(tokens[1]);
+          char * ret = g_strdup(tokens[1]);
+          g_strfreev(tokens);
+          g_debug("Found pulseaudio socket from configuration file '%s': %s", path, ret);
+          return g_strdup(ret);
+        }
+      }
+      g_strfreev(tokens);
+    }
+  }
+
+  return NULL;
+}
+
+static char *flatpak_run_get_pulseaudio_server(void) {
+  {
+    const char *pulse_server;
+    g_autofree char *pulse_user_config = NULL;
+
+    pulse_server = g_getenv ("PULSE_SERVER");
+    if (pulse_server) {
+      g_debug("Found pulseaudio socket from environment: %s", pulse_server);
+      return g_strdup (pulse_server);
+    }
+  }
+
+  {
+    const char* pulse_clientconfig = g_getenv ("PULSE_CLIENTCONFIG");
+
+    if (pulse_clientconfig) {
+      return flatpak_run_get_pulseaudio_server_user_config(pulse_clientconfig);
+    }
+  }
+
+  {
+    char *pulse_server;
+    g_autofree char *pulse_user_config = g_build_filename (g_get_user_config_dir(), "pulse/client.conf", NULL);
+
+    pulse_server = flatpak_run_get_pulseaudio_server_user_config(pulse_user_config);
+    if (pulse_server)
+      return pulse_server;
+
+    pulse_server = flatpak_run_get_pulseaudio_server_user_config("/etc/pulse/client.conf");
+    if (pulse_server)
+      return pulse_server;
+  }
+
+  return NULL;
+}
+
+static char* flatpak_run_parse_pulse_server(const char *value) {
+  char **servers = g_strsplit (value, " ", 0);
+  size_t i;
+
+  for (i = 0; servers[i] != NULL; ++i) {
+    const char *server = servers[i];
+    if (g_str_has_prefix (server, "{")) {
+      const char* closing = strstr(server, "}");
+      if (closing == NULL) {
+        continue ;
+      }
+      server = closing + 1;
+    }
+    if (flatpak_has_path_prefix (server, "unix:")) {
+      char* ret = g_strdup (server+5);
+      g_strfreev(servers);
+      return ret;
+    }
+  }
+
+  g_strfreev(servers);
+  return NULL;
+}
+
 static void
 flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
 {
-  g_autofree char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
+  g_autofree char *pulseaudio_servers = flatpak_run_get_pulseaudio_server ();
+  g_autofree char *pulseaudio_socket = NULL;
+
+  if (pulseaudio_servers)
+    pulseaudio_socket = flatpak_run_parse_pulse_server (pulseaudio_servers);
+
+  if (!pulseaudio_socket)
+    pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
 
   flatpak_bwrap_unset_env (bwrap, "PULSE_SERVER");
 
