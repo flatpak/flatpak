@@ -5438,7 +5438,7 @@ flatpak_number_prompt (int min, int max, const char *prompt, ...)
 {
   char buf[512];
   va_list var_args;
-  gchar *s;
+  g_autofree char *s = NULL;
 
   va_start (var_args, prompt);
   s = g_strdup_vprintf (prompt, var_args);
