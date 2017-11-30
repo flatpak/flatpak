@@ -19,40 +19,40 @@
     </chapter>
     <chapter>
       <title>Commands</title>
-      <xi:include href="@srcdir@/flatpak-install.xml"/>
-      <xi:include href="@srcdir@/flatpak-update.xml"/>
-      <xi:include href="@srcdir@/flatpak-uninstall.xml"/>
-      <xi:include href="@srcdir@/flatpak-list.xml"/>
-      <xi:include href="@srcdir@/flatpak-info.xml"/>
-      <xi:include href="@srcdir@/flatpak-run.xml"/>
-      <xi:include href="@srcdir@/flatpak-override.xml"/>
-      <xi:include href="@srcdir@/flatpak-make-current.xml"/>
-      <xi:include href="@srcdir@/flatpak-enter.xml"/>
-      <xi:include href="@srcdir@/flatpak-document-export.xml"/>
-      <xi:include href="@srcdir@/flatpak-document-unexport.xml"/>
-      <xi:include href="@srcdir@/flatpak-document-info.xml"/>
-      <xi:include href="@srcdir@/flatpak-document-list.xml"/>
-      <xi:include href="@srcdir@/flatpak-remotes.xml"/>
-      <xi:include href="@srcdir@/flatpak-remote-add.xml"/>
-      <xi:include href="@srcdir@/flatpak-remote-modify.xml"/>
-      <xi:include href="@srcdir@/flatpak-remote-delete.xml"/>
-      <xi:include href="@srcdir@/flatpak-remote-ls.xml"/>
-      <xi:include href="@srcdir@/flatpak-build-init.xml"/>
-      <xi:include href="@srcdir@/flatpak-build.xml"/>
-      <xi:include href="@srcdir@/flatpak-build-finish.xml"/>
-      <xi:include href="@srcdir@/flatpak-build-export.xml"/>
       <xi:include href="@srcdir@/flatpak-build-bundle.xml"/>
+      <xi:include href="@srcdir@/flatpak-build-commit-from.xml"/>
+      <xi:include href="@srcdir@/flatpak-build-export.xml"/>
+      <xi:include href="@srcdir@/flatpak-build-finish.xml"/>
       <xi:include href="@srcdir@/flatpak-build-import-bundle.xml"/>
+      <xi:include href="@srcdir@/flatpak-build-init.xml"/>
       <xi:include href="@srcdir@/flatpak-build-sign.xml"/>
       <xi:include href="@srcdir@/flatpak-build-update-repo.xml"/>
-      <xi:include href="@srcdir@/flatpak-build-commit-from.xml"/>
+      <xi:include href="@srcdir@/flatpak-build.xml"/>
+      <xi:include href="@srcdir@/flatpak-document-export.xml"/>
+      <xi:include href="@srcdir@/flatpak-document-info.xml"/>
+      <xi:include href="@srcdir@/flatpak-document-list.xml"/>
+      <xi:include href="@srcdir@/flatpak-document-unexport.xml"/>
+      <xi:include href="@srcdir@/flatpak-enter.xml"/>
+      <xi:include href="@srcdir@/flatpak-info.xml"/>
+      <xi:include href="@srcdir@/flatpak-install.xml"/>
+      <xi:include href="@srcdir@/flatpak-list.xml"/>
+      <xi:include href="@srcdir@/flatpak-make-current.xml"/>
+      <xi:include href="@srcdir@/flatpak-override.xml"/>
+      <xi:include href="@srcdir@/flatpak-remote-add.xml"/>
+      <xi:include href="@srcdir@/flatpak-remote-delete.xml"/>
+      <xi:include href="@srcdir@/flatpak-remote-ls.xml"/>
+      <xi:include href="@srcdir@/flatpak-remote-modify.xml"/>
+      <xi:include href="@srcdir@/flatpak-remotes.xml"/>
+      <xi:include href="@srcdir@/flatpak-run.xml"/>
+      <xi:include href="@srcdir@/flatpak-uninstall.xml"/>
+      <xi:include href="@srcdir@/flatpak-update.xml"/>
     </chapter>
     <chapter>
       <title>File Formats</title>
-      <xi:include href="@srcdir@/flatpak-metadata.xml"/>
       <xi:include href="@srcdir@/flatpak-flatpakrepo.xml"/>
       <xi:include href="@srcdir@/flatpak-flatpakref.xml"/>
-      <xi:include href="@srcdir@/flatpak-remote.xml"/>
       <xi:include href="@srcdir@/flatpak-installation.xml"/>
+      <xi:include href="@srcdir@/flatpak-metadata.xml"/>
+      <xi:include href="@srcdir@/flatpak-remote.xml"/>
     </chapter>
 </reference>
