@@ -28,6 +28,7 @@
       <xi:include href="@srcdir@/flatpak-build-sign.xml"/>
       <xi:include href="@srcdir@/flatpak-build-update-repo.xml"/>
       <xi:include href="@srcdir@/flatpak-build.xml"/>
+      <xi:include href="@srcdir@/flatpak-config.xml"/>
       <xi:include href="@srcdir@/flatpak-document-export.xml"/>
       <xi:include href="@srcdir@/flatpak-document-info.xml"/>
       <xi:include href="@srcdir@/flatpak-document-list.xml"/>
@@ -40,10 +41,13 @@
       <xi:include href="@srcdir@/flatpak-override.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-add.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-delete.xml"/>
+      <xi:include href="@srcdir@/flatpak-remote-info.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-ls.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-modify.xml"/>
       <xi:include href="@srcdir@/flatpak-remotes.xml"/>
+      <xi:include href="@srcdir@/flatpak-repo.xml"/>
       <xi:include href="@srcdir@/flatpak-run.xml"/>
+      <xi:include href="@srcdir@/flatpak-search.xml"/>
       <xi:include href="@srcdir@/flatpak-uninstall.xml"/>
       <xi:include href="@srcdir@/flatpak-update.xml"/>
     </chapter>
