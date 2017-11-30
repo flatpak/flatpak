@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-11-24 14:31+0100\n"
-"PO-Revision-Date: 2017-10-25 20:46+0700\n"
+"POT-Creation-Date: 2017-11-30 03:24+0000\n"
+"PO-Revision-Date: 2017-11-30 14:16+0700\n"
 "Last-Translator: Kukuh Syafaat <syafaatkukuh@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.3\n"
+"X-Generator: Poedit 2.0.4\n"
 
 #: app/flatpak-builtins-add-remote.c:57
 msgid "Do nothing if the provided remote exists"
@@ -326,7 +326,7 @@ msgstr "Gunakan runtime Platform daripada Sdk"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
-msgstr ""
+msgstr "Buat tujuan hanya baca"
 
 #: app/flatpak-builtins-build.c:51
 msgid "Add bind mount"
@@ -1179,11 +1179,11 @@ msgstr "Asal:"
 
 #: app/flatpak-builtins-info.c:198 app/flatpak-builtins-info-remote.c:191
 msgid "Date:"
-msgstr ""
+msgstr "Tanggal:"
 
 #: app/flatpak-builtins-info.c:200 app/flatpak-builtins-info-remote.c:192
 msgid "Subject:"
-msgstr ""
+msgstr "Subjek:"
 
 #: app/flatpak-builtins-info.c:204
 msgid "Active commit:"
@@ -1204,7 +1204,7 @@ msgstr "alt-id:"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-info-remote.c:194
 msgid "Parent:"
-msgstr ""
+msgstr "Induk:"
 
 #: app/flatpak-builtins-info.c:212
 msgid "Location:"
@@ -1233,7 +1233,7 @@ msgstr "Subpath:"
 
 #: app/flatpak-builtins-info-remote.c:48
 msgid "Commit to show info for"
-msgstr ""
+msgstr "Komit untuk menunjukkan info untuk"
 
 #: app/flatpak-builtins-info-remote.c:48 app/flatpak-builtins-update.c:54
 msgid "COMMIT"
@@ -1246,43 +1246,41 @@ msgstr "Cari aplikasi dengan nama yang ditentukan"
 
 #: app/flatpak-builtins-info-remote.c:51
 msgid "Display log"
-msgstr ""
+msgstr "Tampilkan log"
 
 #: app/flatpak-builtins-info-remote.c:54
-#, fuzzy
 msgid "Show parent"
-msgstr "Tampilkan ref"
+msgstr "Tampilkan induk"
 
 #: app/flatpak-builtins-info-remote.c:119
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
+" REMOTE REF - Tampilkan informasi tentang aplikasi atau runtime pada remote"
 
 #: app/flatpak-builtins-info-remote.c:129 app/flatpak-builtins-install.c:491
 msgid "REMOTE and REF must be specified"
 msgstr "REMOTE dan REF harus ditentukan"
 
 #: app/flatpak-builtins-info-remote.c:195
-#, fuzzy
 msgid "Download size:"
-msgstr "Ukuran unduh"
+msgstr "Ukuran unduh:"
 
 #: app/flatpak-builtins-info-remote.c:208
 msgid "History:"
-msgstr ""
+msgstr "Riwayat:"
 
 #: app/flatpak-builtins-info-remote.c:230
 msgid " Subject:"
-msgstr ""
+msgstr " Subjek:"
 
 #: app/flatpak-builtins-info-remote.c:231
 msgid " Date:"
-msgstr ""
+msgstr " Tanggal:"
 
 #: app/flatpak-builtins-info-remote.c:232
-#, fuzzy
 msgid " Commit:"
-msgstr "Komit:"
+msgstr " Komit:"
 
 #: app/flatpak-builtins-install.c:57
 msgid "Don't pull, only install from local cache"
@@ -1354,13 +1352,13 @@ msgid "Remote bundles are not supported"
 msgstr "Bundel remote tidak didukung"
 
 #: app/flatpak-builtins-install.c:336
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The remote '%s', at location %s contains additional applications.\n"
 "Should the remote be kept for future installations?"
 msgstr ""
 "Remote '%s', pada lokasi %s berisi aplikasi tambahan.\n"
-"Apakah Anda ingin memasang aplikasi lain dari sini?"
+"Haruskah remote disimpan untuk pemasangan di masa depan?"
 
 #: app/flatpak-builtins-install.c:396
 msgid "Filename or uri must be specified"
@@ -1469,8 +1467,8 @@ msgid "Limit to this arch (* for all)"
 msgstr "Batasi arsitektur ini (* untuk semua)"
 
 #: app/flatpak-builtins-ls-remote.c:74
-msgid " REMOTE - Show available runtimes and applications"
-msgstr " REMOTE - Tampilkan runtime dan aplikasi yang tersedia"
+msgid " [REMOTE] - Show available runtimes and applications"
+msgstr " [REMOTE] - Tampilkan runtime dan aplikasi yang tersedia"
 
 #: app/flatpak-builtins-ls-remote.c:132
 msgid "Commit"
@@ -1692,57 +1690,48 @@ msgid "APP [args...] - Run an app"
 msgstr "APL [argumen...] - Jalankan aplikasi"
 
 #: app/flatpak-builtins-search.c:36
-#, fuzzy
 msgid "Search only user installations"
-msgstr "Tampilkan pemasangan pengguna"
+msgstr "Cari hanya pemasangan pengguna"
 
 #: app/flatpak-builtins-search.c:37
-#, fuzzy
 msgid "Search only system-wide installations"
-msgstr "Tampilkan pemasangan di seluruh sistem"
+msgstr "Cari hanya pemasangan di seluruh sistem"
 
 #: app/flatpak-builtins-search.c:38
-#, fuzzy
 msgid "Search specific system-wide installations"
-msgstr "Tampilkan pemasangan tertentu di seluruh sistem"
+msgstr "Cari pemasangan tertentu di seluruh sistem"
 
-#: app/flatpak-builtins-search.c:182
+#: app/flatpak-builtins-search.c:223
 msgid "TEXT - Search remote apps/runtimes for text"
-msgstr ""
+msgstr "TEXT - Cari aplikasi remote/runtime untuk teks"
 
-#: app/flatpak-builtins-search.c:220
-#, fuzzy
+#: app/flatpak-builtins-search.c:261
 msgid "TEXT must be specified"
-msgstr "REMOTE harus ditentukan"
+msgstr "TEXT harus ditentukan"
 
-#: app/flatpak-builtins-search.c:270
-#, fuzzy
+#: app/flatpak-builtins-search.c:311
 msgid "Application ID"
-msgstr "ID Koleksi"
+msgstr "ID Aplikasi"
 
-#: app/flatpak-builtins-search.c:271
+#: app/flatpak-builtins-search.c:312
 msgid "Version"
-msgstr ""
+msgstr "Versi"
 
-#: app/flatpak-builtins-search.c:272
-#, fuzzy
+#: app/flatpak-builtins-search.c:314
 msgid "Branch"
-msgstr "Cabang:"
+msgstr "Cabang"
 
-#: app/flatpak-builtins-search.c:273
-#, fuzzy
+#: app/flatpak-builtins-search.c:316
 msgid "Remotes"
-msgstr "Tidak ada remote %s"
+msgstr "Remote"
 
-#: app/flatpak-builtins-search.c:274
-#, fuzzy
+#: app/flatpak-builtins-search.c:317
 msgid "Description"
-msgstr "Deskripsi lengkap"
+msgstr "Deskripsi"
 
-#: app/flatpak-builtins-search.c:283
-#, fuzzy
+#: app/flatpak-builtins-search.c:326
 msgid "No matches found"
-msgstr "Tidak ada yang cocok dengan %s"
+msgstr "Tidak ditemukan kecocokan"
 
 #: app/flatpak-builtins-uninstall.c:44
 msgid "Arch to uninstall"
@@ -1774,9 +1763,9 @@ msgid "Warning: Problem looking for related refs: %s\n"
 msgstr "Peringatan: Masalah mencari ref terkait: %s\n"
 
 #: app/flatpak-builtins-uninstall.c:159
-#, fuzzy, c-format
+#, c-format
 msgid "Uninstalling: %s\n"
-msgstr "Memasang: %s\n"
+msgstr "Mencopot: %s\n"
 
 #: app/flatpak-builtins-update.c:53
 msgid "Arch to update for"
@@ -1857,15 +1846,16 @@ msgstr "Konfigurasi flatpak"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:70
-#, fuzzy
 msgid ""
 "\n"
 " Finding applications and runtimes"
-msgstr "Menandatangani sebuah aplikasi atau runtime"
+msgstr ""
+"\n"
+"Menemukan aplikasi dan runtime"
 
 #: app/flatpak-main.c:71
 msgid "Search for remote apps/runtimes"
-msgstr ""
+msgstr "Cari aplikasi remote/runtime"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:74
@@ -1947,9 +1937,8 @@ msgid "List contents of a configured remote"
 msgstr "Daftar isi dari remote yang terkonfigurasi"
 
 #: app/flatpak-main.c:95
-#, fuzzy
 msgid "Show information about a remote app or runtime"
-msgstr "Tampilkan info untuk aplikasi yang terpasang atau runtime"
+msgstr "Tampilkan informasi tentang aplikasi remote atau runtime"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:98
@@ -2240,7 +2229,7 @@ msgstr "Checksum tidak valid untuk data ekstra %s"
 
 #: common/flatpak-dir.c:2664
 msgid "Remote OCI index has no registry uri"
-msgstr ""
+msgstr "Indeks remote OCI tidak memiliki registry uri"
 
 #: common/flatpak-dir.c:2880
 #, c-format
