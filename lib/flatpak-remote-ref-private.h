@@ -28,7 +28,7 @@
 #include <flatpak-remote-ref.h>
 #include <flatpak-dir.h>
 
-FlatpakRemoteRef *flatpak_remote_ref_new (const char *full_ref,
+FlatpakRemoteRef *flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
                                           const char *commit,
                                           const char *remote_name,
                                           FlatpakRemoteState *remote_state);
