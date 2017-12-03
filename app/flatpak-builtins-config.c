@@ -215,7 +215,7 @@ flatpak_builtin_config (int argc, char **argv, GCancellable *cancellable, GError
   else if (opt_list)
     return list_config (argc, argv, dir, cancellable, error);
   else
-    return flatpak_fail (error, _("Must specify one on --list, --get, --set or --unset"));
+    return flatpak_fail (error, _("Must specify one of --list, --get, --set or --unset"));
 
   return TRUE;
 }
