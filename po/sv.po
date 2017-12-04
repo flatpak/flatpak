@@ -124,12 +124,12 @@ msgstr "Lägg till OCI-register"
 #: app/flatpak-builtins-add-remote.c:218 app/flatpak-builtins-add-remote.c:225
 #, c-format
 msgid "Can't load uri %s: %s\n"
-msgstr "Det går inte att läsa in uri: %s: %s\n"
+msgstr "Det går inte att läsa in uri %s: %s\n"
 
 #: app/flatpak-builtins-add-remote.c:233
 #, c-format
 msgid "Can't load file %s: %s\n"
-msgstr "Det går inte att öppna filen %s: %s\n"
+msgstr "Det går inte att läsa in filen %s: %s\n"
 
 #: app/flatpak-builtins-add-remote.c:241
 msgid "Invalid file format"
@@ -360,7 +360,7 @@ msgstr "Döda processen när den överordnade processen dör"
 
 #: app/flatpak-builtins-build.c:56
 msgid "Export application homedir directory to build"
-msgstr "Exportera programmets hemkatalog till build"
+msgstr "Exportera programmets hemkatalog till bygge"
 
 #: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:58
 msgid "Log session bus calls"
@@ -545,23 +545,23 @@ msgstr "VARNING: Misslyckades med att validera desktop-filen %s: %s\n"
 #: app/flatpak-builtins-build-export.c:370
 #, c-format
 msgid "WARNING: Can't find Exec key in %s: %s\n"
-msgstr "VARNING:Det går inte att hitta Exec-nyckeln i %s: %s\n"
+msgstr "VARNING: Det går inte att hitta Exec-nyckeln i %s: %s\n"
 
 #: app/flatpak-builtins-build-export.c:378
 #: app/flatpak-builtins-build-export.c:475
 #, c-format
 msgid "WARNING: Binary not found for Exec line in %s: %s\n"
-msgstr "VARNING:Binär inte funnen för Exec-rad i %s: %s\n"
+msgstr "VARNING: Binär inte funnen för Exec-rad i %s: %s\n"
 
 #: app/flatpak-builtins-build-export.c:385
 #, c-format
 msgid "WARNING: Icon not matching app id in %s: %s\n"
-msgstr "VARNING:Ikon matchar inte appid i %s: %s\n"
+msgstr "VARNING: Ikon matchar inte appid i %s: %s\n"
 
 #: app/flatpak-builtins-build-export.c:413
 #, c-format
 msgid "WARNING: Icon referenced in desktop file but not exported: %s\n"
-msgstr "VARNING:Ikon hänvisad till i desktop-fil men inte exporterad: %s\n"
+msgstr "VARNING: Ikon hänvisad till i desktop-fil men inte exporterad: %s\n"
 
 #: app/flatpak-builtins-build-export.c:551
 #, c-format
@@ -664,7 +664,7 @@ msgstr "NAMN=VARIABEL[=VÄRDE]"
 
 #: app/flatpak-builtins-build-finish.c:53
 msgid "Set extension priority (only for extensions)"
-msgstr "Set prioritet för tillägg (endast för tillägg)"
+msgstr "Ställ in prioritet för tillägg (endast för tillägg)"
 
 #: app/flatpak-builtins-build-finish.c:53
 msgid "0"
@@ -945,6 +945,7 @@ msgstr "Du måste ange både nyckel och värde"
 msgid "[KEY [VALUE]] - Manage configuration"
 msgstr "[NYCKEL [VÄRDE]] - Hantera konfiguration"
 
+# TODO: one on -> one of ?
 #: app/flatpak-builtins-config.c:218
 msgid "Must specify one on --list, --get, --set or --unset"
 msgstr "Måste ange en av --list, --get, --set eller --unset"
@@ -1257,8 +1258,8 @@ msgstr "Visa överordnad"
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
-"REMOTE REF - visa information om ett program eller en exekveringsmiljö i ett "
-"fjärrförråd"
+" REMOTE REF - visa information om ett program eller en exekveringsmiljö i "
+"ett fjärrförråd"
 
 #: app/flatpak-builtins-info-remote.c:129 app/flatpak-builtins-install.c:491
 msgid "REMOTE and REF must be specified"
@@ -1469,8 +1470,8 @@ msgid "Limit to this arch (* for all)"
 msgstr "Begränsa till denna ark (* för alla)"
 
 #: app/flatpak-builtins-ls-remote.c:74
-msgid " REMOTE - Show available runtimes and applications"
-msgstr " FJÄRRFÖRRÅD - Visa tillgängliga exekveringsmiljöer och program"
+msgid " [REMOTE] - Show available runtimes and applications"
+msgstr " [FJÄRRFÖRRÅD] - Visa tillgängliga exekveringsmiljöer och program"
 
 #: app/flatpak-builtins-ls-remote.c:132
 msgid "Commit"
@@ -1513,7 +1514,7 @@ msgstr "PROG - Åsidosätt inställningar för program"
 #: app/flatpak-builtins-repo.c:48
 #, c-format
 msgid "Title: %s\n"
-msgstr "Titel:%s\n"
+msgstr "Titel: %s\n"
 
 #: app/flatpak-builtins-repo.c:51
 #, c-format
@@ -2330,7 +2331,7 @@ msgstr "Under försök att tillämpa extra data: "
 #: common/flatpak-dir.c:5352
 #, c-format
 msgid "Invalid deployed ref %s: "
-msgstr "Ogiltig distribuerad ref %s:"
+msgstr "Ogiltig distribuerad ref %s: "
 
 #: common/flatpak-dir.c:5359
 #, c-format
@@ -2350,7 +2351,7 @@ msgstr "Distribuerad ref %s matchar inte incheckning (%s)"
 #: common/flatpak-dir.c:5383
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
-msgstr "arch för distribuerad ref %s matchar inte incheckning (%s)"
+msgstr "Ark för distribuerad ref %s matchar inte incheckning (%s)"
 
 #: common/flatpak-dir.c:5389
 #, c-format
