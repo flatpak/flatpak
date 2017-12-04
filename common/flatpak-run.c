@@ -5018,10 +5018,10 @@ flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
                             const char *src,
                             const char *dest)
 {
-  g_autofree char *dest_real = realpath (dest, NULL);
+  g_autofree char *src_real = realpath (src, NULL);
 
-  if (dest_real)
-    flatpak_bwrap_add_args (bwrap, type, src, dest_real, NULL);
+  if (src_real)
+    flatpak_bwrap_add_args (bwrap, type, src_real, dest, NULL);
 }
 
 
