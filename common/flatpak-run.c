@@ -5009,19 +5009,28 @@ flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
   return TRUE;
 }
 
-/* This resolves the target here rather than the destination, because
-   it may not resolve in bwrap setup due to absolute relative links
-   conflicting with /newroot root. */
+/* This resolves the target here rather than in bwrap, because it may
+ * not resolve in bwrap setup due to absolute symlinks conflicting
+ * with /newroot root. For example, dest could be inside
+ * ~/.var/app/XXX where XXX is an absolute symlink.  However, in the
+ * usecases here the destination file often doesn't exist, so we
+ * only resolve the directory part.
+ */
 void
 flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
                             const char *type,
                             const char *src,
                             const char *dest)
 {
-  g_autofree char *dest_real = realpath (dest, NULL);
+  g_autofree char *dest_dirname = g_path_get_dirname (dest);
+  g_autofree char *dest_dirname_real = realpath (dest_dirname, NULL);
 
-  if (dest_real)
-    flatpak_bwrap_add_args (bwrap, type, src, dest_real, NULL);
+  if (dest_dirname_real)
+    {
+      g_autofree char *dest_basename = g_path_get_basename (dest);
+      g_autofree char *dest_real = g_build_filename (dest_dirname_real, dest_basename, NULL);
+      flatpak_bwrap_add_args (bwrap, type, src, dest_real, NULL);
+    }
 }
 
 
