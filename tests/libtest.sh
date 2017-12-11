@@ -205,7 +205,7 @@ setup_repo_no_add () {
     fi
 
     GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Platform "${COLLECTION_ID}" bash ls cat echo readlink > /dev/null
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} "${COLLECTION_ID}" > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} "" "${COLLECTION_ID}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
         $(dirname $0)/test-webserver.sh repos
@@ -256,7 +256,7 @@ make_updated_app () {
         COLLECTION_ID=""
     fi
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} "${COLLECTION_ID}" ${3:-UPDATED} > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} "" "${COLLECTION_ID}" ${3:-UPDATED} > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
