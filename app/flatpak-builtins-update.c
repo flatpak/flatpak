@@ -89,7 +89,8 @@ update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable
           g_autoptr(GError) local_error = NULL;
           FlatpakTerminalProgress terminal_progress = { 0 };
 
-          if (flatpak_dir_get_remote_disabled (dir, remotes[i]))
+          if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
+              flatpak_dir_get_remote_noenumerate (dir, remotes[i]))
             continue;
 
           g_print (_("Updating appstream for remote %s\n"), remotes[i]);
