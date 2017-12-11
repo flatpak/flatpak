@@ -396,14 +396,20 @@ test_list_refs_in_remotes (void)
   GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
   g_autofree char *argv_str = NULL;
   g_autofree char *repo_url = NULL;
-  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(GPtrArray) refs1 = NULL;
+  g_autoptr(GPtrArray) refs2 = NULL;
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakRemote) remote = NULL;
   g_autofree char *repo_dir = g_build_filename (testdir, repo_name, NULL);
+  g_autofree char *repo_uri = NULL;
   g_autoptr(GHashTable) collection_ids = g_hash_table_new_full (g_str_hash,
                                                                 g_str_equal,
                                                                 NULL, NULL);
+  g_autoptr(GHashTable) ref_specs = g_hash_table_new_full (g_str_hash,
+                                                           g_str_equal,
+                                                           g_free,
+                                                           NULL);
 
   create_multi_collection_id_repo (repo_dir);
 
@@ -435,21 +441,38 @@ test_list_refs_in_remotes (void)
   g_assert_nonnull (remote);
 
   /* List the refs in the remote we've just added */
-  refs = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
+  refs1 = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
 
   g_assert_no_error (error);
-  g_assert_nonnull (refs);
-  g_assert (refs->len > 0);
+  g_assert_nonnull (refs1);
+  g_assert (refs1->len > 1);
 
   /* Ensure that the number of different collection IDs is the same as the
    * number of apps */
-  for (guint i = 0; i < refs->len; ++i)
+  for (guint i = 0; i < refs1->len; ++i)
     {
-      FlatpakRef *ref = g_ptr_array_index (refs, i);
+      FlatpakRef *ref = g_ptr_array_index (refs1, i);
       g_hash_table_add (collection_ids, (gchar *) flatpak_ref_get_collection_id (ref));
+      g_hash_table_add (ref_specs, flatpak_ref_format_ref (ref));
     }
 
-  g_assert_cmpuint (g_hash_table_size (collection_ids), ==, refs->len);
+  g_assert_cmpuint (g_hash_table_size (collection_ids), ==, refs1->len);
+
+  /* Ensure that listing the refs by using a remote's URI will get us the
+   * same results as using the name */
+  repo_uri = flatpak_remote_get_url (remote);
+  refs2 = flatpak_installation_list_remote_refs_sync (inst, repo_uri, NULL, &error);
+
+  g_assert_no_error (error);
+  g_assert_nonnull (refs2);
+  g_assert_cmpuint (refs2->len, ==, refs1->len);
+
+  for (guint i = 0; i < refs2->len; ++i)
+    {
+      FlatpakRef *ref = g_ptr_array_index (refs2, i);
+      g_autofree char *ref_spec = flatpak_ref_format_ref (ref);
+      g_assert_nonnull (g_hash_table_lookup (ref_specs, ref_spec));
+    }
 }
 #endif /* FLATPAK_ENABLE_P2P */
 
