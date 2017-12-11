@@ -230,7 +230,7 @@ add_file_to_mtree (GFile             *file,
   g_file_info_set_file_type (file_info, G_FILE_TYPE_REGULAR);
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
-  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100744);
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100644);
 
   raw_input = (GInputStream *) g_file_read (file, cancellable, error);
   if (raw_input == NULL)
