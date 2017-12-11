@@ -88,9 +88,10 @@ typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE = 1 << 0,
   FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY = 1 << 1,
   FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL = 1 << 2,
+  FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL = 1 << 3,
 } FlatpakHelperDeployFlags;
 
-#define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE|FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY|FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL)
+#define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE|FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY|FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL|FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL)
 
 typedef enum {
   FLATPAK_HELPER_UNINSTALL_FLAGS_NONE = 0,
@@ -436,12 +437,14 @@ gboolean   flatpak_dir_deploy_install (FlatpakDir   *self,
                                        const char   *ref,
                                        const char   *origin,
                                        const char  **subpaths,
+                                       gboolean      reinstall,
                                        GCancellable *cancellable,
                                        GError      **error);
 gboolean   flatpak_dir_install (FlatpakDir          *self,
                                 gboolean             no_pull,
                                 gboolean             no_deploy,
                                 gboolean             no_static_deltas,
+                                gboolean             reinstall,
                                 const char          *ref,
                                 const char          *remote_name,
                                 const char         **subpaths,

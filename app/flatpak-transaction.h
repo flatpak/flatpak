@@ -34,7 +34,8 @@ FlatpakTransaction *flatpak_transaction_new         (FlatpakDir          *dir,
                                                      gboolean             no_deploy,
                                                      gboolean             no_static_deltas,
                                                      gboolean             add_deps,
-                                                     gboolean             add_related);
+                                                     gboolean             add_related,
+                                                     gboolean             reinstall);
 void                flatpak_transaction_free        (FlatpakTransaction  *self);
 gboolean            flatpak_transaction_update_metadata (FlatpakTransaction  *self,
                                                          gboolean             all_remotes,

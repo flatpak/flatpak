@@ -5598,11 +5598,24 @@ flatpak_dir_deploy (FlatpakDir          *self,
   return TRUE;
 }
 
+/* -origin remotes are deleted when the last ref refering to it is undeployed */
+static void
+maybe_prune_remote (FlatpakDir *self,
+                    const char *remote)
+{
+  if (remote != NULL &&
+      g_str_has_suffix (remote, "-origin") &&
+      flatpak_dir_get_remote_noenumerate (self, remote) &&
+      !flatpak_dir_remote_has_deploys (self, remote))
+    ostree_repo_remote_delete (self->repo, remote, NULL, NULL);
+}
+
 gboolean
 flatpak_dir_deploy_install (FlatpakDir   *self,
                             const char   *ref,
                             const char   *origin,
                             const char  **subpaths,
+                            gboolean      reinstall,
                             GCancellable *cancellable,
                             GError      **error)
 {
@@ -5613,6 +5626,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   gboolean ret = FALSE;
   g_autoptr(GError) local_error = NULL;
   g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
+  g_autofree char *remove_ref_from_remote = NULL;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -5621,9 +5635,33 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   old_deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
   if (old_deploy_dir != NULL)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                   _("%s branch %s already installed"), ref_parts[1], ref_parts[3]);
-      goto out;
+      if (reinstall)
+        {
+          g_autofree char *old_active = flatpak_dir_read_active (self, ref, cancellable);
+          g_autoptr(GVariant) old_deploy = NULL;
+          const char *old_origin;
+
+          old_deploy = flatpak_load_deploy_data (old_deploy_dir, cancellable, error);
+          if (old_deploy == NULL)
+            goto out;
+
+          /* If the old install was from a different remote, remove the ref */
+          old_origin = flatpak_deploy_data_get_origin (old_deploy);
+          if (strcmp (old_origin, origin) != 0)
+            remove_ref_from_remote = g_strdup (old_origin);
+
+          g_debug ("Removing old deployment for reinstall");
+          if (!flatpak_dir_undeploy (self, ref, old_active,
+                                     TRUE, FALSE,
+                                     cancellable, error))
+            goto out;
+        }
+      else
+        {
+          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                       _("%s branch %s already installed"), ref_parts[1], ref_parts[3]);
+          goto out;
+        }
     }
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
@@ -5650,6 +5688,15 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
 
       if (!flatpak_dir_update_exports (self, ref_parts[1], cancellable, error))
         goto out;
+    }
+
+  /* Remove old ref if the reinstalled was from a different remote */
+  if (remove_ref_from_remote != NULL)
+    {
+      if (!flatpak_dir_remove_ref (self, remove_ref_from_remote, ref, cancellable, error))
+        goto out;
+
+      maybe_prune_remote (self, remove_ref_from_remote);
     }
 
   /* Release lock before doing possibly slow prune */
@@ -5898,6 +5945,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_pull,
                      gboolean             no_deploy,
                      gboolean             no_static_deltas,
+                     gboolean             reinstall,
                      const char          *ref,
                      const char          *remote_name,
                      const char         **opt_subpaths,
@@ -6060,6 +6108,9 @@ flatpak_dir_install (FlatpakDir          *self,
       if (no_deploy)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY;
 
+      if (reinstall)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL;
+
       g_debug ("Calling system helper: Deploy");
       if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                    child_repo_path ? child_repo_path : "",
@@ -6089,7 +6140,7 @@ flatpak_dir_install (FlatpakDir          *self,
   if (!no_deploy)
     {
       if (!flatpak_dir_deploy_install (self, ref, remote_name, opt_subpaths,
-                                       cancellable, error))
+                                       reinstall, cancellable, error))
         return FALSE;
     }
 
@@ -6312,7 +6363,7 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, FALSE, cancellable, error))
         return FALSE;
     }
 
@@ -6800,11 +6851,7 @@ flatpak_dir_uninstall (FlatpakDir          *self,
 
   glnx_release_lock_file (&lock);
 
-  if (repository != NULL &&
-      g_str_has_suffix (repository, "-origin") &&
-      flatpak_dir_get_remote_noenumerate (self, repository) &&
-      !flatpak_dir_remote_has_deploys (self, repository))
-    ostree_repo_remote_delete (self->repo, repository, NULL, NULL);
+  maybe_prune_remote (self, repository);
 
   if (!keep_ref)
     flatpak_dir_prune (self, cancellable, NULL);

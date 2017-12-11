@@ -60,6 +60,7 @@ struct FlatpakTransaction {
   gboolean no_static_deltas;
   gboolean add_deps;
   gboolean add_related;
+  gboolean reinstall;
 };
 
 
@@ -170,7 +171,8 @@ flatpak_transaction_new (FlatpakDir *dir,
                          gboolean no_deploy,
                          gboolean no_static_deltas,
                          gboolean add_deps,
-                         gboolean add_related)
+                         gboolean add_related,
+                         gboolean reinstall)
 {
   FlatpakTransaction *t = g_new0 (FlatpakTransaction, 1);
 
@@ -183,6 +185,7 @@ flatpak_transaction_new (FlatpakDir *dir,
   t->no_static_deltas = no_static_deltas;
   t->add_deps = add_deps;
   t->add_related = add_related;
+  t->reinstall = reinstall;
   return t;
 }
 
@@ -482,10 +485,20 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
     {
       g_assert (remote != NULL);
-      if (dir_ref_is_installed (self->dir, ref, NULL, NULL))
+      if (!self->reinstall &&
+          dir_ref_is_installed (self->dir, ref, &origin, NULL))
         {
-          g_printerr (_("%s already installed, skipping\n"), pref);
-          return TRUE;
+          if (strcmp (remote, origin) == 0)
+            {
+              g_printerr (_("%s already installed, skipping\n"), pref);
+              return TRUE;
+            }
+          else
+            {
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                           _("%s is already installed from other remote (%s)"), pref, origin);
+              return FALSE;
+            }
         }
     }
 
@@ -665,7 +678,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
     {
       FlatpakTransactionOp *op = l->data;
       g_autoptr(GError) local_error = NULL;
-      gboolean res;
+      gboolean res = TRUE;
       const char *pref;
       const char *opname;
       FlatpakTransactionOpKind kind;
@@ -704,6 +717,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                      self->no_pull,
                                      self->no_deploy,
                                      self->no_static_deltas,
+                                     self->reinstall,
                                      op->ref, op->remote,
                                      (const char **)op->subpaths,
                                      progress,
