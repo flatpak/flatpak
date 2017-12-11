@@ -284,7 +284,7 @@ FLATPAK_EXTERN GBytes        *   flatpak_installation_fetch_remote_metadata_sync
                                                                                   GCancellable        *cancellable,
                                                                                   GError             **error);
 FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
-                                                                             const char          *remote_name,
+                                                                             const char          *remote_or_uri,
                                                                              GCancellable        *cancellable,
                                                                              GError             **error);
 FLATPAK_EXTERN FlatpakRemoteRef  *flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
