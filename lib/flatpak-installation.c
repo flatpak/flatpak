@@ -2020,7 +2020,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
 /**
  * flatpak_installation_list_remote_refs_sync:
  * @self: a #FlatpakInstallation
- * @remote_name: the name of the remote
+ * @remote_or_uri: the name or URI of the remote
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -2031,7 +2031,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
  */
 GPtrArray *
 flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
-                                            const char          *remote_name,
+                                            const char          *remote_or_uri,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
@@ -2047,7 +2047,7 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state (dir, remote_or_uri, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2062,7 +2062,7 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
       FlatpakCollectionRef *coll_ref = key;
       const gchar *ref_commit = value;
 
-      ref = flatpak_remote_ref_new (coll_ref, ref_commit, remote_name, state);
+      ref = flatpak_remote_ref_new (coll_ref, ref_commit, remote_or_uri, state);
 
       if (ref)
         g_ptr_array_add (refs, ref);
