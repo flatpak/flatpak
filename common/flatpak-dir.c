@@ -8648,6 +8648,62 @@ cmp_remote (gconstpointer a,
   return prio_b - prio_a;
 }
 
+static gboolean
+origin_remote_matches (OstreeRepo   *repo,
+                       const char   *remote_name,
+                       const char   *url,
+                       const char   *main_ref,
+                       gboolean      gpg_verify,
+                       const char   *collection_id)
+{
+  g_autofree char *real_url = NULL;
+  g_autofree char *real_main_ref = NULL;
+  g_autofree char *real_collection_id = NULL;
+  gboolean noenumerate;
+  gboolean real_gpg_verify;
+
+  /* Must match url */
+  if (!ostree_repo_remote_get_url (repo, remote_name, &real_url, NULL))
+    return FALSE;
+  if (strcmp (url, real_url) != 0)
+    return FALSE;
+
+  /* Must be noenumerate */
+  if (!ostree_repo_get_remote_boolean_option (repo, remote_name,
+                                              "xa.noenumerate",
+                                              FALSE, &noenumerate,
+                                              NULL) ||
+      !noenumerate)
+    return FALSE;
+
+  /* Must be match gpg-verify.
+   * NOTE: We assume if all else matches the actual gpg key matches too. */
+  if (!ostree_repo_get_remote_boolean_option (repo, remote_name,
+                                              "gpg-verify",
+                                              FALSE, &real_gpg_verify,
+                                              NULL) ||
+      real_gpg_verify != gpg_verify)
+    return FALSE;
+
+  /* Must match main-ref */
+  if (ostree_repo_get_remote_option (repo, remote_name,
+                                     "xa.main-ref",
+                                     NULL, &real_main_ref,
+                                     NULL) &&
+      g_strcmp0 (main_ref, real_main_ref) != 0)
+    return FALSE;
+
+  /* Must match main-ref */
+  if (ostree_repo_get_remote_option (repo, remote_name,
+                                     "collection-id",
+                                     NULL, &real_collection_id,
+                                     NULL) &&
+      g_strcmp0 (main_ref, real_main_ref) != 0)
+    return FALSE;
+
+  return TRUE;
+}
+
 static char *
 create_origin_remote_config (OstreeRepo   *repo,
                              const char   *url,
@@ -8656,7 +8712,7 @@ create_origin_remote_config (OstreeRepo   *repo,
                              const char   *main_ref,
                              gboolean      gpg_verify,
                              const char   *collection_id,
-                             GKeyFile     *new_config)
+                             GKeyFile    **new_config)
 {
   g_autofree char *remote = NULL;
   g_auto(GStrv) remotes = NULL;
@@ -8674,6 +8730,9 @@ create_origin_remote_config (OstreeRepo   *repo,
         name = g_strdup_printf ("%s-%d-origin", id, version);
       version++;
 
+      if (origin_remote_matches (repo, name, url, main_ref, gpg_verify, collection_id))
+        return g_steal_pointer (&name);
+
       if (remotes == NULL ||
           !g_strv_contains ((const char * const *) remotes, name))
         remote = g_steal_pointer (&name);
@@ -8682,21 +8741,23 @@ create_origin_remote_config (OstreeRepo   *repo,
 
   group = g_strdup_printf ("remote \"%s\"", remote);
 
-  g_key_file_set_string (new_config, group, "url", url ? url : "");
+  *new_config = g_key_file_new ();
+
+  g_key_file_set_string (*new_config, group, "url", url ? url : "");
   if (title)
-    g_key_file_set_string (new_config, group, "xa.title", title);
-  g_key_file_set_string (new_config, group, "xa.noenumerate", "true");
-  g_key_file_set_string (new_config, group, "xa.prio", "0");
+    g_key_file_set_string (*new_config, group, "xa.title", title);
+  g_key_file_set_string (*new_config, group, "xa.noenumerate", "true");
+  g_key_file_set_string (*new_config, group, "xa.prio", "0");
   /* Don’t enable summary verification if a collection ID is set, as collection
    * IDs enable the verification of refs from commit metadata instead. */
-  g_key_file_set_string (new_config, group, "gpg-verify-summary", (gpg_verify && collection_id == NULL) ? "true" : "false");
-  g_key_file_set_string (new_config, group, "gpg-verify", gpg_verify ? "true" : "false");
+  g_key_file_set_string (*new_config, group, "gpg-verify-summary", (gpg_verify && collection_id == NULL) ? "true" : "false");
+  g_key_file_set_string (*new_config, group, "gpg-verify", gpg_verify ? "true" : "false");
   if (main_ref)
-    g_key_file_set_string (new_config, group, "xa.main-ref", main_ref);
+    g_key_file_set_string (*new_config, group, "xa.main-ref", main_ref);
 
 #ifdef FLATPAK_ENABLE_P2P
   if (collection_id)
-    g_key_file_set_string (new_config, group, "collection-id", collection_id);
+    g_key_file_set_string (*new_config, group, "collection-id", collection_id);
 #endif  /* FLATPAK_ENABLE_P2P */
 
   return g_steal_pointer (&remote);
@@ -8713,12 +8774,13 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
-  g_autoptr(GKeyFile) new_config = g_key_file_new ();
+  g_autoptr(GKeyFile) new_config = NULL;
   g_autofree char *remote = NULL;
 
-  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, gpg_data != NULL, collection_id, new_config);
+  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, gpg_data != NULL, collection_id, &new_config);
 
-  if (!flatpak_dir_modify_remote (self, remote, new_config,
+  if (new_config &&
+      !flatpak_dir_modify_remote (self, remote, new_config,
                                   gpg_data, cancellable, error))
     return NULL;
 
