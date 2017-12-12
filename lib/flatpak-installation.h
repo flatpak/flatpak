@@ -176,9 +176,15 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_get_current_installed_
                                                                                      const char          *name,
                                                                                      GCancellable        *cancellable,
                                                                                      GError             **error);
+
 FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_remotes (FlatpakInstallation *self,
                                                                        GCancellable        *cancellable,
                                                                        GError             **error);
+FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
+                                                                               const FlatpakRemoteType  types[],
+                                                                               gsize                    num_types,
+                                                                               GCancellable            *cancellable,
+                                                                               GError                 **error);
 FLATPAK_EXTERN FlatpakRemote        *flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
                                                                               const gchar         *name,
                                                                               GCancellable        *cancellable,
