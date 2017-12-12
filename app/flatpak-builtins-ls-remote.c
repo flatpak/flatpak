@@ -30,6 +30,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-utils.h"
 #include "flatpak-table-printer.h"
 
@@ -50,12 +51,33 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+typedef struct RemoteDirPair {
+  gchar *remote_name;
+  FlatpakDir *dir;
+} RemoteDirPair;
+
+static void
+remote_dir_pair_free (RemoteDirPair *pair)
+{
+  g_free (pair->remote_name);
+  g_object_unref (pair->dir);
+  g_free (pair);
+}
+
+static RemoteDirPair *
+remote_dir_pair_new (const char *remote_name, FlatpakDir *dir)
+{
+  RemoteDirPair *pair = g_new (RemoteDirPair, 1);
+  pair->remote_name = g_strdup (remote_name);
+  pair->dir = g_object_ref (dir);
+  return pair;
+}
+
 gboolean
 flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  FlatpakDir *dir;
   GHashTableIter refs_iter;
   GHashTableIter iter;
   gpointer refs_key;
@@ -67,20 +89,16 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   int i;
   const char **arches = flatpak_get_arches ();
   const char *opt_arches[] = {NULL, NULL};
-  g_auto(GStrv) remotes = NULL;
   gboolean has_remote;
   g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  g_autoptr(GHashTable) refs_hash = g_hash_table_new_full(g_direct_hash, g_direct_equal, (GDestroyNotify)g_hash_table_unref, g_free);
+  g_autoptr(GHashTable) refs_hash = g_hash_table_new_full(g_direct_hash, g_direct_equal, (GDestroyNotify)g_hash_table_unref, (GDestroyNotify)remote_dir_pair_free);
 
   context = g_option_context_new (_(" [REMOTE] - Show available runtimes and applications"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
-                                     &dirs, cancellable, error))
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, cancellable, error))
     return FALSE;
-
-  dir = g_ptr_array_index (dirs, 0);
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
@@ -88,33 +106,55 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   if (argc > 2)
     return usage_error (context, _("Too many arguments"), error);
 
-  if (argc < 2)
-    {
-      has_remote = FALSE;
-      remotes = flatpak_dir_list_remotes (dir, cancellable, error);
-      if (remotes == NULL)
-        return FALSE;
-    }
-  else
-    {
-      has_remote = TRUE;
-      remotes = g_new (char *, 2);
-      remotes[0] = g_strdup(argv[1]);
-      remotes[1] = NULL;
-    }
+  has_remote = (argc == 2);
 
-  for (i = 0; remotes[i] != NULL; i++)
+  if (has_remote)
     {
+      g_autoptr(FlatpakDir) preferred_dir = NULL;
       g_autoptr(GHashTable) refs = NULL;
-      const char *remote_name = remotes[i];
+      RemoteDirPair *remote_dir_pair = NULL;
 
-      if (!flatpak_dir_list_remote_refs (dir,
-                                         remote_name,
+      if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], &preferred_dir, cancellable, error))
+        return FALSE;
+
+      if (!flatpak_dir_list_remote_refs (preferred_dir,
+                                         argv[1],
                                          &refs,
                                          cancellable, error))
         return FALSE;
 
-      g_hash_table_insert (refs_hash, g_steal_pointer (&refs), g_strdup (remote_name));
+      remote_dir_pair = remote_dir_pair_new (argv[1], preferred_dir);
+      g_hash_table_insert (refs_hash, g_steal_pointer (&refs), remote_dir_pair);
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          g_auto(GStrv) remotes = NULL;
+          int j;
+
+          remotes = flatpak_dir_list_remotes (dir, cancellable, error);
+          if (remotes == NULL)
+            return FALSE;
+
+          for (j = 0; remotes[j] != NULL; j++)
+            {
+              g_autoptr(GHashTable) refs = NULL;
+              RemoteDirPair *remote_dir_pair = NULL;
+              const char *remote_name = remotes[j];
+
+              if (!flatpak_dir_list_remote_refs (dir,
+                                                 remote_name,
+                                                 &refs,
+                                                 cancellable, error))
+                return FALSE;
+
+              remote_dir_pair = remote_dir_pair_new (remote_name, dir);
+              g_hash_table_insert (refs_hash, g_steal_pointer (&refs), remote_dir_pair);
+            }
+        }
     }
 
   if (opt_arch != NULL)
@@ -142,7 +182,9 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   while (g_hash_table_iter_next (&refs_iter, &refs_key, &refs_value))
     {
       GHashTable *refs = refs_key;
-      char *remote = refs_value;
+      RemoteDirPair *remote_dir_pair = refs_value;
+      const char *remote = remote_dir_pair->remote_name;
+      FlatpakDir *dir = remote_dir_pair->dir;
       g_autoptr(GHashTable) names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
       g_hash_table_iter_init (&iter, refs);
@@ -285,16 +327,13 @@ flatpak_complete_ls_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  FlatpakDir *dir;
   int i;
 
   context = g_option_context_new ("");
 
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, NULL, NULL))
     return FALSE;
-
-  dir = g_ptr_array_index (dirs, 0);
 
   switch (completion->argc)
     {
@@ -304,13 +343,16 @@ flatpak_complete_ls_remote (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
       flatpak_complete_options (completion, user_entries);
 
-      {
-        g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
-        if (remotes == NULL)
-          return FALSE;
-        for (i = 0; remotes[i] != NULL; i++)
-          flatpak_complete_word (completion, "%s ", remotes[i]);
-      }
+      for (i = 0; i < dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          int j;
+          g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
+          if (remotes == NULL)
+            return FALSE;
+          for (j = 0; remotes[j] != NULL; j++)
+            flatpak_complete_word (completion, "%s ", remotes[j]);
+        }
 
       break;
     }

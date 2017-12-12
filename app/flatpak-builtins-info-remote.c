@@ -30,6 +30,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-utils.h"
 #include "flatpak-table-printer.h"
 
@@ -87,7 +88,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  FlatpakDir *dir;
+  g_autoptr(FlatpakDir) preferred_dir = NULL;
   g_autoptr(GVariant) commit_v = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
   const char *remote;
@@ -121,11 +122,8 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
-                                     &dirs, cancellable, error))
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, cancellable, error))
     return FALSE;
-
-  dir = g_ptr_array_index (dirs, 0);
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
@@ -136,19 +134,22 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
   remote = argv[1];
   pref = argv[2];
 
-  default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
+  if (!flatpak_resolve_duplicate_remotes (dirs, remote, &preferred_dir, cancellable, error))
+    return FALSE;
+
+  default_branch = flatpak_dir_get_remote_default_branch (preferred_dir, remote);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, NULL,
                                       &matched_kinds, &id, &arch, &branch, error))
     return FALSE;
 
-  ref = flatpak_dir_find_remote_ref (dir, remote, id, branch, default_branch, arch,
+  ref = flatpak_dir_find_remote_ref (preferred_dir, remote, id, branch, default_branch, arch,
                                      matched_kinds, &kind, cancellable, error);
   if (ref == NULL)
     return FALSE;
 
-  commit_v = flatpak_dir_fetch_remote_commit (dir, remote, ref, opt_commit, &commit, cancellable, error);
+  commit_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, opt_commit, &commit, cancellable, error);
   if (commit_v == NULL)
     return FALSE;
 
@@ -220,7 +221,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
               g_autofree char *p_formatted_timestamp = NULL;
               g_autoptr(GVariant) p_commit_v = NULL;
 
-              p_commit_v = flatpak_dir_fetch_remote_commit (dir, remote, ref, p, NULL, cancellable, NULL);
+              p_commit_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, p, NULL, cancellable, NULL);
               if (p_commit_v == NULL)
                 break;
 
@@ -282,7 +283,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
           c_v = NULL;
 
           if (c && opt_log)
-            c_v = flatpak_dir_fetch_remote_commit (dir, remote, ref, c, NULL, cancellable, NULL);
+            c_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, c, NULL, cancellable, NULL);
         }
       while (c_v != NULL);
     }
@@ -295,17 +296,14 @@ flatpak_complete_info_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  FlatpakDir *dir;
   FlatpakKinds kinds;
   int i;
 
   context = g_option_context_new ("");
 
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, NULL, NULL))
     return FALSE;
-
-  dir = g_ptr_array_index (dirs, 0);
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
@@ -317,18 +315,26 @@ flatpak_complete_info_remote (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
       flatpak_complete_options (completion, user_entries);
 
-      {
-        g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
-        if (remotes == NULL)
-          return FALSE;
-        for (i = 0; remotes[i] != NULL; i++)
-          flatpak_complete_word (completion, "%s ", remotes[i]);
-      }
+      for (i = 0; i < dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          int j;
+          g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
+          if (remotes == NULL)
+            return FALSE;
+          for (j = 0; remotes[j] != NULL; j++)
+            flatpak_complete_word (completion, "%s ", remotes[j]);
+        }
 
       break;
 
     default: /* REF */
-      flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, completion->argv[1]);
+      for (i = 0; i < dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, completion->argv[1]);
+        }
+
       break;
     }
 

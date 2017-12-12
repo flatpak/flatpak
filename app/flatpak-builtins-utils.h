@@ -46,4 +46,10 @@ FlatpakDir * flatpak_find_installed_pref (const char *pref,
                                           GCancellable *cancellable,
                                           GError **error);
 
+gboolean flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
+                                            const char   *remote_name,
+                                            FlatpakDir  **out_dir,
+                                            GCancellable *cancellable,
+                                            GError      **error);
+
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */
