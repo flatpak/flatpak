@@ -5599,15 +5599,37 @@ flatpak_dir_deploy (FlatpakDir          *self,
 }
 
 /* -origin remotes are deleted when the last ref refering to it is undeployed */
-static void
-maybe_prune_remote (FlatpakDir *self,
-                    const char *remote)
+void
+flatpak_dir_prune_origin_remote (FlatpakDir *self,
+                                 const char *remote)
 {
   if (remote != NULL &&
       g_str_has_suffix (remote, "-origin") &&
       flatpak_dir_get_remote_noenumerate (self, remote) &&
       !flatpak_dir_remote_has_deploys (self, remote))
-    ostree_repo_remote_delete (self->repo, remote, NULL, NULL);
+    {
+      if (flatpak_dir_use_system_helper (self, NULL))
+        {
+          FlatpakSystemHelper *system_helper;
+          const char *installation = flatpak_dir_get_id (self);
+          g_autoptr(GVariant) gpg_data_v = NULL;
+
+          system_helper = flatpak_dir_get_system_helper (self);
+          g_assert (system_helper != NULL);
+
+          gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
+
+          g_debug ("Calling system helper: ConfigureRemote");
+          flatpak_system_helper_call_configure_remote_sync (system_helper,
+                                                            0, remote,
+                                                            "",
+                                                            gpg_data_v,
+                                                            installation ? installation : "",
+                                                            NULL, NULL);
+        }
+      else
+        ostree_repo_remote_delete (self->repo, remote, NULL, NULL);
+    }
 }
 
 gboolean
@@ -5696,7 +5718,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
       if (!flatpak_dir_remove_ref (self, remove_ref_from_remote, ref, cancellable, error))
         goto out;
 
-      maybe_prune_remote (self, remove_ref_from_remote);
+      flatpak_dir_prune_origin_remote (self, remove_ref_from_remote);
     }
 
   /* Release lock before doing possibly slow prune */
@@ -6851,7 +6873,7 @@ flatpak_dir_uninstall (FlatpakDir          *self,
 
   glnx_release_lock_file (&lock);
 
-  maybe_prune_remote (self, repository);
+  flatpak_dir_prune_origin_remote (self, repository);
 
   if (!keep_ref)
     flatpak_dir_prune (self, cancellable, NULL);

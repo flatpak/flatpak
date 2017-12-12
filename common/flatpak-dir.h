@@ -549,6 +549,8 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *collection_id,
                                              GCancellable *cancellable,
                                              GError      **error);
+void       flatpak_dir_prune_origin_remote (FlatpakDir *self,
+                                            const char *remote);
 gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir   *self,
                                                    GBytes  *data,
                                                    const char *default_arch,
