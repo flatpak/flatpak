@@ -8806,6 +8806,9 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   gpg_data, cancellable, error))
     return NULL;
 
+  if (!ostree_repo_reload_config (self->repo, cancellable, error))
+    return FALSE;
+
   return g_steal_pointer (&remote);
 }
 

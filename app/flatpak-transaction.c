@@ -53,6 +53,7 @@ struct FlatpakTransaction {
   GHashTable *refs;
   GPtrArray *system_dirs;
   GList *ops;
+  GPtrArray *added_origin_remotes;
 
   gboolean no_interaction;
   gboolean no_pull;
@@ -63,6 +64,12 @@ struct FlatpakTransaction {
   gboolean reinstall;
 };
 
+static gboolean
+remote_name_is_file (const char *remote_name)
+{
+  return remote_name != NULL &&
+    g_str_has_prefix (remote_name, "file://");
+}
 
 /* Check if the ref is in the dir, or in the system dir, in case its a
  * user-dir or another system-wide installation. We want to avoid depending
@@ -178,6 +185,7 @@ flatpak_transaction_new (FlatpakDir *dir,
 
   t->dir = g_object_ref (dir);
   t->refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  t->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
 
   t->no_interaction = no_interaction;
   t->no_pull = no_pull;
@@ -195,6 +203,8 @@ flatpak_transaction_free (FlatpakTransaction *self)
   g_hash_table_unref (self->refs);
   g_list_free_full (self->ops, (GDestroyNotify)flatpak_transaction_operation_free);
   g_object_unref (self->dir);
+
+  g_ptr_array_unref (self->added_origin_remotes);
 
   if (self->system_dirs != NULL)
     g_ptr_array_free (self->system_dirs, TRUE);
@@ -463,6 +473,28 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   g_autofree char *remote_metadata = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GError) local_error = NULL;
+  g_autofree char *origin_remote = NULL;
+
+  if (remote_name_is_file (remote))
+    {
+      g_auto(GStrv) parts = NULL;
+      parts = g_strsplit (ref, "/", -1);
+
+      origin_remote = flatpak_dir_create_origin_remote (self->dir,
+                                                        remote, /* uri */
+                                                        parts[1],
+                                                        "Local repo",
+                                                        ref,
+                                                        NULL,
+                                                        NULL,
+                                                        NULL, error);
+      if (origin_remote == NULL)
+        return FALSE;
+
+      g_ptr_array_add (self->added_origin_remotes, g_strdup (origin_remote));
+
+      remote = origin_remote;
+    }
 
   pref = strchr (ref, '/') + 1;
 
@@ -671,6 +703,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 {
   GList *l;
   gboolean succeeded = TRUE;
+  int i;
 
   self->ops = g_list_reverse (self->ops);
 
@@ -815,11 +848,17 @@ flatpak_transaction_run (FlatpakTransaction *self,
             }
           else
             {
+              succeeded = FALSE;
               g_propagate_error (error, g_steal_pointer (&local_error));
-              return FALSE;
+              goto out;
             }
         }
     }
+
+ out:
+
+  for (i = 0; i < self->added_origin_remotes->len; i++)
+    flatpak_dir_prune_origin_remote (self->dir, g_ptr_array_index (self->added_origin_remotes, i));
 
   return succeeded;
 }
