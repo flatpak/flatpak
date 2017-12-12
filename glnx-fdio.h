@@ -29,6 +29,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/xattr.h>
+// For dirname(), and previously basename()
+#include <libgen.h>
 
 #include <glnx-macros.h>
 #include <glnx-errors.h>
@@ -41,9 +43,7 @@ G_BEGIN_DECLS
 static inline
 const char *glnx_basename (const char *path)
 {
-  gchar *base;
-
-  base = strrchr (path, G_DIR_SEPARATOR);
+  gchar *base = strrchr (path, G_DIR_SEPARATOR);
 
   if (base)
     return base + 1;
