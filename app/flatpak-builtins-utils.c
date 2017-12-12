@@ -326,3 +326,65 @@ flatpak_load_gpg_keys (char **gpg_import,
 
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
 }
+
+gboolean
+flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
+                                   const char   *remote_name,
+                                   FlatpakDir  **out_dir,
+                                   GCancellable *cancellable,
+                                   GError      **error)
+{
+  g_autoptr(GPtrArray) dirs_with_remote = NULL;
+  int chosen = 0;
+  int i;
+
+  dirs_with_remote = g_ptr_array_new ();
+  for (i = 0; i < dirs->len; i++)
+    {
+      FlatpakDir *dir = g_ptr_array_index (dirs, i);
+      g_auto(GStrv) remotes = NULL;
+      int j = 0;
+
+      remotes = flatpak_dir_list_remotes (dir, cancellable, error);
+      if (remotes == NULL)
+        return FALSE;
+
+      for (j = 0; remotes[j] != NULL; j++)
+        {
+          const char *this_remote = remotes[j];
+
+          if (g_strcmp0 (remote_name, this_remote) == 0)
+            g_ptr_array_add (dirs_with_remote, dir);
+        }
+    }
+
+  if (dirs_with_remote->len == 1)
+    chosen = 1;
+  else if (dirs_with_remote->len > 1)
+    {
+      g_print (_("Remote ‘%s’ found in multiple installations:\n"), remote_name);
+      for (i = 0; i < dirs_with_remote->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs_with_remote, i);
+          g_autofree char *dir_name = flatpak_dir_get_name (dir);
+          g_print("%d) %s\n", i + 1, dir_name);
+        }
+      chosen = flatpak_number_prompt (1, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
+      if (chosen == 0)
+        return flatpak_fail (error, _("No remote chosen to resolve ‘%s’ which exists in multiple installations"), remote_name);
+    }
+
+  if (out_dir)
+    {
+      if (dirs_with_remote->len == 0)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                       "Remote \"%s\" not found", remote_name);
+          return FALSE;
+        }
+      else
+        *out_dir = g_object_ref (g_ptr_array_index (dirs_with_remote, chosen - 1));
+    }
+
+  return TRUE;
+}
