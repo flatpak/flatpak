@@ -478,9 +478,6 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
   if (!flatpak_resolve_duplicate_remotes (dirs, remote_name, &preferred_dir, cancellable, error))
     return FALSE;
 
-  if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (preferred_dir), remote_name, NULL, NULL))
-    return flatpak_fail (error, _("No remote %s"), remote_name);
-
   if (opt_update_metadata)
     {
       g_autoptr(GError) local_error = NULL;
