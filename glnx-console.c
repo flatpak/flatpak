@@ -29,6 +29,13 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 
+/* For people with widescreen monitors and maximized terminals, it looks pretty
+ * bad to have an enormous progress bar. For much the same reason as web pages
+ * tend to have a maximum width;
+ * https://ux.stackexchange.com/questions/48982/suggest-good-max-width-for-fluid-width-design
+ */
+#define MAX_PROGRESSBAR_COLUMNS 20
+
 static char *current_text = NULL;
 static gint current_percent = -1;
 static gboolean locked;
@@ -232,7 +239,7 @@ text_percent_internal (const char *text,
   else
     {
       const guint textlen = MIN (input_textlen, ncolumns - bar_min);
-      const guint barlen = ncolumns - (textlen + 1);;
+      const guint barlen = MIN (MAX_PROGRESSBAR_COLUMNS, ncolumns - (textlen + 1));
 
       if (textlen > 0)
         {
@@ -245,7 +252,7 @@ text_percent_internal (const char *text,
         const guint textpercent_len = 5;
         const guint bar_internal_len = barlen - nbraces - textpercent_len;
         const guint eqlen = bar_internal_len * (percentage / 100.0);
-        const guint spacelen = bar_internal_len - eqlen; 
+        const guint spacelen = bar_internal_len - eqlen;
 
         fputc ('[', stdout);
         printpad (equals, n_equals, eqlen);
