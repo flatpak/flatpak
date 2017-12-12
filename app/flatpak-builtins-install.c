@@ -463,6 +463,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakDir *dir;
   const char *remote;
+  g_autofree char *remote_url = NULL;
   char **prefs = NULL;
   int i, n_prefs;
   g_autofree char *target_branch = NULL;
@@ -497,7 +498,15 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (argc < 3)
     return usage_error (context, _("REMOTE and REF must be specified"), error);
 
-  remote = argv[1];
+  if (g_path_is_absolute (argv[1]) ||
+      g_str_has_prefix (argv[1], "./"))
+    {
+      g_autoptr(GFile) remote_file = g_file_new_for_commandline_arg (argv[1]);
+      remote_url = g_file_get_uri (remote_file);
+      remote = remote_url;
+    }
+  else
+    remote = argv[1];
   prefs = &argv[2];
   n_prefs = argc - 2;
 

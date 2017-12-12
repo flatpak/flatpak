@@ -75,6 +75,11 @@
             --runtime option, or by supplying the initial element in the REF.
         </para>
         <para>
+            If <arg choice="plain">REMOTE</arg> is a uri or a path (absolute or relative starting with ./)
+            to a local repository, then that repository will be used as the source, and a temporary remote
+            will be created for the lifetime of the <arg choice="plain">REF</arg>.
+        </para>
+        <para>
             The alternative form of the command (<arg>--from</arg> or
             <arg>--bundle</arg> allows you to
             install directly from a source such as a .flatpak
