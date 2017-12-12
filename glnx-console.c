@@ -280,6 +280,32 @@ glnx_console_progress_text_percent (const char *text,
   text_percent_internal (text, percentage);
 }
 
+/**
+ * glnx_console_progress_n_items:
+ * @text: Show this text before the progress bar
+ * @current: An integer for how many items have been processed
+ * @total: An integer for how many items there are total
+ *
+ * On a tty, print to the console @text followed by [@current/@total],
+ * then an ASCII art progress bar, like glnx_console_progress_text_percent().
+ *
+ * You must have called glnx_console_lock() before invoking this
+ * function.
+ */
+void
+glnx_console_progress_n_items (const char     *text,
+                               guint           current,
+                               guint           total)
+{
+  g_return_if_fail (current <= total);
+  g_return_if_fail (total > 0);
+
+  g_autofree char *newtext = g_strdup_printf ("%s (%u/%u)", text, current, total);
+  /* Special case current == total to ensure we end at 100% */
+  int percentage = (current == total) ? 100 : (((double)current) / total * 100);
+  glnx_console_progress_text_percent (newtext, percentage);
+}
+
 void
 glnx_console_text (const char *text)
 {
