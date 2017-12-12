@@ -135,6 +135,11 @@ dir_get_system (const char *installation, GError **error)
   return system;
 }
 
+static void
+no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
+{
+}
+
 static gboolean
 handle_deploy (FlatpakSystemHelper   *object,
                GDBusMethodInvocation *invocation,
@@ -149,6 +154,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   gboolean is_update;
   gboolean is_oci;
   gboolean no_deploy;
@@ -303,11 +309,13 @@ handle_deploy (FlatpakSystemHelper   *object,
       main_context = g_main_context_new ();
       g_main_context_push_thread_default (main_context);
 
+      ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
+
       if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
                                              arg_origin,
                                              arg_ref,
                                              (const char **) arg_subpaths,
-                                             NULL,
+                                             ostree_progress,
                                              NULL, &error))
         {
           g_main_context_pop_thread_default (main_context);
@@ -316,6 +324,9 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
       g_main_context_pop_thread_default (main_context);
+
+      if (ostree_progress)
+        ostree_async_progress_finish (ostree_progress);
     }
   else if (local_pull)
     {
@@ -340,8 +351,10 @@ handle_deploy (FlatpakSystemHelper   *object,
       main_context = g_main_context_new ();
       g_main_context_push_thread_default (main_context);
 
+      ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
+
       if (!flatpak_dir_pull (system, arg_origin, arg_ref, NULL, NULL, (const char **)arg_subpaths, NULL,
-                             FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
+                             FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &error))
         {
           g_main_context_pop_thread_default (main_context);
@@ -349,7 +362,11 @@ handle_deploy (FlatpakSystemHelper   *object,
                                                  "Error pulling from repo: %s", error->message);
           return TRUE;
         }
+
       g_main_context_pop_thread_default (main_context);
+
+      if (ostree_progress)
+        ostree_async_progress_finish (ostree_progress);
     }
 
   if (!no_deploy)
