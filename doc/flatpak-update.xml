@@ -76,8 +76,8 @@
             version, with the --commit option.
         </para>
         <para>
-            Unless overridden with the --user or the --installation option, this command updates
-            the default system-wide installation.
+            Unless overridden with the --user, --system or --installation option, this command updates
+            any matching refs in the standard system-wide installation and the per-user one.
         </para>
 
     </refsect1>

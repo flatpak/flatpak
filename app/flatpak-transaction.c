@@ -157,6 +157,12 @@ flatpak_transaction_operation_free (FlatpakTransactionOp *self)
   g_free (self);
 }
 
+gboolean
+flatpak_transaction_is_empty (FlatpakTransaction  *self)
+{
+  return self->ops == NULL;
+}
+
 FlatpakTransaction *
 flatpak_transaction_new (FlatpakDir *dir,
                          gboolean no_interaction,
