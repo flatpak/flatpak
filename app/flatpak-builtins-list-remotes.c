@@ -154,7 +154,7 @@ flatpak_complete_list_remotes (FlatpakCompletion *completion)
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, NULL, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, NULL, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
