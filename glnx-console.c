@@ -36,8 +36,6 @@
  */
 #define MAX_PROGRESSBAR_COLUMNS 20
 
-static char *current_text = NULL;
-static gint current_percent = -1;
 static gboolean locked;
 
 static gboolean
@@ -154,8 +152,6 @@ glnx_console_lock (GLnxConsoleRef *console)
 
   locked = console->locked = TRUE;
 
-  current_percent = 0;
-
   if (console->is_tty)
     {
       if (g_once_init_enter (&sigwinch_initialized))
@@ -199,10 +195,6 @@ text_percent_internal (const char *text,
     text = NULL;
 
   const guint input_textlen = text ? strlen (text) : 0;
-
-  if (percentage == current_percent
-      && g_strcmp0 (text, current_text) == 0)
-    return;
 
   if (!stdout_is_tty ())
     {
@@ -331,9 +323,6 @@ glnx_console_unlock (GLnxConsoleRef *console)
 {
   g_return_if_fail (locked);
   g_return_if_fail (console->locked);
-
-  current_percent = -1;
-  g_clear_pointer (&current_text, g_free);
 
   if (console->is_tty)
     fputc ('\n', stdout);
