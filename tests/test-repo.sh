@@ -191,7 +191,7 @@ if [ x${USE_SYSTEMDIR-} == xyes ]; then
     if ${FLATPAK} --user remote-modify --title=NewTitle test-repo 2> remote-modify-error-log; then
         assert_not_reached "flatpak --user remote-modify should not work for system remotes"
     fi
-    assert_file_has_content remote-modify-error-log "No remote test-repo"
+    assert_file_has_content remote-modify-error-log "Remote \"test-repo\" not found"
 else
     ${FLATPAK} --user remote-modify --title=NewTitle test-repo
     ${FLATPAK} remotes -d | grep ^test-repo > repo-info
@@ -206,7 +206,7 @@ else
     if ${FLATPAK} --system remote-modify --title=NewTitle test-repo 2> remote-modify-error-log; then
         assert_not_reached "flatpak --system remote-modify should not work for user remotes"
     fi
-    assert_file_has_content remote-modify-error-log "No remote test-repo"
+    assert_file_has_content remote-modify-error-log "Remote \"test-repo\" not found"
 fi
 
 echo "ok remote-modify"
