@@ -226,7 +226,10 @@ test_list_remotes (void)
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GPtrArray) remotes = NULL;
+  g_autoptr(GPtrArray) remotes2 = NULL;
   FlatpakRemote *remote;
+  const FlatpakRemoteType types[] = { FLATPAK_REMOTE_TYPE_STATIC };
+  const FlatpakRemoteType types2[] = { FLATPAK_REMOTE_TYPE_LAN };
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -238,6 +241,30 @@ test_list_remotes (void)
 
   remote = g_ptr_array_index (remotes, 0);
   g_assert (FLATPAK_IS_REMOTE (remote));
+
+  remotes2 = flatpak_installation_list_remotes_by_type (inst, types,
+                                                        G_N_ELEMENTS (types),
+                                                        NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpuint (remotes2->len, ==, remotes->len);
+
+  for (guint i = 0; i < remotes->len; ++i)
+    {
+      FlatpakRemote *remote1 = g_ptr_array_index (remotes, i);
+      FlatpakRemote *remote2 = g_ptr_array_index (remotes2, i);
+      g_assert_cmpstr (flatpak_remote_get_name (remote1), ==,
+                       flatpak_remote_get_name (remote2));
+      g_assert_cmpstr (flatpak_remote_get_url (remote1), ==,
+                       flatpak_remote_get_url (remote2));
+    }
+
+  g_ptr_array_unref (remotes2);
+  remotes2 = flatpak_installation_list_remotes_by_type (inst,
+                                                        types2,
+                                                        G_N_ELEMENTS (types2),
+                                                        NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpuint (remotes2->len, ==, 0);
 }
 
 static void

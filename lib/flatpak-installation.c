@@ -1064,6 +1064,7 @@ static gboolean
 list_remotes_for_configured_remote (FlatpakInstallation  *self,
                                     const gchar          *remote_name,
                                     FlatpakDir           *dir,
+                                    gboolean              types_filter[],
                                     GPtrArray            *remotes  /* (element-type FlatpakRemote) */,
                                     GCancellable         *cancellable,
                                     GError              **error)
@@ -1079,6 +1080,11 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
   g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
   OstreeRepoFinder *finders[3] = { NULL, };
   gsize i;
+  guint finder_index = 0;
+
+  if (!types_filter[FLATPAK_REMOTE_TYPE_USB] &&
+      !types_filter[FLATPAK_REMOTE_TYPE_LAN])
+    return TRUE;
 
   /* Find the collection ID for @remote_name, or bail if there is none. */
   if (!ostree_repo_get_remote_option (flatpak_dir_get_repo (dir),
@@ -1096,12 +1102,19 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
   ref.ref_name = appstream_ref;
   refs[0] = &ref;
 
-  finder_mount = OSTREE_REPO_FINDER (ostree_repo_finder_mount_new (NULL));
-  finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
-  finders[0] = finder_mount;
-  finders[1] = finder_avahi;
+  if (types_filter[FLATPAK_REMOTE_TYPE_USB])
+    {
+      finder_mount = OSTREE_REPO_FINDER (ostree_repo_finder_mount_new (NULL));
+      finders[finder_index++] = finder_mount;
+    }
 
-  ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), NULL);  /* ignore failure */
+  if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
+    {
+      finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
+      finders[finder_index++] = finder_avahi;
+      ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), NULL);  /* ignore failure */
+    }
+
   ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
                                   (const OstreeCollectionRef * const *) refs,
                                   NULL,  /* no options */
@@ -1115,7 +1128,9 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
     g_main_context_iteration (context, TRUE);
 
   results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
-  ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
+
+  if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
+    ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
 
   g_main_context_pop_thread_default (context);
 
@@ -1132,26 +1147,31 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
 }
 
 /**
- * flatpak_installation_list_remotes:
+ * flatpak_installation_list_remotes_by_type:
  * @self: a #FlatpakInstallation
+ * @types: (array length=num_types): an array of #FlatpakRemoteType
+ * @num_types: the number of types provided in @types
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the remotes, in priority (highest first) order. For same priority,
- * an earlier added remote comes before a later added one.
+ * Lists only the remotes whose type is included in the @types argument.
  *
  * Returns: (transfer container) (element-type FlatpakRemote): a GPtrArray of
  *   #FlatpakRemote instances
  */
 GPtrArray *
-flatpak_installation_list_remotes (FlatpakInstallation *self,
-                                   GCancellable        *cancellable,
-                                   GError             **error)
+flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
+                                           const FlatpakRemoteType *types,
+                                           gsize                    num_types,
+                                           GCancellable            *cancellable,
+                                           GError                 **error)
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_auto(GStrv) remote_names = NULL;
   g_autoptr(GPtrArray) remotes = g_ptr_array_new_with_free_func (g_object_unref);
+  const guint NUM_FLATPAK_REMOTE_TYPES = 3;
+  gboolean types_filter[NUM_FLATPAK_REMOTE_TYPES];
   gsize i;
 
   remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
@@ -1164,18 +1184,52 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
   if (!flatpak_dir_maybe_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
-  for (i = 0; remote_names[i] != NULL; i++)
+  for (i = 0; i < NUM_FLATPAK_REMOTE_TYPES; ++i)
     {
-      g_ptr_array_add (remotes,
-                       flatpak_remote_new_with_dir (remote_names[i], dir_clone));
+      /* If NULL or an empty array of types is passed then we include all types */
+      types_filter[i] = (num_types == 0) ? TRUE : FALSE;
+    }
+
+  for (i = 0; i < num_types; ++i)
+    {
+      g_return_val_if_fail (types[i] < NUM_FLATPAK_REMOTE_TYPES, NULL);
+      types_filter[types[i]] = TRUE;
+    }
+
+  for (i = 0; remote_names[i] != NULL; ++i)
+    {
+      if (types_filter[FLATPAK_REMOTE_TYPE_STATIC])
+        g_ptr_array_add (remotes, flatpak_remote_new_with_dir (remote_names[i],
+                                                               dir_clone));
 
       /* Add the dynamic mirrors of this remote. */
       if (!list_remotes_for_configured_remote (self, remote_names[i], dir_clone,
-                                               remotes, cancellable, error))
+                                               types_filter, remotes,
+                                               cancellable, error))
         return NULL;
     }
 
   return g_steal_pointer (&remotes);
+}
+
+/**
+ * flatpak_installation_list_remotes:
+ * @self: a #FlatpakInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the remotes, in priority (highest first) order. For same priority,
+ * an earlier added remote comes before a later added one.
+ *
+ * Returns: (transfer container) (element-type FlatpakRemote): an GPtrArray of
+ *   #FlatpakRemote instances
+ */
+GPtrArray *
+flatpak_installation_list_remotes (FlatpakInstallation *self,
+                                   GCancellable        *cancellable,
+                                   GError             **error)
+{
+  return flatpak_installation_list_remotes_by_type (self, NULL, 0, cancellable, error);
 }
 
 /**
