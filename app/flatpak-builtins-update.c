@@ -67,10 +67,11 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable, GError **error)
+update_appstream (GPtrArray *dirs, const char *remote, GCancellable *cancellable, GError **error)
 {
   gboolean changed;
   gboolean res;
+  int i, j;
 
   if (opt_arch == NULL)
     opt_arch = (char *)flatpak_get_arch ();
@@ -78,40 +79,60 @@ update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable
   if (remote == NULL)
     {
       g_auto(GStrv) remotes = NULL;
-      int i;
 
-      remotes = flatpak_dir_list_remotes (dir, cancellable, error);
-      if (remotes == NULL)
-        return FALSE;
-
-      for (i = 0; remotes[i] != NULL; i++)
+      for (j = 0; j < dirs->len; j++)
         {
-          g_autoptr(GError) local_error = NULL;
-          FlatpakTerminalProgress terminal_progress = { 0 };
+          FlatpakDir *dir = g_ptr_array_index (dirs, j);
 
-          if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
-              flatpak_dir_get_remote_noenumerate (dir, remotes[i]))
-            continue;
+          remotes = flatpak_dir_list_remotes (dir, cancellable, error);
+          if (remotes == NULL)
+            return FALSE;
 
-          g_print (_("Updating appstream for remote %s\n"), remotes[i]);
-          g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
-          if (!flatpak_dir_update_appstream (dir, remotes[i], opt_arch, &changed,
-                                             progress, cancellable, &local_error))
-            g_printerr (_("Error updating: %s\n"), local_error->message);
-          ostree_async_progress_finish (progress);
-          flatpak_terminal_progress_end (&terminal_progress);
+          for (i = 0; remotes[i] != NULL; i++)
+            {
+              g_autoptr(GError) local_error = NULL;
+              FlatpakTerminalProgress terminal_progress = { 0 };
+
+              if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
+                  flatpak_dir_get_remote_noenumerate (dir, remotes[i]))
+                continue;
+
+              g_print (_("Updating appstream for remote %s\n"), remotes[i]);
+              g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
+              if (!flatpak_dir_update_appstream (dir, remotes[i], opt_arch, &changed,
+                                                 progress, cancellable, &local_error))
+                g_printerr (_("Error updating: %s\n"), local_error->message);
+              ostree_async_progress_finish (progress);
+              flatpak_terminal_progress_end (&terminal_progress);
+            }
         }
     }
   else
     {
-      FlatpakTerminalProgress terminal_progress = { 0 };
-      g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
-      res = flatpak_dir_update_appstream (dir, remote, opt_arch, &changed,
-                                          progress, cancellable, error);
-      ostree_async_progress_finish (progress);
-      if (!res)
-        return FALSE;
-      flatpak_terminal_progress_end (&terminal_progress);
+      gboolean found = FALSE;
+
+      for (j = 0; j < dirs->len; j++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, j);
+
+          if (flatpak_dir_has_remote (dir, remote))
+            {
+              FlatpakTerminalProgress terminal_progress = { 0 };
+
+              found = TRUE;
+
+              g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
+              res = flatpak_dir_update_appstream (dir, remote, opt_arch, &changed,
+                                                  progress, cancellable, error);
+              ostree_async_progress_finish (progress);
+              if (!res)
+                return FALSE;
+              flatpak_terminal_progress_end (&terminal_progress);
+            }
+        }
+
+      if (!found)
+        return flatpak_fail (error, _("Remote \"%s\" not found"), remote);
     }
 
   return TRUE;
@@ -125,25 +146,22 @@ flatpak_builtin_update (int           argc,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  FlatpakDir *dir;
   char **prefs = NULL;
-  int i, j, n_prefs;
+  int i, j, k, n_prefs;
   const char *default_branch = NULL;
   FlatpakKinds kinds;
-  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GPtrArray) transactions = NULL;
 
   context = g_option_context_new (_("[REF...] - Update applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS,
                                      &dirs, cancellable, error))
     return FALSE;
 
-  dir = g_ptr_array_index (dirs, 0);
-
   if (opt_appstream)
-    return update_appstream (dir, argc >= 2 ? argv[1] : NULL, cancellable, error);
+    return update_appstream (dirs, argc >= 2 ? argv[1] : NULL, cancellable, error);
 
   prefs = &argv[1];
   n_prefs = argc - 1;
@@ -155,8 +173,16 @@ flatpak_builtin_update (int           argc,
       n_prefs = 1;
     }
 
-  transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+  transactions = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_transaction_free);
+
+  for (k = 0; k < dirs->len; k++)
+    {
+      FlatpakTransaction *transaction = flatpak_transaction_new (g_ptr_array_index (dirs, k),
+                                                                 opt_yes, opt_no_pull, opt_no_deploy,
+                                                                 opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+      g_ptr_array_add (transactions, transaction);
+    }
+
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   g_print (_("Looking for updates...\n"));
@@ -182,64 +208,70 @@ flatpak_builtin_update (int           argc,
             return FALSE;
         }
 
-      if (kinds & FLATPAK_KINDS_APP)
+      for (k = 0; k < dirs->len; k++)
         {
-          g_auto(GStrv) refs = NULL;
+          FlatpakDir *dir = g_ptr_array_index (dirs, k);
+          FlatpakTransaction *transaction = g_ptr_array_index (transactions, k);
 
-          if (!flatpak_dir_list_refs (dir, "app", &refs,
-                                      cancellable,
-                                      error))
-            return FALSE;
-
-          for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          if (kinds & FLATPAK_KINDS_APP)
             {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
-              if (parts == NULL)
+              g_auto(GStrv) refs = NULL;
+
+              if (!flatpak_dir_list_refs (dir, "app", &refs,
+                                          cancellable,
+                                          error))
                 return FALSE;
 
-              if (id != NULL && strcmp (parts[1], id) != 0)
-                continue;
+              for (i = 0; refs != NULL && refs[i] != NULL; i++)
+                {
+                  g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
+                  if (parts == NULL)
+                    return FALSE;
 
-              if (arch != NULL && strcmp (parts[2], arch) != 0)
-                continue;
+                  if (id != NULL && strcmp (parts[1], id) != 0)
+                    continue;
 
-              if (branch != NULL && strcmp (parts[3], branch) != 0)
-                continue;
+                  if (arch != NULL && strcmp (parts[2], arch) != 0)
+                    continue;
 
-              found = TRUE;
-              if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, opt_commit, error))
-                return FALSE;
+                  if (branch != NULL && strcmp (parts[3], branch) != 0)
+                    continue;
+
+                  found = TRUE;
+                  if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, opt_commit, error))
+                    return FALSE;
+                }
             }
-        }
 
-      if (kinds & FLATPAK_KINDS_RUNTIME)
-        {
-          g_auto(GStrv) refs = NULL;
-
-          if (!flatpak_dir_list_refs (dir, "runtime", &refs,
-                                      cancellable,
-                                      error))
-            return FALSE;
-
-          for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          if (kinds & FLATPAK_KINDS_RUNTIME)
             {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
+              g_auto(GStrv) refs = NULL;
 
-              if (parts == NULL)
+              if (!flatpak_dir_list_refs (dir, "runtime", &refs,
+                                          cancellable,
+                                          error))
                 return FALSE;
 
-              if (id != NULL && strcmp (parts[1], id) != 0)
-                continue;
+              for (i = 0; refs != NULL && refs[i] != NULL; i++)
+                {
+                  g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
 
-              if (arch != NULL && strcmp (parts[2], arch) != 0)
-                continue;
+                  if (parts == NULL)
+                    return FALSE;
 
-              if (branch != NULL && strcmp (parts[3], branch) != 0)
-                continue;
+                  if (id != NULL && strcmp (parts[1], id) != 0)
+                    continue;
 
-              found = TRUE;
-              if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, opt_commit, error))
-                return FALSE;
+                  if (arch != NULL && strcmp (parts[2], arch) != 0)
+                    continue;
+
+                  if (branch != NULL && strcmp (parts[3], branch) != 0)
+                    continue;
+
+                  found = TRUE;
+                  if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, opt_commit, error))
+                    return FALSE;
+                }
             }
         }
 
@@ -251,14 +283,22 @@ flatpak_builtin_update (int           argc,
         }
     }
 
-  if (!flatpak_transaction_update_metadata (transaction, n_prefs == 0, cancellable, error))
-    return FALSE;
+  for (k = 0; k < dirs->len; k++)
+    {
+      FlatpakTransaction *transaction = g_ptr_array_index (transactions, k);
 
-  if (!flatpak_transaction_run (transaction, FALSE, cancellable, error))
-    return FALSE;
+      if (!flatpak_transaction_is_emptry (transaction))
+        {
+          if (!flatpak_transaction_update_metadata (transaction, n_prefs == 0, cancellable, error))
+            return FALSE;
+
+          if (!flatpak_transaction_run (transaction, FALSE, cancellable, error))
+            return FALSE;
+        }
+    }
 
   if (n_prefs == 0)
-    return update_appstream (dir, NULL, cancellable, error);
+    return update_appstream (dirs, NULL, cancellable, error);
 
   return TRUE;
 }
