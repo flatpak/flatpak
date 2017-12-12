@@ -1586,6 +1586,8 @@ flatpak_context_save_metadata (FlatpakContext *context,
             g_ptr_array_add (array, g_strconcat (key, ":create", NULL));
           else if (value != NULL)
             g_ptr_array_add (array, g_strdup (key));
+          else
+            g_ptr_array_add (array, g_strconcat ("!", key, NULL));
         }
 
       g_key_file_set_string_list (metakey,
