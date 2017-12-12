@@ -43,7 +43,8 @@ gboolean
 flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   g_autoptr(GFile) deploy_base = NULL;
   const char *pref;
   const char *default_branch = NULL;
@@ -57,8 +58,12 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   context = g_option_context_new (_("APP BRANCH - Make branch of application current"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (argc < 2)
     return usage_error (context, _("APP must be specified"), error);
@@ -109,14 +114,18 @@ gboolean
 flatpak_complete_make_current_app (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   g_autoptr(GError) error = NULL;
   g_auto(GStrv) refs = NULL;
   int i;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   switch (completion->argc)
     {

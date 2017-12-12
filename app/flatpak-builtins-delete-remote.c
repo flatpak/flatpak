@@ -43,7 +43,8 @@ gboolean
 flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   const char *remote_name;
 
   context = g_option_context_new (_("NAME - Delete a remote repository"));
@@ -51,8 +52,12 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 
   g_option_context_add_main_entries (context, delete_options, NULL);
 
-  if (!flatpak_option_context_parse (context, NULL, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, NULL, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (argc < 2)
     return usage_error (context, _("NAME must be specified"), error);
@@ -73,12 +78,16 @@ gboolean
 flatpak_complete_delete_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   int i;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, delete_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, delete_options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   switch (completion->argc)
     {
