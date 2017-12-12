@@ -1218,8 +1218,8 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the remotes, in priority (highest first) order. For same priority,
- * an earlier added remote comes before a later added one.
+ * Lists the static remotes, in priority (highest first) order. For same
+ * priority, an earlier added remote comes before a later added one.
  *
  * Returns: (transfer container) (element-type FlatpakRemote): an GPtrArray of
  *   #FlatpakRemote instances
@@ -1229,7 +1229,8 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
                                    GCancellable        *cancellable,
                                    GError             **error)
 {
-  return flatpak_installation_list_remotes_by_type (self, NULL, 0, cancellable, error);
+  const FlatpakRemoteType types[] = { FLATPAK_REMOTE_TYPE_STATIC };
+  return flatpak_installation_list_remotes_by_type (self, types, 1, cancellable, error);
 }
 
 /**
