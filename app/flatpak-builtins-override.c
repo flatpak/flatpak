@@ -51,7 +51,7 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
   g_autoptr(FlatpakContext) overrides = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  context = g_option_context_new (_("APP - Override settings for application"));
+  context = g_option_context_new (_("[APP] - Override settings [for application]"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   arg_context = flatpak_context_new ();
@@ -64,16 +64,17 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
 
   dir = g_ptr_array_index (dirs, 0);
 
-  if (argc < 2)
-    return usage_error (context, _("APP must be specified"), error);
-
   if (argc > 2)
     return usage_error (context, _("Too many arguments"), error);
 
-  app = argv[1];
-
-  if (!flatpak_is_valid_name (app, &my_error))
-    return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app, my_error->message);
+  if (argc >= 2)
+    {
+      app = argv[1];
+      if (!flatpak_is_valid_name (app, &my_error))
+        return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app, my_error->message);
+    }
+  else
+    app = NULL;
 
   metakey = flatpak_load_override_keyfile (app, flatpak_dir_is_user (dir), &my_error);
   if (metakey == NULL)
