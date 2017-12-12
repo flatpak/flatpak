@@ -32,7 +32,7 @@
             <cmdsynopsis>
                 <command>flatpak override</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">APP</arg>
+                <arg choice="opt">APP</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -48,6 +48,10 @@
             requested when it is started. But the user can override it
             on a particular instance by specifying extra arguments to
             flatpak run, or every time by using flatpak override.
+        </para>
+        <para>
+            If the application id is not specified then the overrides affect all applications,
+            but the per-application overrides can override the global overrides.
         </para>
         <para>
             Unless overridden with the --user or --installation options, this command
