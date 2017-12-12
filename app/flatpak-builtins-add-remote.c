@@ -305,7 +305,8 @@ flatpak_builtin_add_remote (int argc, char **argv,
                             GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   g_autoptr(GFile) file = NULL;
   g_auto(GStrv) remotes = NULL;
   g_autofree char *remote_url = NULL;
@@ -321,9 +322,12 @@ flatpak_builtin_add_remote (int argc, char **argv,
 
   g_option_context_add_main_entries (context, common_options, NULL);
 
-  if (!flatpak_option_context_parse (context, add_options, &argc, &argv, FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO, &dir,
-                                     cancellable, error))
+  if (!flatpak_option_context_parse (context, add_options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (argc < 2)
     return usage_error (context, _("NAME must be specified"), error);
@@ -424,11 +428,11 @@ gboolean
 flatpak_complete_add_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
 
   context = g_option_context_new ("");
   g_option_context_add_main_entries (context, common_options, NULL);
-  if (!flatpak_option_context_parse (context, add_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, add_options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, NULL, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
@@ -450,7 +454,8 @@ gboolean
 flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   const char *remote_name;
@@ -461,8 +466,12 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   g_option_context_add_main_entries (context, common_options, NULL);
 
-  if (!flatpak_option_context_parse (context, modify_options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, modify_options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (argc < 2)
     return usage_error (context, _("Remote NAME must be specified"), error);
@@ -508,13 +517,17 @@ gboolean
 flatpak_complete_modify_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   int i;
 
   context = g_option_context_new ("");
   g_option_context_add_main_entries (context, common_options, NULL);
-  if (!flatpak_option_context_parse (context, modify_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, modify_options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   switch (completion->argc)
     {

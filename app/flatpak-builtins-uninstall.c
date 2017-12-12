@@ -54,7 +54,8 @@ gboolean
 flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   char **prefs = NULL;
   int i, j, n_prefs;
   const char *default_branch = NULL;
@@ -69,8 +70,12 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   context = g_option_context_new (_("REF... - Uninstall an application"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (argc < 2)
     return usage_error (context, _("Must specify at least one REF"), error);
@@ -169,12 +174,16 @@ gboolean
 flatpak_complete_uninstall (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   FlatpakKinds kinds;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 

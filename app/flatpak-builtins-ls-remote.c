@@ -54,7 +54,8 @@ gboolean
 flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   GHashTableIter refs_iter;
   GHashTableIter iter;
   gpointer refs_key;
@@ -74,8 +75,12 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   context = g_option_context_new (_(" [REMOTE] - Show available runtimes and applications"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
@@ -279,13 +284,17 @@ gboolean
 flatpak_complete_ls_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   int i;
 
   context = g_option_context_new ("");
 
-  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   switch (completion->argc)
     {
