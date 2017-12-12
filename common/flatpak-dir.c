@@ -8907,6 +8907,25 @@ flatpak_dir_find_remote_by_uri (FlatpakDir   *self,
   return NULL;
 }
 
+gboolean
+flatpak_dir_has_remote (FlatpakDir   *self,
+                        const char   *remote_name)
+{
+  GKeyFile *config = NULL;
+  g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
+
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, NULL))
+    return FALSE;
+
+  if (self->repo == NULL)
+    return FALSE;
+
+  config = ostree_repo_get_config (self->repo);
+
+  return g_key_file_has_group (config, group);
+}
+
+
 char **
 flatpak_dir_list_remotes (FlatpakDir   *self,
                           GCancellable *cancellable,
