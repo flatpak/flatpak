@@ -30,6 +30,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 
 static gboolean opt_force;
 
@@ -43,7 +44,8 @@ gboolean
 flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  g_autoptr(FlatpakDir) preferred_dir = NULL;
   const char *remote_name;
 
   context = g_option_context_new (_("NAME - Delete a remote repository"));
@@ -51,7 +53,8 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 
   g_option_context_add_main_entries (context, delete_options, NULL);
 
-  if (!flatpak_option_context_parse (context, NULL, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, NULL, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -62,7 +65,10 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
   if (argc > 2)
     return usage_error (context, _("Too many arguments"), error);
 
-  if (!flatpak_dir_remove_remote (dir, opt_force, remote_name,
+  if (!flatpak_resolve_duplicate_remotes (dirs, remote_name, &preferred_dir, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_remove_remote (preferred_dir, opt_force, remote_name,
                                   cancellable, error))
     return FALSE;
 
@@ -73,11 +79,12 @@ gboolean
 flatpak_complete_delete_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
   int i;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, delete_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, delete_options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
@@ -88,13 +95,16 @@ flatpak_complete_delete_remote (FlatpakCompletion *completion)
       flatpak_complete_options (completion, delete_options);
       flatpak_complete_options (completion, user_entries);
 
-      {
-        g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
-        if (remotes == NULL)
-          return FALSE;
-        for (i = 0; remotes[i] != NULL; i++)
-          flatpak_complete_word (completion, "%s ", remotes[i]);
-      }
+      for (i = 0; i < dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          int j;
+          g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
+          if (remotes == NULL)
+            return FALSE;
+          for (j = 0; remotes[j] != NULL; j++)
+            flatpak_complete_word (completion, "%s ", remotes[j]);
+        }
 
       break;
     }

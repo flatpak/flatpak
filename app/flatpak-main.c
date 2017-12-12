@@ -40,7 +40,8 @@ static gboolean opt_default_arch;
 static gboolean opt_supported_arches;
 static gboolean opt_gl_drivers;
 static gboolean opt_user;
-static char *opt_installation;
+static gboolean opt_system;
+static char **opt_installations;
 
 static gboolean is_in_complete;
 
@@ -138,8 +139,8 @@ static GOptionEntry empty_entries[] = {
 
 GOptionEntry user_entries[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Work on user installations"), NULL },
-  { "system", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_user, N_("Work on system-wide installations (default)"), NULL },
-  { "installation", 0, 0, G_OPTION_ARG_STRING, &opt_installation, N_("Work on a specific system-wide installation"), N_("NAME") },
+  { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Work on system-wide installations (default)"), NULL },
+  { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Work on specific system-wide installation(s)"), N_("NAME") },
   { NULL }
 };
 
@@ -221,11 +222,32 @@ flatpak_option_context_parse (GOptionContext     *context,
                               int                *argc,
                               char             ***argv,
                               FlatpakBuiltinFlags flags,
-                              FlatpakDir        **out_dir,
+                              GPtrArray         **out_dirs,
                               GCancellable       *cancellable,
                               GError            **error)
 {
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+
+  if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR) &&
+      !(flags & FLATPAK_BUILTIN_FLAG_ONE_DIR) &&
+      !(flags & FLATPAK_BUILTIN_FLAG_STANDARD_DIRS) &&
+      !(flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS))
+    g_assert_not_reached ();
+
+  if (flags & FLATPAK_BUILTIN_FLAG_NO_DIR &&
+      (flags & FLATPAK_BUILTIN_FLAG_ONE_DIR ||
+       flags & FLATPAK_BUILTIN_FLAG_STANDARD_DIRS ||
+       flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS))
+    g_assert_not_reached ();
+
+  if (flags & FLATPAK_BUILTIN_FLAG_ONE_DIR &&
+      (flags & FLATPAK_BUILTIN_FLAG_STANDARD_DIRS ||
+       flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS))
+    g_assert_not_reached ();
+
+  if (flags & FLATPAK_BUILTIN_FLAG_STANDARD_DIRS &&
+      flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS)
+    g_assert_not_reached ();
 
   if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     g_option_context_add_main_entries (context, user_entries, NULL);
@@ -282,33 +304,97 @@ flatpak_option_context_parse (GOptionContext     *context,
 
   if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     {
-      if (opt_user)
-        dir = flatpak_dir_get_user ();
-      else if (opt_installation == NULL)
-        dir = flatpak_dir_get_system_default ();
-      else
+      dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+      int i;
+
+      if (!(flags & FLATPAK_BUILTIN_FLAG_ONE_DIR))
         {
-          dir = flatpak_dir_get_system_by_id (opt_installation, cancellable, error);
-          if (dir == NULL)
-            return FALSE;
+          /*
+           * FLATPAK_BUILTIN_FLAG_STANDARD_DIRS or FLATPAK_BUILTIN_FLAG_ALL_DIRS
+           * must be set.
+           */
+          if (opt_user || (!opt_system && opt_installations == NULL))
+            g_ptr_array_add (dirs, flatpak_dir_get_user ());
+
+          if (opt_system || (!opt_user && opt_installations == NULL))
+            g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
+
+          if (opt_installations != NULL)
+            {
+              for (i = 0; opt_installations[i] != NULL; i++)
+                {
+                  FlatpakDir *installation_dir = NULL;
+
+                  /* Already included the default system installation */
+                  if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
+                    continue;
+
+                  installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
+                  if (installation_dir == NULL)
+                    return FALSE;
+
+                  g_ptr_array_add (dirs, installation_dir);
+                }
+            }
+
+          if (flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS &&
+              opt_installations == NULL && !opt_user && !opt_system)
+            {
+              g_autoptr(GPtrArray) system_dirs = NULL;
+
+              g_ptr_array_set_size (dirs, 0);
+              g_ptr_array_add (dirs, flatpak_dir_get_user ());
+
+              system_dirs = flatpak_dir_get_system_list (cancellable, error);
+              for (i = 0; i < system_dirs->len; i++)
+                {
+                  FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
+                  g_ptr_array_add (dirs, g_object_ref (dir));
+                }
+            }
+        }
+      else /* FLATPAK_BUILTIN_FLAG_ONE_DIR */
+        {
+          FlatpakDir *dir;
+
+          if (opt_system || (!opt_user && opt_installations == NULL))
+            dir = flatpak_dir_get_system_default ();
+          else if (opt_user)
+            dir = flatpak_dir_get_user ();
+          else if (opt_installations != NULL)
+            {
+              if (g_strv_length (opt_installations) > 1)
+                return usage_error (context, _("The --installation option was used multiple times"
+                                               "for a command that works on one installation"), error);
+              dir = flatpak_dir_get_system_by_id (opt_installations[0], cancellable, error);
+              if (dir == NULL)
+                return FALSE;
+            }
+
+          g_ptr_array_add (dirs, dir);
         }
 
-      if (flags & FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO)
+      for (i = 0; i < dirs->len; i++)
         {
-          if (!flatpak_dir_maybe_ensure_repo (dir, cancellable, error))
-            return FALSE;
-        }
-      else
-        {
-          if (!flatpak_dir_ensure_repo (dir, cancellable, error))
-            return FALSE;
-        }
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
 
-      flatpak_log_dir_access (dir);
+          if (flags & FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO)
+            {
+              if (!flatpak_dir_maybe_ensure_repo (dir, cancellable, error))
+                return FALSE;
+            }
+          else
+            {
+              if (!flatpak_dir_ensure_repo (dir, cancellable, error))
+                return FALSE;
+            }
+
+          flatpak_log_dir_access (dir);
+        }
     }
 
-  if (out_dir)
-    *out_dir = g_steal_pointer (&dir);
+  if (out_dirs)
+    *out_dirs = g_steal_pointer (&dirs);
 
   return TRUE;
 }

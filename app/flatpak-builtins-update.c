@@ -124,7 +124,8 @@ flatpak_builtin_update (int           argc,
                         GError      **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   char **prefs = NULL;
   int i, j, n_prefs;
   const char *default_branch = NULL;
@@ -134,8 +135,12 @@ flatpak_builtin_update (int           argc,
   context = g_option_context_new (_("[REF...] - Update applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (opt_appstream)
     return update_appstream (dir, argc >= 2 ? argv[1] : NULL, cancellable, error);
@@ -262,12 +267,16 @@ gboolean
 flatpak_complete_update (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   FlatpakKinds kinds;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 

@@ -46,8 +46,10 @@
             remote repositories with <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
         </para>
         <para>
-            Unless overridden with the --user or --installation options, this command
-            uses the default system-wide configuration.
+            Unless overridden with the --system, --user, or --installation options,
+            this command uses either the default system-wide installation or the
+            per-user one, depending on which has the specified
+            <arg choice="plain">REMOTE</arg>.
         </para>
 
     </refsect1>

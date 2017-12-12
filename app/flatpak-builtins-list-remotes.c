@@ -34,15 +34,9 @@
 #include "flatpak-table-printer.h"
 
 static gboolean opt_show_details;
-static gboolean opt_user;
-static gboolean opt_system;
 static gboolean opt_show_disabled;
-static char **opt_installations;
 
 static GOptionEntry options[] = {
-  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
-  { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
-  { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Show specific system-wide installations"), NULL },
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show remote details"), NULL },
   { "show-disabled", 0, 0, G_OPTION_ARG_NONE, &opt_show_disabled, N_("Show disabled remotes"), NULL },
   { NULL }
@@ -59,45 +53,12 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   context = g_option_context_new (_(" - List remote repositories"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, cancellable, error))
     return FALSE;
 
   if (argc > 1)
     return usage_error (context, _("Too many arguments"), error);
-
-  if (!opt_user && !opt_system && opt_installations == NULL)
-    {
-      /* Default: All system and user remotes */
-      opt_user = opt_system = TRUE;
-    }
-
-  dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-
-  if (opt_user)
-    g_ptr_array_add (dirs, flatpak_dir_get_user ());
-
-  if (opt_system)
-    g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
-
-  if (opt_installations != NULL)
-    {
-      int i = 0;
-
-      for (i = 0; opt_installations[i] != NULL; i++)
-        {
-          FlatpakDir *installation_dir = NULL;
-
-          /* Already included the default system installation. */
-          if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
-            continue;
-
-          installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
-          if (installation_dir == NULL)
-            return FALSE;
-
-          g_ptr_array_add (dirs, installation_dir);
-        }
-    }
 
   printer = flatpak_table_printer_new ();
 
@@ -115,8 +76,6 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, j);
       g_auto(GStrv) remotes = NULL;
-
-      flatpak_log_dir_access (dir);
 
       remotes = flatpak_dir_list_remotes (dir, cancellable, error);
       if (remotes == NULL)
@@ -158,9 +117,7 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
           flatpak_table_printer_add_column (printer, ""); /* Options */
 
-          if ((opt_user && opt_system) || (opt_user && opt_installations != NULL)
-              || (opt_system && opt_installations != NULL)
-              || (opt_installations != NULL && g_strv_length (opt_installations) > 1))
+          if (dirs->len > 1)
             {
               g_autofree char *dir_id = flatpak_dir_get_name (dir);
               flatpak_table_printer_append_with_comma (printer, dir_id);
@@ -194,10 +151,10 @@ gboolean
 flatpak_complete_list_remotes (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, NULL, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)

@@ -34,18 +34,12 @@
 #include "flatpak-table-printer.h"
 
 static gboolean opt_show_details;
-static gboolean opt_user;
-static gboolean opt_system;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_all;
-static char **opt_installations;
 static char *opt_arch;
 
 static GOptionEntry options[] = {
-  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
-  { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
-  { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Show specific system-wide installations"), NULL },
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show extra information"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
@@ -278,87 +272,22 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
 }
 
 static gboolean
-print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gboolean print_user, char **installations, const char *arch, GCancellable *cancellable, GError **error)
+print_installed_refs (gboolean app, gboolean runtime, GPtrArray *dirs, const char *arch, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GPtrArray) refs_array = NULL;
-  gboolean print_all = !print_user && !print_system && (installations == NULL);
+  int i;
 
   refs_array = g_ptr_array_new_with_free_func ((GDestroyNotify) refs_data_free);
-  if (print_user || print_all)
-    {
-      g_autoptr(FlatpakDir) user_dir = NULL;
-      g_auto(GStrv) user_app = NULL;
-      g_auto(GStrv) user_runtime = NULL;
 
-      user_dir =flatpak_dir_get_user ();
-      flatpak_log_dir_access (user_dir);
-      if (!find_refs_for_dir (user_dir, app ? &user_app : NULL, runtime ? &user_runtime : NULL, cancellable, error))
+  for (i = 0; i < dirs->len; i++)
+    {
+      FlatpakDir *dir = g_ptr_array_index (dirs, i);
+      g_auto(GStrv) apps = NULL;
+      g_auto(GStrv) runtimes = NULL;
+
+      if (!find_refs_for_dir (dir, app ? &apps : NULL, runtime ? &runtimes : NULL, cancellable, error))
         return FALSE;
-      g_ptr_array_add (refs_array, refs_data_new (user_dir, user_app, user_runtime));
-    }
-
-  if (print_all)
-    {
-      g_autoptr(GPtrArray) system_dirs = NULL;
-      int i;
-
-      system_dirs = flatpak_dir_get_system_list (cancellable, error);
-      if (system_dirs == NULL)
-        return FALSE;
-
-      for (i = 0; i < system_dirs->len; i++)
-        {
-          FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
-          g_auto(GStrv) apps = NULL;
-          g_auto(GStrv) runtimes = NULL;
-
-          flatpak_log_dir_access (dir);
-
-          if (!find_refs_for_dir (dir, app ? &apps : NULL, runtime ? &runtimes : NULL, cancellable, error))
-            return FALSE;
-          g_ptr_array_add (refs_array, refs_data_new (dir, apps, runtimes));
-        }
-    }
-  else
-    {
-      if (print_system)
-        {
-          g_autoptr(FlatpakDir) system_dir = NULL;
-          g_auto(GStrv) system_app = NULL;
-          g_auto(GStrv) system_runtime = NULL;
-
-          system_dir = flatpak_dir_get_system_default ();
-          flatpak_log_dir_access (system_dir);
-          if (!find_refs_for_dir (system_dir, app ? &system_app : NULL, runtime ? &system_runtime : NULL, cancellable, error))
-            return FALSE;
-          g_ptr_array_add (refs_array, refs_data_new (system_dir, system_app, system_runtime));
-        }
-
-      if (installations != NULL)
-        {
-          g_auto(GStrv) installation_apps = NULL;
-          g_auto(GStrv) installation_runtimes = NULL;
-          int i = 0;
-
-          for (i = 0; installations[i] != NULL; i++)
-            {
-              g_autoptr(FlatpakDir) system_dir = NULL;
-
-              /* Already included the default system installation. */
-              if (print_system && g_strcmp0 (installations[i], "default") == 0)
-                continue;
-
-              system_dir = flatpak_dir_get_system_by_id (installations[i], cancellable, error);
-              flatpak_log_dir_access (system_dir);
-              if (system_dir == NULL)
-                return FALSE;
-
-              if (!find_refs_for_dir (system_dir, app ? &installation_apps : NULL, runtime ? &installation_runtimes : NULL, cancellable, error))
-                return FALSE;
-
-              g_ptr_array_add (refs_array, refs_data_new (system_dir, installation_apps, installation_runtimes));
-            }
-        }
+      g_ptr_array_add (refs_array, refs_data_new (dir, apps, runtimes));
     }
 
   if (!print_table_for_refs (app, refs_array, arch, cancellable, error))
@@ -371,11 +300,14 @@ gboolean
 flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
 
   context = g_option_context_new (_(" - List installed apps and/or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS,
+                                     &dirs, cancellable, error))
     return FALSE;
 
   if (argc > 1)
@@ -388,9 +320,7 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
     }
 
   if (!print_installed_refs (opt_app, opt_runtime,
-                             opt_system,
-                             opt_user,
-                             opt_installations,
+                             dirs,
                              opt_arch,
                              cancellable, error))
     return FALSE;
@@ -403,5 +333,6 @@ flatpak_complete_list (FlatpakCompletion *completion)
 {
   flatpak_complete_options (completion, global_entries);
   flatpak_complete_options (completion, options);
+  flatpak_complete_options (completion, user_entries);
   return TRUE;
 }
