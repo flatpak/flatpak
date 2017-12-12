@@ -36,7 +36,15 @@
  */
 #define MAX_PROGRESSBAR_COLUMNS 20
 
+/* Max updates output per second.  On a tty there's no point to rendering
+ * extremely fast; and for a non-tty we're probably in a Jenkins job
+ * or whatever and having percentages spam multiple lines there is annoying.
+ */
+#define MAX_TTY_UPDATE_HZ (5)
+#define MAX_NONTTY_UPDATE_HZ (1)
+
 static gboolean locked;
+static guint64 last_update_ms; /* monotonic time in millis we last updated */
 
 static gboolean
 stdout_is_tty (void)
@@ -184,6 +192,26 @@ static void
 text_percent_internal (const char *text,
                        int percentage)
 {
+  /* Check whether we're trying to render too fast; unless percentage is 100, in
+   * which case we assume this is the last call, so we always render it.
+   */
+  const guint64 current_ms = g_get_monotonic_time () / 1000;
+  if (percentage != 100)
+    {
+      const guint64 diff_ms = current_ms - last_update_ms;
+      if (stdout_is_tty ())
+        {
+          if (diff_ms < (1000/MAX_TTY_UPDATE_HZ))
+            return;
+        }
+      else
+        {
+          if (diff_ms < (1000/MAX_NONTTY_UPDATE_HZ))
+            return;
+        }
+    }
+  last_update_ms = current_ms;
+
   static const char equals[] = "====================";
   const guint n_equals = sizeof (equals) - 1;
   static const char spaces[] = "                    ";
