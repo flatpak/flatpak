@@ -822,6 +822,12 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     goto out;
 
+  /* This is useful only if the target is a "bare" rep, but this happens
+     in flatpak-builder when commiting to the cache repo. For other repos
+     this is a no-op */
+  if (!ostree_repo_scan_hardlinks (repo, cancellable, error))
+    goto out;
+
   mtree = ostree_mutable_tree_new ();
 
   if (!flatpak_mtree_create_root (repo, mtree, cancellable, error))
