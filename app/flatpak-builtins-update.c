@@ -103,7 +103,10 @@ update_appstream (GPtrArray *dirs, const char *remote, GCancellable *cancellable
                   !flatpak_dir_check_for_appstream_update (dir, remotes[i], opt_arch))
                 continue;
 
-              g_print (_("Updating appstream data for remote %s\n"), remotes[i]);
+              if (flatpak_dir_is_user (dir))
+                g_print (_("Updating appstream data for user remote %s\n"), remotes[i]);
+              else
+                g_print (_("Updating appstream data for remote %s\n"), remotes[i]);
               progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
               if (!flatpak_dir_update_appstream (dir, remotes[i], opt_arch, &changed,
                                                  progress, cancellable, &local_error))
