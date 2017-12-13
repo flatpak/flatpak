@@ -94,6 +94,13 @@ static GVariant *fetch_remote_summary_file (FlatpakDir    *self,
 static GVariant * flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
                                                        GCancellable *cancellable,
                                                        GError      **error);
+static char * flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
+                                                   const char          *remote,
+                                                   const          char *ref,
+                                                   GVariant           **out_variant,
+                                                   GVariant           **out_summary,
+                                                   GCancellable        *cancellable,
+                                                   GError             **error);
 
 typedef struct
 {
@@ -1930,6 +1937,46 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
     *out_changed = TRUE;
 
   return TRUE;
+}
+
+gboolean
+flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
+                                        const char          *remote,
+                                        const char          *arch)
+{
+  const char *old_checksum = NULL;
+  g_autofree char *new_checksum = NULL;
+  g_autoptr(GFile) active_link = NULL;
+  g_autofree char *branch = NULL;
+  g_autoptr(GFileInfo) file_info = NULL;
+
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, NULL))
+    return TRUE;
+
+  active_link = flatpak_build_file (flatpak_dir_get_path (self),
+                                     "appstream",
+                                     remote,
+                                     arch,
+                                     "active",
+                                     NULL);
+
+  file_info = g_file_query_info (active_link, OSTREE_GIO_FAST_QUERYINFO,
+                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                 NULL, NULL);
+  if (file_info != NULL)
+    old_checksum =  g_file_info_get_symlink_target (file_info);
+
+  branch = g_strdup_printf ("appstream/%s", arch);
+
+  new_checksum = flatpak_dir_lookup_ref_from_summary (self, remote, branch,
+                                                      NULL, NULL, NULL, NULL);
+  if (new_checksum == NULL)
+    {
+      g_debug ("No %s branch for remote %s, ignoring", branch, remote);
+      return FALSE; /* No appstream branch, don't update, no error */
+    }
+
+  return g_strcmp0 (new_checksum, old_checksum) != 0;
 }
 
 gboolean
