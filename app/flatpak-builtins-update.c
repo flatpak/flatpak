@@ -287,7 +287,7 @@ flatpak_builtin_update (int           argc,
     {
       FlatpakTransaction *transaction = g_ptr_array_index (transactions, k);
 
-      if (!flatpak_transaction_is_emptry (transaction))
+      if (!flatpak_transaction_is_empty (transaction))
         {
           if (!flatpak_transaction_update_metadata (transaction, n_prefs == 0, cancellable, error))
             return FALSE;

@@ -158,7 +158,7 @@ flatpak_transaction_operation_free (FlatpakTransactionOp *self)
 }
 
 gboolean
-flatpak_transaction_is_emptry (FlatpakTransaction  *self)
+flatpak_transaction_is_empty (FlatpakTransaction  *self)
 {
   return self->ops == NULL;
 }
