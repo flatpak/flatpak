@@ -563,6 +563,8 @@ GKeyFile * flatpak_dir_parse_repofile (FlatpakDir   *self,
 char      *flatpak_dir_find_remote_by_uri (FlatpakDir   *self,
                                            const char   *uri,
                                            const char   *collection_id);
+gboolean   flatpak_dir_has_remote (FlatpakDir   *self,
+                                   const char   *remote_name);
 char     **flatpak_dir_list_remotes (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);

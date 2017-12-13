@@ -58,6 +58,7 @@ gboolean            flatpak_transaction_add_update  (FlatpakTransaction  *self,
                                                      const char         **subpaths,
                                                      const char          *commit,
                                                      GError             **error);
+gboolean            flatpak_transaction_is_empty   (FlatpakTransaction  *self);
 
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakTransaction, flatpak_transaction_free)
