@@ -30,6 +30,7 @@ app/flatpak-builtins-run.c
 app/flatpak-builtins-search.c
 app/flatpak-builtins-uninstall.c
 app/flatpak-builtins-update.c
+app/flatpak-builtins-utils.c
 app/flatpak-main.c
 app/flatpak-transaction.c
 common/flatpak-dir.c
