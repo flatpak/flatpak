@@ -211,7 +211,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
         {
           g_autofree char *p = g_strdup (parent);
 
-          g_print ("%s%s%s", on, _("History:"), off);
+          g_print ("%s%s%s", on, _("History:\n"), off);
 
           while (p)
             {
@@ -232,13 +232,14 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
               g_variant_get (p_commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
                              &p_subject, NULL, NULL, NULL, NULL);
 
-              g_print ("\n");
               g_print ("%s%s%s %s\n", on, _(" Subject:"), off, p_subject);
               g_print ("%s%s%s %s\n", on, _(" Date:"), off, p_formatted_timestamp);
               g_print ("%s%s%s %s\n", on, _(" Commit:"), off, p);
 
               g_free (p);
               p = g_steal_pointer (&p_parent);
+              if (p)
+                g_print ("\n");
             }
         }
     }
