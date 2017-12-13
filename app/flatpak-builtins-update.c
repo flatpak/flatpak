@@ -94,7 +94,8 @@ update_appstream (GPtrArray *dirs, const char *remote, GCancellable *cancellable
               FlatpakTerminalProgress terminal_progress = { 0 };
 
               if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
-                  flatpak_dir_get_remote_noenumerate (dir, remotes[i]))
+                  flatpak_dir_get_remote_noenumerate (dir, remotes[i]) ||
+                  !flatpak_dir_check_for_appstream_update (dir, remotes[i], opt_arch))
                 continue;
 
               g_print (_("Updating appstream for remote %s\n"), remotes[i]);
@@ -115,7 +116,8 @@ update_appstream (GPtrArray *dirs, const char *remote, GCancellable *cancellable
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
 
-          if (flatpak_dir_has_remote (dir, remote))
+          if (flatpak_dir_has_remote (dir, remote) &&
+              flatpak_dir_check_for_appstream_update (dir, remote, opt_arch))
             {
               FlatpakTerminalProgress terminal_progress = { 0 };
 
