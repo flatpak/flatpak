@@ -370,6 +370,8 @@ flatpak_option_context_parse (GOptionContext     *context,
               if (dir == NULL)
                 return FALSE;
             }
+          else
+            g_assert_not_reached ();
 
           g_ptr_array_add (dirs, dir);
         }
