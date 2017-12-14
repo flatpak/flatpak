@@ -1586,6 +1586,8 @@ flatpak_context_save_metadata (FlatpakContext *context,
             g_ptr_array_add (array, g_strconcat (key, ":create", NULL));
           else if (value != NULL)
             g_ptr_array_add (array, g_strdup (key));
+          else
+            g_ptr_array_add (array, g_strconcat ("!", key, NULL));
         }
 
       g_key_file_set_string_list (metakey,
@@ -2812,6 +2814,17 @@ exports_path_tmpfs (FlatpakExports *exports,
 }
 
 static void
+exports_path_expose_or_hide (FlatpakExports *exports,
+                             FlatpakFilesystemMode mode,
+                             const char *path)
+{
+  if (mode == 0)
+    exports_path_tmpfs (exports, path);
+  else
+    exports_path_expose (exports, mode, path);
+}
+
+static void
 exports_path_dir (FlatpakExports *exports,
                   const char *path)
 {
@@ -2875,8 +2888,7 @@ export_paths_export_context (FlatpakContext *context,
       const char *filesystem = key;
       FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-      if (value == NULL ||
-          strcmp (filesystem, "host") == 0 ||
+      if (strcmp (filesystem, "host") == 0 ||
           strcmp (filesystem, "home") == 0)
         continue;
 
@@ -2915,7 +2927,7 @@ export_paths_export_context (FlatpakContext *context,
                 g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
                                         config_key, path);
 
-              exports_path_expose (exports, mode, subpath);
+              exports_path_expose_or_hide (exports, mode, subpath);
             }
         }
       else if (g_str_has_prefix (filesystem, "~/"))
@@ -2928,7 +2940,7 @@ export_paths_export_context (FlatpakContext *context,
             g_mkdir_with_parents (path, 0755);
 
           if (g_file_test (path, G_FILE_TEST_EXISTS))
-            exports_path_expose (exports, mode, path);
+            exports_path_expose_or_hide (exports, mode, path);
         }
       else if (g_str_has_prefix (filesystem, "/"))
         {
@@ -2936,7 +2948,7 @@ export_paths_export_context (FlatpakContext *context,
             g_mkdir_with_parents (filesystem, 0755);
 
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
-            exports_path_expose (exports, mode, filesystem);
+            exports_path_expose_or_hide (exports, mode, filesystem);
         }
       else
         {

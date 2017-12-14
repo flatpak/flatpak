@@ -149,6 +149,8 @@ struct FlatpakDeploy
   GKeyFile       *metadata;
   FlatpakContext *system_overrides;
   FlatpakContext *user_overrides;
+  FlatpakContext *system_app_overrides;
+  FlatpakContext *user_app_overrides;
 };
 
 typedef struct
@@ -242,6 +244,8 @@ flatpak_deploy_finalize (GObject *object)
   g_clear_pointer (&self->metadata, g_key_file_unref);
   g_clear_pointer (&self->system_overrides, flatpak_context_free);
   g_clear_pointer (&self->user_overrides, flatpak_context_free);
+  g_clear_pointer (&self->system_app_overrides, flatpak_context_free);
+  g_clear_pointer (&self->user_app_overrides, flatpak_context_free);
 
   G_OBJECT_CLASS (flatpak_deploy_parent_class)->finalize (object);
 }
@@ -319,8 +323,14 @@ flatpak_deploy_get_overrides (FlatpakDeploy *deploy)
   if (deploy->system_overrides)
     flatpak_context_merge (overrides, deploy->system_overrides);
 
+  if (deploy->system_app_overrides)
+    flatpak_context_merge (overrides, deploy->system_app_overrides);
+
   if (deploy->user_overrides)
     flatpak_context_merge (overrides, deploy->user_overrides);
+
+  if (deploy->user_app_overrides)
+    flatpak_context_merge (overrides, deploy->user_app_overrides);
 
   return overrides;
 }
@@ -1018,7 +1028,11 @@ flatpak_dir_load_override (FlatpakDir *self,
   char *metadata_contents;
 
   override_dir = g_file_get_child (self->basedir, "overrides");
-  file = g_file_get_child (override_dir, app_id);
+
+  if (app_id)
+    file = g_file_get_child (override_dir, app_id);
+  else
+    file = g_file_get_child (override_dir, "global");
 
   if (!g_file_load_contents (file, NULL,
                              &metadata_contents, length, NULL, NULL))
@@ -1099,7 +1113,11 @@ flatpak_save_override_keyfile (GKeyFile   *metakey,
     base_dir = flatpak_get_system_default_base_dir_location ();
 
   override_dir = g_file_get_child (base_dir, "overrides");
-  file = g_file_get_child (override_dir, app_id);
+
+  if (app_id)
+    file = g_file_get_child (override_dir, app_id);
+  else
+    file = g_file_get_child (override_dir, "global");
 
   filename = g_file_get_path (file);
   parent = g_path_get_dirname (filename);
@@ -1153,20 +1171,33 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
   ref_parts = g_strsplit (ref, "/", -1);
   g_assert (g_strv_length (ref_parts) == 4);
 
-  /* Only apps have overrides */
+  /* Only load system global overrides for system installed apps */
+  if (!self->user)
+    {
+      deploy->system_overrides = flatpak_load_override_file (NULL, FALSE, error);
+      if (deploy->system_overrides == NULL)
+        return NULL;
+    }
+
+  /* Always load user global overrides */
+  deploy->user_overrides = flatpak_load_override_file (NULL, TRUE, error);
+  if (deploy->user_overrides == NULL)
+    return NULL;
+
+  /* Only apps have app overrides */
   if (strcmp (ref_parts[0], "app") == 0)
     {
       /* Only load system overrides for system installed apps */
       if (!self->user)
         {
-          deploy->system_overrides = flatpak_load_override_file (ref_parts[1], FALSE, error);
-          if (deploy->system_overrides == NULL)
+          deploy->system_app_overrides = flatpak_load_override_file (ref_parts[1], FALSE, error);
+          if (deploy->system_app_overrides == NULL)
             return NULL;
         }
 
       /* Always load user overrides */
-      deploy->user_overrides = flatpak_load_override_file (ref_parts[1], TRUE, error);
-      if (deploy->user_overrides == NULL)
+      deploy->user_app_overrides = flatpak_load_override_file (ref_parts[1], TRUE, error);
+      if (deploy->user_app_overrides == NULL)
         return NULL;
     }
 
