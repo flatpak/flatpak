@@ -1434,6 +1434,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_PULL) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
+                            FALSE,
                             ref, remote_name, (const char **)subpaths,
                             ostree_progress, cancellable, error))
     goto out;

@@ -187,7 +187,7 @@ flatpak_builtin_update (int           argc,
     {
       FlatpakTransaction *transaction = flatpak_transaction_new (g_ptr_array_index (dirs, k),
                                                                  opt_yes, opt_no_pull, opt_no_deploy,
-                                                                 opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+                                                                 opt_no_static_deltas, !opt_no_deps, !opt_no_related, FALSE);
       g_ptr_array_add (transactions, transaction);
     }
 

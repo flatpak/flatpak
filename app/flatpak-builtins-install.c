@@ -51,6 +51,7 @@ static gboolean opt_app;
 static gboolean opt_bundle;
 static gboolean opt_from;
 static gboolean opt_yes;
+static gboolean opt_reinstall;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -66,6 +67,7 @@ static GOptionEntry options[] = {
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
+  { "reinstall", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall, N_("Uninstall first if already installed"), NULL },
   { NULL }
 };
 
@@ -286,7 +288,7 @@ install_bundle (FlatpakDir *dir,
     return FALSE;
 
   transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related, opt_reinstall);
 
   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
     return FALSE;
@@ -440,7 +442,7 @@ install_from (FlatpakDir *dir,
   g_print (_("Installing: %s\n"), slash + 1);
 
   transaction = flatpak_transaction_new (clone, opt_yes, opt_no_pull, opt_no_deploy,
-                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related, opt_reinstall);
 
   if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
     return FALSE;
@@ -510,7 +512,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related, opt_reinstall);
 
   for (i = 0; i < n_prefs; i++)
     {

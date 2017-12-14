@@ -28,7 +28,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-
     skip_without_p2p
 fi
 
-echo "1..10"
+echo "1..12"
 
 #Regular repo
 setup_repo
@@ -75,6 +75,14 @@ fi
 
 install_repo test-gpg2
 echo "ok with alternative gpg key"
+
+if ${FLATPAK} ${U} install test-repo org.test.Platform 2> install-error-log; then
+    assert_not_reached "Should not be able to install again from different remote without reinstall"
+fi
+echo "ok failed to install again from different remote"
+
+${FLATPAK} ${U} install --reinstall test-repo org.test.Platform
+echo "ok re-install"
 
 ${FLATPAK} ${U} uninstall org.test.Platform org.test.Hello
 
