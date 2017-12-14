@@ -696,8 +696,11 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
           opname = _("install");
-          g_print (_("Installing: %s from %s\n"), pref, op->remote);
-          res = flatpak_dir_install (self->dir,
+          if (flatpak_dir_is_user (self->dir))
+            g_print (_("Installing for user: %s from %s\n"), pref, op->remote);
+          else
+            g_print (_("Installing: %s from %s\n"), pref, op->remote);
+          res = flatpak_dir_install (self->dir ,
                                      self->no_pull,
                                      self->no_deploy,
                                      self->no_static_deltas,
@@ -720,7 +723,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                                                          cancellable, &local_error);
           if (target_commit != NULL)
             {
-              g_print (_("Updating: %s from %s\n"), pref, op->remote);
+              if (flatpak_dir_is_user (self->dir))
+                g_print (_("Updating for user: %s from %s\n"), pref, op->remote);
+              else
+                g_print (_("Updating: %s from %s\n"), pref, op->remote);
               g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
               res = flatpak_dir_update (self->dir,
                                         self->no_pull,
@@ -765,7 +771,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_autofree char *bundle_basename = g_file_get_basename (op->bundle);
           opname = _("install bundle");
-          g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
+          if (flatpak_dir_is_user (self->dir))
+            g_print (_("Installing for user: %s from bundle %s\n"), pref, bundle_basename);
+          else
+            g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
           res = flatpak_dir_install_bundle (self->dir, op->bundle,
                                             op->remote, NULL,
                                             cancellable, &local_error);
