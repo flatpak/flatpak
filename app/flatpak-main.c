@@ -364,7 +364,7 @@ flatpak_option_context_parse (GOptionContext     *context,
           else if (opt_installations != NULL)
             {
               if (g_strv_length (opt_installations) > 1)
-                return usage_error (context, _("The --installation option was used multiple times"
+                return usage_error (context, _("The --installation option was used multiple times "
                                                "for a command that works on one installation"), error);
               dir = flatpak_dir_get_system_by_id (opt_installations[0], cancellable, error);
               if (dir == NULL)
