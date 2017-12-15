@@ -1,3 +1,31 @@
+Major changes in 0.10.2
+=======================
+
+ * Flatpak now requires OSTree 2017.14
+ * flatpak update now updates from both system and user installations
+   by default.
+ * flatpak update is less noisy when updating appstream info.
+ * All the remote-* commands now by default automatically decide to use
+   --user or --system based on the given remote name.
+ * flatpak remote-ls with no remote lists the content of all remotes
+ * Fixed regression that made xdg-user-dirs and theme selection
+   for kde apps break.
+ * flatpak override with no argument now overrides globally, i.e. for
+   all apps.
+ * flatpak override now supports --nofilesystem properly. For example
+   flatpak override --nofilesystem=~/.ssh hides the ssh dir for all
+   apps, even those who have homedir access.
+ * flatpak install now takes a --reinstall argument which uninstalls
+   a previously installed version if necessary. This is very useful
+   when you want to install a new version from a different source.
+ * flatpak install now allows you to pass an absolute pathname as
+   remote name, which will create a temporary remote and install
+   from that. The remote will be removed when the app is uninstalled.
+   This is very useful during development and testing.
+ * Flatpak now creates CLI wrappers for all installed apps, so if you
+   add /var/lib/flatpak/exports/bin or ~/.local/share/flatpak/exports/bin
+   to your PATH you can easily  start flatpak apps by their application id.
+
 Major changes in 0.10.1
 =======================
 
