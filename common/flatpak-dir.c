@@ -4809,6 +4809,7 @@ flatpak_export_dir (GFile        *source,
     "share/dbus-1/services",               "../../..",
     "share/gnome-shell/search-providers",  "../../..",
     "share/mime/packages",                 "../../..",
+    "bin",                                 "..",
   };
   int i;
 
@@ -5210,6 +5211,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
+  g_autoptr(GFile) bindir = NULL;
   g_autofree char *checkoutdirpath = NULL;
   g_autoptr(GFile) real_checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
@@ -5512,6 +5514,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
     }
 
   export = g_file_get_child (checkoutdir, "export");
+
+  /* Never export any binaries bundled with the app */
+  bindir = g_file_get_child (export, "bin");
+  if (!flatpak_rm_rf (bindir, cancellable, error))
+    return FALSE;
+
   is_app = g_str_has_prefix (ref, "app/");
 
   if (!is_app) /* is runtime */
@@ -5563,18 +5571,35 @@ flatpak_dir_deploy (FlatpakDir          *self,
     }
   else /* is app */
     {
-      if (g_file_query_exists (export, cancellable))
-        {
-          g_auto(GStrv) ref_parts = NULL;
+      g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
+      g_autoptr(GFile) wrapper = g_file_get_child (bindir, ref_parts[1]);
+      g_autofree char *escaped_app = maybe_quote (ref_parts[1]);
+      g_autofree char *escaped_branch = maybe_quote (ref_parts[3]);
+      g_autofree char *escaped_arch = maybe_quote (ref_parts[2]);
+      g_autofree char *bin_data = NULL;
+      int r;
 
-          ref_parts = g_strsplit (ref, "/", -1);
+      if (!flatpak_mkdir_p (bindir, cancellable, error))
+        return FALSE;
 
-          if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
-                                           keyfile, export,
-                                           cancellable,
-                                           error))
-            return FALSE;
-        }
+      bin_data = g_strdup_printf ("#!/bin/sh\nexec %s/flatpak run --branch=%s --arch=%s %s \"$@\"\n",
+                                  FLATPAK_BINDIR, escaped_branch, escaped_arch, escaped_app);
+      if (!g_file_replace_contents (wrapper, bin_data, strlen (bin_data), NULL, FALSE,
+                                    G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
+        return FALSE;
+
+      do
+        r = fchmodat (AT_FDCWD, flatpak_file_get_path_cached (wrapper), 0755, 0);
+      while (G_UNLIKELY (r == -1 && errno == EINTR));
+      if (r == -1)
+        return glnx_throw_errno_prefix (error, "fchmodat");
+
+      if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
+                                       keyfile, export,
+                                       cancellable,
+                                       error))
+        return FALSE;
+
     }
 
   g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
