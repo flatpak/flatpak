@@ -5229,7 +5229,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) tmp_dir_template = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autofree char *tmp_dir_path = NULL;
-  g_autofree char *alt_id = NULL;
+  const char *alt_id = NULL;
   const char *xa_metadata = NULL;
   const char *xa_ref = NULL;
   g_autofree char *checkout_basename = NULL;
@@ -5279,7 +5279,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
     return FALSE;
 
   commit_metadata = g_variant_get_child_value (commit_data, 0);
-  g_variant_lookup (commit_metadata, "xa.alt-id", "s", &alt_id);
+  g_variant_lookup (commit_metadata, "xa.alt-id", "&s", &alt_id);
 
   checkout_basename = flatpak_dir_get_deploy_subdir (self, checksum, subpaths);
 
@@ -5408,7 +5408,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
         }
     }
 
-  g_variant_lookup (commit_metadata, "xa.ref", "s", &xa_ref);
+  g_variant_lookup (commit_metadata, "xa.ref", "&s", &xa_ref);
   if (xa_ref != NULL)
     {
       gboolean gpg_verify_summary;
@@ -5481,11 +5481,11 @@ flatpak_dir_deploy (FlatpakDir          *self,
   /* Check the metadata in the commit to make sure it matches the actual
      deployed metadata, in case we relied on the one in the commit for
      a decision */
-  g_variant_lookup (commit_metadata, "xa.metadata", "s", &xa_metadata);
+  g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
   if (xa_metadata != NULL)
     {
       g_autoptr(GFile) metadata_file = g_file_resolve_relative_path (checkoutdir, "metadata");
-      char *metadata_contents;
+      g_autofree char *metadata_contents = NULL;
 
       if (!g_file_load_contents (metadata_file, NULL,
                                  &metadata_contents, NULL, NULL, NULL) ||
