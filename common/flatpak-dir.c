@@ -4809,6 +4809,7 @@ flatpak_export_dir (GFile        *source,
     "share/dbus-1/services",               "../../..",
     "share/gnome-shell/search-providers",  "../../..",
     "share/mime/packages",                 "../../..",
+    "bin",                                 "..",
   };
   int i;
 
@@ -5210,6 +5211,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
+  g_autoptr(GFile) bindir = NULL;
   g_autofree char *checkoutdirpath = NULL;
   g_autoptr(GFile) real_checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
@@ -5235,6 +5237,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GVariant) commit_metadata = NULL;
   GVariantBuilder metadata_builder;
   g_auto(GLnxLockFile) lock = { 0, };
+  gboolean is_app;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -5499,46 +5502,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                 G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
     return TRUE;
 
-  /* Ensure that various files exists as regular files in /usr/etc, as we
-     want to bind-mount over them */
-  files_etc = g_file_resolve_relative_path (checkoutdir, "files/etc");
-  if (g_file_query_exists (files_etc, cancellable))
-    {
-      char *etcfiles[] = {"passwd", "group", "machine-id" };
-      g_autoptr(GFile) etc_resolve_conf = g_file_get_child (files_etc, "resolv.conf");
-      int i;
-      for (i = 0; i < G_N_ELEMENTS (etcfiles); i++)
-        {
-          g_autoptr(GFile) etc_file = g_file_get_child (files_etc, etcfiles[i]);
-          GFileType type;
-
-          type = g_file_query_file_type (etc_file, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                         cancellable);
-          if (type == G_FILE_TYPE_REGULAR)
-            continue;
-
-          if (type != G_FILE_TYPE_UNKNOWN)
-            {
-              /* Already exists, but not regular, probably symlink. Remove it */
-              if (!g_file_delete (etc_file, cancellable, error))
-                return FALSE;
-            }
-
-          if (!g_file_replace_contents (etc_file, "", 0, NULL, FALSE,
-                                        G_FILE_CREATE_REPLACE_DESTINATION,
-                                        NULL, cancellable, error))
-            return FALSE;
-        }
-
-      if (g_file_query_exists (etc_resolve_conf, cancellable) &&
-          !g_file_delete (etc_resolve_conf, cancellable, error))
-        return TRUE;
-
-      if (!g_file_make_symbolic_link (etc_resolve_conf,
-                                      "/run/host/monitor/resolv.conf",
-                                      cancellable, error))
-        return FALSE;
-    }
 
   keyfile = g_key_file_new ();
   metadata = g_file_get_child (checkoutdir, "metadata");
@@ -5551,17 +5514,92 @@ flatpak_dir_deploy (FlatpakDir          *self,
     }
 
   export = g_file_get_child (checkoutdir, "export");
-  if (g_file_query_exists (export, cancellable))
-    {
-      g_auto(GStrv) ref_parts = NULL;
 
-      ref_parts = g_strsplit (ref, "/", -1);
+  /* Never export any binaries bundled with the app */
+  bindir = g_file_get_child (export, "bin");
+  if (!flatpak_rm_rf (bindir, cancellable, error))
+    return FALSE;
+
+  is_app = g_str_has_prefix (ref, "app/");
+
+  if (!is_app) /* is runtime */
+    {
+      /* Ensure that various files exists as regular files in /usr/etc, as we
+         want to bind-mount over them */
+      files_etc = g_file_resolve_relative_path (checkoutdir, "files/etc");
+      if (g_file_query_exists (files_etc, cancellable))
+        {
+          char *etcfiles[] = {"passwd", "group", "machine-id" };
+          g_autoptr(GFile) etc_resolve_conf = g_file_get_child (files_etc, "resolv.conf");
+          int i;
+          for (i = 0; i < G_N_ELEMENTS (etcfiles); i++)
+            {
+              g_autoptr(GFile) etc_file = g_file_get_child (files_etc, etcfiles[i]);
+              GFileType type;
+
+              type = g_file_query_file_type (etc_file, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                             cancellable);
+              if (type == G_FILE_TYPE_REGULAR)
+                continue;
+
+              if (type != G_FILE_TYPE_UNKNOWN)
+                {
+                  /* Already exists, but not regular, probably symlink. Remove it */
+                  if (!g_file_delete (etc_file, cancellable, error))
+                    return FALSE;
+                }
+
+              if (!g_file_replace_contents (etc_file, "", 0, NULL, FALSE,
+                                            G_FILE_CREATE_REPLACE_DESTINATION,
+                                            NULL, cancellable, error))
+                return FALSE;
+            }
+
+          if (g_file_query_exists (etc_resolve_conf, cancellable) &&
+              !g_file_delete (etc_resolve_conf, cancellable, error))
+            return TRUE;
+
+          if (!g_file_make_symbolic_link (etc_resolve_conf,
+                                          "/run/host/monitor/resolv.conf",
+                                          cancellable, error))
+            return FALSE;
+        }
+
+      /* Runtime should never export anything */
+      if (!flatpak_rm_rf (export, cancellable, error))
+        return FALSE;
+    }
+  else /* is app */
+    {
+      g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
+      g_autoptr(GFile) wrapper = g_file_get_child (bindir, ref_parts[1]);
+      g_autofree char *escaped_app = maybe_quote (ref_parts[1]);
+      g_autofree char *escaped_branch = maybe_quote (ref_parts[3]);
+      g_autofree char *escaped_arch = maybe_quote (ref_parts[2]);
+      g_autofree char *bin_data = NULL;
+      int r;
+
+      if (!flatpak_mkdir_p (bindir, cancellable, error))
+        return FALSE;
+
+      bin_data = g_strdup_printf ("#!/bin/sh\nexec %s/flatpak run --branch=%s --arch=%s %s \"$@\"\n",
+                                  FLATPAK_BINDIR, escaped_branch, escaped_arch, escaped_app);
+      if (!g_file_replace_contents (wrapper, bin_data, strlen (bin_data), NULL, FALSE,
+                                    G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
+        return FALSE;
+
+      do
+        r = fchmodat (AT_FDCWD, flatpak_file_get_path_cached (wrapper), 0755, 0);
+      while (G_UNLIKELY (r == -1 && errno == EINTR));
+      if (r == -1)
+        return glnx_throw_errno_prefix (error, "fchmodat");
 
       if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
                                        keyfile, export,
                                        cancellable,
                                        error))
         return FALSE;
+
     }
 
   g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
