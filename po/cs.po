@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-12-15 13:30+0100\n"
-"PO-Revision-Date: 2017-11-25 16:14+0100\n"
+"PO-Revision-Date: 2017-12-16 01:06+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -877,6 +877,7 @@ msgstr "PROSTŘEDÍ musí byť určeno"
 #, c-format
 msgid "'%s' is not a valid build type name, use app, runtime or extension"
 msgstr ""
+"„%s“ není platným názvem typu sestavení, použijte app, runtime nebo extension"
 
 #: app/flatpak-builtins-build-init.c:205 app/flatpak-builtins-override.c:74
 #, c-format
@@ -942,7 +943,7 @@ msgstr "[KLÍČ [HODNOTA]] - Spravovat konfiguraci"
 
 #: app/flatpak-builtins-config.c:223
 msgid "Must specify one of --list, --get, --set or --unset"
-msgstr ""
+msgstr "Musíte určit jedno z --list, --get, --set nebo --unset"
 
 #: app/flatpak-builtins-delete-remote.c:38
 msgid "Remove remote even if in use"
@@ -1256,9 +1257,8 @@ msgid "Download size:"
 msgstr "Stahovaná velikost:"
 
 #: app/flatpak-builtins-info-remote.c:214
-#, fuzzy
 msgid "History:\n"
-msgstr "Historie:"
+msgstr "Historie:\n"
 
 #: app/flatpak-builtins-info-remote.c:235
 msgid " Subject:"
@@ -1318,9 +1318,8 @@ msgid "Automatically answer yes for all questions"
 msgstr "Automaticky odpovědět ano na všechny otázky"
 
 #: app/flatpak-builtins-install.c:70
-#, fuzzy
 msgid "Uninstall first if already installed"
-msgstr "%s commit %s je již nainstalováno"
+msgstr "Nejprve odinstalovat, pokud je již nainstalováno"
 
 #: app/flatpak-builtins-install.c:212
 #, c-format
@@ -1462,9 +1461,8 @@ msgid "Limit to this arch (* for all)"
 msgstr "Omezit na tuto architekturu (* pro všechny)"
 
 #: app/flatpak-builtins-ls-remote.c:96
-#, fuzzy
 msgid " [REMOTE] - Show available runtimes and applications"
-msgstr " VZDÁLENÉ - Zobrazit dostupné prostředí a aplikace"
+msgstr " [VZDÁLENÉ] - Zobrazit dostupná prostředí a aplikace"
 
 #: app/flatpak-builtins-ls-remote.c:177
 msgid "Commit"
@@ -1500,9 +1498,8 @@ msgid "App %s branch %s is not installed"
 msgstr "Aplikace %s větev %s není nainstalována"
 
 #: app/flatpak-builtins-override.c:54
-#, fuzzy
 msgid "[APP] - Override settings [for application]"
-msgstr "APLIKACE - Přepsat nastavení pro aplikaci"
+msgstr "[APLIKACE] - Přepsat nastavení [pro aplikaci]"
 
 #: app/flatpak-builtins-repo.c:48
 #, c-format
@@ -1776,14 +1773,14 @@ msgid "Only update this subpath"
 msgstr "Aktualizovat pouze tuto podcestu"
 
 #: app/flatpak-builtins-update.c:107
-#, fuzzy, c-format
+#, c-format
 msgid "Updating appstream data for user remote %s\n"
-msgstr "Aktualizuji appstream pro vzdálený repozitář %s\n"
+msgstr "Aktualizuji appstream data pro uživatelský vzdálený repozitář %s\n"
 
 #: app/flatpak-builtins-update.c:109
-#, fuzzy, c-format
+#, c-format
 msgid "Updating appstream data for remote %s\n"
-msgstr "Aktualizuji appstream pro vzdálený repozitář %s\n"
+msgstr "Aktualizuji appstream data pro vzdálený repozitář %s\n"
 
 #: app/flatpak-builtins-update.c:113
 #, c-format
@@ -1793,7 +1790,7 @@ msgstr "Chyba během aktualizace: %s\n"
 #: app/flatpak-builtins-update.c:143
 #, c-format
 msgid "Remote \"%s\" not found"
-msgstr ""
+msgstr "Vzdálený repozitář „%s“ nebyl nalezen"
 
 #: app/flatpak-builtins-update.c:163
 msgid "[REF...] - Update applications or runtimes"
@@ -1806,17 +1803,18 @@ msgstr "Vyhledávají se aktualizace...\n"
 #: app/flatpak-builtins-utils.c:365
 #, c-format
 msgid "Remote ‘%s’ found in multiple installations:\n"
-msgstr ""
+msgstr "Vzdálený repozitář „%s“ nalezen ve více instalacích:\n"
 
 #: app/flatpak-builtins-utils.c:372
-#, fuzzy
 msgid "Which do you want to use (0 to abort)?"
-msgstr "Který si přejete instalovat (0 pro zrušení)?"
+msgstr "Který si přejete použít (0 pro zrušení)?"
 
 #: app/flatpak-builtins-utils.c:374
 #, c-format
 msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
 msgstr ""
+"Nebyl vybrán žádný vzdálený repozitář pro vyřešení „%s“, který existuje ve "
+"více instalacích"
 
 #. translators: please keep the leading space
 #: app/flatpak-main.c:62
@@ -2030,7 +2028,6 @@ msgid "Work on system-wide installations (default)"
 msgstr "Pracovat na systémových instalacích (výchozí)"
 
 #: app/flatpak-main.c:143
-#, fuzzy
 msgid "Work on specific system-wide installation(s)"
 msgstr "Pracovat na specifických systémových instalacích"
 
@@ -2108,9 +2105,9 @@ msgid "%s already installed, skipping\n"
 msgstr "%s je již nainstalováno, přeskakuji\n"
 
 #: app/flatpak-transaction.c:531
-#, fuzzy, c-format
+#, c-format
 msgid "%s is already installed from other remote (%s)"
-msgstr "%s commit %s je již nainstalováno"
+msgstr "%s je již nainstalováno z jiného vzdáleného repozitáře (%s)"
 
 #: app/flatpak-transaction.c:543
 #, c-format
@@ -2137,9 +2134,9 @@ msgid "install"
 msgstr "instalace"
 
 #: app/flatpak-transaction.c:746
-#, fuzzy, c-format
+#, c-format
 msgid "Installing for user: %s from %s\n"
-msgstr "Instaluji: %s z %s\n"
+msgstr "Instaluji pro uživatele: %s z %s\n"
 
 #: app/flatpak-transaction.c:748
 #, c-format
@@ -2151,9 +2148,9 @@ msgid "update"
 msgstr "aktualizace"
 
 #: app/flatpak-transaction.c:774
-#, fuzzy, c-format
+#, c-format
 msgid "Updating for user: %s from %s\n"
-msgstr "Aktualizuji: %s z %s\n"
+msgstr "Aktualizuji pro uživatele: %s z %s\n"
 
 #: app/flatpak-transaction.c:776
 #, c-format
@@ -2174,9 +2171,9 @@ msgid "install bundle"
 msgstr "instalace balíku"
 
 #: app/flatpak-transaction.c:822
-#, fuzzy, c-format
+#, c-format
 msgid "Installing for user: %s from bundle %s\n"
-msgstr "Instaluji: %s z balíku %s\n"
+msgstr "Instaluji pro uživatele: %s z balíku %s\n"
 
 #: app/flatpak-transaction.c:824
 #, c-format
