@@ -346,6 +346,9 @@ flatpak_option_context_parse (GOptionContext     *context,
               g_ptr_array_add (dirs, flatpak_dir_get_user ());
 
               system_dirs = flatpak_dir_get_system_list (cancellable, error);
+              if (system_dirs == NULL)
+                return FALSE;
+
               for (i = 0; i < system_dirs->len; i++)
                 {
                   FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
