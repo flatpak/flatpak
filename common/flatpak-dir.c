@@ -8723,9 +8723,13 @@ origin_remote_matches (OstreeRepo   *repo,
   gboolean real_gpg_verify;
 
   /* Must match url */
+  if (url == NULL)
+    return FALSE;
+
   if (!ostree_repo_remote_get_url (repo, remote_name, &real_url, NULL))
     return FALSE;
-  if (strcmp (url, real_url) != 0)
+
+  if (g_strcmp0 (url, real_url) != 0)
     return FALSE;
 
   /* Must be noenumerate */
