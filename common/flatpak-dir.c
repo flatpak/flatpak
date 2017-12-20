@@ -7157,6 +7157,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   g_autofree char *tmpname = g_strdup_printf ("removed-%s-XXXXXX", active_id);
   g_autofree char *current_active = NULL;
   g_autoptr(GFile) change_file = NULL;
+  g_autoptr(GError) child_error = NULL;
   int i;
 
   g_assert (ref != NULL);
@@ -7219,8 +7220,14 @@ flatpak_dir_undeploy (FlatpakDir   *self,
     change_file = g_file_resolve_relative_path (removed_subdir, "files/.updated");
   else
     change_file = g_file_resolve_relative_path (removed_subdir, "files/.removed");
-  g_file_replace_contents (change_file, "", 0, NULL, FALSE,
-                           G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, NULL);
+
+  if (!g_file_replace_contents (change_file, "", 0, NULL, FALSE,
+                                G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, &child_error))
+    {
+      g_autofree gchar *path = g_file_get_path (change_file);
+      g_warning ("Unable to clear %s: %s", path, child_error->message);
+      g_clear_error (&child_error);
+    }
 
   if (force_remove || !dir_is_locked (removed_subdir))
     {
