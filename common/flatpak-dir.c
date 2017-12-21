@@ -5582,6 +5582,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
       if (!flatpak_mkdir_p (bindir, cancellable, error))
         return FALSE;
 
+      if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
+                                       keyfile, export,
+                                       cancellable,
+                                       error))
+        return FALSE;
+
       bin_data = g_strdup_printf ("#!/bin/sh\nexec %s/flatpak run --branch=%s --arch=%s %s \"$@\"\n",
                                   FLATPAK_BINDIR, escaped_branch, escaped_arch, escaped_app);
       if (!g_file_replace_contents (wrapper, bin_data, strlen (bin_data), NULL, FALSE,
@@ -5593,12 +5599,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
       while (G_UNLIKELY (r == -1 && errno == EINTR));
       if (r == -1)
         return glnx_throw_errno_prefix (error, "fchmodat");
-
-      if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
-                                       keyfile, export,
-                                       cancellable,
-                                       error))
-        return FALSE;
 
     }
 
