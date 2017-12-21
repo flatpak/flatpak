@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-12-15 13:30+0100\n"
-"PO-Revision-Date: 2017-11-03 18:28+0100\n"
+"POT-Creation-Date: 2017-12-21 11:12+0100\n"
+"PO-Revision-Date: 2017-12-21 19:22+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -326,7 +326,7 @@ msgstr ""
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
-msgstr ""
+msgstr "Ustawia element docelowy jako tylko do odczytu"
 
 #: app/flatpak-builtins-build.c:51
 msgid "Add bind mount"
@@ -969,9 +969,8 @@ msgid "[KEY [VALUE]] - Manage configuration"
 msgstr "[KLUCZ [WARTOŚĆ]] — zarządza konfiguracją"
 
 #: app/flatpak-builtins-config.c:223
-#, fuzzy
 msgid "Must specify one of --list, --get, --set or --unset"
-msgstr "Parametry --list, --get, --set i --unset wymagają jednego"
+msgstr "Należy podać jedną z opcji --list, --get, --set lub --unset"
 
 #: app/flatpak-builtins-delete-remote.c:38
 msgid "Remove remote even if in use"
@@ -1200,11 +1199,11 @@ msgstr "Pochodzenie:"
 
 #: app/flatpak-builtins-info.c:198 app/flatpak-builtins-info-remote.c:197
 msgid "Date:"
-msgstr ""
+msgstr "Data:"
 
 #: app/flatpak-builtins-info.c:200 app/flatpak-builtins-info-remote.c:198
 msgid "Subject:"
-msgstr ""
+msgstr "Temat:"
 
 #: app/flatpak-builtins-info.c:204
 msgid "Active commit:"
@@ -1225,7 +1224,7 @@ msgstr "Alternatywny identyfikator:"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-info-remote.c:200
 msgid "Parent:"
-msgstr ""
+msgstr "Element nadrzędny:"
 
 #: app/flatpak-builtins-info.c:212
 msgid "Location:"
@@ -1254,7 +1253,7 @@ msgstr "Podścieżki:"
 
 #: app/flatpak-builtins-info-remote.c:49
 msgid "Commit to show info for"
-msgstr ""
+msgstr "Zatwierdzenie, dla którego wyświetlić informacje"
 
 #: app/flatpak-builtins-info-remote.c:49 app/flatpak-builtins-update.c:54
 msgid "COMMIT"
@@ -1267,43 +1266,42 @@ msgstr "Wyszukuje program o podanej nazwie"
 
 #: app/flatpak-builtins-info-remote.c:52
 msgid "Display log"
-msgstr ""
+msgstr "Wyświetla dziennik"
 
 #: app/flatpak-builtins-info-remote.c:55
-#, fuzzy
 msgid "Show parent"
-msgstr "Wyświetla odniesienie"
+msgstr "Wyświetla element nadrzędny"
 
 #: app/flatpak-builtins-info-remote.c:121
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
+" REPOZYTORIUM ODNIESIENIE — wyświetla informacje o programie lub środowisku "
+"wykonawczym w repozytorium"
 
 #: app/flatpak-builtins-info-remote.c:132 app/flatpak-builtins-install.c:499
 msgid "REMOTE and REF must be specified"
 msgstr "Należy podać REPOZYTORIUM i ODNIESIENIE"
 
 #: app/flatpak-builtins-info-remote.c:201
-#, fuzzy
 msgid "Download size:"
-msgstr "Rozmiar do pobrania"
+msgstr "Rozmiar do pobrania:"
 
 #: app/flatpak-builtins-info-remote.c:214
 msgid "History:\n"
-msgstr ""
+msgstr "Historia:\n"
 
 #: app/flatpak-builtins-info-remote.c:235
 msgid " Subject:"
-msgstr ""
+msgstr " Temat:"
 
 #: app/flatpak-builtins-info-remote.c:236
 msgid " Date:"
-msgstr ""
+msgstr " Data:"
 
 #: app/flatpak-builtins-info-remote.c:237
-#, fuzzy
 msgid " Commit:"
-msgstr "Zatwierdzenie:"
+msgstr " Zatwierdzenie:"
 
 #: app/flatpak-builtins-install.c:58
 msgid "Don't pull, only install from local cache"
@@ -1352,9 +1350,8 @@ msgid "Automatically answer yes for all questions"
 msgstr "Automatycznie odpowiada tak na wszystkie pytania"
 
 #: app/flatpak-builtins-install.c:70
-#, fuzzy
 msgid "Uninstall first if already installed"
-msgstr "Już zainstalowano %s zatwierdzenie %s"
+msgstr "Należy najpierw odinstalować, jeśli jest już zainstalowane"
 
 #: app/flatpak-builtins-install.c:212
 #, c-format
@@ -1381,13 +1378,13 @@ msgid "Remote bundles are not supported"
 msgstr "Zdalne pakiety nie są obsługiwane"
 
 #: app/flatpak-builtins-install.c:338
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The remote '%s', at location %s contains additional applications.\n"
 "Should the remote be kept for future installations?"
 msgstr ""
 "Repozytorium „%s” w położeniu %s zawiera dodatkowe programy.\n"
-"Zainstalować pozostałe programy z tego repozytorium?"
+"Zachować repozytorium, aby móc instalować z niego w przyszłości?"
 
 #: app/flatpak-builtins-install.c:398
 msgid "Filename or uri must be specified"
@@ -1499,10 +1496,10 @@ msgid "Limit to this arch (* for all)"
 msgstr "Ogranicza do tej architektury (* dla wszystkich)"
 
 #: app/flatpak-builtins-ls-remote.c:96
-#, fuzzy
 msgid " [REMOTE] - Show available runtimes and applications"
 msgstr ""
-" REPOZYTORIUM — wyświetla listę dostępnych środowisk wykonawczych i programów"
+" [REPOZYTORIUM] — wyświetla listę dostępnych środowisk wykonawczych "
+"i programów"
 
 #: app/flatpak-builtins-ls-remote.c:177
 msgid "Commit"
@@ -1538,9 +1535,8 @@ msgid "App %s branch %s is not installed"
 msgstr "Nie zainstalowano programu %s gałęzi %s"
 
 #: app/flatpak-builtins-override.c:54
-#, fuzzy
 msgid "[APP] - Override settings [for application]"
-msgstr "PROGRAM — zastępuje ustawienia programu"
+msgstr "[PROGRAM] — zastępuje ustawienia [programu]"
 
 #: app/flatpak-builtins-repo.c:48
 #, c-format
@@ -1724,7 +1720,8 @@ msgstr "PROGRAM [parametry…] — uruchamia program"
 
 #: app/flatpak-builtins-search.c:212
 msgid "TEXT - Search remote apps/runtimes for text"
-msgstr "TEKST — wyszukuje zdalne programy/środowiska wykonawcze według tekstu"
+msgstr ""
+"TEKST — wyszukuje programy/środowiska wykonawcze repozytorium według tekstu"
 
 #: app/flatpak-builtins-search.c:220
 msgid "TEXT must be specified"
@@ -1784,9 +1781,9 @@ msgid "Warning: Problem looking for related refs: %s\n"
 msgstr "Ostrzeżenie: problem podczas wyszukiwania powiązanych odniesień: %s\n"
 
 #: app/flatpak-builtins-uninstall.c:164
-#, fuzzy, c-format
+#, c-format
 msgid "Uninstalling: %s\n"
-msgstr "Instalowanie: %s\n"
+msgstr "Odinstalowywanie: %s\n"
 
 #: app/flatpak-builtins-update.c:53
 msgid "Arch to update for"
@@ -1817,14 +1814,14 @@ msgid "Only update this subpath"
 msgstr "Aktualizuje tylko tę podścieżkę"
 
 #: app/flatpak-builtins-update.c:107
-#, fuzzy, c-format
+#, c-format
 msgid "Updating appstream data for user remote %s\n"
-msgstr "Aktualizuje AppStream dla repozytorium %s\n"
+msgstr "Aktualizowanie danych AppStream dla repozytorium użytkownika %s\n"
 
 #: app/flatpak-builtins-update.c:109
-#, fuzzy, c-format
+#, c-format
 msgid "Updating appstream data for remote %s\n"
-msgstr "Aktualizuje AppStream dla repozytorium %s\n"
+msgstr "Aktualizowanie danych AppStream dla repozytorium %s\n"
 
 #: app/flatpak-builtins-update.c:113
 #, c-format
@@ -1834,7 +1831,7 @@ msgstr "Błąd podczas aktualizowania: %s\n"
 #: app/flatpak-builtins-update.c:143
 #, c-format
 msgid "Remote \"%s\" not found"
-msgstr ""
+msgstr "Nie odnaleziono repozytorium „%s”"
 
 #: app/flatpak-builtins-update.c:163
 msgid "[REF...] - Update applications or runtimes"
@@ -1847,17 +1844,18 @@ msgstr "Wyszukiwanie aktualizacji…\n"
 #: app/flatpak-builtins-utils.c:365
 #, c-format
 msgid "Remote ‘%s’ found in multiple installations:\n"
-msgstr ""
+msgstr "Odnaleziono repozytorium „%s” w wielu instalacjach:\n"
 
 #: app/flatpak-builtins-utils.c:372
-#, fuzzy
 msgid "Which do you want to use (0 to abort)?"
-msgstr "Które zainstalować (0 przerwie)?"
+msgstr "Którego użyć (0 przerwie)?"
 
 #: app/flatpak-builtins-utils.c:374
 #, c-format
 msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
 msgstr ""
+"Nie wybrano repozytorium do rozwiązania „%s”, które istnieje w wielu "
+"instalacjach"
 
 #. translators: please keep the leading space
 #: app/flatpak-main.c:62
@@ -1900,7 +1898,7 @@ msgstr ""
 
 #: app/flatpak-main.c:72
 msgid "Search for remote apps/runtimes"
-msgstr "Wyszukuje zdalne programy/środowiska wykonawcze"
+msgstr "Wyszukuje programy/środowiska wykonawcze repozytorium"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:75
@@ -1982,10 +1980,9 @@ msgid "List contents of a configured remote"
 msgstr "Wyświetla listę zawartości skonfigurowanego repozytorium"
 
 #: app/flatpak-main.c:96
-#, fuzzy
 msgid "Show information about a remote app or runtime"
 msgstr ""
-"Wyświetla informacje o zainstalowanym programie lub środowisku wykonawczym"
+"Wyświetla informacje o programie lub środowisku wykonawczym repozytorium"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:99
@@ -2075,9 +2072,8 @@ msgid "Work on system-wide installations (default)"
 msgstr "Działa na instalacjach systemowych (domyślnie)"
 
 #: app/flatpak-main.c:143
-#, fuzzy
 msgid "Work on specific system-wide installation(s)"
-msgstr "Działa na podanej instalacji systemowej"
+msgstr "Działa na podanych instalacjach systemowych"
 
 #: app/flatpak-main.c:143
 msgid "NAME"
@@ -2087,22 +2083,24 @@ msgstr "NAZWA"
 msgid "Builtin Commands:"
 msgstr "Wbudowane polecenia:"
 
-#: app/flatpak-main.c:367
+#: app/flatpak-main.c:370
 msgid ""
-"The --installation option was used multiple timesfor a command that works on "
-"one installation"
+"The --installation option was used multiple times for a command that works "
+"on one installation"
 msgstr ""
+"Opcja --installation została użyta wiele razy dla polecenia, które działa na "
+"jednej instalacji"
 
-#: app/flatpak-main.c:486
+#: app/flatpak-main.c:489
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Nieznane polecenie „%s”"
 
-#: app/flatpak-main.c:494
+#: app/flatpak-main.c:497
 msgid "No command specified"
 msgstr "Nie podano polecenia"
 
-#: app/flatpak-main.c:612
+#: app/flatpak-main.c:615
 msgid "error:"
 msgstr "błąd:"
 
@@ -2140,7 +2138,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1157
 #: common/flatpak-dir.c:1476 common/flatpak-dir.c:1499
-#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10508
+#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10512
 #: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
 #, c-format
 msgid "%s not installed"
@@ -2157,9 +2155,9 @@ msgid "%s already installed, skipping\n"
 msgstr "Już zainstalowano %s, pomijanie\n"
 
 #: app/flatpak-transaction.c:531
-#, fuzzy, c-format
+#, c-format
 msgid "%s is already installed from other remote (%s)"
-msgstr "Już zainstalowano %s zatwierdzenie %s"
+msgstr "%s jest już zainstalowane z innego repozytorium (%s)"
 
 #: app/flatpak-transaction.c:543
 #, c-format
@@ -2179,16 +2177,16 @@ msgstr "%s wymaga późniejszej wersji Flatpak (%s)"
 #: app/flatpak-transaction.c:688
 #, c-format
 msgid "Error updating remote metadata for '%s': %s\n"
-msgstr "Błąd podczas aktualizowania zdalnych metadanych dla „%s”: %s\n"
+msgstr "Błąd podczas aktualizowania metadanych repozytorium dla „%s”: %s\n"
 
 #: app/flatpak-transaction.c:744
 msgid "install"
 msgstr "instalacja"
 
 #: app/flatpak-transaction.c:746
-#, fuzzy, c-format
+#, c-format
 msgid "Installing for user: %s from %s\n"
-msgstr "Instalowanie: %s z %s\n"
+msgstr "Instalowanie dla użytkownika: %s z %s\n"
 
 #: app/flatpak-transaction.c:748
 #, c-format
@@ -2200,9 +2198,9 @@ msgid "update"
 msgstr "aktualizacja"
 
 #: app/flatpak-transaction.c:774
-#, fuzzy, c-format
+#, c-format
 msgid "Updating for user: %s from %s\n"
-msgstr "Aktualizowanie: %s z %s\n"
+msgstr "Aktualizowanie dla użytkownika: %s z %s\n"
 
 #: app/flatpak-transaction.c:776
 #, c-format
@@ -2223,9 +2221,9 @@ msgid "install bundle"
 msgstr "instalacja pakietu"
 
 #: app/flatpak-transaction.c:822
-#, fuzzy, c-format
+#, c-format
 msgid "Installing for user: %s from bundle %s\n"
-msgstr "Instalowanie: %s z pakietu %s\n"
+msgstr "Instalowanie dla użytkownika: %s z pakietu %s\n"
 
 #: app/flatpak-transaction.c:824
 #, c-format
@@ -2302,7 +2300,7 @@ msgstr "Nieprawidłowa suma kontrolna dodatkowych danych %s"
 
 #: common/flatpak-dir.c:2742
 msgid "Remote OCI index has no registry uri"
-msgstr ""
+msgstr "Indeks OCI repozytorium nie ma adresu URI rejestru"
 
 #: common/flatpak-dir.c:2958
 #, c-format
@@ -2503,29 +2501,29 @@ msgstr "Nie zainstalowano %s %s"
 msgid "Could not find installation %s"
 msgstr "Nie można odnaleźć instalacji %s"
 
-#: common/flatpak-dir.c:9094
+#: common/flatpak-dir.c:9098
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Już zainstalowano środowisko wykonawcze %s, gałąź %s"
 
-#: common/flatpak-dir.c:9095
+#: common/flatpak-dir.c:9099
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Już zainstalowano program %s, gałąź %s"
 
-#: common/flatpak-dir.c:9575
+#: common/flatpak-dir.c:9579
 msgid "Remote title not set"
 msgstr "Nie ustawiono tytułu repozytorium"
 
-#: common/flatpak-dir.c:9597
+#: common/flatpak-dir.c:9601
 msgid "Remote default-branch not set"
 msgstr "Nie ustawiono domyślnej gałęzi repozytorium"
 
-#: common/flatpak-dir.c:10185
+#: common/flatpak-dir.c:10189
 msgid "No flatpak cache in remote summary"
 msgstr "Brak pamięci podręcznej Flatpak w podsumowaniu repozytorium"
 
-#: common/flatpak-dir.c:10195
+#: common/flatpak-dir.c:10199
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
@@ -2872,16 +2870,3 @@ msgstr ""
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "Aktualizacja danych AppStream"
-
-#~ msgid "No remote %s"
-#~ msgstr "Brak repozytorium %s"
-
-#~ msgid "Search only user installations"
-#~ msgstr "Wyszukuje tylko instalacje użytkownika"
-
-#~ msgid "Search only system-wide installations"
-#~ msgstr "Wyszukuje tylko instalacje systemowe"
-
-#, fuzzy
-#~ msgid "Search specific system-wide installations"
-#~ msgstr "Wyświetla podane instalacje systemowe"
