@@ -5583,13 +5583,13 @@ flatpak_dir_deploy (FlatpakDir          *self,
       g_autofree char *bin_data = NULL;
       int r;
 
+      if (!flatpak_mkdir_p (bindir, cancellable, error))
+        return FALSE;
+
       if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
                                        keyfile, export,
                                        cancellable,
                                        error))
-        return FALSE;
-
-      if (!flatpak_mkdir_p (bindir, cancellable, error))
         return FALSE;
 
       bin_data = g_strdup_printf ("#!/bin/sh\nexec %s/flatpak run --branch=%s --arch=%s %s \"$@\"\n",
