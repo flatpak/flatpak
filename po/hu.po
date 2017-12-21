@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-12-15 13:30+0100\n"
+"POT-Creation-Date: 2017-12-21 11:12+0100\n"
 "PO-Revision-Date: 2017-05-14 19:51+0100\n"
 "Last-Translator: Balázs Úr <urbalazs@gmail.com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -2072,22 +2072,22 @@ msgstr "NÉV"
 msgid "Builtin Commands:"
 msgstr "Beépített parancsok:"
 
-#: app/flatpak-main.c:367
+#: app/flatpak-main.c:370
 msgid ""
-"The --installation option was used multiple timesfor a command that works on "
-"one installation"
+"The --installation option was used multiple times for a command that works "
+"on one installation"
 msgstr ""
 
-#: app/flatpak-main.c:486
+#: app/flatpak-main.c:489
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Ismeretlen „%s” parancs"
 
-#: app/flatpak-main.c:494
+#: app/flatpak-main.c:497
 msgid "No command specified"
 msgstr "Nincs parancs megadva"
 
-#: app/flatpak-main.c:612
+#: app/flatpak-main.c:615
 msgid "error:"
 msgstr "hiba:"
 
@@ -2122,7 +2122,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1157
 #: common/flatpak-dir.c:1476 common/flatpak-dir.c:1499
-#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10508
+#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10512
 #: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
 #, c-format
 msgid "%s not installed"
@@ -2484,29 +2484,29 @@ msgstr "A(z) %s %s nincs telepítve"
 msgid "Could not find installation %s"
 msgstr "Nem található a telepítési %s"
 
-#: common/flatpak-dir.c:9094
+#: common/flatpak-dir.c:9098
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "A(z) %s futtatókörnyezet, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:9095
+#: common/flatpak-dir.c:9099
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "A(z) %s alkalmazás, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:9575
+#: common/flatpak-dir.c:9579
 msgid "Remote title not set"
 msgstr "A távoli cím nincs beállítva"
 
-#: common/flatpak-dir.c:9597
+#: common/flatpak-dir.c:9601
 msgid "Remote default-branch not set"
 msgstr "A távoli alapértelmezett ág nincs beállítva"
 
-#: common/flatpak-dir.c:10185
+#: common/flatpak-dir.c:10189
 msgid "No flatpak cache in remote summary"
 msgstr "Nincs flatpak gyorsítótár a távoli összegzésben"
 
-#: common/flatpak-dir.c:10195
+#: common/flatpak-dir.c:10199
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""

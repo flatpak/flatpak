@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-12-15 13:30+0100\n"
+"POT-Creation-Date: 2017-12-21 11:12+0100\n"
 "PO-Revision-Date: 2017-04-07 13:52+0200\n"
 "Last-Translator: Mario Blättermann <mario.blaettermann@gmail.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
@@ -2094,22 +2094,22 @@ msgstr "DATEINAME"
 msgid "Builtin Commands:"
 msgstr "Eingebaute Befehle:"
 
-#: app/flatpak-main.c:367
+#: app/flatpak-main.c:370
 msgid ""
-"The --installation option was used multiple timesfor a command that works on "
-"one installation"
+"The --installation option was used multiple times for a command that works "
+"on one installation"
 msgstr ""
 
-#: app/flatpak-main.c:486
+#: app/flatpak-main.c:489
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Unbekannter Befehl »%s«"
 
-#: app/flatpak-main.c:494
+#: app/flatpak-main.c:497
 msgid "No command specified"
 msgstr "Kein Befehl angegeben"
 
-#: app/flatpak-main.c:612
+#: app/flatpak-main.c:615
 msgid "error:"
 msgstr "Fehler:"
 
@@ -2146,7 +2146,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1157
 #: common/flatpak-dir.c:1476 common/flatpak-dir.c:1499
-#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10508
+#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10512
 #: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
 #, c-format
 msgid "%s not installed"
@@ -2511,29 +2511,29 @@ msgstr "%s %s ist nicht installiert"
 msgid "Could not find installation %s"
 msgstr "Installation %s konnte nicht gefunden werden"
 
-#: common/flatpak-dir.c:9094
+#: common/flatpak-dir.c:9098
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Laufzeitumgebung %s, Zweig %s ist bereits installiert"
 
-#: common/flatpak-dir.c:9095
+#: common/flatpak-dir.c:9099
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Anwendung %s, Zweig %s ist bereits installiert"
 
-#: common/flatpak-dir.c:9575
+#: common/flatpak-dir.c:9579
 msgid "Remote title not set"
 msgstr "Entfernter Titel nicht gesetzt"
 
-#: common/flatpak-dir.c:9597
+#: common/flatpak-dir.c:9601
 msgid "Remote default-branch not set"
 msgstr "Vorgabe-Zweig für ferne Quelle nicht definiert"
 
-#: common/flatpak-dir.c:10185
+#: common/flatpak-dir.c:10189
 msgid "No flatpak cache in remote summary"
 msgstr ""
 
-#: common/flatpak-dir.c:10195
+#: common/flatpak-dir.c:10199
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""

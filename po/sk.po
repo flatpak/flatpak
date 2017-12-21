@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-12-15 13:30+0100\n"
+"POT-Creation-Date: 2017-12-21 11:12+0100\n"
 "PO-Revision-Date: 2017-01-23 18:19+0100\n"
 "Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
@@ -2070,22 +2070,22 @@ msgstr "NÁZOV_SÚBORU"
 msgid "Builtin Commands:"
 msgstr "Vstavané príkazy:"
 
-#: app/flatpak-main.c:367
+#: app/flatpak-main.c:370
 msgid ""
-"The --installation option was used multiple timesfor a command that works on "
-"one installation"
+"The --installation option was used multiple times for a command that works "
+"on one installation"
 msgstr ""
 
-#: app/flatpak-main.c:486
+#: app/flatpak-main.c:489
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Neznámy príkaz „%s“"
 
-#: app/flatpak-main.c:494
+#: app/flatpak-main.c:497
 msgid "No command specified"
 msgstr "Nebol určený žiadny príkaz"
 
-#: app/flatpak-main.c:612
+#: app/flatpak-main.c:615
 msgid "error:"
 msgstr "chyba:"
 
@@ -2120,7 +2120,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1157
 #: common/flatpak-dir.c:1476 common/flatpak-dir.c:1499
-#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10508
+#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10512
 #: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
 #, c-format
 msgid "%s not installed"
@@ -2487,30 +2487,30 @@ msgstr "Aplikácia %s %s nie je nainštalovaná"
 msgid "Could not find installation %s"
 msgstr "Nepodarilo sa nájsť inštaláciu %s"
 
-#: common/flatpak-dir.c:9094
+#: common/flatpak-dir.c:9098
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Prostredie %s, vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:9095
+#: common/flatpak-dir.c:9099
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Aplikácia %s, vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:9575
+#: common/flatpak-dir.c:9579
 msgid "Remote title not set"
 msgstr ""
 
-#: common/flatpak-dir.c:9597
+#: common/flatpak-dir.c:9601
 #, fuzzy
 msgid "Remote default-branch not set"
 msgstr "Vypíše predvolenú architektúru a skončí"
 
-#: common/flatpak-dir.c:10185
+#: common/flatpak-dir.c:10189
 msgid "No flatpak cache in remote summary"
 msgstr ""
 
-#: common/flatpak-dir.c:10195
+#: common/flatpak-dir.c:10199
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""

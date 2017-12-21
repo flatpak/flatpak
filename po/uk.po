@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-12-15 13:30+0100\n"
+"POT-Creation-Date: 2017-12-21 11:12+0100\n"
 "PO-Revision-Date: 2017-10-23 20:15+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
@@ -2081,22 +2081,22 @@ msgstr "НАЗВА"
 msgid "Builtin Commands:"
 msgstr "Вбудовані команди:"
 
-#: app/flatpak-main.c:367
+#: app/flatpak-main.c:370
 msgid ""
-"The --installation option was used multiple timesfor a command that works on "
-"one installation"
+"The --installation option was used multiple times for a command that works "
+"on one installation"
 msgstr ""
 
-#: app/flatpak-main.c:486
+#: app/flatpak-main.c:489
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Невідома команда «%s»"
 
-#: app/flatpak-main.c:494
+#: app/flatpak-main.c:497
 msgid "No command specified"
 msgstr "Команду не вказано"
 
-#: app/flatpak-main.c:612
+#: app/flatpak-main.c:615
 msgid "error:"
 msgstr "помилка:"
 
@@ -2132,7 +2132,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1157
 #: common/flatpak-dir.c:1476 common/flatpak-dir.c:1499
-#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10508
+#: common/flatpak-dir.c:1521 common/flatpak-dir.c:10512
 #: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
 #, c-format
 msgid "%s not installed"
@@ -2496,29 +2496,29 @@ msgstr "Не встановлено %s %s"
 msgid "Could not find installation %s"
 msgstr "Не вдалося знайти встановлення %s"
 
-#: common/flatpak-dir.c:9094
+#: common/flatpak-dir.c:9098
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Середовище виконання %s, гілка %s вже встановлено"
 
-#: common/flatpak-dir.c:9095
+#: common/flatpak-dir.c:9099
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Програму %s, гілка %s вже встановлено"
 
-#: common/flatpak-dir.c:9575
+#: common/flatpak-dir.c:9579
 msgid "Remote title not set"
 msgstr "Заголовок віддаленого сховища не встановлено"
 
-#: common/flatpak-dir.c:9597
+#: common/flatpak-dir.c:9601
 msgid "Remote default-branch not set"
 msgstr "Не встановлено типову гілку віддаленого сховища"
 
-#: common/flatpak-dir.c:10185
+#: common/flatpak-dir.c:10189
 msgid "No flatpak cache in remote summary"
 msgstr "У резюме сховища немає кешу flatpak"
 
-#: common/flatpak-dir.c:10195
+#: common/flatpak-dir.c:10199
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Немає запису %s у кеші flatpak резюме сховища "
