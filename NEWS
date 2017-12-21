@@ -1,3 +1,12 @@
+Major changes in 0.10.2.1
+=========================
+
+ * Fixed crash when installing some flatpak bundle files
+ * Fix installation of telegram
+ * Fixed some warnings reported by coverity
+ * Some leaks fixed
+ * Fixed typo in error message
+
 Major changes in 0.10.2
 =======================
 
