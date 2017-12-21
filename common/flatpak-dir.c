@@ -5583,6 +5583,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
       g_autofree char *bin_data = NULL;
       int r;
 
+      if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
+                                       keyfile, export,
+                                       cancellable,
+                                       error))
+        return FALSE;
+
       if (!flatpak_mkdir_p (bindir, cancellable, error))
         return FALSE;
 
@@ -5597,12 +5603,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
       while (G_UNLIKELY (r == -1 && errno == EINTR));
       if (r == -1)
         return glnx_throw_errno_prefix (error, "fchmodat");
-
-      if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
-                                       keyfile, export,
-                                       cancellable,
-                                       error))
-        return FALSE;
 
     }
 
