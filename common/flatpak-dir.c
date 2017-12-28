@@ -8751,7 +8751,7 @@ origin_remote_matches (OstreeRepo   *repo,
       !noenumerate)
     return FALSE;
 
-  /* Must be match gpg-verify.
+  /* Must match gpg-verify
    * NOTE: We assume if all else matches the actual gpg key matches too. */
   if (!ostree_repo_get_remote_boolean_option (repo, remote_name,
                                               "gpg-verify",
@@ -8768,7 +8768,7 @@ origin_remote_matches (OstreeRepo   *repo,
       g_strcmp0 (main_ref, real_main_ref) != 0)
     return FALSE;
 
-  /* Must match main-ref */
+  /* Must match collection ID */
   if (ostree_repo_get_remote_option (repo, remote_name,
                                      "collection-id",
                                      NULL, &real_collection_id,
