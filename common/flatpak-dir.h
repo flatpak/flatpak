@@ -145,8 +145,10 @@ GQuark       flatpak_dir_error_quark (void);
 typedef void OstreeRepoFinderResult;
 typedef void** OstreeRepoFinderResultv;
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoFinderResult, void)
-G_DEFINE_AUTO_CLEANUP_FREE_FUNC (OstreeRepoFinderResultv, void, NULL)
+static inline void no_op (gpointer data) {}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoFinderResult, no_op)
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC (OstreeRepoFinderResultv, no_op, NULL)
 #endif  /* !FLATPAK_ENABLE_P2P */
 
 /**
