@@ -31,6 +31,8 @@ struct GLnxConsoleRef {
 
 typedef struct GLnxConsoleRef GLnxConsoleRef;
 
+gboolean glnx_stdout_is_tty (void);
+
 void	 glnx_console_lock (GLnxConsoleRef *ref);
 
 void	 glnx_console_text (const char     *text);

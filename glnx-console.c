@@ -46,8 +46,8 @@
 static gboolean locked;
 static guint64 last_update_ms; /* monotonic time in millis we last updated */
 
-static gboolean
-stdout_is_tty (void)
+gboolean
+glnx_stdout_is_tty (void)
 {
   static gsize initialized = 0;
   static gboolean stdout_is_tty_v;
@@ -156,7 +156,7 @@ glnx_console_lock (GLnxConsoleRef *console)
   g_return_if_fail (!locked);
   g_return_if_fail (!console->locked);
 
-  console->is_tty = stdout_is_tty ();
+  console->is_tty = glnx_stdout_is_tty ();
 
   locked = console->locked = TRUE;
 
@@ -199,7 +199,7 @@ text_percent_internal (const char *text,
   if (percentage != 100)
     {
       const guint64 diff_ms = current_ms - last_update_ms;
-      if (stdout_is_tty ())
+      if (glnx_stdout_is_tty ())
         {
           if (diff_ms < (1000/MAX_TTY_UPDATE_HZ))
             return;
@@ -224,7 +224,7 @@ text_percent_internal (const char *text,
 
   const guint input_textlen = text ? strlen (text) : 0;
 
-  if (!stdout_is_tty ())
+  if (!glnx_stdout_is_tty ())
     {
       if (text)
         fprintf (stdout, "%s", text);
