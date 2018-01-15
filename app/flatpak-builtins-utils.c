@@ -369,7 +369,7 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
           g_autofree char *dir_name = flatpak_dir_get_name (dir);
           g_print("%d) %s\n", i + 1, dir_name);
         }
-      chosen = flatpak_number_prompt (1, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
+      chosen = flatpak_number_prompt (0, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)
         return flatpak_fail (error, _("No remote chosen to resolve ‘%s’ which exists in multiple installations"), remote_name);
     }
