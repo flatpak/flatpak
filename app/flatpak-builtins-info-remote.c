@@ -275,7 +275,14 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
             g_print ("\n");
 
           if (opt_show_metadata)
-            g_print ("%s", xa_metadata);
+            {
+              g_autoptr(GVariant) c_m = NULL;
+              c_m = g_variant_get_child_value (c_v, 0);
+              g_variant_lookup (c_m, "xa.metadata", "&s", &xa_metadata);
+              if (xa_metadata == NULL)
+                return flatpak_fail (error, "Commit %s has no metadata", c);
+              g_print ("%s", xa_metadata);
+            }
 
           g_free (c);
           c = g_steal_pointer (&p);
