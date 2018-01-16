@@ -6486,7 +6486,7 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
   if (deploy_data != NULL)
     old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
   else
-    old_subpaths = g_new0 (const char *, 1); /* Empty strv == all subpatsh*/
+    old_subpaths = g_new0 (const char *, 1); /* Empty strv == all subpaths*/
 
   if (opt_subpaths)
     subpaths = opt_subpaths;
@@ -6503,7 +6503,7 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
 
   if (*url == 0)
     {
-      /* Empty URL => disabled, but we preted to be already installed to avoid warnings */
+      /* Empty URL => disabled, but we pretend to be already installed to avoid warnings */
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                    _("%s branch %s already installed"), ref, installed_commit);
       return NULL;
