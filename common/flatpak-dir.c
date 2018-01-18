@@ -2813,6 +2813,7 @@ oci_pull_init_progress (OstreeAsyncProgress *progress)
                              "total-delta-part-usize", "t", (guint64) 0,
                              "total-delta-superblocks", "u", 0,
                              "status", "s", "",
+                             "caught-error", "b", FALSE,
                              NULL);
 }
 
