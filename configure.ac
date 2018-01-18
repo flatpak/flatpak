@@ -32,6 +32,7 @@ AC_INIT([Flatpak],
 GLIB_REQS=2.44
 SYSTEM_BWRAP_REQS=0.1.8
 OSTREE_REQS=2017.14
+OSTREE_P2P_REQS=2018.2
 
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
@@ -259,7 +260,7 @@ AC_ARG_ENABLE([p2p],
                   [Enable unstable peer to peer support [default=no]])],,
   [enable_p2p=no])
 AS_IF([test x$enable_p2p = xyes],[
-  PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
+  PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_P2P_REQS])
 
   ostree_features=$($PKG_CONFIG --variable=features ostree-1)
   AS_CASE(["$ostree_features"],
