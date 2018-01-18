@@ -2016,18 +2016,31 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 #ifdef FLATPAK_ENABLE_P2P
       /* Find the latest rev from the remote and its available mirrors, including
        * LAN and USB sources. */
+      g_auto(GVariantBuilder) find_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
       g_autoptr(GMainContext) context = NULL;
+      g_autoptr(GVariant) find_options = NULL;
       g_autoptr(GAsyncResult) find_result = NULL;
       g_auto(OstreeRepoFinderResultv) results = NULL;
       OstreeCollectionRef collection_ref = { collection_id, (char *) ref };
       OstreeCollectionRef *collection_refs_to_fetch[2] = { &collection_ref, NULL };
       gsize i;
 
+      /* Find options */
+      g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
+
+      if (checksum_or_latest != NULL)
+        {
+          g_variant_builder_add (&find_builder, "{s@v}", "override-commit-ids",
+                                 g_variant_new_variant (g_variant_new_strv (&checksum_or_latest, 1)));
+        }
+
+      find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
+
       context = g_main_context_new ();
       g_main_context_push_thread_default (context);
 
       ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
-                                      NULL  /* no options */,
+                                      find_options,
                                       NULL  /* default finders */,
                                       NULL  /* no progress reporting */,
                                       cancellable, async_result_cb, &find_result);
@@ -2438,6 +2451,12 @@ repo_pull_one_dir (OstreeRepo          *self,
 
       g_variant_builder_add (&find_builder, "{s@v}", "update-frequency",
                              g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+
+      if (flatpak_flags & FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE && rev_to_fetch != NULL)
+        {
+          g_variant_builder_add (&find_builder, "{s@v}", "override-commit-ids",
+                                 g_variant_new_variant (g_variant_new_strv (&rev_to_fetch, 1)));
+        }
 
       find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
