@@ -1363,7 +1363,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
  * @name: name of the app/runtime to fetch
  * @arch: (nullable): which architecture to fetch (default: current architecture)
  * @branch: (nullable): which branch to fetch (default: 'master')
- * @subpaths: (nullable): A list of subpaths to fetch, or %NULL for everything
+ * @subpaths: (nullable) (array zero-terminated=1): A list of subpaths to fetch, or %NULL for everything
  * @progress: (scope call) (nullable): progress callback
  * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
@@ -1516,7 +1516,7 @@ flatpak_installation_install (FlatpakInstallation    *self,
  * @name: name of the app or runtime to update
  * @arch: (nullable): architecture of the app or runtime to update (default: current architecture)
  * @branch: (nullable): name of the branch of the app or runtime to update (default: master)
- * @subpaths: (nullable): A list of subpaths to fetch, or %NULL for everything
+ * @subpaths: (nullable) (array zero-terminated=1): A list of subpaths to fetch, or %NULL for everything
  * @progress: (scope call) (nullable): the callback
  * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
