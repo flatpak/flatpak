@@ -31,10 +31,8 @@ has a recent enough version of Bubblewrap already, you can use
 
 Bubblewrap can run in two modes, either using unprivileged user
 namespaces or setuid mode. This requires that the kernel supports this,
-which some distributions disable. For instance, Arch completely
-disables user namespaces, while Debian supports unprivileged user
-namespaces, but only if you turn on the
-`kernel.unprivileged_userns_clone` sysctl.
+which some distributions disable. For instance, Debian and Arch 
+([linux](https://www.archlinux.org/packages/?name=linux) kernel v4.14.5 or later), support user namespaces with the `kernel.unprivileged_userns_clone` sysctl enabled.
 
 If unprivileged user namespaces are not available, then Bubblewrap must
 be built as setuid root. This is believed to be safe, as it is
