@@ -6573,7 +6573,11 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
         }
 
       /* The download progress goes up to 97% */
-      new_progress = 5 + ((total_transferred / (gdouble) total) * 92);
+      if (total > 0) {
+        new_progress = 5 + ((total_transferred / (gdouble) total) * 92);
+      } else {
+        new_progress = 97;
+      }
 
       /* And the writing of the objects adds 3% to the progress */
       new_progress += get_write_progress (outstanding_writes);
