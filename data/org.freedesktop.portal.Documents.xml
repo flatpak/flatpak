@@ -72,6 +72,7 @@
         access to the file.
     -->
     <method name="Add">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='h' name='o_path_fd' direction='in'/>
       <arg type='b' name='reuse_existing' direction='in'/>
       <arg type='b' name='persistent' direction='in'/>
@@ -89,6 +90,7 @@
         Creates an entry in the document store for writing a new file.
     -->
     <method name="AddNamed">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='h' name='o_path_parent_fd' direction='in'/>
       <arg type='ay' name='filename' direction='in'/>
       <arg type='b' name='reuse_existing' direction='in'/>
@@ -124,6 +126,7 @@
         This method was added in version 2 of the org.freedesktop.portal.Documents interface.
     -->
     <method name="AddFull">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='ah' name='o_path_fds' direction='in'/>
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='app_id' direction='in'/>
