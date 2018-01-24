@@ -108,6 +108,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
   const char *off = "";
   gboolean friendly = TRUE;
   const char *xa_metadata = NULL;
+  const char *collection_id = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   guint64 installed_size = 0;
   guint64 download_size = 0;
@@ -175,6 +176,10 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
       if (xa_metadata == NULL)
         return flatpak_fail (error, "Commit has no metadata");
 
+#ifdef FLATPAK_ENABLE_P2P
+      g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
+#endif
+
       if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
         installed_size = GUINT64_FROM_BE (installed_size);
 
@@ -194,6 +199,8 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
       g_print ("%s%s%s %s\n", on, _("ID:"), off, parts[1]);
       g_print ("%s%s%s %s\n", on, _("Arch:"), off, parts[2]);
       g_print ("%s%s%s %s\n", on, _("Branch:"), off, parts[3]);
+      if (collection_id != NULL)
+        g_print ("%s%s%s %s\n", on, _("Collection ID:"), off, collection_id);
       g_print ("%s%s%s %s\n", on, _("Date:"), off, formatted_timestamp);
       g_print ("%s%s%s %s\n", on, _("Subject:"), off, subject);
       g_print ("%s%s%s %s\n", on, _("Commit:"), off, commit);
