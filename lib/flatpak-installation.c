@@ -225,7 +225,9 @@ flatpak_get_system_installations (GCancellable *cancellable,
       else
         {
           /* Warn about the problem and continue without listing this installation. */
-          g_warning ("Unable to create FlatpakInstallation for: %s", local_error->message);
+          g_autofree char *dir_name = flatpak_dir_get_name (install_dir);
+          g_warning ("Unable to create FlatpakInstallation for %s: %s",
+                     dir_name, local_error->message);
         }
     }
 
