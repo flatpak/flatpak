@@ -1524,7 +1524,13 @@ flatpak_installation_install (FlatpakInstallation    *self,
  *
  * Update an application or runtime.
  *
- * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %NULL on failure
+ * If the specified package is not installed, then %FLATPAK_ERROR_NOT_INSTALLED
+ * will be thrown.
+ *
+ * If no updates could be found on the remote end and the package is
+ * already up to date, then %FLATPAK_ERROR_ALREADY_INSTALLED will be thrown.
+ *
+ * Returns: (transfer full): The ref for the newly updated app or %NULL on failure
  */
 FlatpakInstalledRef *
 flatpak_installation_update_full (FlatpakInstallation    *self,
@@ -1629,7 +1635,13 @@ out:
  *
  * Update an application or runtime.
  *
- * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %NULL on failure
+ * If the specified package is not installed, then %FLATPAK_ERROR_NOT_INSTALLED
+ * will be thrown.
+ *
+ * If no updates could be found on the remote end and the package is
+ * already up to date, then %FLATPAK_ERROR_ALREADY_INSTALLED will be thrown.
+ *
+ * Returns: (transfer full): The ref for the newly updated app or %NULL on failure
  */
 FlatpakInstalledRef *
 flatpak_installation_update (FlatpakInstallation    *self,
