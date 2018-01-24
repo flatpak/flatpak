@@ -758,6 +758,158 @@ portal_add_full (GDBusMethodInvocation *invocation,
 }
 
 static void
+portal_add_named_full (GDBusMethodInvocation *invocation,
+                       GVariant              *parameters,
+                       const char            *app_id)
+{
+  GDBusMessage *message;
+  GUnixFDList *fd_list;
+  int parent_fd_id, parent_fd, fds_len;
+  char parent_path_buffer[PATH_MAX + 1];
+  const int *fds = NULL;
+  struct stat parent_st_buf;
+  gboolean reuse_existing, persistent, as_needed_by_app;
+  GError *error = NULL;
+  guint32 flags = 0;
+  const char *filename;
+  const char *target_app_id;
+  g_autofree const char **permissions = NULL;
+  g_autofree char *id = NULL;
+  g_autofree char *path = NULL;
+  XdpPermissionFlags target_perms;
+  GVariantBuilder builder;
+  g_autoptr(FlatpakExports) app_exports = NULL;
+  g_autoptr(GVariant) filename_v = NULL;
+
+  g_variant_get (parameters, "(h@ayus^a&s)", &parent_fd_id, &filename_v, &flags, &target_app_id, &permissions);
+  filename = g_variant_get_bytestring (filename_v);
+
+  /* This is only allowed from the host, or else we could leak existence of files */
+  if (*app_id != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_NOT_ALLOWED,
+                                             "Not enough permissions");
+      return;
+    }
+
+  if ((flags & ~XDP_ADD_FLAGS_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                                             "Invalid flags");
+      return;
+    }
+
+  reuse_existing = (flags & XDP_ADD_FLAGS_REUSE_EXISTING) != 0;
+  persistent = (flags & XDP_ADD_FLAGS_PERSISTENT) != 0;
+  as_needed_by_app = (flags & XDP_ADD_FLAGS_AS_NEEDED_BY_APP) != 0;
+
+  if (as_needed_by_app && target_app_id[0] != '\0')
+    {
+      g_autoptr(FlatpakContext) app_context = flatpak_context_load_for_app (target_app_id, NULL);
+      if (app_context)
+        app_exports = flatpak_exports_from_context (app_context, target_app_id);
+    }
+
+  target_perms = xdp_parse_permissions (permissions);
+
+  message = g_dbus_method_invocation_get_message (invocation);
+  fd_list = g_dbus_message_get_unix_fd_list (message);
+
+  parent_fd = -1;
+  if (fd_list != NULL)
+    {
+      fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
+      if (parent_fd_id < fds_len)
+        parent_fd = fds[parent_fd_id];
+    }
+
+  if (strchr (filename, '/') != NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                                             "Invalid filename passed");
+      return;
+    }
+
+  if (!validate_fd_common (parent_fd, &parent_st_buf, S_IFDIR, parent_path_buffer, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return;
+    }
+
+  if (parent_st_buf.st_dev == fuse_dev)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                                             "Invalid fd passed");
+      return;
+    }
+
+  path = g_build_filename (parent_path_buffer, filename, NULL);
+
+  g_debug ("portal_add_named_full %s", path);
+
+  {
+    XdpPermissionFlags caller_perms =
+      XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
+      XDP_PERMISSION_FLAGS_READ |
+      XDP_PERMISSION_FLAGS_WRITE;
+
+    /* If its a unique one its safe for the creator to
+       delete it at will */
+    if (!reuse_existing)
+      caller_perms |= XDP_PERMISSION_FLAGS_DELETE;
+
+    AUTOLOCK (db);
+
+    if (app_exports &&
+        flatpak_exports_path_is_visible (app_exports, parent_path_buffer))
+      {
+        id = g_strdup ("");
+      }
+    else
+      {
+        id = do_create_doc (&parent_st_buf, path, reuse_existing, persistent);
+
+        if (app_id[0] != '\0' && strcmp (app_id, target_app_id) != 0)
+          {
+            g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);;
+            do_set_permissions (entry, id, app_id, caller_perms);
+          }
+
+        if (target_app_id[0] != '\0' && target_perms != 0)
+          {
+            g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);
+            do_set_permissions (entry, id, target_app_id, target_perms);
+          }
+      }
+  }
+
+  /* Invalidate with lock dropped to avoid deadlock */
+  g_assert (id != NULL);
+
+  if (*id != 0)
+    {
+      xdp_fuse_invalidate_doc_app (id, NULL);
+      if (app_id[0] != '\0')
+        xdp_fuse_invalidate_doc_app (id, app_id);
+      if (target_app_id[0] != '\0' && target_perms != 0)
+        xdp_fuse_invalidate_doc_app (id, target_app_id);
+    }
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&builder, "{sv}", "mountpoint",
+                         g_variant_new_bytestring (xdp_fuse_get_mountpoint ()));
+
+  g_dbus_method_invocation_return_value (invocation,
+                                         g_variant_new ("(s@a{sv})",
+                                                        id,
+                                                        g_variant_builder_end (&builder)));
+}
+
+static void
 portal_add_named (GDBusMethodInvocation *invocation,
                   GVariant              *parameters,
                   const char            *app_id)
@@ -1073,12 +1225,13 @@ on_bus_acquired (GDBusConnection *connection,
 
   dbus_api = xdp_dbus_documents_skeleton_new ();
 
-  xdp_dbus_documents_set_version (XDP_DBUS_DOCUMENTS (dbus_api), 2);
+  xdp_dbus_documents_set_version (XDP_DBUS_DOCUMENTS (dbus_api), 3);
 
   g_signal_connect_swapped (dbus_api, "handle-get-mount-point", G_CALLBACK (handle_get_mount_point), NULL);
   g_signal_connect_swapped (dbus_api, "handle-add", G_CALLBACK (handle_method), portal_add);
   g_signal_connect_swapped (dbus_api, "handle-add-named", G_CALLBACK (handle_method), portal_add_named);
   g_signal_connect_swapped (dbus_api, "handle-add-full", G_CALLBACK (handle_method), portal_add_full);
+  g_signal_connect_swapped (dbus_api, "handle-add-named-full", G_CALLBACK (handle_method), portal_add_named_full);
   g_signal_connect_swapped (dbus_api, "handle-grant-permissions", G_CALLBACK (handle_method), portal_grant_permissions);
   g_signal_connect_swapped (dbus_api, "handle-revoke-permissions", G_CALLBACK (handle_method), portal_revoke_permissions);
   g_signal_connect_swapped (dbus_api, "handle-delete", G_CALLBACK (handle_method), portal_delete);
