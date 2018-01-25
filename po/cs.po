@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-12-15 13:30+0100\n"
-"PO-Revision-Date: 2017-12-16 01:06+0100\n"
+"PO-Revision-Date: 2018-01-25 14:08+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -102,7 +102,7 @@ msgstr "ID kolekce"
 
 #: app/flatpak-builtins-add-remote.c:80 app/flatpak-builtins-repo-update.c:56
 msgid "COLLECTION-ID"
-msgstr "KOLEKCE-ID"
+msgstr "ID-KOLEKCE"
 
 #: app/flatpak-builtins-add-remote.c:82
 msgid "Import GPG key from FILE (- for stdin)"
@@ -1165,6 +1165,10 @@ msgstr "Větev:"
 #: app/flatpak-builtins-info.c:196 app/flatpak-builtins-info.c:310
 msgid "Origin:"
 msgstr "Původ:"
+
+#: app/flatpak-builtins-info-remote.c:203
+msgid "Collection ID:"
+msgstr "ID kolekce:"
 
 #: app/flatpak-builtins-info.c:198 app/flatpak-builtins-info-remote.c:197
 msgid "Date:"
