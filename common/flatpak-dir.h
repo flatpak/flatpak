@@ -134,6 +134,7 @@ typedef enum {
   FLATPAK_DIR_STORAGE_TYPE_HARD_DISK,
   FLATPAK_DIR_STORAGE_TYPE_SDCARD,
   FLATPAK_DIR_STORAGE_TYPE_MMC,
+  FLATPAK_DIR_STORAGE_TYPE_NETWORK,
 } FlatpakDirStorageType;
 
 GQuark       flatpak_dir_error_quark (void);

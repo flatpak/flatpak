@@ -380,6 +380,9 @@ parse_storage_type (const char *type_string)
       g_autofree char *type_low = NULL;
 
       type_low = g_ascii_strdown (type_string, -1);
+      if (g_strcmp0 (type_low, "network") == 0)
+        return FLATPAK_DIR_STORAGE_TYPE_NETWORK;
+
       if (g_strcmp0 (type_low, "mmc") == 0)
         return FLATPAK_DIR_STORAGE_TYPE_MMC;
 
