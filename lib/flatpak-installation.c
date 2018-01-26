@@ -495,6 +495,9 @@ flatpak_installation_get_storage_type (FlatpakInstallation *self)
     case FLATPAK_DIR_STORAGE_TYPE_MMC:
       return FLATPAK_STORAGE_TYPE_MMC;
 
+    case FLATPAK_DIR_STORAGE_TYPE_NETWORK:
+      return FLATPAK_STORAGE_TYPE_NETWORK;
+
     default:
       return FLATPAK_STORAGE_TYPE_DEFAULT;
     }

@@ -81,6 +81,7 @@ typedef enum {
  * @FLATPAK_STORAGE_TYPE_HARD_DISK: installation is on a hard disk
  * @FLATPAK_STORAGE_TYPE_SDCARD: installation is on a SD card
  * @FLATPAK_STORAGE_TYPE_MMC: installation is on an MMC
+ * @FLATPAK_STORAGE_TYPE_NETWORK: installation is on the network
  *
  * Flags to alter the behavior of flatpak_installation_install_full().
  *
@@ -91,6 +92,7 @@ typedef enum {
   FLATPAK_STORAGE_TYPE_HARD_DISK,
   FLATPAK_STORAGE_TYPE_SDCARD,
   FLATPAK_STORAGE_TYPE_MMC,
+  FLATPAK_STORAGE_TYPE_NETWORK,
 } FlatpakStorageType;
 
 
