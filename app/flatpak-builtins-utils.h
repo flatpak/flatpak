@@ -52,4 +52,10 @@ gboolean flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
                                             GCancellable *cancellable,
                                             GError      **error);
 
+gboolean update_appstream (GPtrArray    *dirs,
+                           const char   *remote,
+                           const char   *arch,
+                           GCancellable *cancellable,
+                           GError      **error);
+
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */
