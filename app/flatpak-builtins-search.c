@@ -24,6 +24,7 @@
 #include <appstream-glib.h>
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-dir.h"
 #include "flatpak-table-printer.h"
 #include "flatpak-utils.h"
@@ -211,6 +212,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
   g_autoptr(GPtrArray) dirs = NULL;
   g_autoptr(GOptionContext) context = g_option_context_new (_("TEXT - Search remote apps/runtimes for text"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
+  const char *arch = NULL;
 
   if (!flatpak_option_context_parse (context, NULL, &argc, &argv,
                                      FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, cancellable, error))
@@ -218,6 +220,10 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
 
   if (argc < 2)
     return usage_error (context, _("TEXT must be specified"), error);
+
+  arch = flatpak_get_arch ();
+  if (!update_appstream (dirs, NULL, arch, cancellable, error))
+    return FALSE;
 
   const char *search_text = argv[1];
   GSList *matches = NULL;
