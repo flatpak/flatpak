@@ -389,6 +389,30 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
   return TRUE;
 }
 
+/* Returns: the time in seconds since the file was modified, or %G_MAXUINT64 on error */
+static guint64
+get_file_age (GFile *file)
+{
+    guint64 now;
+    guint64 mtime;
+    g_autoptr(GFileInfo) info = NULL;
+
+    info = g_file_query_info (file,
+                              G_FILE_ATTRIBUTE_TIME_MODIFIED,
+                              G_FILE_QUERY_INFO_NONE,
+                              NULL,
+                              NULL);
+    if (info == NULL)
+      return G_MAXUINT64;
+
+    mtime = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+    now = (guint64) g_get_real_time () / G_USEC_PER_SEC;
+    if (mtime > now)
+      return G_MAXUINT64;
+
+    return (guint64) (now - mtime);
+}
+
 static void
 no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 {
@@ -398,6 +422,7 @@ gboolean
 update_appstream (GPtrArray    *dirs,
                   const char   *remote,
                   const char   *arch,
+                  guint64       ttl,
                   GCancellable *cancellable,
                   GError      **error)
 {
@@ -424,6 +449,13 @@ update_appstream (GPtrArray    *dirs,
             {
               g_autoptr(GError) local_error = NULL;
               g_autoptr(OstreeAsyncProgress) progress = NULL;
+              g_autoptr(GFile) ts_file = NULL;
+              g_autofree char *subdir = NULL;
+
+              subdir = g_strdup_printf ("appstream/%s/%s/.timestamp", remotes[i], arch);
+              ts_file = g_file_resolve_relative_path (flatpak_dir_get_path (dir), subdir);
+              if (get_file_age (ts_file) < ttl)
+                continue;
 
               if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
                   flatpak_dir_get_remote_noenumerate (dir, remotes[i]) ||

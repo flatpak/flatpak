@@ -29,6 +29,9 @@
 #include "flatpak-table-printer.h"
 #include "flatpak-utils.h"
 
+/* Appstream data expires after a day */
+#define FLATPAK_APPSTREAM_TTL 86400
+
 static GPtrArray *
 get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
 {
@@ -222,7 +225,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
     return usage_error (context, _("TEXT must be specified"), error);
 
   arch = flatpak_get_arch ();
-  if (!update_appstream (dirs, NULL, arch, cancellable, error))
+  if (!update_appstream (dirs, NULL, arch, FLATPAK_APPSTREAM_TTL, cancellable, error))
     return FALSE;
 
   const char *search_text = argv[1];
