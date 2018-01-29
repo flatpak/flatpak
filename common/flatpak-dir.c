@@ -10028,7 +10028,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 
       if (collection_id == NULL && summary_sig_bytes == NULL)
         {
-          g_debug ("Can't update remote configuration as user, no GPG signature)");
+          g_debug ("Can't update remote configuration as user, no GPG signature");
           return TRUE;
         }
 
