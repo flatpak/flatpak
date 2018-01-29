@@ -423,6 +423,7 @@ update_appstream (GPtrArray    *dirs,
                   const char   *remote,
                   const char   *arch,
                   guint64       ttl,
+                  gboolean      quiet,
                   GCancellable *cancellable,
                   GError      **error)
 {
@@ -473,9 +474,19 @@ update_appstream (GPtrArray    *dirs,
                 continue;
 
               if (flatpak_dir_is_user (dir))
-                g_print (_("Updating appstream data for user remote %s\n"), remotes[i]);
+                {
+                  if (quiet)
+                    g_debug (_("Updating appstream data for user remote %s\n"), remotes[i]);
+                  else
+                    g_print (_("Updating appstream data for user remote %s\n"), remotes[i]);
+                }
               else
-                g_print (_("Updating appstream data for remote %s\n"), remotes[i]);
+                {
+                  if (quiet)
+                    g_debug (_("Updating appstream data for remote %s\n"), remotes[i]);
+                  else
+                    g_print (_("Updating appstream data for remote %s\n"), remotes[i]);
+                }
               progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
               if (!flatpak_dir_update_appstream (dir, remotes[i], arch, &changed,
                                                  progress, cancellable, &local_error))
