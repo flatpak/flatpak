@@ -450,12 +450,22 @@ update_appstream (GPtrArray    *dirs,
               g_autoptr(GError) local_error = NULL;
               g_autoptr(OstreeAsyncProgress) progress = NULL;
               g_autoptr(GFile) ts_file = NULL;
+              g_autofree char *ts_file_path = NULL;
               g_autofree char *subdir = NULL;
+              guint64 ts_file_age;
 
               subdir = g_strdup_printf ("appstream/%s/%s/.timestamp", remotes[i], arch);
               ts_file = g_file_resolve_relative_path (flatpak_dir_get_path (dir), subdir);
-              if (get_file_age (ts_file) < ttl)
-                continue;
+              ts_file_path = g_file_get_path (ts_file);
+              ts_file_age = get_file_age (ts_file);
+              if (ts_file_age < ttl)
+                {
+                  g_debug ("%s age %" G_GUINT64_FORMAT " is less than ttl %" G_GUINT64_FORMAT, ts_file_path, ts_file_age, ttl);
+                  continue;
+                }
+              else
+                g_debug ("%s age %" G_GUINT64_FORMAT " is greater than ttl %" G_GUINT64_FORMAT, ts_file_path, ts_file_age, ttl);
+
 
               if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
                   flatpak_dir_get_remote_noenumerate (dir, remotes[i]) ||
