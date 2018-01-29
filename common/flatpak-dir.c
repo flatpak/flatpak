@@ -2190,7 +2190,14 @@ default_progress_changed (OstreeAsyncProgress *progress,
       glnx_console_text (line);
     }
   else
-    ostree_repo_pull_default_console_progress_changed (progress, user_data);
+    {
+      /* We get some extra calls before we've really started due to the initialization of the
+         extra data, so ignore those */
+      if (ostree_async_progress_get_variant (progress, "outstanding-fetches") == NULL)
+        return;
+
+      ostree_repo_pull_default_console_progress_changed (progress, user_data);
+    }
 }
 
 /* Get the configured collection-id for @remote_name, squashing empty strings into
