@@ -42,6 +42,7 @@
             Searches for applications and runtimes matching
             <arg choice="plain">TEXT</arg>. Note that this uses appstream data
             that can be updated with <citerefentry><refentrytitle>flatpak-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+            The appstream data is updated automatically only if it's at least a day old.
         </para>
     </refsect1>
 
