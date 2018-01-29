@@ -225,7 +225,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
     return usage_error (context, _("TEXT must be specified"), error);
 
   arch = flatpak_get_arch ();
-  if (!update_appstream (dirs, NULL, arch, FLATPAK_APPSTREAM_TTL, cancellable, error))
+  if (!update_appstream (dirs, NULL, arch, FLATPAK_APPSTREAM_TTL, TRUE, cancellable, error))
     return FALSE;
 
   const char *search_text = argv[1];
