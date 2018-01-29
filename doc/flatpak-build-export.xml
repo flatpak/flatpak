@@ -177,7 +177,7 @@
                 <term><option>--update-appstream</option></term>
 
                 <listitem><para>
-                    Run appstream-builder and to update the appstream branch after build.
+                    Update the appstream branch after the build.
                 </para></listitem>
             </varlistentry>
 
