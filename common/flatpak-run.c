@@ -1242,13 +1242,16 @@ flatpak_context_load_metadata (FlatpakContext *context,
         {
           FlatpakContextShares share;
 
-          share = flatpak_context_share_from_string (parse_negated (shares[i], &remove), error);
+          share = flatpak_context_share_from_string (parse_negated (shares[i], &remove), NULL);
           if (share == 0)
-            return FALSE;
-          if (remove)
-            flatpak_context_remove_shares (context, share);
+            g_debug ("Unknown share type %s", shares[i]);
           else
-            flatpak_context_add_shares (context, share);
+            {
+              if (remove)
+                flatpak_context_remove_shares (context, share);
+              else
+                flatpak_context_add_shares (context, share);
+            }
         }
     }
 
@@ -1261,13 +1264,16 @@ flatpak_context_load_metadata (FlatpakContext *context,
 
       for (i = 0; sockets[i] != NULL; i++)
         {
-          FlatpakContextSockets socket = flatpak_context_socket_from_string (parse_negated (sockets[i], &remove), error);
+          FlatpakContextSockets socket = flatpak_context_socket_from_string (parse_negated (sockets[i], &remove), NULL);
           if (socket == 0)
-            return FALSE;
-          if (remove)
-            flatpak_context_remove_sockets (context, socket);
+            g_debug ("Unknown socket type %s", sockets[i]);
           else
-            flatpak_context_add_sockets (context, socket);
+            {
+              if (remove)
+                flatpak_context_remove_sockets (context, socket);
+              else
+                flatpak_context_add_sockets (context, socket);
+            }
         }
     }
 
@@ -1281,13 +1287,16 @@ flatpak_context_load_metadata (FlatpakContext *context,
 
       for (i = 0; devices[i] != NULL; i++)
         {
-          FlatpakContextDevices device = flatpak_context_device_from_string (parse_negated (devices[i], &remove), error);
+          FlatpakContextDevices device = flatpak_context_device_from_string (parse_negated (devices[i], &remove), NULL);
           if (device == 0)
-            return FALSE;
-          if (remove)
-            flatpak_context_remove_devices (context, device);
+            g_debug ("Unknown device type %s", devices[i]);
           else
-            flatpak_context_add_devices (context, device);
+            {
+              if (remove)
+                flatpak_context_remove_devices (context, device);
+              else
+                flatpak_context_add_devices (context, device);
+            }
         }
     }
 
@@ -1301,13 +1310,16 @@ flatpak_context_load_metadata (FlatpakContext *context,
 
       for (i = 0; features[i] != NULL; i++)
         {
-          FlatpakContextFeatures feature = flatpak_context_feature_from_string (parse_negated (features[i], &remove), error);
+          FlatpakContextFeatures feature = flatpak_context_feature_from_string (parse_negated (features[i], &remove), NULL);
           if (feature == 0)
-            return FALSE;
-          if (remove)
-            flatpak_context_remove_features (context, feature);
+            g_debug ("Unknown feature type %s", features[i]);
           else
-            flatpak_context_add_features (context, feature);
+            {
+              if (remove)
+                flatpak_context_remove_features (context, feature);
+              else
+                flatpak_context_add_features (context, feature);
+            }
         }
     }
 
@@ -1321,12 +1333,15 @@ flatpak_context_load_metadata (FlatpakContext *context,
       for (i = 0; filesystems[i] != NULL; i++)
         {
           const char *fs = parse_negated (filesystems[i], &remove);
-          if (!flatpak_context_verify_filesystem (fs, error))
-            return FALSE;
-          if (remove)
-            flatpak_context_remove_filesystem (context, fs);
+          if (!flatpak_context_verify_filesystem (fs, NULL))
+            g_debug ("Unknown filesystem type %s", filesystems[i]);
           else
-            flatpak_context_add_filesystem (context, fs);
+            {
+              if (remove)
+                flatpak_context_remove_filesystem (context, fs);
+              else
+                flatpak_context_add_filesystem (context, fs);
+            }
         }
     }
 
@@ -1356,11 +1371,9 @@ flatpak_context_load_metadata (FlatpakContext *context,
           if (!flatpak_verify_dbus_name (key, error))
             return FALSE;
 
-          policy = flatpak_policy_from_string (value, error);
-          if ((int) policy == -1)
-            return FALSE;
-
-          flatpak_context_set_session_bus_policy (context, key, policy);
+          policy = flatpak_policy_from_string (value, NULL);
+          if ((int) policy != -1)
+            flatpak_context_set_session_bus_policy (context, key, policy);
         }
     }
 
@@ -1379,11 +1392,9 @@ flatpak_context_load_metadata (FlatpakContext *context,
           if (!flatpak_verify_dbus_name (key, error))
             return FALSE;
 
-          policy = flatpak_policy_from_string (value, error);
-          if ((int) policy == -1)
-            return FALSE;
-
-          flatpak_context_set_system_bus_policy (context, key, policy);
+          policy = flatpak_policy_from_string (value, NULL);
+          if ((int) policy != -1)
+            flatpak_context_set_system_bus_policy (context, key, policy);
         }
     }
 
