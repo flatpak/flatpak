@@ -1,3 +1,19 @@
+Major changes in 0.10.3
+=======================
+
+This is a security fix release that fixes a sandbox escape in the
+flatpak dbus proxy. This issue was found by Gabriel Campana of The
+Google Security Team.
+
+ * Fix dbus proxy vulnerability in authentication phase
+ * Make permission handling ignore unknown permissions for forwards
+   compatibility
+ * Removed incorrect error message in update --appdata when ther
+   was no updates
+ * Fix handling of abort in the duplicate remote prompt
+ * Fix division by zero in progress calculation
+ * Fix flatpak remote-info --show-metadata
+
 Major changes in 0.10.2.1
 =========================
 
