@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-10-31 11:33+0100\n"
+"POT-Creation-Date: 2018-01-30 14:45+0100\n"
 "PO-Revision-Date: 2017-03-03 08:35+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -283,7 +283,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Brak „=” w opcji montowania dowiązania „%s”"
 
-#: app/flatpak-builtins-build.c:258 common/flatpak-run.c:4479
+#: app/flatpak-builtins-build.c:258 common/flatpak-run.c:4490
 msgid "Unable to start app"
 msgstr "Nie można uruchomić programu"
 
@@ -1876,38 +1876,38 @@ msgstr "NAZWA-PLIKU"
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 
-#: common/flatpak-run.c:1839
+#: common/flatpak-run.c:1850
 msgid "Failed to create temporary file"
 msgstr "Utworzenie pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:1846
+#: common/flatpak-run.c:1857
 msgid "Failed to unlink temporary file"
 msgstr "Odwiązanie pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:1864
+#: common/flatpak-run.c:1875
 msgid "Failed to write to temporary file"
 msgstr "Zapisanie do pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:3340
+#: common/flatpak-run.c:3351
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Otwarcie pliku tymczasowego „flatpak-info” się nie powiodło: %s"
 
-#: common/flatpak-run.c:3395 common/flatpak-run.c:3405
+#: common/flatpak-run.c:3406 common/flatpak-run.c:3416
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Otwarcie pliku tymczasowego się nie powiodło: %s"
 
-#: common/flatpak-run.c:3700
+#: common/flatpak-run.c:3711
 msgid "Unable to create sync pipe"
 msgstr "Utworzenie potoku synchronizacji się nie powiodło"
 
-#: common/flatpak-run.c:3725
+#: common/flatpak-run.c:3736
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Otwarcie pliku informacji o programie się nie powiodło: %s"
 
-#: common/flatpak-run.c:3755
+#: common/flatpak-run.c:3766
 msgid "Failed to sync with dbus proxy"
 msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 

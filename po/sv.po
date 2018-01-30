@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-10-31 11:33+0100\n"
+"POT-Creation-Date: 2018-01-30 14:45+0100\n"
 "PO-Revision-Date: 2016-09-15 00:32+0800\n"
 "Last-Translator: Sebastian Rasmussen <sebras@gmail.com>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -285,7 +285,7 @@ msgstr "Byggkatalog %s är inte initierad"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:258 common/flatpak-run.c:4479
+#: app/flatpak-builtins-build.c:258 common/flatpak-run.c:4490
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -1898,39 +1898,39 @@ msgstr "FILNAMN"
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Kräv inte en körande session (inget cgroups-skapande)"
 
-#: common/flatpak-run.c:1839
+#: common/flatpak-run.c:1850
 msgid "Failed to create temporary file"
 msgstr "Misslyckades med att skapa temporärfil"
 
-#: common/flatpak-run.c:1846
+#: common/flatpak-run.c:1857
 msgid "Failed to unlink temporary file"
 msgstr "Misslyckades med att avlänka temporärfil"
 
-#: common/flatpak-run.c:1864
+#: common/flatpak-run.c:1875
 msgid "Failed to write to temporary file"
 msgstr "Misslyckades med att skriva till temporärfil"
 
-#: common/flatpak-run.c:3340
+#: common/flatpak-run.c:3351
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Misslyckades med att öppna temporär flatpak-info-fil: %s"
 
-#: common/flatpak-run.c:3395 common/flatpak-run.c:3405
+#: common/flatpak-run.c:3406 common/flatpak-run.c:3416
 #, fuzzy, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Misslyckades med att öppna temporärfil: %s"
 
 # sebras: sync?
-#: common/flatpak-run.c:3700
+#: common/flatpak-run.c:3711
 msgid "Unable to create sync pipe"
 msgstr "Kan inte skapa sync-rör"
 
-#: common/flatpak-run.c:3725
+#: common/flatpak-run.c:3736
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Misslyckades med att öppna prog-info-fil: %s"
 
-#: common/flatpak-run.c:3755
+#: common/flatpak-run.c:3766
 msgid "Failed to sync with dbus proxy"
 msgstr "Misslyckades med att synkronisera med dbus-proxy"
 

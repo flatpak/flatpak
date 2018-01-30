@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak 0.8.0\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-10-31 11:33+0100\n"
+"POT-Creation-Date: 2018-01-30 14:45+0100\n"
 "PO-Revision-Date: 2017-01-18 11:30+MSK\n"
 "Last-Translator: romiq <romiq.kh@gmail.com>, 2017\n"
 "Language-Team: Russian (Russia) (https://www.transifex.com/flatpak/"
@@ -285,7 +285,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:258 common/flatpak-run.c:4479
+#: app/flatpak-builtins-build.c:258 common/flatpak-run.c:4490
 msgid "Unable to start app"
 msgstr "Невозможно запустить приложение"
 
@@ -1863,38 +1863,38 @@ msgstr ""
 msgid "Don't require a running session (no cgroups creation)"
 msgstr ""
 
-#: common/flatpak-run.c:1839
+#: common/flatpak-run.c:1850
 msgid "Failed to create temporary file"
 msgstr "Ошибка при создании временного файла"
 
-#: common/flatpak-run.c:1846
+#: common/flatpak-run.c:1857
 msgid "Failed to unlink temporary file"
 msgstr ""
 
-#: common/flatpak-run.c:1864
+#: common/flatpak-run.c:1875
 msgid "Failed to write to temporary file"
 msgstr ""
 
-#: common/flatpak-run.c:3340
+#: common/flatpak-run.c:3351
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3395 common/flatpak-run.c:3405
+#: common/flatpak-run.c:3406 common/flatpak-run.c:3416
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3700
+#: common/flatpak-run.c:3711
 msgid "Unable to create sync pipe"
 msgstr ""
 
-#: common/flatpak-run.c:3725
+#: common/flatpak-run.c:3736
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3755
+#: common/flatpak-run.c:3766
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
