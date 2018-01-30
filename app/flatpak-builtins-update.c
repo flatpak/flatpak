@@ -123,12 +123,15 @@ update_appstream (GPtrArray *dirs, const char *remote, GCancellable *cancellable
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
 
-          if (flatpak_dir_has_remote (dir, remote) &&
-              flatpak_dir_check_for_appstream_update (dir, remote, opt_arch))
+          if (flatpak_dir_has_remote (dir, remote))
             {
               g_autoptr(OstreeAsyncProgress) progress = NULL;
 
               found = TRUE;
+
+              /* Early bail out check */
+              if (!flatpak_dir_check_for_appstream_update (dir, remote, opt_arch))
+                continue;
 
               progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
               res = flatpak_dir_update_appstream (dir, remote, opt_arch, &changed,
