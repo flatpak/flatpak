@@ -1,3 +1,15 @@
+Major changes in 0.8.9
+======================
+
+This is a security fix release that fixes a sandbox escape in the
+flatpak dbus proxy. This issue was found by Gabriel Campana of The
+Google Security Team.
+
+ * Fix dbus proxy vulnerability in authentication phase
+ * Make permission handling ignore unknown permissions for forwards
+   compatibility
+ * Improved profile snippet
+
 Major changes in 0.8.8
 ======================
 
