@@ -144,7 +144,7 @@ flatpak_installation_new_for_dir (FlatpakDir   *dir,
   FlatpakInstallation *self;
   FlatpakInstallationPrivate *priv;
 
-  if (!flatpak_dir_ensure_repo (dir, NULL, error))
+  if (!flatpak_dir_maybe_ensure_repo (dir, NULL, error))
     {
       g_object_unref (dir);
       return NULL;
@@ -337,14 +337,39 @@ flatpak_installation_new_for_path (GFile *path, gboolean user,
 }
 
 static FlatpakDir *
-flatpak_installation_get_dir (FlatpakInstallation *self)
+_flatpak_installation_get_dir (FlatpakInstallation *self, gboolean ensure_repo, GError **error)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   FlatpakDir *dir;
+
   G_LOCK (dir);
+
+  if (ensure_repo && flatpak_dir_get_repo (priv->dir_unlocked) == NULL)
+    {
+      if (!flatpak_dir_ensure_repo (priv->dir_unlocked, NULL, error))
+        {
+          dir = NULL;
+          goto out;
+        }
+    }
+
   dir = g_object_ref (priv->dir_unlocked);
+
+out:
   G_UNLOCK (dir);
   return dir;
+}
+
+static FlatpakDir *
+flatpak_installation_get_dir (FlatpakInstallation *self, GError **error)
+{
+  return _flatpak_installation_get_dir (self, TRUE, error);
+}
+
+static FlatpakDir *
+flatpak_installation_get_dir_maybe_no_repo (FlatpakInstallation *self)
+{
+  return _flatpak_installation_get_dir (self, FALSE, NULL);
 }
 
 /**
@@ -372,7 +397,7 @@ flatpak_installation_drop_caches (FlatpakInstallation *self,
   old = priv->dir_unlocked;
   clone = flatpak_dir_clone (priv->dir_unlocked);
 
-  if (flatpak_dir_ensure_repo (clone, cancellable, error))
+  if (flatpak_dir_maybe_ensure_repo (clone, cancellable, error))
     {
       priv->dir_unlocked = clone;
       g_object_unref (old);
@@ -395,7 +420,7 @@ flatpak_installation_drop_caches (FlatpakInstallation *self,
 gboolean
 flatpak_installation_get_is_user (FlatpakInstallation *self)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   return flatpak_dir_is_user (dir);
 }
@@ -411,7 +436,7 @@ flatpak_installation_get_is_user (FlatpakInstallation *self)
 GFile *
 flatpak_installation_get_path (FlatpakInstallation *self)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   return g_object_ref (flatpak_dir_get_path (dir));
 }
@@ -429,7 +454,7 @@ flatpak_installation_get_path (FlatpakInstallation *self)
 const char *
 flatpak_installation_get_id (FlatpakInstallation *self)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   return flatpak_dir_get_id (dir);
 }
@@ -447,7 +472,7 @@ flatpak_installation_get_id (FlatpakInstallation *self)
 const char *
 flatpak_installation_get_display_name (FlatpakInstallation *self)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   return flatpak_dir_get_display_name (dir);
 }
@@ -465,7 +490,7 @@ flatpak_installation_get_display_name (FlatpakInstallation *self)
 gint
 flatpak_installation_get_priority (FlatpakInstallation *self)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   return flatpak_dir_get_priority (dir);
 }
@@ -482,7 +507,7 @@ flatpak_installation_get_priority (FlatpakInstallation *self)
  */FlatpakStorageType
 flatpak_installation_get_storage_type (FlatpakInstallation *self)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   switch (flatpak_dir_get_storage_type (dir))
     {
@@ -532,10 +557,13 @@ flatpak_installation_launch (FlatpakInstallation *self,
                              GCancellable        *cancellable,
                              GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(FlatpakDeploy) app_deploy = NULL;
   g_autofree char *app_ref = NULL;
 
-  g_autoptr(FlatpakDeploy) app_deploy = NULL;
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   app_ref =
     flatpak_build_app_ref (name, branch, arch);
@@ -638,10 +666,13 @@ flatpak_installation_get_installed_ref (FlatpakInstallation *self,
                                         GCancellable        *cancellable,
                                         GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
-
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) deploy = NULL;
   g_autofree char *ref = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   if (arch == NULL)
     arch = flatpak_get_arch ();
@@ -683,12 +714,15 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
                                                 GCancellable        *cancellable,
                                                 GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
-
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) deploy = NULL;
-  g_autofree char *current =
-    flatpak_dir_current_ref (dir, name, cancellable);
+  g_autofree char *current = NULL;
 
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  current = flatpak_dir_current_ref (dir, name, cancellable);
   if (current)
     deploy = flatpak_dir_get_if_deployed (dir,
                                           current, NULL, cancellable);
@@ -719,7 +753,7 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
                                           GCancellable        *cancellable,
                                           GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_auto(GStrv) raw_refs_app = NULL;
   g_auto(GStrv) raw_refs_runtime = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
@@ -778,7 +812,7 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
                                                   GCancellable        *cancellable,
                                                   GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_auto(GStrv) raw_refs = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
@@ -994,7 +1028,7 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
                                    GCancellable        *cancellable,
                                    GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_auto(GStrv) remote_names = NULL;
   g_autoptr(GPtrArray) remotes = g_ptr_array_new_with_free_func (g_object_unref);
@@ -1007,7 +1041,7 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
   /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
      it has local changes */
   dir_clone = flatpak_dir_clone (dir);
-  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+  if (!flatpak_dir_maybe_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
   for (i = 0; remote_names[i] != NULL; i++)
@@ -1041,13 +1075,13 @@ flatpak_installation_modify_remote (FlatpakInstallation *self,
                                     GCancellable        *cancellable,
                                     GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_autoptr(FlatpakDir) dir_clone = NULL;
 
   /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
      it has local changes */
   dir_clone = flatpak_dir_clone (dir);
-  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+  if (!flatpak_dir_maybe_ensure_repo (dir_clone, cancellable, error))
     return FALSE;
 
   if (!flatpak_remote_commit (remote, dir_clone, cancellable, error))
@@ -1076,8 +1110,12 @@ flatpak_installation_remove_remote (FlatpakInstallation *self,
                                     GCancellable        *cancellable,
                                     GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
      it has local changes */
@@ -1116,8 +1154,12 @@ flatpak_installation_set_config_sync (FlatpakInstallation *self,
 				      GCancellable        *cancellable,
 				      GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
      it has local changes */
@@ -1152,7 +1194,11 @@ flatpak_installation_get_config (FlatpakInstallation *self,
 				 GCancellable        *cancellable,
 				 GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   return flatpak_dir_get_config (dir, key, error);
 }
@@ -1178,8 +1224,12 @@ flatpak_installation_update_remote_sync (FlatpakInstallation *self,
                                          GCancellable        *cancellable,
                                          GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
      it has local changes */
@@ -1213,7 +1263,7 @@ flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
                                          GCancellable        *cancellable,
                                          GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_auto(GStrv) remote_names = NULL;
   int i;
@@ -1258,9 +1308,13 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
                                          GCancellable        *cancellable,
                                          GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   metadata_contents = flatpak_dir_load_override (dir, app_id, &metadata_size, error);
   if (metadata_contents == NULL)
@@ -1291,11 +1345,15 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                      GCancellable           *cancellable,
                                      GError                **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *remote = NULL;
   FlatpakInstalledRef *result = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   remote = flatpak_dir_ensure_bundle_remote (dir, file, NULL, &ref, NULL, NULL, cancellable, error);
   if (remote == NULL)
@@ -1346,9 +1404,13 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
                                        GCancellable        *cancellable,
                                        GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   if (!flatpak_dir_create_remote_for_ref_file (dir, ref_file_data, NULL, &remote, &ref, error))
     return NULL;
@@ -1400,13 +1462,17 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                                    GCancellable           *cancellable,
                                    GError                **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   FlatpakInstalledRef *result = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
@@ -1550,7 +1616,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                                   GCancellable           *cancellable,
                                   GError                **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
@@ -1560,6 +1626,10 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   FlatpakInstalledRef *result = NULL;
   g_autofree char *target_commit = NULL;
   g_auto(OstreeRepoFinderResultv) check_results = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
@@ -1692,9 +1762,13 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
                                 GCancellable           *cancellable,
                                 GError                **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
@@ -1741,8 +1815,12 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
                                              GCancellable        *cancellable,
                                              GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   return flatpak_dir_fetch_ref_cache (dir, remote_name, full_ref,
                                       download_size, installed_size,
@@ -1771,9 +1849,13 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
                                                  GCancellable        *cancellable,
                                                  GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
   char *res = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   if (!flatpak_dir_fetch_ref_cache (dir, remote_name, full_ref,
                                     NULL, NULL,
@@ -1802,12 +1884,16 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GHashTable) ht = NULL;
   GHashTableIter iter;
   gpointer key;
   gpointer value;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   if (!flatpak_dir_list_remote_refs (dir,
                                      remote_name,
@@ -1857,13 +1943,17 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GHashTable) ht = NULL;
   g_autofree char *ref = NULL;
   const char *checksum;
 
   if (branch == NULL)
     branch = "master";
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   if (!flatpak_dir_list_remote_refs (dir,
                                      remote_name,
@@ -1944,11 +2034,15 @@ flatpak_installation_update_appstream_full_sync (FlatpakInstallation *self,
                                                  GCancellable        *cancellable,
                                                  GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   gboolean res;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
@@ -1998,7 +2092,7 @@ flatpak_installation_create_monitor (FlatpakInstallation *self,
                                      GCancellable        *cancellable,
                                      GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_autoptr(GFile) path = NULL;
 
   path = flatpak_dir_get_changed_path (dir);
@@ -2040,10 +2134,14 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
                                                     GCancellable        *cancellable,
                                                     GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GPtrArray) related = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   related = flatpak_dir_find_remote_related (dir, ref, remote_name,
                                              cancellable, error);
@@ -2096,10 +2194,14 @@ flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self
                                                        GCancellable        *cancellable,
                                                        GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GPtrArray) related = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
 
   related = flatpak_dir_find_local_related (dir, ref, remote_name,
                                             cancellable, error);
@@ -2148,7 +2250,11 @@ flatpak_installation_remove_local_ref_sync (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   return flatpak_dir_remove_ref (dir, remote_name, ref, cancellable, error);
 }
@@ -2177,7 +2283,11 @@ flatpak_installation_cleanup_local_refs_sync (FlatpakInstallation *self,
                                               GCancellable        *cancellable,
                                               GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   return flatpak_dir_cleanup_undeployed_refs (dir, cancellable, error);
 }
@@ -2198,7 +2308,11 @@ flatpak_installation_prune_local_repo (FlatpakInstallation *self,
                                        GCancellable        *cancellable,
                                        GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
 
   return flatpak_dir_prune (dir, cancellable, error);
 }

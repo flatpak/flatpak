@@ -790,6 +790,7 @@ flatpak_remote_commit (FlatpakRemote   *self,
                        GError         **error)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+  OstreeRepo *repo;
   g_autofree char *url = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", priv->name);
@@ -801,7 +802,12 @@ flatpak_remote_commit (FlatpakRemote   *self,
   if (priv->type != FLATPAK_REMOTE_TYPE_STATIC)
     return flatpak_fail (error, "Dynamic remote cannot be committed");
 
-  config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+  repo = flatpak_dir_get_repo (dir);
+  if (repo == NULL)
+    config = g_key_file_new ();
+  else
+    config = ostree_repo_copy_config (repo);
+
   if (priv->local_url_set)
     g_key_file_set_string (config, group, "url", priv->local_url);
 
