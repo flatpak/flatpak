@@ -6663,6 +6663,9 @@ flatpak_dir_update (FlatpakDir          *self,
       gboolean gpg_verify;
       g_autofree char *collection_id = NULL;
 
+      if (allow_downgrade)
+        return flatpak_fail (error, "Can't update to a specific commit without root permissions");
+
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
