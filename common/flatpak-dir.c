@@ -1243,7 +1243,7 @@ flatpak_dir_get_unmaintained_extension_dir (FlatpakDir *self,
                                             const char *arch,
                                             const char *branch)
 {
-  const char *unmaintained_ref;
+  g_autofree char *unmaintained_ref = NULL;
 
   unmaintained_ref = g_build_filename ("extension", name, arch, branch, NULL);
   return g_file_resolve_relative_path (self->basedir, unmaintained_ref);
