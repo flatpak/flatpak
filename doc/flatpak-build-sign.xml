@@ -2,7 +2,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="flatpak-build-export">
+<refentry id="flatpak-build-sign">
 
     <refentryinfo>
         <title>flatpak build-sign</title>
