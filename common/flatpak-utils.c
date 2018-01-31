@@ -3860,15 +3860,20 @@ extract_appstream (OstreeRepo   *repo,
           component_id_text_node = flatpak_xml_find (component_id, NULL, NULL);
 
           component_id_text = g_strstrip (g_strdup (component_id_text_node->text));
-          if (!g_str_has_prefix (component_id_text, id) ||
-              !g_str_has_suffix (component_id_text, ".desktop"))
+
+          /* .desktop suffix in component ID is suggested, not required
+             (unless app ID actually ends in .desktop) */
+          if (g_str_has_suffix (component_id_text, ".desktop") &&
+              !g_str_has_suffix (id, ".desktop"))
+            component_id_text[strlen (component_id_text) - strlen (".desktop")] = 0;
+
+          if (!g_str_has_prefix (component_id_text, id))
             {
               component = component->next_sibling;
               continue;
             }
 
           g_print ("Extracting icons for component %s\n", component_id_text);
-          component_id_text[strlen (component_id_text) - strlen (".desktop")] = 0;
 
           if (!copy_icon (component_id_text, root, dest, "64x64", &my_error))
             {
