@@ -103,6 +103,11 @@ void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       FlatpakPolicy   policy);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray *args);
+void           flatpak_context_add_bus_filters (FlatpakContext *context,
+                                                const char     *app_id,
+                                                gboolean        session_bus,
+                                                GPtrArray      *dbus_proxy_argv);
+
 gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context);
 gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context);
 
