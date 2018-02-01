@@ -379,55 +379,6 @@ add_args_data_fd (GPtrArray *argv_array,
             NULL);
 }
 
-
-/* If memfd_create() is available, generate a sealed memfd with contents of
- * @str. Otherwise use an O_TMPFILE @tmpf in anonymous mode, write @str to
- * @tmpf, and lseek() back to the start. See also similar uses in e.g.
- * rpm-ostree for running dracut.
- */
-static gboolean
-buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
-                                   const char  *name,
-                                   const char  *str,
-                                   size_t       len,
-                                   GError     **error)
-{
-  if (len == -1)
-    len = strlen (str);
-  glnx_autofd int memfd = memfd_create (name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
-  int fd; /* Unowned */
-  if (memfd != -1)
-    {
-      fd = memfd;
-    }
-  else
-    {
-      /* We use an anonymous fd (i.e. O_EXCL) since we don't want
-       * the target container to potentially be able to re-link it.
-       */
-      if (!G_IN_SET (errno, ENOSYS, EOPNOTSUPP))
-        return glnx_throw_errno_prefix (error, "memfd_create");
-      if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, tmpf, error))
-        return FALSE;
-      fd = tmpf->fd;
-    }
-  if (ftruncate (fd, len) < 0)
-    return glnx_throw_errno_prefix (error, "ftruncate");
-  if (glnx_loop_write (fd, str, len) < 0)
-    return glnx_throw_errno_prefix (error, "write");
-  if (lseek (fd, 0, SEEK_SET) < 0)
-    return glnx_throw_errno_prefix (error, "lseek");
-  if (memfd != -1)
-    {
-      if (fcntl (memfd, F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE | F_SEAL_SEAL) < 0)
-        return glnx_throw_errno_prefix (error, "fcntl(F_ADD_SEALS)");
-      /* The other values can stay default */
-      tmpf->fd = glnx_steal_fd (&memfd);
-      tmpf->initialized = TRUE;
-    }
-  return TRUE;
-}
-
 static void
 flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
                           gboolean allowed)
@@ -2616,7 +2567,7 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
   }
 
   bwrap_args_data = join_args (bwrap_args, &bwrap_args_len);
-  if (!buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, "bwrap-args", bwrap_args_data, bwrap_args_len, error))
+  if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, "bwrap-args", bwrap_args_data, bwrap_args_len, error))
     return FALSE;
 
   g_ptr_array_insert (argv, i++, g_strdup (flatpak_get_bwrap ()));
@@ -3495,7 +3446,7 @@ flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
 {
   g_auto(GLnxTmpfile) args_tmpf  = { 0, };
 
-  if (!buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, name, content, content_size, error))
+  if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, name, content, content_size, error))
     return FALSE;
 
   flatpak_bwrap_add_args_data_fd (bwrap, "--bind-data", glnx_steal_fd (&args_tmpf.fd), path);
@@ -3946,7 +3897,7 @@ flatpak_run_app (const char     *app_ref,
     gsize len;
     g_autofree char *args = join_args (bwrap->argv, &len);
 
-    if (!buffer_to_sealed_memfd_or_tmpfile (&arg_tmpf, "bwrap-args", args, len, error))
+    if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&arg_tmpf, "bwrap-args", args, len, error))
       return FALSE;
 
     add_args_data_fd (real_argv_array, bwrap->fds,
