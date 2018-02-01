@@ -3877,10 +3877,10 @@ flatpak_run_app (const char     *app_ref,
       g_array_append_val (bwrap->fds, ld_so_fd);
     }
 
-  if (app_context->features & FLATPAK_CONTEXT_FEATURE_DEVEL)
+  if (flatpak_context_allows_features (app_context, FLATPAK_CONTEXT_FEATURE_DEVEL))
     flags |= FLATPAK_RUN_FLAG_DEVEL;
 
-  if (app_context->features & FLATPAK_CONTEXT_FEATURE_MULTIARCH)
+  if (flatpak_context_allows_features (app_context, FLATPAK_CONTEXT_FEATURE_MULTIARCH))
     flags |= FLATPAK_RUN_FLAG_MULTIARCH;
 
   if (!flatpak_run_setup_base_argv (bwrap, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
