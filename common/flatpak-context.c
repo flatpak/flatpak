@@ -1652,3 +1652,34 @@ flatpak_context_to_args (FlatpakContext *context,
         g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", (char *)key));
     }
 }
+
+void
+flatpak_context_add_bus_filters (FlatpakContext *context,
+                                 const char     *app_id,
+                                 gboolean        session_bus,
+                                 GPtrArray      *dbus_proxy_argv)
+{
+  GHashTable *ht;
+  GHashTableIter iter;
+  gpointer key, value;
+
+  g_ptr_array_add (dbus_proxy_argv, g_strdup ("--filter"));
+  if (app_id && session_bus)
+    {
+      g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s", app_id));
+      g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s.*", app_id));
+    }
+
+  if (session_bus)
+    ht = context->session_bus_policy;
+  else
+    ht = context->system_bus_policy;
+  g_hash_table_iter_init (&iter, ht);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      FlatpakPolicy policy = GPOINTER_TO_INT (value);
+
+      if (policy > 0)
+        g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--%s=%s", flatpak_policy_to_string (policy), (char *) key));
+    }
+}

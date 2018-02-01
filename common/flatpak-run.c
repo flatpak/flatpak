@@ -78,19 +78,6 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      const char *app_info_path,
                      GError   **error);
 
-static const char *
-flatpak_policy_to_string (FlatpakPolicy policy)
-{
-  if (policy == FLATPAK_POLICY_SEE)
-    return "see";
-  if (policy == FLATPAK_POLICY_TALK)
-    return "talk";
-  if (policy == FLATPAK_POLICY_OWN)
-    return "own";
-
-  return "none";
-}
-
 static gboolean
 get_xdg_dir_from_prefix (const char *prefix,
                          const char **where,
@@ -699,32 +686,6 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap *bwrap,
     }
 
   return FALSE;
-}
-
-static void
-flatpak_add_bus_filters (GPtrArray      *dbus_proxy_argv,
-                         GHashTable     *ht,
-                         const char     *app_id,
-                         FlatpakContext *context)
-{
-  GHashTableIter iter;
-  gpointer key, value;
-
-  g_ptr_array_add (dbus_proxy_argv, g_strdup ("--filter"));
-  if (app_id)
-    {
-      g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s", app_id));
-      g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s.*", app_id));
-    }
-
-  g_hash_table_iter_init (&iter, ht);
-  while (g_hash_table_iter_next (&iter, &key, &value))
-    {
-      FlatpakPolicy policy = GPOINTER_TO_INT (value);
-
-      if (policy > 0)
-        g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--%s=%s", flatpak_policy_to_string (policy), (char *) key));
-    }
 }
 
 static int
@@ -1698,7 +1659,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
     g_debug ("Allowing session-dbus access");
   if (flatpak_run_add_session_dbus_args (bwrap, session_bus_proxy_argv, unrestricted_session_bus) &&
       !unrestricted_session_bus && session_bus_proxy_argv)
-    flatpak_add_bus_filters (session_bus_proxy_argv, context->session_bus_policy, app_id, context);
+    flatpak_context_add_bus_filters (context, app_id, TRUE, session_bus_proxy_argv);
 
   unrestricted_system_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) != 0;
   if (unrestricted_system_bus)
@@ -1706,7 +1667,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
   if (flatpak_run_add_system_dbus_args (context, bwrap, system_bus_proxy_argv,
                                         unrestricted_system_bus) &&
       !unrestricted_system_bus && system_bus_proxy_argv)
-    flatpak_add_bus_filters (system_bus_proxy_argv, context->system_bus_policy, NULL, context);
+    flatpak_context_add_bus_filters (context, app_id, FALSE, system_bus_proxy_argv);
 
   if ((flags & FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY) == 0)
     {
