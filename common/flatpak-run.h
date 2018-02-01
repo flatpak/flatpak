@@ -22,8 +22,8 @@
 #define __FLATPAK_RUN_H__
 
 #include "libglnx/libglnx.h"
-#include "dbus-proxy/flatpak-proxy.h"
 #include "flatpak-common-types.h"
+#include "flatpak-context.h"
 #include "flatpak-utils.h"
 
 gboolean flatpak_run_in_transient_unit (const char *app_id,
@@ -95,11 +95,6 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_PRIORITY "priority"
 #define FLATPAK_METADATA_KEY_REF "ref"
 
-extern const char *flatpak_context_sockets[];
-extern const char *flatpak_context_devices[];
-extern const char *flatpak_context_features[];
-extern const char *flatpak_context_shares[];
-
 typedef struct {
   GPtrArray *argv;
   GArray *fds;
@@ -137,39 +132,6 @@ void          flatpak_bwrap_add_bind_arg     (FlatpakBwrap  *bwrap,
                                               const char    *dest);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakBwrap, flatpak_bwrap_free)
-
-
-FlatpakContext *flatpak_context_new (void);
-void           flatpak_context_free (FlatpakContext *context);
-void           flatpak_context_merge (FlatpakContext *context,
-                                      FlatpakContext *other);
-GOptionGroup  *flatpak_context_get_options (FlatpakContext *context);
-void           flatpak_context_complete (FlatpakContext *context,
-                                         FlatpakCompletion *completion);
-gboolean       flatpak_context_load_metadata (FlatpakContext *context,
-                                              GKeyFile       *metakey,
-                                              GError        **error);
-void           flatpak_context_save_metadata (FlatpakContext *context,
-                                              gboolean        flatten,
-                                              GKeyFile       *metakey);
-void           flatpak_context_allow_host_fs (FlatpakContext *context);
-void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
-                                                       const char     *name,
-                                                       FlatpakPolicy   policy);
-void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
-                                                      const char     *name,
-                                                      FlatpakPolicy   policy);
-void           flatpak_context_to_args (FlatpakContext *context,
-                                        GPtrArray *args);
-gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context);
-gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context);
-
-FlatpakContext *flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
-                                                 GError        **error);
-FlatpakContext *flatpak_context_load_for_app (const char     *app_id,
-                                              GError        **error);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
 typedef enum {
   FLATPAK_RUN_FLAG_DEVEL              = (1 << 0),
