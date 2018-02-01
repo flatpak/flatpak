@@ -115,12 +115,12 @@ FlatpakContext *flatpak_context_load_for_app (const char     *app_id,
 
 FlatpakExports *flatpak_context_get_exports (FlatpakContext *context,
                                              const char *app_id);
-void flatpak_context_export (FlatpakContext *context,
-                             FlatpakExports *exports,
-                             GFile *app_id_dir,
-                             gboolean do_create,
-                             GString *xdg_dirs_conf,
-                             gboolean *home_access_out);
+
+void flatpak_context_append_bwrap_filesystem (FlatpakContext *context,
+                                              FlatpakBwrap *bwrap,
+                                              const char *app_id,
+                                              GFile *app_id_dir,
+                                              FlatpakExports **exports_out);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
