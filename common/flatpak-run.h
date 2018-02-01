@@ -26,6 +26,7 @@
 #include "flatpak-context.h"
 #include "flatpak-bwrap.h"
 #include "flatpak-utils.h"
+#include "flatpak-exports.h"
 
 gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         GError    **error);
@@ -113,38 +114,6 @@ typedef enum {
   FLATPAK_RUN_FLAG_LOG_A11Y_BUS       = (1 << 12),
   FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY  = (1 << 13),
 } FlatpakRunFlags;
-
-typedef struct _FlatpakExports FlatpakExports;
-
-void flatpak_exports_free (FlatpakExports *exports);
-FlatpakExports *flatpak_exports_new (void);
-void flatpak_exports_append_bwrap_args (FlatpakExports *exports,
-                                        FlatpakBwrap *bwrap);
-void flatpak_export_paths_export_context (FlatpakContext *context,
-                                          FlatpakExports *exports,
-                                          GFile *app_id_dir,
-                                          gboolean do_create,
-                                          GString *xdg_dirs_conf,
-                                          gboolean *home_access_out);
-void flatpak_exports_add_path_expose (FlatpakExports *exports,
-                                      FlatpakFilesystemMode mode,
-                                      const char *path);
-void flatpak_exports_add_path_tmpfs (FlatpakExports *exports,
-                                 const char *path);
-void flatpak_exports_add_path_expose_or_hide (FlatpakExports *exports,
-                                          FlatpakFilesystemMode mode,
-                                          const char *path);
-void flatpak_exports_add_path_dir (FlatpakExports *exports,
-                                   const char *path);
-void flatpak_exports_add_home_expose (FlatpakExports *exports,
-                                      FlatpakFilesystemMode mode);
-
-gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
-                                          const char *path);
-FlatpakExports *flatpak_exports_from_context (FlatpakContext *context,
-                                              const char *app_id);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 
 gboolean  flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
                                           GKeyFile     *metakey,
