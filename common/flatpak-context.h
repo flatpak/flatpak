@@ -111,6 +111,9 @@ void           flatpak_context_add_bus_filters (FlatpakContext *context,
 gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context);
 gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context);
 
+gboolean       flatpak_context_allows_features (FlatpakContext *context,
+                                                FlatpakContextFeatures features);
+
 FlatpakContext *flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
                                                  GError        **error);
 FlatpakContext *flatpak_context_load_for_app (const char     *app_id,

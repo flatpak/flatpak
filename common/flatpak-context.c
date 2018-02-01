@@ -1599,6 +1599,13 @@ flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context)
   return g_hash_table_size (context->system_bus_policy) > 0;
 }
 
+gboolean
+flatpak_context_allows_features (FlatpakContext *context,
+                                 FlatpakContextFeatures features)
+{
+  return (context->features & features) == features;
+}
+
 void
 flatpak_context_to_args (FlatpakContext *context,
                          GPtrArray *args)
