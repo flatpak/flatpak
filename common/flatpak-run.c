@@ -67,73 +67,6 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      const char *app_info_path,
                      GError   **error);
 
-static gboolean
-get_xdg_dir_from_prefix (const char *prefix,
-                         const char **where,
-                         const char **dir)
-{
-  if (strcmp (prefix, "xdg-data") == 0)
-    {
-      if (where)
-        *where = "data";
-      if (dir)
-        *dir = g_get_user_data_dir ();
-      return TRUE;
-    }
-  if (strcmp (prefix, "xdg-cache") == 0)
-    {
-      if (where)
-        *where = "cache";
-      if (dir)
-        *dir = g_get_user_cache_dir ();
-      return TRUE;
-    }
-  if (strcmp (prefix, "xdg-config") == 0)
-    {
-      if (where)
-        *where = "config";
-      if (dir)
-        *dir = g_get_user_config_dir ();
-      return TRUE;
-    }
-  return FALSE;
-}
-
-/* This looks only in the xdg dirs (config, cache, data), not the user
-   definable ones */
-static char *
-get_xdg_dir_from_string (const char *filesystem,
-                         const char **suffix,
-                         const char **where)
-{
-  char *slash;
-  const char *rest;
-  g_autofree char *prefix = NULL;
-  const char *dir = NULL;
-  gsize len;
-
-  slash = strchr (filesystem, '/');
-
-  if (slash)
-    len = slash - filesystem;
-  else
-    len = strlen (filesystem);
-
-  rest = filesystem + len;
-  while (*rest == '/')
-    rest++;
-
-  if (suffix != NULL)
-    *suffix = rest;
-
-  prefix = g_strndup (filesystem, len);
-
-  if (get_xdg_dir_from_prefix (prefix, where, &dir))
-    return g_build_filename (dir, rest, NULL);
-
-  return NULL;
-}
-
 static char *
 extract_unix_path_from_dbus_address (const char *address)
 {
@@ -702,15 +635,11 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                   GCancellable   *cancellable,
                                   GError        **error)
 {
-  gboolean home_access = FALSE;
-  GHashTableIter iter;
-  gpointer key, value;
   gboolean unrestricted_session_bus;
   gboolean unrestricted_system_bus;
-  g_autoptr(GString) xdg_dirs_conf = g_string_new ("");
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GFile) user_flatpak_dir = NULL;
-  g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
+  g_autoptr(FlatpakExports) exports = NULL;
   g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) a11y_bus_proxy_argv = NULL;
@@ -775,109 +704,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
         }
     }
 
-  flatpak_context_export (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
-  if (app_id_dir != NULL)
-    flatpak_run_apply_env_appid (bwrap, app_id_dir);
-
-  if (!home_access)
-    {
-      /* Enable persistent mapping only if no access to real home dir */
-
-      g_hash_table_iter_init (&iter, context->persistent);
-      while (g_hash_table_iter_next (&iter, &key, NULL))
-        {
-          const char *persist = key;
-          g_autofree char *src = g_build_filename (g_get_home_dir (), ".var/app", app_id, persist, NULL);
-          g_autofree char *dest = g_build_filename (g_get_home_dir (), persist, NULL);
-
-          g_mkdir_with_parents (src, 0755);
-
-          /* We stick to flatpak_bwrap_add_args instead of flatpak_bwrap_add_bind_arg because persisted
-           * folders don't need to exist outside the chroot.
-           */
-          flatpak_bwrap_add_args (bwrap, "--bind", src, dest, NULL);
-        }
-    }
-
-  {
-    g_autofree char *run_user_app_dst = g_strdup_printf ("/run/user/%d/app/%s", getuid (), app_id);
-    g_autofree char *run_user_app_src = g_build_filename (g_get_user_runtime_dir (), "app", app_id, NULL);
-
-    if (glnx_shutil_mkdir_p_at (AT_FDCWD,
-                                run_user_app_src,
-                                0700,
-                                NULL,
-                                NULL))
-        flatpak_bwrap_add_args (bwrap,
-                                "--bind", run_user_app_src, run_user_app_dst,
-                                NULL);
-  }
-
-  /* Hide the flatpak dir by default (unless explicitly made visible) */
-  user_flatpak_dir = flatpak_get_user_base_dir_location ();
-  flatpak_exports_add_path_tmpfs (exports, flatpak_file_get_path_cached (user_flatpak_dir));
-
-  /* Ensure we always have a homedir */
-  flatpak_exports_add_path_dir (exports, g_get_home_dir ());
-
-  /* This actually outputs the args for the hide/expose operations above */
-  flatpak_exports_append_bwrap_args (exports, bwrap);
-
-  /* Special case subdirectories of the cache, config and data xdg
-   * dirs.  If these are accessible explicilty, then we bind-mount
-   * these in the app-id dir. This allows applications to explicitly
-   * opt out of keeping some config/cache/data in the app-specific
-   * directory.
-   */
-  if (app_id_dir)
-    {
-      g_hash_table_iter_init (&iter, context->filesystems);
-      while (g_hash_table_iter_next (&iter, &key, &value))
-        {
-          const char *filesystem = key;
-          FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
-          g_autofree char *xdg_path = NULL;
-          const char *rest, *where;
-
-          xdg_path = get_xdg_dir_from_string (filesystem, &rest, &where);
-
-          if (xdg_path != NULL && *rest != 0 &&
-              mode >= FLATPAK_FILESYSTEM_MODE_READ_ONLY)
-            {
-              g_autoptr(GFile) app_version = g_file_get_child (app_id_dir, where);
-              g_autoptr(GFile) app_version_subdir = g_file_resolve_relative_path (app_version, rest);
-
-              if (g_file_test (xdg_path, G_FILE_TEST_IS_DIR) ||
-                  g_file_test (xdg_path, G_FILE_TEST_IS_REGULAR))
-                {
-                  g_autofree char *xdg_path_in_app = g_file_get_path (app_version_subdir);
-                  flatpak_bwrap_add_bind_arg (bwrap,
-                                              mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ? "--ro-bind" : "--bind",
-                                              xdg_path, xdg_path_in_app);
-                }
-            }
-        }
-    }
-
-  if (home_access  && app_id_dir != NULL)
-    {
-      g_autofree char *src_path = g_build_filename (g_get_user_config_dir (),
-                                                    "user-dirs.dirs",
-                                                    NULL);
-      g_autofree char *path = g_build_filename (flatpak_file_get_path_cached (app_id_dir),
-                                                "config/user-dirs.dirs", NULL);
-      if (g_file_test (src_path, G_FILE_TEST_EXISTS))
-        flatpak_bwrap_add_bind_arg (bwrap, "--ro-bind", src_path, path);
-    }
-  else if (xdg_dirs_conf->len > 0 && app_id_dir != NULL)
-    {
-      g_autofree char *path =
-        g_build_filename (flatpak_file_get_path_cached (app_id_dir),
-                          "config/user-dirs.dirs", NULL);
-
-      flatpak_bwrap_add_args_data (bwrap, "xdg-config-dirs",
-                                   xdg_dirs_conf->str, xdg_dirs_conf->len, path, NULL);
-    }
+  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, &exports);
 
   flatpak_run_add_x11_args (bwrap,
                             (context->sockets & FLATPAK_CONTEXT_SOCKET_X11) != 0);
