@@ -39,6 +39,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-dir.h \
 	common/flatpak-run.c \
 	common/flatpak-run.h \
+	common/flatpak-context.c \
+	common/flatpak-context.h \
 	common/flatpak-portal-error.c \
 	common/flatpak-portal-error.h \
 	common/flatpak-utils.c \
