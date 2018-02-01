@@ -908,8 +908,8 @@ exported_path_free (ExportedPath *exported_path)
   g_free (exported_path);
 }
 
-static FlatpakExports *
-exports_new (void)
+FlatpakExports *
+flatpak_exports_new (void)
 {
   FlatpakExports *exports = g_new0 (FlatpakExports, 1);
   exports->hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GFreeFunc)exported_path_free);
@@ -1016,9 +1016,9 @@ path_is_symlink (const char *path)
   return S_ISLNK (s.st_mode);
 }
 
-static void
-exports_add_bwrap_args (FlatpakExports *exports,
-                        FlatpakBwrap *bwrap)
+void
+flatpak_exports_append_bwrap_args (FlatpakExports *exports,
+                                   FlatpakBwrap *bwrap)
 {
   guint n_keys;
   g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (exports->hash, &n_keys);
@@ -1268,46 +1268,46 @@ _exports_path_expose (FlatpakExports *exports,
   return TRUE;
 }
 
-static void
-exports_path_expose (FlatpakExports *exports,
-                     FlatpakFilesystemMode mode,
-                     const char *path)
+void
+flatpak_exports_add_path_expose (FlatpakExports *exports,
+                                 FlatpakFilesystemMode mode,
+                                 const char *path)
 {
   _exports_path_expose (exports, mode, path, 0);
 }
 
-static void
-exports_path_tmpfs (FlatpakExports *exports,
-                    const char *path)
+void
+flatpak_exports_add_path_tmpfs (FlatpakExports *exports,
+                                const char *path)
 {
   _exports_path_expose (exports, FAKE_MODE_TMPFS, path, 0);
 }
 
-static void
-exports_path_expose_or_hide (FlatpakExports *exports,
-                             FlatpakFilesystemMode mode,
-                             const char *path)
+void
+flatpak_exports_add_path_expose_or_hide (FlatpakExports *exports,
+                                         FlatpakFilesystemMode mode,
+                                         const char *path)
 {
   if (mode == 0)
-    exports_path_tmpfs (exports, path);
+    flatpak_exports_add_path_tmpfs (exports, path);
   else
-    exports_path_expose (exports, mode, path);
+    flatpak_exports_add_path_expose (exports, mode, path);
 }
 
-static void
-exports_path_dir (FlatpakExports *exports,
-                  const char *path)
+void
+flatpak_exports_add_path_dir (FlatpakExports *exports,
+                              const char *path)
 {
   _exports_path_expose (exports, FAKE_MODE_DIR, path, 0);
 }
 
-static void
-export_paths_export_context (FlatpakContext *context,
-                             FlatpakExports *exports,
-                             GFile *app_id_dir,
-                             gboolean do_create,
-                             GString *xdg_dirs_conf,
-                             gboolean *home_access_out)
+void
+flatpak_export_paths_export_context (FlatpakContext *context,
+                                     FlatpakExports *exports,
+                                     GFile *app_id_dir,
+                                     gboolean do_create,
+                                     GString *xdg_dirs_conf,
+                                     gboolean *home_access_out)
 {
   gboolean home_access = FALSE;
   FlatpakFilesystemMode fs_mode, home_mode;
@@ -1335,11 +1335,11 @@ export_paths_export_context (FlatpakContext *context,
                 continue;
 
               path = g_build_filename ("/", dirent->d_name, NULL);
-              exports_path_expose (exports, fs_mode, path);
+              flatpak_exports_add_path_expose (exports, fs_mode, path);
             }
           closedir (dir);
         }
-      exports_path_expose (exports, fs_mode, "/run/media");
+      flatpak_exports_add_path_expose (exports, fs_mode, "/run/media");
       exports->host_fs = fs_mode;
     }
 
@@ -1349,7 +1349,7 @@ export_paths_export_context (FlatpakContext *context,
       g_debug ("Allowing homedir access");
       home_access = TRUE;
 
-      exports_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir ());
+      flatpak_exports_add_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir ());
     }
 
   g_hash_table_iter_init (&iter, context->filesystems);
@@ -1397,7 +1397,7 @@ export_paths_export_context (FlatpakContext *context,
                 g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
                                         config_key, path);
 
-              exports_path_expose_or_hide (exports, mode, subpath);
+              flatpak_exports_add_path_expose_or_hide (exports, mode, subpath);
             }
         }
       else if (g_str_has_prefix (filesystem, "~/"))
@@ -1410,7 +1410,7 @@ export_paths_export_context (FlatpakContext *context,
             g_mkdir_with_parents (path, 0755);
 
           if (g_file_test (path, G_FILE_TEST_EXISTS))
-            exports_path_expose_or_hide (exports, mode, path);
+            flatpak_exports_add_path_expose_or_hide (exports, mode, path);
         }
       else if (g_str_has_prefix (filesystem, "/"))
         {
@@ -1418,7 +1418,7 @@ export_paths_export_context (FlatpakContext *context,
             g_mkdir_with_parents (filesystem, 0755);
 
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
-            exports_path_expose_or_hide (exports, mode, filesystem);
+            flatpak_exports_add_path_expose_or_hide (exports, mode, filesystem);
         }
       else
         {
@@ -1430,10 +1430,10 @@ export_paths_export_context (FlatpakContext *context,
     {
       g_autoptr(GFile) apps_dir = g_file_get_parent (app_id_dir);
       /* Hide the .var/app dir by default (unless explicitly made visible) */
-      exports_path_tmpfs (exports, flatpak_file_get_path_cached (apps_dir));
+      flatpak_exports_add_path_tmpfs (exports, flatpak_file_get_path_cached (apps_dir));
       /* But let the app write to the per-app dir in it */
-      exports_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
-                           flatpak_file_get_path_cached (app_id_dir));
+      flatpak_exports_add_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                       flatpak_file_get_path_cached (app_id_dir));
     }
 
   if (home_access_out != NULL)
@@ -1444,10 +1444,10 @@ FlatpakExports *
 flatpak_exports_from_context (FlatpakContext *context,
                               const char *app_id)
 {
-  g_autoptr(FlatpakExports) exports = exports_new ();
+  g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autoptr(GFile) app_id_dir = flatpak_get_data_dir (app_id);
 
-  export_paths_export_context (context, exports, app_id_dir, FALSE, NULL, NULL);
+  flatpak_export_paths_export_context (context, exports, app_id_dir, FALSE, NULL, NULL);
   return g_steal_pointer (&exports);
 }
 
@@ -1470,7 +1470,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
   g_autoptr(GString) xdg_dirs_conf = g_string_new ("");
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GFile) user_flatpak_dir = NULL;
-  g_autoptr(FlatpakExports) exports = exports_new ();
+  g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) a11y_bus_proxy_argv = NULL;
@@ -1535,7 +1535,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
         }
     }
 
-  export_paths_export_context (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
+  flatpak_export_paths_export_context (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
   if (app_id_dir != NULL)
     flatpak_run_apply_env_appid (bwrap, app_id_dir);
 
@@ -1575,13 +1575,13 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
 
   /* Hide the flatpak dir by default (unless explicitly made visible) */
   user_flatpak_dir = flatpak_get_user_base_dir_location ();
-  exports_path_tmpfs (exports, flatpak_file_get_path_cached (user_flatpak_dir));
+  flatpak_exports_add_path_tmpfs (exports, flatpak_file_get_path_cached (user_flatpak_dir));
 
   /* Ensure we always have a homedir */
-  exports_path_dir (exports, g_get_home_dir ());
+  flatpak_exports_add_path_dir (exports, g_get_home_dir ());
 
   /* This actually outputs the args for the hide/expose operations above */
-  exports_add_bwrap_args (exports, bwrap);
+  flatpak_exports_append_bwrap_args (exports, bwrap);
 
   /* Special case subdirectories of the cache, config and data xdg
    * dirs.  If these are accessible explicilty, then we bind-mount

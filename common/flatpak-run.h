@@ -153,6 +153,25 @@ typedef enum {
 typedef struct _FlatpakExports FlatpakExports;
 
 void flatpak_exports_free (FlatpakExports *exports);
+FlatpakExports *flatpak_exports_new (void);
+void flatpak_exports_append_bwrap_args (FlatpakExports *exports,
+                                        FlatpakBwrap *bwrap);
+void flatpak_export_paths_export_context (FlatpakContext *context,
+                                          FlatpakExports *exports,
+                                          GFile *app_id_dir,
+                                          gboolean do_create,
+                                          GString *xdg_dirs_conf,
+                                          gboolean *home_access_out);
+void flatpak_exports_add_path_expose (FlatpakExports *exports,
+                                      FlatpakFilesystemMode mode,
+                                      const char *path);
+void flatpak_exports_add_path_tmpfs (FlatpakExports *exports,
+                                 const char *path);
+void flatpak_exports_add_path_expose_or_hide (FlatpakExports *exports,
+                                          FlatpakFilesystemMode mode,
+                                          const char *path);
+void flatpak_exports_add_path_dir (FlatpakExports *exports,
+                                   const char *path);
 
 gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
                                           const char *path);
