@@ -618,7 +618,7 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
       return TRUE;
     }
   else if (dbus_proxy_argv &&
-           g_hash_table_size (context->system_bus_policy) > 0)
+           flatpak_context_get_needs_system_bus_proxy (context))
     {
       g_autofree char *proxy_socket = create_proxy_socket ("system-bus-proxy-XXXXXX");
 
