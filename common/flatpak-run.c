@@ -4890,6 +4890,25 @@ add_rest_args (const char  *app_id,
 }
 
 FlatpakContext *
+flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
+                                 GError        **error)
+{
+  g_autoptr(FlatpakContext) context = NULL;
+  g_autoptr(FlatpakContext) overrides = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  metakey = flatpak_deploy_get_metadata (deploy);
+  context = flatpak_app_compute_permissions (metakey, NULL, error);
+  if (context == NULL)
+    return NULL;
+
+  overrides = flatpak_deploy_get_overrides (deploy);
+  flatpak_context_merge (context, overrides);
+
+  return g_steal_pointer (&context);
+}
+
+FlatpakContext *
 flatpak_context_load_for_app (const char     *app_id,
                               GError        **error)
 {
@@ -4907,15 +4926,7 @@ flatpak_context_load_for_app (const char     *app_id,
   if (app_deploy == NULL)
     return NULL;
 
-  metakey = flatpak_deploy_get_metadata (app_deploy);
-  app_context = flatpak_app_compute_permissions (metakey, NULL, error);
-  if (app_context == NULL)
-    return NULL;
-
-  overrides = flatpak_deploy_get_overrides (app_deploy);
-  flatpak_context_merge (app_context, overrides);
-
-  return g_steal_pointer (&app_context);
+  return flatpak_context_load_for_deploy (app_deploy, error);
 }
 
 FlatpakBwrap *

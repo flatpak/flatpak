@@ -164,6 +164,8 @@ void           flatpak_context_to_args (FlatpakContext *context,
 gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context);
 gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context);
 
+FlatpakContext *flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
+                                                 GError        **error);
 FlatpakContext *flatpak_context_load_for_app (const char     *app_id,
                                               GError        **error);
 
