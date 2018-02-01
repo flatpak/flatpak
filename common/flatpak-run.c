@@ -775,7 +775,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
         }
     }
 
-  flatpak_export_paths_export_context (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
+  flatpak_context_export (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
   if (app_id_dir != NULL)
     flatpak_run_apply_env_appid (bwrap, app_id_dir);
 
