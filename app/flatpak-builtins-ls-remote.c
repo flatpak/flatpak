@@ -226,6 +226,9 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
               if (deploy_data == NULL)
                 continue;
 
+              if (g_strcmp0 (flatpak_deploy_data_get_origin (deploy_data), remote) != 0)
+                continue;
+
               if (g_strcmp0 (flatpak_deploy_data_get_commit (deploy_data), checksum) == 0)
                 continue;
             }
