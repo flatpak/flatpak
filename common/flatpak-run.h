@@ -136,6 +136,8 @@ void flatpak_exports_add_path_expose_or_hide (FlatpakExports *exports,
                                           const char *path);
 void flatpak_exports_add_path_dir (FlatpakExports *exports,
                                    const char *path);
+void flatpak_exports_add_home_expose (FlatpakExports *exports,
+                                      FlatpakFilesystemMode mode);
 
 gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
                                           const char *path);
