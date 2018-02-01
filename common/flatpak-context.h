@@ -24,6 +24,7 @@
 #include "libglnx/libglnx.h"
 #include "dbus-proxy/flatpak-proxy.h"
 #include "flatpak-utils.h"
+#include "flatpak-exports.h"
 
 typedef struct FlatpakContext FlatpakContext;
 
@@ -31,13 +32,6 @@ typedef enum {
   FLATPAK_CONTEXT_SHARED_NETWORK   = 1 << 0,
   FLATPAK_CONTEXT_SHARED_IPC       = 1 << 1,
 } FlatpakContextShares;
-
-/* In numerical order of more privs */
-typedef enum {
-  FLATPAK_FILESYSTEM_MODE_READ_ONLY    = 1,
-  FLATPAK_FILESYSTEM_MODE_READ_WRITE   = 2,
-  FLATPAK_FILESYSTEM_MODE_CREATE       = 3,
-} FlatpakFilesystemMode;
 
 typedef enum {
   FLATPAK_CONTEXT_SOCKET_X11         = 1 << 0,
@@ -118,6 +112,15 @@ FlatpakContext *flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
                                                  GError        **error);
 FlatpakContext *flatpak_context_load_for_app (const char     *app_id,
                                               GError        **error);
+
+FlatpakExports *flatpak_exports_from_context (FlatpakContext *context,
+                                              const char *app_id);
+void flatpak_export_paths_export_context (FlatpakContext *context,
+                                          FlatpakExports *exports,
+                                          GFile *app_id_dir,
+                                          gboolean do_create,
+                                          GString *xdg_dirs_conf,
+                                          gboolean *home_access_out);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
