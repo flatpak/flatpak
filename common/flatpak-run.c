@@ -638,7 +638,6 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
   gboolean unrestricted_session_bus;
   gboolean unrestricted_system_bus;
   g_autoptr(GError) my_error = NULL;
-  g_autoptr(GFile) user_flatpak_dir = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
   g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
@@ -2431,10 +2430,7 @@ flatpak_context_load_for_app (const char     *app_id,
                               GError        **error)
 {
   g_autofree char *app_ref = NULL;
-  g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
-  g_autoptr(FlatpakContext) overrides = NULL;
-  g_autoptr(GKeyFile) metakey = NULL;
 
   app_ref = flatpak_find_current_ref (app_id, NULL, error);
   if (app_ref == NULL)
