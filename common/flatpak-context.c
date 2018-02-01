@@ -1697,12 +1697,12 @@ const char *dont_mount_in_root[] = {
 };
 
 void
-flatpak_export_paths_export_context (FlatpakContext *context,
-                                     FlatpakExports *exports,
-                                     GFile *app_id_dir,
-                                     gboolean do_create,
-                                     GString *xdg_dirs_conf,
-                                     gboolean *home_access_out)
+flatpak_context_export (FlatpakContext *context,
+                        FlatpakExports *exports,
+                        GFile *app_id_dir,
+                        gboolean do_create,
+                        GString *xdg_dirs_conf,
+                        gboolean *home_access_out)
 {
   gboolean home_access = FALSE;
   FlatpakFilesystemMode fs_mode, home_mode;
@@ -1836,12 +1836,12 @@ flatpak_export_paths_export_context (FlatpakContext *context,
 }
 
 FlatpakExports *
-flatpak_exports_from_context (FlatpakContext *context,
-                              const char *app_id)
+flatpak_context_get_exports (FlatpakContext *context,
+                             const char *app_id)
 {
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autoptr(GFile) app_id_dir = flatpak_get_data_dir (app_id);
 
-  flatpak_export_paths_export_context (context, exports, app_id_dir, FALSE, NULL, NULL);
+  flatpak_context_export (context, exports, app_id_dir, FALSE, NULL, NULL);
   return g_steal_pointer (&exports);
 }
