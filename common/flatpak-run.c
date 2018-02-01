@@ -1253,6 +1253,13 @@ flatpak_exports_add_path_dir (FlatpakExports *exports,
 }
 
 void
+flatpak_exports_add_home_expose (FlatpakExports *exports,
+                                 FlatpakFilesystemMode mode)
+{
+  exports->host_fs = mode;
+}
+
+void
 flatpak_export_paths_export_context (FlatpakContext *context,
                                      FlatpakExports *exports,
                                      GFile *app_id_dir,
@@ -1291,7 +1298,7 @@ flatpak_export_paths_export_context (FlatpakContext *context,
           closedir (dir);
         }
       flatpak_exports_add_path_expose (exports, fs_mode, "/run/media");
-      exports->host_fs = fs_mode;
+      flatpak_exports_add_home_expose (exports, fs_mode);
     }
 
   home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
