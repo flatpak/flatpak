@@ -226,10 +226,15 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
       for (j = 0; j < row->len; j++)
         {
           Cell *cell = g_ptr_array_index (row, j);
-          if (cell->align < 0)
-            g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
+          if (flatpak_fancy_output ())
+            {
+              if (cell->align < 0)
+                g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
+              else
+                g_print ("%s%*s%-*s", (j == 0) ? "" : " ", lwidths[j] - cell->align, "", widths[j] - (lwidths[j] - cell->align), cell->text);
+            }
           else
-            g_print ("%s%*s%-*s", (j == 0) ? "" : " ", lwidths[j] - cell->align, "", widths[j] - (lwidths[j] - cell->align), cell->text);
+            g_print ("%s%s", cell->text, (j < row->len - 1) ? "\t" : "");
         }
       g_print ("\n");
     }
