@@ -35,10 +35,16 @@ CLEANFILES += $(nodist_libflatpak_common_la_SOURCES)
 
 libflatpak_common_la_SOURCES = \
 	common/flatpak-common-types.h \
+	common/flatpak-bwrap.c \
+	common/flatpak-bwrap.h \
 	common/flatpak-dir.c \
 	common/flatpak-dir.h \
 	common/flatpak-run.c \
 	common/flatpak-run.h \
+	common/flatpak-context.c \
+	common/flatpak-context.h \
+	common/flatpak-exports.c \
+	common/flatpak-exports.h \
 	common/flatpak-portal-error.c \
 	common/flatpak-portal-error.h \
 	common/flatpak-utils.c \

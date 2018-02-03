@@ -25,6 +25,7 @@
 
 #include "libglnx/libglnx.h"
 #include <flatpak-common-types.h>
+#include <flatpak-context.h>
 
 #define FLATPAK_TYPE_DIR flatpak_dir_get_type ()
 #define FLATPAK_DIR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_DIR, FlatpakDir))

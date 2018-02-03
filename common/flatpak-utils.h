@@ -487,6 +487,13 @@ gboolean flatpak_open_in_tmpdir_at (int                tmpdir_fd,
                                     GCancellable      *cancellable,
                                     GError           **error);
 
+gboolean
+flatpak_buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
+                                           const char  *name,
+                                           const char  *str,
+                                           size_t       len,
+                                           GError     **error);
+
 static inline void
 flatpak_temp_dir_destroy (void *p)
 {
