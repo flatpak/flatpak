@@ -7,7 +7,7 @@ desktop applications on Linux.
 
 See https://flatpak.org/ for more information.
 
-Read documentation for the flatpak [commandline tools](http://flatpak.github.io/flatpak/flatpak-docs.html) and for the libflatpak [library API](http://flatpak.github.io/flatpak/reference/html/index.html).
+Read documentation for the flatpak [commandline tools](http://docs.flatpak.org/en/latest/command-reference.html) and for the libflatpak [library API](http://flatpak.github.io/flatpak/reference/html/index.html).
 
 # INSTALLATION
 
