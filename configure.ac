@@ -210,6 +210,17 @@ if test "x$enable_xauth" = "xyes"; then
       [Define if using xauth])
 fi
 
+AC_ARG_ENABLE([xcb],
+              AC_HELP_STRING([--disable-xcb],
+                             [Disable xcb use]),
+              [],
+              [enable_xcb=yes])
+if test "x$enable_xcb" = "xyes"; then
+   PKG_CHECK_MODULES(XCB, [xcb])
+   AC_DEFINE([ENABLE_XCB], [1],
+      [Define if using xcb])
+fi
+
 AC_ARG_ENABLE([sandboxed-triggers],
               AC_HELP_STRING([--disable-sandboxed-triggers],
                              [Disable sandboxed triggers]),
