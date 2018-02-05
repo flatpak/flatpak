@@ -592,6 +592,38 @@ portal_add (GDBusMethodInvocation *invocation,
                                          g_variant_new ("(s)", id));
 }
 
+static gboolean
+app_has_file_access (const char *target_app_id,
+                     XdpPermissionFlags target_perms,
+                     const char *path)
+{
+  g_autoptr(FlatpakContext) app_context = NULL;
+  g_autoptr(FlatpakExports) app_exports = NULL;
+  FlatpakFilesystemMode mode = 0;
+
+  if (target_app_id == NULL || target_app_id[0] == '\0')
+    return FALSE;
+
+  app_context = flatpak_context_load_for_app (target_app_id, NULL);
+  if (app_context == NULL)
+    return FALSE;
+
+  app_exports = flatpak_context_get_exports (app_context, target_app_id);
+  if (app_exports == NULL)
+    return FALSE;
+
+  mode = flatpak_exports_path_get_mode (app_exports, path);
+
+  if (mode == FLATPAK_FILESYSTEM_MODE_READ_WRITE)
+    return TRUE;
+
+  if ((mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY) &&
+      ((target_perms & XDP_PERMISSION_FLAGS_WRITE) == 0))
+    return TRUE;
+
+  return FALSE;
+}
+
 static void
 portal_add_full (GDBusMethodInvocation *invocation,
                  GVariant              *parameters,
@@ -618,7 +650,6 @@ portal_add_full (GDBusMethodInvocation *invocation,
   gsize n_args;
   XdpPermissionFlags target_perms;
   GVariantBuilder builder;
-  g_autoptr(FlatpakExports) app_exports = NULL;
 
   g_variant_get (parameters, "(@ahus^a&s)",
                  &array, &flags, &target_app_id, &permissions);
@@ -634,13 +665,6 @@ portal_add_full (GDBusMethodInvocation *invocation,
   reuse_existing = (flags & XDP_ADD_FLAGS_REUSE_EXISTING) != 0;
   persistent = (flags & XDP_ADD_FLAGS_PERSISTENT) != 0;
   as_needed_by_app = (flags & XDP_ADD_FLAGS_AS_NEEDED_BY_APP) != 0;
-
-  if (as_needed_by_app && target_app_id[0] != '\0')
-    {
-      g_autoptr(FlatpakContext) app_context = flatpak_context_load_for_app (target_app_id, NULL);
-      if (app_context)
-        app_exports = flatpak_context_get_exports (app_context, target_app_id);
-    }
 
   target_perms = xdp_parse_permissions (permissions);
 
@@ -703,8 +727,8 @@ portal_add_full (GDBusMethodInvocation *invocation,
         const char *path = g_ptr_array_index(paths,i);
         g_assert (path != NULL);
 
-        if (app_exports &&
-            flatpak_exports_path_is_visible (app_exports, path))
+        if (as_needed_by_app &&
+            app_has_file_access (target_app_id, target_perms, path))
           {
             g_free (g_ptr_array_index(ids,i));
             g_ptr_array_index(ids,i) = g_strdup ("");
@@ -778,7 +802,6 @@ portal_add_named_full (GDBusMethodInvocation *invocation,
   g_autofree char *path = NULL;
   XdpPermissionFlags target_perms;
   GVariantBuilder builder;
-  g_autoptr(FlatpakExports) app_exports = NULL;
   g_autoptr(GVariant) filename_v = NULL;
 
   g_variant_get (parameters, "(h@ayus^a&s)", &parent_fd_id, &filename_v, &flags, &target_app_id, &permissions);
@@ -804,13 +827,6 @@ portal_add_named_full (GDBusMethodInvocation *invocation,
   reuse_existing = (flags & XDP_ADD_FLAGS_REUSE_EXISTING) != 0;
   persistent = (flags & XDP_ADD_FLAGS_PERSISTENT) != 0;
   as_needed_by_app = (flags & XDP_ADD_FLAGS_AS_NEEDED_BY_APP) != 0;
-
-  if (as_needed_by_app && target_app_id[0] != '\0')
-    {
-      g_autoptr(FlatpakContext) app_context = flatpak_context_load_for_app (target_app_id, NULL);
-      if (app_context)
-        app_exports = flatpak_context_get_exports (app_context, target_app_id);
-    }
 
   target_perms = xdp_parse_permissions (permissions);
 
@@ -864,8 +880,8 @@ portal_add_named_full (GDBusMethodInvocation *invocation,
 
     AUTOLOCK (db);
 
-    if (app_exports &&
-        flatpak_exports_path_is_visible (app_exports, parent_path_buffer))
+    if (as_needed_by_app &&
+        app_has_file_access (target_app_id, target_perms, path))
       {
         id = g_strdup ("");
       }
