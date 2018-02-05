@@ -45,6 +45,7 @@ static gboolean opt_show_permissions;
 static gboolean opt_show_extensions;
 static char *opt_arch;
 static char **opt_installations;
+static char *opt_file_access;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -57,6 +58,7 @@ static GOptionEntry options[] = {
   { "show-size", 's', 0, G_OPTION_ARG_NONE, &opt_show_size, N_("Show size"), NULL },
   { "show-metadata", 'm', 0, G_OPTION_ARG_NONE, &opt_show_metadata, N_("Show metadata"), NULL },
   { "show-permissions", 'M', 0, G_OPTION_ARG_NONE, &opt_show_permissions, N_("Show permissions"), NULL },
+  { "file-access", 0, 0, G_OPTION_ARG_FILENAME, &opt_file_access, N_("Query file access"), N_("PATH") },
   { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
   { NULL }
 };
@@ -166,7 +168,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   metakey = flatpak_deploy_get_metadata (deploy);
 
-  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions)
+  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions || opt_file_access)
     friendly = FALSE;
 
   if (friendly)
@@ -274,7 +276,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           g_print ("%s", data);
         }
 
-      if (opt_show_permissions)
+      if (opt_show_permissions || opt_file_access)
         {
           g_autoptr(FlatpakContext) context = NULL;
           g_autoptr(GKeyFile) keyfile = NULL;
@@ -284,15 +286,30 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           if (context == NULL)
             return FALSE;
 
-          keyfile = g_key_file_new ();
+          if (opt_show_permissions)
+            {
+              keyfile = g_key_file_new ();
+              flatpak_context_save_metadata (context, TRUE, keyfile);
+              contents = g_key_file_to_data (keyfile, NULL, error);
+              if (contents == NULL)
+                return FALSE;
 
-          flatpak_context_save_metadata (context, TRUE, keyfile);
+              g_print ("%s", contents);
+            }
 
-          contents = g_key_file_to_data (keyfile, NULL, error);
-          if (contents == NULL)
-            return FALSE;
+          if (opt_file_access)
+            {
+              g_autoptr(FlatpakExports) exports = flatpak_context_get_exports (context, parts[1]);
+              FlatpakFilesystemMode mode;
 
-          g_print ("%s", contents);
+              mode = flatpak_exports_path_get_mode (exports, opt_file_access);
+              if (mode == 0)
+                g_print ("hidden\n");
+              else if (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
+                g_print ("read-only\n");
+              else
+                g_print ("read-write\n");
+            }
         }
     }
 
