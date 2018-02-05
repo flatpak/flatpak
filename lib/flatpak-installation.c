@@ -2176,6 +2176,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
                                      cancellable, error))
     return NULL;
 
+  /* FIXME: Rework to accept the collection ID as an input argument instead */
 #ifdef FLATPAK_ENABLE_P2P
   if (!ostree_repo_get_remote_option (flatpak_dir_get_repo (dir),
                                       remote_name, "collection-id",
@@ -2194,6 +2195,28 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
 
   coll_ref = flatpak_collection_ref_new (collection_id, ref);
   checksum = g_hash_table_lookup (ht, coll_ref);
+
+#ifdef FLATPAK_ENABLE_P2P
+  /* If there was not a match, it may be because the collection ID is
+   * not set in the local configuration, or it is wrong, so we resort to
+   * trying to match just the ref name */
+  if (checksum == NULL)
+    {
+      GHashTableIter iter;
+      gpointer key, value;
+
+      g_hash_table_iter_init (&iter, ht);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+          FlatpakCollectionRef *current =  (FlatpakCollectionRef *) key;
+          if (g_strcmp0 (current->ref_name, ref) == 0)
+            {
+              checksum = (const gchar *) value;
+              break;
+            }
+        }
+    }
+#endif /* FLATPAK_ENABLE_P2P */
 
   if (checksum != NULL)
     return flatpak_remote_ref_new (coll_ref, checksum, remote_name, state);
