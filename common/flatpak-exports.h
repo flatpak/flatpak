@@ -53,6 +53,8 @@ void flatpak_exports_add_path_dir (FlatpakExports *exports,
 
 gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
                                           const char *path);
+FlatpakFilesystemMode flatpak_exports_path_get_mode (FlatpakExports *exports,
+                                                     const char *path);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 
