@@ -102,7 +102,7 @@
                 <term><option>--verbose</option></term>
 
                 <listitem><para>
-                    Print debug information during command processing.
+                    Print debug information during command processing. Use -vv for more detail.
                 </para></listitem>
             </varlistentry>
 
