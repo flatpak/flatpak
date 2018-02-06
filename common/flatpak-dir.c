@@ -2781,7 +2781,10 @@ flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
 
   if (!flatpak_summary_lookup_ref (summary, collection_id, ref, &latest_rev, out_variant))
     {
-      flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote);
+      if (collection_id != NULL)
+        flatpak_fail (error, "No such ref (%s, %s) in remote %s", collection_id, ref, remote);
+      else
+        flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote);
       return NULL;
     }
 
@@ -9968,7 +9971,12 @@ flatpak_dir_update_remote_configuration_for_repo_metadata (FlatpakDir    *self,
     return FALSE;
 
   if (!flatpak_summary_lookup_ref (summary, collection_id, OSTREE_REPO_METADATA_REF, &latest_rev, NULL))
-    return flatpak_fail (error, "No such ref '%s' in remote %s", OSTREE_REPO_METADATA_REF, remote);
+    {
+      if (collection_id != NULL)
+        return flatpak_fail (error, "No such ref (%s, %s) in remote %s", collection_id, OSTREE_REPO_METADATA_REF, remote);
+      else
+        return flatpak_fail (error, "No such ref '%s' in remote %s", OSTREE_REPO_METADATA_REF, remote);
+    }
 
   if (!ostree_repo_load_commit (self->repo, latest_rev, &commit_v, NULL, error))
     return FALSE;
