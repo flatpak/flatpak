@@ -148,10 +148,12 @@ static gboolean
 path_is_mapped (const char **keys,
                 guint n_keys,
                 GHashTable *hash_table,
-                const char *path)
+                const char *path,
+                gboolean *is_readonly_out)
 {
   guint i;
   gboolean is_mapped = FALSE;
+  gboolean is_readonly = FALSE;
 
   /* The keys are sorted so shorter (i.e. parents) are first */
   for (i = 0; i < n_keys; i++)
@@ -169,9 +171,15 @@ path_is_mapped (const char **keys,
             is_mapped = strcmp (path, mounted_path) == 0;
           else
             is_mapped = ep->mode != FAKE_MODE_TMPFS;
+
+          if (is_mapped)
+            is_readonly = ep->mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY;
+          else
+            is_readonly = FALSE;
         }
     }
 
+  *is_readonly_out = is_readonly;
   return is_mapped;
 }
 
@@ -277,13 +285,15 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
     }
 }
 
-gboolean
-flatpak_exports_path_is_visible (FlatpakExports *exports,
-                                 const char *path)
+/* Returns 0 if not visible */
+FlatpakFilesystemMode
+flatpak_exports_path_get_mode (FlatpakExports *exports,
+                               const char *path)
 {
   guint n_keys;
   g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (exports->hash, &n_keys);
   g_autofree char *canonical = NULL;
+  gboolean is_readonly = FALSE;
   g_auto(GStrv) parts = NULL;
   int i;
   g_autoptr(GString) path_builder = g_string_new ("");
@@ -306,10 +316,10 @@ flatpak_exports_path_is_visible (FlatpakExports *exports,
       g_string_append (path_builder, "/");
       g_string_append (path_builder, parts[i]);
 
-      if (path_is_mapped (keys, n_keys, exports->hash, path_builder->str))
+      if (path_is_mapped (keys, n_keys, exports->hash, path_builder->str, &is_readonly))
         {
           if (lstat (path_builder->str, &st) != 0)
-            return FALSE;
+            return 0;
 
           if (S_ISLNK (st.st_mode))
             {
@@ -318,7 +328,8 @@ flatpak_exports_path_is_visible (FlatpakExports *exports,
               int j;
 
               if (resolved == NULL)
-                return FALSE;
+                return 0;
+
               path2_builder = g_string_new (resolved);
 
               for (j = i + 1; parts[j] != NULL; j++)
@@ -327,15 +338,24 @@ flatpak_exports_path_is_visible (FlatpakExports *exports,
                   g_string_append (path2_builder, parts[j]);
                 }
 
-
-              return flatpak_exports_path_is_visible (exports, path2_builder->str);
+              return flatpak_exports_path_get_mode (exports, path2_builder->str);
             }
         }
       else if (parts[i+1] == NULL)
-        return FALSE; /* Last part was not mapped */
+        return 0; /* Last part was not mapped */
     }
 
-  return TRUE;
+  if (is_readonly)
+    return FLATPAK_FILESYSTEM_MODE_READ_ONLY;
+
+  return FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+}
+
+gboolean
+flatpak_exports_path_is_visible (FlatpakExports *exports,
+                                 const char *path)
+{
+  return flatpak_exports_path_get_mode (exports, path) > 0;
 }
 
 static gboolean

@@ -1545,7 +1545,10 @@ add_document_portal_args (FlatpakBwrap *bwrap,
         {
           if (g_dbus_message_to_gerror (reply, &local_error))
             {
-              g_message ("Can't get document portal: %s", local_error->message);
+              if (g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_SERVICE_UNKNOWN))
+                g_debug ("Document portal not available, not mounting /run/user/%d/doc", getuid ());
+              else
+                g_message ("Can't get document portal: %s", local_error->message);
             }
           else
             {
