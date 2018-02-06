@@ -362,7 +362,7 @@
                 <term><citerefentry><refentrytitle>flatpak-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Create a bundle file from a build directory.
+                    Create a bundle file from a ref in a local repository.
                 </para></listitem>
             </varlistentry>
             <varlistentry>

@@ -101,7 +101,7 @@ static FlatpakCommand commands[] = {
   { "build", N_("Run a build command inside the build dir"), flatpak_builtin_build, flatpak_complete_build  },
   { "build-finish", N_("Finish a build dir for export"), flatpak_builtin_build_finish, flatpak_complete_build_finish },
   { "build-export", N_("Export a build dir to a repository"), flatpak_builtin_build_export, flatpak_complete_build_export },
-  { "build-bundle", N_("Create a bundle file from a build directory"), flatpak_builtin_build_bundle, flatpak_complete_build_bundle },
+  { "build-bundle", N_("Create a bundle file from a ref in a local repository"), flatpak_builtin_build_bundle, flatpak_complete_build_bundle },
   { "build-import-bundle", N_("Import a bundle file"), flatpak_builtin_build_import, flatpak_complete_build_import },
   { "build-sign", N_("Sign an application or runtime"), flatpak_builtin_build_sign, flatpak_complete_build_sign },
   { "build-update-repo", N_("Update the summary file in a repository"), flatpak_builtin_build_update_repo, flatpak_complete_build_update_repo },
