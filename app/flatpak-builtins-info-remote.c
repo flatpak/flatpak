@@ -174,7 +174,13 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
       commit_metadata = g_variant_get_child_value (commit_v, 0);
       g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
       if (xa_metadata == NULL)
-        return flatpak_fail (error, "Commit has no metadata");
+        g_printerr (_("Warning: Commit has no flatpak metadata\n"));
+      else
+        {
+          metakey = g_key_file_new ();
+          if (!g_key_file_load_from_data (metakey, xa_metadata, -1, 0, error))
+            return FALSE;
+        }
 
 #ifdef FLATPAK_ENABLE_P2P
       g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
@@ -185,10 +191,6 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
 
       if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
         download_size = GUINT64_FROM_BE (download_size);
-
-      metakey = g_key_file_new ();
-      if (!g_key_file_load_from_data (metakey, xa_metadata, -1, 0, error))
-        return FALSE;
 
       parts = g_strsplit (ref, "/", 0);
       formatted_installed_size = g_format_size (installed_size);
@@ -207,7 +209,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
       g_print ("%s%s%s %s\n", on, _("Parent:"), off, parent ? parent : "-");
       g_print ("%s%s%s %s\n", on, _("Download size:"), off, formatted_download_size);
       g_print ("%s%s%s %s\n", on, _("Installed size:"), off, formatted_installed_size);
-      if (strcmp (parts[0], "app") == 0)
+      if (strcmp (parts[0], "app") == 0 && metakey != NULL)
         {
           g_autofree char *runtime = NULL;
           runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
@@ -287,8 +289,9 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
               c_m = g_variant_get_child_value (c_v, 0);
               g_variant_lookup (c_m, "xa.metadata", "&s", &xa_metadata);
               if (xa_metadata == NULL)
-                return flatpak_fail (error, "Commit %s has no metadata", c);
-              g_print ("%s", xa_metadata);
+                g_printerr (_("Warning: Commit %s has no flatpak metadata\n"), c);
+              else
+                g_print ("%s", xa_metadata);
             }
 
           g_free (c);

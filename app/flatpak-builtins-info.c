@@ -181,6 +181,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       const gchar *body = NULL;
       g_autofree char *parent = NULL;
       const char *latest;
+      const char *xa_metadata = NULL;
       const char *collection_id = NULL;
 
       latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
@@ -196,6 +197,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           formatted_timestamp = format_timestamp (timestamp);
 
           commit_metadata = g_variant_get_child_value (commit_v, 0);
+          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+          if (xa_metadata == NULL)
+            g_printerr (_("Warning: Commit has no flatpak metadata\n"));
 
 #ifdef FLATPAK_ENABLE_P2P
           g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
