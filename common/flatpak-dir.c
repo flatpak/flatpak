@@ -2017,6 +2017,12 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
   return g_strcmp0 (new_checksum, old_checksum) != 0;
 }
 
+static gboolean
+repo_get_remote_collection_id (OstreeRepo  *repo,
+                               const char  *remote_name,
+                               char       **collection_id_out,
+                               GError     **error);
+
 gboolean
 flatpak_dir_update_appstream (FlatpakDir          *self,
                               const char          *remote,
@@ -2049,10 +2055,14 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       gboolean is_oci;
       g_autoptr(GFile) child_repo_file = NULL;
       g_autofree char *child_repo_path = NULL;
+      g_autofree char *collection_id = NULL;
 
       system_helper = flatpak_dir_get_system_helper (self);
 
       g_assert (system_helper != NULL);
+
+      if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
+        return FALSE;
 
       is_oci = flatpak_dir_get_remote_oci (self, remote);
 
@@ -2092,7 +2102,14 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
           if (child_repo == NULL)
             return FALSE;
 
-          if (!flatpak_dir_remote_fetch_summary (self, remote,
+          /* Avoid fetching the system remote summary on P2P code paths. The
+           * flatpak_dir_pull() call below will cause the true remote's summary
+           * to be pulled into the child repo (which might be the one from a
+           * temporary remote rather than the system remote). Ostree does this
+           * because of the MIRROR flag.*/
+          /* FIXME: P2P appstream updates don't work.*/
+          if (collection_id == NULL &&
+              !flatpak_dir_remote_fetch_summary (self, remote,
                                                  &summary_copy, &summary_sig_copy,
                                                  cancellable, error))
             return FALSE;
@@ -2104,19 +2121,22 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                  progress, cancellable, error))
             return FALSE;
 
-          summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
-          if (!g_file_replace_contents (summary_file,
-                                        g_bytes_get_data (summary_copy, NULL),
-                                        g_bytes_get_size (summary_copy),
-                                        NULL, FALSE, 0, NULL, cancellable, NULL))
-            return FALSE;
+          if (summary_copy != NULL)
+            {
+              summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
+              if (!g_file_replace_contents (summary_file,
+                                            g_bytes_get_data (summary_copy, NULL),
+                                            g_bytes_get_size (summary_copy),
+                                            NULL, FALSE, 0, NULL, cancellable, NULL))
+                return FALSE;
 
-          summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
-          if (!g_file_replace_contents (summary_sig_file,
-                                        g_bytes_get_data (summary_sig_copy, NULL),
-                                        g_bytes_get_size (summary_sig_copy),
-                                        NULL, FALSE, 0, NULL, cancellable, NULL))
-            return FALSE;
+              summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
+              if (!g_file_replace_contents (summary_sig_file,
+                                            g_bytes_get_data (summary_sig_copy, NULL),
+                                            g_bytes_get_size (summary_sig_copy),
+                                            NULL, FALSE, 0, NULL, cancellable, NULL))
+                return FALSE;
+            }
 
           if (!ostree_repo_resolve_rev (child_repo, branch, TRUE, &new_checksum, error))
             return FALSE;
@@ -6135,7 +6155,13 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
-          if (!flatpak_dir_remote_fetch_summary (self, remote_name,
+          /* Avoid fetching the system remote summary on P2P code paths. The
+           * flatpak_dir_pull() call below will cause the true remote's summary
+           * to be pulled into the child repo (which might be the one from a
+           * temporary remote rather than the system remote). Ostree does this
+           * because of the MIRROR flag.*/
+          if (collection_id == NULL &&
+              !flatpak_dir_remote_fetch_summary (self, remote_name,
                                                  &summary_copy, &summary_sig_copy,
                                                  cancellable, error))
             return FALSE;
@@ -6163,12 +6189,15 @@ flatpak_dir_install (FlatpakDir          *self,
             return FALSE;
 #endif  /* FLATPAK_ENABLE_P2P */
 
-          summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
-          if (!g_file_replace_contents (summary_file,
-                                        g_bytes_get_data (summary_copy, NULL),
-                                        g_bytes_get_size (summary_copy),
-                                        NULL, FALSE, 0, NULL, cancellable, NULL))
-            return FALSE;
+          if (summary_copy != NULL)
+            {
+              summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
+              if (!g_file_replace_contents (summary_file,
+                                            g_bytes_get_data (summary_copy, NULL),
+                                            g_bytes_get_size (summary_copy),
+                                            NULL, FALSE, 0, NULL, cancellable, NULL))
+                return FALSE;
+            }
 
           if (collection_id == NULL)
             {
@@ -6764,7 +6793,13 @@ flatpak_dir_update (FlatpakDir          *self,
           if (child_repo == NULL)
             return FALSE;
 
-          if (!flatpak_dir_remote_fetch_summary (self, remote_name,
+          /* Avoid fetching the system remote summary on P2P code paths. The
+           * flatpak_dir_pull() call below will cause the true remote's summary
+           * to be pulled into the child repo (which might be the one from a
+           * temporary remote rather than the system remote). Ostree does this
+           * because of the MIRROR flag.*/
+          if (collection_id == NULL &&
+              !flatpak_dir_remote_fetch_summary (self, remote_name,
                                                  &summary_copy, &summary_sig_copy,
                                                  cancellable, error))
             return FALSE;
@@ -6788,12 +6823,15 @@ flatpak_dir_update (FlatpakDir          *self,
             return FALSE;
 #endif  /* FLATPAK_ENABLE_P2P */
 
-          summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
-          if (!g_file_replace_contents (summary_file,
-                                        g_bytes_get_data (summary_copy, NULL),
-                                        g_bytes_get_size (summary_copy),
-                                        NULL, FALSE, 0, NULL, cancellable, NULL))
-            return FALSE;
+          if (summary_copy != NULL)
+            {
+              summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
+              if (!g_file_replace_contents (summary_file,
+                                            g_bytes_get_data (summary_copy, NULL),
+                                            g_bytes_get_size (summary_copy),
+                                            NULL, FALSE, 0, NULL, cancellable, NULL))
+                return FALSE;
+            }
 
           if (collection_id == NULL)
             {
