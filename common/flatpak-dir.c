@@ -3155,10 +3155,10 @@ flatpak_dir_pull (FlatpakDir          *self,
     return FALSE;
 
   /* Keep a shared repo lock to avoid prunes removing objects we're relying on
-   * while we do the pull. There are two cases we protect against. 1) objects
-   * we need but that were already decided was locall available could be removed,
-   * and 2) during the transaction commit objects that not yet have a ref to the
-   * could be considered unreachable.
+   * while we do the pull. There are two cases we protect against. 1) objects we
+   * need but that we already decided are locally available could be removed,
+   * and 2) during the transaction commit objects that don't yet have a ref to
+   * them could be considered unreachable.
    */
   if (repo == NULL && !flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
