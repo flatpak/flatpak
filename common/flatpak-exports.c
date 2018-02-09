@@ -43,7 +43,6 @@
 #include "flatpak-utils.h"
 #include "flatpak-dir.h"
 #include "flatpak-systemd-dbus.h"
-#include "document-portal/xdp-dbus.h"
 #include "lib/flatpak-error.h"
 
 /* We don't want to export paths pointing into these, because they are readonly

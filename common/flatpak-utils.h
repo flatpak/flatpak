@@ -29,9 +29,9 @@
 #include <gio/gunixfdlist.h>
 #include <libsoup/soup.h>
 #include "flatpak-dbus.h"
+#include "flatpak-document-dbus.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
-#include "document-portal/xdp-dbus.h"
 
 typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,

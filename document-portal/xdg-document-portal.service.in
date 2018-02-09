@@ -1,7 +1,0 @@
-[Unit]
-Description=flatpak document portal service
-
-[Service]
-BusName=org.freedesktop.portal.Documents
-ExecStart=@libexecdir@/xdg-document-portal
-Type=dbus

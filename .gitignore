@@ -36,7 +36,6 @@ flatpak-session-helper
 xdg-document-portal
 xdg-permission-store
 flatpak-builder
-testdb
 *~
 profile/flatpak.sh
 flatpak-dbus.[ch]
@@ -68,9 +67,6 @@ Flatpak-1.0.*
 /doc/flatpak-docs.xml
 /doc/*.1
 /doc/*.5
-/test-doc-portal
-/test-doc-portal.log
-/test-doc-portal.trs
 /test-libglnx-errors
 /test-libglnx-errors.log
 /test-libglnx-errors.trs
@@ -89,8 +85,6 @@ Flatpak-1.0.*
 /testlibrary
 /testlibrary.log
 /testlibrary.trs
-/testdb.log
-/testdb.trs
 /tests/test-keyring/.gpg-v21-migrated
 /tests/test-keyring/private-keys-v1.d/
 /tests/test-keyring/trustdb.gpg
