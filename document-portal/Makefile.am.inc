@@ -1,6 +1,10 @@
+if ENABLE_DOCUMENT_PORTAL
 libexec_PROGRAMS += \
 	xdg-document-portal \
 	$(NULL)
+systemduserunit_DATA += document-portal/xdg-document-portal.service
+dbus_service_DATA += document-portal/org.freedesktop.portal.Documents.service
+endif
 
 xdp_dbus_built_sources = document-portal/xdp-dbus.c document-portal/xdp-dbus.h
 BUILT_SOURCES += $(xdp_dbus_built_sources)
@@ -20,10 +24,7 @@ document-portal/%-dbus.h: document-portal/%-dbus.c
 	@true # Built as a side-effect of the rules for the .c
 
 service_in_files += document-portal/xdg-document-portal.service.in
-systemduserunit_DATA += document-portal/xdg-document-portal.service
-
 service_in_files += document-portal/org.freedesktop.portal.Documents.service.in
-dbus_service_DATA += document-portal/org.freedesktop.portal.Documents.service
 
 nodist_xdg_document_portal_SOURCES = \
 	$(xdp_dbus_built_sources)		\

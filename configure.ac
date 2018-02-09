@@ -220,6 +220,13 @@ if test "x$enable_sandboxed_triggers" = "xno"; then
       [Define if sandboxed triggers are disabled])
 fi
 
+AC_ARG_ENABLE([document-portal],
+              AC_HELP_STRING([--disable-document-portal],
+                             [Disable document portal]),
+              [],
+              [enable_document_portal=yes])
+AM_CONDITIONAL(ENABLE_DOCUMENT_PORTAL, test "x$enable_document_portal" = "xyes")
+
 PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
 
 PKG_CHECK_MODULES(FUSE, [fuse])
@@ -444,6 +451,7 @@ echo "          ============="
 echo ""
 echo "          Build system helper:    $enable_system_helper"
 echo "          Build bubblewrap:       $build_bwrap"
+echo "          Build document portal:  $enable_document_portal"
 echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
 echo "          Use seccomp:            $enable_seccomp"
 echo "          Privileged group:       $PRIVILEGED_GROUP"

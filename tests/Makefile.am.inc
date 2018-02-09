@@ -60,7 +60,7 @@ tests/services/org.freedesktop.Flatpak.SystemHelper.service: system-helper/org.f
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $< > $@
 
-tests/libtest.sh: tests/services/org.freedesktop.impl.portal.PermissionStore.service tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.Flatpak.service
+tests/libtest.sh: tests/services/org.freedesktop.impl.portal.PermissionStore.service tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service
 
 install-test-data-hook:
 if ENABLE_INSTALLED_TESTS
@@ -127,7 +127,11 @@ dist_test_scripts = \
 	tests/test-update-remote-configuration.sh \
 	$(NULL)
 
-test_programs = testdb test-doc-portal testlibrary
+test_programs = testlibrary
+
+if ENABLE_DOCUMENT_PORTAL
+test_programs += testdb test-doc-portal
+endif
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
