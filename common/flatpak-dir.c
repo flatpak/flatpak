@@ -3379,12 +3379,14 @@ repo_pull_one_local_untrusted (FlatpakDir          *self,
   /* The latter flag was introduced in https://github.com/ostreedev/ostree/pull/926 */
   const OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED |OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
   GVariantBuilder builder;
+  g_auto(GVariantBuilder) refs_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   gboolean res;
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
   const char *refs[2] = { NULL, NULL };
   const char *commits[2] = { NULL, NULL };
+  g_autofree char *collection_id = NULL;
 
   if (progress == NULL)
     {
@@ -3396,21 +3398,36 @@ repo_pull_one_local_untrusted (FlatpakDir          *self,
         }
     }
 
-  refs[0] = ref;
-  commits[0] = checksum;
+  if (!repo_get_remote_collection_id (repo, remote_name, &collection_id, error))
+    return FALSE;
+
+  if (collection_id != NULL)
+    {
+      g_variant_builder_init (&refs_builder, G_VARIANT_TYPE ("a(sss)"));
+      g_variant_builder_add (&refs_builder, "(sss)", collection_id, ref, checksum);
+
+      g_variant_builder_add (&builder, "{s@v}", "collection-refs",
+                             g_variant_new_variant (g_variant_builder_end (&refs_builder)));
+    }
+  else
+    {
+      refs[0] = ref;
+      commits[0] = checksum;
+
+      g_variant_builder_add (&builder, "{s@v}", "refs",
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *) refs, -1)));
+      g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *) commits, -1)));
+    }
 
   g_variant_builder_add (&builder, "{s@v}", "flags",
                          g_variant_new_variant (g_variant_new_int32 (flags)));
-  g_variant_builder_add (&builder, "{s@v}", "refs",
-                         g_variant_new_variant (g_variant_new_strv ((const char * const *) refs, -1)));
-  g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
-                         g_variant_new_variant (g_variant_new_strv ((const char * const *) commits, -1)));
   g_variant_builder_add (&builder, "{s@v}", "override-remote-name",
                          g_variant_new_variant (g_variant_new_string (remote_name)));
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify-summary",
-                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+                         g_variant_new_variant (g_variant_new_boolean (collection_id == NULL)));
   g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
   g_variant_builder_add (&builder, "{s@v}", "update-frequency",
