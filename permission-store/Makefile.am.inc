@@ -1,12 +1,13 @@
+if ENABLE_DOCUMENT_PORTAL
+systemduserunit_DATA += permission-store/xdg-permission-store.service
+dbus_service_DATA += permission-store/org.freedesktop.impl.portal.PermissionStore.service
 libexec_PROGRAMS += \
 	xdg-permission-store \
 	$(NULL)
+endif
 
 service_in_files += permission-store/xdg-permission-store.service.in
-systemduserunit_DATA += permission-store/xdg-permission-store.service
-
 service_in_files += permission-store/org.freedesktop.impl.portal.PermissionStore.service.in
-dbus_service_DATA += permission-store/org.freedesktop.impl.portal.PermissionStore.service
 
 nodist_xdg_permission_store_SOURCES = permission-store/permission-store-dbus.c permission-store/permission-store-dbus.h
 BUILT_SOURCES += $(nodist_xdg_permission_store_SOURCES)
