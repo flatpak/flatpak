@@ -174,12 +174,15 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (friendly)
     {
       g_autoptr(GVariant) commit_v = NULL;
+      g_autoptr(GVariant) commit_metadata = NULL;
       guint64 timestamp;
       g_autofree char *formatted_timestamp = NULL;
       const gchar *subject = NULL;
       const gchar *body = NULL;
       g_autofree char *parent = NULL;
       const char *latest;
+      const char *xa_metadata = NULL;
+      const char *collection_id = NULL;
 
       latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
       if (latest == NULL)
@@ -192,6 +195,15 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           parent = ostree_commit_get_parent (commit_v);
           timestamp = ostree_commit_get_timestamp (commit_v);
           formatted_timestamp = format_timestamp (timestamp);
+
+          commit_metadata = g_variant_get_child_value (commit_v, 0);
+          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+          if (xa_metadata == NULL)
+            g_printerr (_("Warning: Commit has no flatpak metadata\n"));
+
+#ifdef FLATPAK_ENABLE_P2P
+          g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
+#endif
         }
 
       g_print ("%s%s%s %s\n", on, _("Ref:"), off, ref);
@@ -199,6 +211,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       g_print ("%s%s%s %s\n", on, _("Arch:"), off, parts[2]);
       g_print ("%s%s%s %s\n", on, _("Branch:"), off, parts[3]);
       g_print ("%s%s%s %s\n", on, _("Origin:"), off, origin ? origin : "-");
+      if (collection_id)
+        g_print ("%s%s%s %s\n", on, _("Collection ID:"), off, collection_id);
       if (formatted_timestamp)
         g_print ("%s%s%s %s\n", on, _("Date:"), off, formatted_timestamp);
       if (subject)
