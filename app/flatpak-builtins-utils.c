@@ -388,3 +388,143 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
 
   return TRUE;
 }
+
+/* Returns: the time in seconds since the file was modified, or %G_MAXUINT64 on error */
+static guint64
+get_file_age (GFile *file)
+{
+    guint64 now;
+    guint64 mtime;
+    g_autoptr(GFileInfo) info = NULL;
+
+    info = g_file_query_info (file,
+                              G_FILE_ATTRIBUTE_TIME_MODIFIED,
+                              G_FILE_QUERY_INFO_NONE,
+                              NULL,
+                              NULL);
+    if (info == NULL)
+      return G_MAXUINT64;
+
+    mtime = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+    now = (guint64) g_get_real_time () / G_USEC_PER_SEC;
+    if (mtime > now)
+      return G_MAXUINT64;
+
+    return (guint64) (now - mtime);
+}
+
+static void
+no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
+{
+}
+
+gboolean
+update_appstream (GPtrArray    *dirs,
+                  const char   *remote,
+                  const char   *arch,
+                  guint64       ttl,
+                  gboolean      quiet,
+                  GCancellable *cancellable,
+                  GError      **error)
+{
+  gboolean changed;
+  gboolean res;
+  int i, j;
+
+  g_return_val_if_fail (dirs != NULL, FALSE);
+  g_return_val_if_fail (arch != NULL, FALSE);
+
+  if (remote == NULL)
+    {
+      g_auto(GStrv) remotes = NULL;
+
+      for (j = 0; j < dirs->len; j++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, j);
+
+          remotes = flatpak_dir_list_remotes (dir, cancellable, error);
+          if (remotes == NULL)
+            return FALSE;
+
+          for (i = 0; remotes[i] != NULL; i++)
+            {
+              g_autoptr(GError) local_error = NULL;
+              g_autoptr(OstreeAsyncProgress) progress = NULL;
+              g_autoptr(GFile) ts_file = NULL;
+              g_autofree char *ts_file_path = NULL;
+              g_autofree char *subdir = NULL;
+              guint64 ts_file_age;
+
+              subdir = g_strdup_printf ("appstream/%s/%s/.timestamp", remotes[i], arch);
+              ts_file = g_file_resolve_relative_path (flatpak_dir_get_path (dir), subdir);
+              ts_file_path = g_file_get_path (ts_file);
+              ts_file_age = get_file_age (ts_file);
+              if (ts_file_age < ttl)
+                {
+                  g_debug ("%s age %" G_GUINT64_FORMAT " is less than ttl %" G_GUINT64_FORMAT, ts_file_path, ts_file_age, ttl);
+                  continue;
+                }
+              else
+                g_debug ("%s age %" G_GUINT64_FORMAT " is greater than ttl %" G_GUINT64_FORMAT, ts_file_path, ts_file_age, ttl);
+
+
+              if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
+                  flatpak_dir_get_remote_noenumerate (dir, remotes[i]) ||
+                  !flatpak_dir_check_for_appstream_update (dir, remotes[i], arch))
+                continue;
+
+              if (flatpak_dir_is_user (dir))
+                {
+                  if (quiet)
+                    g_debug (_("Updating appstream data for user remote %s\n"), remotes[i]);
+                  else
+                    g_print (_("Updating appstream data for user remote %s\n"), remotes[i]);
+                }
+              else
+                {
+                  if (quiet)
+                    g_debug (_("Updating appstream data for remote %s\n"), remotes[i]);
+                  else
+                    g_print (_("Updating appstream data for remote %s\n"), remotes[i]);
+                }
+              progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
+              if (!flatpak_dir_update_appstream (dir, remotes[i], arch, &changed,
+                                                 progress, cancellable, &local_error))
+                g_printerr (_("Error updating: %s\n"), local_error->message);
+              ostree_async_progress_finish (progress);
+            }
+        }
+    }
+  else
+    {
+      gboolean found = FALSE;
+
+      for (j = 0; j < dirs->len; j++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, j);
+
+          if (flatpak_dir_has_remote (dir, remote))
+            {
+              g_autoptr(OstreeAsyncProgress) progress = NULL;
+
+              found = TRUE;
+
+              /* Early bail out check */
+              if (!flatpak_dir_check_for_appstream_update (dir, remote, arch))
+                continue;
+
+              progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
+              res = flatpak_dir_update_appstream (dir, remote, arch, &changed,
+                                                  progress, cancellable, error);
+              ostree_async_progress_finish (progress);
+              if (!res)
+                return FALSE;
+            }
+        }
+
+      if (!found)
+        return flatpak_fail (error, _("Remote \"%s\" not found"), remote);
+    }
+
+  return TRUE;
+}

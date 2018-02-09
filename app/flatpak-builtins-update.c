@@ -66,89 +66,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static void
-no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
-{
-}
-
-static gboolean
-update_appstream (GPtrArray *dirs, const char *remote, GCancellable *cancellable, GError **error)
-{
-  gboolean changed;
-  gboolean res;
-  int i, j;
-
-  if (opt_arch == NULL)
-    opt_arch = (char *)flatpak_get_arch ();
-
-  if (remote == NULL)
-    {
-      g_auto(GStrv) remotes = NULL;
-
-      for (j = 0; j < dirs->len; j++)
-        {
-          FlatpakDir *dir = g_ptr_array_index (dirs, j);
-
-          remotes = flatpak_dir_list_remotes (dir, cancellable, error);
-          if (remotes == NULL)
-            return FALSE;
-
-          for (i = 0; remotes[i] != NULL; i++)
-            {
-              g_autoptr(GError) local_error = NULL;
-              g_autoptr(OstreeAsyncProgress) progress = NULL;
-
-              if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
-                  flatpak_dir_get_remote_noenumerate (dir, remotes[i]) ||
-                  !flatpak_dir_check_for_appstream_update (dir, remotes[i], opt_arch))
-                continue;
-
-              if (flatpak_dir_is_user (dir))
-                g_print (_("Updating appstream data for user remote %s\n"), remotes[i]);
-              else
-                g_print (_("Updating appstream data for remote %s\n"), remotes[i]);
-              progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
-              if (!flatpak_dir_update_appstream (dir, remotes[i], opt_arch, &changed,
-                                                 progress, cancellable, &local_error))
-                g_printerr (_("Error updating: %s\n"), local_error->message);
-              ostree_async_progress_finish (progress);
-            }
-        }
-    }
-  else
-    {
-      gboolean found = FALSE;
-
-      for (j = 0; j < dirs->len; j++)
-        {
-          FlatpakDir *dir = g_ptr_array_index (dirs, j);
-
-          if (flatpak_dir_has_remote (dir, remote))
-            {
-              g_autoptr(OstreeAsyncProgress) progress = NULL;
-
-              found = TRUE;
-
-              /* Early bail out check */
-              if (!flatpak_dir_check_for_appstream_update (dir, remote, opt_arch))
-                continue;
-
-              progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
-              res = flatpak_dir_update_appstream (dir, remote, opt_arch, &changed,
-                                                  progress, cancellable, error);
-              ostree_async_progress_finish (progress);
-              if (!res)
-                return FALSE;
-            }
-        }
-
-      if (!found)
-        return flatpak_fail (error, _("Remote \"%s\" not found"), remote);
-    }
-
-  return TRUE;
-}
-
 gboolean
 flatpak_builtin_update (int           argc,
                         char        **argv,
@@ -171,8 +88,11 @@ flatpak_builtin_update (int           argc,
                                      &dirs, cancellable, error))
     return FALSE;
 
+  if (opt_arch == NULL)
+    opt_arch = (char *)flatpak_get_arch ();
+
   if (opt_appstream)
-    return update_appstream (dirs, argc >= 2 ? argv[1] : NULL, cancellable, error);
+    return update_appstream (dirs, argc >= 2 ? argv[1] : NULL, opt_arch, 0, FALSE, cancellable, error);
 
   prefs = &argv[1];
   n_prefs = argc - 1;
@@ -309,7 +229,7 @@ flatpak_builtin_update (int           argc,
     }
 
   if (n_prefs == 0)
-    return update_appstream (dirs, NULL, cancellable, error);
+    return update_appstream (dirs, NULL, opt_arch, 0, FALSE, cancellable, error);
 
   return TRUE;
 }
