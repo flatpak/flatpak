@@ -50,7 +50,7 @@
 #include "flatpak-utils.h"
 #include "flatpak-dir.h"
 #include "flatpak-systemd-dbus.h"
-#include "document-portal/xdp-dbus.h"
+#include "flatpak-document-dbus.h"
 #include "lib/flatpak-error.h"
 
 #define DEFAULT_SHELL "/bin/sh"

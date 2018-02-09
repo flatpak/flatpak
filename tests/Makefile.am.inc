@@ -12,27 +12,6 @@ else
 AM_TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 
-testdb_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
-testdb_LDADD = \
-             $(AM_LDADD) \
-             $(BASE_LIBS) \
-             $(OSTREE_LIBS) \
-             libglnx.la \
-             libflatpak-common.la \
-             $(NULL)
-testdb_SOURCES = tests/testdb.c
-
-test_doc_portal_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
-test_doc_portal_LDADD = \
-             $(AM_LDADD) \
-             $(BASE_LIBS) \
-             $(OSTREE_LIBS) \
-             libglnx.la \
-             libflatpak-common.la \
-             $(NULL)
-test_doc_portal_SOURCES = tests/test-doc-portal.c
-nodist_test_doc_portal_SOURCES = $(xdp_dbus_built_sources)
-
 testlibrary_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
 testlibrary_LDADD = \
              $(AM_LDADD) \
@@ -42,16 +21,6 @@ testlibrary_LDADD = \
              $(NULL)
 testlibrary_SOURCES = tests/testlibrary.c
 
-EXTRA_test_doc_portal_DEPENDENCIES = tests/services/org.freedesktop.impl.portal.PermissionStore.service tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service
-
-tests/services/org.freedesktop.portal.Documents.service: document-portal/org.freedesktop.portal.Documents.service.in
-	mkdir -p tests/services
-	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
-
-tests/services/org.freedesktop.impl.portal.PermissionStore.service: permission-store/org.freedesktop.impl.portal.PermissionStore.service.in
-	mkdir -p tests/services
-	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
-
 tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
@@ -60,14 +29,12 @@ tests/services/org.freedesktop.Flatpak.SystemHelper.service: system-helper/org.f
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $< > $@
 
-tests/libtest.sh: tests/services/org.freedesktop.impl.portal.PermissionStore.service tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.Flatpak.service
+tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service
 
 install-test-data-hook:
 if ENABLE_INSTALLED_TESTS
 	mkdir -p $(DESTDIR)$(installed_testdir)/services
 	ln -sf $(dbus_servicedir)/org.freedesktop.Flatpak.service $(DESTDIR)$(installed_testdir)/services/
-	ln -sf $(dbus_servicedir)/org.freedesktop.portal.Documents.service $(DESTDIR)$(installed_testdir)/services/
-	ln -sf $(dbus_servicedir)/org.freedesktop.impl.portal.PermissionStore.service $(DESTDIR)$(installed_testdir)/services/
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $(top_srcdir)/system-helper/org.freedesktop.Flatpak.SystemHelper.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.Flatpak.SystemHelper.service
 endif
 
@@ -93,7 +60,6 @@ dist_installed_test_data = \
 
 installed_test_keyringdir = $(installed_testdir)/test-keyring
 installed_test_keyring2dir = $(installed_testdir)/test-keyring2
-installed_test_dbsdir = $(installed_testdir)/dbs
 
 if ENABLE_INSTALLED_TESTS
 dist_installed_test_keyring_DATA = \
@@ -106,7 +72,6 @@ dist_installed_test_keyring2_DATA = \
 	tests/test-keyring2/pubring.gpg \
 	tests/test-keyring2/secring.gpg \
 	$(NULL)
-dist_installed_test_dbs_DATA = tests/dbs/no_tables
 endif
 
 dist_test_scripts = \
@@ -127,15 +92,13 @@ dist_test_scripts = \
 	tests/test-update-remote-configuration.sh \
 	$(NULL)
 
-test_programs = testdb test-doc-portal testlibrary
+test_programs = testlibrary
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
 EXTRA_DIST += tests/flatpak.supp tests/glib.supp
 DISTCLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
-	tests/services/org.freedesktop.portal.Documents.service \
-	tests/services/org.freedesktop.impl.portal.PermissionStore.service \
 	tests/services/org.freedesktop.Flatpak.SystemHelper.service \
 	tests/package_version.txt \
 	$(NULL)

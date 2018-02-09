@@ -42,7 +42,6 @@
 #include "flatpak-utils.h"
 #include "flatpak-dir.h"
 #include "flatpak-systemd-dbus.h"
-#include "document-portal/xdp-dbus.h"
 #include "lib/flatpak-error.h"
 
 /* Same order as enum */
