@@ -288,10 +288,129 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
     }
 }
 
+/* Try to find a default server from a pulseaudio confguration file */
+static char *
+flatpak_run_get_pulseaudio_server_user_config (const char *path)
+{
+  g_autoptr(GFile) file = g_file_new_for_path (path);
+  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GFileInputStream) input_stream = NULL;
+  g_autoptr(GDataInputStream) data_stream = NULL;
+  size_t len;
+
+  input_stream = g_file_read (file, NULL, &my_error);
+  if (my_error)
+    {
+      g_debug ("Pulseaudio user configuration file '%s': %s", path, my_error->message);
+      return NULL;
+    }
+
+  data_stream = g_data_input_stream_new (G_INPUT_STREAM(input_stream));
+
+  while (TRUE)
+    {
+      g_autofree char *line = g_data_input_stream_read_line (data_stream, &len, NULL, NULL);
+      if (line == NULL)
+        break;
+
+      g_strchug (line);
+
+      if ((*line  == '\0') || (*line == ';') || (*line == '#'))
+        continue;
+
+      if (g_str_has_prefix (line, ".include "))
+        {
+          g_autofree char *rec_path = g_strdup (line+9);
+          g_strstrip (rec_path);
+          char *found = flatpak_run_get_pulseaudio_server_user_config (rec_path);
+          if (found)
+            return found;
+        }
+      else if (g_str_has_prefix (line, "["))
+        {
+          return NULL;
+        }
+      else
+        {
+          g_auto(GStrv) tokens = g_strsplit (line, "=", 2);
+
+          if ((tokens[0] != NULL) && (tokens[1] != NULL))
+            {
+              g_strchomp (tokens[0]);
+              if (strcmp ("default-server", tokens[0]) == 0)
+                {
+                  g_strstrip (tokens[1]);
+                  g_debug("Found pulseaudio socket from configuration file '%s': %s", path, tokens[1]);
+                  return g_strdup (tokens[1]);
+                }
+            }
+        }
+    }
+
+  return NULL;
+}
+
+static char *
+flatpak_run_get_pulseaudio_server (void)
+{
+  const char* pulse_clientconfig;
+  char *pulse_server;
+  g_autofree char *pulse_user_config = NULL;
+
+  pulse_server = g_strdup (g_getenv ("PULSE_SERVER"));
+  if (pulse_server)
+    return pulse_server;
+
+  pulse_clientconfig = g_getenv ("PULSE_CLIENTCONFIG");
+  if (pulse_clientconfig)
+    return flatpak_run_get_pulseaudio_server_user_config (pulse_clientconfig);
+
+  pulse_user_config = g_build_filename (g_get_user_config_dir(), "pulse/client.conf", NULL);
+  pulse_server = flatpak_run_get_pulseaudio_server_user_config (pulse_user_config);
+  if (pulse_server)
+    return pulse_server;
+
+  pulse_server = flatpak_run_get_pulseaudio_server_user_config ("/etc/pulse/client.conf");
+  if (pulse_server)
+    return pulse_server;
+
+  return NULL;
+}
+
+static char *
+flatpak_run_parse_pulse_server (const char *value)
+{
+  g_auto(GStrv) servers = g_strsplit (value, " ", 0);
+  gsize i;
+
+  for (i = 0; servers[i] != NULL; i++)
+    {
+      const char *server = servers[i];
+      if (g_str_has_prefix (server, "{"))
+        {
+          const char* closing = strstr (server, "}");
+          if (closing == NULL)
+            continue;
+          server = closing + 1;
+        }
+      if (g_str_has_prefix (server, "unix:"))
+        return g_strdup (server+5);
+    }
+
+  return NULL;
+}
+
 static void
 flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
 {
-  g_autofree char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
+  g_autofree char *pulseaudio_server = flatpak_run_get_pulseaudio_server ();
+  g_autofree char *pulseaudio_socket = NULL;
+
+  if (pulseaudio_server)
+    pulseaudio_socket = flatpak_run_parse_pulse_server (pulseaudio_server);
+
+  if (!pulseaudio_socket)
+    pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
 
   flatpak_bwrap_unset_env (bwrap, "PULSE_SERVER");
 
@@ -314,6 +433,8 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
       flatpak_bwrap_set_env (bwrap, "PULSE_SERVER", pulse_server, TRUE);
       flatpak_bwrap_set_env (bwrap, "PULSE_CLIENTCONFIG", config_path, TRUE);
     }
+  else
+    g_debug ("Could not find pulseaudio socket");
 }
 
 static void
