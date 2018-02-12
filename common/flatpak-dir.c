@@ -2924,10 +2924,8 @@ flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
         return FALSE;
 
       /* Look up the commit containing the latest repository metadata. */
-      latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote_name,
-                                                        OSTREE_REPO_METADATA_REF,
-                                                        NULL, NULL,
-                                                        cancellable, error);
+      latest_rev = flatpak_dir_read_latest (self, remote_name, OSTREE_REPO_METADATA_REF,
+                                            NULL, cancellable, error);
       if (latest_rev == NULL)
         return FALSE;
 
