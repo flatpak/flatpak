@@ -61,6 +61,11 @@
             autobuilder, and can be properly signed with the official
             key.
         </para>
+        <para>
+            Any deltas that affect the original commit and that match parent
+            commits in the destination repository are copied and rewritten
+            for the new commit id.
+        </para>
     </refsect1>
 
     <refsect1>

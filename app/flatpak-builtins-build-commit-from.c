@@ -57,6 +57,156 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+#define OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "(uayttay)"
+#define OSTREE_STATIC_DELTA_FALLBACK_FORMAT "(yaytt)"
+#define OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT "(a{sv}tayay" OSTREE_COMMIT_GVARIANT_STRING "aya" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "a" OSTREE_STATIC_DELTA_FALLBACK_FORMAT ")"
+
+static char *
+_ostree_get_relative_static_delta_path (const char *from,
+                                        const char *to,
+                                        const char *target)
+{
+  guint8 csum_to[OSTREE_SHA256_DIGEST_LEN];
+  char to_b64[44];
+  guint8 csum_to_copy[OSTREE_SHA256_DIGEST_LEN];
+  GString *ret = g_string_new ("deltas/");
+
+  ostree_checksum_inplace_to_bytes (to, csum_to);
+  ostree_checksum_b64_inplace_from_bytes (csum_to, to_b64);
+  ostree_checksum_b64_inplace_to_bytes (to_b64, csum_to_copy);
+
+  g_assert (memcmp (csum_to, csum_to_copy, OSTREE_SHA256_DIGEST_LEN) == 0);
+
+  if (from != NULL)
+    {
+      guint8 csum_from[OSTREE_SHA256_DIGEST_LEN];
+      char from_b64[44];
+
+      ostree_checksum_inplace_to_bytes (from, csum_from);
+      ostree_checksum_b64_inplace_from_bytes (csum_from, from_b64);
+
+      g_string_append_c (ret, from_b64[0]);
+      g_string_append_c (ret, from_b64[1]);
+      g_string_append_c (ret, '/');
+      g_string_append (ret, from_b64 + 2);
+      g_string_append_c (ret, '-');
+    }
+
+  g_string_append_c (ret, to_b64[0]);
+  g_string_append_c (ret, to_b64[1]);
+  if (from == NULL)
+    g_string_append_c (ret, '/');
+  g_string_append (ret, to_b64 + 2);
+
+  if (target != NULL)
+    {
+      g_string_append_c (ret, '/');
+      g_string_append (ret, target);
+    }
+
+  return g_string_free (ret, FALSE);
+}
+
+static GVariant *
+new_bytearray (const guchar *data,
+               gsize len)
+{
+  gpointer data_copy = g_memdup (data, len);
+  GVariant *ret = g_variant_new_from_data (G_VARIANT_TYPE ("ay"), data_copy,
+                                           len, FALSE, g_free, data_copy);
+  return ret;
+}
+
+static gboolean
+rewrite_delta (OstreeRepo *src_repo,
+               const char *src_commit,
+               OstreeRepo *dst_repo,
+               const char *dst_commit,
+               GVariant *dst_commitv,
+               const char *from,
+               GError **error)
+{
+  g_autoptr(GFile) src_delta_file = NULL;
+  g_autoptr(GFile) dst_delta_file = NULL;
+  g_autofree char *src_detached_key = _ostree_get_relative_static_delta_path (from, src_commit, "commitmeta");
+  g_autofree char *dst_detached_key = _ostree_get_relative_static_delta_path (from, dst_commit, "commitmeta");
+  g_autofree char *src_delta_dir = _ostree_get_relative_static_delta_path (from, src_commit, NULL);
+  g_autofree char *dst_delta_dir = _ostree_get_relative_static_delta_path (from, dst_commit, NULL);
+  g_autofree char *src_superblock_path = _ostree_get_relative_static_delta_path (from, src_commit, "superblock");
+  g_autofree char *dst_superblock_path = _ostree_get_relative_static_delta_path (from, dst_commit, "superblock");
+  GMappedFile *mfile = NULL;
+  g_auto(GVariantBuilder) superblock_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+  g_autoptr(GVariant) src_superblock = NULL;
+  g_autoptr(GVariant) dst_superblock = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GVariant) dst_detached = NULL;
+  g_autoptr(GVariant) src_metadata = NULL;
+  g_autoptr(GVariant) src_recurse = NULL;
+  g_autoptr(GVariant) src_parts = NULL;
+  g_auto(GVariantDict) dst_metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+  int i;
+
+  src_delta_file = g_file_resolve_relative_path (ostree_repo_get_path (src_repo), src_superblock_path);
+  mfile = g_mapped_file_new (flatpak_file_get_path_cached (src_delta_file), FALSE, NULL);
+  if (mfile == NULL)
+    return TRUE; /* No superblock, not an error */
+
+  bytes = g_mapped_file_get_bytes (mfile);
+  g_mapped_file_unref (mfile);
+
+  src_superblock = g_variant_ref_sink (g_variant_new_from_bytes (G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT), bytes, FALSE));
+
+  src_metadata = g_variant_get_child_value (src_superblock, 0);
+  src_recurse = g_variant_get_child_value (src_superblock, 5);
+  src_parts = g_variant_get_child_value (src_superblock, 6);
+
+  if (g_variant_n_children (src_recurse) != 0)
+    return flatpak_fail (error, "Recursive deltas not supported, ignoring");
+
+  g_variant_builder_init (&superblock_builder, G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT));
+
+  g_variant_dict_init (&dst_metadata_dict, src_metadata);
+  g_variant_dict_remove (&dst_metadata_dict, src_detached_key);
+  if (ostree_repo_read_commit_detached_metadata (dst_repo, dst_commit, &dst_detached, NULL, NULL))
+    g_variant_dict_insert_value (&dst_metadata_dict, dst_detached_key, dst_detached);
+
+  g_variant_builder_add_value (&superblock_builder, g_variant_dict_end (&dst_metadata_dict));
+  g_variant_builder_add_value (&superblock_builder, g_variant_get_child_value (src_superblock, 1)); /* timestamp */
+  g_variant_builder_add_value (&superblock_builder, from ? ostree_checksum_to_bytes_v (from) : new_bytearray ((guchar *)"", 0));
+  g_variant_builder_add_value (&superblock_builder, ostree_checksum_to_bytes_v (dst_commit));
+  g_variant_builder_add_value (&superblock_builder, dst_commitv);
+  g_variant_builder_add_value (&superblock_builder, src_recurse);
+  g_variant_builder_add_value (&superblock_builder, src_parts);
+  g_variant_builder_add_value (&superblock_builder, g_variant_get_child_value (src_superblock, 7)); /* fallback */
+
+  dst_superblock = g_variant_ref_sink (g_variant_builder_end (&superblock_builder));
+
+  if (!glnx_shutil_mkdir_p_at (ostree_repo_get_dfd (dst_repo), dst_delta_dir, 0755, NULL, error))
+    return FALSE;
+
+  for (i = 0; i < g_variant_n_children (src_parts); i++)
+    {
+      g_autofree char *src_part_path = g_strdup_printf ("%s/%d", src_delta_dir, i);
+      g_autofree char *dst_part_path = g_strdup_printf ("%s/%d", dst_delta_dir, i);
+
+      if (!glnx_file_copy_at (ostree_repo_get_dfd (src_repo),
+                              src_part_path,
+                              NULL,
+                              ostree_repo_get_dfd (dst_repo),
+                              dst_part_path,
+                              GLNX_FILE_COPY_OVERWRITE | GLNX_FILE_COPY_NOXATTRS,
+                              NULL, error))
+        return FALSE;
+    }
+
+  dst_delta_file = g_file_resolve_relative_path (ostree_repo_get_path (dst_repo), dst_superblock_path);
+  if (!flatpak_variant_save (dst_delta_file, dst_superblock, NULL, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+
 gboolean
 flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -224,6 +374,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       g_autoptr(GFile) dst_parent_root = NULL;
       g_autoptr(GFile) src_ref_root = NULL;
       g_autoptr(GVariant) src_commitv = NULL;
+      g_autoptr(GVariant) dst_commitv = NULL;
       g_autoptr(OstreeMutableTree) mtree = NULL;
       g_autoptr(GFile) dst_root = NULL;
       g_autoptr(GVariant) commitv_metadata = NULL;
@@ -319,6 +470,9 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
 
       g_print ("%s: %s\n", dst_ref, commit_checksum);
 
+      if (!ostree_repo_load_commit (dst_repo, commit_checksum, &dst_commitv, NULL, error))
+        return FALSE;
+
       /* This doesn't copy the detached metadata. I'm not sure if this is a problem.
        * The main thing there is commit signatures, and we can't copy those, as the commit hash changes.
        */
@@ -357,6 +511,23 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
         {
           ostree_repo_transaction_set_ref (dst_repo, NULL, dst_ref, commit_checksum);
         }
+
+      /* Copy + Rewrite any deltas */
+      {
+        const char *from[2];
+        gsize j, n_from = 0;
+
+        if (dst_parent != NULL)
+          from[n_from++] = dst_parent;
+        from[n_from++] = NULL;
+
+        for (j = 0; j < n_from; j++)
+          {
+            g_autoptr(GError) local_error = NULL;
+            if (!rewrite_delta (src_repo, resolved_ref, dst_repo, commit_checksum, dst_commitv, from[j], &local_error))
+              g_debug ("Failed to copy delta: %s", local_error->message);
+          }
+      }
     }
 
   if (!ostree_repo_commit_transaction (dst_repo, NULL, cancellable, error))
