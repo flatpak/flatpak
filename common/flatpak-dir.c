@@ -8577,13 +8577,11 @@ char *
 flatpak_dir_get_remote_collection_id (FlatpakDir *self,
                                       const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
-  g_autofree char *group = get_group (remote_name);
+  g_autofree char *collection_id = NULL;
 
-  if (config)
-    return g_key_file_get_string (config, group, "collection-id", NULL);
+  repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL);
 
-  return NULL;
+  return g_steal_pointer (&collection_id);
 }
 
 char *
