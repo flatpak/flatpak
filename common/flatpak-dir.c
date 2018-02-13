@@ -1977,6 +1977,101 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   return TRUE;
 }
 
+static gboolean
+repo_get_remote_collection_id (OstreeRepo  *repo,
+                               const char  *remote_name,
+                               char       **collection_id_out,
+                               GError     **error);
+
+#ifdef FLATPAK_ENABLE_P2P
+static void
+async_result_cb (GObject      *obj,
+                 GAsyncResult *result,
+                 gpointer      user_data)
+{
+  GAsyncResult **result_out = user_data;
+  *result_out = g_object_ref (result);
+}
+#endif  /* FLATPAK_ENABLE_P2P */
+
+gboolean
+flatpak_dir_find_latest_rev (FlatpakDir               *self,
+                             const char               *remote,
+                             const char               *ref,
+                             char                    **out_rev,
+                             OstreeRepoFinderResult ***out_results,
+                             GCancellable             *cancellable,
+                             GError                  **error)
+{
+  g_autofree char *collection_id = NULL;
+  g_autofree char *latest_rev = NULL;
+
+  g_return_val_if_fail (out_rev != NULL, FALSE);
+
+  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
+    return FALSE;
+
+  if (collection_id != NULL)
+    {
+#ifdef FLATPAK_ENABLE_P2P
+      /* Find the latest rev from the remote and its available mirrors, including
+       * LAN and USB sources. */
+      g_autoptr(GMainContext) context = NULL;
+      g_autoptr(GAsyncResult) find_result = NULL;
+      g_auto(OstreeRepoFinderResultv) results = NULL;
+      OstreeCollectionRef collection_ref = { collection_id, (char *) ref };
+      OstreeCollectionRef *collection_refs_to_fetch[2] = { &collection_ref, NULL };
+      gsize i;
+
+      context = g_main_context_new ();
+      g_main_context_push_thread_default (context);
+
+      ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
+                                      NULL  /* no options */,
+                                      NULL  /* default finders */,
+                                      NULL  /* no progress reporting */,
+                                      cancellable, async_result_cb, &find_result);
+
+      while (find_result == NULL)
+        g_main_context_iteration (context, TRUE);
+
+      results = ostree_repo_find_remotes_finish (self->repo, find_result, error);
+      if (results == NULL)
+        return FALSE;
+
+      for (i = 0; results[i] != NULL && latest_rev == NULL; i++)
+        latest_rev = g_strdup (g_hash_table_lookup (results[i]->ref_to_checksum, &collection_ref));
+
+      if (latest_rev == NULL)
+        {
+          flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
+                        collection_ref.collection_id, collection_ref.ref_name, remote);
+          return FALSE;
+        }
+
+      if (out_results != NULL)
+        *out_results = g_steal_pointer (&results);
+
+      if (out_rev != NULL)
+        *out_rev = g_steal_pointer (&latest_rev);
+
+#else  /* if !FLATPAK_ENABLE_P2P */
+      g_assert_not_reached ();
+#endif  /* !FLATPAK_ENABLE_P2P */
+    }
+  else
+    {
+      latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote, ref, NULL, NULL, NULL, error);
+      if (latest_rev == NULL)
+        return FALSE;
+
+      if (out_rev != NULL)
+        *out_rev = g_steal_pointer (&latest_rev);
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
                                         const char          *remote,
@@ -1987,6 +2082,7 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
   g_autoptr(GFile) active_link = NULL;
   g_autofree char *branch = NULL;
   g_autoptr(GFileInfo) file_info = NULL;
+  g_autoptr(GError) local_error = NULL;
 
   if (!flatpak_dir_maybe_ensure_repo (self, NULL, NULL))
     return TRUE;
@@ -2006,8 +2102,13 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
 
   branch = g_strdup_printf ("appstream/%s", arch);
 
-  new_checksum = flatpak_dir_lookup_ref_from_summary (self, remote, branch,
-                                                      NULL, NULL, NULL, NULL);
+  if (!flatpak_dir_find_latest_rev (self, remote, branch, &new_checksum,
+                                    NULL, NULL, &local_error))
+    {
+      g_printerr (_("Failed to find latest revision for ref %s from remote %s: %s\n"),
+                  branch, remote, local_error->message);
+      new_checksum = NULL;
+    }
   if (new_checksum == NULL)
     {
       g_debug ("No %s branch for remote %s, ignoring", branch, remote);
@@ -2016,12 +2117,6 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
 
   return g_strcmp0 (new_checksum, old_checksum) != 0;
 }
-
-static gboolean
-repo_get_remote_collection_id (OstreeRepo  *repo,
-                               const char  *remote_name,
-                               char       **collection_id_out,
-                               GError     **error);
 
 gboolean
 flatpak_dir_update_appstream (FlatpakDir          *self,
@@ -2181,17 +2276,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                        cancellable,
                                        error);
 }
-
-#ifdef FLATPAK_ENABLE_P2P
-static void
-async_result_cb (GObject      *obj,
-                 GAsyncResult *result,
-                 gpointer      user_data)
-{
-  GAsyncResult **result_out = user_data;
-  *result_out = g_object_ref (result);
-}
-#endif  /* FLATPAK_ENABLE_P2P */
 
 static void
 default_progress_changed (OstreeAsyncProgress *progress,
@@ -6537,7 +6621,6 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
   const char *target_rev = NULL;
   const char *installed_commit;
   const char *installed_alt_id;
-  g_autofree char *collection_id = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
@@ -6567,9 +6650,6 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
       return NULL;
     }
 
-  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
-    return NULL;
-
   if (no_pull)
     {
       remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref);
@@ -6580,55 +6660,11 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
           return NULL; /* No update, because nothing to update to */
         }
     }
-  else if (collection_id != NULL)
-    {
-#ifdef FLATPAK_ENABLE_P2P
-      /* Find the latest rev from the remote and its available mirrors, including
-       * LAN and USB sources. */
-      g_autoptr(GMainContext) context = NULL;
-      g_autoptr(GAsyncResult) find_result = NULL;
-      g_auto(OstreeRepoFinderResultv) results = NULL;
-      OstreeCollectionRef collection_ref = { collection_id, (char *) ref };
-      OstreeCollectionRef *collection_refs_to_fetch[2] = { &collection_ref, NULL };
-      gsize i;
-
-      context = g_main_context_new ();
-      g_main_context_push_thread_default (context);
-
-      ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
-                                      NULL  /* no options */,
-                                      NULL  /* default finders */,
-                                      NULL  /* no progress reporting */,
-                                      cancellable, async_result_cb, &find_result);
-
-      while (find_result == NULL)
-        g_main_context_iteration (context, TRUE);
-
-      results = ostree_repo_find_remotes_finish (self->repo, find_result, error);
-      if (results == NULL)
-        return NULL;
-
-      for (i = 0; results[i] != NULL && latest_rev == NULL; i++)
-        latest_rev = g_strdup (g_hash_table_lookup (results[i]->ref_to_checksum, &collection_ref));
-
-      if (latest_rev == NULL)
-        {
-          flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
-                        collection_ref.collection_id, collection_ref.ref_name, remote_name);
-          return NULL;
-        }
-
-      if (out_results != NULL)
-        *out_results = g_steal_pointer (&results);
-#else  /* if !FLATPAK_ENABLE_P2P */
-      g_assert_not_reached ();
-#endif  /* !FLATPAK_ENABLE_P2P */
-    }
   else
     {
-      latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote_name, ref, NULL, NULL, NULL, error);
-      if (latest_rev == NULL)
-        return NULL;
+      if (!flatpak_dir_find_latest_rev (self, remote_name, ref, &latest_rev,
+                                        out_results, cancellable, error))
+        return FALSE;
     }
 
   if (checksum_or_latest != NULL)
