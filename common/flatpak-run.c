@@ -2002,8 +2002,6 @@ setup_seccomp (FlatpakBwrap *bwrap,
     {SCMP_SYS (syslog)},
     /* Useless old syscall */
     {SCMP_SYS (uselib)},
-    /* Don't allow you to switch to bsd emulation or whatnot */
-    {SCMP_SYS (personality), &SCMP_A0(SCMP_CMP_NE, allowed_personality)},
     /* Don't allow disabling accounting */
     {SCMP_SYS (acct)},
     /* 16-bit code is unnecessary in the sandbox, and modify_ldt is a
@@ -2043,6 +2041,8 @@ setup_seccomp (FlatpakBwrap *bwrap,
      * the sandbox.  In particular perf has been the source of many CVEs.
      */
     {SCMP_SYS (perf_event_open)},
+    /* Don't allow you to switch to bsd emulation or whatnot */
+    {SCMP_SYS (personality), &SCMP_A0(SCMP_CMP_NE, allowed_personality)},
     {SCMP_SYS (ptrace)}
   };
   /* Blacklist all but unix, inet, inet6 and netlink */
