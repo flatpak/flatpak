@@ -513,19 +513,21 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
         }
 
       /* Copy + Rewrite any deltas */
-      const char *from[2];
-      gsize n_from = 0;
+      {
+        const char *from[2];
+        gsize j, n_from = 0;
 
-      if (dst_parent != NULL)
+        if (dst_parent != NULL)
           from[n_from++] = dst_parent;
-      from[n_from++] = NULL;
+        from[n_from++] = NULL;
 
-      for (i = 0; i < n_from; i++)
-        {
-          g_autoptr(GError) local_error = NULL;
-          if (!rewrite_delta (src_repo, resolved_ref, dst_repo, commit_checksum, dst_commitv, from[i], &local_error))
-            g_debug ("Failed to copy delta: %s", local_error->message);
-        }
+        for (j = 0; j < n_from; j++)
+          {
+            g_autoptr(GError) local_error = NULL;
+            if (!rewrite_delta (src_repo, resolved_ref, dst_repo, commit_checksum, dst_commitv, from[j], &local_error))
+              g_debug ("Failed to copy delta: %s", local_error->message);
+          }
+      }
     }
 
   if (!ostree_repo_commit_transaction (dst_repo, NULL, cancellable, error))
