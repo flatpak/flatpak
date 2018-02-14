@@ -1,3 +1,41 @@
+Major changes in 0.11.1
+=======================
+
+This release removes the document portal and the permission store as they
+have been added to xdg-desktop-portal 0.10. Packagers need to update
+these two in lock-step. Flatpak technically doesn't depend on
+xdg-desktop-portal, but it is recommended that the flatpak package
+depends on xdg-desktop-portal in some way, because most flatpaks will
+want it.
+
+ * Remove document portal and permission store
+ * Add --socket=fallback-x11 permission
+ * Fix dbus proxy vulnerability in authentication phase
+ * Allow personality syscall in devel mode
+ * commit-from: Migrate static deltas with commit
+ * Add "network" storage type for installations
+ * Add flatpak info --show-permissions
+ * Add flatpak info --file-access
+ * search: Update appstream (if stale) before searching
+ * Make libflatpak work when /var/lib/flatpak is empty
+ * build-bundle: Add --from-commit option
+ * Allow appstream ids that don't end in .desktop
+ * Make permission handling ignore unknown permissions for forwards
+   compatibility
+ * Removed incorrect error message in update --appdata when there
+   was no updates
+ * Fix handling of abort in the duplicate remote prompt
+ * Fix division by zero in progress calculation
+ * Fix flatpak remote-info --show-metadata
+ * Fixed crash when installing some flatpak bundle files
+ * Fix installation of telegram
+ * remote-ls -u only considers app from the origin remote
+ * Fix assertion error in extra-data progress reporting
+ * Report nicer errors when trying to downgrade as non-root
+ * pulseaudio: Try to find pulseaudio socket better
+ * Fixed some warnings reported by coverity
+ * Cleaned up code by splitting up some large source files
+
 Major changes in 0.10.2
 =======================
 
