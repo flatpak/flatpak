@@ -39,6 +39,7 @@ typedef enum {
   FLATPAK_CONTEXT_SOCKET_PULSEAUDIO  = 1 << 2,
   FLATPAK_CONTEXT_SOCKET_SESSION_BUS = 1 << 3,
   FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS  = 1 << 4,
+  FLATPAK_CONTEXT_SOCKET_FALLBACK_X11 = 1 << 5, /* For backwards compat, also set SOCKET_X11 */
 } FlatpakContextSockets;
 
 typedef enum {
