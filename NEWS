@@ -1,3 +1,18 @@
+Major changes in 0.10.4
+=======================
+
+This version adds the --disable-document-portal configure option, which is needed when
+packaging xdg-desktop-portal 0.10 which now ships the document portal instead. Anyone
+packaging this new version need to disable the portal in flatpak and add a dependency
+on xdg-desktop-portal from the flatpak package.
+
+ * remote-ls -u only considers app from the origin remote
+ * Fix assertion error in extra-data progress reporting
+ * Report nicer errors when trying to downgrade as non-root
+ * Make libflatpak work when /var/lib/flatpak is empty
+ * Allow appstream ids that don't end in .desktop
+ * Allow personality syscall in devel mode
+
 Major changes in 0.10.3
 =======================
 
