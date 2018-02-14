@@ -8668,7 +8668,8 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
 {
   g_autofree char *collection_id = NULL;
 
-  repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL);
+  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL))
+    return NULL;
 
   return g_steal_pointer (&collection_id);
 }
