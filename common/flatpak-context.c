@@ -58,6 +58,7 @@ const char *flatpak_context_sockets[] = {
   "pulseaudio",
   "session-bus",
   "system-bus",
+  "fallback-x11",
   NULL
 };
 
@@ -815,6 +816,9 @@ option_socket_cb (const gchar *option_name,
   if (socket == 0)
     return FALSE;
 
+  if (socket == FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    socket |= FLATPAK_CONTEXT_SOCKET_X11;
+
   flatpak_context_add_sockets (context, socket);
 
   return TRUE;
@@ -832,6 +836,9 @@ option_nosocket_cb (const gchar *option_name,
   socket = flatpak_context_socket_from_string (value, error);
   if (socket == 0)
     return FALSE;
+
+  if (socket == FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    socket |= FLATPAK_CONTEXT_SOCKET_X11;
 
   flatpak_context_remove_sockets (context, socket);
 

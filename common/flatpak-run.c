@@ -266,12 +266,13 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
 
 }
 
-static void
+static gboolean
 flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
 {
   const char *wayland_display;
   g_autofree char *wayland_socket = NULL;
   g_autofree char *sandbox_wayland_socket = NULL;
+  gboolean res = FALSE;
 
   wayland_display = g_getenv ("WAYLAND_DISPLAY");
   if (!wayland_display)
@@ -282,10 +283,12 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
 
   if (g_file_test (wayland_socket, G_FILE_TEST_EXISTS))
     {
+      res = TRUE;
       flatpak_bwrap_add_args (bwrap,
                               "--bind", wayland_socket, sandbox_wayland_socket,
                               NULL);
     }
+  return res;
 }
 
 /* Try to find a default server from a pulseaudio confguration file */
@@ -764,6 +767,8 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
   g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) a11y_bus_proxy_argv = NULL;
   int sync_fds[2] = {-1, -1};
+  gboolean has_wayland = FALSE;
+  gboolean allow_x11 = FALSE;
 
   if ((flags & FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY) == 0)
     session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
@@ -826,14 +831,18 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
 
   flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, &exports);
 
-  flatpak_run_add_x11_args (bwrap,
-                            (context->sockets & FLATPAK_CONTEXT_SOCKET_X11) != 0);
-
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
       g_debug ("Allowing wayland access");
-      flatpak_run_add_wayland_args (bwrap);
+      has_wayland = flatpak_run_add_wayland_args (bwrap);
     }
+
+  if ((context->sockets & FLATPAK_CONTEXT_SOCKET_FALLBACK_X11) != 0)
+    allow_x11 = !has_wayland;
+  else
+    allow_x11 = (context->sockets & FLATPAK_CONTEXT_SOCKET_X11) != 0;
+
+  flatpak_run_add_x11_args (bwrap, allow_x11);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_PULSEAUDIO)
     {
