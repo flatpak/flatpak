@@ -243,7 +243,8 @@ AM_CONDITIONAL(ENABLE_DOCUMENT_PORTAL, test "x$enable_document_portal" = "xyes")
 
 PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
 
-PKG_CHECK_MODULES(FUSE, [fuse])
+AS_IF([test "x$enable_document_portal" = "xyes"],
+      [PKG_CHECK_MODULES(FUSE, [fuse])])
 
 PKG_CHECK_MODULES(JSON, [json-glib-1.0])
 
