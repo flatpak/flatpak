@@ -3093,10 +3093,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
 
           g_mkdir_with_parents (src, 0755);
 
-          /* We stick to flatpak_bwrap_add_args instead of flatpak_bwrap_add_bind_arg because persisted
-           * folders don't need to exist outside the chroot.
-           */
-          flatpak_bwrap_add_args (bwrap, "--bind", src, dest, NULL);
+          flatpak_bwrap_add_bind_arg (bwrap, "--bind", src, dest);
         }
     }
 
