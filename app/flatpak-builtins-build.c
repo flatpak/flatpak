@@ -83,6 +83,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(GVariant) runtime_deploy_data = NULL;
   g_autoptr(FlatpakDeploy) extensionof_deploy = NULL;
   g_autoptr(GFile) var = NULL;
+  g_autoptr(GFile) var_tmp = NULL;
+  g_autoptr(GFile) var_lib = NULL;
   g_autoptr(GFile) usr = NULL;
   g_autoptr(GFile) res_deploy = NULL;
   g_autoptr(GFile) res_files = NULL;
@@ -229,7 +231,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     }
 
   var = g_file_get_child (res_deploy, "var");
-  if (!flatpak_mkdir_p (var, cancellable, error))
+  var_tmp = g_file_get_child (var, "tmp");
+  if (!flatpak_mkdir_p (var_tmp, cancellable, error))
+    return FALSE;
+  var_lib = g_file_get_child (var, "lib");
+  if (!flatpak_mkdir_p (var_lib, cancellable, error))
     return FALSE;
 
   res_files = g_file_get_child (res_deploy, "files");
@@ -377,6 +383,18 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             "--setenv", "FLATPAK_ARCH", runtime_ref_parts[2],
             NULL);
 
+  /* Persist some stuff in /var. We can't persist everything because  that breaks /var things
+   * from the host to work. For example the /home -> /var/home on atomic.
+   * The interesting things to contain during the build is /var/tmp (for tempfiles shared during builds)
+   * and things like /var/lib/rpm, if the installation uses packages.
+   */
+  flatpak_bwrap_add_args (bwrap,
+                          "--bind", flatpak_file_get_path_cached (var_lib), "/var/lib",
+                          NULL);
+  flatpak_bwrap_add_args (bwrap,
+                          "--bind", flatpak_file_get_path_cached (var_tmp), "/var/tmp",
+                          NULL);
+
   app_context = flatpak_app_compute_permissions (metakey,
                                                  runtime_metakey,
                                                  error);
@@ -405,11 +423,6 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, run_flags, id,
                                          app_context, app_id_dir, NULL, cancellable, error))
     return FALSE;
-
-  /* After setup_base to avoid conflicts with /var symlinks */
-  flatpak_bwrap_add_args (bwrap,
-                          "--bind", flatpak_file_get_path_cached (var), "/var",
-                          NULL);
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
     {
