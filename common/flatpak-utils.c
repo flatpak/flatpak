@@ -3917,8 +3917,6 @@ extract_appstream (OstreeRepo   *repo,
 
           if (!g_str_has_prefix (component_id_text, id))
             {
-              g_print ("Skipping mismatched appstream component %s for app %s\n",
-                       component_id_text, id);
               component = component->next_sibling;
               continue;
             }
