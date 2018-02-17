@@ -12,6 +12,7 @@ AC_CHECK_DECLS([
 #include <sched.h>
 #include <linux/loop.h>
 #include <linux/random.h>
+#include <sys/mman.h>
 ]])
 
 AC_ARG_ENABLE(otmpfile,
