@@ -2202,7 +2202,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
            * to be pulled into the child repo (which might be the one from a
            * temporary remote rather than the system remote). Ostree does this
            * because of the MIRROR flag.*/
-          /* FIXME: P2P appstream updates don't work.*/
           if (collection_id == NULL &&
               !flatpak_dir_remote_fetch_summary (self, remote,
                                                  &summary_copy, &summary_sig_copy,
