@@ -39,6 +39,7 @@ flatpak-builder
 *~
 profile/flatpak.sh
 flatpak-dbus.[ch]
+flatpak-document-dbus.[ch]
 flatpak-systemd-dbus.[ch]
 flatpak-resources.[ch]
 flatpak-dbus-proxy
