@@ -2001,4 +2001,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext *context,
       flatpak_bwrap_add_args_data (bwrap, "xdg-config-dirs",
                                    xdg_dirs_conf->str, xdg_dirs_conf->len, path, NULL);
     }
+
+  if (exports_out)
+    *exports_out = g_steal_pointer (&exports);
 }
