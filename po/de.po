@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-02-14 11:06+0100\n"
+"POT-Creation-Date: 2018-02-19 11:05+0100\n"
 "PO-Revision-Date: 2017-04-07 13:52+0200\n"
 "Last-Translator: Mario Blättermann <mario.blaettermann@gmail.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
@@ -382,36 +382,36 @@ msgstr "Sitzungsbus-Aufrufe protokollieren"
 msgid "Log system bus calls"
 msgstr "Systembus-Aufrufe protokollieren"
 
-#: app/flatpak-builtins-build.c:124
+#: app/flatpak-builtins-build.c:126
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
 msgstr "ORDNER [BEFEHL [Argumente …]] - In Ordner Erstellen"
 
-#: app/flatpak-builtins-build.c:147 app/flatpak-builtins-build-finish.c:533
+#: app/flatpak-builtins-build.c:149 app/flatpak-builtins-build-finish.c:533
 msgid "DIRECTORY must be specified"
 msgstr "ORDNER muss angegeben werden"
 
-#: app/flatpak-builtins-build.c:158 app/flatpak-builtins-build-export.c:721
+#: app/flatpak-builtins-build.c:160 app/flatpak-builtins-build-export.c:721
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr ""
 "Erstellungsordner %s ist nicht initialisiert. Verwenden Sie flatpak build-"
 "init"
 
-#: app/flatpak-builtins-build.c:177
+#: app/flatpak-builtins-build.c:179
 msgid "metadata invalid, not application or runtime"
 msgstr "Metadaten sind ungültig. Es ist keine Anwendung oder Laufzeit"
 
-#: app/flatpak-builtins-build.c:277
+#: app/flatpak-builtins-build.c:283
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Kein Erweiterungspunkt entspricht %s in %s"
 
-#: app/flatpak-builtins-build.c:420
+#: app/flatpak-builtins-build.c:433
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Fehlendes »=« in Bind-Mount-Option »%s«"
 
-#: app/flatpak-builtins-build.c:449 common/flatpak-run.c:3038
+#: app/flatpak-builtins-build.c:462 common/flatpak-run.c:3038
 msgid "Unable to start app"
 msgstr "Anwendung kann nicht gestartet werden"
 
@@ -1752,40 +1752,40 @@ msgstr ""
 msgid "APP [args...] - Run an app"
 msgstr "ANWENDUNG [Argumente …] - Eine Anwendung ausführen"
 
-#: app/flatpak-builtins-search.c:216
+#: app/flatpak-builtins-search.c:239
 msgid "TEXT - Search remote apps/runtimes for text"
 msgstr ""
 
-#: app/flatpak-builtins-search.c:225
+#: app/flatpak-builtins-search.c:249
 #, fuzzy
 msgid "TEXT must be specified"
 msgstr "ENTFERNTE QUELLE muss angegeben werden"
 
-#: app/flatpak-builtins-search.c:279
+#: app/flatpak-builtins-search.c:305
 #, fuzzy
 msgid "Application ID"
 msgstr "Eine Anwendung ausführen"
 
-#: app/flatpak-builtins-search.c:280
+#: app/flatpak-builtins-search.c:306
 msgid "Version"
 msgstr ""
 
-#: app/flatpak-builtins-search.c:282
+#: app/flatpak-builtins-search.c:308
 #, fuzzy
 msgid "Branch"
 msgstr "Zu verwendender Zweig"
 
-#: app/flatpak-builtins-search.c:284
+#: app/flatpak-builtins-search.c:310
 #, fuzzy
 msgid "Remotes"
 msgstr "Keine entfernte Quelle %s"
 
-#: app/flatpak-builtins-search.c:285
+#: app/flatpak-builtins-search.c:311
 #, fuzzy
 msgid "Description"
 msgstr "Vollständige Beschreibung"
 
-#: app/flatpak-builtins-search.c:294
+#: app/flatpak-builtins-search.c:320
 #, fuzzy
 msgid "No matches found"
 msgstr "Kein Treffer für %s"
@@ -2179,7 +2179,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1160
 #: common/flatpak-dir.c:1479 common/flatpak-dir.c:1502
-#: common/flatpak-dir.c:1524 common/flatpak-dir.c:10633
+#: common/flatpak-dir.c:1524 common/flatpak-dir.c:10655
 #: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
 #, c-format
 msgid "%s not installed"
@@ -2462,283 +2462,283 @@ msgstr "Keine Ersetzungen für %s gefunden"
 msgid "While opening repository %s: "
 msgstr "Während des Öffnens der Quelle %s: "
 
-#: common/flatpak-dir.c:1908 common/flatpak-dir.c:5438
+#: common/flatpak-dir.c:1908 common/flatpak-dir.c:5460
 msgid "Can't create deploy directory"
 msgstr "Bereitstellungsordner konnte nicht erstellt werden"
 
-#: common/flatpak-dir.c:2108
+#: common/flatpak-dir.c:2122 common/flatpak-dir.c:2125
 #, c-format
 msgid "Failed to find latest revision for ref %s from remote %s: %s\n"
 msgstr ""
 
-#: common/flatpak-dir.c:2739
+#: common/flatpak-dir.c:2761
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Ungültiges sha256 für die Adresse %s der Extradaten"
 
-#: common/flatpak-dir.c:2744
+#: common/flatpak-dir.c:2766
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Leerer Name für die Adresse %s der Extradaten"
 
-#: common/flatpak-dir.c:2751
+#: common/flatpak-dir.c:2773
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Nicht unterstützte Adresse %s der Extradaten"
 
-#: common/flatpak-dir.c:2765
+#: common/flatpak-dir.c:2787
 #, fuzzy, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Commit %s konnte nicht gelesen werden: "
 
-#: common/flatpak-dir.c:2768
+#: common/flatpak-dir.c:2790
 #, fuzzy, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Falsche Größe für Extradaten %s"
 
-#: common/flatpak-dir.c:2783
+#: common/flatpak-dir.c:2805
 #, c-format
 msgid "While downloading %s: "
 msgstr "Während des Herunterladens von %s: "
 
-#: common/flatpak-dir.c:2790
+#: common/flatpak-dir.c:2812
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Falsche Größe für Extradaten %s"
 
-#: common/flatpak-dir.c:2801
+#: common/flatpak-dir.c:2823
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Ungültige Prüfsumme für Extradaten %s"
 
-#: common/flatpak-dir.c:2860
+#: common/flatpak-dir.c:2882
 #, fuzzy
 msgid "Remote OCI index has no registry uri"
 msgstr "NAME [ORT] - eine ferne Quelle hinzufügen"
 
-#: common/flatpak-dir.c:3078
+#: common/flatpak-dir.c:3100
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s-Commit %s wurde bereits installiert"
 
-#: common/flatpak-dir.c:3420 common/flatpak-dir.c:3751
+#: common/flatpak-dir.c:3442 common/flatpak-dir.c:3773
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Während des Holens von %s von der entfernten Quelle %s: "
 
-#: common/flatpak-dir.c:3636
+#: common/flatpak-dir.c:3658
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "%s konnte nicht in entfernter Quelle %s gefunden werden"
 
-#: common/flatpak-dir.c:4309
+#: common/flatpak-dir.c:4331
 msgid "Not enough memory"
 msgstr "Nicht genug Speicher"
 
-#: common/flatpak-dir.c:4328
+#: common/flatpak-dir.c:4350
 msgid "Failed to read from exported file"
 msgstr "Lesen aus der exportierten Datei fehlgeschlagen"
 
-#: common/flatpak-dir.c:4519
+#: common/flatpak-dir.c:4541
 msgid "Error reading mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:4524
+#: common/flatpak-dir.c:4546
 msgid "Invalid mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:5067
+#: common/flatpak-dir.c:5089
 msgid "While getting detached metadata: "
 msgstr "Während des Versuchs, abgekoppelte Metadaten zu holen: "
 
-#: common/flatpak-dir.c:5085
+#: common/flatpak-dir.c:5107
 msgid "While creating extradir: "
 msgstr "Beim Anlegen von extradir: "
 
-#: common/flatpak-dir.c:5106
+#: common/flatpak-dir.c:5128
 msgid "Invalid sha256 for extra data"
 msgstr "Ungültige sha256 für zusätzliche Daten"
 
-#: common/flatpak-dir.c:5135
+#: common/flatpak-dir.c:5157
 msgid "Wrong size for extra data"
 msgstr "Falsche Größe für zusätzliche Daten"
 
-#: common/flatpak-dir.c:5139
+#: common/flatpak-dir.c:5161
 msgid "Invalid checksum for extra data"
 msgstr "Ungültige Prüfsumme für zusätzliche Daten"
 
-#: common/flatpak-dir.c:5148
+#: common/flatpak-dir.c:5170
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "Fehler beim Schreiben der zusätzlichen Datendatei: »%s«: "
 
-#: common/flatpak-dir.c:5318
+#: common/flatpak-dir.c:5340
 #, fuzzy, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "Skript apply_extra ist fehlgeschlagen"
 
-#: common/flatpak-dir.c:5397
+#: common/flatpak-dir.c:5419
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Während des Auflösens der Referenz %s: "
 
-#: common/flatpak-dir.c:5412
+#: common/flatpak-dir.c:5434
 #, c-format
 msgid "%s is not available"
 msgstr "%s ist nicht verfügbar"
 
-#: common/flatpak-dir.c:5427 common/flatpak-dir.c:5859
-#: common/flatpak-dir.c:6649 common/flatpak-dir.c:6659
-#: common/flatpak-dir.c:6691
+#: common/flatpak-dir.c:5449 common/flatpak-dir.c:5881
+#: common/flatpak-dir.c:6671 common/flatpak-dir.c:6681
+#: common/flatpak-dir.c:6713
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s Zweig %s wurde bereits installiert"
 
-#: common/flatpak-dir.c:5446
+#: common/flatpak-dir.c:5468
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Commit %s konnte nicht gelesen werden: "
 
-#: common/flatpak-dir.c:5466
+#: common/flatpak-dir.c:5488
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Während des Versuchs, eine Arbeitskopie von %s nach %s zu erstellen: "
 
-#: common/flatpak-dir.c:5491 common/flatpak-dir.c:5522
+#: common/flatpak-dir.c:5513 common/flatpak-dir.c:5544
 msgid "While trying to checkout metadata subpath: "
 msgstr ""
 "Während des Versuchs, eine Arbeitskopie des Metadaten-Unterordners zu "
 "erstellen: "
 
-#: common/flatpak-dir.c:5532
+#: common/flatpak-dir.c:5554
 msgid "While trying to remove existing extra dir: "
 msgstr "Während des Versuchs, den bestehenden Extraordner zu entfernen: "
 
-#: common/flatpak-dir.c:5543
+#: common/flatpak-dir.c:5565
 msgid "While trying to apply extra data: "
 msgstr "Während des Versuchs, zusätzliche Daten anzuwenden: "
 
-#: common/flatpak-dir.c:5570
+#: common/flatpak-dir.c:5592
 #, fuzzy, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Ungültige Prozesskennung %s"
 
-#: common/flatpak-dir.c:5577
+#: common/flatpak-dir.c:5599
 #, fuzzy, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Ungültige Prozesskennung %s"
 
-#: common/flatpak-dir.c:5585
+#: common/flatpak-dir.c:5607
 #, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5593
+#: common/flatpak-dir.c:5615
 #, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5601
+#: common/flatpak-dir.c:5623
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5607
+#: common/flatpak-dir.c:5629
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5613
+#: common/flatpak-dir.c:5635
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5632
+#: common/flatpak-dir.c:5654
 msgid "Deployed metadata does not match commit"
 msgstr ""
 
-#: common/flatpak-dir.c:6511
+#: common/flatpak-dir.c:6533
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Diese Version von %s ist bereits installiert"
 
-#: common/flatpak-dir.c:6518
+#: common/flatpak-dir.c:6540
 msgid "Can't change remote during bundle install"
 msgstr ""
 
-#: common/flatpak-dir.c:7037
+#: common/flatpak-dir.c:7059
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s Zweig %s ist nicht installiert"
 
-#: common/flatpak-dir.c:7282
+#: common/flatpak-dir.c:7304
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "%s Zweig %s ist nicht installiert"
 
-#: common/flatpak-dir.c:7606
+#: common/flatpak-dir.c:7628
 #, fuzzy, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Zugehörige werden installiert: %s\n"
 
-#: common/flatpak-dir.c:8133
+#: common/flatpak-dir.c:8155
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 
-#: common/flatpak-dir.c:8154
+#: common/flatpak-dir.c:8176
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Kein Treffer für %s"
 
-#: common/flatpak-dir.c:8236
+#: common/flatpak-dir.c:8258
 #, fuzzy, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "%s%s%s%s%s kann nicht in ferner Quelle %s gefunden werden"
 
-#: common/flatpak-dir.c:8278
+#: common/flatpak-dir.c:8300
 #, fuzzy, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Fehler: %s %s ist fehlgeschlagen: %s\n"
 
-#: common/flatpak-dir.c:8323
+#: common/flatpak-dir.c:8345
 #, fuzzy, c-format
 msgid "Error searching local repository: %s"
 msgstr "Referenz in lokaler Quelle behalten"
 
-#: common/flatpak-dir.c:8449
+#: common/flatpak-dir.c:8471
 #, c-format
 msgid "%s %s not installed"
 msgstr "%s %s ist nicht installiert"
 
-#: common/flatpak-dir.c:8616
+#: common/flatpak-dir.c:8638
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Installation %s konnte nicht gefunden werden"
 
-#: common/flatpak-dir.c:9214
+#: common/flatpak-dir.c:9236
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Laufzeitumgebung %s, Zweig %s ist bereits installiert"
 
-#: common/flatpak-dir.c:9215
+#: common/flatpak-dir.c:9237
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Anwendung %s, Zweig %s ist bereits installiert"
 
-#: common/flatpak-dir.c:9695
+#: common/flatpak-dir.c:9717
 msgid "Remote title not set"
 msgstr "Entfernter Titel nicht gesetzt"
 
-#: common/flatpak-dir.c:9717
+#: common/flatpak-dir.c:9739
 msgid "Remote default-branch not set"
 msgstr "Vorgabe-Zweig für ferne Quelle nicht definiert"
 
-#: common/flatpak-dir.c:10310
+#: common/flatpak-dir.c:10332
 msgid "No flatpak cache in remote summary"
 msgstr ""
 
-#: common/flatpak-dir.c:10320
+#: common/flatpak-dir.c:10342
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
@@ -2785,22 +2785,22 @@ msgstr "Fehler: %s %s ist fehlgeschlagen: %s\n"
 msgid "No extra data sources"
 msgstr "Keine zusätzlichen Datenquellen"
 
-#: common/flatpak-utils.c:6577
+#: common/flatpak-utils.c:6575
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr ""
 
-#: common/flatpak-utils.c:6601
+#: common/flatpak-utils.c:6599
 #, fuzzy, c-format
 msgid "Downloading: %s/%s"
 msgstr "Referenz anzeigen"
 
-#: common/flatpak-utils.c:6621
+#: common/flatpak-utils.c:6619
 #, fuzzy, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Referenz anzeigen"
 
-#: common/flatpak-utils.c:6626
+#: common/flatpak-utils.c:6624
 #, fuzzy, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Referenz anzeigen"
