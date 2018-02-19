@@ -93,6 +93,13 @@ get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
   return ret;
 }
 
+static void
+clear_app_arches (AsApp *app)
+{
+  GPtrArray *arches = as_app_get_architectures (app);
+  g_ptr_array_set_size (arches, 0);
+}
+
 typedef struct MatchResult {
   AsApp *app;
   GPtrArray *remotes;
@@ -114,6 +121,9 @@ match_result_new (AsApp *app, guint score)
   result->app = g_object_ref (app);
   result->remotes = g_ptr_array_new_with_free_func (g_free);
   result->score = score;
+
+  clear_app_arches (result->app);
+
   return result;
 }
 
@@ -178,6 +188,12 @@ as_app_equal (AsApp *app1, AsApp *app2)
 static int
 compare_apps (MatchResult *a, AsApp *b)
 {
+  /* For now we want to ignore arch when comparing applications
+   * It may be valuable to show runtime arches in the future though.
+   * This is a naughty hack but for our purposes totally fine.
+   */
+  clear_app_arches (b);
+
   return !as_app_equal (a->app, b);
 }
 
