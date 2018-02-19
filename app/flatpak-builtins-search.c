@@ -60,17 +60,20 @@ get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
 
       for (j = 0; remotes[j]; ++j)
         {
+          g_autoptr(AsStore) store = as_store_new ();
+
+#if AS_CHECK_VERSION(0, 6, 1)
+          // We want to see multiple versions/branches of same app-id's, e.g. org.gnome.Platform
+          as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
+#endif
+
           for (k = 0; arches[k]; ++k)
             {
               g_autofree char *appstream_path = g_build_filename (install_path, "appstream", remotes[j],
                                                                   arches[k], "active", "appstream.xml.gz",
                                                                   NULL);
               g_autoptr(GFile) appstream_file = g_file_new_for_path (appstream_path);
-              g_autoptr(AsStore) store = as_store_new ();
-#if AS_CHECK_VERSION(0, 6, 1)
-              // We want to see multiple versions/branches of same app-id's, e.g. org.gnome.Platform
-              as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
-#endif
+
               as_store_from_file (store, appstream_file, NULL, cancellable, &error);
               if (error)
                 {
@@ -81,10 +84,10 @@ get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
                   g_clear_error (&error);
                   continue;
                 }
-
-              g_object_set_data_full (G_OBJECT(store), "remote-name", g_strdup(remotes[j]), g_free);
-              g_ptr_array_add (ret, g_steal_pointer (&store));
             }
+
+            g_object_set_data_full (G_OBJECT(store), "remote-name", g_strdup (remotes[j]), g_free);
+            g_ptr_array_add (ret, g_steal_pointer (&store));
         }
     }
   return ret;
