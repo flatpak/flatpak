@@ -149,6 +149,7 @@ gboolean flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                            const char     *app_id,
                                            FlatpakContext *context,
                                            GFile          *app_id_dir,
+                                           GVariant       *metadata_dict,
                                            FlatpakExports **exports_out,
                                            GCancellable *cancellable,
                                            GError      **error);

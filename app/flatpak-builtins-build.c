@@ -122,6 +122,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *app_info_path = NULL;
   g_autofree char *runtime_extensions = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
+  g_autoptr(GVariant) metadata_dict = NULL;
 
   context = g_option_context_new (_("DIRECTORY [COMMAND [args...]] - Build in directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -417,12 +418,14 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       runtime_ref,
                                       app_context,
                                       &app_info_path,
-                                      NULL,
+                                      &metadata_dict,
                                       error))
     return FALSE;
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, run_flags, id,
-                                         app_context, app_id_dir, NULL, cancellable, error))
+                                         app_context, app_id_dir,
+                                         metadata_dict, NULL, cancellable,
+                                         error))
     return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)

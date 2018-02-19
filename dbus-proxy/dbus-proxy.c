@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include <gio/gunixinputstream.h>
+
 #include "libglnx/libglnx.h"
 
 #include "flatpak-proxy.h"
@@ -33,7 +35,50 @@
 
 static GList *proxies;
 static int sync_fd = -1;
+static GVariant *metadata = NULL;
 static gchar *app_id = NULL;
+
+static gboolean
+read_metadata_variant (int      fd,
+                       GError **error)
+{
+  gssize this_read;
+  g_autoptr(GByteArray) buffer = g_byte_array_new ();
+  g_autoptr(GInputStream) reader = g_unix_input_stream_new (fd, TRUE);
+
+  do
+    {
+      const guint READ_SIZE = 4096;
+      guint pos = buffer->len;
+
+      g_byte_array_set_size (buffer, pos + READ_SIZE);
+      this_read = g_input_stream_read (reader, buffer->data + pos,
+                                       READ_SIZE, NULL, error);
+
+      if (this_read < 0)
+        return FALSE;
+
+      g_assert (this_read >= 0);
+      g_assert (this_read <= READ_SIZE);
+      g_byte_array_set_size (buffer, pos + this_read);
+    }
+  while (this_read > 0);
+
+  g_clear_pointer (&metadata, g_variant_unref);
+  metadata = g_variant_new_from_data (G_VARIANT_TYPE_VARDICT,
+                                      buffer->data, buffer->len, FALSE,
+                                      (GDestroyNotify) g_byte_array_unref,
+                                      g_byte_array_ref (buffer));
+  g_variant_ref_sink (metadata);
+
+  if (!g_variant_is_normal_form (metadata))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "invalid GVariant");
+      return FALSE;
+    }
+
+  return TRUE;
+}
 
 static int
 parse_generic_args (int n_args, const char *args[])
@@ -64,6 +109,29 @@ parse_generic_args (int n_args, const char *args[])
       if (!flatpak_is_valid_name (app_id, &error))
         {
           g_printerr ("Invalid app ID %s: %s\n", app_id, error->message);
+          return -1;
+        }
+
+      return 1;
+    }
+  else if (g_str_has_prefix (args[0], "--metadata-fd="))
+    {
+      g_autoptr(GError) error = NULL;
+      const char *fd_s = args[0] + strlen ("--metadata-fd=");
+      char *endptr;
+      int fd;
+
+      fd = strtol (fd_s, &endptr, 10);
+      if (fd < 0 || endptr == fd_s || *endptr != 0)
+        {
+          g_printerr ("Invalid fd %s\n", fd_s);
+          return -1;
+        }
+
+      if (!read_metadata_variant (fd, &error))
+        {
+          g_printerr ("Failed to read metadata from fd %d: %s\n", fd,
+                      error->message);
           return -1;
         }
 
@@ -259,5 +327,6 @@ main (int argc, const char *argv[])
   g_main_loop_unref (service_loop);
 
   g_free (app_id);
+  g_clear_pointer (&metadata, g_variant_unref);
   return 0;
 }

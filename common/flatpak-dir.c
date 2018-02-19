@@ -5315,7 +5315,8 @@ apply_extra_data (FlatpakDir          *self,
                                          FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
                                          FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY,
                                          id,
-                                         app_context, NULL, NULL, cancellable, error))
+                                         app_context, NULL, NULL, NULL,
+                                         cancellable, error))
     return FALSE;
 
   g_ptr_array_add (bwrap->argv, g_strdup ("/app/bin/apply_extra"));

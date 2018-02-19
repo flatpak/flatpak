@@ -66,6 +66,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      int        sync_fds[2],
                      const char *app_id,
                      const char *app_info_path,
+                     GVariant   *metatada_dict,
                      GError   **error);
 
 static char *
@@ -756,6 +757,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                   const char     *app_id,
                                   FlatpakContext *context,
                                   GFile          *app_id_dir,
+                                  GVariant       *metadata_dict,
                                   FlatpakExports **exports_out,
                                   GCancellable   *cancellable,
                                   GError        **error)
@@ -964,7 +966,8 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                             session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
                             system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
                             a11y_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0,
-                            sync_fds, app_id, app_info_path, error))
+                            sync_fds, app_id, app_info_path, metadata_dict,
+                            error))
     return FALSE;
 
   if (sync_fds[1] != -1)
@@ -1783,6 +1786,7 @@ typedef struct {
   int sync_fd;
   int app_info_fd;
   int bwrap_args_fd;
+  int metadata_fd;
 } DbusProxySpawnData;
 
 static void
@@ -1794,6 +1798,7 @@ dbus_spawn_child_setup (gpointer user_data)
   fcntl (data->sync_fd, F_SETFD, 0);
   fcntl (data->app_info_fd, F_SETFD, 0);
   fcntl (data->bwrap_args_fd, F_SETFD, 0);
+  fcntl (data->metadata_fd, F_SETFD, 0);
 }
 
 /* This wraps the argv in a bwrap call, primary to allow the
@@ -1920,6 +1925,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      int        sync_fds[2],
                      const char *app_id,
                      const char *app_info_path,
+                     GVariant  *metadata_dict,
                      GError   **error)
 {
   char x = 'x';
@@ -1929,6 +1935,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   glnx_autofd int app_info_fd = -1;
   glnx_autofd int bwrap_args_fd = -1;
   g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
+  g_auto(GLnxTmpfile) metadata_buffer = { 0, };
 
   if (!has_args (session_dbus_proxy_argv) &&
       !has_args (system_dbus_proxy_argv) &&
@@ -1953,10 +1960,19 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   if (proxy == NULL)
     proxy = DBUSPROXY;
 
+  if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&metadata_buffer,
+                                                  "flatpak-Containers1-metadata",
+                                                  g_variant_get_data (metadata_dict),
+                                                  g_variant_get_size (metadata_dict),
+                                                  error))
+    return FALSE;
+
   dbus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy));
   g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--fd=%d", sync_fds[1]));
   g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--app-id=%s", app_id));
+  g_ptr_array_add (dbus_proxy_argv,
+                   g_strdup_printf ("--metadata-fd=%d", metadata_buffer.fd));
 
   append_proxy_args (dbus_proxy_argv, session_dbus_proxy_argv, enable_session_logging);
   append_proxy_args (dbus_proxy_argv, system_dbus_proxy_argv, enable_system_logging);
@@ -1982,6 +1998,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   spawn_data.sync_fd = sync_fds[1];
   spawn_data.app_info_fd = app_info_fd;
   spawn_data.bwrap_args_fd = bwrap_args_fd;
+  spawn_data.metadata_fd = metadata_buffer.fd;
   if (!g_spawn_async (NULL,
                       (char **) dbus_proxy_argv->pdata,
                       NULL,
@@ -2838,6 +2855,7 @@ flatpak_run_app (const char     *app_ref,
   gboolean generate_ld_so_conf = TRUE;
   gboolean use_ld_so_cache = TRUE;
   struct stat s;
+  g_autoptr(GVariant) metadata_dict = NULL;
 
   app_ref_parts = flatpak_decompose_ref (app_ref, error);
   if (app_ref_parts == NULL)
@@ -3014,13 +3032,15 @@ flatpak_run_app (const char     *app_ref,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_ref_parts[1], app_ref_parts[3],
                                       runtime_ref, app_context, &app_info_path,
-                                      NULL, error))
+                                      &metadata_dict, error))
     return FALSE;
 
   add_document_portal_args (bwrap, app_ref_parts[1], &doc_mount_path);
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
-                                         app_ref_parts[1], app_context, app_id_dir, &exports, cancellable, error))
+                                         app_ref_parts[1], app_context,
+                                         app_id_dir, metadata_dict,
+                                         &exports, cancellable, error))
     return FALSE;
 
   flatpak_run_add_journal_args (bwrap);
