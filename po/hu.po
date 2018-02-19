@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-02-19 11:05+0100\n"
+"POT-Creation-Date: 2018-02-19 14:20+0100\n"
 "PO-Revision-Date: 2018-01-26 15:02+0100\n"
 "Last-Translator: Balázs Meskó <mesko.balazs@fsf.hu>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -2158,7 +2158,7 @@ msgstr ""
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1160
 #: common/flatpak-dir.c:1479 common/flatpak-dir.c:1502
 #: common/flatpak-dir.c:1524 common/flatpak-dir.c:10655
-#: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
+#: common/flatpak-utils.c:1312 common/flatpak-utils.c:1406
 #, c-format
 msgid "%s not installed"
 msgstr "A(z) %s nincs telepítve"
@@ -2744,36 +2744,36 @@ msgstr "Nem sikerült szinkronizálni a dbus proxyval"
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig meghiúsult, kilépési állapot: %d"
 
-#: common/flatpak-utils.c:623
+#: common/flatpak-utils.c:624
 #, c-format
 msgid "Migrating %s to %s\n"
 msgstr "%s migrálása ide: %s\n"
 
-#: common/flatpak-utils.c:629
+#: common/flatpak-utils.c:630
 #, c-format
 msgid "Error during migration: %s\n"
 msgstr "Hiba a migráció során: %s\n"
 
-#: common/flatpak-utils.c:2987
+#: common/flatpak-utils.c:2988
 msgid "No extra data sources"
 msgstr "Nincsenek további adatforrások"
 
-#: common/flatpak-utils.c:6575
+#: common/flatpak-utils.c:6576
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Metaadatok letöltése: %u/%s (becslés)"
 
-#: common/flatpak-utils.c:6599
+#: common/flatpak-utils.c:6600
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Letöltés: %s/%s"
 
-#: common/flatpak-utils.c:6619
+#: common/flatpak-utils.c:6620
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "További adatok letöltése: %s/%s"
 
-#: common/flatpak-utils.c:6624
+#: common/flatpak-utils.c:6625
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Fájlok letöltése: %d/%d %s"

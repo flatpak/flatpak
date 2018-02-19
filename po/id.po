@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-02-19 11:05+0100\n"
+"POT-Creation-Date: 2018-02-19 14:20+0100\n"
 "PO-Revision-Date: 2018-01-18 17:44+0700\n"
 "Last-Translator: Kukuh Syafaat <syafaatkukuh@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -2135,7 +2135,7 @@ msgstr ""
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1160
 #: common/flatpak-dir.c:1479 common/flatpak-dir.c:1502
 #: common/flatpak-dir.c:1524 common/flatpak-dir.c:10655
-#: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
+#: common/flatpak-utils.c:1312 common/flatpak-utils.c:1406
 #, c-format
 msgid "%s not installed"
 msgstr "%s tidak terpasang"
@@ -2721,36 +2721,36 @@ msgstr "Gagal melakukan sinkronisasi dengan proksi dbus"
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig gagal, status keluar %d"
 
-#: common/flatpak-utils.c:623
+#: common/flatpak-utils.c:624
 #, c-format
 msgid "Migrating %s to %s\n"
 msgstr "Migrasi %s ke %s\n"
 
-#: common/flatpak-utils.c:629
+#: common/flatpak-utils.c:630
 #, c-format
 msgid "Error during migration: %s\n"
 msgstr "Galat saat migrasi: %s\n"
 
-#: common/flatpak-utils.c:2987
+#: common/flatpak-utils.c:2988
 msgid "No extra data sources"
 msgstr "Tidak ada sumber data tambahan"
 
-#: common/flatpak-utils.c:6575
+#: common/flatpak-utils.c:6576
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Mengunduh metadata: %u /(perkiraan) %s"
 
-#: common/flatpak-utils.c:6599
+#: common/flatpak-utils.c:6600
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Mengunduh: %s/%s"
 
-#: common/flatpak-utils.c:6619
+#: common/flatpak-utils.c:6620
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Mengunduh data ekstra: %s/%s"
 
-#: common/flatpak-utils.c:6624
+#: common/flatpak-utils.c:6625
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Mengunduh berkas: %d/%d %s"

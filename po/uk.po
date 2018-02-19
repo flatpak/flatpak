@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-02-19 11:05+0100\n"
+"POT-Creation-Date: 2018-02-19 14:20+0100\n"
 "PO-Revision-Date: 2017-10-23 20:15+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
@@ -2166,7 +2166,7 @@ msgstr ""
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1160
 #: common/flatpak-dir.c:1479 common/flatpak-dir.c:1502
 #: common/flatpak-dir.c:1524 common/flatpak-dir.c:10655
-#: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
+#: common/flatpak-utils.c:1312 common/flatpak-utils.c:1406
 #, c-format
 msgid "%s not installed"
 msgstr "%s не встановлено"
@@ -2751,36 +2751,36 @@ msgstr "Не вдалося виконати синхронізацію із п�
 msgid "ldconfig failed, exit status %d"
 msgstr "Помилка ldconfig, стан виходу %d"
 
-#: common/flatpak-utils.c:623
+#: common/flatpak-utils.c:624
 #, c-format
 msgid "Migrating %s to %s\n"
 msgstr "Переносимо %s на %s\n"
 
-#: common/flatpak-utils.c:629
+#: common/flatpak-utils.c:630
 #, c-format
 msgid "Error during migration: %s\n"
 msgstr "Помилка під час перенесення: %s\n"
 
-#: common/flatpak-utils.c:2987
+#: common/flatpak-utils.c:2988
 msgid "No extra data sources"
 msgstr "Немає джерел додаткових даних"
 
-#: common/flatpak-utils.c:6575
+#: common/flatpak-utils.c:6576
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Отримуємо метадані: %u/(оцінка) %s"
 
-#: common/flatpak-utils.c:6599
+#: common/flatpak-utils.c:6600
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Отримуємо: %s/%s"
 
-#: common/flatpak-utils.c:6619
+#: common/flatpak-utils.c:6620
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Отримуємо додаткові дані: %s з %s"
 
-#: common/flatpak-utils.c:6624
+#: common/flatpak-utils.c:6625
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Отримуємо файли: %d з %d %s"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-02-19 11:05+0100\n"
+"POT-Creation-Date: 2018-02-19 14:20+0100\n"
 "PO-Revision-Date: 2017-05-20 08:19+0300\n"
 "Last-Translator: Muhammet Kara <muhammetk@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
@@ -2138,7 +2138,7 @@ msgstr "Gerekli çalışma ortamı %s yapılandırılmış uzaklarda bulunamadı
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1160
 #: common/flatpak-dir.c:1479 common/flatpak-dir.c:1502
 #: common/flatpak-dir.c:1524 common/flatpak-dir.c:10655
-#: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
+#: common/flatpak-utils.c:1312 common/flatpak-utils.c:1406
 #, c-format
 msgid "%s not installed"
 msgstr "%s yüklü değil"
@@ -2722,36 +2722,36 @@ msgstr "Dbus vekiliyle eşzamanlanamadı"
 msgid "ldconfig failed, exit status %d"
 msgstr "apply_extra betiği başarısız oldu"
 
-#: common/flatpak-utils.c:623
+#: common/flatpak-utils.c:624
 #, fuzzy, c-format
 msgid "Migrating %s to %s\n"
 msgstr "Güncelleniyor: %2$s'ten %1$s\n"
 
-#: common/flatpak-utils.c:629
+#: common/flatpak-utils.c:630
 #, fuzzy, c-format
 msgid "Error during migration: %s\n"
 msgstr "Hata: %2$s'i %1$s başarılamadı: %3$s\n"
 
-#: common/flatpak-utils.c:2987
+#: common/flatpak-utils.c:2988
 msgid "No extra data sources"
 msgstr "Ek veri kaynağı yok"
 
-#: common/flatpak-utils.c:6575
+#: common/flatpak-utils.c:6576
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr ""
 
-#: common/flatpak-utils.c:6599
+#: common/flatpak-utils.c:6600
 #, fuzzy, c-format
 msgid "Downloading: %s/%s"
 msgstr "İndirme boyutu"
 
-#: common/flatpak-utils.c:6619
+#: common/flatpak-utils.c:6620
 #, fuzzy, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "İndirme boyutu"
 
-#: common/flatpak-utils.c:6624
+#: common/flatpak-utils.c:6625
 #, fuzzy, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "İndirme boyutu"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-02-19 11:05+0100\n"
+"POT-Creation-Date: 2018-02-19 14:20+0100\n"
 "PO-Revision-Date: 2017-09-08 21:48-0200\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
@@ -2148,7 +2148,7 @@ msgstr "O runtime exigido %s não foi localizado em um remoto configurado.\n"
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1160
 #: common/flatpak-dir.c:1479 common/flatpak-dir.c:1502
 #: common/flatpak-dir.c:1524 common/flatpak-dir.c:10655
-#: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
+#: common/flatpak-utils.c:1312 common/flatpak-utils.c:1406
 #, c-format
 msgid "%s not installed"
 msgstr "%s não instalado"
@@ -2732,36 +2732,36 @@ msgstr "Falha ao sincronizar com proxy de dbus"
 msgid "ldconfig failed, exit status %d"
 msgstr "script apply_extra falhou, status de saída %d"
 
-#: common/flatpak-utils.c:623
+#: common/flatpak-utils.c:624
 #, fuzzy, c-format
 msgid "Migrating %s to %s\n"
 msgstr "Atualizando: %s de %s\n"
 
-#: common/flatpak-utils.c:629
+#: common/flatpak-utils.c:630
 #, fuzzy, c-format
 msgid "Error during migration: %s\n"
 msgstr "Erro: Falha ao %s %s: %s\n"
 
-#: common/flatpak-utils.c:2987
+#: common/flatpak-utils.c:2988
 msgid "No extra data sources"
 msgstr "Nenhuma fonte de dados extras"
 
-#: common/flatpak-utils.c:6575
+#: common/flatpak-utils.c:6576
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr ""
 
-#: common/flatpak-utils.c:6599
+#: common/flatpak-utils.c:6600
 #, fuzzy, c-format
 msgid "Downloading: %s/%s"
 msgstr "Mostra tamanho"
 
-#: common/flatpak-utils.c:6619
+#: common/flatpak-utils.c:6620
 #, fuzzy, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Mostra tamanho"
 
-#: common/flatpak-utils.c:6624
+#: common/flatpak-utils.c:6625
 #, fuzzy, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Mostra tamanho"

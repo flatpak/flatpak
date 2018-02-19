@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-02-19 11:05+0100\n"
+"POT-Creation-Date: 2018-02-19 14:20+0100\n"
 "PO-Revision-Date: 2017-04-07 13:52+0200\n"
 "Last-Translator: Mario Blättermann <mario.blaettermann@gmail.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
@@ -2180,7 +2180,7 @@ msgstr ""
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1160
 #: common/flatpak-dir.c:1479 common/flatpak-dir.c:1502
 #: common/flatpak-dir.c:1524 common/flatpak-dir.c:10655
-#: common/flatpak-utils.c:1311 common/flatpak-utils.c:1405
+#: common/flatpak-utils.c:1312 common/flatpak-utils.c:1406
 #, c-format
 msgid "%s not installed"
 msgstr "%s ist nicht installiert"
@@ -2771,36 +2771,36 @@ msgstr "Abgleich mit Dbus-Proxy ist fehlgeschlagen"
 msgid "ldconfig failed, exit status %d"
 msgstr "Skript apply_extra ist fehlgeschlagen"
 
-#: common/flatpak-utils.c:623
+#: common/flatpak-utils.c:624
 #, fuzzy, c-format
 msgid "Migrating %s to %s\n"
 msgstr "Aktualisieren: %s von %s\n"
 
-#: common/flatpak-utils.c:629
+#: common/flatpak-utils.c:630
 #, fuzzy, c-format
 msgid "Error during migration: %s\n"
 msgstr "Fehler: %s %s ist fehlgeschlagen: %s\n"
 
-#: common/flatpak-utils.c:2987
+#: common/flatpak-utils.c:2988
 msgid "No extra data sources"
 msgstr "Keine zusätzlichen Datenquellen"
 
-#: common/flatpak-utils.c:6575
+#: common/flatpak-utils.c:6576
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr ""
 
-#: common/flatpak-utils.c:6599
+#: common/flatpak-utils.c:6600
 #, fuzzy, c-format
 msgid "Downloading: %s/%s"
 msgstr "Referenz anzeigen"
 
-#: common/flatpak-utils.c:6619
+#: common/flatpak-utils.c:6620
 #, fuzzy, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Referenz anzeigen"
 
-#: common/flatpak-utils.c:6624
+#: common/flatpak-utils.c:6625
 #, fuzzy, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Referenz anzeigen"
