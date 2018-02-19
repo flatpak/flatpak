@@ -409,7 +409,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
   if (!flatpak_context_load_metadata (app_context, keyfile, error))
     goto out;
   flatpak_context_merge (app_context, arg_context);
-  flatpak_context_save_metadata (app_context, FALSE, keyfile);
+  flatpak_context_save_metadata (app_context, FALSE, keyfile, NULL);
 
   for (i = 0; opt_extra_data != NULL && opt_extra_data[i] != NULL; i++)
     {

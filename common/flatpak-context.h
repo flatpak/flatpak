@@ -88,7 +88,8 @@ gboolean       flatpak_context_load_metadata (FlatpakContext *context,
                                               GError        **error);
 void           flatpak_context_save_metadata (FlatpakContext *context,
                                               gboolean        flatten,
-                                              GKeyFile       *metakey);
+                                              GKeyFile       *metakey,
+                                              GVariantDict   *dict);
 void           flatpak_context_allow_host_fs (FlatpakContext *context);
 void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
                                                        const char     *name,

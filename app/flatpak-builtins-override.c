@@ -93,7 +93,7 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
 
   flatpak_context_merge (overrides, arg_context);
 
-  flatpak_context_save_metadata (overrides, FALSE, metakey);
+  flatpak_context_save_metadata (overrides, FALSE, metakey, NULL);
 
   if (!flatpak_save_override_keyfile (metakey, app, flatpak_dir_is_user (dir), error))
     return FALSE;

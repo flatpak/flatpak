@@ -379,6 +379,13 @@
                     </para></listitem>
                 </varlistentry>
             </variablelist>
+            <para>
+              When app metadata is made available as a D-Bus data
+              structure, this group is represented by an entry where
+              the name is <literal>Context</literal> and the value is a
+              string/variant dictionary (type <literal>a{sv}</literal>)
+              with the same keys and values as the group.
+            </para>
         </refsect2>
         <refsect2>
             <title>[Instance]</title>
@@ -508,6 +515,13 @@
                     </para></listitem>
                 </varlistentry>
             </variablelist>
+            <para>
+              When app metadata is made available as a D-Bus data
+              structure, this group is represented by an entry where
+              the name is <literal>Session Bus Policy</literal> and the value
+              is a string/string dictionary (type <literal>a{ss}</literal>)
+              with the same keys and values as the group.
+            </para>
         </refsect2>
         <refsect2>
             <title>[System Bus Policy]</title>
@@ -521,6 +535,12 @@
                 Entries in this group have the same form as for the [Session Bus Policy] group.
                 However, the app has no permissions by default.
             </para>
+            <para>
+              When app metadata is made available as a D-Bus data
+              structure, this group is represented by an entry where
+              the name is <literal>System Bus Policy</literal> and the value
+              is in the same format as for Session Bus Policy.
+            </para>
         </refsect2>
         <refsect2>
             <title>[Environment]</title>
@@ -532,6 +552,14 @@
                 Entries in this group have the form <option>VAR=VALUE</option>
                 where <option>VAR</option> is the name of an environment variable
                 to set.
+            </para>
+            <para>
+              When app metadata is made available as a D-Bus data
+              structure, this group is represented by an entry where
+              the name is <literal>Environment</literal> and the value
+              is a string/string dictionary (type <literal>a{ss}</literal>)
+              with environment variable names as keys and environment
+              variable values as values.
             </para>
         </refsect2>
         <refsect2>
@@ -748,6 +776,15 @@
             to the value. They are not otherwise parsed by Flatpak.
             Available since 0.6.13.
             <!-- TODO: More information would be nice -->
+          </para>
+          <para>
+            When app metadata is made available as a D-Bus data
+            structure, all groups of this form are represented as a
+            single top-level entry named <literal>Policies</literal>.
+            The corresponding value is a dictionary keyed by strings,
+            which are subsystem names. Values in that dictionary are
+            themselves dictionaries, with subsystem-defined string keys
+            and arrays of strings as values.
           </para>
         </refsect2>
     </refsect1>

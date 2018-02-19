@@ -33,6 +33,8 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 
 /* See flatpak-metadata(5) */
 
+/* When serialized into GVariant, [Application] turns into an a{sv} value with
+ * {'Application', <{'command': <'...'>, 'tags': <['awesome']>, ...}>} */
 #define FLATPAK_METADATA_GROUP_APPLICATION "Application"
 #define FLATPAK_METADATA_GROUP_RUNTIME "Runtime"
 #define FLATPAK_METADATA_KEY_COMMAND "command"
@@ -42,6 +44,8 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_SDK "sdk"
 #define FLATPAK_METADATA_KEY_TAGS "tags"
 
+/* When serialized into GVariant, [Context] turns into an a{sv} entry with
+ * {'Context', <{'shared': <['network, 'ipc']>, ...}>} */
 #define FLATPAK_METADATA_GROUP_CONTEXT "Context"
 #define FLATPAK_METADATA_KEY_SHARED "shared"
 #define FLATPAK_METADATA_KEY_SOCKETS "sockets"
@@ -50,6 +54,8 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_DEVICES "devices"
 #define FLATPAK_METADATA_KEY_FEATURES "features"
 
+/* When serialized into GVariant, [Instance] turns into an a{sv} entry with
+ * {'Instance', <{'app-path': <'/...'>, 'session-bus-proxy': <true>, ...}>} */
 #define FLATPAK_METADATA_GROUP_INSTANCE "Instance"
 #define FLATPAK_METADATA_KEY_APP_PATH "app-path"
 #define FLATPAK_METADATA_KEY_APP_COMMIT "app-commit"
@@ -62,11 +68,25 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_SESSION_BUS_PROXY "session-bus-proxy"
 #define FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY "system-bus-proxy"
 
+/* When serialized into GVariant, [Session Bus Policy] com.example.Foo=talk ...
+ * turns into an a{sv} entry with
+ * {'Session Bus Policy', <{'com.example.Foo': 'talk', ...}>}.
+ * [System Bus Policy] is encoded the same way. */
 #define FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
 #define FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
-#define FLATPAK_METADATA_GROUP_PREFIX_POLICY "Policy "
+
+/* When serialized into GVariant, [Environment] FOO_DEBUG=all ...
+ * turns into an a{sv} entry {'Environment', <{'FOO_DEBUG': 'all', ...}>}. */
 #define FLATPAK_METADATA_GROUP_ENVIRONMENT "Environment"
 
+/* When serialized into GVariant, [Policy foo] Bar=baz;bar; turns into
+ * {'Policies', {'foo': {'Bar': ['baz', 'bar']}}}. Note that this is not
+ * a 1:1 mapping of the GKeyFile encoding because GVariant and D-Bus support
+ * nested data structures. */
+#define FLATPAK_METADATA_GROUP_PREFIX_POLICY "Policy "
+#define FLATPAK_METADATA_VARIANT_KEY_POLICIES "Policies"
+
+/* Not serialized in flatpak_context_save_metadata() */
 #define FLATPAK_METADATA_GROUP_PREFIX_EXTENSION "Extension "
 #define FLATPAK_METADATA_KEY_ADD_LD_PATH "add-ld-path"
 #define FLATPAK_METADATA_KEY_AUTODELETE "autodelete"
@@ -85,6 +105,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_COLLECTION_ID "collection-id"
 #endif  /* FLATPAK_ENABLE_P2P */
 
+/* Not serialized in flatpak_context_save_metadata() */
 #define FLATPAK_METADATA_GROUP_EXTRA_DATA "Extra Data"
 #define FLATPAK_METADATA_KEY_EXTRA_DATA_CHECKSUM "checksum"
 #define FLATPAK_METADATA_KEY_EXTRA_DATA_INSTALLED_SIZE "installed-size"
@@ -93,10 +114,10 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_EXTRA_DATA_URI "uri"
 #define FLATPAK_METADATA_KEY_NO_RUNTIME "NoRuntime"
 
+/* Not serialized in flatpak_context_save_metadata() */
 #define FLATPAK_METADATA_GROUP_EXTENSION_OF "ExtensionOf"
 #define FLATPAK_METADATA_KEY_PRIORITY "priority"
 #define FLATPAK_METADATA_KEY_REF "ref"
-
 
 typedef enum {
   FLATPAK_RUN_FLAG_DEVEL              = (1 << 0),

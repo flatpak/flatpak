@@ -303,7 +303,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           if (opt_show_permissions)
             {
               keyfile = g_key_file_new ();
-              flatpak_context_save_metadata (context, TRUE, keyfile);
+              flatpak_context_save_metadata (context, TRUE, keyfile, NULL);
               contents = g_key_file_to_data (keyfile, NULL, error);
               if (contents == NULL)
                 return FALSE;

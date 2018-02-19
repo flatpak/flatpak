@@ -1507,7 +1507,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                             FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY, TRUE);
 
-  flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
+  flatpak_context_save_metadata (final_app_context, TRUE, keyfile, NULL);
 
   if (!g_key_file_save_to_file (keyfile, tmp_path, error))
     return FALSE;
