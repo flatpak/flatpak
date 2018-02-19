@@ -1998,6 +1998,7 @@ gboolean
 flatpak_dir_find_latest_rev (FlatpakDir               *self,
                              const char               *remote,
                              const char               *ref,
+                             const char               *checksum_or_latest,
                              char                    **out_rev,
                              OstreeRepoFinderResult ***out_results,
                              GCancellable             *cancellable,
@@ -2115,7 +2116,7 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
 
   branch = g_strdup_printf ("appstream/%s", arch);
 
-  if (!flatpak_dir_find_latest_rev (self, remote, branch, &new_checksum,
+  if (!flatpak_dir_find_latest_rev (self, remote, branch, NULL, &new_checksum,
                                     NULL, NULL, &local_error))
     {
       if (g_strcmp0 (arch, flatpak_get_arch ()) == 0)
@@ -6684,7 +6685,7 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
     }
   else
     {
-      if (!flatpak_dir_find_latest_rev (self, remote_name, ref, &latest_rev,
+      if (!flatpak_dir_find_latest_rev (self, remote_name, ref, checksum_or_latest, &latest_rev,
                                         out_results, cancellable, error))
         return FALSE;
     }
