@@ -1,3 +1,11 @@
+Major changes in 0.11.2
+=======================
+
+ * Remove fuse dependency, since we don't ship document portal anymore
+ * Fix various issues with /home being a symlink to /var/home (atomic)
+ * Allow downgrades when using collection ids
+ * Search on all supported architectures
+
 Major changes in 0.11.1
 =======================
 
