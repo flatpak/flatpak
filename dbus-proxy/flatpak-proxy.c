@@ -35,6 +35,9 @@
  * when we depend on GLib >= 2.50 */
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FpDBusContainers1, g_object_unref)
 
+/* TODO: Remove this when supported by GLib */
+#define DBUS_HEADER_FIELD_CONTAINER_INSTANCE 10
+
 /**
  *
  * |--------------------------------------------------|
@@ -1233,6 +1236,12 @@ parse_header (Buffer *buffer, guint32 serial_offset, guint32 reply_serial_offset
 
           header->unix_fds = read_uint32 (header, &buffer->data[offset]);
           offset += 4;
+          break;
+
+        case DBUS_HEADER_FIELD_CONTAINER_INSTANCE:
+          if (strcmp (signature, "o") != 0 ||
+              get_string (buffer, header, &offset, end_offset) == NULL)
+            return NULL;
           break;
 
         default:
