@@ -1,21 +1,21 @@
 # Indonesian translation for flatpak.
 # Copyright (C) 2017 flatpak's COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
-# Kukuh Syafaat <syafaatkukuh@gmail.com>, 2017.
+# Kukuh Syafaat <syafaatkukuh@gmail.com>, 2017, 2018.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-02-19 14:20+0100\n"
-"PO-Revision-Date: 2018-01-18 17:44+0700\n"
+"POT-Creation-Date: 2018-02-22 03:24+0000\n"
+"PO-Revision-Date: 2018-02-22 15:58+0700\n"
 "Last-Translator: Kukuh Syafaat <syafaatkukuh@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.5\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: app/flatpak-builtins-add-remote.c:57
 msgid "Do nothing if the provided remote exists"
@@ -285,7 +285,7 @@ msgstr "HOMEDIR"
 
 #: app/flatpak-builtins-build-bundle.c:64
 msgid "OSTree commit to create a delta bundle from"
-msgstr ""
+msgstr "Komit OSTree untuk membuat bundel delta dari"
 
 #: app/flatpak-builtins-build-bundle.c:64 app/flatpak-builtins-info-remote.c:49
 #: app/flatpak-builtins-update.c:54
@@ -1143,16 +1143,12 @@ msgid "Show metadata"
 msgstr "Tampilkan metadata"
 
 #: app/flatpak-builtins-info.c:60
-#, fuzzy
 msgid "Show permissions"
-msgstr "Tampilkan ekstensi"
+msgstr "Tampilkan izin"
 
 #: app/flatpak-builtins-info.c:61
-#, fuzzy
 msgid "Query file access"
-msgstr ""
-"\n"
-" Kelola akses berkas"
+msgstr "Akses berkas kueri"
 
 #: app/flatpak-builtins-info.c:61 app/flatpak-builtins-install.c:68
 #: app/flatpak-builtins-update.c:64
@@ -1175,7 +1171,7 @@ msgstr "ref tidak ada di asal"
 
 #: app/flatpak-builtins-info.c:202 app/flatpak-builtins-info-remote.c:177
 msgid "Warning: Commit has no flatpak metadata\n"
-msgstr ""
+msgstr "Peringatan: Komit tidak memiliki metadata flatpak\n"
 
 #: app/flatpak-builtins-info.c:209 app/flatpak-builtins-info-remote.c:200
 msgid "Ref:"
@@ -1199,9 +1195,8 @@ msgid "Origin:"
 msgstr "Asal:"
 
 #: app/flatpak-builtins-info.c:215 app/flatpak-builtins-info-remote.c:205
-#, fuzzy
 msgid "Collection ID:"
-msgstr "ID Koleksi"
+msgstr "ID Koleksi:"
 
 #: app/flatpak-builtins-info.c:217 app/flatpak-builtins-info-remote.c:206
 msgid "Date:"
@@ -1307,7 +1302,7 @@ msgstr " Komit:"
 #: app/flatpak-builtins-info-remote.c:292
 #, c-format
 msgid "Warning: Commit %s has no flatpak metadata\n"
-msgstr ""
+msgstr "Peringatan: Komit %s tidak memiliki metadata flatpak\n"
 
 #: app/flatpak-builtins-install.c:58
 msgid "Don't pull, only install from local cache"
@@ -2006,9 +2001,8 @@ msgid "Export a build dir to a repository"
 msgstr "Ekspor direktori bangun ke repositori"
 
 #: app/flatpak-main.c:104
-#, fuzzy
 msgid "Create a bundle file from a ref in a local repository"
-msgstr "Buat berkas bundel dari direktori bangun"
+msgstr "Buat berkas bundel dari ref pada repositori lokal"
 
 #: app/flatpak-main.c:105
 msgid "Import a bundle file"
@@ -2134,7 +2128,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:506 common/flatpak-dir.c:1160
 #: common/flatpak-dir.c:1479 common/flatpak-dir.c:1502
-#: common/flatpak-dir.c:1524 common/flatpak-dir.c:10655
+#: common/flatpak-dir.c:1524 common/flatpak-dir.c:10656
 #: common/flatpak-utils.c:1312 common/flatpak-utils.c:1406
 #, c-format
 msgid "%s not installed"
@@ -2414,281 +2408,281 @@ msgstr "Tidak ada penimpaan yang ditemukan untuk %s"
 msgid "While opening repository %s: "
 msgstr "Saat membuka repositori %s: "
 
-#: common/flatpak-dir.c:1908 common/flatpak-dir.c:5460
+#: common/flatpak-dir.c:1908 common/flatpak-dir.c:5461
 msgid "Can't create deploy directory"
 msgstr "Tidak dapat membuat direktori deploy"
 
-#: common/flatpak-dir.c:2122 common/flatpak-dir.c:2125
+#: common/flatpak-dir.c:2123 common/flatpak-dir.c:2126
 #, c-format
 msgid "Failed to find latest revision for ref %s from remote %s: %s\n"
-msgstr ""
+msgstr "Gagal menemukan revisi terbaru untuk %s dari %s: %s\n"
 
-#: common/flatpak-dir.c:2761
+#: common/flatpak-dir.c:2762
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Sha256 tidak valid untuk data ekstra uri %s"
 
-#: common/flatpak-dir.c:2766
+#: common/flatpak-dir.c:2767
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Nama kosong untuk data ekstra uri %s"
 
-#: common/flatpak-dir.c:2773
+#: common/flatpak-dir.c:2774
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Data ekstra yang tidak didukung uri %s"
 
-#: common/flatpak-dir.c:2787
+#: common/flatpak-dir.c:2788
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Gagal memuat data-ekstra lokal %s: %s"
 
-#: common/flatpak-dir.c:2790
+#: common/flatpak-dir.c:2791
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Ukuran yang salah untuk data-ekstra %s"
 
-#: common/flatpak-dir.c:2805
+#: common/flatpak-dir.c:2806
 #, c-format
 msgid "While downloading %s: "
 msgstr "Saat mengunduh %s: "
 
-#: common/flatpak-dir.c:2812
+#: common/flatpak-dir.c:2813
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Ukuran yang salah untuk data ekstra %s"
 
-#: common/flatpak-dir.c:2823
+#: common/flatpak-dir.c:2824
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Checksum tidak valid untuk data ekstra %s"
 
-#: common/flatpak-dir.c:2882
+#: common/flatpak-dir.c:2883
 msgid "Remote OCI index has no registry uri"
 msgstr "Indeks remote OCI tidak memiliki registry uri"
 
-#: common/flatpak-dir.c:3100
+#: common/flatpak-dir.c:3101
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s komit %s sudah terpasang"
 
-#: common/flatpak-dir.c:3442 common/flatpak-dir.c:3773
+#: common/flatpak-dir.c:3443 common/flatpak-dir.c:3774
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Saat menarik %s dari remote %s: "
 
-#: common/flatpak-dir.c:3658
+#: common/flatpak-dir.c:3659
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "Tidak dapat menemukan %s di remote %s"
 
-#: common/flatpak-dir.c:4331
+#: common/flatpak-dir.c:4332
 msgid "Not enough memory"
 msgstr "Memori tidak cukup"
 
-#: common/flatpak-dir.c:4350
+#: common/flatpak-dir.c:4351
 msgid "Failed to read from exported file"
 msgstr "Gagal membaca dari berkas yang diekspor"
 
-#: common/flatpak-dir.c:4541
+#: common/flatpak-dir.c:4542
 msgid "Error reading mimetype xml file"
 msgstr "Kesalahan saat membaca berkas xml mimetype"
 
-#: common/flatpak-dir.c:4546
+#: common/flatpak-dir.c:4547
 msgid "Invalid mimetype xml file"
 msgstr "Berkas xml mimetype tidak valid"
 
-#: common/flatpak-dir.c:5089
+#: common/flatpak-dir.c:5090
 msgid "While getting detached metadata: "
 msgstr "Saat mendapatkan metadata yang terpisah: "
 
-#: common/flatpak-dir.c:5107
+#: common/flatpak-dir.c:5108
 msgid "While creating extradir: "
 msgstr "Saat membuat direktori ekstra: "
 
-#: common/flatpak-dir.c:5128
+#: common/flatpak-dir.c:5129
 msgid "Invalid sha256 for extra data"
 msgstr "Sha256 tidak valid untuk data ekstra"
 
-#: common/flatpak-dir.c:5157
+#: common/flatpak-dir.c:5158
 msgid "Wrong size for extra data"
 msgstr "Ukuran yang salah untuk data ekstra"
 
-#: common/flatpak-dir.c:5161
+#: common/flatpak-dir.c:5162
 msgid "Invalid checksum for extra data"
 msgstr "Checksum tidak valid untuk data ekstra"
 
-#: common/flatpak-dir.c:5170
+#: common/flatpak-dir.c:5171
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "Saat menulis berkas data ekstra '%s': "
 
-#: common/flatpak-dir.c:5340
+#: common/flatpak-dir.c:5341
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "Skrip apply_extra gagal, status keluar %d"
 
-#: common/flatpak-dir.c:5419
+#: common/flatpak-dir.c:5420
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Saat mencoba menyelesaikan ref %s: "
 
-#: common/flatpak-dir.c:5434
+#: common/flatpak-dir.c:5435
 #, c-format
 msgid "%s is not available"
 msgstr "%s tak tersedia"
 
-#: common/flatpak-dir.c:5449 common/flatpak-dir.c:5881
-#: common/flatpak-dir.c:6671 common/flatpak-dir.c:6681
-#: common/flatpak-dir.c:6713
+#: common/flatpak-dir.c:5450 common/flatpak-dir.c:5882
+#: common/flatpak-dir.c:6672 common/flatpak-dir.c:6682
+#: common/flatpak-dir.c:6714
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s cabang %s sudah terpasang"
 
-#: common/flatpak-dir.c:5468
+#: common/flatpak-dir.c:5469
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Gagal membaca komit %s: "
 
-#: common/flatpak-dir.c:5488
+#: common/flatpak-dir.c:5489
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Saat mencoba melakukan checkout %s ke %s: "
 
-#: common/flatpak-dir.c:5513 common/flatpak-dir.c:5544
+#: common/flatpak-dir.c:5514 common/flatpak-dir.c:5545
 msgid "While trying to checkout metadata subpath: "
 msgstr "Saat mencoba melakukan checkout metadata subpath: "
 
-#: common/flatpak-dir.c:5554
+#: common/flatpak-dir.c:5555
 msgid "While trying to remove existing extra dir: "
 msgstr "Saat mencoba menghapus direktori tambahan yang ada: "
 
-#: common/flatpak-dir.c:5565
+#: common/flatpak-dir.c:5566
 msgid "While trying to apply extra data: "
 msgstr "Saat mencoba menerapkan data tambahan: "
 
-#: common/flatpak-dir.c:5592
+#: common/flatpak-dir.c:5593
 #, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Ref %s yang dideploy tidak valid: "
 
-#: common/flatpak-dir.c:5599
+#: common/flatpak-dir.c:5600
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Komit ref %s tidak valid: "
 
-#: common/flatpak-dir.c:5607
+#: common/flatpak-dir.c:5608
 #, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr "Jenis ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:5615
+#: common/flatpak-dir.c:5616
 #, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr "Nama ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:5623
+#: common/flatpak-dir.c:5624
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr "Arsitektur ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:5629
+#: common/flatpak-dir.c:5630
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Cabang ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:5635
+#: common/flatpak-dir.c:5636
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:5654
+#: common/flatpak-dir.c:5655
 msgid "Deployed metadata does not match commit"
 msgstr "Metadata yang dideploy tidak cocok dengan komit"
 
-#: common/flatpak-dir.c:6533
+#: common/flatpak-dir.c:6534
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Versi %s ini sudah terpasang"
 
-#: common/flatpak-dir.c:6540
+#: common/flatpak-dir.c:6541
 msgid "Can't change remote during bundle install"
 msgstr "Tidak dapat mengubah remote saat memasang paket"
 
-#: common/flatpak-dir.c:7059
+#: common/flatpak-dir.c:7060
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s cabang %s tidak terpasang"
 
-#: common/flatpak-dir.c:7304
+#: common/flatpak-dir.c:7305
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "%s cabang %s tidak terpasang"
 
-#: common/flatpak-dir.c:7628
+#: common/flatpak-dir.c:7629
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Repo pemangkasan gagal: %s"
 
-#: common/flatpak-dir.c:8155
+#: common/flatpak-dir.c:8156
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 "Beberapa cabang tersedia untuk %s, Anda harus menentukan salah satu dari: "
 
-#: common/flatpak-dir.c:8176
+#: common/flatpak-dir.c:8177
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Tidak ada yang cocok dengan %s"
 
-#: common/flatpak-dir.c:8258
+#: common/flatpak-dir.c:8259
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Tidak dapat menemukan ref %s%s%s%s%s"
 
-#: common/flatpak-dir.c:8300
+#: common/flatpak-dir.c:8301
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Galat mencari remote %s: %s"
 
-#: common/flatpak-dir.c:8345
+#: common/flatpak-dir.c:8346
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Galat mencari repositori lokal: %s"
 
-#: common/flatpak-dir.c:8471
+#: common/flatpak-dir.c:8472
 #, c-format
 msgid "%s %s not installed"
 msgstr "%s %s tidak terpasang"
 
-#: common/flatpak-dir.c:8638
+#: common/flatpak-dir.c:8639
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Tidak dapat menemukan pemasangan %s"
 
-#: common/flatpak-dir.c:9236
+#: common/flatpak-dir.c:9237
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Runtime %s, cabang %s telah terpasang"
 
-#: common/flatpak-dir.c:9237
+#: common/flatpak-dir.c:9238
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Aplikasi %s, cabang %s sudah terpasang"
 
-#: common/flatpak-dir.c:9717
+#: common/flatpak-dir.c:9718
 msgid "Remote title not set"
 msgstr "Judul remote tidak diatur"
 
-#: common/flatpak-dir.c:9739
+#: common/flatpak-dir.c:9740
 msgid "Remote default-branch not set"
 msgstr "Cabang bawaaan remote tidak diatur"
 
-#: common/flatpak-dir.c:10332
+#: common/flatpak-dir.c:10333
 msgid "No flatpak cache in remote summary"
 msgstr "Tidak ada cache flatpak dalam ringkasan remote"
 
-#: common/flatpak-dir.c:10342
+#: common/flatpak-dir.c:10343
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Tidak ada entri untuk %s dalam ringkasan remote cache flatpak "
