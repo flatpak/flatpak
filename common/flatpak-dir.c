@@ -2564,7 +2564,7 @@ repo_pull_one_dir (OstreeRepo          *self,
       new_timestamp = ostree_commit_get_timestamp (new_commit);
 
       if (new_timestamp < old_timestamp)
-        return flatpak_fail (error, "Update is older then current version");
+        return flatpak_fail (error, "Update is older than current version");
     }
 
   return TRUE;
