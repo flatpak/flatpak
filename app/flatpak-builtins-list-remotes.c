@@ -90,7 +90,9 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
           gboolean disabled;
           g_autofree char *remote_url = NULL;
           g_autofree char *title = NULL;
+#ifdef FLATPAK_ENABLE_P2P
           g_autofree char *collection_id = NULL;
+#endif
           int prio;
           g_autofree char *prio_as_string = NULL;
           gboolean gpg_verify = TRUE;
