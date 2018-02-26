@@ -68,6 +68,9 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
     {
       flatpak_table_printer_set_column_title (printer, j++, _("Title"));
       flatpak_table_printer_set_column_title (printer, j++, _("URL"));
+#ifdef FLATPAK_ENABLE_P2P
+      flatpak_table_printer_set_column_title (printer, j++, _("Collection ID"));
+#endif
       flatpak_table_printer_set_column_title (printer, j++, _("Priority"));
     }
   flatpak_table_printer_set_column_title (printer, j++, _("Options"));
@@ -87,6 +90,9 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
           gboolean disabled;
           g_autofree char *remote_url = NULL;
           g_autofree char *title = NULL;
+#ifdef FLATPAK_ENABLE_P2P
+          g_autofree char *collection_id = NULL;
+#endif
           int prio;
           g_autofree char *prio_as_string = NULL;
           gboolean gpg_verify = TRUE;
@@ -109,6 +115,14 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
                 flatpak_table_printer_add_column (printer, remote_url);
               else
                 flatpak_table_printer_add_column (printer, "-");
+
+#ifdef FLATPAK_ENABLE_P2P
+              collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
+              if (collection_id != NULL)
+                flatpak_table_printer_add_column (printer, collection_id);
+              else
+                flatpak_table_printer_add_column (printer, "-");
+#endif
 
               prio = flatpak_dir_get_remote_prio (dir, remote_name);
               prio_as_string = g_strdup_printf ("%d", prio);
