@@ -524,19 +524,26 @@ flatpak_get_gtk_theme (void)
     {
       /* The schema may not be installed so check first */
       GSettingsSchemaSource *source = g_settings_schema_source_get_default ();
-      g_autoptr(GSettingsSchema) schema = g_settings_schema_source_lookup (source,
-                                            "org.gnome.desktop.interface", FALSE);
+      g_autoptr(GSettingsSchema) schema = NULL;
 
-      if (schema == NULL)
-        g_once_init_leave (&gtk_theme, g_strdup (""));
+      if (source == NULL)
+          g_once_init_leave (&gtk_theme, g_strdup (""));
       else
         {
-          /* GSettings is used to store the theme if you use Wayland or GNOME.
-           * TODO: Check XSettings Net/ThemeName for other desktops.
-           * We don't care about any other method (like settings.ini) because they
-           *   aren't passed through the sandbox anyway. */
-          g_autoptr(GSettings) settings = g_settings_new ("org.gnome.desktop.interface");
-          g_once_init_leave (&gtk_theme, g_settings_get_string (settings, "gtk-theme"));
+          schema = g_settings_schema_source_lookup (source,
+                                                    "org.gnome.desktop.interface", FALSE);
+
+          if (schema == NULL)
+            g_once_init_leave (&gtk_theme, g_strdup (""));
+          else
+            {
+              /* GSettings is used to store the theme if you use Wayland or GNOME.
+               * TODO: Check XSettings Net/ThemeName for other desktops.
+               * We don't care about any other method (like settings.ini) because they
+               *   aren't passed through the sandbox anyway. */
+              g_autoptr(GSettings) settings = g_settings_new ("org.gnome.desktop.interface");
+              g_once_init_leave (&gtk_theme, g_settings_get_string (settings, "gtk-theme"));
+            }
         }
     }
 
