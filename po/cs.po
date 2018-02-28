@@ -1883,7 +1883,7 @@ msgid ""
 " Finding applications and runtimes"
 msgstr ""
 "\n"
-" Vyhledávají se aplikace a prostředí"
+" Vyhledávání aplikací a prostředí"
 
 #: app/flatpak-main.c:72
 msgid "Search for remote apps/runtimes"
