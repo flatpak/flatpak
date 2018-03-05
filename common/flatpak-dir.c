@@ -8471,8 +8471,8 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                _("%s/%s/%s not installed"),
                opt_name ? opt_name : "*unspecified*",
-               opt_arch ? opt_arch : flatpak_get_arch (),
-               opt_branch ? opt_branch : "master");
+               opt_arch ? opt_arch : "*unspecified*",
+               opt_branch ? opt_branch : "*unspecified*");
   return NULL;
 }
 
