@@ -2241,7 +2241,10 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                             g_bytes_get_size (summary_copy),
                                             NULL, FALSE, 0, NULL, cancellable, NULL))
                 return FALSE;
+            }
 
+          if (summary_sig_copy != NULL)
+            {
               summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
               if (!g_file_replace_contents (summary_sig_file,
                                             g_bytes_get_data (summary_sig_copy, NULL),
