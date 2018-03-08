@@ -2396,20 +2396,18 @@ get_common_pull_options (GVariantBuilder     *builder,
                          g_variant_new_variant (g_variant_new_uint32 (update_freq)));
 }
 
-/* This is a copy of ostree_repo_pull_one_dir that always disables
-   static deltas if subdir is used */
 static gboolean
-repo_pull_one_dir (OstreeRepo          *self,
-                   const char          *remote_name,
-                   const char         **dirs_to_pull,
-                   const char          *ref_to_fetch,
-                   const char          *rev_to_fetch,
-                   const OstreeRepoFinderResult * const *results_to_fetch,
-                   FlatpakPullFlags     flatpak_flags,
-                   OstreeRepoPullFlags  flags,
-                   OstreeAsyncProgress *progress,
-                   GCancellable        *cancellable,
-                   GError             **error)
+repo_pull (OstreeRepo          *self,
+           const char          *remote_name,
+           const char         **dirs_to_pull,
+           const char          *ref_to_fetch,
+           const char          *rev_to_fetch,
+           const OstreeRepoFinderResult * const *results_to_fetch,
+           FlatpakPullFlags     flatpak_flags,
+           OstreeRepoPullFlags  flags,
+           OstreeAsyncProgress *progress,
+           GCancellable        *cancellable,
+           GError             **error)
 {
   gboolean force_disable_deltas = (flatpak_flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
   g_autofree char *remote_and_branch = NULL;
@@ -2636,16 +2634,16 @@ flatpak_dir_setup_extra_data (FlatpakDir           *self,
       /* Pull the commits (and only the commits) to check for extra data
        * again. Here we don't pass the progress because we don't want any
        * reports coming out of it. */
-      if (!repo_pull_one_dir (repo, repository,
-                              NULL,
-                              ref,
-                              rev,
-                              results,
-                              flatpak_flags,
-                              OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY,
-                              NULL,
-                              cancellable,
-                              error))
+      if (!repo_pull (repo, repository,
+                      NULL,
+                      ref,
+                      rev,
+                      results,
+                      flatpak_flags,
+                      OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY,
+                      NULL,
+                      cancellable,
+                      error))
         return FALSE;
 
       extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
@@ -3441,11 +3439,11 @@ flatpak_dir_pull (FlatpakDir          *self,
                                      error))
     goto out;
 
-  if (!repo_pull_one_dir (repo, repository,
-                          subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
-                          ref, rev, results, flatpak_flags, flags,
-                          progress,
-                          cancellable, error))
+  if (!repo_pull (repo, repository,
+                  subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
+                  ref, rev, results, flatpak_flags, flags,
+                  progress,
+                  cancellable, error))
     {
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, repository);
       goto out;
@@ -3477,16 +3475,16 @@ out:
 }
 
 static gboolean
-repo_pull_one_local_untrusted (FlatpakDir          *self,
-                               OstreeRepo          *repo,
-                               const char          *remote_name,
-                               const char          *url,
-                               const char         **dirs_to_pull,
-                               const char          *ref,
-                               const char          *checksum,
-                               OstreeAsyncProgress *progress,
-                               GCancellable        *cancellable,
-                               GError             **error)
+repo_pull_local_untrusted (FlatpakDir          *self,
+                           OstreeRepo          *repo,
+                           const char          *remote_name,
+                           const char          *url,
+                           const char         **dirs_to_pull,
+                           const char          *ref,
+                           const char          *checksum,
+                           OstreeAsyncProgress *progress,
+                           GCancellable        *cancellable,
+                           GError             **error)
 {
   /* The latter flag was introduced in https://github.com/ostreedev/ostree/pull/926 */
   const OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED |OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
@@ -3773,10 +3771,10 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   /* Past this we must use goto out, so we abort the transaction on error */
 
-  if (!repo_pull_one_local_untrusted (self, self->repo, remote_name, url,
-                                      subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
-                                      ref, checksum, progress,
-                                      cancellable, error))
+  if (!repo_pull_local_untrusted (self, self->repo, remote_name, url,
+                                  subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
+                                  ref, checksum, progress,
+                                  cancellable, error))
     {
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, remote_name);
       goto out;
