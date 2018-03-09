@@ -2233,6 +2233,13 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                  progress, cancellable, error))
             return FALSE;
 
+          /* Regenerate the summary in the child repo because the
+           * flatpak_dir_pull() call above might not copy the remote summary
+           * into the repo if the "branches" key is set on the remote. */
+          if (collection_id != NULL &&
+              !ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
+            return FALSE;
+
           if (summary_copy != NULL)
             {
               summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
@@ -9890,6 +9897,13 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  NULL, cancellable, error))
+            return FALSE;
+
+          /* Regenerate the summary in the child repo because the
+           * flatpak_dir_pull() call above might not copy the remote summary
+           * into the repo if the "branches" key is set on the remote. */
+          if (collection_id != NULL &&
+              !ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
             return FALSE;
 
           child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
