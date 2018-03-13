@@ -1,23 +1,23 @@
 # Hungarian translation for flatpak.
-# Copyright (C) 2016, 2017 Free Software Foundation, Inc.
+# Copyright (C) 2016, 2017, 2018 Free Software Foundation, Inc.
 # This file is distributed under the same license as the flatpak package.
 #
-# Balázs Úr <urbalazs@gmail.com>, 2016, 2017.
+# Balázs Úr <urbalazs@gmail.com>, 2016, 2017, 2018.
 # Gabor Kelemen <kelemeng at ubuntu dot com>, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2018-02-19 14:20+0100\n"
-"PO-Revision-Date: 2018-01-26 15:02+0100\n"
-"Last-Translator: Balázs Meskó <mesko.balazs@fsf.hu>\n"
+"PO-Revision-Date: 2018-03-10 00:00+0100\n"
+"Last-Translator: Balázs Úr <urbalazs@gmail.com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.3\n"
+"X-Generator: Lokalize 2.0\n"
 
 #: app/flatpak-builtins-add-remote.c:57
 msgid "Do nothing if the provided remote exists"
@@ -289,7 +289,7 @@ msgstr "SAJÁTKÖNYVTÁR"
 
 #: app/flatpak-builtins-build-bundle.c:64
 msgid "OSTree commit to create a delta bundle from"
-msgstr ""
+msgstr "OSTree kommit egy deltacsomag előállításához ebből:"
 
 #: app/flatpak-builtins-build-bundle.c:64 app/flatpak-builtins-info-remote.c:49
 #: app/flatpak-builtins-update.c:54
@@ -1161,16 +1161,12 @@ msgid "Show metadata"
 msgstr "Metaadatok megjelenítése"
 
 #: app/flatpak-builtins-info.c:60
-#, fuzzy
 msgid "Show permissions"
-msgstr "Kiterjesztések megjelenítése"
+msgstr "Jogosultságok megjelenítése"
 
 #: app/flatpak-builtins-info.c:61
-#, fuzzy
 msgid "Query file access"
-msgstr ""
-"\n"
-" Fájlhozzáférés kezelése"
+msgstr "Fájlhozzáférés lekérése"
 
 #: app/flatpak-builtins-info.c:61 app/flatpak-builtins-install.c:68
 #: app/flatpak-builtins-update.c:64
@@ -1193,7 +1189,7 @@ msgstr "a hivatkozás nincs jelen az eredetben"
 
 #: app/flatpak-builtins-info.c:202 app/flatpak-builtins-info-remote.c:177
 msgid "Warning: Commit has no flatpak metadata\n"
-msgstr ""
+msgstr "Figyelmeztetés: a kommitnak nincs flatpak metaadata\n"
 
 #: app/flatpak-builtins-info.c:209 app/flatpak-builtins-info-remote.c:200
 msgid "Ref:"
@@ -1217,9 +1213,8 @@ msgid "Origin:"
 msgstr "Eredet:"
 
 #: app/flatpak-builtins-info.c:215 app/flatpak-builtins-info-remote.c:205
-#, fuzzy
 msgid "Collection ID:"
-msgstr "Gyűjteményazonosító"
+msgstr "Gyűjteményazonosító:"
 
 #: app/flatpak-builtins-info.c:217 app/flatpak-builtins-info-remote.c:206
 msgid "Date:"
@@ -1326,7 +1321,7 @@ msgstr " Kommit:"
 #: app/flatpak-builtins-info-remote.c:292
 #, c-format
 msgid "Warning: Commit %s has no flatpak metadata\n"
-msgstr ""
+msgstr "Figyelmeztetés: a(z) %s kommitnak nincs flatpak metaadata\n"
 
 #: app/flatpak-builtins-install.c:58
 msgid "Don't pull, only install from local cache"
@@ -2030,9 +2025,8 @@ msgid "Export a build dir to a repository"
 msgstr "Összeállítási könyvtár exportálása tárolóba"
 
 #: app/flatpak-main.c:104
-#, fuzzy
 msgid "Create a bundle file from a ref in a local repository"
-msgstr "Csomagfájl létrehozása összeállítási könyvtárból"
+msgstr "Csomagfájl létrehozása egy hivatkozásból egy helyi tárolóban"
 
 #: app/flatpak-main.c:105
 msgid "Import a bundle file"
@@ -2105,12 +2099,11 @@ msgid "Builtin Commands:"
 msgstr "Beépített parancsok:"
 
 #: app/flatpak-main.c:370
-#, fuzzy
 msgid ""
 "The --installation option was used multiple times for a command that works "
 "on one installation"
 msgstr ""
-"Az --installation kapcsoló többször használva volt, egy olyan parancsnál, "
+"Az --installation kapcsoló többször volt használva egy olyan parancsnál, "
 "amely csak egy telepítésnél működik"
 
 #: app/flatpak-main.c:489
@@ -2445,6 +2438,8 @@ msgstr "Nem lehet létrehozni a telepítési könyvtárat"
 #, c-format
 msgid "Failed to find latest revision for ref %s from remote %s: %s\n"
 msgstr ""
+"Nem sikerült megtalálni a legújabb verziót a(z) %s hivatkozáshoz a(z) %s "
+"távoliból: %s\n"
 
 #: common/flatpak-dir.c:2761
 #, c-format
@@ -2893,34 +2888,3 @@ msgstr "Hitelesítés szükséges a szoftvertelepítés beállításához"
 msgid "Update appstream"
 msgstr "AppStream frissítése"
 
-#~ msgid "No remote %s"
-#~ msgstr "Nincs távoli %s"
-
-#, fuzzy
-#~ msgid "Search only user installations"
-#~ msgstr "Felhasználói telepítések megjelenítése"
-
-#, fuzzy
-#~ msgid "Search only system-wide installations"
-#~ msgstr "Rendszerszintű telepítések megjelenítése"
-
-#, fuzzy
-#~ msgid "Search specific system-wide installations"
-#~ msgstr "Bizonyos rendszerszintű telepítések megjelenítése"
-
-#~ msgid "Failed to create temporary file"
-#~ msgstr "Nem sikerült létrehozni az átmeneti fájlt"
-
-#~ msgid "Failed to unlink temporary file"
-#~ msgstr "Nem sikerült törölni az átmeneti fájlt"
-
-#~ msgid "Failed to write to temporary file"
-#~ msgstr "Nem sikerült írni az átmeneti fájlba"
-
-#, fuzzy
-#~ msgid "Installing %s"
-#~ msgstr "Telepítés: %s\n"
-
-#, fuzzy
-#~ msgid "Post-Install %s"
-#~ msgstr "Telepítés: %s\n"
