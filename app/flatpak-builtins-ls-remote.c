@@ -145,6 +145,9 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
               RemoteDirPair *remote_dir_pair = NULL;
               const char *remote_name = remotes[j];
 
+              if (flatpak_dir_get_remote_disabled (dir, remote_name))
+                continue;
+
               if (!flatpak_dir_list_remote_refs (dir,
                                                  remote_name,
                                                  &refs,
