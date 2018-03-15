@@ -318,7 +318,19 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
       if (path_is_mapped (keys, n_keys, exports->hash, path_builder->str, &is_readonly))
         {
           if (lstat (path_builder->str, &st) != 0)
-            return 0;
+            {
+              if (errno == ENOENT && parts[i+1] == NULL && !is_readonly)
+                {
+                  /* Last element was mapped but isn't there, this is
+                   * OK (used for the save case) if we the parent is
+                   * mapped and writable, as the app can then create
+                   * the file here.
+                   */
+                  break;
+                }
+
+              return 0;
+            }
 
           if (S_ISLNK (st.st_mode))
             {
