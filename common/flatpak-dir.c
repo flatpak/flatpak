@@ -2361,12 +2361,14 @@ repo_get_remote_collection_id (OstreeRepo  *repo,
  * collection-based and normal pulls. Update @builder in place. */
 static void
 get_common_pull_options (GVariantBuilder     *builder,
+                         const char          *ref_to_fetch,
                          const gchar * const *dirs_to_pull,
                          gboolean             force_disable_deltas,
                          OstreeRepoPullFlags  flags,
                          OstreeAsyncProgress *progress)
 {
   guint32 update_freq = 0;
+  GVariantBuilder hdr_builder;
 
   if (dirs_to_pull)
     {
@@ -2386,6 +2388,12 @@ get_common_pull_options (GVariantBuilder     *builder,
 
   g_variant_builder_add (builder, "{s@v}", "flags",
                          g_variant_new_variant (g_variant_new_int32 (flags)));
+
+
+  g_variant_builder_init (&hdr_builder, G_VARIANT_TYPE ("a(ss)"));
+  g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Ref", ref_to_fetch);
+  g_variant_builder_add (builder, "{s@v}", "http-headers",
+                         g_variant_new_variant (g_variant_builder_end (&hdr_builder)));
 
   if (progress != NULL)
     update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
@@ -2474,7 +2482,7 @@ repo_pull_one_dir (OstreeRepo          *self,
 
       /* Pull options */
       g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
-      get_common_pull_options (&pull_builder, dirs_to_pull,
+      get_common_pull_options (&pull_builder, ref_to_fetch, dirs_to_pull,
                                force_disable_deltas, flags, progress);
       pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
@@ -2531,7 +2539,7 @@ repo_pull_one_dir (OstreeRepo          *self,
 
       /* Pull options */
       g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
-      get_common_pull_options (&builder, dirs_to_pull,
+      get_common_pull_options (&builder, ref_to_fetch, dirs_to_pull,
                                force_disable_deltas, flags, progress);
 
       refs_to_fetch[0] = ref_to_fetch;
