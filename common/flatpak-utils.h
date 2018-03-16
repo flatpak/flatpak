@@ -72,8 +72,6 @@ gboolean  flatpak_has_path_prefix (const char *str,
 const char * flatpak_path_match_prefix (const char *pattern,
                                         const char *path);
 
-gboolean flatpak_is_in_sandbox (void);
-
 gboolean flatpak_fancy_output (void);
 
 const char * flatpak_get_arch (void);
@@ -98,7 +96,6 @@ void flatpak_migrate_from_xdg_app (void);
 GFile *flatpak_file_new_tmp_in (GFile *dir,
                                 const char *templatename,
                                 GError        **error);
-gboolean flatpak_break_hardlink (GFile *file, GError **error);
 
 gboolean flatpak_write_update_checksum (GOutputStream  *out,
                                         gconstpointer   data,
@@ -220,25 +217,9 @@ char ** flatpak_list_unmaintained_refs (const char   *name_prefix,
                                         GCancellable *cancellable,
                                         GError      **error);
 
-gboolean flatpak_overlay_symlink_tree (GFile        *source,
-                                       GFile        *destination,
-                                       const char   *symlink_prefix,
-                                       GCancellable *cancellable,
-                                       GError      **error);
 gboolean flatpak_remove_dangling_symlinks (GFile        *dir,
                                            GCancellable *cancellable,
                                            GError      **error);
-
-void  flatpak_invocation_lookup_app_info (GDBusMethodInvocation *invocation,
-                                          GCancellable          *cancellable,
-                                          GAsyncReadyCallback    callback,
-                                          gpointer               user_data);
-
-GKeyFile *flatpak_invocation_lookup_app_info_finish (GDBusMethodInvocation *invocation,
-                                                     GAsyncResult          *result,
-                                                     GError               **error);
-
-void  flatpak_connection_track_name_owners (GDBusConnection *connection);
 
 #if !GLIB_CHECK_VERSION (2, 40, 0)
 static inline gboolean
@@ -418,18 +399,6 @@ GList *flatpak_list_extensions (GKeyFile   *metakey,
 
 char * flatpak_quote_argv (const char *argv[]);
 gboolean flatpak_file_arg_has_suffix (const char *arg, const char *suffix);
-
-gboolean            flatpak_spawn (GFile       *dir,
-                                   char       **output,
-                                   GError     **error,
-                                   const gchar *argv0,
-                                   va_list      args);
-
-gboolean            flatpak_spawnv (GFile                *dir,
-                                    char                **output,
-                                    GSubprocessFlags      flags,
-                                    GError              **error,
-                                    const gchar * const  *argv);
 
 const char *flatpak_file_get_path_cached (GFile *file);
 
