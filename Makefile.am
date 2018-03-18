@@ -94,8 +94,6 @@ include lib/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include system-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
-include permission-store/Makefile.am.inc
-include document-portal/Makefile.am.inc
 include tests/Makefile.am.inc
 
 if !WITH_SYSTEM_BWRAP

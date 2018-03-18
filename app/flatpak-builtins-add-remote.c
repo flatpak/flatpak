@@ -89,8 +89,15 @@ static GOptionEntry common_options[] = {
 static GKeyFile *
 get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *changed)
 {
-  GKeyFile *config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+  OstreeRepo *repo;
+  GKeyFile *config;
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
+
+  repo = flatpak_dir_get_repo (dir);
+  if (repo == NULL)
+    config = g_key_file_new ();
+  else
+    config = ostree_repo_copy_config (repo);
 
   if (opt_no_gpg_verify)
     {
@@ -298,7 +305,8 @@ flatpak_builtin_add_remote (int argc, char **argv,
                             GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   g_autoptr(GFile) file = NULL;
   g_auto(GStrv) remotes = NULL;
   g_autofree char *remote_url = NULL;
@@ -314,8 +322,12 @@ flatpak_builtin_add_remote (int argc, char **argv,
 
   g_option_context_add_main_entries (context, common_options, NULL);
 
-  if (!flatpak_option_context_parse (context, add_options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, add_options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (argc < 2)
     return usage_error (context, _("NAME must be specified"), error);
@@ -371,8 +383,8 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (opt_oci && g_getenv ("FLATPAK_ENABLE_EXPERIMENTAL_OCI") == NULL)
     return flatpak_fail (error, "flatpak remote-add --oci is currently unsupported and experimental, enable it by setting the FLATPAK_ENABLE_EXPERIMENTAL_OCI env var");
 
-  /* Default to gpg verify */
-  if (!opt_no_gpg_verify)
+  /* Default to gpg verify, except for --oci */
+  if (!opt_no_gpg_verify && !opt_oci)
     opt_do_gpg_verify = TRUE;
 
   config = get_config_from_opts (dir, remote_name, &changed);
@@ -416,11 +428,11 @@ gboolean
 flatpak_complete_add_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
 
   context = g_option_context_new ("");
   g_option_context_add_main_entries (context, common_options, NULL);
-  if (!flatpak_option_context_parse (context, add_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, add_options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, NULL, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
@@ -442,7 +454,8 @@ gboolean
 flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  g_autoptr(FlatpakDir) preferred_dir = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   const char *remote_name;
@@ -453,7 +466,8 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   g_option_context_add_main_entries (context, common_options, NULL);
 
-  if (!flatpak_option_context_parse (context, modify_options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, modify_options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -461,26 +475,26 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   remote_name = argv[1];
 
-  if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, NULL, NULL))
-    return flatpak_fail (error, _("No remote %s"), remote_name);
+  if (!flatpak_resolve_duplicate_remotes (dirs, remote_name, &preferred_dir, cancellable, error))
+    return FALSE;
 
   if (opt_update_metadata)
     {
       g_autoptr(GError) local_error = NULL;
 
       g_print (_("Updating extra metadata from remote summary for %s\n"), remote_name);
-      if (!flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, &local_error))
+      if (!flatpak_dir_update_remote_configuration (preferred_dir, remote_name, cancellable, &local_error))
         {
           g_printerr (_("Error updating extra metadata for '%s': %s\n"), remote_name, local_error->message);
           return flatpak_fail (error, _("Could not update extra metadata for %s"), remote_name);
         }
 
       /* Reload changed configuration */
-      if (!flatpak_dir_recreate_repo (dir, cancellable, error))
+      if (!flatpak_dir_recreate_repo (preferred_dir, cancellable, error))
         return FALSE;
     }
 
-  config = get_config_from_opts (dir, remote_name, &changed);
+  config = get_config_from_opts (preferred_dir, remote_name, &changed);
 
   if (opt_gpg_import != NULL)
     {
@@ -493,19 +507,20 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
   if (!changed)
     return TRUE;
 
-  return flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error);
+  return flatpak_dir_modify_remote (preferred_dir, remote_name, config, gpg_data, cancellable, error);
 }
 
 gboolean
 flatpak_complete_modify_remote (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
   int i;
 
   context = g_option_context_new ("");
   g_option_context_add_main_entries (context, common_options, NULL);
-  if (!flatpak_option_context_parse (context, modify_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, modify_options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
@@ -517,13 +532,16 @@ flatpak_complete_modify_remote (FlatpakCompletion *completion)
       flatpak_complete_options (completion, modify_options);
       flatpak_complete_options (completion, user_entries);
 
-      {
-        g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
-        if (remotes == NULL)
-          return FALSE;
-        for (i = 0; remotes[i] != NULL; i++)
-          flatpak_complete_word (completion, "%s ", remotes[i]);
-      }
+      for (i = 0; i < dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          int j;
+          g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
+          if (remotes == NULL)
+            return FALSE;
+          for (j = 0; remotes[j] != NULL; j++)
+            flatpak_complete_word (completion, "%s ", remotes[j]);
+        }
 
       break;
     }

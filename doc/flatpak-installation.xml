@@ -76,7 +76,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>StorageType</option> (string)</term>
-                    <listitem><para>The type of storage used for this installation. Possible values include: mmc, sdcard, harddisk.</para></listitem>
+                    <listitem><para>The type of storage used for this installation. Possible values include: network, mmc, sdcard, harddisk.</para></listitem>
                 </varlistentry>
             </variablelist>
         </refsect2>

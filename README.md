@@ -5,12 +5,23 @@
 Flatpak is a system for building, distributing and running sandboxed
 desktop applications on Linux.
 
-See http://flatpak.org/ for more information.
+See https://flatpak.org/ for more information.
 
-Read documentation for the flatpak [commandline tools](http://flatpak.github.io/flatpak/flatpak-docs.html) and for the libflatpak [library API](http://flatpak.github.io/flatpak/reference/html/index.html).
+Community discussion happens in [#flatpak on Freenode](ircs://chat.freenode.net/flatpak) and on [the mailing list](https://lists.freedesktop.org/mailman/listinfo/flatpak).
 
-# INSTALLATION
+Read documentation for the flatpak [commandline tools](http://docs.flatpak.org/en/latest/command-reference.html) and for the libflatpak [library API](http://flatpak.github.io/flatpak/reference/html/index.html).
 
+# Contributing
+
+Flatpak welcomes contributions from anyone! Here are some ways you can help:
+* Fix [one of the issues](https://github.com/flatpak/flatpak/issues/) and submit a PR
+* Update flatpak's translations and submit a PR
+* Update flatpak's documentation, hosted at http://docs.flatpak.org and developed over in [flatpak-docs](https://github.com/flatpak/flatpak-docs)
+* Find a bug and [submit a detailed report](https://github.com/flatpak/flatpak/issues/new) including your OS, flatpak version, and the steps to reproduce
+* Add your favorite application to [Flathub](https://flathub.org) by writing a flatpak-builder manifest and [submitting it](https://github.com/flathub/flathub/wiki/App-Submission)
+* Improve the Flatpak support in your favorite Linux distribution
+
+# Hacking
 Flatpak uses a traditional autoconf-style build mechanism. To build just do
 ```
  ./configure [args]
@@ -31,10 +42,8 @@ has a recent enough version of Bubblewrap already, you can use
 
 Bubblewrap can run in two modes, either using unprivileged user
 namespaces or setuid mode. This requires that the kernel supports this,
-which some distributions disable. For instance, Arch completely
-disables user namespaces, while Debian supports unprivileged user
-namespaces, but only if you turn on the
-`kernel.unprivileged_userns_clone` sysctl.
+which some distributions disable. For instance, Debian and Arch 
+([linux](https://www.archlinux.org/packages/?name=linux) kernel v4.14.5 or later), support user namespaces with the `kernel.unprivileged_userns_clone` sysctl enabled.
 
 If unprivileged user namespaces are not available, then Bubblewrap must
 be built as setuid root. This is believed to be safe, as it is

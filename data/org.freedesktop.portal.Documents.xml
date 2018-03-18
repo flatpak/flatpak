@@ -72,6 +72,7 @@
         access to the file.
     -->
     <method name="Add">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='h' name='o_path_fd' direction='in'/>
       <arg type='b' name='reuse_existing' direction='in'/>
       <arg type='b' name='persistent' direction='in'/>
@@ -89,6 +90,7 @@
         Creates an entry in the document store for writing a new file.
     -->
     <method name="AddNamed">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='h' name='o_path_parent_fd' direction='in'/>
       <arg type='ay' name='filename' direction='in'/>
       <arg type='b' name='reuse_existing' direction='in'/>
@@ -124,11 +126,49 @@
         This method was added in version 2 of the org.freedesktop.portal.Documents interface.
     -->
     <method name="AddFull">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='ah' name='o_path_fds' direction='in'/>
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='app_id' direction='in'/>
       <arg type='as' name='permissions' direction='in'/>
       <arg type='as' name='doc_ids' direction='out'/>
+      <arg type='a{sv}' name='extra_out' direction='out'/>
+    </method>
+
+    <!--
+        AddNamedFull:
+        @o_path_fds: open file descriptor for the parent directory
+        @filename: the basename for the file
+        @flags: flags, 1 == reuse_existing, 2 == persistent, 3 == as-needed-by-app
+        @app_id: an application ID, or empty string
+        @permissions: the permissions to grant, possible values are 'read', 'write', 'grant-permissions' and 'delete'
+        @doc_id: the ID of the file in the document store
+        @extra_info: Extra info returned
+
+        Creates an entry in the document store for writing a new file.
+
+        If the as-needed-by-app flag is given, file will only be added to
+        the document store if the application does not already have access to it.
+        For file that is not added to the document store, the doc_id will
+        contain an empty string.
+
+        Additionally, if app_id is specified, it will be given the permissions
+        listed in GrantPermission.
+
+        The method also returns some extra info that can be used to avoid
+        multiple roundtrips. For now it only contains as "mountpoint", the
+        fuse mountpoint of the document portal.
+
+        This method was added in version 3 of the org.freedesktop.portal.Documents interface.
+    -->
+    <method name="AddNamedFull">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
+      <arg type='h' name='o_path_fd' direction='in'/>
+      <arg type='ay' name='filename' direction='in'/>
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='app_id' direction='in'/>
+      <arg type='as' name='permissions' direction='in'/>
+      <arg type='s' name='doc_id' direction='out'/>
       <arg type='a{sv}' name='extra_out' direction='out'/>
     </method>
 

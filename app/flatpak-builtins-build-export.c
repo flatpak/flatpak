@@ -230,7 +230,7 @@ add_file_to_mtree (GFile             *file,
   g_file_info_set_file_type (file_info, G_FILE_TYPE_REGULAR);
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
-  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100744);
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100644);
 
   raw_input = (GInputStream *) g_file_read (file, cancellable, error);
   if (raw_input == NULL)
@@ -822,6 +822,12 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     goto out;
 
+  /* This is useful only if the target is a "bare" rep, but this happens
+     in flatpak-builder when commiting to the cache repo. For other repos
+     this is a no-op */
+  if (!ostree_repo_scan_hardlinks (repo, cancellable, error))
+    goto out;
+
   mtree = ostree_mutable_tree_new ();
 
   if (!flatpak_mtree_create_root (repo, mtree, cancellable, error))
@@ -891,7 +897,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
 
-  /* required for the metadata and the AppStream commits */
+  /* The timestamp is used for the commit metadata and AppStream data */
   if (opt_timestamp != NULL)
     {
       if (!g_time_val_from_iso8601 (opt_timestamp, &ts))
@@ -954,7 +960,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_update_appstream &&
       !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir,
-                                        ts.tv_sec, cancellable, error))
+                                        (opt_timestamp != NULL) ? ts.tv_sec : 0, cancellable, error))
     return FALSE;
 
   if (!opt_no_update_summary &&

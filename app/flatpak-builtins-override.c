@@ -45,30 +45,36 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
   g_autoptr(GOptionContext) context = NULL;
   const char *app;
   g_autoptr(FlatpakContext) arg_context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  context = g_option_context_new (_("APP - Override settings for application"));
+  context = g_option_context_new (_("[APP] - Override settings [for application]"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   arg_context = flatpak_context_new ();
   g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
 
-  if (argc < 2)
-    return usage_error (context, _("APP must be specified"), error);
+  dir = g_ptr_array_index (dirs, 0);
 
   if (argc > 2)
     return usage_error (context, _("Too many arguments"), error);
 
-  app = argv[1];
-
-  if (!flatpak_is_valid_name (app, &my_error))
-    return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app, my_error->message);
+  if (argc >= 2)
+    {
+      app = argv[1];
+      if (!flatpak_is_valid_name (app, &my_error))
+        return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app, my_error->message);
+    }
+  else
+    app = NULL;
 
   metakey = flatpak_load_override_keyfile (app, flatpak_dir_is_user (dir), &my_error);
   if (metakey == NULL)
@@ -99,8 +105,7 @@ gboolean
 flatpak_complete_override (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
   g_autoptr(GError) error = NULL;
   int i;
   g_autoptr(FlatpakContext) arg_context = NULL;
@@ -111,7 +116,7 @@ flatpak_complete_override (FlatpakCompletion *completion)
   g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
@@ -122,33 +127,21 @@ flatpak_complete_override (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
       flatpak_context_complete (arg_context, completion);
 
-      user_dir = flatpak_dir_get_user ();
-      {
-        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, NULL,
-                                                              FLATPAK_KINDS_APP, &error);
-        if (refs == NULL)
-          flatpak_completion_debug ("find local refs error: %s", error->message);
-        for (i = 0; refs != NULL && refs[i] != NULL; i++)
-          {
-            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-            if (parts)
-              flatpak_complete_word (completion, "%s ", parts[1]);
-          }
-      }
-
-      system_dir = flatpak_dir_get_system_default ();
-      {
-        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, NULL,
-                                                              FLATPAK_KINDS_APP, &error);
-        if (refs == NULL)
-          flatpak_completion_debug ("find local refs error: %s", error->message);
-        for (i = 0; refs != NULL && refs[i] != NULL; i++)
-          {
-            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-            if (parts)
-              flatpak_complete_word (completion, "%s ", parts[1]);
-          }
-      }
+      for (i = 0; i < dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          int j;
+          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, NULL,
+                                                                FLATPAK_KINDS_APP, &error);
+          if (refs == NULL)
+            flatpak_completion_debug ("find local refs error: %s", error->message);
+          for (j = 0; refs != NULL && refs[j] != NULL; j++)
+            {
+              g_auto(GStrv) parts = flatpak_decompose_ref (refs[j], NULL);
+              if (parts)
+                flatpak_complete_word (completion, "%s ", parts[1]);
+            }
+        }
 
       break;
 

@@ -198,13 +198,18 @@ gboolean
 flatpak_builtin_config (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
 
   context = g_option_context_new (_("[KEY [VALUE]] - Manage configuration"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (opt_get)
     return get_config (argc, argv, dir, cancellable, error);
@@ -215,7 +220,7 @@ flatpak_builtin_config (int argc, char **argv, GCancellable *cancellable, GError
   else if (opt_list)
     return list_config (argc, argv, dir, cancellable, error);
   else
-    return flatpak_fail (error, _("Must specify one on --list, --get, --set or --unset"));
+    return flatpak_fail (error, _("Must specify one of --list, --get, --set or --unset"));
 
   return TRUE;
 }
@@ -224,16 +229,16 @@ gboolean
 flatpak_complete_config (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, NULL, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
     {
     case 0:
-    case 1: /* REMOTE */
+    case 1: /* KEY */
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
       flatpak_complete_options (completion, user_entries);

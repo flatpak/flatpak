@@ -24,6 +24,7 @@ man1 = \
 	flatpak-remote-delete.1		\
 	flatpak-remote-modify.1		\
 	flatpak-remote-ls.1		\
+	flatpak-remote-info.1		\
 	flatpak-install.1		\
 	flatpak-config.1		\
 	flatpak-update.1		\
@@ -48,6 +49,7 @@ man1 = \
 	flatpak-build-sign.1		\
 	flatpak-build-commit-from.1	\
 	flatpak-repo.1			\
+	flatpak-search.1		\
 	$(NULL)
 
 man5 = \
@@ -94,4 +96,3 @@ flatpak-docs.html: flatpak-docs.xml $(xml_files) xmlto-config.xsl
 	$(AM_V_GEN) $(XMLTO) $(XMLTO_FLAGS) --skip-validation xhtml-nochunks -m $(srcdir)/xmlto-config.xsl $<
 
 endif # DOCBOOK_DOCS_ENABLED
-

@@ -102,7 +102,7 @@
                 <term><option>--verbose</option></term>
 
                 <listitem><para>
-                    Print debug information during command processing.
+                    Print debug information during command processing. Use -vv for more detail.
                 </para></listitem>
             </varlistentry>
 
@@ -195,6 +195,19 @@
 
                 <listitem><para>
                     Manage flatpak configuration.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+
+        <para>Commands for finding applications and runtimes:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-search</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Search for applications and runtimes.
                 </para></listitem>
             </varlistentry>
         </variablelist>
@@ -305,6 +318,13 @@
                     List contents of a configured remote repository.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remote-info</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Show information about a ref in a configured remote repository.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
         <para>Commands for building applications:</para>
@@ -342,7 +362,7 @@
                 <term><citerefentry><refentrytitle>flatpak-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Create a bundle file from a build directory.
+                    Create a bundle file from a ref in a local repository.
                 </para></listitem>
             </varlistentry>
             <varlistentry>

@@ -29,9 +29,9 @@
 #include <gio/gunixfdlist.h>
 #include <libsoup/soup.h>
 #include "flatpak-dbus.h"
+#include "flatpak-document-dbus.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
-#include "document-portal/xdp-dbus.h"
 
 typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
@@ -375,11 +375,11 @@ typedef void (*FlatpakOciPullProgress) (guint64 total_size, guint64 pulled_size,
 
 char * flatpak_pull_from_oci (OstreeRepo   *repo,
                               FlatpakOciRegistry *registry,
+			      const char *oci_repository,
                               const char *digest,
                               FlatpakOciManifest *manifest,
                               const char *remote,
                               const char *ref,
-                              const char *signature_digest,
                               FlatpakOciPullProgress progress_cb,
                               gpointer progress_data,
                               GCancellable *cancellable,
@@ -387,8 +387,8 @@ char * flatpak_pull_from_oci (OstreeRepo   *repo,
 
 gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
                                         FlatpakOciRegistry *registry,
+                                        const char *oci_repository,
                                         const char *digest,
-                                        const char *signature_digest,
                                         FlatpakOciPullProgress progress_cb,
                                         gpointer progress_data,
                                         GCancellable *cancellable,
@@ -486,6 +486,13 @@ gboolean flatpak_open_in_tmpdir_at (int                tmpdir_fd,
                                     GOutputStream    **out_stream,
                                     GCancellable      *cancellable,
                                     GError           **error);
+
+gboolean
+flatpak_buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
+                                           const char  *name,
+                                           const char  *str,
+                                           size_t       len,
+                                           GError     **error);
 
 static inline void
 flatpak_temp_dir_destroy (void *p)
@@ -643,8 +650,15 @@ gboolean flatpak_yes_no_prompt (const char *prompt, ...) G_GNUC_PRINTF(1, 2);
 long flatpak_number_prompt (int min, int max, const char *prompt, ...) G_GNUC_PRINTF(3, 4);
 
 SoupSession * flatpak_create_soup_session (const char *user_agent);
+
+typedef enum {
+  FLATPAK_HTTP_FLAGS_NONE = 0,
+  FLATPAK_HTTP_FLAGS_ACCEPT_OCI = 1<<0,
+} FlatpakHTTPFlags;
+
 GBytes * flatpak_load_http_uri (SoupSession *soup_session,
                                 const char   *uri,
+				FlatpakHTTPFlags flags,
                                 const char   *etag,
                                 char        **out_etag,
                                 FlatpakLoadUriProgress progress,
@@ -653,6 +667,7 @@ GBytes * flatpak_load_http_uri (SoupSession *soup_session,
                                 GError      **error);
 gboolean flatpak_download_http_uri (SoupSession *soup_session,
                                     const char   *uri,
+				    FlatpakHTTPFlags flags,
                                     GOutputStream *out,
                                     FlatpakLoadUriProgress progress,
                                     gpointer      user_data,

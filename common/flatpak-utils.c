@@ -38,6 +38,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/ioctl.h>
@@ -501,6 +502,52 @@ flatpak_get_gl_drivers (void)
     }
 
   return (const char **)drivers;
+}
+
+static gboolean
+flatpak_get_have_intel_gpu (void)
+{
+  static int have_intel = -1;
+
+  if (have_intel == -1)
+    have_intel = g_file_test ("/sys/module/i915", G_FILE_TEST_EXISTS);
+
+  return have_intel;
+}
+
+static const char *
+flatpak_get_gtk_theme (void)
+{
+  static char *gtk_theme;
+
+  if (g_once_init_enter (&gtk_theme))
+    {
+      /* The schema may not be installed so check first */
+      GSettingsSchemaSource *source = g_settings_schema_source_get_default ();
+      g_autoptr(GSettingsSchema) schema = NULL;
+
+      if (source == NULL)
+          g_once_init_leave (&gtk_theme, g_strdup (""));
+      else
+        {
+          schema = g_settings_schema_source_lookup (source,
+                                                    "org.gnome.desktop.interface", FALSE);
+
+          if (schema == NULL)
+            g_once_init_leave (&gtk_theme, g_strdup (""));
+          else
+            {
+              /* GSettings is used to store the theme if you use Wayland or GNOME.
+               * TODO: Check XSettings Net/ThemeName for other desktops.
+               * We don't care about any other method (like settings.ini) because they
+               *   aren't passed through the sandbox anyway. */
+              g_autoptr(GSettings) settings = g_settings_new ("org.gnome.desktop.interface");
+              g_once_init_leave (&gtk_theme, g_settings_get_string (settings, "gtk-theme"));
+            }
+        }
+    }
+
+  return (const char*)gtk_theme;
 }
 
 gboolean
@@ -2492,6 +2539,54 @@ gboolean flatpak_file_rename (GFile *from,
   return TRUE;
 }
 
+/* If memfd_create() is available, generate a sealed memfd with contents of
+ * @str. Otherwise use an O_TMPFILE @tmpf in anonymous mode, write @str to
+ * @tmpf, and lseek() back to the start. See also similar uses in e.g.
+ * rpm-ostree for running dracut.
+ */
+gboolean
+flatpak_buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
+                                           const char  *name,
+                                           const char  *str,
+                                           size_t       len,
+                                           GError     **error)
+{
+  if (len == -1)
+    len = strlen (str);
+  glnx_autofd int memfd = memfd_create (name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
+  int fd; /* Unowned */
+  if (memfd != -1)
+    {
+      fd = memfd;
+    }
+  else
+    {
+      /* We use an anonymous fd (i.e. O_EXCL) since we don't want
+       * the target container to potentially be able to re-link it.
+       */
+      if (!G_IN_SET (errno, ENOSYS, EOPNOTSUPP))
+        return glnx_throw_errno_prefix (error, "memfd_create");
+      if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, tmpf, error))
+        return FALSE;
+      fd = tmpf->fd;
+    }
+  if (ftruncate (fd, len) < 0)
+    return glnx_throw_errno_prefix (error, "ftruncate");
+  if (glnx_loop_write (fd, str, len) < 0)
+    return glnx_throw_errno_prefix (error, "write");
+  if (lseek (fd, 0, SEEK_SET) < 0)
+    return glnx_throw_errno_prefix (error, "lseek");
+  if (memfd != -1)
+    {
+      if (fcntl (memfd, F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE | F_SEAL_SEAL) < 0)
+        return glnx_throw_errno_prefix (error, "fcntl(F_ADD_SEALS)");
+      /* The other values can stay default */
+      tmpf->fd = glnx_steal_fd (&memfd);
+      tmpf->initialized = TRUE;
+    }
+  return TRUE;
+}
+
 gboolean
 flatpak_open_in_tmpdir_at (int                tmpdir_fd,
                            int                mode,
@@ -3821,15 +3916,20 @@ extract_appstream (OstreeRepo   *repo,
           component_id_text_node = flatpak_xml_find (component_id, NULL, NULL);
 
           component_id_text = g_strstrip (g_strdup (component_id_text_node->text));
-          if (!g_str_has_prefix (component_id_text, id) ||
-              !g_str_has_suffix (component_id_text, ".desktop"))
+
+          /* .desktop suffix in component ID is suggested, not required
+             (unless app ID actually ends in .desktop) */
+          if (g_str_has_suffix (component_id_text, ".desktop") &&
+              !g_str_has_suffix (id, ".desktop"))
+            component_id_text[strlen (component_id_text) - strlen (".desktop")] = 0;
+
+          if (!g_str_has_prefix (component_id_text, id))
             {
               component = component->next_sibling;
               continue;
             }
 
           g_print ("Extracting icons for component %s\n", component_id_text);
-          component_id_text[strlen (component_id_text) - strlen (".desktop")] = 0;
 
           if (!copy_icon (component_id_text, root, dest, "64x64", &my_error))
             {
@@ -4224,6 +4324,16 @@ flatpak_extension_matches_reason (const char *extension_id,
         }
 
       return FALSE;
+    }
+  else if (strcmp (reason, "active-gtk-theme") == 0)
+    {
+      const char *gtk_theme = flatpak_get_gtk_theme ();
+      return (strcmp (gtk_theme, extension_basename) == 0);
+    }
+  else if (strcmp (reason, "have-intel-gpu") == 0)
+    {
+      /* Used for Intel VAAPI driver extension */
+      return flatpak_get_have_intel_gpu ();
     }
 
   return FALSE;
@@ -4954,8 +5064,8 @@ oci_layer_progress (guint64 downloaded_bytes,
 gboolean
 flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
                                FlatpakOciRegistry *registry,
+			       const char *oci_repository,
                                const char *digest,
-                               const char *signature_digest,
                                FlatpakOciPullProgress progress_cb,
                                gpointer progress_user_data,
                                GCancellable *cancellable,
@@ -4969,14 +5079,10 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
   g_autoptr(FlatpakOciIndex) index = NULL;
   int i;
 
-  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, digest, NULL, NULL, cancellable, error))
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, cancellable, error))
     return FALSE;
 
-  if (signature_digest &&
-      !flatpak_oci_registry_mirror_blob (dst_registry, registry, signature_digest, NULL, NULL, cancellable, error))
-    return FALSE;
-
-  versioned = flatpak_oci_registry_load_versioned (dst_registry, digest, &versioned_size, cancellable, error);
+  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, &versioned_size, cancellable, error);
   if (versioned == NULL)
     return FALSE;
 
@@ -4991,7 +5097,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 
   if (manifest->config.digest != NULL)
     {
-      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, manifest->config.digest, NULL, NULL, cancellable, error))
+      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, NULL, NULL, cancellable, error))
         return FALSE;
     }
 
@@ -5011,7 +5117,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
 
-      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, layer->digest,
+      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, layer->digest,
                                              oci_layer_progress, &progress_data,
                                              cancellable, error))
         return FALSE;
@@ -5029,11 +5135,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
-  if (signature_digest)
-    g_hash_table_replace (manifest_desc->annotations,
-                          g_strdup ("org.flatpak.signature-digest"),
-                          g_strdup (signature_digest));
-
   flatpak_oci_index_add_manifest (index, manifest_desc);
 
   if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
@@ -5046,11 +5147,11 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
 char *
 flatpak_pull_from_oci (OstreeRepo   *repo,
                        FlatpakOciRegistry *registry,
+                       const char *oci_repository,
                        const char *digest,
                        FlatpakOciManifest *manifest,
                        const char *remote,
                        const char *ref,
-                       const char *signature_digest,
                        FlatpakOciPullProgress progress_cb,
                        gpointer progress_user_data,
                        GCancellable *cancellable,
@@ -5069,57 +5170,10 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
   GHashTable *annotations;
-  gboolean gpg_verify = FALSE;
   int i;
 
   g_assert (ref != NULL);
   g_assert (g_str_has_prefix (digest, "sha256:"));
-
-  if (remote &&
-      !ostree_repo_remote_get_gpg_verify (repo, remote,
-                                          &gpg_verify, error))
-    return NULL;
-
-  if (gpg_verify)
-    {
-      g_autoptr(GBytes) signature_bytes = NULL;
-      g_autoptr(FlatpakOciSignature) signature = NULL;
-
-      if (signature_digest == NULL)
-        {
-          flatpak_fail (error, "GPG verification enabled, but no OCI signature found");
-          return NULL;
-        }
-
-      signature_bytes = flatpak_oci_registry_load_blob (registry, signature_digest, cancellable, error);
-      if (signature_bytes == NULL)
-        return NULL;
-
-      signature = flatpak_oci_verify_signature (repo, remote, signature_bytes, error);
-      if (signature == NULL)
-        return NULL;
-
-      if (g_strcmp0 (signature->critical.type, FLATPAK_OCI_SIGNATURE_TYPE_FLATPAK) != 0)
-        {
-          flatpak_fail (error, "Invalid signature type %s", signature->critical.type);
-          return NULL;
-        }
-
-      if (g_strcmp0 (signature->critical.image.digest, digest) != 0)
-        {
-          flatpak_fail (error, "Invalid signature digest %s", signature->critical.image.digest);
-          return NULL;
-        }
-
-      if (g_strcmp0 (signature->critical.identity.ref, ref) != 0)
-        {
-          flatpak_fail (error, "Invalid signature ref %s", signature->critical.identity.ref);
-          return NULL;
-        }
-
-      /* Success! It is valid */
-      g_debug ("Verified OCI signature for %s %s", signature->critical.identity.ref, digest);
-    }
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   if (annotations)
@@ -5173,7 +5227,8 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       opts.autocreate_parents = TRUE;
       opts.ignore_unsupported_content = TRUE;
 
-      layer_fd = flatpak_oci_registry_download_blob (registry, layer->digest,
+      layer_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+						     layer->digest,
                                                      oci_layer_progress, &progress_data,
                                                      cancellable, error);
       if (layer_fd == -1)
@@ -5444,7 +5499,7 @@ flatpak_number_prompt (int min, int max, const char *prompt, ...)
 {
   char buf[512];
   va_list var_args;
-  gchar *s;
+  g_autofree char *s = NULL;
 
   va_start (var_args, prompt);
   s = g_strdup_vprintf (prompt, var_args);
@@ -5635,6 +5690,7 @@ flatpak_create_soup_session (const char *user_agent)
 GBytes *
 flatpak_load_http_uri (SoupSession *soup_session,
                        const char *uri,
+		       FlatpakHTTPFlags flags,
                        const char *etag,
                        char      **out_etag,
                        FlatpakLoadUriProgress progress,
@@ -5648,6 +5704,7 @@ flatpak_load_http_uri (SoupSession *soup_session,
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GString) content = g_string_new ("");
   LoadUriData data = { NULL };
+  SoupMessage *m;
 
   g_debug ("Loading %s using libsoup", uri);
 
@@ -5666,11 +5723,13 @@ flatpak_load_http_uri (SoupSession *soup_session,
   if (request == NULL)
     return NULL;
 
+  m = soup_request_http_get_message (request);
   if (etag)
-    {
-      SoupMessage *m = soup_request_http_get_message (request);
-      soup_message_headers_replace (m->request_headers, "If-None-Match", etag);
-    }
+    soup_message_headers_replace (m->request_headers, "If-None-Match", etag);
+
+  if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
+    soup_message_headers_replace (m->request_headers, "Accept",
+				  "application/vnd.oci.image.manifest.v1+json");
 
   soup_request_send_async (SOUP_REQUEST(request),
                            cancellable,
@@ -5699,6 +5758,7 @@ flatpak_load_http_uri (SoupSession *soup_session,
 gboolean
 flatpak_download_http_uri (SoupSession *soup_session,
                            const char   *uri,
+			   FlatpakHTTPFlags flags,
                            GOutputStream *out,
                            FlatpakLoadUriProgress progress,
                            gpointer      user_data,
@@ -5709,6 +5769,7 @@ flatpak_download_http_uri (SoupSession *soup_session,
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GMainContext) context = NULL;
   LoadUriData data = { NULL };
+  SoupMessage *m;
 
   g_debug ("Loading %s using libsoup", uri);
 
@@ -5726,6 +5787,11 @@ flatpak_download_http_uri (SoupSession *soup_session,
                                        uri, error);
   if (request == NULL)
     return FALSE;
+
+  m = soup_request_http_get_message (request);
+  if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
+    soup_message_headers_replace (m->request_headers, "Accept",
+				  "application/vnd.oci.image.manifest.v1+json");
 
   soup_request_send_async (SOUP_REQUEST(request),
                            cancellable,
@@ -6568,7 +6634,11 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
         }
 
       /* The download progress goes up to 97% */
-      new_progress = 5 + ((total_transferred / (gdouble) total) * 92);
+      if (total > 0) {
+        new_progress = 5 + ((total_transferred / (gdouble) total) * 92);
+      } else {
+        new_progress = 97;
+      }
 
       /* And the writing of the objects adds 3% to the progress */
       new_progress += get_write_progress (outstanding_writes);

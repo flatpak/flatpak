@@ -17,6 +17,7 @@ app/flatpak-builtins-document-list.c
 app/flatpak-builtins-document-unexport.c
 app/flatpak-builtins-enter.c
 app/flatpak-builtins-info.c
+app/flatpak-builtins-info-remote.c
 app/flatpak-builtins-install.c
 app/flatpak-builtins-list.c
 app/flatpak-builtins-list-remotes.c
@@ -26,10 +27,13 @@ app/flatpak-builtins-override.c
 app/flatpak-builtins-repo.c
 app/flatpak-builtins-repo-update.c
 app/flatpak-builtins-run.c
+app/flatpak-builtins-search.c
 app/flatpak-builtins-uninstall.c
 app/flatpak-builtins-update.c
+app/flatpak-builtins-utils.c
 app/flatpak-main.c
 app/flatpak-transaction.c
+common/flatpak-context.c
 common/flatpak-dir.c
 common/flatpak-run.c
 common/flatpak-utils.c

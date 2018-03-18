@@ -34,7 +34,8 @@ FlatpakTransaction *flatpak_transaction_new         (FlatpakDir          *dir,
                                                      gboolean             no_deploy,
                                                      gboolean             no_static_deltas,
                                                      gboolean             add_deps,
-                                                     gboolean             add_related);
+                                                     gboolean             add_related,
+                                                     gboolean             reinstall);
 void                flatpak_transaction_free        (FlatpakTransaction  *self);
 gboolean            flatpak_transaction_update_metadata (FlatpakTransaction  *self,
                                                          gboolean             all_remotes,
@@ -58,6 +59,7 @@ gboolean            flatpak_transaction_add_update  (FlatpakTransaction  *self,
                                                      const char         **subpaths,
                                                      const char          *commit,
                                                      GError             **error);
+gboolean            flatpak_transaction_is_empty   (FlatpakTransaction  *self);
 
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakTransaction, flatpak_transaction_free)

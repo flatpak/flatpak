@@ -1,3 +1,123 @@
+Major changes in 0.11.3
+=======================
+
+ * Fix "open with" and flatpak run --file-forwarding crash
+ * Fix build with glibc 2.27
+
+Major changes in 0.11.2
+=======================
+
+ * Remove fuse dependency, since we don't ship document portal anymore
+ * Fix various issues with /home being a symlink to /var/home (atomic)
+ * Allow downgrades when using collection ids
+ * Search on all supported architectures
+
+Major changes in 0.11.1
+=======================
+
+This release removes the document portal and the permission store as they
+have been added to xdg-desktop-portal 0.10. Packagers need to update
+these two in lock-step. Flatpak technically doesn't depend on
+xdg-desktop-portal, but it is recommended that the flatpak package
+depends on xdg-desktop-portal in some way, because most flatpaks will
+want it.
+
+ * Remove document portal and permission store
+ * Add --socket=fallback-x11 permission
+ * Fix dbus proxy vulnerability in authentication phase
+ * Allow personality syscall in devel mode
+ * commit-from: Migrate static deltas with commit
+ * Add "network" storage type for installations
+ * Add flatpak info --show-permissions
+ * Add flatpak info --file-access
+ * search: Update appstream (if stale) before searching
+ * Make libflatpak work when /var/lib/flatpak is empty
+ * build-bundle: Add --from-commit option
+ * Allow appstream ids that don't end in .desktop
+ * Make permission handling ignore unknown permissions for forwards
+   compatibility
+ * Removed incorrect error message in update --appdata when there
+   was no updates
+ * Fix handling of abort in the duplicate remote prompt
+ * Fix division by zero in progress calculation
+ * Fix flatpak remote-info --show-metadata
+ * Fixed crash when installing some flatpak bundle files
+ * Fix installation of telegram
+ * remote-ls -u only considers app from the origin remote
+ * Fix assertion error in extra-data progress reporting
+ * Report nicer errors when trying to downgrade as non-root
+ * pulseaudio: Try to find pulseaudio socket better
+ * Fixed some warnings reported by coverity
+ * Cleaned up code by splitting up some large source files
+
+Major changes in 0.10.2
+=======================
+
+ * Flatpak now requires OSTree 2017.14
+ * flatpak update now updates from both system and user installations
+   by default.
+ * flatpak update is less noisy when updating appstream info.
+ * All the remote-* commands now by default automatically decide to use
+   --user or --system based on the given remote name.
+ * flatpak remote-ls with no remote lists the content of all remotes
+ * Fixed regression that made xdg-user-dirs and theme selection
+   for kde apps break.
+ * flatpak override with no argument now overrides globally, i.e. for
+   all apps.
+ * flatpak override now supports --nofilesystem properly. For example
+   flatpak override --nofilesystem=~/.ssh hides the ssh dir for all
+   apps, even those who have homedir access.
+ * flatpak install now takes a --reinstall argument which uninstalls
+   a previously installed version if necessary. This is very useful
+   when you want to install a new version from a different source.
+ * flatpak install now allows you to pass an absolute pathname as
+   remote name, which will create a temporary remote and install
+   from that. The remote will be removed when the app is uninstalled.
+   This is very useful during development and testing.
+ * Flatpak now creates CLI wrappers for all installed apps, so if you
+   add /var/lib/flatpak/exports/bin or ~/.local/share/flatpak/exports/bin
+   to your PATH you can easily  start flatpak apps by their application id.
+
+Major changes in 0.10.1
+=======================
+
+ * New command "flatpak remote-info" shows information about applications
+   in a remote. In particular the --log operation shows the history and
+   can be used in combination with flatpak upate --commit=XYZ to roll
+   back to a previous version.
+ * New command "flatpak search" which allows you to search the appstream
+   data from the commandline.
+ * flatpak update now upates appstream data for all confured remotes, which
+   is important for search to work.
+ * Allow automatic installation of gtk themes matching the active theme.
+ * Handle the case when /etc/resolv.conf is a symlink
+ * /usr an /etc are now expose in /run/host in the app if the app has
+   full filesystem access.
+ * flatpak remote-add now works as a user when /var/lib/flatpak is empty,
+   allowing flatpak to work on stateless systems.
+ * Add support for flatpak build --log-session/system-bus, similar to
+   what flatpak run already does.
+ * flatpak build --readonly runs with the target directory (normally /app)
+   mounted read-only.
+ * Fall back to LD_LIBRARY_PATH if a runtime doesn't have /usr/bin/ldconfig.
+ * Updated the support for OCI remotes. This is work in progress and still
+   disabled by default though.
+
+Major changes in 0.10
+=====================
+
+This is the first release in a new series of stable releases called
+0.10.x. New features will be added to 0.11.x, and bugfixes will be
+backported to 0.10.x. During the early phase of the 0.10.x series we
+may also backport minor features, but we guarantee backwards
+compatibility.
+
+Changes since 0.9.99
+ * Added the flatpak config option which can set the language settings
+ * Fix issue where sometimes ld.so.conf were not generated
+ * /dev/mali0 is added to --device=dri
+ * Work around ostree static delta issues in some cases
+
 Major changes in 0.9.99
 =======================
 

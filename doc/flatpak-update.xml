@@ -34,6 +34,12 @@
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="opt" rep="repeat">REF</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak update</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">--appstream</arg>
+                <arg choice="opt">REMOTE</arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -41,8 +47,8 @@
 
         <para>
             Updates applications and runtimes. <arg choice="plain">REF</arg> is a reference to the
-            application or runtime to install. If no <arg choice="plain">REF</arg> is given, everything
-            is updated.
+            application or runtime to update. If no <arg choice="plain">REF</arg> is given, everything
+            is updated, as well as appstream info for all remotes.
         </para>
         <para>
             Each <arg choice="plain">REF</arg> arguments is a full or partial indentifier in the
@@ -53,9 +59,9 @@
             will list the alternatives.
         </para>
         <para>
-            By default this looks for both apps and runtime with the given <arg choice="plain">REF</arg> in
-            the specified <arg choice="plain">REMOTE</arg>, but you can limit this by using the --app or
-            --runtime option, or by supplying the initial element in the REF.
+            By default this looks for both apps and runtimes with the given <arg choice="plain">REF</arg>,
+            but you can limit this by using the --app or --runtime option, or by supplying the initial
+            element in the REF.
         </para>
         <para>
             Normally, this command updates the application to the tip
@@ -70,8 +76,8 @@
             version, with the --commit option.
         </para>
         <para>
-            Unless overridden with the --user or the --installation option, this command updates
-            the default system-wide installation.
+            Unless overridden with the --user, --system or --installation option, this command updates
+            any matching refs in the standard system-wide installation and the per-user one.
         </para>
 
     </refsect1>
@@ -156,7 +162,7 @@
                 <term><option>--no-pull</option></term>
 
                 <listitem><para>
-                    Don't download the latest version, deploy it whatever is locally available.
+                    Don't download the latest version, deploy whatever is locally available.
                 </para></listitem>
             </varlistentry>
 
@@ -188,7 +194,7 @@
                 <term><option>--appstream</option></term>
 
                 <listitem><para>
-                    Update appstream for the remote.
+                    Update appstream for <arg choice="plain">REMOTE</arg>, or all remotes if no remote is specified.
                 </para></listitem>
             </varlistentry>
 
@@ -196,7 +202,7 @@
                 <term><option>--runtime</option></term>
 
                 <listitem><para>
-                    Only look for an runtime with the given name.
+                    Only look for a runtime with the given name.
                 </para></listitem>
             </varlistentry>
 

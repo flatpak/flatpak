@@ -53,6 +53,7 @@ struct FlatpakTransaction {
   GHashTable *refs;
   GPtrArray *system_dirs;
   GList *ops;
+  GPtrArray *added_origin_remotes;
 
   gboolean no_interaction;
   gboolean no_pull;
@@ -60,8 +61,15 @@ struct FlatpakTransaction {
   gboolean no_static_deltas;
   gboolean add_deps;
   gboolean add_related;
+  gboolean reinstall;
 };
 
+static gboolean
+remote_name_is_file (const char *remote_name)
+{
+  return remote_name != NULL &&
+    g_str_has_prefix (remote_name, "file://");
+}
 
 /* Check if the ref is in the dir, or in the system dir, in case its a
  * user-dir or another system-wide installation. We want to avoid depending
@@ -157,6 +165,12 @@ flatpak_transaction_operation_free (FlatpakTransactionOp *self)
   g_free (self);
 }
 
+gboolean
+flatpak_transaction_is_empty (FlatpakTransaction  *self)
+{
+  return self->ops == NULL;
+}
+
 FlatpakTransaction *
 flatpak_transaction_new (FlatpakDir *dir,
                          gboolean no_interaction,
@@ -164,12 +178,14 @@ flatpak_transaction_new (FlatpakDir *dir,
                          gboolean no_deploy,
                          gboolean no_static_deltas,
                          gboolean add_deps,
-                         gboolean add_related)
+                         gboolean add_related,
+                         gboolean reinstall)
 {
   FlatpakTransaction *t = g_new0 (FlatpakTransaction, 1);
 
   t->dir = g_object_ref (dir);
   t->refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  t->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
 
   t->no_interaction = no_interaction;
   t->no_pull = no_pull;
@@ -177,6 +193,7 @@ flatpak_transaction_new (FlatpakDir *dir,
   t->no_static_deltas = no_static_deltas;
   t->add_deps = add_deps;
   t->add_related = add_related;
+  t->reinstall = reinstall;
   return t;
 }
 
@@ -186,6 +203,8 @@ flatpak_transaction_free (FlatpakTransaction *self)
   g_hash_table_unref (self->refs);
   g_list_free_full (self->ops, (GDestroyNotify)flatpak_transaction_operation_free);
   g_object_unref (self->dir);
+
+  g_ptr_array_unref (self->added_origin_remotes);
 
   if (self->system_dirs != NULL)
     g_ptr_array_free (self->system_dirs, TRUE);
@@ -454,6 +473,28 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   g_autofree char *remote_metadata = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GError) local_error = NULL;
+  g_autofree char *origin_remote = NULL;
+
+  if (remote_name_is_file (remote))
+    {
+      g_auto(GStrv) parts = NULL;
+      parts = g_strsplit (ref, "/", -1);
+
+      origin_remote = flatpak_dir_create_origin_remote (self->dir,
+                                                        remote, /* uri */
+                                                        parts[1],
+                                                        "Local repo",
+                                                        ref,
+                                                        NULL,
+                                                        NULL,
+                                                        NULL, error);
+      if (origin_remote == NULL)
+        return FALSE;
+
+      g_ptr_array_add (self->added_origin_remotes, g_strdup (origin_remote));
+
+      remote = origin_remote;
+    }
 
   pref = strchr (ref, '/') + 1;
 
@@ -476,10 +517,20 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
     {
       g_assert (remote != NULL);
-      if (dir_ref_is_installed (self->dir, ref, NULL, NULL))
+      if (!self->reinstall &&
+          dir_ref_is_installed (self->dir, ref, &origin, NULL))
         {
-          g_printerr (_("%s already installed, skipping\n"), pref);
-          return TRUE;
+          if (strcmp (remote, origin) == 0)
+            {
+              g_printerr (_("%s already installed, skipping\n"), pref);
+              return TRUE;
+            }
+          else
+            {
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                           _("%s is already installed from other remote (%s)"), pref, origin);
+              return FALSE;
+            }
         }
     }
 
@@ -652,6 +703,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 {
   GList *l;
   gboolean succeeded = TRUE;
+  int i;
 
   self->ops = g_list_reverse (self->ops);
 
@@ -659,7 +711,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
     {
       FlatpakTransactionOp *op = l->data;
       g_autoptr(GError) local_error = NULL;
-      gboolean res;
+      gboolean res = TRUE;
       const char *pref;
       const char *opname;
       FlatpakTransactionOpKind kind;
@@ -690,11 +742,15 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
           opname = _("install");
-          g_print (_("Installing: %s from %s\n"), pref, op->remote);
-          res = flatpak_dir_install (self->dir,
+          if (flatpak_dir_is_user (self->dir))
+            g_print (_("Installing for user: %s from %s\n"), pref, op->remote);
+          else
+            g_print (_("Installing: %s from %s\n"), pref, op->remote);
+          res = flatpak_dir_install (self->dir ,
                                      self->no_pull,
                                      self->no_deploy,
                                      self->no_static_deltas,
+                                     self->reinstall,
                                      op->ref, op->remote,
                                      (const char **)op->subpaths,
                                      progress,
@@ -714,7 +770,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                                                          cancellable, &local_error);
           if (target_commit != NULL)
             {
-              g_print (_("Updating: %s from %s\n"), pref, op->remote);
+              if (flatpak_dir_is_user (self->dir))
+                g_print (_("Updating for user: %s from %s\n"), pref, op->remote);
+              else
+                g_print (_("Updating: %s from %s\n"), pref, op->remote);
               g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
               res = flatpak_dir_update (self->dir,
                                         self->no_pull,
@@ -759,7 +818,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_autofree char *bundle_basename = g_file_get_basename (op->bundle);
           opname = _("install bundle");
-          g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
+          if (flatpak_dir_is_user (self->dir))
+            g_print (_("Installing for user: %s from bundle %s\n"), pref, bundle_basename);
+          else
+            g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
           res = flatpak_dir_install_bundle (self->dir, op->bundle,
                                             op->remote, NULL,
                                             cancellable, &local_error);
@@ -786,11 +848,17 @@ flatpak_transaction_run (FlatpakTransaction *self,
             }
           else
             {
+              succeeded = FALSE;
               g_propagate_error (error, g_steal_pointer (&local_error));
-              return FALSE;
+              goto out;
             }
         }
     }
+
+ out:
+
+  for (i = 0; i < self->added_origin_remotes->len; i++)
+    flatpak_dir_prune_origin_remote (self->dir, g_ptr_array_index (self->added_origin_remotes, i));
 
   return succeeded;
 }

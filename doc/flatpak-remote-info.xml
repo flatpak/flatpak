@@ -1,0 +1,233 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-remote-info">
+
+    <refentryinfo>
+        <title>flatpak remote-info</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak remote-info</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-remote-info</refname>
+        <refpurpose>Show information about an application or runtime in a remote</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak remote-info</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">REMOTE</arg>
+                <arg choice="plain">REF</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Shows information about the runtime or application <arg choice="plain">REF</arg> from the
+            remote repository with the name <arg choice="plain">REMOTE</arg>.
+            You can find all configured remote repositories with flatpak remotes.
+        </para>
+        <para>
+            By default, the output is formatted in a friendly format.
+            If you specify one of the options --show-ref, --show-commit,
+            --show-parent, or --show-metadata, the output is instead formatted
+            in a machine-readable format.
+        </para>
+        <para>
+            Unless overridden with the --system, --user, or --installation options,
+            this command uses either the default system-wide installation or the
+            per-user one, depending on which has the specified
+            <arg choice="plain">REMOTE</arg>.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Use the per-user configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Use the default system-wide configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Use a system-wide installation specified by <arg choice="plain">NAME</arg>
+                    among those defined in <filename>/etc/flatpak/installations.d/</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Assume that <arg choice="plain">REF</arg> is a runtime if not explicitly specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--app</option></term>
+
+                <listitem><para>
+                    Assume that <arg choice="plain">REF</arg> is an app if not explicitly specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    The default architecture to look for, if not given explicitly in the <arg choice="plain">REF</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--commit=COMMIT</option></term>
+
+                <listitem><para>
+                    Show information about the specific commit, rather than the latest version.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--log</option></term>
+
+                <listitem><para>
+                    Display a log of previous versions.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-r</option></term>
+                <term><option>--show-ref</option></term>
+
+                <listitem><para>
+                    Show the matched ref.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-c</option></term>
+                <term><option>--show-commit</option></term>
+
+                <listitem><para>
+                    Show the commit id.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-p</option></term>
+                <term><option>--show-parent</option></term>
+
+                <listitem><para>
+                    Show the parent commit id.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-m</option></term>
+                <term><option>--show-metadata</option></term>
+
+                <listitem><para>
+                    Show the metadata.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--ostree-verbose</option></term>
+
+                <listitem><para>
+                    Print OSTree debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak --user remote-info flathub org.gnome.gedit</command>
+        </para>
+<programlisting>
+Ref: app/org.gnome.gedit/x86_64/stable
+ID: org.gnome.gedit
+Arch: x86_64
+Branch: stable
+Date: 2017-07-31 16:05:22 +0000
+Subject: Build org.gnome.gedit at 3ec291fc1ce4d78220527fa79576f4cc1481ebe5
+Commit: 3de7e9dde3bb8382aad9dfbbff20eccd9bf2100bc1887a3619ec0372e8066bf7
+Parent: -
+Download size: 3,4 MB
+Installed size: 11,1 MB
+Runtime: org.gnome.Platform/x86_64/3.24
+</programlisting>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+            <para>
+                <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>flatpak-remote-ls</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            </para>
+    </refsect1>
+
+</refentry>

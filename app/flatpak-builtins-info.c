@@ -32,6 +32,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
 #include "flatpak-builtins-utils.h"
+#include "flatpak-run.h"
 
 static gboolean opt_user;
 static gboolean opt_system;
@@ -40,9 +41,11 @@ static gboolean opt_show_commit;
 static gboolean opt_show_origin;
 static gboolean opt_show_size;
 static gboolean opt_show_metadata;
+static gboolean opt_show_permissions;
 static gboolean opt_show_extensions;
 static char *opt_arch;
 static char **opt_installations;
+static char *opt_file_access;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -54,6 +57,8 @@ static GOptionEntry options[] = {
   { "show-origin", 'o', 0, G_OPTION_ARG_NONE, &opt_show_origin, N_("Show origin"), NULL },
   { "show-size", 's', 0, G_OPTION_ARG_NONE, &opt_show_size, N_("Show size"), NULL },
   { "show-metadata", 'm', 0, G_OPTION_ARG_NONE, &opt_show_metadata, N_("Show metadata"), NULL },
+  { "show-permissions", 'M', 0, G_OPTION_ARG_NONE, &opt_show_permissions, N_("Show permissions"), NULL },
+  { "file-access", 0, 0, G_OPTION_ARG_FILENAME, &opt_file_access, N_("Query file access"), N_("PATH") },
   { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
   { NULL }
 };
@@ -66,6 +71,22 @@ maybe_print_space (gboolean *first)
     *first = FALSE;
   else
     g_print (" ");
+}
+
+static gchar *
+format_timestamp (guint64  timestamp)
+{
+  GDateTime *dt;
+  gchar *str;
+
+  dt = g_date_time_new_from_unix_utc (timestamp);
+  if (dt == NULL)
+    return g_strdup ("?");
+
+  str = g_date_time_format (dt, "%Y-%m-%d %H:%M:%S +0000");
+  g_date_time_unref (dt);
+
+  return str;
 }
 
 gboolean
@@ -147,20 +168,56 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   metakey = flatpak_deploy_get_metadata (deploy);
 
-  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata)
+  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions || opt_file_access)
     friendly = FALSE;
 
   if (friendly)
     {
-      const char *latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
+      g_autoptr(GVariant) commit_v = NULL;
+      g_autoptr(GVariant) commit_metadata = NULL;
+      guint64 timestamp;
+      g_autofree char *formatted_timestamp = NULL;
+      const gchar *subject = NULL;
+      const gchar *body = NULL;
+      g_autofree char *parent = NULL;
+      const char *latest;
+      const char *xa_metadata = NULL;
+      const char *collection_id = NULL;
+
+      latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
       if (latest == NULL)
         latest = _("ref not present in origin");
+
+      if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), commit, &commit_v, NULL, NULL))
+        {
+          g_variant_get (commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
+                         &subject, &body, NULL, NULL, NULL);
+          parent = ostree_commit_get_parent (commit_v);
+          timestamp = ostree_commit_get_timestamp (commit_v);
+          formatted_timestamp = format_timestamp (timestamp);
+
+          commit_metadata = g_variant_get_child_value (commit_v, 0);
+          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+          if (xa_metadata == NULL)
+            g_printerr (_("Warning: Commit has no flatpak metadata\n"));
+
+#ifdef FLATPAK_ENABLE_P2P
+          g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
+#endif
+        }
 
       g_print ("%s%s%s %s\n", on, _("Ref:"), off, ref);
       g_print ("%s%s%s %s\n", on, _("ID:"), off, parts[1]);
       g_print ("%s%s%s %s\n", on, _("Arch:"), off, parts[2]);
       g_print ("%s%s%s %s\n", on, _("Branch:"), off, parts[3]);
       g_print ("%s%s%s %s\n", on, _("Origin:"), off, origin ? origin : "-");
+      if (collection_id)
+        g_print ("%s%s%s %s\n", on, _("Collection ID:"), off, collection_id);
+      if (formatted_timestamp)
+        g_print ("%s%s%s %s\n", on, _("Date:"), off, formatted_timestamp);
+      if (subject)
+        g_print ("%s%s%s %s\n", on, _("Subject:"), off, subject);
+
       if (strcmp (commit, latest) != 0)
         {
           g_print ("%s%s%s %s\n", on, _("Active commit:"), off, commit);
@@ -170,6 +227,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         g_print ("%s%s%s %s\n", on, _("Commit:"), off, commit);
       if (alt_id)
         g_print ("%s%s%s %s\n", on, _("alt-id:"), off, alt_id);
+      g_print ("%s%s%s %s\n", on, _("Parent:"), off, parent ? parent : "-");
       g_print ("%s%s%s %s\n", on, _("Location:"), off, path);
       g_print ("%s%s%s %s\n", on, _("Installed size:"), off, formatted);
       if (strcmp (parts[0], "app") == 0)
@@ -231,6 +289,42 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
           g_print ("%s", data);
         }
+
+      if (opt_show_permissions || opt_file_access)
+        {
+          g_autoptr(FlatpakContext) context = NULL;
+          g_autoptr(GKeyFile) keyfile = NULL;
+          g_autofree gchar *contents = NULL;
+
+          context = flatpak_context_load_for_deploy (deploy, error);
+          if (context == NULL)
+            return FALSE;
+
+          if (opt_show_permissions)
+            {
+              keyfile = g_key_file_new ();
+              flatpak_context_save_metadata (context, TRUE, keyfile);
+              contents = g_key_file_to_data (keyfile, NULL, error);
+              if (contents == NULL)
+                return FALSE;
+
+              g_print ("%s", contents);
+            }
+
+          if (opt_file_access)
+            {
+              g_autoptr(FlatpakExports) exports = flatpak_context_get_exports (context, parts[1]);
+              FlatpakFilesystemMode mode;
+
+              mode = flatpak_exports_path_get_mode (exports, opt_file_access);
+              if (mode == 0)
+                g_print ("hidden\n");
+              else if (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
+                g_print ("read-only\n");
+              else
+                g_print ("read-write\n");
+            }
+        }
     }
 
   if (opt_show_extensions)
@@ -289,38 +383,17 @@ gboolean
 flatpak_complete_info (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
-  g_autoptr(GPtrArray) system_dirs = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
   g_autoptr(GError) error = NULL;
-  gboolean search_all = FALSE;
   FlatpakKinds kinds;
   int i, j;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS, &dirs, NULL, NULL))
     return FALSE;
 
   kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;
-
-  if (!opt_user && !opt_system && opt_installations == NULL)
-    search_all = TRUE;
-
-  if (opt_user || search_all)
-    user_dir = flatpak_dir_get_user ();
-
-  if (search_all)
-    {
-      system_dirs = flatpak_dir_get_system_list (NULL, &error);
-      if (system_dirs == NULL)
-        {
-          flatpak_completion_debug ("find system installations error: %s", error->message);
-          return FALSE;
-        }
-    }
-
-  if (opt_system)
-    system_dir = flatpak_dir_get_system_default ();
 
   switch (completion->argc)
     {
@@ -329,47 +402,16 @@ flatpak_complete_info (FlatpakCompletion *completion)
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
 
-      if (user_dir)
+      for (i = 0; i < dirs->len; i++)
         {
-          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, opt_arch,
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
                                                                 kinds, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find local refs error: %s", error->message);
-          for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          for (j = 0; refs != NULL && refs[j] != NULL; j++)
             {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-              if (parts)
-                flatpak_complete_word (completion, "%s ", parts[1]);
-            }
-        }
-
-      if (system_dirs)
-        {
-          for (i = 0; i < system_dirs->len; i++)
-            {
-              FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
-              g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
-                                                                    kinds, &error);
-              if (refs == NULL)
-                flatpak_completion_debug ("find local refs error: %s", error->message);
-              for (j = 0; refs != NULL && refs[j] != NULL; j++)
-                {
-                  g_auto(GStrv) parts = flatpak_decompose_ref (refs[j], NULL);
-                  if (parts)
-                    flatpak_complete_word (completion, "%s ", parts[1]);
-                }
-            }
-        }
-
-      if (system_dir)
-        {
-          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, opt_arch,
-                                                                kinds, &error);
-          if (refs == NULL)
-            flatpak_completion_debug ("find local refs error: %s", error->message);
-          for (i = 0; refs != NULL && refs[i] != NULL; i++)
-            {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+              g_auto(GStrv) parts = flatpak_decompose_ref (refs[j], NULL);
               if (parts)
                 flatpak_complete_word (completion, "%s ", parts[1]);
             }
@@ -377,47 +419,16 @@ flatpak_complete_info (FlatpakCompletion *completion)
       break;
 
     case 2: /* BRANCH */
-      if (user_dir)
+      for (i = 0; i < dirs->len; i++)
         {
-          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, completion->argv[1], NULL, opt_arch,
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
                                                                 kinds, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find remote refs error: %s", error->message);
-          for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          for (j = 0; refs != NULL && refs[j] != NULL; j++)
             {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-              if (parts)
-                flatpak_complete_word (completion, "%s ", parts[3]);
-            }
-        }
-
-      if (system_dirs)
-        {
-          for (i = 0; i < system_dirs->len; i++)
-            {
-              FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
-              g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
-                                                                    kinds, &error);
-              if (refs == NULL)
-                flatpak_completion_debug ("find remote refs error: %s", error->message);
-              for (j = 0; refs != NULL && refs[j] != NULL; j++)
-                {
-                  g_auto(GStrv) parts = flatpak_decompose_ref (refs[j], NULL);
-                  if (parts)
-                    flatpak_complete_word (completion, "%s ", parts[3]);
-                }
-            }
-        }
-
-      if (system_dir)
-        {
-          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, completion->argv[1], NULL, opt_arch,
-                                                                kinds, &error);
-          if (refs == NULL)
-            flatpak_completion_debug ("find remote refs error: %s", error->message);
-          for (i = 0; refs != NULL && refs[i] != NULL; i++)
-            {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+              g_auto(GStrv) parts = flatpak_decompose_ref (refs[j], NULL);
               if (parts)
                 flatpak_complete_word (completion, "%s ", parts[3]);
             }

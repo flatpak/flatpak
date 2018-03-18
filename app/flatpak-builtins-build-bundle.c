@@ -50,6 +50,7 @@ static char **opt_gpg_file;
 static gboolean opt_oci = FALSE;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
+static char *opt_from_commit;
 
 static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Export runtime instead of app"), NULL },
@@ -60,7 +61,7 @@ static GOptionEntry options[] = {
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Export oci image instead of flatpak bundle"), NULL },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the OCI image with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
-
+  { "from-commit", 0, 0, G_OPTION_ARG_STRING, &opt_from_commit, N_("OSTree commit to create a delta bundle from"), N_("COMMIT") },
   { NULL }
 };
 
@@ -109,6 +110,7 @@ read_gpg_data (GCancellable *cancellable,
 static gboolean
 build_bundle (OstreeRepo *repo, GFile *file,
               const char *name, const char *full_branch,
+              const char *from_commit,
               GCancellable *cancellable, GError **error)
 {
   GVariantBuilder metadata_builder;
@@ -269,7 +271,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
 
   if (!ostree_repo_static_delta_generate (repo,
                                           OSTREE_STATIC_DELTA_GENERATE_OPT_LOWLATENCY,
-                                          /* from */ NULL,
+                                          from_commit,
                                           commit_checksum,
                                           metadata,
                                           params,
@@ -420,26 +422,6 @@ build_oci (OstreeRepo *repo, GFile *dir,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
-  if (opt_gpg_key_ids)
-    {
-      g_autoptr(FlatpakOciSignature) sig = flatpak_oci_signature_new (manifest_desc->digest, ref);
-      g_autoptr(GBytes) sig_bytes = flatpak_json_to_bytes (FLATPAK_JSON (sig));
-      g_autoptr(GBytes) res = NULL;
-      g_autofree char *signature_digest = NULL;
-
-      res = flatpak_oci_sign_data (sig_bytes, (const char **)opt_gpg_key_ids, opt_gpg_homedir, error);
-      if (res == NULL)
-        return FALSE;
-
-      signature_digest = flatpak_oci_registry_store_blob (registry, res, cancellable, error);
-      if (signature_digest == NULL)
-        return FALSE;
-
-      g_hash_table_replace (manifest_desc->annotations,
-                            g_strdup ("org.flatpak.signature-digest"),
-                            g_strdup (signature_digest));
-    }
-
   index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, NULL);
   if (index == NULL)
     index = flatpak_oci_index_new ();
@@ -521,7 +503,7 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
     }
   else
     {
-      if (!build_bundle (repo, file, name, full_branch, cancellable, error))
+      if (!build_bundle (repo, file, name, full_branch, opt_from_commit, cancellable, error))
         return FALSE;
     }
 

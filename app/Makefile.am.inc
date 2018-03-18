@@ -13,6 +13,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-delete-remote.c \
 	app/flatpak-builtins-list-remotes.c \
 	app/flatpak-builtins-ls-remote.c \
+	app/flatpak-builtins-info-remote.c \
 	app/flatpak-builtins-install.c \
 	app/flatpak-builtins-override.c \
 	app/flatpak-builtins-make-current.c \
@@ -37,8 +38,10 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-document-unexport.c \
 	app/flatpak-builtins-document-info.c \
 	app/flatpak-builtins-document-list.c \
+	app/flatpak-builtins-search.c \
 	$(NULL)
 
-flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) libglnx.la libflatpak-common.la
-flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) \
+flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
+	libglnx.la libflatpak-common.la
+flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
         -DLOCALEDIR=\"$(localedir)\"

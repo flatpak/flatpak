@@ -96,7 +96,7 @@
                 <term><option>--show-details</option></term>
 
                 <listitem><para>
-                    Show more information each repository in addition to the name.
+                    Show more information for each repository in addition to the name.
                 </para></listitem>
             </varlistentry>
 
@@ -151,8 +151,8 @@ testrepo	Test Repository	 http://209.132.179.91/repo/ no-gpg-verify
 
             <para>
                 <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-delete-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>flatpak-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-remote-delete</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             </para>
     </refsect1>
 

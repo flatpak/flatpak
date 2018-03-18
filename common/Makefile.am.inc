@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES += libflatpak-common.la
 
-dbus_built_sources = common/flatpak-dbus.c common/flatpak-dbus.h
+dbus_built_sources = common/flatpak-dbus.c common/flatpak-dbus.h common/flatpak-document-dbus.c common/flatpak-document-dbus.h
 systemd_dbus_built_sources = common/flatpak-systemd-dbus.c common/flatpak-systemd-dbus.h
 
 common/flatpak-dbus.c: data/org.freedesktop.Flatpak.xml Makefile
@@ -9,7 +9,16 @@ common/flatpak-dbus.c: data/org.freedesktop.Flatpak.xml Makefile
 		--interface-prefix org.freedesktop.Flatpak.	\
 		--c-namespace Flatpak				\
 		--generate-c-code $(builddir)/common/flatpak-dbus	\
-		$(srcdir)/data/org.freedesktop.Flatpak.xml	\
+		$(srcdir)/data/org.freedesktop.Flatpak.xml  \
+		$(NULL)
+
+common/flatpak-document-dbus.c: data/org.freedesktop.portal.Documents.xml Makefile
+	mkdir -p $(builddir)/common
+	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
+		--interface-prefix org.freedesktop.portal.	\
+		--c-namespace XdpDbus				\
+		--generate-c-code $(builddir)/common/flatpak-document-dbus	\
+		$(srcdir)/data/org.freedesktop.portal.Documents.xml  \
 		$(NULL)
 
 common/flatpak-systemd-dbus.c: data/org.freedesktop.systemd1.xml Makefile
@@ -35,10 +44,16 @@ CLEANFILES += $(nodist_libflatpak_common_la_SOURCES)
 
 libflatpak_common_la_SOURCES = \
 	common/flatpak-common-types.h \
+	common/flatpak-bwrap.c \
+	common/flatpak-bwrap.h \
 	common/flatpak-dir.c \
 	common/flatpak-dir.h \
 	common/flatpak-run.c \
 	common/flatpak-run.h \
+	common/flatpak-context.c \
+	common/flatpak-context.h \
+	common/flatpak-exports.c \
+	common/flatpak-exports.h \
 	common/flatpak-portal-error.c \
 	common/flatpak-portal-error.h \
 	common/flatpak-utils.c \
@@ -47,13 +62,6 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-table-printer.h \
 	common/flatpak-chain-input-stream.c \
 	common/flatpak-chain-input-stream.h \
-	common/gvdb/gvdb-reader.h	\
-	common/gvdb/gvdb-format.h	\
-	common/gvdb/gvdb-reader.c	\
-	common/gvdb/gvdb-builder.h	\
-	common/gvdb/gvdb-builder.c	\
-	common/flatpak-db.c \
-	common/flatpak-db.h \
 	common/flatpak-json.c \
 	common/flatpak-json.h \
 	common/flatpak-json-oci.c \

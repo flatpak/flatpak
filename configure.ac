@@ -14,10 +14,10 @@ AC_PREREQ([2.63])
 # on the unstable (ie master), interface age = 0
 
 m4_define([flatpak_major_version], [0])
-m4_define([flatpak_minor_version], [9])
-m4_define([flatpak_micro_version], [99])
+m4_define([flatpak_minor_version], [11])
+m4_define([flatpak_micro_version], [3])
 m4_define([flatpak_extra_version], [])
-m4_define([flatpak_interface_age], [98])
+m4_define([flatpak_interface_age], [0])
 m4_define([flatpak_binary_age],
           [m4_eval(10000 * flatpak_major_version + 100 * flatpak_minor_version + flatpak_micro_version)])
 m4_define([flatpak_version],
@@ -31,7 +31,8 @@ AC_INIT([Flatpak],
 
 GLIB_REQS=2.44
 SYSTEM_BWRAP_REQS=0.1.8
-OSTREE_REQS=2017.12
+OSTREE_REQS=2017.14
+OSTREE_P2P_REQS=2018.2
 
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
@@ -222,9 +223,9 @@ fi
 
 PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
 
-PKG_CHECK_MODULES(FUSE, [fuse])
-
 PKG_CHECK_MODULES(JSON, [json-glib-1.0])
+
+PKG_CHECK_MODULES(APPSTREAM_GLIB, [appstream-glib >= 0.5.10])
 
 AC_ARG_ENABLE([seccomp],
               AC_HELP_STRING([--disable-seccomp],
@@ -259,7 +260,7 @@ AC_ARG_ENABLE([p2p],
                   [Enable unstable peer to peer support [default=no]])],,
   [enable_p2p=no])
 AS_IF([test x$enable_p2p = xyes],[
-  PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
+  PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_P2P_REQS])
 
   ostree_features=$($PKG_CONFIG --variable=features ostree-1)
   AS_CASE(["$ostree_features"],

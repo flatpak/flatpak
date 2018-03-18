@@ -22,9 +22,11 @@
 #define __FLATPAK_RUN_H__
 
 #include "libglnx/libglnx.h"
-#include "dbus-proxy/flatpak-proxy.h"
 #include "flatpak-common-types.h"
+#include "flatpak-context.h"
+#include "flatpak-bwrap.h"
 #include "flatpak-utils.h"
+#include "flatpak-exports.h"
 
 gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         GError    **error);
@@ -95,40 +97,6 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_PRIORITY "priority"
 #define FLATPAK_METADATA_KEY_REF "ref"
 
-extern const char *flatpak_context_sockets[];
-extern const char *flatpak_context_devices[];
-extern const char *flatpak_context_features[];
-extern const char *flatpak_context_shares[];
-
-FlatpakContext *flatpak_context_new (void);
-void           flatpak_context_free (FlatpakContext *context);
-void           flatpak_context_merge (FlatpakContext *context,
-                                      FlatpakContext *other);
-GOptionGroup  *flatpak_context_get_options (FlatpakContext *context);
-void           flatpak_context_complete (FlatpakContext *context,
-                                         FlatpakCompletion *completion);
-gboolean       flatpak_context_load_metadata (FlatpakContext *context,
-                                              GKeyFile       *metakey,
-                                              GError        **error);
-void           flatpak_context_save_metadata (FlatpakContext *context,
-                                              gboolean        flatten,
-                                              GKeyFile       *metakey);
-void           flatpak_context_allow_host_fs (FlatpakContext *context);
-void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
-                                                       const char     *name,
-                                                       FlatpakPolicy   policy);
-void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
-                                                      const char     *name,
-                                                      FlatpakPolicy   policy);
-void           flatpak_context_to_args (FlatpakContext *context,
-                                        GPtrArray *args);
-gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context);
-gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context);
-
-FlatpakContext *flatpak_context_load_for_app (const char     *app_id,
-                                              GError        **error);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
 typedef enum {
   FLATPAK_RUN_FLAG_DEVEL              = (1 << 0),
@@ -147,29 +115,14 @@ typedef enum {
   FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY  = (1 << 13),
 } FlatpakRunFlags;
 
-typedef struct _FlatpakExports FlatpakExports;
-
-void flatpak_exports_free (FlatpakExports *exports);
-
-gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
-                                          const char *path);
-FlatpakExports *flatpak_exports_from_context (FlatpakContext *context,
-                                              const char *app_id);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
-
-gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
-                                          GArray       *fd_array,
-                                          char       ***envp_p,
+gboolean  flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,
                                           gboolean      use_ld_so_cache,
                                           char        **extensions_out,
                                           GCancellable *cancellable,
                                           GError      **error);
-gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
-                                           GArray         *fd_array,
-                                           char         ***envp_p,
+gboolean flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                            const char     *app_info_path,
                                            FlatpakRunFlags flags,
                                            const char     *app_id,
@@ -179,29 +132,26 @@ gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                            GCancellable *cancellable,
                                            GError      **error);
 char **  flatpak_run_get_minimal_env (gboolean devel, gboolean use_ld_so_cache);
-char **  flatpak_run_apply_env_default (char **envp, gboolean use_ld_so_cache);
-char **  flatpak_run_apply_env_appid (char **envp,
+void     flatpak_run_apply_env_default (FlatpakBwrap *bwrap, gboolean use_ld_so_cache);
+void     flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
                                       GFile *app_dir);
-char **  flatpak_run_apply_env_vars (char          **envp,
-                                     FlatpakContext *context);
+void      flatpak_run_apply_env_vars (FlatpakBwrap *bwrap,
+                                      FlatpakContext *context);
 FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                                  GKeyFile *runtime_metadata,
                                                  GError  **error);
-
 GFile *flatpak_get_data_dir (const char *app_id);
 GFile *flatpak_ensure_data_dir (const char   *app_id,
                                 GCancellable *cancellable,
                                 GError      **error);
 
-gboolean flatpak_run_setup_base_argv (GPtrArray      *argv_array,
-                                      GArray         *fd_array,
+gboolean flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                                       GFile          *runtime_files,
                                       GFile          *app_id_dir,
                                       const char     *arch,
                                       FlatpakRunFlags flags,
                                       GError        **error);
-gboolean flatpak_run_add_app_info_args (GPtrArray      *argv_array,
-                                        GArray         *fd_array,
+gboolean flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                         GFile          *app_files,
                                         GVariant       *app_deploy_data,
                                         const char     *app_extensions,

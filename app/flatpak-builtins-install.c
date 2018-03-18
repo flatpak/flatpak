@@ -51,6 +51,7 @@ static gboolean opt_app;
 static gboolean opt_bundle;
 static gboolean opt_from;
 static gboolean opt_yes;
+static gboolean opt_reinstall;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -66,6 +67,7 @@ static GOptionEntry options[] = {
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
+  { "reinstall", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall, N_("Uninstall first if already installed"), NULL },
   { NULL }
 };
 
@@ -286,7 +288,7 @@ install_bundle (FlatpakDir *dir,
     return FALSE;
 
   transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related, opt_reinstall);
 
   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
     return FALSE;
@@ -333,7 +335,7 @@ handle_suggested_remote_name (FlatpakDir *dir, GBytes *data, GError **error)
     return TRUE;
 
   if (opt_yes ||
-      flatpak_yes_no_prompt (_("The remote '%s', at location %s contains additional applications.\nDo you want to install other applications from here?"),
+      flatpak_yes_no_prompt (_("The remote '%s', at location %s contains additional applications.\nShould the remote be kept for future installations?"),
                              suggested_name, url))
     {
       if (opt_yes)
@@ -440,7 +442,7 @@ install_from (FlatpakDir *dir,
   g_print (_("Installing: %s\n"), slash + 1);
 
   transaction = flatpak_transaction_new (clone, opt_yes, opt_no_pull, opt_no_deploy,
-                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related, opt_reinstall);
 
   if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
     return FALSE;
@@ -458,8 +460,10 @@ gboolean
 flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   const char *remote;
+  g_autofree char *remote_url = NULL;
   char **prefs = NULL;
   int i, n_prefs;
   g_autofree char *target_branch = NULL;
@@ -470,8 +474,12 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   context = g_option_context_new (_("LOCATION/REMOTE [REF...] - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     &dirs, cancellable, error))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   if (!opt_bundle && !opt_from && argc >= 2)
     {
@@ -490,7 +498,15 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (argc < 3)
     return usage_error (context, _("REMOTE and REF must be specified"), error);
 
-  remote = argv[1];
+  if (g_path_is_absolute (argv[1]) ||
+      g_str_has_prefix (argv[1], "./"))
+    {
+      g_autoptr(GFile) remote_file = g_file_new_for_commandline_arg (argv[1]);
+      remote_url = g_file_get_uri (remote_file);
+      remote = remote_url;
+    }
+  else
+    remote = argv[1];
   prefs = &argv[2];
   n_prefs = argc - 2;
 
@@ -505,7 +521,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related, opt_reinstall);
 
   for (i = 0; i < n_prefs; i++)
     {
@@ -550,13 +566,17 @@ gboolean
 flatpak_complete_install (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
   FlatpakKinds kinds;
   int i;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 

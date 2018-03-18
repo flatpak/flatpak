@@ -403,6 +403,36 @@ on_name_lost (GDBusConnection *connection,
   exit (1);
 }
 
+/*
+ * In the case that the monitored file is a symlink, we set up a separate
+ * GFileMonitor for the real target of the link so that we don't miss updates
+ * to the linked file contents. This is critical in the case of resolv.conf
+ * which on stateless systems is often a symlink to a dyamically-generated
+ * or updated file in /run.
+ */
+typedef struct {
+  const gchar *source;
+  char *real;
+  GFileMonitor *monitor_source;
+  GFileMonitor *monitor_real;
+} MonitorData;
+
+static void
+monitor_data_free (MonitorData *data)
+{
+  free (data->real);
+  g_signal_handlers_disconnect_by_data (data->monitor_source, data);
+  g_object_unref (data->monitor_source);
+  if (data->monitor_real)
+    {
+      g_signal_handlers_disconnect_by_data (data->monitor_real, data);
+      g_object_unref (data->monitor_real);
+    }
+  g_free (data);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (MonitorData, monitor_data_free)
+
 static void
 copy_file (const char *source,
            const char *target_dir)
@@ -425,24 +455,104 @@ file_changed (GFileMonitor     *monitor,
               GFile            *file,
               GFile            *other_file,
               GFileMonitorEvent event_type,
-              char             *source)
+              MonitorData      *data);
+
+static void
+update_real_monitor (MonitorData *data)
 {
-  if (event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT ||
-      event_type == G_FILE_MONITOR_EVENT_CREATED)
-    copy_file (source, monitor_dir);
+  char *real = realpath (data->source, NULL);
+  if (real == NULL)
+    {
+      g_debug ("unable to get real path to monitor host file %s: %s", data->source,
+               g_strerror (errno));
+      return;
+    }
+
+  /* source path matches real path, second monitor is not required, but an old
+   * one may still exist. set to NULL and compare to what we have. */
+  if (!g_strcmp0 (data->source, real))
+    {
+      free (real);
+      real = NULL;
+    }
+
+  /* no more work needed if the monitor we have matches the additional monitor
+     we need (including NULL == NULL) */
+  if (!g_strcmp0 (data->real, real))
+    {
+      free (real);
+      return;
+    }
+
+  /* otherwise we're not monitoring the right thing and need to remove
+     any old monitor and make a new one if needed */
+  free (data->real);
+  data->real = real;
+
+  if (data->monitor_real)
+    {
+      g_signal_handlers_disconnect_by_data (data->monitor_real, data);
+      g_clear_object (&(data->monitor_real));
+    }
+
+  if (!real)
+    return;
+
+  g_autoptr(GFile) r = g_file_new_for_path (real);
+  g_autoptr(GError) err = NULL;
+  data->monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, &err);
+  if (!data->monitor_real)
+    {
+      g_debug ("failed to monitor host file %s (real path of %s): %s",
+               real, data->source, err->message);
+      return;
+    }
+
+  g_signal_connect (data->monitor_real, "changed", G_CALLBACK (file_changed), data);
 }
 
 static void
+file_changed (GFileMonitor     *monitor,
+              GFile            *file,
+              GFile            *other_file,
+              GFileMonitorEvent event_type,
+              MonitorData      *data)
+{
+  if (event_type != G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
+    return;
+
+  update_real_monitor (data);
+
+  copy_file (data->source, monitor_dir);
+}
+
+static MonitorData *
 setup_file_monitor (const char *source)
 {
-  GFile *s = g_file_new_for_path (source);
-  GFileMonitor *monitor;
+  g_autoptr(GFile) s = g_file_new_for_path (source);
+  g_autoptr(GError) err = NULL;
+  GFileMonitor *monitor = NULL;
+  MonitorData *data = NULL;
+
+  data = g_new0 (MonitorData, 1);
+  data->source = source;
+
+  monitor = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, &err);
+  if (monitor)
+    {
+      data->monitor_source = monitor;
+      g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), data);
+    }
+  else
+    {
+      g_debug ("failed to monitor host file %s: %s", source, err->message);
+    }
+
+  update_real_monitor (data);
 
   copy_file (source, monitor_dir);
 
-  monitor = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, NULL);
-  if (monitor)
-    g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), (char *) source);
+  return data;
 }
 
 static void
@@ -453,7 +563,7 @@ message_handler (const gchar   *log_domain,
 {
   /* Make this look like normal console output */
   if (log_level & G_LOG_LEVEL_DEBUG)
-    g_printerr ("XA: %s\n", message);
+    g_printerr ("F: %s\n", message);
   else
     g_printerr ("%s: %s\n", g_get_prgname (), message);
 }
@@ -476,6 +586,7 @@ main (int    argc,
     { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
     { NULL }
   };
+  g_autoptr(MonitorData) m_resolv_conf = NULL, m_host_conf = NULL, m_hosts = NULL, m_localtime = NULL;
 
   setlocale (LC_ALL, "");
 
@@ -532,10 +643,10 @@ main (int    argc,
       exit (1);
     }
 
-  setup_file_monitor ("/etc/resolv.conf");
-  setup_file_monitor ("/etc/host.conf");
-  setup_file_monitor ("/etc/hosts");
-  setup_file_monitor ("/etc/localtime");
+  m_resolv_conf = setup_file_monitor ("/etc/resolv.conf");
+  m_host_conf   = setup_file_monitor ("/etc/host.conf");
+  m_hosts       = setup_file_monitor ("/etc/hosts");
+  m_localtime   = setup_file_monitor ("/etc/localtime");
 
   flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
   if (replace)
