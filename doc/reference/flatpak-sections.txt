@@ -88,6 +88,20 @@ flatpak_remote_ref_get_type
 </SECTION>
 
 <SECTION>
+<FILE>flatpak-related-ref</FILE>
+<TITLE>FlatpakRelatedRef</TITLE>
+FlatpakRelatedRef
+flatpak_related_ref_should_download
+flatpak_related_ref_should_delete
+<SUBSECTION Standard>
+FLATPAK_IS_RELATED_REF
+FLATPAK_RELATED_REF
+FLATPAK_TYPE_RELATED_REF
+FlatpakRelatedRefClass
+flatpak_related_ref_get_type
+</SECTION>
+
+<SECTION>
 <FILE>flatpak-ref</FILE>
 <TITLE>FlatpakRef</TITLE>
 FlatpakRef
