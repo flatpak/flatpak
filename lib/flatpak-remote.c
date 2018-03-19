@@ -814,9 +814,27 @@ flatpak_remote_commit (FlatpakRemote   *self,
   if (priv->local_collection_id_set)
     {
       if (priv->local_collection_id != NULL)
-        g_key_file_set_string (config, group, "collection-id", priv->local_collection_id);
+        {
+          g_key_file_set_string (config, group, "collection-id", priv->local_collection_id);
+
+          /* When a collection ID is set, flatpak uses signed per-repo and
+           * per-commit metadata instead of summary signatures. */
+          g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
+        }
       else
-        g_key_file_remove_key (config, group, "collection-id", NULL);
+        {
+          gboolean gpg_verify_value;
+
+          g_key_file_remove_key (config, group, "collection-id", NULL);
+
+          /* Without a collection ID gpg-verify-summary should go back to
+           * matching gpg-verify. */
+          gpg_verify_value = g_key_file_get_boolean (config, group, "gpg-verify", error);
+          if (*error == NULL)
+            g_key_file_set_boolean (config, group, "gpg-verify-summary", gpg_verify_value);
+          else
+            g_clear_error (error);
+        }
     }
 
   if (priv->local_title_set)
@@ -828,7 +846,9 @@ flatpak_remote_commit (FlatpakRemote   *self,
   if (priv->local_gpg_verify_set)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", priv->local_gpg_verify);
-      g_key_file_set_boolean (config, group, "gpg-verify-summary", priv->local_gpg_verify);
+
+      if (!priv->local_collection_id_set || priv->local_collection_id == NULL)
+        g_key_file_set_boolean (config, group, "gpg-verify-summary", priv->local_gpg_verify);
     }
 
   if (priv->local_noenumerate_set)
