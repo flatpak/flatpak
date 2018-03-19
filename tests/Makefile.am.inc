@@ -12,10 +12,11 @@ else
 AM_TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 
-testlibrary_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
+testlibrary_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS)
 testlibrary_LDADD = \
              $(AM_LDADD) \
              $(BASE_LIBS) \
+             $(OSTREE_LIBS) \
              libglnx.la \
              libflatpak.la \
              $(NULL)
