@@ -40,6 +40,12 @@ flatpak_installation_drop_caches
 flatpak_installation_modify_remote
 flatpak_installation_remove_remote
 flatpak_installation_update_remote_sync
+flatpak_installation_cleanup_local_refs_sync
+flatpak_installation_get_config
+flatpak_installation_prune_local_repo
+flatpak_installation_remove_local_ref_sync
+flatpak_installation_set_config_sync
+flatpak_installation_update_appstream_full_sync
 flatpak_get_default_arch
 flatpak_get_supported_arches
 flatpak_get_system_installations
@@ -91,6 +97,8 @@ flatpak_remote_ref_get_type
 <FILE>flatpak-related-ref</FILE>
 <TITLE>FlatpakRelatedRef</TITLE>
 FlatpakRelatedRef
+flatpak_related_ref_new
+flatpak_related_ref_get_subpaths
 flatpak_related_ref_should_download
 flatpak_related_ref_should_delete
 <SUBSECTION Standard>
@@ -109,6 +117,7 @@ FlatpakRefKind
 flatpak_ref_format_ref
 flatpak_ref_get_arch
 flatpak_ref_get_branch
+flatpak_ref_get_collection_id
 flatpak_ref_get_commit
 flatpak_ref_get_kind
 flatpak_ref_get_name
@@ -129,19 +138,27 @@ flatpak_remote_new
 flatpak_remote_get_name
 flatpak_remote_get_appstream_dir
 flatpak_remote_get_appstream_timestamp
+flatpak_remote_get_collection_id
+flatpak_remote_set_collection_id
+flatpak_remote_get_default_branch
+flatpak_remote_set_default_branch
 flatpak_remote_get_gpg_verify
 flatpak_remote_set_gpg_verify
 flatpak_remote_set_gpg_key
+flatpak_remote_get_nodeps
+flatpak_remote_set_nodeps
 flatpak_remote_get_noenumerate
 flatpak_remote_set_noenumerate
 flatpak_remote_get_prio
 flatpak_remote_set_prio
+flatpak_remote_get_remote_type
 flatpak_remote_get_title
 flatpak_remote_set_title
 flatpak_remote_get_url
 flatpak_remote_set_url
 flatpak_remote_get_disabled
 flatpak_remote_set_disabled
+FlatpakRemoteType
 <SUBSECTION Standard>
 FlatpakRemoteClass
 FLATPAK_IS_REMOTE
@@ -152,6 +169,7 @@ flatpak_remote_get_type
 
 <SECTION>
 <FILE>flatpak-version-macros</FILE>
+FLATPAK_CHECK_VERSION
 FLATPAK_MAJOR_VERSION
 FLATPAK_MINOR_VERSION
 FLATPAK_MICRO_VERSION
@@ -175,6 +193,7 @@ flatpak_bundle_ref_get_appstream
 flatpak_bundle_ref_get_icon
 flatpak_bundle_ref_get_origin
 flatpak_bundle_ref_get_installed_size
+flatpak_bundle_ref_get_runtime_repo_url
 <SUBSECTION Standard>
 FlatpakBundleRefClass
 FLATPAK_TYPE_BUNDLE_REF
