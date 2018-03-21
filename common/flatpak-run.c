@@ -1447,6 +1447,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime_path = NULL;
   g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
+  g_auto(GStrv) runtime_ref_parts = g_strsplit (runtime_ref, "/", 0);
   const char *group;
 
   fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
@@ -1495,6 +1496,8 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   if (app_branch != NULL)
     g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                            FLATPAK_METADATA_KEY_BRANCH, app_branch);
+  g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                         FLATPAK_METADATA_KEY_ARCH, runtime_ref_parts[2]);
 
   g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                          FLATPAK_METADATA_KEY_FLATPAK_VERSION, PACKAGE_VERSION);
