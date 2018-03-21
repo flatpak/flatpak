@@ -146,7 +146,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (deploy_data == NULL)
     return FALSE;
 
-  deploy = flatpak_find_deploy_for_ref (ref, NULL, error);
+  deploy = flatpak_find_deploy_for_ref (ref, NULL, NULL, error);
   if (deploy == NULL)
     return FALSE;
 

@@ -2586,7 +2586,7 @@ flatpak_context_load_for_app (const char     *app_id,
   if (app_ref == NULL)
     return NULL;
 
-  app_deploy = flatpak_find_deploy_for_ref (app_ref, NULL, error);
+  app_deploy = flatpak_find_deploy_for_ref (app_ref, NULL, NULL, error);
   if (app_deploy == NULL)
     return NULL;
 
@@ -2750,6 +2750,7 @@ flatpak_run_app (const char     *app_ref,
                  FlatpakContext *extra_context,
                  const char     *custom_runtime,
                  const char     *custom_runtime_version,
+                 const char     *custom_runtime_commit,
                  FlatpakRunFlags flags,
                  const char     *custom_command,
                  char           *args[],
@@ -2861,7 +2862,7 @@ flatpak_run_app (const char     *app_ref,
   if (runtime_ref == NULL)
     return FALSE;
 
-  runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
+  runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, custom_runtime_commit, cancellable, error);
   if (runtime_deploy == NULL)
     return FALSE;
 

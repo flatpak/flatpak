@@ -217,7 +217,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     }
   else
     {
-      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
+      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, NULL, cancellable, error);
       if (runtime_deploy == NULL)
         return FALSE;
 
@@ -255,7 +255,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       char *x_subdir = NULL;
       g_autofree char *bare_extension_point = NULL;
 
-      extensionof_deploy = flatpak_find_deploy_for_ref (extensionof_ref, cancellable, error);
+      extensionof_deploy = flatpak_find_deploy_for_ref (extensionof_ref, NULL, cancellable, error);
       if (extensionof_deploy == NULL)
         return FALSE;
 

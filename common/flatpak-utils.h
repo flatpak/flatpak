@@ -203,6 +203,7 @@ GFile * flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
                                                            const char   *branch,
                                                            GCancellable *cancellable);
 FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
+                                             const char   *commit,
                                              GCancellable *cancellable,
                                              GError      **error);
 char ** flatpak_list_deployed_refs (const char   *type,
