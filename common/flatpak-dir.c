@@ -7311,17 +7311,16 @@ flatpak_dir_undeploy (FlatpakDir   *self,
                       GCancellable *cancellable,
                       GError      **error)
 {
-  gboolean ret = FALSE;
-
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) removed_subdir = NULL;
   g_autoptr(GFile) removed_dir = NULL;
-  g_autofree char *tmpname = g_strdup_printf ("removed-%s-XXXXXX", active_id);
+  g_autofree char *dirname = NULL;
   g_autofree char *current_active = NULL;
   g_autoptr(GFile) change_file = NULL;
   g_autoptr(GError) child_error = NULL;
-  int i;
+  g_auto(GStrv) ref_parts = NULL;
+  int i, retry;
 
   g_assert (ref != NULL);
   g_assert (active_id != NULL);
@@ -7333,11 +7332,11 @@ flatpak_dir_undeploy (FlatpakDir   *self,
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    _("%s branch %s not installed"), ref, active_id);
-      goto out;
+      return FALSE;
     }
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    goto out;
+    return FALSE;
 
   current_active = flatpak_dir_read_active (self, ref, cancellable);
   if (current_active != NULL && strcmp (current_active, active_id) == 0)
@@ -7351,7 +7350,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
       if (!flatpak_dir_list_deployed (self, ref,
                                       &deployed_ids,
                                       cancellable, error))
-        goto out;
+        return FALSE;
 
       some_deployment = NULL;
       for (i = 0; deployed_ids[i] != NULL; i++)
@@ -7364,20 +7363,51 @@ flatpak_dir_undeploy (FlatpakDir   *self,
         }
 
       if (!flatpak_dir_set_active (self, ref, some_deployment, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   removed_dir = flatpak_dir_get_removed_dir (self);
   if (!flatpak_mkdir_p (removed_dir, cancellable, error))
-    goto out;
+    return FALSE;
 
-  glnx_gen_temp_name (tmpname);
-  removed_subdir = g_file_get_child (removed_dir, tmpname);
+  ref_parts = g_strsplit (ref, "/", -1);
+  dirname = g_strdup_printf ("%s-%s", ref_parts[1], active_id);
 
-  if (!flatpak_file_rename (checkoutdir,
-                            removed_subdir,
-                            cancellable, error))
-    goto out;
+  removed_subdir = g_file_get_child (removed_dir, dirname);
+
+  retry = 0;
+  while (TRUE)
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GFile) tmpdir = NULL;
+      g_autofree char *tmpname = NULL;
+
+      if (flatpak_file_rename (checkoutdir,
+                               removed_subdir,
+                               cancellable, &local_error))
+        break;
+
+      if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS) || retry >= 10)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+
+      retry++;
+
+      /* Destination already existed, move that aside, as we want to use the exact
+       * removed dirname for the latest undeployed version */
+
+      tmpname = g_strdup_printf ("%s-XXXXXX", dirname);
+      glnx_gen_temp_name (tmpname);
+      tmpdir = g_file_get_child (removed_dir, tmpname);
+
+      if (!flatpak_file_rename (removed_subdir,
+                                tmpdir,
+                                cancellable, error))
+        return FALSE;
+    }
+
 
   if (is_update)
     change_file = g_file_resolve_relative_path (removed_subdir, "files/.updated");
@@ -7403,9 +7433,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
         }
     }
 
-  ret = TRUE;
-out:
-  return ret;
+  return TRUE;
 }
 
 gboolean
