@@ -48,6 +48,8 @@ static gboolean opt_no_a11y_bus;
 static gboolean opt_file_forwarding;
 static char *opt_runtime;
 static char *opt_runtime_version;
+static char *opt_commit;
+static char *opt_runtime_commit;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -61,6 +63,8 @@ static GOptionEntry options[] = {
   { "log-a11y-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_a11y_bus, N_("Log accessibility bus calls"), NULL },
   { "no-a11y-bus", 0, 0, G_OPTION_ARG_NONE, &opt_no_a11y_bus, N_("Don't proxy accessibility bus calls"), NULL },
   { "file-forwarding", 0, 0, G_OPTION_ARG_NONE, &opt_file_forwarding, N_("Enable file forwarding"), NULL },
+  { "commit", 0, 0, G_OPTION_ARG_STRING, &opt_commit, N_("Run specified commit"), NULL },
+  { "runtime-commit", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_commit, N_("Use specified runtime commit"), NULL },
   { NULL }
 };
 
@@ -136,7 +140,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       if (app_ref == NULL)
         return FALSE;
 
-      app_deploy = flatpak_find_deploy_for_ref (app_ref, cancellable, &local_error);
+      app_deploy = flatpak_find_deploy_for_ref (app_ref, opt_commit, cancellable, &local_error);
       if (app_deploy == NULL &&
           (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED) ||
            (kinds & FLATPAK_KINDS_RUNTIME) == 0))
@@ -158,7 +162,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       if (runtime_ref == NULL)
         return FALSE;
 
-      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, &local_error2);
+      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, opt_commit ? opt_commit : opt_runtime_commit, cancellable, &local_error2);
       if (runtime_deploy == NULL)
         {
           /* Report old app-kind error, as its more likely right */
@@ -177,6 +181,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         arg_context,
                         opt_runtime,
                         opt_runtime_version,
+                        opt_runtime_commit,
                         (opt_devel ? FLATPAK_RUN_FLAG_DEVEL : 0) |
                         (opt_log_session_bus ? FLATPAK_RUN_FLAG_LOG_SESSION_BUS : 0) |
                         (opt_log_system_bus ? FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS : 0) |

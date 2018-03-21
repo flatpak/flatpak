@@ -1366,6 +1366,7 @@ flatpak_find_current_ref (const char *app_id,
 
 FlatpakDeploy *
 flatpak_find_deploy_for_ref (const char   *ref,
+                             const char   *commit,
                              GCancellable *cancellable,
                              GError      **error)
 {
@@ -1380,7 +1381,7 @@ flatpak_find_deploy_for_ref (const char   *ref,
   if (system_dirs == NULL)
     return NULL;
 
-  deploy = flatpak_dir_load_deployed (user_dir, ref, NULL, cancellable, &my_error);
+  deploy = flatpak_dir_load_deployed (user_dir, ref, commit, cancellable, &my_error);
   if (deploy == NULL &&
       system_dirs->len > 0 &&
       g_error_matches (my_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
@@ -1393,7 +1394,7 @@ flatpak_find_deploy_for_ref (const char   *ref,
 
           flatpak_log_dir_access (system_dir);
           g_clear_error (&my_error);
-          deploy = flatpak_dir_load_deployed (system_dir, ref, NULL, cancellable, &my_error);
+          deploy = flatpak_dir_load_deployed (system_dir, ref, commit, cancellable, &my_error);
         }
     }
   if (deploy == NULL)

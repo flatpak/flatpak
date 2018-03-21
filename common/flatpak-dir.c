@@ -1156,8 +1156,12 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
   deploy_dir = flatpak_dir_get_if_deployed (self, ref, checksum, cancellable);
   if (deploy_dir == NULL)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s not installed"), ref);
+      if (checksum == NULL)
+        g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                     _("%s not installed"), ref);
+      else
+        g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                     _("%s (commit %s) not installed"), ref, checksum);
       return NULL;
     }
 
@@ -5298,7 +5302,7 @@ apply_extra_data (FlatpakDir          *self,
   if (!g_key_file_get_boolean (metakey, FLATPAK_METADATA_GROUP_EXTRA_DATA,
                                FLATPAK_METADATA_KEY_NO_RUNTIME, NULL))
     {
-      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
+      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, NULL, cancellable, error);
       if (runtime_deploy == NULL)
         return FALSE;
       runtime_files = flatpak_deploy_get_files (runtime_deploy);
@@ -7733,6 +7737,23 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
 
   if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
     return g_object_ref (deploy_dir);
+
+  /* Maybe it was removed but is still living? */
+  if (checksum != NULL)
+    {
+      g_autoptr(GFile) removed_dir = flatpak_dir_get_removed_dir (self);
+      g_autoptr(GFile) removed_deploy_dir = NULL;
+      g_auto(GStrv) ref_parts = NULL;
+      g_autofree char *dirname = NULL;
+
+      ref_parts = g_strsplit (ref, "/", -1);
+      dirname = g_strdup_printf ("%s-%s", ref_parts[1], checksum);
+      removed_deploy_dir = g_file_get_child (removed_dir, dirname);
+
+      if (g_file_query_file_type (removed_deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
+        return g_object_ref (removed_deploy_dir);
+    }
+
   return NULL;
 }
 
