@@ -277,7 +277,7 @@ test_remote (void)
   g_autoptr(GFile) inst_file = NULL;
   g_autoptr(GFile) repo_file = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
-  g_autofree char *gpg_verify_summary = NULL;
+  gboolean gpg_verify_summary;
   gboolean res;
 
   inst = flatpak_installation_new_user (NULL, &error);
@@ -293,33 +293,33 @@ test_remote (void)
 
   /* Flatpak doesn't provide access to gpg-verify-summary, so use ostree */
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
-  g_assert_true (res);
   g_assert_no_error (error);
+  g_assert_true (res);
   inst_file = flatpak_installation_get_path (inst);
   repo_file = g_file_get_child (inst_file, "repo");
   repo = ostree_repo_new (repo_file);
   res = ostree_repo_open (repo, NULL, &error);
-  g_assert_true (res);
   g_assert_no_error (error);
-  res = ostree_repo_get_remote_option (repo, repo_name, "gpg-verify-summary", NULL, &gpg_verify_summary, &error);
   g_assert_true (res);
+  res = ostree_repo_get_remote_boolean_option (repo, repo_name, "gpg-verify-summary", TRUE, &gpg_verify_summary, &error);
   g_assert_no_error (error);
-  g_assert_cmpstr (gpg_verify_summary, ==, "false");
+  g_assert_true (res);
+  g_assert_false (gpg_verify_summary);
 
   /* Don’t leave the collection ID set since the repos aren’t configured with one. */
   flatpak_remote_set_collection_id (remote, NULL);
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, NULL);
 
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
-  g_assert_true (res);
   g_assert_no_error (error);
+  g_assert_true (res);
   res = ostree_repo_reload_config (repo, NULL, &error);
-  g_assert_true (res);
   g_assert_no_error (error);
-  res = ostree_repo_get_remote_option (repo, repo_name, "gpg-verify-summary", NULL, &gpg_verify_summary, &error);
   g_assert_true (res);
+  res = ostree_repo_get_remote_boolean_option (repo, repo_name, "gpg-verify-summary", FALSE, &gpg_verify_summary, &error);
   g_assert_no_error (error);
-  g_assert_cmpstr (gpg_verify_summary, ==, "true");
+  g_assert_true (res);
+  g_assert_true (gpg_verify_summary);
 #endif  /* FLATPAK_ENABLE_P2P */
 
   g_assert_cmpstr (flatpak_remote_get_title (remote), ==, NULL);

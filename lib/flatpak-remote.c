@@ -823,17 +823,16 @@ flatpak_remote_commit (FlatpakRemote   *self,
         }
       else
         {
+          g_autoptr(GError) local_error = NULL;
           gboolean gpg_verify_value;
 
           g_key_file_remove_key (config, group, "collection-id", NULL);
 
           /* Without a collection ID gpg-verify-summary should go back to
            * matching gpg-verify. */
-          gpg_verify_value = g_key_file_get_boolean (config, group, "gpg-verify", error);
-          if (*error == NULL)
+          gpg_verify_value = g_key_file_get_boolean (config, group, "gpg-verify", &local_error);
+          if (local_error == NULL)
             g_key_file_set_boolean (config, group, "gpg-verify-summary", gpg_verify_value);
-          else
-            g_clear_error (error);
         }
     }
 
