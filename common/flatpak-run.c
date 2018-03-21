@@ -1438,6 +1438,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                const char     *app_branch,
                                const char     *runtime_ref,
                                FlatpakContext *final_app_context,
+                               FlatpakContext *cmdline_context,
                                char          **app_info_path_out,
                                GError        **error)
 {
@@ -1505,6 +1506,19 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) == 0)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                             FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY, TRUE);
+
+  if (cmdline_context)
+    {
+      g_autoptr(GPtrArray) cmdline_args = g_ptr_array_new_with_free_func (g_free);
+      flatpak_context_to_args (cmdline_context, cmdline_args);
+      if (cmdline_args->len > 0)
+        {
+          g_key_file_set_string_list (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                                      FLATPAK_METADATA_KEY_EXTRA_ARGS,
+                                      (const char * const *)cmdline_args->pdata,
+                                      cmdline_args->len);
+        }
+    }
 
   flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
 
@@ -2951,7 +2965,7 @@ flatpak_run_app (const char     *app_ref,
                                       app_files, app_deploy_data, app_extensions,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_ref_parts[1], app_ref_parts[3],
-                                      runtime_ref, app_context, &app_info_path, error))
+                                      runtime_ref, app_context, extra_context, &app_info_path, error))
     return FALSE;
 
   add_document_portal_args (bwrap, app_ref_parts[1], &doc_mount_path);
