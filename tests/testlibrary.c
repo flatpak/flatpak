@@ -331,8 +331,8 @@ test_remote (void)
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 15);
 
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
-  g_assert_true (res);
   g_assert_no_error (error);
+  g_assert_true (res);
 
   g_clear_object (&remote);
 
