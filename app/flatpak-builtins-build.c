@@ -415,7 +415,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       id, NULL,
                                       runtime_ref,
-                                      app_context,
+                                      app_context, NULL,
                                       &app_info_path,
                                       error))
     return FALSE;

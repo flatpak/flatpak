@@ -61,6 +61,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_RUNTIME_EXTENSIONS "runtime-extensions"
 #define FLATPAK_METADATA_KEY_SESSION_BUS_PROXY "session-bus-proxy"
 #define FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY "system-bus-proxy"
+#define FLATPAK_METADATA_KEY_EXTRA_ARGS "extra-args"
 
 #define FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
 #define FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
@@ -162,6 +163,7 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                         const char     *app_branch,
                                         const char     *runtime_ref,
                                         FlatpakContext *final_app_context,
+                                        FlatpakContext *cmdline_context,
                                         char          **app_info_path_out,
                                         GError        **error);
 
