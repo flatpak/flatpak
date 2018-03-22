@@ -589,7 +589,7 @@ flatpak_remote_get_disabled (FlatpakRemote *self)
  * @self: a #FlatpakRemote
  * @disabled: a bool
  *
- * Sets the disabled config of this remote. See flatpak_remote_get_disable().
+ * Sets the disabled config of this remote. See flatpak_remote_get_disabled().
  *
  * Note: This is a local modification of this object, you must commit changes
  * using flatpak_installation_modify_remote() for the changes to take
