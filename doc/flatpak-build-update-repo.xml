@@ -43,7 +43,7 @@
             Updates repository metadata for the repository at
             <arg choice="plain">LOCATION</arg>. This command generates
             an OSTree summary file that lists the contents of the repository.
-            The summary is used by flatpak repo-contents and other commands
+            The summary is used by flatpak remote-ls and other commands
             to display the contents of remote repositories.
         </para>
         <para>
@@ -205,7 +205,7 @@
         <para>
             <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-repo-contents</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-remote-ls</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
