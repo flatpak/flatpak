@@ -63,6 +63,8 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_SESSION_BUS_PROXY "session-bus-proxy"
 #define FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY "system-bus-proxy"
 #define FLATPAK_METADATA_KEY_EXTRA_ARGS "extra-args"
+#define FLATPAK_METADATA_KEY_SANDBOX "sandbox"
+#define FLATPAK_METADATA_KEY_BUILD "build"
 
 #define FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
 #define FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
@@ -115,6 +117,7 @@ typedef enum {
   FLATPAK_RUN_FLAG_DIE_WITH_PARENT    = (1 << 11),
   FLATPAK_RUN_FLAG_LOG_A11Y_BUS       = (1 << 12),
   FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY  = (1 << 13),
+  FLATPAK_RUN_FLAG_SANDBOX            = (1 << 14),
 } FlatpakRunFlags;
 
 gboolean  flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
@@ -165,6 +168,8 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                         const char     *runtime_ref,
                                         FlatpakContext *final_app_context,
                                         FlatpakContext *cmdline_context,
+                                        gboolean        sandbox,
+                                        gboolean        build,
                                         char          **app_info_path_out,
                                         GError        **error);
 

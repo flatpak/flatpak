@@ -1439,6 +1439,8 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                const char     *runtime_ref,
                                FlatpakContext *final_app_context,
                                FlatpakContext *cmdline_context,
+                               gboolean        sandbox,
+                               gboolean        build,
                                char          **app_info_path_out,
                                GError        **error)
 {
@@ -1509,6 +1511,13 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) == 0)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                             FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY, TRUE);
+
+  if (sandbox)
+    g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                            FLATPAK_METADATA_KEY_SANDBOX, TRUE);
+  if (build)
+    g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                            FLATPAK_METADATA_KEY_BUILD, TRUE);
 
   if (cmdline_context)
     {
@@ -2765,6 +2774,7 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) bin_ldconfig = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
+  g_autoptr(GFile) real_app_id_dir = NULL;
   g_autofree char *default_runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
@@ -2793,6 +2803,8 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GFile) runtime_ld_so_conf = NULL;
   gboolean generate_ld_so_conf = TRUE;
   gboolean use_ld_so_cache = TRUE;
+  gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
+
   struct stat s;
 
   app_ref_parts = flatpak_decompose_ref (app_ref, error);
@@ -2882,6 +2894,15 @@ flatpak_run_app (const char     *app_ref,
       flatpak_context_merge (app_context, overrides);
     }
 
+  if (sandboxed)
+    {
+      flatpak_context_make_sandboxed (app_context);
+      flags |=
+        FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
+        FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
+        FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
+    }
+
   if (extra_context)
     flatpak_context_merge (app_context, extra_context);
 
@@ -2893,12 +2914,23 @@ flatpak_run_app (const char     *app_ref,
   if (app_deploy != NULL)
     {
       app_files = flatpak_deploy_get_files (app_deploy);
-      if ((app_id_dir = flatpak_ensure_data_dir (app_ref_parts[1], cancellable, error)) == NULL)
+
+      real_app_id_dir = flatpak_ensure_data_dir (app_ref_parts[1], cancellable, error);
+      if (real_app_id_dir == NULL)
         return FALSE;
+
+      if (!sandboxed)
+        app_id_dir = g_object_ref (real_app_id_dir);
     }
 
   flatpak_run_apply_env_default (bwrap, use_ld_so_cache);
   flatpak_run_apply_env_vars (bwrap, app_context);
+
+  if (real_app_id_dir)
+    {
+      g_autoptr(GFile) sandbox_dir = g_file_get_child (real_app_id_dir, "sandbox");
+      flatpak_bwrap_set_env (bwrap, "FLATPAK_SANDBOX_DIR", flatpak_file_get_path_cached (sandbox_dir), TRUE);
+    }
 
   flatpak_bwrap_add_args (bwrap,
                           "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
@@ -2969,10 +3001,13 @@ flatpak_run_app (const char     *app_ref,
                                       app_files, app_deploy_data, app_extensions,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_ref_parts[1], app_ref_parts[3],
-                                      runtime_ref, app_context, extra_context, &app_info_path, error))
+                                      runtime_ref, app_context, extra_context,
+                                      sandboxed, FALSE,
+                                      &app_info_path, error))
     return FALSE;
 
-  add_document_portal_args (bwrap, app_ref_parts[1], &doc_mount_path);
+  if (!sandboxed)
+    add_document_portal_args (bwrap, app_ref_parts[1], &doc_mount_path);
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
                                          app_ref_parts[1], app_context, app_id_dir, &exports, cancellable, error))
