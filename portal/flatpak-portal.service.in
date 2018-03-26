@@ -1,0 +1,7 @@
+[Unit]
+Description=flatpak portal
+
+[Service]
+BusName=org.freedesktop.portal.Flatpak
+ExecStart=@libexecdir@/flatpak-portal
+Type=dbus

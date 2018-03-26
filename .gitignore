@@ -33,15 +33,14 @@ gtk-doc.make
 flatpak
 flatpak-*.tar.xz
 flatpak-session-helper
-xdg-document-portal
-xdg-permission-store
-flatpak-builder
+flatpak-portal
 *~
 profile/flatpak.sh
 flatpak-dbus.[ch]
 flatpak-document-dbus.[ch]
 flatpak-systemd-dbus.[ch]
 flatpak-resources.[ch]
+flatpak-portal-dbus.[ch]
 flatpak-dbus-proxy
 permission-store-dbus.[ch]
 flatpak-system-helper
