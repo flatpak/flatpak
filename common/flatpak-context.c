@@ -1732,6 +1732,29 @@ flatpak_context_add_bus_filters (FlatpakContext *context,
     }
 }
 
+void
+flatpak_context_make_sandboxed (FlatpakContext *context)
+{
+  /* We drop almost everything from the app permission, except
+   * multiarch which is inherited, to make sure app code keeps
+   * running. */
+  context->shares_valid &= 0;
+  context->sockets_valid &= 0;
+  context->devices_valid &= 0;
+  context->features_valid &= FLATPAK_CONTEXT_FEATURE_MULTIARCH;
+
+  context->shares &= context->shares_valid;
+  context->sockets &= context->sockets_valid;
+  context->devices &= context->devices_valid;
+  context->features &= context->features_valid;
+
+  g_hash_table_remove_all (context->persistent);
+  g_hash_table_remove_all (context->filesystems);
+  g_hash_table_remove_all (context->session_bus_policy);
+  g_hash_table_remove_all (context->system_bus_policy);
+  g_hash_table_remove_all (context->generic_policy);
+}
+
 const char *dont_mount_in_root[] = {
   ".", "..", "lib", "lib32", "lib64", "bin", "sbin", "usr", "boot", "root",
   "tmp", "etc", "app", "run", "proc", "sys", "dev", "var", NULL
@@ -1922,19 +1945,20 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext *context,
         }
     }
 
-  {
-    g_autofree char *run_user_app_dst = g_strdup_printf ("/run/user/%d/app/%s", getuid (), app_id);
-    g_autofree char *run_user_app_src = g_build_filename (g_get_user_runtime_dir (), "app", app_id, NULL);
+  if (app_id_dir != NULL)
+    {
+      g_autofree char *run_user_app_dst = g_strdup_printf ("/run/user/%d/app/%s", getuid (), app_id);
+      g_autofree char *run_user_app_src = g_build_filename (g_get_user_runtime_dir (), "app", app_id, NULL);
 
-    if (glnx_shutil_mkdir_p_at (AT_FDCWD,
-                                run_user_app_src,
-                                0700,
-                                NULL,
-                                NULL))
+      if (glnx_shutil_mkdir_p_at (AT_FDCWD,
+                                  run_user_app_src,
+                                  0700,
+                                  NULL,
+                                  NULL))
         flatpak_bwrap_add_args (bwrap,
                                 "--bind", run_user_app_src, run_user_app_dst,
                                 NULL);
-  }
+    }
 
   /* Hide the flatpak dir by default (unless explicitly made visible) */
   user_flatpak_dir = flatpak_get_user_base_dir_location ();
