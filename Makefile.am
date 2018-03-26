@@ -92,6 +92,7 @@ include data/Makefile.am.inc
 include app/Makefile.am.inc
 include lib/Makefile.am.inc
 include session-helper/Makefile.am.inc
+include portal/Makefile.am.inc
 include system-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
 include tests/Makefile.am.inc

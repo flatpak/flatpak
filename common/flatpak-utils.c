@@ -23,7 +23,6 @@
 #include "flatpak-utils.h"
 #include "lib/flatpak-error.h"
 #include "flatpak-dir.h"
-#include "flatpak-portal-error.h"
 #include "flatpak-oci-registry.h"
 #include "flatpak-run.h"
 
