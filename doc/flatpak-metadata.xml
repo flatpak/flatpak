@@ -542,7 +542,11 @@
                 inside the sandbox when they are present on the system. Typical uses
                 for extension points include translations for applications, or debuginfo
                 for sdks. The name of the extension point is specified as part of the
-                group heading.
+                group heading. Since 0.11.4, the name may optionally include a tag
+                in the NAME in the name@tag ref syntax if you wish to use different
+                configurations (eg, versions) of the same extension concurrently.
+                The "tag" is effectively ignored, but is necessary in order to allow
+                the same extension name to be specified more than once.
             </para>
             <variablelist>
                 <varlistentry>
