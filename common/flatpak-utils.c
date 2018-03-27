@@ -3955,6 +3955,31 @@ add_extension (GKeyFile   *metakey,
   return res;
 }
 
+void
+flatpak_parse_extension_with_tag (const char  *extension,
+                                  char       **name,
+                                  char       **tag)
+{
+  const char *tag_chr = strchr (extension, '@');
+
+  if (tag_chr)
+    {
+      if (name != NULL)
+        *name = g_strndup (extension, tag_chr - extension);
+
+      /* Everything after the @ */
+      if (tag != NULL)
+        *tag = g_strdup (tag_chr + 1);
+
+      return;
+    }
+
+  if (name != NULL)
+    *name = g_strdup (extension);
+
+  if (tag != NULL)
+    *tag = NULL;
+}
 
 GList *
 flatpak_list_extensions (GKeyFile   *metakey,
@@ -3984,8 +4009,11 @@ flatpak_list_extensions (GKeyFile   *metakey,
           g_auto(GStrv) versions = g_key_file_get_string_list (metakey, groups[i],
                                                                FLATPAK_METADATA_KEY_VERSIONS,
                                                                NULL, NULL);
+          g_autofree char *name = NULL;
           const char *default_branches[] = { default_branch, NULL};
           const char **branches;
+
+          flatpak_parse_extension_with_tag (extension, &name, NULL);
 
           if (versions)
             branches = (const char **)versions;
@@ -3997,7 +4025,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
             }
 
           for (j = 0; branches[j] != NULL; j++)
-            res = add_extension (metakey, groups[i], extension, arch, branches[j], res);
+            res = add_extension (metakey, groups[i], name, arch, branches[j], res);
         }
     }
 
