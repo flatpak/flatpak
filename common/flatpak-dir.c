@@ -713,6 +713,14 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
       return NULL;
     }
 
+  if (setxattr (path, "user.test", "novalue", strlen ("novalue"), 0) < 0 &&
+      (errno == ENOTSUP || errno == EOPNOTSUPP))
+    {
+      flatpak_fail (error,
+                    _("/var/tmp does not suport xattrs which is needed for system-wide installation as a user. FLATPAK_SYSTEM_CACHE_DIR can be used to set an alternative path."));
+      return NULL;
+    }
+
   unlink (symlink_path);
   if (symlink (path, symlink_path) != 0)
     {
