@@ -3929,32 +3929,45 @@ flatpak_list_extensions (GKeyFile   *metakey,
   groups = g_key_file_get_groups (metakey, NULL);
   for (i = 0; groups[i] != NULL; i++)
     {
-      char *extension;
+      if (!g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))
+        continue;
 
-      if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
-          *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
+      char *extension = groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION);
+
+      if (!extension)
+        continue;
+
+      g_autofree char *name = NULL;
+      g_autofree char *branch = NULL;
+      g_autoptr(GError) error = NULL;
+
+      if (!flatpak_split_partial_ref_arg (extension, FLATPAK_KINDS_RUNTIME, arch, default_branch,
+                                          NULL, &name, NULL, &branch, &error))
         {
-          g_autofree char *version = g_key_file_get_string (metakey, groups[i],
-                                                            FLATPAK_METADATA_KEY_VERSION,
-                                                            NULL);
-          g_auto(GStrv) versions = g_key_file_get_string_list (metakey, groups[i],
-                                                               FLATPAK_METADATA_KEY_VERSIONS,
-                                                               NULL, NULL);
-          const char *default_branches[] = { default_branch, NULL};
-          const char **branches;
-
-          if (versions)
-            branches = (const char **)versions;
-          else
-            {
-              if (version)
-                default_branches[0] = version;
-              branches = default_branches;
-            }
-
-          for (j = 0; branches[j] != NULL; j++)
-            res = add_extension (metakey, groups[i], extension, arch, branches[j], res);
+          g_debug ("couldn't parse extension name %s: %s", extension, error->message);
+          continue;
         }
+
+      g_autofree char *version = g_key_file_get_string (metakey, groups[i],
+                                                        FLATPAK_METADATA_KEY_VERSION,
+                                                        NULL);
+      g_auto(GStrv) versions = g_key_file_get_string_list (metakey, groups[i],
+                                                           FLATPAK_METADATA_KEY_VERSIONS,
+                                                           NULL, NULL);
+      const char *default_branches[] = { branch, NULL };
+      const char **branches;
+
+      if (versions)
+        branches = (const char **)versions;
+      else
+        {
+          if (version)
+            default_branches[0] = version;
+          branches = default_branches;
+        }
+
+      for (j = 0; branches[j] != NULL; j++)
+        res = add_extension (metakey, groups[i], name, arch, branches[j], res);
     }
 
   return g_list_sort (g_list_reverse (res), flatpak_extension_compare);

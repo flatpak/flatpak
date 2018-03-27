@@ -542,7 +542,10 @@
                 inside the sandbox when they are present on the system. Typical uses
                 for extension points include translations for applications, or debuginfo
                 for sdks. The name of the extension point is specified as part of the
-                group heading.
+                group heading. Since 0.11.4, the name may optionally include a branch
+                in the name//branch ref syntax if you wish to use different versions
+                of the same extension at same time. If specified, the architecture
+                part of the ref is currently ignored.
             </para>
             <variablelist>
                 <varlistentry>

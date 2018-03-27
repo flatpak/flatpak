@@ -61,6 +61,40 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
+extension_matches_partial_ref (FlatpakExtension *ext, const char *match_partial_ref)
+{
+  g_autofree char *ext_arch = NULL;
+  g_autofree char *ext_branch = NULL;
+  g_autofree char *ext_base_ref = NULL;
+  g_autofree char *match_id = NULL;
+  g_autofree char *match_arch = NULL;
+  g_autofree char *match_branch = NULL;
+  g_autofree char *match_full_ref = NULL;
+
+  if (!flatpak_split_partial_ref_arg (ext->ref, FLATPAK_KINDS_RUNTIME, NULL, NULL, NULL, NULL, &ext_arch, &ext_branch, NULL))
+    return FALSE;
+
+  /* complete provided partial ref with arch and branch from the ext */
+  if (!flatpak_split_partial_ref_arg (match_partial_ref, FLATPAK_KINDS_RUNTIME, ext_arch, ext_branch, NULL, &match_id, &match_arch, &match_branch, NULL))
+    return FALSE;
+  match_full_ref = g_build_filename ("runtime", match_id, match_arch, match_branch, NULL);
+
+  if (strcmp (ext->ref, match_full_ref) == 0)
+    return TRUE;
+
+  if (strcmp (ext->id, ext->installed_id) == 0)
+    return FALSE;
+
+  /* imaginary ext->ref for ext->id rather than ext->installed_id, if this is a subdir extension */
+  ext_base_ref = g_build_filename ("runtime", ext->id, ext_arch, ext_branch, NULL);
+
+  if (strcmp (ext_base_ref, match_full_ref) == 0)
+    return TRUE;
+
+  return FALSE;
+}
+
+static gboolean
 ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
                  char *src_extensions[], GFile *top_dir, GCancellable *cancellable, GError **error)
 {
@@ -80,8 +114,7 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
         {
           FlatpakExtension *ext = l->data;
 
-          if (strcmp (ext->installed_id, requested_extension) == 0 ||
-              strcmp (ext->id, requested_extension) == 0)
+          if (extension_matches_partial_ref (ext, requested_extension))
             {
               if (!ext->is_unmaintained)
                 {
