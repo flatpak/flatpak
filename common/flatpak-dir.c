@@ -3671,8 +3671,13 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                    ref,
                                    &checksum, NULL))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   _("Can't find %s in remote %s"), ref, remote_name);
+      if (collection_id != NULL)
+        g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                     _("No such ref (%s, %s) in remote %s"), collection_id, ref, remote_name);
+      else
+        g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                     _("No such ref '%s' in remote %s"), ref, remote_name);
+
       return FALSE;
     }
 
