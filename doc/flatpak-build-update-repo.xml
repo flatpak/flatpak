@@ -48,7 +48,7 @@
         </para>
         <para>
             After this command, <arg choice="plain">LOCATION</arg> can be
-            used as the repository location for flatpak add-repo, either by
+            used as the repository location for flatpak remote-add, either by
             exporting it over http, or directly with a file: url.
         </para>
     </refsect1>
