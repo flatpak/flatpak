@@ -167,7 +167,8 @@ rewrite_delta (OstreeRepo *src_repo,
 
   g_variant_dict_init (&dst_metadata_dict, src_metadata);
   g_variant_dict_remove (&dst_metadata_dict, src_detached_key);
-  if (ostree_repo_read_commit_detached_metadata (dst_repo, dst_commit, &dst_detached, NULL, NULL))
+  if (ostree_repo_read_commit_detached_metadata (dst_repo, dst_commit, &dst_detached, NULL, NULL) &&
+      dst_detached != NULL)
     g_variant_dict_insert_value (&dst_metadata_dict, dst_detached_key, dst_detached);
 
   g_variant_builder_add_value (&superblock_builder, g_variant_dict_end (&dst_metadata_dict));
