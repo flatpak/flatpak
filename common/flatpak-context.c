@@ -641,33 +641,81 @@ get_xdg_user_dir_from_string (const char  *filesystem,
 }
 
 static char *
-parse_filesystem_flags (const char *filesystem, FlatpakFilesystemMode *mode)
+unparse_filesystem_flags (const char *path,
+                          FlatpakFilesystemMode mode)
 {
-  gsize len = strlen (filesystem);
+  g_autoptr(GString) s = g_string_new ("");
+  const char *p;
 
-  if (mode)
-    *mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
-
-  if (g_str_has_suffix (filesystem, ":ro"))
+  for (p = path; *p != 0; p++)
     {
-      len -= 3;
-      if (mode)
-        *mode = FLATPAK_FILESYSTEM_MODE_READ_ONLY;
-    }
-  else if (g_str_has_suffix (filesystem, ":rw"))
-    {
-      len -= 3;
-      if (mode)
-        *mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
-    }
-  else if (g_str_has_suffix (filesystem, ":create"))
-    {
-      len -= 7;
-      if (mode)
-        *mode = FLATPAK_FILESYSTEM_MODE_CREATE;
+      if (*p == ':')
+        g_string_append (s, "\\:");
+      else if (*p == '\\')
+        g_string_append (s, "\\\\");
+      else
+        g_string_append_c (s, *p);
     }
 
-  return g_strndup (filesystem, len);
+  switch (mode)
+    {
+    case FLATPAK_FILESYSTEM_MODE_READ_ONLY:
+      g_string_append (s, ":ro");
+      break;
+    case FLATPAK_FILESYSTEM_MODE_CREATE:
+      g_string_append (s, ":create");
+      break;
+    case FLATPAK_FILESYSTEM_MODE_READ_WRITE:
+      break;
+    default:
+      g_warning ("Unexpected filesystem mode %d", mode);
+      break;
+    }
+
+  return g_string_free (g_steal_pointer (&s), FALSE);
+}
+
+static char *
+parse_filesystem_flags (const char *filesystem,
+                        FlatpakFilesystemMode *mode_out)
+{
+  g_autoptr(GString) s = g_string_new ("");
+  const char *p, *suffix;
+  FlatpakFilesystemMode mode;
+
+  p = filesystem;
+  while (*p != 0 && *p != ':')
+    {
+      if (*p == '\\')
+        {
+          p++;
+          if (*p != 0)
+            g_string_append_c (s, *p++);
+        }
+      else
+        g_string_append_c (s, *p++);
+    }
+
+  mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+
+  if (*p == ':')
+    {
+      suffix = p + 1;
+
+      if (strcmp (suffix, "ro") == 0)
+        mode = FLATPAK_FILESYSTEM_MODE_READ_ONLY;
+      else if (strcmp (suffix, "rw") == 0)
+        mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+      else if (strcmp (suffix, "create") == 0)
+        mode = FLATPAK_FILESYSTEM_MODE_CREATE;
+      else if (*suffix != 0)
+        g_warning ("Unexpected filesystem suffix %s, ignoring", suffix);
+    }
+
+  if (mode_out)
+    *mode_out = mode;
+
+  return g_string_free (g_steal_pointer (&s), FALSE);
 }
 
 static gboolean
@@ -1514,12 +1562,8 @@ flatpak_context_save_metadata (FlatpakContext *context,
         {
           FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-          if (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
-            g_ptr_array_add (array, g_strconcat (key, ":ro", NULL));
-          else if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
-            g_ptr_array_add (array, g_strconcat (key, ":create", NULL));
-          else if (value != NULL)
-            g_ptr_array_add (array, g_strdup (key));
+          if (mode != 0)
+            g_ptr_array_add (array, unparse_filesystem_flags (key, mode));
           else
             g_ptr_array_add (array, g_strconcat ("!", key, NULL));
         }
@@ -1690,12 +1734,11 @@ flatpak_context_to_args (FlatpakContext *context,
     {
       FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-      if (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
-        g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s:ro", (char *)key));
-      else if (mode == FLATPAK_FILESYSTEM_MODE_READ_WRITE)
-        g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", (char *)key));
-      else if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
-        g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s:create", (char *)key));
+      if (mode != 0)
+        {
+          g_autofree char *fs = unparse_filesystem_flags (key, mode);
+          g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", fs));
+        }
       else
         g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", (char *)key));
     }
