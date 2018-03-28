@@ -1437,6 +1437,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                const char     *app_id,
                                const char     *app_branch,
                                const char     *runtime_ref,
+                               GFile          *app_id_dir,
                                FlatpakContext *final_app_context,
                                FlatpakContext *cmdline_context,
                                gboolean        sandbox,
@@ -1473,6 +1474,13 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_NAME, app_id);
   g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_RUNTIME,
                          runtime_ref);
+
+  if (app_id_dir)
+    {
+      g_autofree char *instance_path = g_file_get_path (app_id_dir);
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                             FLATPAK_METADATA_KEY_INSTANCE_PATH, instance_path);
+    }
 
   if (app_files)
     {
@@ -3001,7 +3009,7 @@ flatpak_run_app (const char     *app_ref,
                                       app_files, app_deploy_data, app_extensions,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_ref_parts[1], app_ref_parts[3],
-                                      runtime_ref, app_context, extra_context,
+                                      runtime_ref, app_id_dir, app_context, extra_context,
                                       sandboxed, FALSE,
                                       &app_info_path, error))
     return FALSE;
