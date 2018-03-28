@@ -2397,6 +2397,8 @@ get_common_pull_options (GVariantBuilder     *builder,
   g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Ref", ref_to_fetch);
   g_variant_builder_add (builder, "{s@v}", "http-headers",
                          g_variant_new_variant (g_variant_builder_end (&hdr_builder)));
+  g_variant_builder_add (builder, "{s@v}", "append-user-agent",
+                         g_variant_new_variant (g_variant_new_string ("flatpak/" PACKAGE_VERSION)));
 
   if (progress != NULL)
     update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
