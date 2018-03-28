@@ -239,6 +239,38 @@ is_valid_expose (const char *expose)
   return TRUE;
 }
 
+static char *
+filesystem_sandbox_arg (const char *path,
+                        const char *sandbox,
+                        gboolean readonly)
+{
+  g_autoptr(GString) s = g_string_new ("--filesystem=");
+  const char *p;
+
+  for (p = path; *p != 0; p++)
+    {
+      if (*p == ':')
+        g_string_append (s, "\\:");
+      else
+        g_string_append_c (s, *p);
+    }
+
+  g_string_append (s, "/sandbox/");
+
+  for (p = sandbox; *p != 0; p++)
+    {
+      if (*p == ':')
+        g_string_append (s, "\\:");
+      else
+        g_string_append_c (s, *p);
+    }
+
+  if (readonly)
+    g_string_append (s, ":ro");
+
+  return g_string_free (g_steal_pointer (&s), FALSE);
+}
+
 static gboolean
 handle_spawn (PortalFlatpak *object,
               GDBusMethodInvocation *invocation,
@@ -468,9 +500,11 @@ handle_spawn (PortalFlatpak *object,
   if (instance_path)
     {
       for (i = 0; sandbox_expose != NULL && sandbox_expose[i] != NULL; i++)
-        g_ptr_array_add (flatpak_argv, g_strdup_printf ("--filesystem=%s/sandbox/%s:rw", instance_path, sandbox_expose[i]));
+        g_ptr_array_add (flatpak_argv,
+                         filesystem_sandbox_arg (instance_path, sandbox_expose[i], FALSE));
       for (i = 0; sandbox_expose_ro != NULL && sandbox_expose_ro[i] != NULL; i++)
-        g_ptr_array_add (flatpak_argv, g_strdup_printf ("--filesystem=%s/sandbox/%s:ro", instance_path, sandbox_expose_ro[i]));
+        g_ptr_array_add (flatpak_argv,
+                         filesystem_sandbox_arg (instance_path, sandbox_expose_ro[i], TRUE));
     }
 
   for (i = 0; sandbox_expose_ro != NULL && sandbox_expose_ro[i] != NULL; i++)
