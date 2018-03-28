@@ -531,6 +531,74 @@ flatpak_installation_get_storage_type (FlatpakInstallation *self)
 }
 
 /**
+ * flatpak_installation_launch_full:
+ * @self: a #FlatpakInstallation
+ * @name: name of the app to launch
+ * @arch: (nullable): which architecture to launch (default: current architecture)
+ * @branch: (nullable): which branch of the application (default: "master")
+ * @commit: (nullable): the commit of @branch to launch
+ * @devel: if %TRUE run with devel access
+ * @custom_command: (nullable): custom command to run
+ * @argc: number of elements in @argv
+ * @argv: (array length=argc) (nullable): array of args to pass to command
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Launch an installed application.
+ *
+ * You can use flatpak_installation_get_installed_ref() or
+ * flatpak_installation_get_current_installed_app() to find out what builds
+ * are available, in order to get a value for @commit.
+ *
+ * Returns: %TRUE, unless an error occurred
+ * Since: 0.10.4
+ */
+gboolean
+flatpak_installation_launch_full (FlatpakInstallation  *self,
+                                  const char           *name,
+                                  const char           *arch,
+                                  const char           *branch,
+                                  const char           *commit,
+                                  gboolean              devel,
+                                  const char           *custom_command,
+                                  const guint           argc,
+                                  const gchar         **argv,
+                                  GCancellable         *cancellable,
+                                  GError              **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(FlatpakDeploy) app_deploy = NULL;
+  g_autofree char *app_ref = NULL;
+  FlatpakRunFlags flags = FLATPAK_RUN_FLAG_BACKGROUND;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
+
+  app_ref =
+    flatpak_build_app_ref (name, branch, arch);
+
+  app_deploy =
+    flatpak_dir_load_deployed (dir, app_ref,
+                               commit,
+                               cancellable, error);
+  if (app_deploy == NULL)
+    return FALSE;
+
+  if (devel)
+    flags |= FLATPAK_RUN_FLAG_DEVEL;
+
+  return flatpak_run_app (app_ref,
+                          app_deploy,
+                          NULL, NULL,
+                          NULL,
+                          flags,
+                          custom_command,
+                          (char**)argv, argc,
+                          cancellable, error);
+}
+
+/**
  * flatpak_installation_launch:
  * @self: a #FlatpakInstallation
  * @name: name of the app to launch
@@ -557,32 +625,16 @@ flatpak_installation_launch (FlatpakInstallation *self,
                              GCancellable        *cancellable,
                              GError             **error)
 {
-  g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(FlatpakDeploy) app_deploy = NULL;
-  g_autofree char *app_ref = NULL;
-
-  dir = flatpak_installation_get_dir (self, error);
-  if (dir == NULL)
-    return FALSE;
-
-  app_ref =
-    flatpak_build_app_ref (name, branch, arch);
-
-  app_deploy =
-    flatpak_dir_load_deployed (dir, app_ref,
-                               commit,
-                               cancellable, error);
-  if (app_deploy == NULL)
-    return FALSE;
-
-  return flatpak_run_app (app_ref,
-                          app_deploy,
-                          NULL, NULL,
-                          NULL,
-                          FLATPAK_RUN_FLAG_BACKGROUND,
-                          NULL,
-                          NULL, 0,
-                          cancellable, error);
+  return flatpak_installation_launch_full (self,
+                                           name,
+                                           arch,
+                                           branch,
+                                           commit,
+                                           FALSE,
+                                           NULL,
+                                           0, NULL,
+                                           cancellable,
+                                           error);
 }
 
 

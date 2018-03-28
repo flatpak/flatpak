@@ -152,6 +152,17 @@ FLATPAK_EXTERN gboolean             flatpak_installation_launch (FlatpakInstalla
                                                                  const char          *commit,
                                                                  GCancellable        *cancellable,
                                                                  GError             **error);
+FLATPAK_EXTERN gboolean             flatpak_installation_launch_full (FlatpakInstallation  *self,
+                                                                      const char           *name,
+                                                                      const char           *arch,
+                                                                      const char           *branch,
+                                                                      const char           *commit,
+                                                                      gboolean              devel,
+                                                                      const char           *custom_command,
+                                                                      const guint           argc,
+                                                                      const gchar         **argv,
+                                                                      GCancellable         *cancellable,
+                                                                      GError              **error);
 FLATPAK_EXTERN GFileMonitor        *flatpak_installation_create_monitor (FlatpakInstallation *self,
                                                                          GCancellable        *cancellable,
                                                                          GError             **error);
