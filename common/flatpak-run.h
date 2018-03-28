@@ -51,6 +51,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_FEATURES "features"
 
 #define FLATPAK_METADATA_GROUP_INSTANCE "Instance"
+#define FLATPAK_METADATA_KEY_INSTANCE_PATH "instance-path"
 #define FLATPAK_METADATA_KEY_APP_PATH "app-path"
 #define FLATPAK_METADATA_KEY_APP_COMMIT "app-commit"
 #define FLATPAK_METADATA_KEY_APP_EXTENSIONS "app-extensions"
@@ -166,6 +167,7 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                         const char     *app_id,
                                         const char     *app_branch,
                                         const char     *runtime_ref,
+                                        GFile          *app_id_dir,
                                         FlatpakContext *final_app_context,
                                         FlatpakContext *cmdline_context,
                                         gboolean        sandbox,
