@@ -239,15 +239,13 @@ flatpak_complete_update (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  FlatpakDir *dir;
   FlatpakKinds kinds;
+  int i;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, NULL, NULL))
     return FALSE;
-
-  dir = g_ptr_array_index (dirs, 0);
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
@@ -258,7 +256,13 @@ flatpak_complete_update (FlatpakCompletion *completion)
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
       flatpak_complete_options (completion, user_entries);
-      flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, NULL);
+
+      for (i = 0; i < dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, NULL);
+        }
+
       break;
     }
 
