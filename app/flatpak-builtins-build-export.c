@@ -31,6 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "parse-datetime.h"
 
 static char *opt_subject;
 static char *opt_body;
@@ -62,7 +63,7 @@ static GOptionEntry options[] = {
   { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, N_("Files to exclude"), N_("PATTERN") },
   { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, N_("Excluded files to include"), N_("PATTERN") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
-  { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit"), N_("ISO-8601-TIMESTAMP") },
+  { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit"), N_("TIMESTAMP") },
 #ifdef FLATPAK_ENABLE_P2P
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), "COLLECTION-ID" },
 #endif  /* FLATPAK_ENABLE_P2P */
@@ -656,7 +657,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   gboolean is_runtime = FALSE;
   gboolean is_extension = FALSE;
   guint64 installed_size = 0,download_size = 0;
-  GTimeVal ts;
+  struct timespec ts;
   const char *collection_id;
 
   context = g_option_context_new (_("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"));
@@ -900,12 +901,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   /* The timestamp is used for the commit metadata and AppStream data */
   if (opt_timestamp != NULL)
     {
-      if (!g_time_val_from_iso8601 (opt_timestamp, &ts))
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Could not parse '%s'", opt_timestamp);
-          goto out;
-        }
+      if (!parse_datetime (&ts, opt_timestamp, NULL))
+        return flatpak_fail (error, _("Could not parse '%s'"), opt_timestamp);
     }
 
   if (opt_timestamp == NULL)
