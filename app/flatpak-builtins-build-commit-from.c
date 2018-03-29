@@ -31,6 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "parse-datetime.h"
 
 static char *opt_src_repo;
 static char *opt_src_ref;
@@ -42,6 +43,7 @@ static gboolean opt_untrusted;
 static gboolean opt_force;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
+static char *opt_timestamp;
 
 static GOptionEntry options[] = {
   { "src-repo", 's', 0, G_OPTION_ARG_STRING, &opt_src_repo, N_("Source repo dir"), N_("SRC-REPO") },
@@ -54,6 +56,7 @@ static GOptionEntry options[] = {
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, "Override the timestamp of the commit", N_("TIMESTAMP") },
   { NULL }
 };
 
@@ -224,6 +227,8 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
   g_autoptr(GPtrArray) src_refs = NULL;
   g_autoptr(GPtrArray) resolved_src_refs = NULL;
   OstreeRepoCommitState src_commit_state;
+  struct timespec ts;
+  guint64 timestamp;
   int i;
 
   context = g_option_context_new (_("DST-REPO [DST-REF]... - Make a new commit based on existing commit(s)"));
@@ -248,6 +253,12 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
 
   if (opt_src_repo == NULL && opt_src_ref == NULL)
     return flatpak_fail (error, _("Either --src-repo or --src-ref must be specified."));
+
+  if (opt_timestamp)
+    {
+      if (!parse_datetime (&ts, opt_timestamp, NULL))
+        return flatpak_fail (error, _("Could not parse '%s'"), opt_timestamp);
+    }
 
   dst_repofile = g_file_new_for_commandline_arg (dst_repo_arg);
   if (!g_file_query_exists (dst_repofile, cancellable))
@@ -463,9 +474,13 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
           g_variant_builder_add_value (&metadata_builder, child);
         }
 
+      timestamp = ostree_commit_get_timestamp (src_commitv);
+      if (opt_timestamp)
+        timestamp = ts.tv_sec;
+
       if (!ostree_repo_write_commit_with_time (dst_repo, dst_parent, subject, body, g_variant_builder_end (&metadata_builder),
                                                OSTREE_REPO_FILE (dst_root),
-                                               ostree_commit_get_timestamp (src_commitv),
+                                               timestamp,
                                                &commit_checksum, cancellable, error))
         return FALSE;
 
