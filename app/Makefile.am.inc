@@ -2,6 +2,8 @@ bin_PROGRAMS += \
 	flatpak \
 	$(NULL)
 
+EXTRA_DIST += app/parse-datetime.y
+
 flatpak_SOURCES = \
 	app/flatpak-main.c \
 	app/flatpak-builtins.h \
@@ -39,6 +41,8 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-document-info.c \
 	app/flatpak-builtins-document-list.c \
 	app/flatpak-builtins-search.c \
+	app/parse-datetime.c \
+	app/parse-datetime.h \
 	$(NULL)
 
 flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
