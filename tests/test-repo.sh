@@ -28,7 +28,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-
     skip_without_p2p
 fi
 
-echo "1..12"
+echo "1..13"
 
 #Regular repo
 setup_repo
@@ -139,9 +139,16 @@ update_repo test-gpg3 org.test.Collection.test
 ${FLATPAK} ${U} install test-repo org.test.Hello
 assert_file_has_content $FL_DIR/app/org.test.Hello/$ARCH/master/active/files/bin/hello.sh UPDATED
 
-${FLATPAK} ${U} uninstall org.test.Platform org.test.Hello
-
 echo "ok redirect url and gpg key"
+
+if ${FLATPAK} ${INVERT_U} uninstall org.test.Platform org.test.Hello; then
+    assert_not_reached "Should not be able to uninstall ${INVERT_U} when installed ${U}"
+fi
+
+# Test that unspecified --user/--system finds the right one, so no ${U}
+${FLATPAK} uninstall org.test.Platform org.test.Hello
+
+echo "ok uninstall vs installations"
 
 # Test that remote-ls works in all of the following cases:
 # * system remote, and --system is used

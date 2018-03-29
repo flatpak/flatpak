@@ -94,9 +94,11 @@ export ARCH=`flatpak --default-arch`
 if [ x${USE_SYSTEMDIR-} == xyes ] ; then
     export FL_DIR=${SYSTEMDIR}
     export U=
+    export INVERT_U=--user
 else
     export FL_DIR=${USERDIR}
     export U="--user"
+    export INVERT_U=--system
 fi
 
 if [ x${USE_DELTAS-} == xyes ] ; then
