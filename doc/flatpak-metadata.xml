@@ -694,6 +694,13 @@
                         backported to the 0.8.x branch in 0.8.3.
                     </para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>tag</option> (string)</term>
+                    <listitem><para>
+                        The tag name to use when searching for this extension's mount
+                        point in the parent flatpak. Available since 0.11.4.
+                    </para></listitem>
+                </varlistentry>
             </variablelist>
         </refsect2>
         <refsect2>
