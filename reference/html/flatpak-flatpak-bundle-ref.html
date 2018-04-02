@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>flatpak-bundle-ref: Flatpak Library Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="index.html" title="Flatpak Library Reference Manual">
 <link rel="up" href="ch01.html" title="Flatpak">
 <link rel="prev" href="FlatpakRemote.html" title="FlatpakRemote">
 <link rel="next" href="flatpak-Error-codes.html" title="Error codes">
-<meta name="generator" content="GTK-Doc V1.25.1 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -35,7 +35,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="flatpak-flatpak-bundle-ref.functions"></a><h2>Functions</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="functions_return">
 <col class="functions_name">
@@ -51,7 +51,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../gio/GFile.html#GFile-struct"><span class="returnvalue">GFile</span></a> *
+<span class="returnvalue">GFile</span> *
 </td>
 <td class="function_name">
 <a class="link" href="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-file" title="flatpak_bundle_ref_get_file ()">flatpak_bundle_ref_get_file</a> <span class="c_punctuation">()</span>
@@ -59,7 +59,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<span class="returnvalue">GBytes</span> *
 </td>
 <td class="function_name">
 <a class="link" href="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-metadata" title="flatpak_bundle_ref_get_metadata ()">flatpak_bundle_ref_get_metadata</a> <span class="c_punctuation">()</span>
@@ -67,7 +67,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<span class="returnvalue">GBytes</span> *
 </td>
 <td class="function_name">
 <a class="link" href="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-appstream" title="flatpak_bundle_ref_get_appstream ()">flatpak_bundle_ref_get_appstream</a> <span class="c_punctuation">()</span>
@@ -75,7 +75,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<span class="returnvalue">GBytes</span> *
 </td>
 <td class="function_name">
 <a class="link" href="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-icon" title="flatpak_bundle_ref_get_icon ()">flatpak_bundle_ref_get_icon</a> <span class="c_punctuation">()</span>
@@ -91,10 +91,18 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#guint64"><span class="returnvalue">guint64</span></a>
+<span class="returnvalue">guint64</span>
 </td>
 <td class="function_name">
 <a class="link" href="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-installed-size" title="flatpak_bundle_ref_get_installed_size ()">flatpak_bundle_ref_get_installed_size</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">char</span> *
+</td>
+<td class="function_name">
+<a class="link" href="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-runtime-repo-url" title="flatpak_bundle_ref_get_runtime_repo_url ()">flatpak_bundle_ref_get_runtime_repo_url</a> <span class="c_punctuation">()</span>
 </td>
 </tr>
 </tbody>
@@ -102,7 +110,7 @@
 </div>
 <div class="refsect1">
 <a name="flatpak-flatpak-bundle-ref.properties"></a><h2>Properties</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="properties_type">
 <col width="300px" class="properties_name">
@@ -110,7 +118,7 @@
 </colgroup>
 <tbody><tr>
 <td class="property_type">
-<a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a> *</td>
+<span class="type">GFile</span> *</td>
 <td class="property_name"><a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef--file" title="The “file” property">file</a></td>
 <td class="property_flags">Read / Write</td>
 </tr></tbody>
@@ -118,7 +126,7 @@
 </div>
 <a name="FlatpakBundleRef"></a><div class="refsect1">
 <a name="flatpak-flatpak-bundle-ref.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -131,7 +139,7 @@
 </div>
 <div class="refsect1">
 <a name="flatpak-flatpak-bundle-ref.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="../gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+<pre class="screen">    GObject
     <span class="lineart">╰──</span> <a class="link" href="FlatpakRef.html" title="FlatpakRef">FlatpakRef</a>
         <span class="lineart">╰──</span> FlatpakBundleRef
 </pre>
@@ -144,12 +152,12 @@
 <div class="refsect2">
 <a name="flatpak-bundle-ref-new"></a><h3>flatpak_bundle_ref_new ()</h3>
 <pre class="programlisting"><a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef"><span class="returnvalue">FlatpakBundleRef</span></a> *
-flatpak_bundle_ref_new (<em class="parameter"><code><a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a> *file</code></em>,
-                        <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+flatpak_bundle_ref_new (<em class="parameter"><code><span class="type">GFile</span> *file</code></em>,
+                        <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Creates a new bundle ref for the given file.</p>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-new.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -158,12 +166,12 @@ flatpak_bundle_ref_new (<em class="parameter"><code><a href="../gio/GFile.html#G
 <tbody>
 <tr>
 <td class="parameter_name"><p>file</p></td>
-<td class="parameter_description"><p>a <a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a></p></td>
+<td class="parameter_description"><p>a <span class="type">GFile</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p> return location for an error. </p></td>
+<td class="parameter_description"><p>return location for an error. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL is OK, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span></td>
 </tr>
 </tbody>
@@ -177,12 +185,12 @@ flatpak_bundle_ref_new (<em class="parameter"><code><a href="../gio/GFile.html#G
 <hr>
 <div class="refsect2">
 <a name="flatpak-bundle-ref-get-file"></a><h3>flatpak_bundle_ref_get_file ()</h3>
-<pre class="programlisting"><a href="../gio/GFile.html#GFile-struct"><span class="returnvalue">GFile</span></a> *
+<pre class="programlisting"><span class="returnvalue">GFile</span> *
 flatpak_bundle_ref_get_file (<em class="parameter"><code><a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef"><span class="type">FlatpakBundleRef</span></a> *self</code></em>);</pre>
 <p>Get the file this bundle is stored in.</p>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-file.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -197,18 +205,18 @@ flatpak_bundle_ref_get_file (<em class="parameter"><code><a class="link" href="f
 </div>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-file.returns"></a><h4>Returns</h4>
-<p> (transfer full) : an <a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a></p>
+<p> (transfer full) : an <span class="type">GFile</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-bundle-ref-get-metadata"></a><h3>flatpak_bundle_ref_get_metadata ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<pre class="programlisting"><span class="returnvalue">GBytes</span> *
 flatpak_bundle_ref_get_metadata (<em class="parameter"><code><a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef"><span class="type">FlatpakBundleRef</span></a> *self</code></em>);</pre>
 <p>Get the metadata for the app/runtime</p>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-metadata.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -223,18 +231,18 @@ flatpak_bundle_ref_get_metadata (<em class="parameter"><code><a class="link" hre
 </div>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-metadata.returns"></a><h4>Returns</h4>
-<p> (transfer full) : an <a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> with the metadata contents, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a></p>
+<p> (transfer full) : an <span class="type">GBytes</span> with the metadata contents, or <code class="literal">NULL</code></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-bundle-ref-get-appstream"></a><h3>flatpak_bundle_ref_get_appstream ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<pre class="programlisting"><span class="returnvalue">GBytes</span> *
 flatpak_bundle_ref_get_appstream (<em class="parameter"><code><a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef"><span class="type">FlatpakBundleRef</span></a> *self</code></em>);</pre>
 <p>Get the compressed appstream for the app/runtime</p>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-appstream.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -249,19 +257,19 @@ flatpak_bundle_ref_get_appstream (<em class="parameter"><code><a class="link" hr
 </div>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-appstream.returns"></a><h4>Returns</h4>
-<p> (transfer full) : an <a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> with the appstream contents, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a></p>
+<p> (transfer full) : an <span class="type">GBytes</span> with the appstream contents, or <code class="literal">NULL</code></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-bundle-ref-get-icon"></a><h3>flatpak_bundle_ref_get_icon ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<pre class="programlisting"><span class="returnvalue">GBytes</span> *
 flatpak_bundle_ref_get_icon (<em class="parameter"><code><a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef"><span class="type">FlatpakBundleRef</span></a> *self</code></em>,
                              <em class="parameter"><code><span class="type">int</span> size</code></em>);</pre>
 <p>Get the icon png data for the app/runtime</p>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-icon.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -283,7 +291,7 @@ flatpak_bundle_ref_get_icon (<em class="parameter"><code><a class="link" href="f
 </div>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-icon.returns"></a><h4>Returns</h4>
-<p> (transfer full) : an <a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> with png contents</p>
+<p> (transfer full) : an <span class="type">GBytes</span> with png contents</p>
 </div>
 </div>
 <hr>
@@ -294,7 +302,7 @@ flatpak_bundle_ref_get_origin (<em class="parameter"><code><a class="link" href=
 <p>Get the origin url stored in the bundle</p>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-origin.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -309,18 +317,18 @@ flatpak_bundle_ref_get_origin (<em class="parameter"><code><a class="link" href=
 </div>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-origin.returns"></a><h4>Returns</h4>
-<p> (transfer full) : an url string, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a></p>
+<p> (transfer full) : an url string, or <code class="literal">NULL</code></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-bundle-ref-get-installed-size"></a><h3>flatpak_bundle_ref_get_installed_size ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#guint64"><span class="returnvalue">guint64</span></a>
+<pre class="programlisting"><span class="returnvalue">guint64</span>
 flatpak_bundle_ref_get_installed_size (<em class="parameter"><code><a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef"><span class="type">FlatpakBundleRef</span></a> *self</code></em>);</pre>
 <p>Returns the installed size for the bundle.</p>
 <div class="refsect3">
 <a name="flatpak-bundle-ref-get-installed-size.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -338,6 +346,13 @@ flatpak_bundle_ref_get_installed_size (<em class="parameter"><code><a class="lin
 <p> the installed size</p>
 </div>
 </div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-bundle-ref-get-runtime-repo-url"></a><h3>flatpak_bundle_ref_get_runtime_repo_url ()</h3>
+<pre class="programlisting"><span class="returnvalue">char</span> *
+flatpak_bundle_ref_get_runtime_repo_url
+                               (<em class="parameter"><code><a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef"><span class="type">FlatpakBundleRef</span></a> *self</code></em>);</pre>
+</div>
 </div>
 <div class="refsect1">
 <a name="flatpak-flatpak-bundle-ref.other_details"></a><h2>Types and Values</h2>
@@ -350,12 +365,12 @@ flatpak_bundle_ref_get_installed_size (<em class="parameter"><code><a class="lin
 <a name="flatpak-flatpak-bundle-ref.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="FlatpakBundleRef--file"></a><h3>The <code class="literal">“file”</code> property</h3>
-<pre class="programlisting">  “file”                     <a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a> *</pre>
+<pre class="programlisting">  “file”                     <span class="type">GFile</span> *</pre>
 <p>Flags: Read / Write</p>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25.1</div>
+<hr>Generated by GTK-Doc V1.27</div>
 </body>
 </html>

@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>FlatpakInstalledRef: Flatpak Library Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="index.html" title="Flatpak Library Reference Manual">
 <link rel="up" href="ch01.html" title="Flatpak">
 <link rel="prev" href="FlatpakRef.html" title="FlatpakRef">
-<link rel="next" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef">
-<meta name="generator" content="GTK-Doc V1.25.1 (XML mode)">
+<link rel="next" href="FlatpakRelatedRef.html" title="FlatpakRelatedRef">
+<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -22,7 +22,7 @@
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
 <td><a accesskey="p" href="FlatpakRef.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="FlatpakRemoteRef.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="FlatpakRelatedRef.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="FlatpakInstalledRef"></a><div class="titlepage"></div>
@@ -35,7 +35,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="FlatpakInstalledRef.functions"></a><h2>Functions</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="functions_return">
 <col class="functions_name">
@@ -50,7 +50,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#guint64"><span class="returnvalue">guint64</span></a>
+<span class="returnvalue">guint64</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstalledRef.html#flatpak-installed-ref-get-installed-size" title="flatpak_installed_ref_get_installed_size ()">flatpak_installed_ref_get_installed_size</a> <span class="c_punctuation">()</span>
@@ -58,7 +58,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstalledRef.html#flatpak-installed-ref-get-is-current" title="flatpak_installed_ref_get_is_current ()">flatpak_installed_ref_get_is_current</a> <span class="c_punctuation">()</span>
@@ -80,7 +80,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<span class="returnvalue">GBytes</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstalledRef.html#flatpak-installed-ref-load-metadata" title="flatpak_installed_ref_load_metadata ()">flatpak_installed_ref_load_metadata</a> <span class="c_punctuation">()</span>
@@ -98,7 +98,7 @@
 </div>
 <div class="refsect1">
 <a name="FlatpakInstalledRef.properties"></a><h2>Properties</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="properties_type">
 <col width="300px" class="properties_name">
@@ -107,34 +107,34 @@
 <tbody>
 <tr>
 <td class="property_type">
-<a href="../glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<span class="type">gchar</span> *</td>
 <td class="property_name"><a class="link" href="FlatpakInstalledRef.html#FlatpakInstalledRef--deploy-dir" title="The “deploy-dir” property">deploy-dir</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="../glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_type"><span class="type">guint64</span></td>
 <td class="property_name"><a class="link" href="FlatpakInstalledRef.html#FlatpakInstalledRef--installed-size" title="The “installed-size” property">installed-size</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><span class="type">gboolean</span></td>
 <td class="property_name"><a class="link" href="FlatpakInstalledRef.html#FlatpakInstalledRef--is-current" title="The “is-current” property">is-current</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
 <td class="property_type">
-<a href="../glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<span class="type">gchar</span> *</td>
 <td class="property_name"><a class="link" href="FlatpakInstalledRef.html#FlatpakInstalledRef--latest-commit" title="The “latest-commit” property">latest-commit</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
 <td class="property_type">
-<a href="../glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<span class="type">gchar</span> *</td>
 <td class="property_name"><a class="link" href="FlatpakInstalledRef.html#FlatpakInstalledRef--origin" title="The “origin” property">origin</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="../glib/glib-String-Utility-Functions.html#GStrv"><span class="type">GStrv</span></a></td>
+<td class="property_type"><span class="type">GStrv</span></td>
 <td class="property_name"><a class="link" href="FlatpakInstalledRef.html#FlatpakInstalledRef--subpaths" title="The “subpaths” property">subpaths</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -143,7 +143,7 @@
 </div>
 <div class="refsect1">
 <a name="FlatpakInstalledRef.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -156,7 +156,7 @@
 </div>
 <div class="refsect1">
 <a name="FlatpakInstalledRef.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="../gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+<pre class="screen">    GObject
     <span class="lineart">╰──</span> <a class="link" href="FlatpakRef.html" title="FlatpakRef">FlatpakRef</a>
         <span class="lineart">╰──</span> FlatpakInstalledRef
 </pre>
@@ -176,7 +176,7 @@ flatpak_installed_ref_get_deploy_dir (<em class="parameter"><code><a class="link
 <p>Gets the deploy dir of the ref.</p>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-deploy-dir.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -191,20 +191,20 @@ flatpak_installed_ref_get_deploy_dir (<em class="parameter"><code><a class="link
 </div>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-deploy-dir.returns"></a><h4>Returns</h4>
-<p> the deploy dir. </p>
+<p>the deploy dir. </p>
 <p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installed-ref-get-installed-size"></a><h3>flatpak_installed_ref_get_installed_size ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#guint64"><span class="returnvalue">guint64</span></a>
+<pre class="programlisting"><span class="returnvalue">guint64</span>
 flatpak_installed_ref_get_installed_size
                                (<em class="parameter"><code><a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a> *self</code></em>);</pre>
 <p>Returns the installed size of the ref.</p>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-installed-size.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -225,12 +225,12 @@ flatpak_installed_ref_get_installed_size
 <hr>
 <div class="refsect2">
 <a name="flatpak-installed-ref-get-is-current"></a><h3>flatpak_installed_ref_get_is_current ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installed_ref_get_is_current (<em class="parameter"><code><a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a> *self</code></em>);</pre>
 <p>Returns whether the ref is current.</p>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-is-current.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -245,7 +245,7 @@ flatpak_installed_ref_get_is_current (<em class="parameter"><code><a class="link
 </div>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-is-current.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> if the ref is current</p>
+<p> <code class="literal">TRUE</code> if the ref is current</p>
 </div>
 </div>
 <hr>
@@ -257,7 +257,7 @@ flatpak_installed_ref_get_latest_commit
 <p>Gets the latest commit of the ref.</p>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-latest-commit.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -272,7 +272,7 @@ flatpak_installed_ref_get_latest_commit
 </div>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-latest-commit.returns"></a><h4>Returns</h4>
-<p> the latest commit. </p>
+<p>the latest commit. </p>
 <p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
 </div>
 </div>
@@ -284,7 +284,7 @@ flatpak_installed_ref_get_origin (<em class="parameter"><code><a class="link" hr
 <p>Gets the origin of the ref.</p>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-origin.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -299,21 +299,21 @@ flatpak_installed_ref_get_origin (<em class="parameter"><code><a class="link" hr
 </div>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-origin.returns"></a><h4>Returns</h4>
-<p> the origin. </p>
+<p>the origin. </p>
 <p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installed-ref-load-metadata"></a><h3>flatpak_installed_ref_load_metadata ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<pre class="programlisting"><span class="returnvalue">GBytes</span> *
 flatpak_installed_ref_load_metadata (<em class="parameter"><code><a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a> *self</code></em>,
-                                     <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                     <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                     <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                     <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Loads the metadata file for this ref.</p>
 <div class="refsect3">
 <a name="flatpak-installed-ref-load-metadata.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -327,12 +327,12 @@ flatpak_installed_ref_load_metadata (<em class="parameter"><code><a class="link"
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>a return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>a return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -340,8 +340,8 @@ flatpak_installed_ref_load_metadata (<em class="parameter"><code><a class="link"
 </div>
 <div class="refsect3">
 <a name="flatpak-installed-ref-load-metadata.returns"></a><h4>Returns</h4>
-<p> a <a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> containing the metadata file,
-or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if an error occurred. </p>
+<p>a <span class="type">GBytes</span> containing the metadata file,
+or <code class="literal">NULL</code> if an error occurred. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
@@ -350,10 +350,10 @@ or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">N
 <a name="flatpak-installed-ref-get-subpaths"></a><h3>flatpak_installed_ref_get_subpaths ()</h3>
 <pre class="programlisting">const <span class="returnvalue">char</span> * const *
 flatpak_installed_ref_get_subpaths (<em class="parameter"><code><a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a> *self</code></em>);</pre>
-<p>Returns the subpaths that are installed, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if all files installed.</p>
+<p>Returns the subpaths that are installed, or <code class="literal">NULL</code> if all files installed.</p>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-subpaths.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -368,7 +368,7 @@ flatpak_installed_ref_get_subpaths (<em class="parameter"><code><a class="link" 
 </div>
 <div class="refsect3">
 <a name="flatpak-installed-ref-get-subpaths.returns"></a><h4>Returns</h4>
-<p> A strv, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a>. </p>
+<p>A strv, or <code class="literal">NULL</code>. </p>
 <p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
 </div>
 </div>
@@ -384,7 +384,7 @@ flatpak_installed_ref_get_subpaths (<em class="parameter"><code><a class="link" 
 <a name="FlatpakInstalledRef.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="FlatpakInstalledRef--deploy-dir"></a><h3>The <code class="literal">“deploy-dir”</code> property</h3>
-<pre class="programlisting">  “deploy-dir”               <a href="../glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<pre class="programlisting">  “deploy-dir”               <span class="type">gchar</span> *</pre>
 <p>Where the application is installed.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
@@ -392,7 +392,7 @@ flatpak_installed_ref_get_subpaths (<em class="parameter"><code><a class="link" 
 <hr>
 <div class="refsect2">
 <a name="FlatpakInstalledRef--installed-size"></a><h3>The <code class="literal">“installed-size”</code> property</h3>
-<pre class="programlisting">  “installed-size”           <a href="../glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<pre class="programlisting">  “installed-size”           <span class="type">guint64</span></pre>
 <p>The installed size of the application.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
@@ -400,7 +400,7 @@ flatpak_installed_ref_get_subpaths (<em class="parameter"><code><a class="link" 
 <hr>
 <div class="refsect2">
 <a name="FlatpakInstalledRef--is-current"></a><h3>The <code class="literal">“is-current”</code> property</h3>
-<pre class="programlisting">  “is-current”               <a href="../glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<pre class="programlisting">  “is-current”               <span class="type">gboolean</span></pre>
 <p>Whether the application is current.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
@@ -408,7 +408,7 @@ flatpak_installed_ref_get_subpaths (<em class="parameter"><code><a class="link" 
 <hr>
 <div class="refsect2">
 <a name="FlatpakInstalledRef--latest-commit"></a><h3>The <code class="literal">“latest-commit”</code> property</h3>
-<pre class="programlisting">  “latest-commit”            <a href="../glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<pre class="programlisting">  “latest-commit”            <span class="type">gchar</span> *</pre>
 <p>The latest commit.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
@@ -416,7 +416,7 @@ flatpak_installed_ref_get_subpaths (<em class="parameter"><code><a class="link" 
 <hr>
 <div class="refsect2">
 <a name="FlatpakInstalledRef--origin"></a><h3>The <code class="literal">“origin”</code> property</h3>
-<pre class="programlisting">  “origin”                   <a href="../glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<pre class="programlisting">  “origin”                   <span class="type">gchar</span> *</pre>
 <p>The origin.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
@@ -424,12 +424,12 @@ flatpak_installed_ref_get_subpaths (<em class="parameter"><code><a class="link" 
 <hr>
 <div class="refsect2">
 <a name="FlatpakInstalledRef--subpaths"></a><h3>The <code class="literal">“subpaths”</code> property</h3>
-<pre class="programlisting">  “subpaths”                 <a href="../glib/glib-String-Utility-Functions.html#GStrv"><span class="type">GStrv</span></a></pre>
+<pre class="programlisting">  “subpaths”                 <span class="type">GStrv</span></pre>
 <p>Flags: Read / Write</p>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25.1</div>
+<hr>Generated by GTK-Doc V1.27</div>
 </body>
 </html>

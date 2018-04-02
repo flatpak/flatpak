@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>FlatpakInstallation: Flatpak Library Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="index.html" title="Flatpak Library Reference Manual">
 <link rel="up" href="ch01.html" title="Flatpak">
 <link rel="prev" href="ch01.html" title="Flatpak">
 <link rel="next" href="FlatpakRef.html" title="FlatpakRef">
-<meta name="generator" content="GTK-Doc V1.25.1 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -34,7 +34,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="FlatpakInstallation.functions"></a><h2>Functions</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="functions_return">
 <col class="functions_name">
@@ -46,6 +46,14 @@
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-new-system" title="flatpak_installation_new_system ()">flatpak_installation_new_system</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="returnvalue">FlatpakInstallation</span></a> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-new-system-with-id" title="flatpak_installation_new_system_with_id ()">flatpak_installation_new_system_with_id</a> <span class="c_punctuation">()</span>
 </td>
 </tr>
 <tr>
@@ -66,7 +74,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-get-is-user" title="flatpak_installation_get_is_user ()">flatpak_installation_get_is_user</a> <span class="c_punctuation">()</span>
@@ -74,7 +82,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../gio/GFile.html#GFile-struct"><span class="returnvalue">GFile</span></a> *
+<span class="returnvalue">GFile</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-get-path" title="flatpak_installation_get_path ()">flatpak_installation_get_path</a> <span class="c_punctuation">()</span>
@@ -82,7 +90,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../gio/GFileMonitor.html#GFileMonitor-struct"><span class="returnvalue">GFileMonitor</span></a> *
+<span class="returnvalue">GFileMonitor</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-create-monitor" title="flatpak_installation_create_monitor ()">flatpak_installation_create_monitor</a> <span class="c_punctuation">()</span>
@@ -101,12 +109,28 @@
 <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="returnvalue">FlatpakInstalledRef</span></a> *
 </td>
 <td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-install-full" title="flatpak_installation_install_full ()">flatpak_installation_install_full</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="returnvalue">FlatpakInstalledRef</span></a> *
+</td>
+<td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-update" title="flatpak_installation_update ()">flatpak_installation_update</a> <span class="c_punctuation">()</span>
 </td>
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="returnvalue">FlatpakInstalledRef</span></a> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-update-full" title="flatpak_installation_update_full ()">flatpak_installation_update_full</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-uninstall" title="flatpak_installation_uninstall ()">flatpak_installation_uninstall</a> <span class="c_punctuation">()</span>
@@ -114,7 +138,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-launch" title="flatpak_installation_launch ()">flatpak_installation_launch</a> <span class="c_punctuation">()</span>
@@ -129,6 +153,20 @@
 </td>
 </tr>
 <tr>
+<td class="function_type">const <span class="returnvalue">char</span> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-get-display-name" title="flatpak_installation_get_display_name ()">flatpak_installation_get_display_name</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">const <span class="returnvalue">char</span> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-get-id" title="flatpak_installation_get_id ()">flatpak_installation_get_id</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
 <td class="function_type">
 <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="returnvalue">FlatpakInstalledRef</span></a> *
 </td>
@@ -138,7 +176,23 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
+<span class="returnvalue">gint</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-get-priority" title="flatpak_installation_get_priority ()">flatpak_installation_get_priority</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a class="link" href="FlatpakInstallation.html#FlatpakStorageType" title="enum FlatpakStorageType"><span class="returnvalue">FlatpakStorageType</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-get-storage-type" title="flatpak_installation_get_storage_type ()">flatpak_installation_get_storage_type</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">GPtrArray</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-list-installed-refs" title="flatpak_installation_list_installed_refs ()">flatpak_installation_list_installed_refs</a> <span class="c_punctuation">()</span>
@@ -146,7 +200,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
+<span class="returnvalue">GPtrArray</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-list-installed-refs-by-kind" title="flatpak_installation_list_installed_refs_by_kind ()">flatpak_installation_list_installed_refs_by_kind</a> <span class="c_punctuation">()</span>
@@ -154,7 +208,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
+<span class="returnvalue">GPtrArray</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-list-installed-refs-for-update" title="flatpak_installation_list_installed_refs_for_update ()">flatpak_installation_list_installed_refs_for_update</a> <span class="c_punctuation">()</span>
@@ -162,7 +216,15 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
+<span class="returnvalue">GPtrArray</span> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-list-installed-related-refs-sync" title="flatpak_installation_list_installed_related_refs_sync ()">flatpak_installation_list_installed_related_refs_sync</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">GPtrArray</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-list-remote-refs-sync" title="flatpak_installation_list_remote_refs_sync ()">flatpak_installation_list_remote_refs_sync</a> <span class="c_punctuation">()</span>
@@ -170,7 +232,15 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
+<span class="returnvalue">GPtrArray</span> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-list-remote-related-refs-sync" title="flatpak_installation_list_remote_related_refs_sync ()">flatpak_installation_list_remote_related_refs_sync</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">GPtrArray</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-list-remotes" title="flatpak_installation_list_remotes ()">flatpak_installation_list_remotes</a> <span class="c_punctuation">()</span>
@@ -186,7 +256,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+<span class="returnvalue">GBytes</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-fetch-remote-metadata-sync" title="flatpak_installation_fetch_remote_metadata_sync ()">flatpak_installation_fetch_remote_metadata_sync</a> <span class="c_punctuation">()</span>
@@ -202,7 +272,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-fetch-remote-size-sync" title="flatpak_installation_fetch_remote_size_sync ()">flatpak_installation_fetch_remote_size_sync</a> <span class="c_punctuation">()</span>
@@ -218,7 +288,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-update-appstream-sync" title="flatpak_installation_update_appstream_sync ()">flatpak_installation_update_appstream_sync</a> <span class="c_punctuation">()</span>
@@ -234,7 +304,15 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="returnvalue">FlatpakRemoteRef</span></a> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-install-ref-file" title="flatpak_installation_install_ref_file ()">flatpak_installation_install_ref_file</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-drop-caches" title="flatpak_installation_drop_caches ()">flatpak_installation_drop_caches</a> <span class="c_punctuation">()</span>
@@ -242,7 +320,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-modify-remote" title="flatpak_installation_modify_remote ()">flatpak_installation_modify_remote</a> <span class="c_punctuation">()</span>
@@ -250,7 +328,7 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-remove-remote" title="flatpak_installation_remove_remote ()">flatpak_installation_remove_remote</a> <span class="c_punctuation">()</span>
@@ -258,10 +336,58 @@
 </tr>
 <tr>
 <td class="function_type">
-<a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-update-remote-sync" title="flatpak_installation_update_remote_sync ()">flatpak_installation_update_remote_sync</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">gboolean</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-cleanup-local-refs-sync" title="flatpak_installation_cleanup_local_refs_sync ()">flatpak_installation_cleanup_local_refs_sync</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">char</span> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-get-config" title="flatpak_installation_get_config ()">flatpak_installation_get_config</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">gboolean</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-prune-local-repo" title="flatpak_installation_prune_local_repo ()">flatpak_installation_prune_local_repo</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">gboolean</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-remove-local-ref-sync" title="flatpak_installation_remove_local_ref_sync ()">flatpak_installation_remove_local_ref_sync</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">gboolean</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-set-config-sync" title="flatpak_installation_set_config_sync ()">flatpak_installation_set_config_sync</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">gboolean</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-update-appstream-full-sync" title="flatpak_installation_update_appstream_full_sync ()">flatpak_installation_update_appstream_full_sync</a> <span class="c_punctuation">()</span>
 </td>
 </tr>
 <tr>
@@ -269,6 +395,21 @@
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakInstallation.html#flatpak-get-default-arch" title="flatpak_get_default_arch ()">flatpak_get_default_arch</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">const <span class="returnvalue">char</span> *const *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-get-supported-arches" title="flatpak_get_supported_arches ()">flatpak_get_supported_arches</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">GPtrArray</span> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakInstallation.html#flatpak-get-system-installations" title="flatpak_get_system_installations ()">flatpak_get_system_installations</a> <span class="c_punctuation">()</span>
 </td>
 </tr>
 <tr>
@@ -284,7 +425,7 @@
 </div>
 <div class="refsect1">
 <a name="FlatpakInstallation.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -298,12 +439,20 @@
 <td class="datatype_keyword">enum</td>
 <td class="function_name"><a class="link" href="FlatpakInstallation.html#FlatpakUpdateFlags" title="enum FlatpakUpdateFlags">FlatpakUpdateFlags</a></td>
 </tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="FlatpakInstallation.html#FlatpakInstallFlags" title="enum FlatpakInstallFlags">FlatpakInstallFlags</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="FlatpakInstallation.html#FlatpakStorageType" title="enum FlatpakStorageType">FlatpakStorageType</a></td>
+</tr>
 </tbody>
 </table></div>
 </div>
 <div class="refsect1">
 <a name="FlatpakInstallation.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="../gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+<pre class="screen">    GObject
     <span class="lineart">╰──</span> FlatpakInstallation
 </pre>
 </div>
@@ -323,12 +472,12 @@ uninstall applications and runtimes.</p>
 <div class="refsect2">
 <a name="flatpak-installation-new-system"></a><h3>flatpak_installation_new_system ()</h3>
 <pre class="programlisting"><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="returnvalue">FlatpakInstallation</span></a> *
-flatpak_installation_new_system (<em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                 <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+flatpak_installation_new_system (<em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                 <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Creates a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> for the system-wide installation.</p>
 <div class="refsect3">
 <a name="flatpak-installation-new-system.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -337,12 +486,12 @@ flatpak_installation_new_system (<em class="parameter"><code><a href="../gio/GCa
 <tbody>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -350,20 +499,64 @@ flatpak_installation_new_system (<em class="parameter"><code><a href="../gio/GCa
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-new-system.returns"></a><h4>Returns</h4>
-<p> a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a>. </p>
+<p>a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a>. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
+<a name="flatpak-installation-new-system-with-id"></a><h3>flatpak_installation_new_system_with_id ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="returnvalue">FlatpakInstallation</span></a> *
+flatpak_installation_new_system_with_id
+                               (<em class="parameter"><code>const <span class="type">char</span> *id</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Creates a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> for the system-wide installation <em class="parameter"><code>id</code></em>
+.</p>
+<div class="refsect3">
+<a name="flatpak-installation-new-system-with-id.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>id</p></td>
+<td class="parameter_description"><p>the ID of the system-wide installation. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-new-system-with-id.returns"></a><h4>Returns</h4>
+<p>a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a>. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
+</div>
+<p class="since">Since: 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
 <a name="flatpak-installation-new-user"></a><h3>flatpak_installation_new_user ()</h3>
 <pre class="programlisting"><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="returnvalue">FlatpakInstallation</span></a> *
-flatpak_installation_new_user (<em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                               <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+flatpak_installation_new_user (<em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                               <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Creates a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> for the per-user installation.</p>
 <div class="refsect3">
 <a name="flatpak-installation-new-user.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -372,12 +565,12 @@ flatpak_installation_new_user (<em class="parameter"><code><a href="../gio/GCanc
 <tbody>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -385,7 +578,7 @@ flatpak_installation_new_user (<em class="parameter"><code><a href="../gio/GCanc
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-new-user.returns"></a><h4>Returns</h4>
-<p> a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a>. </p>
+<p>a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a>. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
@@ -393,15 +586,15 @@ flatpak_installation_new_user (<em class="parameter"><code><a href="../gio/GCanc
 <div class="refsect2">
 <a name="flatpak-installation-new-for-path"></a><h3>flatpak_installation_new_for_path ()</h3>
 <pre class="programlisting"><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="returnvalue">FlatpakInstallation</span></a> *
-flatpak_installation_new_for_path (<em class="parameter"><code><a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a> *path</code></em>,
-                                   <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> user</code></em>,
-                                   <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                   <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+flatpak_installation_new_for_path (<em class="parameter"><code><span class="type">GFile</span> *path</code></em>,
+                                   <em class="parameter"><code><span class="type">gboolean</span> user</code></em>,
+                                   <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                   <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Creates a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> for the installation at the given <em class="parameter"><code>path</code></em>
 .</p>
 <div class="refsect3">
 <a name="flatpak-installation-new-for-path.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -410,7 +603,7 @@ flatpak_installation_new_for_path (<em class="parameter"><code><a href="../gio/G
 <tbody>
 <tr>
 <td class="parameter_name"><p>path</p></td>
-<td class="parameter_description"><p>a <a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a></p></td>
+<td class="parameter_description"><p>a <span class="type">GFile</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>
@@ -420,12 +613,12 @@ flatpak_installation_new_for_path (<em class="parameter"><code><a href="../gio/G
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -433,19 +626,19 @@ flatpak_installation_new_for_path (<em class="parameter"><code><a href="../gio/G
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-new-for-path.returns"></a><h4>Returns</h4>
-<p> a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a>. </p>
+<p>a new <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a>. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-get-is-user"></a><h3>flatpak_installation_get_is_user ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_get_is_user (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>);</pre>
 <p>Returns whether the installation is for a user-specific location.</p>
 <div class="refsect3">
 <a name="flatpak-installation-get-is-user.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -460,20 +653,20 @@ flatpak_installation_get_is_user (<em class="parameter"><code><a class="link" hr
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-get-is-user.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> if <em class="parameter"><code>self</code></em>
+<p> <code class="literal">TRUE</code> if <em class="parameter"><code>self</code></em>
 is a per-user installation</p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-get-path"></a><h3>flatpak_installation_get_path ()</h3>
-<pre class="programlisting"><a href="../gio/GFile.html#GFile-struct"><span class="returnvalue">GFile</span></a> *
+<pre class="programlisting"><span class="returnvalue">GFile</span> *
 flatpak_installation_get_path (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>);</pre>
 <p>Returns the installation location for <em class="parameter"><code>self</code></em>
 .</p>
 <div class="refsect3">
 <a name="flatpak-installation-get-path.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -488,23 +681,23 @@ flatpak_installation_get_path (<em class="parameter"><code><a class="link" href=
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-get-path.returns"></a><h4>Returns</h4>
-<p> an <a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a>. </p>
+<p>an <span class="type">GFile</span>. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-create-monitor"></a><h3>flatpak_installation_create_monitor ()</h3>
-<pre class="programlisting"><a href="../gio/GFileMonitor.html#GFileMonitor-struct"><span class="returnvalue">GFileMonitor</span></a> *
+<pre class="programlisting"><span class="returnvalue">GFileMonitor</span> *
 flatpak_installation_create_monitor (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
-                                     <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                     <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                     <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                     <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Gets monitor object for the installation. The returned file monitor will
-emit the <a href="../gio/GFileMonitor.html#GFileMonitor-changed"><span class="type">“changed”</span></a> signal whenever an application or runtime
+emit the <span class="type">“changed”</span> signal whenever an application or runtime
 was installed, uninstalled or updated.</p>
 <div class="refsect3">
 <a name="flatpak-installation-create-monitor.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -518,12 +711,12 @@ was installed, uninstalled or updated.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -531,7 +724,7 @@ was installed, uninstalled or updated.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-create-monitor.returns"></a><h4>Returns</h4>
-<p> a new <a href="../gio/GFileMonitor.html#GFileMonitor-struct"><span class="type">GFileMonitor</span></a> instance, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> on error. </p>
+<p>a new <span class="type">GFileMonitor</span> instance, or <code class="literal">NULL</code> on error. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
@@ -546,13 +739,20 @@ flatpak_installation_install (<em class="parameter"><code><a class="link" href="
                               <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
                               <em class="parameter"><code>const <span class="type">char</span> *branch</code></em>,
                               <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakProgressCallback" title="FlatpakProgressCallback ()"><span class="type">FlatpakProgressCallback</span></a> progress</code></em>,
-                              <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a> progress_data</code></em>,
-                              <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                              <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                              <em class="parameter"><code><span class="type">gpointer</span> progress_data</code></em>,
+                              <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                              <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Install a new application or runtime.</p>
+<p>Note that this function was originally written to always return a
+<a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a>. Since 0.9.13, passing
+FLATPAK_INSTALL_FLAGS_NO_DEPLOY will only pull refs into the local flatpak
+repository without deploying them, however this function will
+be unable to provide information on the installed ref, so
+FLATPAK_ERROR_ONLY_PULLED will be set and the caller must respond
+accordingly.</p>
 <div class="refsect3">
 <a name="flatpak-installation-install.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -581,33 +781,33 @@ flatpak_installation_install (<em class="parameter"><code><a class="link" href="
 </tr>
 <tr>
 <td class="parameter_name"><p>arch</p></td>
-<td class="parameter_description"><p> which architecture to fetch (default: current architecture). </p></td>
+<td class="parameter_description"><p>which architecture to fetch (default: current architecture). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>branch</p></td>
-<td class="parameter_description"><p> which branch to fetch (default: 'master'). </p></td>
+<td class="parameter_description"><p>which branch to fetch (default: 'master'). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>progress</p></td>
-<td class="parameter_description"><p> progress callback. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>]</span></td>
+<td class="parameter_description"><p>progress callback. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>progress_data</p></td>
 <td class="parameter_description"><p>user data passed to <em class="parameter"><code>progress</code></em>
-</p></td>
-<td class="parameter_annotations"> </td>
+. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="This parameter is a 'user_data', for callbacks; many bindings can pass NULL here."><span class="acronym">closure</span></acronym> progress][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -615,7 +815,110 @@ flatpak_installation_install (<em class="parameter"><code><a class="link" href="
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-install.returns"></a><h4>Returns</h4>
-<p> The ref for the newly installed app or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> on failure. </p>
+<p>The ref for the newly installed app or <code class="literal">NULL</code> on failure. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-install-full"></a><h3>flatpak_installation_install_full ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="returnvalue">FlatpakInstalledRef</span></a> *
+flatpak_installation_install_full (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                   <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakInstallFlags" title="enum FlatpakInstallFlags"><span class="type">FlatpakInstallFlags</span></a> flags</code></em>,
+                                   <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
+                                   <em class="parameter"><code><a class="link" href="FlatpakRef.html#FlatpakRefKind" title="enum FlatpakRefKind"><span class="type">FlatpakRefKind</span></a> kind</code></em>,
+                                   <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
+                                   <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
+                                   <em class="parameter"><code>const <span class="type">char</span> *branch</code></em>,
+                                   <em class="parameter"><code>const <span class="type">char</span> * const *subpaths</code></em>,
+                                   <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakProgressCallback" title="FlatpakProgressCallback ()"><span class="type">FlatpakProgressCallback</span></a> progress</code></em>,
+                                   <em class="parameter"><code><span class="type">gpointer</span> progress_data</code></em>,
+                                   <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                   <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Install a new application or runtime.</p>
+<p>Note that this function was originally written to always return a
+<a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a>. Since 0.9.13, passing
+FLATPAK_INSTALL_FLAGS_NO_DEPLOY will only pull refs into the local flatpak
+repository without deploying them, however this function will
+be unable to provide information on the installed ref, so
+FLATPAK_ERROR_ONLY_PULLED will be set and the caller must respond
+accordingly.</p>
+<div class="refsect3">
+<a name="flatpak-installation-install-full.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>flags</p></td>
+<td class="parameter_description"><p>set of <a class="link" href="FlatpakInstallation.html#FlatpakInstallFlags" title="enum FlatpakInstallFlags"><span class="type">FlatpakInstallFlags</span></a> flag</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>remote_name</p></td>
+<td class="parameter_description"><p>name of the remote to use</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>kind</p></td>
+<td class="parameter_description"><p>what this ref contains (an <a class="link" href="FlatpakRef.html#FlatpakRefKind" title="enum FlatpakRefKind"><span class="type">FlatpakRefKind</span></a>)</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>name</p></td>
+<td class="parameter_description"><p>name of the app/runtime to fetch</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>arch</p></td>
+<td class="parameter_description"><p>which architecture to fetch (default: current architecture). </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>branch</p></td>
+<td class="parameter_description"><p>which branch to fetch (default: 'master'). </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>subpaths</p></td>
+<td class="parameter_description"><p>A list of subpaths to fetch, or <code class="literal">NULL</code> for everything. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>][<acronym title="Parameter points to an array of items."><span class="acronym">array</span></acronym> zero-terminated=1]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>progress</p></td>
+<td class="parameter_description"><p>progress callback. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>progress_data</p></td>
+<td class="parameter_description"><p>user data passed to <em class="parameter"><code>progress</code></em>
+. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="This parameter is a 'user_data', for callbacks; many bindings can pass NULL here."><span class="acronym">closure</span></acronym> progress][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-install-full.returns"></a><h4>Returns</h4>
+<p>The ref for the newly installed app or <code class="literal">NULL</code> on failure. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
@@ -630,13 +933,17 @@ flatpak_installation_update (<em class="parameter"><code><a class="link" href="F
                              <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
                              <em class="parameter"><code>const <span class="type">char</span> *branch</code></em>,
                              <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakProgressCallback" title="FlatpakProgressCallback ()"><span class="type">FlatpakProgressCallback</span></a> progress</code></em>,
-                             <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a> progress_data</code></em>,
-                             <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                             <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                             <em class="parameter"><code><span class="type">gpointer</span> progress_data</code></em>,
+                             <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                             <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Update an application or runtime.</p>
+<p>If the specified package is not installed, then <a class="link" href="flatpak-Error-codes.html#FLATPAK-ERROR-NOT-INSTALLED:CAPS"><code class="literal">FLATPAK_ERROR_NOT_INSTALLED</code></a>
+will be thrown.</p>
+<p>If no updates could be found on the remote end and the package is
+already up to date, then <a class="link" href="flatpak-Error-codes.html#FLATPAK-ERROR-ALREADY-INSTALLED:CAPS"><code class="literal">FLATPAK_ERROR_ALREADY_INSTALLED</code></a> will be thrown.</p>
 <div class="refsect3">
 <a name="flatpak-installation-update.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -665,33 +972,33 @@ flatpak_installation_update (<em class="parameter"><code><a class="link" href="F
 </tr>
 <tr>
 <td class="parameter_name"><p>arch</p></td>
-<td class="parameter_description"><p> architecture of the app or runtime to update (default: current architecture). </p></td>
+<td class="parameter_description"><p>architecture of the app or runtime to update (default: current architecture). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>branch</p></td>
-<td class="parameter_description"><p> name of the branch of the app or runtime to update (default: master). </p></td>
+<td class="parameter_description"><p>name of the branch of the app or runtime to update (default: master). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>progress</p></td>
-<td class="parameter_description"><p> the callback. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>]</span></td>
+<td class="parameter_description"><p>the callback. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>progress_data</p></td>
 <td class="parameter_description"><p>user data passed to <em class="parameter"><code>progress</code></em>
-</p></td>
-<td class="parameter_annotations"> </td>
+. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="This parameter is a 'user_data', for callbacks; many bindings can pass NULL here."><span class="acronym">closure</span></acronym> progress][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -699,27 +1006,121 @@ flatpak_installation_update (<em class="parameter"><code><a class="link" href="F
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-update.returns"></a><h4>Returns</h4>
-<p> The ref for the newly updated app (or the same if no update) or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> on failure. </p>
+<p>The ref for the newly updated app or <code class="literal">NULL</code> on failure. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-update-full"></a><h3>flatpak_installation_update_full ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="returnvalue">FlatpakInstalledRef</span></a> *
+flatpak_installation_update_full (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                  <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakUpdateFlags" title="enum FlatpakUpdateFlags"><span class="type">FlatpakUpdateFlags</span></a> flags</code></em>,
+                                  <em class="parameter"><code><a class="link" href="FlatpakRef.html#FlatpakRefKind" title="enum FlatpakRefKind"><span class="type">FlatpakRefKind</span></a> kind</code></em>,
+                                  <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
+                                  <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
+                                  <em class="parameter"><code>const <span class="type">char</span> *branch</code></em>,
+                                  <em class="parameter"><code>const <span class="type">char</span> * const *subpaths</code></em>,
+                                  <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakProgressCallback" title="FlatpakProgressCallback ()"><span class="type">FlatpakProgressCallback</span></a> progress</code></em>,
+                                  <em class="parameter"><code><span class="type">gpointer</span> progress_data</code></em>,
+                                  <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                  <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Update an application or runtime.</p>
+<p>If the specified package is not installed, then <a class="link" href="flatpak-Error-codes.html#FLATPAK-ERROR-NOT-INSTALLED:CAPS"><code class="literal">FLATPAK_ERROR_NOT_INSTALLED</code></a>
+will be thrown.</p>
+<p>If no updates could be found on the remote end and the package is
+already up to date, then <a class="link" href="flatpak-Error-codes.html#FLATPAK-ERROR-ALREADY-INSTALLED:CAPS"><code class="literal">FLATPAK_ERROR_ALREADY_INSTALLED</code></a> will be thrown.</p>
+<div class="refsect3">
+<a name="flatpak-installation-update-full.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>flags</p></td>
+<td class="parameter_description"><p>set of <a class="link" href="FlatpakInstallation.html#FlatpakUpdateFlags" title="enum FlatpakUpdateFlags"><span class="type">FlatpakUpdateFlags</span></a> flag</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>kind</p></td>
+<td class="parameter_description"><p>whether this is an app or runtime</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>name</p></td>
+<td class="parameter_description"><p>name of the app or runtime to update</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>arch</p></td>
+<td class="parameter_description"><p>architecture of the app or runtime to update (default: current architecture). </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>branch</p></td>
+<td class="parameter_description"><p>name of the branch of the app or runtime to update (default: master). </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>subpaths</p></td>
+<td class="parameter_description"><p>A list of subpaths to fetch, or <code class="literal">NULL</code> for everything. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>][<acronym title="Parameter points to an array of items."><span class="acronym">array</span></acronym> zero-terminated=1]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>progress</p></td>
+<td class="parameter_description"><p>the callback. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>progress_data</p></td>
+<td class="parameter_description"><p>user data passed to <em class="parameter"><code>progress</code></em>
+. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="This parameter is a 'user_data', for callbacks; many bindings can pass NULL here."><span class="acronym">closure</span></acronym> progress][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-update-full.returns"></a><h4>Returns</h4>
+<p>The ref for the newly updated app or <code class="literal">NULL</code> on failure. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-uninstall"></a><h3>flatpak_installation_uninstall ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_uninstall (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                 <em class="parameter"><code><a class="link" href="FlatpakRef.html#FlatpakRefKind" title="enum FlatpakRefKind"><span class="type">FlatpakRefKind</span></a> kind</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *branch</code></em>,
                                 <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakProgressCallback" title="FlatpakProgressCallback ()"><span class="type">FlatpakProgressCallback</span></a> progress</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a> progress_data</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">gpointer</span> progress_data</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Uninstall an application or runtime.</p>
 <div class="refsect3">
 <a name="flatpak-installation-uninstall.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -753,23 +1154,23 @@ flatpak_installation_uninstall (<em class="parameter"><code><a class="link" href
 </tr>
 <tr>
 <td class="parameter_name"><p>progress</p></td>
-<td class="parameter_description"><p> the callback. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>]</span></td>
+<td class="parameter_description"><p>the callback. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>progress_data</p></td>
 <td class="parameter_description"><p>user data passed to <em class="parameter"><code>progress</code></em>
-</p></td>
-<td class="parameter_annotations"> </td>
+. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="This parameter is a 'user_data', for callbacks; many bindings can pass NULL here."><span class="acronym">closure</span></acronym> progress][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -777,20 +1178,20 @@ flatpak_installation_uninstall (<em class="parameter"><code><a class="link" href
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-uninstall.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> on success</p>
+<p> <code class="literal">TRUE</code> on success</p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-launch"></a><h3>flatpak_installation_launch ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_launch (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                              <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
                              <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
                              <em class="parameter"><code>const <span class="type">char</span> *branch</code></em>,
                              <em class="parameter"><code>const <span class="type">char</span> *commit</code></em>,
-                             <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                             <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                             <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                             <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Launch an installed application.</p>
 <p>You can use <a class="link" href="FlatpakInstallation.html#flatpak-installation-get-installed-ref" title="flatpak_installation_get_installed_ref ()"><code class="function">flatpak_installation_get_installed_ref()</code></a> or
 <a class="link" href="FlatpakInstallation.html#flatpak-installation-get-current-installed-app" title="flatpak_installation_get_current_installed_app ()"><code class="function">flatpak_installation_get_current_installed_app()</code></a> to find out what builds
@@ -798,7 +1199,7 @@ are available, in order to get a value for <em class="parameter"><code>commit</c
 .</p>
 <div class="refsect3">
 <a name="flatpak-installation-launch.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -817,28 +1218,28 @@ are available, in order to get a value for <em class="parameter"><code>commit</c
 </tr>
 <tr>
 <td class="parameter_name"><p>arch</p></td>
-<td class="parameter_description"><p> which architecture to launch (default: current architecture). </p></td>
+<td class="parameter_description"><p>which architecture to launch (default: current architecture). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>branch</p></td>
-<td class="parameter_description"><p> which branch of the application (default: "master"). </p></td>
+<td class="parameter_description"><p>which branch of the application (default: "master"). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>commit</p></td>
-<td class="parameter_description"><p> the commit of <em class="parameter"><code>branch</code></em>
+<td class="parameter_description"><p>the commit of <em class="parameter"><code>branch</code></em>
 to launch. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -846,7 +1247,7 @@ to launch. </p></td>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-launch.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a>, unless an error occurred</p>
+<p> <code class="literal">TRUE</code>, unless an error occurred</p>
 </div>
 </div>
 <hr>
@@ -856,15 +1257,15 @@ to launch. </p></td>
 flatpak_installation_get_current_installed_app
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Get the last build of reference <em class="parameter"><code>name</code></em>
  that was installed with
-<a class="link" href="FlatpakInstallation.html#flatpak-installation-install" title="flatpak_installation_install ()"><code class="function">flatpak_installation_install()</code></a>, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if the reference has
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-install" title="flatpak_installation_install ()"><code class="function">flatpak_installation_install()</code></a>, or <code class="literal">NULL</code> if the reference has
 never been installed locally.</p>
 <div class="refsect3">
 <a name="flatpak-installation-get-current-installed-app.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -883,12 +1284,12 @@ never been installed locally.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -896,9 +1297,67 @@ never been installed locally.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-get-current-installed-app.returns"></a><h4>Returns</h4>
-<p> an <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a>. </p>
+<p>an <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a>. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-get-display-name"></a><h3>flatpak_installation_get_display_name ()</h3>
+<pre class="programlisting">const <span class="returnvalue">char</span> *
+flatpak_installation_get_display_name (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>);</pre>
+<p>Returns the display name of the system installation for <em class="parameter"><code>self</code></em>
+.</p>
+<div class="refsect3">
+<a name="flatpak-installation-get-display-name.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-get-display-name.returns"></a><h4>Returns</h4>
+<p>a string with the installation's display name. </p>
+<p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
+</div>
+<p class="since">Since: 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-get-id"></a><h3>flatpak_installation_get_id ()</h3>
+<pre class="programlisting">const <span class="returnvalue">char</span> *
+flatpak_installation_get_id (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>);</pre>
+<p>Returns the ID of the system installation for <em class="parameter"><code>self</code></em>
+.</p>
+<div class="refsect3">
+<a name="flatpak-installation-get-id.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-get-id.returns"></a><h4>Returns</h4>
+<p>a string with the installation's ID. </p>
+<p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
+</div>
+<p class="since">Since: 0.8</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -910,13 +1369,13 @@ flatpak_installation_get_installed_ref
                                 <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *branch</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Returns information about an installed ref, such as the available builds,
 its size, location, etc.</p>
 <div class="refsect3">
 <a name="flatpak-installation-get-installed-ref.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -940,22 +1399,22 @@ its size, location, etc.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>arch</p></td>
-<td class="parameter_description"><p> which architecture to fetch (default: current architecture). </p></td>
+<td class="parameter_description"><p>which architecture to fetch (default: current architecture). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>branch</p></td>
-<td class="parameter_description"><p> which branch to fetch (default: "master"). </p></td>
+<td class="parameter_description"><p>which branch to fetch (default: "master"). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -963,22 +1422,78 @@ its size, location, etc.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-get-installed-ref.returns"></a><h4>Returns</h4>
-<p> an <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a>, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if an error occurred. </p>
+<p>an <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a>, or <code class="literal">NULL</code> if an error occurred. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
+<a name="flatpak-installation-get-priority"></a><h3>flatpak_installation_get_priority ()</h3>
+<pre class="programlisting"><span class="returnvalue">gint</span>
+flatpak_installation_get_priority (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>);</pre>
+<p>Returns the numeric priority of the system installation for <em class="parameter"><code>self</code></em>
+.</p>
+<div class="refsect3">
+<a name="flatpak-installation-get-priority.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-get-priority.returns"></a><h4>Returns</h4>
+<p> an integer with the configured priority value</p>
+</div>
+<p class="since">Since: 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-get-storage-type"></a><h3>flatpak_installation_get_storage_type ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakInstallation.html#FlatpakStorageType" title="enum FlatpakStorageType"><span class="returnvalue">FlatpakStorageType</span></a>
+flatpak_installation_get_storage_type (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>);</pre>
+<p>Returns the type of storage of the system installation for <em class="parameter"><code>self</code></em>
+.</p>
+<div class="refsect3">
+<a name="flatpak-installation-get-storage-type.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-get-storage-type.returns"></a><h4>Returns</h4>
+<p> a <a class="link" href="FlatpakInstallation.html#FlatpakStorageType" title="enum FlatpakStorageType"><span class="type">FlatpakStorageType</span></a></p>
+</div>
+<p class="since">Since: 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
 <a name="flatpak-installation-list-installed-refs"></a><h3>flatpak_installation_list_installed_refs ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
+<pre class="programlisting"><span class="returnvalue">GPtrArray</span> *
 flatpak_installation_list_installed_refs
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Lists the installed references.</p>
 <div class="refsect3">
 <a name="flatpak-installation-list-installed-refs.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -992,12 +1507,12 @@ flatpak_installation_list_installed_refs
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1005,7 +1520,7 @@ flatpak_installation_list_installed_refs
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-list-installed-refs.returns"></a><h4>Returns</h4>
-<p> an GPtrArray of
+<p>an GPtrArray of
 <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a> instances. </p>
 <p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakInstalledRef]</span></p>
 </div>
@@ -1013,16 +1528,16 @@ flatpak_installation_list_installed_refs
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-list-installed-refs-by-kind"></a><h3>flatpak_installation_list_installed_refs_by_kind ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
+<pre class="programlisting"><span class="returnvalue">GPtrArray</span> *
 flatpak_installation_list_installed_refs_by_kind
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                 <em class="parameter"><code><a class="link" href="FlatpakRef.html#FlatpakRefKind" title="enum FlatpakRefKind"><span class="type">FlatpakRefKind</span></a> kind</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Lists the installed references of a specific kind.</p>
 <div class="refsect3">
 <a name="flatpak-installation-list-installed-refs-by-kind.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1041,12 +1556,12 @@ flatpak_installation_list_installed_refs_by_kind
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1054,7 +1569,7 @@ flatpak_installation_list_installed_refs_by_kind
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-list-installed-refs-by-kind.returns"></a><h4>Returns</h4>
-<p> an GPtrArray of
+<p>an GPtrArray of
 <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a> instances. </p>
 <p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakInstalledRef]</span></p>
 </div>
@@ -1062,18 +1577,18 @@ flatpak_installation_list_installed_refs_by_kind
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-list-installed-refs-for-update"></a><h3>flatpak_installation_list_installed_refs_for_update ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
+<pre class="programlisting"><span class="returnvalue">GPtrArray</span> *
 flatpak_installation_list_installed_refs_for_update
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Lists the installed references that has a remote update that is not
 locally available. However, even though an app is not returned by this
 it can have local updates available that has not been deployed. Look
 at commit vs latest_commit on installed apps for this.</p>
 <div class="refsect3">
 <a name="flatpak-installation-list-installed-refs-for-update.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1087,12 +1602,12 @@ at commit vs latest_commit on installed apps for this.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1100,165 +1615,36 @@ at commit vs latest_commit on installed apps for this.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-list-installed-refs-for-update.returns"></a><h4>Returns</h4>
-<p> an GPtrArray of
+<p>an GPtrArray of
 <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="type">FlatpakInstalledRef</span></a> instances. </p>
 <p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakInstalledRef]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
-<a name="flatpak-installation-list-remote-refs-sync"></a><h3>flatpak_installation_list_remote_refs_sync ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
-flatpak_installation_list_remote_refs_sync
+<a name="flatpak-installation-list-installed-related-refs-sync"></a><h3>flatpak_installation_list_installed_related_refs_sync ()</h3>
+<pre class="programlisting"><span class="returnvalue">GPtrArray</span> *
+flatpak_installation_list_installed_related_refs_sync
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
-<p>Lists all the applications and runtimes in a remote.</p>
+                                <em class="parameter"><code>const <span class="type">char</span> *ref</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Lists all the locally installed refs from <em class="parameter"><code>remote_name</code></em>
+ that are
+related to <em class="parameter"><code>ref</code></em>
+. These are things that are interesting to install,
+update, or uninstall together with <em class="parameter"><code>ref</code></em>
+. For instance, locale data
+or debug information.</p>
+<p>This function is similar to flatpak_installation_list_remote_related_refs_sync,
+but instead of looking at what is available on the remote, it only looks
+at the locally installed refs. This is useful for instance when you're
+looking for related refs to uninstall, or when you're planning to use
+FLATPAK_UPDATE_FLAGS_NO_PULL to install previously pulled refs.</p>
 <div class="refsect3">
-<a name="flatpak-installation-list-remote-refs-sync.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
-<colgroup>
-<col width="150px" class="parameters_name">
-<col class="parameters_description">
-<col width="200px" class="parameters_annotations">
-</colgroup>
-<tbody>
-<tr>
-<td class="parameter_name"><p>self</p></td>
-<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-<tr>
-<td class="parameter_name"><p>remote_name</p></td>
-<td class="parameter_description"><p>the name of the remote</p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-<tr>
-<td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
-</tr>
-<tr>
-<td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-</tbody>
-</table></div>
-</div>
-<div class="refsect3">
-<a name="flatpak-installation-list-remote-refs-sync.returns"></a><h4>Returns</h4>
-<p> an GPtrArray of
-<a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> instances. </p>
-<p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakRemoteRef]</span></p>
-</div>
-</div>
-<hr>
-<div class="refsect2">
-<a name="flatpak-installation-list-remotes"></a><h3>flatpak_installation_list_remotes ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Pointer-Arrays.html#GPtrArray"><span class="returnvalue">GPtrArray</span></a> *
-flatpak_installation_list_remotes (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
-                                   <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                   <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
-<p>Lists the remotes, in priority (highest first) order. For same priority,
-an earlier added remote comes before a later added one.</p>
-<div class="refsect3">
-<a name="flatpak-installation-list-remotes.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
-<colgroup>
-<col width="150px" class="parameters_name">
-<col class="parameters_description">
-<col width="200px" class="parameters_annotations">
-</colgroup>
-<tbody>
-<tr>
-<td class="parameter_name"><p>self</p></td>
-<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-<tr>
-<td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
-</tr>
-<tr>
-<td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-</tbody>
-</table></div>
-</div>
-<div class="refsect3">
-<a name="flatpak-installation-list-remotes.returns"></a><h4>Returns</h4>
-<p> an GPtrArray of
-<a class="link" href="FlatpakRemote.html" title="FlatpakRemote"><span class="type">FlatpakRemote</span></a> instances. </p>
-<p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakRemote]</span></p>
-</div>
-</div>
-<hr>
-<div class="refsect2">
-<a name="flatpak-installation-get-remote-by-name"></a><h3>flatpak_installation_get_remote_by_name ()</h3>
-<pre class="programlisting"><a class="link" href="FlatpakRemote.html" title="FlatpakRemote"><span class="returnvalue">FlatpakRemote</span></a> *
-flatpak_installation_get_remote_by_name
-                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
-                                <em class="parameter"><code>const <a href="../glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *name</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
-<p>Looks up a remote by name.</p>
-<div class="refsect3">
-<a name="flatpak-installation-get-remote-by-name.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
-<colgroup>
-<col width="150px" class="parameters_name">
-<col class="parameters_description">
-<col width="200px" class="parameters_annotations">
-</colgroup>
-<tbody>
-<tr>
-<td class="parameter_name"><p>self</p></td>
-<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-<tr>
-<td class="parameter_name"><p>name</p></td>
-<td class="parameter_description"><p>a remote name</p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-<tr>
-<td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
-</tr>
-<tr>
-<td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-</tbody>
-</table></div>
-</div>
-<div class="refsect3">
-<a name="flatpak-installation-get-remote-by-name.returns"></a><h4>Returns</h4>
-<p> a <a class="link" href="FlatpakRemote.html" title="FlatpakRemote"><span class="type">FlatpakRemote</span></a> instances, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> error. </p>
-<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
-</div>
-</div>
-<hr>
-<div class="refsect2">
-<a name="flatpak-installation-fetch-remote-metadata-sync"></a><h3>flatpak_installation_fetch_remote_metadata_sync ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
-flatpak_installation_fetch_remote_metadata_sync
-                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
-                                <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
-                                <em class="parameter"><code><a class="link" href="FlatpakRef.html" title="FlatpakRef"><span class="type">FlatpakRef</span></a> *ref</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
-<p>Obtains the metadata file from a commit.</p>
-<div class="refsect3">
-<a name="flatpak-installation-fetch-remote-metadata-sync.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<a name="flatpak-installation-list-installed-related-refs-sync.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1282,12 +1668,276 @@ flatpak_installation_fetch_remote_metadata_sync
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-list-installed-related-refs-sync.returns"></a><h4>Returns</h4>
+<p>an GPtrArray of
+<a class="link" href="FlatpakRelatedRef.html" title="FlatpakRelatedRef"><span class="type">FlatpakRelatedRef</span></a> instances. </p>
+<p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakRelatedRef]</span></p>
+</div>
+<p class="since">Since: 0.6.7</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-list-remote-refs-sync"></a><h3>flatpak_installation_list_remote_refs_sync ()</h3>
+<pre class="programlisting"><span class="returnvalue">GPtrArray</span> *
+flatpak_installation_list_remote_refs_sync
+                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Lists all the applications and runtimes in a remote.</p>
+<div class="refsect3">
+<a name="flatpak-installation-list-remote-refs-sync.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>remote_name</p></td>
+<td class="parameter_description"><p>the name of the remote</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-list-remote-refs-sync.returns"></a><h4>Returns</h4>
+<p>an GPtrArray of
+<a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> instances. </p>
+<p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakRemoteRef]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-list-remote-related-refs-sync"></a><h3>flatpak_installation_list_remote_related_refs_sync ()</h3>
+<pre class="programlisting"><span class="returnvalue">GPtrArray</span> *
+flatpak_installation_list_remote_related_refs_sync
+                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *ref</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Lists all the available refs on <em class="parameter"><code>remote_name</code></em>
+ that are related to
+<em class="parameter"><code>ref</code></em>
+, and the subpaths to use. These are things that are
+interesting to install, update, or uninstall together with
+<em class="parameter"><code>ref</code></em>
+. For instance, locale data or debug information.</p>
+<p>The returned list contains all available related refs, but not
+everyone should always be installed. For example,
+<a class="link" href="FlatpakRelatedRef.html#flatpak-related-ref-should-download" title="flatpak_related_ref_should_download ()"><code class="function">flatpak_related_ref_should_download()</code></a> returns TRUE if the
+reference should be installed/updated with the app, and
+<a class="link" href="FlatpakRelatedRef.html#flatpak-related-ref-should-delete" title="flatpak_related_ref_should_delete ()"><code class="function">flatpak_related_ref_should_delete()</code></a> returns TRUE if it
+should be uninstalled with the main ref.</p>
+<div class="refsect3">
+<a name="flatpak-installation-list-remote-related-refs-sync.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>remote_name</p></td>
+<td class="parameter_description"><p>the name of the remote</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>ref</p></td>
+<td class="parameter_description"><p>the ref</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-list-remote-related-refs-sync.returns"></a><h4>Returns</h4>
+<p>an GPtrArray of
+<a class="link" href="FlatpakRelatedRef.html" title="FlatpakRelatedRef"><span class="type">FlatpakRelatedRef</span></a> instances. </p>
+<p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakRelatedRef]</span></p>
+</div>
+<p class="since">Since: 0.6.7</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-list-remotes"></a><h3>flatpak_installation_list_remotes ()</h3>
+<pre class="programlisting"><span class="returnvalue">GPtrArray</span> *
+flatpak_installation_list_remotes (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                   <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                   <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Lists the remotes, in priority (highest first) order. For same priority,
+an earlier added remote comes before a later added one.</p>
+<div class="refsect3">
+<a name="flatpak-installation-list-remotes.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-list-remotes.returns"></a><h4>Returns</h4>
+<p>an GPtrArray of
+<a class="link" href="FlatpakRemote.html" title="FlatpakRemote"><span class="type">FlatpakRemote</span></a> instances. </p>
+<p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakRemote]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-get-remote-by-name"></a><h3>flatpak_installation_get_remote_by_name ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakRemote.html" title="FlatpakRemote"><span class="returnvalue">FlatpakRemote</span></a> *
+flatpak_installation_get_remote_by_name
+                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                <em class="parameter"><code>const <span class="type">gchar</span> *name</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Looks up a remote by name.</p>
+<div class="refsect3">
+<a name="flatpak-installation-get-remote-by-name.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>name</p></td>
+<td class="parameter_description"><p>a remote name</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-get-remote-by-name.returns"></a><h4>Returns</h4>
+<p>a <a class="link" href="FlatpakRemote.html" title="FlatpakRemote"><span class="type">FlatpakRemote</span></a> instances, or <code class="literal">NULL</code> error. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-fetch-remote-metadata-sync"></a><h3>flatpak_installation_fetch_remote_metadata_sync ()</h3>
+<pre class="programlisting"><span class="returnvalue">GBytes</span> *
+flatpak_installation_fetch_remote_metadata_sync
+                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
+                                <em class="parameter"><code><a class="link" href="FlatpakRef.html" title="FlatpakRef"><span class="type">FlatpakRef</span></a> *ref</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Obtains the metadata file from a commit.</p>
+<div class="refsect3">
+<a name="flatpak-installation-fetch-remote-metadata-sync.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>remote_name</p></td>
+<td class="parameter_description"><p>the name of the remote</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>ref</p></td>
+<td class="parameter_description"><p>the ref</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1295,8 +1945,8 @@ flatpak_installation_fetch_remote_metadata_sync
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-fetch-remote-metadata-sync.returns"></a><h4>Returns</h4>
-<p> a <a href="../glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> containing the flatpak metadata file,
-or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if an error occurred. </p>
+<p>a <span class="type">GBytes</span> containing the flatpak metadata file,
+or <code class="literal">NULL</code> if an error occurred. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
@@ -1311,12 +1961,12 @@ flatpak_installation_fetch_remote_ref_sync
                                 <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *branch</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Gets the current remote branch of a ref in the remote.</p>
 <div class="refsect3">
 <a name="flatpak-installation-fetch-remote-ref-sync.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1345,22 +1995,22 @@ flatpak_installation_fetch_remote_ref_sync
 </tr>
 <tr>
 <td class="parameter_name"><p>arch</p></td>
-<td class="parameter_description"><p> which architecture to fetch (default: current architecture). </p></td>
+<td class="parameter_description"><p>which architecture to fetch (default: current architecture). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>branch</p></td>
-<td class="parameter_description"><p> which branch to fetch (default: 'master'). </p></td>
+<td class="parameter_description"><p>which branch to fetch (default: 'master'). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1368,22 +2018,22 @@ flatpak_installation_fetch_remote_ref_sync
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-fetch-remote-ref-sync.returns"></a><h4>Returns</h4>
-<p> a <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> instance, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a>. </p>
+<p>a <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> instance, or <code class="literal">NULL</code>. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-fetch-remote-size-sync"></a><h3>flatpak_installation_fetch_remote_size_sync ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_fetch_remote_size_sync
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
                                 <em class="parameter"><code><a class="link" href="FlatpakRef.html" title="FlatpakRef"><span class="type">FlatpakRef</span></a> *ref</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a> *download_size</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a> *installed_size</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">guint64</span> *download_size</code></em>,
+                                <em class="parameter"><code><span class="type">guint64</span> *installed_size</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Gets information about the maximum amount of data that needs to be transferred
 to pull the ref from a remote repository, and about the amount of
 local disk space that is required to check out this commit.</p>
@@ -1392,7 +2042,7 @@ for instance if you're doing an update then the real download size may be smalle
 than what is returned here.</p>
 <div class="refsect3">
 <a name="flatpak-installation-fetch-remote-size-sync.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1416,22 +2066,22 @@ than what is returned here.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>download_size</p></td>
-<td class="parameter_description"><p> return location for the (maximum) download size. </p></td>
+<td class="parameter_description"><p>return location for the (maximum) download size. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="Parameter for returning results. Default is transfer full."><span class="acronym">out</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>installed_size</p></td>
-<td class="parameter_description"><p> return location for the installed size. </p></td>
+<td class="parameter_description"><p>return location for the installed size. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="Parameter for returning results. Default is transfer full."><span class="acronym">out</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1439,7 +2089,7 @@ than what is returned here.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-fetch-remote-size-sync.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a>, unless an error occurred</p>
+<p> <code class="literal">TRUE</code>, unless an error occurred</p>
 </div>
 </div>
 <hr>
@@ -1449,12 +2099,12 @@ than what is returned here.</p>
 flatpak_installation_load_app_overrides
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *app_id</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Loads the metadata overrides file for an application.</p>
 <div class="refsect3">
 <a name="flatpak-installation-load-app-overrides.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1473,12 +2123,12 @@ flatpak_installation_load_app_overrides
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1486,28 +2136,29 @@ flatpak_installation_load_app_overrides
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-load-app-overrides.returns"></a><h4>Returns</h4>
-<p> the contents of the overrides files,
-or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if an error occurred. </p>
+<p>the contents of the overrides files,
+or <code class="literal">NULL</code> if an error occurred. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-update-appstream-sync"></a><h3>flatpak_installation_update_appstream_sync ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_update_appstream_sync
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> *out_changed</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">gboolean</span> *out_changed</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Updates the local copy of appstream for <em class="parameter"><code>remote_name</code></em>
  for the specified <em class="parameter"><code>arch</code></em>
-.</p>
+.
+If you need progress feedback, use <a class="link" href="FlatpakInstallation.html#flatpak-installation-update-appstream-full-sync" title="flatpak_installation_update_appstream_full_sync ()"><code class="function">flatpak_installation_update_appstream_full_sync()</code></a>.</p>
 <div class="refsect3">
 <a name="flatpak-installation-update-appstream-sync.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1526,22 +2177,22 @@ flatpak_installation_update_appstream_sync
 </tr>
 <tr>
 <td class="parameter_name"><p>arch</p></td>
-<td class="parameter_description"><p>Architecture to update, or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> for the local machine arch</p></td>
+<td class="parameter_description"><p>Architecture to update, or <code class="literal">NULL</code> for the local machine arch</p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_changed</p></td>
-<td class="parameter_description"><p> Set to <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> if the contents of the appstream changed, <a href="../glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> if nothing changed. </p></td>
+<td class="parameter_description"><p>Set to <code class="literal">TRUE</code> if the contents of the appstream changed, <code class="literal">FALSE</code> if nothing changed. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1549,7 +2200,7 @@ flatpak_installation_update_appstream_sync
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-update-appstream-sync.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> on success, or <a href="../glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> on error</p>
+<p> <code class="literal">TRUE</code> on success, or <code class="literal">FALSE</code> on error</p>
 </div>
 </div>
 <hr>
@@ -1557,16 +2208,16 @@ flatpak_installation_update_appstream_sync
 <a name="flatpak-installation-install-bundle"></a><h3>flatpak_installation_install_bundle ()</h3>
 <pre class="programlisting"><a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef"><span class="returnvalue">FlatpakInstalledRef</span></a> *
 flatpak_installation_install_bundle (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
-                                     <em class="parameter"><code><a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a> *file</code></em>,
+                                     <em class="parameter"><code><span class="type">GFile</span> *file</code></em>,
                                      <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakProgressCallback" title="FlatpakProgressCallback ()"><span class="type">FlatpakProgressCallback</span></a> progress</code></em>,
-                                     <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a> progress_data</code></em>,
-                                     <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                     <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                     <em class="parameter"><code><span class="type">gpointer</span> progress_data</code></em>,
+                                     <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                     <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Install an application or runtime from an flatpak bundle file.
-See flatpak-build-bundle(1) for how to create brundles.</p>
+See flatpak-build-bundle(1) for how to create bundles.</p>
 <div class="refsect3">
 <a name="flatpak-installation-install-bundle.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1580,28 +2231,28 @@ See flatpak-build-bundle(1) for how to create brundles.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>file</p></td>
-<td class="parameter_description"><p>a <a href="../gio/GFile.html#GFile-struct"><span class="type">GFile</span></a> that is an flatpak bundle</p></td>
+<td class="parameter_description"><p>a <span class="type">GFile</span> that is an flatpak bundle</p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>
 <td class="parameter_name"><p>progress</p></td>
-<td class="parameter_description"><p> progress callback. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>]</span></td>
+<td class="parameter_description"><p>progress callback. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>progress_data</p></td>
 <td class="parameter_description"><p>user data passed to <em class="parameter"><code>progress</code></em>
-</p></td>
-<td class="parameter_annotations"> </td>
+. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="This parameter is a 'user_data', for callbacks; many bindings can pass NULL here."><span class="acronym">closure</span></acronym> progress][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1609,22 +2260,77 @@ See flatpak-build-bundle(1) for how to create brundles.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-install-bundle.returns"></a><h4>Returns</h4>
-<p> The ref for the newly installed app or <a href="../glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> on failure. </p>
+<p>The ref for the newly installed app or <code class="literal">NULL</code> on failure. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
+<a name="flatpak-installation-install-ref-file"></a><h3>flatpak_installation_install_ref_file ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="returnvalue">FlatpakRemoteRef</span></a> *
+flatpak_installation_install_ref_file (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                       <em class="parameter"><code><span class="type">GBytes</span> *ref_file_data</code></em>,
+                                       <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                       <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Creates a remote based on the passed in .flatpakref file contents
+in <em class="parameter"><code>ref_file_data</code></em>
+ and returns the <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> that can be used
+to install it.</p>
+<p>Note, the <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> will not have the commit field set, to
+avoid unnecessary roundtrips. If you need that you have to resolve it
+explicitly with <a class="link" href="FlatpakInstallation.html#flatpak-installation-fetch-remote-ref-sync" title="flatpak_installation_fetch_remote_ref_sync ()"><code class="function">flatpak_installation_fetch_remote_ref_sync()</code></a>.</p>
+<div class="refsect3">
+<a name="flatpak-installation-install-ref-file.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>ref_file_data</p></td>
+<td class="parameter_description"><p>The ref file contents</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-install-ref-file.returns"></a><h4>Returns</h4>
+<p>a <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> if the remote has been added successfully, <code class="literal">NULL</code>
+on error. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
+</div>
+<p class="since">Since: 0.6.10</p>
+</div>
+<hr>
+<div class="refsect2">
 <a name="flatpak-installation-drop-caches"></a><h3>flatpak_installation_drop_caches ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_drop_caches (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
-                                  <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                  <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                  <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                  <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Drops all internal (in-memory) caches. For instance, this may be needed to pick up new or changed
 remotes configured outside this installation instance.</p>
 <div class="refsect3">
 <a name="flatpak-installation-drop-caches.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1638,12 +2344,12 @@ remotes configured outside this installation instance.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1651,22 +2357,22 @@ remotes configured outside this installation instance.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-drop-caches.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> on success, <a href="../glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> on error</p>
+<p> <code class="literal">TRUE</code> on success, <code class="literal">FALSE</code> on error</p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-modify-remote"></a><h3>flatpak_installation_modify_remote ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_modify_remote (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                     <em class="parameter"><code><a class="link" href="FlatpakRemote.html" title="FlatpakRemote"><span class="type">FlatpakRemote</span></a> *remote</code></em>,
-                                    <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                    <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                    <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                    <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Saves changes in the <em class="parameter"><code>remote</code></em>
  object.</p>
 <div class="refsect3">
 <a name="flatpak-installation-modify-remote.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1685,12 +2391,12 @@ flatpak_installation_modify_remote (<em class="parameter"><code><a class="link" 
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1698,21 +2404,21 @@ flatpak_installation_modify_remote (<em class="parameter"><code><a class="link" 
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-modify-remote.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> if the modifications have been committed successfully</p>
+<p> <code class="literal">TRUE</code> if the modifications have been committed successfully</p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-remove-remote"></a><h3>flatpak_installation_remove_remote ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_remove_remote (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                     <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
-                                    <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                    <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                    <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                    <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Removes the remote with the given name from the installation.</p>
 <div class="refsect3">
 <a name="flatpak-installation-remove-remote.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1731,12 +2437,12 @@ flatpak_installation_remove_remote (<em class="parameter"><code><a class="link" 
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1744,24 +2450,24 @@ flatpak_installation_remove_remote (<em class="parameter"><code><a class="link" 
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-remove-remote.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> if the remote has been removed successfully</p>
+<p> <code class="literal">TRUE</code> if the remote has been removed successfully</p>
 </div>
 </div>
 <hr>
 <div class="refsect2">
 <a name="flatpak-installation-update-remote-sync"></a><h3>flatpak_installation_update_remote_sync ()</h3>
-<pre class="programlisting"><a href="../glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
 flatpak_installation_update_remote_sync
                                (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
                                 <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
-                                <em class="parameter"><code><a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
-                                <em class="parameter"><code><a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
 <p>Updates the local configuration of a remote repository by fetching
 the related information from the summary file in the remote OSTree
 repository and committing the changes to the local installation.</p>
 <div class="refsect3">
 <a name="flatpak-installation-update-remote-sync.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1780,12 +2486,12 @@ repository and committing the changes to the local installation.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
-<td class="parameter_description"><p> a <a href="../gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <a href="../glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -1793,9 +2499,341 @@ repository and committing the changes to the local installation.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-installation-update-remote-sync.returns"></a><h4>Returns</h4>
-<p> <a href="../glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> if the remote has been updated successfully</p>
+<p> <code class="literal">TRUE</code> if the remote has been updated successfully</p>
 </div>
 <p class="since">Since: 0.6.13</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-cleanup-local-refs-sync"></a><h3>flatpak_installation_cleanup_local_refs_sync ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
+flatpak_installation_cleanup_local_refs_sync
+                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Remove all OSTree refs from the local flatpak repository which are not
+in a deployed state. The next time the underlying OSTree repo is pruned,
+objects which were attached to that ref will be removed. This is useful if
+you pulled a flatpak refs using <a class="link" href="FlatpakInstallation.html#flatpak-installation-install-full" title="flatpak_installation_install_full ()"><code class="function">flatpak_installation_install_full()</code></a> and
+specified <a class="link" href="FlatpakInstallation.html#FLATPAK-INSTALL-FLAGS-NO-DEPLOY:CAPS"><code class="literal">FLATPAK_INSTALL_FLAGS_NO_DEPLOY</code></a> but then decided not to
+deploy the refs later on and want to remove the local refs to prevent them
+from taking up disk space. Note that this will not remove the objects
+referred to by <em class="parameter"><code>ref</code></em>
+ from the underlying OSTree repo, you should use
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-prune-local-repo" title="flatpak_installation_prune_local_repo ()"><code class="function">flatpak_installation_prune_local_repo()</code></a> to do that.</p>
+<div class="refsect3">
+<a name="flatpak-installation-cleanup-local-refs-sync.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-cleanup-local-refs-sync.returns"></a><h4>Returns</h4>
+<p> <code class="literal">TRUE</code> on success</p>
+</div>
+<p class="since">Since: 0.10.0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-get-config"></a><h3>flatpak_installation_get_config ()</h3>
+<pre class="programlisting"><span class="returnvalue">char</span> *
+flatpak_installation_get_config (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                 <em class="parameter"><code>const <span class="type">char</span> *key</code></em>,
+                                 <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                 <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Get a global configuration option for the remote, see
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-set-config-sync" title="flatpak_installation_set_config_sync ()"><code class="function">flatpak_installation_set_config_sync()</code></a> for supported keys.</p>
+<div class="refsect3">
+<a name="flatpak-installation-get-config.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>key</p></td>
+<td class="parameter_description"><p>the name of the key to get</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-get-config.returns"></a><h4>Returns</h4>
+<p> The (newly allocated) value, or <code class="literal">NULL</code> on error (<code class="literal">G_KEY_FILE_ERROR_KEY_NOT_FOUND</code> error if key is not set)</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-prune-local-repo"></a><h3>flatpak_installation_prune_local_repo ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
+flatpak_installation_prune_local_repo (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                       <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                       <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Remove all orphaned OSTree objects from the underlying OSTree repo in
+<em class="parameter"><code>installation</code></em>
+.</p>
+<div class="refsect3">
+<a name="flatpak-installation-prune-local-repo.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-prune-local-repo.returns"></a><h4>Returns</h4>
+<p> <code class="literal">TRUE</code> on success</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-remove-local-ref-sync"></a><h3>flatpak_installation_remove_local_ref_sync ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
+flatpak_installation_remove_local_ref_sync
+                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *ref</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Remove the OSTree ref given by <em class="parameter"><code>remote_name</code></em>
+:<em class="parameter"><code>ref</code></em>
+ from the local flatpak
+repository. The next time the underlying OSTree repo is pruned, objects
+which were attached to that ref will be removed. This is useful if you
+pulled a flatpak ref using <a class="link" href="FlatpakInstallation.html#flatpak-installation-install-full" title="flatpak_installation_install_full ()"><code class="function">flatpak_installation_install_full()</code></a> and
+specified <a class="link" href="FlatpakInstallation.html#FLATPAK-INSTALL-FLAGS-NO-DEPLOY:CAPS"><code class="literal">FLATPAK_INSTALL_FLAGS_NO_DEPLOY</code></a> but then decided not to
+deploy the ref later on and want to remove the local ref to prevent it
+from taking up disk space. Note that this will not remove the objects
+referred to by <em class="parameter"><code>ref</code></em>
+ from the underlying OSTree repo, you should use
+<a class="link" href="FlatpakInstallation.html#flatpak-installation-prune-local-repo" title="flatpak_installation_prune_local_repo ()"><code class="function">flatpak_installation_prune_local_repo()</code></a> to do that.</p>
+<div class="refsect3">
+<a name="flatpak-installation-remove-local-ref-sync.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>remote_name</p></td>
+<td class="parameter_description"><p>the name of the remote</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>ref</p></td>
+<td class="parameter_description"><p>the ref</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-remove-local-ref-sync.returns"></a><h4>Returns</h4>
+<p> <code class="literal">TRUE</code> on success</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-set-config-sync"></a><h3>flatpak_installation_set_config_sync ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
+flatpak_installation_set_config_sync (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                      <em class="parameter"><code>const <span class="type">char</span> *key</code></em>,
+                                      <em class="parameter"><code>const <span class="type">char</span> *value</code></em>,
+                                      <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                      <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Set a global configuration option for the installation, currently
+the only supported key is "languages", which is a comman-separated
+list of langue codes like "sv;en;pl", or "" to mean all languages.</p>
+<div class="refsect3">
+<a name="flatpak-installation-set-config-sync.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>key</p></td>
+<td class="parameter_description"><p>the name of the key to set</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>value</p></td>
+<td class="parameter_description"><p>the new value, or <code class="literal">NULL</code> to unset</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-set-config-sync.returns"></a><h4>Returns</h4>
+<p> <code class="literal">TRUE</code> if the option was set correctly</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-installation-update-appstream-full-sync"></a><h3>flatpak_installation_update_appstream_full_sync ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
+flatpak_installation_update_appstream_full_sync
+                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *self</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *remote_name</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>,
+                                <em class="parameter"><code><a class="link" href="FlatpakInstallation.html#FlatpakProgressCallback" title="FlatpakProgressCallback ()"><span class="type">FlatpakProgressCallback</span></a> progress</code></em>,
+                                <em class="parameter"><code><span class="type">gpointer</span> progress_data</code></em>,
+                                <em class="parameter"><code><span class="type">gboolean</span> *out_changed</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Updates the local copy of appstream for <em class="parameter"><code>remote_name</code></em>
+ for the specified <em class="parameter"><code>arch</code></em>
+.</p>
+<div class="refsect3">
+<a name="flatpak-installation-update-appstream-full-sync.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>remote_name</p></td>
+<td class="parameter_description"><p>the name of the remote</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>arch</p></td>
+<td class="parameter_description"><p>Architecture to update, or <code class="literal">NULL</code> for the local machine arch</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>progress</p></td>
+<td class="parameter_description"><p>progress callback. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>progress_data</p></td>
+<td class="parameter_description"><p>user data passed to <em class="parameter"><code>progress</code></em>
+. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="This parameter is a 'user_data', for callbacks; many bindings can pass NULL here."><span class="acronym">closure</span></acronym> progress][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>out_changed</p></td>
+<td class="parameter_description"><p>Set to <code class="literal">TRUE</code> if the contents of the appstream changed, <code class="literal">FALSE</code> if nothing changed. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-installation-update-appstream-full-sync.returns"></a><h4>Returns</h4>
+<p> <code class="literal">TRUE</code> on success, or <code class="literal">FALSE</code> on error</p>
+</div>
 </div>
 <hr>
 <div class="refsect2">
@@ -1810,19 +2848,69 @@ flatpak_get_default_arch (<em class="parameter"><code><span class="type">void</s
 </div>
 <hr>
 <div class="refsect2">
+<a name="flatpak-get-supported-arches"></a><h3>flatpak_get_supported_arches ()</h3>
+<pre class="programlisting">const <span class="returnvalue">char</span> *const *
+flatpak_get_supported_arches (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
+<p>Returns the canonical names for the arches that are supported (i.e. can run)
+on the current machine, in order of priority (default is first).</p>
+<div class="refsect3">
+<a name="flatpak-get-supported-arches.returns"></a><h4>Returns</h4>
+<p> a zero terminated array of arch strings</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-get-system-installations"></a><h3>flatpak_get_system_installations ()</h3>
+<pre class="programlisting"><span class="returnvalue">GPtrArray</span> *
+flatpak_get_system_installations (<em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                  <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Lists the system installations according to the current configuration and current
+availability (e.g. doesn't return a configured installation if not reachable).</p>
+<div class="refsect3">
+<a name="flatpak-get-system-installations.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <span class="type">GCancellable</span>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-get-system-installations.returns"></a><h4>Returns</h4>
+<p>an GPtrArray of
+<a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> instances. </p>
+<p><span class="annotation">[<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakInstallation]</span></p>
+</div>
+<p class="since">Since: 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
 <a name="FlatpakProgressCallback"></a><h3>FlatpakProgressCallback ()</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
 <span class="c_punctuation">(</span>*FlatpakProgressCallback<span class="c_punctuation">)</span> (<em class="parameter"><code>const <span class="type">char</span> *status</code></em>,
-                            <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a> progress</code></em>,
-                            <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> estimating</code></em>,
-                            <em class="parameter"><code><a href="../glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a> user_data</code></em>);</pre>
+                            <em class="parameter"><code><span class="type">guint</span> progress</code></em>,
+                            <em class="parameter"><code><span class="type">gboolean</span> estimating</code></em>,
+                            <em class="parameter"><code><span class="type">gpointer</span> user_data</code></em>);</pre>
 <p>The progress callback is called repeatedly during long-running operations
 such as installations or updates, and can be used to update progress information
 in a user interface.</p>
 <p>The callback occurs in the thread-default context of the caller.</p>
 <div class="refsect3">
 <a name="FlatpakProgressCallback.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1867,7 +2955,7 @@ is just an estimate</p></td>
 <p>Flags to alter the behavior of <a class="link" href="FlatpakInstallation.html#flatpak-installation-update" title="flatpak_installation_update ()"><code class="function">flatpak_installation_update()</code></a>.</p>
 <div class="refsect3">
 <a name="FlatpakUpdateFlags.members"></a><h4>Members</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="300px" class="enum_members_name">
 <col class="enum_members_description">
@@ -1895,13 +2983,110 @@ is just an estimate</p></td>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-UPDATE-FLAGS-NO-STATIC-DELTAS:CAPS"></a>FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS</p></td>
+<td> </td>
+<td> </td>
+</tr>
 </tbody>
 </table></div>
 </div>
 </div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakInstallFlags"></a><h3>enum FlatpakInstallFlags</h3>
+<p>Flags to alter the behavior of <a class="link" href="FlatpakInstallation.html#flatpak-installation-install-full" title="flatpak_installation_install_full ()"><code class="function">flatpak_installation_install_full()</code></a>.</p>
+<div class="refsect3">
+<a name="FlatpakInstallFlags.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-INSTALL-FLAGS-NONE:CAPS"></a>FLATPAK_INSTALL_FLAGS_NONE</p></td>
+<td class="enum_member_description">
+<p>Default</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-INSTALL-FLAGS-NO-STATIC-DELTAS:CAPS"></a>FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-INSTALL-FLAGS-NO-DEPLOY:CAPS"></a>FLATPAK_INSTALL_FLAGS_NO_DEPLOY</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-INSTALL-FLAGS-NO-PULL:CAPS"></a>FLATPAK_INSTALL_FLAGS_NO_PULL</p></td>
+<td> </td>
+<td> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakStorageType"></a><h3>enum FlatpakStorageType</h3>
+<p>Flags to alter the behavior of <a class="link" href="FlatpakInstallation.html#flatpak-installation-install-full" title="flatpak_installation_install_full ()"><code class="function">flatpak_installation_install_full()</code></a>.</p>
+<div class="refsect3">
+<a name="FlatpakStorageType.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-STORAGE-TYPE-DEFAULT:CAPS"></a>FLATPAK_STORAGE_TYPE_DEFAULT</p></td>
+<td class="enum_member_description">
+<p>default</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-STORAGE-TYPE-HARD-DISK:CAPS"></a>FLATPAK_STORAGE_TYPE_HARD_DISK</p></td>
+<td class="enum_member_description">
+<p>installation is on a hard disk</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-STORAGE-TYPE-SDCARD:CAPS"></a>FLATPAK_STORAGE_TYPE_SDCARD</p></td>
+<td class="enum_member_description">
+<p>installation is on a SD card</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-STORAGE-TYPE-MMC:CAPS"></a>FLATPAK_STORAGE_TYPE_MMC</p></td>
+<td class="enum_member_description">
+<p>installation is on an MMC</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-STORAGE-TYPE-NETWORK:CAPS"></a>FLATPAK_STORAGE_TYPE_NETWORK</p></td>
+<td class="enum_member_description">
+<p>installation is on the network</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p class="since">Since: 0.6.15</p>
+</div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25.1</div>
+<hr>Generated by GTK-Doc V1.27</div>
 </body>
 </html>
