@@ -2089,7 +2089,8 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 gboolean
 flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
                                         const char          *remote,
-                                        const char          *arch)
+                                        const char          *arch,
+                                        GError             **error)
 {
   const char *old_checksum = NULL;
   g_autofree char *new_checksum = NULL;
@@ -2119,14 +2120,11 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
   if (!flatpak_dir_find_latest_rev (self, remote, branch, NULL, &new_checksum,
                                     NULL, NULL, &local_error))
     {
-      if (g_strcmp0 (arch, flatpak_get_arch ()) == 0)
-        g_printerr (_("Failed to find latest revision for ref %s from remote %s: %s\n"),
+      flatpak_fail (error, _("Failed to find latest revision for ref %s from remote %s: %s"),
                     branch, remote, local_error->message);
-      else
-        g_debug (_("Failed to find latest revision for ref %s from remote %s: %s\n"),
-                 branch, remote, local_error->message);
       new_checksum = NULL;
     }
+
   if (new_checksum == NULL)
     {
       g_debug ("No %s branch for remote %s, ignoring", branch, remote);
