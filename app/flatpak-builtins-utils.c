@@ -467,30 +467,49 @@ update_appstream (GPtrArray    *dirs,
               else
                 g_debug ("%s age %" G_GUINT64_FORMAT " is greater than ttl %" G_GUINT64_FORMAT, ts_file_path, ts_file_age, ttl);
 
-
               if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
                   flatpak_dir_get_remote_noenumerate (dir, remotes[i]) ||
-                  !flatpak_dir_check_for_appstream_update (dir, remotes[i], arch))
-                continue;
+                  !flatpak_dir_check_for_appstream_update (dir, remotes[i], arch, &local_error))
+                {
+                  if (local_error)
+                    {
+                      if (quiet)
+                        g_debug ("%s: %s", _("Error updating"), local_error->message);
+                      else
+                        g_printerr ("%s: %s\n", _("Error updating"), local_error->message);
+                    }
+                  continue;
+                }
 
               if (flatpak_dir_is_user (dir))
                 {
                   if (quiet)
-                    g_debug (_("Updating appstream data for user remote %s\n"), remotes[i]);
+                    g_debug (_("Updating appstream data for user remote %s"), remotes[i]);
                   else
-                    g_print (_("Updating appstream data for user remote %s\n"), remotes[i]);
+                    {
+                      g_print (_("Updating appstream data for user remote %s"), remotes[i]);
+                      g_print ("\n");
+                    }
                 }
               else
                 {
                   if (quiet)
-                    g_debug (_("Updating appstream data for remote %s\n"), remotes[i]);
+                    g_debug (_("Updating appstream data for remote %s"), remotes[i]);
                   else
-                    g_print (_("Updating appstream data for remote %s\n"), remotes[i]);
+                    {
+                      g_print (_("Updating appstream data for remote %s"), remotes[i]);
+                      g_print ("\n");
+                    }
                 }
               progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
               if (!flatpak_dir_update_appstream (dir, remotes[i], arch, &changed,
                                                  progress, cancellable, &local_error))
-                g_printerr (_("Error updating: %s\n"), local_error->message);
+                {
+                  if (quiet)
+                    g_debug ("%s: %s", _("Error updating"), local_error->message);
+                  else
+                    g_printerr ("%s: %s\n", _("Error updating"), local_error->message);
+                }
               ostree_async_progress_finish (progress);
             }
         }
@@ -506,12 +525,22 @@ update_appstream (GPtrArray    *dirs,
           if (flatpak_dir_has_remote (dir, remote))
             {
               g_autoptr(OstreeAsyncProgress) progress = NULL;
+              g_autoptr(GError) local_error = NULL;
 
               found = TRUE;
 
               /* Early bail out check */
-              if (!flatpak_dir_check_for_appstream_update (dir, remote, arch))
-                continue;
+              if (!flatpak_dir_check_for_appstream_update (dir, remote, arch, &local_error))
+                {
+                  if (local_error)
+                    {
+                      if (quiet)
+                        g_debug ("%s: %s", _("Error updating"), local_error->message);
+                      else
+                        g_printerr ("%s: %s\n", _("Error updating"), local_error->message);
+                    }
+                  continue;
+                }
 
               progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
               res = flatpak_dir_update_appstream (dir, remote, arch, &changed,

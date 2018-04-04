@@ -353,7 +353,8 @@ gboolean    flatpak_dir_find_latest_rev (FlatpakDir               *self,
                                          GError                  **error);
 gboolean    flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
                                                     const char          *remote,
-                                                    const char          *arch);
+                                                    const char          *arch,
+                                                    GError             **error);
 gboolean    flatpak_dir_update_appstream (FlatpakDir          *self,
                                           const char          *remote,
                                           const char          *arch,
