@@ -79,6 +79,8 @@ flatpak_builtin_update (int           argc,
   const char *default_branch = NULL;
   FlatpakKinds kinds;
   g_autoptr(GPtrArray) transactions = NULL;
+  const char *opt_arches[2] = {NULL, NULL};
+  const char **arches = flatpak_get_arches ();
 
   context = g_option_context_new (_("[REF...] - Update applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -88,11 +90,20 @@ flatpak_builtin_update (int           argc,
                                      &dirs, cancellable, error))
     return FALSE;
 
-  if (opt_arch == NULL)
-    opt_arch = (char *)flatpak_get_arch ();
+  if (opt_arch)
+    {
+      opt_arches[0] = opt_arch;
+      arches = opt_arches;
+    }
 
   if (opt_appstream)
-    return update_appstream (dirs, argc >= 2 ? argv[1] : NULL, opt_arch, 0, FALSE, cancellable, error);
+    {
+      for (i = 0; arches[i] != NULL; i++)
+        {
+          if (!update_appstream (dirs, argc >= 2 ? argv[1] : NULL, arches[i], 0, FALSE, cancellable, error))
+            return FALSE;
+        }
+    }
 
   prefs = &argv[1];
   n_prefs = argc - 1;
@@ -229,7 +240,13 @@ flatpak_builtin_update (int           argc,
     }
 
   if (n_prefs == 0)
-    return update_appstream (dirs, NULL, opt_arch, 0, FALSE, cancellable, error);
+    {
+      for (i = 0; arches[i] != NULL; i++)
+        {
+          if (!update_appstream (dirs, NULL, arches[i], FLATPAK_APPSTREAM_TTL, TRUE, cancellable, error))
+            return FALSE;
+        }
+    }
 
   return TRUE;
 }
