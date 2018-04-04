@@ -134,6 +134,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--reinstall</option></term>
+
+                <listitem><para>
+                  Uninstall first if already installed.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--user</option></term>
 
                 <listitem><para>
