@@ -28,7 +28,6 @@
 #include <sys/ioctl.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
-#include "libglnx/libglnx.h"
 #include "flatpak-portal-dbus.h"
 #include "flatpak-portal.h"
 #include "flatpak-portal-app-info.h"
