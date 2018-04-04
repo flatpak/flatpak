@@ -37,4 +37,4 @@ CLEANFILES += $(portal_built_sources)
 
 flatpak_portal_LDADD = $(AM_LDADD) $(BASE_LIBS)
 flatpak_portal_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
-flatpak_portal_CPPFLAGS = -I$(builddir)/portal
+flatpak_portal_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/portal
