@@ -29,9 +29,6 @@
 #include "flatpak-table-printer.h"
 #include "flatpak-utils.h"
 
-/* Appstream data expires after a day */
-#define FLATPAK_APPSTREAM_TTL 86400
-
 static GPtrArray *
 get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
 {

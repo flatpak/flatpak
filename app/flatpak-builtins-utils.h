@@ -26,6 +26,9 @@
 #include "flatpak-utils.h"
 #include "flatpak-dir.h"
 
+/* Appstream data expires after a day */
+#define FLATPAK_APPSTREAM_TTL 86400
+
 gboolean    looks_like_branch (const char  *branch);
 GBytes *    download_uri      (const char  *url,
                                GError     **error);
