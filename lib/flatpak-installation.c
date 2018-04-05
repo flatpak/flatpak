@@ -192,7 +192,7 @@ flatpak_get_supported_arches (void)
  * Lists the system installations according to the current configuration and current
  * availability (e.g. doesn't return a configured installation if not reachable).
  *
- * Returns: (transfer container) (element-type FlatpakInstallation): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakInstallation): a GPtrArray of
  *   #FlatpakInstallation instances
  *
  * Since: 0.8
@@ -745,7 +745,7 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
  *
  * Lists the installed references.
  *
- * Returns: (transfer container) (element-type FlatpakInstalledRef): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances
  */
 GPtrArray *
@@ -803,7 +803,7 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
  *
  * Lists the installed references of a specific kind.
  *
- * Returns: (transfer container) (element-type FlatpakInstalledRef): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances
  */
 GPtrArray *
@@ -847,7 +847,7 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
  * it can have local updates available that has not been deployed. Look
  * at commit vs latest_commit on installed apps for this.
  *
- * Returns: (transfer container) (element-type FlatpakInstalledRef): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances
  */
 GPtrArray *
@@ -1021,7 +1021,7 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
  * Lists the remotes, in priority (highest first) order. For same priority,
  * an earlier added remote comes before a later added one.
  *
- * Returns: (transfer container) (element-type FlatpakRemote): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakRemote): a GPtrArray of
  *   #FlatpakRemote instances
  */
 GPtrArray *
@@ -1876,7 +1876,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
  *
  * Lists all the applications and runtimes in a remote.
  *
- * Returns: (transfer container) (element-type FlatpakRemoteRef): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakRemoteRef): a GPtrArray of
  *   #FlatpakRemoteRef instances
  */
 GPtrArray *
@@ -2123,7 +2123,7 @@ flatpak_installation_create_monitor (FlatpakInstallation *self,
  * flatpak_related_ref_should_delete () returns TRUE if it
  * should be uninstalled with the main ref.
  *
- * Returns: (transfer container) (element-type FlatpakRelatedRef): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakRelatedRef): a GPtrArray of
  *   #FlatpakRelatedRef instances
  *
  * Since: 0.6.7
@@ -2183,7 +2183,7 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
  * looking for related refs to uninstall, or when you're planning to use
  * FLATPAK_UPDATE_FLAGS_NO_PULL to install previously pulled refs.
  *
- * Returns: (transfer container) (element-type FlatpakRelatedRef): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakRelatedRef): a GPtrArray of
  *   #FlatpakRelatedRef instances
  *
  * Since: 0.6.7
