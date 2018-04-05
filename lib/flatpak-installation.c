@@ -836,6 +836,17 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
   return g_steal_pointer (&refs);
 }
 
+#ifdef FLATPAK_ENABLE_P2P
+static void
+async_result_cb (GObject      *obj,
+                 GAsyncResult *result,
+                 gpointer      user_data)
+{
+  GAsyncResult **result_out = user_data;
+  *result_out = g_object_ref (result);
+}
+#endif  /* FLATPAK_ENABLE_P2P */
+
 /**
  * flatpak_installation_list_installed_refs_for_update:
  * @self: a #FlatpakInstallation
@@ -848,7 +859,7 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
  * at commit vs latest_commit on installed apps for this.
  *
  * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
- *   #FlatpakInstalledRef instances
+ *   #FlatpakInstalledRef instances, or %NULL on error
  */
 GPtrArray *
 flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
@@ -860,6 +871,13 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   g_autoptr(GPtrArray) remotes = NULL; /* (element-type FlatpakRemote) */
   g_autoptr(GHashTable) remote_commits = NULL; /* (element-type utf8 utf8) */
   int i, j;
+#ifdef FLATPAK_ENABLE_P2P
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GMainContext) context = NULL;
+  g_auto(OstreeRepoFinderResultv) results = NULL;
+  g_autoptr(GAsyncResult) result = NULL;
+  g_autoptr(GPtrArray) collection_refs = NULL; /* (element-type OstreeCollectionRef) */
+#endif  /* FLATPAK_ENABLE_P2P */
 
   remote_commits = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
@@ -872,9 +890,15 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       FlatpakRemote *remote = g_ptr_array_index (remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GError) local_error = NULL;
+      g_autofree char *collection_id = NULL;
       const char *remote_name = flatpak_remote_get_name (remote);
 
       if (flatpak_remote_get_disabled (remote))
+        continue;
+
+      /* Remotes with collection IDs will be handled separately below */
+      collection_id = flatpak_remote_get_collection_id (remote);
+      if (collection_id != NULL)
         continue;
 
       /* We ignore errors here. we don't want one remote to fail us */
@@ -921,19 +945,114 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         g_ptr_array_add (updates, g_object_ref (installed_ref));
     }
 
+#ifdef FLATPAK_ENABLE_P2P
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  collection_refs = g_ptr_array_new ();
+
+  for (i = 0; i < installed->len; i++)
+    {
+      FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
+      g_autofree char *collection_id = NULL;
+      const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
+
+      collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
+      if (collection_id != NULL)
+        {
+          const char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
+          OstreeCollectionRef *c_r = ostree_collection_ref_new (collection_id, ref);
+          g_ptr_array_add (collection_refs, c_r);
+        }
+    }
+
+  g_ptr_array_add (collection_refs, NULL);
+
+  context = g_main_context_new ();
+  g_main_context_push_thread_default (context);
+
+  ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
+                                  (const OstreeCollectionRef * const *) collection_refs->pdata,
+                                  NULL,  /* no options */
+                                  NULL, /* default finders */
+                                  NULL,  /* no progress */
+                                  cancellable,
+                                  async_result_cb,
+                                  &result);
+
+  while (result == NULL)
+    g_main_context_iteration (context, TRUE);
+
+  results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
+
+  g_main_context_pop_thread_default (context);
+
+  if (results == NULL)
+    return NULL;
+
+  for (i = 0; i < installed->len; i++)
+    {
+      FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
+      const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
+      const char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
+      g_autofree char *collection_id = NULL;
+      g_autoptr(OstreeCollectionRef) collection_ref = NULL;
+
+      collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
+      collection_ref = ostree_collection_ref_new (collection_id, ref);
+
+      /* Look for matching remote refs that are updates */
+      for (j = 0; results != NULL && results[j] != NULL; j++)
+        {
+          const char *local_commit, *remote_commit;
+
+          local_commit = flatpak_installed_ref_get_latest_commit (installed_ref);
+          remote_commit = g_hash_table_lookup (results[j]->ref_to_checksum, collection_ref);
+          if (remote_commit == NULL || g_strcmp0 (remote_commit, local_commit) == 0)
+            continue;
+
+          /* The ref_to_checksum map only tells us if this remote is offering
+           * the latest commit of the available remotes, not what the timestamp
+           * is. So unless we're using a new enough version of ostree to
+           * provide ref_to_timestamp, we have no way of knowing if the commit
+           * is an update or a downgrade (we could check the summary but
+           * there's no signature, and we'd have to add the temporary remote to
+           * the local configuration).
+           */
+#ifdef OSTREE_VERSION_2018_5
+            {
+              guint64 local_timestamp = 0;
+              guint64 *remote_timestamp;
+              g_autoptr(GVariant) commit_v = NULL;
+
+              if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), local_commit, &commit_v, NULL, NULL))
+                local_timestamp = ostree_commit_get_timestamp (commit_v);
+
+              remote_timestamp = g_hash_table_lookup (results[j]->ref_to_timestamp, collection_ref);
+              *remote_timestamp = GUINT64_FROM_BE (*remote_timestamp);
+
+              g_debug ("%s: Comparing local timestamp %" G_GUINT64_FORMAT " to remote timestamp %"
+                       G_GUINT64_FORMAT " on ref (%s, %s)", G_STRFUNC, local_timestamp, *remote_timestamp,
+                       collection_ref->collection_id, collection_ref->ref_name);
+
+              /* The timestamp could be 0 due to an error reading it. Assume
+               * it's an update until proven otherwise. */
+              if (*remote_timestamp != 0 && *remote_timestamp <= local_timestamp)
+                continue;
+            }
+#endif /* OSTREE_VERSION_2018_5 */
+
+          g_ptr_array_add (updates, g_object_ref (installed_ref));
+
+          /* Move on to the next ref so we don't add duplicates */
+          break;
+        }
+    }
+#endif  /* FLATPAK_ENABLE_P2P */
+
   return g_steal_pointer (&updates);
 }
-
-#ifdef FLATPAK_ENABLE_P2P
-static void
-async_result_cb (GObject      *obj,
-                 GAsyncResult *result,
-                 gpointer      user_data)
-{
-  GAsyncResult **result_out = user_data;
-  *result_out = g_object_ref (result);
-}
-#endif  /* FLATPAK_ENABLE_P2P */
 
 /* Find all USB and LAN repositories which share the same collection ID as
  * @remote_name, and add a #FlatpakRemote to @remotes for each of them. The caller

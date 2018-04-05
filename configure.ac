@@ -223,6 +223,9 @@ fi
 
 PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
 
+# FIXME: Remove this check and the use of it when the ostree requirement is at least 2018.5
+PKG_CHECK_MODULES(OSTREE_2018_5, [ostree-1 >= 2018.5], AC_DEFINE([OSTREE_VERSION_2018_5], [1], [Define if ostree is at least version 2018.5]), :)
+
 PKG_CHECK_MODULES(JSON, [json-glib-1.0])
 
 PKG_CHECK_MODULES(APPSTREAM_GLIB, [appstream-glib >= 0.5.10])

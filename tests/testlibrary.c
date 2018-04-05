@@ -596,6 +596,121 @@ test_install_launch_uninstall (void)
   g_ptr_array_unref (refs);
 }
 
+static void update_test_app (void);
+static void update_repo (void);
+
+static void
+test_list_updates (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(FlatpakInstalledRef) ref = NULL;
+  g_autoptr(FlatpakInstalledRef) runtime_ref = NULL;
+  FlatpakInstalledRef *update_ref = NULL;
+  g_autoptr(GFileMonitor) monitor = NULL;
+  gboolean res;
+  guint timeout_id;
+  gboolean timeout_reached = FALSE;
+  int changed_count = 0;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  monitor = flatpak_installation_create_monitor (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert (G_IS_FILE_MONITOR (monitor));
+  g_file_monitor_set_rate_limit (monitor, 100);
+
+  g_signal_connect (monitor, "changed", G_CALLBACK (changed_cb), &changed_count);
+
+  /* Install a runtime and app */
+  runtime_ref = flatpak_installation_install (inst,
+                                              repo_name,
+                                              FLATPAK_REF_KIND_RUNTIME,
+                                              "org.test.Platform",
+                                              NULL, NULL, NULL, NULL, NULL,
+                                              &error);
+  g_assert_no_error (error);
+  g_assert (FLATPAK_IS_INSTALLED_REF (runtime_ref));
+
+  timeout_id = g_timeout_add (20000, timeout_cb, &timeout_reached);
+  while (!timeout_reached && changed_count == 0)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
+
+  g_assert_cmpint (changed_count, >, 0);
+  changed_count = 0;
+
+  ref = flatpak_installation_install (inst,
+                                      repo_name,
+                                      FLATPAK_REF_KIND_APP,
+                                      "org.test.Hello",
+                                      NULL, NULL, NULL, NULL, NULL,
+                                      &error);
+  g_assert_no_error (error);
+  g_assert (FLATPAK_IS_INSTALLED_REF (ref));
+
+  timeout_reached = FALSE;
+  timeout_id = g_timeout_add (20000, timeout_cb, &timeout_reached);
+  while (!timeout_reached && changed_count == 0)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
+
+  g_assert_cmpint (changed_count, >, 0);
+  changed_count = 0;
+
+  /* Update the test app and list the update */
+  update_test_app ();
+  update_repo ();
+
+  refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 1);
+  update_ref = g_ptr_array_index (refs, 0);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello");
+  g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_APP);
+
+  /* Uninstall the runtime and app */
+  res = flatpak_installation_uninstall (inst,
+                                        flatpak_ref_get_kind (FLATPAK_REF (ref)),
+                                        flatpak_ref_get_name (FLATPAK_REF (ref)),
+                                        flatpak_ref_get_arch (FLATPAK_REF (ref)),
+                                        flatpak_ref_get_branch (FLATPAK_REF (ref)),
+                                        NULL, NULL, NULL,
+                                        &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  timeout_reached = FALSE;
+  timeout_id = g_timeout_add (20000, timeout_cb, &timeout_reached);
+  while (!timeout_reached && changed_count == 0)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
+
+  g_assert_cmpint (changed_count, >, 0);
+  changed_count = 0;
+
+  res = flatpak_installation_uninstall (inst,
+                                        flatpak_ref_get_kind (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_name (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_arch (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_branch (FLATPAK_REF (runtime_ref)),
+                                        NULL, NULL, NULL,
+                                        &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  timeout_reached = FALSE;
+  timeout_id = g_timeout_add (20000, timeout_cb, &timeout_reached);
+  while (!timeout_reached && changed_count == 0)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
+
+  g_assert_cmpint (changed_count, >, 0);
+}
+
 typedef enum
 {
   RUN_TEST_SUBPROCESS_DEFAULT = 0,
@@ -674,6 +789,21 @@ make_test_app (void)
 {
   g_autofree char *arg0 = NULL;
   char *argv[] = { NULL, "test", "", NULL };
+
+  arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
+  argv[0] = arg0;
+#ifdef FLATPAK_ENABLE_P2P
+  argv[2] = repo_collection_id;
+#endif /* FLATPAK_ENABLE_P2P */
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
+update_test_app (void)
+{
+  g_autofree char *arg0 = NULL;
+  char *argv[] = { NULL, "test", "", "UPDATED", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
@@ -947,6 +1077,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/remote", test_remote);
   g_test_add_func ("/library/list-refs", test_list_refs);
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
+  g_test_add_func ("/library/list-updates", test_list_updates);
 
   global_setup ();
 
