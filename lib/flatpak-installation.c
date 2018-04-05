@@ -855,13 +855,14 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
                                                      GCancellable        *cancellable,
                                                      GError             **error)
 {
-  g_autoptr(GPtrArray) updates = NULL;
-  g_autoptr(GPtrArray) installed = NULL;
-  g_autoptr(GPtrArray) remotes = NULL;
-  g_autoptr(GHashTable) ht = NULL;
+  g_autoptr(GPtrArray) updates = NULL; /* (element-type FlatpakInstalledRef) */
+  g_autoptr(GPtrArray) installed = NULL; /* (element-type FlatpakInstalledRef) */
+  g_autoptr(GPtrArray) remotes = NULL; /* (element-type FlatpakRemote) */
+  g_autoptr(GHashTable) remote_commits = NULL; /* (element-type utf8 utf8) */
   int i, j;
 
-  ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  remote_commits = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
   remotes = flatpak_installation_list_remotes (self, cancellable, error);
   if (remotes == NULL)
     return NULL;
@@ -871,13 +872,14 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       FlatpakRemote *remote = g_ptr_array_index (remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GError) local_error = NULL;
+      const char *remote_name = flatpak_remote_get_name (remote);
 
       if (flatpak_remote_get_disabled (remote))
         continue;
 
       /* We ignore errors here. we don't want one remote to fail us */
       refs = flatpak_installation_list_remote_refs_sync (self,
-                                                         flatpak_remote_get_name (remote),
+                                                         remote_name,
                                                          cancellable, &local_error);
       if (refs != NULL)
         {
@@ -885,10 +887,9 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
             {
               FlatpakRemoteRef *remote_ref = g_ptr_array_index (refs, j);
               g_autofree char *full_ref = flatpak_ref_format_ref (FLATPAK_REF (remote_ref));
-              g_autofree char *key = g_strdup_printf ("%s:%s", flatpak_remote_get_name (remote),
-                                                      full_ref);
+              g_autofree char *key = g_strdup_printf ("%s:%s", remote_name, full_ref);
 
-              g_hash_table_insert (ht, g_steal_pointer (&key),
+              g_hash_table_insert (remote_commits, g_steal_pointer (&key),
                                    g_strdup (flatpak_ref_get_commit (FLATPAK_REF (remote_ref))));
             }
         }
@@ -909,14 +910,14 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   for (i = 0; i < installed->len; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
+      const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
       g_autofree char *full_ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
-      g_autofree char *key = g_strdup_printf ("%s:%s", flatpak_installed_ref_get_origin (installed_ref),
-                                              full_ref);
-      const char *remote_ref = g_hash_table_lookup (ht, key);
+      g_autofree char *key = g_strdup_printf ("%s:%s", remote_name, full_ref);
+      const char *remote_commit = g_hash_table_lookup (remote_commits, key);
+      const char *local_commit = flatpak_installed_ref_get_latest_commit (installed_ref);
 
-      if (remote_ref != NULL &&
-          g_strcmp0 (remote_ref,
-                     flatpak_installed_ref_get_latest_commit (installed_ref)) != 0)
+      if (remote_commit != NULL &&
+          g_strcmp0 (remote_commit, local_commit) != 0)
         g_ptr_array_add (updates, g_object_ref (installed_ref));
     }
 
