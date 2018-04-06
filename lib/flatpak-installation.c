@@ -876,8 +876,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   g_autoptr(GMainContext) context = NULL;
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GAsyncResult) result = NULL;
-  GPtrArray *collection_refs = NULL; /* (element-type OstreeCollectionRef) */
-  OstreeCollectionRef **collection_refv;
+  g_autoptr(GPtrArray) collection_refs = NULL; /* (element-type OstreeCollectionRef) */
 #endif  /* FLATPAK_ENABLE_P2P */
 
   remote_commits = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -973,9 +972,8 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   context = g_main_context_new ();
   g_main_context_push_thread_default (context);
 
-  collection_refv = (OstreeCollectionRef **) g_ptr_array_free (g_steal_pointer (&collection_refs), FALSE);
   ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
-                                  (const OstreeCollectionRef * const *) collection_refv,
+                                  (const OstreeCollectionRef * const *) collection_refs->pdata,
                                   NULL,  /* no options */
                                   NULL, /* default finders */
                                   NULL,  /* no progress */
@@ -1046,6 +1044,9 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 #endif /* OSTREE_VERSION_2018_5 */
 
           g_ptr_array_add (updates, g_object_ref (installed_ref));
+
+          /* Move on to the next ref so we don't add duplicates */
+          break;
         }
     }
 #endif  /* FLATPAK_ENABLE_P2P */
