@@ -142,6 +142,7 @@ AC_ARG_WITH([system-bubblewrap],
             [AS_HELP_STRING([--with-system-bubblewrap], [Use system bwrap executable [default=check $BWRAP]])],
             [BWRAP="$withval"],
             [BWRAP="${BWRAP:-false}"])
+CAP_LIB=
 AS_CASE([$BWRAP],
         [yes],
             [BWRAP=bwrap],
@@ -155,8 +156,15 @@ if test "x$BWRAP" != xfalse; then
                       [AC_MSG_ERROR([You need at least version $SYSTEM_BWRAP_REQS of bubblewrap to use the system installed version])])
    AM_CONDITIONAL([WITH_SYSTEM_BWRAP], [true])
 else
+   AC_CHECK_LIB(cap, cap_from_text, CAP_LIB=-lcap)
+   if test "$ac_cv_lib_cap_cap_from_text" != "yes"; then
+      AC_MSG_ERROR([*** libcap needed by bubblewrap but not found])
+   fi
+
    AM_CONDITIONAL([WITH_SYSTEM_BWRAP], [false])
 fi
+AC_SUBST([CAP_LIB])
+
 
 AC_CHECK_FUNCS(fdwalk)
 LIBGLNX_CONFIGURE
