@@ -2,7 +2,7 @@
   <img src="https://github.com/flatpak/flatpak/blob/master/flatpak.png?raw=true" alt="Flatpak icon"/>
 </p>
 
-Flatpak is a system for building, distributing and running sandboxed
+Flatpak is a system for building, distributing, and running sandboxed
 desktop applications on Linux.
 
 See https://flatpak.org/ for more information.
