@@ -28,7 +28,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-
     skip_without_p2p
 fi
 
-echo "1..13"
+echo "1..15"
 
 #Regular repo
 setup_repo
@@ -129,6 +129,61 @@ ${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
 assert_file_has_content repo-info "new-title"
 
 echo "ok update metadata"
+
+if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+    COPY_COLLECTION_ID=org.test.Collection.test
+    copy_collection_args=--collection-id=${COLLECTION_ID}
+else
+    COPY_COLLECTION_ID=
+    copy_collection_args=
+fi
+
+ostree init --repo=repos/test-copy --mode=archive-z2 ${copy_collection_args}
+${FLATPAK} build-commit-from --end-of-life=Reason1 --src-repo=repos/test repos/test-copy app/org.test.Hello/$ARCH/master
+update_repo test-copy ${COPY_COLLECTION_ID}
+
+# Ensure we have no eol app in appdata
+if ! ostree show --repo=repos/test-copy appstream/${ARCH} > /dev/null; then
+    assert_not_reached "No appstream branch"
+fi
+ostree cat --repo=repos/test-copy appstream/${ARCH} /appstream.xml.gz | gunzip -d > appdata.xml
+assert_not_file_has_content appdata.xml "org.test.Hello.desktop"
+
+${FLATPAK} repo --branches repos/test-copy > branches-log
+assert_file_has_content branches-log "^app/org.test.Hello/.*eol=Reason1"
+
+echo "ok eol build-commit-from"
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+
+EXPORT_ARGS="--end-of-life=Reason2" make_updated_app
+
+# Ensure we have no eol app in appdata
+if ! ostree show --repo=repos/test appstream/${ARCH} > /dev/null; then
+    assert_not_reached "No appstream branch"
+fi
+ostree cat --repo=repos/test appstream/${ARCH} /appstream.xml.gz | gunzip -d > appdata.xml
+assert_not_file_has_content appdata.xml "org.test.Hello.desktop"
+
+${FLATPAK} repo --branches repos/test > branches-log
+assert_file_has_content branches-log "^app/org.test.Hello/.*eol=Reason2"
+
+${FLATPAK} ${U} remote-ls -d test-repo > remote-ls-log
+assert_file_has_content remote-ls-log "^app/org.test.Hello/.*eol=Reason2"
+
+${FLATPAK} ${U} update org.test.Hello 2> update-log
+assert_file_has_content update-log "app/org.test.Hello/.*Reason2"
+
+${FLATPAK} ${U} info org.test.Hello > info-log
+assert_file_has_content info-log "end-of-life: Reason2"
+
+${FLATPAK} ${U} list -d > list-log
+assert_file_has_content list-log "^org.test.Hello/.*eol=Reason2"
+
+${FLATPAK} ${U} uninstall org.test.Hello
+
+echo "ok eol build-export"
+
 
 port=$(cat httpd-port-main)
 UPDATE_REPO_ARGS="--redirect-url=http://127.0.0.1:${port}/test-gpg3 --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg" update_repo
