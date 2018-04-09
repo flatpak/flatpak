@@ -33,6 +33,13 @@ echo "1..13"
 #Regular repo
 setup_repo
 
+# Ensure we have appdata
+if ! ostree show --repo=repos/test appstream/${ARCH} > /dev/null; then
+    assert_not_reached "No appstream branch"
+fi
+ostree cat --repo=repos/test appstream/${ARCH} /appstream.xml.gz | gunzip -d > appdata.xml
+assert_file_has_content appdata.xml "<id>org.test.Hello.desktop</id>"
+
 # Unsigned repo (not supported with collections; client-side use of collections requires GPG)
 if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
     if GPGPUBKEY=" " GPGARGS=" " setup_repo test-no-gpg org.test.Collection.NoGpg; then
