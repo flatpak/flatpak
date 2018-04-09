@@ -3399,16 +3399,16 @@ extract_appstream (OstreeRepo   *repo,
               continue;
             }
 
-          g_print ("Extracting icons for component %s\n", component_id_text);
+          g_print (_("Extracting icons for component %s\n"), component_id_text);
 
           if (!copy_icon (component_id_text, root, dest, "64x64", &my_error))
             {
-              g_print ("Error copying 64x64 icon: %s\n", my_error->message);
+              g_print (_("Error copying 64x64 icon: %s\n"), my_error->message);
               g_clear_error (&my_error);
             }
           if (!copy_icon (component_id_text, root, dest, "128x128", &my_error))
             {
-              g_print ("Error copying 128x128 icon: %s\n", my_error->message);
+              g_print (_("Error copying 128x128 icon: %s\n"), my_error->message);
               g_clear_error (&my_error);
             }
 
@@ -3557,7 +3557,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   cancellable, &my_error))
             {
               if (g_str_has_prefix (ref, "app/"))
-                g_print ("No appstream data for %s: %s\n", ref, my_error->message);
+                g_print (_("No appstream data for %s: %s\n"), ref, my_error->message);
               continue;
             }
         }
