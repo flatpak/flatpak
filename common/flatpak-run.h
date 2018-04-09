@@ -102,7 +102,6 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_PRIORITY "priority"
 #define FLATPAK_METADATA_KEY_REF "ref"
 
-
 typedef enum {
   FLATPAK_RUN_FLAG_DEVEL              = (1 << 0),
   FLATPAK_RUN_FLAG_BACKGROUND         = (1 << 1),
