@@ -46,6 +46,7 @@ static char *opt_gpg_homedir;
 static char *opt_files;
 static char *opt_metadata;
 static char *opt_timestamp = NULL;
+static char *opt_endoflife;
 #ifdef FLATPAK_ENABLE_P2P
 static char *opt_collection_id = NULL;
 #endif  /* FLATPAK_ENABLE_P2P */
@@ -63,6 +64,7 @@ static GOptionEntry options[] = {
   { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, N_("Files to exclude"), N_("PATTERN") },
   { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, N_("Excluded files to include"), N_("PATTERN") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "end-of-life", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife, N_("Mark build as end-of-life"), N_("REASON") },
   { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit"), N_("TIMESTAMP") },
 #ifdef FLATPAK_ENABLE_P2P
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), "COLLECTION-ID" },
@@ -895,6 +897,10 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_variant_dict_insert_value (&metadata_dict, "xa.metadata", g_variant_new_string (metadata_contents));
   g_variant_dict_insert_value (&metadata_dict, "xa.installed-size", g_variant_new_uint64 (GUINT64_TO_BE (installed_size)));
   g_variant_dict_insert_value (&metadata_dict, "xa.download-size", g_variant_new_uint64 (GUINT64_TO_BE (download_size)));
+
+  if (opt_endoflife && *opt_endoflife)
+    g_variant_dict_insert_value (&metadata_dict, OSTREE_COMMIT_META_KEY_ENDOFLIFE,
+                                 g_variant_new_string (opt_endoflife));
 
   metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
 

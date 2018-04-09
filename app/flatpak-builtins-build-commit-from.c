@@ -43,6 +43,7 @@ static gboolean opt_untrusted;
 static gboolean opt_force;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
+static char *opt_endoflife;
 static char *opt_timestamp;
 
 static GOptionEntry options[] = {
@@ -56,6 +57,7 @@ static GOptionEntry options[] = {
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "end-of-life", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife, N_("Mark build as end-of-life"), N_("REASON") },
   { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, "Override the timestamp of the commit", N_("TIMESTAMP") },
   { NULL }
 };
@@ -471,8 +473,16 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
               strcmp (key, "ostree.ref-binding") == 0)
             continue;
 
+          if (opt_endoflife &&
+              strcmp (key, OSTREE_COMMIT_META_KEY_ENDOFLIFE) == 0)
+            continue;
+
           g_variant_builder_add_value (&metadata_builder, child);
         }
+
+      if (opt_endoflife && *opt_endoflife)
+        g_variant_builder_add (&metadata_builder, "{sv}", OSTREE_COMMIT_META_KEY_ENDOFLIFE,
+                               g_variant_new_string (opt_endoflife));
 
       timestamp = ostree_commit_get_timestamp (src_commitv);
       if (opt_timestamp)
