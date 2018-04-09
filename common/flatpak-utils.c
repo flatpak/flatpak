@@ -4251,7 +4251,6 @@ flatpak_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
 
   g_variant_get_child (bundle, 6, "@a" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT, &meta_entries);
   n_parts = g_variant_n_children (meta_entries);
-  g_print ("Number of parts: %u\n", n_parts);
 
   for (i = 0; i < n_parts; i++)
     {
