@@ -3477,8 +3477,6 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 {
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) arches = NULL;  /* (element-type utf8 utf8) */
-  GHashTableIter iter;
-  gpointer key;
   const char *collection_id;
 
   arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -3496,12 +3494,10 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                               error))
     return FALSE;
 
-  g_hash_table_iter_init (&iter, all_refs);
-  while (g_hash_table_iter_next (&iter, &key, NULL))
+  GLNX_HASH_TABLE_FOREACH (all_refs, const char *, ref)
     {
-      const char *ref = key;
-      const char *arch;
       g_auto(GStrv) split = NULL;
+      const char *arch;
 
       split = flatpak_decompose_ref (ref, NULL);
       if (!split)
@@ -3512,11 +3508,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
         g_hash_table_add (arches, g_strdup (arch));
     }
 
-  g_hash_table_iter_init (&iter, arches);
-  while (g_hash_table_iter_next (&iter, &key, NULL))
+  GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
     {
-      GHashTableIter iter2;
-      const char *arch = key;
       g_autofree char *tmpdir = g_strdup ("/tmp/flatpak-appstream-XXXXXX");
       g_autoptr(FlatpakTempDir) tmpdir_file = NULL;
       g_autoptr(GFile) appstream_file = NULL;
@@ -3538,12 +3531,14 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       appstream_root = flatpak_appstream_xml_new ();
 
-      g_hash_table_iter_init (&iter2, all_refs);
-      while (g_hash_table_iter_next (&iter2, &key, NULL))
+      GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, ref, const char *, commit)
         {
-          const char *ref = key;
+          g_autoptr(GVariant) commit_v = NULL;
+          g_autoptr(GVariant) commit_metadata = NULL;
           g_auto(GStrv) split = NULL;
           g_autoptr(GError) my_error = NULL;
+          const char *eol = NULL;
+          const char *eol_rebase = NULL;
 
           split = flatpak_decompose_ref (ref, NULL);
           if (!split)
@@ -3551,6 +3546,22 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
           if (strcmp (split[2], arch) != 0)
             continue;
+
+          if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
+                                         &commit_v, NULL))
+            {
+              g_warning ("Couldn't load commit %s (ref %s)", commit, ref);
+              continue;
+            }
+
+          commit_metadata = g_variant_get_child_value (commit_v, 0);
+          g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
+          g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
+          if (eol || eol_rebase)
+            {
+              g_print (_("%s is end-of-life, ignoring\n"), ref);
+              continue;
+            }
 
           if (!extract_appstream (repo, appstream_root,
                                   ref, split[1], tmpdir_file,
