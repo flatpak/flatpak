@@ -750,6 +750,46 @@ flatpak_has_name_prefix (const char *string,
     !is_valid_name_character (*rest, FALSE);
 }
 
+gboolean
+flatpak_name_matches_one_prefix (const char         *path,
+                                 const char * const *prefixes)
+{
+  const char * const *iter = prefixes;
+
+  for (; *iter != NULL; ++iter)
+    if (flatpak_has_name_prefix (path, *iter))
+      return TRUE;
+
+  return FALSE;
+}
+
+gboolean
+flatpak_name_matches_one_wildcard_prefix (const char         *path,
+                                          const char * const *wildcarded_prefixes)
+{
+  const char * const *iter = wildcarded_prefixes;
+
+  for (; *iter != NULL; ++iter)
+    {
+      const char *maybe_wildcarded_prefix = *iter;
+
+      if (g_str_has_suffix (maybe_wildcarded_prefix, ".*"))
+        {
+          g_autofree char *truncated_wildcarded_prefix = g_strndup (maybe_wildcarded_prefix,
+                                                                    strlen (maybe_wildcarded_prefix) - 2);
+
+          if (flatpak_has_name_prefix (path, truncated_wildcarded_prefix))
+            return TRUE;
+        }
+      else if (flatpak_has_name_prefix (path, maybe_wildcarded_prefix))
+        {
+          return TRUE;
+        }
+    }
+
+  return FALSE;
+}
+
 static gboolean
 is_valid_initial_branch_character (gint c)
 {
