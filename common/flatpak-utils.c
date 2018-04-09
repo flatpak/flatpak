@@ -751,37 +751,43 @@ flatpak_has_name_prefix (const char *string,
 }
 
 gboolean
-flatpak_name_matches_one_prefix (const char         *path,
+flatpak_name_matches_one_prefix (const char         *name,
                                  const char * const *prefixes)
 {
   const char * const *iter = prefixes;
 
   for (; *iter != NULL; ++iter)
-    if (flatpak_has_name_prefix (path, *iter))
+    if (flatpak_has_name_prefix (name, *iter))
       return TRUE;
 
   return FALSE;
 }
 
 gboolean
-flatpak_name_matches_one_wildcard_prefix (const char         *path,
+flatpak_name_matches_one_wildcard_prefix (const char         *name,
                                           const char * const *wildcarded_prefixes)
 {
   const char * const *iter = wildcarded_prefixes;
+  g_autofree char *name_without_suffix = g_strdup (name);
+
+  char *first_dot = strrchr (name_without_suffix, '.');
+  *first_dot = '\0';
 
   for (; *iter != NULL; ++iter)
     {
       const char *maybe_wildcarded_prefix = *iter;
+
+      g_message ("Checking if name matches %s %s", name_without_suffix, maybe_wildcarded_prefix);
 
       if (g_str_has_suffix (maybe_wildcarded_prefix, ".*"))
         {
           g_autofree char *truncated_wildcarded_prefix = g_strndup (maybe_wildcarded_prefix,
                                                                     strlen (maybe_wildcarded_prefix) - 2);
 
-          if (flatpak_has_name_prefix (path, truncated_wildcarded_prefix))
+          if (flatpak_has_name_prefix (name_without_suffix, truncated_wildcarded_prefix))
             return TRUE;
         }
-      else if (flatpak_has_name_prefix (path, maybe_wildcarded_prefix))
+      else if (g_strcmp0 (name_without_suffix, maybe_wildcarded_prefix) == 0)
         {
           return TRUE;
         }
