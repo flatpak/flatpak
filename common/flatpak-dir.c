@@ -3040,25 +3040,20 @@ oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
  * Differentiate based on whether the collection ID is set for the remote.
  * Returns %FALSE on error or if @key doesn’t exist (in which case, no error is
  * set). */
-gboolean
-flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
-                                  const char    *remote_name,
-                                  GCancellable  *cancellable,
-                                  GError       **error,
-                                  const char    *key,
-                                  const char    *format_string,
-                                  ...)
+static GVariant *
+flatpak_dir_get_remote_metadata (FlatpakDir    *self,
+                                 const char    *remote_name,
+                                 GCancellable  *cancellable,
+                                 GError       **error)
 {
-  va_list args;
   g_autoptr(GVariant) metadata = NULL;
-  g_autoptr(GVariant) value = NULL;
   g_autofree char *collection_id = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    return FALSE;
+    return NULL;
 
   if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
-    return FALSE;
+    return NULL;
 
   if (collection_id == NULL)
     {
@@ -3066,7 +3061,7 @@ flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
 
       summary_v = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
       if (summary_v == NULL)
-        return FALSE;
+        return NULL;
 
       metadata = g_variant_get_child_value (summary_v, 1);
     }
@@ -3078,16 +3073,16 @@ flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
 
       /* Make sure the branch is up to date. */
       if (!flatpak_dir_fetch_remote_repo_metadata (self, remote_name, cancellable, error))
-        return FALSE;
+        return NULL;
 
       /* Look up the commit containing the latest repository metadata. */
       latest_rev = flatpak_dir_read_latest (self, remote_name, OSTREE_REPO_METADATA_REF,
                                             NULL, cancellable, error);
       if (latest_rev == NULL)
-        return FALSE;
+        return NULL;
 
       if (!ostree_repo_load_commit (self->repo, latest_rev, &commit_v, NULL, error))
-        return FALSE;
+        return NULL;
 
       metadata = g_variant_get_child_value (commit_v, 0);
 #else  /* if !FLATPAK_ENABLE_P2P */
@@ -3095,11 +3090,32 @@ flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
 #endif  /* !FLATPAK_ENABLE_P2P */
     }
 
+  return g_steal_pointer (&metadata);
+}
+
+gboolean
+flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
+                                  const char    *remote_name,
+                                  GCancellable  *cancellable,
+                                  GError       **error,
+                                  const char    *key,
+                                  const char    *format_string,
+                                  ...)
+{
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(GVariant) value = NULL;
+  va_list args;
+
+  metadata = flatpak_dir_get_remote_metadata (self, remote_name,
+                                              cancellable, error);
+  if (metadata == NULL)
+    return FALSE;
+
   /* Extract the metadata from it, if set. */
   value = g_variant_lookup_value (metadata, key, NULL);
-
   if (value == NULL)
     return FALSE;
+
   if (!g_variant_check_format_string (value, format_string, FALSE))
     return FALSE;
 
