@@ -198,6 +198,193 @@ get_config_dir_location (void)
   return (const char *)path;
 }
 
+static FlatpakRemoteState *
+flatpak_remote_state_new (void)
+{
+  return g_new0 (FlatpakRemoteState, 1);
+}
+
+void
+flatpak_remote_state_free (FlatpakRemoteState *remote_state)
+{
+  g_free (remote_state->remote);
+  g_free (remote_state->collection_id);
+  g_clear_pointer (&remote_state->summary, g_variant_unref);
+  g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
+  g_clear_pointer (&remote_state->metadata, g_variant_unref);
+
+  g_free (remote_state);
+}
+
+gboolean
+flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
+                                     GError            **error)
+{
+  if (self->summary == NULL)
+    return flatpak_fail (error, "Unable to load summary from remote %s", self->remote);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
+                                      GError            **error)
+{
+  if (self->metadata == NULL)
+    return flatpak_fail (error, "Unable to load medata from remote %s", self->remote);
+
+  return TRUE;
+}
+
+
+char *
+flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
+                                 const char         *ref,
+                                 GVariant          **out_variant,
+                                 GError            **error)
+{
+  g_autofree char *latest_rev = NULL;
+
+  if (!flatpak_remote_state_ensure_summary (self, error))
+    return NULL;
+
+  if (!flatpak_summary_lookup_ref (self->summary, self->collection_id, ref, &latest_rev, out_variant))
+    {
+      if (self->collection_id != NULL)
+        flatpak_fail (error, "No such ref (%s, %s) in remote %s", self->collection_id, ref, self->remote);
+      else
+        flatpak_fail (error, "No such ref '%s' in remote %s", ref, self->remote);
+      return NULL;
+    }
+
+  return g_steal_pointer (&latest_rev);
+}
+
+char **
+flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
+                                    const char         *ref)
+{
+  if (self->summary == NULL)
+    {
+      const char *empty[] = { NULL };
+      g_debug ("flatpak_remote_state_match_subrefs with no summary");
+      return g_strdupv ((char **)empty);
+    }
+
+  return flatpak_summary_match_subrefs (self->summary, self->collection_id, ref);
+}
+
+
+gboolean
+flatpak_remote_state_lookup_repo_metadata (FlatpakRemoteState *self,
+                                           const char         *key,
+                                           const char         *format_string,
+                                           ...)
+{
+  g_autoptr(GVariant) value = NULL;
+  va_list args;
+
+  if (self->metadata == NULL)
+    return FALSE;
+
+  /* Extract the metadata from it, if set. */
+  value = g_variant_lookup_value (self->metadata, key, NULL);
+  if (value == NULL)
+    return FALSE;
+
+  if (!g_variant_check_format_string (value, format_string, FALSE))
+    return FALSE;
+
+  va_start (args, format_string);
+  g_variant_get_va (value, format_string, NULL, &args);
+  va_end (args);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
+                                   const char         *ref,
+                                   guint64            *download_size,
+                                   guint64            *installed_size,
+                                   char               **metadata,
+                                   GCancellable        *cancellable,
+                                   GError             **error)
+{
+  g_autoptr(GVariant) cache_v = NULL;
+  g_autoptr(GVariant) cache = NULL;
+  g_autoptr(GVariant) res = NULL;
+  g_autoptr(GVariant) refdata = NULL;
+  int pos;
+
+  if (!flatpak_remote_state_ensure_metadata (self, error))
+    return FALSE;
+
+  cache_v = g_variant_lookup_value (self->metadata, "xa.cache", NULL);
+  if (cache_v == NULL)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                           _("No flatpak cache in remote summary"));
+      return FALSE;
+    }
+
+  cache = g_variant_get_child_value (cache_v, 0);
+
+  if (!flatpak_variant_bsearch_str (cache, ref, &pos))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("No entry for %s in remote summary flatpak cache "), ref);
+      return FALSE;
+    }
+
+  refdata = g_variant_get_child_value (cache, pos);
+  res = g_variant_get_child_value (refdata, 1);
+
+  if (installed_size)
+    {
+      guint64 v;
+      g_variant_get_child (res, 0, "t", &v);
+      *installed_size = GUINT64_FROM_BE (v);
+    }
+
+  if (download_size)
+    {
+      guint64 v;
+      g_variant_get_child (res, 1, "t", &v);
+      *download_size = GUINT64_FROM_BE (v);
+    }
+
+  if (metadata)
+    g_variant_get_child (res, 2, "s", metadata);
+
+  return TRUE;
+}
+
+GVariant *
+flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
+                                          const char         *ref,
+                                          GError             **error)
+{
+  g_autoptr(GVariant) cache = NULL;
+  int pos;
+
+  if (!flatpak_remote_state_ensure_metadata (self, error))
+    return FALSE;
+
+  cache = g_variant_lookup_value (self->metadata, "xa.sparse-cache", NULL);
+  if (cache != NULL && flatpak_variant_bsearch_str (cache, ref, &pos))
+    {
+      g_autoptr(GVariant) refdata = g_variant_get_child_value (cache, pos);
+      return g_variant_get_child_value (refdata, 1);
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               _("No entry for %s in remote summary flatpak sparse cache "), ref);
+
+  return FALSE;
+}
+
+
 static DirExtraData *
 dir_extra_data_new (const char           *id,
                     const char           *display_name,
@@ -8078,6 +8265,168 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     *out_summary_sig = g_steal_pointer (&summary_sig);
 
   return TRUE;
+}
+
+static FlatpakRemoteState *
+_flatpak_dir_get_remote_state (FlatpakDir   *self,
+                               const char   *remote,
+                               gboolean      optional,
+                               GBytes       *opt_summary,
+                               GBytes       *opt_summary_sig,
+                               GCancellable *cancellable,
+                               GError      **error)
+{
+  g_autoptr(FlatpakRemoteState) state = flatpak_remote_state_new ();
+  g_autoptr(GError) my_error = NULL;
+
+  if (error == NULL)
+    error = &my_error;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  state->remote = g_strdup (remote);
+  if (!repo_get_remote_collection_id (self->repo, remote, &state->collection_id, error))
+    return NULL;
+
+  if (opt_summary)
+    {
+      if (opt_summary_sig)
+        {
+          /* If specified, must be valid signature */
+          g_autoptr(OstreeGpgVerifyResult) gpg_result =
+            ostree_repo_verify_summary (self->repo,
+                                        state->remote,
+                                        opt_summary,
+                                        opt_summary_sig,
+                                        NULL, error);
+          if (gpg_result == NULL ||
+              !ostree_gpg_verify_result_require_valid_signature (gpg_result, error))
+            return NULL;
+
+          state->summary_sig_bytes = g_bytes_ref (opt_summary_sig);
+        }
+      state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                                     opt_summary, FALSE));
+    }
+  else
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GBytes) summary_bytes = NULL;
+      g_autoptr(GBytes) summary_sig_bytes = NULL;
+
+      if (flatpak_dir_remote_fetch_summary (self, remote, &summary_bytes, &summary_sig_bytes,
+                                            cancellable, &local_error))
+        {
+          state->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
+          state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                                         summary_bytes, FALSE));
+        }
+      else
+        {
+          if (optional && state->collection_id != NULL)
+            {
+              g_debug ("Failed to download optional summary");
+            }
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return NULL;
+            }
+        }
+    }
+
+  if (state->summary != NULL) /* In the optional case we might not have a summary */
+    {
+      if (state->collection_id == NULL)
+        {
+          state->metadata = g_variant_get_child_value (state->summary, 1);
+        }
+      else
+        {
+#ifdef FLATPAK_ENABLE_P2P
+          g_autofree char *latest_rev = NULL;
+          g_autoptr(GVariant) commit_v = NULL;
+          g_autoptr(GError) local_error = NULL;
+
+          /* Make sure the branch is up to date. */
+          if (!flatpak_dir_fetch_remote_repo_metadata (self, remote, state->summary, state->collection_id, cancellable, &local_error))
+            {
+              if (optional)
+                {
+                  /* This happens for instance in the case where a p2p remote is invalid (wrong signature)
+                     and we should just silently fail to update to it. */
+                  g_debug ("Failed to download optional metadata");
+                }
+              else
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return NULL;
+                }
+            }
+          else
+            {
+              /* Look up the commit containing the latest repository metadata. */
+              latest_rev = flatpak_dir_read_latest (self, remote, OSTREE_REPO_METADATA_REF,
+                                                    NULL, cancellable, error);
+              if (latest_rev == NULL)
+                return NULL;
+
+              if (!ostree_repo_load_commit (self->repo, latest_rev, &commit_v, NULL, error))
+                return NULL;
+
+              state->metadata = g_variant_get_child_value (commit_v, 0);
+            }
+#else  /* if !FLATPAK_ENABLE_P2P */
+          g_assert_not_reached ();
+#endif  /* !FLATPAK_ENABLE_P2P */
+        }
+    }
+
+  return g_steal_pointer (&state);
+}
+
+FlatpakRemoteState *
+flatpak_dir_get_remote_state (FlatpakDir   *self,
+                              const char   *remote,
+                              GCancellable *cancellable,
+                              GError      **error)
+{
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, NULL, NULL, cancellable, error);
+}
+
+/* This is an alternative way to get the state where the summary is
+ * from elsewhere. It is mainly used by the system-helper where the
+ * summary is from the user-mode part which downloaded an update
+ *
+ * It will verify the summary if a signature is passed in, but not
+ * otherwise.
+ **/
+FlatpakRemoteState *
+flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
+                                          const char   *remote,
+                                          GBytes       *opt_summary,
+                                          GBytes       *opt_summary_sig,
+                                          GCancellable *cancellable,
+                                          GError      **error)
+{
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, opt_summary, opt_summary_sig, cancellable, error);
+}
+
+
+/* This is an alternative way to get the remote state that doesn't
+ * error out if the summary or metadata is not available in the p2p
+ * case. For example, we want to be able to update an app even when
+ * we can't talk to the main repo, but there is a local (p2p/sdcard)
+ * source for apps.
+ */
+FlatpakRemoteState *
+flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
+                                       const char   *remote,
+                                       GCancellable *cancellable,
+                                       GError      **error)
+{
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, NULL, NULL, cancellable, error);
 }
 
 gboolean
