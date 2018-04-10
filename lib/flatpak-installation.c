@@ -1110,9 +1110,22 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
 
   if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
     {
+      g_autoptr(GError) local_error = NULL;
       finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
       finders[finder_index++] = finder_avahi;
-      ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), NULL);  /* ignore failure */
+
+      /* The Avahi finder may fail to start on, for example, a CI server. */
+      ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), &local_error);
+      if (local_error != NULL)
+        {
+          if (finder_index == 1)
+            return TRUE;
+          else
+            {
+              finders[--finder_index] = NULL;
+              g_clear_object (&finder_avahi);
+            }
+        }
     }
 
   ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
