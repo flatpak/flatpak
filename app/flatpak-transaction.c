@@ -829,6 +829,24 @@ flatpak_transaction_run (FlatpakTransaction *self,
       else
         g_assert_not_reached ();
 
+      if (res)
+        {
+          g_autoptr(GVariant) deploy_data = NULL;
+          deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
+
+          const char *eol =  flatpak_deploy_data_get_eol (deploy_data);
+          const char *eol_rebase = flatpak_deploy_data_get_eol_rebase (deploy_data);
+
+          if (eol_rebase)
+            {
+              g_printerr ("Warning: %s is end-of-line, in preference of %s\n", op->ref, eol_rebase);
+            }
+          else if (eol)
+            {
+              g_printerr ("Warning: %s is end-of-line, with reason: %s\n", op->ref, eol);
+            }
+        }
+
       if (!res)
         {
           if (op->non_fatal)
