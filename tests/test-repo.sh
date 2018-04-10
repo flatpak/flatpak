@@ -130,9 +130,17 @@ assert_file_has_content repo-info "new-title"
 
 echo "ok update metadata"
 
-ostree init --repo=repos/test-copy --mode=archive-z2
+if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+    COPY_COLLECTION_ID=org.test.Collection.test
+    copy_collection_args=--collection-id=${COLLECTION_ID}
+else
+    COPY_COLLECTION_ID=
+    copy_collection_args=
+fi
+
+ostree init --repo=repos/test-copy --mode=archive-z2 ${copy_collection_args}
 ${FLATPAK} build-commit-from --end-of-life=Reason1 --src-repo=repos/test repos/test-copy app/org.test.Hello/$ARCH/master
-update_repo test-copy
+update_repo test-copy ${COPY_COLLECTION_ID}
 
 # Ensure we have no eol app in appdata
 if ! ostree show --repo=repos/test-copy appstream/${ARCH} > /dev/null; then
