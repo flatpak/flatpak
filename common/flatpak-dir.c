@@ -10375,14 +10375,13 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
 #endif  /* FLATPAK_ENABLE_P2P */
 }
 
-static gboolean
-flatpak_dir_update_remote_configuration_for_dict (FlatpakDir    *self,
-                                                  const char    *remote,
-                                                  GVariant      *metadata,
-                                                  gboolean       dry_run,
-                                                  gboolean      *has_changed_out,
-                                                  GCancellable  *cancellable,
-                                                  GError       **error)
+gboolean
+flatpak_dir_update_remote_configuration_for_state (FlatpakDir    *self,
+                                                   FlatpakRemoteState *remote_state,
+                                                   gboolean       dry_run,
+                                                   gboolean      *has_changed_out,
+                                                   GCancellable  *cancellable,
+                                                   GError       **error)
 {
   /* We only support those configuration parameters that can
      be set in the server when building the repo (see the
@@ -10402,7 +10401,7 @@ flatpak_dir_update_remote_configuration_for_dict (FlatpakDir    *self,
 
   updated_params = g_ptr_array_new_with_free_func (g_free);
 
-  g_variant_iter_init (&iter, metadata);
+  g_variant_iter_init (&iter, remote_state->metadata);
   if (g_variant_iter_n_children (&iter) > 0)
     {
       GVariant *value_var = NULL;
@@ -10457,7 +10456,7 @@ flatpak_dir_update_remote_configuration_for_dict (FlatpakDir    *self,
     int i;
 
     config = ostree_repo_copy_config (flatpak_dir_get_repo (self));
-    group = g_strdup_printf ("remote \"%s\"", remote);
+    group = g_strdup_printf ("remote \"%s\"", remote_state->remote);
 
     i = 0;
     while (i < (updated_params->len - 1))
@@ -10507,70 +10506,11 @@ flatpak_dir_update_remote_configuration_for_dict (FlatpakDir    *self,
       return TRUE;
 
     /* Update the local remote configuration with the updated info. */
-    if (!flatpak_dir_modify_remote (self, remote, config, gpg_keys, cancellable, error))
+    if (!flatpak_dir_modify_remote (self, remote_state->remote, config, gpg_keys, cancellable, error))
       return FALSE;
   }
 
   return TRUE;
-}
-
-gboolean
-flatpak_dir_update_remote_configuration_for_summary (FlatpakDir    *self,
-                                                     const char    *remote,
-                                                     GVariant      *summary,
-                                                     gboolean       dry_run,
-                                                     gboolean      *has_changed_out,
-                                                     GCancellable  *cancellable,
-                                                     GError       **error)
-{
-  g_autoptr(GVariant) extensions = NULL;
-
-  extensions = g_variant_get_child_value (summary, 1);
-
-  return flatpak_dir_update_remote_configuration_for_dict (self, remote, extensions,
-                                                           dry_run, has_changed_out,
-                                                           cancellable, error);
-}
-
-gboolean
-flatpak_dir_update_remote_configuration_for_repo_metadata (FlatpakDir    *self,
-                                                           const char    *remote,
-                                                           GVariant      *summary,
-                                                           gboolean       dry_run,
-                                                           gboolean      *has_changed_out,
-                                                           GCancellable  *cancellable,
-                                                           GError       **error)
-{
-#ifdef FLATPAK_ENABLE_P2P
-  g_autofree char *latest_rev = NULL;
-  g_autoptr(GVariant) commit_v = NULL;
-  g_autoptr(GVariant) metadata = NULL;
-  g_autofree char *collection_id = NULL;
-
-  /* Derive the collection ID from the remote we are querying. This will act as
-   * a sanity check on the summary ref lookup. */
-  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
-    return FALSE;
-
-  if (!flatpak_summary_lookup_ref (summary, collection_id, OSTREE_REPO_METADATA_REF, &latest_rev, NULL))
-    {
-      if (collection_id != NULL)
-        return flatpak_fail (error, "No such ref (%s, %s) in remote %s", collection_id, OSTREE_REPO_METADATA_REF, remote);
-      else
-        return flatpak_fail (error, "No such ref '%s' in remote %s", OSTREE_REPO_METADATA_REF, remote);
-    }
-
-  if (!ostree_repo_load_commit (self->repo, latest_rev, &commit_v, NULL, error))
-    return FALSE;
-
-  metadata = g_variant_get_child_value (commit_v, 0);
-
-  return flatpak_dir_update_remote_configuration_for_dict (self, remote, metadata,
-                                                           dry_run, has_changed_out,
-                                                           cancellable, error);
-#else  /* if !FLATPAK_ENABLE_P2P */
-  g_assert_not_reached ();
-#endif  /* FLATPAK_ENABLE_P2P */
 }
 
 gboolean
@@ -10579,10 +10519,8 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error)
 {
-  g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GBytes) summary_sig_bytes = NULL;
   gboolean is_oci;
-  g_autofree char *collection_id = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
 
   if (flatpak_dir_get_remote_disabled (self, remote))
     return TRUE;
@@ -10591,15 +10529,8 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   if (is_oci)
     return TRUE;
 
-  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
-    return FALSE;
-
-  summary = fetch_remote_summary_file (self, remote, &summary_sig_bytes, cancellable, error);
-  if (summary == NULL)
-    return FALSE;
-
-  if (collection_id != NULL &&
-      !flatpak_dir_fetch_remote_repo_metadata (self, remote, summary, collection_id, cancellable, error))
+  state = flatpak_dir_get_remote_state (self, remote, cancellable, error);
+  if (state == NULL)
     return FALSE;
 
   if (flatpak_dir_use_system_helper (self, NULL))
@@ -10614,19 +10545,16 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
       if (!ostree_repo_remote_get_gpg_verify (self->repo, remote, &gpg_verify, error))
         return FALSE;
 
-      if ((!gpg_verify_summary && collection_id == NULL) || !gpg_verify)
+      if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
         {
           g_debug ("Ignoring automatic updates for system-helper remotes without gpg signatures");
           return TRUE;
         }
 
-      if ((collection_id == NULL &&
-           !flatpak_dir_update_remote_configuration_for_summary (self, remote, summary, TRUE, &has_changed, cancellable, error)) ||
-          (collection_id != NULL &&
-           !flatpak_dir_update_remote_configuration_for_repo_metadata (self, remote, summary, TRUE, &has_changed, cancellable, error)))
+      if (!flatpak_dir_update_remote_configuration_for_state (self, state, TRUE, &has_changed, cancellable, error))
         return FALSE;
 
-      if (collection_id == NULL && summary_sig_bytes == NULL)
+      if (state->collection_id == NULL && state->summary_sig_bytes == NULL)
         {
           g_debug ("Can't update remote configuration as user, no GPG signature");
           return TRUE;
@@ -10634,7 +10562,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 
       if (has_changed)
         {
-          g_autoptr(GBytes) bytes = g_variant_get_data_as_bytes (summary);
+          g_autoptr(GBytes) bytes = g_variant_get_data_as_bytes (state->summary);
           glnx_autofd int summary_fd = -1;
           g_autofree char *summary_path = NULL;
           glnx_autofd int summary_sig_fd = -1;
@@ -10651,12 +10579,12 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
           if (glnx_loop_write (summary_fd, g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes)) < 0)
             return glnx_throw_errno (error);
 
-          if (summary_sig_bytes != NULL)
+          if (state->summary_sig_bytes != NULL)
             {
               summary_sig_fd = g_file_open_tmp ("remote-summary-sig.XXXXXX", &summary_sig_path, error);
               if (summary_sig_fd == -1)
                 return FALSE;
-              if (glnx_loop_write (summary_sig_fd, g_bytes_get_data (summary_sig_bytes, NULL), g_bytes_get_size (summary_sig_bytes)) < 0)
+              if (glnx_loop_write (summary_sig_fd, g_bytes_get_data (state->summary_sig_bytes, NULL), g_bytes_get_size (state->summary_sig_bytes)) < 0)
                 return glnx_throw_errno (error);
             }
 
@@ -10665,7 +10593,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
           g_debug ("Calling system helper: UpdateRemote");
           if (!flatpak_system_helper_call_update_remote_sync (system_helper, 0, remote,
                                                               installation ? installation : "",
-                                                              summary_path, summary_sig_path,
+                                                              summary_path, summary_sig_path ? summary_sig_path : "",
                                                               cancellable, error))
             return FALSE;
 
@@ -10676,10 +10604,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
       return TRUE;
     }
 
-  if (collection_id == NULL)
-    return flatpak_dir_update_remote_configuration_for_summary (self, remote, summary, FALSE, NULL, cancellable, error);
-  else
-    return flatpak_dir_update_remote_configuration_for_repo_metadata (self, remote, summary, FALSE, NULL, cancellable, error);
+  return flatpak_dir_update_remote_configuration_for_state (self, state, FALSE, NULL, cancellable, error);
 }
 
 
