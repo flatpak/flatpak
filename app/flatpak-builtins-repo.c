@@ -82,7 +82,9 @@ static void
 print_branches (GVariant *meta)
 {
   g_autoptr(GVariant) cache = NULL;
+  g_autoptr(GVariant) sparse_cache = NULL;
 
+  g_variant_lookup (meta, "xa.sparse-cache", "@a{sa{sv}}", &sparse_cache);
   cache = g_variant_lookup_value (meta, "xa.cache", NULL);
   if (cache)
     {
@@ -98,6 +100,7 @@ print_branches (GVariant *meta)
       flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
       flatpak_table_printer_set_column_title (printer, 1, _("Installed"));
       flatpak_table_printer_set_column_title (printer, 2, _("Download"));
+      flatpak_table_printer_set_column_title (printer, 3, _("Options"));
 
       refdata = g_variant_get_variant (cache);
       g_variant_iter_init (&iter, refdata);
@@ -109,6 +112,22 @@ print_branches (GVariant *meta)
           flatpak_table_printer_add_column (printer, ref);
           flatpak_table_printer_add_decimal_column (printer, installed);
           flatpak_table_printer_add_decimal_column (printer, download);
+
+          flatpak_table_printer_add_column (printer, ""); /* Options */
+
+          if (sparse_cache)
+            {
+              g_autoptr(GVariant) sparse = NULL;
+              if (g_variant_lookup (sparse_cache, ref, "@a{sv}", &sparse))
+                {
+                  const char *eol;
+                  if (g_variant_lookup (sparse, "eol", "&s", &eol))
+                    flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
+                  if (g_variant_lookup (sparse, "eolr", "&s", &eol))
+                    flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
+                }
+            }
+
           flatpak_table_printer_finish_row (printer);
         }
 
