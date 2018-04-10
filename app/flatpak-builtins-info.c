@@ -100,6 +100,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GKeyFile) metakey = NULL;
   const char *commit = NULL;
   const char *alt_id = NULL;
+  const char *eol;
+  const char *eol_rebase;
   const char *pref = NULL;
   const char *default_branch = NULL;
   const char *origin = NULL;
@@ -165,6 +167,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   formatted = g_format_size (size);
   path = g_file_get_path (flatpak_deploy_get_dir (deploy));
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+  eol = flatpak_deploy_data_get_eol (deploy_data);
+  eol_rebase = flatpak_deploy_data_get_eol_rebase (deploy_data);
 
   metakey = flatpak_deploy_get_metadata (deploy);
 
@@ -230,6 +234,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       g_print ("%s%s%s %s\n", on, _("Parent:"), off, parent ? parent : "-");
       g_print ("%s%s%s %s\n", on, _("Location:"), off, path);
       g_print ("%s%s%s %s\n", on, _("Installed size:"), off, formatted);
+      if (eol)
+        g_print ("%s%s%s %s\n", on, _("end-of-life:"), off, eol);
+      if (eol_rebase)
+        g_print ("%s%s%s %s\n", on, _("end-of-life-rebase:"), off, eol_rebase);
       if (strcmp (parts[0], "app") == 0)
         {
           g_autofree char *runtime = NULL;
