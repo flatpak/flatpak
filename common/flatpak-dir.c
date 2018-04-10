@@ -102,6 +102,14 @@ static char * flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
                                                    GCancellable        *cancellable,
                                                    GError             **error);
 
+static gboolean flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
+                                                        const char    *remote_name,
+                                                        GVariant      *summary,
+                                                        const char    *collection_id,
+                                                        GCancellable  *cancellable,
+                                                        GError       **error);
+
+
 typedef struct
 {
   GBytes *bytes;
@@ -3048,6 +3056,7 @@ flatpak_dir_get_remote_metadata (FlatpakDir    *self,
 {
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *collection_id = NULL;
+  g_autoptr(GVariant) summary_v = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
@@ -3055,13 +3064,12 @@ flatpak_dir_get_remote_metadata (FlatpakDir    *self,
   if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
     return NULL;
 
+  summary_v = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
+  if (summary_v == NULL)
+    return NULL;
+
   if (collection_id == NULL)
     {
-      g_autoptr(GVariant) summary_v = NULL;
-
-      summary_v = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
-      if (summary_v == NULL)
-        return NULL;
 
       metadata = g_variant_get_child_value (summary_v, 1);
     }
@@ -3072,7 +3080,7 @@ flatpak_dir_get_remote_metadata (FlatpakDir    *self,
       g_autoptr(GVariant) commit_v = NULL;
 
       /* Make sure the branch is up to date. */
-      if (!flatpak_dir_fetch_remote_repo_metadata (self, remote_name, cancellable, error))
+      if (!flatpak_dir_fetch_remote_repo_metadata (self, remote_name, summary_v, collection_id, cancellable, error))
         return NULL;
 
       /* Look up the commit containing the latest repository metadata. */
@@ -9892,6 +9900,8 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
 gboolean
 flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
                                         const char    *remote_name,
+                                        GVariant      *summary,
+                                        const char    *collection_id,
                                         GCancellable  *cancellable,
                                         GError       **error)
 {
@@ -9901,6 +9911,8 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
   g_autofree char *checksum_from_summary = NULL;
   g_autofree char *checksum_from_repo = NULL;
   g_autofree char *refspec = NULL;
+
+  g_assert (collection_id != NULL);
 
   /* We can only fetch metadata if we’re going to verify it with GPG. */
   if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
@@ -9913,9 +9925,9 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
   /* Look up the checksum as advertised by the summary file. If it differs from
    * what we currently have on disk, try and pull the updated ostree-metadata ref.
    * This is how we implement caching. Ignore failure and pull the ref anyway. */
-  checksum_from_summary = flatpak_dir_lookup_ref_from_summary (self, remote_name,
-                                                               OSTREE_REPO_METADATA_REF,
-                                                               NULL, NULL, NULL, NULL);
+  if (!flatpak_summary_lookup_ref (summary, collection_id, OSTREE_REPO_METADATA_REF, &checksum_from_summary, NULL))
+    return flatpak_fail (error, "No such ref (%s, %s) in remote %s", collection_id, OSTREE_REPO_METADATA_REF, remote_name);
+
   refspec = g_strdup_printf ("%s:%s", remote_name, OSTREE_REPO_METADATA_REF);
   if (!ostree_repo_resolve_rev (self->repo, refspec, TRUE, &checksum_from_repo, error))
     return FALSE;
@@ -10282,7 +10294,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
     return FALSE;
 
   if (collection_id != NULL &&
-      !flatpak_dir_fetch_remote_repo_metadata (self, remote, cancellable, error))
+      !flatpak_dir_fetch_remote_repo_metadata (self, remote, summary, collection_id, cancellable, error))
     return FALSE;
 
   if (flatpak_dir_use_system_helper (self, NULL))
