@@ -152,6 +152,23 @@ flatpak_table_printer_append_with_comma (FlatpakTablePrinter *printer,
   cell->text = new;
 }
 
+void
+flatpak_table_printer_append_with_comma_printf  (FlatpakTablePrinter *printer,
+                                                 const char          *format,
+                                                 ...)
+{
+  va_list var_args;
+  g_autofree char *s = NULL;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+  va_start (var_args, format);
+  s = g_strdup_vprintf (format, var_args);
+  va_end (var_args);
+#pragma GCC diagnostic pop
+
+  flatpak_table_printer_append_with_comma (printer, s);
+}
 
 void
 flatpak_table_printer_finish_row (FlatpakTablePrinter *printer)
