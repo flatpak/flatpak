@@ -159,6 +159,8 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
           g_autoptr(GVariant) deploy_data = NULL;
           const char *active;
           const char *alt_id;
+          const char *eol;
+          const char *eol_rebase;
           g_autofree char *latest = NULL;
           g_autofree char *size_s = NULL;
           guint64 size = 0;
@@ -195,6 +197,8 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
 
           active = flatpak_deploy_data_get_commit (deploy_data);
           alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
+          eol = flatpak_deploy_data_get_eol (deploy_data);
+          eol_rebase = flatpak_deploy_data_get_eol_rebase (deploy_data);
 
           latest = flatpak_dir_read_latest (dir, repo, ref, NULL, NULL, NULL);
           if (latest)
@@ -237,10 +241,7 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
             }
 
           if (alt_id)
-            {
-              g_autofree char *alt_id_str = g_strdup_printf ("alt-id=%.12s", alt_id);
-              flatpak_table_printer_append_with_comma (printer, alt_id_str);
-            }
+            flatpak_table_printer_append_with_comma_printf (printer, "alt-id=%.12s", alt_id);
 
           if (strcmp (parts[0], "app") == 0)
             {
@@ -261,6 +262,12 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
             {
               flatpak_table_printer_append_with_comma (printer, "partial");
             }
+
+          if (eol)
+            flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
+          if (eol_rebase)
+            flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol_rebase);
+
           flatpak_table_printer_finish_row (printer);
         }
     }
