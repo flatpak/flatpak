@@ -80,9 +80,51 @@ typedef struct
 
 void         flatpak_related_free (FlatpakRelated *related);
 
+
+/* The collection state represent the state of the remote at a particular
+   time, including the summary file and the metadata (which may be from
+   the summary or from a branch. We create this once per highlevel operation
+   to avoid looking up the summary multiple times, but also to avoid races
+   if it happened to change in the middle of the operation */
+typedef struct
+{
+  char *remote;
+  char *collection_id;
+  GVariant *summary;
+  GBytes *summary_sig_bytes;
+  GVariant *metadata;
+} FlatpakRemoteState;
+
+void flatpak_remote_state_free (FlatpakRemoteState *remote_state);
+gboolean flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
+                                              GError      **error);
+gboolean flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
+                                               GError      **error);
+char *flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
+                                       const   char *ref,
+                                       GVariant    **out_variant,
+                                       GError      **error);
+char **flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
+                                           const   char *ref);
+gboolean flatpak_remote_state_lookup_repo_metadata (FlatpakRemoteState *self,
+                                                    const char    *key,
+                                                    const char    *format_string,
+                                                    ...);
+gboolean flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
+                                            const char         *ref,
+                                            guint64            *download_size,
+                                            guint64            *installed_size,
+                                            char               **metadata,
+                                            GCancellable        *cancellable,
+                                            GError             **error);
+GVariant *flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
+                                                    const char         *ref,
+                                                    GError             **error);
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRelated, flatpak_related_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemoteState, flatpak_remote_state_free)
 
 typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_NONE = 0,
@@ -653,6 +695,20 @@ gboolean flatpak_dir_update_remote_configuration_for_repo_metadata (FlatpakDir  
                                                                     gboolean      *has_changed_out,
                                                                     GCancellable  *cancellable,
                                                                     GError       **error);
+FlatpakRemoteState * flatpak_dir_get_remote_state (FlatpakDir   *self,
+                                                   const char   *remote,
+                                                   GCancellable *cancellable,
+                                                   GError      **error);
+FlatpakRemoteState * flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
+                                                               const char   *remote,
+                                                               GBytes       *opt_summary,
+                                                               GBytes       *opt_summary_sig,
+                                                               GCancellable *cancellable,
+                                                               GError      **error);
+FlatpakRemoteState * flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
+                                                            const char   *remote,
+                                                            GCancellable *cancellable,
+                                                            GError      **error);
 gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                       const char   *remote_name,
                                       const char   *ref,
