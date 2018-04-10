@@ -1359,6 +1359,28 @@ flatpak_deploy_data_get_alt_id (GVariant *deploy_data)
   return alt_id;
 }
 
+const char *
+flatpak_deploy_data_get_eol (GVariant *deploy_data)
+{
+  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  const char *eol = NULL;
+
+  g_variant_lookup (metadata, "eol", "&s", &eol);
+
+  return eol;
+}
+
+const char *
+flatpak_deploy_data_get_eol_rebase (GVariant *deploy_data)
+{
+  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  const char *eol = NULL;
+
+  g_variant_lookup (metadata, "eolr", "&s", &eol);
+
+  return eol;
+}
+
 /**
  * flatpak_deploy_data_get_subpaths:
  *
@@ -5423,6 +5445,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GVariant) commit_data = NULL;
   g_autofree char *tmp_dir_path = NULL;
   const char *alt_id = NULL;
+  const char *eol = NULL;
+  const char *eol_rebase = NULL;
   const char *xa_metadata = NULL;
   const char *xa_ref = NULL;
   g_autofree char *checkout_basename = NULL;
@@ -5473,6 +5497,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   commit_metadata = g_variant_get_child_value (commit_data, 0);
   g_variant_lookup (commit_metadata, "xa.alt-id", "&s", &alt_id);
+  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
+  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
 
   checkout_basename = flatpak_dir_get_deploy_subdir (self, checksum, subpaths);
 
@@ -5799,6 +5825,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (alt_id)
     g_variant_builder_add (&metadata_builder, "{s@v}", "alt-id",
                            g_variant_new_variant (g_variant_new_string (alt_id)));
+  if (eol)
+    g_variant_builder_add (&metadata_builder, "{s@v}", "eol",
+                           g_variant_new_variant (g_variant_new_string (eol)));
+  if (eol_rebase)
+    g_variant_builder_add (&metadata_builder, "{s@v}", "eolr",
+                           g_variant_new_variant (g_variant_new_string (eol_rebase)));
 
   deploy_data = flatpak_dir_new_deploy_data (origin,
                                              checksum,
