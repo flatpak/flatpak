@@ -180,6 +180,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   flatpak_table_printer_set_column_title (printer, i++, _("Commit"));
   flatpak_table_printer_set_column_title (printer, i++, _("Installed size"));
   flatpak_table_printer_set_column_title (printer, i++, _("Download size"));
+  flatpak_table_printer_set_column_title (printer, i++, _("Options"));
 
   g_hash_table_iter_init (&refs_iter, refs_hash);
   while (g_hash_table_iter_next (&refs_iter, &refs_key, &refs_value))
@@ -291,6 +292,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
             {
               g_autofree char *value = NULL;
               g_autoptr(GVariant) refdata = NULL;
+              g_autoptr(GVariant) sparse_refdata = NULL;
               g_autoptr(GError) local_error = NULL;
               guint64 installed_size;
               guint64 download_size;
@@ -309,6 +311,10 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
                   return FALSE;
                 }
 
+              /* The sparse cache is optional */
+              flatpak_dir_lookup_repo_metadata (dir, remote, cancellable, NULL,
+                                                "xa.sparse-cache", "@a{sa{sv}}", &sparse_refdata);
+
               if (g_variant_lookup (refdata, keys[i], "(tt&s)", &installed_size, &download_size, &metadata))
                 {
                   g_autofree char *installed = g_format_size (GUINT64_FROM_BE (installed_size));
@@ -316,6 +322,21 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
                   flatpak_table_printer_add_decimal_column (printer, installed);
                   flatpak_table_printer_add_decimal_column (printer, download);
+                }
+
+              flatpak_table_printer_add_column (printer, ""); /* Extra */
+              if (sparse_refdata)
+                {
+                  g_autoptr(GVariant) sparse = NULL;
+                  if (g_variant_lookup (sparse_refdata, keys[i], "@a{sv}", &sparse))
+                    {
+                      const char *eol;
+
+                      if (g_variant_lookup (sparse, "eol", "&s", &eol))
+                        flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
+                      if (g_variant_lookup (sparse, "eolr", "&s", &eol))
+                        flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
+                    }
                 }
             }
           flatpak_table_printer_finish_row (printer);
