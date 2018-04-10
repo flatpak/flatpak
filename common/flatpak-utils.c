@@ -2679,6 +2679,7 @@ typedef struct {
   guint64 installed_size;
   guint64 download_size;
   char *metadata_contents;
+  GVariant *sparse_data;
 } CommitData;
 
 static void
@@ -2686,6 +2687,8 @@ commit_data_free (gpointer data)
 {
   CommitData *rev_data = data;
   g_free (rev_data->metadata_contents);
+  if (rev_data->sparse_data)
+    g_variant_unref (rev_data->sparse_data);
   g_free (rev_data);
 }
 
@@ -2698,6 +2701,7 @@ populate_commit_data_cache (GVariant   *metadata,
 {
   g_autoptr(GVariant) cache_v = NULL;
   g_autoptr(GVariant) cache = NULL;
+  g_autoptr(GVariant) sparse_cache = NULL;
   gsize n, i;
   const char *old_collection_id;
 
@@ -2714,6 +2718,8 @@ populate_commit_data_cache (GVariant   *metadata,
     return;
 
   cache = g_variant_get_child_value (cache_v, 0);
+
+  sparse_cache = g_variant_lookup_value (metadata, "xa.sparse-cache", NULL);
 
   n = g_variant_n_children (cache);
   for (i = 0; i < n; i++)
@@ -2740,10 +2746,13 @@ populate_commit_data_cache (GVariant   *metadata,
           old_download_size = GUINT64_FROM_BE (old_download_size);
           g_variant_get_child (old_commit_data_v, 2, "s", &old_metadata);
 
-          old_rev_data = g_new (CommitData, 1);
+          old_rev_data = g_new0 (CommitData, 1);
           old_rev_data->installed_size = old_installed_size;
           old_rev_data->download_size = old_download_size;
           old_rev_data->metadata_contents = g_steal_pointer (&old_metadata);
+
+          if (sparse_cache)
+            old_rev_data->sparse_data = g_variant_lookup_value (sparse_cache, old_ref, G_VARIANT_TYPE_VARDICT);
 
           g_hash_table_insert (commit_data_cache, g_steal_pointer (&old_rev), old_rev_data);
         }
@@ -2771,6 +2780,7 @@ flatpak_repo_update (OstreeRepo   *repo,
 {
   GVariantBuilder builder;
   GVariantBuilder ref_data_builder;
+  GVariantBuilder ref_sparse_data_builder;
   GKeyFile *config;
   g_autofree char *title = NULL;
   g_autofree char *redirect_url = NULL;
@@ -2840,6 +2850,7 @@ flatpak_repo_update (OstreeRepo   *repo,
     }
 
   g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE ("a{s(tts)}"));
+  g_variant_builder_init (&ref_sparse_data_builder, G_VARIANT_TYPE ("a{sa{sv}}"));
 
   /* Only operate on flatpak relevant refs */
   refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -2905,6 +2916,8 @@ flatpak_repo_update (OstreeRepo   *repo,
       g_autoptr(GVariant) commit_v = NULL;
       g_autoptr(GVariant) commit_metadata = NULL;
       CommitData *rev_data;
+      const char *eol = NULL;
+      const char *eol_rebase = NULL;
 
       /* See if we already have the info on this revision */
       if (g_hash_table_lookup (commit_data_cache, rev))
@@ -2938,10 +2951,24 @@ flatpak_repo_update (OstreeRepo   *repo,
 
       flatpak_repo_collect_extra_data_sizes (repo, rev, &installed_size, &download_size);
 
-      rev_data = g_new (CommitData, 1);
+      rev_data = g_new0 (CommitData, 1);
       rev_data->installed_size = installed_size;
       rev_data->download_size = download_size;
-      rev_data->metadata_contents = g_strdup (metadata_contents);
+      rev_data->metadata_contents = g_steal_pointer (&metadata_contents);
+
+      g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
+      g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
+      if (eol || eol_rebase)
+        {
+          g_auto(GVariantBuilder) sparse_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+          g_variant_builder_init (&sparse_builder, G_VARIANT_TYPE_VARDICT);
+          if (eol)
+            g_variant_builder_add (&sparse_builder, "{sv}", "eol", g_variant_new_string (eol));
+          if (eol_rebase)
+            g_variant_builder_add (&sparse_builder, "{sv}", "eolr", g_variant_new_string (eol_rebase));
+
+          rev_data->sparse_data = g_variant_ref_sink (g_variant_builder_end (&sparse_builder));
+       }
 
       g_hash_table_insert (commit_data_cache, g_strdup (rev), rev_data);
     }
@@ -2958,7 +2985,10 @@ flatpak_repo_update (OstreeRepo   *repo,
                              GUINT64_TO_BE (rev_data->installed_size),
                              GUINT64_TO_BE (rev_data->download_size),
                              rev_data->metadata_contents);
-    }
+      if (rev_data->sparse_data)
+        g_variant_builder_add (&ref_sparse_data_builder, "{s@a{sv}}",
+                               ref, rev_data->sparse_data);
+   }
 
   /* Note: xa.cache doesn’t need to support collection IDs for the refs listed
    * in it, because the xa.cache metadata is stored on the ostree-metadata ref,
@@ -2968,6 +2998,9 @@ flatpak_repo_update (OstreeRepo   *repo,
    * too old to care about collection IDs anyway. */
   g_variant_builder_add (&builder, "{sv}", "xa.cache",
                          g_variant_new_variant (g_variant_builder_end (&ref_data_builder)));
+
+  g_variant_builder_add (&builder, "{sv}", "xa.sparse-cache",
+                         g_variant_builder_end (&ref_sparse_data_builder));
 
   new_summary = g_variant_ref_sink (g_variant_builder_end (&builder));
 
