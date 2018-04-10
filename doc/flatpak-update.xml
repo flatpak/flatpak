@@ -146,7 +146,8 @@
                 <term><option>--commit=COMMIT</option></term>
 
                 <listitem><para>
-                    Update to this commit, instead of the tip of the branch.
+                    Update to this commit, instead of the tip of the branch. You can find commits
+                    using <command>flatpak remote-info --log REMOTE REF</command>.
                 </para></listitem>
             </varlistentry>
 
