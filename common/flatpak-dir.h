@@ -295,9 +295,6 @@ GFile *     flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *se
                                                                   const char *branch,
                                                                   GCancellable *cancellable);
 
-gboolean    flatpak_dir_remote_has_ref (FlatpakDir   *self,
-                                        const char   *remote,
-                                        const char   *ref);
 char **     flatpak_dir_search_for_dependency (FlatpakDir   *self,
                                                const char   *runtime_ref,
                                                GCancellable *cancellable,
