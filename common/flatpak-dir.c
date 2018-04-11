@@ -10658,12 +10658,14 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
   g_autoptr(GVariant) commit_variant = NULL;
   g_autofree char *latest_commit = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
 
   if (opt_commit == NULL)
     {
-      latest_commit = flatpak_dir_lookup_ref_from_summary (self, remote_name,
-                                                           ref, NULL, NULL,
-                                                           cancellable, error);
+      state = flatpak_dir_get_remote_state (self, remote_name, cancellable, error);
+      if (state == NULL)
+        return NULL;
+      latest_commit = flatpak_remote_state_lookup_ref (state, ref, NULL, error);
       if (latest_commit == NULL)
         return NULL;
       opt_commit = latest_commit;
