@@ -8425,7 +8425,6 @@ flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
   return _flatpak_dir_get_remote_state (self, remote, FALSE, opt_summary, opt_summary_sig, cancellable, error);
 }
 
-
 /* This is an alternative way to get the remote state that doesn't
  * error out if the summary or metadata is not available in the p2p
  * case. For example, we want to be able to update an app even when
@@ -8441,31 +8440,24 @@ flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
   return _flatpak_dir_get_remote_state (self, remote, TRUE, NULL, NULL, cancellable, error);
 }
 
-gboolean
+static gboolean
 flatpak_dir_remote_has_ref (FlatpakDir   *self,
                             const char   *remote,
                             const char   *ref)
 {
-  g_autoptr(GVariant) summary = NULL;
   g_autoptr(GError) local_error = NULL;
-  g_autofree char *collection_id = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
+  g_autofree char *rev = NULL;
 
-  summary = fetch_remote_summary_file (self, remote, NULL, NULL, &local_error);
-  if (summary == NULL)
+  state = flatpak_dir_get_remote_state (self, remote, NULL, &local_error);
+  if (state == NULL)
     {
-      g_debug ("Can't get summary for remote %s: %s", remote, local_error->message);
+      g_debug ("Can't get state for remote %s: %s", remote, local_error->message);
       return FALSE;
     }
 
-  /* Derive the collection ID from the remote we are querying. This will act as
-   * a sanity check on the summary ref lookup. */
-  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, &local_error))
-    {
-      g_debug ("Can’t get collection ID for remote %s: %s", remote, local_error->message);
-      return FALSE;
-    }
-
-  return flatpak_summary_lookup_ref (summary, collection_id, ref, NULL, NULL);
+  rev = flatpak_remote_state_lookup_ref (state, ref, NULL, NULL);
+  return rev != NULL;
 }
 
 /* This duplicates ostree_repo_list_refs so it can use flatpak_dir_remote_fetch_summary
