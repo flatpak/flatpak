@@ -9853,50 +9853,6 @@ fetch_remote_summary_file (FlatpakDir   *self,
                                                        summary_bytes, FALSE));
 }
 
-char *
-flatpak_dir_fetch_remote_title (FlatpakDir   *self,
-                                const char   *remote,
-                                GCancellable *cancellable,
-                                GError      **error)
-{
-  g_autofree char *title = NULL;
-  g_autoptr(GError) local_error = NULL;
-
-  if (!flatpak_dir_lookup_repo_metadata (self, remote, cancellable, &local_error,
-                                         "xa.title", "s", &title))
-    {
-      if (local_error == NULL)
-        g_set_error_literal (&local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                             _("Remote title not set"));
-      g_propagate_error (error, g_steal_pointer (&local_error));
-      return FALSE;
-    }
-
-  return g_steal_pointer (&title);
-}
-
-char *
-flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
-                                         const char   *remote,
-                                         GCancellable *cancellable,
-                                         GError      **error)
-{
-  g_autofree char *default_branch = NULL;
-  g_autoptr(GError) local_error = NULL;
-
-  if (!flatpak_dir_lookup_repo_metadata (self, remote, cancellable, &local_error,
-                                         "xa.default-branch", "s", &default_branch))
-    {
-      if (local_error == NULL)
-        g_set_error_literal (&local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                             _("Remote default-branch not set"));
-      g_propagate_error (error, g_steal_pointer (&local_error));
-      return FALSE;
-    }
-
-  return g_steal_pointer (&default_branch);
-}
-
 gboolean
 flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
                                         const char    *remote_name,
