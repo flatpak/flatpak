@@ -628,14 +628,6 @@ gboolean   flatpak_dir_list_remote_refs (FlatpakDir   *self,
                                          GHashTable  **refs,
                                          GCancellable *cancellable,
                                          GError      **error);
-char *   flatpak_dir_fetch_remote_title (FlatpakDir   *self,
-                                         const char   *remote,
-                                         GCancellable *cancellable,
-                                         GError      **error);
-char *   flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
-                                                  const char   *remote,
-                                                  GCancellable *cancellable,
-                                                  GError      **error);
 GVariant * flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
                                             const char   *remote_name,
                                             const char   *ref,
