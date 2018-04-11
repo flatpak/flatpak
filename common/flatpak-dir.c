@@ -10857,20 +10857,20 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                                  GCancellable *cancellable,
                                  GError **error)
 {
-  g_autoptr(GVariant) summary = NULL;
   g_autofree char *metadata = NULL;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   int i;
   g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_related_free);
   g_autofree char *url = NULL;
-  g_autofree char *collection_id = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
     return NULL;
 
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+  state = flatpak_dir_get_remote_state (self, remote_name, cancellable, error);
+  if (state == NULL)
     return NULL;
 
   if (!ostree_repo_remote_get_url (self->repo,
@@ -10882,18 +10882,9 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
   if (*url == 0)
     return g_steal_pointer (&related);  /* Empty url, silently disables updates */
 
-  /* Derive the collection ID from the remote we are querying. This will act as
-   * a sanity check on the summary ref lookup. */
-  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
-    return NULL;
-
-  summary = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
-  if (summary == NULL)
-    return NULL;
-
-  if (flatpak_dir_fetch_ref_cache (self, remote_name, ref,
-                                   NULL, NULL, &metadata,
-                                   NULL, NULL) &&
+  if (flatpak_remote_state_lookup_cache (state, ref,
+                                         NULL, NULL, &metadata,
+                                         NULL, NULL) &&
       g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
     {
       g_auto(GStrv) groups = NULL;
@@ -10936,30 +10927,30 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
               /* For the moment, none of the related ref machinery handles
                * collection IDs which don’t match the original ref. */
               if (extension_collection_id != NULL && *extension_collection_id != '\0' &&
-                  g_strcmp0 (extension_collection_id, collection_id) != 0)
+                  g_strcmp0 (extension_collection_id, state->collection_id) != 0)
                 {
                   g_debug ("Skipping related extension ‘%s’ because it’s in collection "
                            "‘%s’ which does not match the current remote ‘%s’.",
-                           extension, extension_collection_id, collection_id);
+                           extension, extension_collection_id, state->collection_id);
                   continue;
                 }
 
               g_clear_pointer (&extension_collection_id, g_free);
-              extension_collection_id = g_strdup (collection_id);
+              extension_collection_id = g_strdup (state->collection_id);
 
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
 
-              if (flatpak_summary_lookup_ref (summary, extension_collection_id, extension_ref, &checksum, NULL))
+              if (flatpak_summary_lookup_ref (state->summary, extension_collection_id, extension_ref, &checksum, NULL))
                 {
                   add_related (self, related, extension, extension_collection_id, extension_ref, checksum, no_autodownload, download_if, autodelete, locale_subset);
                 }
               else if (subdirectories)
                 {
-                  g_auto(GStrv) refs = flatpak_summary_match_subrefs (summary, extension_collection_id, extension_ref);
+                  g_auto(GStrv) refs = flatpak_summary_match_subrefs (state->summary, extension_collection_id, extension_ref);
                   int j;
                   for (j = 0; refs[j] != NULL; j++)
                     {
-                      if (flatpak_summary_lookup_ref (summary, extension_collection_id, refs[j], &checksum, NULL))
+                      if (flatpak_summary_lookup_ref (state->summary, extension_collection_id, refs[j], &checksum, NULL))
                         add_related (self, related, extension, extension_collection_id, refs[j], checksum, no_autodownload, download_if, autodelete, locale_subset);
                     }
                 }
