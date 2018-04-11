@@ -8465,25 +8465,22 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
 /* FIXME: For command line completion support for collection–refs over P2P,
  * we need a version of ostree_repo_list_collection_refs(). */
 static gboolean
-flatpak_dir_remote_list_refs (FlatpakDir       *self,
-                              const char       *remote_name,
-                              GHashTable      **out_all_refs,
-                              GCancellable     *cancellable,
-                              GError          **error)
+flatpak_dir_remote_list_refs (FlatpakDir         *self,
+                              FlatpakRemoteState *state,
+                              GHashTable         **out_all_refs,
+                              GCancellable        *cancellable,
+                              GError             **error)
 {
   g_autoptr(GHashTable) ret_all_refs = NULL;
-  g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) ref_map = NULL;
   GVariantIter iter;
   GVariant *child;
 
+  g_assert (state->summary != NULL);
+
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-  summary = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
-  if (summary == NULL)
-    return FALSE;
-
-  ref_map = g_variant_get_child_value (summary, 0);
+  ref_map = g_variant_get_child_value (state->summary, 0);
 
   g_variant_iter_init (&iter, ref_map);
   while ((child = g_variant_iter_next_value (&iter)) != NULL)
@@ -8693,12 +8690,14 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
                              GError      **error)
 {
   g_autoptr(GHashTable) remote_refs = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
   GPtrArray *matched_refs;
 
-  if (!flatpak_dir_ensure_repo (self, NULL, error))
+  state = flatpak_dir_get_remote_state (self, remote, cancellable, error);
+  if (state == NULL)
     return NULL;
 
-  if (!flatpak_dir_remote_list_refs (self, remote,
+  if (!flatpak_dir_remote_list_refs (self, state,
                                      &remote_refs, cancellable, error))
     return NULL;
 
@@ -8783,12 +8782,19 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
 {
   g_autofree char *remote_ref = NULL;
   g_autoptr(GHashTable) remote_refs = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  if (!flatpak_dir_ensure_repo (self, NULL, error))
+  /* Atm this has to be optional, because otherwise we test-unsigned-summaries.sh due
+   * to the install failing with a wrong-gpg error, rather than silently ignoring this */
+  state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
+  if (state == NULL)
     return NULL;
 
-  if (!flatpak_dir_remote_list_refs (self, remote,
+  if (!flatpak_remote_state_ensure_summary (state, error))
+    return NULL;
+
+  if (!flatpak_dir_remote_list_refs (self, state,
                                      &remote_refs, cancellable, error))
     return NULL;
 
@@ -10131,14 +10137,16 @@ flatpak_dir_list_remote_refs (FlatpakDir   *self,
                               GError      **error)
 {
   g_autoptr(GError) my_error = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
 
   if (error == NULL)
     error = &my_error;
 
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+  state = flatpak_dir_get_remote_state (self, remote, cancellable, error);
+  if (state == NULL)
     return FALSE;
 
-  if (!flatpak_dir_remote_list_refs (self, remote, refs,
+  if (!flatpak_dir_remote_list_refs (self, state, refs,
                                      cancellable, error))
     return FALSE;
 
