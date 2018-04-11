@@ -109,6 +109,14 @@ static gboolean flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
                                                         GCancellable  *cancellable,
                                                         GError       **error);
 
+static gboolean    flatpak_dir_find_latest_rev (FlatpakDir               *self,
+                                                FlatpakRemoteState       *state,
+                                                const char               *ref,
+                                                const char               *checksum_or_latest,
+                                                char                    **out_rev,
+                                                OstreeRepoFinderResult ***out_results,
+                                                GCancellable             *cancellable,
+                                                GError                  **error);
 
 typedef struct
 {
@@ -2223,9 +2231,9 @@ async_result_cb (GObject      *obj,
 }
 #endif  /* FLATPAK_ENABLE_P2P */
 
-gboolean
+static gboolean
 flatpak_dir_find_latest_rev (FlatpakDir               *self,
-                             const char               *remote,
+                             FlatpakRemoteState       *state,
                              const char               *ref,
                              const char               *checksum_or_latest,
                              char                    **out_rev,
@@ -2233,15 +2241,11 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
                              GCancellable             *cancellable,
                              GError                  **error)
 {
-  g_autofree char *collection_id = NULL;
   g_autofree char *latest_rev = NULL;
 
   g_return_val_if_fail (out_rev != NULL, FALSE);
 
-  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
-    return FALSE;
-
-  if (collection_id != NULL)
+  if (state->collection_id != NULL)
     {
 #ifdef FLATPAK_ENABLE_P2P
       /* Find the latest rev from the remote and its available mirrors, including
@@ -2251,7 +2255,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
       g_autoptr(GVariant) find_options = NULL;
       g_autoptr(GAsyncResult) find_result = NULL;
       g_auto(OstreeRepoFinderResultv) results = NULL;
-      OstreeCollectionRef collection_ref = { collection_id, (char *) ref };
+      OstreeCollectionRef collection_ref = { state->collection_id, (char *) ref };
       OstreeCollectionRef *collection_refs_to_fetch[2] = { &collection_ref, NULL };
       gsize i;
 
@@ -2288,7 +2292,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
       if (latest_rev == NULL)
         {
           flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
-                        collection_ref.collection_id, collection_ref.ref_name, remote);
+                        collection_ref.collection_id, collection_ref.ref_name, state->remote);
           return FALSE;
         }
 
@@ -2304,7 +2308,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
     }
   else
     {
-      latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote, ref, NULL, NULL, NULL, error);
+      latest_rev = flatpak_remote_state_lookup_ref (state, ref, NULL, error);
       if (latest_rev == NULL)
         return FALSE;
 
@@ -2327,6 +2331,7 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
   g_autofree char *branch = NULL;
   g_autoptr(GFileInfo) file_info = NULL;
   g_autoptr(GError) local_error = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
 
   if (!flatpak_dir_maybe_ensure_repo (self, NULL, NULL))
     return TRUE;
@@ -2346,7 +2351,9 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
 
   branch = g_strdup_printf ("appstream/%s", arch);
 
-  if (!flatpak_dir_find_latest_rev (self, remote, branch, NULL, &new_checksum,
+  state = flatpak_dir_get_remote_state_optional (self, remote, NULL, &local_error);
+  if (state == NULL ||
+      !flatpak_dir_find_latest_rev (self, state, branch, NULL, &new_checksum,
                                     NULL, NULL, &local_error))
     {
       flatpak_fail (error, _("Failed to find latest revision for ref %s from remote %s: %s"),
@@ -6928,6 +6935,11 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
   const char *target_rev = NULL;
   const char *installed_commit;
   const char *installed_alt_id;
+  g_autoptr(FlatpakRemoteState) state = NULL;
+
+  state = flatpak_dir_get_remote_state_optional (self, remote_name, NULL, error);
+  if (state == NULL)
+    return NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
@@ -6969,9 +6981,9 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
     }
   else
     {
-      if (!flatpak_dir_find_latest_rev (self, remote_name, ref, checksum_or_latest, &latest_rev,
+      if (!flatpak_dir_find_latest_rev (self, state, ref, checksum_or_latest, &latest_rev,
                                         out_results, cancellable, error))
-        return FALSE;
+        return NULL;
     }
 
   if (checksum_or_latest != NULL)
