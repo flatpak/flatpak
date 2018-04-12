@@ -103,6 +103,8 @@ flatpak_builtin_update (int           argc,
           if (!update_appstream (dirs, argc >= 2 ? argv[1] : NULL, arches[i], 0, FALSE, cancellable, error))
             return FALSE;
         }
+
+      return TRUE;
     }
 
   prefs = &argv[1];
