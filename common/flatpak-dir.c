@@ -6917,8 +6917,8 @@ out:
 
 char *
 flatpak_dir_check_for_update (FlatpakDir          *self,
+                              FlatpakRemoteState  *state,
                               const char          *ref,
-                              const char          *remote_name,
                               const char          *checksum_or_latest,
                               const char         **opt_subpaths,
                               gboolean             no_pull,
@@ -6935,11 +6935,6 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
   const char *target_rev = NULL;
   const char *installed_commit;
   const char *installed_alt_id;
-  g_autoptr(FlatpakRemoteState) state = NULL;
-
-  state = flatpak_dir_get_remote_state_optional (self, remote_name, NULL, error);
-  if (state == NULL)
-    return NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
@@ -6956,7 +6951,7 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
   installed_commit = flatpak_deploy_data_get_commit (deploy_data);
   installed_alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
 
-  if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, error))
+  if (!ostree_repo_remote_get_url (self->repo, state->remote, &url, error))
     {
       return NULL;
     }
@@ -6971,7 +6966,7 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
 
   if (no_pull)
     {
-      remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref);
+      remote_and_branch = g_strdup_printf ("%s:%s", state->remote, ref);
       if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, FALSE, &latest_rev, NULL))
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
