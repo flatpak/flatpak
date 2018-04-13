@@ -4041,13 +4041,14 @@ flatpak_dir_list_refs_for_name (FlatpakDir   *self,
 
       while ((child_info2 = g_file_enumerator_next_file (dir_enum2, cancellable, &temp_error)))
         {
-          const char *branch;
+          const char *branch = g_file_info_get_name (child_info2);
 
           if (g_file_info_get_file_type (child_info2) == G_FILE_TYPE_DIRECTORY)
             {
-              branch = g_file_info_get_name (child_info2);
-              g_ptr_array_add (refs,
-                               g_strdup_printf ("%s/%s/%s/%s", kind, name, arch, branch));
+              g_autoptr(GFile) deploy = flatpak_build_file (child, branch, "active/deploy", NULL);
+              if (g_file_query_exists (deploy, NULL))
+                g_ptr_array_add (refs,
+                                 g_strdup_printf ("%s/%s/%s/%s", kind, name, arch, branch));
             }
 
           g_clear_object (&child_info2);
