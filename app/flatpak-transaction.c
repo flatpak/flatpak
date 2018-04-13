@@ -51,6 +51,7 @@ struct FlatpakTransactionOp {
 struct FlatpakTransaction {
   FlatpakDir *dir;
   GHashTable *refs;
+  GHashTable *remote_states; /* (element-type utf8 FlatpakRemoteState) */
   GPtrArray *system_dirs;
   GList *ops;
   GPtrArray *added_origin_remotes;
@@ -185,6 +186,7 @@ flatpak_transaction_new (FlatpakDir *dir,
 
   t->dir = g_object_ref (dir);
   t->refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  t->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)flatpak_remote_state_free);
   t->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
 
   t->no_interaction = no_interaction;
@@ -201,6 +203,7 @@ void
 flatpak_transaction_free (FlatpakTransaction *self)
 {
   g_hash_table_unref (self->refs);
+  g_hash_table_unref (self->remote_states);
   g_list_free_full (self->ops, (GDestroyNotify)flatpak_transaction_operation_free);
   g_object_unref (self->dir);
 
@@ -263,6 +266,25 @@ kind_to_str (FlatpakTransactionOpKind kind)
       return "install bundle";
     }
   return "unknown";
+}
+
+static FlatpakRemoteState *
+flatpak_transaction_ensure_remote_state (FlatpakTransaction *self,
+                                         const char *remote,
+                                         GError **error)
+{
+  FlatpakRemoteState *state;
+
+  state = g_hash_table_lookup (self->remote_states, remote);
+  if (state)
+    return state;
+
+  state = flatpak_dir_get_remote_state_optional (self->dir, remote, NULL, error);
+
+  if (state)
+    g_hash_table_insert (self->remote_states, state->remote, state);
+
+  return state;
 }
 
 static FlatpakTransactionOp *
@@ -474,6 +496,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autofree char *origin_remote = NULL;
+  FlatpakRemoteState *state;
 
   if (remote_name_is_file (remote))
     {
@@ -533,6 +556,10 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
             }
         }
     }
+
+  state = flatpak_transaction_ensure_remote_state (self, remote, error);
+  if (state == NULL)
+    return FALSE;
 
   if (metadata == NULL && remote != NULL)
     {
