@@ -1746,6 +1746,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   FlatpakInstalledRef *result = NULL;
   g_autofree char *target_commit = NULL;
   g_auto(OstreeRepoFinderResultv) check_results = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -1768,7 +1769,11 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (remote_name == NULL)
     return NULL;
 
-  target_commit = flatpak_dir_check_for_update (dir, ref, remote_name, NULL,
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  if (state == NULL)
+    return NULL;
+
+  target_commit = flatpak_dir_check_for_update (dir, state, ref, NULL,
                                                 (const char **)subpaths,
                                                 (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                                                 &check_results,

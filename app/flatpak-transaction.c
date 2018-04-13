@@ -745,6 +745,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
       const char *opname;
       FlatpakTransactionOpKind kind;
       FlatpakTerminalProgress terminal_progress = { 0 };
+      FlatpakRemoteState *state;
 
       kind = op->kind;
       if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE)
@@ -767,7 +768,13 @@ flatpak_transaction_run (FlatpakTransaction *self,
       pref = strchr (op->ref, '/') + 1;
 
 
-      if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
+      state = flatpak_transaction_ensure_remote_state (self, op->remote, &local_error);
+      if (state == NULL)
+        {
+          opname = _("fetch remote info");
+          res = FALSE;
+        }
+      else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
         {
           g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
           opname = _("install");
@@ -792,7 +799,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           g_auto(OstreeRepoFinderResultv) check_results = NULL;
 
           opname = _("update");
-          g_autofree char *target_commit = flatpak_dir_check_for_update (self->dir, op->ref, op->remote, op->commit,
+          g_autofree char *target_commit = flatpak_dir_check_for_update (self->dir, state, op->ref, op->commit,
                                                                          (const char **)op->subpaths,
                                                                          self->no_pull,
                                                                          &check_results,
