@@ -1589,6 +1589,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   FlatpakInstalledRef *result = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -1606,6 +1607,10 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                    "%s branch %s already installed", name, branch ? branch : "master");
       return NULL;
     }
+
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  if (state == NULL)
+    return NULL;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
@@ -1625,8 +1630,8 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_PULL) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
-                            FALSE,
-                            ref, remote_name, (const char **)subpaths,
+                            FALSE, state,
+                            ref, (const char **)subpaths,
                             ostree_progress, cancellable, error))
     goto out;
 
@@ -1799,8 +1804,8 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
-                           FALSE,
-                           ref, remote_name, target_commit,
+                           FALSE, state,
+                           ref, target_commit,
                            (const OstreeRepoFinderResult * const *) check_results,
                            (const char **)subpaths,
                            ostree_progress, cancellable, error))
