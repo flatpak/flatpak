@@ -71,7 +71,7 @@ static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
 
 static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
                                         FlatpakOciRegistry  *dst_registry,
-                                        const char          *remote,
+                                        FlatpakRemoteState *state,
                                         const char          *ref,
                                         const char          *skip_if_current_is,
                                         OstreeAsyncProgress *progress,
@@ -102,12 +102,10 @@ static char * flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
                                                    GCancellable        *cancellable,
                                                    GError             **error);
 
-static gboolean flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
-                                                        const char    *remote_name,
-                                                        GVariant      *summary,
-                                                        const char    *collection_id,
-                                                        GCancellable  *cancellable,
-                                                        GError       **error);
+static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
+                                                                 FlatpakRemoteState *state,
+                                                                 GCancellable  *cancellable,
+                                                                 GError       **error);
 
 static gboolean    flatpak_dir_find_latest_rev (FlatpakDir               *self,
                                                 FlatpakRemoteState       *state,
@@ -392,6 +390,39 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
   return FALSE;
 }
 
+static gboolean
+flatpak_remote_state_save_summary (FlatpakRemoteState *self,
+                                   GFile              *dir,
+                                   GCancellable       *cancellable,
+                                   GError             **error)
+{
+  g_autoptr(GFile) summary_file = g_file_get_child (dir, "summary");
+  g_autoptr(GBytes) summary_bytes = NULL;
+
+  /* For non-p2p case we always require a summary */
+  if (!flatpak_remote_state_ensure_summary (self, error))
+    return FALSE;
+
+  summary_bytes = g_variant_get_data_as_bytes (self->summary);
+
+  if (!g_file_replace_contents (summary_file,
+                                g_bytes_get_data (summary_bytes, NULL),
+                                g_bytes_get_size (summary_bytes),
+                                NULL, FALSE, 0, NULL, cancellable, NULL))
+    return FALSE;
+
+  if (self->summary_sig_bytes != NULL)
+    {
+      g_autoptr(GFile) summary_sig_file = g_file_get_child (dir, "summary.sig");
+      if (!g_file_replace_contents (summary_sig_file,
+                                    g_bytes_get_data (self->summary_sig_bytes, NULL),
+                                    g_bytes_get_size (self->summary_sig_bytes),
+                                    NULL, FALSE, 0, NULL, cancellable, NULL))
+        return FALSE;
+    }
+
+  return TRUE;
+}
 
 static DirExtraData *
 dir_extra_data_new (const char           *id,
@@ -2370,6 +2401,32 @@ flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
   return g_strcmp0 (new_checksum, old_checksum) != 0;
 }
 
+static gboolean
+child_repo_ensure_summary (OstreeRepo *child_repo,
+                           FlatpakRemoteState *state,
+                           GCancellable        *cancellable,
+                           GError             **error)
+{
+  if (state->collection_id != NULL)
+    {
+      /* Regenerate the summary in the child repo because the summary copied
+       * into the repo by the flatpak_dir_pull() call above is reflective of the refs on the
+       * remote that was pulled from, which might be a peer remote and might not
+       * have the full set of refs that was pulled. */
+      if (!ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
+        return FALSE;
+    }
+  else
+    {
+      if (!flatpak_remote_state_save_summary (state, ostree_repo_get_path (child_repo),
+                                              cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+
 gboolean
 flatpak_dir_update_appstream (FlatpakDir          *self,
                               const char          *remote,
@@ -2382,6 +2439,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   g_autofree char *branch = NULL;
   g_autofree char *remote_and_branch = NULL;
   g_autofree char *new_checksum = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
   const char *installation;
 
   if (out_changed)
@@ -2392,7 +2450,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   branch = g_strdup_printf ("appstream/%s", arch);
 
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+  state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
+  if (state == NULL)
     return FALSE;
 
   if (flatpak_dir_use_system_helper (self, NULL))
@@ -2402,14 +2461,10 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       gboolean is_oci;
       g_autoptr(GFile) child_repo_file = NULL;
       g_autofree char *child_repo_path = NULL;
-      g_autofree char *collection_id = NULL;
 
       system_helper = flatpak_dir_get_system_helper (self);
 
       g_assert (system_helper != NULL);
-
-      if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
-        return FALSE;
 
       is_oci = flatpak_dir_get_remote_oci (self, remote);
 
@@ -2427,7 +2482,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
           child_repo_file = g_file_new_for_uri (flatpak_oci_registry_get_uri (registry));
 
-          if (!flatpak_dir_mirror_oci (self, registry, remote, branch, latest_alt_commit, progress, cancellable, &local_error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, branch, latest_alt_commit, progress, cancellable, &local_error))
             {
               if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
                 return TRUE;
@@ -2440,59 +2495,19 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
         }
       else
         {
-          g_autoptr(GBytes) summary_copy = NULL;
-          g_autoptr(GBytes) summary_sig_copy = NULL;
-          g_autoptr(GFile) summary_file = NULL;
-          g_autoptr(GFile) summary_sig_file = NULL;
-
           g_autoptr(OstreeRepo) child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, NULL, error);
           if (child_repo == NULL)
             return FALSE;
 
-          /* Avoid fetching the system remote summary on P2P code paths. The
-           * flatpak_dir_pull() call below will cause the true remote's summary
-           * to be pulled into the child repo (which might be the one from a
-           * temporary remote rather than the system remote). Ostree does this
-           * because of the MIRROR flag.*/
-          if (collection_id == NULL &&
-              !flatpak_dir_remote_fetch_summary (self, remote,
-                                                 &summary_copy, &summary_sig_copy,
-                                                 cancellable, error))
-            return FALSE;
-
           /* No need to use an existing OstreeRepoFinderResult array, since
            * appstream updates do not need to be atomic wrt other updates. */
-          if (!flatpak_dir_pull (self, remote, branch, NULL, NULL, NULL,
+          if (!flatpak_dir_pull (self, state, branch, NULL, NULL, NULL,
                                  child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
 
-          /* Regenerate the summary in the child repo because the
-           * flatpak_dir_pull() call above might not copy the remote summary
-           * into the repo if the "branches" key is set on the remote. */
-          if (collection_id != NULL &&
-              !ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
+          if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             return FALSE;
-
-          if (summary_copy != NULL)
-            {
-              summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
-              if (!g_file_replace_contents (summary_file,
-                                            g_bytes_get_data (summary_copy, NULL),
-                                            g_bytes_get_size (summary_copy),
-                                            NULL, FALSE, 0, NULL, cancellable, NULL))
-                return FALSE;
-            }
-
-          if (summary_sig_copy != NULL)
-            {
-              summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
-              if (!g_file_replace_contents (summary_sig_file,
-                                            g_bytes_get_data (summary_sig_copy, NULL),
-                                            g_bytes_get_size (summary_sig_copy),
-                                            NULL, FALSE, 0, NULL, cancellable, NULL))
-                return FALSE;
-            }
 
           if (!ostree_repo_resolve_rev (child_repo, branch, TRUE, &new_checksum, error))
             return FALSE;
@@ -2521,7 +2536,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   /* No need to use an existing OstreeRepoFinderResult array, since
    * appstream updates do not need to be atomic wrt other updates. */
-  if (!flatpak_dir_pull (self, remote, branch, NULL, NULL, NULL, NULL, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
+  if (!flatpak_dir_pull (self, state, branch, NULL, NULL, NULL, NULL,
+                         FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                          cancellable, error))
     return FALSE;
 
@@ -3240,7 +3256,7 @@ oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
 static gboolean
 flatpak_dir_mirror_oci (FlatpakDir          *self,
                         FlatpakOciRegistry  *dst_registry,
-                        const char          *remote,
+                        FlatpakRemoteState *state,
                         const char          *ref,
                         const char          *skip_if_current_is,
                         OstreeAsyncProgress *progress,
@@ -3255,20 +3271,18 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
-  g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *oci_repository = NULL;
   gboolean res;
 
   if (!ostree_repo_remote_get_url (self->repo,
-                                   remote,
+                                   state->remote,
                                    &oci_uri,
                                    error))
     return FALSE;
 
   /* We use the summary so that we can reuse any cached json */
-  latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element, &summary,
-                                                    cancellable, error);
+  latest_rev = flatpak_remote_state_lookup_ref (state, ref, &summary_element, error);
   if (latest_rev == NULL)
     return FALSE;
 
@@ -3284,7 +3298,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
 
-  registry_uri = lookup_oci_registry_uri_from_summary (summary, error);
+  registry_uri = lookup_oci_registry_uri_from_summary (state->summary, error);
   if (registry_uri == NULL)
     return FALSE;
 
@@ -3320,7 +3334,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
 static gboolean
 flatpak_dir_pull_oci (FlatpakDir          *self,
-                      const char          *remote,
+                      FlatpakRemoteState  *state,
                       const char          *ref,
                       OstreeRepo          *repo,
                       FlatpakPullFlags     flatpak_flags,
@@ -3340,25 +3354,23 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
-  g_autoptr(GVariant) summary = NULL;
   g_autofree char *latest_alt_commit = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *latest_rev = NULL;
   G_GNUC_UNUSED g_autofree char *latest_commit =
-    flatpak_dir_read_latest (self, remote, ref, &latest_alt_commit, cancellable, NULL);
+    flatpak_dir_read_latest (self, state->remote, ref, &latest_alt_commit, cancellable, NULL);
 
   /* This doesn't support specifying a specific digest, because that can't work
      with OCI signatures. We need to get that from the index */
   if (!ostree_repo_remote_get_url (self->repo,
-                                   remote,
+                                   state->remote,
                                    &oci_uri,
                                    error))
     return FALSE;
 
   /* We use the summary so that we can reuse any cached json */
   latest_rev =
-    flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element, &summary,
-                                         cancellable, error);
+    flatpak_remote_state_lookup_ref (state, ref, &summary_element, error);
   if (latest_rev == NULL)
     return FALSE;
 
@@ -3371,7 +3383,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
     return TRUE;
 
-  registry_uri = lookup_oci_registry_uri_from_summary (summary, error);
+  registry_uri = lookup_oci_registry_uri_from_summary (state->summary, error);
   if (registry_uri == NULL)
     return FALSE;
 
@@ -3380,7 +3392,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     return FALSE;
 
   versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
-						   NULL, cancellable, error);
+                                                   NULL, cancellable, error);
   if (versioned == NULL)
     return FALSE;
 
@@ -3391,7 +3403,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
       return FALSE;
     }
 
-  full_ref = g_strdup_printf ("%s:%s", remote, ref);
+  full_ref = g_strdup_printf ("%s:%s", state->remote, ref);
 
   if (repo == NULL)
     repo = self->repo;
@@ -3411,7 +3423,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_debug ("Pulling OCI image %s", oci_digest);
 
   checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, FLATPAK_OCI_MANIFEST (versioned),
-                                    remote, ref, oci_pull_progress_cb, progress, cancellable, error);
+                                    state->remote, ref, oci_pull_progress_cb, progress, cancellable, error);
 
   if (progress)
     ostree_async_progress_finish (progress);
@@ -3426,7 +3438,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
 gboolean
 flatpak_dir_pull (FlatpakDir          *self,
-                  const char          *repository,
+                  FlatpakRemoteState  *state,
                   const char          *ref,
                   const char          *opt_rev,
                   const OstreeRepoFinderResult * const *opt_results,
@@ -3465,12 +3477,12 @@ flatpak_dir_pull (FlatpakDir          *self,
   if (repo == NULL && !flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
-  if (flatpak_dir_get_remote_oci (self, repository))
-    return flatpak_dir_pull_oci (self, repository, ref, repo, flatpak_flags,
+  if (flatpak_dir_get_remote_oci (self, state->remote))
+    return flatpak_dir_pull_oci (self, state, ref, repo, flatpak_flags,
                                  flags, progress, cancellable, error);
 
   if (!ostree_repo_remote_get_url (self->repo,
-                                   repository,
+                                   state->remote,
                                    &url,
                                    error))
     return FALSE;
@@ -3500,12 +3512,7 @@ flatpak_dir_pull (FlatpakDir          *self,
   else
     {
 #ifdef FLATPAK_ENABLE_P2P
-      g_autofree char *collection_id = NULL;
-
-      if (!repo_get_remote_collection_id (self->repo, repository, &collection_id, NULL))
-        collection_id = NULL;
-
-      if (collection_id != NULL && *collection_id != '\0')
+      if (state->collection_id)
         {
           GVariantBuilder find_builder;
           g_autoptr(GVariant) find_options = NULL;
@@ -3525,7 +3532,7 @@ flatpak_dir_pull (FlatpakDir          *self,
                                      g_variant_new_variant (g_variant_new_boolean (TRUE)));
             }
 
-          collection_ref.collection_id = collection_id;
+          collection_ref.collection_id = state->collection_id;
           collection_ref.ref_name = (char *) ref;
 
           collection_refs_to_fetch[0] = &collection_ref;
@@ -3565,12 +3572,12 @@ flatpak_dir_pull (FlatpakDir          *self,
 
           if (rev == NULL)
             return flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
-                                 collection_ref.collection_id, collection_ref.ref_name, repository);
+                                 collection_ref.collection_id, collection_ref.ref_name, state->remote);
         }
       else
 #endif  /* FLATPAK_ENABLE_P2P */
         {
-          rev = flatpak_dir_lookup_ref_from_summary (self, repository, ref, NULL, NULL, cancellable, error);
+          rev = flatpak_remote_state_lookup_ref (state, ref, NULL, error);
           results = NULL;
         }
 
@@ -3603,7 +3610,7 @@ flatpak_dir_pull (FlatpakDir          *self,
 
   /* Setup extra data information before starting to pull, so we can have precise
    * progress reports */
-  if (!flatpak_dir_setup_extra_data (self, repo, repository,
+  if (!flatpak_dir_setup_extra_data (self, repo, state->remote,
                                      ref, rev, results,
                                      flatpak_flags,
                                      progress,
@@ -3611,18 +3618,18 @@ flatpak_dir_pull (FlatpakDir          *self,
                                      error))
     goto out;
 
-  if (!repo_pull (repo, repository,
+  if (!repo_pull (repo, state->remote,
                   subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
                   ref, rev, results, flatpak_flags, flags,
                   progress,
                   cancellable, error))
     {
-      g_prefix_error (error, _("While pulling %s from remote %s: "), ref, repository);
+      g_prefix_error (error, _("While pulling %s from remote %s: "), ref, state->remote);
       goto out;
     }
 
   if (!flatpak_dir_pull_extra_data (self, repo,
-                                    repository,
+                                    state->remote,
                                     ref, rev,
                                     flatpak_flags,
                                     progress,
@@ -6359,8 +6366,8 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_deploy,
                      gboolean             no_static_deltas,
                      gboolean             reinstall,
+                     FlatpakRemoteState  *state,
                      const char          *ref,
-                     const char          *remote_name,
                      const char         **opt_subpaths,
                      OstreeAsyncProgress *progress,
                      GCancellable        *cancellable,
@@ -6385,7 +6392,6 @@ flatpak_dir_install (FlatpakDir          *self,
       g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
-      g_autofree char *collection_id = NULL;
       gboolean is_oci;
 
       system_helper = flatpak_dir_get_system_helper (self);
@@ -6396,28 +6402,21 @@ flatpak_dir_install (FlatpakDir          *self,
       else
         subpaths = empty_subpaths;
 
-      if (!flatpak_dir_ensure_repo (self, cancellable, error))
-        return FALSE;
-
       if (!ostree_repo_remote_get_url (self->repo,
-                                       remote_name,
+                                       state->remote,
                                        &url,
                                        error))
         return FALSE;
 
-      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote,
                                                       &gpg_verify_summary, error))
         return FALSE;
 
-      if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
-        return FALSE;
-
-      if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+      if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote,
                                               &gpg_verify, error))
         return FALSE;
 
-      is_oci = flatpak_dir_get_remote_oci (self, remote_name);
-
+      is_oci = flatpak_dir_get_remote_oci (self, state->remote);
       if (no_pull)
         {
           /* Do nothing */
@@ -6435,10 +6434,10 @@ flatpak_dir_install (FlatpakDir          *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, remote_name, ref, NULL, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, progress, cancellable, error))
             return FALSE;
         }
-      else if ((!gpg_verify_summary && collection_id == NULL) || !gpg_verify)
+      else if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
         {
           /* The remote is not gpg verified, so we don't want to allow installation via
              a download in the home directory, as there is no way to verify you're not
@@ -6459,10 +6458,6 @@ flatpak_dir_install (FlatpakDir          *self,
           /* We're pulling from a remote source, we do the network mirroring pull as a
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
-          g_autoptr(GBytes) summary_copy = NULL;
-          g_autoptr(GBytes) summary_sig_copy = NULL;
-          g_autoptr(GFile) summary_file = NULL;
-          g_autoptr(GFile) summary_sig_file = NULL;
 
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, NULL, error);
           if (child_repo == NULL)
@@ -6470,23 +6465,13 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
-          /* Avoid fetching the system remote summary on P2P code paths.
-           * Instead we have to regenerate the summary in the child repo,
-           * because the refs in it can be pulled from various different
-           * remotes. */
-          if (collection_id == NULL &&
-              !flatpak_dir_remote_fetch_summary (self, remote_name,
-                                                 &summary_copy, &summary_sig_copy,
-                                                 cancellable, error))
-            return FALSE;
-
           /* Don’t resolve a rev or OstreeRepoFinderResult set early; the pull
            * code will do this. */
           /* FIXME: Ideally we could merge these two flatpak_dir_pull() calls
            * so @ref and  %OSTREE_REPO_METADATA_REF are resolved atomically.
            * However, pulling them separately is no worse than the old code path
            * where the summary and ref were pulled separately. */
-          if (!flatpak_dir_pull (self, remote_name, ref, NULL, NULL, subpaths,
+          if (!flatpak_dir_pull (self, state, ref, NULL, NULL, subpaths,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -6494,8 +6479,8 @@ flatpak_dir_install (FlatpakDir          *self,
             return FALSE;
 
 #ifdef FLATPAK_ENABLE_P2P
-          if (collection_id != NULL &&
-              !flatpak_dir_pull (self, remote_name, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
+          if (state->collection_id != NULL &&
+              !flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -6503,33 +6488,8 @@ flatpak_dir_install (FlatpakDir          *self,
             return FALSE;
 #endif  /* FLATPAK_ENABLE_P2P */
 
-          /* Regenerate the summary in the child repo because the summary copied
-           * into the repo by the flatpak_dir_pull() call above is reflective of the refs on the
-           * remote that was pulled from, which might be a peer remote and might not
-           * have the full set of refs that was pulled. */
-          if (collection_id != NULL &&
-              !ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
+          if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             return FALSE;
-
-          if (summary_copy != NULL)
-            {
-              summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
-              if (!g_file_replace_contents (summary_file,
-                                            g_bytes_get_data (summary_copy, NULL),
-                                            g_bytes_get_size (summary_copy),
-                                            NULL, FALSE, 0, NULL, cancellable, NULL))
-                return FALSE;
-            }
-
-          if (collection_id == NULL)
-            {
-              summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
-              if (!g_file_replace_contents (summary_sig_file,
-                                            g_bytes_get_data (summary_sig_copy, NULL),
-                                            g_bytes_get_size (summary_sig_copy),
-                                            NULL, FALSE, 0, NULL, cancellable, NULL))
-                return FALSE;
-            }
 
           child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
         }
@@ -6543,7 +6503,7 @@ flatpak_dir_install (FlatpakDir          *self,
       g_debug ("Calling system helper: Deploy");
       if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                    child_repo_path ? child_repo_path : "",
-                                                   helper_flags, ref, remote_name,
+                                                   helper_flags, ref, state->remote,
                                                    (const char * const *) subpaths,
                                                    installation ? installation : "",
                                                    cancellable,
@@ -6560,7 +6520,7 @@ flatpak_dir_install (FlatpakDir          *self,
     {
       /* Don’t resolve a rev or OstreeRepoFinderResult set early; the pull
        * code will do this. */
-      if (!flatpak_dir_pull (self, remote_name, ref, NULL, NULL, opt_subpaths, NULL,
+      if (!flatpak_dir_pull (self, state, ref, NULL, NULL, opt_subpaths, NULL,
                              flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
@@ -6568,7 +6528,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_deploy)
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote_name, opt_subpaths,
+      if (!flatpak_dir_deploy_install (self, ref, state->remote, opt_subpaths,
                                        reinstall, cancellable, error))
         return FALSE;
     }
@@ -6921,8 +6881,8 @@ flatpak_dir_update (FlatpakDir          *self,
                     gboolean             no_deploy,
                     gboolean             no_static_deltas,
                     gboolean             allow_downgrade,
+                    FlatpakRemoteState  *state,
                     const char          *ref,
-                    const char          *remote_name,
                     const char          *commit,
                     const OstreeRepoFinderResult * const *results,
                     const char         **opt_subpaths,
@@ -6958,13 +6918,13 @@ flatpak_dir_update (FlatpakDir          *self,
   else
     subpaths = old_subpaths;
 
-  if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, error))
+  if (!ostree_repo_remote_get_url (self->repo, state->remote, &url, error))
     return FALSE;
 
   if (*url == 0)
     return TRUE; /* Empty URL => disabled */
 
-  is_oci = flatpak_dir_get_remote_oci (self, remote_name);
+  is_oci = flatpak_dir_get_remote_oci (self, state->remote);
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -6977,7 +6937,6 @@ flatpak_dir_update (FlatpakDir          *self,
       g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
-      g_autofree char *collection_id = NULL;
 
       if (allow_downgrade)
         return flatpak_fail (error, "Can't update to a specific commit without root permissions");
@@ -7000,28 +6959,25 @@ flatpak_dir_update (FlatpakDir          *self,
         return FALSE;
 
       if (!ostree_repo_remote_get_url (self->repo,
-                                       remote_name,
+                                       state->remote,
                                        &url,
                                        error))
         return FALSE;
 
       helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
 
-      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote,
                                                       &gpg_verify_summary, error))
         return FALSE;
 
-      if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
-        return FALSE;
-
-      if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+      if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote,
                                               &gpg_verify, error))
         return FALSE;
 
       if (no_pull)
         {
         }
-      else if ((!gpg_verify_summary && collection_id == NULL) || !gpg_verify)
+      else if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
         {
           /* The remote is not gpg verified, so we don't want to allow installation via
              a download in the home directory, as there is no way to verify you're not
@@ -7050,7 +7006,7 @@ flatpak_dir_update (FlatpakDir          *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, remote_name, ref, NULL, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, progress, cancellable, error))
             return FALSE;
         }
       else
@@ -7058,23 +7014,9 @@ flatpak_dir_update (FlatpakDir          *self,
           /* We're pulling from a remote source, we do the network mirroring pull as a
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
-          g_autoptr(GBytes) summary_copy = NULL;
-          g_autoptr(GBytes) summary_sig_copy = NULL;
-          g_autoptr(GFile) summary_file = NULL;
-          g_autoptr(GFile) summary_sig_file = NULL;
 
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, commit, error);
           if (child_repo == NULL)
-            return FALSE;
-
-          /* Avoid fetching the system remote summary on P2P code paths.
-           * Instead we have to regenerate the summary in the child repo,
-           * because the refs in it can be pulled from various different
-           * remotes. */
-          if (collection_id == NULL &&
-              !flatpak_dir_remote_fetch_summary (self, remote_name,
-                                                 &summary_copy, &summary_sig_copy,
-                                                 cancellable, error))
             return FALSE;
 
           /* FIXME: Ideally we could merge these two flatpak_dir_pull() calls
@@ -7082,47 +7024,22 @@ flatpak_dir_update (FlatpakDir          *self,
            * However, pulling them separately is no worse than the old code path
            * where the summary and ref were pulled separately. */
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
-          if (!flatpak_dir_pull (self, remote_name, ref, commit, results, subpaths,
+          if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
 #ifdef FLATPAK_ENABLE_P2P
-          if (collection_id != NULL &&
-              !flatpak_dir_pull (self, remote_name, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
+          if (state->collection_id != NULL &&
+              !flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
 #endif  /* FLATPAK_ENABLE_P2P */
 
-          /* Regenerate the summary in the child repo because the summary copied
-           * into the repo by the flatpak_dir_pull() call above is reflective of the refs on the
-           * remote that was pulled from, which might be a peer remote and might not
-           * have the full set of refs that was pulled. */
-          if (collection_id != NULL &&
-              !ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
+          if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             return FALSE;
-
-          if (summary_copy != NULL)
-            {
-              summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
-              if (!g_file_replace_contents (summary_file,
-                                            g_bytes_get_data (summary_copy, NULL),
-                                            g_bytes_get_size (summary_copy),
-                                            NULL, FALSE, 0, NULL, cancellable, NULL))
-                return FALSE;
-            }
-
-          if (collection_id == NULL)
-            {
-              summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
-              if (!g_file_replace_contents (summary_sig_file,
-                                            g_bytes_get_data (summary_sig_copy, NULL),
-                                            g_bytes_get_size (summary_sig_copy),
-                                            NULL, FALSE, 0, NULL, cancellable, NULL))
-                return FALSE;
-            }
 
           child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
         }
@@ -7133,7 +7050,7 @@ flatpak_dir_update (FlatpakDir          *self,
       g_debug ("Calling system helper: Deploy");
       if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                    child_repo_path ? child_repo_path : "",
-                                                   helper_flags, ref, remote_name,
+                                                   helper_flags, ref, state->remote,
                                                    subpaths,
                                                    installation ? installation : "",
                                                    cancellable,
@@ -7148,7 +7065,7 @@ flatpak_dir_update (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, remote_name, ref, commit, results, subpaths,
+      if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths,
                              NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
@@ -8266,7 +8183,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
           g_autoptr(GError) local_error = NULL;
 
           /* Make sure the branch is up to date. */
-          if (!flatpak_dir_fetch_remote_repo_metadata (self, remote, state->summary, state->collection_id, cancellable, &local_error))
+          if (!_flatpak_dir_fetch_remote_state_metadata_branch (self, state, cancellable, &local_error))
             {
               if (optional)
                 {
@@ -10115,12 +10032,10 @@ fetch_remote_summary_file (FlatpakDir   *self,
 }
 
 gboolean
-flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
-                                        const char    *remote_name,
-                                        GVariant      *summary,
-                                        const char    *collection_id,
-                                        GCancellable  *cancellable,
-                                        GError       **error)
+_flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
+                                                 FlatpakRemoteState *state, /* This state does not have metadata filled out yet */
+                                                 GCancellable  *cancellable,
+                                                 GError       **error)
 {
 #ifdef FLATPAK_ENABLE_P2P
   FlatpakPullFlags flatpak_flags;
@@ -10129,10 +10044,10 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
   g_autofree char *checksum_from_repo = NULL;
   g_autofree char *refspec = NULL;
 
-  g_assert (collection_id != NULL);
+  g_assert (state->collection_id != NULL);
 
   /* We can only fetch metadata if we’re going to verify it with GPG. */
-  if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+  if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote,
                                           &gpg_verify, error))
     return FALSE;
 
@@ -10142,10 +10057,10 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
   /* Look up the checksum as advertised by the summary file. If it differs from
    * what we currently have on disk, try and pull the updated ostree-metadata ref.
    * This is how we implement caching. Ignore failure and pull the ref anyway. */
-  if (!flatpak_summary_lookup_ref (summary, collection_id, OSTREE_REPO_METADATA_REF, &checksum_from_summary, NULL))
-    return flatpak_fail (error, "No such ref (%s, %s) in remote %s", collection_id, OSTREE_REPO_METADATA_REF, remote_name);
+  if (!flatpak_summary_lookup_ref (state->summary, state->collection_id, OSTREE_REPO_METADATA_REF, &checksum_from_summary, NULL))
+    return flatpak_fail (error, "No such ref (%s, %s) in remote %s", state->collection_id, OSTREE_REPO_METADATA_REF, state->remote);
 
-  refspec = g_strdup_printf ("%s:%s", remote_name, OSTREE_REPO_METADATA_REF);
+  refspec = g_strdup_printf ("%s:%s", state->remote, OSTREE_REPO_METADATA_REF);
   if (!ostree_repo_resolve_rev (self->repo, refspec, TRUE, &checksum_from_repo, error))
     return FALSE;
 
@@ -10178,29 +10093,22 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
-      if (!flatpak_dir_ensure_repo (self, cancellable, error))
-        return FALSE;
-
       if (!ostree_repo_remote_get_url (self->repo,
-                                       remote_name,
+                                       state->remote,
                                        &url,
                                        error))
         return FALSE;
 
-      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote,
                                                       &gpg_verify_summary, error))
         return FALSE;
 
-      if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
-        return FALSE;
-
-      if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+      if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote,
                                               &gpg_verify, error))
         return FALSE;
 
-      is_oci = flatpak_dir_get_remote_oci (self, remote_name);
-
-      if ((!gpg_verify_summary && collection_id == NULL) || !gpg_verify)
+      is_oci = flatpak_dir_get_remote_oci (self, state->remote);
+      if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
         {
           /* The remote is not gpg verified, so we don't want to allow installation via
              a download in the home directory, as there is no way to verify you're not
@@ -10218,19 +10126,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
         }
       else if (is_oci)
         {
-          g_autoptr(FlatpakOciRegistry) registry = NULL;
-          g_autoptr(GFile) registry_file = NULL;
-
-          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, error);
-          if (registry == NULL)
-            return FALSE;
-
-          registry_file = g_file_new_for_uri (flatpak_oci_registry_get_uri (registry));
-
-          child_repo_path = g_file_get_path (registry_file);
-
-          if (!flatpak_dir_mirror_oci (self, registry, remote_name, OSTREE_REPO_METADATA_REF, NULL, NULL, cancellable, error))
-            return FALSE;
+          return flatpak_fail (error, "No metadata branch for OCI");
         }
       else
         {
@@ -10241,7 +10137,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
           if (child_repo == NULL)
             return FALSE;
 
-          if (!flatpak_dir_pull (self, remote_name, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
+          if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -10251,7 +10147,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
           /* Regenerate the summary in the child repo because the
            * flatpak_dir_pull() call above might not copy the remote summary
            * into the repo if the "branches" key is set on the remote. */
-          if (collection_id != NULL &&
+          if (state->collection_id != NULL &&
               !ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
             return FALSE;
 
@@ -10263,7 +10159,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
       g_debug ("Calling system helper: Deploy");
       if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                    child_repo_path ? child_repo_path : "",
-                                                   helper_flags, OSTREE_REPO_METADATA_REF, remote_name,
+                                                   helper_flags, OSTREE_REPO_METADATA_REF, state->remote,
                                                    (const char * const *) subpaths,
                                                    installation ? installation : "",
                                                    cancellable,
@@ -10276,7 +10172,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
       return TRUE;
     }
 
-  if (!flatpak_dir_pull (self, remote_name, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL,
+  if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL,
                          flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                          NULL, cancellable, error))
     return FALSE;

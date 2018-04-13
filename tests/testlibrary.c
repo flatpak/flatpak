@@ -636,6 +636,10 @@ test_list_updates (void)
   update_test_app ();
   update_repo ();
 
+  /* Drop all in-memory summary caches so we can find the new update */
+  flatpak_installation_drop_caches (inst, NULL, &error);
+  g_assert_no_error (error);
+
   refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);

@@ -337,6 +337,7 @@ handle_deploy (FlatpakSystemHelper   *object,
     }
   else if (local_pull)
     {
+      g_autoptr(FlatpakRemoteState) state = NULL;
       if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
                                        arg_origin,
                                        &url,
@@ -354,13 +355,21 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
+      state = flatpak_dir_get_remote_state_optional (system, arg_origin, NULL, &error);
+      if (state == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Error pulling from repo: %s", error->message);
+          return TRUE;
+        }
+
       /* Work around ostree-pull spinning the default main context for the sync calls */
       main_context = g_main_context_new ();
       g_main_context_push_thread_default (main_context);
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-      if (!flatpak_dir_pull (system, arg_origin, arg_ref, NULL, NULL, (const char **)arg_subpaths, NULL,
+      if (!flatpak_dir_pull (system, state, arg_ref, NULL, NULL, (const char **)arg_subpaths, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &error))
         {
