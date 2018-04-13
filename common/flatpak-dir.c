@@ -10714,66 +10714,6 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
   return g_steal_pointer (&commit_variant);
 }
 
-
-gboolean
-flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
-                             const char   *remote_name,
-                             const char   *ref,
-                             guint64      *download_size,
-                             guint64      *installed_size,
-                             char        **metadata,
-                             GCancellable *cancellable,
-                             GError      **error)
-{
-  g_autoptr(GVariant) cache_v = NULL;
-  g_autoptr(GVariant) cache = NULL;
-  g_autoptr(GVariant) res = NULL;
-  g_autoptr(GVariant) refdata = NULL;
-  int pos;
-  g_autoptr(GError) local_error = NULL;
-
-  if (!flatpak_dir_lookup_repo_metadata (self, remote_name, cancellable, &local_error,
-                                         "xa.cache", "@*", &cache_v))
-    {
-      if (local_error == NULL)
-        g_set_error_literal (&local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                             _("No flatpak cache in remote summary"));
-      g_propagate_error (error, g_steal_pointer (&local_error));
-      return FALSE;
-    }
-
-  cache = g_variant_get_child_value (cache_v, 0);
-
-  if (!flatpak_variant_bsearch_str (cache, ref, &pos))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   _("No entry for %s in remote summary flatpak cache "), ref);
-      return FALSE;
-    }
-
-  refdata = g_variant_get_child_value (cache, pos);
-  res = g_variant_get_child_value (refdata, 1);
-
-  if (installed_size)
-    {
-      guint64 v;
-      g_variant_get_child (res, 0, "t", &v);
-      *installed_size = GUINT64_FROM_BE (v);
-    }
-
-  if (download_size)
-    {
-      guint64 v;
-      g_variant_get_child (res, 1, "t", &v);
-      *download_size = GUINT64_FROM_BE (v);
-    }
-
-  if (metadata)
-    g_variant_get_child (res, 2, "s", metadata);
-
-  return TRUE;
-}
-
 void
 flatpak_related_free (FlatpakRelated *self)
 {
