@@ -691,7 +691,7 @@ FlatpakRemoteState * flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                                             GCancellable *cancellable,
                                                             GError      **error);
 GPtrArray * flatpak_dir_find_remote_related (FlatpakDir *dir,
-                                             const char *remote_name,
+                                             FlatpakRemoteState *state,
                                              const char *ref,
                                              GCancellable *cancellable,
                                              GError **error);

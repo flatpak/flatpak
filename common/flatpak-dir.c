@@ -10806,8 +10806,8 @@ add_related (FlatpakDir *self,
 
 GPtrArray *
 flatpak_dir_find_remote_related (FlatpakDir *self,
+                                 FlatpakRemoteState *state,
                                  const char *ref,
-                                 const char *remote_name,
                                  GCancellable *cancellable,
                                  GError **error)
 {
@@ -10817,18 +10817,13 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
   g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_related_free);
   g_autofree char *url = NULL;
-  g_autoptr(FlatpakRemoteState) state = NULL;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (self, remote_name, cancellable, error);
-  if (state == NULL)
-    return NULL;
-
   if (!ostree_repo_remote_get_url (self->repo,
-                                   remote_name,
+                                   state->remote,
                                    &url,
                                    error))
     return FALSE;
@@ -10894,18 +10889,22 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
 
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
 
-              if (flatpak_summary_lookup_ref (state->summary, extension_collection_id, extension_ref, &checksum, NULL))
+              checksum = flatpak_remote_state_lookup_ref (state, extension_ref, NULL, NULL);
+              if (checksum)
                 {
-                  add_related (self, related, extension, extension_collection_id, extension_ref, checksum, no_autodownload, download_if, autodelete, locale_subset);
+                  add_related (self, related, extension, extension_collection_id, extension_ref, checksum,
+                               no_autodownload, download_if, autodelete, locale_subset);
                 }
               else if (subdirectories)
                 {
-                  g_auto(GStrv) refs = flatpak_summary_match_subrefs (state->summary, extension_collection_id, extension_ref);
+                  g_auto(GStrv) refs = flatpak_remote_state_match_subrefs (state, extension_ref);
                   int j;
                   for (j = 0; refs[j] != NULL; j++)
                     {
-                      if (flatpak_summary_lookup_ref (state->summary, extension_collection_id, refs[j], &checksum, NULL))
-                        add_related (self, related, extension, extension_collection_id, refs[j], checksum, no_autodownload, download_if, autodelete, locale_subset);
+                      g_autofree char *subref_checksum = flatpak_remote_state_lookup_ref (state, refs[j], NULL, NULL);
+                      if (subref_checksum)
+                        add_related (self, related, extension, extension_collection_id, refs[j], subref_checksum,
+                                     no_autodownload, download_if, autodelete, locale_subset);
                     }
                 }
             }

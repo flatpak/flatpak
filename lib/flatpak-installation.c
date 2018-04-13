@@ -2264,13 +2264,18 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GPtrArray) related = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
+  g_autoptr(FlatpakRemoteState) state = NULL;
   int i;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return NULL;
 
-  related = flatpak_dir_find_remote_related (dir, ref, remote_name,
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  if (state == NULL)
+    return NULL;
+
+  related = flatpak_dir_find_remote_related (dir, state, ref,
                                              cancellable, error);
   if (related == NULL)
     return NULL;
