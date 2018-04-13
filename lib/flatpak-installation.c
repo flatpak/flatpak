@@ -1936,17 +1936,20 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
                                              GError             **error)
 {
   g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return FALSE;
 
-  return flatpak_dir_fetch_ref_cache (dir, remote_name, full_ref,
-                                      download_size, installed_size,
-                                      NULL,
-                                      cancellable,
-                                      error);
+  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  if (state == NULL)
+    return FALSE;
+
+  return flatpak_remote_state_lookup_cache (state, full_ref,
+                                            download_size, installed_size, NULL,
+                                            cancellable, error);
 }
 
 /**
@@ -1970,6 +1973,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
                                                  GError             **error)
 {
   g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
   char *res = NULL;
 
@@ -1977,10 +1981,13 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  if (!flatpak_dir_fetch_ref_cache (dir, remote_name, full_ref,
-                                    NULL, NULL,
-                                    &res,
-                                    cancellable, error))
+  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  if (state == NULL)
+    return FALSE;
+
+  if (!flatpak_remote_state_lookup_cache (state, full_ref,
+                                          NULL, NULL, &res,
+                                          cancellable, error))
     return NULL;
 
   return g_bytes_new_take (res, strlen (res));
