@@ -357,6 +357,7 @@ ask_for_remote (FlatpakTransaction *self, const char **remotes)
 
 static gboolean
 add_related (FlatpakTransaction *self,
+             FlatpakRemoteState *state,
              const char *remote,
              const char *ref,
              GError **error)
@@ -371,7 +372,7 @@ add_related (FlatpakTransaction *self,
   if (self->no_pull)
     related = flatpak_dir_find_local_related (self->dir, ref, remote, NULL, &local_error);
   else
-    related = flatpak_dir_find_remote_related (self->dir, ref, remote, NULL, &local_error);
+    related = flatpak_dir_find_remote_related (self->dir, state, ref, NULL, &local_error);
   if (related == NULL)
     {
       g_printerr (_("Warning: Problem looking for related refs: %s\n"), local_error->message);
@@ -401,6 +402,7 @@ add_related (FlatpakTransaction *self,
 static gboolean
 add_deps (FlatpakTransaction *self,
           GKeyFile *metakey,
+          FlatpakRemoteState *state,
           const char *remote,
           const char *ref,
           GError **error)
@@ -473,7 +475,7 @@ add_deps (FlatpakTransaction *self,
     }
 
   if (runtime_remote != NULL &&
-      !add_related (self, runtime_remote, full_runtime_ref, error))
+      !add_related (self, state, runtime_remote, full_runtime_ref, error))
     return FALSE;
 
   return TRUE;
@@ -607,13 +609,13 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
 
   if (self->add_deps)
     {
-      if (!add_deps (self, metakey, remote, ref, error))
+      if (!add_deps (self, metakey, state, remote, ref, error))
         return FALSE;
     }
 
   flatpak_transaction_add_op (self, remote, ref, subpaths, commit, bundle, kind);
 
-  if (!add_related (self, remote, ref, error))
+  if (!add_related (self, state, remote, ref, error))
     return FALSE;
 
   return TRUE;
