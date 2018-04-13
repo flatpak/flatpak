@@ -701,14 +701,6 @@ GPtrArray * flatpak_dir_find_local_related (FlatpakDir *self,
                                             GCancellable *cancellable,
                                             GError **error);
 
-gboolean flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
-                                           const char    *remote_name,
-                                           GCancellable  *cancellable,
-                                           GError       **error,
-                                           const char    *key,
-                                           const char    *format_string,
-                                           ...);
-
 char ** flatpak_dir_get_default_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locale_subpaths (FlatpakDir *self);
