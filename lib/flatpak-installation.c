@@ -2018,6 +2018,7 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
+  g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GHashTable) ht = NULL;
   GHashTableIter iter;
   gpointer key;
@@ -2027,11 +2028,12 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  if (!flatpak_dir_list_remote_refs (dir,
-                                     remote_name,
-                                     &ht,
-                                     cancellable,
-                                     error))
+  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  if (state == NULL)
+    return NULL;
+
+  if (!flatpak_dir_list_remote_refs (dir, state, &ht,
+                                     cancellable, error))
     return NULL;
 
   g_hash_table_iter_init (&iter, ht);
@@ -2077,6 +2079,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GHashTable) ht = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *ref = NULL;
   const char *checksum;
 
@@ -2087,11 +2090,12 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  if (!flatpak_dir_list_remote_refs (dir,
-                                     remote_name,
-                                     &ht,
-                                     cancellable,
-                                     error))
+  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  if (state == NULL)
+    return NULL;
+
+  if (!flatpak_dir_list_remote_refs (dir, state, &ht,
+                                     cancellable, error))
     return NULL;
 
   if (kind == FLATPAK_REF_KIND_APP)

@@ -655,7 +655,7 @@ gboolean   flatpak_dir_get_remote_nodeps (FlatpakDir *self,
 gboolean   flatpak_dir_get_remote_disabled (FlatpakDir *self,
                                             const char *remote_name);
 gboolean   flatpak_dir_list_remote_refs (FlatpakDir   *self,
-                                         const char   *remote,
+                                         FlatpakRemoteState *state,
                                          GHashTable  **refs,
                                          GCancellable *cancellable,
                                          GError      **error);

@@ -8471,7 +8471,8 @@ flatpak_dir_remote_list_refs (FlatpakDir         *self,
   GVariantIter iter;
   GVariant *child;
 
-  g_assert (state->summary != NULL);
+  if (!flatpak_remote_state_ensure_summary (state, error))
+    return FALSE;
 
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
@@ -10126,32 +10127,27 @@ remove_unless_in_hash (gpointer key,
 
 gboolean
 flatpak_dir_list_remote_refs (FlatpakDir   *self,
-                              const char   *remote,
+                              FlatpakRemoteState *state,
                               GHashTable  **refs,
                               GCancellable *cancellable,
                               GError      **error)
 {
   g_autoptr(GError) my_error = NULL;
-  g_autoptr(FlatpakRemoteState) state = NULL;
 
   if (error == NULL)
     error = &my_error;
-
-  state = flatpak_dir_get_remote_state (self, remote, cancellable, error);
-  if (state == NULL)
-    return FALSE;
 
   if (!flatpak_dir_remote_list_refs (self, state, refs,
                                      cancellable, error))
     return FALSE;
 
-  if (flatpak_dir_get_remote_noenumerate (self, remote))
+  if (flatpak_dir_get_remote_noenumerate (self, state->remote))
     {
       g_autoptr(GHashTable) unprefixed_local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
       g_autoptr(GHashTable) local_refs = NULL;
       GHashTableIter hash_iter;
       gpointer key;
-      g_autofree char *refspec_prefix = g_strconcat (remote, ":.", NULL);
+      g_autofree char *refspec_prefix = g_strconcat (state->remote, ":.", NULL);
 
       /* For noenumerate remotes, only return data for already locally
        * available refs */
