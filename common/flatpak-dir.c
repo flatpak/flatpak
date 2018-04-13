@@ -85,22 +85,9 @@ static gboolean flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                                   GCancellable *cancellable,
                                                   GError      **error);
 
-static GVariant *fetch_remote_summary_file (FlatpakDir    *self,
-                                            const char    *remote,
-                                            GBytes       **summary_sig_bytes_out,
-                                            GCancellable  *cancellable,
-                                            GError       **error);
-
 static GVariant * flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
                                                        GCancellable *cancellable,
                                                        GError      **error);
-static char * flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
-                                                   const char          *remote,
-                                                   const          char *ref,
-                                                   GVariant           **out_variant,
-                                                   GVariant           **out_summary,
-                                                   GCancellable        *cancellable,
-                                                   GError             **error);
 
 static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
                                                                  FlatpakRemoteState *state,
@@ -3153,43 +3140,6 @@ lookup_oci_registry_uri_from_summary (GVariant *summary,
     }
 
   return g_steal_pointer (&registry_uri);
-}
-
-static char *
-flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
-                                     const char          *remote,
-                                     const          char *ref,
-                                     GVariant           **out_variant,
-                                     GVariant           **out_summary,
-                                     GCancellable        *cancellable,
-                                     GError             **error)
-{
-  g_autoptr(GVariant) summary = NULL;
-  g_autofree char *latest_rev = NULL;
-  g_autofree char *collection_id = NULL;
-
-  summary = fetch_remote_summary_file (self, remote, NULL, cancellable, error);
-  if (summary == NULL)
-    return NULL;
-
-  /* Derive the collection ID from the remote we are querying. This will act as
-   * a sanity check on the summary ref lookup. */
-  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
-    return FALSE;
-
-  if (!flatpak_summary_lookup_ref (summary, collection_id, ref, &latest_rev, out_variant))
-    {
-      if (collection_id != NULL)
-        flatpak_fail (error, "No such ref (%s, %s) in remote %s", collection_id, ref, remote);
-      else
-        flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote);
-      return NULL;
-    }
-
-  if (out_summary)
-    *out_summary = g_steal_pointer (&summary);
-
-  return g_steal_pointer (&latest_rev);
 }
 
 static void
@@ -10000,35 +9950,6 @@ flatpak_dir_list_remote_refs (FlatpakDir   *self,
     }
 
   return TRUE;
-}
-
-static GVariant *
-fetch_remote_summary_file (FlatpakDir   *self,
-                           const char   *remote,
-                           GBytes     **summary_sig_bytes_out,
-                           GCancellable *cancellable,
-                           GError      **error)
-{
-  g_autoptr(GError) my_error = NULL;
-  g_autoptr(GBytes) summary_bytes = NULL;
-  g_autoptr(GBytes) summary_sig_bytes = NULL;
-
-  if (error == NULL)
-    error = &my_error;
-
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    return NULL;
-
-  if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                         &summary_bytes, &summary_sig_bytes,
-                                         cancellable, error))
-    return NULL;
-
-
-  if (summary_sig_bytes_out != NULL)
-    *summary_sig_bytes_out = g_steal_pointer (&summary_sig_bytes);
-  return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                       summary_bytes, FALSE));
 }
 
 gboolean
