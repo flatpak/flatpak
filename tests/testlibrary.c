@@ -277,7 +277,9 @@ test_remote (void)
   g_autoptr(GFile) inst_file = NULL;
   g_autoptr(GFile) repo_file = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
+#ifdef FLATPAK_ENABLE_P2P
   gboolean gpg_verify_summary;
+#endif
   gboolean res;
 
   inst = flatpak_installation_new_user (NULL, &error);
