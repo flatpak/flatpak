@@ -604,8 +604,10 @@ gboolean   flatpak_appstream_xml_migrate (FlatpakXml *source,
                                           const char *ref,
                                           const char *id,
                                           GKeyFile   *metadata);
-GBytes *flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
-                                            GError    **error);
+gboolean flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
+                                             GBytes **uncompressed,
+                                             GBytes **compressed,
+                                             GError    **error);
 gboolean   flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                             const char  **gpg_key_ids,
                                             const char   *gpg_homedir,

@@ -60,10 +60,12 @@ ostree --repo=repos/test refs > refs
 assert_file_has_content refs "^app/org.test.App/$ARCH/master$"
 assert_file_has_content refs '^ostree-metadata$'
 assert_file_has_content refs "^appstream/${ARCH}$"
+assert_file_has_content refs "^appstream2/${ARCH}$"
 ostree --repo=repos/test refs --collections > refs-collections
 assert_file_has_content refs-collections "^(org.test.Collection, app/org.test.App/$ARCH/master)$"
 assert_file_has_content refs-collections '^(org.test.Collection, ostree-metadata)$'
 assert_file_has_content refs-collections "^(org.test.Collection, appstream/${ARCH})$"
+assert_file_has_content refs-collections "^(org.test.Collection, appstream2/${ARCH})$"
 assert_has_file repos/test/summary.sig
 ostree --repo=repos/test summary --view > summary
 assert_file_has_content summary '^Collection ID (ostree.summary.collection-id): org.test.Collection$'
