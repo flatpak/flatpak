@@ -89,10 +89,12 @@ static GVariant * flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
                                                        GCancellable *cancellable,
                                                        GError      **error);
 
+#ifdef FLATPAK_ENABLE_P2P
 static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
                                                                  FlatpakRemoteState *state,
                                                                  GCancellable  *cancellable,
                                                                  GError       **error);
+#endif
 
 static gboolean    flatpak_dir_find_latest_rev (FlatpakDir               *self,
                                                 FlatpakRemoteState       *state,
@@ -9952,13 +9954,13 @@ flatpak_dir_list_remote_refs (FlatpakDir   *self,
   return TRUE;
 }
 
+#ifdef FLATPAK_ENABLE_P2P
 gboolean
 _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
                                                  FlatpakRemoteState *state, /* This state does not have metadata filled out yet */
                                                  GCancellable  *cancellable,
                                                  GError       **error)
 {
-#ifdef FLATPAK_ENABLE_P2P
   FlatpakPullFlags flatpak_flags;
   gboolean gpg_verify;
   g_autofree char *checksum_from_summary = NULL;
@@ -10099,10 +10101,8 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
     return FALSE;
 
   return TRUE;
-#else  /* if !FLATPAK_ENABLE_P2P */
-  g_assert_not_reached ();
-#endif  /* FLATPAK_ENABLE_P2P */
 }
+#endif  /* FLATPAK_ENABLE_P2P */
 
 gboolean
 flatpak_dir_update_remote_configuration_for_state (FlatpakDir    *self,
