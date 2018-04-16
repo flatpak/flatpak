@@ -10592,6 +10592,21 @@ add_related (FlatpakDir *self,
   g_ptr_array_add (related, rel);
 }
 
+static const char *
+find_best_remote_in_list_for_runtime (FlatpakDir         *self,
+                                      const char * const *remotes,
+                                      const char         *source_remote)
+{
+  /* Use the source remote if it was in the list */
+  if (g_strv_contains (remotes, source_remote))
+    return source_remote;
+
+  /* Otherwise, we assume that remotes is in priority order. Take
+   * the first one from there (which will be NULL if the list
+   * was empty) */
+  return remotes[0];
+}
+
 GPtrArray *
 flatpak_dir_find_remote_related (FlatpakDir *self,
                                  const char *ref,
@@ -10645,8 +10660,60 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
         {
           char *extension;
 
-          if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
-              *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
+          if (g_strcmp0 (groups[i], FLATPAK_METADATA_GROUP_APPLICATION) == 0)
+            {
+              g_autofree char *runtime_ref = g_key_file_get_string (metakey, groups[i], FLATPAK_METADATA_KEY_RUNTIME, NULL);
+              g_autofree char *full_runtime_ref = g_strdup_printf ("runtime/%s", runtime_ref);
+              g_auto(GStrv) full_runtime_ref_parts = flatpak_decompose_ref (full_runtime_ref, error);
+              g_auto(GStrv) remotes = NULL;
+              const char *best_remote = NULL;
+
+              if (full_runtime_ref_parts == NULL)
+                return NULL;
+
+              remotes = flatpak_dir_search_for_dependency (self, full_runtime_ref, cancellable, error);
+
+              if (remotes == NULL)
+                return NULL;
+
+              best_remote = find_best_remote_in_list_for_runtime (self,
+                                                                  (const char * const *) remotes,
+                                                                  remote_name);
+
+              /* XXX: Not sure what to do if we cannot find a best remote for the runtime here.
+               * We probably should not block showing the other related refs in this case,
+               * so just skip it for now. */
+              if (best_remote != NULL)
+                {
+                  g_autofree char *collection_id = flatpak_dir_get_remote_collection_id (self, best_remote);
+                  g_autofree char *checksum = NULL;
+                  const char *runtime_name = parts[1];
+                  gboolean no_autodownload = FALSE;
+                  const char *download_if = NULL;
+                  gboolean autodelete = FALSE;
+                  gboolean locale_subset = FALSE;
+
+                  if (flatpak_summary_lookup_ref (summary,
+                                                  collection_id,
+                                                  full_runtime_ref,
+                                                  &checksum,
+                                                  NULL))
+                    {
+                      add_related (self,
+                                   related,
+                                   runtime_name,
+                                   collection_id,
+                                   full_runtime_ref,
+                                   checksum,
+                                   no_autodownload,
+                                   download_if,
+                                   autodelete,
+                                   locale_subset);
+                    }
+                }
+            }
+          else if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
+                   *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
             {
               g_autofree char *version = g_key_file_get_string (metakey, groups[i],
                                                                 FLATPAK_METADATA_KEY_VERSION, NULL);
@@ -10805,8 +10872,63 @@ flatpak_dir_find_local_related (FlatpakDir *self,
         {
           char *extension;
 
-          if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
-              *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
+          if (g_strcmp0 (groups[i], FLATPAK_METADATA_GROUP_APPLICATION) == 0)
+            {
+              g_autofree char *runtime_ref = g_key_file_get_string (metakey, groups[i], FLATPAK_METADATA_KEY_RUNTIME, NULL);
+              g_autofree char *full_runtime_ref = g_strdup_printf ("runtime/%s", runtime_ref);
+              g_auto(GStrv) full_runtime_ref_parts = flatpak_decompose_ref (full_runtime_ref, error);
+              g_auto(GStrv) remotes = NULL;
+              const char *best_remote = NULL;
+
+              if (full_runtime_ref_parts == NULL)
+                return NULL;
+
+              remotes = flatpak_dir_search_for_dependency (self, full_runtime_ref, cancellable, error);
+
+              if (remotes == NULL)
+                return NULL;
+
+              best_remote = find_best_remote_in_list_for_runtime (self,
+                                                                  (const char * const *) remotes,
+                                                                  remote_name);
+
+              /* XXX: Not sure what to do if we cannot find a best remote for the runtime here.
+               * We probably should not block showing the other related refs in this case,
+               * so just skip it for now. */
+              if (best_remote != NULL)
+                {
+                  g_autofree char *prefixed_extension_ref = g_strdup_printf ("%s:%s",
+                                                                             best_remote,
+                                                                             full_runtime_ref);
+                  g_autofree char *collection_id = flatpak_dir_get_remote_collection_id (self, best_remote);
+                  g_autofree char *checksum = NULL;
+                  const char *runtime_name = parts[1];
+                  gboolean no_autodownload = FALSE;
+                  const char *download_if = NULL;
+                  gboolean autodelete = FALSE;
+                  gboolean locale_subset = FALSE;
+
+                  if (!ostree_repo_resolve_rev (self->repo,
+                                                prefixed_extension_ref,
+                                                FALSE,
+                                                &checksum,
+                                                NULL))
+                    {
+                      add_related (self,
+                                   related,
+                                   runtime_name,
+                                   collection_id,
+                                   full_runtime_ref,
+                                   checksum,
+                                   no_autodownload,
+                                   download_if,
+                                   autodelete,
+                                   locale_subset);
+                    }
+                }
+            }
+          else if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
+                   *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
             {
               g_autofree char *version = g_key_file_get_string (metakey, groups[i],
                                                                 FLATPAK_METADATA_KEY_VERSION, NULL);
