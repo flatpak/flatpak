@@ -3579,6 +3579,9 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  GError      **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
+  g_autofree const char **all_refs_keys = NULL;
+  guint n_keys;
+  gsize i;
   g_autoptr(GHashTable) arches = NULL;  /* (element-type utf8 utf8) */
   const char *collection_id;
 
@@ -3597,8 +3600,14 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                               error))
     return FALSE;
 
-  GLNX_HASH_TABLE_FOREACH (all_refs, const char *, ref)
+  all_refs_keys = (const char **)g_hash_table_get_keys_as_array (all_refs, &n_keys);
+
+  /* Sort refs so that appdata order is stable for e.g. deltas */
+  g_qsort_with_data (all_refs_keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+
+  for (i = 0; i < n_keys; i++)
     {
+      const char *ref = all_refs_keys[i];
       g_auto(GStrv) split = NULL;
       const char *arch;
 
@@ -3645,8 +3654,10 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       appstream_root = flatpak_appstream_xml_new ();
 
-      GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, ref, const char *, commit)
+      for (i = 0; i < n_keys; i++)
         {
+          const char *ref = all_refs_keys[i];
+          const char *commit;
           g_autoptr(GVariant) commit_v = NULL;
           g_autoptr(GVariant) commit_metadata = NULL;
           g_auto(GStrv) split = NULL;
@@ -3670,6 +3681,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                   g_hash_table_lookup (all_refs, main_ref))
                 continue;
             }
+
+          commit = g_hash_table_lookup (all_refs, ref);
 
           if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
                                          &commit_v, NULL))
