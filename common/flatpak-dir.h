@@ -81,7 +81,7 @@ typedef struct
 void         flatpak_related_free (FlatpakRelated *related);
 
 
-/* The collection state represent the state of the remote at a particular
+/* The remote state represent the state of the remote at a particular
    time, including the summary file and the metadata (which may be from
    the summary or from a branch. We create this once per highlevel operation
    to avoid looking up the summary multiple times, but also to avoid races
