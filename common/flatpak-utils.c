@@ -419,39 +419,65 @@ flatpak_is_linux32_arch (const char *arch)
   return FALSE;
 }
 
+static struct {
+  const char *kernel_arch;
+  const char *compat_arch;
+} compat_arches[] = {
+  { "x86_64", "i386" },
+  { "aarch64", "arm" },
+};
+
+static const char *
+flatpak_get_compat_arch (const char *kernel_arch)
+{
+  int i;
+
+  /* Also add all other arches that are compatible with the kernel arch */
+  for (i = 0; i < G_N_ELEMENTS(compat_arches); i++)
+    {
+      if (strcmp (compat_arches[i].kernel_arch, kernel_arch) == 0)
+        return compat_arches[i].compat_arch;
+    }
+
+  return NULL;
+}
+
+static const char *
+flatpak_get_compat_arch_reverse (const char *compat_arch)
+{
+  int i;
+
+  /* Also add all other arches that are compatible with the kernel arch */
+  for (i = 0; i < G_N_ELEMENTS(compat_arches); i++)
+    {
+      if (strcmp (compat_arches[i].compat_arch, compat_arch) == 0)
+        return compat_arches[i].kernel_arch;
+    }
+
+  return NULL;
+}
+
 /* Get all compatible arches for this host in order of priority */
 const char **
 flatpak_get_arches (void)
 {
   static gsize arches = 0;
-  static struct {
-    const char *kernel_arch;
-    const char *compat_arch;
-  } compat_arches[] = {
-    { "x86_64", "i386" },
-    { "aarch64", "arm" },
-  };
 
   if (g_once_init_enter (&arches))
     {
       gsize new_arches = 0;
       const char *main_arch = flatpak_get_arch ();
       const char *kernel_arch = flatpak_get_kernel_arch ();
+      const char *compat_arch;
       GPtrArray *array = g_ptr_array_new ();
-      int i;
 
       /* This is the userspace arch, i.e. the one flatpak itself was
          build for. It's always first. */
       g_ptr_array_add (array, (char *)main_arch);
 
-      /* Also add all other arches that are compatible with the kernel arch */
-      for (i = 0; i < G_N_ELEMENTS(compat_arches); i++)
-        {
-          if ((strcmp (compat_arches[i].kernel_arch, kernel_arch) == 0) &&
-              /* Don't re-add the main arch */
-              (strcmp (compat_arches[i].compat_arch, main_arch) != 0))
-            g_ptr_array_add (array, (char *)compat_arches[i].compat_arch);
-        }
+      compat_arch = flatpak_get_compat_arch (kernel_arch);
+      if (strcmp (compat_arch, main_arch) != 0)
+        g_ptr_array_add (array, (char *)compat_arch);
 
       g_ptr_array_add (array, NULL);
       new_arches = (gsize)g_ptr_array_free (array, FALSE);
@@ -3582,7 +3608,15 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       arch = split[2];
       if (!g_hash_table_contains (arches, arch))
-        g_hash_table_add (arches, g_strdup (arch));
+        {
+          const char *reverse_compat_arch;
+          g_hash_table_add (arches, g_strdup (arch));
+
+          /* If repo contains e.g. i386, also generated x86-64 appdata */
+          reverse_compat_arch = flatpak_get_compat_arch_reverse (arch);
+          if (reverse_compat_arch)
+            g_hash_table_add (arches, g_strdup (reverse_compat_arch));
+        }
     }
 
   GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
@@ -3600,6 +3634,9 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
       g_autoptr(FlatpakXml) appstream_root = NULL;
       g_autoptr(GBytes) xml_data = NULL;
       gboolean skip_commit = FALSE;
+      const char *compat_arch;
+
+      compat_arch = flatpak_get_compat_arch (arch);
 
       if (g_mkdtemp_full (tmpdir, 0755) == NULL)
         return flatpak_fail (error, "Can't create temporary directory");
@@ -3622,7 +3659,17 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
             continue;
 
           if (strcmp (split[2], arch) != 0)
-            continue;
+            {
+              g_autofree char *main_ref = NULL;
+              /* Include refs that don't match the main arch (e.g. x86_64), if they match
+                 the compat arch (e.g. i386) and the main arch version is not in the repo */
+              if (g_strcmp0 (split[2], compat_arch) == 0)
+                main_ref = g_strdup_printf ("%s/%s/%s/%s",
+                                            split[0], split[1], arch, split[3]);
+              if (main_ref == NULL ||
+                  g_hash_table_lookup (all_refs, main_ref))
+                continue;
+            }
 
           if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
                                          &commit_v, NULL))
