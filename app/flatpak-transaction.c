@@ -51,7 +51,7 @@ struct FlatpakTransactionOp {
 struct FlatpakTransaction {
   FlatpakDir *dir;
   GHashTable *refs;
-  GHashTable *remote_states;
+  GHashTable *remote_states; /* (element-type utf8 FlatpakRemoteState) */
   GPtrArray *system_dirs;
   GList *ops;
   GPtrArray *added_origin_remotes;
