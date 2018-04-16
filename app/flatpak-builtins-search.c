@@ -29,13 +29,23 @@
 #include "flatpak-table-printer.h"
 #include "flatpak-utils.h"
 
+static char *opt_arch;
+
+static GOptionEntry options[] = {
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to search for"), N_("ARCH") },
+  { NULL}
+};
+
 static GPtrArray *
-get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
+get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
 {
   GError *error = NULL;
   GPtrArray *ret = g_ptr_array_new_with_free_func (g_object_unref);
-  const char **arches = flatpak_get_arches ();
-  guint i,j,k;
+  guint i,j;
+
+  if (arch == NULL)
+    arch = flatpak_get_arch ();
+
   for (i = 0; i < dirs->len; ++i)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
@@ -64,27 +74,23 @@ get_remote_stores (GPtrArray *dirs, GCancellable *cancellable)
           as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
 #endif
 
-          for (k = 0; arches[k]; ++k)
-            {
-              g_autofree char *appstream_path = g_build_filename (install_path, "appstream", remotes[j],
-                                                                  arches[k], "active", "appstream.xml.gz",
-                                                                  NULL);
-              g_autoptr(GFile) appstream_file = g_file_new_for_path (appstream_path);
+          g_autofree char *appstream_path = g_build_filename (install_path, "appstream", remotes[j],
+                                                              arch, "active", "appstream.xml.gz",
+                                                              NULL);
+          g_autoptr(GFile) appstream_file = g_file_new_for_path (appstream_path);
 
-              as_store_from_file (store, appstream_file, NULL, cancellable, &error);
-              if (error)
-                {
-                  // We want to ignore this error as it is harmless and valid
-                  // NOTE: appstream-glib doesn't have granular file-not-found error
-                  if (!g_str_has_suffix (error->message, "No such file or directory"))
-                    g_warning ("%s", error->message);
-                  g_clear_error (&error);
-                  continue;
-                }
+          as_store_from_file (store, appstream_file, NULL, cancellable, &error);
+          if (error)
+            {
+              // We want to ignore this error as it is harmless and valid
+              // NOTE: appstream-glib doesn't have granular file-not-found error
+              if (!g_str_has_suffix (error->message, "No such file or directory"))
+                g_warning ("%s", error->message);
+              g_clear_error (&error);
             }
 
-            g_object_set_data_full (G_OBJECT(store), "remote-name", g_strdup (remotes[j]), g_free);
-            g_ptr_array_add (ret, g_steal_pointer (&store));
+          g_object_set_data_full (G_OBJECT(store), "remote-name", g_strdup (remotes[j]), g_free);
+          g_ptr_array_add (ret, g_steal_pointer (&store));
         }
     }
   return ret;
@@ -235,21 +241,16 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
   g_autoptr(GPtrArray) dirs = NULL;
   g_autoptr(GOptionContext) context = g_option_context_new (_("TEXT - Search remote apps/runtimes for text"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
-  const char **arches = flatpak_get_arches ();
-  int i;
 
-  if (!flatpak_option_context_parse (context, NULL, &argc, &argv,
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
                                      FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, cancellable, error))
     return FALSE;
 
   if (argc < 2)
     return usage_error (context, _("TEXT must be specified"), error);
 
-  for (i = 0; arches[i] != NULL; i++)
-    {
-      if (!update_appstream (dirs, NULL, arches[i], FLATPAK_APPSTREAM_TTL, TRUE, cancellable, error))
-        return FALSE;
-    }
+  if (!update_appstream (dirs, NULL, opt_arch, FLATPAK_APPSTREAM_TTL, TRUE, cancellable, error))
+    return FALSE;
 
   const char *search_text = argv[1];
   GSList *matches = NULL;
@@ -257,7 +258,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
 
   // We want a store for each remote so we keep the remote information
   // as AsApp doesn't currently contain that information
-  g_autoptr(GPtrArray) remote_stores = get_remote_stores (dirs, cancellable);
+  g_autoptr(GPtrArray) remote_stores = get_remote_stores (dirs, opt_arch, cancellable);
   for (j = 0; j < remote_stores->len; ++j)
     {
       AsStore *store = g_ptr_array_index (remote_stores, j);
@@ -325,7 +326,7 @@ flatpak_complete_search (FlatpakCompletion *completion)
   g_autoptr(GOptionContext) context = NULL;
 
   context = g_option_context_new ("");
-  if (!flatpak_option_context_parse (context, NULL, &completion->argc, &completion->argv,
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
                                      FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, NULL, NULL, NULL))
     return FALSE;
 
