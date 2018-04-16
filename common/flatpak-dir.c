@@ -8559,7 +8559,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  /* Atm this has to be optional, because otherwise we test-unsigned-summaries.sh due
+  /* Atm this has to be optional, because otherwise we fail test-unsigned-summaries.sh due
    * to the install failing with a wrong-gpg error, rather than silently ignoring this */
   state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
   if (state == NULL)
