@@ -88,7 +88,7 @@ void         flatpak_related_free (FlatpakRelated *related);
    if it happened to change in the middle of the operation */
 typedef struct
 {
-  char *remote;
+  char *remote_name;
   char *collection_id;
   GVariant *summary;
   GBytes *summary_sig_bytes;

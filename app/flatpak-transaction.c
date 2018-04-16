@@ -282,7 +282,7 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction *self,
   state = flatpak_dir_get_remote_state_optional (self->dir, remote, NULL, error);
 
   if (state)
-    g_hash_table_insert (self->remote_states, state->remote, state);
+    g_hash_table_insert (self->remote_states, state->remote_name, state);
 
   return state;
 }
