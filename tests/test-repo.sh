@@ -37,8 +37,14 @@ setup_repo
 if ! ostree show --repo=repos/test appstream/${ARCH} > /dev/null; then
     assert_not_reached "No appstream branch"
 fi
+if ! ostree show --repo=repos/test appstream2/${ARCH} > /dev/null; then
+    assert_not_reached "No appstream2 branch"
+fi
 ostree cat --repo=repos/test appstream/${ARCH} /appstream.xml.gz | gunzip -d > appdata.xml
 assert_file_has_content appdata.xml "<id>org.test.Hello.desktop</id>"
+
+ostree cat --repo=repos/test appstream2/${ARCH} /appstream.xml > appdata2.xml
+assert_file_has_content appdata2.xml "<id>org.test.Hello.desktop</id>"
 
 # Unsigned repo (not supported with collections; client-side use of collections requires GPG)
 if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then

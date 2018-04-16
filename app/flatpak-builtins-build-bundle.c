@@ -190,7 +190,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
       if (flatpak_appstream_xml_migrate (xml_root, appstream_root,
                                          full_branch, name, keyfile))
         {
-          g_autoptr(GBytes) xml_data = flatpak_appstream_xml_root_to_data (appstream_root, error);
+          g_autoptr(GBytes) xml_data = NULL;
           int i;
           g_autoptr(GFile) icons_dir =
             g_file_resolve_relative_path (root,
@@ -199,7 +199,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
           const char *icon_sizes_key[] = { "icon-64", "icon-128" };
           g_autofree char *icon_name = g_strconcat (name, ".png", NULL);
 
-          if (xml_data == NULL)
+          if (!flatpak_appstream_xml_root_to_data (appstream_root, NULL, &xml_data, error))
             return FALSE;
 
           g_variant_builder_add (&metadata_builder, "{sv}", "appdata",
