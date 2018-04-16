@@ -263,7 +263,7 @@ flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
     {
       const char *empty[] = { NULL };
       g_debug ("flatpak_remote_state_match_subrefs with no summary");
-      return g_strdupv (empty);
+      return g_strdupv ((char **)empty);
     }
 
   return flatpak_summary_match_subrefs (self->summary, self->collection_id, ref);
