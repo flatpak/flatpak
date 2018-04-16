@@ -448,7 +448,9 @@ update_appstream (GPtrArray    *dirs,
   int i, j;
 
   g_return_val_if_fail (dirs != NULL, FALSE);
-  g_return_val_if_fail (arch != NULL, FALSE);
+
+  if (arch == NULL)
+    arch = flatpak_get_arch ();
 
   if (remote == NULL)
     {
