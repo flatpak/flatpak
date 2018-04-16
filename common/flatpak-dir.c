@@ -213,7 +213,7 @@ flatpak_remote_state_free (FlatpakRemoteState *remote_state)
 
 gboolean
 flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
-                                     GError      **error)
+                                     GError            **error)
 {
   if (self->summary == NULL)
     return flatpak_fail (error, "Unable to load summary from remote %s", self->remote);
@@ -223,7 +223,7 @@ flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
 
 gboolean
 flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
-                                      GError      **error)
+                                      GError            **error)
 {
   if (self->metadata == NULL)
     return flatpak_fail (error, "Unable to load medata from remote %s", self->remote);
@@ -234,9 +234,9 @@ flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
 
 char *
 flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
-                                 const   char *ref,
-                                 GVariant    **out_variant,
-                                 GError      **error)
+                                 const char         *ref,
+                                 GVariant          **out_variant,
+                                 GError            **error)
 {
   g_autofree char *latest_rev = NULL;
 
@@ -257,11 +257,11 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
 
 char **
 flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
-                                    const   char *ref)
+                                    const char         *ref)
 {
   if (self->summary == NULL)
     {
-      char *empty[] = { NULL };
+      const char *empty[] = { NULL };
       g_debug ("flatpak_remote_state_match_subrefs with no summary");
       return g_strdupv (empty);
     }
@@ -272,8 +272,8 @@ flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
 
 gboolean
 flatpak_remote_state_lookup_repo_metadata (FlatpakRemoteState *self,
-                                           const char    *key,
-                                           const char    *format_string,
+                                           const char         *key,
+                                           const char         *format_string,
                                            ...)
 {
   g_autoptr(GVariant) value = NULL;
