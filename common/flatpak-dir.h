@@ -399,10 +399,6 @@ gboolean    flatpak_dir_deploy_appstream (FlatpakDir          *self,
                                           gboolean            *out_changed,
                                           GCancellable        *cancellable,
                                           GError             **error);
-gboolean    flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
-                                                    const char          *remote,
-                                                    const char          *arch,
-                                                    GError             **error);
 gboolean    flatpak_dir_update_appstream (FlatpakDir          *self,
                                           const char          *remote,
                                           const char          *arch,
