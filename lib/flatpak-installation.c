@@ -873,7 +873,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   int i, j;
 #ifdef FLATPAK_ENABLE_P2P
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GMainContext) context = NULL;
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GAsyncResult) result = NULL;
   g_autoptr(GPtrArray) collection_refs = NULL; /* (element-type OstreeCollectionRef) */
@@ -967,29 +966,37 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         }
     }
 
-  g_ptr_array_add (collection_refs, NULL);
+  /* if we do not have any collection refs, then we shouldn't try to find
+   * dynamic remotes for them, to avoid extra unnecessary processing, and also
+   * because the refs array cannot be empty in ostree_repo_find_remotes_async
+   * (otherwise it early returns and we never get our callback called) */
+  if (collection_refs->len > 0) {
+    g_autoptr(GMainContext) context = NULL;
 
-  context = g_main_context_new ();
-  g_main_context_push_thread_default (context);
+    g_ptr_array_add (collection_refs, NULL);
 
-  ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
-                                  (const OstreeCollectionRef * const *) collection_refs->pdata,
-                                  NULL,  /* no options */
-                                  NULL, /* default finders */
-                                  NULL,  /* no progress */
-                                  cancellable,
-                                  async_result_cb,
-                                  &result);
+    context = g_main_context_new ();
+    g_main_context_push_thread_default (context);
 
-  while (result == NULL)
-    g_main_context_iteration (context, TRUE);
+    ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
+                                    (const OstreeCollectionRef * const *) collection_refs->pdata,
+                                    NULL,  /* no options */
+                                    NULL, /* default finders */
+                                    NULL,  /* no progress */
+                                    cancellable,
+                                    async_result_cb,
+                                    &result);
 
-  results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
+    while (result == NULL)
+      g_main_context_iteration (context, TRUE);
 
-  g_main_context_pop_thread_default (context);
+    results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
 
-  if (results == NULL)
-    return NULL;
+    g_main_context_pop_thread_default (context);
+
+    if (results == NULL)
+      return NULL;
+  }
 
   for (i = 0; i < installed->len; i++)
     {
