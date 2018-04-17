@@ -2443,14 +2443,31 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       g_auto(GLnxLockFile) child_repo_lock = { 0, };
       FlatpakSystemHelper *system_helper;
       gboolean is_oci;
+      g_autofree char *url = NULL;
       g_autoptr(GFile) child_repo_file = NULL;
       g_autofree char *child_repo_path = NULL;
+      gboolean gpg_verify_summary;
+      gboolean gpg_verify;
 
       system_helper = flatpak_dir_get_system_helper (self);
 
       g_assert (system_helper != NULL);
 
+      if (!ostree_repo_remote_get_url (self->repo,
+                                       state->remote_name,
+                                       &url,
+                                       error))
+        return FALSE;
+
       is_oci = flatpak_dir_get_remote_oci (self, remote);
+
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote_name,
+                                                      &gpg_verify_summary, error))
+        return FALSE;
+
+      if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote_name,
+                                              &gpg_verify, error))
+        return FALSE;
 
       if (is_oci)
         {
@@ -2475,6 +2492,20 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                   return FALSE;
                 }
             }
+        }
+      else if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
+        {
+          /* The remote is not gpg verified, so we don't want to allow installation via
+             a download in the home directory, as there is no way to verify you're not
+             injecting anything into the remote. However, in the case of a remote
+             configured to a local filesystem we can just let the system helper do
+             the installation, as it can then avoid network i/o and be certain the
+             data comes from the right place.
+
+             If @collection_id is non-%NULL, we can verify the refs in commit
+             metadata, so don’t need to verify the summary. */
+          if (!g_str_has_prefix (url, "file:"))
+            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
         }
       else
         {
@@ -2508,13 +2539,14 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
           child_repo_file = g_object_ref (ostree_repo_get_path (child_repo));
         }
 
-      child_repo_path = g_file_get_path (child_repo_file);
+      if (child_repo_file)
+        child_repo_path = g_file_get_path (child_repo_file);
 
       installation = flatpak_dir_get_id (self);
 
       g_debug ("Calling system helper: DeployAppstream");
       if (!flatpak_system_helper_call_deploy_appstream_sync (system_helper,
-                                                             child_repo_path,
+                                                             child_repo_path ? child_repo_path : "",
                                                              remote,
                                                              arch,
                                                              installation ? installation : "",
@@ -2522,7 +2554,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                                              error))
         return FALSE;
 
-      (void) flatpak_rm_rf (child_repo_file, NULL, NULL);
+      if (child_repo_file)
+        (void) flatpak_rm_rf (child_repo_file, NULL, NULL);
 
       return TRUE;
     }
