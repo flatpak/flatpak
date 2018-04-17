@@ -2399,7 +2399,7 @@ child_repo_ensure_summary (OstreeRepo *child_repo,
   if (state->collection_id != NULL)
     {
       /* Regenerate the summary in the child repo because the summary copied
-       * into the repo by the flatpak_dir_pull() call above is reflective of the refs on the
+       * into the repo by flatpak_dir_pull() is reflective of the refs on the
        * remote that was pulled from, which might be a peer remote and might not
        * have the full set of refs that was pulled. */
       if (!ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
