@@ -4719,6 +4719,8 @@ format_flatpak_run_args_from_run_opts (GStrv flatpak_run_args)
     {
       if (g_strcmp0 (*iter, "no-a11y-bus") == 0)
         g_string_append_printf (str, " --no-a11y-bus");
+      else if (g_strcmp0 (*iter, "no-documents-portal") == 0)
+        g_string_append_printf (str, " --no-documents-portal");
     }
 
   return g_string_free (str, FALSE);
