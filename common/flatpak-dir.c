@@ -2401,7 +2401,10 @@ child_repo_ensure_summary (OstreeRepo *child_repo,
       /* Regenerate the summary in the child repo because the summary copied
        * into the repo by flatpak_dir_pull() is reflective of the refs on the
        * remote that was pulled from, which might be a peer remote and might not
-       * have the full set of refs that was pulled. */
+       * have the full set of refs that was pulled. It's also possible that
+       * ostree didn't copy the remote summary into the repo at all if the
+       * "branches" key is set in the remote config. See
+       * https://github.com/ostreedev/ostree/issues/1461 */
       if (!ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
         return FALSE;
     }
@@ -10095,11 +10098,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
                                  NULL, cancellable, error))
             return FALSE;
 
-          /* Regenerate the summary in the child repo because the
-           * flatpak_dir_pull() call above might not copy the remote summary
-           * into the repo if the "branches" key is set on the remote. */
-          if (state->collection_id != NULL &&
-              !ostree_repo_regenerate_summary (child_repo, NULL, cancellable, error))
+          if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             return FALSE;
 
           child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
