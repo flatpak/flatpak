@@ -468,8 +468,7 @@ update_appstream (GPtrArray    *dirs,
                 g_debug ("%s age %" G_GUINT64_FORMAT " is greater than ttl %" G_GUINT64_FORMAT, ts_file_path, ts_file_age, ttl);
 
               if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
-                  flatpak_dir_get_remote_noenumerate (dir, remotes[i]) ||
-                  !flatpak_dir_check_for_appstream_update (dir, remotes[i], arch, &local_error))
+                  flatpak_dir_get_remote_noenumerate (dir, remotes[i]))
                 {
                   if (local_error)
                     {
@@ -528,19 +527,6 @@ update_appstream (GPtrArray    *dirs,
               g_autoptr(GError) local_error = NULL;
 
               found = TRUE;
-
-              /* Early bail out check */
-              if (!flatpak_dir_check_for_appstream_update (dir, remote, arch, &local_error))
-                {
-                  if (local_error)
-                    {
-                      if (quiet)
-                        g_debug ("%s: %s", _("Error updating"), local_error->message);
-                      else
-                        g_printerr ("%s: %s\n", _("Error updating"), local_error->message);
-                    }
-                  continue;
-                }
 
               progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
               res = flatpak_dir_update_appstream (dir, remote, arch, &changed,

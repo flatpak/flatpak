@@ -2339,57 +2339,6 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
   return TRUE;
 }
 
-gboolean
-flatpak_dir_check_for_appstream_update (FlatpakDir          *self,
-                                        const char          *remote,
-                                        const char          *arch,
-                                        GError             **error)
-{
-  const char *old_checksum = NULL;
-  g_autofree char *new_checksum = NULL;
-  g_autoptr(GFile) active_link = NULL;
-  g_autofree char *branch = NULL;
-  g_autoptr(GFileInfo) file_info = NULL;
-  g_autoptr(GError) local_error = NULL;
-  g_autoptr(FlatpakRemoteState) state = NULL;
-
-  if (!flatpak_dir_maybe_ensure_repo (self, NULL, NULL))
-    return TRUE;
-
-  active_link = flatpak_build_file (flatpak_dir_get_path (self),
-                                     "appstream",
-                                     remote,
-                                     arch,
-                                     "active",
-                                     NULL);
-
-  file_info = g_file_query_info (active_link, OSTREE_GIO_FAST_QUERYINFO,
-                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                 NULL, NULL);
-  if (file_info != NULL)
-    old_checksum =  g_file_info_get_symlink_target (file_info);
-
-  branch = g_strdup_printf ("appstream/%s", arch);
-
-  state = flatpak_dir_get_remote_state_optional (self, remote, NULL, &local_error);
-  if (state == NULL ||
-      !flatpak_dir_find_latest_rev (self, state, branch, NULL, &new_checksum,
-                                    NULL, NULL, &local_error))
-    {
-      flatpak_fail (error, _("Failed to find latest revision for ref %s from remote %s: %s"),
-                    branch, remote, local_error->message);
-      new_checksum = NULL;
-    }
-
-  if (new_checksum == NULL)
-    {
-      g_debug ("No %s branch for remote %s, ignoring", branch, remote);
-      return FALSE; /* No appstream branch, don't update, no error */
-    }
-
-  return g_strcmp0 (new_checksum, old_checksum) != 0;
-}
-
 static gboolean
 child_repo_ensure_summary (OstreeRepo *child_repo,
                            FlatpakRemoteState *state,
@@ -2417,7 +2366,6 @@ child_repo_ensure_summary (OstreeRepo *child_repo,
 
   return TRUE;
 }
-
 
 gboolean
 flatpak_dir_update_appstream (FlatpakDir          *self,
