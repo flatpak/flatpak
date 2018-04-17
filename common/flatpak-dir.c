@@ -10585,11 +10585,12 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
       groups = g_key_file_get_groups (metakey, NULL);
       for (i = 0; groups[i] != NULL; i++)
         {
-          char *extension;
+          char *tagged_extension;
 
           if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
-              *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
+              *(tagged_extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
             {
+              g_autofree char *extension = NULL;
               g_autofree char *version = g_key_file_get_string (metakey, groups[i],
                                                                 FLATPAK_METADATA_KEY_VERSION, NULL);
               gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
@@ -10606,6 +10607,9 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
               const char *branch;
               g_autofree char *extension_ref = NULL;
               g_autofree char *checksum = NULL;
+
+              /* Parse actual extension name */
+              flatpak_parse_extension_with_tag (tagged_extension, &extension, NULL);
 
               if (version)
                 branch = version;
@@ -10749,11 +10753,12 @@ flatpak_dir_find_local_related (FlatpakDir *self,
       groups = g_key_file_get_groups (metakey, NULL);
       for (i = 0; groups[i] != NULL; i++)
         {
-          char *extension;
+          char *tagged_extension;
 
           if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
-              *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
+              *(tagged_extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
             {
+              g_autofree char *extension = NULL;
               g_autofree char *version = g_key_file_get_string (metakey, groups[i],
                                                                 FLATPAK_METADATA_KEY_VERSION, NULL);
               gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
@@ -10771,6 +10776,9 @@ flatpak_dir_find_local_related (FlatpakDir *self,
               g_autofree char *prefixed_extension_ref = NULL;
               g_autofree char *checksum = NULL;
               g_autofree char *extension_collection_id = NULL;
+
+              /* Parse actual extension name */
+              flatpak_parse_extension_with_tag (tagged_extension, &extension, NULL);
 
               if (version)
                 branch = version;

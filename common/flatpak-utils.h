@@ -394,6 +394,10 @@ typedef struct
 
 void flatpak_extension_free (FlatpakExtension *extension);
 
+void flatpak_parse_extension_with_tag (const char  *extension,
+                                       char       **name,
+                                       char       **tag);
+
 GList *flatpak_list_extensions (GKeyFile   *metakey,
                                 const char *arch,
                                 const char *branch);

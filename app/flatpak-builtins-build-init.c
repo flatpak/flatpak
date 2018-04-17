@@ -39,6 +39,7 @@ static char *opt_type;
 static char *opt_sdk_dir;
 static char **opt_sdk_extensions;
 static char **opt_tags;
+static char *opt_extension_tag;
 static char *opt_base;
 static char *opt_base_version;
 static char **opt_base_extensions;
@@ -51,6 +52,7 @@ static GOptionEntry options[] = {
   { "base", 0, 0, G_OPTION_ARG_STRING, &opt_base, N_("Initialize apps from named app"), N_("APP") },
   { "base-version", 0, 0, G_OPTION_ARG_STRING, &opt_base_version, N_("Specify version for --base"), N_("VERSION") },
   { "base-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_base_extensions, N_("Include this base extension"), N_("EXTENSION") },
+  { "extension-tag", 0, 0, G_OPTION_ARG_STRING, &opt_extension_tag, N_("Extension tag to use if building extension"), N_("EXTENSION_TAG") },
   { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, N_("Initialize /usr with a writable copy of the sdk"), NULL },
   { "type", 0, 0, G_OPTION_ARG_STRING, &opt_type, N_("Specify the build type (app, runtime, extension)"), N_("TYPE") },
   { "tag", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_tags, N_("Add a tag"), N_("TAG") },
@@ -74,14 +76,20 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
   for (i = 0; src_extensions[i] != NULL; i++)
     {
       const char *requested_extension = src_extensions[i];
+      g_autofree char *requested_extension_name = NULL;
       gboolean found = FALSE;
+
+      /* Remove any '@' from the name */
+      flatpak_parse_extension_with_tag (requested_extension,
+                                        &requested_extension_name,
+                                        NULL);
 
       for (l = extensions; l != NULL; l = l->next)
         {
           FlatpakExtension *ext = l->data;
 
-          if (strcmp (ext->installed_id, requested_extension) == 0 ||
-              strcmp (ext->id, requested_extension) == 0)
+          if (strcmp (ext->installed_id, requested_extension_name) == 0 ||
+              strcmp (ext->id, requested_extension_name) == 0)
             {
               if (!ext->is_unmaintained)
                 {
@@ -128,13 +136,24 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
       if (!found)
         {
           g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
-          return flatpak_fail (error, _("Requested extension %s not installed"), requested_extension);
+          return flatpak_fail (error, _("Requested extension %s not installed"), requested_extension_name);
         }
     }
 
   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
 
   return TRUE;
+}
+
+static char *
+maybe_format_extension_tag (const char *extension_tag)
+{
+  if (extension_tag != NULL)
+    {
+      return g_strdup_printf ("tag=%s\n", extension_tag);
+    }
+
+  return g_strdup ("");
 }
 
 gboolean
@@ -360,11 +379,16 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     }
 
   if (is_extension)
-    g_string_append_printf (metadata_contents,
-                            "\n"
-                            "[ExtensionOf]\n"
-                            "ref=%s\n",
-                            runtime_ref);
+    {
+      g_autofree char *optional_extension_tag = maybe_format_extension_tag (opt_extension_tag);
+      g_string_append_printf (metadata_contents,
+                              "\n"
+                              "[ExtensionOf]\n"
+                              "ref=%s\n"
+                              "%s",
+                              runtime_ref,
+                              optional_extension_tag);
+    }
 
   if (!g_file_replace_contents (metadata_file,
                                 metadata_contents->str, metadata_contents->len, NULL, FALSE,

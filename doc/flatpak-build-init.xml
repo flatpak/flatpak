@@ -179,6 +179,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--extension-tag=EXTENSION_TAG</option></term>
+
+                <listitem><para>
+                    If building an extension, the tag to use when searching for
+                    the mount point of the extension.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--verbose</option></term>
 
                 <listitem><para>
