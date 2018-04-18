@@ -8154,51 +8154,49 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
     }
 
-  if (state->summary != NULL) /* In the optional case we might not have a summary */
+  if (state->collection_id == NULL)
     {
-      if (state->collection_id == NULL)
-        {
-          state->metadata = g_variant_get_child_value (state->summary, 1);
-        }
-      else
-        {
+      if (state->summary != NULL) /* In the optional case we might not have a summary */
+        state->metadata = g_variant_get_child_value (state->summary, 1);
+    }
+  else
+    {
 #ifdef FLATPAK_ENABLE_P2P
-          g_autofree char *latest_rev = NULL;
-          g_autoptr(GVariant) commit_v = NULL;
-          g_autoptr(GError) local_error = NULL;
+      g_autofree char *latest_rev = NULL;
+      g_autoptr(GVariant) commit_v = NULL;
+      g_autoptr(GError) local_error = NULL;
 
-          /* Make sure the branch is up to date. */
-          if (!_flatpak_dir_fetch_remote_state_metadata_branch (self, state, cancellable, &local_error))
+      /* Make sure the branch is up to date. */
+      if (!_flatpak_dir_fetch_remote_state_metadata_branch (self, state, cancellable, &local_error))
+        {
+          if (optional)
             {
-              if (optional)
-                {
-                  /* This happens for instance in the case where a p2p remote is invalid (wrong signature)
-                     and we should just silently fail to update to it. */
-                  g_debug ("Failed to download optional metadata");
-                }
-              else
-                {
-                  g_propagate_error (error, g_steal_pointer (&local_error));
-                  return NULL;
-                }
+              /* This happens for instance in the case where a p2p remote is invalid (wrong signature)
+                 and we should just silently fail to update to it. */
+              g_debug ("Failed to download optional metadata");
             }
           else
             {
-              /* Look up the commit containing the latest repository metadata. */
-              latest_rev = flatpak_dir_read_latest (self, remote, OSTREE_REPO_METADATA_REF,
-                                                    NULL, cancellable, error);
-              if (latest_rev == NULL)
-                return NULL;
-
-              if (!ostree_repo_load_commit (self->repo, latest_rev, &commit_v, NULL, error))
-                return NULL;
-
-              state->metadata = g_variant_get_child_value (commit_v, 0);
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return NULL;
             }
-#else  /* if !FLATPAK_ENABLE_P2P */
-          g_assert_not_reached ();
-#endif  /* !FLATPAK_ENABLE_P2P */
         }
+      else
+        {
+          /* Look up the commit containing the latest repository metadata. */
+          latest_rev = flatpak_dir_read_latest (self, remote, OSTREE_REPO_METADATA_REF,
+                                                NULL, cancellable, error);
+          if (latest_rev == NULL)
+            return NULL;
+
+          if (!ostree_repo_load_commit (self->repo, latest_rev, &commit_v, NULL, error))
+            return NULL;
+
+          state->metadata = g_variant_get_child_value (commit_v, 0);
+        }
+#else  /* if !FLATPAK_ENABLE_P2P */
+      g_assert_not_reached ();
+#endif  /* !FLATPAK_ENABLE_P2P */
     }
 
   return g_steal_pointer (&state);
@@ -10013,8 +10011,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
   /* Look up the checksum as advertised by the summary file. If it differs from
    * what we currently have on disk, try and pull the updated ostree-metadata ref.
    * This is how we implement caching. Ignore failure and pull the ref anyway. */
-  if (!flatpak_summary_lookup_ref (state->summary, state->collection_id, OSTREE_REPO_METADATA_REF, &checksum_from_summary, NULL))
-    return flatpak_fail (error, "No such ref (%s, %s) in remote %s", state->collection_id, OSTREE_REPO_METADATA_REF, state->remote_name);
+  flatpak_summary_lookup_ref (state->summary, state->collection_id, OSTREE_REPO_METADATA_REF, &checksum_from_summary, NULL);
 
   refspec = g_strdup_printf ("%s:%s", state->remote_name, OSTREE_REPO_METADATA_REF);
   if (!ostree_repo_resolve_rev (self->repo, refspec, TRUE, &checksum_from_repo, error))
