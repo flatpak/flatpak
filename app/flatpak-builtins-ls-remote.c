@@ -117,9 +117,16 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       g_autoptr(GHashTable) refs = NULL;
       RemoteDirPair *remote_dir_pair = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
+      gboolean is_local = FALSE;
 
-      if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], &preferred_dir, cancellable, error))
-        return FALSE;
+      is_local = g_str_has_prefix (argv[1], "file:");
+      if (is_local)
+        preferred_dir = flatpak_dir_get_system_default ();
+      else
+        {
+          if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], &preferred_dir, cancellable, error))
+            return FALSE;
+        }
 
       state = flatpak_dir_get_remote_state (preferred_dir, argv[1], cancellable, error);
       if (state == NULL)

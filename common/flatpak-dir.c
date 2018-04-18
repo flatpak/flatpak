@@ -8079,7 +8079,7 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
 
 static gboolean
 flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
-                                  const char   *name,
+                                  const char   *name_or_uri,
                                   GBytes      **out_summary,
                                   GBytes      **out_summary_sig,
                                   GCancellable *cancellable,
@@ -8091,13 +8091,13 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   g_autoptr(GBytes) summary = NULL;
   g_autoptr(GBytes) summary_sig = NULL;
 
-  if (!ostree_repo_remote_get_url (self->repo, name, &url, error))
+  if (!ostree_repo_remote_get_url (self->repo, name_or_uri, &url, error))
     return FALSE;
 
   if (*url == '\0')
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
-                   "Can't fetch summary from disabled remote ‘%s’", name);
+                   "Can't fetch summary from disabled remote ‘%s’", name_or_uri);
       return FALSE;
     }
 
@@ -8106,7 +8106,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   /* No caching for local files */
   if (!is_local)
     {
-      if (flatpak_dir_lookup_cached_summary (self, out_summary, out_summary_sig, name, url))
+      if (flatpak_dir_lookup_cached_summary (self, out_summary, out_summary_sig, name_or_uri, url))
         return TRUE;
     }
 
@@ -8114,9 +8114,9 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   if (error == NULL)
     error = &local_error;
 
-  if (flatpak_dir_get_remote_oci (self, name))
+  if (flatpak_dir_get_remote_oci (self, name_or_uri))
     {
-      if (!flatpak_dir_remote_make_oci_summary (self, name,
+      if (!flatpak_dir_remote_make_oci_summary (self, name_or_uri,
                                                 &summary,
                                                 cancellable,
                                                 error))
@@ -8124,8 +8124,8 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     }
   else
     {
-      g_debug ("Fetching summary file for remote ‘%s’", name);
-      if (!ostree_repo_remote_fetch_summary (self->repo, name,
+      g_debug ("Fetching summary file for remote ‘%s’", name_or_uri);
+      if (!ostree_repo_remote_fetch_summary (self->repo, name_or_uri,
                                              &summary, &summary_sig,
                                              cancellable,
                                              error))
@@ -8134,10 +8134,10 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
 
   if (summary == NULL)
     return flatpak_fail (error, "Remote listing for %s not available; server has no summary file\n" \
-                         "Check the URL passed to remote-add was valid\n", name);
+                         "Check the URL passed to remote-add was valid\n", name_or_uri);
 
   if (!is_local)
-    flatpak_dir_cache_summary (self, summary, summary_sig, name, url);
+    flatpak_dir_cache_summary (self, summary, summary_sig, name_or_uri, url);
 
   *out_summary = g_steal_pointer (&summary);
   if (out_summary_sig)
@@ -8148,7 +8148,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
 
 static FlatpakRemoteState *
 _flatpak_dir_get_remote_state (FlatpakDir   *self,
-                               const char   *remote,
+                               const char   *remote_or_uri,
                                gboolean      optional,
                                GBytes       *opt_summary,
                                GBytes       *opt_summary_sig,
@@ -8157,6 +8157,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 {
   g_autoptr(FlatpakRemoteState) state = flatpak_remote_state_new ();
   g_autoptr(GError) my_error = NULL;
+  gboolean is_local;
 
   if (error == NULL)
     error = &my_error;
@@ -8164,8 +8165,9 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
 
-  state->remote_name = g_strdup (remote);
-  if (!repo_get_remote_collection_id (self->repo, remote, &state->collection_id, error))
+  state->remote_name = g_strdup (remote_or_uri);
+  is_local = g_str_has_prefix (remote_or_uri, "file:");
+  if (!is_local && !repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
     return NULL;
 
   if (opt_summary)
@@ -8194,7 +8196,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       g_autoptr(GBytes) summary_bytes = NULL;
       g_autoptr(GBytes) summary_sig_bytes = NULL;
 
-      if (flatpak_dir_remote_fetch_summary (self, remote, &summary_bytes, &summary_sig_bytes,
+      if (flatpak_dir_remote_fetch_summary (self, remote_or_uri, &summary_bytes, &summary_sig_bytes,
                                             cancellable, &local_error))
         {
           state->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
@@ -8245,7 +8247,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       else
         {
           /* Look up the commit containing the latest repository metadata. */
-          latest_rev = flatpak_dir_read_latest (self, remote, OSTREE_REPO_METADATA_REF,
+          latest_rev = flatpak_dir_read_latest (self, remote_or_uri, OSTREE_REPO_METADATA_REF,
                                                 NULL, cancellable, error);
           if (latest_rev == NULL)
             return NULL;
