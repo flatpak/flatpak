@@ -363,6 +363,62 @@ test_list_refs (void)
 }
 
 static void
+test_list_remote_refs (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  int i;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  refs = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 2);
+
+
+  for (i = 0; i < refs->len; i++)
+    {
+      FlatpakRemoteRef *remote_ref = g_ptr_array_index (refs, i);
+      FlatpakRef *ref = FLATPAK_REF (remote_ref);
+      GBytes *metadata;
+
+      g_assert (ref != NULL);
+
+      if (strcmp ("org.test.Hello", flatpak_ref_get_name (ref)) == 0)
+        {
+          g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_APP);
+        }
+      else
+        {
+          g_assert_cmpstr (flatpak_ref_get_name (ref), ==, "org.test.Platform");
+          g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_RUNTIME);
+        }
+
+      g_assert_cmpstr (flatpak_ref_get_branch (ref), ==, "master");
+      g_assert_cmpstr (flatpak_ref_get_commit (ref), !=, NULL);
+      g_assert_cmpstr (flatpak_ref_get_arch (ref), ==, flatpak_get_default_arch ());
+
+      g_assert_cmpstr (flatpak_remote_ref_get_remote_name (remote_ref), ==, repo_name);
+      g_assert_cmpstr (flatpak_remote_ref_get_eol (remote_ref), ==, NULL);
+      g_assert_cmpstr (flatpak_remote_ref_get_eol_rebase (remote_ref), ==, NULL);
+
+      g_assert_cmpuint (flatpak_remote_ref_get_installed_size (remote_ref), >, 0);
+      g_assert_cmpuint (flatpak_remote_ref_get_download_size (remote_ref), >, 0);
+
+      metadata = flatpak_remote_ref_get_metadata (remote_ref);
+      g_assert (metadata != NULL);
+
+      if (strcmp ("org.test.Hello", flatpak_ref_get_name (ref)) == 0)
+        g_assert (g_str_has_prefix ((char *)g_bytes_get_data (metadata, NULL), "[Application]"));
+      else
+        g_assert (g_str_has_prefix ((char *)g_bytes_get_data (metadata, NULL), "[Runtime]"));
+    }
+}
+
+static void
 progress_cb (const char *status,
              guint progress,
              gboolean estimating,
@@ -1036,6 +1092,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/list-remotes", test_list_remotes);
   g_test_add_func ("/library/remote-by-name", test_remote_by_name);
   g_test_add_func ("/library/remote", test_remote);
+  g_test_add_func ("/library/list-remote-refs", test_list_remote_refs);
   g_test_add_func ("/library/list-refs", test_list_refs);
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
   g_test_add_func ("/library/list-updates", test_list_updates);

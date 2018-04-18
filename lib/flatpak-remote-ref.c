@@ -40,6 +40,12 @@ typedef struct _FlatpakRemoteRefPrivate FlatpakRemoteRefPrivate;
 struct _FlatpakRemoteRefPrivate
 {
   char *remote_name;
+  guint64 installed_size;
+  guint64 download_size;
+  GBytes *metadata;
+  char *eol;
+  char *eol_rebase;
+
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRemoteRef, flatpak_remote_ref, FLATPAK_TYPE_REF)
@@ -48,6 +54,11 @@ enum {
   PROP_0,
 
   PROP_REMOTE_NAME,
+  PROP_INSTALLED_SIZE,
+  PROP_DOWNLOAD_SIZE,
+  PROP_METADATA,
+  PROP_EOL,
+  PROP_EOL_REBASE,
 };
 
 static void
@@ -77,6 +88,29 @@ flatpak_remote_ref_set_property (GObject      *object,
       priv->remote_name = g_value_dup_string (value);
       break;
 
+    case PROP_INSTALLED_SIZE:
+      priv->installed_size = g_value_get_uint64 (value);
+      break;
+
+    case PROP_DOWNLOAD_SIZE:
+      priv->download_size = g_value_get_uint64 (value);
+      break;
+
+    case PROP_METADATA:
+      g_clear_pointer (&priv->metadata, g_bytes_unref);
+      priv->metadata = g_bytes_ref (g_value_get_boxed (value));
+      break;
+
+    case PROP_EOL:
+      g_clear_pointer (&priv->eol, g_free);
+      priv->eol = g_value_dup_string (value);
+      break;
+
+    case PROP_EOL_REBASE:
+      g_clear_pointer (&priv->eol_rebase, g_free);
+      priv->eol_rebase = g_value_dup_string (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -96,6 +130,26 @@ flatpak_remote_ref_get_property (GObject    *object,
     {
     case PROP_REMOTE_NAME:
       g_value_set_string (value, priv->remote_name);
+      break;
+
+    case PROP_INSTALLED_SIZE:
+      g_value_set_uint64 (value, priv->installed_size);
+      break;
+
+    case PROP_DOWNLOAD_SIZE:
+      g_value_set_uint64 (value, priv->installed_size);
+      break;
+
+    case PROP_METADATA:
+      g_value_set_boxed (value, priv->metadata);
+      break;
+
+    case PROP_EOL:
+      g_value_set_string (value, priv->eol);
+      break;
+
+    case PROP_EOL_REBASE:
+      g_value_set_string (value, priv->eol_rebase);
       break;
 
     default:
@@ -118,6 +172,41 @@ flatpak_remote_ref_class_init (FlatpakRemoteRefClass *klass)
                                    g_param_spec_string ("remote-name",
                                                         "Remote Name",
                                                         "The name of the remote",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_INSTALLED_SIZE,
+                                   g_param_spec_uint64 ("installed-size",
+                                                        "Installed Size",
+                                                        "The installed size of the application",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_DOWNLOAD_SIZE,
+                                   g_param_spec_uint64 ("download-size",
+                                                        "Download Size",
+                                                        "The download size of the application",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_METADATA,
+                                   g_param_spec_boxed ("metadata",
+                                                       "Metadata",
+                                                       "The metadata info for the application",
+                                                       G_TYPE_BYTES,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_EOL,
+                                   g_param_spec_string ("end-of-life",
+                                                        "End of life",
+                                                        "The reason for the ref to be end of life",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_EOL_REBASE,
+                                   g_param_spec_string ("end-of-life-rebase",
+                                                        "End of life rebase",
+                                                        "The new ref for the end of lifeed ref",
                                                         NULL,
                                                         G_PARAM_READWRITE));
 }
@@ -143,20 +232,126 @@ flatpak_remote_ref_get_remote_name (FlatpakRemoteRef *self)
   return priv->remote_name;
 }
 
+/**
+ * flatpak_remote_ref_get_installed_size:
+ * @self: a #FlatpakRemoteRef
+ *
+ * Returns the installed size of the ref.
+ *
+ * Returns: the installed size
+ */
+guint64
+flatpak_remote_ref_get_installed_size (FlatpakRemoteRef *self)
+{
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
+
+  return priv->installed_size;
+}
+
+/**
+ * flatpak_remote_ref_get_download_size:
+ * @self: a #FlatpakRemoteRef
+ *
+ * Returns the download size of the ref.
+ *
+ * Returns: the download size
+ */
+guint64
+flatpak_remote_ref_get_download_size (FlatpakRemoteRef *self)
+{
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
+
+  return priv->download_size;
+}
+
+/**
+ * flatpak_remote_ref_get_metadata:
+ * @self: a #FlatpakRemoteRef
+ *
+ * Returns the app metadata from the metadata cach of the ref.
+ *
+ * Returns: (transfer none): a #GBytes with the metadata file contents
+ */
+GBytes *
+flatpak_remote_ref_get_metadata (FlatpakRemoteRef *self)
+{
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
+
+  return priv->metadata;
+}
+
+/**
+ * flatpak_remote_ref_get_eol:
+ * @self: a #FlatpakRemoteRef
+ *
+ * Returns the end-of-life reason string, or %NULL if the
+ * ref is not end-of-lifed.
+ *
+ * Returns: (transfer none): the end-of-life reason or %NULL
+ */
+const char *
+flatpak_remote_ref_get_eol (FlatpakRemoteRef *self)
+{
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
+
+  return priv->eol;
+}
+
+/**
+ * flatpak_remote_ref_get_eol_rebase:
+ * @self: a #FlatpakRemoteRef
+ *
+ * Returns the end-of-life rebased ref, or %NULL if the
+ * ref is not end-of-lifed.
+ *
+ * Returns: (transfer none): the end-of-life rebased ref or %NULL
+ */
+const char *
+flatpak_remote_ref_get_eol_rebase (FlatpakRemoteRef *self)
+{
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
+
+  return priv->eol_rebase;
+}
 
 FlatpakRemoteRef *
 flatpak_remote_ref_new (const char *full_ref,
                         const char *commit,
-                        const char *remote_name)
+                        const char *remote_name,
+                        FlatpakRemoteState *state)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
-
+  guint64 download_size = 0, installed_size = 0;
+  g_autofree char *metadata = NULL;
+  g_autoptr(GBytes) metadata_bytes = NULL;
   g_auto(GStrv) parts = NULL;
   FlatpakRemoteRef *ref;
+  g_autoptr(GVariant) sparse = NULL;
+  const char *eol = NULL;
+  const char *eol_rebase = NULL;
 
   parts = flatpak_decompose_ref (full_ref, NULL);
   if (parts == NULL)
     return NULL;
+
+  if (state &&
+      !flatpak_remote_state_lookup_cache (state, full_ref,
+                                          &download_size, &installed_size, &metadata,
+                                          NULL, NULL))
+    {
+      g_warning ("Ignoring ref %s due to lack of metadata", full_ref);
+      return NULL;
+    }
+
+  if (metadata)
+    metadata_bytes = g_bytes_new_take (g_steal_pointer (&metadata), strlen (metadata));
+
+  sparse = flatpak_remote_state_lookup_sparse_cache (state, full_ref, NULL);
+  if (sparse)
+    {
+      g_variant_lookup (sparse, "eol", "&s", &eol);
+      g_variant_lookup (sparse, "eolr", "&s", &eol_rebase);
+    }
 
   if (strcmp (parts[0], "app") != 0)
     kind = FLATPAK_REF_KIND_RUNTIME;
@@ -168,6 +363,11 @@ flatpak_remote_ref_new (const char *full_ref,
                       "branch", parts[3],
                       "commit", commit,
                       "remote-name", remote_name,
+                      "installed-size", installed_size,
+                      "download-size", download_size,
+                      "metadata", metadata_bytes,
+                      "end-of-life", eol,
+                      "end-of-life-rebase", eol_rebase,
                       NULL);
 
   return ref;

@@ -30,6 +30,7 @@
 
 FlatpakRemoteRef *flatpak_remote_ref_new (const char *full_ref,
                                           const char *commit,
-                                          const char *remote_name);
+                                          const char *remote_name,
+                                          FlatpakRemoteState *remote_state);
 
 #endif /* __FLATPAK_REMOTE_REF_PRIVATE_H__ */
