@@ -8266,8 +8266,8 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
   return rev != NULL;
 }
 
-/* This duplicates ostree_repo_list_refs so it can use flatpak_dir_remote_fetch_summary
-   and get caching */
+/* This duplicates ostree_repo_remote_list_refs so it can use
+ * flatpak_remote_state_ensure_summary and get caching. */
 /* FIXME: For command line completion support for collection–refs over P2P,
  * we need a version of ostree_repo_list_collection_refs(). */
 static gboolean
