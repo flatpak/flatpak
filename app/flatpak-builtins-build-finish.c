@@ -31,6 +31,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-context.h"
 #include "flatpak-utils.h"
 #include "flatpak-run.h"
 
@@ -57,15 +58,59 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+typedef gboolean (*DirectoryExportFileFilterFunc) (char *path, gpointer user_data);
+
+typedef struct _BuiltinExportedDirectoryInfo {
+  char                          *path;
+  DirectoryExportFileFilterFunc  filter_func;
+  gpointer                       user_data;
+  GDestroyNotify                 user_data_destroy;
+} BuiltinExportedDirectoryInfo;
+
+static BuiltinExportedDirectoryInfo *
+builtin_exported_directory_info_new (const char                    *path,
+                                     DirectoryExportFileFilterFunc  filter_func,
+                                     gpointer                       user_data,
+                                     GDestroyNotify                 user_data_destroy)
+{
+  BuiltinExportedDirectoryInfo *info = g_new0 (BuiltinExportedDirectoryInfo, 1);
+
+  info->path = g_strdup (path);
+  info->filter_func = filter_func;
+  info->user_data = user_data;
+  info->user_data_destroy = user_data_destroy;
+
+  return info;
+}
+
+static BuiltinExportedDirectoryInfo *
+builtin_exported_directory_info_new_simple (const char *path,
+                                            const char *permissible_prefix)
+{
+  return builtin_exported_directory_info_new (path,
+                                              (DirectoryExportFileFilterFunc) flatpak_has_name_prefix,
+                                              g_strdup (permissible_prefix),
+                                              g_free);
+}
+
+static void
+builtin_exported_directory_info_free (BuiltinExportedDirectoryInfo *info)
+{
+  g_clear_pointer (&info->path, g_free);
+
+  if (info->user_data_destroy != NULL)
+    g_clear_pointer (&info->user_data, info->user_data_destroy);
+}
+
 static gboolean
-export_dir (int           source_parent_fd,
-            const char   *source_name,
-            const char   *source_relpath,
-            int           destination_parent_fd,
-            const char   *destination_name,
-            const char   *required_prefix,
-            GCancellable *cancellable,
-            GError      **error)
+export_dir (int                            source_parent_fd,
+            const char                    *source_name,
+            const char                    *source_relpath,
+            int                            destination_parent_fd,
+            const char                    *destination_name,
+            BuiltinExportedDirectoryInfo  *exported_directory_info,
+            GCancellable                  *cancellable,
+            GError                       **error)
 {
   int res;
 
@@ -126,15 +171,15 @@ export_dir (int           source_parent_fd,
           g_autofree gchar *child_relpath = g_build_filename (source_relpath, dent->d_name, NULL);
 
           if (!export_dir (source_iter.fd, dent->d_name, child_relpath, destination_dfd, dent->d_name,
-                           required_prefix, cancellable, error))
+                           exported_directory_info, cancellable, error))
             return FALSE;
         }
       else if (S_ISREG (stbuf.st_mode))
         {
           source_printable = g_build_filename (source_relpath, dent->d_name, NULL);
 
-
-          if (!flatpak_has_name_prefix (dent->d_name, required_prefix))
+          if (!exported_directory_info->filter_func (dent->d_name,
+                                                     exported_directory_info->user_data))
             {
               g_print (_("Not exporting %s, wrong prefix\n"), source_printable);
               continue;
@@ -174,12 +219,12 @@ export_dir (int           source_parent_fd,
 }
 
 static gboolean
-copy_exports (GFile        *source,
-              GFile        *destination,
-              const char   *source_prefix,
-              const char   *required_prefix,
-              GCancellable *cancellable,
-              GError      **error)
+copy_exports (GFile                         *source,
+              GFile                         *destination,
+              const char                    *source_prefix,
+              BuiltinExportedDirectoryInfo  *exported_directory_info,
+              GCancellable                  *cancellable,
+              GError                       **error)
 {
   if (!flatpak_mkdir_p (destination, cancellable, error))
     return FALSE;
@@ -187,26 +232,67 @@ copy_exports (GFile        *source,
   /* The fds are closed by this call */
   if (!export_dir (AT_FDCWD, flatpak_file_get_path_cached (source), source_prefix,
                    AT_FDCWD, flatpak_file_get_path_cached (destination),
-                   required_prefix, cancellable, error))
+                   exported_directory_info, cancellable, error))
     return FALSE;
 
   return TRUE;
 }
 
+static GStrv
+lookup_permitted_dbus_service_file_prefixes (FlatpakContext  *arg_context,
+                                             const char      *app_id)
+{
+  g_auto(GStrv) dbus_own_name_prefixes =
+    flatpak_context_get_session_bus_policy_allowed_own_names (arg_context);
+  g_autoptr(GPtrArray) permitted_prefixes = g_ptr_array_new_with_free_func (g_free);
+  GStrv iter = dbus_own_name_prefixes;
+
+  g_ptr_array_add (permitted_prefixes, g_strdup (app_id));
+
+  for (; *iter != NULL; ++iter)
+    g_ptr_array_add (permitted_prefixes, g_strdup (*iter));
+
+  g_ptr_array_add (permitted_prefixes, NULL);
+  return (GStrv) g_ptr_array_free (g_steal_pointer (&permitted_prefixes), FALSE);
+}
+
 static gboolean
-collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GError **error)
+collect_exports (GFile          *base,
+                 const char     *app_id,
+                 FlatpakContext *arg_context,
+                 GCancellable   *cancellable,
+                 GError        **error)
 {
   g_autoptr(GFile) files = NULL;
   g_autoptr(GFile) export = NULL;
-  const char *paths[] = {
-    "share/applications",                 /* Copy desktop files */
-    "share/mime/packages",                /* Copy MIME Type files */
-    "share/icons",                        /* Icons */
-    "share/dbus-1/services",              /* D-Bus service files */
-    "share/gnome-shell/search-providers", /* Search providers */
-    NULL,
-  };
+  g_autoptr(GPtrArray) exported_directory_infos =
+    g_ptr_array_new_with_free_func ((GDestroyNotify) builtin_exported_directory_info_free);
+  g_auto(GStrv) permitted_dbus_service_file_prefixes =
+    lookup_permitted_dbus_service_file_prefixes (arg_context, app_id);
   int i;
+
+  /* Copy desktop files */
+  g_ptr_array_add (exported_directory_infos,
+                   builtin_exported_directory_info_new_simple ("share/applications", app_id));
+
+  /* Copy MIME type files */
+  g_ptr_array_add (exported_directory_infos,
+                   builtin_exported_directory_info_new_simple ("share/mime/packages", app_id));
+
+  /* Copy icons */
+  g_ptr_array_add (exported_directory_infos,
+                   builtin_exported_directory_info_new_simple ("share/icons", app_id));
+
+  /* Copy D-Bus service files */
+  g_ptr_array_add (exported_directory_infos,
+                   builtin_exported_directory_info_new ("share/dbus-1/services",
+                                                        (DirectoryExportFileFilterFunc) flatpak_name_matches_one_wildcard_prefix,
+                                                        g_steal_pointer (&permitted_dbus_service_file_prefixes),
+                                                        (GDestroyNotify) g_strfreev));
+
+  /* Copy Search Providers */
+  g_ptr_array_add (exported_directory_infos,
+                   builtin_exported_directory_info_new_simple ("share/gnome-shell/search-providers", app_id));
 
   files = g_file_get_child (base, "files");
 
@@ -218,22 +304,29 @@ collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GEr
   if (opt_no_exports)
     return TRUE;
 
-  for (i = 0; paths[i]; i++)
+  for (i = 0; i < exported_directory_infos->len; i++)
     {
       g_autoptr(GFile) src = NULL;
-      src = g_file_resolve_relative_path (files, paths[i]);
+      BuiltinExportedDirectoryInfo *info = g_ptr_array_index (exported_directory_infos, i);
+      const char * path = info->path;
+      src = g_file_resolve_relative_path (files, path);
       if (g_file_query_exists (src, cancellable))
         {
-          g_debug ("Exporting from %s", paths[i]);
+          g_debug ("Exporting from %s", path);
           g_autoptr(GFile) dest = NULL;
           g_autoptr(GFile) dest_parent = NULL;
-          dest = g_file_resolve_relative_path (export, paths[i]);
+          dest = g_file_resolve_relative_path (export, path);
           dest_parent = g_file_get_parent (dest);
-          g_debug ("Ensuring export/%s parent exists", paths[i]);
+          g_debug ("Ensuring export/%s parent exists", path);
           if (!flatpak_mkdir_p (dest_parent, cancellable, error))
             return FALSE;
-          g_debug ("Copying from files/%s", paths[i]);
-          if (!copy_exports (src, dest, paths[i], app_id, cancellable, error))
+          g_debug ("Copying from files/%s", path);
+          if (!copy_exports (src,
+                             dest,
+                             path,
+                             info,
+                             cancellable,
+                             error))
             return FALSE;
         }
     }
@@ -568,7 +661,7 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   if (!is_runtime)
     {
       g_debug ("Collecting exports");
-      if (!collect_exports (base, id, cancellable, error))
+      if (!collect_exports (base, id, arg_context, cancellable, error))
         return FALSE;
     }
 
