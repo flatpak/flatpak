@@ -93,6 +93,7 @@ void           flatpak_context_allow_host_fs (FlatpakContext *context);
 void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
                                                        const char     *name,
                                                        FlatpakPolicy   policy);
+GStrv          flatpak_context_get_session_bus_policy_allowed_own_names (FlatpakContext *context);
 void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       const char     *name,
                                                       FlatpakPolicy   policy);
