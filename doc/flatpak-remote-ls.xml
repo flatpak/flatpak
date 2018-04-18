@@ -46,6 +46,10 @@
             remote repositories with <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
         </para>
         <para>
+            <arg choice="plain">REMOTE</arg> can be a file:// URI pointing to a
+            local repository instead of a remote name.
+        </para>
+        <para>
             Unless overridden with the --system, --user, or --installation options,
             this command uses either the default system-wide installation or the
             per-user one, depending on which has the specified
@@ -182,8 +186,17 @@
             <command>$ flatpak --user remote-ls --app testrepo</command>
         </para>
 <programlisting>
+Ref
 org.gnome.Builder
 org.freedesktop.glxgears
+</programlisting>
+
+        <para>
+            <command>$ flatpak remote-ls file:///run/media/mwleeds/d4d37026-cde2-4e5e-8bcc-d23ebbf231f9/.ostree/repo</command>
+        </para>
+<programlisting>
+Ref
+org.kde.Khangman
 </programlisting>
 
     </refsect1>

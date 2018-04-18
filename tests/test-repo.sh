@@ -28,7 +28,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-
     skip_without_p2p
 fi
 
-echo "1..15"
+echo "1..16"
 
 #Regular repo
 setup_repo
@@ -245,6 +245,13 @@ else
 fi
 
 echo "ok remote-ls"
+
+# Test that remote-ls can take a file:// URI
+ostree --repo=repos/test summary -u
+${FLATPAK} remote-ls file://`pwd`/repos/test > repo-list
+assert_file_has_content repo-list "org.test.Hello"
+
+echo "ok remote-ls URI"
 
 # Test that remote-modify works in all of the following cases:
 # * system remote, and --system is used
