@@ -47,6 +47,11 @@ typedef struct
 } FlatpakRemoteRefClass;
 
 FLATPAK_EXTERN const char * flatpak_remote_ref_get_remote_name (FlatpakRemoteRef *self);
+FLATPAK_EXTERN guint64      flatpak_remote_ref_get_installed_size (FlatpakRemoteRef *self);
+FLATPAK_EXTERN guint64      flatpak_remote_ref_get_download_size (FlatpakRemoteRef *self);
+FLATPAK_EXTERN GBytes *     flatpak_remote_ref_get_metadata (FlatpakRemoteRef *self);
+FLATPAK_EXTERN const char * flatpak_remote_ref_get_eol (FlatpakRemoteRef *self);
+FLATPAK_EXTERN const char * flatpak_remote_ref_get_eol_rebase (FlatpakRemoteRef *self);
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemoteRef, g_object_unref)
