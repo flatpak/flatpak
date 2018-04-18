@@ -6173,8 +6173,6 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   /* Release lock before doing possibly slow prune */
   glnx_release_lock_file (&lock);
 
-  flatpak_dir_prune (self, cancellable, NULL);
-
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
 
@@ -7152,9 +7150,6 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   glnx_release_lock_file (&lock);
 
   flatpak_dir_prune_origin_remote (self, repository);
-
-  if (!keep_ref)
-    flatpak_dir_prune (self, cancellable, NULL);
 
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
 

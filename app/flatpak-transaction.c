@@ -911,6 +911,8 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
  out:
 
+  flatpak_dir_prune (self->dir, cancellable, NULL);
+
   for (i = 0; i < self->added_origin_remotes->len; i++)
     flatpak_dir_prune_origin_remote (self->dir, g_ptr_array_index (self->added_origin_remotes, i));
 
