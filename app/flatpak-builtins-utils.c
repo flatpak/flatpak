@@ -536,7 +536,6 @@ update_appstream (GPtrArray    *dirs,
           if (flatpak_dir_has_remote (dir, remote))
             {
               g_autoptr(OstreeAsyncProgress) progress = NULL;
-              g_autoptr(GError) local_error = NULL;
               guint64 ts_file_age;
 
               found = TRUE;
