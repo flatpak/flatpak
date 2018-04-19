@@ -6,8 +6,14 @@ DIR=`mktemp -d`
 
 REPONAME=$1
 shift
+APP_ID=$1
+shift
 COLLECTION_ID=$1
 shift
+
+if [ x$APP_ID = x ]; then
+    APP_ID=org.test.Hello
+fi
 
 EXTRA="${1-}"
 
@@ -16,7 +22,7 @@ ARCH=`flatpak --default-arch`
 # Init dir
 cat > ${DIR}/metadata <<EOF
 [Application]
-name=org.test.Hello
+name=$APP_ID
 runtime=org.test.Platform/$ARCH/master
 sdk=org.test.Platform/$ARCH/master
 EOF
@@ -35,25 +41,25 @@ Version=1.0
 Type=Application
 Name=Hello
 Exec=hello.sh
-Icon=org.test.Hello
+Icon=$APP_ID
 MimeType=x-test/Hello;
 EOF
 
 mkdir -p ${DIR}/files/share/icons/hicolor/64x64/apps
-cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/
+cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/${APP_ID}.png
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/dont-export.png
 mkdir -p ${DIR}/files/share/icons/HighContrast/64x64/apps
-cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/HighContrast/64x64/apps/
+cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/HighContrast/64x64/apps/${APP_ID}.png
 
 
 mkdir -p ${DIR}/files/share/app-info/xmls
 mkdir -p ${DIR}/files/share/app-info/icons/flatpak/64x64
-gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF
+gzip -c > ${DIR}/files/share/app-info/xmls/${APP_ID}.xml.gz <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <components version="0.8">
   <component type="desktop">
-    <id>org.test.Hello.desktop</id>
-    <name>Hello world test app</name>
+    <id>$APP_ID.desktop</id>
+    <name>Hello world test app: $APP_ID</name>
     <summary>Print a greeting</summary>
     <description><p>This is a test app.</p></description>
     <categories>
@@ -63,7 +69,7 @@ gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF
   </component>
 </components>
 EOF
-cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/
+cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/${APP_ID}.png
 
 if [ x$COLLECTION_ID != x ]; then
     collection_args=--collection-id=${COLLECTION_ID}

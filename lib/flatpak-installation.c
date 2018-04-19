@@ -873,7 +873,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   int i, j;
 #ifdef FLATPAK_ENABLE_P2P
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GMainContext) context = NULL;
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GAsyncResult) result = NULL;
   g_autoptr(GPtrArray) collection_refs = NULL; /* (element-type OstreeCollectionRef) */
@@ -967,29 +966,37 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         }
     }
 
-  g_ptr_array_add (collection_refs, NULL);
+  /* if we do not have any collection refs, then we shouldn't try to find
+   * dynamic remotes for them, to avoid extra unnecessary processing, and also
+   * because the refs array cannot be empty in ostree_repo_find_remotes_async
+   * (otherwise it early returns and we never get our callback called) */
+  if (collection_refs->len > 0) {
+    g_autoptr(GMainContext) context = NULL;
 
-  context = g_main_context_new ();
-  g_main_context_push_thread_default (context);
+    g_ptr_array_add (collection_refs, NULL);
 
-  ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
-                                  (const OstreeCollectionRef * const *) collection_refs->pdata,
-                                  NULL,  /* no options */
-                                  NULL, /* default finders */
-                                  NULL,  /* no progress */
-                                  cancellable,
-                                  async_result_cb,
-                                  &result);
+    context = g_main_context_new ();
+    g_main_context_push_thread_default (context);
 
-  while (result == NULL)
-    g_main_context_iteration (context, TRUE);
+    ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
+                                    (const OstreeCollectionRef * const *) collection_refs->pdata,
+                                    NULL,  /* no options */
+                                    NULL, /* default finders */
+                                    NULL,  /* no progress */
+                                    cancellable,
+                                    async_result_cb,
+                                    &result);
 
-  results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
+    while (result == NULL)
+      g_main_context_iteration (context, TRUE);
 
-  g_main_context_pop_thread_default (context);
+    results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
 
-  if (results == NULL)
-    return NULL;
+    g_main_context_pop_thread_default (context);
+
+    if (results == NULL)
+      return NULL;
+  }
 
   for (i = 0; i < installed->len; i++)
     {
@@ -1064,6 +1071,7 @@ static gboolean
 list_remotes_for_configured_remote (FlatpakInstallation  *self,
                                     const gchar          *remote_name,
                                     FlatpakDir           *dir,
+                                    gboolean              types_filter[],
                                     GPtrArray            *remotes  /* (element-type FlatpakRemote) */,
                                     GCancellable         *cancellable,
                                     GError              **error)
@@ -1079,6 +1087,11 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
   g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
   OstreeRepoFinder *finders[3] = { NULL, };
   gsize i;
+  guint finder_index = 0;
+
+  if (!types_filter[FLATPAK_REMOTE_TYPE_USB] &&
+      !types_filter[FLATPAK_REMOTE_TYPE_LAN])
+    return TRUE;
 
   /* Find the collection ID for @remote_name, or bail if there is none. */
   if (!ostree_repo_get_remote_option (flatpak_dir_get_repo (dir),
@@ -1096,12 +1109,32 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
   ref.ref_name = appstream_ref;
   refs[0] = &ref;
 
-  finder_mount = OSTREE_REPO_FINDER (ostree_repo_finder_mount_new (NULL));
-  finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
-  finders[0] = finder_mount;
-  finders[1] = finder_avahi;
+  if (types_filter[FLATPAK_REMOTE_TYPE_USB])
+    {
+      finder_mount = OSTREE_REPO_FINDER (ostree_repo_finder_mount_new (NULL));
+      finders[finder_index++] = finder_mount;
+    }
 
-  ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), NULL);  /* ignore failure */
+  if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
+    {
+      g_autoptr(GError) local_error = NULL;
+      finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
+      finders[finder_index++] = finder_avahi;
+
+      /* The Avahi finder may fail to start on, for example, a CI server. */
+      ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), &local_error);
+      if (local_error != NULL)
+        {
+          if (finder_index == 1)
+            return TRUE;
+          else
+            {
+              finders[--finder_index] = NULL;
+              g_clear_object (&finder_avahi);
+            }
+        }
+    }
+
   ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
                                   (const OstreeCollectionRef * const *) refs,
                                   NULL,  /* no options */
@@ -1115,7 +1148,9 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
     g_main_context_iteration (context, TRUE);
 
   results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
-  ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
+
+  if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
+    ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
 
   g_main_context_pop_thread_default (context);
 
@@ -1132,26 +1167,31 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
 }
 
 /**
- * flatpak_installation_list_remotes:
+ * flatpak_installation_list_remotes_by_type:
  * @self: a #FlatpakInstallation
+ * @types: (array length=num_types): an array of #FlatpakRemoteType
+ * @num_types: the number of types provided in @types
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the remotes, in priority (highest first) order. For same priority,
- * an earlier added remote comes before a later added one.
+ * Lists only the remotes whose type is included in the @types argument.
  *
  * Returns: (transfer container) (element-type FlatpakRemote): a GPtrArray of
  *   #FlatpakRemote instances
  */
 GPtrArray *
-flatpak_installation_list_remotes (FlatpakInstallation *self,
-                                   GCancellable        *cancellable,
-                                   GError             **error)
+flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
+                                           const FlatpakRemoteType *types,
+                                           gsize                    num_types,
+                                           GCancellable            *cancellable,
+                                           GError                 **error)
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_auto(GStrv) remote_names = NULL;
   g_autoptr(GPtrArray) remotes = g_ptr_array_new_with_free_func (g_object_unref);
+  const guint NUM_FLATPAK_REMOTE_TYPES = 3;
+  gboolean types_filter[NUM_FLATPAK_REMOTE_TYPES];
   gsize i;
 
   remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
@@ -1164,18 +1204,55 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
   if (!flatpak_dir_maybe_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
-  for (i = 0; remote_names[i] != NULL; i++)
+  for (i = 0; i < NUM_FLATPAK_REMOTE_TYPES; ++i)
     {
-      g_ptr_array_add (remotes,
-                       flatpak_remote_new_with_dir (remote_names[i], dir_clone));
+      /* If NULL or an empty array of types is passed then we include all types */
+      types_filter[i] = (num_types == 0) ? TRUE : FALSE;
+    }
+
+  for (i = 0; i < num_types; ++i)
+    {
+      g_return_val_if_fail (types[i] < NUM_FLATPAK_REMOTE_TYPES, NULL);
+      types_filter[types[i]] = TRUE;
+    }
+
+  for (i = 0; remote_names[i] != NULL; ++i)
+    {
+      g_autoptr(GError) local_error = NULL;
+      if (types_filter[FLATPAK_REMOTE_TYPE_STATIC])
+        g_ptr_array_add (remotes, flatpak_remote_new_with_dir (remote_names[i],
+                                                               dir_clone));
 
       /* Add the dynamic mirrors of this remote. */
       if (!list_remotes_for_configured_remote (self, remote_names[i], dir_clone,
-                                               remotes, cancellable, error))
-        return NULL;
+                                               types_filter, remotes,
+                                               cancellable, &local_error))
+        g_debug ("Couldn't find remotes for configured remote %s: %s",
+                 remote_names[i], local_error->message);
     }
 
   return g_steal_pointer (&remotes);
+}
+
+/**
+ * flatpak_installation_list_remotes:
+ * @self: a #FlatpakInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the static remotes, in priority (highest first) order. For same
+ * priority, an earlier added remote comes before a later added one.
+ *
+ * Returns: (transfer container) (element-type FlatpakRemote): an GPtrArray of
+ *   #FlatpakRemote instances
+ */
+GPtrArray *
+flatpak_installation_list_remotes (FlatpakInstallation *self,
+                                   GCancellable        *cancellable,
+                                   GError             **error)
+{
+  const FlatpakRemoteType types[] = { FLATPAK_REMOTE_TYPE_STATIC };
+  return flatpak_installation_list_remotes_by_type (self, types, 1, cancellable, error);
 }
 
 /**
@@ -1527,18 +1604,21 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
+  g_autofree char *collection_id = NULL;
+  g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return NULL;
 
-  if (!flatpak_dir_create_remote_for_ref_file (dir, ref_file_data, NULL, &remote, &ref, error))
+  if (!flatpak_dir_create_remote_for_ref_file (dir, ref_file_data, NULL, &remote, &collection_id, &ref, error))
     return NULL;
 
   if (!flatpak_installation_drop_caches (self, cancellable, error))
     return NULL;
 
-  return flatpak_remote_ref_new (ref, NULL, remote, NULL);
+  coll_ref = flatpak_collection_ref_new (collection_id, ref);
+  return flatpak_remote_ref_new (coll_ref, NULL, remote, NULL);
 }
 
 /**
@@ -2017,7 +2097,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
 /**
  * flatpak_installation_list_remote_refs_sync:
  * @self: a #FlatpakInstallation
- * @remote_name: the name of the remote
+ * @remote_or_uri: the name or URI of the remote
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -2028,7 +2108,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
  */
 GPtrArray *
 flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
-                                            const char          *remote_name,
+                                            const char          *remote_or_uri,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
@@ -2044,7 +2124,7 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state (dir, remote_or_uri, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2055,11 +2135,11 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
   g_hash_table_iter_init (&iter, ht);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      const char *refspec = key;
-      const char *checksum = value;
       FlatpakRemoteRef *ref;
+      FlatpakCollectionRef *coll_ref = key;
+      const gchar *ref_commit = value;
 
-      ref = flatpak_remote_ref_new (refspec, checksum, remote_name, state);
+      ref = flatpak_remote_ref_new (coll_ref, ref_commit, remote_or_uri, state);
 
       if (ref)
         g_ptr_array_add (refs, ref);
@@ -2097,6 +2177,8 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
   g_autoptr(GHashTable) ht = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *ref = NULL;
+  g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
+  g_autofree gchar *collection_id = NULL;
   const char *checksum;
 
   if (branch == NULL)
@@ -2114,6 +2196,14 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
                                      cancellable, error))
     return NULL;
 
+  /* FIXME: Rework to accept the collection ID as an input argument instead */
+#ifdef FLATPAK_ENABLE_P2P
+  if (!ostree_repo_get_remote_option (flatpak_dir_get_repo (dir),
+                                      remote_name, "collection-id",
+                                      NULL, &collection_id, error))
+    return FALSE;
+#endif /* FLATPAK_ENABLE_P2P */
+
   if (kind == FLATPAK_REF_KIND_APP)
     ref = flatpak_build_app_ref (name,
                                  branch,
@@ -2123,10 +2213,33 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
                                      branch,
                                      arch);
 
-  checksum = g_hash_table_lookup (ht, ref);
+  coll_ref = flatpak_collection_ref_new (collection_id, ref);
+  checksum = g_hash_table_lookup (ht, coll_ref);
+
+#ifdef FLATPAK_ENABLE_P2P
+  /* If there was not a match, it may be because the collection ID is
+   * not set in the local configuration, or it is wrong, so we resort to
+   * trying to match just the ref name */
+  if (checksum == NULL)
+    {
+      GHashTableIter iter;
+      gpointer key, value;
+
+      g_hash_table_iter_init (&iter, ht);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+          FlatpakCollectionRef *current =  (FlatpakCollectionRef *) key;
+          if (g_strcmp0 (current->ref_name, ref) == 0)
+            {
+              checksum = (const gchar *) value;
+              break;
+            }
+        }
+    }
+#endif /* FLATPAK_ENABLE_P2P */
 
   if (checksum != NULL)
-    return flatpak_remote_ref_new (ref, checksum, remote_name, state);
+    return flatpak_remote_ref_new (coll_ref, checksum, remote_name, state);
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                "Reference %s doesn't exist in remote", ref);

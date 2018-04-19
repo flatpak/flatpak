@@ -96,7 +96,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   g_autoptr(GHashTable) refs_hash = g_hash_table_new_full(g_direct_hash, g_direct_equal, (GDestroyNotify)g_hash_table_unref, (GDestroyNotify)remote_dir_pair_free);
 
-  context = g_option_context_new (_(" [REMOTE] - Show available runtimes and applications"));
+  context = g_option_context_new (_(" [REMOTE or URI] - Show available runtimes and applications"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
@@ -117,9 +117,16 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       g_autoptr(GHashTable) refs = NULL;
       RemoteDirPair *remote_dir_pair = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
+      gboolean is_local = FALSE;
 
-      if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], &preferred_dir, cancellable, error))
-        return FALSE;
+      is_local = g_str_has_prefix (argv[1], "file:");
+      if (is_local)
+        preferred_dir = flatpak_dir_get_system_default ();
+      else
+        {
+          if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], &preferred_dir, cancellable, error))
+            return FALSE;
+        }
 
       state = flatpak_dir_get_remote_state (preferred_dir, argv[1], cancellable, error);
       if (state == NULL)
@@ -206,7 +213,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          char *ref = key;
+          FlatpakCollectionRef *coll_ref = key;
+          char *ref = coll_ref->ref_name;
           char *partial_ref;
           const char *slash = strchr (ref, '/');
 
@@ -223,7 +231,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          const char *ref = key;
+          FlatpakCollectionRef *coll_ref = key;
+          const char *ref = coll_ref->ref_name;
           const char *checksum = value;
           const char *name = NULL;
           g_auto(GStrv) parts = NULL;
@@ -283,7 +292,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
               strcmp (arches[0], parts[2]) != 0)
             {
               g_autofree char *alt_arch_ref = g_strconcat (parts[0], "/", parts[1], "/", arches[0], "/", parts[3], NULL);
-              if (g_hash_table_lookup (refs, alt_arch_ref))
+              g_autoptr(FlatpakCollectionRef) alt_arch_coll_ref = flatpak_collection_ref_new (coll_ref->collection_id, alt_arch_ref);
+              if (g_hash_table_lookup (refs, alt_arch_coll_ref))
                 continue;
             }
 

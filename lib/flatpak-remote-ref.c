@@ -315,7 +315,7 @@ flatpak_remote_ref_get_eol_rebase (FlatpakRemoteRef *self)
 }
 
 FlatpakRemoteRef *
-flatpak_remote_ref_new (const char *full_ref,
+flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
                         const char *commit,
                         const char *remote_name,
                         FlatpakRemoteState *state)
@@ -327,6 +327,7 @@ flatpak_remote_ref_new (const char *full_ref,
   g_auto(GStrv) parts = NULL;
   FlatpakRemoteRef *ref;
   g_autoptr(GVariant) sparse = NULL;
+  const char *full_ref = coll_ref->ref_name;
   const char *eol = NULL;
   const char *eol_rebase = NULL;
 
@@ -361,6 +362,7 @@ flatpak_remote_ref_new (const char *full_ref,
                       "name", parts[1],
                       "arch", parts[2],
                       "branch", parts[3],
+                      "collection-id", coll_ref->collection_id,
                       "commit", commit,
                       "remote-name", remote_name,
                       "installed-size", installed_size,

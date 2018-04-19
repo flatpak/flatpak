@@ -226,7 +226,10 @@ test_list_remotes (void)
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GPtrArray) remotes = NULL;
+  g_autoptr(GPtrArray) remotes2 = NULL;
   FlatpakRemote *remote;
+  const FlatpakRemoteType types[] = { FLATPAK_REMOTE_TYPE_STATIC };
+  const FlatpakRemoteType types2[] = { FLATPAK_REMOTE_TYPE_LAN };
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -238,6 +241,30 @@ test_list_remotes (void)
 
   remote = g_ptr_array_index (remotes, 0);
   g_assert (FLATPAK_IS_REMOTE (remote));
+
+  remotes2 = flatpak_installation_list_remotes_by_type (inst, types,
+                                                        G_N_ELEMENTS (types),
+                                                        NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpuint (remotes2->len, ==, remotes->len);
+
+  for (guint i = 0; i < remotes->len; ++i)
+    {
+      FlatpakRemote *remote1 = g_ptr_array_index (remotes, i);
+      FlatpakRemote *remote2 = g_ptr_array_index (remotes2, i);
+      g_assert_cmpstr (flatpak_remote_get_name (remote1), ==,
+                       flatpak_remote_get_name (remote2));
+      g_assert_cmpstr (flatpak_remote_get_url (remote1), ==,
+                       flatpak_remote_get_url (remote2));
+    }
+
+  g_ptr_array_unref (remotes2);
+  remotes2 = flatpak_installation_list_remotes_by_type (inst,
+                                                        types2,
+                                                        G_N_ELEMENTS (types2),
+                                                        NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpuint (remotes2->len, ==, 0);
 }
 
 static void
@@ -361,6 +388,120 @@ test_list_refs (void)
   g_assert_nonnull (refs);
   g_assert_cmpint (refs->len, ==, 0);
 }
+
+#ifdef FLATPAK_ENABLE_P2P
+static void
+create_multi_collection_id_repo (const char *repo_dir)
+{
+  int status;
+  g_autoptr(GError) error = NULL;
+  GSpawnFlags flags = G_SPAWN_DEFAULT;
+  g_autofree char *arg0 = NULL;
+  g_autofree char *argv_str = NULL;
+
+  /* Create a repository in which each app has a different collection-id */
+  arg0 = g_test_build_filename (G_TEST_DIST, "make-multi-collection-id-repo.sh", NULL);
+  const char *argv[] = { arg0, repo_dir, NULL };
+  argv_str = g_strjoinv (" ", (char **) argv);
+
+  if (g_test_verbose ())
+    g_print ("running %s\n", argv_str);
+  else
+    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
+
+  g_test_message ("Spawning %s", argv_str);
+  g_spawn_sync (NULL, (char **) argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (status, ==, 0);
+}
+
+static void
+test_list_refs_in_remotes (void)
+{
+  int status;
+  const char *repo_name = "multi-refs-repo";
+  GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
+  g_autofree char *argv_str = NULL;
+  g_autofree char *repo_url = NULL;
+  g_autoptr(GPtrArray) refs1 = NULL;
+  g_autoptr(GPtrArray) refs2 = NULL;
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+  g_autofree char *repo_dir = g_build_filename (testdir, repo_name, NULL);
+  g_autofree char *repo_uri = NULL;
+  g_autoptr(GHashTable) collection_ids = g_hash_table_new_full (g_str_hash,
+                                                                g_str_equal,
+                                                                NULL, NULL);
+  g_autoptr(GHashTable) ref_specs = g_hash_table_new_full (g_str_hash,
+                                                           g_str_equal,
+                                                           g_free,
+                                                           NULL);
+
+  create_multi_collection_id_repo (repo_dir);
+
+  repo_url = g_strdup_printf ("file://%s", repo_dir);
+
+  const char *argv[] = { "flatpak", "remote-add", "--user", "--no-gpg-verify",
+                         repo_name, repo_url, NULL };
+
+  argv_str = g_strjoinv (" ", (char **) argv);
+
+  if (g_test_verbose ())
+    g_print ("running %s\n", argv_str);
+  else
+    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
+
+  /* Add the repo we created above, which holds one collection ID per ref */
+  g_test_message ("Spawning %s", argv_str);
+  flags = G_SPAWN_SEARCH_PATH;
+  g_spawn_sync (NULL, (char **) argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (status, ==, 0);
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  /* Ensure the remote can be successfully found */
+  remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remote);
+
+  /* List the refs in the remote we've just added */
+  refs1 = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
+
+  g_assert_no_error (error);
+  g_assert_nonnull (refs1);
+  g_assert (refs1->len > 1);
+
+  /* Ensure that the number of different collection IDs is the same as the
+   * number of apps */
+  for (guint i = 0; i < refs1->len; ++i)
+    {
+      FlatpakRef *ref = g_ptr_array_index (refs1, i);
+      g_hash_table_add (collection_ids, (gchar *) flatpak_ref_get_collection_id (ref));
+      g_hash_table_add (ref_specs, flatpak_ref_format_ref (ref));
+    }
+
+  g_assert_cmpuint (g_hash_table_size (collection_ids), ==, refs1->len);
+
+  /* Ensure that listing the refs by using a remote's URI will get us the
+   * same results as using the name */
+  repo_uri = flatpak_remote_get_url (remote);
+  refs2 = flatpak_installation_list_remote_refs_sync (inst, repo_uri, NULL, &error);
+
+  g_assert_no_error (error);
+  g_assert_nonnull (refs2);
+  g_assert_cmpuint (refs2->len, ==, refs1->len);
+
+  for (guint i = 0; i < refs2->len; ++i)
+    {
+      FlatpakRef *ref = g_ptr_array_index (refs2, i);
+      g_autofree char *ref_spec = flatpak_ref_format_ref (ref);
+      g_assert_nonnull (g_hash_table_lookup (ref_specs, ref_spec));
+    }
+}
+#endif /* FLATPAK_ENABLE_P2P */
 
 static void
 test_list_remote_refs (void)
@@ -805,12 +946,12 @@ static void
 make_test_app (void)
 {
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "test", "", NULL };
+  char *argv[] = { NULL, "test", "", "", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
 #ifdef FLATPAK_ENABLE_P2P
-  argv[2] = repo_collection_id;
+  argv[3] = repo_collection_id;
 #endif /* FLATPAK_ENABLE_P2P */
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
@@ -820,12 +961,12 @@ static void
 update_test_app (void)
 {
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "test", "", "UPDATED", NULL };
+  char *argv[] = { NULL, "test", "", "", "UPDATED", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
 #ifdef FLATPAK_ENABLE_P2P
-  argv[2] = repo_collection_id;
+  argv[3] = repo_collection_id;
 #endif /* FLATPAK_ENABLE_P2P */
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
@@ -1095,6 +1236,9 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/list-remote-refs", test_list_remote_refs);
   g_test_add_func ("/library/list-refs", test_list_refs);
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
+#ifdef FLATPAK_ENABLE_P2P
+  g_test_add_func ("/library/list-refs-in-remote", test_list_refs_in_remotes);
+#endif /* FLATPAK_ENABLE_P2P */
   g_test_add_func ("/library/list-updates", test_list_updates);
 
   global_setup ();
