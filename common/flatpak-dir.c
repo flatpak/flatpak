@@ -302,9 +302,9 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                    const char         *ref,
                                    guint64            *download_size,
                                    guint64            *installed_size,
-                                   char               **metadata,
-                                   GCancellable        *cancellable,
-                                   GError             **error)
+                                   const char        **metadata,
+                                   GCancellable       *cancellable,
+                                   GError            **error)
 {
   g_autoptr(GVariant) cache_v = NULL;
   g_autoptr(GVariant) cache = NULL;
@@ -350,7 +350,7 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
     }
 
   if (metadata)
-    g_variant_get_child (res, 2, "s", metadata);
+    g_variant_get_child (res, 2, "&s", metadata);
 
   return TRUE;
 }
@@ -10777,7 +10777,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                                  GCancellable *cancellable,
                                  GError **error)
 {
-  g_autofree char *metadata = NULL;
+  const char *metadata = NULL;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   int i;
   g_auto(GStrv) parts = NULL;
