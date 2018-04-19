@@ -303,7 +303,6 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                    guint64            *download_size,
                                    guint64            *installed_size,
                                    const char        **metadata,
-                                   GCancellable       *cancellable,
                                    GError            **error)
 {
   g_autoptr(GVariant) cache_v = NULL;
@@ -10640,7 +10639,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
 
   if (flatpak_remote_state_lookup_cache (state, ref,
                                          NULL, NULL, &metadata,
-                                         NULL, NULL) &&
+                                         NULL) &&
       g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
     {
       g_auto(GStrv) groups = NULL;
