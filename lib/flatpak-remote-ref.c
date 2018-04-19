@@ -173,42 +173,42 @@ flatpak_remote_ref_class_init (FlatpakRemoteRefClass *klass)
                                                         "Remote Name",
                                                         "The name of the remote",
                                                         NULL,
-                                                        G_PARAM_READWRITE));
+                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_INSTALLED_SIZE,
                                    g_param_spec_uint64 ("installed-size",
                                                         "Installed Size",
                                                         "The installed size of the application",
                                                         0, G_MAXUINT64, 0,
-                                                        G_PARAM_READWRITE));
+                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_DOWNLOAD_SIZE,
                                    g_param_spec_uint64 ("download-size",
                                                         "Download Size",
                                                         "The download size of the application",
                                                         0, G_MAXUINT64, 0,
-                                                        G_PARAM_READWRITE));
+                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_METADATA,
                                    g_param_spec_boxed ("metadata",
                                                        "Metadata",
                                                        "The metadata info for the application",
                                                        G_TYPE_BYTES,
-                                                       G_PARAM_READWRITE));
+                                                       G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_EOL,
                                    g_param_spec_string ("end-of-life",
                                                         "End of life",
                                                         "The reason for the ref to be end of life",
                                                         NULL,
-                                                        G_PARAM_READWRITE));
+                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_EOL_REBASE,
                                    g_param_spec_string ("end-of-life-rebase",
                                                         "End of life rebase",
                                                         "The new ref for the end of lifeed ref",
                                                         NULL,
-                                                        G_PARAM_READWRITE));
+                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
 }
 
 static void
