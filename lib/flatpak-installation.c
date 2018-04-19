@@ -1509,7 +1509,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
  * in @ref_file_data and returns the #FlatpakRemoteRef that can be used
  * to install it.
  *
- * Note, the #FlatpakRemoteRef will not have the commit field set, to
+ * Note, the #FlatpakRemoteRef will not have the commit field set, or other details, to
  * avoid unnecessary roundtrips. If you need that you have to resolve it
  * explicitly with flatpak_installation_fetch_remote_ref_sync ().
  *
@@ -1538,7 +1538,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   if (!flatpak_installation_drop_caches (self, cancellable, error))
     return NULL;
 
-  return flatpak_remote_ref_new (ref, NULL, remote);
+  return flatpak_remote_ref_new (ref, NULL, remote, NULL);
 }
 
 /**
@@ -1939,6 +1939,9 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
  * for instance if you're doing an update then the real download size may be smaller
  * than what is returned here.
  *
+ * NOTE: Since 0.11.4 this information is accessible in FlatpakRemoteRef, so this
+ * function is not very useful anymore.
+ *
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
@@ -1976,6 +1979,9 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
  * @error: return location for a #GError
  *
  * Obtains the metadata file from a commit.
+ *
+ * NOTE: Since 0.11.4 this information is accessible in FlatpakRemoteRef, so this
+ * function is not very useful anymore.
  *
  * Returns: (transfer full): a #GBytes containing the flatpak metadata file,
  *   or %NULL if an error occurred
@@ -2053,7 +2059,7 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
       const char *checksum = value;
       FlatpakRemoteRef *ref;
 
-      ref = flatpak_remote_ref_new (refspec, checksum, remote_name);
+      ref = flatpak_remote_ref_new (refspec, checksum, remote_name, state);
 
       if (ref)
         g_ptr_array_add (refs, ref);
@@ -2120,7 +2126,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
   checksum = g_hash_table_lookup (ht, ref);
 
   if (checksum != NULL)
-    return flatpak_remote_ref_new (ref, checksum, remote_name);
+    return flatpak_remote_ref_new (ref, checksum, remote_name, state);
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                "Reference %s doesn't exist in remote", ref);

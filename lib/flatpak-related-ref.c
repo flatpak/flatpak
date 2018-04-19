@@ -142,21 +142,21 @@ flatpak_related_ref_class_init (FlatpakRelatedRefClass *klass)
                                                          "Should download",
                                                          "Whether to auto-download the ref with the main ref",
                                                          FALSE,
-                                                         G_PARAM_READWRITE));
+                                                         G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_SHOULD_DELETE,
                                    g_param_spec_boolean ("should-delete",
                                                          "Should delete",
                                                          "Whether to auto-delete the ref with the main ref",
                                                          FALSE,
-                                                         G_PARAM_READWRITE));
+                                                         G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_SUBPATHS,
                                    g_param_spec_boxed ("subpaths",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
-                                                       G_PARAM_READWRITE));
+                                                       G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
 }
 
 static void
