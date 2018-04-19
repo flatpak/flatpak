@@ -1996,7 +1996,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
-  char *res = NULL;
+  const char *res = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -2011,7 +2011,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
                                           cancellable, error))
     return NULL;
 
-  return g_bytes_new_take (res, strlen (res));
+  return g_bytes_new (res, strlen (res));
 }
 
 /**
