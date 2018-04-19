@@ -68,6 +68,9 @@ flatpak_remote_ref_finalize (GObject *object)
   FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
 
   g_free (priv->remote_name);
+  g_free (priv->eol);
+  g_free (priv->eol_rebase);
+  g_clear_pointer (&priv->metadata, g_bytes_unref);
 
   G_OBJECT_CLASS (flatpak_remote_ref_parent_class)->finalize (object);
 }
