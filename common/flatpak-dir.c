@@ -4890,15 +4890,56 @@ out:
   return ret;
 }
 
+typedef gboolean (*MultiplePrefixesComparisonFunc) (const char         *path,
+                                                    const char * const *prefixes);
+
+static GStrv
+get_permissible_prefixes (FlatpakContext                  *context,
+                          const char                      *source_path,
+                          const char                      *app_id,
+                          MultiplePrefixesComparisonFunc  *out_match_prefixes_func,
+                          GError                         **error)
+{
+  g_autoptr(GPtrArray) prefixes = NULL;
+
+  g_return_val_if_fail (out_match_prefixes_func != NULL, FALSE);
+
+  prefixes = g_ptr_array_new_with_free_func (g_free);
+
+  /* Create a new pointer array with prefixes including the app
+   * ID and in the case of d-bus service files, the allowed own
+   * names. */
+  g_ptr_array_add (prefixes, g_strdup (app_id));
+
+  if (flatpak_has_path_prefix (source_path, "share/dbus-1/services"))
+    {
+      g_auto(GStrv) owned_dbus_names =
+        flatpak_context_get_session_bus_policy_allowed_own_names (context);
+      GStrv iter = owned_dbus_names;
+
+      for (; *iter != NULL; ++iter)
+        g_ptr_array_add (prefixes, g_strdup (*iter));
+
+      *out_match_prefixes_func = flatpak_name_matches_one_wildcard_prefix;
+    }
+
+  g_ptr_array_add (prefixes, NULL);
+
+  *out_match_prefixes_func = flatpak_name_matches_one_prefix;
+  return (GStrv) g_ptr_array_free (g_steal_pointer (&prefixes), FALSE);
+}
+
 static gboolean
-rewrite_export_dir (const char   *app,
-                    const char   *branch,
-                    const char   *arch,
-                    GKeyFile     *metadata,
-                    int           source_parent_fd,
-                    const char   *source_name,
-                    GCancellable *cancellable,
-                    GError      **error)
+rewrite_export_dir (const char     *app,
+                    const char     *branch,
+                    const char     *arch,
+                    GKeyFile       *metadata,
+                    FlatpakContext *context,
+                    int             source_parent_fd,
+                    const char     *source_name,
+                    const char     *source_path,
+                    GCancellable   *cancellable,
+                    GError        **error)
 {
   gboolean ret = FALSE;
 
@@ -4942,16 +4983,27 @@ rewrite_export_dir (const char   *app,
 
       if (S_ISDIR (stbuf.st_mode))
         {
-          if (!rewrite_export_dir (app, branch, arch, metadata,
+          g_autofree char *path = g_build_filename (source_path, dent->d_name, NULL);
+
+          if (!rewrite_export_dir (app, branch, arch, metadata, context,
                                    source_iter.fd, dent->d_name,
-                                   cancellable, error))
+                                   path, cancellable, error))
             goto out;
         }
       else if (S_ISREG (stbuf.st_mode))
         {
+          MultiplePrefixesComparisonFunc match_prefixes_func;
+          g_auto(GStrv) permissible_prefixes = get_permissible_prefixes (context,
+                                                                         source_path,
+                                                                         app,
+                                                                         &match_prefixes_func,
+                                                                         error);
           g_autofree gchar *new_name = NULL;
 
-          if (!flatpak_has_name_prefix (dent->d_name, app))
+          if (permissible_prefixes == NULL)
+            return FALSE;
+
+          if (!match_prefixes_func (dent->d_name, (const char * const *) permissible_prefixes))
             {
               g_warning ("Non-prefixed filename %s in app %s, removing.", dent->d_name, app);
               if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
@@ -5023,10 +5075,24 @@ flatpak_rewrite_export_dir (const char   *app,
                             GError      **error)
 {
   gboolean ret = FALSE;
+  g_autoptr(GFile) parent = g_file_get_parent (source);
+  glnx_autofd int parentfd = -1;
+  g_autofree char *name = g_file_get_basename (source);
+  g_autoptr(FlatpakContext) context = flatpak_context_new ();
+
+  if (!flatpak_context_load_metadata (context, metadata, error))
+    return FALSE;
+
+  if (!glnx_opendirat (AT_FDCWD,
+                       flatpak_file_get_path_cached (parent),
+                       TRUE,
+                       &parentfd,
+                       error))
+    return FALSE;
 
   /* The fds are closed by this call */
-  if (!rewrite_export_dir (app, branch, arch, metadata,
-                           AT_FDCWD, flatpak_file_get_path_cached (source),
+  if (!rewrite_export_dir (app, branch, arch, metadata, context,
+                           parentfd, name, name,
                            cancellable, error))
     goto out;
 
