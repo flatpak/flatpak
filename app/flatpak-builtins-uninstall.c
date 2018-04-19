@@ -274,6 +274,9 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
                                       cancellable, error))
             return FALSE;
         }
+
+      if (!opt_keep_ref)
+        flatpak_dir_prune (udir->dir, cancellable, NULL);
     }
 
   return TRUE;

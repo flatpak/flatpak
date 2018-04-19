@@ -1815,6 +1815,9 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (result == NULL)
     goto out;
 
+  if ((flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0)
+    flatpak_dir_prune (dir_clone, cancellable, NULL);
+
 out:
   if (main_context)
     g_main_context_pop_thread_default (main_context);
@@ -1912,6 +1915,8 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
   if (!flatpak_dir_uninstall (dir_clone, ref, FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
                               cancellable, error))
     return FALSE;
+
+  flatpak_dir_prune (dir_clone, cancellable, NULL);
 
   return TRUE;
 }
