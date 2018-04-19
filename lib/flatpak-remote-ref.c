@@ -191,8 +191,8 @@ flatpak_remote_ref_class_init (FlatpakRemoteRefClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_METADATA,
                                    g_param_spec_boxed ("metadata",
-                                                       "",
-                                                       "",
+                                                       "Metadata",
+                                                       "The metadata info for the application",
                                                        G_TYPE_BYTES,
                                                        G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
@@ -321,7 +321,7 @@ flatpak_remote_ref_new (const char *full_ref,
                         FlatpakRemoteState *state)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
-  guint64 download_size = 0,  installed_size = 0;
+  guint64 download_size = 0, installed_size = 0;
   g_autofree char *metadata = NULL;
   g_autoptr(GBytes) metadata_bytes = NULL;
   g_auto(GStrv) parts = NULL;
