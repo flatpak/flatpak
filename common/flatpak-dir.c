@@ -7735,7 +7735,7 @@ flatpak_dir_prune (FlatpakDir   *self,
          the shared lock operation is released and we will do a prune then */
       if (g_error_matches (lock_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
         {
-          g_debug ("Skipping prune do to in progress operation");
+          g_debug ("Skipping prune due to in progress operation");
           return TRUE;
         }
 
