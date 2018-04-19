@@ -2047,7 +2047,7 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
 
   return flatpak_remote_state_lookup_cache (state, full_ref,
                                             download_size, installed_size, NULL,
-                                            cancellable, error);
+                                            error);
 }
 
 /**
@@ -2088,7 +2088,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
 
   if (!flatpak_remote_state_lookup_cache (state, full_ref,
                                           NULL, NULL, &res,
-                                          cancellable, error))
+                                          error))
     return NULL;
 
   return g_bytes_new (res, strlen (res));
