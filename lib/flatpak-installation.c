@@ -639,7 +639,9 @@ get_ref (FlatpakDir          *dir,
                                     origin, subpaths,
                                     deploy_path,
                                     installed_size,
-                                    is_current);
+                                    is_current,
+                                    flatpak_deploy_data_get_eol (deploy_data),
+                                    flatpak_deploy_data_get_eol_rebase (deploy_data));
 }
 
 /**

@@ -59,5 +59,7 @@ FLATPAK_EXTERN gboolean     flatpak_installed_ref_get_is_current (FlatpakInstall
 FLATPAK_EXTERN GBytes      *flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
                                                                  GCancellable        *cancellable,
                                                                  GError             **error);
+FLATPAK_EXTERN const char * flatpak_installed_ref_get_eol (FlatpakInstalledRef *self);
+FLATPAK_EXTERN const char * flatpak_installed_ref_get_eol_rebase (FlatpakInstalledRef *self);
 
 #endif /* __FLATPAK_INSTALLED_REF_H__ */
