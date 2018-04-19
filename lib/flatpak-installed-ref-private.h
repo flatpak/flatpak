@@ -35,6 +35,8 @@ FlatpakInstalledRef *flatpak_installed_ref_new (const char  *full_ref,
                                                 const char **subpaths,
                                                 const char  *deploy_dir,
                                                 guint64      installed_size,
-                                                gboolean     current);
+                                                gboolean     current,
+                                                const char  *eol,
+                                                const char  *eol_rebase);
 
 #endif /* __FLATPAK_INSTALLED_REF_PRIVATE_H__ */

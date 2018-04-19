@@ -47,6 +47,8 @@ struct _FlatpakInstalledRefPrivate
   char    *deploy_dir;
   char   **subpaths;
   guint64  installed_size;
+  char    *eol;
+  char    *eol_rebase;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstalledRef, flatpak_installed_ref, FLATPAK_TYPE_REF)
@@ -59,7 +61,9 @@ enum {
   PROP_LATEST_COMMIT,
   PROP_DEPLOY_DIR,
   PROP_INSTALLED_SIZE,
-  PROP_SUBPATHS
+  PROP_SUBPATHS,
+  PROP_EOL,
+  PROP_EOL_REBASE,
 };
 
 static void
@@ -72,6 +76,8 @@ flatpak_installed_ref_finalize (GObject *object)
   g_free (priv->latest_commit);
   g_free (priv->deploy_dir);
   g_strfreev (priv->subpaths);
+  g_free (priv->eol);
+  g_free (priv->eol_rebase);
 
   G_OBJECT_CLASS (flatpak_installed_ref_parent_class)->finalize (object);
 }
@@ -115,6 +121,16 @@ flatpak_installed_ref_set_property (GObject      *object,
       priv->subpaths = g_strdupv (g_value_get_boxed (value));
       break;
 
+    case PROP_EOL:
+      g_clear_pointer (&priv->eol, g_free);
+      priv->eol = g_value_dup_string (value);
+      break;
+
+    case PROP_EOL_REBASE:
+      g_clear_pointer (&priv->eol_rebase, g_free);
+      priv->eol_rebase = g_value_dup_string (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -156,7 +172,15 @@ flatpak_installed_ref_get_property (GObject    *object,
       g_value_set_boxed (value, priv->subpaths);
       break;
 
-    default:
+    case PROP_EOL:
+      g_value_set_string (value, priv->eol);
+      break;
+
+    case PROP_EOL_REBASE:
+      g_value_set_string (value, priv->eol_rebase);
+      break;
+
+   default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
     }
@@ -213,6 +237,20 @@ flatpak_installed_ref_class_init (FlatpakInstalledRefClass *klass)
                                                        "",
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_EOL,
+                                   g_param_spec_string ("end-of-life",
+                                                        "End of life",
+                                                        "The reason for the ref to be end of life",
+                                                        NULL,
+                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_EOL_REBASE,
+                                   g_param_spec_string ("end-of-life-rebase",
+                                                        "End of life rebase",
+                                                        "The new ref for the end of lifeed ref",
+                                                        NULL,
+                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -351,6 +389,40 @@ flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
   return g_bytes_new_take (metadata, length);
 }
 
+/**
+ * flatpak_installed_ref_get_eol:
+ * @self: a #FlatpakInstalledRef
+ *
+ * Returns the end-of-life reason string, or %NULL if the
+ * ref is not end-of-lifed.
+ *
+ * Returns: (transfer none): the end-of-life reason or %NULL
+ */
+const char *
+flatpak_installed_ref_get_eol (FlatpakInstalledRef *self)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+
+  return priv->eol;
+}
+
+/**
+ * flatpak_installed_ref_get_eol_rebase:
+ * @self: a #FlatpakInstalledRef
+ *
+ * Returns the end-of-life rebased ref, or %NULL if the
+ * ref is not end-of-lifed.
+ *
+ * Returns: (transfer none): the end-of-life rebased ref or %NULL
+ */
+const char *
+flatpak_installed_ref_get_eol_rebase (FlatpakInstalledRef *self)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+
+  return priv->eol_rebase;
+}
+
 FlatpakInstalledRef *
 flatpak_installed_ref_new (const char  *full_ref,
                            const char  *commit,
@@ -359,7 +431,9 @@ flatpak_installed_ref_new (const char  *full_ref,
                            const char **subpaths,
                            const char  *deploy_dir,
                            guint64      installed_size,
-                           gboolean     is_current)
+                           gboolean     is_current,
+                           const char  *eol,
+                           const char  *eol_rebase)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakInstalledRef *ref;
@@ -387,6 +461,8 @@ flatpak_installed_ref_new (const char  *full_ref,
                       "is-current", is_current,
                       "installed-size", installed_size,
                       "deploy-dir", deploy_dir,
+                      "end-of-life", eol,
+                      "end-of-life-rebase", eol_rebase,
                       NULL);
 
   return ref;
