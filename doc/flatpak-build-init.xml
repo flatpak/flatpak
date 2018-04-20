@@ -127,6 +127,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--extension=NAME=VARIABLE[=VALUE]</option></term>
+
+                <listitem><para>
+                  Add extension point info.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--sdk-dir</option></term>
 
                 <listitem><para>
