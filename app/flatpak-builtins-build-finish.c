@@ -39,6 +39,7 @@ static char *opt_command;
 static char *opt_require_version;
 static char **opt_extra_data;
 static char **opt_extensions;
+static char **opt_remove_extensions;
 static char **opt_metadata;
 static gboolean opt_no_exports;
 static int opt_extension_prio = G_MININT;
@@ -51,6 +52,7 @@ static GOptionEntry options[] = {
   { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, N_("Don't process exports"), NULL },
   { "extra-data", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data, N_("Extra data info") },
   { "extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extensions, N_("Add extension point info"),  N_("NAME=VARIABLE[=VALUE]") },
+  { "remove-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_remove_extensions, N_("Remove extension point info"),  N_("NAME") },
   { "extension-priority", 0, 0, G_OPTION_ARG_INT, &opt_extension_prio, N_("Set extension priority (only for extensions)"), N_("0") },
   { "sdk", 0, 0, G_OPTION_ARG_STRING, &opt_sdk, N_("Change the sdk used for the app"),  N_("SDK") },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
@@ -560,6 +562,13 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
         }
 
       g_key_file_set_string (keyfile, elements[0], elements[1], elements[2] ? elements[2] : "true");
+    }
+
+  for (i = 0; opt_remove_extensions != NULL && opt_remove_extensions[i] != NULL; i++)
+    {
+      g_autofree char *groupname = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION, opt_remove_extensions[i], NULL);
+
+      g_key_file_remove_group (keyfile, groupname, NULL);
     }
 
   for (i = 0; opt_extensions != NULL && opt_extensions[i] != NULL; i++)
