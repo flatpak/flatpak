@@ -419,39 +419,65 @@ flatpak_is_linux32_arch (const char *arch)
   return FALSE;
 }
 
+static struct {
+  const char *kernel_arch;
+  const char *compat_arch;
+} compat_arches[] = {
+  { "x86_64", "i386" },
+  { "aarch64", "arm" },
+};
+
+static const char *
+flatpak_get_compat_arch (const char *kernel_arch)
+{
+  int i;
+
+  /* Also add all other arches that are compatible with the kernel arch */
+  for (i = 0; i < G_N_ELEMENTS(compat_arches); i++)
+    {
+      if (strcmp (compat_arches[i].kernel_arch, kernel_arch) == 0)
+        return compat_arches[i].compat_arch;
+    }
+
+  return NULL;
+}
+
+static const char *
+flatpak_get_compat_arch_reverse (const char *compat_arch)
+{
+  int i;
+
+  /* Also add all other arches that are compatible with the kernel arch */
+  for (i = 0; i < G_N_ELEMENTS(compat_arches); i++)
+    {
+      if (strcmp (compat_arches[i].compat_arch, compat_arch) == 0)
+        return compat_arches[i].kernel_arch;
+    }
+
+  return NULL;
+}
+
 /* Get all compatible arches for this host in order of priority */
 const char **
 flatpak_get_arches (void)
 {
   static gsize arches = 0;
-  static struct {
-    const char *kernel_arch;
-    const char *compat_arch;
-  } compat_arches[] = {
-    { "x86_64", "i386" },
-    { "aarch64", "arm" },
-  };
 
   if (g_once_init_enter (&arches))
     {
       gsize new_arches = 0;
       const char *main_arch = flatpak_get_arch ();
       const char *kernel_arch = flatpak_get_kernel_arch ();
+      const char *compat_arch;
       GPtrArray *array = g_ptr_array_new ();
-      int i;
 
       /* This is the userspace arch, i.e. the one flatpak itself was
          build for. It's always first. */
       g_ptr_array_add (array, (char *)main_arch);
 
-      /* Also add all other arches that are compatible with the kernel arch */
-      for (i = 0; i < G_N_ELEMENTS(compat_arches); i++)
-        {
-          if ((strcmp (compat_arches[i].kernel_arch, kernel_arch) == 0) &&
-              /* Don't re-add the main arch */
-              (strcmp (compat_arches[i].compat_arch, main_arch) != 0))
-            g_ptr_array_add (array, (char *)compat_arches[i].compat_arch);
-        }
+      compat_arch = flatpak_get_compat_arch (kernel_arch);
+      if (strcmp (compat_arch, main_arch) != 0)
+        g_ptr_array_add (array, (char *)compat_arch);
 
       g_ptr_array_add (array, NULL);
       new_arches = (gsize)g_ptr_array_free (array, FALSE);
@@ -3168,7 +3194,11 @@ commit_filter (OstreeRepo *repo,
                GFileInfo  *file_info,
                gpointer    user_data)
 {
+  const char *ignore_filename = user_data;
   guint current_mode;
+
+  if (g_strcmp0 (ignore_filename, g_file_info_get_name (file_info)) == 0)
+    return OSTREE_REPO_COMMIT_FILTER_SKIP;
 
   /* No user info */
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
@@ -3518,8 +3548,10 @@ flatpak_appstream_xml_new (void)
   return appstream_root;
 }
 
-GBytes *
+gboolean
 flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
+                                    GBytes **uncompressed,
+                                    GBytes **compressed,
                                     GError    **error)
 {
   g_autoptr(GString) xml = NULL;
@@ -3532,16 +3564,25 @@ flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
   xml = g_string_new ("");
   flatpak_xml_to_string (appstream_root, xml);
 
-  compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
-  out = g_memory_output_stream_new_resizable ();
-  out2 = g_converter_output_stream_new (out, G_CONVERTER (compressor));
-  if (!g_output_stream_write_all (out2, xml->str, xml->len,
-                                  NULL, NULL, error))
-    return NULL;
-  if (!g_output_stream_close (out2, NULL, error))
-    return NULL;
+  if (compressed)
+    {
+      compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
+      out = g_memory_output_stream_new_resizable ();
+      out2 = g_converter_output_stream_new (out, G_CONVERTER (compressor));
+      if (!g_output_stream_write_all (out2, xml->str, xml->len,
+                                      NULL, NULL, error))
+        return FALSE;
+      if (!g_output_stream_close (out2, NULL, error))
+        return FALSE;
+    }
 
-  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
+  if (uncompressed)
+    *uncompressed = g_string_free_to_bytes (g_steal_pointer (&xml));
+
+  if (compressed)
+    *compressed = g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
+
+  return TRUE;
 }
 
 gboolean
@@ -3553,6 +3594,9 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  GError      **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
+  g_autofree const char **all_refs_keys = NULL;
+  guint n_keys;
+  gsize i;
   g_autoptr(GHashTable) arches = NULL;  /* (element-type utf8 utf8) */
   const char *collection_id;
 
@@ -3571,8 +3615,14 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                               error))
     return FALSE;
 
-  GLNX_HASH_TABLE_FOREACH (all_refs, const char *, ref)
+  all_refs_keys = (const char **)g_hash_table_get_keys_as_array (all_refs, &n_keys);
+
+  /* Sort refs so that appdata order is stable for e.g. deltas */
+  g_qsort_with_data (all_refs_keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+
+  for (i = 0; i < n_keys; i++)
     {
+      const char *ref = all_refs_keys[i];
       g_auto(GStrv) split = NULL;
       const char *arch;
 
@@ -3582,7 +3632,15 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       arch = split[2];
       if (!g_hash_table_contains (arches, arch))
-        g_hash_table_add (arches, g_strdup (arch));
+        {
+          const char *reverse_compat_arch;
+          g_hash_table_add (arches, g_strdup (arch));
+
+          /* If repo contains e.g. i386, also generated x86-64 appdata */
+          reverse_compat_arch = flatpak_get_compat_arch_reverse (arch);
+          if (reverse_compat_arch)
+            g_hash_table_add (arches, g_strdup (reverse_compat_arch));
+        }
     }
 
   GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
@@ -3590,16 +3648,23 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
       g_autofree char *tmpdir = g_strdup ("/tmp/flatpak-appstream-XXXXXX");
       g_autoptr(FlatpakTempDir) tmpdir_file = NULL;
       g_autoptr(GFile) appstream_file = NULL;
-      g_autoptr(GFile) root = NULL;
-      g_autoptr(OstreeMutableTree) mtree = NULL;
+      g_autoptr(GFile) appstream_gz_file = NULL;
       g_autofree char *commit_checksum = NULL;
       OstreeRepoTransactionStats stats;
       g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
-      g_autofree char *parent = NULL;
-      g_autofree char *branch = NULL;
       g_autoptr(FlatpakXml) appstream_root = NULL;
       g_autoptr(GBytes) xml_data = NULL;
-      gboolean skip_commit = FALSE;
+      g_autoptr(GBytes) xml_gz_data = NULL;
+      const char *compat_arch;
+      g_autoptr(FlatpakRepoTransaction) transaction = NULL;
+      compat_arch = flatpak_get_compat_arch (arch);
+      struct {
+        const char *ignore_filename;
+        const char *branch_prefix;
+      } branch_data[] = {
+        { "appstream.xml", "appstream" },
+        { "appstream.xml.gz", "appstream2" },
+      };
 
       if (g_mkdtemp_full (tmpdir, 0755) == NULL)
         return flatpak_fail (error, "Can't create temporary directory");
@@ -3608,8 +3673,10 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       appstream_root = flatpak_appstream_xml_new ();
 
-      GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, ref, const char *, commit)
+      for (i = 0; i < n_keys; i++)
         {
+          const char *ref = all_refs_keys[i];
+          const char *commit;
           g_autoptr(GVariant) commit_v = NULL;
           g_autoptr(GVariant) commit_metadata = NULL;
           g_auto(GStrv) split = NULL;
@@ -3622,7 +3689,19 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
             continue;
 
           if (strcmp (split[2], arch) != 0)
-            continue;
+            {
+              g_autofree char *main_ref = NULL;
+              /* Include refs that don't match the main arch (e.g. x86_64), if they match
+                 the compat arch (e.g. i386) and the main arch version is not in the repo */
+              if (g_strcmp0 (split[2], compat_arch) == 0)
+                main_ref = g_strdup_printf ("%s/%s/%s/%s",
+                                            split[0], split[1], arch, split[3]);
+              if (main_ref == NULL ||
+                  g_hash_table_lookup (all_refs, main_ref))
+                continue;
+            }
+
+          commit = g_hash_table_lookup (all_refs, ref);
 
           if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
                                          &commit_v, NULL))
@@ -3650,12 +3729,10 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
             }
         }
 
-      xml_data = flatpak_appstream_xml_root_to_data (appstream_root, error);
-      if (xml_data == NULL)
+      if (!flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, &xml_gz_data, error))
         return FALSE;
 
-      appstream_file = g_file_get_child (tmpdir_file, "appstream.xml.gz");
-
+      appstream_file = g_file_get_child (tmpdir_file, "appstream.xml");
       if (!g_file_replace_contents (appstream_file,
                                     g_bytes_get_data (xml_data, NULL),
                                     g_bytes_get_size (xml_data),
@@ -3667,117 +3744,130 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                     error))
         return FALSE;
 
-      if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+      appstream_gz_file = g_file_get_child (tmpdir_file, "appstream.xml.gz");
+      if (!g_file_replace_contents (appstream_gz_file,
+                                    g_bytes_get_data (xml_gz_data, NULL),
+                                    g_bytes_get_size (xml_gz_data),
+                                    NULL,
+                                    FALSE,
+                                    G_FILE_CREATE_NONE,
+                                    NULL,
+                                    cancellable,
+                                    error))
         return FALSE;
 
-      branch = g_strdup_printf ("appstream/%s", arch);
+      transaction = flatpak_repo_transaction_start (repo, cancellable, error);
+      if (transaction == NULL)
+        return FALSE;
 
-      if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
-        goto out;
-
-      mtree = ostree_mutable_tree_new ();
-
-      modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
-                                                  OSTREE_REPO_COMMIT_MODIFIER_FLAGS_CANONICAL_PERMISSIONS,
-                                                  (OstreeRepoCommitFilter) commit_filter, NULL, NULL);
-
-      if (!ostree_repo_write_directory_to_mtree (repo, G_FILE (tmpdir_file), mtree, modifier, cancellable, error))
-        goto out;
-
-      if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
-        goto out;
-
-
-      /* No need to commit if nothing changed */
-      if (parent)
+      for (i = 0; i < G_N_ELEMENTS(branch_data); i++)
         {
-          g_autoptr(GFile) parent_root;
+          gboolean skip_commit = FALSE;
+          const char *ignore_filename = branch_data[i].ignore_filename;
+          const char *branch_prefix = branch_data[i].branch_prefix;
+          g_autoptr(OstreeMutableTree) mtree = NULL;
+          g_autoptr(GFile) root = NULL;
+          g_autofree char *branch = NULL;
+          g_autofree char *parent = NULL;
 
-          if (!ostree_repo_read_commit (repo, parent, &parent_root, NULL, cancellable, error))
-            goto out;
+          branch = g_strdup_printf ("%s/%s", branch_prefix, arch);
+          if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
+            return FALSE;
 
-          if (g_file_equal (root, parent_root))
+          mtree = ostree_mutable_tree_new ();
+          modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
+                                                      OSTREE_REPO_COMMIT_MODIFIER_FLAGS_CANONICAL_PERMISSIONS,
+                                                      (OstreeRepoCommitFilter) commit_filter, (gpointer)ignore_filename, NULL);
+
+          if (!ostree_repo_write_directory_to_mtree (repo, G_FILE (tmpdir_file), mtree, modifier, cancellable, error))
+            return FALSE;
+
+          if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
+            return FALSE;
+
+          /* No need to commit if nothing changed */
+          if (parent)
             {
-              skip_commit = TRUE;
-              g_debug ("Not updating %s, no change", branch);
-            }
-        }
+              g_autoptr(GFile) parent_root;
 
-      if (!skip_commit)
-        {
-          g_autoptr(GVariantDict) metadata_dict = NULL;
-          g_autoptr(GVariant) metadata = NULL;
+              if (!ostree_repo_read_commit (repo, parent, &parent_root, NULL, cancellable, error))
+                return FALSE;
 
-          /* Add bindings to the metadata. Do this even if P2P support is not
-           * enabled, as it might be enable for other flatpak builds. */
-          metadata_dict = g_variant_dict_new (NULL);
-          g_variant_dict_insert (metadata_dict, "ostree.collection-binding",
-                                 "s", (collection_id != NULL) ? collection_id : "");
-          g_variant_dict_insert_value (metadata_dict, "ostree.ref-binding",
-                                       g_variant_new_strv ((const gchar * const *) &branch, 1));
-          metadata = g_variant_ref_sink (g_variant_dict_end (metadata_dict));
-
-          if (timestamp > 0)
-            {
-              if (!ostree_repo_write_commit_with_time (repo, parent, "Update", NULL, metadata,
-                                                       OSTREE_REPO_FILE (root),
-                                                       timestamp,
-                                                       &commit_checksum,
-                                                       cancellable, error))
-                goto out;
-            }
-          else
-            {
-              if (!ostree_repo_write_commit (repo, parent, "Update", NULL, metadata,
-                                             OSTREE_REPO_FILE (root),
-                                             &commit_checksum, cancellable, error))
-                goto out;
-            }
-
-          if (gpg_key_ids)
-            {
-              int i;
-
-              for (i = 0; gpg_key_ids[i] != NULL; i++)
+              if (g_file_equal (root, parent_root))
                 {
-                  const char *keyid = gpg_key_ids[i];
-
-                  if (!ostree_repo_sign_commit (repo,
-                                                commit_checksum,
-                                                keyid,
-                                                gpg_homedir,
-                                                cancellable,
-                                                error))
-                    goto out;
+                  skip_commit = TRUE;
+                  g_debug ("Not updating %s, no change", branch);
                 }
             }
 
-#ifdef FLATPAK_ENABLE_P2P
-          if (collection_id != NULL)
+          if (!skip_commit)
             {
-              const OstreeCollectionRef collection_ref = { (char *) collection_id, branch };
-              ostree_repo_transaction_set_collection_ref (repo, &collection_ref, commit_checksum);
-            }
-          else
-#endif  /* FLATPAK_ENABLE_P2P */
-            {
-              ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
-            }
+              g_autoptr(GVariantDict) metadata_dict = NULL;
+              g_autoptr(GVariant) metadata = NULL;
 
-          if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
-            goto out;
+              /* Add bindings to the metadata. Do this even if P2P support is not
+               * enabled, as it might be enable for other flatpak builds. */
+              metadata_dict = g_variant_dict_new (NULL);
+              g_variant_dict_insert (metadata_dict, "ostree.collection-binding",
+                                     "s", (collection_id != NULL) ? collection_id : "");
+              g_variant_dict_insert_value (metadata_dict, "ostree.ref-binding",
+                                           g_variant_new_strv ((const gchar * const *) &branch, 1));
+              metadata = g_variant_ref_sink (g_variant_dict_end (metadata_dict));
+
+              if (timestamp > 0)
+                {
+                  if (!ostree_repo_write_commit_with_time (repo, parent, "Update", NULL, metadata,
+                                                           OSTREE_REPO_FILE (root),
+                                                           timestamp,
+                                                           &commit_checksum,
+                                                           cancellable, error))
+                    return FALSE;
+                }
+              else
+                {
+                  if (!ostree_repo_write_commit (repo, parent, "Update", NULL, metadata,
+                                                 OSTREE_REPO_FILE (root),
+                                                 &commit_checksum, cancellable, error))
+                    return FALSE;
+                }
+
+              if (gpg_key_ids)
+                {
+                  int i;
+
+                  for (i = 0; gpg_key_ids[i] != NULL; i++)
+                    {
+                      const char *keyid = gpg_key_ids[i];
+
+                      if (!ostree_repo_sign_commit (repo,
+                                                    commit_checksum,
+                                                    keyid,
+                                                    gpg_homedir,
+                                                    cancellable,
+                                                    error))
+                        return FALSE;
+                    }
+                }
+
+#ifdef FLATPAK_ENABLE_P2P
+              if (collection_id != NULL)
+                {
+                  const OstreeCollectionRef collection_ref = { (char *) collection_id, branch };
+                  ostree_repo_transaction_set_collection_ref (repo, &collection_ref, commit_checksum);
+                }
+              else
+#endif  /* FLATPAK_ENABLE_P2P */
+                {
+                  ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
+                }
+            }
         }
-      else
-        {
-          ostree_repo_abort_transaction (repo, cancellable, NULL);
-        }
+
+      if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
+        return FALSE;
     }
 
   return TRUE;
-
-out:
-  ostree_repo_abort_transaction (repo, cancellable, NULL);
-  return FALSE;
 }
 
 void

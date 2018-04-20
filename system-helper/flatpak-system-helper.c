@@ -429,10 +429,10 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                          const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
-  g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GMainContext) main_context = NULL;
-  g_autofree char *branch = NULL;
+  g_autofree char *new_branch = NULL;
+  g_autofree char *old_branch = NULL;
   gboolean is_oci;
 
   g_debug ("DeployAppstream %s %s %s %s", arg_repo_path, arg_origin, arg_arch, arg_installation);
@@ -444,10 +444,14 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (!g_file_query_exists (path, NULL))
+  if (strlen (arg_repo_path) > 0)
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
-      return TRUE;
+      g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
+      if (!g_file_query_exists (path, NULL))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
+          return TRUE;
+        }
     }
 
   if (!flatpak_dir_ensure_repo (system, NULL, &error))
@@ -459,7 +463,8 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
   is_oci = flatpak_dir_get_remote_oci (system, arg_origin);
 
-  branch = g_strdup_printf ("appstream/%s", arg_arch);
+  new_branch = g_strdup_printf ("appstream2/%s", arg_arch);
+  old_branch = g_strdup_printf ("appstream/%s", arg_arch);
 
   if (is_oci)
     {
@@ -487,11 +492,11 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      desc = flatpak_oci_index_get_manifest (index, branch);
+      desc = flatpak_oci_index_get_manifest (index, new_branch);
       if (desc == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't find ref %s in child OCI registry index", branch);
+                                                 "Can't find ref %s in child OCI registry index", new_branch);
           return TRUE;
         }
 
@@ -505,34 +510,102 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
         }
 
       checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
-                                        arg_origin, branch, NULL, NULL, NULL, &error);
+                                        arg_origin, new_branch, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't pull ref %s from child OCI registry index: %s", branch, error->message);
+                                                 "Can't pull ref %s from child OCI registry index: %s", new_branch, error->message);
           return TRUE;
         }
     }
-  else
+  else if (strlen (arg_repo_path) > 0)
     {
+      g_autoptr(GError) first_error = NULL;
+
       /* Work around ostree-pull spinning the default main context for the sync calls */
       main_context = g_main_context_new ();
       g_main_context_push_thread_default (main_context);
 
       if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
                                              arg_origin,
-                                             branch,
+                                             new_branch,
                                              NULL,
                                              NULL,
-                                             NULL, &error))
+                                             NULL, &first_error))
         {
-          g_main_context_pop_thread_default (main_context);
+          if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
+                                                 arg_origin,
+                                                 old_branch,
+                                                 NULL,
+                                                 NULL,
+                                                 NULL, NULL))
+            {
+              g_main_context_pop_thread_default (main_context);
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                     "Error pulling from repo: %s", first_error->message);
+              return TRUE;
+            }
+        }
+
+      g_main_context_pop_thread_default (main_context);
+    }
+  else /* empty path == local pull */
+    {
+      g_autoptr(FlatpakRemoteState) state = NULL;
+      g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+      g_autoptr(GError) first_error = NULL;
+      g_autofree char *url = NULL;
+
+      if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
+                                       arg_origin,
+                                       &url,
+                                       &error))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Error getting remote url: %s", error->message);
+          return TRUE;
+        }
+
+      if (!g_str_has_prefix (url, "file:"))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Local pull url doesn't start with file://");
+          return TRUE;
+        }
+
+      state = flatpak_dir_get_remote_state_optional (system, arg_origin, NULL, &error);
+      if (state == NULL)
+        {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                  "Error pulling from repo: %s", error->message);
           return TRUE;
         }
 
+      /* Work around ostree-pull spinning the default main context for the sync calls */
+      main_context = g_main_context_new ();
+      g_main_context_push_thread_default (main_context);
+
+      ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
+
+      if (!flatpak_dir_pull (system, state, new_branch, NULL, NULL, NULL, NULL,
+                             FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
+                             NULL, &first_error))
+        {
+          if (!flatpak_dir_pull (system, state, old_branch, NULL, NULL, NULL, NULL,
+                                 FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
+                                 NULL, NULL))
+            {
+              g_main_context_pop_thread_default (main_context);
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                     "Error pulling from repo: %s", error->message);
+              return TRUE;
+            }
+        }
+
       g_main_context_pop_thread_default (main_context);
+
+      if (ostree_progress)
+        ostree_async_progress_finish (ostree_progress);
     }
 
   if (!flatpak_dir_deploy_appstream (system,

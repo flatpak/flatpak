@@ -28,7 +28,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-
     skip_without_p2p
 fi
 
-echo "1..16"
+echo "1..19"
 
 #Regular repo
 setup_repo
@@ -37,8 +37,14 @@ setup_repo
 if ! ostree show --repo=repos/test appstream/${ARCH} > /dev/null; then
     assert_not_reached "No appstream branch"
 fi
+if ! ostree show --repo=repos/test appstream2/${ARCH} > /dev/null; then
+    assert_not_reached "No appstream2 branch"
+fi
 ostree cat --repo=repos/test appstream/${ARCH} /appstream.xml.gz | gunzip -d > appdata.xml
 assert_file_has_content appdata.xml "<id>org.test.Hello.desktop</id>"
+
+ostree cat --repo=repos/test appstream2/${ARCH} /appstream.xml > appdata2.xml
+assert_file_has_content appdata2.xml "<id>org.test.Hello.desktop</id>"
 
 # Unsigned repo (not supported with collections; client-side use of collections requires GPG)
 if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
@@ -53,6 +59,8 @@ elif [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
 else
     GPGPUBKEY="" GPGARGS="" setup_repo test-no-gpg
 fi
+
+flatpak remote-add ${U} --no-gpg-verify local-test-no-gpg-repo `pwd`/repos/test-no-gpg
 
 #alternative gpg key repo
 GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo test-gpg2 org.test.Collection.Gpg2
@@ -71,6 +79,36 @@ if flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-wron
     assert_not_reached "Should fail metadata-update due to wrong gpg key"
 fi
 
+# Remove new appstream branch so we can test deploying the old one
+rm -rf repos/test/refs/heads/appstream2
+ostree summary -u --repo=repos/test ${FL_GPGARGS}
+
+flatpak ${U} --appstream update test-repo
+
+assert_has_file $FL_DIR/repo/refs/remotes/test-repo/appstream/$ARCH
+assert_not_has_file $FL_DIR/repo/refs/remotes/test-repo/appstream2/$ARCH
+
+assert_has_file $FL_DIR/appstream/test-repo/$ARCH/.timestamp
+assert_has_symlink $FL_DIR/appstream/test-repo/$ARCH/active
+assert_not_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml
+assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml.gz
+
+echo "ok update compat appstream"
+
+# Then regenerate new appstream branch and verify that we update to it
+update_repo
+
+flatpak ${U} --appstream update test-repo
+
+assert_has_file $FL_DIR/repo/refs/remotes/test-repo/appstream2/$ARCH
+
+assert_has_file $FL_DIR/appstream/test-repo/$ARCH/.timestamp
+assert_has_symlink $FL_DIR/appstream/test-repo/$ARCH/active
+assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml
+assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml.gz
+
+echo "ok update appstream"
+
 if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
     install_repo test-no-gpg
     echo "ok install without gpg key"
@@ -79,6 +117,12 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
 else
     echo "ok install without gpg key # skip not supported for collections"
 fi
+
+install_repo local-test-no-gpg
+${FLATPAK} ${U} uninstall org.test.Platform org.test.Hello
+${FLATPAK} ${U} update --appstream local-test-no-gpg-repo
+
+echo "ok local without gpg key"
 
 install_repo test-gpg2
 echo "ok with alternative gpg key"
