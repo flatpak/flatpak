@@ -322,7 +322,7 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   guint64 download_size = 0, installed_size = 0;
-  g_autofree char *metadata = NULL;
+  const char *metadata;
   g_autoptr(GBytes) metadata_bytes = NULL;
   g_auto(GStrv) parts = NULL;
   FlatpakRemoteRef *ref;
@@ -338,14 +338,14 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
   if (state &&
       !flatpak_remote_state_lookup_cache (state, full_ref,
                                           &download_size, &installed_size, &metadata,
-                                          NULL, NULL))
+                                          NULL))
     {
       g_warning ("Ignoring ref %s due to lack of metadata", full_ref);
       return NULL;
     }
 
   if (metadata)
-    metadata_bytes = g_bytes_new_take (g_steal_pointer (&metadata), strlen (metadata));
+    metadata_bytes = g_bytes_new (metadata, strlen (metadata));
 
   sparse = flatpak_remote_state_lookup_sparse_cache (state, full_ref, NULL);
   if (sparse)

@@ -114,9 +114,8 @@ gboolean flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                             const char         *ref,
                                             guint64            *download_size,
                                             guint64            *installed_size,
-                                            char               **metadata,
-                                            GCancellable        *cancellable,
-                                            GError             **error);
+                                            const char        **metadata,
+                                            GError            **error);
 GVariant *flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
                                                     const char         *ref,
                                                     GError             **error);

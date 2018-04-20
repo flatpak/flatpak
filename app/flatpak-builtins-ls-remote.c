@@ -328,7 +328,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
               if (!flatpak_remote_state_lookup_cache (state, ref,
                                                       &download_size, &installed_size, NULL,
-                                                      NULL, error))
+                                                      error))
                 return FALSE;
 
               /* The sparse cache is optional */

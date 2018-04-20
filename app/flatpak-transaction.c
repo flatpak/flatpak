@@ -494,7 +494,6 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
 {
   g_autofree char *origin = NULL;
   const char *pref;
-  g_autofree char *remote_metadata = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autofree char *origin_remote = NULL;
@@ -565,9 +564,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
 
   if (metadata == NULL && remote != NULL)
     {
-      if (flatpak_remote_state_lookup_cache (state, ref, NULL, NULL, &remote_metadata, NULL, &local_error))
-        metadata = remote_metadata;
-      else
+      if (!flatpak_remote_state_lookup_cache (state, ref, NULL, NULL, &metadata, &local_error))
         {
           g_print (_("Warning: Can't find dependencies: %s\n"), local_error->message);
           g_clear_error (&local_error);
