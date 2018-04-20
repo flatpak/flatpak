@@ -195,6 +195,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   gboolean is_extension = FALSE;
   gboolean is_app_extension = FALSE;
   g_autofree char *app_info_path = NULL;
+  g_autofree char *app_extensions = NULL;
   g_autofree char *runtime_extensions = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
 
@@ -504,12 +505,21 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   flatpak_run_apply_env_vars (bwrap, app_context);
 
+  if (is_app)
+    {
+      /* We don't actually know the final branchname yet, so use "nobranch" as fallback to avoid unexpected matches.
+         This means any extension point used at build time must have explicit versions to work. */
+      g_autofree char *fake_ref = g_strdup_printf ("app/%s/%s/nobranch", id, runtime_ref_parts[2]);
+      if (!flatpak_run_add_extension_args (bwrap, metakey, fake_ref, FALSE, &app_extensions, cancellable, error))
+        return FALSE;
+    }
+
   if (!custom_usr && !(is_extension && !is_app_extension) &&
       !flatpak_run_add_extension_args (bwrap, runtime_metakey, runtime_ref, FALSE, &runtime_extensions, cancellable, error))
     return FALSE;
 
   if (!flatpak_run_add_app_info_args (bwrap,
-                                      app_files, NULL, NULL,
+                                      app_files, NULL, app_extensions,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       id, NULL,
                                       runtime_ref,
