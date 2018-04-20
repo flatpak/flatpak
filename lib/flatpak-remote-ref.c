@@ -98,7 +98,7 @@ flatpak_remote_ref_set_property (GObject      *object,
 
     case PROP_METADATA:
       g_clear_pointer (&priv->metadata, g_bytes_unref);
-      priv->metadata = g_bytes_ref (g_value_get_boxed (value));
+      priv->metadata = g_value_get_boxed (value) ? g_bytes_ref (g_value_get_boxed (value)) : NULL;
       break;
 
     case PROP_EOL:
@@ -270,7 +270,8 @@ flatpak_remote_ref_get_download_size (FlatpakRemoteRef *self)
  *
  * Returns the app metadata from the metadata cach of the ref.
  *
- * Returns: (transfer none): a #GBytes with the metadata file contents
+ * Returns: (transfer none) (nullable): a #GBytes with the metadata file
+ * contents or %NULL
  */
 GBytes *
 flatpak_remote_ref_get_metadata (FlatpakRemoteRef *self)
@@ -340,8 +341,7 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
                                           &download_size, &installed_size, &metadata,
                                           NULL))
     {
-      g_warning ("Ignoring ref %s due to lack of metadata", full_ref);
-      return NULL;
+      g_debug ("Can't find metadata for ref %s", full_ref);
     }
 
   if (metadata)
