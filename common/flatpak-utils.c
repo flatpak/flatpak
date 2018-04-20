@@ -3662,8 +3662,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
         const char *ignore_filename;
         const char *branch_prefix;
       } branch_data[] = {
-        { "appstream.xml", "appstream" },
-        { "appstream.xml.gz", "appstream2" },
+        { "appstream.xml", "appstream2" },
+        { "appstream.xml.gz", "appstream" },
       };
 
       if (g_mkdtemp_full (tmpdir, 0755) == NULL)
