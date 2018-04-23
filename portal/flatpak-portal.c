@@ -296,6 +296,8 @@ handle_spawn (PortalFlatpak *object,
   g_autofree char *branch = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *app_commit = NULL;
+  g_autofree char *runtime_ref = NULL;
+  g_auto(GStrv) runtime_parts = NULL;
   g_autofree char *runtime_commit = NULL;
   g_autofree char *instance_path = NULL;
   g_auto(GStrv) extra_args = NULL;
@@ -311,6 +313,11 @@ handle_spawn (PortalFlatpak *object,
                                   FLATPAK_METADATA_GROUP_APPLICATION,
                                   FLATPAK_METADATA_KEY_NAME, NULL);
   g_assert (app_id != NULL);
+  runtime_ref = g_key_file_get_string (app_info,
+                                       FLATPAK_METADATA_GROUP_APPLICATION,
+                                       FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  runtime_parts = g_strsplit (runtime_ref, "/", -1);
+
   branch = g_key_file_get_string (app_info,
                                   FLATPAK_METADATA_GROUP_INSTANCE,
                                   FLATPAK_METADATA_KEY_BRANCH, NULL);
@@ -511,6 +518,9 @@ handle_spawn (PortalFlatpak *object,
       const char *expose = sandbox_expose_ro[i];
       g_debug ("exposing %s", expose);
     }
+
+  g_ptr_array_add (flatpak_argv, g_strdup_printf ("--runtime=%s", runtime_parts[1]));
+  g_ptr_array_add (flatpak_argv, g_strdup_printf ("--runtime-version=%s", runtime_parts[3]));
 
   if ((arg_flags & FLATPAK_SPAWN_FLAGS_LATEST_VERSION) == 0)
     {
