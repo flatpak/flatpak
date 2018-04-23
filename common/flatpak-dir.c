@@ -5131,6 +5131,11 @@ flatpak_rewrite_export_dir (const char   *app,
   g_autoptr(GFile) parent = g_file_get_parent (source);
   glnx_autofd int parentfd = -1;
   g_autofree char *name = g_file_get_basename (source);
+
+  /* Start with a source path of "" - we don't care about
+   * the "export" component and we want to start path traversal
+   * relative to it. */
+  const char *source_path = "";
   g_autoptr(FlatpakContext) context = flatpak_context_new ();
 
   if (!flatpak_context_load_metadata (context, metadata, error))
@@ -5145,7 +5150,7 @@ flatpak_rewrite_export_dir (const char   *app,
 
   /* The fds are closed by this call */
   if (!rewrite_export_dir (app, branch, arch, metadata, context,
-                           parentfd, name, name,
+                           parentfd, name, source_path,
                            cancellable, error))
     goto out;
 
