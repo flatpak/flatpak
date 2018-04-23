@@ -3482,6 +3482,7 @@ extract_appstream (OstreeRepo   *repo,
         {
           FlatpakXml *component_id, *component_id_text_node;
           g_autofree char *component_id_text = NULL;
+          char *component_id_suffix;
 
           if (g_strcmp0 (component->element_name, "component") != 0)
             {
@@ -3494,17 +3495,21 @@ extract_appstream (OstreeRepo   *repo,
 
           component_id_text = g_strstrip (g_strdup (component_id_text_node->text));
 
-          /* .desktop suffix in component ID is suggested, not required
-             (unless app ID actually ends in .desktop) */
-          if (g_str_has_suffix (component_id_text, ".desktop") &&
-              !g_str_has_suffix (id, ".desktop"))
-            component_id_text[strlen (component_id_text) - strlen (".desktop")] = 0;
+          /* We're looking for a component that matches the app-id (id), but it
+             may have some further elements (separated by dot) and can also have
+             ".desktop" at the end which we need to strip out. Further complicating
+             things, some actual app ids ends in .desktop, such as org.telegram.desktop. */
 
-          if (!g_str_has_prefix (component_id_text, id))
+          component_id_suffix = component_id_text + strlen (id); /* Don't deref before we check for prefix match! */
+          if (!g_str_has_prefix (component_id_text, id) ||
+              (component_id_suffix[0] != 0 && component_id_suffix[0] != '.'))
             {
               component = component->next_sibling;
               continue;
             }
+
+          if (g_str_has_suffix (component_id_suffix, ".desktop"))
+            component_id_suffix[strlen (component_id_suffix) - strlen (".desktop")] = 0;
 
           g_print (_("Extracting icons for component %s\n"), component_id_text);
 
