@@ -11115,6 +11115,53 @@ flatpak_dir_get_deployed_metadata (FlatpakDir    *self,
   return TRUE;
 }
 
+/* Get the metadata the most recent commit of ref in the
+ * repo. This is not the same as the xa.cache, which might
+ * be updated separately. This function is used by
+ * flatpak_dir_find_local_related_for_ref_in_repo because we
+ * want to find the local related refs for a ref that has
+ * been pulled into the repo already, not for a ref for which
+ * an updated piece of metadata might exist on the remote end
+ * that we pulled into the xa.cache through some other means. */
+static GKeyFile *
+flatpak_dir_get_metadata_for_ref_in_repo (FlatpakDir    *self,
+                                          const char    *ref,
+                                          const char    *remote_name,
+                                          GCancellable  *cancellable,
+                                          GError       **error)
+{
+  g_autofree char *refspec = g_strdup_printf ("%s:%s", remote_name, ref);
+  g_autofree char *checksum = NULL;
+  g_autoptr(GVariant) commit = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  const char *xa_metadata_str = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  if (!ostree_repo_resolve_rev (self->repo, refspec, FALSE, &checksum, error))
+    return NULL;
+
+  if (!ostree_repo_load_variant (self->repo,
+                                 OSTREE_OBJECT_TYPE_COMMIT,
+                                 checksum,
+                                 &commit,
+                                 error))
+    return NULL;
+
+  /* Look up xa.metadata for this commit. */
+  metadata = g_variant_get_child_value (commit, 0);
+
+  g_variant_lookup (metadata, "xa.metadata", "s", &xa_metadata_str);
+  metakey = g_key_file_new ();
+
+  if (!g_key_file_load_from_data (metakey, xa_metadata_str, -1, G_KEY_FILE_NONE, error))
+    return NULL;
+
+  return g_steal_pointer (&metakey);
+}
+
 static GDBusProxy *
 get_accounts_dbus_proxy (void)
 {
