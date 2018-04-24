@@ -4975,10 +4975,13 @@ get_permissible_prefixes (FlatpakContext                  *context,
 
       *out_match_prefixes_func = flatpak_name_matches_one_wildcard_prefix;
     }
+  else
+    {
+      *out_match_prefixes_func = flatpak_name_matches_one_prefix;
+    }
 
   g_ptr_array_add (prefixes, NULL);
 
-  *out_match_prefixes_func = flatpak_name_matches_one_prefix;
   return (GStrv) g_ptr_array_free (g_steal_pointer (&prefixes), FALSE);
 }
 
