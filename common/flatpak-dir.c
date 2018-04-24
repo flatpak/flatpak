@@ -4955,7 +4955,7 @@ get_permissible_prefixes (FlatpakContext                  *context,
 {
   g_autoptr(GPtrArray) prefixes = NULL;
 
-  g_return_val_if_fail (out_match_prefixes_func != NULL, FALSE);
+  g_return_val_if_fail (out_match_prefixes_func != NULL, NULL);
 
   prefixes = g_ptr_array_new_with_free_func (g_free);
 
