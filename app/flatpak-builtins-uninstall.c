@@ -231,8 +231,8 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       if (origin == NULL)
         continue;
 
-      related = flatpak_dir_find_local_related (udir->dir, first_ref, origin,
-                                                NULL, &local_error);
+      related = flatpak_dir_find_local_related_for_deployed (udir->dir, first_ref, origin,
+                                                             NULL, &local_error);
       if (related == NULL)
         {
           g_printerr (_("Warning: Problem looking for related refs: %s\n"),
