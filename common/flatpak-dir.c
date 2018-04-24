@@ -11172,6 +11172,38 @@ flatpak_dir_get_metadata_for_ref_in_repo (FlatpakDir    *self,
   return g_steal_pointer (&metakey);
 }
 
+/* Use flatpak_dir_find_local_related_for_ref_in_repo to find the related
+ * refs for a ref in the repo (that might not be deployed yet, or different
+ * from the one that is deployed). */
+GPtrArray *
+flatpak_dir_find_local_related_for_ref_in_repo (FlatpakDir *self,
+                                                const char *ref,
+                                                const char *remote_name,
+                                                GCancellable *cancellable,
+                                                GError **error)
+{
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  metakey = flatpak_dir_get_metadata_for_ref_in_repo (self,
+                                                      ref,
+                                                      remote_name,
+                                                      cancellable,
+                                                      error);
+
+  if (metakey == NULL)
+    return NULL;
+
+  return flatpak_dir_find_local_related_for_metadata (self,
+                                                      ref,
+                                                      remote_name,
+                                                      metakey,
+                                                      cancellable,
+                                                      error);
+}
+
 static GDBusProxy *
 get_accounts_dbus_proxy (void)
 {
