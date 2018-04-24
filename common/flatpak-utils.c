@@ -2234,6 +2234,8 @@ flatpak_variant_bsearch_str (GVariant   *array,
   gsize imid;
   gsize n;
 
+  g_return_val_if_fail (out_pos != NULL, FALSE);
+
   n = g_variant_n_children (array);
   if (n == 0)
     return FALSE;
