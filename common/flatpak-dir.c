@@ -11076,6 +11076,45 @@ flatpak_dir_find_local_related (FlatpakDir *self,
   return g_steal_pointer (&related);
 }
 
+static gboolean
+flatpak_dir_get_deployed_metadata (FlatpakDir    *self,
+                                   const char    *ref,
+                                   GCancellable  *cancellable,
+                                   GKeyFile     **out_metadata,
+                                   GError       **error)
+{
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autofree char *metadata_contents = NULL;
+  gsize metadata_size;
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  g_return_val_if_fail (out_metadata != NULL, FALSE);
+
+  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+  if (deploy_dir == NULL)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                   _("%s not installed"), ref);
+      return FALSE;
+    }
+
+  metadata = g_file_get_child (deploy_dir, "metadata");
+  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, NULL))
+    {
+      *out_metadata = NULL;
+      return TRUE;
+    }
+
+  metakey = g_key_file_new ();
+
+  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
+    return FALSE;
+
+  *out_metadata = g_steal_pointer (&metakey);
+  return TRUE;
+}
+
 static GDBusProxy *
 get_accounts_dbus_proxy (void)
 {
