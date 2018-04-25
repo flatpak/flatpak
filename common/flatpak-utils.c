@@ -476,7 +476,7 @@ flatpak_get_arches (void)
       g_ptr_array_add (array, (char *)main_arch);
 
       compat_arch = flatpak_get_compat_arch (kernel_arch);
-      if (strcmp (compat_arch, main_arch) != 0)
+      if (g_strcmp0 (compat_arch, main_arch) != 0)
         g_ptr_array_add (array, (char *)compat_arch);
 
       g_ptr_array_add (array, NULL);
