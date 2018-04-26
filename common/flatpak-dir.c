@@ -226,7 +226,7 @@ flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
                                       GError            **error)
 {
   if (self->metadata == NULL)
-    return flatpak_fail (error, "Unable to load medata from remote %s", self->remote_name);
+    return flatpak_fail (error, "Unable to load metadata from remote %s", self->remote_name);
 
   return TRUE;
 }
