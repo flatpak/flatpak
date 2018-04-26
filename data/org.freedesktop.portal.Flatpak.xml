@@ -31,12 +31,72 @@
       The flatpak portal exposes some interactions with flatpak on the
       host to the sandbox. For example, it allows you to restart the
       applications or start a more sandboxed instance.
+
+      This documentation describes version 1 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
     <property name="version" type="u" access="read"/>
 
-    <!-- This methods let you start a new instance of your
-         application, optionally enabling a tighter sandbox. -->
+    <!--
+         Spawn:
+         @cwd_path: the working directory for the new process
+         @argv: the argv for the new process, starting with the executable to launch
+         @fds: an array of file descriptors to pass to the new process
+         @envs: an array of variable/value pairs for the environment of the new process
+         @flags: flags
+         @options: Vardict with optional further information
+         @pid: the PID of the new process
+
+         This methods let you start a new instance of your
+         application, optionally enabling a tighter sandbox.
+
+         The following flags values are supported:
+         <variablelist>
+           <varlistentry>
+             <term>1</term>
+             <listitem><para>
+               Clear the environment.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>2</term>
+             <listitem><para>
+               Spawn the latest version of the app.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>4</term>
+             <listitem><para>
+               Spawn in a sandbox (equivalent of the -‍-sandbox option of flatpak run).
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>8</term>
+             <listitem><para>
+               Spawn without network (equivalent of the -‍-unshare=network option of flatpak run).
+             </para></listitem>
+           </varlistentry>
+         </variablelist>
+
+         The following options are supported:
+         <variablelist>
+           <varlistentry>
+             <term>sandbox-expose as</term>
+             <listitem><para>
+               A list of filenames for files inside the sandbox that will be exposed
+               to the new sandbox, for reading and writing.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>sandbox-expose-ro as</term>
+             <listitem><para>
+               A list of filenames for files inside the sandbox that will be exposed
+               to the new sandbox, readonly.
+             </para></listitem>
+           </varlistentry>
+         </variablelist>
+
+    -->
     <method name="Spawn">
       <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='ay' name='cwd_path' direction='in'/>
@@ -47,11 +107,32 @@
       <arg type="a{sv}" name="options" direction="in"/>
       <arg type='u' name='pid' direction='out'/>
     </method>
+
+    <!--
+        SpawnSignal:
+        @pid: the PID of the process to send the signal to
+        @signal: the signal to send (see signal(7))
+        @to_process_group: whether to send the signal to the process group
+
+        This methods let you send a Unix signal to a process
+        that was started with org.freedesktop.portal.Flatpak.Spawn().
+        The @pid argument here should be the PID that is returned
+        by the Spawn() call.
+      -->
     <method name="SpawnSignal">
       <arg type='u' name='pid' direction='in'/>
       <arg type='u' name='signal' direction='in'/>
       <arg type='b' name='to_process_group' direction='in'/>
     </method>
+
+    <!--
+        SpawnExited:
+        @pid: the PID of the process that has ended
+        @exit_status: the exit status (see waitpid(2))
+
+        Emitted when a process started by org.freedesktop.portal.Flatpak.Spawn()
+        exits.
+    -->
     <signal name="SpawnExited">
       <arg type='u' name='pid' direction='out'/>
       <arg type='u' name='exit_status' direction='out'/>
