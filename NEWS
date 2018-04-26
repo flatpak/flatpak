@@ -1,3 +1,39 @@
+Major changes in 0.11.4
+=======================
+
+ * flatpak remove is now an alias for flatpak uninstall.
+ * flatpak uninstall now picks system or user automatically if not specified
+ * New appstream branch format which is more efficient to distribute,
+   the old is still generated for backwards compat.
+ * Appstream data now contains compatible arches (for applications
+   that doesn't exist for the primary arch). For example, an
+   i386-only app is now listed in the x86-64 appstream.
+ * The flatpak version is included in the user agent when downloading.
+ * The Flatpak-Ref http header is set to the currently installing ref when
+   downloading.
+ * New argument --timestamp in build-commit-from.
+ * When updating many apps we now only prune the local repo when all
+   updates are done, making multi-app updates faster.
+ * flatpak build now always allows multiarch use.
+ * flatpak build now mounts app extensions during build.
+ * flatpak build-init now supports --extension to add extension points earlier
+   than build-finish. Also build-finish now supports --remove-extension.
+ * New flatpak portal allows applications to sandbox themselves and restart a
+   newer version of themselves.
+ * New flatpak run options: --no-a11y-bus, --no-documents-portal.
+ * Initial support for end-of-life:ing applications.
+ * New option X-Flatpak-RunOptions in exported desktop/files allow you to specify
+   no-a11y-bus and no-documents-portal.
+ * Support for tagged extension points, which is useful if you want to use
+   the same extension id (but maybe different versions) multiple times in an app.
+ * We now export .service files for names that the app is allowed to own on
+   the session bus.
+ * libflatpak got new methods for listing remotes by type.
+ * libflatpak now has support in FlatpakRemoteRef for getting remote metadata
+   such as end-of-life, download size, metadata etc.
+ * There was some internal restructuring on how installs/updates are done
+   which should improve performance and maintainability.
+
 Major changes in 0.11.3
 =======================
 
