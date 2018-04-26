@@ -28,8 +28,8 @@ flatpak_portal_SOURCES = \
 	portal/flatpak-portal.h		\
 	portal/flatpak-portal-app-info.c		\
 	portal/flatpak-portal-app-info.h		\
-	portal/flatpak-portal-error.c	\
-	portal/flatpak-portal-error.h	\
+	common/flatpak-portal-error.c	\
+	common/flatpak-portal-error.h	\
 	$(NULL)
 
 BUILT_SOURCES += $(portal_built_sources)
