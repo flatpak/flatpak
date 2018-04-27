@@ -2421,6 +2421,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   g_autofree char *remote_and_branch = NULL;
   g_autofree char *new_checksum = NULL;
   g_autoptr(GError) first_error = NULL;
+  g_autoptr(GError) second_error = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   const char *installation;
 
@@ -2522,9 +2523,11 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
               used_branch = old_branch;
               if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL,
                                      child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
-                                     progress, cancellable, NULL))
+                                     progress, cancellable, &second_error))
                 {
-                  g_propagate_error (error, g_steal_pointer (&first_error));
+                  g_prefix_error (&first_error, "Error updating appstream2: ");
+                  g_prefix_error (&second_error, "Error updating appstream: ");
+                  g_propagate_prefixed_error (error, g_steal_pointer (&second_error), "%s; ", first_error->message);
                   return FALSE;
                 }
             }
@@ -2569,9 +2572,11 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       used_branch = old_branch;
       if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
-                             cancellable, NULL))
+                             cancellable, &second_error))
         {
-          g_propagate_error (error, g_steal_pointer (&first_error));
+          g_prefix_error (&first_error, "Error updating appstream2: ");
+          g_prefix_error (&second_error, "Error updating appstream: ");
+          g_propagate_prefixed_error (error, g_steal_pointer (&second_error), "%s; ", first_error->message);
           return FALSE;
         }
     }
