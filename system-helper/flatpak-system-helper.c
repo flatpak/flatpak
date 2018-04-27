@@ -521,6 +521,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
   else if (strlen (arg_repo_path) > 0)
     {
       g_autoptr(GError) first_error = NULL;
+      g_autoptr(GError) second_error = NULL;
 
       /* Work around ostree-pull spinning the default main context for the sync calls */
       main_context = g_main_context_new ();
@@ -538,11 +539,13 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                                  old_branch,
                                                  NULL,
                                                  NULL,
-                                                 NULL, NULL))
+                                                 NULL, &second_error))
             {
               g_main_context_pop_thread_default (main_context);
+              g_prefix_error (&first_error, "Error updating appstream2: ");
+              g_prefix_error (&second_error, "%s; Error updating appstream: ", first_error->message);
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                     "Error pulling from repo: %s", first_error->message);
+                                                     "Error pulling from repo: %s", second_error->message);
               return TRUE;
             }
         }
@@ -554,6 +557,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakRemoteState) state = NULL;
       g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
       g_autoptr(GError) first_error = NULL;
+      g_autoptr(GError) second_error = NULL;
       g_autofree char *url = NULL;
 
       if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
@@ -596,8 +600,10 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                  NULL, NULL))
             {
               g_main_context_pop_thread_default (main_context);
+              g_prefix_error (&first_error, "Error updating appstream2: ");
+              g_prefix_error (&second_error, "%s; Error updating appstream: ", first_error->message);
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                     "Error pulling from repo: %s", error->message);
+                                                     "Error pulling from repo: %s", second_error->message);
               return TRUE;
             }
         }
