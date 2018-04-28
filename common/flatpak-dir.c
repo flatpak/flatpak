@@ -3848,22 +3848,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   g_clear_object (&gpg_result);
 
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
-  if (!flatpak_summary_lookup_ref (summary,
-                                   collection_id,
-                                   ref,
-                                   &checksum, NULL))
-    {
-      if (collection_id != NULL)
-        g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                     _("No such ref (%s, %s) in remote %s"), collection_id, ref, remote_name);
-      else
-        g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                     _("No such ref '%s' in remote %s"), ref, remote_name);
-
-      return FALSE;
-    }
-
   remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref);
   if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &current_checksum, error))
     return FALSE;
@@ -3875,6 +3859,26 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   src_repo = ostree_repo_new (path_file);
   if (!ostree_repo_open (src_repo, cancellable, error))
     return FALSE;
+
+  if (collection_id == NULL)
+    {
+      summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
+      if (!flatpak_summary_lookup_ref (summary,
+                                       NULL,
+                                       ref,
+                                       &checksum, NULL))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                       _("No such ref '%s' in remote %s"), ref, remote_name);
+
+          return FALSE;
+        }
+    }
+  else
+    {
+      if (!ostree_repo_resolve_rev (src_repo, remote_and_branch, FALSE, &checksum, error))
+        return FALSE;
+    }
 
   if (gpg_verify)
     {
