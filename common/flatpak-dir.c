@@ -3461,7 +3461,7 @@ flatpak_dir_pull (FlatpakDir          *self,
                   GError             **error)
 {
   gboolean ret = FALSE;
-  const char *rev;
+  g_autofree char *rev = NULL;
   g_autofree char *url = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
@@ -3516,7 +3516,7 @@ flatpak_dir_pull (FlatpakDir          *self,
      pulls (e.g. with subpaths) */
   if (opt_rev != NULL)
     {
-      rev = opt_rev;
+      rev = g_strdup (opt_rev);
       results = opt_results;
     }
   else
@@ -3578,7 +3578,7 @@ flatpak_dir_pull (FlatpakDir          *self,
             return FALSE;
 
           for (i = 0, rev = NULL; results[i] != NULL && rev == NULL; i++)
-            rev = g_hash_table_lookup (results[i]->ref_to_checksum, &collection_ref);
+            rev = g_strdup (g_hash_table_lookup (results[i]->ref_to_checksum, &collection_ref));
 
           if (rev == NULL)
             return flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
