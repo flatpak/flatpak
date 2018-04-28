@@ -2535,7 +2535,9 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
           if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             return FALSE;
 
-          if (!ostree_repo_resolve_rev (child_repo, used_branch, TRUE, &new_checksum, error))
+          remote_and_branch = g_strdup_printf ("%s:%s", remote, used_branch);
+
+          if (!ostree_repo_resolve_rev (child_repo, remote_and_branch, TRUE, &new_checksum, error))
             return FALSE;
 
           child_repo_file = g_object_ref (ostree_repo_get_path (child_repo));
