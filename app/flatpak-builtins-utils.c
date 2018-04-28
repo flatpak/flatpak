@@ -454,11 +454,10 @@ update_appstream (GPtrArray    *dirs,
 
   if (remote == NULL)
     {
-      g_auto(GStrv) remotes = NULL;
-
       for (j = 0; j < dirs->len; j++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
+          g_auto(GStrv) remotes = NULL;
 
           remotes = flatpak_dir_list_remotes (dir, cancellable, error);
           if (remotes == NULL)
