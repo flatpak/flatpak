@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-04-26 12:03+0200\n"
-"PO-Revision-Date: 2018-03-29 08:15-0200\n"
+"POT-Creation-Date: 2018-04-28 03:24+0000\n"
+"PO-Revision-Date: 2018-04-28 05:39-0200\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
@@ -464,18 +464,17 @@ msgstr "ID da chave GPG para assinar o commit"
 #: app/flatpak-builtins-build-commit-from.c:60
 #: app/flatpak-builtins-build-export.c:67
 msgid "Mark build as end-of-life"
-msgstr ""
+msgstr "Marca a compilação como fim de vida"
 
 #: app/flatpak-builtins-build-commit-from.c:60
 #: app/flatpak-builtins-build-export.c:67
 msgid "REASON"
-msgstr ""
+msgstr "MOTIVO"
 
 #: app/flatpak-builtins-build-commit-from.c:61
 #: app/flatpak-builtins-build-export.c:68
-#, fuzzy
 msgid "TIMESTAMP"
-msgstr "CARIMBO-TEMPO-ISO-8601"
+msgstr "CARIMBO-DE-TEMPO"
 
 #: app/flatpak-builtins-build-commit-from.c:236
 msgid "DST-REPO [DST-REF]... - Make a new commit based on existing commit(s)"
@@ -508,7 +507,7 @@ msgstr "--src-repo ou --src-ref deve ser especificado."
 #: app/flatpak-builtins-build-export.c:911
 #, c-format
 msgid "Could not parse '%s'"
-msgstr ""
+msgstr "Não foi possível analisar \"%s\""
 
 #: app/flatpak-builtins-build-commit-from.c:416
 msgid "Can't commit from partial source commit."
@@ -692,9 +691,8 @@ msgid "NAME=VARIABLE[=VALUE]"
 msgstr "NOME=VARIÁVEL[=VALOR]"
 
 #: app/flatpak-builtins-build-finish.c:55
-#, fuzzy
 msgid "Remove extension point info"
-msgstr "Adiciona info do ponto de extensão"
+msgstr "Remove info do ponto de extensão"
 
 #: app/flatpak-builtins-build-finish.c:55 app/flatpak-main.c:145
 msgid "NAME"
@@ -869,12 +867,11 @@ msgstr "EXTENSÃO"
 
 #: app/flatpak-builtins-build-init.c:57
 msgid "Extension tag to use if building extension"
-msgstr ""
+msgstr "Etiqueta de extensão para usar se compilação extensão"
 
 #: app/flatpak-builtins-build-init.c:57
-#, fuzzy
 msgid "EXTENSION_TAG"
-msgstr "EXTENSÃO"
+msgstr "ETIQUETA_EXTENSÃO"
 
 #: app/flatpak-builtins-build-init.c:58
 msgid "Initialize /usr with a writable copy of the sdk"
@@ -1283,11 +1280,11 @@ msgstr "Tamanho instalado:"
 
 #: app/flatpak-builtins-info.c:238
 msgid "end-of-life:"
-msgstr ""
+msgstr "fim de vida:"
 
 #: app/flatpak-builtins-info.c:240
 msgid "end-of-life-rebase:"
-msgstr ""
+msgstr "rebase de fim de vida:"
 
 #: app/flatpak-builtins-info.c:245 app/flatpak-builtins-info-remote.c:216
 msgid "Runtime:"
@@ -1542,9 +1539,8 @@ msgid "Limit to this arch (* for all)"
 msgstr "Limita a essa arquitetura (* para todas)"
 
 #: app/flatpak-builtins-ls-remote.c:99
-#, fuzzy
 msgid " [REMOTE or URI] - Show available runtimes and applications"
-msgstr " [REMOTO] – Mostra runtimes e aplicativos disponíveis"
+msgstr " [REMOTO ou URI] – Mostra runtimes e aplicativos disponíveis"
 
 #: app/flatpak-builtins-ls-remote.c:197
 msgid "Commit"
@@ -1754,36 +1750,32 @@ msgid "Don't proxy accessibility bus calls"
 msgstr "Não fazer chamadas de barramento de acessibilidade"
 
 #: app/flatpak-builtins-run.c:67
-#, fuzzy
 msgid "Don't start portals"
-msgstr "Não usa deltas estáticos"
+msgstr "Não inicia portais"
 
 #: app/flatpak-builtins-run.c:68
 msgid "Enable file forwarding"
 msgstr "Habilita encaminhamento de arquivo"
 
 #: app/flatpak-builtins-run.c:69
-#, fuzzy
 msgid "Run specified commit"
-msgstr "Commit ativo"
+msgstr "Executa o commit especificado"
 
 #: app/flatpak-builtins-run.c:70
-#, fuzzy
 msgid "Use specified runtime commit"
-msgstr "Atualizar runtime assinado"
+msgstr "Usa o commit de runtime especificado"
 
 #: app/flatpak-builtins-run.c:71
 msgid "Run completely sandboxed"
-msgstr ""
+msgstr "Execute totalmente em sandbox"
 
 #: app/flatpak-builtins-run.c:92
 msgid "APP [args...] - Run an app"
 msgstr "APLICATIVO [args…] – Executa um aplicativo"
 
 #: app/flatpak-builtins-search.c:35
-#, fuzzy
 msgid "Arch to search for"
-msgstr "Arquitetura para a qual será instalada"
+msgstr "Arquitetura para pesquisar por"
 
 #: app/flatpak-builtins-search.c:242
 msgid "TEXT - Search remote apps/runtimes for text"
@@ -1842,9 +1834,10 @@ msgid "Must specify at least one REF"
 msgstr "Deve especificar pelo menos uma REF"
 
 #: app/flatpak-builtins-uninstall.c:215
-#, fuzzy, c-format
+#, c-format
 msgid "Ref ‘%s’ found in multiple installations: %s. You must specify one."
-msgstr "Remote “%s” localizado em múltiplas instalações:\n"
+msgstr ""
+"Ref “%s” localizada em múltiplas instalações: %s. Você deve especificar uma."
 
 #: app/flatpak-builtins-uninstall.c:238 app/flatpak-transaction.c:381
 #, c-format
@@ -1852,9 +1845,9 @@ msgid "Warning: Problem looking for related refs: %s\n"
 msgstr "Aviso: Problema ao procurar por refs relacionadas: %s\n"
 
 #: app/flatpak-builtins-uninstall.c:271
-#, fuzzy, c-format
+#, c-format
 msgid "Uninstalling: %s from %s\n"
-msgstr "Instalando: %s de %s\n"
+msgstr "Desinstalando: %s de %s\n"
 
 #: app/flatpak-builtins-update.c:53
 msgid "Arch to update for"
@@ -1909,19 +1902,18 @@ msgstr ""
 
 #: app/flatpak-builtins-utils.c:488 app/flatpak-builtins-utils.c:490
 #: app/flatpak-builtins-utils.c:520 app/flatpak-builtins-utils.c:522
-#, fuzzy
 msgid "Error updating"
-msgstr "Erro ao atualizar: %s\n"
+msgstr "Erro ao atualizar"
 
 #: app/flatpak-builtins-utils.c:498 app/flatpak-builtins-utils.c:501
-#, fuzzy, c-format
+#, c-format
 msgid "Updating appstream data for user remote %s"
-msgstr "Atualizando dados de appstream para remoto %s de usuário\n"
+msgstr "Atualizando dados de appstream para remoto %s de usuário"
 
 #: app/flatpak-builtins-utils.c:508 app/flatpak-builtins-utils.c:511
-#, fuzzy, c-format
+#, c-format
 msgid "Updating appstream data for remote %s"
-msgstr "Atualizando dados de appstream para remoto %s\n"
+msgstr "Atualizando dados de appstream para remoto %s"
 
 #: app/flatpak-builtins-utils.c:562
 #, c-format
@@ -2245,11 +2237,11 @@ msgstr "Erro ao atualizar metadados de remoto para “%s”: %s\n"
 #: app/flatpak-transaction.c:788
 #, c-format
 msgid "Skipping %s due to previous error\n"
-msgstr ""
+msgstr "Ignorando %s por causa do erro anterior\n"
 
 #: app/flatpak-transaction.c:793
 msgid "fetch remote info"
-msgstr ""
+msgstr "obtém info de remoto"
 
 #: app/flatpak-transaction.c:799
 msgid "install"
@@ -2489,15 +2481,18 @@ msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Nenhuma entrada para %s no cache de flatpak de sumário remoto "
 
 #: common/flatpak-dir.c:376
-#, fuzzy, c-format
+#, c-format
 msgid "No entry for %s in remote summary flatpak sparse cache "
-msgstr "Nenhuma entrada para %s no cache de flatpak de sumário remoto "
+msgstr "Nenhuma entrada para %s no cache esparso de flatpak de sumário remoto "
 
 #: common/flatpak-dir.c:942
 msgid ""
 "/var/tmp does not suport xattrs which is needed for system-wide installation "
 "as a user. FLATPAK_SYSTEM_CACHE_DIR can be used to set an alternative path."
 msgstr ""
+"/var/tmp não possui suporte a xattrs que é necessário para instalação para "
+"todo sistema como usuário. FLATPAK_SYSTEM_CACHE_DIR pode ser usado para "
+"definir um caminho alternativo."
 
 #: common/flatpak-dir.c:1274
 #, c-format
@@ -2505,9 +2500,9 @@ msgid "No overrides found for %s"
 msgstr "Nenhuma substituição localizada para %s"
 
 #: common/flatpak-dir.c:1394
-#, fuzzy, c-format
+#, c-format
 msgid "%s (commit %s) not installed"
-msgstr "%s commit %s já está instalado"
+msgstr "%s (commit %s) não instalado"
 
 #: common/flatpak-dir.c:1930
 #, c-format
@@ -2820,27 +2815,27 @@ msgstr "Nenhuma fonte de dados extras"
 #: common/flatpak-utils.c:3516
 #, c-format
 msgid "Extracting icons for component %s\n"
-msgstr ""
+msgstr "Extraindo ícones para o componente %s\n"
 
 #: common/flatpak-utils.c:3520
-#, fuzzy, c-format
+#, c-format
 msgid "Error copying 64x64 icon: %s\n"
-msgstr "Erro durante a migração: %s\n"
+msgstr "Erro ao copiar ícone 64x64: %s\n"
 
 #: common/flatpak-utils.c:3525
-#, fuzzy, c-format
+#, c-format
 msgid "Error copying 128x128 icon: %s\n"
-msgstr "Erro durante a migração: %s\n"
+msgstr "Erro ao copiar ícone 128x128: %s\n"
 
 #: common/flatpak-utils.c:3725
 #, c-format
 msgid "%s is end-of-life, ignoring\n"
-msgstr ""
+msgstr "%s está em fim de vida, ignorando\n"
 
 #: common/flatpak-utils.c:3734
-#, fuzzy, c-format
+#, c-format
 msgid "No appstream data for %s: %s\n"
-msgstr "Atualizando dados de appstream para remoto %s\n"
+msgstr "Nenhum dado de appstream para %s: %s\n"
 
 #: common/flatpak-utils.c:6265
 #, c-format
