@@ -4961,19 +4961,16 @@ static GStrv
 get_permissible_prefixes (FlatpakContext                  *context,
                           const char                      *source_path,
                           const char                      *app_id,
-                          MultiplePrefixesComparisonFunc  *out_match_prefixes_func,
                           GError                         **error)
 {
   g_autoptr(GPtrArray) prefixes = NULL;
-
-  g_return_val_if_fail (out_match_prefixes_func != NULL, NULL);
 
   prefixes = g_ptr_array_new_with_free_func (g_free);
 
   /* Create a new pointer array with prefixes including the app
    * ID and in the case of d-bus service files, the allowed own
    * names. */
-  g_ptr_array_add (prefixes, g_strdup (app_id));
+  g_ptr_array_add (prefixes, g_strdup_printf ("%s.*", app_id));
 
   if (flatpak_has_path_prefix (source_path, "share/dbus-1/services"))
     {
@@ -4983,12 +4980,6 @@ get_permissible_prefixes (FlatpakContext                  *context,
 
       for (; *iter != NULL; ++iter)
         g_ptr_array_add (prefixes, g_strdup (*iter));
-
-      *out_match_prefixes_func = flatpak_name_matches_one_wildcard_prefix;
-    }
-  else
-    {
-      *out_match_prefixes_func = flatpak_name_matches_one_prefix;
     }
 
   g_ptr_array_add (prefixes, NULL);
@@ -5059,18 +5050,16 @@ rewrite_export_dir (const char     *app,
         }
       else if (S_ISREG (stbuf.st_mode))
         {
-          MultiplePrefixesComparisonFunc match_prefixes_func;
           g_auto(GStrv) permissible_prefixes = get_permissible_prefixes (context,
                                                                          source_path,
                                                                          app,
-                                                                         &match_prefixes_func,
                                                                          error);
           g_autofree gchar *new_name = NULL;
 
           if (permissible_prefixes == NULL)
             return FALSE;
 
-          if (!match_prefixes_func (dent->d_name, (const char * const *) permissible_prefixes))
+          if (!flatpak_name_matches_one_wildcard_prefix (dent->d_name, (const char * const *) permissible_prefixes))
             {
               g_warning ("Non-prefixed filename %s in app %s, removing.", dent->d_name, app);
               if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
