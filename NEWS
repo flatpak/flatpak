@@ -1,3 +1,12 @@
+Major changes in 0.11.5
+=======================
+
+ * Fix a regression which caused installation of epiphany and
+   other apps that export multiple .service files to fail.
+ * Fix appstream updates in p2p mode.
+ * Don't distribute generated gdbus code with tarball.
+ * Add documentation for the flatpak portal
+
 Major changes in 0.11.4
 =======================
 
