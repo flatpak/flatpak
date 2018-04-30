@@ -1480,7 +1480,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
   FlatpakContextDevices devices_mask = context->devices;
   FlatpakContextDevices devices_valid = context->devices_valid;
   FlatpakContextFeatures features_mask = context->features;
-  FlatpakContextFeatures features_valid = context->features;
+  FlatpakContextFeatures features_valid = context->features_valid;
   g_auto(GStrv) groups = NULL;
   int i;
 
