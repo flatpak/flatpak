@@ -41,11 +41,20 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-document-info.c \
 	app/flatpak-builtins-document-list.c \
 	app/flatpak-builtins-search.c \
-	app/parse-datetime.c \
 	app/parse-datetime.h \
 	$(NULL)
+
+nodist_flatpak_SOURCES = \
+	app/parse-datetime.c \
+	$(NULL)
+
+app/parse-datetime.c: app/parse-datetime.y Makefile
+	$(AM_V_GEN) $(YACC) $< -o $@
+
+CLEANFILES += app/parse-datetime.c
 
 flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
 	libglnx.la libflatpak-common.la
 flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
+        -I$(srcdir)/app \
         -DLOCALEDIR=\"$(localedir)\"

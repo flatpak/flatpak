@@ -6,7 +6,7 @@ set -xeuo pipefail
 dn=$(dirname $0)
 . ${dn}/libbuild.sh
 
-pkg_install sudo which attr fuse \
+pkg_install sudo which attr fuse bison \
     libubsan libasan libtsan \
     elfutils git gettext-devel libappstream-glib-devel \
     /usr/bin/{update-mime-database,update-desktop-database,gtk-update-icon-cache}
