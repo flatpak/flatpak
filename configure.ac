@@ -49,6 +49,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.13.4 no-define no-dist-gzip dist-xz tar-ustar foreign subdir-objects])
 AC_PROG_SED
+AC_PROG_YACC
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.18.2])
