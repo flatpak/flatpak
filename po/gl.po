@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-04-26 12:03+0200\n"
+"POT-Creation-Date: 2018-04-30 14:38+0200\n"
 "PO-Revision-Date: 2017-09-26 17:32+0200\n"
 "Last-Translator: Fran Dieguez <frandieguez@gnome.org>\n"
 "Language-Team: Galician <gnome-l10n-gl@gnome.org>\n"
@@ -1942,24 +1942,24 @@ msgstr "Cal desexa instalar (0 para abortar)?"
 msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:488 app/flatpak-builtins-utils.c:490
-#: app/flatpak-builtins-utils.c:520 app/flatpak-builtins-utils.c:522
+#: app/flatpak-builtins-utils.c:487 app/flatpak-builtins-utils.c:489
+#: app/flatpak-builtins-utils.c:519 app/flatpak-builtins-utils.c:521
 #, fuzzy
 msgid "Error updating"
 msgstr ""
 "Produciuse un erro ao actualizar os metadatos adicionais para «%s»: %s\n"
 
-#: app/flatpak-builtins-utils.c:498 app/flatpak-builtins-utils.c:501
+#: app/flatpak-builtins-utils.c:497 app/flatpak-builtins-utils.c:500
 #, fuzzy, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Actualizando appstream para o remoto %s\n"
 
-#: app/flatpak-builtins-utils.c:508 app/flatpak-builtins-utils.c:511
+#: app/flatpak-builtins-utils.c:507 app/flatpak-builtins-utils.c:510
 #, fuzzy, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Actualizando appstream para o remoto %s\n"
 
-#: app/flatpak-builtins-utils.c:562
+#: app/flatpak-builtins-utils.c:561
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr ""
@@ -2553,83 +2553,78 @@ msgstr "Ao abrir o repositorio %s: "
 msgid "Can't create deploy directory"
 msgstr "Non é posíbel crear o directorio de despregue"
 
-#: common/flatpak-dir.c:3070
+#: common/flatpak-dir.c:3077
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "SHA256 non válido para o uri de datos adicionais %s"
 
-#: common/flatpak-dir.c:3075
+#: common/flatpak-dir.c:3082
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Nome baleiro para o uri de datos adicinais %s"
 
-#: common/flatpak-dir.c:3082
+#: common/flatpak-dir.c:3089
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "URI de datos adicinais %s non admitido"
 
-#: common/flatpak-dir.c:3096
+#: common/flatpak-dir.c:3103
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Produciuse un fallo ao cargar os datos adicinais locais %s: %s"
 
-#: common/flatpak-dir.c:3099
+#: common/flatpak-dir.c:3106
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Tamaño dos datos adicinais incorrecto %s"
 
-#: common/flatpak-dir.c:3114
+#: common/flatpak-dir.c:3121
 #, c-format
 msgid "While downloading %s: "
 msgstr "Ao descargar %s: "
 
-#: common/flatpak-dir.c:3121
+#: common/flatpak-dir.c:3128
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Tamaño dos datos adicinais %s incorrecto"
 
-#: common/flatpak-dir.c:3132
+#: common/flatpak-dir.c:3139
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Suma de verificación non válida para os datos adicinais %s"
 
-#: common/flatpak-dir.c:3191
+#: common/flatpak-dir.c:3198
 msgid "Remote OCI index has no registry uri"
 msgstr ""
 
-#: common/flatpak-dir.c:3295
+#: common/flatpak-dir.c:3302
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s remisión %s xa instalado"
 
-#: common/flatpak-dir.c:3630 common/flatpak-dir.c:3971
+#: common/flatpak-dir.c:3637 common/flatpak-dir.c:3982
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Ao obter %s desde o remoto %s: "
 
-#: common/flatpak-dir.c:3852
-#, fuzzy, c-format
-msgid "No such ref (%s, %s) in remote %s"
-msgstr "Non é posíbel atopar %s no remoto %s"
-
-#: common/flatpak-dir.c:3855
+#: common/flatpak-dir.c:3872
 #, fuzzy, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "Non é posíbel atopar %s no remoto %s"
 
-#: common/flatpak-dir.c:4530
+#: common/flatpak-dir.c:4541
 msgid "Not enough memory"
 msgstr "Non hai momoria dabondo"
 
-#: common/flatpak-dir.c:4549
+#: common/flatpak-dir.c:4560
 msgid "Failed to read from exported file"
 msgstr "Produciuse un fallo ao ler o ficheiro exportado"
 
-#: common/flatpak-dir.c:4740
+#: common/flatpak-dir.c:4751
 msgid "Error reading mimetype xml file"
 msgstr "Produciuse un erro ao ler o ficheiro xml de mimetype"
 
-#: common/flatpak-dir.c:4745
+#: common/flatpak-dir.c:4756
 msgid "Invalid mimetype xml file"
 msgstr "Ficheiro xml de mimetype non válido"
 
@@ -3017,6 +3012,10 @@ msgstr "Requírese autenticación para configurar os repositorios de software"
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "Actualizar appstream"
+
+#, fuzzy
+#~ msgid "No such ref (%s, %s) in remote %s"
+#~ msgstr "Non é posíbel atopar %s no remoto %s"
 
 #~ msgid "No ref information available in repository"
 #~ msgstr "Non hai información dispoñíbel para a referencia no repositorio"

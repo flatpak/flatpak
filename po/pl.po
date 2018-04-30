@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-04-26 12:03+0200\n"
+"POT-Creation-Date: 2018-04-30 14:38+0200\n"
 "PO-Revision-Date: 2017-12-21 19:22+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -1947,23 +1947,23 @@ msgstr ""
 "Nie wybrano repozytorium do rozwiązania „%s”, które istnieje w wielu "
 "instalacjach"
 
-#: app/flatpak-builtins-utils.c:488 app/flatpak-builtins-utils.c:490
-#: app/flatpak-builtins-utils.c:520 app/flatpak-builtins-utils.c:522
+#: app/flatpak-builtins-utils.c:487 app/flatpak-builtins-utils.c:489
+#: app/flatpak-builtins-utils.c:519 app/flatpak-builtins-utils.c:521
 #, fuzzy
 msgid "Error updating"
 msgstr "Błąd podczas aktualizowania: %s\n"
 
-#: app/flatpak-builtins-utils.c:498 app/flatpak-builtins-utils.c:501
+#: app/flatpak-builtins-utils.c:497 app/flatpak-builtins-utils.c:500
 #, fuzzy, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Aktualizowanie danych AppStream dla repozytorium użytkownika %s\n"
 
-#: app/flatpak-builtins-utils.c:508 app/flatpak-builtins-utils.c:511
+#: app/flatpak-builtins-utils.c:507 app/flatpak-builtins-utils.c:510
 #, fuzzy, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Aktualizowanie danych AppStream dla repozytorium %s\n"
 
-#: app/flatpak-builtins-utils.c:562
+#: app/flatpak-builtins-utils.c:561
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr "Nie odnaleziono repozytorium „%s”"
@@ -2564,83 +2564,78 @@ msgstr "Podczas otwierania repozytorium %s: "
 msgid "Can't create deploy directory"
 msgstr "Nie można utworzyć katalogu wdrażania"
 
-#: common/flatpak-dir.c:3070
+#: common/flatpak-dir.c:3077
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Nieprawidłowa suma SHA256 dla adresu URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:3075
+#: common/flatpak-dir.c:3082
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Pusta nazwa dla adresu URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:3082
+#: common/flatpak-dir.c:3089
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Nieobsługiwany adres URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:3096
+#: common/flatpak-dir.c:3103
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Wczytanie lokalnych dodatkowych danych %s się nie powiodło: %s"
 
-#: common/flatpak-dir.c:3099
+#: common/flatpak-dir.c:3106
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Błędny rozmiar dodatkowych danych %s"
 
-#: common/flatpak-dir.c:3114
+#: common/flatpak-dir.c:3121
 #, c-format
 msgid "While downloading %s: "
 msgstr "Podczas pobierania %s: "
 
-#: common/flatpak-dir.c:3121
+#: common/flatpak-dir.c:3128
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Błędny rozmiar dodatkowych danych %s"
 
-#: common/flatpak-dir.c:3132
+#: common/flatpak-dir.c:3139
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Nieprawidłowa suma kontrolna dodatkowych danych %s"
 
-#: common/flatpak-dir.c:3191
+#: common/flatpak-dir.c:3198
 msgid "Remote OCI index has no registry uri"
 msgstr "Indeks OCI repozytorium nie ma adresu URI rejestru"
 
-#: common/flatpak-dir.c:3295
+#: common/flatpak-dir.c:3302
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "Już zainstalowano %s zatwierdzenie %s"
 
-#: common/flatpak-dir.c:3630 common/flatpak-dir.c:3971
+#: common/flatpak-dir.c:3637 common/flatpak-dir.c:3982
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Podczas pobierania %s z repozytorium %s: "
 
-#: common/flatpak-dir.c:3852
-#, fuzzy, c-format
-msgid "No such ref (%s, %s) in remote %s"
-msgstr "Nie można odnaleźć %s w repozytorium %s"
-
-#: common/flatpak-dir.c:3855
+#: common/flatpak-dir.c:3872
 #, fuzzy, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "Nie można odnaleźć %s w repozytorium %s"
 
-#: common/flatpak-dir.c:4530
+#: common/flatpak-dir.c:4541
 msgid "Not enough memory"
 msgstr "Za mało pamięci"
 
-#: common/flatpak-dir.c:4549
+#: common/flatpak-dir.c:4560
 msgid "Failed to read from exported file"
 msgstr "Odczytanie z wyeksportowanego pliku się nie powiodło"
 
-#: common/flatpak-dir.c:4740
+#: common/flatpak-dir.c:4751
 msgid "Error reading mimetype xml file"
 msgstr "Błąd podczas odczytywania pliku XML typu MIME"
 
-#: common/flatpak-dir.c:4745
+#: common/flatpak-dir.c:4756
 msgid "Invalid mimetype xml file"
 msgstr "Nieprawidłowy plik XML typu MIME"
 
@@ -3026,6 +3021,10 @@ msgstr ""
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "Aktualizacja danych AppStream"
+
+#, fuzzy
+#~ msgid "No such ref (%s, %s) in remote %s"
+#~ msgstr "Nie można odnaleźć %s w repozytorium %s"
 
 #~ msgid "No ref information available in repository"
 #~ msgstr "Brak dostępnych informacji o odniesieniu w repozytorium"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-04-26 12:03+0200\n"
+"POT-Creation-Date: 2018-04-30 14:38+0200\n"
 "PO-Revision-Date: 2017-05-20 08:19+0300\n"
 "Last-Translator: Muhammet Kara <muhammetk@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
@@ -1916,23 +1916,23 @@ msgstr "Hangisini yüklemek istiyorsunuz (iptal etmek için 0)?"
 msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:488 app/flatpak-builtins-utils.c:490
-#: app/flatpak-builtins-utils.c:520 app/flatpak-builtins-utils.c:522
+#: app/flatpak-builtins-utils.c:487 app/flatpak-builtins-utils.c:489
+#: app/flatpak-builtins-utils.c:519 app/flatpak-builtins-utils.c:521
 #, fuzzy
 msgid "Error updating"
 msgstr "Özet güncelleniyor\n"
 
-#: app/flatpak-builtins-utils.c:498 app/flatpak-builtins-utils.c:501
+#: app/flatpak-builtins-utils.c:497 app/flatpak-builtins-utils.c:500
 #, fuzzy, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Appstream uzak %s için güncelleniyor\n"
 
-#: app/flatpak-builtins-utils.c:508 app/flatpak-builtins-utils.c:511
+#: app/flatpak-builtins-utils.c:507 app/flatpak-builtins-utils.c:510
 #, fuzzy, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Appstream uzak %s için güncelleniyor\n"
 
-#: app/flatpak-builtins-utils.c:562
+#: app/flatpak-builtins-utils.c:561
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr ""
@@ -2524,84 +2524,79 @@ msgstr "Arşiv %s'i açarken:"
 msgid "Can't create deploy directory"
 msgstr "Dağıtım dizini oluşturulamadı"
 
-#: common/flatpak-dir.c:3070
+#: common/flatpak-dir.c:3077
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Ek veri uri'si %s için geçersiz sha256 "
 
-#: common/flatpak-dir.c:3075
+#: common/flatpak-dir.c:3082
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Ek veri uri'si %s için boş isim"
 
-#: common/flatpak-dir.c:3082
+#: common/flatpak-dir.c:3089
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Desteklenmeyen ek veri uri'si %s"
 
-#: common/flatpak-dir.c:3096
+#: common/flatpak-dir.c:3103
 #, fuzzy, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Değişiklik %s okunamadı:"
 
-#: common/flatpak-dir.c:3099
+#: common/flatpak-dir.c:3106
 #, fuzzy, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Ek veri %s için yanlış boyut"
 
-#: common/flatpak-dir.c:3114
+#: common/flatpak-dir.c:3121
 #, c-format
 msgid "While downloading %s: "
 msgstr "%s indirilirken:"
 
-#: common/flatpak-dir.c:3121
+#: common/flatpak-dir.c:3128
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Ek veri %s için yanlış boyut"
 
-#: common/flatpak-dir.c:3132
+#: common/flatpak-dir.c:3139
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Ek veri %s için geçeresiz sağlama toplamı"
 
-#: common/flatpak-dir.c:3191
+#: common/flatpak-dir.c:3198
 #, fuzzy
 msgid "Remote OCI index has no registry uri"
 msgstr "KONUM'un bir oci sicili olduğunu varsay "
 
-#: common/flatpak-dir.c:3295
+#: common/flatpak-dir.c:3302
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s değişikliği %s zaten yüklü"
 
-#: common/flatpak-dir.c:3630 common/flatpak-dir.c:3971
+#: common/flatpak-dir.c:3637 common/flatpak-dir.c:3982
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Uzak %2$s'ten %1$s çekerken:"
 
-#: common/flatpak-dir.c:3852
-#, fuzzy, c-format
-msgid "No such ref (%s, %s) in remote %s"
-msgstr "Uzak %2$s'te %1$s bulunamadı"
-
-#: common/flatpak-dir.c:3855
+#: common/flatpak-dir.c:3872
 #, fuzzy, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "Uzak %2$s'te %1$s bulunamadı"
 
-#: common/flatpak-dir.c:4530
+#: common/flatpak-dir.c:4541
 msgid "Not enough memory"
 msgstr "Yeterli bellek yok"
 
-#: common/flatpak-dir.c:4549
+#: common/flatpak-dir.c:4560
 msgid "Failed to read from exported file"
 msgstr "Dışa aktarılmış dosyadan okunamadı"
 
-#: common/flatpak-dir.c:4740
+#: common/flatpak-dir.c:4751
 msgid "Error reading mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:4745
+#: common/flatpak-dir.c:4756
 msgid "Invalid mimetype xml file"
 msgstr ""
 
@@ -2988,6 +2983,10 @@ msgstr "Yazılım arşivlerini yapılandırmak için kimlik denetimi gerekli"
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "Appstream'i güncelle"
+
+#, fuzzy
+#~ msgid "No such ref (%s, %s) in remote %s"
+#~ msgstr "Uzak %2$s'te %1$s bulunamadı"
 
 #, fuzzy
 #~ msgid "No ref information available in repository"

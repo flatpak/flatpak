@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-04-26 12:03+0200\n"
+"POT-Creation-Date: 2018-04-30 14:38+0200\n"
 "PO-Revision-Date: 2018-04-25 15:16+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -1900,22 +1900,22 @@ msgstr ""
 "Tidak ada remote yang dipilih untuk menyelesaikan '%s' yang ada pada "
 "beberapa pemasangan"
 
-#: app/flatpak-builtins-utils.c:488 app/flatpak-builtins-utils.c:490
-#: app/flatpak-builtins-utils.c:520 app/flatpak-builtins-utils.c:522
+#: app/flatpak-builtins-utils.c:487 app/flatpak-builtins-utils.c:489
+#: app/flatpak-builtins-utils.c:519 app/flatpak-builtins-utils.c:521
 msgid "Error updating"
 msgstr "Galat memperbarui"
 
-#: app/flatpak-builtins-utils.c:498 app/flatpak-builtins-utils.c:501
+#: app/flatpak-builtins-utils.c:497 app/flatpak-builtins-utils.c:500
 #, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Memperbarui data appstream untuk remote pengguna %s"
 
-#: app/flatpak-builtins-utils.c:508 app/flatpak-builtins-utils.c:511
+#: app/flatpak-builtins-utils.c:507 app/flatpak-builtins-utils.c:510
 #, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Memperbarui data appstream untuk remote %s"
 
-#: app/flatpak-builtins-utils.c:562
+#: app/flatpak-builtins-utils.c:561
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr "Remote \"%s\" tidak ditemukan"
@@ -2515,83 +2515,78 @@ msgstr "Saat membuka repositori %s: "
 msgid "Can't create deploy directory"
 msgstr "Tidak dapat membuat direktori deploy"
 
-#: common/flatpak-dir.c:3070
+#: common/flatpak-dir.c:3077
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Sha256 tidak valid untuk data ekstra uri %s"
 
-#: common/flatpak-dir.c:3075
+#: common/flatpak-dir.c:3082
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Nama kosong untuk data ekstra uri %s"
 
-#: common/flatpak-dir.c:3082
+#: common/flatpak-dir.c:3089
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Data ekstra yang tidak didukung uri %s"
 
-#: common/flatpak-dir.c:3096
+#: common/flatpak-dir.c:3103
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Gagal memuat data-ekstra lokal %s: %s"
 
-#: common/flatpak-dir.c:3099
+#: common/flatpak-dir.c:3106
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Ukuran yang salah untuk data-ekstra %s"
 
-#: common/flatpak-dir.c:3114
+#: common/flatpak-dir.c:3121
 #, c-format
 msgid "While downloading %s: "
 msgstr "Saat mengunduh %s: "
 
-#: common/flatpak-dir.c:3121
+#: common/flatpak-dir.c:3128
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Ukuran yang salah untuk data ekstra %s"
 
-#: common/flatpak-dir.c:3132
+#: common/flatpak-dir.c:3139
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Checksum tidak valid untuk data ekstra %s"
 
-#: common/flatpak-dir.c:3191
+#: common/flatpak-dir.c:3198
 msgid "Remote OCI index has no registry uri"
 msgstr "Indeks remote OCI tidak memiliki registry uri"
 
-#: common/flatpak-dir.c:3295
+#: common/flatpak-dir.c:3302
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s komit %s sudah terpasang"
 
-#: common/flatpak-dir.c:3630 common/flatpak-dir.c:3971
+#: common/flatpak-dir.c:3637 common/flatpak-dir.c:3982
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Saat menarik %s dari remote %s: "
 
-#: common/flatpak-dir.c:3852
-#, c-format
-msgid "No such ref (%s, %s) in remote %s"
-msgstr "Tidak ada ref (%s, %s) pada remote %s"
-
-#: common/flatpak-dir.c:3855
+#: common/flatpak-dir.c:3872
 #, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "Tidak ada ref '%s' pada remote %s"
 
-#: common/flatpak-dir.c:4530
+#: common/flatpak-dir.c:4541
 msgid "Not enough memory"
 msgstr "Memori tidak cukup"
 
-#: common/flatpak-dir.c:4549
+#: common/flatpak-dir.c:4560
 msgid "Failed to read from exported file"
 msgstr "Gagal membaca dari berkas yang diekspor"
 
-#: common/flatpak-dir.c:4740
+#: common/flatpak-dir.c:4751
 msgid "Error reading mimetype xml file"
 msgstr "Kesalahan saat membaca berkas xml mimetype"
 
-#: common/flatpak-dir.c:4745
+#: common/flatpak-dir.c:4756
 msgid "Invalid mimetype xml file"
 msgstr "Berkas xml mimetype tidak valid"
 
@@ -2974,6 +2969,9 @@ msgstr "Otentikasi diperlukan untuk mengkonfigurasi pemasangan perangkat lunak"
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "Perbarui appstream"
+
+#~ msgid "No such ref (%s, %s) in remote %s"
+#~ msgstr "Tidak ada ref (%s, %s) pada remote %s"
 
 #~ msgid "No ref information available in repository"
 #~ msgstr "Tidak ada informasi ref yang tersedia dalam repositori"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-04-26 12:03+0200\n"
+"POT-Creation-Date: 2018-04-30 14:38+0200\n"
 "PO-Revision-Date: 2018-03-10 00:00+0100\n"
 "Last-Translator: Balázs Úr <urbalazs@gmail.com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -1930,23 +1930,23 @@ msgstr ""
 "Nem lett távoli tároló kiválasztva a(z) „%s” feloldásához, amely több "
 "telepítésben is létezik"
 
-#: app/flatpak-builtins-utils.c:488 app/flatpak-builtins-utils.c:490
-#: app/flatpak-builtins-utils.c:520 app/flatpak-builtins-utils.c:522
+#: app/flatpak-builtins-utils.c:487 app/flatpak-builtins-utils.c:489
+#: app/flatpak-builtins-utils.c:519 app/flatpak-builtins-utils.c:521
 #, fuzzy
 msgid "Error updating"
 msgstr "Hiba a frissítéskor: %s\n"
 
-#: app/flatpak-builtins-utils.c:498 app/flatpak-builtins-utils.c:501
+#: app/flatpak-builtins-utils.c:497 app/flatpak-builtins-utils.c:500
 #, fuzzy, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Az appstream adatok frissítése a felhasználó %s távoli tárolójához\n"
 
-#: app/flatpak-builtins-utils.c:508 app/flatpak-builtins-utils.c:511
+#: app/flatpak-builtins-utils.c:507 app/flatpak-builtins-utils.c:510
 #, fuzzy, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Az appstream adatok frissítése a(z) %s távoli tárolóhoz\n"
 
-#: app/flatpak-builtins-utils.c:562
+#: app/flatpak-builtins-utils.c:561
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr "A(z) „%s” távoli tároló nem található"
@@ -2545,83 +2545,78 @@ msgstr "A(z) %s tároló megnyitása közben: "
 msgid "Can't create deploy directory"
 msgstr "Nem lehet létrehozni a telepítési könyvtárat"
 
-#: common/flatpak-dir.c:3070
+#: common/flatpak-dir.c:3077
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Érvénytelen sha256 a további adat URI-nál: %s"
 
-#: common/flatpak-dir.c:3075
+#: common/flatpak-dir.c:3082
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Üres név a további adat URI-nál: %s"
 
-#: common/flatpak-dir.c:3082
+#: common/flatpak-dir.c:3089
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Nem támogatott további adat URI: %s"
 
-#: common/flatpak-dir.c:3096
+#: common/flatpak-dir.c:3103
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Nem sikerült a(z) %s helyi további adat betöltése: %s"
 
-#: common/flatpak-dir.c:3099
+#: common/flatpak-dir.c:3106
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Hibás méret a(z) %s további adatnál"
 
-#: common/flatpak-dir.c:3114
+#: common/flatpak-dir.c:3121
 #, c-format
 msgid "While downloading %s: "
 msgstr "A(z) %s letöltése közben: "
 
-#: common/flatpak-dir.c:3121
+#: common/flatpak-dir.c:3128
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Hibás méret a(z) %s további adatnál"
 
-#: common/flatpak-dir.c:3132
+#: common/flatpak-dir.c:3139
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Érvénytelen ellenőrzőösszeg a(z) %s további adatnál"
 
-#: common/flatpak-dir.c:3191
+#: common/flatpak-dir.c:3198
 msgid "Remote OCI index has no registry uri"
 msgstr "A távoli OCI indexnek nincs regisztrációs URI-ja"
 
-#: common/flatpak-dir.c:3295
+#: common/flatpak-dir.c:3302
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "A(z) %s kommit %s már telepítve van"
 
-#: common/flatpak-dir.c:3630 common/flatpak-dir.c:3971
+#: common/flatpak-dir.c:3637 common/flatpak-dir.c:3982
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "A(z) %s lekérése közben a(z) %s távoliról: "
 
-#: common/flatpak-dir.c:3852
-#, fuzzy, c-format
-msgid "No such ref (%s, %s) in remote %s"
-msgstr "A(z) %s nem található a(z) %s távoliban"
-
-#: common/flatpak-dir.c:3855
+#: common/flatpak-dir.c:3872
 #, fuzzy, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "A(z) %s nem található a(z) %s távoliban"
 
-#: common/flatpak-dir.c:4530
+#: common/flatpak-dir.c:4541
 msgid "Not enough memory"
 msgstr "Nincs elég memória"
 
-#: common/flatpak-dir.c:4549
+#: common/flatpak-dir.c:4560
 msgid "Failed to read from exported file"
 msgstr "Nem sikerült olvasni az exportált fájlból"
 
-#: common/flatpak-dir.c:4740
+#: common/flatpak-dir.c:4751
 msgid "Error reading mimetype xml file"
 msgstr "Hiba a MIME-típus XML-fájl olvasásakor"
 
-#: common/flatpak-dir.c:4745
+#: common/flatpak-dir.c:4756
 msgid "Invalid mimetype xml file"
 msgstr "Érvénytelen MIME-típus XML-fájl"
 
@@ -3003,6 +2998,10 @@ msgstr "Hitelesítés szükséges a szoftvertelepítés beállításához"
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "AppStream frissítése"
+
+#, fuzzy
+#~ msgid "No such ref (%s, %s) in remote %s"
+#~ msgstr "A(z) %s nem található a(z) %s távoliban"
 
 #~ msgid "No ref information available in repository"
 #~ msgstr "Nem érhetőek el hivatkozásinformációk a tárolóban"
