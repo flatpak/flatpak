@@ -20,6 +20,10 @@ EOF
 
 cat ${DIR}/metadata
 
+# On Debian derivatives, /usr/sbin and /sbin aren't in ordinary users'
+# PATHs, but ldconfig is kept in /sbin
+PATH="$PATH:/usr/sbin:/sbin"
+
 # Add bash and dependencies
 mkdir -p ${DIR}/usr/bin
 mkdir -p ${DIR}/usr/lib
