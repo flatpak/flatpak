@@ -350,7 +350,9 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
   if (metadata)
     metadata_bytes = g_bytes_new (metadata, strlen (metadata));
 
-  sparse = flatpak_remote_state_lookup_sparse_cache (state, full_ref, NULL);
+  if (state)
+    sparse = flatpak_remote_state_lookup_sparse_cache (state, full_ref, NULL);
+
   if (sparse)
     {
       g_variant_lookup (sparse, "eol", "&s", &eol);
