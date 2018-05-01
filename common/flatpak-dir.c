@@ -8143,7 +8143,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   if (!ostree_repo_remote_get_url (self->repo, name_or_uri, &url, error))
     return FALSE;
 
-  if (*url == '\0')
+  if (!g_str_has_prefix (name_or_uri, "file:") && flatpak_dir_get_remote_disabled (self, name_or_uri))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
                    "Can't fetch summary from disabled remote ‘%s’", name_or_uri);
