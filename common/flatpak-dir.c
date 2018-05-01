@@ -8254,7 +8254,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
       else
         {
-          if (optional && state->collection_id != NULL)
+          if (optional)
             {
               g_debug ("Failed to download optional summary");
             }
@@ -8342,10 +8342,12 @@ flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
 }
 
 /* This is an alternative way to get the remote state that doesn't
- * error out if the summary or metadata is not available in the p2p
- * case. For example, we want to be able to update an app even when
+ * error out if the summary or metadata is not available.
+ * For example, we want to be able to update an app even when
  * we can't talk to the main repo, but there is a local (p2p/sdcard)
- * source for apps.
+ * source for apps, and we want to be able to deploy a ref without pulling it,
+ * e.g. because we are installing with FLATPAK_INSTALL_FLAGS_NO_PULL, and we
+ * already pulled it out of band beforehand.
  */
 FlatpakRemoteState *
 flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
