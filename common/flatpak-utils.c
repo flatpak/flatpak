@@ -5686,6 +5686,22 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
       if (!g_str_has_prefix (parts[element], cur_parts[element]))
         continue;
 
+      if (flatpak_id_has_subref_suffix (parts[element]))
+        {
+          char *last_dot = strrchr (parts[element], '.');
+
+          if (last_dot == NULL)
+            continue; /* Shouldn't really happen */
+
+          /* Only complete to subrefs is fully matching real part.
+           * For example, only match org.foo.Bar.Sources for
+           * "org.foo.Bar", "org.foo.Bar." or "org.foo.Bar.S", but
+           * not for "org.foo" or other shorter prefixes.
+           */
+          if (strncmp (parts[element], cur_parts[element], last_dot - parts[element] - 1) != 0)
+            continue;
+        }
+
       comp = g_string_new (pref);
       g_string_append (comp, parts[element] + strlen (cur_parts[element]));
 
