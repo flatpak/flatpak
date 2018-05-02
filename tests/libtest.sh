@@ -357,7 +357,7 @@ if ! /bin/kill -0 "$DBUS_SESSION_BUS_PID"; then
 fi
 
 cleanup () {
-    /bin/kill $DBUS_SESSION_BUS_PID ${FLATPAK_HTTP_PID:-}
+    /bin/kill -9 $DBUS_SESSION_BUS_PID ${FLATPAK_HTTP_PID:-}
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
     fusermount -u $XDG_RUNTIME_DIR/doc || :
     if test -n "${TEST_SKIP_CLEANUP:-}"; then
