@@ -4954,39 +4954,6 @@ out:
   return ret;
 }
 
-typedef gboolean (*MultiplePrefixesComparisonFunc) (const char         *path,
-                                                    const char * const *prefixes);
-
-static GStrv
-get_permissible_prefixes (FlatpakContext                  *context,
-                          const char                      *source_path,
-                          const char                      *app_id,
-                          GError                         **error)
-{
-  g_autoptr(GPtrArray) prefixes = NULL;
-
-  prefixes = g_ptr_array_new_with_free_func (g_free);
-
-  /* Create a new pointer array with prefixes including the app
-   * ID and in the case of d-bus service files, the allowed own
-   * names. */
-  g_ptr_array_add (prefixes, g_strdup_printf ("%s.*", app_id));
-
-  if (flatpak_has_path_prefix (source_path, "share/dbus-1/services"))
-    {
-      g_auto(GStrv) owned_dbus_names =
-        flatpak_context_get_session_bus_policy_allowed_own_names (context);
-      GStrv iter = owned_dbus_names;
-
-      for (; *iter != NULL; ++iter)
-        g_ptr_array_add (prefixes, g_strdup (*iter));
-    }
-
-  g_ptr_array_add (prefixes, NULL);
-
-  return (GStrv) g_ptr_array_free (g_steal_pointer (&prefixes), FALSE);
-}
-
 static gboolean
 rewrite_export_dir (const char     *app,
                     const char     *branch,
@@ -5004,9 +4971,16 @@ rewrite_export_dir (const char     *app,
   g_auto(GLnxDirFdIterator) source_iter = {0};
   g_autoptr(GHashTable) visited_children = NULL;
   struct dirent *dent;
+  gboolean exports_allowed = FALSE;
+  g_auto(GStrv) allowed_prefixes = NULL;
+  g_auto(GStrv) allowed_extensions = NULL;
+  gboolean require_exact_match = FALSE;
 
   if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
     goto out;
+
+  exports_allowed = flatpak_get_allowed_exports (source_path, app, context,
+                                                 &allowed_extensions, &allowed_prefixes, &require_exact_match);
 
   visited_children = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
@@ -5048,18 +5022,32 @@ rewrite_export_dir (const char     *app,
                                    path, cancellable, error))
             goto out;
         }
-      else if (S_ISREG (stbuf.st_mode))
+      else if (S_ISREG (stbuf.st_mode) && exports_allowed)
         {
-          g_auto(GStrv) permissible_prefixes = get_permissible_prefixes (context,
-                                                                         source_path,
-                                                                         app,
-                                                                         error);
+          g_autofree gchar *name_without_extension = NULL;
           g_autofree gchar *new_name = NULL;
+          int i;
 
-          if (permissible_prefixes == NULL)
-            return FALSE;
+          for (i = 0; allowed_extensions[i] != NULL; i++)
+            {
+              if (g_str_has_suffix (dent->d_name, allowed_extensions[i]))
+                break;
+            }
 
-          if (!flatpak_name_matches_one_wildcard_prefix (dent->d_name, (const char * const *) permissible_prefixes))
+          if (allowed_extensions[i] == NULL)
+            {
+              g_warning ("Invalid extension for %s in app %s, removing.", dent->d_name, app);
+              if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
+                {
+                  glnx_set_error_from_errno (error);
+                  goto out;
+                }
+              continue;
+            }
+
+          name_without_extension = g_strndup (dent->d_name, strlen (dent->d_name) - strlen (allowed_extensions[i]));
+
+          if (!flatpak_name_matches_one_wildcard_prefix (name_without_extension, (const char * const *) allowed_prefixes, require_exact_match))
             {
               g_warning ("Non-prefixed filename %s in app %s, removing.", dent->d_name, app);
               if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)

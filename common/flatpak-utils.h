@@ -141,12 +141,17 @@ gboolean flatpak_summary_lookup_ref (GVariant    *summary,
                                      char       **out_checksum,
                                      GVariant   **out_variant);
 
-gboolean flatpak_has_name_prefix (const char *string,
-                                  const char *name);
-gboolean flatpak_name_matches_one_prefix (const char         *string,
-                                          const char * const *prefixes);
 gboolean flatpak_name_matches_one_wildcard_prefix (const char         *string,
-                                                   const char * const *maybe_wildcard_prefixes);
+                                                   const char * const *maybe_wildcard_prefixes,
+                                                   gboolean require_exact_match);
+
+gboolean flatpak_get_allowed_exports (const char *source_path,
+                                      const char *app_id,
+                                      FlatpakContext *context,
+                                      char ***allowed_extensions_out,
+                                      char ***allowed_prefixes_out,
+                                      gboolean *require_exact_match_out);
+
 gboolean flatpak_is_valid_name (const char *string,
                                 GError **error);
 gboolean flatpak_is_valid_branch (const char *string,
