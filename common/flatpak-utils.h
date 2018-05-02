@@ -30,6 +30,7 @@
 #include <libsoup/soup.h>
 #include "flatpak-dbus.h"
 #include "flatpak-document-dbus.h"
+#include "flatpak-context.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
 
@@ -654,7 +655,7 @@ gboolean flatpak_download_http_uri (SoupSession *soup_session,
                                     GCancellable *cancellable,
                                     GError      **error);
 
-typedef struct {
+struct FlatpakCompletion {
   char *shell_cur;
   char *cur;
   char *prev;
@@ -664,7 +665,7 @@ typedef struct {
   char **original_argv;
   int argc;
   int original_argc;
-} FlatpakCompletion;
+};
 
 void flatpak_completion_debug (const gchar *format, ...);
 

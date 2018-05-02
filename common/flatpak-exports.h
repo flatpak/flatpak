@@ -22,7 +22,6 @@
 #define __FLATPAK_EXPORTS_H__
 
 #include "libglnx/libglnx.h"
-#include "flatpak-utils.h"
 #include "flatpak-bwrap.h"
 
 /* In numerical order of more privs */
