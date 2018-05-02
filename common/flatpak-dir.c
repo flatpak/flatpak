@@ -206,7 +206,9 @@ flatpak_remote_state_free (FlatpakRemoteState *remote_state)
   g_free (remote_state->collection_id);
   g_clear_pointer (&remote_state->summary, g_variant_unref);
   g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
+  g_clear_error (&remote_state->summary_fetch_error);
   g_clear_pointer (&remote_state->metadata, g_variant_unref);
+  g_clear_error (&remote_state->metadata_fetch_error);
 
   g_free (remote_state);
 }
@@ -216,7 +218,8 @@ flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                      GError            **error)
 {
   if (self->summary == NULL)
-    return flatpak_fail (error, "Unable to load summary from remote %s", self->remote_name);
+    return flatpak_fail (error, "Unable to load summary from remote %s: %s", self->remote_name,
+                         self->summary_fetch_error != NULL ? self->summary_fetch_error->message : "unknown error");
 
   return TRUE;
 }
@@ -226,7 +229,8 @@ flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
                                       GError            **error)
 {
   if (self->metadata == NULL)
-    return flatpak_fail (error, "Unable to load metadata from remote %s", self->remote_name);
+    return flatpak_fail (error, "Unable to load metadata from remote %s: %s", self->remote_name,
+                         self->metadata_fetch_error != NULL ? self->metadata_fetch_error->message : "unknown error");
 
   return TRUE;
 }
@@ -8256,6 +8260,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         {
           if (optional)
             {
+              state->summary_fetch_error = g_steal_pointer (&local_error);
               g_debug ("Failed to download optional summary");
             }
           else
@@ -8285,6 +8290,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
             {
               /* This happens for instance in the case where a p2p remote is invalid (wrong signature)
                  and we should just silently fail to update to it. */
+              state->metadata_fetch_error = g_steal_pointer (&local_error);
               g_debug ("Failed to download optional metadata");
             }
           else
