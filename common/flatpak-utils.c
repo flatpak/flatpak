@@ -761,63 +761,131 @@ out:
 }
 
 gboolean
-flatpak_has_name_prefix (const char *string,
-                         const char *name)
-{
-  const char *rest;
-
-  if (!g_str_has_prefix (string, name))
-    return FALSE;
-
-  rest = string + strlen (name);
-  return
-    *rest == 0 ||
-    *rest == '.' ||
-    !is_valid_name_character (*rest, FALSE);
-}
-
-gboolean
-flatpak_name_matches_one_prefix (const char         *name,
-                                 const char * const *prefixes)
-{
-  const char * const *iter = prefixes;
-
-  for (; *iter != NULL; ++iter)
-    if (flatpak_has_name_prefix (name, *iter))
-      return TRUE;
-
-  return FALSE;
-}
-
-gboolean
 flatpak_name_matches_one_wildcard_prefix (const char         *name,
-                                          const char * const *wildcarded_prefixes)
+                                          const char * const *wildcarded_prefixes,
+                                          gboolean require_exact_match)
 {
   const char * const *iter = wildcarded_prefixes;
-  g_autofree char *name_without_suffix = g_strdup (name);
+  const char *remainder;
+  gsize longest_match_len = 0;
 
-  char *first_dot = strrchr (name_without_suffix, '.');
-  *first_dot = '\0';
-
+  /* Find longest valid match */
   for (; *iter != NULL; ++iter)
     {
-      const char *maybe_wildcarded_prefix = *iter;
+      const char *prefix = *iter;
+      gsize prefix_len = strlen (prefix);
+      gsize match_len = strlen (prefix);
+      gboolean has_wildcard = FALSE;
+      const char *end_of_match;
 
-      if (g_str_has_suffix (maybe_wildcarded_prefix, ".*"))
+      if (g_str_has_suffix (prefix, ".*"))
         {
-          g_autofree char *truncated_wildcarded_prefix = g_strndup (maybe_wildcarded_prefix,
-                                                                    strlen (maybe_wildcarded_prefix) - 2);
+          has_wildcard = TRUE;
+          prefix_len -= 2;
+        }
 
-          if (flatpak_has_name_prefix (name_without_suffix, truncated_wildcarded_prefix))
-            return TRUE;
-        }
-      else if (g_strcmp0 (name_without_suffix, maybe_wildcarded_prefix) == 0)
+      if (strncmp (name, prefix, prefix_len) != 0)
+        continue;
+
+      end_of_match = name + prefix_len;
+
+      if (has_wildcard &&
+          end_of_match[0] == '.' &&
+          is_valid_initial_name_character (end_of_match[1], TRUE))
         {
-          return TRUE;
+          end_of_match += 2;
+          while (*end_of_match != 0 &&
+                 is_valid_name_character (*end_of_match, TRUE))
+            end_of_match++;
         }
+
+      match_len = end_of_match - name;
+
+      if (match_len > longest_match_len)
+        longest_match_len = match_len;
     }
 
-  return FALSE;
+  if (longest_match_len == 0)
+    return FALSE;
+
+  if (require_exact_match)
+    return name[longest_match_len] == 0;
+
+  /* non-exact matches can be exact, or can be followed by characters that would make
+   * not be part of the last element in the matched prefix, due to being invalid or
+   * a new element. As a special case we explicitly disallow dash here, even though
+   * it iss typically allowed in the final element of a name, this allows you too sloppily
+   * match org.the.App with org.the.App-symbolic[.png] or org.the.App-settings[.desktop].
+   */
+  remainder = name + longest_match_len;
+  return
+    *remainder == 0 ||
+    *remainder == '.' ||
+    !is_valid_name_character (*remainder, FALSE);
+}
+
+gboolean
+flatpak_get_allowed_exports (const char *source_path,
+                             const char *app_id,
+                             FlatpakContext *context,
+                             char ***allowed_extensions_out,
+                             char ***allowed_prefixes_out,
+                             gboolean *require_exact_match_out)
+{
+  g_autoptr(GPtrArray) allowed_extensions = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) allowed_prefixes = g_ptr_array_new_with_free_func (g_free);
+  gboolean require_exact_match = FALSE;
+
+  g_ptr_array_add (allowed_prefixes, g_strdup_printf ("%s.*", app_id));
+
+  if (flatpak_has_path_prefix (source_path, "share/applications"))
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".desktop"));
+    }
+  else if (flatpak_has_path_prefix (source_path, "share/icons"))
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".svgz"));
+      g_ptr_array_add (allowed_extensions, g_strdup (".png"));
+      g_ptr_array_add (allowed_extensions, g_strdup (".svg"));
+      g_ptr_array_add (allowed_extensions, g_strdup (".ico"));
+    }
+  else if (flatpak_has_path_prefix (source_path, "share/dbus-1/services"))
+    {
+      g_auto(GStrv) owned_dbus_names =  flatpak_context_get_session_bus_policy_allowed_own_names (context);
+
+      g_ptr_array_add (allowed_extensions, g_strdup (".service"));
+
+      for (GStrv iter = owned_dbus_names; *iter != NULL; ++iter)
+        g_ptr_array_add (allowed_prefixes, g_strdup (*iter));
+
+      /* We need an exact match with no extra garbage, because the filename refers to busnames
+       * and we can *only* match exactly these */
+      require_exact_match = TRUE;
+    }
+  else if (flatpak_has_path_prefix (source_path, "share/gnome-shell/search-providers"))
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".ini"));
+    }
+  else if (flatpak_has_path_prefix (source_path, "share/mime/packages"))
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".xml"));
+    }
+  else
+    return FALSE;
+
+  g_ptr_array_add (allowed_extensions, NULL);
+  g_ptr_array_add (allowed_prefixes, NULL);
+
+  if (allowed_extensions_out)
+    *allowed_extensions_out = (char **)g_ptr_array_free (g_steal_pointer (&allowed_extensions), FALSE);
+
+  if (allowed_prefixes_out)
+    *allowed_prefixes_out = (char **)g_ptr_array_free (g_steal_pointer (&allowed_prefixes), FALSE);
+
+  if (require_exact_match_out)
+    *require_exact_match_out = require_exact_match;
+
+  return TRUE;
 }
 
 static gboolean
