@@ -131,7 +131,7 @@
 
                 <listitem><para> Show everything. By default locale and
                 debug extensions as well as secondary arches when the primary
-                arch in available are hidden.
+                arch is available are hidden.
                 </para></listitem>
             </varlistentry>
 
