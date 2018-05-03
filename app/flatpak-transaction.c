@@ -894,11 +894,11 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
           if (eol_rebase)
             {
-              g_printerr ("Warning: %s is end-of-line, in preference of %s\n", op->ref, eol_rebase);
+              g_printerr ("Warning: %s is end-of-life, in preference of %s\n", op->ref, eol_rebase);
             }
           else if (eol)
             {
-              g_printerr ("Warning: %s is end-of-line, with reason: %s\n", op->ref, eol);
+              g_printerr ("Warning: %s is end-of-life, with reason: %s\n", op->ref, eol);
             }
         }
 
