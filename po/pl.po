@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-05-02 15:03+0200\n"
+"POT-Creation-Date: 2018-05-03 08:26+0200\n"
 "PO-Revision-Date: 2017-12-21 19:22+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -2249,9 +2249,9 @@ msgstr ""
 "Nie odnaleziono wymaganego środowiska wykonawczego %s w skonfigurowanym "
 "repozytorium.\n"
 
-#: app/flatpak-transaction.c:541 common/flatpak-dir.c:1391
-#: common/flatpak-dir.c:1735 common/flatpak-dir.c:1758
-#: common/flatpak-dir.c:1780 common/flatpak-dir.c:10958
+#: app/flatpak-transaction.c:541 common/flatpak-dir.c:1395
+#: common/flatpak-dir.c:1739 common/flatpak-dir.c:1762
+#: common/flatpak-dir.c:1784 common/flatpak-dir.c:10966
 #: common/flatpak-utils.c:1406 common/flatpak-utils.c:1500
 #, c-format
 msgid "%s not installed"
@@ -2528,296 +2528,296 @@ msgstr "NAZWA-PLIKU"
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 
-#: common/flatpak-dir.c:321
+#: common/flatpak-dir.c:325
 msgid "No flatpak cache in remote summary"
 msgstr "Brak pamięci podręcznej Flatpak w podsumowaniu repozytorium"
 
-#: common/flatpak-dir.c:330
+#: common/flatpak-dir.c:334
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
 "Brak wpisu dla %s w pamięci podręcznej Flatpak podsumowania repozytorium "
 
-#: common/flatpak-dir.c:376
+#: common/flatpak-dir.c:380
 #, fuzzy, c-format
 msgid "No entry for %s in remote summary flatpak sparse cache "
 msgstr ""
 "Brak wpisu dla %s w pamięci podręcznej Flatpak podsumowania repozytorium "
 
-#: common/flatpak-dir.c:942
+#: common/flatpak-dir.c:946
 msgid ""
 "/var/tmp does not suport xattrs which is needed for system-wide installation "
 "as a user. FLATPAK_SYSTEM_CACHE_DIR can be used to set an alternative path."
 msgstr ""
 
-#: common/flatpak-dir.c:1274
+#: common/flatpak-dir.c:1278
 #, c-format
 msgid "No overrides found for %s"
 msgstr "Nie odnaleziono zastępników dla %s"
 
-#: common/flatpak-dir.c:1394
+#: common/flatpak-dir.c:1398
 #, fuzzy, c-format
 msgid "%s (commit %s) not installed"
 msgstr "Nie zainstalowano %s %s"
 
-#: common/flatpak-dir.c:1930
+#: common/flatpak-dir.c:1934
 #, c-format
 msgid "While opening repository %s: "
 msgstr "Podczas otwierania repozytorium %s: "
 
-#: common/flatpak-dir.c:2179 common/flatpak-dir.c:5755
+#: common/flatpak-dir.c:2183 common/flatpak-dir.c:5759
 msgid "Can't create deploy directory"
 msgstr "Nie można utworzyć katalogu wdrażania"
 
-#: common/flatpak-dir.c:3077
+#: common/flatpak-dir.c:3081
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Nieprawidłowa suma SHA256 dla adresu URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:3082
+#: common/flatpak-dir.c:3086
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Pusta nazwa dla adresu URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:3089
+#: common/flatpak-dir.c:3093
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Nieobsługiwany adres URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:3103
+#: common/flatpak-dir.c:3107
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Wczytanie lokalnych dodatkowych danych %s się nie powiodło: %s"
 
-#: common/flatpak-dir.c:3106
+#: common/flatpak-dir.c:3110
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Błędny rozmiar dodatkowych danych %s"
 
-#: common/flatpak-dir.c:3121
+#: common/flatpak-dir.c:3125
 #, c-format
 msgid "While downloading %s: "
 msgstr "Podczas pobierania %s: "
 
-#: common/flatpak-dir.c:3128
+#: common/flatpak-dir.c:3132
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Błędny rozmiar dodatkowych danych %s"
 
-#: common/flatpak-dir.c:3139
+#: common/flatpak-dir.c:3143
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Nieprawidłowa suma kontrolna dodatkowych danych %s"
 
-#: common/flatpak-dir.c:3198
+#: common/flatpak-dir.c:3202
 msgid "Remote OCI index has no registry uri"
 msgstr "Indeks OCI repozytorium nie ma adresu URI rejestru"
 
-#: common/flatpak-dir.c:3302
+#: common/flatpak-dir.c:3306
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "Już zainstalowano %s zatwierdzenie %s"
 
-#: common/flatpak-dir.c:3637 common/flatpak-dir.c:3982
+#: common/flatpak-dir.c:3641 common/flatpak-dir.c:3986
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Podczas pobierania %s z repozytorium %s: "
 
-#: common/flatpak-dir.c:3872
+#: common/flatpak-dir.c:3876
 #, fuzzy, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "Nie można odnaleźć %s w repozytorium %s"
 
-#: common/flatpak-dir.c:4541
+#: common/flatpak-dir.c:4545
 msgid "Not enough memory"
 msgstr "Za mało pamięci"
 
-#: common/flatpak-dir.c:4560
+#: common/flatpak-dir.c:4564
 msgid "Failed to read from exported file"
 msgstr "Odczytanie z wyeksportowanego pliku się nie powiodło"
 
-#: common/flatpak-dir.c:4751
+#: common/flatpak-dir.c:4755
 msgid "Error reading mimetype xml file"
 msgstr "Błąd podczas odczytywania pliku XML typu MIME"
 
-#: common/flatpak-dir.c:4756
+#: common/flatpak-dir.c:4760
 msgid "Invalid mimetype xml file"
 msgstr "Nieprawidłowy plik XML typu MIME"
 
-#: common/flatpak-dir.c:5380
+#: common/flatpak-dir.c:5384
 msgid "While getting detached metadata: "
 msgstr "Podczas pobierania odłączonych metadanych: "
 
-#: common/flatpak-dir.c:5398
+#: common/flatpak-dir.c:5402
 msgid "While creating extradir: "
 msgstr "Podczas tworzenia dodatkowego katalogu: "
 
-#: common/flatpak-dir.c:5419
+#: common/flatpak-dir.c:5423
 msgid "Invalid sha256 for extra data"
 msgstr "Nieprawidłowa suma SHA256 dodatkowych danych"
 
-#: common/flatpak-dir.c:5448
+#: common/flatpak-dir.c:5452
 msgid "Wrong size for extra data"
 msgstr "Błędny rozmiar dodatkowych danych"
 
-#: common/flatpak-dir.c:5452
+#: common/flatpak-dir.c:5456
 msgid "Invalid checksum for extra data"
 msgstr "Nieprawidłowa suma kontrolna dodatkowych danych"
 
-#: common/flatpak-dir.c:5461
+#: common/flatpak-dir.c:5465
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "Podczas zapisywania pliku dodatkowych danych „%s”: "
 
-#: common/flatpak-dir.c:5631
+#: common/flatpak-dir.c:5635
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "Skrypt „apply_extra” się nie powiódł, stan wyjścia %d"
 
-#: common/flatpak-dir.c:5712
+#: common/flatpak-dir.c:5716
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Podczas rozwiązywania odniesienia %s: "
 
-#: common/flatpak-dir.c:5727
+#: common/flatpak-dir.c:5731
 #, c-format
 msgid "%s is not available"
 msgstr "%s jest niedostępne"
 
-#: common/flatpak-dir.c:5744 common/flatpak-dir.c:6182
-#: common/flatpak-dir.c:6930 common/flatpak-dir.c:6940
-#: common/flatpak-dir.c:6972
+#: common/flatpak-dir.c:5748 common/flatpak-dir.c:6186
+#: common/flatpak-dir.c:6934 common/flatpak-dir.c:6944
+#: common/flatpak-dir.c:6976
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "Już zainstalowano %s gałąź %s"
 
-#: common/flatpak-dir.c:5763
+#: common/flatpak-dir.c:5767
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Odczytanie zatwierdzenia %s się nie powiodło: "
 
-#: common/flatpak-dir.c:5783
+#: common/flatpak-dir.c:5787
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Podczas wymeldowywania %s do %s: "
 
-#: common/flatpak-dir.c:5808 common/flatpak-dir.c:5839
+#: common/flatpak-dir.c:5812 common/flatpak-dir.c:5843
 msgid "While trying to checkout metadata subpath: "
 msgstr "Podczas wymeldowywania podścieżki metadanych: "
 
-#: common/flatpak-dir.c:5849
+#: common/flatpak-dir.c:5853
 msgid "While trying to remove existing extra dir: "
 msgstr "Podczas usuwania istniejącego dodatkowego katalogu: "
 
-#: common/flatpak-dir.c:5860
+#: common/flatpak-dir.c:5864
 msgid "While trying to apply extra data: "
 msgstr "Podczas zastosowywania dodatkowych danych: "
 
-#: common/flatpak-dir.c:5887
+#: common/flatpak-dir.c:5891
 #, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Nieprawidłowe wdrożone odniesienie %s: "
 
-#: common/flatpak-dir.c:5894
+#: common/flatpak-dir.c:5898
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Nieprawidłowe odniesienie zatwierdzenia %s: "
 
-#: common/flatpak-dir.c:5902
+#: common/flatpak-dir.c:5906
 #, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr "Rodzaj wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 
-#: common/flatpak-dir.c:5910
+#: common/flatpak-dir.c:5914
 #, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr "Nazwa wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 
-#: common/flatpak-dir.c:5918
+#: common/flatpak-dir.c:5922
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr ""
 "Architektura wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 
-#: common/flatpak-dir.c:5924
+#: common/flatpak-dir.c:5928
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Gałąź wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 
-#: common/flatpak-dir.c:5930
+#: common/flatpak-dir.c:5934
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
 
-#: common/flatpak-dir.c:5949
+#: common/flatpak-dir.c:5953
 msgid "Deployed metadata does not match commit"
 msgstr "Wdrożone metadane nie pasują do zatwierdzenia"
 
-#: common/flatpak-dir.c:6792
+#: common/flatpak-dir.c:6796
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Ta wersja programu %s jest już zainstalowana"
 
-#: common/flatpak-dir.c:6799
+#: common/flatpak-dir.c:6803
 msgid "Can't change remote during bundle install"
 msgstr "Nie można zmienić repozytorium podczas instalacji pakietu"
 
-#: common/flatpak-dir.c:7279
+#: common/flatpak-dir.c:7283
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "Nie zainstalowano %s gałęzi %s"
 
-#: common/flatpak-dir.c:7523
+#: common/flatpak-dir.c:7527
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "Nie zainstalowano %s gałęzi %s"
 
-#: common/flatpak-dir.c:7876
+#: common/flatpak-dir.c:7880
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Usuwanie nieużywanych obiektów z repozytorium się nie powiodło: %s"
 
-#: common/flatpak-dir.c:8608
+#: common/flatpak-dir.c:8616
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr "Dla %s dostępnych jest wiele gałęzi, należy podać jedną z: "
 
-#: common/flatpak-dir.c:8629
+#: common/flatpak-dir.c:8637
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Nic nie pasuje do %s"
 
-#: common/flatpak-dir.c:8727
+#: common/flatpak-dir.c:8735
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Nie można odnaleźć odniesienia %s%s%s%s%s"
 
-#: common/flatpak-dir.c:8778
+#: common/flatpak-dir.c:8786
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Błąd podczas wyszukiwania repozytorium %s: %s"
 
-#: common/flatpak-dir.c:8861
+#: common/flatpak-dir.c:8869
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Błąd podczas wyszukiwania lokalnego repozytorium: %s"
 
-#: common/flatpak-dir.c:9005
+#: common/flatpak-dir.c:9013
 #, fuzzy, c-format
 msgid "%s/%s/%s not installed"
 msgstr "Nie zainstalowano %s %s"
 
-#: common/flatpak-dir.c:9176
+#: common/flatpak-dir.c:9184
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Nie można odnaleźć instalacji %s"
 
-#: common/flatpak-dir.c:9764
+#: common/flatpak-dir.c:9772
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Już zainstalowano środowisko wykonawcze %s, gałąź %s"
 
-#: common/flatpak-dir.c:9765
+#: common/flatpak-dir.c:9773
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Już zainstalowano program %s, gałąź %s"
