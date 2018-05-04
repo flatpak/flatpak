@@ -140,10 +140,10 @@ static inline int memfd_create(const char *name, unsigned int flags) {
 #    endif
 #  endif
 
-static inline ssize_t copy_file_range(int fd_in, loff_t *off_in,
-                                      int fd_out, loff_t *off_out,
-                                      size_t len,
-                                      unsigned int flags) {
+static inline ssize_t missing_copy_file_range(int fd_in, loff_t *off_in,
+                                              int fd_out, loff_t *off_out,
+                                              size_t len,
+                                              unsigned int flags) {
 #  ifdef __NR_copy_file_range
         return syscall(__NR_copy_file_range, fd_in, off_in, fd_out, off_out, len, flags);
 #  else
@@ -151,4 +151,6 @@ static inline ssize_t copy_file_range(int fd_in, loff_t *off_in,
         return -1;
 #  endif
 }
+
+#  define copy_file_range missing_copy_file_range
 #endif
