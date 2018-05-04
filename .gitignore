@@ -59,6 +59,7 @@ lib/flatpak-enum-types.c
 lib/flatpak-enum-types.h
 test-libflatpak
 Flatpak-1.0.*
+/app/parse-datetime.c
 /doc/reference/gtkdoc-check.log
 /doc/reference/gtkdoc-check.test
 /doc/reference/gtkdoc-check.trs
