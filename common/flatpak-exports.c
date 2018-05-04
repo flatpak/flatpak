@@ -27,7 +27,10 @@
 #include <sys/utsname.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/vfs.h>
 #include <sys/personality.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <grp.h>
 #include <unistd.h>
 #include <gio/gunixfdlist.h>
@@ -400,6 +403,75 @@ do_export_path (FlatpakExports *exports,
   g_hash_table_replace (exports->hash, ep->path, ep);
 }
 
+/* AUTOFS mounts are tricky, as using them as a source in a bind mount
+ * causes the mount to trigger, which can take a long time (or forever)
+ * waiting for a device or network mount. We try to open the directory
+ * but time out after a while, ignoring the mount. Unfortunately we
+ * have to mess with forks and stuff to be able to handle the timeout.
+ */
+static gboolean
+check_if_autofs_works (const char *path)
+{
+  int selfpipe[2];
+  struct timeval timeout;
+  pid_t pid;
+  fd_set rfds;
+  int res;
+  int wstatus;
+
+  if (pipe (selfpipe) == -1)
+    return FALSE;
+
+  fcntl (selfpipe[0], F_SETFL, fcntl (selfpipe[0], F_GETFL) | O_NONBLOCK);
+  fcntl (selfpipe[1], F_SETFL, fcntl (selfpipe[1], F_GETFL) | O_NONBLOCK);
+
+  pid = fork();
+  if (pid == -1)
+    {
+      close (selfpipe[0]);
+      close (selfpipe[1]);
+      return FALSE;
+    }
+
+  if (pid == 0)
+    {
+      /* Note: open, close and _exit are signal-async-safe, so it is ok to call in the child after fork */
+
+      close (selfpipe[0]); /* Close unused read end */
+      int dir_fd = open (path, O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY);
+      _exit (dir_fd == -1 ? 1 : 0);
+    }
+
+  /* Parent */
+  close (selfpipe[1]);  /* Close unused write end */
+
+  /* 200 msec timeout*/
+  timeout.tv_sec = 0;
+  timeout.tv_usec = 200 * 1000;
+
+  FD_ZERO (&rfds);
+  FD_SET (selfpipe[0], &rfds);
+  res = select (selfpipe[0]+1, &rfds, NULL, NULL, &timeout);
+
+  close (selfpipe[0]);
+
+  if (res == -1 /* Error */ || res == 0) /* Timeout */
+    {
+      /* Kill, but then waitpid to avoid zombie */
+      kill (pid, SIGKILL);
+    }
+
+  if (waitpid (pid, &wstatus, 0) != pid)
+    return FALSE;
+
+  if (res == -1 /* Error */ || res == 0) /* Timeout */
+    return FALSE;
+
+  if (!WIFEXITED(wstatus) || WEXITSTATUS(wstatus) != 0)
+    return FALSE;
+
+  return TRUE;
+}
 
 /* We use level to avoid infinite recursion */
 static gboolean
@@ -410,8 +482,10 @@ _exports_path_expose (FlatpakExports *exports,
 {
   g_autofree char *canonical = NULL;
   struct stat st;
+  struct statfs stfs;
   char *slash;
   int i;
+  glnx_autofd int o_path_fd = -1;
 
   if (level > 40) /* 40 is the current kernel ELOOP check */
     {
@@ -426,7 +500,11 @@ _exports_path_expose (FlatpakExports *exports,
     }
 
   /* Check if it exists at all */
-  if (lstat (path, &st) != 0)
+  o_path_fd = open (path, O_PATH | O_NOFOLLOW | O_CLOEXEC);
+  if (o_path_fd == -1)
+    return FALSE;
+
+  if (fstat (o_path_fd, &st) != 0)
     return FALSE;
 
   /* Don't expose weird things */
@@ -435,6 +513,19 @@ _exports_path_expose (FlatpakExports *exports,
         S_ISLNK (st.st_mode) ||
         S_ISSOCK (st.st_mode)))
     return FALSE;
+
+  /* O_PATH + fstatfs is the magic that we need to statfs without automounting the target */
+  if (fstatfs (o_path_fd, &stfs) != 0)
+    return FALSE;
+
+  if (stfs.f_type == AUTOFS_SUPER_MAGIC)
+    {
+      if (!check_if_autofs_works (path))
+        {
+          g_debug ("ignoring blocking autofs path %s", path);
+          return FALSE;
+        }
+    }
 
   path = canonical = flatpak_canonicalize_filename (path);
 
