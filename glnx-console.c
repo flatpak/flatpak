@@ -168,7 +168,7 @@ glnx_console_lock (GLnxConsoleRef *console)
           g_once_init_leave (&sigwinch_initialized, 1);
         }
       
-      { static const char initbuf[] = { '\n', 0x1B, 0x37 };
+      { static const char initbuf[] = { 0x1B, 0x37 };
         (void) fwrite (initbuf, 1, sizeof (initbuf), stdout);
       }
     }
