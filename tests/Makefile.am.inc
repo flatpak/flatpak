@@ -78,6 +78,7 @@ endif
 
 dist_test_scripts = \
 	tests/test-basic.sh \
+	tests/test-build-update-repo.sh \
 	tests/test-run.sh \
 	tests/test-run-system.sh \
 	tests/test-run-deltas.sh \
