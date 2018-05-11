@@ -6731,6 +6731,56 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir          *self,
   return g_steal_pointer (&remote);
 }
 
+/* If core.add-remotes-config-dir is set for this repository (which is
+ * not a common configuration, but it is possible), we will fail to modify
+ * remote configuration when using a combination of
+ * ostree_repo_remote_[add|change]() and ostree_repo_write_config() due to
+ * adding remote config in /etc/flatpak/remotes.d and also in
+ * /ostree/repo/config. Avoid that.
+ *
+ * FIXME: See https://github.com/flatpak/flatpak/issues/1665. In future, we
+ * should just write the remote config to the correct place, factoring
+ * core.add-remotes-config-dir in. */
+static gboolean
+flatpak_dir_check_add_remotes_config_dir (FlatpakDir  *self,
+                                          GError     **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  gboolean val;
+  GKeyFile *config;
+
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
+    return FALSE;
+
+  config = ostree_repo_get_config (self->repo);
+
+  if (config == NULL)
+    return TRUE;
+
+  val = g_key_file_get_boolean (config, "core", "add-remotes-config-dir", &local_error);
+
+  if (local_error != NULL)
+    {
+      if (g_error_matches (local_error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND))
+        {
+          g_clear_error (&local_error);
+          val = ostree_repo_is_system (self->repo);
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+    }
+
+  if (!val)
+    return TRUE;
+
+  return flatpak_fail (error,
+                       "Can’t update remote configuration on a repository with "
+                       "core.add-remotes-config-dir=true");
+}
+
 gboolean
 flatpak_dir_install_bundle (FlatpakDir          *self,
                             GFile               *file,
@@ -6746,6 +6796,9 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
   g_auto(GStrv) parts = NULL;
   g_autofree char *to_checksum = NULL;
   gboolean gpg_verify;
+
+  if (!flatpak_dir_check_add_remotes_config_dir (self, error))
+    return FALSE;
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -6826,7 +6879,6 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
 
       /* The pull succeeded, and this is an update. So, we need to update the repo config
          if anything changed */
-
       ostree_repo_remote_get_url (self->repo,
                                   remote,
                                   &old_url,
@@ -10093,6 +10145,8 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
     return flatpak_fail (error, "No configuration for remote %s specified",
                          remote_name);
 
+  if (!flatpak_dir_check_add_remotes_config_dir (self, error))
+    return FALSE;
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
