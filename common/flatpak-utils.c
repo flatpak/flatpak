@@ -2576,10 +2576,10 @@ flatpak_repo_set_collection_id (OstreeRepo  *repo,
 #ifdef FLATPAK_ENABLE_P2P
   g_autoptr(GKeyFile) config = NULL;
 
-  config = ostree_repo_copy_config (repo);
   if (!ostree_repo_set_collection_id (repo, collection_id, error))
     return FALSE;
 
+  config = ostree_repo_copy_config (repo);
   if (!ostree_repo_write_config (repo, config, error))
     return FALSE;
 #endif  /* FLATPAK_ENABLE_P2P */
