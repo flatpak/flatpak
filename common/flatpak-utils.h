@@ -34,6 +34,8 @@
 #include <ostree.h>
 #include <json-glib/json-glib.h>
 
+#define AUTOFS_SUPER_MAGIC    0x0187
+
 typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
 } FlatpakHostCommandFlags;

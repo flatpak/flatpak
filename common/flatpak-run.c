@@ -27,6 +27,7 @@
 #include <sys/utsname.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/vfs.h>
 #include <sys/personality.h>
 #include <grp.h>
 #include <unistd.h>
@@ -1793,6 +1794,9 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
 
   while (TRUE)
     {
+      glnx_autofd int o_path_fd = -1;
+      struct statfs stfs;
+
       if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dir_iter, &dent, NULL, error))
         return FALSE;
 
@@ -1801,6 +1805,11 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
 
       if (strcmp (dent->d_name, ".flatpak-info") == 0)
         continue;
+
+      /* O_PATH + fstatfs is the magic that we need to statfs without automounting the target */
+      o_path_fd = openat (dir_iter.fd, dent->d_name, O_PATH | O_NOFOLLOW | O_CLOEXEC);
+      if (o_path_fd == -1 || fstatfs (o_path_fd, &stfs) != 0 || stfs.f_type == AUTOFS_SUPER_MAGIC)
+        continue; /* AUTOFS mounts are risky and can cause us to block (see issue #1633), so ignore it. Its unlikely the proxy needs such a directory. */
 
       if (dent->d_type == DT_DIR)
         {
