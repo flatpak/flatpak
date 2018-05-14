@@ -8436,13 +8436,49 @@ flatpak_dir_remote_list_refs (FlatpakDir         *self,
   const gchar *collection_id;
   GVariantIter iter;
 
-  if (!flatpak_remote_state_ensure_summary (state, error))
-    return FALSE;
-
   ret_all_refs = g_hash_table_new_full (flatpak_collection_ref_hash,
                                         flatpak_collection_ref_equal,
                                         (GDestroyNotify) flatpak_collection_ref_free,
                                         g_free);
+
+  /* If the remote has P2P enabled and we're offline, get the refs list from
+   * xa.cache in ostree-metadata (although it's inferior to the summary refs
+   * list in that it lacks checksums). */
+  if (state->collection_id != NULL && state->summary == NULL)
+    {
+      g_autoptr(GVariant) xa_cache = NULL;
+      g_autoptr(GVariant) cache = NULL;
+      gsize i, n;
+
+      if (!flatpak_remote_state_ensure_metadata (state, error))
+        return FALSE;
+
+      if (!flatpak_remote_state_lookup_repo_metadata (state, "xa.cache", "@*", &xa_cache))
+        return flatpak_fail (error, _("No summary or Flatpak cache available for remote %s"),
+                             state->remote_name);
+
+      cache = g_variant_get_child_value (xa_cache, 0);
+      n = g_variant_n_children (cache);
+      for (i = 0; i < n; i++)
+        {
+          g_autoptr(GVariant) child = NULL;
+          g_autoptr(GVariant) cur_v = NULL;
+          g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
+          const char *ref;
+
+          child = g_variant_get_child_value (cache, i);
+          cur_v = g_variant_get_child_value (child, 0);
+          ref = g_variant_get_string (cur_v, NULL);
+          coll_ref = flatpak_collection_ref_new (state->collection_id, ref);
+
+          g_hash_table_insert (ret_all_refs, g_steal_pointer (&coll_ref), NULL);
+        }
+
+      goto out;
+    }
+
+  if (!flatpak_remote_state_ensure_summary (state, error))
+    return FALSE;
 
   /* refs that match the main collection-id */
   ref_map = g_variant_get_child_value (state->summary, 0);
@@ -8465,6 +8501,7 @@ flatpak_dir_remote_list_refs (FlatpakDir         *self,
     }
 
 
+out:
   *out_all_refs = g_steal_pointer (&ret_all_refs);
 
   return TRUE;
@@ -8664,7 +8701,7 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
   g_autoptr(FlatpakRemoteState) state = NULL;
   GPtrArray *matched_refs;
 
-  state = flatpak_dir_get_remote_state (self, remote, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -8761,13 +8798,8 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  /* Atm this has to be optional, because otherwise we fail test-unsigned-summaries.sh due
-   * to the install failing with a wrong-gpg error, rather than silently ignoring this */
   state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
   if (state == NULL)
-    return NULL;
-
-  if (!flatpak_remote_state_ensure_summary (state, error))
     return NULL;
 
   if (!flatpak_dir_remote_list_refs (self, state,
