@@ -102,10 +102,11 @@ gboolean flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                               GError      **error);
 gboolean flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
                                                GError      **error);
-char *flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
-                                       const   char *ref,
-                                       GVariant    **out_variant,
-                                       GError      **error);
+gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
+                                          const char         *ref,
+                                          char              **out_checksum,
+                                          GVariant          **out_variant,
+                                          GError            **error);
 char **flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
                                            const   char *ref);
 gboolean flatpak_remote_state_lookup_repo_metadata (FlatpakRemoteState *self,
