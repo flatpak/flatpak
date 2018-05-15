@@ -414,7 +414,8 @@ GList *flatpak_list_extensions (GKeyFile   *metakey,
                                 const char *arch,
                                 const char *branch);
 
-char * flatpak_quote_argv (const char *argv[]);
+char * flatpak_quote_argv (const char *argv[],
+                           gssize len);
 gboolean flatpak_file_arg_has_suffix (const char *arg, const char *suffix);
 
 const char *flatpak_file_get_path_cached (GFile *file);
