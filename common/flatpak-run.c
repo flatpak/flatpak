@@ -713,7 +713,7 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
      not be unmounted from the namespace when the namespace dies. */
   flatpak_bwrap_add_args_data_fd (bwrap, "--file", glnx_steal_fd (&app_info_fd), "/.flatpak-info");
 
-  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, error))
+  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
   return TRUE;
@@ -2541,7 +2541,7 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
                           "--bind", flatpak_file_get_path_cached (ld_so_dir), "/run/ld-so-cache-dir",
                           NULL);
 
-  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, error))
+  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return -1;
 
   flatpak_bwrap_add_args (bwrap,
@@ -2886,7 +2886,7 @@ flatpak_run_app (const char     *app_ref,
       command = default_command;
     }
 
-  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, error))
+  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
   flatpak_bwrap_add_arg (bwrap, command);

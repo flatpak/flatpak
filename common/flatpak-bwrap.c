@@ -266,6 +266,7 @@ gboolean
 flatpak_bwrap_bundle_args (FlatpakBwrap  *bwrap,
                            int            start,
                            int            end,
+                           gboolean       one_arg,
                            GError       **error)
 {
   gchar *data;
@@ -299,8 +300,15 @@ flatpak_bwrap_bundle_args (FlatpakBwrap  *bwrap,
 
   flatpak_bwrap_add_fd (bwrap, fd);
   g_ptr_array_remove_range (bwrap->argv, start, end - start);
-  g_ptr_array_insert (bwrap->argv, start, g_strdup ("--args"));
-  g_ptr_array_insert (bwrap->argv, start+1, g_strdup_printf ("%d", fd));
+  if (one_arg)
+    {
+      g_ptr_array_insert (bwrap->argv, start, g_strdup_printf ("--args=%d", fd));
+    }
+  else
+    {
+      g_ptr_array_insert (bwrap->argv, start, g_strdup ("--args"));
+      g_ptr_array_insert (bwrap->argv, start+1, g_strdup_printf ("%d", fd));
+    }
 
   return TRUE;
 }
