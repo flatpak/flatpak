@@ -1754,12 +1754,16 @@ needs_quoting (const char *arg)
 }
 
 char *
-flatpak_quote_argv (const char *argv[])
+flatpak_quote_argv (const char *argv[],
+                    gssize len)
 {
   GString *res = g_string_new ("");
   int i;
 
-  for (i = 0; argv[i] != NULL; i++)
+  if (len == -1)
+    len = g_strv_length ((char **)argv);
+
+  for (i = 0; i < len; i++)
     {
       if (i != 0)
         g_string_append_c (res, ' ');
