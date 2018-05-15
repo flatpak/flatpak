@@ -56,18 +56,6 @@
 
 #define DEFAULT_SHELL "/bin/sh"
 
-static gboolean
-add_dbus_proxy_args (GPtrArray *argv_array,
-                     GPtrArray *session_dbus_proxy_argv,
-                     gboolean   enable_session_logging,
-                     GPtrArray *system_dbus_proxy_argv,
-                     gboolean   enable_system_logging,
-                     GPtrArray *a11y_dbus_proxy_argv,
-                     gboolean   enable_a11y_logging,
-                     int        sync_fds[2],
-                     const char *app_info_path,
-                     GError   **error);
-
 static char *
 extract_unix_path_from_dbus_address (const char *address)
 {
@@ -481,14 +469,21 @@ create_proxy_socket (char *template)
 }
 
 static gboolean
-flatpak_run_add_system_dbus_args (FlatpakContext *context,
-                                  FlatpakBwrap   *bwrap,
-                                  GPtrArray      *dbus_proxy_argv,
-                                  gboolean        unrestricted)
+flatpak_run_add_system_dbus_args (FlatpakBwrap   *app_bwrap,
+                                  FlatpakBwrap   *proxy_arg_bwrap,
+                                  FlatpakContext *context,
+                                  FlatpakRunFlags flags)
 {
+  gboolean unrestricted, no_proxy;
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
   g_autofree char *real_dbus_address = NULL;
   g_autofree char *dbus_system_socket = NULL;
+
+  unrestricted = (context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) != 0;
+  if (unrestricted)
+    g_debug ("Allowing system-dbus access");
+
+  no_proxy = (flags & FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY) != 0;
 
   if (dbus_address != NULL)
     dbus_system_socket = extract_unix_path_from_dbus_address (dbus_address);
@@ -497,15 +492,14 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
 
   if (dbus_system_socket != NULL && unrestricted)
     {
-      flatpak_bwrap_add_args (bwrap,
+      flatpak_bwrap_add_args (app_bwrap,
                               "--bind", dbus_system_socket, "/run/dbus/system_bus_socket",
                               NULL);
-      flatpak_bwrap_set_env (bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
+      flatpak_bwrap_set_env (app_bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
       return TRUE;
     }
-  else if (dbus_proxy_argv &&
-           flatpak_context_get_needs_system_bus_proxy (context))
+  else if (!no_proxy && flatpak_context_get_needs_system_bus_proxy (context))
     {
       g_autofree char *proxy_socket = create_proxy_socket ("system-bus-proxy-XXXXXX");
 
@@ -517,14 +511,18 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
       else
         real_dbus_address = g_strdup_printf ("unix:path=%s", dbus_system_socket);
 
-      g_ptr_array_add (dbus_proxy_argv, g_strdup (real_dbus_address));
-      g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
+      flatpak_bwrap_add_args (proxy_arg_bwrap, real_dbus_address, proxy_socket, NULL);
 
+      if (!unrestricted)
+        flatpak_context_add_bus_filters (context, NULL, FALSE, proxy_arg_bwrap);
 
-      flatpak_bwrap_add_args (bwrap,
+      if ((flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0)
+        flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
+
+      flatpak_bwrap_add_args (app_bwrap,
                               "--bind", proxy_socket, "/run/dbus/system_bus_socket",
                               NULL);
-      flatpak_bwrap_set_env (bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
+      flatpak_bwrap_set_env (app_bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
       return TRUE;
     }
@@ -532,47 +530,285 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
 }
 
 static gboolean
-flatpak_run_add_session_dbus_args (FlatpakBwrap *bwrap,
-                                   GPtrArray *dbus_proxy_argv,
-                                   gboolean   unrestricted)
+flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
+                                   FlatpakBwrap   *proxy_arg_bwrap,
+                                   FlatpakContext *context,
+                                   FlatpakRunFlags flags,
+                                   const char     *app_id)
 {
+  gboolean unrestricted, no_proxy;
   const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
   char *dbus_session_socket = NULL;
   g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/bus", getuid ());
   g_autofree char *sandbox_dbus_address = g_strdup_printf ("unix:path=/run/user/%d/bus", getuid ());
 
+  unrestricted = (context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) != 0;
+
   if (dbus_address == NULL)
     return FALSE;
+
+  if (unrestricted)
+    g_debug ("Allowing session-dbus access");
+
+  no_proxy = (flags & FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY) != 0;
 
   dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_session_socket != NULL && unrestricted)
     {
-      flatpak_bwrap_add_args (bwrap,
+      flatpak_bwrap_add_args (app_bwrap,
                               "--bind", dbus_session_socket, sandbox_socket_path,
                               NULL);
-      flatpak_bwrap_set_env (bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
+      flatpak_bwrap_set_env (app_bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
       return TRUE;
     }
-  else if (dbus_proxy_argv && dbus_address != NULL)
+  else if (!no_proxy && dbus_address != NULL)
     {
       g_autofree char *proxy_socket = create_proxy_socket ("session-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
         return FALSE;
 
-      g_ptr_array_add (dbus_proxy_argv, g_strdup (dbus_address));
-      g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
+      flatpak_bwrap_add_args (proxy_arg_bwrap, dbus_address, proxy_socket, NULL);
 
-      flatpak_bwrap_add_args (bwrap,
+      if (!unrestricted)
+        flatpak_context_add_bus_filters (context, app_id, TRUE, proxy_arg_bwrap);
+
+      if ((flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0)
+        flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
+
+      flatpak_bwrap_add_args (app_bwrap,
                               "--bind", proxy_socket, sandbox_socket_path,
                               NULL);
-      flatpak_bwrap_set_env (bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
+      flatpak_bwrap_set_env (app_bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
       return TRUE;
     }
 
   return FALSE;
+}
+
+static gboolean
+flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
+                                FlatpakBwrap   *proxy_arg_bwrap,
+                                FlatpakContext *context,
+                                FlatpakRunFlags flags)
+{
+  g_autoptr(GDBusConnection) session_bus = NULL;
+  g_autofree char *a11y_address = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GDBusMessage) reply = NULL;
+  g_autoptr(GDBusMessage) msg = NULL;
+  g_autofree char *proxy_socket = NULL;
+
+  if ((flags & FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY) != 0)
+    return FALSE;
+
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (session_bus == NULL)
+    return FALSE;
+
+  msg = g_dbus_message_new_method_call ("org.a11y.Bus", "/org/a11y/bus", "org.a11y.Bus", "GetAddress");
+  g_dbus_message_set_body (msg, g_variant_new ("()"));
+  reply =
+    g_dbus_connection_send_message_with_reply_sync (session_bus, msg,
+                                                    G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+                                                    30000,
+                                                    NULL,
+                                                    NULL,
+                                                    NULL);
+  if (reply)
+    {
+      if (g_dbus_message_to_gerror (reply, &local_error))
+        {
+          if (!g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_SERVICE_UNKNOWN))
+            g_message ("Can't find a11y bus: %s", local_error->message);
+        }
+      else
+        {
+          g_variant_get (g_dbus_message_get_body (reply),
+                         "(s)", &a11y_address);
+        }
+    }
+
+  if (!a11y_address)
+    return FALSE;
+
+  proxy_socket = create_proxy_socket ("a11y-bus-proxy-XXXXXX");
+  if (proxy_socket == NULL)
+    return FALSE;
+
+  g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/at-spi-bus", getuid ());
+  g_autofree char *sandbox_dbus_address = g_strdup_printf ("unix:path=/run/user/%d/at-spi-bus", getuid ());
+
+  flatpak_bwrap_add_args (proxy_arg_bwrap,
+                          a11y_address,
+                          proxy_socket, "--filter", "--sloppy-names",
+                          "--filter=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Embed@/org/a11y/atspi/accessible/root",
+                          "--filter=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Unembed@/org/a11y/atspi/accessible/root",
+                          "--filter=org.a11y.atspi.Registry=org.a11y.atspi.Registry.GetRegisteredEvents@/org/a11y/atspi/registry",
+                          "--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetKeystrokeListeners@/org/a11y/atspi/registry/deviceeventcontroller",
+                          "--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetDeviceEventListeners@/org/a11y/atspi/registry/deviceeventcontroller",
+                          "--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersSync@/org/a11y/atspi/registry/deviceeventcontroller",
+                          "--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersAsync@/org/a11y/atspi/registry/deviceeventcontroller",
+                          NULL);
+
+  if ((flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0)
+    flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
+
+  flatpak_bwrap_add_args (app_bwrap,
+                          "--bind", proxy_socket, sandbox_socket_path,
+                          NULL);
+  flatpak_bwrap_set_env (app_bwrap, "AT_SPI_BUS_ADDRESS", sandbox_dbus_address, TRUE);
+
+  return TRUE;
+}
+
+/* This wraps the argv in a bwrap call, primary to allow the
+   command to be run with a proper /.flatpak-info with data
+   taken from app_info_path */
+static gboolean
+add_bwrap_wrapper (FlatpakBwrap *bwrap,
+                   const char *app_info_path,
+                   GError **error)
+{
+  glnx_autofd int app_info_fd = -1;
+  g_auto(GLnxDirFdIterator) dir_iter = { 0 };
+  struct dirent *dent;
+  g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy/", NULL);
+
+  app_info_fd = open (app_info_path, O_RDONLY);
+  if (app_info_fd == -1)
+    return glnx_throw_errno_prefix (error, _("Failed to open app info file"));
+
+  if (!glnx_dirfd_iterator_init_at (AT_FDCWD, "/", FALSE, &dir_iter, error))
+    return FALSE;
+
+  flatpak_bwrap_add_arg (bwrap, flatpak_get_bwrap ());
+
+  while (TRUE)
+    {
+      glnx_autofd int o_path_fd = -1;
+      struct statfs stfs;
+
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dir_iter, &dent, NULL, error))
+        return FALSE;
+
+      if (dent == NULL)
+        break;
+
+      if (strcmp (dent->d_name, ".flatpak-info") == 0)
+        continue;
+
+      /* O_PATH + fstatfs is the magic that we need to statfs without automounting the target */
+      o_path_fd = openat (dir_iter.fd, dent->d_name, O_PATH | O_NOFOLLOW | O_CLOEXEC);
+      if (o_path_fd == -1 || fstatfs (o_path_fd, &stfs) != 0 || stfs.f_type == AUTOFS_SUPER_MAGIC)
+        continue; /* AUTOFS mounts are risky and can cause us to block (see issue #1633), so ignore it. Its unlikely the proxy needs such a directory. */
+
+      if (dent->d_type == DT_DIR)
+        {
+          if (strcmp (dent->d_name, "tmp") == 0 ||
+              strcmp (dent->d_name, "var") == 0 ||
+              strcmp (dent->d_name, "run") == 0)
+            flatpak_bwrap_add_arg (bwrap, "--bind");
+          else
+            flatpak_bwrap_add_arg (bwrap, "--ro-bind");
+
+          flatpak_bwrap_add_arg_printf (bwrap, "/%s", dent->d_name);
+          flatpak_bwrap_add_arg_printf (bwrap, "/%s", dent->d_name);
+        }
+      else if (dent->d_type == DT_LNK)
+        {
+          ssize_t symlink_size;
+          char path_buffer[PATH_MAX + 1];
+
+          symlink_size = readlinkat (dir_iter.fd, dent->d_name, path_buffer, sizeof (path_buffer) - 1);
+          if (symlink_size < 0)
+            {
+              glnx_set_error_from_errno (error);
+              return FALSE;
+            }
+          path_buffer[symlink_size] = 0;
+
+          flatpak_bwrap_add_args (bwrap, "--symlink", path_buffer, NULL);
+          flatpak_bwrap_add_arg_printf (bwrap, "/%s", dent->d_name);
+        }
+    }
+
+  flatpak_bwrap_add_args (bwrap, "--bind", proxy_socket_dir, proxy_socket_dir, NULL);
+
+  /* This is a file rather than a bind mount, because it will then
+     not be unmounted from the namespace when the namespace dies. */
+  flatpak_bwrap_add_args_data_fd (bwrap, "--file", glnx_steal_fd (&app_info_fd), "/.flatpak-info");
+
+  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+start_dbus_proxy (FlatpakBwrap   *app_bwrap,
+                  FlatpakBwrap   *proxy_arg_bwrap,
+                  const char *app_info_path,
+                  GError   **error)
+{
+  char x = 'x';
+  const char *proxy;
+  g_autofree char *commandline = NULL;
+  g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
+  int sync_fds[2] = {-1, -1};
+
+  proxy_bwrap = flatpak_bwrap_new (NULL);
+
+  if (!add_bwrap_wrapper (proxy_bwrap, app_info_path, error))
+    return FALSE;
+
+  proxy = g_getenv ("FLATPAK_DBUSPROXY");
+  if (proxy == NULL)
+    proxy = DBUSPROXY;
+
+  flatpak_bwrap_add_arg (proxy_bwrap, proxy);
+
+  if (pipe (sync_fds) < 0)
+    {
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           _("Unable to create sync pipe"));
+      return FALSE;
+    }
+
+  /* read end goes to app */
+  flatpak_bwrap_add_args_data_fd (app_bwrap, "--sync-fd", sync_fds[0], NULL);
+
+  /* write end goes to proxy */
+  flatpak_bwrap_add_fd (proxy_bwrap, sync_fds[1]);
+  flatpak_bwrap_add_arg_printf (proxy_bwrap, "--fd=%d", sync_fds[1]);
+
+  /* Note: This steals the fds from proxy_arg_bwrap */
+  flatpak_bwrap_append_bwrap (proxy_bwrap, proxy_arg_bwrap);
+
+  flatpak_bwrap_finish (proxy_bwrap);
+
+  commandline = flatpak_quote_argv ((const char **) proxy_bwrap->argv->pdata, -1);
+  flatpak_debug2 ("Running '%s'", commandline);
+
+  if (!g_spawn_async (NULL,
+                      (char **) proxy_bwrap->argv->pdata,
+                      NULL,
+                      G_SPAWN_DEFAULT,
+                      flatpak_bwrap_child_setup_cb, proxy_bwrap->fds,
+                      NULL, error))
+    return FALSE;
+
+  /* Sync with proxy, i.e. wait until its listening on the sockets */
+  if (read (sync_fds[0], &x, 1) != 1)
+    {
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           _("Failed to sync with dbus proxy"));
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 static int
@@ -760,21 +996,11 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                   GCancellable   *cancellable,
                                   GError        **error)
 {
-  gboolean unrestricted_session_bus;
-  gboolean unrestricted_system_bus;
   g_autoptr(GError) my_error = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
-  g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
-  g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
-  g_autoptr(GPtrArray) a11y_bus_proxy_argv = NULL;
-  int sync_fds[2] = {-1, -1};
+  g_autoptr(FlatpakBwrap) proxy_arg_bwrap = flatpak_bwrap_new (flatpak_bwrap_empty_env);
   gboolean has_wayland = FALSE;
   gboolean allow_x11 = FALSE;
-
-  if ((flags & FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY) == 0)
-    session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
-  if ((flags & FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY) == 0)
-    system_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
 
  if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
@@ -851,95 +1077,9 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
       flatpak_run_add_pulseaudio_args (bwrap);
     }
 
-  unrestricted_session_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) != 0;
-  if (unrestricted_session_bus)
-    g_debug ("Allowing session-dbus access");
-  if (flatpak_run_add_session_dbus_args (bwrap, session_bus_proxy_argv, unrestricted_session_bus) &&
-      !unrestricted_session_bus && session_bus_proxy_argv)
-    flatpak_context_add_bus_filters (context, app_id, TRUE, session_bus_proxy_argv);
-
-  unrestricted_system_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) != 0;
-  if (unrestricted_system_bus)
-    g_debug ("Allowing system-dbus access");
-  if (flatpak_run_add_system_dbus_args (context, bwrap, system_bus_proxy_argv,
-                                        unrestricted_system_bus) &&
-      !unrestricted_system_bus && system_bus_proxy_argv)
-    flatpak_context_add_bus_filters (context, app_id, FALSE, system_bus_proxy_argv);
-
-  if ((flags & FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY) == 0)
-    {
-      g_autoptr(GDBusConnection) session_bus = NULL;
-      g_autofree char *a11y_address = NULL;
-
-      session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
-      if (session_bus)
-        {
-          g_autoptr(GError) local_error = NULL;
-          g_autoptr(GDBusMessage) reply = NULL;
-          g_autoptr(GDBusMessage) msg =
-            g_dbus_message_new_method_call ("org.a11y.Bus",
-                                            "/org/a11y/bus",
-                                            "org.a11y.Bus",
-                                            "GetAddress");
-          g_dbus_message_set_body (msg, g_variant_new ("()"));
-          reply =
-            g_dbus_connection_send_message_with_reply_sync (session_bus, msg,
-                                                            G_DBUS_SEND_MESSAGE_FLAGS_NONE,
-                                                            30000,
-                                                            NULL,
-                                                            NULL,
-                                                            NULL);
-          if (reply)
-            {
-              if (g_dbus_message_to_gerror (reply, &local_error))
-                {
-                  if (!g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_SERVICE_UNKNOWN))
-                    g_message ("Can't find a11y bus: %s", local_error->message);
-                }
-              else
-                {
-                  g_variant_get (g_dbus_message_get_body (reply),
-                                 "(s)", &a11y_address);
-                }
-            }
-        }
-
-      if (a11y_address)
-        {
-          g_autofree char *proxy_socket = create_proxy_socket ("a11y-bus-proxy-XXXXXX");
-          if (proxy_socket)
-            {
-              g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/at-spi-bus", getuid ());
-              g_autofree char *sandbox_dbus_address = g_strdup_printf ("unix:path=/run/user/%d/at-spi-bus", getuid ());
-
-              a11y_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
-
-              g_ptr_array_add (a11y_bus_proxy_argv, g_strdup (a11y_address));
-              g_ptr_array_add (a11y_bus_proxy_argv, g_strdup (proxy_socket));
-              g_ptr_array_add (a11y_bus_proxy_argv, g_strdup ("--filter"));
-              g_ptr_array_add (a11y_bus_proxy_argv, g_strdup ("--sloppy-names"));
-              g_ptr_array_add (a11y_bus_proxy_argv,
-                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Embed@/org/a11y/atspi/accessible/root"));
-              g_ptr_array_add (a11y_bus_proxy_argv,
-                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Unembed@/org/a11y/atspi/accessible/root"));
-              g_ptr_array_add (a11y_bus_proxy_argv,
-                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.Registry.GetRegisteredEvents@/org/a11y/atspi/registry"));
-              g_ptr_array_add (a11y_bus_proxy_argv,
-                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetKeystrokeListeners@/org/a11y/atspi/registry/deviceeventcontroller"));
-              g_ptr_array_add (a11y_bus_proxy_argv,
-                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetDeviceEventListeners@/org/a11y/atspi/registry/deviceeventcontroller"));
-              g_ptr_array_add (a11y_bus_proxy_argv,
-                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersSync@/org/a11y/atspi/registry/deviceeventcontroller"));
-              g_ptr_array_add (a11y_bus_proxy_argv,
-                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersAsync@/org/a11y/atspi/registry/deviceeventcontroller"));
-
-              flatpak_bwrap_add_args (bwrap,
-                                      "--bind", proxy_socket, sandbox_socket_path,
-                                      NULL);
-              flatpak_bwrap_set_env (bwrap, "AT_SPI_BUS_ADDRESS", sandbox_dbus_address, TRUE);
-            }
-        }
-    }
+  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
+  flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
+  flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
 
   if (g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH") != NULL)
     {
@@ -960,15 +1100,9 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
       g_clear_error (&my_error);
     }
 
-  if (!add_dbus_proxy_args (bwrap->argv,
-                            session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
-                            system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
-                            a11y_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0,
-                            sync_fds, app_info_path, error))
+  if (!flatpak_bwrap_is_empty (proxy_arg_bwrap) &&
+      !start_dbus_proxy (bwrap, proxy_arg_bwrap, app_info_path, error))
     return FALSE;
-
-  if (sync_fds[1] != -1)
-    close (sync_fds[1]);
 
   if (exports_out)
     *exports_out = g_steal_pointer (&exports);
@@ -1752,242 +1886,6 @@ join_args (GPtrArray *argv_array, gsize *len_out)
 
   *len_out = len;
   return string;
-}
-
-typedef struct {
-  int sync_fd;
-  int app_info_fd;
-  int bwrap_args_fd;
-} DbusProxySpawnData;
-
-static void
-dbus_spawn_child_setup (gpointer user_data)
-{
-  DbusProxySpawnData *data = user_data;
-
-  /* Unset CLOEXEC */
-  fcntl (data->sync_fd, F_SETFD, 0);
-  fcntl (data->app_info_fd, F_SETFD, 0);
-  fcntl (data->bwrap_args_fd, F_SETFD, 0);
-}
-
-/* This wraps the argv in a bwrap call, primary to allow the
-   command to be run with a proper /.flatpak-info with data
-   taken from app_info_fd */
-static gboolean
-prepend_bwrap_argv_wrapper (GPtrArray *argv,
-                            int app_info_fd,
-                            int *bwrap_fd_out,
-                            GError **error)
-{
-  int i = 0;
-  g_auto(GLnxDirFdIterator) dir_iter = { 0 };
-  struct dirent *dent;
-  g_autoptr(GPtrArray) bwrap_args = g_ptr_array_new_with_free_func (g_free);
-  gsize bwrap_args_len;
-  g_auto(GLnxTmpfile) args_tmpf  = { 0, };
-  g_autofree char *bwrap_args_data = NULL;
-  g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy/", NULL);
-
-  if (!glnx_dirfd_iterator_init_at (AT_FDCWD, "/", FALSE, &dir_iter, error))
-    return FALSE;
-
-  while (TRUE)
-    {
-      glnx_autofd int o_path_fd = -1;
-      struct statfs stfs;
-
-      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dir_iter, &dent, NULL, error))
-        return FALSE;
-
-      if (dent == NULL)
-        break;
-
-      if (strcmp (dent->d_name, ".flatpak-info") == 0)
-        continue;
-
-      /* O_PATH + fstatfs is the magic that we need to statfs without automounting the target */
-      o_path_fd = openat (dir_iter.fd, dent->d_name, O_PATH | O_NOFOLLOW | O_CLOEXEC);
-      if (o_path_fd == -1 || fstatfs (o_path_fd, &stfs) != 0 || stfs.f_type == AUTOFS_SUPER_MAGIC)
-        continue; /* AUTOFS mounts are risky and can cause us to block (see issue #1633), so ignore it. Its unlikely the proxy needs such a directory. */
-
-      if (dent->d_type == DT_DIR)
-        {
-          if (strcmp (dent->d_name, "tmp") == 0 ||
-              strcmp (dent->d_name, "var") == 0 ||
-              strcmp (dent->d_name, "run") == 0)
-            g_ptr_array_add (bwrap_args, g_strdup ("--bind"));
-          else
-            g_ptr_array_add (bwrap_args, g_strdup ("--ro-bind"));
-          g_ptr_array_add (bwrap_args, g_strconcat ("/", dent->d_name, NULL));
-          g_ptr_array_add (bwrap_args, g_strconcat ("/", dent->d_name, NULL));
-        }
-      else if (dent->d_type == DT_LNK)
-        {
-          ssize_t symlink_size;
-          char path_buffer[PATH_MAX + 1];
-
-          symlink_size = readlinkat (dir_iter.fd, dent->d_name, path_buffer, sizeof (path_buffer) - 1);
-          if (symlink_size < 0)
-            {
-              glnx_set_error_from_errno (error);
-              return FALSE;
-            }
-          path_buffer[symlink_size] = 0;
-
-          g_ptr_array_add (bwrap_args, g_strdup ("--symlink"));
-          g_ptr_array_add (bwrap_args, g_strdup (path_buffer));
-          g_ptr_array_add (bwrap_args, g_strconcat ("/", dent->d_name, NULL));
-        }
-    }
-
-  g_ptr_array_add (bwrap_args, g_strdup ("--bind"));
-  g_ptr_array_add (bwrap_args, g_strdup (proxy_socket_dir));
-  g_ptr_array_add (bwrap_args, g_strdup (proxy_socket_dir));
-
-  /* This is a file rather than a bind mount, because it will then
-     not be unmounted from the namespace when the namespace dies. */
-  g_ptr_array_add (bwrap_args, g_strdup ("--file"));
-  g_ptr_array_add (bwrap_args, g_strdup_printf ("%d", app_info_fd));
-  g_ptr_array_add (bwrap_args, g_strdup ("/.flatpak-info"));
-  g_ptr_array_add (bwrap_args, NULL);
-
-  {
-    g_autofree char *commandline = flatpak_quote_argv ((const char **) bwrap_args->pdata, -1);
-    flatpak_debug2 ("bwrap args '%s'", commandline);
-  }
-
-  bwrap_args_data = join_args (bwrap_args, &bwrap_args_len);
-  if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, "bwrap-args", bwrap_args_data, bwrap_args_len, error))
-    return FALSE;
-
-  g_ptr_array_insert (argv, i++, g_strdup (flatpak_get_bwrap ()));
-  g_ptr_array_insert (argv, i++, g_strdup ("--args"));
-  g_ptr_array_insert (argv, i++, g_strdup_printf ("%d", args_tmpf.fd));
-
-  *bwrap_fd_out = glnx_steal_fd (&args_tmpf.fd);
-  return TRUE;
-}
-
-static gboolean
-has_args (GPtrArray *args)
-{
-  return args != NULL && args->len > 0;
-}
-
-static void
-append_proxy_args (GPtrArray *dbus_proxy_argv,
-                   GPtrArray *args,
-                   gboolean   enable_logging)
-{
-  if (has_args (args))
-    {
-      int i;
-
-      for (i = 0; i < args->len; i++)
-        g_ptr_array_add (dbus_proxy_argv, g_strdup (args->pdata[i]));
-
-      if (enable_logging)
-        g_ptr_array_add (dbus_proxy_argv, g_strdup ("--log"));
-    }
-}
-
-static gboolean
-add_dbus_proxy_args (GPtrArray *argv_array,
-                     GPtrArray *session_dbus_proxy_argv,
-                     gboolean   enable_session_logging,
-                     GPtrArray *system_dbus_proxy_argv,
-                     gboolean   enable_system_logging,
-                     GPtrArray *a11y_dbus_proxy_argv,
-                     gboolean   enable_a11y_logging,
-                     int        sync_fds[2],
-                     const char *app_info_path,
-                     GError   **error)
-{
-  char x = 'x';
-  const char *proxy;
-  g_autofree char *commandline = NULL;
-  DbusProxySpawnData spawn_data;
-  glnx_autofd int app_info_fd = -1;
-  glnx_autofd int bwrap_args_fd = -1;
-  g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
-
-  if (!has_args (session_dbus_proxy_argv) &&
-      !has_args (system_dbus_proxy_argv) &&
-      !has_args (a11y_dbus_proxy_argv))
-    return TRUE;
-
-  if (sync_fds[0] == -1)
-    {
-      access ("sync_fds", 0);
-      if (pipe (sync_fds) < 0)
-        {
-          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                               _("Unable to create sync pipe"));
-          return FALSE;
-        }
-
-      add_args_data_fd (argv_array, NULL,
-                        "--sync-fd", sync_fds[0], NULL);
-    }
-
-  proxy = g_getenv ("FLATPAK_DBUSPROXY");
-  if (proxy == NULL)
-    proxy = DBUSPROXY;
-
-  dbus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy));
-  g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--fd=%d", sync_fds[1]));
-
-  append_proxy_args (dbus_proxy_argv, session_dbus_proxy_argv, enable_session_logging);
-  append_proxy_args (dbus_proxy_argv, system_dbus_proxy_argv, enable_system_logging);
-  append_proxy_args (dbus_proxy_argv, a11y_dbus_proxy_argv, enable_a11y_logging);
-
-  g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
-
-  app_info_fd = open (app_info_path, O_RDONLY);
-  if (app_info_fd == -1)
-    {
-      int errsv = errno;
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open app info file: %s"), g_strerror (errsv));
-      return FALSE;
-    }
-
-  if (!prepend_bwrap_argv_wrapper (dbus_proxy_argv, app_info_fd, &bwrap_args_fd, error))
-    return FALSE;
-
-  commandline = flatpak_quote_argv ((const char **) dbus_proxy_argv->pdata, -1);
-  flatpak_debug2 ("Running '%s'", commandline);
-
-  spawn_data.sync_fd = sync_fds[1];
-  spawn_data.app_info_fd = app_info_fd;
-  spawn_data.bwrap_args_fd = bwrap_args_fd;
-  if (!g_spawn_async (NULL,
-                      (char **) dbus_proxy_argv->pdata,
-                      NULL,
-                      G_SPAWN_SEARCH_PATH,
-                      dbus_spawn_child_setup,
-                      &spawn_data,
-                      NULL, error))
-    {
-      close (sync_fds[0]);
-      close (sync_fds[1]);
-      return FALSE;
-    }
-
-  /* Sync with proxy, i.e. wait until its listening on the sockets */
-  if (read (sync_fds[0], &x, 1) != 1)
-    {
-      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                           _("Failed to sync with dbus proxy"));
-
-      close (sync_fds[0]);
-      close (sync_fds[1]);
-      return FALSE;
-    }
-
-  return TRUE;
 }
 
 #ifdef ENABLE_SECCOMP
