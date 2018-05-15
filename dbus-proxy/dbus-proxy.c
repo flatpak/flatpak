@@ -33,12 +33,45 @@
 static GList *proxies;
 static int sync_fd = -1;
 
-static int
-parse_generic_args (int n_args, const char *args[])
+static void
+add_args (GBytes *bytes,
+          GPtrArray *args,
+          int pos)
 {
-  if (g_str_has_prefix (args[0], "--fd="))
+  gsize data_len, remainder_len;
+  const guchar *data = g_bytes_get_data (bytes, &data_len);
+  guchar *s;
+  const guchar *remainder;
+
+  remainder = data;
+  remainder_len = data_len;
+  s = memchr (remainder, 0, remainder_len);
+  while (s)
     {
-      const char *fd_s = args[0] + strlen ("--fd=");
+      gsize len = s - remainder;
+      char *arg = g_strndup ((char *)remainder, len);
+      g_ptr_array_insert (args, pos++, arg);
+      remainder = s + 1;
+      remainder_len -= len + 1;
+      s = memchr (remainder, 0, remainder_len);
+    }
+
+  if (remainder_len)
+    {
+      char *arg = g_strndup ((char *)remainder, remainder_len);
+      g_ptr_array_insert (args, pos++, arg);
+    }
+}
+
+
+static gboolean
+parse_generic_args (GPtrArray *args, int *args_i)
+{
+  const char *arg = g_ptr_array_index (args, *args_i);
+
+  if (g_str_has_prefix (arg, "--fd="))
+    {
+      const char *fd_s = arg + strlen ("--fd=");
       char *endptr;
       int fd;
 
@@ -46,66 +79,102 @@ parse_generic_args (int n_args, const char *args[])
       if (fd < 0 || endptr == fd_s || *endptr != 0)
         {
           g_printerr ("Invalid fd %s\n", fd_s);
-          return -1;
+          return FALSE;
         }
       sync_fd = fd;
 
-      return 1;
+      *args_i += 1;
+
+      return TRUE;
+    }
+  else if (g_str_has_prefix (arg, "--args="))
+    {
+      const char *fd_s = arg + strlen ("--args=");
+      char *endptr;
+      int fd;
+      g_autoptr(GBytes) data = NULL;
+      g_autoptr(GError) error = NULL;
+
+      fd = strtol (fd_s, &endptr, 10);
+      if (fd < 0 || endptr == fd_s || *endptr != 0)
+        {
+          g_printerr ("Invalid --args fd %s\n", fd_s);
+          return FALSE;
+        }
+
+      data = glnx_fd_readall_bytes (fd, NULL, &error);
+
+      if (data == NULL)
+        {
+          g_printerr ("Failed to load --args: %s\n", error->message);
+          return FALSE;
+        }
+
+      *args_i += 1;
+
+      add_args (data, args, *args_i);
+
+      return TRUE;
     }
   else
     {
-      g_printerr ("Unknown argument %s\n", args[0]);
-      return -1;
+      g_printerr ("Unknown argument %s\n", arg);
+      return FALSE;
     }
 }
 
-static int
-start_proxy (int n_args, const char *args[])
+static gboolean
+start_proxy (GPtrArray *args, int *args_i)
 {
   g_autoptr(FlatpakProxy) proxy = NULL;
   g_autoptr(GError) error = NULL;
   const char *bus_address, *socket_path;
-  int n;
+  const char *arg;
 
-  n = 0;
-  if (n_args < n + 1 || args[n][0] == '-')
+  if (*args_i >= args->len || ((char *)g_ptr_array_index (args, *args_i))[0] == '-')
     {
       g_printerr ("No bus address given\n");
-      return -1;
+      return FALSE;
     }
-  bus_address = args[n++];
 
-  if (n_args < n + 1 || args[n][0] == '-')
+  bus_address = g_ptr_array_index (args, *args_i);
+  *args_i += 1;
+
+  if (*args_i >= args->len || ((char *)g_ptr_array_index (args, *args_i))[0] == '-')
     {
       g_printerr ("No socket path given\n");
-      return -1;
+      return FALSE;
     }
-  socket_path = args[n++];
+
+  socket_path = g_ptr_array_index (args, *args_i);
+  *args_i += 1;
 
   proxy = flatpak_proxy_new (bus_address, socket_path);
 
-  while (n < n_args)
+  while (*args_i < args->len)
     {
-      if (args[n][0] != '-')
+      arg = g_ptr_array_index (args, *args_i);
+
+      if (arg[0] != '-')
         break;
 
-      if (g_str_has_prefix (args[n], "--see=") ||
-          g_str_has_prefix (args[n], "--talk=") ||
-          g_str_has_prefix (args[n], "--filter=") ||
-          g_str_has_prefix (args[n], "--own="))
+      if (g_str_has_prefix (arg, "--see=") ||
+          g_str_has_prefix (arg, "--talk=") ||
+          g_str_has_prefix (arg, "--filter=") ||
+          g_str_has_prefix (arg, "--own="))
         {
           FlatpakPolicy policy = FLATPAK_POLICY_SEE;
           g_autofree char *name = NULL;
           gboolean wildcard = FALSE;
 
-          if (args[n][2] == 't')
+          if (arg[2] == 't')
             policy = FLATPAK_POLICY_TALK;
-          else if (args[n][2] == 'f')
+          else if (arg[2] == 'f')
             policy = FLATPAK_POLICY_FILTERED;
-          else if (args[n][2] == 'o')
+          else if (arg[2] == 'o')
             policy = FLATPAK_POLICY_OWN;
 
-          name = g_strdup (strchr (args[n], '=') + 1);
+          name = g_strdup (strchr (arg, '=') + 1);
 
           if (policy == FLATPAK_POLICY_FILTERED)
             {
@@ -128,49 +197,49 @@ start_proxy (int n_args, const char *args[])
           if (name[0] == ':' || !g_dbus_is_name (name))
             {
               g_printerr ("'%s' is not a valid dbus name\n", name);
-              return -1;
+              return FALSE;
             }
 
           if (wildcard)
             flatpak_proxy_add_wildcarded_policy (proxy, name, policy);
           else
             flatpak_proxy_add_policy (proxy, name, policy);
+
+          *args_i += 1;
         }
-      else if (g_str_equal (args[n], "--log"))
+      else if (g_str_equal (arg, "--log"))
         {
           flatpak_proxy_set_log_messages (proxy, TRUE);
+          *args_i += 1;
         }
-      else if (g_str_equal (args[n], "--filter"))
+      else if (g_str_equal (arg, "--filter"))
         {
           flatpak_proxy_set_filter (proxy, TRUE);
+          *args_i += 1;
         }
-      else if (g_str_equal (args[n], "--sloppy-names"))
+      else if (g_str_equal (arg, "--sloppy-names"))
         {
           /* This means we're reporing the name changes for all unique names,
              which is needed for the a11y bus */
           flatpak_proxy_set_sloppy_names (proxy, TRUE);
+          *args_i += 1;
         }
       else
         {
-          int res = parse_generic_args (n_args - n, &args[n]);
-          if (res == -1)
-            return -1;
-
-          n += res - 1; /* res - 1, because we ++ below */
+          if (!parse_generic_args (args, args_i))
+            return FALSE;
         }
-
-      n++;
     }
 
   if (!flatpak_proxy_start (proxy, &error))
     {
       g_printerr ("Failed to start proxy for %s: %s\n", bus_address, error->message);
-      return -1;
+      return FALSE;
     }
 
   proxies = g_list_prepend (proxies, g_object_ref (proxy));
 
-  return n;
+  return TRUE;
 }
 
 static gboolean
@@ -191,30 +260,26 @@ int
 main (int argc, const char *argv[])
 {
   GMainLoop *service_loop;
-  int n_args, res;
-  const char **args;
+  int i, args_i;
+  g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
 
-  n_args = argc - 1;
-  args = &argv[1];
+  for (i = 1; i < argc; i++)
+    g_ptr_array_add (args, g_strdup ((char *)argv[i]));
 
-  while (n_args > 0)
+  args_i = 0;
+  while (args_i < args->len)
     {
-      if (args[0][0] == '-')
+      const char *arg = g_ptr_array_index (args, args_i);
+      if (arg[0] == '-')
         {
-          res = parse_generic_args (n_args, &args[0]);
-          if (res == -1)
+          if (!parse_generic_args (args, &args_i))
             return 1;
         }
       else
         {
-          res = start_proxy (n_args, args);
-          if (res == -1)
+          if (!start_proxy (args, &args_i))
             return 1;
         }
-
-      g_assert (res > 0);
-      n_args -= res;
-      args += res;
     }
 
   if (proxies == NULL)
