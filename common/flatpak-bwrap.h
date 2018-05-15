@@ -72,6 +72,7 @@ void          flatpak_bwrap_add_bind_arg     (FlatpakBwrap  *bwrap,
 gboolean      flatpak_bwrap_bundle_args      (FlatpakBwrap  *bwrap,
                                               int            start,
                                               int            end,
+                                              gboolean       one_arg,
                                               GError       **error);
 
 void          flatpak_bwrap_child_setup_cb   (gpointer       user_data);
