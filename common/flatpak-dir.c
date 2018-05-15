@@ -5613,9 +5613,9 @@ apply_extra_data (FlatpakDir          *self,
                                          app_context, NULL, NULL, cancellable, error))
     return FALSE;
 
-  g_ptr_array_add (bwrap->argv, g_strdup ("/app/bin/apply_extra"));
+  flatpak_bwrap_add_arg (bwrap, "/app/bin/apply_extra");
 
-  g_ptr_array_add (bwrap->argv, NULL);
+  flatpak_bwrap_finish (bwrap);
 
   g_debug ("Running /app/bin/apply_extra ");
 
