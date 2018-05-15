@@ -1746,7 +1746,7 @@ needs_quoting (const char *arg)
       if (!g_ascii_isalnum (c) &&
           !(c == '-' || c == '/' || c == '~' ||
             c == ':' || c == '.' || c == '_' ||
-            c == '='))
+            c == '=' || c == '@'))
         return TRUE;
       arg++;
     }
