@@ -8456,7 +8456,7 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
   g_autoptr(GError) local_error = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
 
-  state = flatpak_dir_get_remote_state (self, remote, NULL, &local_error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, NULL, &local_error);
   if (state == NULL)
     {
       g_debug ("Can't get state for remote %s: %s", remote, local_error->message);
