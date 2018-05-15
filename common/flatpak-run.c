@@ -2419,31 +2419,6 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   return TRUE;
 }
 
-/* Unset FD_CLOEXEC on the array of fds passed in @user_data */
-static void
-child_setup (gpointer user_data)
-{
-  GArray *fd_array = user_data;
-  int i;
-
-  /* If no fd_array was specified, don't care. */
-  if (fd_array == NULL)
-    return;
-
-  /* Otherwise, mark not - close-on-exec all the fds in the array */
-  for (i = 0; i < fd_array->len; i++)
-    {
-      int fd = g_array_index (fd_array, int, i);
-
-      /* We also seek all fds to the start, because this lets
-         us use the same fd_array multiple times */
-      if (lseek (fd, 0, SEEK_SET) < 0)
-        g_printerr ("lseek error in child setup");
-
-      fcntl (fd, F_SETFD, 0);
-    }
-}
-
 static gboolean
 forward_file (XdpDbusDocuments  *documents,
               const char        *app_id,
@@ -2691,7 +2666,7 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
 
   minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
   bwrap = flatpak_bwrap_new (minimal_envp);
-  flatpak_bwrap_add_args (bwrap, flatpak_get_bwrap (), NULL);
+  flatpak_bwrap_add_arg (bwrap, flatpak_get_bwrap ());
 
   flatpak_bwrap_append_args (bwrap, base_argv_array);
 
@@ -2718,7 +2693,7 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
                           "--bind", flatpak_file_get_path_cached (ld_so_dir), "/run/ld-so-cache-dir",
                           "ldconfig", "-X", "-C", sandbox_cache_path, NULL);
 
-  g_ptr_array_add (bwrap->argv, NULL);
+  flatpak_bwrap_finish (bwrap);
 
   commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
   flatpak_debug2 ("Running: '%s'", commandline);
@@ -2731,7 +2706,7 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
                      (char **) bwrap->argv->pdata,
                      bwrap->envp,
                      G_SPAWN_SEARCH_PATH,
-                     child_setup, combined_fd_array,
+                     flatpak_bwrap_child_setup_cb, combined_fd_array,
                      NULL, NULL,
                      &exit_status,
                      error))
@@ -2980,17 +2955,17 @@ flatpak_run_app (const char     *app_ref,
   if (use_ld_so_cache)
     {
       checksum = calculate_ld_cache_checksum (app_deploy_data, runtime_deploy_data,
-					      app_extensions, runtime_extensions);
+                                              app_extensions, runtime_extensions);
       ld_so_fd = regenerate_ld_cache (bwrap->argv,
-				      bwrap->fds,
-				      app_id_dir,
-				      checksum,
-				      runtime_files,
-				      generate_ld_so_conf,
-				      cancellable, error);
+                                      bwrap->fds,
+                                      app_id_dir,
+                                      checksum,
+                                      runtime_files,
+                                      generate_ld_so_conf,
+                                      cancellable, error);
       if (ld_so_fd == -1)
-	return FALSE;
-      g_array_append_val (bwrap->fds, ld_so_fd);
+        return FALSE;
+      flatpak_bwrap_add_fd (bwrap, ld_so_fd);
     }
 
   if (flatpak_context_allows_features (app_context, FLATPAK_CONTEXT_FEATURE_DEVEL))
@@ -3011,7 +2986,9 @@ flatpak_run_app (const char     *app_ref,
   if (ld_so_fd != -1)
     {
       /* Don't add to fd_array, its already there */
-      add_args_data_fd (bwrap->argv, NULL, "--ro-bind-data", ld_so_fd, "/etc/ld.so.cache");
+      flatpak_bwrap_add_arg (bwrap, "--ro-bind-data");
+      flatpak_bwrap_add_arg_printf (bwrap, "%d", ld_so_fd);
+      flatpak_bwrap_add_arg (bwrap, "/etc/ld.so.cache");
     }
 
   if (!flatpak_run_add_app_info_args (bwrap,
@@ -3081,7 +3058,8 @@ flatpak_run_app (const char     *app_ref,
     return FALSE;
 
   g_ptr_array_add (real_argv_array, NULL);
-  g_ptr_array_add (bwrap->argv, NULL);
+
+  flatpak_bwrap_finish (bwrap);
 
   commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
   commandline2 = flatpak_quote_argv (((const char **) real_argv_array->pdata) + commandline_2_start, -1);
@@ -3093,7 +3071,7 @@ flatpak_run_app (const char     *app_ref,
                           (char **) real_argv_array->pdata,
                           bwrap->envp,
                           G_SPAWN_SEARCH_PATH,
-                          child_setup, bwrap->fds,
+                          flatpak_bwrap_child_setup_cb, bwrap->fds,
                           NULL,
                           error))
         return FALSE;
@@ -3101,7 +3079,7 @@ flatpak_run_app (const char     *app_ref,
   else
     {
       /* Ensure we unset O_CLOEXEC */
-      child_setup (bwrap->fds);
+      flatpak_bwrap_child_setup_cb (bwrap->fds);
       if (execvpe (flatpak_get_bwrap (), (char **) real_argv_array->pdata, bwrap->envp) == -1)
         {
           g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
