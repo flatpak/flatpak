@@ -152,34 +152,6 @@ write_xauth (char *number, FILE *output)
 #endif /* ENABLE_XAUTH */
 
 static void
-add_args (GPtrArray *argv_array, ...)
-{
-  va_list args;
-  const gchar *arg;
-
-  va_start (args, argv_array);
-  while ((arg = va_arg (args, const gchar *)))
-    g_ptr_array_add (argv_array, g_strdup (arg));
-  va_end (args);
-}
-
-static void
-add_args_data_fd (GPtrArray *argv_array,
-                  GArray    *fd_array,
-                  const char *op,
-                  int fd,
-                  const char *path_optional)
-{
-  g_autofree char *fd_str = g_strdup_printf ("%d", fd);
-  if (fd_array)
-    g_array_append_val (fd_array, fd);
-
-  add_args (argv_array,
-            op, fd_str, path_optional,
-            NULL);
-}
-
-static void
 flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
                           gboolean allowed)
 {
@@ -790,7 +762,7 @@ start_dbus_proxy (FlatpakBwrap   *app_bwrap,
   flatpak_bwrap_finish (proxy_bwrap);
 
   commandline = flatpak_quote_argv ((const char **) proxy_bwrap->argv->pdata, -1);
-  flatpak_debug2 ("Running '%s'", commandline);
+  g_debug ("Running '%s'", commandline);
 
   if (!g_spawn_async (NULL,
                       (char **) proxy_bwrap->argv->pdata,
@@ -1867,27 +1839,6 @@ add_document_portal_args (FlatpakBwrap *bwrap,
   *out_mount_path = g_steal_pointer (&doc_mount_path);
 }
 
-static gchar *
-join_args (GPtrArray *argv_array, gsize *len_out)
-{
-  gchar *string;
-  gchar *ptr;
-  gint i;
-  gsize len = 0;
-
-  for (i = 0; i < argv_array->len && argv_array->pdata[i] != NULL; i++)
-    len +=  strlen (argv_array->pdata[i]) + 1;
-
-  string = g_new (gchar, len);
-  *string = 0;
-  ptr = string;
-  for (i = 0; i < argv_array->len && argv_array->pdata[i] != NULL; i++)
-    ptr = g_stpcpy (ptr, argv_array->pdata[i]) + 1;
-
-  *len_out = len;
-  return string;
-}
-
 #ifdef ENABLE_SECCOMP
 static const uint32_t seccomp_x86_64_extra_arches[] = { SCMP_ARCH_X86, 0, };
 
@@ -2362,14 +2313,14 @@ forward_file (XdpDbusDocuments  *documents,
 }
 
 static gboolean
-add_rest_args (const char  *app_id,
+add_rest_args (FlatpakBwrap   *bwrap,
+               const char     *app_id,
                FlatpakExports *exports,
-               gboolean     file_forwarding,
-               const char  *doc_mount_path,
-               GPtrArray   *argv_array,
-               char        *args[],
-               int          n_args,
-               GError     **error)
+               gboolean       file_forwarding,
+               const char     *doc_mount_path,
+               char           *args[],
+               int             n_args,
+               GError        **error)
 {
   g_autoptr(XdpDbusDocuments) documents = NULL;
   gboolean forwarding = FALSE;
@@ -2429,7 +2380,7 @@ add_rest_args (const char  *app_id,
         {
           g_autofree char *doc_id = NULL;
           g_autofree char *basename = NULL;
-          char *doc_path;
+          g_autofree char *doc_path = NULL;
           if (!forward_file (documents, app_id, flatpak_file_get_path_cached (file),
                              &doc_id, error))
             return FALSE;
@@ -2446,10 +2397,10 @@ add_rest_args (const char  *app_id,
             }
 
           g_debug ("Forwarding file '%s' as '%s' to %s", args[i], doc_path, app_id);
-          g_ptr_array_add (argv_array, doc_path);
+          flatpak_bwrap_add_arg (bwrap, doc_path);
         }
       else
-        g_ptr_array_add (argv_array, g_strdup (args[i]));
+        flatpak_bwrap_add_arg (bwrap, args[i]);
     }
 
   return TRUE;
@@ -2564,7 +2515,6 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
 
   minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
   bwrap = flatpak_bwrap_new (minimal_envp);
-  flatpak_bwrap_add_arg (bwrap, flatpak_get_bwrap ());
 
   flatpak_bwrap_append_args (bwrap, base_argv_array);
 
@@ -2589,12 +2539,18 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
                           "--proc", "/proc",
                           "--dev", "/dev",
                           "--bind", flatpak_file_get_path_cached (ld_so_dir), "/run/ld-so-cache-dir",
+                          NULL);
+
+  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, error))
+    return -1;
+
+  flatpak_bwrap_add_args (bwrap,
                           "ldconfig", "-X", "-C", sandbox_cache_path, NULL);
 
   flatpak_bwrap_finish (bwrap);
 
   commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
-  flatpak_debug2 ("Running: '%s'", commandline);
+  g_debug ("Running: '%s'", commandline);
 
   combined_fd_array = g_array_new (FALSE, TRUE, sizeof (int));
   g_array_append_vals (combined_fd_array, base_fd_array->data, base_fd_array->len);
@@ -2671,8 +2627,6 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(FlatpakBwrap) bwrap = NULL;
-  g_auto(GLnxTmpfile) arg_tmpf = { 0, };
-  g_autoptr(GPtrArray) real_argv_array = NULL;
   const char *command = "/bin/sh";
   g_autoptr(GError) my_error = NULL;
   g_auto(GStrv) runtime_parts = NULL;
@@ -2683,8 +2637,6 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(FlatpakExports) exports = NULL;
   g_auto(GStrv) app_ref_parts = NULL;
   g_autofree char *commandline = NULL;
-  int commandline_2_start;
-  g_autofree char *commandline2 = NULL;
   g_autofree char *doc_mount_path = NULL;
   g_autofree char *app_extensions = NULL;
   g_autofree char *runtime_extensions = NULL;
@@ -2702,6 +2654,7 @@ flatpak_run_app (const char     *app_ref,
     return FALSE;
 
   bwrap = flatpak_bwrap_new (NULL);
+  flatpak_bwrap_add_arg (bwrap, flatpak_get_bwrap ());
 
   if (app_deploy == NULL)
     {
@@ -2933,40 +2886,26 @@ flatpak_run_app (const char     *app_ref,
       command = default_command;
     }
 
-  real_argv_array = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (real_argv_array, g_strdup (flatpak_get_bwrap ()));
-
-  {
-    gsize len;
-    g_autofree char *args = join_args (bwrap->argv, &len);
-
-    if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&arg_tmpf, "bwrap-args", args, len, error))
-      return FALSE;
-
-    add_args_data_fd (real_argv_array, bwrap->fds,
-                      "--args", glnx_steal_fd (&arg_tmpf.fd), NULL);
-  }
-
-  commandline_2_start = real_argv_array->len;
-
-  g_ptr_array_add (real_argv_array, g_strdup (command));
-  if (!add_rest_args (app_ref_parts[1], exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
-                      doc_mount_path,
-                      real_argv_array, args, n_args, error))
+  if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, error))
     return FALSE;
 
-  g_ptr_array_add (real_argv_array, NULL);
+  flatpak_bwrap_add_arg (bwrap, command);
+
+  if (!add_rest_args (bwrap, app_ref_parts[1],
+                      exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
+                      doc_mount_path,
+                      args, n_args, error))
+    return FALSE;
 
   flatpak_bwrap_finish (bwrap);
 
   commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
-  commandline2 = flatpak_quote_argv (((const char **) real_argv_array->pdata) + commandline_2_start, -1);
-  flatpak_debug2 ("Running '%s %s'", commandline, commandline2);
+  g_debug ("Running '%s'", commandline);
 
   if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
     {
       if (!g_spawn_async (NULL,
-                          (char **) real_argv_array->pdata,
+                          (char **) bwrap->argv->pdata,
                           bwrap->envp,
                           G_SPAWN_SEARCH_PATH,
                           flatpak_bwrap_child_setup_cb, bwrap->fds,
@@ -2978,7 +2917,7 @@ flatpak_run_app (const char     *app_ref,
     {
       /* Ensure we unset O_CLOEXEC */
       flatpak_bwrap_child_setup_cb (bwrap->fds);
-      if (execvpe (flatpak_get_bwrap (), (char **) real_argv_array->pdata, bwrap->envp) == -1)
+      if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
         {
           g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
                                _("Unable to start app"));
