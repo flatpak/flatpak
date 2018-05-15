@@ -730,6 +730,7 @@ start_dbus_proxy (FlatpakBwrap   *app_bwrap,
   g_autofree char *commandline = NULL;
   g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
   int sync_fds[2] = {-1, -1};
+  int proxy_start_index;
 
   proxy_bwrap = flatpak_bwrap_new (NULL);
 
@@ -741,6 +742,8 @@ start_dbus_proxy (FlatpakBwrap   *app_bwrap,
     proxy = DBUSPROXY;
 
   flatpak_bwrap_add_arg (proxy_bwrap, proxy);
+
+  proxy_start_index = proxy_bwrap->argv->len;
 
   if (pipe (sync_fds) < 0)
     {
@@ -758,6 +761,9 @@ start_dbus_proxy (FlatpakBwrap   *app_bwrap,
 
   /* Note: This steals the fds from proxy_arg_bwrap */
   flatpak_bwrap_append_bwrap (proxy_bwrap, proxy_arg_bwrap);
+
+  if (!flatpak_bwrap_bundle_args (proxy_bwrap, proxy_start_index, -1, TRUE, error))
+    return FALSE;
 
   flatpak_bwrap_finish (proxy_bwrap);
 
