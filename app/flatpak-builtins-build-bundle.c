@@ -143,7 +143,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
    * figure out the type. The uint32 is basically a random value, but
    * it ensures we have both zero and high bits sets, so we don't get
    * sniffed as text. Also, the last 01 can be used as a version
-   * later.  Furthermore, the use of an uint32 lets use detect
+   * later.  Furthermore, the use of an uint32 lets us detect
    * byteorder issues.
    */
   g_variant_builder_add (&metadata_builder, "{sv}", "flatpak",
