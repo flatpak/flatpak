@@ -649,7 +649,7 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
   struct dirent *dent;
   g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy/", NULL);
 
-  app_info_fd = open (app_info_path, O_RDONLY);
+  app_info_fd = open (app_info_path, O_RDONLY | O_CLOEXEC);
   if (app_info_fd == -1)
     return glnx_throw_errno_prefix (error, _("Failed to open app info file"));
 
@@ -747,7 +747,7 @@ start_dbus_proxy (FlatpakBwrap   *app_bwrap,
 
   proxy_start_index = proxy_bwrap->argv->len;
 
-  if (pipe (sync_fds) < 0)
+  if (pipe2 (sync_fds, O_CLOEXEC) < 0)
     {
       g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
                            _("Unable to create sync pipe"));

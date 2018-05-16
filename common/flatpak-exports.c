@@ -419,7 +419,7 @@ check_if_autofs_works (const char *path)
   int res;
   int wstatus;
 
-  if (pipe (selfpipe) == -1)
+  if (pipe2 (selfpipe, O_CLOEXEC) == -1)
     return FALSE;
 
   fcntl (selfpipe[0], F_SETFL, fcntl (selfpipe[0], F_GETFL) | O_NONBLOCK);
