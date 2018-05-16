@@ -29,6 +29,7 @@
 #include <sys/ioctl.h>
 #include <sys/vfs.h>
 #include <sys/personality.h>
+#include <sys/socket.h>
 #include <grp.h>
 #include <unistd.h>
 #include <gio/gunixfdlist.h>
@@ -421,23 +422,32 @@ flatpak_run_add_journal_args (FlatpakBwrap *bwrap)
     }
 }
 
-static char *
-create_proxy_socket (char *template)
+static gboolean
+create_proxy_socket (int *fd1, int *fd2)
 {
-  g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy", NULL);
-  g_autofree char *proxy_socket = g_build_filename (proxy_socket_dir, template, NULL);
-  int fd;
+  glnx_autofd int proxy_socket = -1;
+  glnx_autofd int proxy_socket2 = -1;
 
-  if (!glnx_shutil_mkdir_p_at (AT_FDCWD, proxy_socket_dir, 0755, NULL, NULL))
-    return NULL;
+  proxy_socket = socket (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (proxy_socket == -1)
+    {
+      g_debug ("Failed to create proxy socket");
+      return FALSE;
+    }
 
-  fd = g_mkstemp (proxy_socket);
-  if (fd == -1)
-    return NULL;
+  proxy_socket2 = dup (proxy_socket);
+  if (proxy_socket2 == -1)
+    {
+      g_debug ("Failed to dup proxy socket");
+      return FALSE;
+    }
 
-  close (fd);
+  if (fcntl (proxy_socket2, F_SETFD, FD_CLOEXEC) == -1)
+    return FALSE;
 
-  return g_steal_pointer (&proxy_socket);
+  *fd1 = glnx_steal_fd (&proxy_socket);
+  *fd2 = glnx_steal_fd (&proxy_socket2);
+  return TRUE;
 }
 
 static gboolean
@@ -473,9 +483,10 @@ flatpak_run_add_system_dbus_args (FlatpakBwrap   *app_bwrap,
     }
   else if (!no_proxy && flatpak_context_get_needs_system_bus_proxy (context))
     {
-      g_autofree char *proxy_socket = create_proxy_socket ("system-bus-proxy-XXXXXX");
+      glnx_autofd int proxy_socket_fd =  -1;
+      glnx_autofd int proxy_socket_fd2 = -1;
 
-      if (proxy_socket == NULL)
+      if (!create_proxy_socket (&proxy_socket_fd, &proxy_socket_fd2))
         return FALSE;
 
       if (dbus_address)
@@ -483,7 +494,8 @@ flatpak_run_add_system_dbus_args (FlatpakBwrap   *app_bwrap,
       else
         real_dbus_address = g_strdup_printf ("unix:path=%s", dbus_system_socket);
 
-      flatpak_bwrap_add_args (proxy_arg_bwrap, real_dbus_address, proxy_socket, NULL);
+      flatpak_bwrap_add_args_data_fd (proxy_arg_bwrap,
+                                      real_dbus_address, glnx_steal_fd (&proxy_socket_fd), NULL);
 
       if (!unrestricted)
         flatpak_context_add_bus_filters (context, NULL, FALSE, proxy_arg_bwrap);
@@ -491,9 +503,8 @@ flatpak_run_add_system_dbus_args (FlatpakBwrap   *app_bwrap,
       if ((flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0)
         flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
 
-      flatpak_bwrap_add_args (app_bwrap,
-                              "--bind", proxy_socket, "/run/dbus/system_bus_socket",
-                              NULL);
+      flatpak_bwrap_add_args_data_fd (app_bwrap,
+                                      "--socket", glnx_steal_fd (&proxy_socket_fd2), "/run/dbus/system_bus_socket");
       flatpak_bwrap_set_env (app_bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
       return TRUE;
@@ -536,12 +547,14 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
     }
   else if (!no_proxy && dbus_address != NULL)
     {
-      g_autofree char *proxy_socket = create_proxy_socket ("session-bus-proxy-XXXXXX");
+      glnx_autofd int proxy_socket_fd =  -1;
+      glnx_autofd int proxy_socket_fd2 = -1;
 
-      if (proxy_socket == NULL)
+      if (!create_proxy_socket (&proxy_socket_fd, &proxy_socket_fd2))
         return FALSE;
 
-      flatpak_bwrap_add_args (proxy_arg_bwrap, dbus_address, proxy_socket, NULL);
+      flatpak_bwrap_add_args_data_fd (proxy_arg_bwrap,
+                                      dbus_address, glnx_steal_fd (&proxy_socket_fd), NULL);
 
       if (!unrestricted)
         flatpak_context_add_bus_filters (context, app_id, TRUE, proxy_arg_bwrap);
@@ -549,9 +562,8 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
       if ((flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0)
         flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
 
-      flatpak_bwrap_add_args (app_bwrap,
-                              "--bind", proxy_socket, sandbox_socket_path,
-                              NULL);
+      flatpak_bwrap_add_args_data_fd (app_bwrap,
+                                      "--socket", glnx_steal_fd (&proxy_socket_fd2), sandbox_socket_path);
       flatpak_bwrap_set_env (app_bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
       return TRUE;
@@ -571,7 +583,8 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GDBusMessage) reply = NULL;
   g_autoptr(GDBusMessage) msg = NULL;
-  g_autofree char *proxy_socket = NULL;
+  glnx_autofd int proxy_socket_fd =  -1;
+  glnx_autofd int proxy_socket_fd2 = -1;
 
   if ((flags & FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY) != 0)
     return FALSE;
@@ -606,16 +619,17 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
   if (!a11y_address)
     return FALSE;
 
-  proxy_socket = create_proxy_socket ("a11y-bus-proxy-XXXXXX");
-  if (proxy_socket == NULL)
+  if (!create_proxy_socket (&proxy_socket_fd, &proxy_socket_fd2))
     return FALSE;
 
   g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/at-spi-bus", getuid ());
   g_autofree char *sandbox_dbus_address = g_strdup_printf ("unix:path=/run/user/%d/at-spi-bus", getuid ());
 
+  flatpak_bwrap_add_args_data_fd (proxy_arg_bwrap,
+                                  a11y_address, glnx_steal_fd (&proxy_socket_fd), NULL);
+
   flatpak_bwrap_add_args (proxy_arg_bwrap,
-                          a11y_address,
-                          proxy_socket, "--filter", "--sloppy-names",
+                          "--filter", "--sloppy-names",
                           "--filter=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Embed@/org/a11y/atspi/accessible/root",
                           "--filter=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Unembed@/org/a11y/atspi/accessible/root",
                           "--filter=org.a11y.atspi.Registry=org.a11y.atspi.Registry.GetRegisteredEvents@/org/a11y/atspi/registry",
@@ -628,9 +642,8 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
   if ((flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0)
     flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
 
-  flatpak_bwrap_add_args (app_bwrap,
-                          "--bind", proxy_socket, sandbox_socket_path,
-                          NULL);
+  flatpak_bwrap_add_args_data_fd (app_bwrap,
+                                  "--socket", glnx_steal_fd (&proxy_socket_fd2), sandbox_socket_path);
   flatpak_bwrap_set_env (app_bwrap, "AT_SPI_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
   return TRUE;
@@ -720,12 +733,12 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
 }
 
 static gboolean
-start_dbus_proxy (FlatpakBwrap   *app_bwrap,
-                  FlatpakBwrap   *proxy_arg_bwrap,
-                  const char *app_info_path,
-                  GError   **error)
+generate_dbus_proxy (FlatpakBwrap   *app_bwrap,
+                     FlatpakBwrap   *proxy_arg_bwrap,
+                     const char *app_info_path,
+                     FlatpakBwrap  **proxy_bwrap_out,
+                     GError   **error)
 {
-  char x = 'x';
   const char *proxy;
   g_autofree char *commandline = NULL;
   g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
@@ -770,23 +783,9 @@ start_dbus_proxy (FlatpakBwrap   *app_bwrap,
   flatpak_bwrap_finish (proxy_bwrap);
 
   commandline = flatpak_quote_argv ((const char **) proxy_bwrap->argv->pdata, -1);
-  g_debug ("Running '%s'", commandline);
+  g_debug ("prepared dbus proxy commandline: '%s'", commandline);
 
-  if (!g_spawn_async (NULL,
-                      (char **) proxy_bwrap->argv->pdata,
-                      NULL,
-                      G_SPAWN_DEFAULT,
-                      flatpak_bwrap_child_setup_cb, proxy_bwrap->fds,
-                      NULL, error))
-    return FALSE;
-
-  /* Sync with proxy, i.e. wait until its listening on the sockets */
-  if (read (sync_fds[0], &x, 1) != 1)
-    {
-      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                           _("Failed to sync with dbus proxy"));
-      return FALSE;
-    }
+  *proxy_bwrap_out = g_steal_pointer (&proxy_bwrap);
 
   return TRUE;
 }
@@ -973,6 +972,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                   FlatpakContext *context,
                                   GFile          *app_id_dir,
                                   FlatpakExports **exports_out,
+                                  FlatpakBwrap  **proxy_bwrap_out,
                                   GCancellable   *cancellable,
                                   GError        **error)
 {
@@ -1080,8 +1080,9 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
       g_clear_error (&my_error);
     }
 
-  if (!flatpak_bwrap_is_empty (proxy_arg_bwrap) &&
-      !start_dbus_proxy (bwrap, proxy_arg_bwrap, app_info_path, error))
+  if (proxy_bwrap_out != NULL &&
+      !flatpak_bwrap_is_empty (proxy_arg_bwrap) &&
+      !generate_dbus_proxy (bwrap, proxy_arg_bwrap, app_info_path, proxy_bwrap_out, error))
     return FALSE;
 
   if (exports_out)
@@ -2635,6 +2636,7 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(FlatpakBwrap) bwrap = NULL;
+  g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
   const char *command = "/bin/sh";
   g_autoptr(GError) my_error = NULL;
   g_auto(GStrv) runtime_parts = NULL;
@@ -2654,6 +2656,7 @@ flatpak_run_app (const char     *app_ref,
   gboolean generate_ld_so_conf = TRUE;
   gboolean use_ld_so_cache = TRUE;
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
+  pid_t bg_child_pid;
 
   struct stat s;
 
@@ -2863,7 +2866,7 @@ flatpak_run_app (const char     *app_ref,
     add_document_portal_args (bwrap, app_ref_parts[1], &doc_mount_path);
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
-                                         app_ref_parts[1], app_context, app_id_dir, &exports, cancellable, error))
+                                         app_ref_parts[1], app_context, app_id_dir, &exports, &proxy_bwrap, cancellable, error))
     return FALSE;
 
   flatpak_run_add_journal_args (bwrap);
@@ -2875,6 +2878,9 @@ flatpak_run_app (const char     *app_ref,
                           "--symlink", "/app/lib/debug/source", "/run/build",
                           "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
                           NULL);
+
+  if (!flatpak_bwrap_add_close_fd (bwrap, error))
+    return FALSE;
 
   if (custom_command)
     {
@@ -2912,26 +2918,32 @@ flatpak_run_app (const char     *app_ref,
 
   if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
     {
-      if (!g_spawn_async (NULL,
-                          (char **) bwrap->argv->pdata,
-                          bwrap->envp,
-                          G_SPAWN_SEARCH_PATH,
-                          flatpak_bwrap_child_setup_cb, bwrap->fds,
-                          NULL,
-                          error))
-        return FALSE;
+      g_autoptr(GError) local_error = NULL;
+
+      bg_child_pid = fork ();
+      if (bg_child_pid == -1)
+        {
+          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                               "Unable to fork to start app");
+          return FALSE;
+        }
+
+      if (bg_child_pid == 0)
+        {
+          /* Child */
+          if (!flatpak_bwrap_spawn (bwrap, proxy_bwrap, &local_error))
+            g_printerr ("Error starting bwrap: %s\n", local_error->message);
+
+          _exit (1);
+        }
     }
   else
     {
-      /* Ensure we unset O_CLOEXEC */
-      flatpak_bwrap_child_setup_cb (bwrap->fds);
-      if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
-        {
-          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                               _("Unable to start app"));
-          return FALSE;
-        }
+      if (!flatpak_bwrap_spawn (bwrap, proxy_bwrap, error))
+        return FALSE;
+
       /* Not actually reached... */
+      g_assert_not_reached ();
     }
 
   return TRUE;

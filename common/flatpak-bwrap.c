@@ -57,6 +57,8 @@ flatpak_bwrap_new (char **env)
 
   bwrap->argv = g_ptr_array_new_with_free_func (g_free);
   bwrap->fds = g_array_new (FALSE, TRUE, sizeof (int));
+  bwrap->close_fd_read = -1;
+  bwrap->close_fd_write = -1;
   g_array_set_clear_func (bwrap->fds, clear_fd);
 
   if (env)
@@ -70,6 +72,8 @@ flatpak_bwrap_new (char **env)
 void
 flatpak_bwrap_free (FlatpakBwrap *bwrap)
 {
+  clear_fd (&bwrap->close_fd_read);
+  /* Don't close close_fd_write, its in fds */
   g_ptr_array_unref (bwrap->argv);
   g_array_unref (bwrap->fds);
   g_strfreev (bwrap->envp);
@@ -115,6 +119,27 @@ flatpak_bwrap_add_fd (FlatpakBwrap  *bwrap,
                       int            fd)
 {
   g_array_append_val (bwrap->fds, fd);
+}
+
+
+gboolean
+flatpak_bwrap_add_close_fd (FlatpakBwrap  *bwrap,
+                            GError       **error)
+{
+  int close_fds[2] = {-1, -1};
+
+  if (pipe2 (close_fds, O_CLOEXEC) < 0)
+    {
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           _("Unable to create sync pipe"));
+      return FALSE;
+    }
+
+  bwrap->close_fd_read = close_fds[0];
+  bwrap->close_fd_write = close_fds[1];
+  flatpak_bwrap_add_args_data_fd (bwrap, "--close-fd", close_fds[1], NULL);
+
+  return TRUE;
 }
 
 void
@@ -338,4 +363,65 @@ flatpak_bwrap_child_setup_cb (gpointer user_data)
 
       fcntl (fd, F_SETFD, 0);
     }
+}
+
+gboolean
+flatpak_bwrap_spawn (FlatpakBwrap  *bwrap,
+                     FlatpakBwrap  *proxy_bwrap,
+                     GError       **error)
+{
+  g_autofree char *bwrap_prog = g_find_program_in_path (flatpak_get_bwrap ());
+  pid_t child_pid = -1;
+
+  if (bwrap_prog == NULL)
+    return flatpak_fail (error, "Can't find bwrap in path");
+
+  if (proxy_bwrap)
+    {
+      g_assert (bwrap->close_fd_read != -1);
+      g_assert (bwrap->close_fd_write != -1);
+
+      child_pid = fork ();
+      if (child_pid == -1)
+        return flatpak_fail (error, "Unable to fork to start app");
+    }
+
+  if (child_pid != 0)
+    {
+      /* This is the original pid, we exec the app here */
+
+      flatpak_bwrap_child_setup_cb (bwrap->fds);
+      if (execvpe (bwrap_prog, (char **) bwrap->argv->pdata, bwrap->envp) == -1)
+        return flatpak_fail (error, "Unable to start app");
+    }
+  else
+    {
+      char x;
+
+      /* This is the child, we want to hang around here until the parent bwrap set up the
+       * proxy sockets and then we spawn the proxy. Note that we never fork if no
+       * proxy is needed, so this is never reached with NULL proxy_bwrap.
+       *
+       * WARNING: This runs in the fork, so we have to be very careful here and only
+       * use async-signal-safe functions.
+       */
+
+      /* We have to close this in the to ensure we actually know about bwrap closing it in the other process */
+      close (bwrap->close_fd_write);
+
+      (void) read (bwrap->close_fd_read, &x, 1);
+
+      flatpak_bwrap_child_setup_cb (proxy_bwrap->fds);
+      if (execve (bwrap_prog, (char * const*) proxy_bwrap->argv->pdata, proxy_bwrap->envp) == -1)
+        {
+          const char errstr[] = "Unable to start dbus proxy";
+          write (2, errstr, sizeof (errstr));
+        }
+
+      _exit (0);
+    }
+
+  /* Not actually reached... */
+  g_assert_not_reached ();
+  return TRUE;
 }
