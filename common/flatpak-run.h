@@ -137,7 +137,6 @@ gboolean flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                                            FlatpakContext *context,
                                            GFile          *app_id_dir,
                                            FlatpakExports **exports_out,
-                                           FlatpakBwrap  **proxy_bwrap_out,
                                            GCancellable *cancellable,
                                            GError      **error);
 char **  flatpak_run_get_minimal_env (gboolean devel, gboolean use_ld_so_cache);

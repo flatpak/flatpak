@@ -25,8 +25,6 @@ typedef struct {
   GPtrArray *argv;
   GArray *fds;
   GStrv envp;
-  int close_fd_read;
-  int close_fd_write; /* Also in fds */
 } FlatpakBwrap;
 
 extern char *flatpak_bwrap_empty_env[1];
@@ -45,8 +43,6 @@ void          flatpak_bwrap_add_arg          (FlatpakBwrap  *bwrap,
                                               const char    *arg);
 void          flatpak_bwrap_add_fd           (FlatpakBwrap  *bwrap,
                                               int            fd);
-gboolean      flatpak_bwrap_add_close_fd    (FlatpakBwrap  *bwrap,
-                                             GError       **error);
 void          flatpak_bwrap_add_args         (FlatpakBwrap  *bwrap,
                                               ...);
 void          flatpak_bwrap_add_arg_printf   (FlatpakBwrap *bwrap,
@@ -81,9 +77,6 @@ gboolean      flatpak_bwrap_bundle_args      (FlatpakBwrap  *bwrap,
 
 void          flatpak_bwrap_child_setup_cb   (gpointer       user_data);
 
-gboolean      flatpak_bwrap_spawn            (FlatpakBwrap  *bwrap,
-                                              FlatpakBwrap  *proxy_bwrap,
-                                              GError       **error);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakBwrap, flatpak_bwrap_free)
 

@@ -286,7 +286,7 @@ struct FlatpakProxy
   gboolean       log_messages;
 
   GList         *clients;
-  int            socket_fd;
+  char          *socket_path;
   char          *dbus_address;
 
   gboolean       filter;
@@ -307,7 +307,7 @@ enum {
   PROP_0,
 
   PROP_DBUS_ADDRESS,
-  PROP_SOCKET_FD
+  PROP_SOCKET_PATH
 };
 
 #define FLATPAK_TYPE_PROXY flatpak_proxy_get_type ()
@@ -581,12 +581,16 @@ flatpak_proxy_finalize (GObject *object)
 {
   FlatpakProxy *proxy = FLATPAK_PROXY (object);
 
+  if (g_socket_service_is_active (G_SOCKET_SERVICE (proxy)))
+    unlink (proxy->socket_path);
+
   g_assert (proxy->clients == NULL);
 
   g_hash_table_destroy (proxy->policy);
   g_hash_table_destroy (proxy->wildcard_policy);
   g_hash_table_destroy (proxy->filters);
 
+  g_free (proxy->socket_path);
   g_free (proxy->dbus_address);
 
   G_OBJECT_CLASS (flatpak_proxy_parent_class)->finalize (object);
@@ -606,8 +610,8 @@ flatpak_proxy_set_property (GObject      *object,
       proxy->dbus_address = g_value_dup_string (value);
       break;
 
-    case PROP_SOCKET_FD:
-      proxy->socket_fd = g_value_get_int (value);
+    case PROP_SOCKET_PATH:
+      proxy->socket_path = g_value_dup_string (value);
       break;
 
     default:
@@ -630,8 +634,8 @@ flatpak_proxy_get_property (GObject    *object,
       g_value_set_string (value, proxy->dbus_address);
       break;
 
-    case PROP_SOCKET_FD:
-      g_value_set_int (value, proxy->socket_fd);
+    case PROP_SOCKET_PATH:
+      g_value_set_string (value, proxy->socket_path);
       break;
 
     default:
@@ -2608,48 +2612,57 @@ flatpak_proxy_class_init (FlatpakProxyClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
   g_object_class_install_property (object_class,
-                                   PROP_SOCKET_FD,
-                                   g_param_spec_int ("socket-fd",
-                                                     "",
-                                                     "",
-                                                     -1, G_MAXINT,
-                                                     -1,
-                                                     G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+                                   PROP_SOCKET_PATH,
+                                   g_param_spec_string ("socket-path",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
 }
 
 FlatpakProxy *
 flatpak_proxy_new (const char *dbus_address,
-                   int socket_fd)
+                   const char *socket_path)
 {
   FlatpakProxy *proxy;
 
-  proxy = g_object_new (FLATPAK_TYPE_PROXY, "dbus-address", dbus_address, "socket-fd", socket_fd, NULL);
+  proxy = g_object_new (FLATPAK_TYPE_PROXY, "dbus-address", dbus_address, "socket-path", socket_path, NULL);
   return proxy;
 }
 
 gboolean
 flatpak_proxy_start (FlatpakProxy *proxy, GError **error)
 {
-  g_autoptr(GSocket) socket = NULL;
+  GSocketAddress *address;
+  gboolean res;
 
-  socket = g_socket_new_from_fd (proxy->socket_fd, error);
-  if (socket == NULL)
+  unlink (proxy->socket_path);
+
+  address = g_unix_socket_address_new (proxy->socket_path);
+
+  error = NULL;
+  res = g_socket_listener_add_address (G_SOCKET_LISTENER (proxy),
+                                       address,
+                                       G_SOCKET_TYPE_STREAM,
+                                       G_SOCKET_PROTOCOL_DEFAULT,
+                                       NULL, /* source_object */
+                                       NULL, /* effective_address */
+                                       error);
+  g_object_unref (address);
+
+  if (!res)
     return FALSE;
 
-  if (!g_socket_listener_add_socket (G_SOCKET_LISTENER (proxy),
-                                     socket,
-                                     NULL, /* source_object */
-                                     error))
-    return FALSE;
 
   g_socket_service_start (G_SOCKET_SERVICE (proxy));
-
   return TRUE;
 }
 
 void
 flatpak_proxy_stop (FlatpakProxy *proxy)
 {
+  unlink (proxy->socket_path);
+
   g_socket_service_stop (G_SOCKET_SERVICE (proxy));
 }
