@@ -939,14 +939,6 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
       return NULL;
     }
 
-  if (setxattr (path, "user.test", "novalue", strlen ("novalue"), 0) < 0 &&
-      (errno == ENOTSUP || errno == EOPNOTSUPP))
-    {
-      flatpak_fail (error,
-                    _("/var/tmp does not suport xattrs which is needed for system-wide installation as a user. FLATPAK_SYSTEM_CACHE_DIR can be used to set an alternative path."));
-      return NULL;
-    }
-
   unlink (symlink_path);
   if (symlink (path, symlink_path) != 0)
     {
@@ -1898,13 +1890,9 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
 
       if (!g_file_query_exists (repodir, cancellable))
         {
+          /* We always use bare-user-only these days, except old installations
+             that still user bare-user */
           OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
-          const char *mode_env = g_getenv ("FLATPAK_OSTREE_REPO_MODE");
-
-          if (g_strcmp0 (mode_env, "user-only") == 0)
-            mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
-          if (g_strcmp0 (mode_env, "user") == 0)
-            mode = OSTREE_REPO_MODE_BARE_USER;
 
           if (!ostree_repo_create (repo, mode, cancellable, &my_error))
             {
@@ -6356,12 +6344,19 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   g_autofree char *tmpdir_name = NULL;
   g_autoptr(OstreeRepo) new_repo = NULL;
   g_autoptr(GKeyFile) config = NULL;
-  OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER;
-  const char *mode_str = "bare-user";
   g_autofree char *current_mode = NULL;
-  const char *mode_env = g_getenv ("FLATPAK_OSTREE_REPO_MODE");
   GKeyFile *orig_config = NULL;
   g_autofree char *orig_min_free_space_percent = NULL;
+
+  /* We use bare-user-only here now, which means we don't need xattrs
+   * for the child repo. This only works as long as the pulled repo
+   * is valid in a bare-user-only repo, i.e. doesn't have xattrs or
+   * weird permissions, because then the pull into the system repo
+   * would complain that the checksum was wrong. However, by now all
+   * flatpak builds are likely to be valid, so this is fine.
+   */
+  OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
+  const char *mode_str = "bare-user-only";
 
   g_assert (!self->user);
 
@@ -6386,12 +6381,6 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   repo_dir = g_file_get_child (cache_dir, tmpdir_name);
 
   new_repo = ostree_repo_new (repo_dir);
-
-  /* Allow to override the mode when user-only is needed (e.g. live systems) */
-  if (g_strcmp0 (mode_env, "user-only") == 0) {
-    mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
-    mode_str = "bare-user-only";
-  }
 
   repo_dir_config = g_file_get_child (repo_dir, "config");
   if (!g_file_query_exists (repo_dir_config, NULL))
