@@ -123,12 +123,27 @@ parse_generic_args (GPtrArray *args, int *args_i)
     }
 }
 
+static int
+parse_fd (const char *fd_s)
+{
+  char *endptr;
+  int fd;
+
+  fd = strtol (fd_s, &endptr, 10);
+  if (fd < 0 || endptr == fd_s || *endptr != 0)
+    return -1;
+
+  return fd;
+}
+
+
 static gboolean
 start_proxy (GPtrArray *args, int *args_i)
 {
   g_autoptr(FlatpakProxy) proxy = NULL;
   g_autoptr(GError) error = NULL;
-  const char *bus_address, *socket_path;
+  const char *bus_address;
+  int socket_fd;
   const char *arg;
 
   if (*args_i >= args->len || ((char *)g_ptr_array_index (args, *args_i))[0] == '-')
@@ -142,14 +157,20 @@ start_proxy (GPtrArray *args, int *args_i)
 
   if (*args_i >= args->len || ((char *)g_ptr_array_index (args, *args_i))[0] == '-')
     {
-      g_printerr ("No socket path given\n");
+      g_printerr ("No socket fd given\n");
       return FALSE;
     }
 
-  socket_path = g_ptr_array_index (args, *args_i);
+  socket_fd = parse_fd (g_ptr_array_index (args, *args_i));
   *args_i += 1;
 
-  proxy = flatpak_proxy_new (bus_address, socket_path);
+  if (socket_fd == -1)
+    {
+      g_printerr ("Invalid socket fd given\n");
+      return FALSE;
+    }
+
+  proxy = flatpak_proxy_new (bus_address, socket_fd);
 
   while (*args_i < args->len)
     {
@@ -290,11 +311,7 @@ main (int argc, const char *argv[])
 
   if (sync_fd >= 0)
     {
-      ssize_t written;
       GIOChannel *sync_channel;
-      written = write (sync_fd, "x", 1);
-      if (written != 1)
-        g_warning ("Can't write to sync socket");
 
       sync_channel = g_io_channel_unix_new (sync_fd);
       g_io_add_watch (sync_channel, G_IO_ERR | G_IO_HUP,

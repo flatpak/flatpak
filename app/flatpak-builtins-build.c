@@ -59,22 +59,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-/* Unset FD_CLOEXEC on the array of fds passed in @user_data */
-static void
-child_setup (gpointer user_data)
-{
-  GArray *fd_array = user_data;
-  int i;
-
-  /* If no fd_array was specified, don't care. */
-  if (fd_array == NULL)
-    return;
-
-  /* Otherwise, mark not - close-on-exec all the fds in the array */
-  for (i = 0; i < fd_array->len; i++)
-    fcntl (g_array_index (fd_array, int, i), F_SETFD, 0);
-}
-
 static gboolean
 find_matching_extension_group_in_metakey (GKeyFile    *metakey,
                                           const char  *id,
@@ -176,6 +160,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(FlatpakBwrap) bwrap = NULL;
+  g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
   g_auto(GStrv) minimal_envp = NULL;
   gsize metadata_size;
   const char *directory = NULL;
@@ -530,7 +515,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, run_flags, id,
-                                         app_context, app_id_dir, NULL, cancellable, error))
+                                         app_context, app_id_dir, NULL, &proxy_bwrap, cancellable, error))
     return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
@@ -556,6 +541,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                               NULL);
     }
 
+  if (!flatpak_bwrap_add_close_fd (bwrap, error))
+    return FALSE;
+
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
@@ -566,16 +554,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (bwrap->argv, NULL);
 
-  /* Ensure we unset O_CLOEXEC */
-  child_setup (bwrap->fds);
-  if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
-    {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                   _("Unable to start app"));
-      return FALSE;
-    }
+  if (!flatpak_bwrap_spawn (bwrap, proxy_bwrap, error))
+    return FALSE;
 
   /* Not actually reached... */
+  g_assert_not_reached ();
   return TRUE;
 }
 
