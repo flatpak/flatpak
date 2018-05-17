@@ -2389,6 +2389,9 @@ flatpak_installation_create_monitor (FlatpakInstallation *self,
  * flatpak_related_ref_should_delete () returns TRUE if it
  * should be uninstalled with the main ref.
  *
+ * The commit property of each FlatpakRelatedRef is not guaranteed to be
+ * non-%NULL.
+ *
  * Returns: (transfer container) (element-type FlatpakRelatedRef): a GPtrArray of
  *   #FlatpakRelatedRef instances
  *
