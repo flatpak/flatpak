@@ -47,9 +47,9 @@
  * initial policy is that the the user is only allowed to TALK to the
  * bus itself (org.freedesktop.DBus, or no destination specified), and
  * TALK to its own unique id. All other clients are invisible. The
- * well-known names can be specified exactly, or as a simple one-level
- * wildcard like "org.foo.*" which matches "org.foo.bar", but not
- * "org.foobar" or "org.foo.bar.gazonk".
+ * well-known names can be specified exactly, or as a arg0namespace
+ * wildcards like "org.foo.*" which matches "org.foo", "org.foo.bar",
+ * and "org.foo.bar.gazonk", but not "org.foobar".
  *
  * Polices are specified for well-known names, but they also affect
  * the owner of that name, so that the policy for a unique id is the
@@ -431,6 +431,9 @@ flatpak_proxy_client_new (FlatpakProxy *proxy, GSocketConnection *connection)
   return client;
 }
 
+/* This behaves like arg0namespace matching in the dbus specification,
+   i.e. match name exactly against a wildcarded policy, or any suffix
+   of name starting with . */
 static FlatpakPolicy
 flatpak_proxy_get_wildcard_policy (FlatpakProxy *proxy,
                                    const char   *_name)
@@ -439,14 +442,16 @@ flatpak_proxy_get_wildcard_policy (FlatpakProxy *proxy,
   char *dot;
   g_autofree char *name = g_strdup (_name);
 
-  dot = name + strlen (name);
-  while (dot)
+  do
     {
-      *dot = 0;
       policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->wildcard_policy, name));
       wildcard_policy = MAX (wildcard_policy, policy);
+
       dot = strrchr (name, '.');
+      if (dot != NULL)
+        *dot = 0;
     }
+  while (dot != NULL);
 
   return wildcard_policy;
 }
