@@ -23,6 +23,7 @@
 
 typedef struct {
   GPtrArray *argv;
+  GArray *noinherit_fds; /* Just keep these open while the bwrap lives */
   GArray *fds;
   GStrv envp;
 } FlatpakBwrap;
@@ -41,6 +42,8 @@ void          flatpak_bwrap_unset_env        (FlatpakBwrap  *bwrap,
                                               const char    *variable);
 void          flatpak_bwrap_add_arg          (FlatpakBwrap  *bwrap,
                                               const char    *arg);
+void          flatpak_bwrap_add_noinherit_fd (FlatpakBwrap  *bwrap,
+                                              int            fd);
 void          flatpak_bwrap_add_fd           (FlatpakBwrap  *bwrap,
                                               int            fd);
 void          flatpak_bwrap_add_args         (FlatpakBwrap  *bwrap,
