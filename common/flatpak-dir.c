@@ -6752,6 +6752,9 @@ flatpak_dir_check_add_remotes_config_dir (FlatpakDir  *self,
   if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
     return FALSE;
 
+  if (self->repo == NULL)
+    return TRUE;
+
   config = ostree_repo_get_config (self->repo);
 
   if (config == NULL)
