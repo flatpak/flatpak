@@ -56,6 +56,8 @@ flatpak_bwrap_new (char **env)
   FlatpakBwrap *bwrap = g_new0 (FlatpakBwrap, 1);
 
   bwrap->argv = g_ptr_array_new_with_free_func (g_free);
+  bwrap->noinherit_fds = g_array_new (FALSE, TRUE, sizeof (int));
+  g_array_set_clear_func (bwrap->noinherit_fds, clear_fd);
   bwrap->fds = g_array_new (FALSE, TRUE, sizeof (int));
   g_array_set_clear_func (bwrap->fds, clear_fd);
 
@@ -71,6 +73,7 @@ void
 flatpak_bwrap_free (FlatpakBwrap *bwrap)
 {
   g_ptr_array_unref (bwrap->argv);
+  g_array_unref (bwrap->noinherit_fds);
   g_array_unref (bwrap->fds);
   g_strfreev (bwrap->envp);
   g_free (bwrap);
@@ -108,6 +111,13 @@ void
 flatpak_bwrap_finish (FlatpakBwrap  *bwrap)
 {
   g_ptr_array_add (bwrap->argv, NULL);
+}
+
+void
+flatpak_bwrap_add_noinherit_fd (FlatpakBwrap  *bwrap,
+                                int            fd)
+{
+  g_array_append_val (bwrap->noinherit_fds, fd);
 }
 
 void
