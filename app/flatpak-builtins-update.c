@@ -110,9 +110,14 @@ flatpak_builtin_update (int           argc,
 
   for (k = 0; k < dirs->len; k++)
     {
-      FlatpakTransaction *transaction = flatpak_transaction_new (g_ptr_array_index (dirs, k),
-                                                                 opt_yes, opt_no_pull, opt_no_deploy,
-                                                                 opt_no_static_deltas, !opt_no_deps, !opt_no_related, FALSE);
+      FlatpakTransaction *transaction = flatpak_transaction_new (g_ptr_array_index (dirs, k));
+      flatpak_transaction_set_disable_interaction (transaction, opt_yes);
+      flatpak_transaction_set_no_pull (transaction, opt_no_pull);
+      flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
+      flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
+      flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
+      flatpak_transaction_set_disable_related (transaction, opt_no_related);
+
       g_ptr_array_add (transactions, transaction);
     }
 
