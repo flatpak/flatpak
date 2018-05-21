@@ -106,7 +106,7 @@ flatpak_builtin_update (int           argc,
       n_prefs = 1;
     }
 
-  transactions = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_transaction_free);
+  transactions = g_ptr_array_new_with_free_func ((GDestroyNotify)g_object_unref);
 
   for (k = 0; k < dirs->len; k++)
     {

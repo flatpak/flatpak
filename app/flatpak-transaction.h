@@ -26,7 +26,9 @@
 
 #include "flatpak-dir-private.h"
 
-typedef struct FlatpakTransaction FlatpakTransaction;
+#define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
+
+G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject);
 
 FlatpakTransaction *flatpak_transaction_new         (FlatpakDir          *dir,
                                                      gboolean             no_interaction,
@@ -36,7 +38,6 @@ FlatpakTransaction *flatpak_transaction_new         (FlatpakDir          *dir,
                                                      gboolean             add_deps,
                                                      gboolean             add_related,
                                                      gboolean             reinstall);
-void                flatpak_transaction_free        (FlatpakTransaction  *self);
 gboolean            flatpak_transaction_update_metadata (FlatpakTransaction  *self,
                                                          gboolean             all_remotes,
                                                          GCancellable        *cancellable,
@@ -61,7 +62,5 @@ gboolean            flatpak_transaction_add_update  (FlatpakTransaction  *self,
                                                      GError             **error);
 gboolean            flatpak_transaction_is_empty   (FlatpakTransaction  *self);
 
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakTransaction, flatpak_transaction_free)
 
 #endif /* __FLATPAK_TRANSACTION_H__ */
