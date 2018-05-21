@@ -51,7 +51,10 @@ struct FlatpakTransactionOp {
   gboolean skipped;
 };
 
-struct FlatpakTransaction {
+
+struct _FlatpakTransaction {
+  GObject parent;
+
   FlatpakDir *dir;
   GHashTable *refs;
   GHashTable *remote_states; /* (element-type utf8 FlatpakRemoteState) */
@@ -67,6 +70,8 @@ struct FlatpakTransaction {
   gboolean add_related;
   gboolean reinstall;
 };
+
+G_DEFINE_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK_TYPE_TRANSACTION);
 
 static gboolean
 remote_name_is_file (const char *remote_name)
@@ -175,6 +180,39 @@ flatpak_transaction_is_empty (FlatpakTransaction  *self)
   return self->ops == NULL;
 }
 
+
+static void
+flatpak_transaction_finalize (GObject *object)
+{
+  FlatpakTransaction *self = (FlatpakTransaction *) object;
+
+  g_hash_table_unref (self->refs);
+  g_hash_table_unref (self->remote_states);
+  g_list_free_full (self->ops, (GDestroyNotify)flatpak_transaction_operation_free);
+  g_object_unref (self->dir);
+
+  g_ptr_array_unref (self->added_origin_remotes);
+
+  if (self->system_dirs != NULL)
+    g_ptr_array_free (self->system_dirs, TRUE);
+
+  G_OBJECT_CLASS (flatpak_transaction_parent_class)->finalize (object);
+}
+
+static void
+flatpak_transaction_class_init (FlatpakTransactionClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = flatpak_transaction_finalize;
+}
+
+static void
+flatpak_transaction_init (FlatpakTransaction *self)
+{
+}
+
+
 FlatpakTransaction *
 flatpak_transaction_new (FlatpakDir *dir,
                          gboolean no_interaction,
@@ -185,7 +223,9 @@ flatpak_transaction_new (FlatpakDir *dir,
                          gboolean add_related,
                          gboolean reinstall)
 {
-  FlatpakTransaction *t = g_new0 (FlatpakTransaction, 1);
+  FlatpakTransaction *t;
+
+  t = g_object_new (FLATPAK_TYPE_TRANSACTION, NULL);
 
   t->dir = g_object_ref (dir);
   t->refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -200,22 +240,6 @@ flatpak_transaction_new (FlatpakDir *dir,
   t->add_related = add_related;
   t->reinstall = reinstall;
   return t;
-}
-
-void
-flatpak_transaction_free (FlatpakTransaction *self)
-{
-  g_hash_table_unref (self->refs);
-  g_hash_table_unref (self->remote_states);
-  g_list_free_full (self->ops, (GDestroyNotify)flatpak_transaction_operation_free);
-  g_object_unref (self->dir);
-
-  g_ptr_array_unref (self->added_origin_remotes);
-
-  if (self->system_dirs != NULL)
-    g_ptr_array_free (self->system_dirs, TRUE);
-
-  g_free (self);
 }
 
 static FlatpakTransactionOp *
