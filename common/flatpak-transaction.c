@@ -25,7 +25,6 @@
 
 #include "flatpak-transaction.h"
 #include "flatpak-utils-private.h"
-#include "flatpak-builtins-utils.h"
 #include "flatpak-error.h"
 
 typedef struct FlatpakTransactionOp FlatpakTransactionOp;

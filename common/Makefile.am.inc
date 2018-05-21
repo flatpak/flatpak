@@ -88,6 +88,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-context-private.h \
 	common/flatpak-exports.c \
 	common/flatpak-exports-private.h \
+	common/flatpak-transaction.h \
+	common/flatpak-transaction.c \
 	common/flatpak-utils.c \
 	common/flatpak-utils-private.h \
 	common/flatpak-chain-input-stream.c \

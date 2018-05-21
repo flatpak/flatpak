@@ -9,8 +9,6 @@ flatpak_SOURCES = \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
 	app/flatpak-builtins-utils.c \
-	app/flatpak-transaction.h \
-	app/flatpak-transaction.c \
 	app/flatpak-builtins-add-remote.c \
 	app/flatpak-builtins-delete-remote.c \
 	app/flatpak-builtins-list-remotes.c \
