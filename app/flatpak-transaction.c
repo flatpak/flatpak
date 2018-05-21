@@ -62,12 +62,12 @@ struct _FlatpakTransaction {
   GList *ops;
   GPtrArray *added_origin_remotes;
 
-  gboolean no_interaction;
+  gboolean disable_interaction;
   gboolean no_pull;
   gboolean no_deploy;
-  gboolean no_static_deltas;
-  gboolean add_deps;
-  gboolean add_related;
+  gboolean disable_static_deltas;
+  gboolean disable_deps;
+  gboolean disable_related;
   gboolean reinstall;
 };
 
@@ -214,14 +214,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
 
 
 FlatpakTransaction *
-flatpak_transaction_new (FlatpakDir *dir,
-                         gboolean no_interaction,
-                         gboolean no_pull,
-                         gboolean no_deploy,
-                         gboolean no_static_deltas,
-                         gboolean add_deps,
-                         gboolean add_related,
-                         gboolean reinstall)
+flatpak_transaction_new (FlatpakDir *dir)
 {
   FlatpakTransaction *t;
 
@@ -232,14 +225,56 @@ flatpak_transaction_new (FlatpakDir *dir,
   t->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)flatpak_remote_state_free);
   t->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
 
-  t->no_interaction = no_interaction;
-  t->no_pull = no_pull;
-  t->no_deploy = no_deploy;
-  t->no_static_deltas = no_static_deltas;
-  t->add_deps = add_deps;
-  t->add_related = add_related;
-  t->reinstall = reinstall;
   return t;
+}
+
+void
+flatpak_transaction_set_disable_interaction (FlatpakTransaction  *self,
+                                             gboolean             disable_interaction)
+{
+  self->disable_interaction = disable_interaction;
+}
+
+void
+flatpak_transaction_set_no_pull (FlatpakTransaction  *self,
+                                 gboolean             no_pull)
+{
+  self->no_pull = no_pull;
+}
+
+void
+flatpak_transaction_set_no_deploy (FlatpakTransaction  *self,
+                                   gboolean             no_deploy)
+{
+  self->no_deploy = no_deploy;
+}
+
+void
+flatpak_transaction_set_disable_static_deltas (FlatpakTransaction  *self,
+                                               gboolean             disable_static_deltas)
+{
+  self->disable_static_deltas = disable_static_deltas;
+}
+
+void
+flatpak_transaction_set_disable_dependencies  (FlatpakTransaction  *self,
+                                               gboolean             disable_dependencies)
+{
+  self->disable_deps = disable_dependencies;
+}
+
+void
+flatpak_transaction_set_disable_related (FlatpakTransaction  *self,
+                                         gboolean             disable_related)
+{
+  self->disable_related = disable_related;
+}
+
+void
+flatpak_transaction_set_reinstall (FlatpakTransaction   *self,
+                                   gboolean             reinstall)
+{
+  self->reinstall = reinstall;
 }
 
 static FlatpakTransactionOp *
@@ -355,7 +390,7 @@ ask_for_remote (FlatpakTransaction *self, const char **remotes)
   int chosen = 0;
   int i;
 
-  if (self->no_interaction)
+  if (self->disable_interaction)
     {
       chosen = 1;
       g_print (_("Found in remote %s\n"), remotes[0]);
@@ -393,7 +428,7 @@ add_related (FlatpakTransaction *self,
   g_autoptr(GError) local_error = NULL;
   int i;
 
-  if (!self->add_related)
+  if (self->disable_related)
     return TRUE;
 
   if (self->no_pull)
@@ -639,7 +674,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         }
     }
 
-  if (self->add_deps)
+  if (!self->disable_deps)
     {
       if (!add_deps (self, metakey, state, remote, ref, &dep_op, error))
         return FALSE;
@@ -828,7 +863,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           res = flatpak_dir_install (self->dir ,
                                      self->no_pull,
                                      self->no_deploy,
-                                     self->no_static_deltas,
+                                     self->disable_static_deltas,
                                      self->reinstall,
                                      state, op->ref,
                                      (const char **)op->subpaths,
@@ -857,7 +892,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
               res = flatpak_dir_update (self->dir,
                                         self->no_pull,
                                         self->no_deploy,
-                                        self->no_static_deltas,
+                                        self->disable_static_deltas,
                                         op->commit != NULL, /* Allow downgrade if we specify commit */
                                         state, op->ref, target_commit,
                                         (const OstreeRepoFinderResult * const *) check_results,
