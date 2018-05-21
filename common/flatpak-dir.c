@@ -60,7 +60,7 @@
 #define SYSTEM_DIR_DEFAULT_DISPLAY_NAME "Default system directory"
 #define SYSTEM_DIR_DEFAULT_STORAGE_TYPE FLATPAK_DIR_STORAGE_TYPE_DEFAULT
 #define SYSTEM_DIR_DEFAULT_PRIORITY 0
-#define CACHE_THRESHOLD 0.5 /* minimum free space required to hold caches (in GB) */
+#define CACHE_THRESHOLD 5 /* minimum free space required to hold caches (in GB) */
 
 static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
                                                                          GLnxLockFile *file_lock,
