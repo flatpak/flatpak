@@ -2043,7 +2043,7 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return FALSE;
 
-  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -2084,7 +2084,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
   if (state == NULL)
     return FALSE;
 
