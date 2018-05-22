@@ -70,7 +70,7 @@ struct _FlatpakTransaction {
   gboolean reinstall;
 };
 
-G_DEFINE_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK_TYPE_TRANSACTION);
+G_DEFINE_TYPE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT);
 
 static gboolean
 remote_name_is_file (const char *remote_name)
