@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <glib/gi18n.h>
 
-#include "flatpak-transaction.h"
+#include "flatpak-transaction-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 

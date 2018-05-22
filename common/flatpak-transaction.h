@@ -24,13 +24,10 @@
 #include <glib.h>
 #include "libglnx/libglnx.h"
 
-#include "flatpak-dir-private.h"
-
 #define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
 
 G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject);
 
-FlatpakTransaction *flatpak_transaction_new                       (FlatpakDir          *dir);
 void                flatpak_transaction_set_disable_interaction   (FlatpakTransaction  *self,
                                                                    gboolean             no_interaction);
 void                flatpak_transaction_set_no_pull               (FlatpakTransaction  *self,
