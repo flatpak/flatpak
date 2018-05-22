@@ -96,7 +96,7 @@ ostree init --repo=repos/test --mode=archive-z2
 # Modify platform metadata
 ostree checkout -U --repo=repos/test runtime/org.test.Platform/${ARCH}/master platform
 add_extensions platform
-ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --branch=runtime/org.test.Platform/${ARCH}/master -s "modified metadata" platform
+ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --canonical-permissions  --branch=runtime/org.test.Platform/${ARCH}/master -s "modified metadata" platform
 ostree summary -u --repo=repos/test
 
 ${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test
@@ -145,7 +145,7 @@ echo "ok runtime extensions"
 # Modify app metadata
 ostree checkout -U --repo=repos/test app/org.test.Hello/${ARCH}/master hello
 add_extensions hello
-ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --branch=app/org.test.Hello/${ARCH}/master -s "modified metadata" hello
+ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --canonical-permissions --branch=app/org.test.Hello/${ARCH}/master -s "modified metadata" hello
 ostree summary -u --repo=repos/test
 
 ${FLATPAK} --user update org.test.Hello master
