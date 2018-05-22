@@ -78,6 +78,20 @@ typedef enum {
 } FlatpakInstallFlags;
 
 /**
+ * FlatpakUninstallFlags:
+ * @FLATPAK_UNINSTALL_FLAGS_NONE: Default
+ * @FLATPAK_UNINSTALL_FLAGS_NO_PRUNE: Don't prune the local OSTreee repository after uninstalling
+ *
+ * Flags to alter the behavior of flatpak_installation_uninstall_full().
+ *
+ * Since: 0.11.8
+ */
+typedef enum {
+  FLATPAK_UNINSTALL_FLAGS_NONE     = 0,
+  FLATPAK_UNINSTALL_FLAGS_NO_PRUNE = (1 << 0),
+} FlatpakUninstallFlags;
+
+/**
  * FlatpakStorageType:
  * @FLATPAK_STORAGE_TYPE_DEFAULT: default
  * @FLATPAK_STORAGE_TYPE_HARD_DISK: installation is on a hard disk
@@ -278,6 +292,17 @@ FLATPAK_EXTERN gboolean             flatpak_installation_uninstall (FlatpakInsta
                                                                     gpointer                progress_data,
                                                                     GCancellable           *cancellable,
                                                                     GError                **error);
+
+FLATPAK_EXTERN gboolean             flatpak_installation_uninstall_full (FlatpakInstallation    *self,
+                                                                         FlatpakUninstallFlags   flags,
+                                                                         FlatpakRefKind          kind,
+                                                                         const char             *name,
+                                                                         const char             *arch,
+                                                                         const char             *branch,
+                                                                         FlatpakProgressCallback progress,
+                                                                         gpointer                progress_data,
+                                                                         GCancellable           *cancellable,
+                                                                         GError                **error);
 
 FLATPAK_EXTERN gboolean          flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
                                                                               const char          *remote_name,
