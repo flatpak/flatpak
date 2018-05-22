@@ -21,51 +21,64 @@
 #ifndef __FLATPAK_TRANSACTION_H__
 #define __FLATPAK_TRANSACTION_H__
 
-#include <glib.h>
-#include "libglnx/libglnx.h"
+#include <gio/gio.h>
+
+/* Note: This header is actually public in libflatpak, even if its in common/ */
 
 #define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
 
-G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject);
+FLATPAK_EXTERN
+G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject)
 
+FLATPAK_EXTERN
 void                flatpak_transaction_set_disable_interaction   (FlatpakTransaction  *self,
                                                                    gboolean             no_interaction);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_no_pull               (FlatpakTransaction  *self,
                                                                    gboolean             no_pull);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_no_deploy             (FlatpakTransaction  *self,
                                                                    gboolean             no_deploy);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_disable_static_deltas (FlatpakTransaction  *self,
                                                                    gboolean             disable_static_deltas);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_disable_dependencies  (FlatpakTransaction  *self,
                                                                    gboolean             disable_dependencies);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_disable_related       (FlatpakTransaction  *self,
                                                                    gboolean             disable_related);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_reinstall             (FlatpakTransaction   *self,
                                                                    gboolean             reinstall);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_update_metadata           (FlatpakTransaction  *self,
                                                                    gboolean             all_remotes,
                                                                    GCancellable        *cancellable,
                                                                    GError             **error);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_run                       (FlatpakTransaction  *self,
                                                                    gboolean             stop_on_first_errror,
                                                                    GCancellable        *cancellable,
                                                                    GError             **error);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install               (FlatpakTransaction  *self,
                                                                    const char          *remote,
                                                                    const char          *ref,
                                                                    const char         **subpaths,
                                                                    GError             **error);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install_bundle        (FlatpakTransaction  *self,
                                                                    GFile               *file,
                                                                    GBytes              *gpg_data,
                                                                    GError             **error);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_update                (FlatpakTransaction  *self,
                                                                    const char          *ref,
                                                                    const char         **subpaths,
                                                                    const char          *commit,
                                                                    GError             **error);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_is_empty                  (FlatpakTransaction  *self);
-
-
 
 #endif /* __FLATPAK_TRANSACTION_H__ */
