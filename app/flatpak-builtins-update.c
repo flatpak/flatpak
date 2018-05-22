@@ -31,7 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
-#include "flatpak-transaction-private.h"
+#include "flatpak-cli-transaction.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 
@@ -110,8 +110,7 @@ flatpak_builtin_update (int           argc,
 
   for (k = 0; k < dirs->len; k++)
     {
-      FlatpakTransaction *transaction = flatpak_transaction_new (g_ptr_array_index (dirs, k));
-      flatpak_transaction_set_disable_interaction (transaction, opt_yes);
+      FlatpakTransaction *transaction = flatpak_cli_transaction_new (g_ptr_array_index (dirs, k), opt_yes);
       flatpak_transaction_set_no_pull (transaction, opt_no_pull);
       flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
       flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);

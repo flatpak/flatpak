@@ -33,8 +33,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
-#include "flatpak-transaction-private.h"
-#include "flatpak-transaction.h"
+#include "flatpak-cli-transaction.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 #include "flatpak-chain-input-stream-private.h"
@@ -288,8 +287,7 @@ install_bundle (FlatpakDir *dir,
   if (!flatpak_dir_ensure_repo (dir, cancellable, error))
     return FALSE;
 
-  transaction = flatpak_transaction_new (dir);
-  flatpak_transaction_set_disable_interaction (transaction, opt_yes);
+  transaction = flatpak_cli_transaction_new (dir, opt_yes);
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
@@ -448,8 +446,7 @@ install_from (FlatpakDir *dir,
   slash = strchr (ref, '/');
   g_print (_("Installing: %s\n"), slash + 1);
 
-  transaction = flatpak_transaction_new (clone);
-  flatpak_transaction_set_disable_interaction (transaction, opt_yes);
+  transaction = flatpak_cli_transaction_new (clone, opt_yes);
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
@@ -533,8 +530,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  transaction = flatpak_transaction_new (dir);
-  flatpak_transaction_set_disable_interaction (transaction, opt_yes);
+  transaction = flatpak_cli_transaction_new (dir, opt_yes);
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
