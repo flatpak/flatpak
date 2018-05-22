@@ -344,7 +344,8 @@ flatpak build-init app org.test.Writable org.test.Platform org.test.Platform
 mkdir -p app/files/a-dir
 chmod a+rwx app/files/a-dir
 flatpak build-finish --command=hello.sh app
-ostree --repo=repos/test commit  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/master app
+# Note: not --canonical-permissions
+ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/master app
 update_repo
 
 ${FLATPAK} ${U} install test-repo org.test.Writable
@@ -359,7 +360,8 @@ mkdir -p app/files/
 touch app/files/exe
 chmod u+s app/files/exe
 flatpak build-finish --command=hello.sh app
-ostree --repo=repos/test commit  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/master app
+# Note: not --canonical-permissions
+ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/master app
 update_repo
 
 if ${FLATPAK} ${U} install test-repo org.test.Setuid &> err2.txt; then
