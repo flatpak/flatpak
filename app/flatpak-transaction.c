@@ -373,7 +373,11 @@ add_related (FlatpakTransaction *self,
     return TRUE;
 
   if (self->no_pull)
-    related = flatpak_dir_find_local_related (self->dir, ref, remote, NULL, &local_error);
+    related = flatpak_dir_find_local_related_for_ref_in_repo (self->dir,
+                                                              ref,
+                                                              remote,
+                                                              NULL,
+                                                              &local_error);
   else
     related = flatpak_dir_find_remote_related (self->dir, state, ref, NULL, &local_error);
   if (related == NULL)

@@ -2492,9 +2492,10 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
  *
  * This function is similar to flatpak_installation_list_remote_related_refs_sync,
  * but instead of looking at what is available on the remote, it only looks
- * at the locally installed refs. This is useful for instance when you're
- * looking for related refs to uninstall, or when you're planning to use
- * FLATPAK_UPDATE_FLAGS_NO_PULL to install previously pulled refs.
+ * for related refs in the repo for the ref that is currently installed.
+ * This is useful for instance when you're looking for related refs to uninstall,
+ * or when you're planning to use FLATPAK_UPDATE_FLAGS_NO_PULL to install
+ * previously pulled refs.
  *
  * Returns: (transfer container) (element-type FlatpakRelatedRef): a GPtrArray of
  *   #FlatpakRelatedRef instances
@@ -2517,8 +2518,8 @@ flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self
   if (dir == NULL)
     return NULL;
 
-  related = flatpak_dir_find_local_related (dir, ref, remote_name,
-                                            cancellable, error);
+  related = flatpak_dir_find_local_related_for_deployed (dir, ref, remote_name,
+                                                         cancellable, error);
   if (related == NULL)
     return NULL;
 

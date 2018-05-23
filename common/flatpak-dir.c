@@ -11042,22 +11042,19 @@ local_match_prefix (FlatpakDir *self,
   return matches;
 }
 
-GPtrArray *
-flatpak_dir_find_local_related (FlatpakDir *self,
-                                const char *ref,
-                                const char *remote_name,
-                                GCancellable *cancellable,
-                                GError **error)
+static GPtrArray *
+flatpak_dir_find_local_related_for_metadata (FlatpakDir *self,
+                                             const char *ref,
+                                             const char *remote_name,
+                                             GKeyFile   *metakey,
+                                             GCancellable *cancellable,
+                                             GError **error)
 {
-  g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(GFile) metadata = NULL;
-  g_autofree char *metadata_contents = NULL;
-  gsize metadata_size;
-  g_autoptr(GKeyFile) metakey = g_key_file_new ();
   int i;
   g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_related_free);
   g_autofree char *collection_id = NULL;
+  g_auto(GStrv) groups = NULL;
 
   /* Derive the collection ID from the remote we are querying. This will act as
    * a sanity check on the summary ref lookup. */
@@ -11071,110 +11068,93 @@ flatpak_dir_find_local_related (FlatpakDir *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
 
-  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
-  if (deploy_dir == NULL)
+  groups = g_key_file_get_groups (metakey, NULL);
+  for (i = 0; groups[i] != NULL; i++)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s not installed"), ref);
-      return NULL;
-    }
+      char *tagged_extension;
 
-  metadata = g_file_get_child (deploy_dir, "metadata");
-  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, NULL))
-    return g_steal_pointer (&related); /* No metadata => no related, but no error */
-
-  if (g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, NULL))
-    {
-      g_auto(GStrv) groups = NULL;
-
-      groups = g_key_file_get_groups (metakey, NULL);
-      for (i = 0; groups[i] != NULL; i++)
+      if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
+          *(tagged_extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
         {
-          char *tagged_extension;
+          g_autofree char *extension = NULL;
+          g_autofree char *version = g_key_file_get_string (metakey, groups[i],
+                                                            FLATPAK_METADATA_KEY_VERSION, NULL);
+          gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
+                                                            FLATPAK_METADATA_KEY_SUBDIRECTORIES, NULL);
+          gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
+                                                             FLATPAK_METADATA_KEY_NO_AUTODOWNLOAD, NULL);
+          g_autofree char *download_if = g_key_file_get_string (metakey, groups[i],
+                                                                FLATPAK_METADATA_KEY_DOWNLOAD_IF, NULL);
+          gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
+                                                        FLATPAK_METADATA_KEY_AUTODELETE, NULL);
+          gboolean locale_subset = g_key_file_get_boolean (metakey, groups[i],
+                                                           FLATPAK_METADATA_KEY_LOCALE_SUBSET, NULL);
+          const char *branch;
+          g_autofree char *extension_ref = NULL;
+          g_autofree char *prefixed_extension_ref = NULL;
+          g_autofree char *checksum = NULL;
+          g_autofree char *extension_collection_id = NULL;
 
-          if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
-              *(tagged_extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
-            {
-              g_autofree char *extension = NULL;
-              g_autofree char *version = g_key_file_get_string (metakey, groups[i],
-                                                                FLATPAK_METADATA_KEY_VERSION, NULL);
-              gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
-                                                                FLATPAK_METADATA_KEY_SUBDIRECTORIES, NULL);
-              gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
-                                                                 FLATPAK_METADATA_KEY_NO_AUTODOWNLOAD, NULL);
-              g_autofree char *download_if = g_key_file_get_string (metakey, groups[i],
-                                                                    FLATPAK_METADATA_KEY_DOWNLOAD_IF, NULL);
-              gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
-                                                            FLATPAK_METADATA_KEY_AUTODELETE, NULL);
-              gboolean locale_subset = g_key_file_get_boolean (metakey, groups[i],
-                                                               FLATPAK_METADATA_KEY_LOCALE_SUBSET, NULL);
-              const char *branch;
-              g_autofree char *extension_ref = NULL;
-              g_autofree char *prefixed_extension_ref = NULL;
-              g_autofree char *checksum = NULL;
-              g_autofree char *extension_collection_id = NULL;
+          /* Parse actual extension name */
+          flatpak_parse_extension_with_tag (tagged_extension, &extension, NULL);
 
-              /* Parse actual extension name */
-              flatpak_parse_extension_with_tag (tagged_extension, &extension, NULL);
-
-              if (version)
-                branch = version;
-              else
-                branch = parts[3];
+          if (version)
+            branch = version;
+          else
+            branch = parts[3];
 
 #ifdef FLATPAK_ENABLE_P2P
-              extension_collection_id = g_key_file_get_string (metakey, groups[i],
-                                                               FLATPAK_METADATA_KEY_COLLECTION_ID, NULL);
+          extension_collection_id = g_key_file_get_string (metakey, groups[i],
+                                                           FLATPAK_METADATA_KEY_COLLECTION_ID, NULL);
 #endif  /* FLATPAK_ENABLE_P2P */
 
-              /* As we’re looking locally, we can’t support extension
-               * collection IDs which don’t match the current remote (since the
-               * associated refs could be anywhere). */
-              if (extension_collection_id != NULL && *extension_collection_id != '\0' &&
-                  g_strcmp0 (extension_collection_id, collection_id) != 0)
-                {
-                  g_debug ("Skipping related extension ‘%s’ because it’s in collection "
-                           "‘%s’ which does not match the current remote ‘%s’.",
-                           extension, extension_collection_id, collection_id);
-                  continue;
-                }
+          /* As we’re looking locally, we can’t support extension
+           * collection IDs which don’t match the current remote (since the
+           * associated refs could be anywhere). */
+          if (extension_collection_id != NULL && *extension_collection_id != '\0' &&
+              g_strcmp0 (extension_collection_id, collection_id) != 0)
+            {
+              g_debug ("Skipping related extension ‘%s’ because it’s in collection "
+                       "‘%s’ which does not match the current remote ‘%s’.",
+                       extension, extension_collection_id, collection_id);
+              continue;
+            }
 
-              g_clear_pointer (&extension_collection_id, g_free);
-              extension_collection_id = g_strdup (collection_id);
+          g_clear_pointer (&extension_collection_id, g_free);
+          extension_collection_id = g_strdup (collection_id);
 
-              extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
-              prefixed_extension_ref = g_strdup_printf ("%s:%s", remote_name, extension_ref);
-              if (ostree_repo_resolve_rev (self->repo,
-                                           prefixed_extension_ref,
-                                           FALSE,
-                                           &checksum,
-                                           NULL))
+          extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
+          prefixed_extension_ref = g_strdup_printf ("%s:%s", remote_name, extension_ref);
+          if (ostree_repo_resolve_rev (self->repo,
+                                       prefixed_extension_ref,
+                                       FALSE,
+                                       &checksum,
+                                       NULL))
+            {
+              add_related (self, related, extension, extension_collection_id, extension_ref,
+                           checksum, no_autodownload, download_if, autodelete, locale_subset);
+            }
+          else if (subdirectories)
+            {
+              g_autoptr(GPtrArray) matches = local_match_prefix (self, extension_ref, remote_name);
+              int j;
+              for (j = 0; j < matches->len; j++)
                 {
-                  add_related (self, related, extension, extension_collection_id, extension_ref,
-                               checksum, no_autodownload, download_if, autodelete, locale_subset);
-                }
-              else if (subdirectories)
-                {
-                  g_autoptr(GPtrArray) matches = local_match_prefix (self, extension_ref, remote_name);
-                  int j;
-                  for (j = 0; j < matches->len; j++)
+                  const char *match = g_ptr_array_index (matches, j);
+                  g_autofree char *prefixed_match = NULL;
+                  g_autofree char *match_checksum = NULL;
+
+                  prefixed_match = g_strdup_printf ("%s:%s", remote_name, match);
+
+                  if (ostree_repo_resolve_rev (self->repo,
+                                               prefixed_match,
+                                               FALSE,
+                                               &match_checksum,
+                                               NULL))
                     {
-                      const char *match = g_ptr_array_index (matches, j);
-                      g_autofree char *prefixed_match = NULL;
-                      g_autofree char *match_checksum = NULL;
-
-                      prefixed_match = g_strdup_printf ("%s:%s", remote_name, match);
-
-                      if (ostree_repo_resolve_rev (self->repo,
-                                                   prefixed_match,
-                                                   FALSE,
-                                                   &match_checksum,
-                                                   NULL))
-                        {
-                          add_related (self, related, extension,
-                                       extension_collection_id, match, match_checksum,
-                                       no_autodownload, download_if, autodelete, locale_subset);
-                        }
+                      add_related (self, related, extension,
+                                   extension_collection_id, match, match_checksum,
+                                   no_autodownload, download_if, autodelete, locale_subset);
                     }
                 }
             }
@@ -11182,6 +11162,154 @@ flatpak_dir_find_local_related (FlatpakDir *self,
     }
 
   return g_steal_pointer (&related);
+}
+
+static gboolean
+flatpak_dir_get_deployed_metadata (FlatpakDir    *self,
+                                   const char    *ref,
+                                   GCancellable  *cancellable,
+                                   GKeyFile     **out_metadata,
+                                   GError       **error)
+{
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autofree char *metadata_contents = NULL;
+  gsize metadata_size;
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  g_return_val_if_fail (out_metadata != NULL, FALSE);
+
+  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+  if (deploy_dir == NULL)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                   _("%s not installed"), ref);
+      return FALSE;
+    }
+
+  metadata = g_file_get_child (deploy_dir, "metadata");
+  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, NULL))
+    {
+      *out_metadata = NULL;
+      return TRUE;
+    }
+
+  metakey = g_key_file_new ();
+
+  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
+    return FALSE;
+
+  *out_metadata = g_steal_pointer (&metakey);
+  return TRUE;
+}
+
+/* Use flatpak_dir_find_local_related_for_deployed to find the
+ * related refs for an already deployed ref (which might be
+ * different to the one in the repo) */
+GPtrArray *
+flatpak_dir_find_local_related_for_deployed (FlatpakDir *self,
+                                             const char *ref,
+                                             const char *remote_name,
+                                             GCancellable *cancellable,
+                                             GError **error)
+{
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  if (!flatpak_dir_get_deployed_metadata (self,
+                                          ref,
+                                          cancellable,
+                                          &metakey,
+                                          error))
+    return FALSE;
+
+  if (metakey == NULL)
+    return NULL;
+
+  return flatpak_dir_find_local_related_for_metadata (self,
+                                                      ref,
+                                                      remote_name,
+                                                      metakey,
+                                                      cancellable,
+                                                      error);
+}
+
+/* Get the metadata the most recent commit of ref in the
+ * repo. This is not the same as the xa.cache, which might
+ * be updated separately. This function is used by
+ * flatpak_dir_find_local_related_for_ref_in_repo because we
+ * want to find the local related refs for a ref that has
+ * been pulled into the repo already, not for a ref for which
+ * an updated piece of metadata might exist on the remote end
+ * that we pulled into the xa.cache through some other means. */
+static GKeyFile *
+flatpak_dir_get_metadata_for_ref_in_repo (FlatpakDir    *self,
+                                          const char    *ref,
+                                          const char    *remote_name,
+                                          GCancellable  *cancellable,
+                                          GError       **error)
+{
+  g_autofree char *refspec = g_strdup_printf ("%s:%s", remote_name, ref);
+  g_autofree char *checksum = NULL;
+  g_autoptr(GVariant) commit = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  const char *xa_metadata_str = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  if (!ostree_repo_resolve_rev (self->repo, refspec, FALSE, &checksum, error))
+    return NULL;
+
+  if (!ostree_repo_load_variant (self->repo,
+                                 OSTREE_OBJECT_TYPE_COMMIT,
+                                 checksum,
+                                 &commit,
+                                 error))
+    return NULL;
+
+  /* Look up xa.metadata for this commit. */
+  metadata = g_variant_get_child_value (commit, 0);
+
+  g_variant_lookup (metadata, "xa.metadata", "s", &xa_metadata_str);
+  metakey = g_key_file_new ();
+
+  if (!g_key_file_load_from_data (metakey, xa_metadata_str, -1, G_KEY_FILE_NONE, error))
+    return NULL;
+
+  return g_steal_pointer (&metakey);
+}
+
+/* Use flatpak_dir_find_local_related_for_ref_in_repo to find the related
+ * refs for a ref in the repo (that might not be deployed yet, or different
+ * from the one that is deployed). */
+GPtrArray *
+flatpak_dir_find_local_related_for_ref_in_repo (FlatpakDir *self,
+                                                const char *ref,
+                                                const char *remote_name,
+                                                GCancellable *cancellable,
+                                                GError **error)
+{
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  metakey = flatpak_dir_get_metadata_for_ref_in_repo (self,
+                                                      ref,
+                                                      remote_name,
+                                                      cancellable,
+                                                      error);
+
+  if (metakey == NULL)
+    return NULL;
+
+  return flatpak_dir_find_local_related_for_metadata (self,
+                                                      ref,
+                                                      remote_name,
+                                                      metakey,
+                                                      cancellable,
+                                                      error);
 }
 
 static GDBusProxy *
