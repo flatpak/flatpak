@@ -1897,7 +1897,8 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (result == NULL)
     goto out;
 
-  if ((flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0)
+  /* We don't get prunable objects if not pulling */
+  if (!(flags & FLATPAK_UPDATE_FLAGS_NO_PULL))
     flatpak_dir_prune (dir_clone, cancellable, NULL);
 
 out:
