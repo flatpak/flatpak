@@ -52,6 +52,7 @@ typedef struct
  * @FLATPAK_UPDATE_FLAGS_NONE: Fetch remote builds and install the latest one (default)
  * @FLATPAK_UPDATE_FLAGS_NO_DEPLOY: Don't install any new builds that might be fetched
  * @FLATPAK_UPDATE_FLAGS_NO_PULL: Don't try to fetch new builds from the remote repo
+ * @FLATPAK_UPDATE_FLAGS_NO_PRUNE: Don't prune the local OSTreee repository after updating
  *
  * Flags to alter the behavior of flatpak_installation_update().
  */
@@ -60,6 +61,7 @@ typedef enum {
   FLATPAK_UPDATE_FLAGS_NO_DEPLOY        = (1 << 0),
   FLATPAK_UPDATE_FLAGS_NO_PULL          = (1 << 1),
   FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS = (1 << 2),
+  FLATPAK_UPDATE_FLAGS_NO_PRUNE         = (1 << 3),
 } FlatpakUpdateFlags;
 
 /**
@@ -74,6 +76,20 @@ typedef enum {
   FLATPAK_INSTALL_FLAGS_NO_DEPLOY        = (1 << 2),
   FLATPAK_INSTALL_FLAGS_NO_PULL          = (1 << 3),
 } FlatpakInstallFlags;
+
+/**
+ * FlatpakUninstallFlags:
+ * @FLATPAK_UNINSTALL_FLAGS_NONE: Default
+ * @FLATPAK_UNINSTALL_FLAGS_NO_PRUNE: Don't prune the local OSTreee repository after uninstalling
+ *
+ * Flags to alter the behavior of flatpak_installation_uninstall_full().
+ *
+ * Since: 0.11.8
+ */
+typedef enum {
+  FLATPAK_UNINSTALL_FLAGS_NONE     = 0,
+  FLATPAK_UNINSTALL_FLAGS_NO_PRUNE = (1 << 0),
+} FlatpakUninstallFlags;
 
 /**
  * FlatpakStorageType:
@@ -276,6 +292,17 @@ FLATPAK_EXTERN gboolean             flatpak_installation_uninstall (FlatpakInsta
                                                                     gpointer                progress_data,
                                                                     GCancellable           *cancellable,
                                                                     GError                **error);
+
+FLATPAK_EXTERN gboolean             flatpak_installation_uninstall_full (FlatpakInstallation    *self,
+                                                                         FlatpakUninstallFlags   flags,
+                                                                         FlatpakRefKind          kind,
+                                                                         const char             *name,
+                                                                         const char             *arch,
+                                                                         const char             *branch,
+                                                                         FlatpakProgressCallback progress,
+                                                                         gpointer                progress_data,
+                                                                         GCancellable           *cancellable,
+                                                                         GError                **error);
 
 FLATPAK_EXTERN gboolean          flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
                                                                               const char          *remote_name,

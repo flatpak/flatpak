@@ -1897,7 +1897,8 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (result == NULL)
     goto out;
 
-  if ((flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0)
+  /* We don't get prunable objects if not pulling or if NO_PRUNE is passed */
+  if (!(flags & FLATPAK_UPDATE_FLAGS_NO_PULL) && !(flags & FLATPAK_UPDATE_FLAGS_NO_PRUNE))
     flatpak_dir_prune (dir_clone, cancellable, NULL);
 
 out:
@@ -1977,6 +1978,43 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
                                 GCancellable           *cancellable,
                                 GError                **error)
 {
+  return flatpak_installation_uninstall_full (self, FLATPAK_UNINSTALL_FLAGS_NONE,
+                                              kind, name, arch, branch,
+                                              progress, progress_data,
+                                              cancellable, error);
+}
+
+/**
+ * flatpak_installation_uninstall_full:
+ * @self: a #FlatpakInstallation
+ * @flags: set of #FlatpakUninstallFlags flags
+ * @kind: what this ref contains (an #FlatpakRefKind)
+ * @name: name of the app or runtime to uninstall
+ * @arch: architecture of the app or runtime to uninstall
+ * @branch: name of the branch of the app or runtime to uninstall
+ * @progress: (scope call) (nullable): the callback
+ * @progress_data: (closure progress) (nullable): user data passed to @progress
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Uninstall an application or runtime.
+ *
+ * Returns: %TRUE on success
+ *
+ * Since: 0.11.8
+ */
+gboolean
+flatpak_installation_uninstall_full (FlatpakInstallation    *self,
+                                     FlatpakUninstallFlags   flags,
+                                     FlatpakRefKind          kind,
+                                     const char             *name,
+                                     const char             *arch,
+                                     const char             *branch,
+                                     FlatpakProgressCallback progress,
+                                     gpointer                progress_data,
+                                     GCancellable           *cancellable,
+                                     GError                **error)
+{
   g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
@@ -1998,7 +2036,8 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
                               cancellable, error))
     return FALSE;
 
-  flatpak_dir_prune (dir_clone, cancellable, NULL);
+  if (!(flags & FLATPAK_UNINSTALL_FLAGS_NO_PRUNE))
+    flatpak_dir_prune (dir_clone, cancellable, NULL);
 
   return TRUE;
 }
