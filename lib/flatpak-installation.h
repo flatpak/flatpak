@@ -52,7 +52,7 @@ typedef struct
  * @FLATPAK_UPDATE_FLAGS_NONE: Fetch remote builds and install the latest one (default)
  * @FLATPAK_UPDATE_FLAGS_NO_DEPLOY: Don't install any new builds that might be fetched
  * @FLATPAK_UPDATE_FLAGS_NO_PULL: Don't try to fetch new builds from the remote repo
- * @FLATPAK_UPDATE_FLAGS_NO_PRUNE: Don't prune the local OSTreee repository after updating
+ * @FLATPAK_UPDATE_FLAGS_NO_PRUNE: Don't prune the local OSTree repository after updating (Since: 0.11.8)
  *
  * Flags to alter the behavior of flatpak_installation_update().
  */
@@ -80,7 +80,7 @@ typedef enum {
 /**
  * FlatpakUninstallFlags:
  * @FLATPAK_UNINSTALL_FLAGS_NONE: Default
- * @FLATPAK_UNINSTALL_FLAGS_NO_PRUNE: Don't prune the local OSTreee repository after uninstalling
+ * @FLATPAK_UNINSTALL_FLAGS_NO_PRUNE: Don't prune the local OSTree repository after uninstalling
  *
  * Flags to alter the behavior of flatpak_installation_uninstall_full().
  *
