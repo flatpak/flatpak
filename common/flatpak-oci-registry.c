@@ -1882,7 +1882,7 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
   if (json == NULL)
     return FALSE;
 
-  return g_steal_pointer (&json);
+  return (FlatpakOciSignature *)g_steal_pointer (&json);
 }
 
 static const char *
