@@ -419,7 +419,7 @@ add_related (FlatpakTransaction *self,
     related = flatpak_dir_find_remote_related (self->dir, state, ref, NULL, &local_error);
   if (related == NULL)
     {
-      g_printerr (_("Warning: Problem looking for related refs: %s\n"), local_error->message);
+      g_warning (_("Warning: Problem looking for related refs: %s"), local_error->message);
       g_clear_error (&local_error);
     }
   else
@@ -622,7 +622,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
     {
       if (!flatpak_remote_state_lookup_cache (state, ref, NULL, NULL, &metadata, &local_error))
         {
-          g_print (_("Warning: Can't find dependencies: %s\n"), local_error->message);
+          g_warning (_("Warning: Can't find dependencies: %s"), local_error->message);
           g_clear_error (&local_error);
         }
     }
@@ -649,7 +649,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
       if (required_version)
         {
           if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
-            g_print (_("Invalid require-flatpak argument %s\n"), required_version);
+            g_warning ("Invalid require-flatpak argument %s", required_version);
           else
             {
               if (required_major > PACKAGE_MAJOR_VERSION ||
