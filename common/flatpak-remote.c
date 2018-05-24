@@ -569,7 +569,7 @@ flatpak_remote_set_nodeps (FlatpakRemote *self,
  *
  * Returns whether this remote is disabled.
  *
- * Returns: whether the remote is marked as "don't enumerate"
+ * Returns: whether the remote is marked as disabled
  */
 gboolean
 flatpak_remote_get_disabled (FlatpakRemote *self)
