@@ -9483,7 +9483,11 @@ cmp_remote (gconstpointer a,
   prio_a = flatpak_dir_get_remote_prio (self, a_name);
   prio_b = flatpak_dir_get_remote_prio (self, b_name);
 
-  return prio_b - prio_a;
+  if (prio_b != prio_a)
+    return prio_b - prio_a;
+
+  /* Ensure we have a well-defined order for same prio */
+  return strcmp (a_name, b_name);
 }
 
 static gboolean
