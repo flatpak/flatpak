@@ -38,7 +38,7 @@
 #include <gio/gio.h>
 #include <gio/gunixsocketaddress.h>
 #include "libglnx/libglnx.h"
-#include "lib/flatpak-error.h"
+#include "flatpak-error.h"
 #include <ostree.h>
 
 #include "flatpak-dir-private.h"

@@ -51,10 +51,10 @@ document-portal/xdp-dbus.[ch]
 document-portal/xdp-resources.[ch]
 .dirstamp
 test-suite*.log
-lib/flatpak-version-macros.h
+common/flatpak-version-macros.h
 flatpak.pc
-lib/flatpak-enum-types.c
-lib/flatpak-enum-types.h
+common/flatpak-enum-types.c
+common/flatpak-enum-types.h
 test-libflatpak
 Flatpak-1.0.*
 /app/parse-datetime.c

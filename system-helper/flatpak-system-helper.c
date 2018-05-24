@@ -29,7 +29,7 @@
 #include "flatpak-dbus-generated.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-oci-registry-private.h"
-#include "lib/flatpak-error.h"
+#include "flatpak-error.h"
 
 static PolkitAuthority *authority = NULL;
 static FlatpakSystemHelper *helper = NULL;
