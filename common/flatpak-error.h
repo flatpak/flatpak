@@ -32,13 +32,15 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_NOT_INSTALLED: App/runtime is not installed
  * @FLATPAK_ERROR_ONLY_PULLED: App/runtime was only pulled into the local
  *                             repository but not installed.
+ * @FLATPAK_ERROR_DIFFERENT_REMOTE: The App/Runtime is already installed, but from a different remote.
  *
  * Error codes for library functions.
  */
 typedef enum {
   FLATPAK_ERROR_ALREADY_INSTALLED,
   FLATPAK_ERROR_NOT_INSTALLED,
-  FLATPAK_ERROR_ONLY_PULLED
+  FLATPAK_ERROR_ONLY_PULLED,
+  FLATPAK_ERROR_DIFFERENT_REMOTE,
 } FlatpakError;
 
 #define FLATPAK_ERROR flatpak_error_quark ()
