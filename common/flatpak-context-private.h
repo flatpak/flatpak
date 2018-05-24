@@ -80,9 +80,8 @@ FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
 void           flatpak_context_merge (FlatpakContext *context,
                                       FlatpakContext *other);
+GOptionEntry  *flatpak_context_get_option_entries (void);
 GOptionGroup  *flatpak_context_get_options (FlatpakContext *context);
-void           flatpak_context_complete (FlatpakContext *context,
-                                         FlatpakCompletion *completion);
 gboolean       flatpak_context_load_metadata (FlatpakContext *context,
                                               GKeyFile       *metakey,
                                               GError        **error);

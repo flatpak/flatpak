@@ -230,7 +230,7 @@ flatpak_complete_run (FlatpakCompletion *completion)
     case 1: /* NAME */
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
-      flatpak_context_complete (arg_context, completion);
+      flatpak_complete_context (completion);
 
       user_dir = flatpak_dir_get_user ();
       {
