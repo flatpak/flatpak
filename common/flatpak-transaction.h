@@ -31,9 +31,6 @@ FLATPAK_EXTERN
 G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject)
 
 FLATPAK_EXTERN
-void                flatpak_transaction_set_disable_interaction   (FlatpakTransaction  *self,
-                                                                   gboolean             no_interaction);
-FLATPAK_EXTERN
 void                flatpak_transaction_set_no_pull               (FlatpakTransaction  *self,
                                                                    gboolean             no_pull);
 FLATPAK_EXTERN

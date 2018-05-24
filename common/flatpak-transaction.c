@@ -61,7 +61,6 @@ struct _FlatpakTransaction {
   GList *ops;
   GPtrArray *added_origin_remotes;
 
-  gboolean disable_interaction;
   gboolean no_pull;
   gboolean no_deploy;
   gboolean disable_static_deltas;
@@ -69,6 +68,13 @@ struct _FlatpakTransaction {
   gboolean disable_related;
   gboolean reinstall;
 };
+
+enum {
+  CHOOSE_REMOTE_FOR_REF,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT);
 
@@ -204,6 +210,23 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = flatpak_transaction_finalize;
+
+  /**
+   * FlatpakTransaction::choose-remote-for-ref:
+   * @for_ref: The ref we are installing
+   * @runtime_ref: The ref we are looking for
+   * @remotes: the remotes that has the ref, sorted in prio order
+   *
+   * Returns: the index of the remote to use, or -1 to not pick one (and fail)
+   */
+  signals[CHOOSE_REMOTE_FOR_REF] =
+    g_signal_new ("choose-remote-for-ref",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_INT, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRV);
 }
 
 static void
@@ -225,13 +248,6 @@ flatpak_transaction_new (FlatpakDir *dir)
   t->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
 
   return t;
-}
-
-void
-flatpak_transaction_set_disable_interaction (FlatpakTransaction  *self,
-                                             gboolean             disable_interaction)
-{
-  self->disable_interaction = disable_interaction;
 }
 
 void
@@ -382,39 +398,6 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
   return op;
 }
 
-static char *
-ask_for_remote (FlatpakTransaction *self, const char **remotes)
-{
-  int n_remotes = g_strv_length ((char **)remotes);
-  int chosen = 0;
-  int i;
-
-  if (self->disable_interaction)
-    {
-      chosen = 1;
-      g_print (_("Found in remote %s\n"), remotes[0]);
-    }
-  else if (n_remotes == 1)
-    {
-      if (flatpak_yes_no_prompt (_("Found in remote %s, do you want to install it?"), remotes[0]))
-        chosen = 1;
-    }
-  else
-    {
-      g_print (_("Found in several remotes:\n"));
-      for (i = 0; remotes[i] != NULL; i++)
-        {
-          g_print ("%d) %s\n", i + 1, remotes[i]);
-        }
-      chosen = flatpak_number_prompt (0, n_remotes, _("Which do you want to install (0 to abort)?"));
-    }
-
-  if (chosen == 0)
-    return NULL;
-
-  return g_strdup (remotes[chosen-1]);
-}
-
 static gboolean
 add_related (FlatpakTransaction *self,
              FlatpakRemoteState *state,
@@ -503,18 +486,21 @@ add_deps (FlatpakTransaction *self,
               return FALSE;
             }
 
-          g_print (_("Required runtime for %s (%s) is not installed, searching...\n"),
-                   pref, runtime_ref);
-
           remotes = flatpak_dir_search_for_dependency (self->dir, full_runtime_ref, NULL, NULL);
           if (remotes == NULL || *remotes == NULL)
             {
-              g_print (_("The required runtime %s was not found in a configured remote.\n"),
-                       runtime_ref);
+              return flatpak_fail (error,
+                                   "The Application %s requires the runtime %s which was not found",
+                                   pref, runtime_ref);
             }
           else
             {
-              runtime_remote = ask_for_remote (self, (const char **)remotes);
+              int res = -1;
+
+              g_signal_emit (self, signals[CHOOSE_REMOTE_FOR_REF], 0, ref, runtime_ref, remotes, &res);
+
+              if (res >= 0 && res < g_strv_length (remotes))
+                runtime_remote = g_strdup (remotes[res]);
             }
 
           if (runtime_remote == NULL)
