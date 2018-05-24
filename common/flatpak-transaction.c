@@ -601,13 +601,14 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         {
           if (strcmp (remote, origin) == 0)
             {
-              g_printerr (_("%s already installed, skipping\n"), pref);
-              return TRUE;
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                           _("%s is already installed"), pref);
+              return FALSE;
             }
           else
             {
-              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                           _("%s is already installed from other remote (%s)"), pref, origin);
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_DIFFERENT_REMOTE,
+                           _("%s is already installed from remote %s"), pref, origin);
               return FALSE;
             }
         }

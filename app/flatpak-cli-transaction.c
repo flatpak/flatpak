@@ -23,6 +23,7 @@
 #include "flatpak-cli-transaction.h"
 #include "flatpak-transaction-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-error.h"
 #include <glib/gi18n.h>
 
 typedef struct {
@@ -93,4 +94,28 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), cli);
 
   return transaction;
+}
+
+gboolean
+flatpak_cli_transaction_add_install (FlatpakTransaction *transaction,
+                                     const char *remote,
+                                     const char *ref,
+                                     const char **subpaths,
+                                     GError **error)
+{
+  g_autoptr(GError) local_error = NULL;
+
+    if (!flatpak_transaction_add_install (transaction, remote, ref, subpaths, &local_error))
+      {
+        if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+          {
+            g_printerr (_("Skipping: %s\n"), local_error->message);
+            return TRUE;
+          }
+
+        g_propagate_error (error, g_steal_pointer (&local_error));
+        return FALSE;
+      }
+
+    return TRUE;
 }
