@@ -23,8 +23,8 @@
 
 #include <glib.h>
 #include "libglnx/libglnx.h"
-#include "flatpak-utils.h"
-#include "flatpak-dir.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-dir-private.h"
 
 /* Appstream data expires after a day */
 #define FLATPAK_APPSTREAM_TTL 86400

@@ -37,8 +37,8 @@
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
 
-#include "flatpak-bwrap.h"
-#include "flatpak-utils.h"
+#include "flatpak-bwrap-private.h"
+#include "flatpak-utils-private.h"
 
 static void
 clear_fd (gpointer data)

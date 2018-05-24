@@ -21,8 +21,8 @@
 #include "config.h"
 #include "string.h"
 
-#include "flatpak-json.h"
-#include "flatpak-utils.h"
+#include "flatpak-json-private.h"
+#include "flatpak-utils-private.h"
 #include "libglnx.h"
 
 G_DEFINE_TYPE (FlatpakJson, flatpak_json, G_TYPE_OBJECT);

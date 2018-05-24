@@ -32,8 +32,8 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
-#include "flatpak-utils.h"
-#include "flatpak-run.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-run-private.h"
 
 static GOptionEntry options[] = {
   { NULL }

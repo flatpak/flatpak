@@ -24,7 +24,7 @@
 #include <glib.h>
 #include "libglnx/libglnx.h"
 
-#include "flatpak-dir.h"
+#include "flatpak-dir-private.h"
 
 typedef struct FlatpakTransaction FlatpakTransaction;
 

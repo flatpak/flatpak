@@ -43,31 +43,31 @@ BUILT_SOURCES += $(nodist_libflatpak_common_la_SOURCES)
 CLEANFILES += $(nodist_libflatpak_common_la_SOURCES)
 
 libflatpak_common_la_SOURCES = \
-	common/flatpak-common-types.h \
+	common/flatpak-common-types-private.h \
 	common/flatpak-bwrap.c \
-	common/flatpak-bwrap.h \
+	common/flatpak-bwrap-private.h \
 	common/flatpak-dir.c \
-	common/flatpak-dir.h \
+	common/flatpak-dir-private.h \
 	common/flatpak-run.c \
-	common/flatpak-run.h \
+	common/flatpak-run-private.h \
 	common/flatpak-context.c \
-	common/flatpak-context.h \
+	common/flatpak-context-private.h \
 	common/flatpak-exports.c \
-	common/flatpak-exports.h \
+	common/flatpak-exports-private.h \
 	common/flatpak-utils.c \
-	common/flatpak-utils.h \
+	common/flatpak-utils-private.h \
 	common/flatpak-table-printer.c \
 	common/flatpak-table-printer.h \
 	common/flatpak-chain-input-stream.c \
-	common/flatpak-chain-input-stream.h \
+	common/flatpak-chain-input-stream-private.h \
 	common/flatpak-portal-error.c \
 	common/flatpak-portal-error.h \
 	common/flatpak-json.c \
-	common/flatpak-json.h \
+	common/flatpak-json-private.h \
 	common/flatpak-json-oci.c \
-	common/flatpak-json-oci.h \
+	common/flatpak-json-oci-private.h \
 	common/flatpak-oci-registry.c \
-	common/flatpak-oci-registry.h \
+	common/flatpak-oci-registry-private.h \
 	$(NULL)
 
 libflatpak_common_la_CFLAGS = \

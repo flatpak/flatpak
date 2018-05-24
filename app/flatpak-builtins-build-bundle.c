@@ -34,9 +34,9 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
-#include "flatpak-utils.h"
-#include "flatpak-oci-registry.h"
-#include "flatpak-chain-input-stream.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-oci-registry-private.h"
+#include "flatpak-chain-input-stream-private.h"
 #include "flatpak-builtins-utils.h"
 
 #include <archive.h>

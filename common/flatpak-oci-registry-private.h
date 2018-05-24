@@ -26,8 +26,8 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include <archive.h>
-#include "flatpak-json-oci.h"
-#include "flatpak-utils.h"
+#include "flatpak-json-oci-private.h"
+#include "flatpak-utils-private.h"
 
 #define FLATPAK_TYPE_OCI_REGISTRY flatpak_oci_registry_get_type ()
 #define FLATPAK_OCI_REGISTRY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_OCI_REGISTRY, FlatpakOciRegistry))

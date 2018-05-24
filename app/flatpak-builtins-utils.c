@@ -24,10 +24,10 @@
 
 
 #include <gio/gunixinputstream.h>
-#include "flatpak-chain-input-stream.h"
+#include "flatpak-chain-input-stream-private.h"
 
 #include "flatpak-builtins-utils.h"
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 
 
 gboolean

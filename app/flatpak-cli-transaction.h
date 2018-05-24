@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Red Hat, Inc
+ * Copyright © 2018 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,19 +18,13 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
-#error "Only <flatpak.h> can be included directly."
-#endif
+#ifndef __FLATPAK_CLI_TRANSACTION_H__
+#define __FLATPAK_CLI_TRANSACTION_H__
 
-#ifndef __FLATPAK_REMOTE_REF_PRIVATE_H__
-#define __FLATPAK_REMOTE_REF_PRIVATE_H__
+#include "flatpak-transaction.h"
+#include "flatpak-dir-private.h"
 
-#include <flatpak-remote-ref.h>
-#include <flatpak-dir-private.h>
+FlatpakTransaction *flatpak_cli_transaction_new (FlatpakDir *dir,
+                                                 gboolean disable_interaction);
 
-FlatpakRemoteRef *flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
-                                          const char *commit,
-                                          const char *remote_name,
-                                          FlatpakRemoteState *remote_state);
-
-#endif /* __FLATPAK_REMOTE_REF_PRIVATE_H__ */
+#endif /* __FLATPAK_CLI_TRANSACTION_H__ */

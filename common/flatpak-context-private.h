@@ -23,8 +23,8 @@
 
 #include "libglnx/libglnx.h"
 #include "dbus-proxy/flatpak-proxy.h"
-#include <flatpak-common-types.h>
-#include "flatpak-exports.h"
+#include <flatpak-common-types-private.h>
+#include "flatpak-exports-private.h"
 
 typedef struct FlatpakContext FlatpakContext;
 

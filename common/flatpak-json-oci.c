@@ -21,8 +21,8 @@
 #include "config.h"
 #include "string.h"
 
-#include "flatpak-json-oci.h"
-#include "flatpak-utils.h"
+#include "flatpak-json-oci-private.h"
+#include "flatpak-utils-private.h"
 #include "libglnx.h"
 
 const char *

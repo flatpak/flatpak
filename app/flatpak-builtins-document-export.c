@@ -34,8 +34,8 @@
 #include <gio/gunixfdlist.h>
 
 #include "flatpak-builtins.h"
-#include "flatpak-utils.h"
-#include "flatpak-run.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-run-private.h"
 
 static gboolean opt_unique = FALSE;
 static gboolean opt_transient = FALSE;

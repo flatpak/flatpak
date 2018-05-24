@@ -27,8 +27,8 @@
 #include <polkit/polkit.h>
 
 #include "flatpak-dbus.h"
-#include "flatpak-dir.h"
-#include "flatpak-oci-registry.h"
+#include "flatpak-dir-private.h"
+#include "flatpak-oci-registry-private.h"
 #include "lib/flatpak-error.h"
 
 static PolkitAuthority *authority = NULL;

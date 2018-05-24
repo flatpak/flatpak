@@ -25,9 +25,9 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
-#include "flatpak-dir.h"
+#include "flatpak-dir-private.h"
 #include "flatpak-table-printer.h"
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 
 static char *opt_arch;
 
