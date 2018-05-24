@@ -51,8 +51,6 @@ AM_CPPFLAGS =							\
 	-I$(srcdir)/libglnx					\
 	-I$(srcdir)/common					\
 	-I$(builddir)/common					\
-	-I$(srcdir)/lib						\
-	-I$(builddir)/lib					\
 	-include "config.h"					\
 	$(NULL)
 
@@ -90,7 +88,6 @@ include libglnx/Makefile-libglnx.am.inc
 include common/Makefile.am.inc
 include data/Makefile.am.inc
 include app/Makefile.am.inc
-include lib/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include portal/Makefile.am.inc
 include system-helper/Makefile.am.inc

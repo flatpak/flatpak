@@ -35,7 +35,7 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-transaction.h"
 #include "flatpak-utils-private.h"
-#include "lib/flatpak-error.h"
+#include "flatpak-error.h"
 #include "flatpak-chain-input-stream-private.h"
 
 static char *opt_arch;

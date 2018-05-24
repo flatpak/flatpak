@@ -437,7 +437,7 @@ Makefile
 doc/Makefile
 doc/reference/Makefile
 flatpak.pc
-lib/flatpak-version-macros.h
+common/flatpak-version-macros.h
 doc/reference/version.xml
 doc/flatpak-docs.xml
 po/Makefile.in

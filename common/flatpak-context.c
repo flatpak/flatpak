@@ -42,7 +42,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-systemd-dbus-generated.h"
-#include "lib/flatpak-error.h"
+#include "flatpak-error.h"
 
 /* Same order as enum */
 const char *flatpak_context_shares[] = {

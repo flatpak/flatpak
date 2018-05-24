@@ -52,7 +52,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-systemd-dbus-generated.h"
 #include "flatpak-document-dbus-generated.h"
-#include "lib/flatpak-error.h"
+#include "flatpak-error.h"
 
 #define DEFAULT_SHELL "/bin/sh"
 
