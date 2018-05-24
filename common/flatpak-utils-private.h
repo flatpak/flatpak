@@ -24,13 +24,13 @@
 #include <string.h>
 
 #include "libglnx/libglnx.h"
-#include <flatpak-common-types.h>
+#include <flatpak-common-types-private.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include <libsoup/soup.h>
 #include "flatpak-dbus.h"
 #include "flatpak-document-dbus.h"
-#include "flatpak-context.h"
+#include "flatpak-context-private.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
 

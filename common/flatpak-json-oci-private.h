@@ -21,7 +21,7 @@
 #ifndef __FLATPAK_JSON_OCI_H__
 #define __FLATPAK_JSON_OCI_H__
 
-#include "flatpak-json.h"
+#include "flatpak-json-private.h"
 
 G_BEGIN_DECLS
 

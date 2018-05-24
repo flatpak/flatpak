@@ -26,7 +26,7 @@
 #define __FLATPAK_INSTALLED_REF_PRIVATE_H__
 
 #include <flatpak-installed-ref.h>
-#include <flatpak-dir.h>
+#include <flatpak-dir-private.h>
 
 FlatpakInstalledRef *flatpak_installed_ref_new (const char  *full_ref,
                                                 const char  *commit,

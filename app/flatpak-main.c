@@ -31,7 +31,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 
 static int opt_verbose;
 static gboolean opt_ostree_verbose;

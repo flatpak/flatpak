@@ -26,7 +26,7 @@
 #define __FLATPAK_REMOTE_PRIVATE_H__
 
 #include <flatpak-remote.h>
-#include <flatpak-dir.h>
+#include <flatpak-dir-private.h>
 #include <ostree.h>
 
 FlatpakRemote *flatpak_remote_new_with_dir (const char *name,

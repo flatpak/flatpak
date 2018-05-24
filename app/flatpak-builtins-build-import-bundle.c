@@ -30,8 +30,8 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
-#include "flatpak-utils.h"
-#include "flatpak-oci-registry.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-oci-registry-private.h"
 
 static char *opt_ref;
 static gboolean opt_oci = FALSE;

@@ -28,8 +28,8 @@
 
 #include <gpgme.h>
 #include <libsoup/soup.h>
-#include "flatpak-oci-registry.h"
-#include "flatpak-utils.h"
+#include "flatpak-oci-registry-private.h"
+#include "flatpak-utils-private.h"
 
 G_DEFINE_QUARK (flatpak_oci_error, flatpak_oci_error)
 

@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 #include "flatpak-bundle-ref.h"
 #include "flatpak-enum-types.h"
 

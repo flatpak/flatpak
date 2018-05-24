@@ -41,10 +41,10 @@
 #include "lib/flatpak-error.h"
 #include <ostree.h>
 
-#include "flatpak-dir.h"
-#include "flatpak-utils.h"
-#include "flatpak-oci-registry.h"
-#include "flatpak-run.h"
+#include "flatpak-dir-private.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-oci-registry-private.h"
+#include "flatpak-run-private.h"
 
 #include "errno.h"
 

@@ -24,8 +24,8 @@
 #include <ostree.h>
 #include <gio/gio.h>
 
-#include "flatpak-utils.h"
-#include "flatpak-dir.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-dir-private.h"
 
 G_BEGIN_DECLS
 

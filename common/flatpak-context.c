@@ -37,10 +37,10 @@
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
 
-#include "flatpak-run.h"
+#include "flatpak-run-private.h"
 #include "flatpak-proxy.h"
-#include "flatpak-utils.h"
-#include "flatpak-dir.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-dir-private.h"
 #include "flatpak-systemd-dbus.h"
 #include "lib/flatpak-error.h"
 

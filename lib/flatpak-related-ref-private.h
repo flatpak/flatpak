@@ -26,7 +26,7 @@
 #define __FLATPAK_RELATED_REF_PRIVATE_H__
 
 #include <flatpak-related-ref.h>
-#include <flatpak-dir.h>
+#include <flatpak-dir-private.h>
 
 FlatpakRelatedRef *flatpak_related_ref_new (const char  *collection_id,
                                             const char  *full_ref,

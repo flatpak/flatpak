@@ -24,7 +24,7 @@
 #include <glib/gi18n.h>
 
 #include "flatpak-transaction.h"
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-error.h"
 

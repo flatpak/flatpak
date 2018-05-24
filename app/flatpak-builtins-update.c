@@ -32,7 +32,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-transaction.h"
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 
 static char *opt_arch;

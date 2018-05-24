@@ -28,7 +28,7 @@
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "flatpak-dbus.h"
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 
 static char *monitor_dir;
 

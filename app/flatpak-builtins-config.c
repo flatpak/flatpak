@@ -30,7 +30,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
-#include "common/flatpak-dir.h"
+#include "common/flatpak-dir-private.h"
 
 static gboolean opt_get;
 static gboolean opt_set;

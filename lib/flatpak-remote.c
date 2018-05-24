@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 #include "flatpak-remote-private.h"
 #include "flatpak-remote-ref-private.h"
 #include "flatpak-enum-types.h"

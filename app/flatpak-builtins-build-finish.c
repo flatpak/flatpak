@@ -31,9 +31,9 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
-#include "flatpak-context.h"
-#include "flatpak-utils.h"
-#include "flatpak-run.h"
+#include "flatpak-context-private.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-run-private.h"
 
 static char *opt_command;
 static char *opt_require_version;

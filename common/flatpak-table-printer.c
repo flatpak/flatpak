@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include "flatpak-table-printer.h"
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 
 #include <string.h>
 #include <stdlib.h>

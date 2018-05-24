@@ -31,7 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
 
 static gboolean opt_show_details;

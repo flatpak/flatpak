@@ -22,11 +22,11 @@
 #define __FLATPAK_RUN_H__
 
 #include "libglnx/libglnx.h"
-#include "flatpak-common-types.h"
-#include "flatpak-context.h"
-#include "flatpak-bwrap.h"
-#include "flatpak-utils.h"
-#include "flatpak-exports.h"
+#include "flatpak-common-types-private.h"
+#include "flatpak-context-private.h"
+#include "flatpak-bwrap-private.h"
+#include "flatpak-utils-private.h"
+#include "flatpak-exports-private.h"
 
 gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         GError    **error);

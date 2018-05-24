@@ -1,6 +1,6 @@
 /*** BEGIN file-header ***/
 #include "config.h"
-#include <flatpak-utils.h>
+#include <flatpak-utils-private.h>
 #include <flatpak.h>
 #include <flatpak-enum-types.h>
 #include <gio/gio.h>

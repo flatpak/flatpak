@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "flatpak-chain-input-stream.h"
+#include "flatpak-chain-input-stream-private.h"
 
 enum {
   PROP_0,

@@ -20,11 +20,11 @@
 
 #include "config.h"
 
-#include "flatpak-utils.h"
+#include "flatpak-utils-private.h"
 #include "lib/flatpak-error.h"
-#include "flatpak-dir.h"
-#include "flatpak-oci-registry.h"
-#include "flatpak-run.h"
+#include "flatpak-dir-private.h"
+#include "flatpak-oci-registry-private.h"
+#include "flatpak-run-private.h"
 
 #include <glib/gi18n.h>
 
