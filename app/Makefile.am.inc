@@ -43,6 +43,8 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-search.c \
 	app/flatpak-table-printer.c \
 	app/flatpak-table-printer.h \
+	app/flatpak-complete.c \
+	app/flatpak-complete.h \
 	app/parse-datetime.h \
 	$(NULL)
 

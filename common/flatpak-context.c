@@ -1187,10 +1187,10 @@ static GOptionEntry context_options[] = {
   { NULL }
 };
 
-void
-flatpak_context_complete (FlatpakContext *context, FlatpakCompletion *completion)
+GOptionEntry *
+flatpak_context_get_option_entries (void)
 {
-  flatpak_complete_options (completion, context_options);
+  return context_options;
 }
 
 GOptionGroup  *

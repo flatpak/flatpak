@@ -654,7 +654,7 @@ flatpak_complete_build_finish (FlatpakCompletion *completion)
     case 1: /* DIR */
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
-      flatpak_context_complete (arg_context, completion);
+      flatpak_complete_context (completion);
 
       flatpak_complete_dir (completion);
       break;

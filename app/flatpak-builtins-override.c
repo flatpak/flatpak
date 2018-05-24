@@ -125,7 +125,7 @@ flatpak_complete_override (FlatpakCompletion *completion)
     case 1: /* NAME */
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
-      flatpak_context_complete (arg_context, completion);
+      flatpak_complete_context (completion);
 
       for (i = 0; i < dirs->len; i++)
         {

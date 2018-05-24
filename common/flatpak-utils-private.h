@@ -663,39 +663,6 @@ gboolean flatpak_download_http_uri (SoupSession *soup_session,
                                     GCancellable *cancellable,
                                     GError      **error);
 
-struct FlatpakCompletion {
-  char *shell_cur;
-  char *cur;
-  char *prev;
-  char *line;
-  int point;
-  char **argv;
-  char **original_argv;
-  int argc;
-  int original_argc;
-};
-
-void flatpak_completion_debug (const gchar *format, ...);
-
-FlatpakCompletion *flatpak_completion_new   (const char        *arg_line,
-                                             const char        *arg_point,
-                                             const char        *arg_cur);
-void               flatpak_complete_word    (FlatpakCompletion *completion,
-                                             char              *format,
-                                             ...) G_GNUC_PRINTF(2,3);
-void               flatpak_complete_ref     (FlatpakCompletion *completion,
-                                             OstreeRepo        *repo);
-void               flatpak_complete_partial_ref (FlatpakCompletion *completion,
-                                                 FlatpakKinds kinds,
-                                                 const char *only_arch,
-                                                 FlatpakDir *dir,
-                                                 const char *remote);
-void               flatpak_complete_file    (FlatpakCompletion *completion,
-                                             const char        *file_type);
-void               flatpak_complete_dir     (FlatpakCompletion *completion);
-void               flatpak_complete_options (FlatpakCompletion *completion,
-                                             GOptionEntry      *entries);
-void               flatpak_completion_free  (FlatpakCompletion *completion);
 
 typedef struct {
   int inited;
