@@ -56,8 +56,6 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-exports-private.h \
 	common/flatpak-utils.c \
 	common/flatpak-utils-private.h \
-	common/flatpak-table-printer.c \
-	common/flatpak-table-printer.h \
 	common/flatpak-chain-input-stream.c \
 	common/flatpak-chain-input-stream-private.h \
 	common/flatpak-portal-error.c \
