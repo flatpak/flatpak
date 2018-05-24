@@ -26,7 +26,7 @@
 #include <gio/gio.h>
 #include <polkit/polkit.h>
 
-#include "flatpak-dbus.h"
+#include "flatpak-dbus-generated.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "lib/flatpak-error.h"

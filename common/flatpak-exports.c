@@ -45,7 +45,7 @@
 #include "flatpak-proxy.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
-#include "flatpak-systemd-dbus.h"
+#include "flatpak-systemd-dbus-generated.h"
 #include "lib/flatpak-error.h"
 
 /* We don't want to export paths pointing into these, because they are readonly

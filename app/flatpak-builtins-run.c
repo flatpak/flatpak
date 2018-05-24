@@ -34,7 +34,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
-#include "flatpak-dbus.h"
+#include "flatpak-dbus-generated.h"
 #include "flatpak-run-private.h"
 
 static char *opt_arch;
