@@ -28,8 +28,8 @@
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include <libsoup/soup.h>
-#include "flatpak-dbus.h"
-#include "flatpak-document-dbus.h"
+#include "flatpak-dbus-generated.h"
+#include "flatpak-document-dbus-generated.h"
 #include "flatpak-context-private.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>

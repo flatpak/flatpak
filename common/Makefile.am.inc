@@ -1,36 +1,36 @@
 noinst_LTLIBRARIES += libflatpak-common.la
 
-dbus_built_sources = common/flatpak-dbus.c common/flatpak-dbus.h common/flatpak-document-dbus.c common/flatpak-document-dbus.h
-systemd_dbus_built_sources = common/flatpak-systemd-dbus.c common/flatpak-systemd-dbus.h
+dbus_built_sources = common/flatpak-dbus-generated.c common/flatpak-dbus-generated.h common/flatpak-document-dbus-generated.c common/flatpak-document-dbus-generated.h
+systemd_dbus_built_sources = common/flatpak-systemd-dbus-generated.c common/flatpak-systemd-dbus-generated.h
 
-common/flatpak-dbus.c: data/org.freedesktop.Flatpak.xml Makefile
+common/flatpak-dbus-generated.c: data/org.freedesktop.Flatpak.xml Makefile
 	mkdir -p $(builddir)/common
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.Flatpak.	\
 		--c-namespace Flatpak				\
-		--generate-c-code $(builddir)/common/flatpak-dbus	\
+		--generate-c-code $(builddir)/common/flatpak-dbus-generated	\
 		$(srcdir)/data/org.freedesktop.Flatpak.xml  \
 		$(NULL)
 
-common/flatpak-document-dbus.c: data/org.freedesktop.portal.Documents.xml Makefile
+common/flatpak-document-dbus-generated.c: data/org.freedesktop.portal.Documents.xml Makefile
 	mkdir -p $(builddir)/common
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.portal.	\
 		--c-namespace XdpDbus				\
-		--generate-c-code $(builddir)/common/flatpak-document-dbus	\
+		--generate-c-code $(builddir)/common/flatpak-document-dbus-generated	\
 		$(srcdir)/data/org.freedesktop.portal.Documents.xml  \
 		$(NULL)
 
-common/flatpak-systemd-dbus.c: data/org.freedesktop.systemd1.xml Makefile
+common/flatpak-systemd-dbus-generated.c: data/org.freedesktop.systemd1.xml Makefile
 	mkdir -p $(builddir)/common
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.systemd1.	\
 		--c-namespace Systemd				\
-		--generate-c-code $(builddir)/common/flatpak-systemd-dbus	\
+		--generate-c-code $(builddir)/common/flatpak-systemd-dbus-generated	\
 		$(srcdir)/data/org.freedesktop.systemd1.xml	\
 		$(NULL)
 
-common/%-dbus.h: common/%-dbus.c
+common/%-dbus-generated.h: common/%-dbus-generated.c
 	@true # Built as a side-effect of the rules for the .c
 
 nodist_libflatpak_common_la_SOURCES = \

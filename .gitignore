@@ -36,9 +36,7 @@ flatpak-session-helper
 flatpak-portal
 *~
 profile/flatpak.sh
-flatpak-dbus.[ch]
-flatpak-document-dbus.[ch]
-flatpak-systemd-dbus.[ch]
+*-dbus-generated.[ch]
 flatpak-resources.[ch]
 flatpak-portal-dbus.[ch]
 flatpak-dbus-proxy

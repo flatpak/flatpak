@@ -29,7 +29,7 @@
 #include <glib/gi18n.h>
 
 #include "libglnx/libglnx.h"
-#include "flatpak-document-dbus.h"
+#include "flatpak-document-dbus-generated.h"
 
 #include <gio/gunixfdlist.h>
 

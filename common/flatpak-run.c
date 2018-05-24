@@ -50,8 +50,8 @@
 #include "flatpak-proxy.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
-#include "flatpak-systemd-dbus.h"
-#include "flatpak-document-dbus.h"
+#include "flatpak-systemd-dbus-generated.h"
+#include "flatpak-document-dbus-generated.h"
 #include "lib/flatpak-error.h"
 
 #define DEFAULT_SHELL "/bin/sh"
