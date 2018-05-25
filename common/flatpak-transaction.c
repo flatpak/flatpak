@@ -819,35 +819,25 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
   return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, FLATPAK_TRANSACTION_OP_KIND_UPDATE, NULL, NULL, error);
 }
 
-gboolean
+static gboolean
 flatpak_transaction_update_metadata (FlatpakTransaction  *self,
-                                     gboolean             all_remotes,
                                      GCancellable        *cancellable,
                                      GError             **error)
 {
   g_auto(GStrv) remotes = NULL;
   int i;
   GList *l;
+  g_autoptr(GHashTable) ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   /* Collect all dir+remotes used in this transaction */
 
-  if (all_remotes)
+  for (l = self->ops; l != NULL; l = l->next)
     {
-      remotes = flatpak_dir_list_remotes (self->dir, NULL, error);
-      if (remotes == NULL)
-        return FALSE;
+      FlatpakTransactionOp *op = l->data;
+      g_hash_table_add (ht, g_strdup (op->remote));
     }
-  else
-    {
-      g_autoptr(GHashTable) ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-      for (l = self->ops; l != NULL; l = l->next)
-        {
-          FlatpakTransactionOp *op = l->data;
-          g_hash_table_add (ht, g_strdup (op->remote));
-        }
-      remotes = (char **)g_hash_table_get_keys_as_array (ht, NULL);
-      g_hash_table_steal_all (ht); /* Move ownership to remotes */
-    }
+  remotes = (char **)g_hash_table_get_keys_as_array (ht, NULL);
+  g_hash_table_steal_all (ht); /* Move ownership to remotes */
 
   /* Update metadata for said remotes */
   for (i = 0; remotes[i] != NULL; i++)
@@ -905,6 +895,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
   int i;
+
+  if (!self->no_pull &&
+      !flatpak_transaction_update_metadata (self, cancellable, error))
+    return FALSE;
 
   self->ops = g_list_reverse (self->ops);
 

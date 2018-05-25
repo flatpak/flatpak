@@ -63,11 +63,6 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_reinstall             (FlatpakTransaction   *self,
                                                                    gboolean             reinstall);
 FLATPAK_EXTERN
-gboolean            flatpak_transaction_update_metadata           (FlatpakTransaction  *self,
-                                                                   gboolean             all_remotes,
-                                                                   GCancellable        *cancellable,
-                                                                   GError             **error);
-FLATPAK_EXTERN
 gboolean            flatpak_transaction_run                       (FlatpakTransaction  *self,
                                                                    GCancellable        *cancellable,
                                                                    GError             **error);

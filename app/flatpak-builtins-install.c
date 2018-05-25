@@ -457,9 +457,6 @@ install_from (FlatpakDir *dir,
   if (!flatpak_cli_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
     return FALSE;
 
-  if (!flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
-    return FALSE;
-
   if (!flatpak_cli_transaction_run (transaction, cancellable, error))
     return FALSE;
 
@@ -566,10 +563,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!flatpak_cli_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
         return FALSE;
     }
-
-  if (!opt_no_pull &&
-      !flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
-    return FALSE;
 
   if (!flatpak_cli_transaction_run (transaction, cancellable, error))
     return FALSE;
