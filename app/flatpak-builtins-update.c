@@ -110,7 +110,7 @@ flatpak_builtin_update (int           argc,
 
   for (k = 0; k < dirs->len; k++)
     {
-      FlatpakTransaction *transaction = flatpak_cli_transaction_new (g_ptr_array_index (dirs, k), opt_yes);
+      FlatpakTransaction *transaction = flatpak_cli_transaction_new (g_ptr_array_index (dirs, k), opt_yes, FALSE);
       flatpak_transaction_set_no_pull (transaction, opt_no_pull);
       flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
       flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
@@ -229,7 +229,7 @@ flatpak_builtin_update (int           argc,
           if (!flatpak_transaction_update_metadata (transaction, n_prefs == 0, cancellable, error))
             return FALSE;
 
-          if (!flatpak_transaction_run (transaction, FALSE, cancellable, error))
+          if (!flatpak_cli_transaction_run (transaction, cancellable, error))
             return FALSE;
         }
     }

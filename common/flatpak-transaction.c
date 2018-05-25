@@ -32,8 +32,8 @@ typedef struct FlatpakTransactionOp FlatpakTransactionOp;
 typedef enum {
   FLATPAK_TRANSACTION_OP_KIND_INSTALL,
   FLATPAK_TRANSACTION_OP_KIND_UPDATE,
-  FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE,
-  FLATPAK_TRANSACTION_OP_KIND_BUNDLE
+  FLATPAK_TRANSACTION_OP_KIND_BUNDLE,
+  FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE
 } FlatpakTransactionOpKind;
 
 struct FlatpakTransactionOp {
@@ -47,7 +47,6 @@ struct FlatpakTransactionOp {
   gboolean non_fatal;
   FlatpakTransactionOp *source_op; /* This is the main app/runtime ref for related extensions, and the runtime for apps */
   gboolean failed;
-  gboolean skipped;
 };
 
 
@@ -70,6 +69,7 @@ struct _FlatpakTransaction {
 };
 
 enum {
+  OPERATION_ERROR,
   CHOOSE_REMOTE_FOR_REF,
   LAST_SIGNAL
 };
@@ -77,6 +77,25 @@ enum {
 static guint signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT);
+
+static FlatpakTransactionOperationType
+op_type_from_resolved_kind (FlatpakTransactionOpKind kind)
+{
+  switch (kind)
+    {
+    case FLATPAK_TRANSACTION_OP_KIND_INSTALL:
+      return FLATPAK_TRANSACTION_OPERATION_INSTALL;
+    case FLATPAK_TRANSACTION_OP_KIND_UPDATE:
+      return FLATPAK_TRANSACTION_OPERATION_UPDATE;
+    case FLATPAK_TRANSACTION_OP_KIND_BUNDLE:
+      return FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE;
+
+      /* This should be resolve before converting to type */
+    case FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE:
+    default:
+      g_assert_not_reached ();
+    }
+}
 
 static gboolean
 remote_name_is_file (const char *remote_name)
@@ -210,6 +229,24 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = flatpak_transaction_finalize;
+
+  /**
+   * FlatpakTransaction::operation-error:
+   * @ref: The ref the operation was working on
+   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
+   * @error: A #GError
+   * @details: A #FlatpakTransactionError with Details about the error
+   *
+   * Returns: the %TRUE to contine transaction, %FALSE to stop
+   */
+  signals[OPERATION_ERROR] =
+    g_signal_new ("operation-error",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_BOOLEAN, 4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_ERROR, G_TYPE_INT);
 
   /**
    * FlatpakTransaction::choose-remote-for-ref:
@@ -780,7 +817,6 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 
 gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
-                         gboolean stop_on_first_error,
                          GCancellable *cancellable,
                          GError **error)
 {
@@ -795,9 +831,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
       FlatpakTransactionOp *op = l->data;
       g_autoptr(GError) local_error = NULL;
       gboolean res = TRUE;
-      gboolean skipped = FALSE;
       const char *pref;
-      const char *opname;
       FlatpakTransactionOpKind kind;
       FlatpakTerminalProgress terminal_progress = { 0 };
       FlatpakRemoteState *state;
@@ -824,24 +858,23 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
       pref = strchr (op->ref, '/') + 1;
 
-      if (op->source_op && (op->source_op->failed || op->source_op->skipped) &&
+      if (op->source_op && (op->source_op->failed) &&
           /* Allow installing an app if the runtime failed to update (i.e. is installed) because
            * the app should still run, and otherwise you could never install the app until the runtime
            * remote is fixed. */
           !(op->source_op->kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE && g_str_has_prefix (op->ref, "app/")))
         {
-          g_printerr (_("Skipping %s due to previous error\n"), pref);
-          skipped = TRUE;
+          g_set_error (&local_error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED,
+                       _("Skipping %s due to previous error\n"), pref);
+          res = FALSE;
         }
       else if ((state = flatpak_transaction_ensure_remote_state (self, op->remote, &local_error)) == NULL)
         {
-          opname = _("fetch remote info");
           res = FALSE;
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
         {
           g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
-          opname = _("install");
           if (flatpak_dir_is_user (self->dir))
             g_print (_("Installing for user: %s from %s\n"), pref, op->remote);
           else
@@ -862,7 +895,6 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_auto(OstreeRepoFinderResultv) check_results = NULL;
 
-          opname = _("update");
           g_autofree char *target_commit = flatpak_dir_check_for_update (self->dir, state, op->ref, op->commit,
                                                                          (const char **)op->subpaths,
                                                                          self->no_pull,
@@ -917,7 +949,6 @@ flatpak_transaction_run (FlatpakTransaction *self,
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_BUNDLE)
         {
           g_autofree char *bundle_basename = g_file_get_basename (op->bundle);
-          opname = _("install bundle");
           if (flatpak_dir_is_user (self->dir))
             g_print (_("Installing for user: %s from bundle %s\n"), pref, bundle_basename);
           else
@@ -929,7 +960,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
       else
         g_assert_not_reached ();
 
-      if (res && !skipped)
+      if (res)
         {
           g_autoptr(GVariant) deploy_data = NULL;
           deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
@@ -947,35 +978,31 @@ flatpak_transaction_run (FlatpakTransaction *self,
             }
         }
 
-      op->skipped = skipped;
       if (!res)
         {
+          gboolean do_cont = FALSE;
+          FlatpakTransactionError error_details = 0;
+
           op->failed = TRUE;
+
           if (op->non_fatal)
+            error_details |= FLATPAK_TRANSACTION_ERROR_NON_FATAL;
+
+          g_signal_emit (self, signals[OPERATION_ERROR], 0,
+                         op->ref,
+                         op_type_from_resolved_kind (kind),
+                         local_error, error_details,
+                         &do_cont);
+
+          if (!do_cont)
             {
-              g_printerr (_("Warning: Failed to %s %s: %s\n"),
-                          opname, pref, local_error->message);
-            }
-          else if (!stop_on_first_error)
-            {
-              g_printerr (_("Error: Failed to %s %s: %s\n"),
-                          opname, pref, local_error->message);
-              if (succeeded)
-                {
-                  succeeded = FALSE;
-                  flatpak_fail (error, _("One or more operations failed"));
-                }
-            }
-          else
-            {
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED,
+                           _("Aborted due to failure"));
               succeeded = FALSE;
-              g_propagate_error (error, g_steal_pointer (&local_error));
-              goto out;
+              break;
             }
         }
     }
-
- out:
 
   flatpak_dir_prune (self->dir, cancellable, NULL);
 

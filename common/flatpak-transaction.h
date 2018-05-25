@@ -27,6 +27,16 @@
 
 #define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
 
+typedef enum {
+  FLATPAK_TRANSACTION_OPERATION_INSTALL,
+  FLATPAK_TRANSACTION_OPERATION_UPDATE,
+  FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE
+} FlatpakTransactionOperationType;
+
+typedef enum {
+  FLATPAK_TRANSACTION_ERROR_NON_FATAL = 1 << 0,
+} FlatpakTransactionError;
+
 FLATPAK_EXTERN
 G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject)
 
@@ -55,7 +65,6 @@ gboolean            flatpak_transaction_update_metadata           (FlatpakTransa
                                                                    GError             **error);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_run                       (FlatpakTransaction  *self,
-                                                                   gboolean             stop_on_first_errror,
                                                                    GCancellable        *cancellable,
                                                                    GError             **error);
 FLATPAK_EXTERN
