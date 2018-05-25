@@ -1,6 +1,6 @@
 DOC_MODULE = flatpak
 DOC_MAIN_SGML_FILE = flatpak-docs.xml
-DOC_SOURCE_DIR = $(top_srcdir)/lib $(top_builddir)/lib
+DOC_SOURCE_DIR = $(top_srcdir)/common $(top_builddir)/common
 
 SCAN_OPTIONS = --rebuild-types \
     --ignore-decorators='FLATPAK_EXTERN'
@@ -8,14 +8,29 @@ SCANGOBJ_OPTIONS =
 MKDB_OPTIONS = --output-format=xml --name-space=flatpak
 FIXXREF_OPTIONS =
 
-HFILE_GLOB = $(top_srcdir)/lib/*.h $(top_builddir)/lib/*.h
-CFILE_GLOB = $(top_srcdir)/lib/*.c
+HFILE_GLOB = $(top_srcdir)/common/*.h $(top_builddir)/common/*.h
+CFILE_GLOB = $(top_srcdir)/common/*.c
 
 IGNORE_HFILES = \
+	flatpak-bwrap-private.h \
+	flatpak-chain-input-stream-private.h \
+	flatpak-common-types-private.h \
+	flatpak-context-private.h \
+	flatpak-dbus-generated.h \
+	flatpak-dir-private.h \
+	flatpak-document-dbus-generated.h \
 	flatpak-enum-types.h \
+	flatpak-exports-private.h \
 	flatpak-installed-ref-private.h \
+	flatpak-json-oci-private.h \
+	flatpak-json-private.h \
+	flatpak-oci-registry-private.h \
+	flatpak-remote-private.h \
 	flatpak-remote-ref-private.h \
-	flatpak-remote-private.h
+	flatpak-run-private.h \
+	flatpak-systemd-dbus-generated.h \
+	flatpak-transaction-private.h \
+	flatpak-utils-private.h 
 
 EXTRA_HFILES =
 
