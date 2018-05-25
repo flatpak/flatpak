@@ -69,6 +69,7 @@ struct _FlatpakTransaction {
 };
 
 enum {
+  NEW_OPERATION,
   OPERATION_ERROR,
   CHOOSE_REMOTE_FOR_REF,
   END_OF_LIFED,
@@ -230,6 +231,22 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = flatpak_transaction_finalize;
+
+  /**
+   * FlatpakTransaction::new-operation:
+   * @ref: The ref the operation will be working on
+   * @remote: The ref the operation will be working on
+   * @bundle: The bundle path (or %NULL)
+   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
+   */
+  signals[NEW_OPERATION] =
+    g_signal_new ("new-operation",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
 
   /**
    * FlatpakTransaction::operation-error:
@@ -831,6 +848,14 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
   return TRUE;
 }
 
+static void
+emit_new_op (FlatpakTransaction *self, FlatpakTransactionOp *op)
+{
+  g_signal_emit (self, signals[NEW_OPERATION], 0, op->ref, op->remote,
+                 op->bundle ? flatpak_file_get_path_cached (op->bundle) : NULL,
+                 op_type_from_resolved_kind (op->kind));
+}
+
 gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          GCancellable *cancellable,
@@ -891,10 +916,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
         {
           g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
-          if (flatpak_dir_is_user (self->dir))
-            g_print (_("Installing for user: %s from %s\n"), pref, op->remote);
-          else
-            g_print (_("Installing: %s from %s\n"), pref, op->remote);
+
+          emit_new_op (self, op);
+
           res = flatpak_dir_install (self->dir ,
                                      self->no_pull,
                                      self->no_deploy,
@@ -918,11 +942,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                                                          cancellable, &local_error);
           if (target_commit != NULL)
             {
-              if (flatpak_dir_is_user (self->dir))
-                g_print (_("Updating for user: %s from %s\n"), pref, op->remote);
-              else
-                g_print (_("Updating: %s from %s\n"), pref, op->remote);
               g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
+
+              emit_new_op (self, op);
+
               res = flatpak_dir_update (self->dir,
                                         self->no_pull,
                                         self->no_deploy,
@@ -964,11 +987,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_BUNDLE)
         {
-          g_autofree char *bundle_basename = g_file_get_basename (op->bundle);
-          if (flatpak_dir_is_user (self->dir))
-            g_print (_("Installing for user: %s from bundle %s\n"), pref, bundle_basename);
-          else
-            g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
+          emit_new_op (self, op);
           res = flatpak_dir_install_bundle (self->dir, op->bundle,
                                             op->remote, NULL,
                                             cancellable, &local_error);
