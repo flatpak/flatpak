@@ -95,6 +95,7 @@ op_type_to_string (FlatpakTransactionOperationType operation_type)
 static gboolean
 operation_error (FlatpakTransaction *transaction,
                  const char *ref,
+                 const char *remote,
                  FlatpakTransactionOperationType operation_type,
                  GError *error,
                  FlatpakTransactionError detail,
