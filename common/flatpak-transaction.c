@@ -1018,11 +1018,15 @@ flatpak_transaction_run (FlatpakTransaction *self,
   GList *l;
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
+  g_autoptr(GMainContextPopDefault) main_context = NULL;
   int i;
 
   if (!self->no_pull &&
       !flatpak_transaction_update_metadata (self, cancellable, error))
     return FALSE;
+
+  /* Work around ostree-pull spinning the default main context for the sync calls */
+  main_context = flatpak_main_context_new_default ();
 
   self->ops = g_list_reverse (self->ops);
 

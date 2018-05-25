@@ -30,6 +30,7 @@ typedef struct _FlatpakInstallation FlatpakInstallation;
 #include <gio/gio.h>
 #include <flatpak-installed-ref.h>
 #include <flatpak-remote.h>
+#include <flatpak-transaction.h>
 
 #define FLATPAK_TYPE_INSTALLATION flatpak_installation_get_type ()
 #define FLATPAK_INSTALLATION(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_INSTALLATION, FlatpakInstallation))
@@ -228,6 +229,9 @@ FLATPAK_EXTERN char *                flatpak_installation_get_config      (Flatp
 									   GError             **error);
 FLATPAK_EXTERN char *              flatpak_installation_load_app_overrides (FlatpakInstallation *self,
                                                                             const char          *app_id,
+                                                                            GCancellable        *cancellable,
+                                                                            GError             **error);
+FLATPAK_EXTERN FlatpakTransaction *flatpak_installation_create_transaction (FlatpakInstallation    *self,
                                                                             GCancellable        *cancellable,
                                                                             GError             **error);
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install (FlatpakInstallation    *self,
