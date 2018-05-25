@@ -903,6 +903,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 {
   GList *l;
   gboolean succeeded = TRUE;
+  gboolean needs_prune = FALSE;
   int i;
 
   self->ops = g_list_reverse (self->ops);
@@ -972,7 +973,14 @@ flatpak_transaction_run (FlatpakTransaction *self,
           flatpak_terminal_progress_end (&terminal_progress);
 
           if (res)
-            emit_op_done (self, op, 0);
+            {
+              emit_op_done (self, op, 0);
+
+              /* Normally we don't need to prune after install, because it makes no old objects
+                 stale. However if we reinstall, that is not true. */
+              if (!self->no_pull && self->reinstall)
+                needs_prune = TRUE;
+            }
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
         {
@@ -1013,7 +1021,12 @@ flatpak_transaction_run (FlatpakTransaction *self,
                 }
 
               if (res)
-                emit_op_done (self, op, result_details);
+                {
+                  emit_op_done (self, op, result_details);
+
+                  if (!self->no_pull)
+                    needs_prune = TRUE;
+                }
             }
           else
             {
@@ -1032,7 +1045,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                             op->remote, NULL,
                                             cancellable, &local_error);
           if (res)
-            emit_op_done (self, op, 0);
+            {
+              emit_op_done (self, op, 0);
+              needs_prune = TRUE;
+            }
         }
       else
         g_assert_not_reached ();
@@ -1077,7 +1093,8 @@ flatpak_transaction_run (FlatpakTransaction *self,
         }
     }
 
-  flatpak_dir_prune (self->dir, cancellable, NULL);
+  if (needs_prune)
+    flatpak_dir_prune (self->dir, cancellable, NULL);
 
   for (i = 0; i < self->added_origin_remotes->len; i++)
     flatpak_dir_prune_origin_remote (self->dir, g_ptr_array_index (self->added_origin_remotes, i));
