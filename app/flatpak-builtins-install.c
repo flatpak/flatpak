@@ -287,7 +287,7 @@ install_bundle (FlatpakDir *dir,
   if (!flatpak_dir_ensure_repo (dir, cancellable, error))
     return FALSE;
 
-  transaction = flatpak_cli_transaction_new (dir, opt_yes);
+  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE);
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
@@ -298,7 +298,7 @@ install_bundle (FlatpakDir *dir,
   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
     return FALSE;
 
-  if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
+  if (!flatpak_cli_transaction_run (transaction, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -446,7 +446,7 @@ install_from (FlatpakDir *dir,
   slash = strchr (ref, '/');
   g_print (_("Installing: %s\n"), slash + 1);
 
-  transaction = flatpak_cli_transaction_new (clone, opt_yes);
+  transaction = flatpak_cli_transaction_new (clone, opt_yes, TRUE);
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
@@ -460,7 +460,7 @@ install_from (FlatpakDir *dir,
   if (!flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
     return FALSE;
 
-  if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
+  if (!flatpak_cli_transaction_run (transaction, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -530,7 +530,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  transaction = flatpak_cli_transaction_new (dir, opt_yes);
+  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE);
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
@@ -571,7 +571,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       !flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
     return FALSE;
 
-  if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
+  if (!flatpak_cli_transaction_run (transaction, cancellable, error))
     return FALSE;
 
   return TRUE;

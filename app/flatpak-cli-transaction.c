@@ -29,6 +29,8 @@
 typedef struct {
   FlatpakTransaction *transaction;
   gboolean disable_interaction;
+  gboolean stop_on_first_error;
+  GError *first_operation_error;
 } FlatpakCliTransaction;
 
 static int
@@ -74,24 +76,87 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
   return chosen;
 }
 
+static char *
+op_type_to_string (FlatpakTransactionOperationType operation_type)
+{
+  switch (operation_type)
+    {
+    case FLATPAK_TRANSACTION_OPERATION_INSTALL:
+      return _("install");
+    case FLATPAK_TRANSACTION_OPERATION_UPDATE:
+      return _("update");
+    case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
+      return _("install bundle");
+    default:
+      return "Unknown type"; /* Should not happen */
+    }
+}
+
+static gboolean
+operation_error (FlatpakTransaction *transaction,
+                 const char *ref,
+                 FlatpakTransactionOperationType operation_type,
+                 GError *error,
+                 FlatpakTransactionError detail,
+                 gpointer data)
+{
+  FlatpakCliTransaction *cli = data;
+  const char *pref;
+
+  pref = strchr (ref, '/') + 1;
+
+  if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED))
+    {
+      g_printerr ("%s", error->message);
+      return TRUE;
+    }
+
+  if (detail & FLATPAK_TRANSACTION_ERROR_NON_FATAL)
+    {
+      g_printerr (_("Warning: Failed to %s %s: %s\n"),
+                  op_type_to_string (operation_type), pref, error->message);
+    }
+  else
+    {
+      if (cli->first_operation_error == NULL)
+        g_propagate_prefixed_error (&cli->first_operation_error,
+                                    g_error_copy (error),
+                                    _("Failed to %s %s: "),
+                                    op_type_to_string (operation_type), pref);
+
+      if (cli->stop_on_first_error)
+        return FALSE;
+
+      g_printerr (_("Error: Failed to %s %s: %s\n"),
+                  op_type_to_string (operation_type), pref, error->message);
+    }
+
+  return TRUE; /* Continue */
+}
+
 static void
 flatpak_cli_transaction_free (FlatpakCliTransaction *cli)
 {
+  if (cli->first_operation_error)
+    g_error_free (cli->first_operation_error);
   g_free (cli);
 }
 
 FlatpakTransaction *
 flatpak_cli_transaction_new (FlatpakDir *dir,
-                             gboolean disable_interaction)
+                             gboolean disable_interaction,
+                             gboolean stop_on_first_error)
 {
   FlatpakTransaction *transaction = flatpak_transaction_new (dir);
   FlatpakCliTransaction *cli = g_new0 (FlatpakCliTransaction, 1);
 
   cli->transaction = transaction;
   cli->disable_interaction = disable_interaction;
+  cli->stop_on_first_error = stop_on_first_error;
   g_object_set_data_full (G_OBJECT (transaction), "cli", cli, (GDestroyNotify)flatpak_cli_transaction_free);
 
   g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), cli);
+  g_signal_connect (transaction, "operation-error", G_CALLBACK (operation_error), cli);
 
   return transaction;
 }
@@ -118,4 +183,51 @@ flatpak_cli_transaction_add_install (FlatpakTransaction *transaction,
       }
 
     return TRUE;
+}
+
+
+gboolean
+flatpak_cli_transaction_run (FlatpakTransaction *transaction,
+                             GCancellable *cancellable,
+                             GError **error)
+{
+  FlatpakCliTransaction *cli = g_object_get_data (G_OBJECT (transaction), "cli");
+  g_autoptr(GError) local_error = NULL;
+  gboolean res;
+
+  res = flatpak_transaction_run (transaction, cancellable, &local_error);
+
+
+  /* If we got some weird error (i.e. not ABORTED because we chose to abort
+     on an error, report that */
+  if (!res &&
+      !g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  if (cli->first_operation_error)
+    {
+      /* We always want to return an error if there was some kind of operation error,
+         as that causes the main CLI to return an error status. */
+
+      if (cli->stop_on_first_error)
+        {
+          /* For the install/stop_on_first_error we return the first operation error,
+             as we have not yet printed it.  */
+
+          g_propagate_error (error, g_steal_pointer (&cli->first_operation_error));
+          return FALSE;
+        }
+      else
+        {
+          /* For updates/!stop_on_first_error we already printed all errors so we make up
+             a different one. */
+
+          return flatpak_fail (error, _("There were one or more errors"));
+        }
+    }
+
+  return TRUE;
 }

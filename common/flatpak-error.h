@@ -33,6 +33,8 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_ONLY_PULLED: App/runtime was only pulled into the local
  *                             repository but not installed.
  * @FLATPAK_ERROR_DIFFERENT_REMOTE: The App/Runtime is already installed, but from a different remote.
+ * @FLATPAK_ERROR_ABORTED: The transaction was aborted (returned TRUE in operation-error signal).
+ * @FLATPAK_ERROR_SKIPPED: The App/Runtime install was skipped due to earlier errors.
  *
  * Error codes for library functions.
  */
@@ -41,6 +43,8 @@ typedef enum {
   FLATPAK_ERROR_NOT_INSTALLED,
   FLATPAK_ERROR_ONLY_PULLED,
   FLATPAK_ERROR_DIFFERENT_REMOTE,
+  FLATPAK_ERROR_ABORTED,
+  FLATPAK_ERROR_SKIPPED,
 } FlatpakError;
 
 #define FLATPAK_ERROR flatpak_error_quark ()

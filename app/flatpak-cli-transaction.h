@@ -25,12 +25,17 @@
 #include "flatpak-dir-private.h"
 
 FlatpakTransaction *flatpak_cli_transaction_new (FlatpakDir *dir,
-                                                 gboolean disable_interaction);
+                                                 gboolean disable_interaction,
+                                                 gboolean stop_on_first_error);
 
 gboolean flatpak_cli_transaction_add_install (FlatpakTransaction *self,
                                               const char *remote,
                                               const char *ref,
                                               const char **subpaths,
                                               GError **error);
+
+gboolean flatpak_cli_transaction_run (FlatpakTransaction *transaction,
+                                      GCancellable *cancellable,
+                                      GError **error);
 
 #endif /* __FLATPAK_CLI_TRANSACTION_H__ */
