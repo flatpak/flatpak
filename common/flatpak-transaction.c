@@ -78,6 +78,121 @@ enum {
   LAST_SIGNAL
 };
 
+struct _FlatpakTransactionProgress {
+  GObject parent;
+
+  OstreeAsyncProgress *ostree_progress;
+  char *status;
+  gboolean estimating;
+  int progress;
+
+  gboolean done;
+};
+
+enum {
+  CHANGED,
+  LAST_PROGRESS_SIGNAL
+};
+
+static guint progress_signals[LAST_SIGNAL] = { 0 };
+
+G_DEFINE_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, G_TYPE_OBJECT);
+
+void
+flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress  *self,
+                                                   guint update_frequency)
+{
+  g_object_set_data (G_OBJECT (self->ostree_progress), "update-frequency", GUINT_TO_POINTER (update_frequency));
+}
+
+
+const char *
+flatpak_transaction_progress_get_status (FlatpakTransactionProgress  *self)
+{
+  return self->status;
+}
+
+gboolean
+flatpak_transaction_progress_get_is_estimating (FlatpakTransactionProgress  *self)
+{
+  return self->estimating;
+}
+
+int
+flatpak_transaction_progress_get_progress (FlatpakTransactionProgress  *self)
+{
+  return self->progress;
+}
+
+static void
+flatpak_transaction_progress_finalize (GObject *object)
+{
+  FlatpakTransactionProgress *self = (FlatpakTransactionProgress *) object;
+
+  g_free (self->status);
+  g_object_unref (self->ostree_progress);
+
+  G_OBJECT_CLASS (flatpak_transaction_progress_parent_class)->finalize (object);
+}
+
+static void
+flatpak_transaction_progress_class_init (FlatpakTransactionProgressClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = flatpak_transaction_progress_finalize;
+
+  /**
+   * FlatpakTransactionProgress::changed:
+   */
+  progress_signals[CHANGED] =
+    g_signal_new ("changed",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE, 0);
+}
+
+static void
+got_progress_cb (const char *status,
+                 guint       progress,
+                 gboolean    estimating,
+                 gpointer    user_data)
+{
+  FlatpakTransactionProgress *p = user_data;
+
+  g_free (p->status);
+  p->status = g_strdup (status);
+  p->progress = progress;
+  p->estimating = estimating;
+
+  if (!p->done)
+    g_signal_emit (p, progress_signals[CHANGED], 0);
+}
+
+static void
+flatpak_transaction_progress_init (FlatpakTransactionProgress *self)
+{
+  self->status = g_strdup ("Initializing");
+  self->estimating = TRUE;
+  self->ostree_progress = flatpak_progress_new (got_progress_cb, self);
+}
+
+static void
+flatpak_transaction_progress_done (FlatpakTransactionProgress *self)
+{
+  ostree_async_progress_finish (self->ostree_progress);
+  self->done = TRUE;
+}
+
+static FlatpakTransactionProgress *
+flatpak_transaction_progress_new (void)
+{
+  return g_object_new (FLATPAK_TYPE_TRANSACTION_PROGRESS, NULL);
+}
+
 static guint signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT);
@@ -240,6 +355,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @remote: The ref the operation will be working on
    * @bundle: The bundle path (or %NULL)
    * @operation_type: A #FlatpakTransactionOperationType specifying operation type
+   * @progress: A #FlatpakTransactionProgress
    */
   signals[NEW_OPERATION] =
     g_signal_new ("new-operation",
@@ -248,7 +364,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   0,
                   NULL, NULL,
                   NULL,
-                  G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
+                  G_TYPE_NONE, 5, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, FLATPAK_TYPE_TRANSACTION_PROGRESS);
 
   /**
    * FlatpakTransaction::operation-error:
@@ -866,11 +982,11 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 }
 
 static void
-emit_new_op (FlatpakTransaction *self, FlatpakTransactionOp *op)
+emit_new_op (FlatpakTransaction *self, FlatpakTransactionOp *op, FlatpakTransactionProgress *progress)
 {
   g_signal_emit (self, signals[NEW_OPERATION], 0, op->ref, op->remote,
                  op->bundle ? flatpak_file_get_path_cached (op->bundle) : NULL,
-                 op_type_from_resolved_kind (op->kind));
+                 op_type_from_resolved_kind (op->kind), progress);
 }
 
 static void
@@ -917,7 +1033,6 @@ flatpak_transaction_run (FlatpakTransaction *self,
       gboolean res = TRUE;
       const char *pref;
       FlatpakTransactionOpKind kind;
-      FlatpakTerminalProgress terminal_progress = { 0 };
       FlatpakRemoteState *state;
 
       kind = op->kind;
@@ -958,9 +1073,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
         {
-          g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
+          g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
 
-          emit_new_op (self, op);
+          emit_new_op (self, op, progress);
 
           res = flatpak_dir_install (self->dir ,
                                      self->no_pull,
@@ -969,10 +1084,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                      self->reinstall,
                                      state, op->ref,
                                      (const char **)op->subpaths,
-                                     progress,
+                                     progress->ostree_progress,
                                      cancellable, &local_error);
-          ostree_async_progress_finish (progress);
-          flatpak_terminal_progress_end (&terminal_progress);
+          flatpak_transaction_progress_done (progress);
 
           if (res)
             {
@@ -995,10 +1109,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                                                          cancellable, &local_error);
           if (target_commit != NULL)
             {
-              g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
+              g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
               FlatpakTransactionResult result_details = 0;
 
-              emit_new_op (self, op);
+              emit_new_op (self, op, progress);
 
               res = flatpak_dir_update (self->dir,
                                         self->no_pull,
@@ -1008,10 +1122,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                         state, op->ref, target_commit,
                                         (const OstreeRepoFinderResult * const *) check_results,
                                         (const char **)op->subpaths,
-                                        progress,
+                                        progress->ostree_progress,
                                         cancellable, &local_error);
-              ostree_async_progress_finish (progress);
-              flatpak_terminal_progress_end (&terminal_progress);
+              flatpak_transaction_progress_done (progress);
 
               /* Handle noop-updates */
               if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
@@ -1042,10 +1155,13 @@ flatpak_transaction_run (FlatpakTransaction *self,
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_BUNDLE)
         {
-          emit_new_op (self, op);
+          g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
+          emit_new_op (self, op, progress);
           res = flatpak_dir_install_bundle (self->dir, op->bundle,
                                             op->remote, NULL,
                                             cancellable, &local_error);
+          flatpak_transaction_progress_done (progress);
+
           if (res)
             {
               emit_op_done (self, op, 0);

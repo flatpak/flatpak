@@ -25,6 +25,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 #include <glib/gi18n.h>
+#include <sys/ioctl.h>
 
 typedef struct {
   FlatpakTransaction *transaction;
@@ -32,6 +33,10 @@ typedef struct {
   gboolean stop_on_first_error;
   gboolean is_user;
   GError *first_operation_error;
+
+  gboolean progress_initialized;
+  int progress_n_columns;
+  int progress_last_width;
 } FlatpakCliTransaction;
 
 static int
@@ -93,12 +98,77 @@ op_type_to_string (FlatpakTransactionOperationType operation_type)
     }
 }
 
+#define BAR_LENGTH 20
+#define BAR_CHARS " -=#"
+
+
+static void
+progress_changed_cb (FlatpakTransactionProgress *progress,
+                     gpointer data)
+{
+  FlatpakCliTransaction *cli = data;
+  g_autoptr(GString) str = g_string_new ("");
+  int i;
+  int n_full, remainder, partial;
+  int width, padded_width;
+
+  guint percent = flatpak_transaction_progress_get_progress (progress);
+  const char *status = flatpak_transaction_progress_get_status (progress);
+
+  if (!cli->progress_initialized)
+    {
+      struct winsize w;
+      cli->progress_n_columns = 80;
+      if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
+        cli->progress_n_columns = w.ws_col;
+      cli->progress_last_width = 0;
+      cli->progress_initialized = TRUE;
+    }
+
+  g_string_append (str, "[");
+
+  n_full = (BAR_LENGTH * percent) / 100;
+  remainder = percent - (n_full * 100 / BAR_LENGTH);
+  partial = (remainder * strlen(BAR_CHARS) * BAR_LENGTH) / 100;
+
+  for (i = 0; i < n_full; i++)
+    g_string_append_c (str, BAR_CHARS[strlen(BAR_CHARS)-1]);
+
+  if (i < BAR_LENGTH)
+    {
+      g_string_append_c (str, BAR_CHARS[partial]);
+      i++;
+    }
+
+  for (; i < BAR_LENGTH; i++)
+    g_string_append (str, " ");
+
+  g_string_append (str, "] ");
+  g_string_append (str, status);
+
+  g_print ("\r");
+  width = MIN (strlen (str->str), cli->progress_n_columns);
+  padded_width = MAX (cli->progress_last_width, width);
+  cli->progress_last_width = width;
+  g_print ("%-*.*s", padded_width, padded_width, str->str);
+}
+
+static void
+progress_done (FlatpakTransaction *transaction)
+{
+  FlatpakCliTransaction *cli = g_object_get_data (G_OBJECT (transaction), "cli");
+
+  if (cli->progress_initialized)
+    g_print("\n");
+}
+
 static void
 new_operation (FlatpakTransaction *transaction,
                const char *ref,
                const char *remote,
                const char *bundle_path,
                FlatpakTransactionOperationType operation_type,
+               FlatpakTransactionProgress *progress,
                gpointer data)
 {
   FlatpakCliTransaction *cli = data;
@@ -134,6 +204,11 @@ new_operation (FlatpakTransaction *transaction,
       g_assert_not_reached ();
       break;
     }
+
+  cli->progress_initialized = FALSE;
+  g_signal_connect (progress, "changed", G_CALLBACK (progress_changed_cb), cli);
+  flatpak_transaction_progress_set_update_frequency (progress, FLATPAK_CLI_UPDATE_FREQUENCY);
+
 }
 
 static void
@@ -146,6 +221,9 @@ operation_done (FlatpakTransaction *transaction,
                 gpointer data)
 {
   g_autofree char *short_commit = g_strndup (commit, 12);
+
+  progress_done (transaction);
+
   if (details & FLATPAK_TRANSACTION_RESULT_NO_CHANGE)
     g_print (_("No updates.\n"));
   else
@@ -163,6 +241,8 @@ operation_error (FlatpakTransaction *transaction,
 {
   FlatpakCliTransaction *cli = data;
   const char *pref;
+
+  progress_done (transaction);
 
   pref = strchr (ref, '/') + 1;
 
