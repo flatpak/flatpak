@@ -71,6 +71,7 @@ struct _FlatpakTransaction {
 enum {
   OPERATION_ERROR,
   CHOOSE_REMOTE_FOR_REF,
+  END_OF_LIFED,
   LAST_SIGNAL
 };
 
@@ -264,6 +265,20 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   NULL, NULL,
                   NULL,
                   G_TYPE_INT, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRV);
+  /**
+   * FlatpakTransaction::end-of-lifed:
+   * @ref: The ref we are installing
+   * @reason: The eol reason, or %NULL
+   * @rebase: The new name, if rebased, or %NULL
+   */
+  signals[END_OF_LIFED] =
+    g_signal_new ("end-of-lifed",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 }
 
 static void
@@ -968,14 +983,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
           const char *eol =  flatpak_deploy_data_get_eol (deploy_data);
           const char *eol_rebase = flatpak_deploy_data_get_eol_rebase (deploy_data);
 
-          if (eol_rebase)
-            {
-              g_printerr ("Warning: %s is end-of-life, in preference of %s\n", op->ref, eol_rebase);
-            }
-          else if (eol)
-            {
-              g_printerr ("Warning: %s is end-of-life, with reason: %s\n", op->ref, eol);
-            }
+          if (eol || eol_rebase)
+            g_signal_emit (self, signals[END_OF_LIFED], 0,
+                           op->ref, eol, eol_rebase);
         }
 
       if (!res)
