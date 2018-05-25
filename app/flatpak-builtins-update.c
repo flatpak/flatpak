@@ -224,14 +224,9 @@ flatpak_builtin_update (int           argc,
     {
       FlatpakTransaction *transaction = g_ptr_array_index (transactions, k);
 
-      if (!flatpak_transaction_is_empty (transaction))
-        {
-          if (!flatpak_transaction_update_metadata (transaction, n_prefs == 0, cancellable, error))
-            return FALSE;
-
-          if (!flatpak_cli_transaction_run (transaction, cancellable, error))
-            return FALSE;
-        }
+      if (!flatpak_transaction_is_empty (transaction) &&
+          !flatpak_cli_transaction_run (transaction, cancellable, error))
+        return FALSE;
     }
 
   if (n_prefs == 0)
