@@ -857,7 +857,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 
       g_debug ("Updating remote metadata for %s", remote);
       if (!flatpak_dir_update_remote_configuration (self->dir, remote, cancellable, &my_error))
-        g_printerr (_("Error updating remote metadata for '%s': %s\n"), remote, my_error->message);
+        g_warning (_("Error updating remote metadata for '%s': %s"), remote, my_error->message);
     }
 
   /* Reload changed configuration */
