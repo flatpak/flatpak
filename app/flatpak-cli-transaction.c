@@ -30,6 +30,7 @@ typedef struct {
   FlatpakTransaction *transaction;
   gboolean disable_interaction;
   gboolean stop_on_first_error;
+  gboolean is_user;
   GError *first_operation_error;
 } FlatpakCliTransaction;
 
@@ -89,6 +90,49 @@ op_type_to_string (FlatpakTransactionOperationType operation_type)
       return _("install bundle");
     default:
       return "Unknown type"; /* Should not happen */
+    }
+}
+
+static void
+new_operation (FlatpakTransaction *transaction,
+               const char *ref,
+               const char *remote,
+               const char *bundle_path,
+               FlatpakTransactionOperationType operation_type,
+               gpointer data)
+{
+  FlatpakCliTransaction *cli = data;
+  const char *pref;
+  g_autofree char *bundle_basename = NULL;
+
+  pref = strchr (ref, '/') + 1;
+
+  switch (operation_type)
+    {
+    case FLATPAK_TRANSACTION_OPERATION_INSTALL:
+      if (cli->is_user)
+        g_print (_("Installing for user: %s from %s\n"), pref, remote);
+      else
+        g_print (_("Installing: %s from %s\n"), pref, remote);
+      break;
+    case FLATPAK_TRANSACTION_OPERATION_UPDATE:
+      if (cli->is_user)
+        g_print (_("Updating for user: %s from %s\n"), pref, remote);
+      else
+        g_print (_("Updating: %s from %s\n"), pref, remote);
+      break;
+    case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
+      {
+        bundle_basename = g_path_get_basename (bundle_path);
+        if (cli->is_user)
+          g_print (_("Installing for user: %s from bundle %s\n"), pref, bundle_basename);
+        else
+          g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
+      }
+      break;
+    default:
+      g_assert_not_reached ();
+      break;
     }
 }
 
@@ -171,9 +215,11 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   cli->transaction = transaction;
   cli->disable_interaction = disable_interaction;
   cli->stop_on_first_error = stop_on_first_error;
+  cli->is_user = flatpak_dir_is_user (dir);
   g_object_set_data_full (G_OBJECT (transaction), "cli", cli, (GDestroyNotify)flatpak_cli_transaction_free);
 
   g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), cli);
+  g_signal_connect (transaction, "new-operation", G_CALLBACK (new_operation), cli);
   g_signal_connect (transaction, "operation-error", G_CALLBACK (operation_error), cli);
   g_signal_connect (transaction, "end-of-lifed", G_CALLBACK (end_of_lifed), cli);
 
