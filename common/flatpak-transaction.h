@@ -37,6 +37,10 @@ typedef enum {
   FLATPAK_TRANSACTION_ERROR_NON_FATAL = 1 << 0,
 } FlatpakTransactionError;
 
+typedef enum {
+  FLATPAK_TRANSACTION_RESULT_NO_CHANGE = 1 << 0,
+} FlatpakTransactionResult;
+
 FLATPAK_EXTERN
 G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject)
 
