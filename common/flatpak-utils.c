@@ -5664,66 +5664,6 @@ flatpak_get_current_locale_langs (void)
   return (char **)g_ptr_array_free (langs, FALSE);
 }
 
-#define BAR_LENGTH 20
-#define BAR_CHARS " -=#"
-
-void
-flatpak_terminal_progress_cb (const char *status,
-                              guint       progress,
-                              gboolean    estimating,
-                              gpointer    user_data)
-{
-  g_autoptr(GString) str = g_string_new ("");
-  FlatpakTerminalProgress *term = user_data;
-  int i;
-  int n_full, remainder, partial;
-  int width, padded_width;
-
-  if (!term->inited)
-    {
-      struct winsize w;
-      term->n_columns = 80;
-      if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
-        term->n_columns = w.ws_col;
-      term->last_width = 0;
-      term->inited = 1;
-    }
-
-  g_string_append (str, "[");
-
-  n_full = (BAR_LENGTH * progress) / 100;
-  remainder = progress - (n_full * 100 / BAR_LENGTH);
-  partial = (remainder * strlen(BAR_CHARS) * BAR_LENGTH) / 100;
-
-  for (i = 0; i < n_full; i++)
-    g_string_append_c (str, BAR_CHARS[strlen(BAR_CHARS)-1]);
-
-  if (i < BAR_LENGTH)
-    {
-      g_string_append_c (str, BAR_CHARS[partial]);
-      i++;
-    }
-
-  for (; i < BAR_LENGTH; i++)
-    g_string_append (str, " ");
-
-  g_string_append (str, "] ");
-  g_string_append (str, status);
-
-  g_print ("\r");
-  width = MIN (strlen (str->str), term->n_columns);
-  padded_width = MAX (term->last_width, width);
-  term->last_width = width;
-  g_print ("%-*.*s", padded_width, padded_width, str->str);
-}
-
-void
-flatpak_terminal_progress_end (FlatpakTerminalProgress *term)
-{
-  if (term->inited)
-    g_print("\n");
-}
-
 static inline guint
 get_write_progress (guint outstanding_writes)
 {
@@ -5953,9 +5893,6 @@ flatpak_progress_new (FlatpakProgressCallback progress,
                                            progress_data);
   g_object_set_data (G_OBJECT (ostree_progress), "callback", progress);
   g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
-
-  if (progress == flatpak_terminal_progress_cb)
-    g_object_set_data (G_OBJECT (ostree_progress), "update-frequency", GUINT_TO_POINTER (FLATPAK_CLI_UPDATE_FREQUENCY));
 
   return ostree_progress;
 }

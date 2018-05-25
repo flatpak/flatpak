@@ -23,9 +23,8 @@
 
 #include <gio/gio.h>
 
-/* Note: This header is actually public in libflatpak, even if its in common/ */
-
 #define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
+#define FLATPAK_TYPE_TRANSACTION_PROGRESS flatpak_transaction_progress_get_type ()
 
 typedef enum {
   FLATPAK_TRANSACTION_OPERATION_INSTALL,
@@ -43,6 +42,19 @@ typedef enum {
 
 FLATPAK_EXTERN
 G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject)
+
+FLATPAK_EXTERN
+G_DECLARE_FINAL_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, FLATPAK, TRANSACTION_PROGRESS, GObject)
+
+FLATPAK_EXTERN
+void        flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress  *self,
+                                                               guint update_frequency);
+FLATPAK_EXTERN
+const char *flatpak_transaction_progress_get_status           (FlatpakTransactionProgress  *self);
+FLATPAK_EXTERN
+gboolean    flatpak_transaction_progress_get_is_estimating    (FlatpakTransactionProgress  *self);
+FLATPAK_EXTERN
+int         flatpak_transaction_progress_get_progress         (FlatpakTransactionProgress  *self);
 
 FLATPAK_EXTERN
 void                flatpak_transaction_set_no_pull               (FlatpakTransaction  *self,
