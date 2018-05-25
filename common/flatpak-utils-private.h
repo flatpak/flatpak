@@ -496,6 +496,25 @@ flatpak_temp_dir_destroy (void *p)
 typedef GFile FlatpakTempDir;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakTempDir, flatpak_temp_dir_destroy)
 
+typedef GMainContext GMainContextPopDefault;
+static inline void
+flatpak_main_context_pop_default_destroy (void *p)
+{
+  GMainContext *main_context = p;
+
+  if (main_context)
+    g_main_context_pop_thread_default (main_context);
+}
+
+static inline GMainContextPopDefault *
+flatpak_main_context_new_default (void)
+{
+  GMainContext *main_context = g_main_context_new ();
+  g_main_context_push_thread_default (main_context);
+  return main_context;
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GMainContextPopDefault, flatpak_main_context_pop_default_destroy)
 
 typedef OstreeRepo FlatpakRepoTransaction;
 

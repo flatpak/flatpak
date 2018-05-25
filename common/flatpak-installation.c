@@ -30,6 +30,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-installation.h"
 #include "flatpak-installed-ref-private.h"
+#include "flatpak-transaction-private.h"
 #include "flatpak-related-ref-private.h"
 #include "flatpak-remote-private.h"
 #include "flatpak-remote-ref-private.h"
@@ -1621,6 +1622,41 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
 
   coll_ref = flatpak_collection_ref_new (collection_id, ref);
   return flatpak_remote_ref_new (coll_ref, NULL, remote, NULL);
+}
+
+
+/**
+ * flatpak_installation_create_transaction:
+ * @self: a #FlatpakInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a new #FlatpakTransaction object that can be used to do installation
+ * and updates of multiple refs, as well as their dependencies, in a single
+ * operation. Set the options you want on the transaction and add the
+ * refs you want to install/update, then start the transaction with
+ * flatpak_transaction_run ().
+ *
+ * Returns: (transfer full): a #FlatpakTransaction, or %NULL on failure.
+ */
+FlatpakTransaction *
+flatpak_installation_create_transaction (FlatpakInstallation    *self,
+                                         GCancellable           *cancellable,
+                                         GError                **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  /* Pull, prune, etc are not threadsafe, so we work on a copy */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+    return NULL;
+
+  return flatpak_transaction_new (dir);
 }
 
 /**
