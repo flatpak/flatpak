@@ -63,6 +63,7 @@ struct _FlatpakTransaction {
   gboolean no_pull;
   gboolean no_deploy;
   gboolean disable_static_deltas;
+  gboolean disable_prune;
   gboolean disable_deps;
   gboolean disable_related;
   gboolean reinstall;
@@ -358,6 +359,13 @@ flatpak_transaction_set_disable_static_deltas (FlatpakTransaction  *self,
                                                gboolean             disable_static_deltas)
 {
   self->disable_static_deltas = disable_static_deltas;
+}
+
+void
+flatpak_transaction_set_disable_prune (FlatpakTransaction  *self,
+                                       gboolean             disable_prune)
+{
+  self->disable_prune = disable_prune;
 }
 
 void
@@ -1087,7 +1095,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
         }
     }
 
-  if (needs_prune)
+  if (needs_prune && !self->disable_prune)
     flatpak_dir_prune (self->dir, cancellable, NULL);
 
   for (i = 0; i < self->added_origin_remotes->len; i++)

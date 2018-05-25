@@ -54,6 +54,9 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_disable_static_deltas (FlatpakTransaction  *self,
                                                                    gboolean             disable_static_deltas);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_disable_prune         (FlatpakTransaction  *self,
+                                                                   gboolean             disable_prune);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_disable_dependencies  (FlatpakTransaction  *self,
                                                                    gboolean             disable_dependencies);
 FLATPAK_EXTERN
