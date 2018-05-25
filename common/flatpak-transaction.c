@@ -70,6 +70,7 @@ struct _FlatpakTransaction {
 
 enum {
   NEW_OPERATION,
+  OPERATION_DONE,
   OPERATION_ERROR,
   CHOOSE_REMOTE_FOR_REF,
   END_OF_LIFED,
@@ -266,6 +267,24 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   NULL, NULL,
                   NULL,
                   G_TYPE_BOOLEAN, 5, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_ERROR, G_TYPE_INT);
+
+  /**
+   * FlatpakTransaction::operation-done:
+   * @ref: The ref the operation was working on
+   * @remote: The remote
+   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
+   * @commit: The new commit checksum
+   * @result: A #FlatpakTransactionResult giving details about the result
+   *
+   */
+  signals[OPERATION_DONE] =
+    g_signal_new ("operation-done",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING);
 
   /**
    * FlatpakTransaction::choose-remote-for-ref:
@@ -856,6 +875,27 @@ emit_new_op (FlatpakTransaction *self, FlatpakTransactionOp *op)
                  op_type_from_resolved_kind (op->kind));
 }
 
+static void
+emit_op_done (FlatpakTransaction *self,
+              FlatpakTransactionOp *op,
+              FlatpakTransactionResult details)
+{
+  g_autofree char *commit = NULL;
+
+  if (self->no_deploy)
+    commit = flatpak_dir_read_latest (self->dir, op->remote, op->ref, NULL, NULL, NULL);
+  else
+    {
+      g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
+      if (deploy_data)
+        commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+    }
+
+  g_signal_emit (self, signals[OPERATION_DONE], 0, op->ref, op->remote,
+                 op_type_from_resolved_kind (op->kind),
+                 commit, details);
+}
+
 gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          GCancellable *cancellable,
@@ -930,6 +970,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                      cancellable, &local_error);
           ostree_async_progress_finish (progress);
           flatpak_terminal_progress_end (&terminal_progress);
+
+          if (res)
+            emit_op_done (self, op, 0);
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
         {
@@ -943,6 +986,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           if (target_commit != NULL)
             {
               g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
+              FlatpakTransactionResult result_details = 0;
 
               emit_new_op (self, op);
 
@@ -958,22 +1002,18 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                         cancellable, &local_error);
               ostree_async_progress_finish (progress);
               flatpak_terminal_progress_end (&terminal_progress);
-              if (res)
-                {
-                  g_autoptr(GVariant) deploy_data = NULL;
-                  g_autofree char *commit = NULL;
-                  deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
-                  commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
-                  g_print (_("Now at %s.\n"), commit);
-                }
 
               /* Handle noop-updates */
               if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
                 {
-                  g_print (_("No updates.\n"));
                   res = TRUE;
                   g_clear_error (&local_error);
+
+                  result_details |= FLATPAK_TRANSACTION_RESULT_NO_CHANGE;
                 }
+
+              if (res)
+                emit_op_done (self, op, result_details);
             }
           else
             {
@@ -991,6 +1031,8 @@ flatpak_transaction_run (FlatpakTransaction *self,
           res = flatpak_dir_install_bundle (self->dir, op->bundle,
                                             op->remote, NULL,
                                             cancellable, &local_error);
+          if (res)
+            emit_op_done (self, op, 0);
         }
       else
         g_assert_not_reached ();

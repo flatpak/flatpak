@@ -136,6 +136,22 @@ new_operation (FlatpakTransaction *transaction,
     }
 }
 
+static void
+operation_done (FlatpakTransaction *transaction,
+                const char *ref,
+                const char *remote,
+                FlatpakTransactionOperationType operation_type,
+                const char *commit,
+                FlatpakTransactionResult details,
+                gpointer data)
+{
+  g_autofree char *short_commit = g_strndup (commit, 12);
+  if (details & FLATPAK_TRANSACTION_RESULT_NO_CHANGE)
+    g_print (_("No updates.\n"));
+  else
+    g_print (_("Now at %s.\n"), short_commit);
+}
+
 static gboolean
 operation_error (FlatpakTransaction *transaction,
                  const char *ref,
@@ -220,6 +236,7 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
 
   g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), cli);
   g_signal_connect (transaction, "new-operation", G_CALLBACK (new_operation), cli);
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (operation_done), cli);
   g_signal_connect (transaction, "operation-error", G_CALLBACK (operation_error), cli);
   g_signal_connect (transaction, "end-of-lifed", G_CALLBACK (end_of_lifed), cli);
 
