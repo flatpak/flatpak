@@ -234,6 +234,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::operation-error:
    * @ref: The ref the operation was working on
+   * @remote: The remote
    * @operation_type: A #FlatpakTransactionOperationType specifying operation type
    * @error: A #GError
    * @details: A #FlatpakTransactionError with Details about the error
@@ -247,7 +248,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   0,
                   NULL, NULL,
                   NULL,
-                  G_TYPE_BOOLEAN, 4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_ERROR, G_TYPE_INT);
+                  G_TYPE_BOOLEAN, 5, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_ERROR, G_TYPE_INT);
 
   /**
    * FlatpakTransaction::choose-remote-for-ref:
@@ -1000,6 +1001,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
           g_signal_emit (self, signals[OPERATION_ERROR], 0,
                          op->ref,
+                         op->remote,
                          op_type_from_resolved_kind (kind),
                          local_error, error_details,
                          &do_cont);
