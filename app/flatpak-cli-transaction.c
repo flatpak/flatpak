@@ -135,6 +135,23 @@ operation_error (FlatpakTransaction *transaction,
 }
 
 static void
+end_of_lifed (FlatpakTransaction *transaction,
+                 const char *ref,
+                 const char *reason,
+                 const char *rebase,
+                 gpointer data)
+{
+  if (rebase)
+    {
+      g_printerr (_("Warning: %s is end-of-life, in preference of %s\n"), ref, rebase);
+    }
+  else if (reason)
+    {
+      g_printerr (_("Warning: %s is end-of-life, with reason: %s\n"), ref, reason);
+    }
+}
+
+static void
 flatpak_cli_transaction_free (FlatpakCliTransaction *cli)
 {
   if (cli->first_operation_error)
@@ -157,6 +174,7 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
 
   g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), cli);
   g_signal_connect (transaction, "operation-error", G_CALLBACK (operation_error), cli);
+  g_signal_connect (transaction, "end-of-lifed", G_CALLBACK (end_of_lifed), cli);
 
   return transaction;
 }
