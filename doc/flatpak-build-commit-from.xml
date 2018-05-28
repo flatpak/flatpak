@@ -205,16 +205,11 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak build-export ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</command>
+           To revert a commit to the commit before:
         </para>
-<programlisting>
-Commit: 9d0044ea480297114d03aec85c3d7ae3779438f9d2cb69d717fb54237acacb8c
-Metadata Total: 605
-Metadata Written: 5
-Content Total: 1174
-Content Written: 1
-Content Bytes Written: 305
-</programlisting>
+        <para>
+          <command>$ flatpak build-commit-from --timestamp=NOW --src-ref=app/org.gnome.gedit/x86_64/master^ repo app/org.gnome.gedit/x86_64/master</command>
+        </para>
 
     </refsect1>
 
