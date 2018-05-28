@@ -57,6 +57,7 @@ add_extensions () {
     mkdir -p $DIR/files/foo/none
     mkdir -p $DIR/files/foo/dir
     mkdir -p $DIR/files/foo/dir2
+    mkdir -p $DIR/files/foo/multiversion
 
     cat >> $DIR/metadata <<EOF
 [Extension org.test.Extension1]
@@ -83,6 +84,11 @@ subdirectories=true
 
 [Extension org.test.Dir2]
 directory=foo/dir2
+subdirectories=true
+
+[Extension org.test.Multiversion]
+directory=foo/multiversion
+versions=not-master;master
 subdirectories=true
 
 EOF
@@ -112,6 +118,8 @@ make_extension org.test.Extension3 not-master
 make_extension org.test.Extension4 master
 make_extension org.test.Dir.foo master
 make_extension org.test.Dir.bar master
+make_extension org.test.Multiversion.master master
+make_extension org.test.Multiversion.notmaster not-master
 
 assert_has_extension_file () {
     local prefix=$1
@@ -139,6 +147,9 @@ assert_has_extension_file /usr dir/foo/exists
 assert_has_extension_file /usr dir/foo/extension-org.test.Dir.foo:master
 assert_has_extension_file /usr dir/bar/extension-org.test.Dir.bar:master
 assert_not_has_extension_file /usr dir2/foo/exists
+run_sh "ls -lR /usr/foo/multiversion"
+assert_has_extension_file /usr multiversion/master/extension-org.test.Multiversion.master:master
+assert_has_extension_file /usr multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
 echo "ok runtime extensions"
 
@@ -161,5 +172,7 @@ assert_has_extension_file /app dir/foo/exists
 assert_has_extension_file /app dir/foo/extension-org.test.Dir.foo:master
 assert_has_extension_file /app dir/bar/extension-org.test.Dir.bar:master
 assert_not_has_extension_file /app dir2/foo/exists
+assert_has_extension_file /app multiversion/master/extension-org.test.Multiversion.master:master
+assert_has_extension_file /app multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
 echo "ok app extensions"
