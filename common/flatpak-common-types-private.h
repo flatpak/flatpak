@@ -26,6 +26,26 @@ typedef enum {
   FLATPAK_KINDS_RUNTIME = 1 << 1,
 } FlatpakKinds;
 
+typedef enum {
+  FLATPAK_RUN_FLAG_DEVEL              = (1 << 0),
+  FLATPAK_RUN_FLAG_BACKGROUND         = (1 << 1),
+  FLATPAK_RUN_FLAG_LOG_SESSION_BUS    = (1 << 2),
+  FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS     = (1 << 3),
+  FLATPAK_RUN_FLAG_NO_SESSION_HELPER  = (1 << 4),
+  FLATPAK_RUN_FLAG_MULTIARCH          = (1 << 5),
+  FLATPAK_RUN_FLAG_WRITABLE_ETC       = (1 << 6),
+  FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY = (1 << 7),
+  FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY = (1 << 8),
+  FLATPAK_RUN_FLAG_SET_PERSONALITY    = (1 << 9),
+  FLATPAK_RUN_FLAG_FILE_FORWARDING    = (1 << 10),
+  FLATPAK_RUN_FLAG_DIE_WITH_PARENT    = (1 << 11),
+  FLATPAK_RUN_FLAG_LOG_A11Y_BUS       = (1 << 12),
+  FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY  = (1 << 13),
+  FLATPAK_RUN_FLAG_SANDBOX            = (1 << 14),
+  FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL = (1 << 15),
+  FLATPAK_RUN_FLAG_BLUETOOTH          = (1 << 16),
+} FlatpakRunFlags;
+
 typedef struct FlatpakDir     FlatpakDir;
 typedef struct FlatpakDeploy  FlatpakDeploy;
 typedef struct FlatpakOciRegistry FlatpakOciRegistry;
