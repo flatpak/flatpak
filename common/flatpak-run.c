@@ -1956,13 +1956,17 @@ setup_seccomp (FlatpakBwrap *bwrap,
     {SCMP_SYS (ptrace)}
   };
   /* Blacklist all but unix, inet, inet6 and netlink */
-  int socket_family_whitelist[] = {
+  struct {
+    int family;
+    FlatpakRunFlags flags_mask;
+  } socket_family_whitelist[] = {
     /* NOTE: Keep in numerical order */
-    AF_UNSPEC,
-    AF_LOCAL,
-    AF_INET,
-    AF_INET6,
-    AF_NETLINK,
+    { AF_UNSPEC, 0 },
+    { AF_LOCAL, 0 },
+    { AF_INET, 0 },
+    { AF_INET6, 0 },
+    { AF_NETLINK, 0 },
+    { AF_BLUETOOTH, FLATPAK_RUN_FLAG_BLUETOOTH },
   };
   int last_allowed_family;
   int i, r;
@@ -2061,8 +2065,12 @@ setup_seccomp (FlatpakBwrap *bwrap,
   last_allowed_family = -1;
   for (i = 0; i < G_N_ELEMENTS (socket_family_whitelist); i++)
     {
-      int family = socket_family_whitelist[i];
+      int family = socket_family_whitelist[i].family;
       int disallowed;
+
+      if (socket_family_whitelist[i].flags_mask != 0 &&
+          (socket_family_whitelist[i].flags_mask & run_flags) != socket_family_whitelist[i].flags_mask)
+        continue;
 
       for (disallowed = last_allowed_family + 1; disallowed < family; disallowed++)
         {
