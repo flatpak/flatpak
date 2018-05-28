@@ -1955,21 +1955,15 @@ setup_seccomp (FlatpakBwrap *bwrap,
     {SCMP_SYS (ptrace)}
   };
   /* Blacklist all but unix, inet, inet6 and netlink */
-  int socket_family_blacklist[] = {
-    AF_AX25,
-    AF_IPX,
-    AF_APPLETALK,
-    AF_NETROM,
-    AF_BRIDGE,
-    AF_ATMPVC,
-    AF_X25,
-    AF_ROSE,
-    AF_DECnet,
-    AF_NETBEUI,
-    AF_SECURITY,
-    AF_KEY,
-    AF_NETLINK + 1, /* Last gets CMP_GE, so order is important */
+  int socket_family_whitelist[] = {
+    /* NOTE: Keep in numerical order */
+    AF_UNSPEC,
+    AF_LOCAL,
+    AF_INET,
+    AF_INET6,
+    AF_NETLINK,
   };
+  int last_allowed_family;
   int i, r;
   g_auto(GLnxTmpfile) seccomp_tmpf  = { 0, };
 
@@ -2063,14 +2057,21 @@ setup_seccomp (FlatpakBwrap *bwrap,
   /* Socket filtering doesn't work on e.g. i386, so ignore failures here
    * However, we need to user seccomp_rule_add_exact to avoid libseccomp doing
    * something else: https://github.com/seccomp/libseccomp/issues/8 */
-  for (i = 0; i < G_N_ELEMENTS (socket_family_blacklist); i++)
+  last_allowed_family = -1;
+  for (i = 0; i < G_N_ELEMENTS (socket_family_whitelist); i++)
     {
-      int family = socket_family_blacklist[i];
-      if (i == G_N_ELEMENTS (socket_family_blacklist) - 1)
-        seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, family));
-      else
-        seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, family));
+      int family = socket_family_whitelist[i];
+      int disallowed;
+
+      for (disallowed = last_allowed_family + 1; disallowed < family; disallowed++)
+        {
+          /* Blacklist the in-between valid families */
+          seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, disallowed));
+        }
+      last_allowed_family = family;
     }
+  /* Blacklist the rest */
+  seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
 
   if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, &seccomp_tmpf, error))
     return FALSE;
