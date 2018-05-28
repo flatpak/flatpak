@@ -138,3 +138,21 @@
   fun:_g_local_file_new
   fun:soup_request_file_ensure_file
 }
+
+# glibc valgrind fnmatch issue (https://www.mail-archive.com/kde-bugs-dist@kde.org/msg214842.html)
+{
+  ignore_glibc_fnmatch
+  Memcheck:Cond
+  fun:__wmemchr_avx2
+  fun:internal_fnwmatch
+  fun:fnmatch@@GLIBC_2.2.5
+}
+
+# ostree reflink check
+{
+  ignore_ostree_reflink_check_ioctl
+  Memcheck:Param
+  ioctl(generic)
+  fun:ioctl
+  fun:_check_support_reflink
+}
