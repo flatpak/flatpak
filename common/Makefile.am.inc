@@ -112,6 +112,7 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-remote.c \
 	common/flatpak-error.c \
 	common/flatpak-installation.c \
+	common/valgrind.h \
 	$(NULL)
 
 libflatpak_common_la_CFLAGS = \

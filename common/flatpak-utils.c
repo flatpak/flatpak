@@ -25,6 +25,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-run-private.h"
+#include "valgrind.h"
 
 #include <glib/gi18n.h>
 
@@ -2190,7 +2191,9 @@ flatpak_buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
     return glnx_throw_errno_prefix (error, "lseek");
   if (memfd != -1)
     {
-      if (fcntl (memfd, F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE | F_SEAL_SEAL) < 0)
+      /* Valgrind doesn't currently handle G_ADD_SEALS, so lets not seal when debugging... */
+      if ((!RUNNING_ON_VALGRIND) &&
+          fcntl (memfd, F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE | F_SEAL_SEAL) < 0)
         return glnx_throw_errno_prefix (error, "fcntl(F_ADD_SEALS)");
       /* The other values can stay default */
       tmpf->fd = glnx_steal_fd (&memfd);
