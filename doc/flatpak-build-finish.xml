@@ -166,7 +166,7 @@
                 <listitem><para>
                     Allow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch.
+                    FEATURE must be one of: devel, multiarch, bluetooth.
                     This option can be used multiple times.
                  </para><para>
                     The <code>devel</code> feature allows the application to
@@ -178,6 +178,10 @@
                     natively by the system. For example, for the <code>x86_64</code>
                     architecture, 32-bit <code>x86</code> binaries will be allowed as
                     well.
+                </para><para>
+                    The <code>bluetooth</code> feature allows the application to
+                    use bluetooth (AF_BLUETOOTH) sockets. Note, for bluetooth to
+                    fully work you must also have network access.
                 </para></listitem>
             </varlistentry>
 
@@ -187,7 +191,7 @@
                 <listitem><para>
                     Disallow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch.
+                    FEATURE must be one of: devel, multiarch, bluetooth.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
