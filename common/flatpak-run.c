@@ -1867,10 +1867,11 @@ static gboolean
 setup_seccomp (FlatpakBwrap *bwrap,
                const char *arch,
                gulong      allowed_personality,
-               gboolean    multiarch,
-               gboolean    devel,
+               FlatpakRunFlags run_flags,
                GError    **error)
 {
+  gboolean multiarch = (run_flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0;
+  gboolean devel = (run_flags & FLATPAK_RUN_FLAG_DEVEL) != 0;
   __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx seccomp = NULL;
 
   /**** BEGIN NOTE ON CODE SHARING
@@ -2262,12 +2263,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   personality (pers);
 
 #ifdef ENABLE_SECCOMP
-  if (!setup_seccomp (bwrap,
-                      arch,
-                      pers,
-                      (flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0,
-                      (flags & FLATPAK_RUN_FLAG_DEVEL) != 0,
-                      error))
+  if (!setup_seccomp (bwrap, arch, pers, flags, error))
     return FALSE;
 #endif
 
