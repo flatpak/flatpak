@@ -2666,6 +2666,7 @@ static void
 get_common_pull_options (GVariantBuilder     *builder,
                          const char          *ref_to_fetch,
                          const gchar * const *dirs_to_pull,
+                         const char          *current_local_checksum,
                          gboolean             force_disable_deltas,
                          OstreeRepoPullFlags  flags,
                          OstreeAsyncProgress *progress)
@@ -2695,6 +2696,8 @@ get_common_pull_options (GVariantBuilder     *builder,
 
   g_variant_builder_init (&hdr_builder, G_VARIANT_TYPE ("a(ss)"));
   g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Ref", ref_to_fetch);
+  if (current_local_checksum)
+    g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Upgrade-From", current_local_checksum);
   g_variant_builder_add (builder, "{s@v}", "http-headers",
                          g_variant_new_variant (g_variant_builder_end (&hdr_builder)));
   g_variant_builder_add (builder, "{s@v}", "append-user-agent",
@@ -2741,6 +2744,10 @@ repo_pull (OstreeRepo          *self,
 
   /* We always want this on for every type of pull */
   flags |= OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
+
+  remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref_to_fetch);
+  if (!ostree_repo_resolve_rev (self, remote_and_branch, TRUE, &current_checksum, error))
+    return FALSE;
 
   if (!repo_get_remote_collection_id (self, remote_name, &collection_id, NULL))
     g_clear_pointer (&collection_id, g_free);
@@ -2790,7 +2797,7 @@ repo_pull (OstreeRepo          *self,
 
       /* Pull options */
       g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
-      get_common_pull_options (&pull_builder, ref_to_fetch, dirs_to_pull,
+      get_common_pull_options (&pull_builder, ref_to_fetch, dirs_to_pull, current_checksum,
                                force_disable_deltas, flags, progress);
       pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
@@ -2847,7 +2854,7 @@ repo_pull (OstreeRepo          *self,
 
       /* Pull options */
       g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
-      get_common_pull_options (&builder, ref_to_fetch, dirs_to_pull,
+      get_common_pull_options (&builder, ref_to_fetch, dirs_to_pull, current_checksum,
                                force_disable_deltas, flags, progress);
 
       refs_to_fetch[0] = ref_to_fetch;
@@ -2862,9 +2869,6 @@ repo_pull (OstreeRepo          *self,
 
       options = g_variant_ref_sink (g_variant_builder_end (&builder));
 
-      remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref_to_fetch);
-      if (!ostree_repo_resolve_rev (self, remote_and_branch, TRUE, &current_checksum, error))
-        return FALSE;
       if (current_checksum != NULL &&
           !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
         return FALSE;
