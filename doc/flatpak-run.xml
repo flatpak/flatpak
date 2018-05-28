@@ -225,8 +225,11 @@
                 <listitem><para>
                     Allow access to a specific feature. This overrides to
                     the Context section from the application metadata.
-                    FEATURE must be one of: devel, multiarch.
+                    FEATURE must be one of: devel, multiarch, bluetooth.
                     This option can be used multiple times.
+                    </para><para>
+                    See <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                    for the meaning of the various features.
                 </para></listitem>
             </varlistentry>
 
@@ -236,7 +239,7 @@
                 <listitem><para>
                     Disallow access to a specific feature. This overrides to
                     the Context section from the application metadata.
-                    FEATURE must be one of: devel, multiarch.
+                    FEATURE must be one of: devel, multiarch, bluetooth.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

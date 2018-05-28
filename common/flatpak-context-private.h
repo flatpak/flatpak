@@ -51,6 +51,7 @@ typedef enum {
 typedef enum {
   FLATPAK_CONTEXT_FEATURE_DEVEL        = 1 << 0,
   FLATPAK_CONTEXT_FEATURE_MULTIARCH    = 1 << 1,
+  FLATPAK_CONTEXT_FEATURE_BLUETOOTH    = 1 << 2,
 } FlatpakContextFeatures;
 
 struct FlatpakContext
@@ -98,6 +99,7 @@ void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       FlatpakPolicy   policy);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray *args);
+FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
 void           flatpak_context_add_bus_filters (FlatpakContext *context,
                                                 const char     *app_id,
                                                 gboolean        session_bus,

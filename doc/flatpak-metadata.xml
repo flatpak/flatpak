@@ -371,6 +371,13 @@
                                 Available since 0.6.12.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>bluetooth</option></term>
+                            <listitem><para>
+                              Allow the application to use bluetooth (AF_BLUETOOTH) sockets.
+                              Note, for bluetooth to fully work you must also have network access.
+                              Available since 0.11.8.
+                            </para></listitem></varlistentry>
+
                         </variablelist>
                         A feature can be prefixed with <option>!</option> to
                         indicate the absence of that feature, for example

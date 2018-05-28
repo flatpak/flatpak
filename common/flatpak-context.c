@@ -72,6 +72,7 @@ const char *flatpak_context_devices[] = {
 const char *flatpak_context_features[] = {
   "devel",
   "multiarch",
+  "bluetooth",
   NULL
 };
 
@@ -1970,6 +1971,23 @@ flatpak_context_get_exports (FlatpakContext *context,
 
   flatpak_context_export (context, exports, app_id_dir, FALSE, NULL, NULL);
   return g_steal_pointer (&exports);
+}
+
+FlatpakRunFlags
+flatpak_context_get_run_flags (FlatpakContext *context)
+{
+  FlatpakRunFlags flags = 0;
+
+  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_DEVEL))
+    flags |= FLATPAK_RUN_FLAG_DEVEL;
+
+  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_MULTIARCH))
+    flags |= FLATPAK_RUN_FLAG_MULTIARCH;
+
+  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_BLUETOOTH))
+    flags |= FLATPAK_RUN_FLAG_BLUETOOTH;
+
+  return flags;
 }
 
 void

@@ -1867,10 +1867,11 @@ static gboolean
 setup_seccomp (FlatpakBwrap *bwrap,
                const char *arch,
                gulong      allowed_personality,
-               gboolean    multiarch,
-               gboolean    devel,
+               FlatpakRunFlags run_flags,
                GError    **error)
 {
+  gboolean multiarch = (run_flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0;
+  gboolean devel = (run_flags & FLATPAK_RUN_FLAG_DEVEL) != 0;
   __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx seccomp = NULL;
 
   /**** BEGIN NOTE ON CODE SHARING
@@ -1955,21 +1956,19 @@ setup_seccomp (FlatpakBwrap *bwrap,
     {SCMP_SYS (ptrace)}
   };
   /* Blacklist all but unix, inet, inet6 and netlink */
-  int socket_family_blacklist[] = {
-    AF_AX25,
-    AF_IPX,
-    AF_APPLETALK,
-    AF_NETROM,
-    AF_BRIDGE,
-    AF_ATMPVC,
-    AF_X25,
-    AF_ROSE,
-    AF_DECnet,
-    AF_NETBEUI,
-    AF_SECURITY,
-    AF_KEY,
-    AF_NETLINK + 1, /* Last gets CMP_GE, so order is important */
+  struct {
+    int family;
+    FlatpakRunFlags flags_mask;
+  } socket_family_whitelist[] = {
+    /* NOTE: Keep in numerical order */
+    { AF_UNSPEC, 0 },
+    { AF_LOCAL, 0 },
+    { AF_INET, 0 },
+    { AF_INET6, 0 },
+    { AF_NETLINK, 0 },
+    { AF_BLUETOOTH, FLATPAK_RUN_FLAG_BLUETOOTH },
   };
+  int last_allowed_family;
   int i, r;
   g_auto(GLnxTmpfile) seccomp_tmpf  = { 0, };
 
@@ -2063,14 +2062,25 @@ setup_seccomp (FlatpakBwrap *bwrap,
   /* Socket filtering doesn't work on e.g. i386, so ignore failures here
    * However, we need to user seccomp_rule_add_exact to avoid libseccomp doing
    * something else: https://github.com/seccomp/libseccomp/issues/8 */
-  for (i = 0; i < G_N_ELEMENTS (socket_family_blacklist); i++)
+  last_allowed_family = -1;
+  for (i = 0; i < G_N_ELEMENTS (socket_family_whitelist); i++)
     {
-      int family = socket_family_blacklist[i];
-      if (i == G_N_ELEMENTS (socket_family_blacklist) - 1)
-        seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, family));
-      else
-        seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, family));
+      int family = socket_family_whitelist[i].family;
+      int disallowed;
+
+      if (socket_family_whitelist[i].flags_mask != 0 &&
+          (socket_family_whitelist[i].flags_mask & run_flags) != socket_family_whitelist[i].flags_mask)
+        continue;
+
+      for (disallowed = last_allowed_family + 1; disallowed < family; disallowed++)
+        {
+          /* Blacklist the in-between valid families */
+          seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, disallowed));
+        }
+      last_allowed_family = family;
     }
+  /* Blacklist the rest */
+  seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
 
   if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, &seccomp_tmpf, error))
     return FALSE;
@@ -2261,12 +2271,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   personality (pers);
 
 #ifdef ENABLE_SECCOMP
-  if (!setup_seccomp (bwrap,
-                      arch,
-                      pers,
-                      (flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0,
-                      (flags & FLATPAK_RUN_FLAG_DEVEL) != 0,
-                      error))
+  if (!setup_seccomp (bwrap, arch, pers, flags, error))
     return FALSE;
 #endif
 
@@ -2827,11 +2832,7 @@ flatpak_run_app (const char     *app_ref,
       flatpak_bwrap_add_fd (bwrap, ld_so_fd);
     }
 
-  if (flatpak_context_allows_features (app_context, FLATPAK_CONTEXT_FEATURE_DEVEL))
-    flags |= FLATPAK_RUN_FLAG_DEVEL;
-
-  if (flatpak_context_allows_features (app_context, FLATPAK_CONTEXT_FEATURE_MULTIARCH))
-    flags |= FLATPAK_RUN_FLAG_MULTIARCH;
+  flags |= flatpak_context_get_run_flags (app_context);
 
   if (!flatpak_run_setup_base_argv (bwrap, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
