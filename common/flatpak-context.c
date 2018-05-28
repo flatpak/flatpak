@@ -1972,6 +1972,20 @@ flatpak_context_get_exports (FlatpakContext *context,
   return g_steal_pointer (&exports);
 }
 
+FlatpakRunFlags
+flatpak_context_get_run_flags (FlatpakContext *context)
+{
+  FlatpakRunFlags flags = 0;
+
+  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_DEVEL))
+    flags |= FLATPAK_RUN_FLAG_DEVEL;
+
+  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_MULTIARCH))
+    flags |= FLATPAK_RUN_FLAG_MULTIARCH;
+
+  return flags;
+}
+
 void
 flatpak_context_append_bwrap_filesystem (FlatpakContext *context,
                                          FlatpakBwrap *bwrap,
