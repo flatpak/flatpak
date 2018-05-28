@@ -775,7 +775,7 @@ start_dbus_proxy (FlatpakBwrap   *app_bwrap,
   if (!g_spawn_async (NULL,
                       (char **) proxy_bwrap->argv->pdata,
                       NULL,
-                      G_SPAWN_DEFAULT,
+                      G_SPAWN_SEARCH_PATH,
                       flatpak_bwrap_child_setup_cb, proxy_bwrap->fds,
                       NULL, error))
     return FALSE;
