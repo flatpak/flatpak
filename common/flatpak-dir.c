@@ -2345,6 +2345,9 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
         g_main_context_iteration (context, TRUE);
 
       results = ostree_repo_find_remotes_finish (self->repo, find_result, error);
+
+      g_main_context_pop_thread_default (context);
+
       if (results == NULL)
         return FALSE;
 
