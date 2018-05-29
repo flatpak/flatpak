@@ -7770,7 +7770,6 @@ flatpak_dir_undeploy_all (FlatpakDir   *self,
 
 /**
  * flatpak_dir_remove_ref:
- *
  * @self: a #FlatpakDir
  * @remote_name: the name of the remote
  * @ref: the flatpak ref to remove
@@ -9155,7 +9154,6 @@ filter_out_deployed_refs (FlatpakDir *self,
 
 /**
  * flatpak_dir_cleanup_undeployed_refs:
- *
  * @self: a #FlatpakDir
  * @cancellable: (nullable) (optional): a #GCancellable
  * @error: a #GError
