@@ -16,11 +16,13 @@
   <chapter>
     <title>Flatpak</title>
     <xi:include href="xml/flatpak-installation.xml"/>
+    <xi:include href="xml/flatpak-remote.xml"/>
+    <xi:include href="xml/flatpak-transaction-progress.xml"/>
+    <xi:include href="xml/flatpak-transaction.xml"/>
     <xi:include href="xml/flatpak-ref.xml"/>
     <xi:include href="xml/flatpak-installed-ref.xml"/>
     <xi:include href="xml/flatpak-related-ref.xml"/>
     <xi:include href="xml/flatpak-remote-ref.xml"/>
-    <xi:include href="xml/flatpak-remote.xml"/>
     <xi:include href="xml/flatpak-bundle-ref.xml"/>
     <xi:include href="xml/flatpak-error.xml"/>
     <xi:include href="xml/flatpak-version-macros.xml"/>

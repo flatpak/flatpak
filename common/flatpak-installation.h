@@ -53,6 +53,7 @@ typedef struct
  * @FLATPAK_UPDATE_FLAGS_NONE: Fetch remote builds and install the latest one (default)
  * @FLATPAK_UPDATE_FLAGS_NO_DEPLOY: Don't install any new builds that might be fetched
  * @FLATPAK_UPDATE_FLAGS_NO_PULL: Don't try to fetch new builds from the remote repo
+ * @FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS: Don't use static deltas when pulling
  * @FLATPAK_UPDATE_FLAGS_NO_PRUNE: Don't prune the local OSTree repository after updating (Since: 0.11.8)
  *
  * Flags to alter the behavior of flatpak_installation_update().
@@ -68,6 +69,9 @@ typedef enum {
 /**
  * FlatpakInstallFlags:
  * @FLATPAK_INSTALL_FLAGS_NONE: Default
+ * @FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS: Don't use static deltas when pulling
+ * @FLATPAK_INSTALL_FLAGS_NO_DEPLOY: Don't install any new builds that might be fetched
+ * @FLATPAK_INSTALL_FLAGS_NO_PULL: Don't try to fetch new builds from the remote repo
  *
  * Flags to alter the behavior of flatpak_installation_install_full().
  */

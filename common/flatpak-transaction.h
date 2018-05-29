@@ -30,16 +30,34 @@
 #define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
 #define FLATPAK_TYPE_TRANSACTION_PROGRESS flatpak_transaction_progress_get_type ()
 
+/**
+ * FlatpakTransactionOperationType
+ * @FLATPAK_TRANSACTION_OPERATION_INSTALL: Install a ref from a remote
+ * @FLATPAK_TRANSACTION_OPERATION_UPDATE: Update an installed ref
+ * @FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE: Install a bundle from a file
+ *
+ * The type of a transaction, used in FlatpakTransaction::new-operation
+ */
 typedef enum {
   FLATPAK_TRANSACTION_OPERATION_INSTALL,
   FLATPAK_TRANSACTION_OPERATION_UPDATE,
   FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE
 } FlatpakTransactionOperationType;
 
+/**
+ * FlatpakTransactionErrorDetails
+ * @FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL: The operation failure was not fatal
+ *
+ * The details for FlatpakTransaction::operation-error
+ */
 typedef enum {
   FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL = 1 << 0,
 } FlatpakTransactionErrorDetails;
 
+/**
+ * FlatpakTransactionResult
+ * @FLATPAK_TRANSACTION_RESULT_NO_CHANGE: The update caused no changes
+ */
 typedef enum {
   FLATPAK_TRANSACTION_RESULT_NO_CHANGE = 1 << 0,
 } FlatpakTransactionResult;

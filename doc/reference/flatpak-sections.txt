@@ -6,6 +6,7 @@ flatpak_installation_new_system
 flatpak_installation_new_system_with_id
 flatpak_installation_new_user
 flatpak_installation_new_for_path
+flatpak_installation_create_transaction
 flatpak_installation_get_is_user
 flatpak_installation_get_path
 flatpak_installation_create_monitor
@@ -27,6 +28,7 @@ flatpak_installation_list_installed_refs_by_kind
 flatpak_installation_list_installed_refs_for_update
 flatpak_installation_list_installed_related_refs_sync
 flatpak_installation_list_remote_refs_sync
+flatpak_installation_list_remotes_by_type
 flatpak_installation_list_remote_related_refs_sync
 flatpak_installation_list_remotes
 flatpak_installation_get_remote_by_name
@@ -74,6 +76,8 @@ flatpak_installed_ref_get_latest_commit
 flatpak_installed_ref_get_origin
 flatpak_installed_ref_load_metadata
 flatpak_installed_ref_get_subpaths
+flatpak_installed_ref_get_eol
+flatpak_installed_ref_get_eol_rebase
 <SUBSECTION Standard>
 FlatpakInstalledRefClass
 FLATPAK_INSTALLED_REF
@@ -87,6 +91,11 @@ flatpak_installed_ref_get_type
 <TITLE>FlatpakRemoteRef</TITLE>
 FlatpakRemoteRef
 flatpak_remote_ref_get_remote_name
+flatpak_remote_ref_get_download_size
+flatpak_remote_ref_get_eol
+flatpak_remote_ref_get_eol_rebase
+flatpak_remote_ref_get_installed_size
+flatpak_remote_ref_get_metadata
 <SUBSECTION Standard>
 FLATPAK_IS_REMOTE_REF
 FLATPAK_REMOTE_REF
@@ -170,6 +179,50 @@ flatpak_remote_get_type
 </SECTION>
 
 <SECTION>
+<FILE>flatpak-transaction-progress</FILE>
+<TITLE>FlatpakTransactionProgress</TITLE>
+FlatpakTransactionProgress
+flatpak_transaction_progress_get_is_estimating
+flatpak_transaction_progress_get_progress
+flatpak_transaction_progress_get_status
+flatpak_transaction_progress_set_update_frequency
+<SUBSECTION Standard>
+FlatpakTransactionProgressClass
+FLATPAK_IS_TRANSACTION_PROGRESS
+FLATPAK_TRANSACTION_PROGRESS
+FLATPAK_TYPE_TRANSACTION_PROGRESS
+flatpak_transaction_progress_get_type
+</SECTION>
+
+<SECTION>
+<FILE>flatpak-transaction</FILE>
+<TITLE>FlatpakTransaction</TITLE>
+FlatpakTransaction
+FlatpakTransactionOperationType
+FlatpakTransactionErrorDetails
+FlatpakTransactionResult
+flatpak_transaction_add_install
+flatpak_transaction_add_install_bundle
+flatpak_transaction_add_update
+flatpak_transaction_is_empty
+flatpak_transaction_run
+<SUBSECTION>
+flatpak_transaction_set_disable_dependencies
+flatpak_transaction_set_disable_prune
+flatpak_transaction_set_disable_related
+flatpak_transaction_set_disable_static_deltas
+flatpak_transaction_set_no_deploy
+flatpak_transaction_set_no_pull
+flatpak_transaction_set_reinstall
+<SUBSECTION Standard>
+FlatpakTransactionClass
+FLATPAK_IS_TRANSACTION
+FLATPAK_TRANSACTION
+FLATPAK_TYPE_TRANSACTION
+flatpak_transaction_get_type
+</SECTION>
+
+<SECTION>
 <FILE>flatpak-version-macros</FILE>
 FLATPAK_CHECK_VERSION
 FLATPAK_MAJOR_VERSION
@@ -183,6 +236,9 @@ FLATPAK_EXTERN
 FLATPAK_ERROR
 FlatpakError
 flatpak_error_quark
+FLATPAK_PORTAL_ERROR
+FlatpakPortalError
+flatpak_portal_error_quark
 </SECTION>
 
 <SECTION>

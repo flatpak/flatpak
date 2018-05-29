@@ -8,10 +8,11 @@ SCANGOBJ_OPTIONS =
 MKDB_OPTIONS = --output-format=xml --name-space=flatpak
 FIXXREF_OPTIONS =
 
-HFILE_GLOB = $(top_srcdir)/common/*.h $(top_builddir)/common/*.h
+HFILE_GLOB =  $(top_srcdir)/common/*.h $(top_builddir)/common/*.h
 CFILE_GLOB = $(top_srcdir)/common/*.c
 
 IGNORE_HFILES = \
+	valgrind-private.h \
 	flatpak-bwrap-private.h \
 	flatpak-chain-input-stream-private.h \
 	flatpak-common-types-private.h \
@@ -30,7 +31,8 @@ IGNORE_HFILES = \
 	flatpak-run-private.h \
 	flatpak-systemd-dbus-generated.h \
 	flatpak-transaction-private.h \
-	flatpak-utils-private.h 
+	flatpak-utils-private.h \
+	$(NULL)
 
 EXTRA_HFILES =
 

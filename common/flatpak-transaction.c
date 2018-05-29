@@ -27,6 +27,23 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 
+/**
+ * SECTION:flatpak-transaction
+ * @Title: FlatpakTransaction
+ * @Short_description: Transaction information
+ *
+ * FlatpakTransaction is an object representing an install/update
+ * transaction. You create an object like this using flatpak_installation_create_transaction()
+ * and then you add all the operations (installs, updates, etc) you wish to do. Then
+ * you start the transaction with flatpak_transaction_run() which will resolve all kinds
+ * of dependencies and report progress and status while downloading and installing these.
+ *
+ * A transaction is a blocking operation, and all signals are emitted in the same thread.
+ * This means you should either handle the signals directly (say, by doing blocking console
+ * interaction, or by just returning without interaction), or run the operation in a separate
+ * thread and do your own forwarding to the GUI thread.
+ */
+
 typedef struct FlatpakTransactionOp FlatpakTransactionOp;
 
 typedef enum {
@@ -144,6 +161,9 @@ flatpak_transaction_progress_class_init (FlatpakTransactionProgressClass *klass)
 
   /**
    * FlatpakTransactionProgress::changed:
+   * @object: A #FlatpakTransactionProgress
+   *
+   * Emitted when some detail of the progress object changes, you can call the various methods to get the current status.
    */
   progress_signals[CHANGED] =
     g_signal_new ("changed",
@@ -351,6 +371,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 
   /**
    * FlatpakTransaction::new-operation:
+   * @object: A #FlatpakTransaction
    * @ref: The ref the operation will be working on
    * @remote: The ref the operation will be working on
    * @bundle: The bundle path (or %NULL)
@@ -368,6 +389,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 
   /**
    * FlatpakTransaction::operation-error:
+   * @object: A #FlatpakTransaction
    * @ref: The ref the operation was working on
    * @remote: The remote
    * @operation_type: A #FlatpakTransactionOperationType specifying operation type
@@ -387,6 +409,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 
   /**
    * FlatpakTransaction::operation-done:
+   * @object: A #FlatpakTransaction
    * @ref: The ref the operation was working on
    * @remote: The remote
    * @operation_type: A #FlatpakTransactionOperationType specifying operation type
@@ -405,6 +428,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 
   /**
    * FlatpakTransaction::choose-remote-for-ref:
+   * @object: A #FlatpakTransaction
    * @for_ref: The ref we are installing
    * @runtime_ref: The ref we are looking for
    * @remotes: the remotes that has the ref, sorted in prio order
@@ -421,6 +445,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_TYPE_INT, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRV);
   /**
    * FlatpakTransaction::end-of-lifed:
+   * @object: A #FlatpakTransaction
    * @ref: The ref we are installing
    * @reason: The eol reason, or %NULL
    * @rebase: The new name, if rebased, or %NULL

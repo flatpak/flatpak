@@ -25,6 +25,14 @@
 #ifndef __FLATPAK_REMOTE_H__
 #define __FLATPAK_REMOTE_H__
 
+/**
+ * FlatpakRemoteType:
+ * @FLATPAK_REMOTE_TYPE_STATIC: Statically configured remote
+ * @FLATPAK_REMOTE_TYPE_USB: Dynamically detected local pathname remote
+ * @FLATPAK_REMOTE_TYPE_LAN: Dynamically detected network remote
+ *
+ * Different types of @FlatpakRemote.
+ */
 typedef enum
 {
   FLATPAK_REMOTE_TYPE_STATIC,
