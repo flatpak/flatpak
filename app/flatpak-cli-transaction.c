@@ -22,6 +22,7 @@
 
 #include "flatpak-cli-transaction.h"
 #include "flatpak-transaction-private.h"
+#include "flatpak-installation-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 #include <glib/gi18n.h>
@@ -303,11 +304,22 @@ flatpak_cli_transaction_free (FlatpakCliTransaction *cli)
 FlatpakTransaction *
 flatpak_cli_transaction_new (FlatpakDir *dir,
                              gboolean disable_interaction,
-                             gboolean stop_on_first_error)
+                             gboolean stop_on_first_error,
+                             GError **error)
 {
-  FlatpakTransaction *transaction = flatpak_transaction_new (dir);
-  FlatpakCliTransaction *cli = g_new0 (FlatpakCliTransaction, 1);
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  FlatpakCliTransaction *cli = NULL;
 
+  installation = flatpak_installation_new_for_dir (dir, NULL, error);
+  if (installation == NULL)
+    return NULL;
+
+  transaction = flatpak_transaction_new_for_installation (installation, NULL, error);
+  if (transaction == NULL)
+    return NULL;
+
+  cli = g_new0 (FlatpakCliTransaction, 1);
   cli->transaction = transaction;
   cli->disable_interaction = disable_interaction;
   cli->stop_on_first_error = stop_on_first_error;
@@ -320,7 +332,7 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   g_signal_connect (transaction, "operation-error", G_CALLBACK (operation_error), cli);
   g_signal_connect (transaction, "end-of-lifed", G_CALLBACK (end_of_lifed), cli);
 
-  return transaction;
+  return g_steal_pointer (&transaction);
 }
 
 gboolean
