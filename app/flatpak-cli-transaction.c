@@ -28,8 +28,10 @@
 #include <glib/gi18n.h>
 #include <sys/ioctl.h>
 
-typedef struct {
-  FlatpakTransaction *transaction;
+
+struct _FlatpakCliTransaction {
+  FlatpakTransaction parent;
+
   gboolean disable_interaction;
   gboolean stop_on_first_error;
   gboolean is_user;
@@ -38,7 +40,13 @@ typedef struct {
   gboolean progress_initialized;
   int progress_n_columns;
   int progress_last_width;
-} FlatpakCliTransaction;
+};
+
+struct _FlatpakCliTransactionClass {
+  FlatpakCliTransactionClass parent_class;
+};
+
+G_DEFINE_TYPE (FlatpakCliTransaction, flatpak_cli_transaction, FLATPAK_TYPE_TRANSACTION);
 
 static int
 choose_remote_for_ref (FlatpakTransaction *transaction,
@@ -47,7 +55,7 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
                        const char * const *remotes,
                        gpointer data)
 {
-  FlatpakCliTransaction *cli = data;
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   int n_remotes = g_strv_length ((char **)remotes);
   int chosen = -1;
   const char *pref;
@@ -55,7 +63,7 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
 
   pref = strchr (for_ref, '/') + 1;
 
-  if (cli->disable_interaction)
+  if (self->disable_interaction)
     {
       g_print (_("Required runtime for %s (%s) found in remote %s\n"),
                pref, runtime_ref, remotes[0]);
@@ -157,9 +165,9 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
 static void
 progress_done (FlatpakTransaction *transaction)
 {
-  FlatpakCliTransaction *cli = g_object_get_data (G_OBJECT (transaction), "cli");
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
 
-  if (cli->progress_initialized)
+  if (self->progress_initialized)
     g_print("\n");
 }
 
@@ -172,7 +180,7 @@ new_operation (FlatpakTransaction *transaction,
                FlatpakTransactionProgress *progress,
                gpointer data)
 {
-  FlatpakCliTransaction *cli = data;
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   const char *pref;
   g_autofree char *bundle_basename = NULL;
 
@@ -181,13 +189,13 @@ new_operation (FlatpakTransaction *transaction,
   switch (operation_type)
     {
     case FLATPAK_TRANSACTION_OPERATION_INSTALL:
-      if (cli->is_user)
+      if (self->is_user)
         g_print (_("Installing for user: %s from %s\n"), pref, remote);
       else
         g_print (_("Installing: %s from %s\n"), pref, remote);
       break;
     case FLATPAK_TRANSACTION_OPERATION_UPDATE:
-      if (cli->is_user)
+      if (self->is_user)
         g_print (_("Updating for user: %s from %s\n"), pref, remote);
       else
         g_print (_("Updating: %s from %s\n"), pref, remote);
@@ -195,7 +203,7 @@ new_operation (FlatpakTransaction *transaction,
     case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
       {
         bundle_basename = g_path_get_basename (bundle_path);
-        if (cli->is_user)
+        if (self->is_user)
           g_print (_("Installing for user: %s from bundle %s\n"), pref, bundle_basename);
         else
           g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
@@ -206,8 +214,8 @@ new_operation (FlatpakTransaction *transaction,
       break;
     }
 
-  cli->progress_initialized = FALSE;
-  g_signal_connect (progress, "changed", G_CALLBACK (progress_changed_cb), cli);
+  self->progress_initialized = FALSE;
+  g_signal_connect (progress, "changed", G_CALLBACK (progress_changed_cb), self);
   flatpak_transaction_progress_set_update_frequency (progress, FLATPAK_CLI_UPDATE_FREQUENCY);
 
 }
@@ -240,7 +248,7 @@ operation_error (FlatpakTransaction *transaction,
                  FlatpakTransactionErrorDetails detail,
                  gpointer data)
 {
-  FlatpakCliTransaction *cli = data;
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   const char *pref;
 
   progress_done (transaction);
@@ -260,13 +268,13 @@ operation_error (FlatpakTransaction *transaction,
     }
   else
     {
-      if (cli->first_operation_error == NULL)
-        g_propagate_prefixed_error (&cli->first_operation_error,
+      if (self->first_operation_error == NULL)
+        g_propagate_prefixed_error (&self->first_operation_error,
                                     g_error_copy (error),
                                     _("Failed to %s %s: "),
                                     op_type_to_string (operation_type), pref);
 
-      if (cli->stop_on_first_error)
+      if (self->stop_on_first_error)
         return FALSE;
 
       g_printerr (_("Error: Failed to %s %s: %s\n"),
@@ -294,11 +302,27 @@ end_of_lifed (FlatpakTransaction *transaction,
 }
 
 static void
-flatpak_cli_transaction_free (FlatpakCliTransaction *cli)
+flatpak_cli_transaction_finalize (GObject *object)
 {
-  if (cli->first_operation_error)
-    g_error_free (cli->first_operation_error);
-  g_free (cli);
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (object);
+
+  if (self->first_operation_error)
+    g_error_free (self->first_operation_error);
+
+  G_OBJECT_CLASS (flatpak_cli_transaction_parent_class)->finalize (object);
+}
+
+static void
+flatpak_cli_transaction_init (FlatpakCliTransaction *self)
+{
+}
+
+static void
+flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = flatpak_cli_transaction_finalize;
 }
 
 FlatpakTransaction *
@@ -308,31 +332,33 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
                              GError **error)
 {
   g_autoptr(FlatpakInstallation) installation = NULL;
-  g_autoptr(FlatpakTransaction) transaction = NULL;
-  FlatpakCliTransaction *cli = NULL;
+  FlatpakTransaction *transaction = NULL;
+  g_autoptr(FlatpakCliTransaction) self = NULL;
 
   installation = flatpak_installation_new_for_dir (dir, NULL, error);
   if (installation == NULL)
     return NULL;
 
-  transaction = flatpak_transaction_new_for_installation (installation, NULL, error);
-  if (transaction == NULL)
+  self = g_initable_new (FLATPAK_TYPE_CLI_TRANSACTION,
+                         NULL, error,
+                         "installation", installation,
+                         NULL);
+  if (self == NULL)
     return NULL;
 
-  cli = g_new0 (FlatpakCliTransaction, 1);
-  cli->transaction = transaction;
-  cli->disable_interaction = disable_interaction;
-  cli->stop_on_first_error = stop_on_first_error;
-  cli->is_user = flatpak_dir_is_user (dir);
-  g_object_set_data_full (G_OBJECT (transaction), "cli", cli, (GDestroyNotify)flatpak_cli_transaction_free);
+  transaction = FLATPAK_TRANSACTION (self);
 
-  g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), cli);
-  g_signal_connect (transaction, "new-operation", G_CALLBACK (new_operation), cli);
-  g_signal_connect (transaction, "operation-done", G_CALLBACK (operation_done), cli);
-  g_signal_connect (transaction, "operation-error", G_CALLBACK (operation_error), cli);
-  g_signal_connect (transaction, "end-of-lifed", G_CALLBACK (end_of_lifed), cli);
+  self->disable_interaction = disable_interaction;
+  self->stop_on_first_error = stop_on_first_error;
+  self->is_user = flatpak_dir_is_user (dir);
 
-  return g_steal_pointer (&transaction);
+  g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), NULL);
+  g_signal_connect (transaction, "new-operation", G_CALLBACK (new_operation), NULL);
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (operation_done), NULL);
+  g_signal_connect (transaction, "operation-error", G_CALLBACK (operation_error), NULL);
+  g_signal_connect (transaction, "end-of-lifed", G_CALLBACK (end_of_lifed), NULL);
+
+  return (FlatpakTransaction *)g_steal_pointer (&self);
 }
 
 gboolean
@@ -365,7 +391,7 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
                              GCancellable *cancellable,
                              GError **error)
 {
-  FlatpakCliTransaction *cli = g_object_get_data (G_OBJECT (transaction), "cli");
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   g_autoptr(GError) local_error = NULL;
   gboolean res;
 
@@ -381,17 +407,17 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
       return FALSE;
     }
 
-  if (cli->first_operation_error)
+  if (self->first_operation_error)
     {
       /* We always want to return an error if there was some kind of operation error,
          as that causes the main CLI to return an error status. */
 
-      if (cli->stop_on_first_error)
+      if (self->stop_on_first_error)
         {
           /* For the install/stop_on_first_error we return the first operation error,
              as we have not yet printed it.  */
 
-          g_propagate_error (error, g_steal_pointer (&cli->first_operation_error));
+          g_propagate_error (error, g_steal_pointer (&self->first_operation_error));
           return FALSE;
         }
       else
