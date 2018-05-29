@@ -121,7 +121,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   int width, padded_width;
 
   guint percent = flatpak_transaction_progress_get_progress (progress);
-  const char *status = flatpak_transaction_progress_get_status (progress);
+  g_autofree char *status = flatpak_transaction_progress_get_status (progress);
 
   if (!cli->progress_initialized)
     {
