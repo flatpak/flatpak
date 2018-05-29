@@ -372,7 +372,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @remote: The remote
    * @operation_type: A #FlatpakTransactionOperationType specifying operation type
    * @error: A #GError
-   * @details: A #FlatpakTransactionError with Details about the error
+   * @details: A #FlatpakTransactionErrorDetails with Details about the error
    *
    * Returns: the %TRUE to contine transaction, %FALSE to stop
    */
@@ -1191,12 +1191,12 @@ flatpak_transaction_run (FlatpakTransaction *self,
       if (!res)
         {
           gboolean do_cont = FALSE;
-          FlatpakTransactionError error_details = 0;
+          FlatpakTransactionErrorDetails error_details = 0;
 
           op->failed = TRUE;
 
           if (op->non_fatal)
-            error_details |= FLATPAK_TRANSACTION_ERROR_NON_FATAL;
+            error_details |= FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL;
 
           g_signal_emit (self, signals[OPERATION_ERROR], 0,
                          op->ref,

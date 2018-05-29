@@ -236,7 +236,7 @@ operation_error (FlatpakTransaction *transaction,
                  const char *remote,
                  FlatpakTransactionOperationType operation_type,
                  GError *error,
-                 FlatpakTransactionError detail,
+                 FlatpakTransactionErrorDetails detail,
                  gpointer data)
 {
   FlatpakCliTransaction *cli = data;
@@ -252,7 +252,7 @@ operation_error (FlatpakTransaction *transaction,
       return TRUE;
     }
 
-  if (detail & FLATPAK_TRANSACTION_ERROR_NON_FATAL)
+  if (detail & FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL)
     {
       g_printerr (_("Warning: Failed to %s %s: %s\n"),
                   op_type_to_string (operation_type), pref, error->message);
