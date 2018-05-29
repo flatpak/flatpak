@@ -18,6 +18,10 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
+#error "Only <flatpak.h> can be included directly."
+#endif
+
 #ifndef __FLATPAK_TRANSACTION_H__
 #define __FLATPAK_TRANSACTION_H__
 

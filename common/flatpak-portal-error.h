@@ -22,6 +22,10 @@
 #ifndef FLATPAK_PORTAL_ERROR_H
 #define FLATPAK_PORTAL_ERROR_H
 
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
+#error "Only <flatpak.h> can be included directly."
+#endif
+
 #include <glib.h>
 
 G_BEGIN_DECLS
