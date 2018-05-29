@@ -112,7 +112,7 @@ FLATPAK_EXTERN
 void        flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress  *self,
                                                                guint update_frequency);
 FLATPAK_EXTERN
-const char *flatpak_transaction_progress_get_status           (FlatpakTransactionProgress  *self);
+char *      flatpak_transaction_progress_get_status           (FlatpakTransactionProgress  *self);
 FLATPAK_EXTERN
 gboolean    flatpak_transaction_progress_get_is_estimating    (FlatpakTransactionProgress  *self);
 FLATPAK_EXTERN

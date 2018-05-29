@@ -131,10 +131,10 @@ flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress  *
 }
 
 
-const char *
+char *
 flatpak_transaction_progress_get_status (FlatpakTransactionProgress  *self)
 {
-  return self->status;
+  return g_strdup (self->status);
 }
 
 gboolean
