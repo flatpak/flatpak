@@ -18,11 +18,21 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __FLATPAK_TRANSACTION_PRIVATE_H__
-#define __FLATPAK_TRANSACTION_PRIVATE_H__
+#ifndef __FLATPAK_INSTALLATION_PRIVATE_H__
+#define __FLATPAK_INSTALLATION_PRIVATE_H__
 
-#include "flatpak-transaction.h"
+#include "flatpak-installation.h"
 
 #include "flatpak-dir-private.h"
 
-#endif /* __FLATPAK_TRANSACTION_PRIVATE_H__ */
+FlatpakDir *
+flatpak_installation_clone_dir (FlatpakInstallation *self,
+                                GCancellable  *cancellable,
+                                GError       **error);
+
+FlatpakInstallation *
+flatpak_installation_new_for_dir (FlatpakDir   *dir,
+                                  GCancellable *cancellable,
+                                  GError      **error);
+
+#endif /* __FLATPAK_INSTALLATION_PRIVATE_H__ */

@@ -26,7 +26,8 @@
 
 FlatpakTransaction *flatpak_cli_transaction_new (FlatpakDir *dir,
                                                  gboolean disable_interaction,
-                                                 gboolean stop_on_first_error);
+                                                 gboolean stop_on_first_error,
+                                                 GError **error);
 
 gboolean flatpak_cli_transaction_add_install (FlatpakTransaction *self,
                                               const char *remote,

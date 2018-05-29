@@ -24,6 +24,7 @@
 #include <glib/gi18n.h>
 
 #include "flatpak-transaction-private.h"
+#include "flatpak-installation-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 
@@ -33,7 +34,7 @@
  * @Short_description: Transaction information
  *
  * FlatpakTransaction is an object representing an install/update
- * transaction. You create an object like this using flatpak_installation_create_transaction()
+ * transaction. You create an object like this using flatpak_transaction_new_for_installation()
  * and then you add all the operations (installs, updates, etc) you wish to do. Then
  * you start the transaction with flatpak_transaction_run() which will resolve all kinds
  * of dependencies and report progress and status while downloading and installing these.
@@ -71,6 +72,7 @@ typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
 struct _FlatpakTransactionPrivate {
   GObject parent;
 
+  FlatpakInstallation *installation;
   FlatpakDir *dir;
   GHashTable *refs;
   GHashTable *remote_states; /* (element-type utf8 FlatpakRemoteState) */
@@ -94,6 +96,11 @@ enum {
   CHOOSE_REMOTE_FOR_REF,
   END_OF_LIFED,
   LAST_SIGNAL
+};
+
+enum {
+  PROP_0,
+  PROP_INSTALLATION,
 };
 
 struct _FlatpakTransactionProgress {
@@ -216,7 +223,11 @@ flatpak_transaction_progress_new (void)
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT)
+static void initable_iface_init       (GInitableIface      *initable_iface);
+
+G_DEFINE_TYPE_WITH_CODE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT,
+                         G_ADD_PRIVATE(FlatpakTransaction)
+                         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
 static FlatpakTransactionOperationType
 op_type_from_resolved_kind (FlatpakTransactionOpKind kind)
@@ -352,6 +363,8 @@ flatpak_transaction_finalize (GObject *object)
   FlatpakTransaction *self = (FlatpakTransaction *) object;
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
+  g_clear_object (&priv->installation);
+
   g_hash_table_unref (priv->refs);
   g_hash_table_unref (priv->remote_states);
   g_list_free_full (priv->ops, (GDestroyNotify)flatpak_transaction_operation_free);
@@ -366,11 +379,64 @@ flatpak_transaction_finalize (GObject *object)
 }
 
 static void
+flatpak_transaction_set_property (GObject      *object,
+                                  guint         prop_id,
+                                  const GValue *value,
+                                  GParamSpec   *pspec)
+{
+  FlatpakTransaction *self = FLATPAK_TRANSACTION (object);
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  switch (prop_id)
+    {
+    case PROP_INSTALLATION:
+      g_clear_object (&priv->installation);
+      priv->installation = g_value_dup_object (value);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
+flatpak_transaction_get_property (GObject    *object,
+                                  guint       prop_id,
+                                  GValue     *value,
+                                  GParamSpec *pspec)
+{
+  FlatpakTransaction *self = FLATPAK_TRANSACTION (object);
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  switch (prop_id)
+    {
+    case PROP_INSTALLATION:
+      g_value_set_object (value, priv->installation);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
 flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = flatpak_transaction_finalize;
+  object_class->get_property = flatpak_transaction_get_property;
+  object_class->set_property = flatpak_transaction_set_property;
+
+  g_object_class_install_property (object_class,
+                                   PROP_INSTALLATION,
+                                   g_param_spec_object ("installation",
+                                                        "Installation",
+                                                        "The installation instance",
+                                                        FLATPAK_TYPE_INSTALLATION,
+                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
 
   /**
    * FlatpakTransaction::new-operation:
@@ -471,21 +537,60 @@ flatpak_transaction_init (FlatpakTransaction *self)
   priv->refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)flatpak_remote_state_free);
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
-
 }
 
-FlatpakTransaction *
-flatpak_transaction_new (FlatpakDir *dir)
+
+static gboolean
+initable_init (GInitable     *initable,
+               GCancellable  *cancellable,
+               GError       **error)
 {
-  FlatpakTransaction *t;
-  FlatpakTransactionPrivate *priv;
+  FlatpakTransaction *self = FLATPAK_TRANSACTION (initable);
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
 
-  t = g_object_new (FLATPAK_TYPE_TRANSACTION, NULL);
-  priv = flatpak_transaction_get_instance_private (t);
+  if (priv->installation == NULL)
+    return flatpak_fail (error, "No installation specified");
 
-  priv->dir = g_object_ref (dir);
+  dir = flatpak_installation_clone_dir (priv->installation, cancellable, error);
+  if (dir == NULL)
+    return FALSE;
 
-  return t;
+  priv->dir = g_steal_pointer (&dir);
+
+  return TRUE;
+}
+
+static void
+initable_iface_init (GInitableIface *initable_iface)
+{
+  initable_iface->init = initable_init;
+}
+
+/**
+ * flatpak_transaction_new_for_installation:
+ * @installation: a #FlatpakInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a new #FlatpakTransaction object that can be used to do installation
+ * and updates of multiple refs, as well as their dependencies, in a single
+ * operation. Set the options you want on the transaction and add the
+ * refs you want to install/update, then start the transaction with
+ * flatpak_transaction_run ().
+ *
+ * Returns: (transfer full): a #FlatpakTransaction, or %NULL on failure.
+ */
+FlatpakTransaction *
+flatpak_transaction_new_for_installation (FlatpakInstallation *installation,
+                                          GCancellable        *cancellable,
+                                          GError             **error)
+{
+  return g_initable_new (FLATPAK_TYPE_TRANSACTION,
+                         cancellable, error,
+                         "installation", installation,
+                         NULL);
 }
 
 void

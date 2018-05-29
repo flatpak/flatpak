@@ -27,6 +27,7 @@
 #include <ostree-repo-finder-avahi.h>
 #endif  /* FLATPAK_ENABLE_P2P */
 
+#include "flatpak-installation-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-installation.h"
 #include "flatpak-installed-ref-private.h"
@@ -138,9 +139,9 @@ flatpak_installation_init (FlatpakInstallation *self)
 }
 
 static FlatpakInstallation *
-flatpak_installation_new_for_dir (FlatpakDir   *dir,
-                                  GCancellable *cancellable,
-                                  GError      **error)
+flatpak_installation_new_steal_dir (FlatpakDir   *dir,
+                                    GCancellable *cancellable,
+                                    GError      **error)
 {
   FlatpakInstallation *self;
   FlatpakInstallationPrivate *priv;
@@ -158,6 +159,17 @@ flatpak_installation_new_for_dir (FlatpakDir   *dir,
 
   return self;
 }
+
+FlatpakInstallation *
+flatpak_installation_new_for_dir (FlatpakDir   *dir,
+                                  GCancellable *cancellable,
+                                  GError      **error)
+{
+  return flatpak_installation_new_steal_dir (g_object_ref (dir),
+                                             cancellable,
+                                             error);
+}
+
 /**
  * flatpak_get_default_arch:
  *
@@ -218,7 +230,7 @@ flatpak_get_system_installations (GCancellable *cancellable,
       FlatpakDir *install_dir = g_ptr_array_index (system_dirs, i);
       g_autoptr(FlatpakInstallation) installation = NULL;
 
-      installation = flatpak_installation_new_for_dir (g_object_ref (install_dir),
+      installation = flatpak_installation_new_for_dir (install_dir,
                                                        cancellable,
                                                        &local_error);
       if (installation != NULL)
@@ -257,7 +269,7 @@ FlatpakInstallation *
 flatpak_installation_new_system (GCancellable *cancellable,
                                  GError      **error)
 {
-  return flatpak_installation_new_for_dir (flatpak_dir_get_system_default (), cancellable, error);
+  return flatpak_installation_new_steal_dir (flatpak_dir_get_system_default (), cancellable, error);
 }
 
 /**
@@ -285,7 +297,7 @@ flatpak_installation_new_system_with_id (const char   *id,
   if (install_dir == NULL)
     return NULL;
 
-  installation = flatpak_installation_new_for_dir (g_object_ref (install_dir),
+  installation = flatpak_installation_new_for_dir (install_dir,
                                                    cancellable,
                                                    &local_error);
   if (installation == NULL)
@@ -313,7 +325,7 @@ flatpak_installation_new_user (GCancellable *cancellable,
 {
   flatpak_migrate_from_xdg_app ();
 
-  return flatpak_installation_new_for_dir (flatpak_dir_get_user (), cancellable, error);
+  return flatpak_installation_new_steal_dir (flatpak_dir_get_user (), cancellable, error);
 }
 
 /**
@@ -334,7 +346,7 @@ flatpak_installation_new_for_path (GFile *path, gboolean user,
 {
   flatpak_migrate_from_xdg_app ();
 
-  return flatpak_installation_new_for_dir (flatpak_dir_new (path, user), cancellable, error);
+  return flatpak_installation_new_steal_dir (flatpak_dir_new (path, user), cancellable, error);
 }
 
 static FlatpakDir *
@@ -371,6 +383,26 @@ static FlatpakDir *
 flatpak_installation_get_dir_maybe_no_repo (FlatpakInstallation *self)
 {
   return _flatpak_installation_get_dir (self, FALSE, NULL);
+}
+
+FlatpakDir *
+flatpak_installation_clone_dir (FlatpakInstallation *self,
+                                GCancellable  *cancellable,
+                                GError       **error)
+{
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  /* Pull, prune, etc are not threadsafe, so we work on a copy */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+    return NULL;
+
+  return g_steal_pointer (&dir_clone);
 }
 
 /**
@@ -1622,41 +1654,6 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
 
   coll_ref = flatpak_collection_ref_new (collection_id, ref);
   return flatpak_remote_ref_new (coll_ref, NULL, remote, NULL);
-}
-
-
-/**
- * flatpak_installation_create_transaction:
- * @self: a #FlatpakInstallation
- * @cancellable: (nullable): a #GCancellable
- * @error: return location for a #GError
- *
- * Creates a new #FlatpakTransaction object that can be used to do installation
- * and updates of multiple refs, as well as their dependencies, in a single
- * operation. Set the options you want on the transaction and add the
- * refs you want to install/update, then start the transaction with
- * flatpak_transaction_run ().
- *
- * Returns: (transfer full): a #FlatpakTransaction, or %NULL on failure.
- */
-FlatpakTransaction *
-flatpak_installation_create_transaction (FlatpakInstallation    *self,
-                                         GCancellable           *cancellable,
-                                         GError                **error)
-{
-  g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(FlatpakDir) dir_clone = NULL;
-
-  dir = flatpak_installation_get_dir (self, error);
-  if (dir == NULL)
-    return NULL;
-
-  /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = flatpak_dir_clone (dir);
-  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
-    return NULL;
-
-  return flatpak_transaction_new (dir);
 }
 
 /**

@@ -26,6 +26,7 @@
 #define __FLATPAK_TRANSACTION_H__
 
 #include <gio/gio.h>
+#include <flatpak-installation.h>
 
 #define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
 #define FLATPAK_TYPE_TRANSACTION_PROGRESS flatpak_transaction_progress_get_type ()
@@ -74,6 +75,11 @@ struct _FlatpakTransactionClass
 
   gpointer padding[12];
 };
+
+FLATPAK_EXTERN
+FlatpakTransaction *flatpak_transaction_new_for_installation (FlatpakInstallation          *installation,
+                                                              GCancellable                 *cancellable,
+                                                              GError                      **error);
 
 FLATPAK_EXTERN
 void        flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress  *self,

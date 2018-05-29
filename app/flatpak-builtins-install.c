@@ -287,7 +287,10 @@ install_bundle (FlatpakDir *dir,
   if (!flatpak_dir_ensure_repo (dir, cancellable, error))
     return FALSE;
 
-  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE);
+  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+  if (transaction == NULL)
+    return FALSE;
+
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
@@ -446,7 +449,10 @@ install_from (FlatpakDir *dir,
   slash = strchr (ref, '/');
   g_print (_("Installing: %s\n"), slash + 1);
 
-  transaction = flatpak_cli_transaction_new (clone, opt_yes, TRUE);
+  transaction = flatpak_cli_transaction_new (clone, opt_yes, TRUE, error);
+  if (transaction == NULL)
+    return FALSE;
+
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
@@ -527,7 +533,10 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE);
+  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+  if (transaction == NULL)
+    return FALSE;
+
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
