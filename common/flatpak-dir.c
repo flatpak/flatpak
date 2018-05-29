@@ -332,8 +332,8 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
   cache_v = g_variant_lookup_value (self->metadata, "xa.cache", NULL);
   if (cache_v == NULL)
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                           _("No flatpak cache in remote summary"));
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("No flatpak cache in remote '%s' summary"), self->remote_name);
       return FALSE;
     }
 
@@ -342,7 +342,7 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
   if (!flatpak_variant_bsearch_str (cache, ref, &pos))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   _("No entry for %s in remote summary flatpak cache "), ref);
+                   _("No entry for %s in remote '%s' summary flatpak cache "), ref, self->remote_name);
       return FALSE;
     }
 
