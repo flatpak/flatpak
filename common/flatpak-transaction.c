@@ -547,7 +547,6 @@ initable_init (GInitable     *initable,
 {
   FlatpakTransaction *self = FLATPAK_TRANSACTION (initable);
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
 
   if (priv->installation == NULL)
