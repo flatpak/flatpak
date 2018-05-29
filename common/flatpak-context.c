@@ -246,7 +246,7 @@ flatpak_verify_dbus_name (const char *name, GError **error)
     return TRUE;
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               _("Invalid dbus name %s\n"), name);
+               _("Invalid dbus name %s"), name);
   return FALSE;
 }
 

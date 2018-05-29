@@ -1068,7 +1068,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           !(op->source_op->kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE && g_str_has_prefix (op->ref, "app/")))
         {
           g_set_error (&local_error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED,
-                       _("Skipping %s due to previous error\n"), pref);
+                       _("Skipping %s due to previous error"), pref);
           res = FALSE;
         }
       else if ((state = flatpak_transaction_ensure_remote_state (self, op->remote, &local_error)) == NULL)

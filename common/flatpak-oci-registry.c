@@ -2143,5 +2143,5 @@ flatpak_oci_index_verify_ref (SoupSession *soup_session,
         }
     }
 
-  return flatpak_fail (error, "No matching image for %s\n", ref);
+  return flatpak_fail (error, "No matching image for %s", ref);
 }

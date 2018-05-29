@@ -8258,8 +8258,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     }
 
   if (summary == NULL)
-    return flatpak_fail (error, "Remote listing for %s not available; server has no summary file\n" \
-                         "Check the URL passed to remote-add was valid\n", name_or_uri);
+    return flatpak_fail (error, "Remote listing for %s not available; server has no summary file. Check the URL passed to remote-add was valid.", name_or_uri);
 
   if (!is_local)
     flatpak_dir_cache_summary (self, summary, summary_sig, name_or_uri, url);
@@ -9665,13 +9664,13 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
                                   g_bytes_get_size (data),
                                   0, &local_error))
     {
-      flatpak_fail (error, "Invalid .flatpakref: %s\n", local_error->message);
+      flatpak_fail (error, "Invalid .flatpakref: %s", local_error->message);
       return NULL;
     }
 
   if (!g_key_file_has_group (keyfile, source_group))
     {
-      flatpak_fail (error, "Invalid .flatpakref\n");
+      flatpak_fail (error, "Invalid .flatpakref");
       return NULL;
     }
 
@@ -9679,7 +9678,7 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
                                FLATPAK_REPO_URL_KEY, NULL);
   if (uri == NULL)
     {
-      flatpak_fail (error, "Invalid .flatpakref\n");
+      flatpak_fail (error, "Invalid .flatpakref");
       return NULL;
     }
 
@@ -9711,7 +9710,7 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
       decoded = g_base64_decode (gpg_key, &decoded_len);
       if (decoded_len < 10) /* Check some minimal size so we don't get crap */
         {
-          flatpak_fail (error, "Invalid gpg key\n");
+          flatpak_fail (error, "Invalid gpg key");
           return NULL;
         }
 
