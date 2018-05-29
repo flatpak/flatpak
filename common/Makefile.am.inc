@@ -112,7 +112,7 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-remote.c \
 	common/flatpak-error.c \
 	common/flatpak-installation.c \
-	common/valgrind.h \
+	common/valgrind-private.h \
 	$(NULL)
 
 libflatpak_common_la_CFLAGS = \
@@ -182,6 +182,8 @@ test_libflatpak_LDADD = \
 
 # gobject-introspection rules
 -include $(INTROSPECTION_MAKEFILE)
+
+sources = $(libflatpak_common_la_SOURCES) $(libflatpak_la_SOURCES)
 
 INTROSPECTION_GIRS =
 
