@@ -53,7 +53,7 @@
  *
  * FlatpakInstallation can list configured remotes as well as installed application
  * and runtime references (in short: refs). It can also run, install, update and
- * uninstall applications and runtimes.
+ * uninstall applications and runtimes, using #FlatpakTransaction.
  */
 
 typedef struct _FlatpakInstallationPrivate FlatpakInstallationPrivate;
