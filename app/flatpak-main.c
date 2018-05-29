@@ -583,7 +583,7 @@ main (int    argc,
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
   textdomain (GETTEXT_PACKAGE);
 
-  g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, message_handler, NULL);
+  g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING, message_handler, NULL);
 
   g_set_prgname (argv[0]);
 
