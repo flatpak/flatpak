@@ -33,8 +33,8 @@ typedef enum {
 } FlatpakTransactionOperationType;
 
 typedef enum {
-  FLATPAK_TRANSACTION_ERROR_NON_FATAL = 1 << 0,
-} FlatpakTransactionError;
+  FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL = 1 << 0,
+} FlatpakTransactionErrorDetails;
 
 typedef enum {
   FLATPAK_TRANSACTION_RESULT_NO_CHANGE = 1 << 0,
