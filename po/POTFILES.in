@@ -31,11 +31,12 @@ app/flatpak-builtins-search.c
 app/flatpak-builtins-uninstall.c
 app/flatpak-builtins-update.c
 app/flatpak-builtins-utils.c
+app/flatpak-cli-transaction.c
 app/flatpak-main.c
-common/flatpak-transaction.c
 common/flatpak-context.c
 common/flatpak-dir.c
 common/flatpak-run.c
+common/flatpak-transaction.c
 common/flatpak-utils.c
 system-helper/flatpak-system-helper.service.in
 system-helper/org.freedesktop.Flatpak.policy.in
