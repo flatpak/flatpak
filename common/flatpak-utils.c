@@ -25,7 +25,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-run-private.h"
-#include "valgrind.h"
+#include "valgrind-private.h"
 
 #include <glib/gi18n.h>
 
@@ -632,7 +632,8 @@ is_valid_name_character (gint c, gboolean allow_dash)
     (c >= '0' && c <= '9');
 }
 
-/** flatpak_is_valid_name:
+/**
+ * flatpak_is_valid_name:
  * @string: The string to check
  * @error: Return location for an error
  *

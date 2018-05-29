@@ -39,7 +39,7 @@ HTML_IMAGES =
 content_files =
 expand_content_files = 
 
-AM_CPPFLAGS = -I$(top_srcdir)/lib -I$(top_builddir)/lib $(BASE_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/common -I$(top_builddir)/common $(BASE_CFLAGS)
 GTKDOC_LIBS = $(top_builddir)/libflatpak.la $(BASE_LIBS)
 
 include $(top_srcdir)/gtk-doc.make
