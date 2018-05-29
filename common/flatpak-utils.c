@@ -25,7 +25,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-run-private.h"
-#include "valgrind.h"
+#include "valgrind-private.h"
 
 #include <glib/gi18n.h>
 
