@@ -52,8 +52,7 @@ static int
 choose_remote_for_ref (FlatpakTransaction *transaction,
                        const char *for_ref,
                        const char *runtime_ref,
-                       const char * const *remotes,
-                       gpointer data)
+                       const char * const *remotes)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   int n_remotes = g_strv_length ((char **)remotes);
@@ -177,8 +176,7 @@ new_operation (FlatpakTransaction *transaction,
                const char *remote,
                const char *bundle_path,
                FlatpakTransactionOperationType operation_type,
-               FlatpakTransactionProgress *progress,
-               gpointer data)
+               FlatpakTransactionProgress *progress)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   const char *pref;
@@ -226,8 +224,7 @@ operation_done (FlatpakTransaction *transaction,
                 const char *remote,
                 FlatpakTransactionOperationType operation_type,
                 const char *commit,
-                FlatpakTransactionResult details,
-                gpointer data)
+                FlatpakTransactionResult details)
 {
   g_autofree char *short_commit = g_strndup (commit, 12);
 
@@ -245,8 +242,7 @@ operation_error (FlatpakTransaction *transaction,
                  const char *remote,
                  FlatpakTransactionOperationType operation_type,
                  GError *error,
-                 FlatpakTransactionErrorDetails detail,
-                 gpointer data)
+                 FlatpakTransactionErrorDetails detail)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   const char *pref;
@@ -288,8 +284,7 @@ static void
 end_of_lifed (FlatpakTransaction *transaction,
                  const char *ref,
                  const char *reason,
-                 const char *rebase,
-                 gpointer data)
+                 const char *rebase)
 {
   if (rebase)
     {
@@ -321,8 +316,14 @@ static void
 flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  FlatpakTransactionClass *transaction_class = FLATPAK_TRANSACTION_CLASS (klass);
 
   object_class->finalize = flatpak_cli_transaction_finalize;
+  transaction_class->new_operation = new_operation;
+  transaction_class->operation_done = operation_done;
+  transaction_class->operation_error = operation_error;
+  transaction_class->choose_remote_for_ref = choose_remote_for_ref;
+  transaction_class->end_of_lifed = end_of_lifed;
 }
 
 FlatpakTransaction *
@@ -332,7 +333,6 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
                              GError **error)
 {
   g_autoptr(FlatpakInstallation) installation = NULL;
-  FlatpakTransaction *transaction = NULL;
   g_autoptr(FlatpakCliTransaction) self = NULL;
 
   installation = flatpak_installation_new_for_dir (dir, NULL, error);
@@ -346,17 +346,9 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   if (self == NULL)
     return NULL;
 
-  transaction = FLATPAK_TRANSACTION (self);
-
   self->disable_interaction = disable_interaction;
   self->stop_on_first_error = stop_on_first_error;
   self->is_user = flatpak_dir_is_user (dir);
-
-  g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), NULL);
-  g_signal_connect (transaction, "new-operation", G_CALLBACK (new_operation), NULL);
-  g_signal_connect (transaction, "operation-done", G_CALLBACK (operation_done), NULL);
-  g_signal_connect (transaction, "operation-error", G_CALLBACK (operation_error), NULL);
-  g_signal_connect (transaction, "end-of-lifed", G_CALLBACK (end_of_lifed), NULL);
 
   return (FlatpakTransaction *)g_steal_pointer (&self);
 }

@@ -451,7 +451,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
     g_signal_new ("new-operation",
                   G_TYPE_FROM_CLASS (object_class),
                   G_SIGNAL_RUN_LAST,
-                  0,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, new_operation),
                   NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 5, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, FLATPAK_TYPE_TRANSACTION_PROGRESS);
@@ -471,7 +471,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
     g_signal_new ("operation-error",
                   G_TYPE_FROM_CLASS (object_class),
                   G_SIGNAL_RUN_LAST,
-                  0,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, operation_error),
                   NULL, NULL,
                   NULL,
                   G_TYPE_BOOLEAN, 5, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_ERROR, G_TYPE_INT);
@@ -490,7 +490,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
     g_signal_new ("operation-done",
                   G_TYPE_FROM_CLASS (object_class),
                   G_SIGNAL_RUN_LAST,
-                  0,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, operation_done),
                   NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING);
@@ -508,7 +508,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
     g_signal_new ("choose-remote-for-ref",
                   G_TYPE_FROM_CLASS (object_class),
                   G_SIGNAL_RUN_LAST,
-                  0,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, choose_remote_for_ref),
                   NULL, NULL,
                   NULL,
                   G_TYPE_INT, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRV);
@@ -523,7 +523,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
     g_signal_new ("end-of-lifed",
                   G_TYPE_FROM_CLASS (object_class),
                   G_SIGNAL_RUN_LAST,
-                  0,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, end_of_lifed),
                   NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);

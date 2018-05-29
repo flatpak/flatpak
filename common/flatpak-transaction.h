@@ -73,6 +73,33 @@ struct _FlatpakTransactionClass
 {
   GObjectClass parent_class;
 
+  void (*new_operation)        (FlatpakTransaction *transaction,
+                                const char *ref,
+                                const char *remote,
+                                const char *bundle_path,
+                                FlatpakTransactionOperationType operation_type,
+                                FlatpakTransactionProgress *progress);
+  void (*operation_done)       (FlatpakTransaction *transaction,
+                                const char *ref,
+                                const char *remote,
+                                FlatpakTransactionOperationType operation_type,
+                                const char *commit,
+                                FlatpakTransactionResult details);
+  gboolean (*operation_error)  (FlatpakTransaction *transaction,
+                                const char *ref,
+                                const char *remote,
+                                FlatpakTransactionOperationType operation_type,
+                                GError *error,
+                                FlatpakTransactionErrorDetails detail);
+  int (*choose_remote_for_ref) (FlatpakTransaction *transaction,
+                                const char *for_ref,
+                                const char *runtime_ref,
+                                const char * const *remotes);
+  void (*end_of_lifed)         (FlatpakTransaction *transaction,
+                                const char *ref,
+                                const char *reason,
+                                const char *rebase);
+
   gpointer padding[12];
 };
 
