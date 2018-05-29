@@ -60,5 +60,6 @@ CLEANFILES += app/parse-datetime.c
 flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
 	libglnx.la libflatpak-common.la
 flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
+	-DFLATPAK_COMPILATION \
         -I$(srcdir)/app \
         -DLOCALEDIR=\"$(localedir)\"
