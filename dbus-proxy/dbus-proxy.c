@@ -160,38 +160,21 @@ start_proxy (GPtrArray *args, int *args_i)
 
       if (g_str_has_prefix (arg, "--see=") ||
           g_str_has_prefix (arg, "--talk=") ||
-          g_str_has_prefix (arg, "--filter=") ||
           g_str_has_prefix (arg, "--own="))
         {
           FlatpakPolicy policy = FLATPAK_POLICY_SEE;
-          g_autofree char *name = NULL;
+          g_autofree char *name = g_strdup (strchr (arg, '=') + 1);
           gboolean wildcard = FALSE;
 
           if (arg[2] == 't')
             policy = FLATPAK_POLICY_TALK;
-          else if (arg[2] == 'f')
-            policy = FLATPAK_POLICY_FILTERED;
           else if (arg[2] == 'o')
             policy = FLATPAK_POLICY_OWN;
 
-          name = g_strdup (strchr (arg, '=') + 1);
-
-          if (policy == FLATPAK_POLICY_FILTERED)
+          if (g_str_has_suffix (name, ".*"))
             {
-              char *rule = strchr (name, '=');
-              if (rule != NULL)
-                {
-                  *rule++ = 0;
-                  flatpak_proxy_add_filter (proxy, name, rule);
-                }
-            }
-          else
-            {
-              if (g_str_has_suffix (name, ".*"))
-                {
-                  name[strlen (name) - 2] = 0;
-                  wildcard = TRUE;
-                }
+              name[strlen (name) - 2] = 0;
+              wildcard = TRUE;
             }
 
           if (name[0] == ':' || !g_dbus_is_name (name))
@@ -200,10 +183,38 @@ start_proxy (GPtrArray *args, int *args_i)
               return FALSE;
             }
 
-          if (wildcard)
-            flatpak_proxy_add_wildcarded_policy (proxy, name, policy);
+          flatpak_proxy_add_policy (proxy, name, wildcard, policy);
+
+          *args_i += 1;
+        }
+      else if (g_str_has_prefix (arg, "--call=") ||
+               g_str_has_prefix (arg, "--broadcast="))
+        {
+          g_autofree char *rest = g_strdup (strchr (arg, '=') + 1);
+          char *name = rest;
+          char *rule;
+          char *name_end = strchr (rest, '=');
+          gboolean wildcard = FALSE;
+
+          if (name_end == NULL)
+            {
+              g_printerr ("'%s' is not a valid name + rule\n", rest);
+              return FALSE;
+            }
+
+          *name_end = 0;
+          rule = name_end + 1;
+
+          if (g_str_has_suffix (name, ".*"))
+            {
+              name[strlen (name) - 2] = 0;
+              wildcard = TRUE;
+            }
+
+          if (g_str_has_prefix (arg, "--call="))
+            flatpak_proxy_add_call_rule (proxy, name, wildcard, rule);
           else
-            flatpak_proxy_add_policy (proxy, name, policy);
+            flatpak_proxy_add_broadcast_rule (proxy, name, wildcard, rule);
 
           *args_i += 1;
         }

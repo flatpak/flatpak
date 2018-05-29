@@ -47,9 +47,9 @@
  * initial policy is that the the user is only allowed to TALK to the
  * bus itself (org.freedesktop.DBus, or no destination specified), and
  * TALK to its own unique id. All other clients are invisible. The
- * well-known names can be specified exactly, or as a simple one-level
- * wildcard like "org.foo.*" which matches "org.foo.bar", but not
- * "org.foobar" or "org.foo.bar.gazonk".
+ * well-known names can be specified exactly, or as a arg0namespace
+ * wildcards like "org.foo.*" which matches "org.foo", "org.foo.bar",
+ * and "org.foo.bar.gazonk", but not "org.foobar".
  *
  * Polices are specified for well-known names, but they also affect
  * the owner of that name, so that the policy for a unique id is the
@@ -73,9 +73,6 @@
  *    You can call the GetXXX methods on the name/id to get e.g. the peer pid
  *    You get AccessDenied rather than NameHasNoOwner when sending messages to the name/id
  *
- * FILTERED:
- *    You can send *some* method calls to the name (not id)
- *
  * TALK:
  *    You can send any method calls and signals to the name/id
  *    You will receive broadcast signals from the name/id (if you have a match rule for them)
@@ -84,14 +81,22 @@
  * OWN:
  *    You are allowed to call RequestName/ReleaseName/ListQueuedOwners on the name.
  *
- * The policy applies only to signals and method calls. All replies
- * (errors or method returns) are allowed once for an outstanding
- * method call, and never otherwise.
+ * Additionally, there can be more detailed filters installed that
+ * limits what messages you can send to and receive broadcasts from.
+ * However, if you can *ever* call or recieve broadcasts from a name (even if
+ * filtered to some subset of paths/interfaces) its visibility is considered
+ * to be as TALK.
+ *
+ * The policy applies only to outgoing signals and method calls and
+ * incoming broadcast. All replies (errors or method returns) are
+ * allowed once for an outstanding method call, and never
+ * otherwise.
  *
  * Every peer on the bus is considered priviledged, and we thus trust
- * it. So we rely on similar proxies to be running for all untrusted
- * clients. Any such priviledged peer is allowed to send method call
- * or unicast signal messages to the proxied client. Once another peer
+ * it and don't apply any filtering (except broadcasts). So we rely on
+ * similar proxies to be running for all untrusted clients. Any such
+ * priviledged peer is allowed to send method call or unicast signal
+ * messages to the proxied client. Once another peer
  * sends you a message the unique id of that peer is now made visible
  * (policy SEE) to the proxied client, allowing the client to track
  * caller lifetimes via NameOwnerChanged signals.
@@ -154,6 +159,10 @@
  *  * When we get a method call from a unique id, it gets SEE
  *  * When we get a reply to the initial Hello request we give
  *    our own assigned unique id policy TALK.
+ *
+ * There is also a mode called "sloppy-names" where you automatically get
+ * SEE access to all the unique names on the bus. This is used only for
+ * the a11y bus.
  *
  * All messages sent to the bus itself are fully demarshalled
  * and handled on a per-method basis:
@@ -222,9 +231,23 @@ typedef struct
   guint32     unix_fds;
 } Header;
 
+typedef enum {
+  FILTER_TYPE_CALL = 1<<0,
+  FILTER_TYPE_BROADCAST = 1<<1,
+} FilterTypeMask;
+
+#define FILTER_TYPE_ALL (FILTER_TYPE_CALL|FILTER_TYPE_BROADCAST)
+
 typedef struct
 {
+  char *name;
+  gboolean name_is_subtree;
+  FlatpakPolicy policy;
+
+  /* More detailed filter */
+  FilterTypeMask types;
   char *path;
+  gboolean path_is_subtree;
   char *interface;
   char *member;
 } Filter;
@@ -272,6 +295,7 @@ struct FlatpakProxyClient
   GHashTable *get_owner_reply;
 
   GHashTable *unique_id_policy;
+  GHashTable *unique_id_owned_names;
 };
 
 typedef struct
@@ -292,8 +316,6 @@ struct FlatpakProxy
   gboolean       filter;
   gboolean       sloppy_names;
 
-  GHashTable    *wildcard_policy;
-  GHashTable    *policy;
   GHashTable    *filters;
 };
 
@@ -326,6 +348,12 @@ G_DEFINE_TYPE (FlatpakProxyClient, flatpak_proxy_client, G_TYPE_OBJECT)
 
 static void start_reading (ProxySide *side);
 static void stop_reading (ProxySide *side);
+
+static void
+string_list_free (GList *filters)
+{
+  g_list_free_full (filters, (GDestroyNotify)g_free);
+}
 
 static void
 buffer_unref (Buffer *buffer)
@@ -377,6 +405,7 @@ flatpak_proxy_client_finalize (GObject *object)
   g_hash_table_destroy (client->rewrite_reply);
   g_hash_table_destroy (client->get_owner_reply);
   g_hash_table_destroy (client->unique_id_policy);
+  g_hash_table_destroy (client->unique_id_owned_names);
 
   free_side (&client->client_side);
   free_side (&client->bus_side);
@@ -413,6 +442,7 @@ flatpak_proxy_client_init (FlatpakProxyClient *client)
   client->rewrite_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_object_unref);
   client->get_owner_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
   client->unique_id_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  client->unique_id_owned_names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)string_list_free);
 }
 
 static FlatpakProxyClient *
@@ -429,39 +459,6 @@ flatpak_proxy_client_new (FlatpakProxy *proxy, GSocketConnection *connection)
   proxy->clients = g_list_prepend (proxy->clients, client);
 
   return client;
-}
-
-static FlatpakPolicy
-flatpak_proxy_get_wildcard_policy (FlatpakProxy *proxy,
-                                   const char   *_name)
-{
-  guint policy, wildcard_policy = 0;
-  char *dot;
-  g_autofree char *name = g_strdup (_name);
-
-  dot = name + strlen (name);
-  while (dot)
-    {
-      *dot = 0;
-      policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->wildcard_policy, name));
-      wildcard_policy = MAX (wildcard_policy, policy);
-      dot = strrchr (name, '.');
-    }
-
-  return wildcard_policy;
-}
-
-static FlatpakPolicy
-flatpak_proxy_get_policy (FlatpakProxy *proxy,
-                          const char   *name)
-{
-  guint policy, wildcard_policy;
-
-  policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->policy, name));
-
-  wildcard_policy = flatpak_proxy_get_wildcard_policy (proxy, name);
-
-  return MAX (policy, wildcard_policy);
 }
 
 void
@@ -485,29 +482,10 @@ flatpak_proxy_set_log_messages (FlatpakProxy *proxy,
   proxy->log_messages = log;
 }
 
-void
-flatpak_proxy_add_policy (FlatpakProxy *proxy,
-                          const char   *name,
-                          FlatpakPolicy policy)
-{
-  guint current_policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->policy, name));
-
-  current_policy = MAX (policy, current_policy);
-
-  g_hash_table_replace (proxy->policy, g_strdup (name), GINT_TO_POINTER (current_policy));
-}
-
-void
-flatpak_proxy_add_wildcarded_policy (FlatpakProxy *proxy,
-                                     const char   *name,
-                                     FlatpakPolicy policy)
-{
-  g_hash_table_replace (proxy->wildcard_policy, g_strdup (name), GINT_TO_POINTER (policy));
-}
-
 static void
 filter_free (Filter *filter)
 {
+  g_free (filter->name);
   g_free (filter->path);
   g_free (filter->interface);
   g_free (filter->member);
@@ -520,50 +498,138 @@ filter_list_free (GList *filters)
   g_list_free_full (filters, (GDestroyNotify)filter_free);
 }
 
-/* rules are of the form [org.the.interface.[method|*]][@/obj/path] */
+
 static Filter *
-filter_new (const char *rule)
+filter_new (const char *name,
+            gboolean name_is_subtree,
+            FlatpakPolicy policy)
 {
   Filter *filter = g_new0 (Filter, 1);
+
+  filter->name = g_strdup (name);
+  filter->name_is_subtree = name_is_subtree;
+  filter->policy = policy;
+  filter->types = FILTER_TYPE_ALL;
+
+  return filter;
+}
+
+// rules are of the form [*|org.the.interface.[method|*]]|[@/obj/path[/*]]
+static Filter *
+filter_new_from_rule (const char *name,
+                      gboolean name_is_subtree,
+                      FilterTypeMask types,
+                      const char *rule)
+{
+  Filter *filter;
   const char *obj_path_start = NULL;
   const char *method_end = NULL;
 
+  filter = filter_new (name, name_is_subtree, FLATPAK_POLICY_TALK);
+  filter->types = types;
+
   obj_path_start = strchr (rule, '@');
   if (obj_path_start && obj_path_start[1] != 0)
-    filter->path = g_strdup (obj_path_start + 1);
+    {
+      filter->path = g_strdup (obj_path_start + 1);
+
+      if (g_str_has_suffix (filter->path, "/*"))
+        {
+          filter->path_is_subtree = TRUE;
+          filter->path[strlen (filter->path) - 2] = 0;
+        }
+    }
 
   if (obj_path_start != NULL)
     method_end = obj_path_start;
   else
     method_end = rule + strlen(rule);
 
-  if (rule[0] != '@')
+  if (method_end != rule)
     {
-      filter->interface = g_strndup (rule, method_end - rule);
-      char *dot = strrchr (filter->interface, '.');
-      if (dot != NULL)
+      if (rule[0] == '*')
         {
-          *dot = 0;
-          if (strcmp (dot+1, "*") != 0)
-            filter->member = g_strdup (dot + 1);
-         }
+          /* Both interface and method wildcarded */
+        }
+      else
+        {
+          filter->interface = g_strndup (rule, method_end - rule);
+          char *dot = strrchr (filter->interface, '.');
+          if (dot != NULL)
+            {
+              *dot = 0;
+              if (strcmp (dot+1, "*") != 0)
+                filter->member = g_strdup (dot + 1);
+            }
+        }
     }
 
   return filter;
 }
 
-
-void
-flatpak_proxy_add_filter (FlatpakProxy *proxy,
-                          const char   *name,
-                          const char   *rule)
+static gboolean
+filter_matches (Filter *filter,
+                FilterTypeMask type,
+                const char *path,
+                const char *interface,
+                const char *member)
 {
-  Filter *filter;
+  if ((filter->types & type) == 0)
+    return FALSE;
+
+  if (filter->path)
+    {
+      if (path == NULL)
+        return FALSE;
+
+      if (filter->path_is_subtree)
+        {
+          gsize filter_path_len = strlen (filter->path);
+          if (strncmp (path, filter->path, filter_path_len) != 0 ||
+              (path[filter_path_len] != 0 && path[filter_path_len] != '/'))
+            return FALSE;
+        }
+      else if (strcmp (filter->path, path) != 0)
+        return FALSE;
+    }
+
+  if (filter->interface && g_strcmp0 (filter->interface, interface) != 0)
+    return FALSE;
+
+  if (filter->member && g_strcmp0 (filter->member, member) != 0)
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+any_filter_matches (GList *filters,
+                    FilterTypeMask type,
+                    const char *path,
+                    const char *interface,
+                    const char *member)
+{
+  GList *l;
+
+  for (l = filters; l != NULL; l = l->next)
+    {
+      Filter *filter = l->data;
+      if (filter_matches (filter, type, path, interface, member))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+
+static void
+flatpak_proxy_add_filter (FlatpakProxy *proxy,
+                          Filter *filter)
+{
   GList *filters, *new_filters;
 
-  filter = filter_new (rule);
   if (g_hash_table_lookup_extended (proxy->filters,
-                                    name,
+                                    filter->name,
                                     NULL, (void **)&filters))
     {
       new_filters = g_list_append (filters, filter);
@@ -572,8 +638,41 @@ flatpak_proxy_add_filter (FlatpakProxy *proxy,
   else
     {
       filters = g_list_append (NULL, filter);
-      g_hash_table_insert (proxy->filters, g_strdup (name), filters);
+      g_hash_table_insert (proxy->filters, g_strdup (filter->name), filters);
     }
+}
+
+void
+flatpak_proxy_add_policy (FlatpakProxy *proxy,
+                          const char   *name,
+                          gboolean name_is_subtree,
+                          FlatpakPolicy policy)
+{
+  Filter *filter = filter_new (name, name_is_subtree, policy);
+
+  flatpak_proxy_add_filter (proxy, filter);
+}
+
+void
+flatpak_proxy_add_call_rule (FlatpakProxy *proxy,
+                             const char   *name,
+                             gboolean name_is_subtree,
+                             const char   *rule)
+{
+  Filter *filter = filter_new_from_rule (name, name_is_subtree, FILTER_TYPE_CALL, rule);
+
+  flatpak_proxy_add_filter (proxy, filter);
+}
+
+void
+flatpak_proxy_add_broadcast_rule (FlatpakProxy *proxy,
+                                  const char   *name,
+                                  gboolean name_is_subtree,
+                                  const char   *rule)
+{
+  Filter *filter = filter_new_from_rule (name, name_is_subtree, FILTER_TYPE_BROADCAST, rule);
+
+  flatpak_proxy_add_filter (proxy, filter);
 }
 
 static void
@@ -586,8 +685,6 @@ flatpak_proxy_finalize (GObject *object)
 
   g_assert (proxy->clients == NULL);
 
-  g_hash_table_destroy (proxy->policy);
-  g_hash_table_destroy (proxy->wildcard_policy);
   g_hash_table_destroy (proxy->filters);
 
   g_free (proxy->socket_path);
@@ -1304,16 +1401,88 @@ print_incoming_header (Header *header)
     }
 }
 
+
+static Filter *match_all[FLATPAK_POLICY_OWN+1] = { NULL };
+
+
 static FlatpakPolicy
-flatpak_proxy_client_get_policy (FlatpakProxyClient *client, const char *source)
+flatpak_proxy_client_get_max_policy_and_matched (FlatpakProxyClient *client,
+                                                 const char *source,
+                                                 GList **matched_filters)
 {
+  GList *names, *filters, *l;
+  FlatpakPolicy max_policy = FLATPAK_POLICY_NONE;
+  g_autofree char *name = NULL;
+  gboolean exact_name_match;
+  char *dot;
+
+  if (match_all[FLATPAK_POLICY_SEE] == NULL)
+    {
+      match_all[FLATPAK_POLICY_SEE] = filter_new ("", FALSE, FLATPAK_POLICY_SEE);
+      match_all[FLATPAK_POLICY_TALK] = filter_new ("", FALSE, FLATPAK_POLICY_TALK);
+      match_all[FLATPAK_POLICY_OWN] = filter_new ("", FALSE, FLATPAK_POLICY_OWN);
+    }
+
   if (source == NULL)
-    return FLATPAK_POLICY_TALK; /* All clients can talk to the bus itself */
+    {
+      if (matched_filters)
+        *matched_filters = g_list_append (*matched_filters,  match_all[FLATPAK_POLICY_TALK]);
+
+      return FLATPAK_POLICY_TALK; /* All clients can talk to the bus itself */
+    }
 
   if (source[0] == ':')
-    return GPOINTER_TO_UINT (g_hash_table_lookup (client->unique_id_policy, source));
+    {
+      /* Default to the unique id policy, i.e. TALK for self, and SEE for trusted peers */
+      max_policy = GPOINTER_TO_UINT (g_hash_table_lookup (client->unique_id_policy, source));
+      if (max_policy > FLATPAK_POLICY_NONE && matched_filters)
+        *matched_filters = g_list_append (*matched_filters, match_all[max_policy]);
 
-  return flatpak_proxy_get_policy (client->proxy, source);
+      /* Treat this as the merged list of filters for all the names the unique id ever owned */
+      names = g_hash_table_lookup (client->unique_id_owned_names, source);
+      for (l = names; l != NULL; l = l->next)
+        {
+          const char *owned_name = l->data;
+          max_policy = MAX (max_policy, flatpak_proxy_client_get_max_policy_and_matched (client, owned_name, matched_filters));
+        }
+
+
+      return max_policy;
+    }
+
+  name = g_strdup (source);
+  exact_name_match = TRUE;
+  do
+    {
+      filters = g_hash_table_lookup (client->proxy->filters, name);
+
+      for (l = filters; l != NULL; l = l->next)
+        {
+          Filter *filter = l->data;
+
+          if (exact_name_match || filter->name_is_subtree)
+            {
+              max_policy = MAX (max_policy, filter->policy);
+              if (matched_filters)
+                *matched_filters = g_list_append (*matched_filters, filter);
+            }
+        }
+
+      exact_name_match = FALSE;
+      dot = strrchr (name, '.');
+      if (dot != NULL)
+        *dot = 0;
+    }
+  while (dot != NULL);
+
+  return max_policy;
+}
+
+static FlatpakPolicy
+flatpak_proxy_client_get_max_policy (FlatpakProxyClient *client,
+                                     const char *source)
+{
+  return flatpak_proxy_client_get_max_policy_and_matched (client, source, NULL);
 }
 
 static void
@@ -1330,14 +1499,23 @@ flatpak_proxy_client_update_unique_id_policy (FlatpakProxyClient *client,
     }
 }
 
+
 static void
-flatpak_proxy_client_update_unique_id_policy_from_name (FlatpakProxyClient *client,
-                                                        const char         *unique_id,
-                                                        const char         *as_name)
+flatpak_proxy_client_add_unique_id_owned_name (FlatpakProxyClient *client,
+                                               const char         *unique_id,
+                                               const char         *owned_name)
 {
-  flatpak_proxy_client_update_unique_id_policy (client,
+  GList *names;
+  gboolean already_added;
+
+  names = NULL;
+  already_added = g_hash_table_lookup_extended (client->unique_id_owned_names,
                                                 unique_id,
-                                                flatpak_proxy_get_policy (client->proxy, as_name));
+                                                NULL, (void **)&names);
+  names = g_list_append (names, g_strdup (owned_name));
+
+  if (!already_added)
+    g_hash_table_insert (client->unique_id_owned_names, g_strdup (unique_id), names);
 }
 
 
@@ -1482,6 +1660,7 @@ get_dbus_method_handler (FlatpakProxyClient *client, Header *header)
 {
   FlatpakPolicy policy;
   const char *method;
+  g_autoptr(GList) filters = NULL;
 
   if (header->has_reply_serial)
     {
@@ -1494,34 +1673,25 @@ get_dbus_method_handler (FlatpakProxyClient *client, Header *header)
       return HANDLE_PASS;
     }
 
-  policy = flatpak_proxy_client_get_policy (client, header->destination);
+  policy = flatpak_proxy_client_get_max_policy_and_matched (client, header->destination, &filters);
   if (policy < FLATPAK_POLICY_SEE)
     return HANDLE_HIDE;
-  if (policy < FLATPAK_POLICY_FILTERED)
+  if (policy < FLATPAK_POLICY_TALK)
     return HANDLE_DENY;
 
-  if (policy == FLATPAK_POLICY_FILTERED)
+  if (!is_for_bus (header))
     {
-      GList *filters = NULL, *l;
-
-      if (header->destination)
-        filters = g_hash_table_lookup (client->proxy->filters, header->destination);
-      for (l = filters; l != NULL; l = l->next)
-        {
-          Filter *filter = l->data;
-
-          if (header->type == G_DBUS_MESSAGE_TYPE_METHOD_CALL &&
-              (filter->path == NULL || g_strcmp0 (filter->path, header->path) == 0) &&
-              (filter->interface == NULL || g_strcmp0 (filter->interface, header->interface) == 0) &&
-              (filter->member == NULL || g_strcmp0 (filter->member, header->member) == 0))
-            return HANDLE_PASS;
-        }
+      if (policy == FLATPAK_POLICY_OWN ||
+          any_filter_matches (filters, FILTER_TYPE_CALL,
+                              header->path,
+                              header->interface,
+                              header->member))
+        return HANDLE_PASS;
 
       return HANDLE_DENY;
     }
 
-  if (!is_for_bus (header))
-    return HANDLE_PASS;
+  /* Its a bus call */
 
   if (is_introspection_call (header))
     {
@@ -1657,7 +1827,7 @@ validate_arg0_name (FlatpakProxyClient *client, Buffer *buffer, FlatpakPolicy re
       g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING))
     {
       name = g_variant_get_string (arg0, NULL);
-      name_policy = flatpak_proxy_client_get_policy (client, name);
+      name_policy = flatpak_proxy_client_get_max_policy (client, name);
 
       if (has_policy)
         *has_policy = name_policy;
@@ -1693,7 +1863,7 @@ filter_names_list (FlatpakProxyClient *client, Buffer *buffer)
   g_variant_builder_init (&builder, G_VARIANT_TYPE_STRING_ARRAY);
   for (i = 0; names[i] != NULL; i++)
     {
-      if (flatpak_proxy_client_get_policy (client, names[i]) >= FLATPAK_POLICY_SEE)
+      if (flatpak_proxy_client_get_max_policy (client, names[i]) >= FLATPAK_POLICY_SEE)
         g_variant_builder_add (&builder, "s", names[i]);
     }
   g_free (names);
@@ -1723,7 +1893,7 @@ should_filter_name_owner_changed (FlatpakProxyClient *client, Buffer *buffer)
 {
   GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
   GVariant *body, *arg0, *arg1, *arg2;
-  const gchar *name, *old, *new;
+  const gchar *name, *new;
   gboolean filter = TRUE;
 
   if (message == NULL ||
@@ -1737,19 +1907,15 @@ should_filter_name_owner_changed (FlatpakProxyClient *client, Buffer *buffer)
     return TRUE;
 
   name = g_variant_get_string (arg0, NULL);
-  old = g_variant_get_string (arg1, NULL);
   new = g_variant_get_string (arg2, NULL);
 
-  if (flatpak_proxy_client_get_policy (client, name) >= FLATPAK_POLICY_SEE ||
+  if (flatpak_proxy_client_get_max_policy (client, name) >= FLATPAK_POLICY_SEE ||
       (client->proxy->sloppy_names && name[0] == ':'))
     {
       if (name[0] != ':')
         {
-          if (old[0] != 0)
-            flatpak_proxy_client_update_unique_id_policy_from_name (client, old, name);
-
           if (new[0] != 0)
-            flatpak_proxy_client_update_unique_id_policy_from_name (client, new, name);
+            flatpak_proxy_client_add_unique_id_owned_name (client, new, name);
         }
 
       filter = FALSE;
@@ -1845,12 +2011,25 @@ queue_initial_name_ops (FlatpakProxyClient *client)
   gpointer key, value;
   gboolean has_wildcards = FALSE;
 
-  g_hash_table_iter_init (&iter, client->proxy->policy);
+  g_hash_table_iter_init (&iter, client->proxy->filters);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *name = key;
+      GList *filters = value;
+      gboolean name_needs_subtree = FALSE;
       GDBusMessage *message;
       GVariant *match;
+      GList *l;
+
+      for (l = filters; l != NULL; l = l->next)
+        {
+          Filter *filter = l->data;
+          if (filter->name_is_subtree)
+            {
+              name_needs_subtree = TRUE;
+              break;
+            }
+        }
 
       if (strcmp (name, "org.freedesktop.DBus") == 0)
         continue;
@@ -1858,45 +2037,32 @@ queue_initial_name_ops (FlatpakProxyClient *client)
       /* AddMatch the name so we get told about ownership changes.
          Do it before the GetNameOwner to avoid races */
       message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "AddMatch");
-      match = g_variant_new_printf ("type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0='%s'", name);
+      if (name_needs_subtree)
+        match = g_variant_new_printf ("type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0namespace='%s'", name);
+      else
+        match = g_variant_new_printf ("type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0='%s'", name);
       g_dbus_message_set_body (message, g_variant_new_tuple (&match, 1));
       queue_fake_message (client, message, EXPECTED_REPLY_FILTER);
 
       if (client->proxy->log_messages)
-        g_print ("C%d: -> org.freedesktop.DBus fake AddMatch for %s\n", client->last_serial, name);
+        g_print ("C%d: -> org.freedesktop.DBus fake %sAddMatch for %s\n", client->last_serial, name_needs_subtree ? "wildcarded " : "", name);
 
-      /* Get the current owner of the name (if any) so we can apply policy to it */
-      message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetNameOwner");
-      g_dbus_message_set_body (message, g_variant_new ("(s)", name));
-      queue_fake_message (client, message, EXPECTED_REPLY_FAKE_GET_NAME_OWNER);
-      g_hash_table_replace (client->get_owner_reply, GINT_TO_POINTER (client->last_serial), g_strdup (name));
+      if (!name_needs_subtree)
+        {
+          /* Get the current owner of the name (if any) so we can apply policy to it */
+          message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetNameOwner");
+          g_dbus_message_set_body (message, g_variant_new ("(s)", name));
+          queue_fake_message (client, message, EXPECTED_REPLY_FAKE_GET_NAME_OWNER);
+          g_hash_table_replace (client->get_owner_reply, GINT_TO_POINTER (client->last_serial), g_strdup (name));
 
-      if (client->proxy->log_messages)
-        g_print ("C%d: -> org.freedesktop.DBus fake GetNameOwner for %s\n", client->last_serial, name);
+          if (client->proxy->log_messages)
+            g_print ("C%d: -> org.freedesktop.DBus fake GetNameOwner for %s\n", client->last_serial, name);
+        }
+      else
+        has_wildcards = TRUE; /* Send ListNames below */
     }
 
-  /* Same for wildcard proxies. Only here we don't know the actual names to GetNameOwner for, so we have to
-     list all current names */
-  g_hash_table_iter_init (&iter, client->proxy->wildcard_policy);
-  while (g_hash_table_iter_next (&iter, &key, &value))
-    {
-      const char *name = key;
-      GDBusMessage *message;
-      GVariant *match;
-
-      has_wildcards = TRUE;
-
-      /* AddMatch the name with arg0namespace so we get told about ownership changes to all subnames.
-         Do it before the GetNameOwner to avoid races */
-      message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "AddMatch");
-      match = g_variant_new_printf ("type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0namespace='%s'", name);
-      g_dbus_message_set_body (message, g_variant_new_tuple (&match, 1));
-      queue_fake_message (client, message, EXPECTED_REPLY_FILTER);
-
-      if (client->proxy->log_messages)
-        g_print ("C%d: -> org.freedesktop.DBus fake AddMatch for %s.*\n", client->last_serial, name);
-    }
-
+  /* For wildcarded rules we don't know the actual names to GetNameOwner for, so we have to list all current names */
   if (has_wildcards)
     {
       GDBusMessage *message;
@@ -1913,6 +2079,8 @@ queue_initial_name_ops (FlatpakProxyClient *client)
       /* Stop reading from the client, to avoid incoming messages fighting with the ListNames roundtrip.
          We will start it again once we have handled the ListNames reply */
       stop_reading (&client->client_side);
+
+      /* Once we get the reply to this queue_wildcard_initial_name_ops() will be called and we continue there */
     }
 }
 
@@ -1931,14 +2099,14 @@ queue_wildcard_initial_name_ops (FlatpakProxyClient *client, Header *header, Buf
       const gchar **names = g_variant_get_strv (arg0, NULL);
       int i;
 
-      /* Loop over all current names and get the owner for all the ones that match our wildcard
+      /* Loop over all current names and get the owner for all the ones that match our rules
          policies so that we can update the unique id policies for those */
       for (i = 0; names[i] != NULL; i++)
         {
           const char *name = names[i];
 
           if (name[0] != ':' &&
-              flatpak_proxy_get_wildcard_policy (client->proxy, name) != FLATPAK_POLICY_NONE)
+              flatpak_proxy_client_get_max_policy (client, name) != FLATPAK_POLICY_NONE)
             {
               /* Get the current owner of the name (if any) so we can apply policy to it */
               GDBusMessage *message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetNameOwner");
@@ -2222,7 +2390,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
                 if (header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                   {
                     g_autofree char *owner = get_arg0_string (buffer);
-                    flatpak_proxy_client_update_unique_id_policy_from_name (client, owner, requested_name);
+                    flatpak_proxy_client_add_unique_id_owned_name (client, owner, requested_name);
                   }
 
                 g_hash_table_remove (client->get_owner_reply, GINT_TO_POINTER (header->reply_serial));
@@ -2284,8 +2452,20 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
       /* All incoming broadcast signals are filtered according to policy */
       if (header->type == G_DBUS_MESSAGE_TYPE_SIGNAL && header->destination == NULL)
         {
-          policy = flatpak_proxy_client_get_policy (client, header->sender);
-          if (policy < FLATPAK_POLICY_TALK)
+          g_autoptr(GList) filters = NULL;
+          gboolean filtered = TRUE;
+
+          policy = flatpak_proxy_client_get_max_policy_and_matched (client, header->sender, &filters);
+
+          if (policy == FLATPAK_POLICY_OWN ||
+              (policy == FLATPAK_POLICY_TALK &&
+               any_filter_matches (filters, FILTER_TYPE_BROADCAST,
+                                   header->path,
+                                   header->interface,
+                                   header->member)))
+            filtered = FALSE;
+
+          if (filtered)
             {
               if (client->proxy->log_messages)
                 g_print ("*FILTERED IN*\n");
@@ -2586,10 +2766,8 @@ flatpak_proxy_incoming (GSocketService    *service,
 static void
 flatpak_proxy_init (FlatpakProxy *proxy)
 {
-  proxy->policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   proxy->filters = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)filter_list_free);
-  proxy->wildcard_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  flatpak_proxy_add_policy (proxy, "org.freedesktop.DBus", FLATPAK_POLICY_TALK);
+  flatpak_proxy_add_policy (proxy, "org.freedesktop.DBus", FALSE, FLATPAK_POLICY_TALK);
 }
 
 static void
