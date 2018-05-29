@@ -3855,7 +3855,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
     {
       if (!g_file_load_contents (summary_sig_file, cancellable,
                                  &summary_sig_data, &summary_sig_data_size, NULL, NULL))
-        return flatpak_fail (error, "GPG verification enabled, but no summary signatures found");
+        return flatpak_fail (error, "GPG verification enabled, but no summary signatures found for remote '%s'", remote_name);
 
       summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_data_size);
 
@@ -3868,7 +3868,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
         return FALSE;
 
       if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
-        return flatpak_fail (error, "GPG signatures found, but none are in trusted keyring");
+        return flatpak_fail (error, "GPG signatures found for remote '%s', but none are in trusted keyring", remote_name);
     }
 
   g_clear_object (&gpg_result);
