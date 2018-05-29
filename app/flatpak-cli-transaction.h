@@ -24,6 +24,9 @@
 #include "flatpak-transaction.h"
 #include "flatpak-dir-private.h"
 
+#define FLATPAK_TYPE_CLI_TRANSACTION flatpak_cli_transaction_get_type ()
+G_DECLARE_FINAL_TYPE (FlatpakCliTransaction, flatpak_cli_transaction, FLATPAK, CLI_TRANSACTION, FlatpakTransaction)
+
 FlatpakTransaction *flatpak_cli_transaction_new (FlatpakDir *dir,
                                                  gboolean disable_interaction,
                                                  gboolean stop_on_first_error,
