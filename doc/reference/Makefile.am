@@ -30,6 +30,7 @@ IGNORE_HFILES = \
 	flatpak-remote-ref-private.h \
 	flatpak-run-private.h \
 	flatpak-systemd-dbus-generated.h \
+	flatpak-installation-private.h \
 	flatpak-transaction-private.h \
 	flatpak-utils-private.h \
 	$(NULL)
