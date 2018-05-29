@@ -66,8 +66,9 @@ struct FlatpakTransactionOp {
   gboolean failed;
 };
 
+typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
 
-struct _FlatpakTransaction {
+struct _FlatpakTransactionPrivate {
   GObject parent;
 
   FlatpakDir *dir;
@@ -84,7 +85,7 @@ struct _FlatpakTransaction {
   gboolean disable_deps;
   gboolean disable_related;
   gboolean reinstall;
-};
+} ;
 
 enum {
   NEW_OPERATION,
@@ -113,7 +114,7 @@ enum {
 
 static guint progress_signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, G_TYPE_OBJECT);
+G_DEFINE_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, G_TYPE_OBJECT)
 
 void
 flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress  *self,
@@ -215,7 +216,7 @@ flatpak_transaction_progress_new (void)
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT)
 
 static FlatpakTransactionOperationType
 op_type_from_resolved_kind (FlatpakTransactionOpKind kind)
@@ -252,8 +253,9 @@ ref_is_installed (FlatpakTransaction *self,
                   const char *ref,
                   GError **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GFile) deploy_dir = NULL;
-  FlatpakDir *dir = self->dir;
+  FlatpakDir *dir = priv->dir;
   int i;
 
   deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
@@ -265,16 +267,16 @@ ref_is_installed (FlatpakTransaction *self,
     return FALSE;
 
   /* Lazy initialization of this, once per transaction */
-  if (self->system_dirs == NULL)
+  if (priv->system_dirs == NULL)
     {
-      self->system_dirs = flatpak_dir_get_system_list (NULL, error);
-      if (self->system_dirs == NULL)
+      priv->system_dirs = flatpak_dir_get_system_list (NULL, error);
+      if (priv->system_dirs == NULL)
         return FALSE;
     }
 
-  for (i = 0; i < self->system_dirs->len; i++)
+  for (i = 0; i < priv->system_dirs->len; i++)
     {
-      FlatpakDir *system_dir = g_ptr_array_index (self->system_dirs, i);
+      FlatpakDir *system_dir = g_ptr_array_index (priv->system_dirs, i);
 
       if (g_strcmp0 (flatpak_dir_get_id (dir), flatpak_dir_get_id (system_dir)) == 0)
         continue;
@@ -340,24 +342,25 @@ flatpak_transaction_operation_free (FlatpakTransactionOp *self)
 gboolean
 flatpak_transaction_is_empty (FlatpakTransaction  *self)
 {
-  return self->ops == NULL;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  return priv->ops == NULL;
 }
-
 
 static void
 flatpak_transaction_finalize (GObject *object)
 {
   FlatpakTransaction *self = (FlatpakTransaction *) object;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
-  g_hash_table_unref (self->refs);
-  g_hash_table_unref (self->remote_states);
-  g_list_free_full (self->ops, (GDestroyNotify)flatpak_transaction_operation_free);
-  g_object_unref (self->dir);
+  g_hash_table_unref (priv->refs);
+  g_hash_table_unref (priv->remote_states);
+  g_list_free_full (priv->ops, (GDestroyNotify)flatpak_transaction_operation_free);
+  g_object_unref (priv->dir);
 
-  g_ptr_array_unref (self->added_origin_remotes);
+  g_ptr_array_unref (priv->added_origin_remotes);
 
-  if (self->system_dirs != NULL)
-    g_ptr_array_free (self->system_dirs, TRUE);
+  if (priv->system_dirs != NULL)
+    g_ptr_array_free (priv->system_dirs, TRUE);
 
   G_OBJECT_CLASS (flatpak_transaction_parent_class)->finalize (object);
 }
@@ -463,20 +466,24 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 static void
 flatpak_transaction_init (FlatpakTransaction *self)
 {
-}
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
+  priv->refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)flatpak_remote_state_free);
+  priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
+
+}
 
 FlatpakTransaction *
 flatpak_transaction_new (FlatpakDir *dir)
 {
   FlatpakTransaction *t;
+  FlatpakTransactionPrivate *priv;
 
   t = g_object_new (FLATPAK_TYPE_TRANSACTION, NULL);
+  priv = flatpak_transaction_get_instance_private (t);
 
-  t->dir = g_object_ref (dir);
-  t->refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  t->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)flatpak_remote_state_free);
-  t->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
+  priv->dir = g_object_ref (dir);
 
   return t;
 }
@@ -485,58 +492,67 @@ void
 flatpak_transaction_set_no_pull (FlatpakTransaction  *self,
                                  gboolean             no_pull)
 {
-  self->no_pull = no_pull;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->no_pull = no_pull;
 }
 
 void
 flatpak_transaction_set_no_deploy (FlatpakTransaction  *self,
                                    gboolean             no_deploy)
 {
-  self->no_deploy = no_deploy;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  priv->no_deploy = no_deploy;
 }
 
 void
 flatpak_transaction_set_disable_static_deltas (FlatpakTransaction  *self,
                                                gboolean             disable_static_deltas)
 {
-  self->disable_static_deltas = disable_static_deltas;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  priv->disable_static_deltas = disable_static_deltas;
 }
 
 void
 flatpak_transaction_set_disable_prune (FlatpakTransaction  *self,
                                        gboolean             disable_prune)
 {
-  self->disable_prune = disable_prune;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  priv->disable_prune = disable_prune;
 }
 
 void
 flatpak_transaction_set_disable_dependencies  (FlatpakTransaction  *self,
                                                gboolean             disable_dependencies)
 {
-  self->disable_deps = disable_dependencies;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  priv->disable_deps = disable_dependencies;
 }
 
 void
 flatpak_transaction_set_disable_related (FlatpakTransaction  *self,
                                          gboolean             disable_related)
 {
-  self->disable_related = disable_related;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  priv->disable_related = disable_related;
 }
 
 void
 flatpak_transaction_set_reinstall (FlatpakTransaction   *self,
                                    gboolean             reinstall)
 {
-  self->reinstall = reinstall;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  priv->reinstall = reinstall;
 }
 
 static FlatpakTransactionOp *
 flatpak_transaction_get_op_for_ref (FlatpakTransaction *self,
                                     const char *ref)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   FlatpakTransactionOp *op;
 
-  op = g_hash_table_lookup (self->refs, ref);
+  op = g_hash_table_lookup (priv->refs, ref);
 
   return op;
 }
@@ -587,16 +603,17 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction *self,
                                          const char *remote,
                                          GError **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   FlatpakRemoteState *state;
 
-  state = g_hash_table_lookup (self->remote_states, remote);
+  state = g_hash_table_lookup (priv->remote_states, remote);
   if (state)
     return state;
 
-  state = flatpak_dir_get_remote_state_optional (self->dir, remote, NULL, error);
+  state = flatpak_dir_get_remote_state_optional (priv->dir, remote, NULL, error);
 
   if (state)
-    g_hash_table_insert (self->remote_states, state->remote_name, state);
+    g_hash_table_insert (priv->remote_states, state->remote_name, state);
 
   return state;
 }
@@ -610,6 +627,7 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
                             GFile *bundle,
                             FlatpakTransactionOpKind kind)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   FlatpakTransactionOp *op;
   g_autofree char *subpaths_str = NULL;
 
@@ -620,7 +638,7 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
            commit != NULL ? commit : "",
            subpaths_str);
 
-  op = g_hash_table_lookup (self->refs, ref);
+  op = g_hash_table_lookup (priv->refs, ref);
   if (op != NULL)
     {
       g_auto(GStrv) old_subpaths = op->subpaths;
@@ -630,8 +648,8 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
     }
 
   op = flatpak_transaction_operation_new (remote, ref, subpaths, commit, bundle, kind);
-  g_hash_table_insert (self->refs, g_strdup (ref), op);
-  self->ops = g_list_prepend (self->ops, op);
+  g_hash_table_insert (priv->refs, g_strdup (ref), op);
+  priv->ops = g_list_prepend (priv->ops, op);
 
   return op;
 }
@@ -644,17 +662,18 @@ add_related (FlatpakTransaction *self,
              FlatpakTransactionOp *source_op,
              GError **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GPtrArray) related = NULL;
   g_autoptr(GError) local_error = NULL;
   int i;
 
-  if (self->disable_related)
+  if (priv->disable_related)
     return TRUE;
 
-  if (self->no_pull)
-    related = flatpak_dir_find_local_related (self->dir, ref, remote, NULL, &local_error);
+  if (priv->no_pull)
+    related = flatpak_dir_find_local_related (priv->dir, ref, remote, NULL, &local_error);
   else
-    related = flatpak_dir_find_remote_related (self->dir, state, ref, NULL, &local_error);
+    related = flatpak_dir_find_remote_related (priv->dir, state, ref, NULL, &local_error);
   if (related == NULL)
     {
       g_warning (_("Warning: Problem looking for related refs: %s"), local_error->message);
@@ -691,6 +710,7 @@ add_deps (FlatpakTransaction *self,
           FlatpakTransactionOp **dep_op,
           GError **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *runtime_ref = NULL;
   g_autofree char *full_runtime_ref = NULL;
   g_autofree char *runtime_remote = NULL;
@@ -724,7 +744,7 @@ add_deps (FlatpakTransaction *self,
               return FALSE;
             }
 
-          remotes = flatpak_dir_search_for_dependency (self->dir, full_runtime_ref, NULL, NULL);
+          remotes = flatpak_dir_search_for_dependency (priv->dir, full_runtime_ref, NULL, NULL);
           if (remotes == NULL || *remotes == NULL)
             {
               return flatpak_fail (error,
@@ -752,7 +772,7 @@ add_deps (FlatpakTransaction *self,
       else
         {
           /* Update if in same dir */
-          if (dir_ref_is_installed (self->dir, full_runtime_ref, &runtime_remote, NULL))
+          if (dir_ref_is_installed (priv->dir, full_runtime_ref, &runtime_remote, NULL))
             {
               g_debug ("Updating dependent runtime %s", full_runtime_ref);
               op = flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
@@ -783,6 +803,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
                              const char *metadata,
                              GError **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *origin = NULL;
   const char *pref;
   g_autoptr(GKeyFile) metakey = NULL;
@@ -797,7 +818,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
       g_auto(GStrv) parts = NULL;
       parts = g_strsplit (ref, "/", -1);
 
-      origin_remote = flatpak_dir_create_origin_remote (self->dir,
+      origin_remote = flatpak_dir_create_origin_remote (priv->dir,
                                                         remote, /* uri */
                                                         parts[1],
                                                         "Local repo",
@@ -808,7 +829,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
       if (origin_remote == NULL)
         return FALSE;
 
-      g_ptr_array_add (self->added_origin_remotes, g_strdup (origin_remote));
+      g_ptr_array_add (priv->added_origin_remotes, g_strdup (origin_remote));
 
       remote = origin_remote;
     }
@@ -817,14 +838,14 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
 
   if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
     {
-      if (!dir_ref_is_installed (self->dir, ref, &origin, NULL))
+      if (!dir_ref_is_installed (priv->dir, ref, &origin, NULL))
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                        _("%s not installed"), pref);
           return FALSE;
         }
 
-      if (flatpak_dir_get_remote_disabled (self->dir, origin))
+      if (flatpak_dir_get_remote_disabled (priv->dir, origin))
         {
           g_debug (_("Remote %s disabled, ignoring %s update"), origin, pref);
           return TRUE;
@@ -834,8 +855,8 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
     {
       g_assert (remote != NULL);
-      if (!self->reinstall &&
-          dir_ref_is_installed (self->dir, ref, &origin, NULL))
+      if (!priv->reinstall &&
+          dir_ref_is_installed (priv->dir, ref, &origin, NULL))
         {
           if (strcmp (remote, origin) == 0)
             {
@@ -898,7 +919,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         }
     }
 
-  if (!self->disable_deps)
+  if (!priv->disable_deps)
     {
       if (!add_deps (self, metakey, state, remote, ref, &dep_op, error))
         return FALSE;
@@ -935,18 +956,19 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
                                         GBytes              *gpg_data,
                                         GError **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *metadata = NULL;
   gboolean created_remote;
 
-  remote = flatpak_dir_ensure_bundle_remote (self->dir, file, gpg_data,
+  remote = flatpak_dir_ensure_bundle_remote (priv->dir, file, gpg_data,
                                              &ref, &metadata, &created_remote,
                                              NULL, error);
   if (remote == NULL)
     return FALSE;
 
-  if (!flatpak_dir_recreate_repo (self->dir, NULL, error))
+  if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
     return FALSE;
 
   return flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, FLATPAK_TRANSACTION_OP_KIND_BUNDLE, file, metadata, error);
@@ -973,6 +995,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
                                      GCancellable        *cancellable,
                                      GError             **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_auto(GStrv) remotes = NULL;
   int i;
   GList *l;
@@ -980,7 +1003,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 
   /* Collect all dir+remotes used in this transaction */
 
-  for (l = self->ops; l != NULL; l = l->next)
+  for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOp *op = l->data;
       g_hash_table_add (ht, g_strdup (op->remote));
@@ -995,12 +1018,12 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
       g_autoptr(GError) my_error = NULL;
 
       g_debug ("Updating remote metadata for %s", remote);
-      if (!flatpak_dir_update_remote_configuration (self->dir, remote, cancellable, &my_error))
+      if (!flatpak_dir_update_remote_configuration (priv->dir, remote, cancellable, &my_error))
         g_warning (_("Error updating remote metadata for '%s': %s"), remote, my_error->message);
     }
 
   /* Reload changed configuration */
-  if (!flatpak_dir_recreate_repo (self->dir, cancellable, error))
+  if (!flatpak_dir_recreate_repo (priv->dir, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -1019,13 +1042,14 @@ emit_op_done (FlatpakTransaction *self,
               FlatpakTransactionOp *op,
               FlatpakTransactionResult details)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *commit = NULL;
 
-  if (self->no_deploy)
-    commit = flatpak_dir_read_latest (self->dir, op->remote, op->ref, NULL, NULL, NULL);
+  if (priv->no_deploy)
+    commit = flatpak_dir_read_latest (priv->dir, op->remote, op->ref, NULL, NULL, NULL);
   else
     {
-      g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
+      g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, NULL, NULL);
       if (deploy_data)
         commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }
@@ -1040,22 +1064,23 @@ flatpak_transaction_run (FlatpakTransaction *self,
                          GCancellable *cancellable,
                          GError **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   GList *l;
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
   int i;
 
-  if (!self->no_pull &&
+  if (!priv->no_pull &&
       !flatpak_transaction_update_metadata (self, cancellable, error))
     return FALSE;
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
   main_context = flatpak_main_context_new_default ();
 
-  self->ops = g_list_reverse (self->ops);
+  priv->ops = g_list_reverse (priv->ops);
 
-  for (l = self->ops; l != NULL; l = l->next)
+  for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOp *op = l->data;
       g_autoptr(GError) local_error = NULL;
@@ -1069,7 +1094,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_autoptr(GVariant) deploy_data = NULL;
 
-          if (dir_ref_is_installed (self->dir, op->ref, NULL, &deploy_data))
+          if (dir_ref_is_installed (priv->dir, op->ref, NULL, &deploy_data))
             {
               /* Don't use the remote from related ref on update, always use
                  the current remote. */
@@ -1106,11 +1131,11 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
           emit_new_op (self, op, progress);
 
-          res = flatpak_dir_install (self->dir ,
-                                     self->no_pull,
-                                     self->no_deploy,
-                                     self->disable_static_deltas,
-                                     self->reinstall,
+          res = flatpak_dir_install (priv->dir ,
+                                     priv->no_pull,
+                                     priv->no_deploy,
+                                     priv->disable_static_deltas,
+                                     priv->reinstall,
                                      state, op->ref,
                                      (const char **)op->subpaths,
                                      progress->ostree_progress,
@@ -1123,7 +1148,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
               /* Normally we don't need to prune after install, because it makes no old objects
                  stale. However if we reinstall, that is not true. */
-              if (!self->no_pull && self->reinstall)
+              if (!priv->no_pull && priv->reinstall)
                 needs_prune = TRUE;
             }
         }
@@ -1131,9 +1156,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_auto(OstreeRepoFinderResultv) check_results = NULL;
 
-          g_autofree char *target_commit = flatpak_dir_check_for_update (self->dir, state, op->ref, op->commit,
+          g_autofree char *target_commit = flatpak_dir_check_for_update (priv->dir, state, op->ref, op->commit,
                                                                          (const char **)op->subpaths,
-                                                                         self->no_pull,
+                                                                         priv->no_pull,
                                                                          &check_results,
                                                                          cancellable, &local_error);
           if (target_commit != NULL)
@@ -1143,10 +1168,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
               emit_new_op (self, op, progress);
 
-              res = flatpak_dir_update (self->dir,
-                                        self->no_pull,
-                                        self->no_deploy,
-                                        self->disable_static_deltas,
+              res = flatpak_dir_update (priv->dir,
+                                        priv->no_pull,
+                                        priv->no_deploy,
+                                        priv->disable_static_deltas,
                                         op->commit != NULL, /* Allow downgrade if we specify commit */
                                         state, op->ref, target_commit,
                                         (const OstreeRepoFinderResult * const *) check_results,
@@ -1168,7 +1193,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
                 {
                   emit_op_done (self, op, result_details);
 
-                  if (!self->no_pull)
+                  if (!priv->no_pull)
                     needs_prune = TRUE;
                 }
             }
@@ -1186,7 +1211,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
           emit_new_op (self, op, progress);
-          res = flatpak_dir_install_bundle (self->dir, op->bundle,
+          res = flatpak_dir_install_bundle (priv->dir, op->bundle,
                                             op->remote, NULL,
                                             cancellable, &local_error);
           flatpak_transaction_progress_done (progress);
@@ -1203,7 +1228,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
       if (res)
         {
           g_autoptr(GVariant) deploy_data = NULL;
-          deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
+          deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, NULL, NULL);
 
           const char *eol =  flatpak_deploy_data_get_eol (deploy_data);
           const char *eol_rebase = flatpak_deploy_data_get_eol_rebase (deploy_data);
@@ -1240,11 +1265,11 @@ flatpak_transaction_run (FlatpakTransaction *self,
         }
     }
 
-  if (needs_prune && !self->disable_prune)
-    flatpak_dir_prune (self->dir, cancellable, NULL);
+  if (needs_prune && !priv->disable_prune)
+    flatpak_dir_prune (priv->dir, cancellable, NULL);
 
-  for (i = 0; i < self->added_origin_remotes->len; i++)
-    flatpak_dir_prune_origin_remote (self->dir, g_ptr_array_index (self->added_origin_remotes, i));
+  for (i = 0; i < priv->added_origin_remotes->len; i++)
+    flatpak_dir_prune_origin_remote (priv->dir, g_ptr_array_index (priv->added_origin_remotes, i));
 
   return succeeded;
 }

@@ -63,10 +63,17 @@ typedef enum {
 } FlatpakTransactionResult;
 
 FLATPAK_EXTERN
-G_DECLARE_FINAL_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject)
+G_DECLARE_FINAL_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, FLATPAK, TRANSACTION_PROGRESS, GObject)
 
 FLATPAK_EXTERN
-G_DECLARE_FINAL_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, FLATPAK, TRANSACTION_PROGRESS, GObject)
+G_DECLARE_DERIVABLE_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject)
+
+struct _FlatpakTransactionClass
+{
+  GObjectClass parent_class;
+
+  gpointer padding[12];
+};
 
 FLATPAK_EXTERN
 void        flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress  *self,
