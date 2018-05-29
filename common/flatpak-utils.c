@@ -2714,7 +2714,7 @@ _flatpak_repo_collect_sizes (OstreeRepo   *repo,
                 base_input = g_filter_input_stream_get_base_stream (G_FILTER_INPUT_STREAM (base_input));
 
               if (!G_IS_UNIX_INPUT_STREAM (base_input))
-                return flatpak_fail (error, "Unable to find size of commit %s, not an unix stream\n", checksum);
+                return flatpak_fail (error, "Unable to find size of commit %s, not an unix stream", checksum);
 
               fd = g_unix_input_stream_get_fd (G_UNIX_INPUT_STREAM (base_input));
 
@@ -4941,13 +4941,13 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
                                           metadata_builder);
   if (manifest_ref == NULL)
     {
-      flatpak_fail (error, "No ref specified for OCI image %s\n", digest);
+      flatpak_fail (error, "No ref specified for OCI image %s", digest);
       return NULL;
     }
 
   if (strcmp (manifest_ref, ref) != 0)
     {
-      flatpak_fail (error, "Wrong ref (%s) specified for OCI image %s, expected %s\n", manifest_ref, digest, ref);
+      flatpak_fail (error, "Wrong ref (%s) specified for OCI image %s, expected %s", manifest_ref, digest, ref);
       return NULL;
     }
 
@@ -5016,7 +5016,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       if (!g_str_has_prefix (layer->digest, "sha256:") ||
           strcmp (layer->digest + strlen ("sha256:"), layer_checksum) != 0)
         {
-          flatpak_fail (error, "Wrong layer checksum, expected %s, was %s\n", layer->digest, layer_checksum);
+          flatpak_fail (error, "Wrong layer checksum, expected %s, was %s", layer->digest, layer_checksum);
           goto error;
         }
 
