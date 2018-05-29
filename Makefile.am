@@ -115,9 +115,13 @@ if PRIV_MODE_SETUID
 endif # !PRIV_MODE_SETUID
 endif # !WITH_SYSTEM_BWRAP
 
-completiondir = $(datadir)/bash-completion/completions
-completion_DATA = completion/flatpak
-EXTRA_DIST += $(completion_DATA)
+bashcompletiondir = $(datadir)/bash-completion/completions
+bashcompletion_DATA = completion/flatpak
+EXTRA_DIST += $(bashcompletion_DATA)
+
+zshcompletiondir = $(datadir)/zsh/site-functions
+zshcompletion_DATA = completion/_flatpak
+EXTRA_DIST += $(zshcompletion_DATA)
 
 profiledir = $(PROFILE_DIR)
 profile_DATA = flatpak.sh
