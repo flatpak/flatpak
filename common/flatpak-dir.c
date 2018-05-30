@@ -2313,7 +2313,6 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
       /* Find the latest rev from the remote and its available mirrors, including
        * LAN and USB sources. */
       g_auto(GVariantBuilder) find_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
-      g_autoptr(GMainContext) context = NULL;
       g_autoptr(GVariant) find_options = NULL;
       g_autoptr(GAsyncResult) find_result = NULL;
       g_auto(OstreeRepoFinderResultv) results = NULL;
@@ -2332,8 +2331,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 
       find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-      context = g_main_context_new ();
-      g_main_context_push_thread_default (context);
+      g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
 
       ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
                                       find_options,
@@ -2345,8 +2343,6 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
         g_main_context_iteration (context, TRUE);
 
       results = ostree_repo_find_remotes_finish (self->repo, find_result, error);
-
-      g_main_context_pop_thread_default (context);
 
       if (results == NULL)
         return FALSE;
@@ -2760,7 +2756,6 @@ repo_pull (OstreeRepo          *self,
     {
       GVariantBuilder find_builder, pull_builder;
       g_autoptr(GVariant) find_options = NULL, pull_options = NULL;
-      g_autoptr(GMainContext) context = NULL;
       g_autoptr(GAsyncResult) find_result = NULL, pull_result = NULL;
       g_auto(OstreeRepoFinderResultv) results = NULL;
       OstreeCollectionRef collection_ref;
@@ -2804,8 +2799,7 @@ repo_pull (OstreeRepo          *self,
                                force_disable_deltas, flags, progress);
       pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
-      context = g_main_context_new ();
-      g_main_context_push_thread_default (context);
+      g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
 
       if (results_to_fetch == NULL)
         {
@@ -2835,8 +2829,6 @@ repo_pull (OstreeRepo          *self,
         }
       else
         res = FALSE;
-
-      g_main_context_pop_thread_default (context);
     }
   else
     res = FALSE;
@@ -3550,7 +3542,6 @@ flatpak_dir_pull (FlatpakDir          *self,
         {
           GVariantBuilder find_builder;
           g_autoptr(GVariant) find_options = NULL;
-          g_autoptr(GMainContext) context = NULL;
           g_autoptr(GAsyncResult) find_result = NULL;
           OstreeCollectionRef collection_ref;
           OstreeCollectionRef *collection_refs_to_fetch[2];
@@ -3582,8 +3573,7 @@ flatpak_dir_pull (FlatpakDir          *self,
 
           find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-          context = g_main_context_new ();
-          g_main_context_push_thread_default (context);
+          g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
 
           ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
                                           find_options,
@@ -3594,8 +3584,6 @@ flatpak_dir_pull (FlatpakDir          *self,
             g_main_context_iteration (context, TRUE);
 
           allocated_results = ostree_repo_find_remotes_finish (self->repo, find_result, error);
-
-          g_main_context_pop_thread_default (context);
 
           results = (const OstreeRepoFinderResult * const *) allocated_results;
           if (results == NULL)

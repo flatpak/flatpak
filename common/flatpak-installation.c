@@ -1006,12 +1006,9 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
    * because the refs array cannot be empty in ostree_repo_find_remotes_async
    * (otherwise it early returns and we never get our callback called) */
   if (collection_refs->len > 0) {
-    g_autoptr(GMainContext) context = NULL;
-
     g_ptr_array_add (collection_refs, NULL);
 
-    context = g_main_context_new ();
-    g_main_context_push_thread_default (context);
+    g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
 
     ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
                                     (const OstreeCollectionRef * const *) collection_refs->pdata,
@@ -1026,8 +1023,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       g_main_context_iteration (context, TRUE);
 
     results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
-
-    g_main_context_pop_thread_default (context);
 
     if (results == NULL)
       return NULL;
@@ -1116,7 +1111,6 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
   OstreeCollectionRef ref;
   const OstreeCollectionRef *refs[2] = { NULL, };
   g_autofree gchar *appstream_ref = NULL;
-  g_autoptr(GMainContext) context = NULL;
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GAsyncResult) result = NULL;
   g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
@@ -1136,8 +1130,7 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
   if (collection_id == NULL || *collection_id == '\0')
     return TRUE;
 
-  context = g_main_context_new ();
-  g_main_context_push_thread_default (context);
+  g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
 
   appstream_ref = g_strdup_printf ("appstream/%s", flatpak_get_arch ());
   ref.collection_id = collection_id;
@@ -1186,8 +1179,6 @@ list_remotes_for_configured_remote (FlatpakInstallation  *self,
 
   if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
     ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
-
-  g_main_context_pop_thread_default (context);
 
   for (i = 0; results != NULL && results[i] != NULL; i++)
     {
@@ -1700,7 +1691,6 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   FlatpakInstalledRef *result = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
@@ -1733,8 +1723,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
     return NULL;
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
-  main_context = g_main_context_new ();
-  g_main_context_push_thread_default (main_context);
+  g_autoptr(GMainContextPopDefault) main_context = flatpak_main_context_new_default ();
 
   if (progress)
     ostree_progress = flatpak_progress_new (progress, progress_data);
@@ -1767,9 +1756,6 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
     goto out;
 
 out:
-  if (main_context)
-    g_main_context_pop_thread_default (main_context);
-
   if (ostree_progress)
     ostree_async_progress_finish (ostree_progress);
 
@@ -1860,7 +1846,6 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   g_autofree char *ref = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autofree char *remote_name = NULL;
   FlatpakInstalledRef *result = NULL;
@@ -1907,8 +1892,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
     return NULL;
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
-  main_context = g_main_context_new ();
-  g_main_context_push_thread_default (main_context);
+  g_autoptr(GMainContextPopDefault) main_context = flatpak_main_context_new_default ();
 
   if (progress)
     ostree_progress = flatpak_progress_new (progress, progress_data);
@@ -1935,9 +1919,6 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
     flatpak_dir_prune (dir_clone, cancellable, NULL);
 
 out:
-  if (main_context)
-    g_main_context_pop_thread_default (main_context);
-
   if (ostree_progress)
     ostree_async_progress_finish (ostree_progress);
 
@@ -2376,7 +2357,6 @@ flatpak_installation_update_appstream_full_sync (FlatpakInstallation *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
-  g_autoptr(GMainContext) main_context = NULL;
   gboolean res;
 
   dir = flatpak_installation_get_dir (self, error);
@@ -2389,8 +2369,7 @@ flatpak_installation_update_appstream_full_sync (FlatpakInstallation *self,
     return FALSE;
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
-  main_context = g_main_context_new ();
-  g_main_context_push_thread_default (main_context);
+  g_autoptr(GMainContextPopDefault) main_context = flatpak_main_context_new_default ();
 
   if (progress)
     ostree_progress = flatpak_progress_new (progress, progress_data);
@@ -2404,8 +2383,6 @@ flatpak_installation_update_appstream_full_sync (FlatpakInstallation *self,
                                       ostree_progress,
                                       cancellable,
                                       error);
-
-  g_main_context_pop_thread_default (main_context);
 
   if (ostree_progress)
     ostree_async_progress_finish (ostree_progress);
