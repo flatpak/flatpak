@@ -15,6 +15,8 @@ flatpakinclude_HEADERS = \
 	common/flatpak-installation.h \
 	common/flatpak-remote.h \
 	common/flatpak-version-macros.h \
+	common/flatpak-portal-error.h \
+	common/flatpak-transaction.h \
 	$(NULL)
 
 nodist_flatpakinclude_HEADERS = \
