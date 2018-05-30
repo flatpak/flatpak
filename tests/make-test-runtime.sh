@@ -35,10 +35,46 @@ else
     cp `which ldconfig` ${DIR}/usr/bin
 fi
 T=`mktemp`
+PKGS=`mktemp`
+
+# Checks for ELF, doesn't yet handle interpreters as e.g. coreutils-single
+# does in a Fedora 28 container
+scriptre='^a (/[^ ]*) .*script'
+deps_for_binary() {
+    local f=$1
+    shift
+    if test -L "${f}"; then
+        readlink -f "${f}"
+    else
+        ftype=$(file -b ${f})
+        if [[ "$ftype" =~ ^ELF ]]; then
+            ldd "${f}" | sed "s/.* => //"  | awk '{ print $1}' | grep ^/ | grep ^/
+        else
+            if [[ "$ftype" =~ $scriptre ]]; then
+                echo ${BASH_REMATCH[1]}
+            fi
+        fi
+    fi
+}
+
+# Yeah this would obviously be better in a real programming language
+add_deps() {
+    local f=$1
+    shift
+    for dep in $(deps_for_binary $f); do
+        if ! grep -qFe "${dep}" $T; then
+            echo "$f: ${dep}" >> deps.txt
+            echo ${dep} >> $T
+            add_deps ${dep}
+        fi
+    done
+}
+
 for i in $@; do
     I=`which $i`
-    cp $I ${DIR}/usr/bin
-    ldd $I | sed "s/.* => //"  | awk '{ print $1}' | grep ^/ | grep ^/ >> $T
+    cp -d --reflink=auto $I ${DIR}/usr/bin
+    echo "installing $I" >> runtime.log
+    add_deps "$I"
     if test $i == python2; then
         mkdir -p ${DIR}/usr/lib/python2.7/lib-dynload
         # This is a hardcoded minimal set of modules we need in the current tests.
@@ -67,7 +103,8 @@ for i in $@; do
 done
 ln -s bash ${DIR}/usr/bin/sh
 for i in `sort -u $T`; do
-    cp "$i" ${DIR}/usr/lib/
+    mkdir -p ${DIR}/$(dirname $i)
+    cp -d --reflink=auto "$i" ${DIR}/${i}
 done
 
 # We copy the C.UTF8 locale and call it en_US. Its a bit of a lie, but

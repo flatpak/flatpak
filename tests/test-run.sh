@@ -65,6 +65,7 @@ $FLATPAK info ${U} org.test.Hello | grep $ID > /dev/null
 
 echo "ok install"
 
+test -n "${DEBUG_SHELL:-}" && env PS1='debugshell$ ' bash
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
