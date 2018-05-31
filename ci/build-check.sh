@@ -14,5 +14,6 @@ if test -x /usr/bin/clang; then
     # in the future these could parallelize
     export CC=clang
     export CFLAGS='-Werror=unused-variable'
-    build
+    # We disable introspection because it fails with clang: https://bugzilla.redhat.com/show_bug.cgi?id=1543295
+    build --disable-introspection
 fi
