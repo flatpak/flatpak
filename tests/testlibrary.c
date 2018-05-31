@@ -301,10 +301,10 @@ test_remote (void)
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakRemote) remote = NULL;
+#ifdef FLATPAK_ENABLE_P2P
   g_autoptr(GFile) inst_file = NULL;
   g_autoptr(GFile) repo_file = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
-#ifdef FLATPAK_ENABLE_P2P
   gboolean gpg_verify_summary;
 #endif
   gboolean res;
@@ -1000,11 +1000,13 @@ add_remote (void)
 {
   g_autoptr(GError) error = NULL;
   char *argv[] = { "flatpak", "remote-add", "--user", "--gpg-import=", "--collection-id=", "name", "url", NULL };
-  g_autofree char *argv_str = NULL;
   g_autofree char *gpgimport = NULL;
   g_autofree char *port = NULL;
   g_autofree char *pid = NULL;
+#ifdef FLATPAK_ENABLE_P2P
   g_autofree char *collection_id_arg = NULL;
+  g_autofree char *argv_str = NULL;
+#endif /* FLATPAK_ENABLE_P2P */
 
   launch_httpd ();
 
