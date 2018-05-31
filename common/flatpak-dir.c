@@ -7393,6 +7393,37 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   if (repository == NULL)
     return FALSE;
 
+  if (g_str_has_prefix (ref, "runtime/") && !force_remove)
+    {
+      g_auto(GStrv) app_refs = NULL;
+      g_autoptr(GPtrArray) blocking = g_ptr_array_new_with_free_func (g_free);
+      const char *pref = ref + strlen ("runtime/");
+      int i;
+
+      /* Look for apps that need this runtime */
+
+      flatpak_dir_list_refs (self, "app", &app_refs, NULL, NULL);
+      for (i = 0; app_refs != NULL && app_refs[i] != NULL; i++)
+        {
+          g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], NULL, NULL);
+
+          if (deploy_data)
+            {
+              const char *app_runtime = flatpak_deploy_data_get_runtime (deploy_data);
+
+              if (g_strcmp0 (app_runtime, pref) == 0)
+                g_ptr_array_add (blocking, g_strdup (app_refs[i] + strlen ("app/")));
+            }
+        }
+      g_ptr_array_add (blocking, NULL);
+
+      if (blocking->len > 1)
+        {
+          g_autofree char *joined = g_strjoinv (", ", (char **)blocking->pdata);
+          return flatpak_fail (error, "Can't remove %s, it is needed for: %s", pref, joined);
+        }
+    }
+
   g_debug ("dropping active ref");
   if (!flatpak_dir_set_active (self, ref, NULL, cancellable, error))
     return FALSE;
