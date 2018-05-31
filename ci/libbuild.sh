@@ -54,5 +54,6 @@ pkg_install_builddeps() {
     # builddeps+runtime deps
     pkg_builddep $pkg
     pkg_install $pkg
+    yum -y update gcc gcc-c++ annobin # This had some weird conflict with gcc
     rpm -e --nodeps $pkg
 }
