@@ -4477,7 +4477,7 @@ out:
   return ret;
 }
 
-static gboolean
+gboolean
 flatpak_dir_run_triggers (FlatpakDir   *self,
                           GCancellable *cancellable,
                           GError      **error)
@@ -4489,6 +4489,25 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
   g_autoptr(GFile) triggersdir = NULL;
   GError *temp_error = NULL;
   const char *triggerspath;
+
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      const char *installation = flatpak_dir_get_id (self);
+      FlatpakSystemHelper *system_helper = flatpak_dir_get_system_helper (self);
+
+      /* If we don't have the system helper, we'll have to try as an
+       * unprivileged user, which might fail later */
+      if (system_helper)
+        {
+          if (!flatpak_system_helper_call_run_triggers_sync (system_helper,
+                                                             installation ? installation : "",
+                                                             cancellable,
+                                                             error))
+            return FALSE;
+        }
+
+      return TRUE;
+    }
 
   triggerspath = g_getenv ("FLATPAK_TRIGGERSDIR");
   if (triggerspath == NULL)
@@ -5385,9 +5404,6 @@ flatpak_dir_update_exports (FlatpakDir   *self,
     }
 
   if (!flatpak_remove_dangling_symlinks (exports, cancellable, error))
-    goto out;
-
-  if (!flatpak_dir_run_triggers (self, cancellable, error))
     goto out;
 
   ret = TRUE;

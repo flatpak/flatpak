@@ -1305,6 +1305,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
   GList *l;
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
+  gboolean needs_triggers = FALSE;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
   int i;
 
@@ -1387,6 +1388,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
                  stale. However if we reinstall, that is not true. */
               if (!priv->no_pull && priv->reinstall)
                 needs_prune = TRUE;
+
+              if (g_str_has_prefix (op->ref, "app"))
+                needs_triggers = TRUE;
             }
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
@@ -1432,6 +1436,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
                   if (!priv->no_pull)
                     needs_prune = TRUE;
+
+                  if (g_str_has_prefix (op->ref, "app"))
+                    needs_triggers = TRUE;
                 }
             }
           else
@@ -1457,6 +1464,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
             {
               emit_op_done (self, op, 0);
               needs_prune = TRUE;
+              needs_triggers = TRUE;
             }
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
@@ -1481,6 +1489,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
             {
               emit_op_done (self, op, 0);
               needs_prune = TRUE;
+
+              if (g_str_has_prefix (op->ref, "app"))
+                needs_triggers = TRUE;
             }
         }
       else
@@ -1528,6 +1539,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
             }
         }
     }
+
+  if (needs_triggers)
+    flatpak_dir_run_triggers (priv->dir, cancellable, NULL);
 
   if (needs_prune && !priv->disable_prune)
     flatpak_dir_prune (priv->dir, cancellable, NULL);

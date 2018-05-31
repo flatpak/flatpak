@@ -128,6 +128,10 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="RunTriggers">
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
   </interface>
 
 </node>
