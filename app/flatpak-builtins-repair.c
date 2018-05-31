@@ -302,6 +302,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   /*
    * Try to repair a flatpak directory:
    *  + Scan all locally available refs
+   *  + remove ref that don't correspond to a deployed ref
    *  + Verify the commits they point to and all object they reference:
    *  +  Remove any invalid objects
    *  +  Note any missing objects
@@ -327,10 +328,24 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
       g_autofree char *ref_name = NULL;
       FsckStatus status;
 
-      g_print (_("Verifying %s...\n"), refspec);
-
       if (!ostree_parse_refspec (refspec, &remote, &ref_name, error))
         return FALSE;
+
+      /* Does this look like a regular ref? */
+      if (g_str_has_prefix (ref_name, "app/") || g_str_has_prefix (ref_name, "runtime/"))
+        {
+          g_autofree char *origin = flatpak_dir_get_origin (dir, ref_name, cancellable, NULL);
+
+          /* If so, is it deployed, and from this remote? */
+          if (remote == NULL || g_strcmp0 (origin, remote) != 0)
+            {
+              g_print (_("Removing non-deployed ref %s...\n"), refspec);
+              (void)ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+              continue;
+            }
+        }
+
+      g_print (_("Verifying %s...\n"), refspec);
 
       status = fsck_commit (repo, checksum, object_status_cache);
       if (status != FSCK_STATUS_OK)
