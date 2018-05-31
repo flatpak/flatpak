@@ -2,6 +2,9 @@
 
 set -e
 
+# Don't inherit the -x from the testsuite
+set +x
+
 DIR=`mktemp -d`
 
 REPONAME=$1
@@ -18,8 +21,6 @@ cat > ${DIR}/metadata <<EOF
 name=${ID}
 EOF
 
-cat ${DIR}/metadata
-
 # On Debian derivatives, /usr/sbin and /sbin aren't in ordinary users'
 # PATHs, but ldconfig is kept in /sbin
 PATH="$PATH:/usr/sbin:/sbin"
@@ -34,11 +35,32 @@ if test -f /sbin/ldconfig.real; then
 else
     cp `which ldconfig` ${DIR}/usr/bin
 fi
-T=`mktemp`
+LIBS=`mktemp`
+BINS=`mktemp`
+
+add_bin() {
+    local f=$1
+    shift
+
+    if grep -qFe "${f}" $BINS; then
+        # Already handled
+        return 0
+    fi
+
+    echo $f >> $BINS
+
+    # Add library dependencies
+    (ldd "${f}" | sed "s/.* => //"  | awk '{ print $1}' | grep ^/ | sort -u -o $LIBS $LIBS -)  || true
+
+    local shebang=$(sed -n '1s/^#!\([^ ]*\).*/\1/p' "${f}")
+    if [ x$shebang != x ]; then
+        add_bin "$shebang"
+    fi
+}
+
 for i in $@; do
     I=`which $i`
-    cp $I ${DIR}/usr/bin
-    ldd $I | sed "s/.* => //"  | awk '{ print $1}' | grep ^/ | grep ^/ >> $T
+    add_bin $I
     if test $i == python2; then
         mkdir -p ${DIR}/usr/lib/python2.7/lib-dynload
         # This is a hardcoded minimal set of modules we need in the current tests.
@@ -65,10 +87,15 @@ for i in $@; do
         done
     fi
 done
-ln -s bash ${DIR}/usr/bin/sh
-for i in `sort -u $T`; do
+for i in `cat $BINS`; do
+    echo Adding binary $i 1>&2
+    cp "$i" ${DIR}/usr/bin/
+done
+for i in `cat $LIBS`; do
+    echo Adding library $i 1>&2
     cp "$i" ${DIR}/usr/lib/
 done
+ln -s bash ${DIR}/usr/bin/sh
 
 # We copy the C.UTF8 locale and call it en_US. Its a bit of a lie, but
 # the real en_US locale is often not available, because its in the
