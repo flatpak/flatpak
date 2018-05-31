@@ -1603,6 +1603,9 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                    cancellable, error))
     return NULL;
 
+  if (g_str_has_prefix (ref, "app"))
+    flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
+
   result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
     return NULL;
@@ -1749,6 +1752,9 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             ref, (const char **)subpaths,
                             ostree_progress, cancellable, error))
     goto out;
+
+  if (g_str_has_prefix (ref, "app"))
+    flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
 
   /* Note that if the caller sets FLATPAK_INSTALL_FLAGS_NO_DEPLOY we must
    * always return an error, as explained above. Otherwise get_ref will
@@ -1926,6 +1932,9 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            ostree_progress, cancellable, error))
     goto out;
 
+  if (g_str_has_prefix (ref, "app"))
+    flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
+
   result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
     goto out;
@@ -2068,6 +2077,9 @@ flatpak_installation_uninstall_full (FlatpakInstallation    *self,
   if (!flatpak_dir_uninstall (dir_clone, ref, FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
                               cancellable, error))
     return FALSE;
+
+  if (g_str_has_prefix (ref, "app"))
+    flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
 
   if (!(flags & FLATPAK_UNINSTALL_FLAGS_NO_PRUNE))
     flatpak_dir_prune (dir_clone, cancellable, NULL);

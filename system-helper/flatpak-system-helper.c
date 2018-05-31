@@ -1025,6 +1025,40 @@ handle_prune_local_repo (FlatpakSystemHelper   *object,
 }
 
 static gboolean
+handle_run_triggers (FlatpakSystemHelper   *object,
+                     GDBusMethodInvocation *invocation,
+                     const gchar           *arg_installation)
+{
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(GError) error = NULL;
+
+  g_debug ("RunTriggers %s", arg_installation);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if (!flatpak_dir_run_triggers (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  flatpak_system_helper_complete_run_triggers (object, invocation);
+
+  return TRUE;
+}
+
+static gboolean
 flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
                                   GDBusMethodInvocation  *invocation,
                                   gpointer                user_data)
@@ -1148,7 +1182,8 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       polkit_details_insert (details, "remote", remote);
     }
   else if (g_strcmp0 (method_name, "RemoveLocalRef") == 0 ||
-           g_strcmp0 (method_name, "PruneLocalRepo") == 0)
+           g_strcmp0 (method_name, "PruneLocalRepo") == 0 ||
+           g_strcmp0 (method_name, "RunTriggers") == 0)
     {
       const char *remote;
 
@@ -1216,6 +1251,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-update-remote", G_CALLBACK (handle_update_remote), NULL);
   g_signal_connect (helper, "handle-remove-local-ref", G_CALLBACK (handle_remove_local_ref), NULL);
   g_signal_connect (helper, "handle-prune-local-repo", G_CALLBACK (handle_prune_local_repo), NULL);
+  g_signal_connect (helper, "handle-run-triggers", G_CALLBACK (handle_run_triggers), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),
