@@ -6,13 +6,13 @@ branches:
     - try
 
 required: true
-context: f26-primary
+context: f28-primary
 
 # This test case wants an "unprivileged container with bubblewrap",
 # which we don't have right now; so just provision a VM and do a
 # docker --privileged run.
 host:
-  distro: fedora/26/atomic
+  distro: fedora/28/atomic
 
 env:
     # TODO: CFLAGS: Readd -fsanitize-undefined-trap-on-error -fsanitize=address after debugging
@@ -29,7 +29,7 @@ tests:
     -e "ASAN_OPTIONS=${ASAN_OPTIONS:-}"
     -v /etc/yum.repos.d:/etc/yum.repos.d.host:ro
     -v $(pwd):/srv/code -w /srv/code
-    registry.fedoraproject.org/fedora:26 /bin/sh -c
+    registry.fedoraproject.org/fedora:28 /bin/sh -c
     "cp -fv /etc/yum.repos.d{.host/*.repo,} &&
      ./ci/build-check.sh"
 
