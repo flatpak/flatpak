@@ -11152,13 +11152,13 @@ GPtrArray *
 flatpak_dir_find_local_related (FlatpakDir *self,
                                 const char *ref,
                                 const char *remote_name,
+                                gboolean deployed,
                                 GCancellable *cancellable,
                                 GError **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
-  gsize metadata_size;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   int i;
   g_auto(GStrv) parts = NULL;
@@ -11177,19 +11177,37 @@ flatpak_dir_find_local_related (FlatpakDir *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
 
-  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
-  if (deploy_dir == NULL)
+  if (deployed)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s not installed"), ref);
-      return NULL;
+      deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+      if (deploy_dir == NULL)
+        {
+          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                       _("%s not installed"), ref);
+          return NULL;
+        }
+
+      metadata = g_file_get_child (deploy_dir, "metadata");
+      if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
+        {
+          g_debug ("No metadata in local deploy");
+          /* No metadata => no related, but no error */
+        }
+    }
+  else
+    {
+      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, ref, NULL, NULL);
+      if (commit_data)
+        {
+          g_autoptr(GVariant) commit_metadata = g_variant_get_child_value (commit_data, 0);
+          g_variant_lookup (commit_metadata, "xa.metadata", "s", &metadata_contents);
+          if (metadata_contents == NULL)
+            g_debug ("No xa.metadata in local commit");
+        }
     }
 
-  metadata = g_file_get_child (deploy_dir, "metadata");
-  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, NULL))
-    return g_steal_pointer (&related); /* No metadata => no related, but no error */
-
-  if (g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, NULL))
+  if (metadata_contents &&
+      g_key_file_load_from_data (metakey, metadata_contents, -1, 0, NULL))
     {
       g_auto(GStrv) groups = NULL;
 
