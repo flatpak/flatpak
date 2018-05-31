@@ -28,7 +28,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-
     skip_without_p2p
 fi
 
-echo "1..19"
+echo "1..20"
 
 #Regular repo
 setup_repo
@@ -254,7 +254,34 @@ fi
 # Test that unspecified --user/--system finds the right one, so no ${U}
 ${FLATPAK} uninstall org.test.Platform org.test.Hello
 
+${FLATPAK} ${U} list -d > list-log
+assert_not_file_has_content list-log "^org.test.Hello"
+assert_not_file_has_content list-log "^org.test.Platform"
+
 echo "ok uninstall vs installations"
+
+${FLATPAK} ${U} install -y --no-deploy test-repo org.test.Hello
+
+${FLATPAK} ${U} list -d > list-log
+assert_not_file_has_content list-log "^org.test.Hello"
+assert_not_file_has_content list-log "^org.test.Platform"
+
+# Disable the remote to make sure we don't do i/o
+port=$(cat httpd-port-main)
+${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
+
+${FLATPAK} ${U} install -y --no-pull test-repo org.test.Hello
+
+# re-enable remote
+${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
+
+${FLATPAK} ${U} list -d > list-log
+assert_file_has_content list-log "^org.test.Hello"
+assert_file_has_content list-log "^org.test.Platform"
+
+${FLATPAK} uninstall org.test.Platform org.test.Hello
+
+echo "ok install with --no-deploy and then --no-pull"
 
 # Test that remote-ls works in all of the following cases:
 # * system remote, and --system is used

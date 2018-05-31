@@ -725,6 +725,7 @@ GPtrArray * flatpak_dir_find_remote_related (FlatpakDir *dir,
 GPtrArray * flatpak_dir_find_local_related (FlatpakDir *self,
                                             const char *remote_name,
                                             const char *ref,
+                                            gboolean deployed,
                                             GCancellable *cancellable,
                                             GError **error);
 
