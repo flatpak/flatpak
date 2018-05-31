@@ -398,7 +398,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS, &dirs, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS|FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO, &dirs, NULL, NULL))
     return FALSE;
 
   kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;

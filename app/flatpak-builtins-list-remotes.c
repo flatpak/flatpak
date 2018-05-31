@@ -54,7 +54,7 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, cancellable, error))
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS|FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO, &dirs, cancellable, error))
     return FALSE;
 
   if (argc > 1)
