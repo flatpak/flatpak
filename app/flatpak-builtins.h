@@ -91,6 +91,7 @@ BUILTINPROTO (override)
 BUILTINPROTO (repo)
 BUILTINPROTO (config)
 BUILTINPROTO (search)
+BUILTINPROTO (repair)
 
 #undef BUILTINPROTO
 
