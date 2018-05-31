@@ -8997,7 +8997,7 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
   g_autoptr(GHashTable) local_refs = NULL;
   int i;
 
-  if (!flatpak_dir_ensure_repo (self, NULL, error))
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
     return NULL;
 
   local_refs = g_hash_table_new_full (flatpak_collection_ref_hash,
