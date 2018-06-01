@@ -4339,6 +4339,36 @@ out:
   return ret;
 }
 
+GVariant *
+flatpak_dir_read_latest_commit (FlatpakDir   *self,
+                                const char   *remote,
+                                const char   *ref,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  g_autofree char *remote_and_ref = NULL;
+  g_autofree char *res = NULL;
+  g_autoptr(GVariant) commit_data = NULL;
+
+  /* There may be several remotes with the same branch (if we for
+   * instance changed the origin, so prepend the current origin to
+   * make sure we get the right one */
+
+  if (remote)
+    remote_and_ref = g_strdup_printf ("%s:%s", remote, ref);
+  else
+    remote_and_ref = g_strdup (ref);
+
+  if (!ostree_repo_resolve_rev (self->repo, remote_and_ref, FALSE, &res, error))
+    return NULL;
+
+  if (!ostree_repo_load_commit (self->repo, res, &commit_data, NULL, error))
+    return NULL;
+
+  return g_steal_pointer (&commit_data);
+}
+
+
 char *
 flatpak_dir_read_latest (FlatpakDir   *self,
                          const char   *remote,
