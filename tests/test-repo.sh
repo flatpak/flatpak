@@ -28,7 +28,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-
     skip_without_p2p
 fi
 
-echo "1..20"
+echo "1..21"
 
 #Regular repo
 setup_repo
@@ -279,9 +279,15 @@ ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "^org.test.Hello"
 assert_file_has_content list-log "^org.test.Platform"
 
-${FLATPAK} uninstall org.test.Platform org.test.Hello
-
 echo "ok install with --no-deploy and then --no-pull"
+
+${FLATPAK} uninstall --all
+
+${FLATPAK} ${U} list -d > list-log
+assert_not_file_has_content list-log "^org.test.Hello"
+assert_not_file_has_content list-log "^org.test.Platform"
+
+echo "ok uninstall --all"
 
 # Test that remote-ls works in all of the following cases:
 # * system remote, and --system is used
