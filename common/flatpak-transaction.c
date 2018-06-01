@@ -960,8 +960,6 @@ add_deps (FlatpakTransaction *self,
 
       if (!ref_is_installed (self, full_runtime_ref, &local_error))
         {
-          g_auto(GStrv) remotes = NULL;
-
           if (local_error != NULL)
             {
               g_propagate_error (error, g_steal_pointer (&local_error));
@@ -1082,8 +1080,6 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
     }
   else if (kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
     {
-      g_autoptr(GPtrArray) related = NULL;
-
       if (!dir_ref_is_installed (priv->dir, ref, &origin, NULL))
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
