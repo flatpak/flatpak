@@ -1016,7 +1016,6 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   FlatpakRemoteState *state = NULL;
   FlatpakTransactionOp *dep_op = NULL;
   FlatpakTransactionOp *main_op;
-  g_autoptr(GPtrArray) uninstall_related_refs = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GVariant) commit_metadata = NULL;
 
   if (remote_name_is_file (remote))
