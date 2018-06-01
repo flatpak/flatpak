@@ -771,6 +771,7 @@ kind_compatible (FlatpakTransactionOpKind a,
 
 static FlatpakTransactionOp *
 flatpak_transaction_add_op (FlatpakTransaction *self,
+                            FlatpakTransactionOp *before_op,
                             const char *remote,
                             const char *ref,
                             const char **subpaths,
@@ -781,13 +782,17 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   FlatpakTransactionOp *op;
   g_autofree char *subpaths_str = NULL;
+  GList *before_l = NULL;
 
   subpaths_str = subpaths_to_string (subpaths);
-  g_debug ("Transaction: %s %s:%s%s%s%s",
+  g_debug ("Transaction: %s %s:%s%s%s%s%s%s",
            kind_to_str (kind), remote, ref,
            commit != NULL ? "@" : "",
            commit != NULL ? commit : "",
-           subpaths_str);
+           subpaths_str,
+           before_op ? " before op " : "",
+           before_op ? before_op->ref : ""
+           );
 
   op = flatpak_transaction_get_last_op_for_ref (self, ref);
   if (op != NULL && kind_compatible (kind, op->kind))
@@ -802,7 +807,17 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
 
   op = flatpak_transaction_operation_new (remote, ref, subpaths, commit, bundle, kind);
   g_hash_table_insert (priv->last_op_for_ref, g_strdup (ref), op);
-  priv->ops = g_list_prepend (priv->ops, op);
+
+  if (before_op != NULL)
+    before_l = g_list_find (priv->ops, before_op);
+
+  /* Note: we build the list in reverse order, so before => after before_l == before before_l->next */
+  if (before_l)
+    priv->ops = g_list_insert_before (priv->ops,
+                                      before_l->next,
+                                      op);
+  else
+    priv->ops = g_list_prepend (priv->ops, op);
 
   return op;
 }
@@ -814,6 +829,7 @@ add_related (FlatpakTransaction *self,
              const char *remote,
              const char *ref,
              FlatpakTransactionOp *source_op,
+             FlatpakTransactionOp *before_op,
              GError **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -847,7 +863,7 @@ add_related (FlatpakTransaction *self,
           if (!rel->delete)
             continue;
 
-          op = flatpak_transaction_add_op (self, remote, rel->ref,
+          op = flatpak_transaction_add_op (self, before_op, remote, rel->ref,
                                            NULL, NULL, NULL,
                                            FLATPAK_TRANSACTION_OP_KIND_UNINSTALL);
           op->non_fatal = TRUE;
@@ -864,7 +880,7 @@ add_related (FlatpakTransaction *self,
           if (!rel->download)
             continue;
 
-          op = flatpak_transaction_add_op (self, remote, rel->ref,
+          op = flatpak_transaction_add_op (self, before_op, remote, rel->ref,
                                            (const char **)rel->subpaths,
                                            NULL, NULL,
                                            FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE);
@@ -927,7 +943,8 @@ add_deps (FlatpakTransaction *self,
           FlatpakRemoteState *state,
           const char *remote,
           const char *ref,
-          FlatpakTransactionOp **dep_op,
+          FlatpakTransactionOp **dep_op_out,
+          FlatpakTransactionOp **before_op_out,
           GError **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -936,14 +953,40 @@ add_deps (FlatpakTransaction *self,
   g_autofree char *runtime_remote = NULL;
   FlatpakTransactionOp *op = NULL;
 
-  if (priv->disable_deps)
-    return TRUE;
-
-  if (source_kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
-    return TRUE;
+  if (dep_op_out)
+    *dep_op_out = NULL;
+  if (before_op_out)
+    *before_op_out = NULL;
 
   if (!g_str_has_prefix (ref, "app/"))
     return TRUE;
+
+  if (metakey)
+    runtime_ref = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+
+  if (runtime_ref == NULL)
+    return TRUE;
+
+  if (source_kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
+    {
+      g_autofree char *full_runtime_ref = g_strconcat ("runtime/", runtime_ref, NULL);
+      FlatpakTransactionOp *runtime_uninstall_op = flatpak_transaction_get_last_op_for_ref (self, full_runtime_ref);
+
+      /* If the runtime this app uses is already to be uninstalled, then this uninstall must happen before
+         the runtime is installed */
+      if (runtime_uninstall_op &&
+          runtime_uninstall_op->kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL &&
+          before_op_out != NULL)
+        {
+          *before_op_out = runtime_uninstall_op;
+        }
+
+      return TRUE;
+    }
+
+  if (priv->disable_deps)
+    return TRUE;
+
 
   if (metakey)
     runtime_ref = g_key_file_get_string (metakey, "Application", "runtime", NULL);
@@ -970,7 +1013,7 @@ add_deps (FlatpakTransaction *self,
           if (runtime_remote == NULL)
             return FALSE;
 
-          op = flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
+          op = flatpak_transaction_add_op (self, NULL, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
                                            FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE);
         }
       else
@@ -979,7 +1022,7 @@ add_deps (FlatpakTransaction *self,
           if (dir_ref_is_installed (priv->dir, full_runtime_ref, &runtime_remote, NULL))
             {
               g_debug ("Updating dependent runtime %s", full_runtime_ref);
-              op = flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
+              op = flatpak_transaction_add_op (self, NULL, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
                                                FLATPAK_TRANSACTION_OP_KIND_UPDATE);
               op->non_fatal = TRUE;
             }
@@ -987,11 +1030,11 @@ add_deps (FlatpakTransaction *self,
     }
 
   if (runtime_remote != NULL &&
-      !add_related (self, source_kind, state, runtime_remote, full_runtime_ref, op, error))
+      !add_related (self, source_kind, state, runtime_remote, full_runtime_ref, op, NULL, error))
     return FALSE;
 
-  if (dep_op)
-    *dep_op = op;
+  if (dep_op_out)
+    *dep_op_out = op;
 
   return TRUE;
 }
@@ -1015,6 +1058,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   g_autofree char *origin_remote = NULL;
   FlatpakRemoteState *state = NULL;
   FlatpakTransactionOp *dep_op = NULL;
+  FlatpakTransactionOp *before_op = NULL;
   FlatpakTransactionOp *main_op;
   g_autoptr(GVariant) commit_metadata = NULL;
 
@@ -1151,13 +1195,13 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         }
     }
 
-  if (!add_deps (self, kind, metakey, state, remote, ref, &dep_op, error))
+  if (!add_deps (self, kind, metakey, state, remote, ref, &dep_op, &before_op, error))
     return FALSE;
 
-  main_op = flatpak_transaction_add_op (self, remote, ref, subpaths, commit, bundle, kind);
+  main_op = flatpak_transaction_add_op (self, before_op, remote, ref, subpaths, commit, bundle, kind);
   main_op->source_op = dep_op;
 
-  if (!add_related (self, kind, state, remote, ref, main_op, error))
+  if (!add_related (self, kind, state, remote, ref, main_op, before_op, error))
     return FALSE;
 
   return TRUE;

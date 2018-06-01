@@ -1610,6 +1610,17 @@ flatpak_deploy_data_get_eol_rebase (GVariant *deploy_data)
   return eol;
 }
 
+const char *
+flatpak_deploy_data_get_runtime (GVariant *deploy_data)
+{
+  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  const char *runtime = NULL;
+
+  g_variant_lookup (metadata, "runtime", "&s", &runtime);
+
+  return runtime;
+}
+
 /**
  * flatpak_deploy_data_get_subpaths:
  *
@@ -5763,6 +5774,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GVariant) commit_metadata = NULL;
   GVariantBuilder metadata_builder;
   g_auto(GLnxLockFile) lock = { 0, };
+  g_autoptr(GFile) metadata_file = NULL;
+  g_autofree char *metadata_contents = NULL;
+  g_autofree char *application_runtime = NULL;
   gboolean is_app;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
@@ -6006,18 +6020,27 @@ flatpak_dir_deploy (FlatpakDir          *self,
         }
     }
 
+  metadata_file = g_file_resolve_relative_path (checkoutdir, "metadata");
+  if (g_file_load_contents (metadata_file, NULL,
+                            &metadata_contents, NULL, NULL, NULL))
+    {
+      g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+      if (g_key_file_load_from_data (keyfile,
+                                      metadata_contents,
+                                      -1,
+                                      0, error))
+        application_runtime = g_key_file_get_string (keyfile,
+                                                     FLATPAK_METADATA_GROUP_APPLICATION,
+                                                     FLATPAK_METADATA_KEY_RUNTIME, NULL);
+    }
+
   /* Check the metadata in the commit to make sure it matches the actual
      deployed metadata, in case we relied on the one in the commit for
      a decision */
   g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
   if (xa_metadata != NULL)
     {
-      g_autoptr(GFile) metadata_file = g_file_resolve_relative_path (checkoutdir, "metadata");
-      g_autofree char *metadata_contents = NULL;
-
-      if (!g_file_load_contents (metadata_file, NULL,
-                                 &metadata_contents, NULL, NULL, NULL) ||
-          strcmp (metadata_contents, xa_metadata) != 0)
+      if (g_strcmp0 (metadata_contents, xa_metadata) != 0)
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
                        _("Deployed metadata does not match commit"));
@@ -6140,6 +6163,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (eol_rebase)
     g_variant_builder_add (&metadata_builder, "{s@v}", "eolr",
                            g_variant_new_variant (g_variant_new_string (eol_rebase)));
+  if (application_runtime)
+    g_variant_builder_add (&metadata_builder, "{s@v}", "runtime",
+                           g_variant_new_variant (g_variant_new_string (application_runtime)));
 
   deploy_data = flatpak_dir_new_deploy_data (origin,
                                              checksum,
@@ -7366,6 +7392,37 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   repository = flatpak_deploy_data_get_origin (deploy_data);
   if (repository == NULL)
     return FALSE;
+
+  if (g_str_has_prefix (ref, "runtime/") && !force_remove)
+    {
+      g_auto(GStrv) app_refs = NULL;
+      g_autoptr(GPtrArray) blocking = g_ptr_array_new_with_free_func (g_free);
+      const char *pref = ref + strlen ("runtime/");
+      int i;
+
+      /* Look for apps that need this runtime */
+
+      flatpak_dir_list_refs (self, "app", &app_refs, NULL, NULL);
+      for (i = 0; app_refs != NULL && app_refs[i] != NULL; i++)
+        {
+          g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], NULL, NULL);
+
+          if (deploy_data)
+            {
+              const char *app_runtime = flatpak_deploy_data_get_runtime (deploy_data);
+
+              if (g_strcmp0 (app_runtime, pref) == 0)
+                g_ptr_array_add (blocking, g_strdup (app_refs[i] + strlen ("app/")));
+            }
+        }
+      g_ptr_array_add (blocking, NULL);
+
+      if (blocking->len > 1)
+        {
+          g_autofree char *joined = g_strjoinv (", ", (char **)blocking->pdata);
+          return flatpak_fail (error, "Can't remove %s, it is needed for: %s", pref, joined);
+        }
+    }
 
   g_debug ("dropping active ref");
   if (!flatpak_dir_set_active (self, ref, NULL, cancellable, error))

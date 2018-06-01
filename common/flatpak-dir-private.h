@@ -247,6 +247,7 @@ guint64             flatpak_deploy_data_get_installed_size (GVariant *deploy_dat
 const char *        flatpak_deploy_data_get_alt_id (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol_rebase (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_runtime (GVariant *deploy_data);
 
 GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
 GVariant *     flatpak_load_deploy_data (GFile *deploy_dir,

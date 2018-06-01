@@ -85,7 +85,7 @@ assert_has_file $FL_DIR/repo/org.test.Hello-origin.trustedkeys.gpg
 
 echo "ok install app bundle"
 
-${FLATPAK} uninstall ${U} org.test.Platform
+${FLATPAK} uninstall --force-remove ${U} org.test.Platform
 
 assert_not_has_file $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master
 
