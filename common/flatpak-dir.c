@@ -8311,6 +8311,7 @@ static FlatpakRemoteState *
 _flatpak_dir_get_remote_state (FlatpakDir   *self,
                                const char   *remote_or_uri,
                                gboolean      optional,
+                               gboolean      local_only,
                                GBytes       *opt_summary,
                                GBytes       *opt_summary_sig,
                                GCancellable *cancellable,
@@ -8330,6 +8331,13 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
   is_local = g_str_has_prefix (remote_or_uri, "file:");
   if (!is_local && !repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
     return NULL;
+
+  if (local_only)
+    {
+      flatpak_fail (&state->summary_fetch_error, "Internal error, local_only state");
+      flatpak_fail (&state->metadata_fetch_error, "Internal error, local_only state");
+      return g_steal_pointer (&state);
+    }
 
   if (opt_summary)
     {
@@ -8434,7 +8442,7 @@ flatpak_dir_get_remote_state (FlatpakDir   *self,
                               GCancellable *cancellable,
                               GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, FALSE, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, NULL, NULL, cancellable, error);
 }
 
 /* This is an alternative way to get the state where the summary is
@@ -8452,7 +8460,7 @@ flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
                                           GCancellable *cancellable,
                                           GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, FALSE, opt_summary, opt_summary_sig, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, opt_summary, opt_summary_sig, cancellable, error);
 }
 
 /* This is an alternative way to get the remote state that doesn't
@@ -8469,7 +8477,19 @@ flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                        GCancellable *cancellable,
                                        GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, TRUE, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, FALSE, NULL, NULL, cancellable, error);
+}
+
+
+/* This doesn't do any i/o at all, just keeps track of the local details like
+   remote and collection-id. Useful when doing no-pull operations */
+FlatpakRemoteState *
+flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,
+                                         const char   *remote,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, TRUE, NULL, NULL, cancellable, error);
 }
 
 static gboolean
