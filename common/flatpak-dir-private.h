@@ -443,6 +443,11 @@ gboolean    flatpak_dir_list_refs (FlatpakDir   *self,
                                    char       ***refs,
                                    GCancellable *cancellable,
                                    GError      **error);
+GVariant *  flatpak_dir_read_latest_commit (FlatpakDir   *self,
+                                            const char   *remote,
+                                            const char   *ref,
+                                            GCancellable *cancellable,
+                                            GError      **error);
 char *      flatpak_dir_read_latest (FlatpakDir   *self,
                                      const char   *remote,
                                      const char   *ref,
