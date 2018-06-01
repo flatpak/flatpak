@@ -28,7 +28,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-
     skip_without_p2p
 fi
 
-echo "1..21"
+echo "1..22"
 
 #Regular repo
 setup_repo
@@ -259,6 +259,25 @@ assert_not_file_has_content list-log "^org.test.Hello"
 assert_not_file_has_content list-log "^org.test.Platform"
 
 echo "ok uninstall vs installations"
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+
+${FLATPAK} ${U} list -d > list-log
+assert_file_has_content list-log "^org.test.Hello"
+assert_file_has_content list-log "^org.test.Platform"
+
+if ${FLATPAK} ${U} uninstall org.test.Platform; then
+    assert_not_reached "Should not be able to uninstall ${U} when there is a dependency installed"
+fi
+
+${FLATPAK} ${U} uninstall org.test.Hello
+${FLATPAK} ${U} uninstall org.test.Platform
+
+${FLATPAK} ${U} list -d > list-log
+assert_not_file_has_content list-log "^org.test.Hello"
+assert_not_file_has_content list-log "^org.test.Platform"
+
+echo "ok uninstall dependencies"
 
 ${FLATPAK} ${U} install -y --no-deploy test-repo org.test.Hello
 
