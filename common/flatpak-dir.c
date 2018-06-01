@@ -4339,6 +4339,36 @@ out:
   return ret;
 }
 
+GVariant *
+flatpak_dir_read_latest_commit (FlatpakDir   *self,
+                                const char   *remote,
+                                const char   *ref,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  g_autofree char *remote_and_ref = NULL;
+  g_autofree char *res = NULL;
+  g_autoptr(GVariant) commit_data = NULL;
+
+  /* There may be several remotes with the same branch (if we for
+   * instance changed the origin, so prepend the current origin to
+   * make sure we get the right one */
+
+  if (remote)
+    remote_and_ref = g_strdup_printf ("%s:%s", remote, ref);
+  else
+    remote_and_ref = g_strdup (ref);
+
+  if (!ostree_repo_resolve_rev (self->repo, remote_and_ref, FALSE, &res, error))
+    return NULL;
+
+  if (!ostree_repo_load_commit (self->repo, res, &commit_data, NULL, error))
+    return NULL;
+
+  return g_steal_pointer (&commit_data);
+}
+
+
 char *
 flatpak_dir_read_latest (FlatpakDir   *self,
                          const char   *remote,
@@ -8281,6 +8311,7 @@ static FlatpakRemoteState *
 _flatpak_dir_get_remote_state (FlatpakDir   *self,
                                const char   *remote_or_uri,
                                gboolean      optional,
+                               gboolean      local_only,
                                GBytes       *opt_summary,
                                GBytes       *opt_summary_sig,
                                GCancellable *cancellable,
@@ -8300,6 +8331,13 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
   is_local = g_str_has_prefix (remote_or_uri, "file:");
   if (!is_local && !repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
     return NULL;
+
+  if (local_only)
+    {
+      flatpak_fail (&state->summary_fetch_error, "Internal error, local_only state");
+      flatpak_fail (&state->metadata_fetch_error, "Internal error, local_only state");
+      return g_steal_pointer (&state);
+    }
 
   if (opt_summary)
     {
@@ -8404,7 +8442,7 @@ flatpak_dir_get_remote_state (FlatpakDir   *self,
                               GCancellable *cancellable,
                               GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, FALSE, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, NULL, NULL, cancellable, error);
 }
 
 /* This is an alternative way to get the state where the summary is
@@ -8422,7 +8460,7 @@ flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
                                           GCancellable *cancellable,
                                           GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, FALSE, opt_summary, opt_summary_sig, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, opt_summary, opt_summary_sig, cancellable, error);
 }
 
 /* This is an alternative way to get the remote state that doesn't
@@ -8439,7 +8477,19 @@ flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                        GCancellable *cancellable,
                                        GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, TRUE, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, FALSE, NULL, NULL, cancellable, error);
+}
+
+
+/* This doesn't do any i/o at all, just keeps track of the local details like
+   remote and collection-id. Useful when doing no-pull operations */
+FlatpakRemoteState *
+flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,
+                                         const char   *remote,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, TRUE, NULL, NULL, cancellable, error);
 }
 
 static gboolean
@@ -10050,6 +10100,38 @@ flatpak_dir_search_for_dependency (FlatpakDir   *self,
   return (char **)g_ptr_array_free (g_steal_pointer (&found), FALSE);
 }
 
+char **
+flatpak_dir_search_for_local_dependency (FlatpakDir   *self,
+                                         const char   *runtime_ref,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
+  g_auto(GStrv) remotes = NULL;
+  int i;
+
+  remotes = flatpak_dir_list_enumerated_remotes (self, cancellable, error);
+  if (remotes == NULL)
+    return NULL;
+
+  for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
+    {
+      const char *remote = remotes[i];
+      g_autofree char *commit = NULL;
+
+      if (flatpak_dir_get_remote_nodeps (self, remote))
+        continue;
+
+      commit = flatpak_dir_read_latest (self, remote, runtime_ref, NULL, NULL, NULL);
+      if (commit != NULL)
+        g_ptr_array_add (found, g_strdup (remote));
+    }
+
+  g_ptr_array_add (found, NULL);
+
+  return (char **)g_ptr_array_free (g_steal_pointer (&found), FALSE);
+}
+
 gboolean
 flatpak_dir_remove_remote (FlatpakDir   *self,
                            gboolean      force_remove,
@@ -11070,13 +11152,13 @@ GPtrArray *
 flatpak_dir_find_local_related (FlatpakDir *self,
                                 const char *ref,
                                 const char *remote_name,
+                                gboolean deployed,
                                 GCancellable *cancellable,
                                 GError **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
-  gsize metadata_size;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   int i;
   g_auto(GStrv) parts = NULL;
@@ -11095,19 +11177,37 @@ flatpak_dir_find_local_related (FlatpakDir *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
 
-  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
-  if (deploy_dir == NULL)
+  if (deployed)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s not installed"), ref);
-      return NULL;
+      deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+      if (deploy_dir == NULL)
+        {
+          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                       _("%s not installed"), ref);
+          return NULL;
+        }
+
+      metadata = g_file_get_child (deploy_dir, "metadata");
+      if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
+        {
+          g_debug ("No metadata in local deploy");
+          /* No metadata => no related, but no error */
+        }
+    }
+  else
+    {
+      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, ref, NULL, NULL);
+      if (commit_data)
+        {
+          g_autoptr(GVariant) commit_metadata = g_variant_get_child_value (commit_data, 0);
+          g_variant_lookup (commit_metadata, "xa.metadata", "s", &metadata_contents);
+          if (metadata_contents == NULL)
+            g_debug ("No xa.metadata in local commit");
+        }
     }
 
-  metadata = g_file_get_child (deploy_dir, "metadata");
-  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, NULL))
-    return g_steal_pointer (&related); /* No metadata => no related, but no error */
-
-  if (g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, NULL))
+  if (metadata_contents &&
+      g_key_file_load_from_data (metakey, metadata_contents, -1, 0, NULL))
     {
       g_auto(GStrv) groups = NULL;
 

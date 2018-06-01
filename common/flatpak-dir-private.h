@@ -312,6 +312,10 @@ GFile *     flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *se
                                                                   const char *branch,
                                                                   GCancellable *cancellable);
 
+char **     flatpak_dir_search_for_local_dependency (FlatpakDir   *self,
+                                                     const char   *runtime_ref,
+                                                     GCancellable *cancellable,
+                                                     GError      **error);
 char **     flatpak_dir_search_for_dependency (FlatpakDir   *self,
                                                const char   *runtime_ref,
                                                GCancellable *cancellable,
@@ -439,6 +443,11 @@ gboolean    flatpak_dir_list_refs (FlatpakDir   *self,
                                    char       ***refs,
                                    GCancellable *cancellable,
                                    GError      **error);
+GVariant *  flatpak_dir_read_latest_commit (FlatpakDir   *self,
+                                            const char   *remote,
+                                            const char   *ref,
+                                            GCancellable *cancellable,
+                                            GError      **error);
 char *      flatpak_dir_read_latest (FlatpakDir   *self,
                                      const char   *remote,
                                      const char   *ref,
@@ -704,6 +713,10 @@ FlatpakRemoteState * flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                                             const char   *remote,
                                                             GCancellable *cancellable,
                                                             GError      **error);
+FlatpakRemoteState * flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,
+                                                              const char   *remote,
+                                                              GCancellable *cancellable,
+                                                              GError      **error);
 GPtrArray * flatpak_dir_find_remote_related (FlatpakDir *dir,
                                              FlatpakRemoteState *state,
                                              const char *ref,
@@ -712,6 +725,7 @@ GPtrArray * flatpak_dir_find_remote_related (FlatpakDir *dir,
 GPtrArray * flatpak_dir_find_local_related (FlatpakDir *self,
                                             const char *remote_name,
                                             const char *ref,
+                                            gboolean deployed,
                                             GCancellable *cancellable,
                                             GError **error);
 

@@ -36,13 +36,15 @@
  * @FLATPAK_TRANSACTION_OPERATION_INSTALL: Install a ref from a remote
  * @FLATPAK_TRANSACTION_OPERATION_UPDATE: Update an installed ref
  * @FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE: Install a bundle from a file
+ * @FLATPAK_TRANSACTION_OPERATION_UNINSTALL: Uninstall a ref
  *
  * The type of a transaction, used in FlatpakTransaction::new-operation
  */
 typedef enum {
   FLATPAK_TRANSACTION_OPERATION_INSTALL,
   FLATPAK_TRANSACTION_OPERATION_UPDATE,
-  FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE
+  FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE,
+  FLATPAK_TRANSACTION_OPERATION_UNINSTALL
 } FlatpakTransactionOperationType;
 
 /**
@@ -140,6 +142,9 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_reinstall             (FlatpakTransaction   *self,
                                                                    gboolean             reinstall);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_force_uninstall       (FlatpakTransaction  *self,
+                                                                   gboolean             force_uninstall);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_run                       (FlatpakTransaction  *self,
                                                                    GCancellable        *cancellable,
                                                                    GError             **error);
@@ -159,6 +164,10 @@ gboolean            flatpak_transaction_add_update                (FlatpakTransa
                                                                    const char          *ref,
                                                                    const char         **subpaths,
                                                                    const char          *commit,
+                                                                   GError             **error);
+FLATPAK_EXTERN
+gboolean            flatpak_transaction_add_uninstall             (FlatpakTransaction  *self,
+                                                                   const char          *ref,
                                                                    GError             **error);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_is_empty                  (FlatpakTransaction  *self);

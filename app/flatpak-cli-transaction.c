@@ -101,6 +101,8 @@ op_type_to_string (FlatpakTransactionOperationType operation_type)
       return _("update");
     case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
       return _("install bundle");
+    case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
+      return _("uninstall");
     default:
       return "Unknown type"; /* Should not happen */
     }
@@ -207,6 +209,12 @@ new_operation (FlatpakTransaction *transaction,
           g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
       }
       break;
+    case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
+      if (self->is_user)
+        g_print (_("Uninstalling for user: %s\n"), pref);
+      else
+        g_print (_("Uninstalling: %s\n"), pref);
+      break;
     default:
       g_assert_not_reached ();
       break;
@@ -230,10 +238,13 @@ operation_done (FlatpakTransaction *transaction,
 
   progress_done (transaction);
 
-  if (details & FLATPAK_TRANSACTION_RESULT_NO_CHANGE)
-    g_print (_("No updates.\n"));
-  else
-    g_print (_("Now at %s.\n"), short_commit);
+  if (operation_type != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    {
+      if (details & FLATPAK_TRANSACTION_RESULT_NO_CHANGE)
+        g_print (_("No updates.\n"));
+      else
+        g_print (_("Now at %s.\n"), short_commit);
+    }
 }
 
 static gboolean
