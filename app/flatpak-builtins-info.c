@@ -43,6 +43,7 @@ static gboolean opt_show_size;
 static gboolean opt_show_metadata;
 static gboolean opt_show_permissions;
 static gboolean opt_show_extensions;
+static gboolean opt_show_location;
 static char *opt_arch;
 static char **opt_installations;
 static char *opt_file_access;
@@ -60,6 +61,7 @@ static GOptionEntry options[] = {
   { "show-permissions", 'M', 0, G_OPTION_ARG_NONE, &opt_show_permissions, N_("Show permissions"), NULL },
   { "file-access", 0, 0, G_OPTION_ARG_FILENAME, &opt_file_access, N_("Query file access"), N_("PATH") },
   { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
+  { "show-location", 'l', 0, G_OPTION_ARG_NONE, &opt_show_location, N_("Show location"), NULL },
   { NULL }
 };
 
@@ -172,7 +174,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   metakey = flatpak_deploy_get_metadata (deploy);
 
-  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions || opt_file_access)
+  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions ||
+      opt_file_access || opt_show_location)
     friendly = FALSE;
 
   if (friendly)
@@ -277,6 +280,12 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         {
           maybe_print_space (&first);
           g_print ("%s", formatted);
+        }
+
+      if (opt_show_location)
+        {
+          maybe_print_space (&first);
+          g_print ("%s", path);
         }
 
       if (!first)
