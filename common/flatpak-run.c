@@ -1344,10 +1344,10 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
   GVariant *properties = NULL;
   GVariant *aux = NULL;
   guint32 pid;
-  GMainContext *main_context = NULL;
   GMainLoop *main_loop = NULL;
   struct JobData data;
   gboolean res = FALSE;
+  g_autoptr(GMainContextPopDefault) main_context = NULL;
 
   path = g_strdup_printf ("/run/user/%d/systemd/private", getuid ());
 
@@ -1355,10 +1355,8 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
     return flatpak_fail (error,
                          "No systemd user session available, cgroups not available");
 
-  main_context = g_main_context_new ();
+  main_context = flatpak_main_context_new_default ();
   main_loop = g_main_loop_new (main_context, FALSE);
-
-  g_main_context_push_thread_default (main_context);
 
   address = g_strconcat ("unix:path=", path, NULL);
 
@@ -1411,11 +1409,6 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
   res = TRUE;
 
 out:
-  if (main_context)
-    {
-      g_main_context_pop_thread_default (main_context);
-      g_main_context_unref (main_context);
-    }
   if (main_loop)
     g_main_loop_unref (main_loop);
   if (manager)

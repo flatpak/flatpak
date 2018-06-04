@@ -281,7 +281,6 @@ generate_all_deltas (OstreeRepo *repo,
                      GCancellable *cancellable,
                      GError **error)
 {
-  g_autoptr(GMainContext) context = g_main_context_new ();
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) all_deltas_hash = NULL;
   g_autoptr(GHashTable) wanted_deltas_hash = NULL;
@@ -292,6 +291,7 @@ generate_all_deltas (OstreeRepo *repo,
   g_autoptr(GVariantBuilder) parambuilder = NULL;
   g_autoptr(GVariant) params = NULL;
   int n_spawned_delta_generate = 0;
+  g_autoptr(GMainContextPopDefault) context = NULL;
 
   g_print ("Generating static deltas\n");
 
@@ -317,7 +317,7 @@ generate_all_deltas (OstreeRepo *repo,
                               cancellable, error))
     return FALSE;
 
-  g_main_context_push_thread_default (context);
+  context = flatpak_main_context_new_default ();
 
   g_hash_table_iter_init (&iter, all_refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -342,7 +342,7 @@ generate_all_deltas (OstreeRepo *repo,
           if (!spawn_delete_generation (context, &n_spawned_delta_generate, repo, params,
                                         ref, NULL, commit,
                                         error))
-            goto error;
+            return FALSE;
         }
 
       /* Mark this one as wanted */
@@ -368,7 +368,7 @@ generate_all_deltas (OstreeRepo *repo,
               if (!spawn_delete_generation (context, &n_spawned_delta_generate, repo, params,
                                             ref, parent_commit, commit,
                                             error))
-                goto error;
+                return FALSE;
             }
 
           /* Mark parent-to-current as wanted */
@@ -392,8 +392,6 @@ generate_all_deltas (OstreeRepo *repo,
   while (n_spawned_delta_generate > 0)
     g_main_context_iteration (context, TRUE);
 
-  g_main_context_pop_thread_default (context);
-
   *unwanted_deltas = g_ptr_array_new_with_free_func (g_free);
   for (i = 0; i < all_deltas->len; i++)
     {
@@ -403,10 +401,6 @@ generate_all_deltas (OstreeRepo *repo,
     }
 
   return TRUE;
-
- error:
-  g_main_context_pop_thread_default (context);
-  return FALSE;
 }
 
 gboolean
