@@ -1705,6 +1705,7 @@ add_monitor_path_args (gboolean use_session_helper,
 {
   g_autoptr(AutoFlatpakSessionHelper) session_helper = NULL;
   g_autofree char *monitor_path = NULL;
+  g_autoptr(GVariant) session_data = NULL;
 
   if (use_session_helper)
     {
@@ -1717,17 +1718,18 @@ add_monitor_path_args (gboolean use_session_helper,
     }
 
   if (session_helper &&
-      flatpak_session_helper_call_request_monitor_sync (session_helper,
-                                                        &monitor_path,
+      flatpak_session_helper_call_request_session_sync (session_helper,
+                                                        &session_data,
                                                         NULL, NULL))
     {
-      flatpak_bwrap_add_args (bwrap,
-                              "--ro-bind", monitor_path, "/run/host/monitor",
-                              "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
-                              "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
-                              "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
-                              "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
-                              NULL);
+      if (g_variant_lookup (session_data, "path", "s", &monitor_path))
+        flatpak_bwrap_add_args (bwrap,
+                                "--ro-bind", monitor_path, "/run/host/monitor",
+                                "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
+                                "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
+                                "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
+                                "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
+                                NULL);
     }
   else
     {
