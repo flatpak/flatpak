@@ -11201,20 +11201,24 @@ local_match_prefix (FlatpakDir *self,
       g_hash_table_iter_init (&hash_iter, refs);
       while (g_hash_table_iter_next (&hash_iter, &key, NULL))
         {
-          char *ref = key;
-          g_auto(GStrv) cur_parts = g_strsplit (ref, "/", -1);
+          const char *partial_ref_and_origin = key;
+          g_autofree char *partial_ref = NULL;
+          g_auto(GStrv) cur_parts = NULL;
+
+          ostree_parse_refspec (partial_ref_and_origin, NULL, &partial_ref, NULL);
+
+          cur_parts = g_strsplit (partial_ref, "/", -1);
 
           /* Must match type, arch, branch */
-          if (strcmp (parts[0], cur_parts[0]) != 0 ||
-              strcmp (parts[2], cur_parts[2]) != 0 ||
-              strcmp (parts[3], cur_parts[3]) != 0)
+          if (strcmp (parts[2], cur_parts[1]) != 0 ||
+              strcmp (parts[3], cur_parts[2]) != 0)
             continue;
 
           /* But only prefix of id */
-          if (!g_str_has_prefix (cur_parts[1], parts_prefix))
+          if (!g_str_has_prefix (cur_parts[0], parts_prefix))
             continue;
 
-          g_ptr_array_add (matches, g_strdup (ref));
+          g_ptr_array_add (matches, g_strconcat (parts[0], "/", partial_ref, NULL));
         }
     }
 
