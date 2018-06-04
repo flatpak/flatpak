@@ -1005,30 +1005,31 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
    * dynamic remotes for them, to avoid extra unnecessary processing, and also
    * because the refs array cannot be empty in ostree_repo_find_remotes_async
    * (otherwise it early returns and we never get our callback called) */
-  if (collection_refs->len > 0) {
-    g_autoptr(GMainContextPopDefault) context = NULL;
+  if (collection_refs->len > 0)
+    {
+      g_autoptr(GMainContextPopDefault) context = NULL;
 
-    g_ptr_array_add (collection_refs, NULL);
+      g_ptr_array_add (collection_refs, NULL);
 
-    context = flatpak_main_context_new_default ();
+      context = flatpak_main_context_new_default ();
 
-    ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
-                                    (const OstreeCollectionRef * const *) collection_refs->pdata,
-                                    NULL,  /* no options */
-                                    NULL, /* default finders */
-                                    NULL,  /* no progress */
-                                    cancellable,
-                                    async_result_cb,
-                                    &result);
+      ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
+                                      (const OstreeCollectionRef * const *) collection_refs->pdata,
+                                      NULL,  /* no options */
+                                      NULL, /* default finders */
+                                      NULL,  /* no progress */
+                                      cancellable,
+                                      async_result_cb,
+                                      &result);
 
-    while (result == NULL)
-      g_main_context_iteration (context, TRUE);
+      while (result == NULL)
+        g_main_context_iteration (context, TRUE);
 
-    results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
+      results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
 
-    if (results == NULL)
-      return NULL;
-  }
+      if (results == NULL)
+        return NULL;
+    }
 
   for (i = 0; i < installed->len; i++)
     {
