@@ -41,6 +41,8 @@ static gboolean opt_show_commit;
 static gboolean opt_show_origin;
 static gboolean opt_show_size;
 static gboolean opt_show_metadata;
+static gboolean opt_show_runtime;
+static gboolean opt_show_sdk;
 static gboolean opt_show_permissions;
 static gboolean opt_show_extensions;
 static gboolean opt_show_location;
@@ -58,6 +60,8 @@ static GOptionEntry options[] = {
   { "show-origin", 'o', 0, G_OPTION_ARG_NONE, &opt_show_origin, N_("Show origin"), NULL },
   { "show-size", 's', 0, G_OPTION_ARG_NONE, &opt_show_size, N_("Show size"), NULL },
   { "show-metadata", 'm', 0, G_OPTION_ARG_NONE, &opt_show_metadata, N_("Show metadata"), NULL },
+  { "show-runtime", 0, 0, G_OPTION_ARG_NONE, &opt_show_runtime, N_("Show runtime"), NULL },
+  { "show-sdk", 0, 0, G_OPTION_ARG_NONE, &opt_show_sdk, N_("Show sdk"), NULL },
   { "show-permissions", 'M', 0, G_OPTION_ARG_NONE, &opt_show_permissions, N_("Show permissions"), NULL },
   { "file-access", 0, 0, G_OPTION_ARG_FILENAME, &opt_file_access, N_("Query file access"), N_("PATH") },
   { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
@@ -175,7 +179,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   metakey = flatpak_deploy_get_metadata (deploy);
 
   if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions ||
-      opt_file_access || opt_show_location)
+      opt_file_access || opt_show_location || opt_show_runtime || opt_show_sdk)
     friendly = FALSE;
 
   if (friendly)
@@ -244,8 +248,11 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (strcmp (parts[0], "app") == 0)
         {
           g_autofree char *runtime = NULL;
+          g_autofree char *sdk = NULL;
           runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
           g_print ("%s%s%s %s\n", on, _("Runtime:"), off, runtime ? runtime : "-");
+          sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
+          g_print ("%s%s%s %s\n", on, _("Sdk:"), off, sdk ? sdk : "-");
         }
       if (subpaths[0] != NULL)
         {
@@ -286,6 +293,30 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         {
           maybe_print_space (&first);
           g_print ("%s", path);
+        }
+
+      if (opt_show_runtime)
+        {
+          g_autofree char *runtime = NULL;
+          maybe_print_space (&first);
+
+          if (strcmp (parts[0], "app") == 0)
+            runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+          else
+            runtime = g_key_file_get_string (metakey, "Runtime", "runtime", NULL);
+          g_print ("%s", runtime ? runtime : "-");
+        }
+
+      if (opt_show_sdk)
+        {
+          g_autofree char *sdk = NULL;
+          maybe_print_space (&first);
+
+          if (strcmp (parts[0], "app") == 0)
+            sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
+          else
+            sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
+          g_print ("%s", sdk ? sdk : "-");
         }
 
       if (!first)
