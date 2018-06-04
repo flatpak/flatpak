@@ -311,8 +311,10 @@ handle_deploy (FlatpakSystemHelper   *object,
     }
   else if (strlen (arg_repo_path) > 0)
     {
+      g_autoptr(GMainContextPopDefault) main_context = NULL;
+
       /* Work around ostree-pull spinning the default main context for the sync calls */
-      g_autoptr(GMainContextPopDefault) main_context = flatpak_main_context_new_default ();
+      main_context = flatpak_main_context_new_default ();
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
@@ -333,6 +335,8 @@ handle_deploy (FlatpakSystemHelper   *object,
     }
   else if (local_pull)
     {
+      g_autoptr(GMainContextPopDefault) main_context = NULL;
+
       g_autoptr(FlatpakRemoteState) state = NULL;
       if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
                                        arg_origin,
@@ -360,7 +364,7 @@ handle_deploy (FlatpakSystemHelper   *object,
         }
 
       /* Work around ostree-pull spinning the default main context for the sync calls */
-      g_autoptr(GMainContextPopDefault) main_context = flatpak_main_context_new_default ();
+      main_context = flatpak_main_context_new_default ();
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
@@ -513,9 +517,10 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
     {
       g_autoptr(GError) first_error = NULL;
       g_autoptr(GError) second_error = NULL;
+      g_autoptr(GMainContextPopDefault) main_context = NULL;
 
       /* Work around ostree-pull spinning the default main context for the sync calls */
-      g_autoptr(GMainContextPopDefault) main_context = flatpak_main_context_new_default ();
+      main_context = flatpak_main_context_new_default ();
 
       if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
                                              arg_origin,
@@ -546,6 +551,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       g_autoptr(GError) first_error = NULL;
       g_autoptr(GError) second_error = NULL;
       g_autofree char *url = NULL;
+      g_autoptr(GMainContextPopDefault) main_context = NULL;
 
       if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
                                        arg_origin,
@@ -573,7 +579,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
         }
 
       /* Work around ostree-pull spinning the default main context for the sync calls */
-      g_autoptr(GMainContextPopDefault) main_context = flatpak_main_context_new_default ();
+      main_context = flatpak_main_context_new_default ();
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 

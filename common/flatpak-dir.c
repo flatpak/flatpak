@@ -2319,6 +2319,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
       OstreeCollectionRef collection_ref = { state->collection_id, (char *) ref };
       OstreeCollectionRef *collection_refs_to_fetch[2] = { &collection_ref, NULL };
       gsize i;
+      g_autoptr(GMainContextPopDefault) context = NULL;
 
       /* Find options */
       g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
@@ -2331,7 +2332,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 
       find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-      g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
+      context = flatpak_main_context_new_default ();
 
       ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
                                       find_options,
@@ -2761,6 +2762,7 @@ repo_pull (OstreeRepo          *self,
       OstreeCollectionRef collection_ref;
       OstreeCollectionRef *collection_refs_to_fetch[2];
       guint32 update_freq = 0;
+      g_autoptr(GMainContextPopDefault) context = NULL;
 
       /* Find options */
       g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
@@ -2799,7 +2801,7 @@ repo_pull (OstreeRepo          *self,
                                force_disable_deltas, flags, progress);
       pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
-      g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
+      context = flatpak_main_context_new_default ();
 
       if (results_to_fetch == NULL)
         {
@@ -3548,6 +3550,7 @@ flatpak_dir_pull (FlatpakDir          *self,
           gboolean force_disable_deltas = (flatpak_flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
           guint update_freq = 0;
           gsize i;
+          g_autoptr(GMainContextPopDefault) context = NULL;
 
           g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
 
@@ -3573,7 +3576,7 @@ flatpak_dir_pull (FlatpakDir          *self,
 
           find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-          g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
+          context = flatpak_main_context_new_default ();
 
           ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
                                           find_options,

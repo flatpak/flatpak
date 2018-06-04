@@ -291,6 +291,7 @@ generate_all_deltas (OstreeRepo *repo,
   g_autoptr(GVariantBuilder) parambuilder = NULL;
   g_autoptr(GVariant) params = NULL;
   int n_spawned_delta_generate = 0;
+  g_autoptr(GMainContextPopDefault) context = NULL;
 
   g_print ("Generating static deltas\n");
 
@@ -316,7 +317,7 @@ generate_all_deltas (OstreeRepo *repo,
                               cancellable, error))
     return FALSE;
 
-  g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
+  context = flatpak_main_context_new_default ();
 
   g_hash_table_iter_init (&iter, all_refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
