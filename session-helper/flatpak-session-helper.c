@@ -59,6 +59,25 @@ handle_request_monitor (FlatpakSessionHelper   *object,
   return TRUE;
 }
 
+static gboolean
+handle_request_session (FlatpakSessionHelper   *object,
+                        GDBusMethodInvocation *invocation,
+                        gpointer               user_data)
+{
+  GVariantBuilder builder;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+
+  g_variant_builder_add (&builder, "{s@v}", "path",
+                         g_variant_new_variant (g_variant_new_string (monitor_dir)));
+
+  flatpak_session_helper_complete_request_session (object, invocation,
+                                                   g_variant_builder_end (&builder));
+
+  return TRUE;
+}
+
+
 static void
 child_watch_died (GPid     pid,
                   gint     status,
@@ -363,6 +382,7 @@ on_bus_acquired (GDBusConnection *connection,
   flatpak_session_helper_set_version (FLATPAK_SESSION_HELPER (helper), 1);
 
   g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
+  g_signal_connect (helper, "handle-request-session", G_CALLBACK (handle_request_session), NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
                                          connection,
@@ -579,6 +599,7 @@ main (int    argc,
   gboolean show_version;
   GOptionContext *context;
   GBusNameOwnerFlags flags;
+  g_autofree char *flatpak_dir = NULL;
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
@@ -636,8 +657,15 @@ main (int    argc,
       return 1;
     }
 
-  monitor_dir = g_build_filename (g_get_user_runtime_dir (), "flatpak-monitor", NULL);
-  if (g_mkdir_with_parents (monitor_dir, 0755) != 0)
+  flatpak_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak-helper", NULL);
+  if (g_mkdir_with_parents (flatpak_dir, 0700) != 0)
+    {
+      g_print ("Can't create %s\n", monitor_dir);
+      exit (1);
+    }
+
+  monitor_dir = g_build_filename (flatpak_dir, "monitor", NULL);
+  if (g_mkdir_with_parents (monitor_dir, 0700) != 0)
     {
       g_print ("Can't create %s\n", monitor_dir);
       exit (1);

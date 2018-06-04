@@ -30,6 +30,10 @@
     <method name="RequestMonitor">
       <arg type='ay' name='path' direction='out'/>
     </method>
+
+    <method name="RequestSession">
+      <arg type='a{sv}' name='data' direction='out'/>
+    </method>
   </interface>
 
   <interface name='org.freedesktop.Flatpak.Development'>
