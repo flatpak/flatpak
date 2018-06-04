@@ -625,7 +625,6 @@ FlatpakXml *flatpak_xml_find (FlatpakXml  *node,
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakXml, flatpak_xml_free);
 
-
 FlatpakXml *flatpak_appstream_xml_new (void);
 gboolean   flatpak_appstream_xml_migrate (FlatpakXml *source,
                                           FlatpakXml *dest,
@@ -691,5 +690,9 @@ OstreeAsyncProgress *flatpak_progress_new (FlatpakProgressCallback progress,
                                            gpointer                progress_data);
 
 void flatpak_log_dir_access (FlatpakDir *dir);
+
+gboolean flatpak_check_required_version (const char *ref,
+                                         GKeyFile *metakey,
+                                         GError **error);
 
 #endif /* __FLATPAK_UTILS_H__ */

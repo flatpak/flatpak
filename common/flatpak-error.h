@@ -39,6 +39,7 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_DIFFERENT_REMOTE: The App/Runtime is already installed, but from a different remote.
  * @FLATPAK_ERROR_ABORTED: The transaction was aborted (returned TRUE in operation-error signal).
  * @FLATPAK_ERROR_SKIPPED: The App/Runtime install was skipped due to earlier errors.
+ * @FLATPAK_ERROR_NEED_NEW_FLATPAK: The App/Runtime needs a more recent version of flatpak.
  *
  * Error codes for library functions.
  */
@@ -49,6 +50,7 @@ typedef enum {
   FLATPAK_ERROR_DIFFERENT_REMOTE,
   FLATPAK_ERROR_ABORTED,
   FLATPAK_ERROR_SKIPPED,
+  FLATPAK_ERROR_NEED_NEW_FLATPAK,
 } FlatpakError;
 
 #define FLATPAK_ERROR flatpak_error_quark ()
