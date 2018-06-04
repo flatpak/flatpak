@@ -43,6 +43,8 @@ static gboolean opt_show_commit;
 static gboolean opt_show_parent;
 static gboolean opt_show_metadata;
 static gboolean opt_log;
+static gboolean opt_show_runtime;
+static gboolean opt_show_sdk;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -54,6 +56,8 @@ static GOptionEntry options[] = {
   { "show-commit", 'c', 0, G_OPTION_ARG_NONE, &opt_show_commit, N_("Show commit"), NULL },
   { "show-parent", 'p', 0, G_OPTION_ARG_NONE, &opt_show_parent, N_("Show parent"), NULL },
   { "show-metadata", 'm', 0, G_OPTION_ARG_NONE, &opt_show_metadata, N_("Show metadata"), NULL },
+  { "show-runtime", 0, 0, G_OPTION_ARG_NONE, &opt_show_runtime, N_("Show runtime"), NULL },
+  { "show-sdk", 0, 0, G_OPTION_ARG_NONE, &opt_show_sdk, N_("Show sdk"), NULL },
   { NULL }
 };
 
@@ -160,8 +164,10 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
       off = FLATPAK_ANSI_BOLD_OFF; /* bold off */
     }
 
-  if (opt_show_ref || opt_show_commit || opt_show_parent || opt_show_metadata)
+  if (opt_show_ref || opt_show_commit || opt_show_parent || opt_show_metadata || opt_show_runtime || opt_show_sdk)
     friendly = FALSE;
+
+  parts = g_strsplit (ref, "/", 0);
 
   if (friendly)
     {
@@ -192,7 +198,6 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
       if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
         download_size = GUINT64_FROM_BE (download_size);
 
-      parts = g_strsplit (ref, "/", 0);
       formatted_installed_size = g_format_size (installed_size);
       formatted_download_size = g_format_size (download_size);
       formatted_timestamp = format_timestamp (timestamp);
@@ -212,8 +217,11 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
       if (strcmp (parts[0], "app") == 0 && metakey != NULL)
         {
           g_autofree char *runtime = NULL;
+          g_autofree char *sdk = NULL;
           runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
           g_print ("%s%s%s %s\n", on, _("Runtime:"), off, runtime ? runtime : "-");
+          sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
+          g_print ("%s%s%s %s\n", on, _("Sdk:"), off, sdk ? sdk : "-");
         }
 
       if (opt_log)
@@ -260,7 +268,18 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
       do
         {
           g_autofree char *p = ostree_commit_get_parent (c_v);
+          g_autoptr(GVariant) c_m = g_variant_get_child_value (c_v, 0);
           gboolean first = TRUE;
+
+          g_variant_lookup (c_m, "xa.metadata", "&s", &xa_metadata);
+          if (xa_metadata == NULL)
+            g_printerr (_("Warning: Commit %s has no flatpak metadata\n"), c);
+          else
+            {
+              metakey = g_key_file_new ();
+              if (!g_key_file_load_from_data (metakey, xa_metadata, -1, 0, error))
+                return FALSE;
+            }
 
           if (opt_show_ref)
             {
@@ -280,19 +299,41 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
               g_print ("%s", p ? p : "-");
             }
 
+          if (opt_show_runtime)
+            {
+              g_autofree char *runtime = NULL;
+              maybe_print_space (&first);
+
+              if (metakey)
+                {
+                  if (strcmp (parts[0], "app") == 0)
+                    runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+                  else
+                    runtime = g_key_file_get_string (metakey, "Runtime", "runtime", NULL);
+                }
+              g_print ("%s", runtime ? runtime : "-");
+            }
+
+          if (opt_show_sdk)
+            {
+              g_autofree char *sdk = NULL;
+              maybe_print_space (&first);
+
+              if (metakey)
+                {
+                  if (strcmp (parts[0], "app") == 0)
+                    sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
+                  else
+                    sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
+                }
+              g_print ("%s", sdk ? sdk : "-");
+            }
+
           if (!first)
             g_print ("\n");
 
           if (opt_show_metadata)
-            {
-              g_autoptr(GVariant) c_m = NULL;
-              c_m = g_variant_get_child_value (c_v, 0);
-              g_variant_lookup (c_m, "xa.metadata", "&s", &xa_metadata);
-              if (xa_metadata == NULL)
-                g_printerr (_("Warning: Commit %s has no flatpak metadata\n"), c);
-              else
-                g_print ("%s", xa_metadata);
-            }
+            g_print ("%s", xa_metadata);
 
           g_free (c);
           c = g_steal_pointer (&p);
