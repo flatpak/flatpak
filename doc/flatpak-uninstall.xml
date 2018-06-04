@@ -138,6 +138,28 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--all</option></term>
+                <listitem><para>
+                    Remove all refs on the system.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--unused</option></term>
+                <listitem><para>
+                    Remove unused refs on the system.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-y</option></term>
+                <term><option>--assumeyes</option></term>
+                <listitem><para>
+                    Automatically answer yes to all questions. This is useful for automation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--app</option></term>
 
                 <listitem><para>

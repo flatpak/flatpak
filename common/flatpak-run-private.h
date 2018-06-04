@@ -78,6 +78,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_DIRECTORY "directory"
 #define FLATPAK_METADATA_KEY_DOWNLOAD_IF "download-if"
 #define FLATPAK_METADATA_KEY_ENABLE_IF "enable-if"
+#define FLATPAK_METADATA_KEY_AUTOPRUNE_UNLESS "autoprune-unless"
 #define FLATPAK_METADATA_KEY_MERGE_DIRS "merge-dirs"
 #define FLATPAK_METADATA_KEY_NO_AUTODOWNLOAD "no-autodownload"
 #define FLATPAK_METADATA_KEY_SUBDIRECTORIES "subdirectories"

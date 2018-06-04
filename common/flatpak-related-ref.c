@@ -45,6 +45,7 @@ struct _FlatpakRelatedRefPrivate
   char   **subpaths;
   gboolean download;
   gboolean delete;
+  gboolean autoprune;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRelatedRef, flatpak_related_ref, FLATPAK_TYPE_REF)
@@ -55,6 +56,7 @@ enum {
   PROP_SUBPATHS,
   PROP_SHOULD_DOWNLOAD,
   PROP_SHOULD_DELETE,
+  PROP_SHOULD_AUTOPRUNE,
 };
 
 static void
@@ -87,6 +89,10 @@ flatpak_related_ref_set_property (GObject      *object,
       priv->delete = g_value_get_boolean (value);
       break;
 
+    case PROP_SHOULD_AUTOPRUNE:
+      priv->autoprune = g_value_get_boolean (value);
+      break;
+
     case PROP_SUBPATHS:
       g_clear_pointer (&priv->subpaths, g_strfreev);
       priv->subpaths = g_strdupv (g_value_get_boxed (value));
@@ -115,6 +121,10 @@ flatpak_related_ref_get_property (GObject    *object,
 
     case PROP_SHOULD_DELETE:
       g_value_set_boolean (value, priv->delete);
+      break;
+
+    case PROP_SHOULD_AUTOPRUNE:
+      g_value_set_boolean (value, priv->autoprune);
       break;
 
     case PROP_SUBPATHS:
@@ -148,6 +158,13 @@ flatpak_related_ref_class_init (FlatpakRelatedRefClass *klass)
                                    g_param_spec_boolean ("should-delete",
                                                          "Should delete",
                                                          "Whether to auto-delete the ref with the main ref",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_SHOULD_AUTOPRUNE,
+                                   g_param_spec_boolean ("should-autoprune",
+                                                         "Should autoprune",
+                                                         "Whether to delete when pruning unused refs",
                                                          FALSE,
                                                          G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
@@ -198,6 +215,24 @@ flatpak_related_ref_should_delete (FlatpakRelatedRef *self)
   FlatpakRelatedRefPrivate *priv = flatpak_related_ref_get_instance_private (self);
 
   return priv->delete;
+}
+
+/**
+ * flatpak_related_ref_should_autoprune:
+ * @self: a #FlatpakRelatedRef
+ *
+ * Returns whether to delete when pruning unused refs.
+ *
+ * Returns: %TRUE if the ref should be considered unused when pruning.
+ *
+ * Since: 0.11.8
+ */
+gboolean
+flatpak_related_ref_should_autoprune (FlatpakRelatedRef *self)
+{
+  FlatpakRelatedRefPrivate *priv = flatpak_related_ref_get_instance_private (self);
+
+  return priv->autoprune;
 }
 
 /**
