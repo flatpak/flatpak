@@ -5913,3 +5913,37 @@ flatpak_log_dir_access (FlatpakDir *dir)
       g_debug ("Opening %s flatpak installation at path %s", dir_name, dir_path_str);
     }
 }
+
+gboolean
+flatpak_check_required_version (const char *ref,
+                                GKeyFile *metakey,
+                                GError **error)
+{
+  g_autofree char *required_version = NULL;
+  const char *group;
+  int required_major, required_minor, required_micro;
+
+  if (g_str_has_prefix (ref, "app/"))
+    group = "Application";
+  else
+    group = "Runtime";
+
+  required_version = g_key_file_get_string (metakey, group, "required-flatpak", NULL);
+  if (required_version)
+    {
+      if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
+        g_warning ("Invalid require-flatpak argument %s", required_version);
+      else
+        {
+          if (required_major > PACKAGE_MAJOR_VERSION ||
+              (required_major == PACKAGE_MAJOR_VERSION && required_minor > PACKAGE_MINOR_VERSION) ||
+              (required_major == PACKAGE_MAJOR_VERSION && required_minor == PACKAGE_MINOR_VERSION && required_micro > PACKAGE_MICRO_VERSION))
+            {
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NEED_NEW_FLATPAK, _("%s needs a later flatpak version (%s)"), ref, required_version);
+              return FALSE;
+            }
+        }
+    }
+
+  return TRUE;
+}

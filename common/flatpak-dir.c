@@ -6025,13 +6025,18 @@ flatpak_dir_deploy (FlatpakDir          *self,
                             &metadata_contents, NULL, NULL, NULL))
     {
       g_autoptr(GKeyFile) keyfile = g_key_file_new ();
-      if (g_key_file_load_from_data (keyfile,
+      if (!g_key_file_load_from_data (keyfile,
                                       metadata_contents,
                                       -1,
                                       0, error))
-        application_runtime = g_key_file_get_string (keyfile,
-                                                     FLATPAK_METADATA_GROUP_APPLICATION,
-                                                     FLATPAK_METADATA_KEY_RUNTIME, NULL);
+        return FALSE;
+
+      application_runtime = g_key_file_get_string (keyfile,
+                                                   FLATPAK_METADATA_GROUP_APPLICATION,
+                                                   FLATPAK_METADATA_KEY_RUNTIME, NULL);
+
+      if (!flatpak_check_required_version (ref, keyfile, error))
+        return FALSE;
     }
 
   /* Check the metadata in the commit to make sure it matches the actual

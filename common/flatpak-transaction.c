@@ -1169,31 +1169,9 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         g_clear_object (&metakey);
     }
 
-  if (metakey && kind != FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
-    {
-      g_autofree char *required_version = NULL;
-      const char *group;
-      int required_major, required_minor, required_micro;
-
-      if (g_str_has_prefix (ref, "app/"))
-        group = "Application";
-      else
-        group = "Runtime";
-
-      required_version = g_key_file_get_string (metakey, group, "required-flatpak", NULL);
-      if (required_version)
-        {
-          if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
-            g_warning ("Invalid require-flatpak argument %s", required_version);
-          else
-            {
-              if (required_major > PACKAGE_MAJOR_VERSION ||
-                  (required_major == PACKAGE_MAJOR_VERSION && required_minor > PACKAGE_MINOR_VERSION) ||
-                  (required_major == PACKAGE_MAJOR_VERSION && required_minor == PACKAGE_MINOR_VERSION && required_micro > PACKAGE_MICRO_VERSION))
-                return flatpak_fail (error, _("%s needs a later flatpak version (%s)"), ref, required_version);
-            }
-        }
-    }
+  if (metakey && kind != FLATPAK_TRANSACTION_OP_KIND_UNINSTALL &&
+      !flatpak_check_required_version (ref, metakey, error))
+    return FALSE;
 
   if (!add_deps (self, kind, metakey, state, remote, ref, &dep_op, &before_op, error))
     return FALSE;
