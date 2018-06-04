@@ -76,6 +76,7 @@ typedef struct
   char          **subpaths;
   gboolean        download;
   gboolean        delete;
+  gboolean        auto_prune;
 } FlatpakRelated;
 
 void         flatpak_related_free (FlatpakRelated *related);
