@@ -31,9 +31,25 @@
 #include "flatpak-utils-private.h"
 
 static char *monitor_dir;
+static char *p11_kit_server_socket_path;
+static int p11_kit_server_pid = 0;
 
 static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
+
+static void
+do_atexit (void)
+{
+  if (p11_kit_server_pid != 0)
+    kill (p11_kit_server_pid, SIGTERM);
+}
+
+static void
+handle_sigterm (int signum)
+{
+  do_atexit ();
+  _exit (1);
+}
 
 typedef struct {
   GPid pid;
@@ -70,6 +86,9 @@ handle_request_session (FlatpakSessionHelper   *object,
 
   g_variant_builder_add (&builder, "{s@v}", "path",
                          g_variant_new_variant (g_variant_new_string (monitor_dir)));
+  if (p11_kit_server_socket_path)
+    g_variant_builder_add (&builder, "{s@v}", "pkcs11-socket",
+                           g_variant_new_variant (g_variant_new_string (p11_kit_server_socket_path)));
 
   flatpak_session_helper_complete_request_session (object, invocation,
                                                    g_variant_builder_end (&builder));
@@ -608,6 +627,15 @@ main (int    argc,
     { NULL }
   };
   g_autoptr(MonitorData) m_resolv_conf = NULL, m_host_conf = NULL, m_hosts = NULL, m_localtime = NULL;
+  struct sigaction action;
+
+  atexit (do_atexit);
+
+  memset(&action, 0, sizeof(struct sigaction));
+  action.sa_handler = handle_sigterm;
+  sigaction(SIGTERM, &action, NULL);
+  sigaction(SIGHUP, &action, NULL);
+  sigaction(SIGINT, &action, NULL);
 
   setlocale (LC_ALL, "");
 
@@ -662,6 +690,61 @@ main (int    argc,
     {
       g_print ("Can't create %s\n", monitor_dir);
       exit (1);
+    }
+
+  if (g_find_program_in_path  ("p11-kit"))
+    {
+      g_autofree char *socket_basename = g_strdup_printf ("pkcs11-flatpak-%d", getpid ());
+      g_autofree char *socket_path = g_build_filename (flatpak_dir, socket_basename, NULL);
+      g_autofree char *p11_kit_stdout = NULL;
+      gint exit_status;
+      g_autoptr(GError) local_error = NULL;
+      char *p11_argv[] = {
+        "p11-kit", "server",
+        "-n", socket_path,
+        "--provider",  "p11-kit-trust.so",
+        "pkcs11:model=p11-kit-trust?write-protected=yes",
+        NULL
+      };
+      if (!g_spawn_sync (NULL,
+                         p11_argv, NULL, G_SPAWN_SEARCH_PATH,
+                         NULL, NULL,
+                         &p11_kit_stdout, NULL,
+                         &exit_status, &local_error))
+        {
+          g_warning ("Unable to start p11-kit server: %s\n", local_error->message);
+        }
+      else if (exit_status != 0)
+        {
+          g_warning ("Unable to start p11-kit server, exited with status %d\n", exit_status);
+        }
+      else
+        {
+          g_auto(GStrv) stdout_lines = g_strsplit (p11_kit_stdout, "\n", 0);
+          int i;
+
+          /* Output is something like:
+             P11_KIT_SERVER_ADDRESS=unix:path=/run/user/1000/p11-kit/pkcs11-2603742; export P11_KIT_SERVER_ADDRESS;
+             P11_KIT_SERVER_PID=2603743; export P11_KIT_SERVER_PID;
+          */
+          for (i = 0; stdout_lines[i] != NULL; i++)
+            {
+              char *line = stdout_lines[i];
+
+              if (g_str_has_prefix (line, "P11_KIT_SERVER_PID="))
+                {
+                  char *pid = line + strlen ("P11_KIT_SERVER_PID=");
+                  char *p = pid;
+                  while (g_ascii_isdigit (*p))
+                    p++;
+
+                  *p = 0;
+                  p11_kit_server_pid = atol (pid);
+                }
+            }
+
+          p11_kit_server_socket_path = g_steal_pointer (&socket_path);
+        }
     }
 
   monitor_dir = g_build_filename (flatpak_dir, "monitor", NULL);
