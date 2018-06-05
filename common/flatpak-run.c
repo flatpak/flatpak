@@ -1705,6 +1705,7 @@ add_monitor_path_args (gboolean use_session_helper,
 {
   g_autoptr(AutoFlatpakSessionHelper) session_helper = NULL;
   g_autofree char *monitor_path = NULL;
+  g_autofree char *pkcs11_socket_path = NULL;
   g_autoptr(GVariant) session_data = NULL;
 
   if (use_session_helper)
@@ -1730,6 +1731,24 @@ add_monitor_path_args (gboolean use_session_helper,
                                 "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
                                 "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
                                 NULL);
+
+      if (g_variant_lookup (session_data, "pkcs11-socket", "s", &pkcs11_socket_path))
+        {
+          g_autofree char *sandbox_pkcs11_socket_path = g_strdup_printf ("/run/user/%d/p11-kit/pkcs11", getuid ());
+          const char *trusted_module_contents =
+            "# This overrides the runtime p11-kit-trusted module with a client one talking to the trust module on the host\n"
+            "module: p11-kit-client.so\n";
+
+          if (flatpak_bwrap_add_args_data (bwrap, "p11-kit-trust.module",
+                                           trusted_module_contents, -1,
+                                           "/etc/pkcs11/modules/p11-kit-trust.module", NULL))
+            {
+             flatpak_bwrap_add_args (bwrap,
+                                     "--ro-bind", pkcs11_socket_path, sandbox_pkcs11_socket_path,
+                                     NULL);
+             flatpak_bwrap_unset_env (bwrap, "P11_KIT_SERVER_ADDRESS");
+            }
+        }
     }
   else
     {
@@ -2128,6 +2147,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   g_autofree char *run_dir = g_strdup_printf ("/run/user/%d", getuid ());
   g_autofree char *passwd_contents = NULL;
   g_autofree char *group_contents = NULL;
+  const char *pkcs11_conf_contents = NULL;
   struct group *g = getgrgid (getgid ());
   gulong pers;
 
@@ -2145,6 +2165,10 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                                     "nfsnobody:x:65534:\n",
                                     g->gr_name,
                                     getgid (), g_get_user_name ());
+
+  pkcs11_conf_contents =
+    "# Disable user pkcs11 config, because the host modules don't work in the runtime\n"
+    "user-config: none\n";
 
   flatpak_bwrap_add_args (bwrap,
                           "--unshare-pid",
@@ -2177,6 +2201,9 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
     return FALSE;
 
   if (!flatpak_bwrap_add_args_data (bwrap, "group", group_contents, -1, "/etc/group", error))
+    return FALSE;
+
+  if (!flatpak_bwrap_add_args_data (bwrap, "pkcs11.conf", pkcs11_conf_contents, -1, "/etc/pkcs11/pkcs11.conf", error))
     return FALSE;
 
   if (g_file_test ("/etc/machine-id", G_FILE_TEST_EXISTS))
@@ -2212,7 +2239,8 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
               strcmp (dent->d_name, "resolv.conf") == 0 ||
               strcmp (dent->d_name, "host.conf") == 0 ||
               strcmp (dent->d_name, "hosts") == 0 ||
-              strcmp (dent->d_name, "localtime") == 0)
+              strcmp (dent->d_name, "localtime") == 0 ||
+              strcmp (dent->d_name, "pkcs11") == 0)
             continue;
 
           src = g_build_filename (flatpak_file_get_path_cached (etc), dent->d_name, NULL);

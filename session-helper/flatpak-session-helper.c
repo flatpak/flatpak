@@ -31,6 +31,7 @@
 #include "flatpak-utils-private.h"
 
 static char *monitor_dir;
+static char *p11_kit_server_socket_path;
 
 static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
@@ -70,6 +71,9 @@ handle_request_session (FlatpakSessionHelper   *object,
 
   g_variant_builder_add (&builder, "{s@v}", "path",
                          g_variant_new_variant (g_variant_new_string (monitor_dir)));
+  if (p11_kit_server_socket_path)
+    g_variant_builder_add (&builder, "{s@v}", "pkcs11-socket",
+                           g_variant_new_variant (g_variant_new_string (p11_kit_server_socket_path)));
 
   flatpak_session_helper_complete_request_session (object, invocation,
                                                    g_variant_builder_end (&builder));
@@ -662,6 +666,38 @@ main (int    argc,
     {
       g_print ("Can't create %s\n", monitor_dir);
       exit (1);
+    }
+
+  if (g_find_program_in_path  ("p11-kit"))
+    {
+      g_autofree char *socket_path = g_build_filename (flatpak_dir, "pkcs11-flatpak", NULL);
+      g_autofree char *p11_kit_stdout = NULL;
+      gint exit_status;
+      g_autoptr(GError) local_error = NULL;
+      char *p11_argv[] = {
+        "p11-kit", "server",
+        "-n", socket_path,
+        "--provider",  "p11-kit-trust.so",
+        "pkcs11:model=p11-kit-trust?write-protected=yes",
+        NULL
+      };
+      if (!g_spawn_sync (NULL,
+                         p11_argv, NULL, G_SPAWN_SEARCH_PATH,
+                         NULL, NULL,
+                         &p11_kit_stdout, NULL,
+                         &exit_status, &local_error))
+        {
+          g_warning ("Unable to start p11-kit server: %s\n", local_error->message);
+        }
+      else if (exit_status != 0)
+        {
+          g_warning ("Unable to start p11-kit server, exited with status %d\n", exit_status);
+        }
+      else
+        {
+          p11_kit_server_socket_path = g_steal_pointer (&socket_path);
+          /* TODO: Handle PID and kill it with session helper */
+        }
     }
 
   monitor_dir = g_build_filename (flatpak_dir, "monitor", NULL);
