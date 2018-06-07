@@ -1152,7 +1152,7 @@ global_setup (void)
   g_mkdir_with_parents (homedir, S_IRWXU|S_IRWXG|S_IRWXO);
 
   g_setenv ("HOME", homedir, TRUE);
-  g_test_message ("setting HOME=%s", datadir);
+  g_test_message ("setting HOME=%s", homedir);
 
   cachedir = g_strconcat (testdir, "/home/cache", NULL);
   g_mkdir_with_parents (cachedir, S_IRWXU|S_IRWXG|S_IRWXO);
