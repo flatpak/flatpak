@@ -1,3 +1,31 @@
+Major changes in 0.11.8
+=======================
+
+ * Flatpak uninstall now accepts --all to remove everything and --unused to remove unused
+   runtimes.
+ * New command "flatpak repair" allows checking and repairing a flatpak installation.
+ * New permission --allow=bluetooth allows use of AF_BLUETOOTH sockets
+ * If p11-kit-server is installed on the host, this is now used to forward the host
+   certificate trust store to the sandboxed app.
+ * New transaction API in libflatpak that makes it much easier to implement
+  installation and updates in frontends.
+ * Flatpak uninstall now does not allow you to remove a runtime if some installed app requires it.
+ * We now have tab-completion for zsh.
+ * New installations of flatpak now defaults to bare-user-only repos, which means
+   that it works with filesystems that don't support xattrs.
+ * New flatpak info options: --show-location, --show-runtime, --show-sdk
+ * New flatpak remote-info options: --show-runtime, --show-sdk
+ * p2p operations now work when offline.
+ * Work around hanging on app startup on blocking autofs mounts.
+ * The dbus proxy filtering now works matches the new dbus containers filtering API.
+ * Various optimizations make installation and updates faster. In particular
+   operations like running triggers and pruning only happens once per
+   install/update operation.
+ * We now respect multiple extension versions matches when auto-downloading extensions.
+ * New http header Flatpak-Upgrade-From sent when upgrading.
+ * Commands like "flatpak info/list/remotes/seach" now work properly if /var/lib/flatpak doesn't exist.
+ * The bubblewrap version required for system-bwrap is now 0.2.1.
+
 Major changes in 0.11.7
 =======================
 
