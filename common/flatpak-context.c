@@ -196,7 +196,7 @@ flatpak_context_shared_to_args (FlatpakContextShares shares,
 static FlatpakPolicy
 flatpak_policy_from_string (const char *string, GError **error)
 {
-  const char *policies[] = { "none", "see", "filtered", "talk", "own", NULL };
+  const char *policies[] = { "none", "see", "talk", "own", NULL };
   int i;
   g_autofree char *values = NULL;
 
