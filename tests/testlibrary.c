@@ -889,7 +889,7 @@ run_test_subprocess (char **argv,
   g_test_message ("Spawning %s", argv_str);
 
   if (flags & RUN_TEST_SUBPROCESS_NO_CAPTURE)
-    g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL, NULL, NULL, &status, &error);
+    g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL, NULL, NULL, NULL, NULL, &status, &error);
   else
     g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &output, &errors, &status, &error);
 
@@ -1152,7 +1152,7 @@ global_setup (void)
   g_mkdir_with_parents (homedir, S_IRWXU|S_IRWXG|S_IRWXO);
 
   g_setenv ("HOME", homedir, TRUE);
-  g_test_message ("setting HOME=%s", datadir);
+  g_test_message ("setting HOME=%s", homedir);
 
   cachedir = g_strconcat (testdir, "/home/cache", NULL);
   g_mkdir_with_parents (cachedir, S_IRWXU|S_IRWXG|S_IRWXO);
