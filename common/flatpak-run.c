@@ -544,7 +544,13 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
       flatpak_bwrap_add_args (proxy_arg_bwrap, dbus_address, proxy_socket, NULL);
 
       if (!unrestricted)
-        flatpak_context_add_bus_filters (context, app_id, TRUE, proxy_arg_bwrap);
+        {
+          flatpak_context_add_bus_filters (context, app_id, TRUE, proxy_arg_bwrap);
+
+          /* Allow calling any interface+method on all portals, but don't receive broadcasts */
+          flatpak_bwrap_add_arg (proxy_arg_bwrap,
+                                 "--call=org.freedesktop.portal.*=*");
+        }
 
       if ((flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0)
         flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
@@ -1504,14 +1510,6 @@ add_icon_path_args (FlatpakBwrap *bwrap)
     }
 }
 
-static void
-add_default_permissions (FlatpakContext *app_context)
-{
-  flatpak_context_set_session_bus_policy (app_context,
-                                          "org.freedesktop.portal.*",
-                                          FLATPAK_POLICY_TALK);
-}
-
 FlatpakContext *
 flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                  GKeyFile *runtime_metadata,
@@ -1520,8 +1518,6 @@ flatpak_app_compute_permissions (GKeyFile *app_metadata,
   g_autoptr(FlatpakContext) app_context = NULL;
 
   app_context = flatpak_context_new ();
-
-  add_default_permissions (app_context);
 
   if (runtime_metadata != NULL &&
       !flatpak_context_load_metadata (app_context, runtime_metadata, error))
