@@ -409,6 +409,15 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       extension_point = g_build_filename (bare_extension_point, x_subdir_suffix, NULL);
     }
 
+  app_context = flatpak_app_compute_permissions (metakey,
+                                                 runtime_metakey,
+                                                 error);
+  if (app_context == NULL)
+    return FALSE;
+
+  flatpak_context_allow_host_fs (app_context);
+  flatpak_context_merge (app_context, arg_context);
+
   minimal_envp = flatpak_run_get_minimal_env (TRUE, FALSE);
   bwrap = flatpak_bwrap_new (minimal_envp);
   flatpak_bwrap_add_args (bwrap, flatpak_get_bwrap (), NULL);
@@ -495,15 +504,6 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   flatpak_bwrap_add_args (bwrap,
                           "--bind", flatpak_file_get_path_cached (var_tmp), "/var/tmp",
                           NULL);
-
-  app_context = flatpak_app_compute_permissions (metakey,
-                                                 runtime_metakey,
-                                                 error);
-  if (app_context == NULL)
-    return FALSE;
-
-  flatpak_context_allow_host_fs (app_context);
-  flatpak_context_merge (app_context, arg_context);
 
   flatpak_run_apply_env_vars (bwrap, app_context);
 
