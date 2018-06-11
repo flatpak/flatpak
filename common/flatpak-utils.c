@@ -3602,8 +3602,8 @@ extract_appstream (OstreeRepo   *repo,
               g_clear_error (&my_error);
             }
 
-          /* We updated icons for our component, so we're done */
-          break;
+          /* We might match other prefixes, so keep on going */
+          component = component->next_sibling;
         }
     }
 
