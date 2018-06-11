@@ -10999,7 +10999,7 @@ add_related (FlatpakDir *self,
     flatpak_extension_matches_reason (ref_parts[1], download_if, !no_autodownload) ||
     deploy_data != NULL;
 
-  if (flatpak_extension_matches_reason (ref_parts[1], autoprune_unless, FALSE))
+  if (!flatpak_extension_matches_reason (ref_parts[1], autoprune_unless, TRUE))
     auto_prune = TRUE;
 
   /* Don't download if there is an unmaintained extension already installed */
