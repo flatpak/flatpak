@@ -544,7 +544,13 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
       flatpak_bwrap_add_args (proxy_arg_bwrap, dbus_address, proxy_socket, NULL);
 
       if (!unrestricted)
-        flatpak_context_add_bus_filters (context, app_id, TRUE, proxy_arg_bwrap);
+        {
+          flatpak_context_add_bus_filters (context, app_id, TRUE, proxy_arg_bwrap);
+
+          /* Allow calling any interface+method on all portals, but don't receive broadcasts */
+          flatpak_bwrap_add_arg (proxy_arg_bwrap,
+                                 "--call=org.freedesktop.portal.*=*");
+        }
 
       if ((flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0)
         flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
@@ -1504,14 +1510,6 @@ add_icon_path_args (FlatpakBwrap *bwrap)
     }
 }
 
-static void
-add_default_permissions (FlatpakContext *app_context)
-{
-  flatpak_context_set_session_bus_policy (app_context,
-                                          "org.freedesktop.portal.*",
-                                          FLATPAK_POLICY_TALK);
-}
-
 FlatpakContext *
 flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                  GKeyFile *runtime_metadata,
@@ -1520,8 +1518,6 @@ flatpak_app_compute_permissions (GKeyFile *app_metadata,
   g_autoptr(FlatpakContext) app_context = NULL;
 
   app_context = flatpak_context_new ();
-
-  add_default_permissions (app_context);
 
   if (runtime_metadata != NULL &&
       !flatpak_context_load_metadata (app_context, runtime_metadata, error))
@@ -1532,6 +1528,96 @@ flatpak_app_compute_permissions (GKeyFile *app_metadata,
     return NULL;
 
   return g_steal_pointer (&app_context);
+}
+
+static void
+flatpak_run_gc_ids (void)
+{
+  g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
+  g_auto(GLnxDirFdIterator) iter = { 0 };
+  struct dirent *dent;
+
+  /* Clean up unused instances */
+  if (!glnx_dirfd_iterator_init_at (AT_FDCWD, base_dir, FALSE, &iter, NULL))
+    return;
+
+  while (TRUE)
+    {
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&iter, &dent, NULL, NULL))
+        break;
+
+      if (dent == NULL)
+        break;
+
+      if (dent->d_type == DT_DIR)
+        {
+          g_autofree char *ref_file = g_strconcat (dent->d_name, "/.ref", NULL);
+          struct flock l = {
+            .l_type = F_WRLCK,
+            .l_whence = SEEK_SET,
+            .l_start = 0,
+            .l_len = 0
+          };
+          glnx_autofd int lock_fd = openat (iter.fd, ref_file, O_RDWR | O_CLOEXEC);
+          if (lock_fd != -1 &&
+              fcntl (lock_fd, F_GETLK, &l) == 0 &&
+              l.l_type == F_UNLCK)
+            {
+              /* The instance is not used, remove it */
+              g_debug ("Cleaning up unused container id %s", dent->d_name);
+              glnx_shutil_rm_rf_at (iter.fd, dent->d_name, NULL, NULL);
+            }
+        }
+    }
+}
+
+static char *
+flatpak_run_allocate_id (int *lock_fd_out)
+{
+  g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
+  int count;
+
+  g_mkdir_with_parents (base_dir, 0755);
+
+  flatpak_run_gc_ids ();
+
+  for (count = 0; count < 1000; count++)
+    {
+      g_autofree char *instance_id = NULL;
+      g_autofree char *instance_dir = NULL;
+
+      instance_id = g_strdup_printf ("%u", g_random_int ());
+
+      instance_dir = g_build_filename (base_dir, instance_id, NULL);
+
+      /* We use an atomic mkdir to ensure the instance id is unique */
+      if (mkdir (instance_dir, 0755) == 0)
+        {
+          g_autofree char *lock_file = g_build_filename (instance_dir, ".ref", NULL);
+          glnx_autofd int lock_fd = -1;
+          struct flock l = {
+            .l_type = F_RDLCK,
+            .l_whence = SEEK_SET,
+            .l_start = 0,
+            .l_len = 0
+          };
+
+          /* Then we take a file lock inside the dir, hold that during
+           * setup and in bwrap. Anyone trying to clean up unused
+           * directories need to first verify that there is a .ref
+           * file and take a write lock on .ref to ensure its not in
+           * use. */
+          lock_fd = open (lock_file, O_RDWR | O_CREAT | O_CLOEXEC, 0644);
+          if (lock_fd != -1 && fcntl (lock_fd, F_SETLK, &l) == 0)
+            {
+              *lock_fd_out = glnx_steal_fd (&lock_fd);
+              g_debug ("Allocated instance id %s", instance_id);
+              return g_steal_pointer (&instance_id);
+            }
+        }
+    }
+
+  return NULL;
 }
 
 gboolean
@@ -1560,6 +1646,29 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
   g_auto(GStrv) runtime_ref_parts = g_strsplit (runtime_ref, "/", 0);
   const char *group;
+  g_autofree char *instance_id = NULL;
+  glnx_autofd int lock_fd = -1;
+  g_autofree char *instance_id_host_dir = NULL;
+  g_autofree char *instance_id_sandbox_dir = NULL;
+  g_autofree char *instance_id_lock_file = NULL;
+
+  instance_id = flatpak_run_allocate_id (&lock_fd);
+  if (instance_id == NULL)
+    return flatpak_fail (error, "Unable to allocate instance id");
+
+  instance_id_host_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", instance_id, NULL);
+  instance_id_sandbox_dir = g_strdup_printf ("/run/user/%d/.flatpak/%s", getuid (), instance_id);
+  instance_id_lock_file = g_build_filename (instance_id_sandbox_dir, ".ref", NULL);
+
+  flatpak_bwrap_add_args (bwrap,
+                          "--ro-bind",
+                          instance_id_host_dir,
+                          instance_id_sandbox_dir,
+                          "--lock-file",
+                          instance_id_lock_file,
+                          NULL);
+  /* Keep the .ref lock held until we've started bwrap to avoid races */
+  flatpak_bwrap_add_noinherit_fd (bwrap, glnx_steal_fd (&lock_fd));
 
   fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
   if (fd < 0)
@@ -1583,6 +1692,8 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_RUNTIME,
                          runtime_ref);
 
+  g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                         FLATPAK_METADATA_KEY_INSTANCE_ID, instance_id);
   if (app_id_dir)
     {
       g_autofree char *instance_path = g_file_get_path (app_id_dir);

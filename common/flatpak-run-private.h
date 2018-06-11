@@ -52,6 +52,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 
 #define FLATPAK_METADATA_GROUP_INSTANCE "Instance"
 #define FLATPAK_METADATA_KEY_INSTANCE_PATH "instance-path"
+#define FLATPAK_METADATA_KEY_INSTANCE_ID "instance-id"
 #define FLATPAK_METADATA_KEY_APP_PATH "app-path"
 #define FLATPAK_METADATA_KEY_APP_COMMIT "app-commit"
 #define FLATPAK_METADATA_KEY_APP_EXTENSIONS "app-extensions"
