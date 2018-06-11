@@ -197,6 +197,8 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     }
   else if (opt_unused)
     {
+      gboolean found_something_to_uninstall = FALSE;
+
       for (j = 0; j < dirs->len; j++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
@@ -287,7 +289,14 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
               g_ptr_array_sort (udir->refs, flatpak_strcmp0_ptr);
               for (i = 0; i < udir->refs->len; i++)
                 g_print (" %s\n", (char *)udir->refs->pdata[i]);
+              found_something_to_uninstall = TRUE;
             }
+        }
+
+      if (!found_something_to_uninstall)
+        {
+          g_print (_("Nothing unused to uninstall\n"));
+          return TRUE;
         }
 
       if (!opt_yes &&
