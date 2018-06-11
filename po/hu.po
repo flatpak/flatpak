@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-08 14:41+0200\n"
+"POT-Creation-Date: 2018-06-11 12:22+0200\n"
 "PO-Revision-Date: 2018-03-10 00:00+0100\n"
 "Last-Translator: Balázs Úr <urbalazs@gmail.com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -1962,16 +1962,21 @@ msgstr ""
 msgid "Must not specify REFs when using --unused"
 msgstr ""
 
-#: app/flatpak-builtins-uninstall.c:286
+#: app/flatpak-builtins-uninstall.c:288
 #, fuzzy, c-format
 msgid "Uninstalling from %s:\n"
 msgstr "Telepítés: %s innen: %s\n"
 
-#: app/flatpak-builtins-uninstall.c:294
+#: app/flatpak-builtins-uninstall.c:298
+#, fuzzy
+msgid "Nothing unused to uninstall\n"
+msgstr "Eltávolítandó architektúra"
+
+#: app/flatpak-builtins-uninstall.c:303
 msgid "Is this ok?"
 msgstr ""
 
-#: app/flatpak-builtins-uninstall.c:369
+#: app/flatpak-builtins-uninstall.c:378
 #, fuzzy, c-format
 msgid "Ref ‘%s’ found in multiple installations: %s. You must specify one."
 msgstr "A(z) „%s” távoli tároló több telepítésben is megtalálható:\n"

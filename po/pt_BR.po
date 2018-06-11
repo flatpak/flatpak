@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-10 15:24+0000\n"
+"POT-Creation-Date: 2018-06-11 12:22+0200\n"
 "PO-Revision-Date: 2018-06-10 23:36-0200\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
@@ -1923,16 +1923,21 @@ msgstr "Não pode especificar REFs ao usar --all"
 msgid "Must not specify REFs when using --unused"
 msgstr "Não pode especificar REFs ao usar --unused"
 
-#: app/flatpak-builtins-uninstall.c:286
+#: app/flatpak-builtins-uninstall.c:288
 #, c-format
 msgid "Uninstalling from %s:\n"
 msgstr "Desinstalando de %s:\n"
 
-#: app/flatpak-builtins-uninstall.c:294
+#: app/flatpak-builtins-uninstall.c:298
+#, fuzzy
+msgid "Nothing unused to uninstall\n"
+msgstr "Arquitetura para desinstalar"
+
+#: app/flatpak-builtins-uninstall.c:303
 msgid "Is this ok?"
 msgstr "Isto está bom?"
 
-#: app/flatpak-builtins-uninstall.c:369
+#: app/flatpak-builtins-uninstall.c:378
 #, c-format
 msgid "Ref ‘%s’ found in multiple installations: %s. You must specify one."
 msgstr ""

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-08 14:41+0200\n"
+"POT-Creation-Date: 2018-06-11 12:22+0200\n"
 "PO-Revision-Date: 2017-12-21 19:22+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -1979,16 +1979,21 @@ msgstr ""
 msgid "Must not specify REFs when using --unused"
 msgstr ""
 
-#: app/flatpak-builtins-uninstall.c:286
+#: app/flatpak-builtins-uninstall.c:288
 #, fuzzy, c-format
 msgid "Uninstalling from %s:\n"
 msgstr "Instalowanie: %s z %s\n"
 
-#: app/flatpak-builtins-uninstall.c:294
+#: app/flatpak-builtins-uninstall.c:298
+#, fuzzy
+msgid "Nothing unused to uninstall\n"
+msgstr "Odinstalowywana architektura"
+
+#: app/flatpak-builtins-uninstall.c:303
 msgid "Is this ok?"
 msgstr ""
 
-#: app/flatpak-builtins-uninstall.c:369
+#: app/flatpak-builtins-uninstall.c:378
 #, fuzzy, c-format
 msgid "Ref ‘%s’ found in multiple installations: %s. You must specify one."
 msgstr "Odnaleziono repozytorium „%s” w wielu instalacjach:\n"
