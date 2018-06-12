@@ -967,18 +967,18 @@ add_deps (FlatpakTransaction *self,
   if (runtime_ref == NULL)
     return TRUE;
 
+  full_runtime_ref = g_strconcat ("runtime/", runtime_ref, NULL);
+
+  op = flatpak_transaction_get_last_op_for_ref (self, full_runtime_ref);
+
   if (source_kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
     {
-      g_autofree char *full_runtime_ref = g_strconcat ("runtime/", runtime_ref, NULL);
-      FlatpakTransactionOp *runtime_uninstall_op = flatpak_transaction_get_last_op_for_ref (self, full_runtime_ref);
-
       /* If the runtime this app uses is already to be uninstalled, then this uninstall must happen before
          the runtime is installed */
-      if (runtime_uninstall_op &&
-          runtime_uninstall_op->kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL &&
+      if (op && op->kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL &&
           before_op_out != NULL)
         {
-          *before_op_out = runtime_uninstall_op;
+          *before_op_out = op;
         }
 
       return TRUE;
@@ -987,16 +987,6 @@ add_deps (FlatpakTransaction *self,
   if (priv->disable_deps)
     return TRUE;
 
-
-  if (metakey)
-    runtime_ref = g_key_file_get_string (metakey, "Application", "runtime", NULL);
-
-  if (runtime_ref == NULL)
-    return TRUE;
-
-  full_runtime_ref = g_strconcat ("runtime/", runtime_ref, NULL);
-
-  op = flatpak_transaction_get_last_op_for_ref (self, full_runtime_ref);
   if (op == NULL)
     {
       g_autoptr(GError) local_error = NULL;
