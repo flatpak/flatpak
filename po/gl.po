@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-11 12:22+0200\n"
+"POT-Creation-Date: 2018-06-13 12:17+0200\n"
 "PO-Revision-Date: 2017-09-26 17:32+0200\n"
 "Last-Translator: Fran Dieguez <frandieguez@gnome.org>\n"
 "Language-Team: Galician <gnome-l10n-gl@gnome.org>\n"
@@ -409,7 +409,7 @@ msgstr "Non hai ningún punto de extensión que coincida con %s en %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Falta o «=» na opción «%s» de punto de montaxe"
 
-#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:2955
+#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:3066
 msgid "Unable to start app"
 msgstr "Non foi posíbel iniciar o aplicativo"
 
@@ -2898,31 +2898,31 @@ msgstr "Runtime %s, rama %s xa está instalado"
 msgid "App %s, branch %s is already installed"
 msgstr "Aplicativo %s, rama %s xa está instalado"
 
-#: common/flatpak-run.c:654
+#: common/flatpak-run.c:660
 #, fuzzy
 msgid "Failed to open app info file"
 msgstr ""
 "Produciuse un fallo ao abrir o ficheiro de información de aplicativo: %s"
 
-#: common/flatpak-run.c:753
+#: common/flatpak-run.c:759
 msgid "Unable to create sync pipe"
 msgstr "Non foi posíbel crear a tubería de sincronización"
 
-#: common/flatpak-run.c:787
+#: common/flatpak-run.c:793
 msgid "Failed to sync with dbus proxy"
 msgstr "Procuciuse un fallo ao sincronizarse co proxi de dbus"
 
-#: common/flatpak-run.c:1569
+#: common/flatpak-run.c:1678
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Produciuse un fallo ao abrir o ficheiro temporal flatpak-info: %s"
 
-#: common/flatpak-run.c:1672 common/flatpak-run.c:1682
+#: common/flatpak-run.c:1783 common/flatpak-run.c:1793
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Produciuse un fallo ao abrir o ficheiro temporal: %s"
 
-#: common/flatpak-run.c:2608
+#: common/flatpak-run.c:2719
 #, fuzzy, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "apply_extra script failed, estado de saída %d"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-11 12:22+0200\n"
+"POT-Creation-Date: 2018-06-13 12:17+0200\n"
 "PO-Revision-Date: 2018-04-25 15:16+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -400,7 +400,7 @@ msgstr "Tidak ada titik ekstensi %s yang cocok pada %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Kehilangan '=' pada opsi kait bind '%s'"
 
-#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:2955
+#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:3066
 msgid "Unable to start app"
 msgstr "Tidak dapat memulai aplikasi"
 
@@ -2855,30 +2855,30 @@ msgstr "Runtime %s, cabang %s telah terpasang"
 msgid "App %s, branch %s is already installed"
 msgstr "Aplikasi %s, cabang %s sudah terpasang"
 
-#: common/flatpak-run.c:654
+#: common/flatpak-run.c:660
 #, fuzzy
 msgid "Failed to open app info file"
 msgstr "Gagal membuka berkas info aplikasi: %s"
 
-#: common/flatpak-run.c:753
+#: common/flatpak-run.c:759
 msgid "Unable to create sync pipe"
 msgstr "Tidak dapat membuat pipa sinkronisasi"
 
-#: common/flatpak-run.c:787
+#: common/flatpak-run.c:793
 msgid "Failed to sync with dbus proxy"
 msgstr "Gagal melakukan sinkronisasi dengan proksi dbus"
 
-#: common/flatpak-run.c:1569
+#: common/flatpak-run.c:1678
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Gagal membuka berkas temporer flatpak-info: %s"
 
-#: common/flatpak-run.c:1672 common/flatpak-run.c:1682
+#: common/flatpak-run.c:1783 common/flatpak-run.c:1793
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Gagal membuka berkas temporer: %s"
 
-#: common/flatpak-run.c:2608
+#: common/flatpak-run.c:2719
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig gagal, status keluar %d"

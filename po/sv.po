@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-11 12:22+0200\n"
+"POT-Creation-Date: 2018-06-13 12:17+0200\n"
 "PO-Revision-Date: 2017-12-01 03:20+0100\n"
 "Last-Translator: Josef Andersson <josef.andersson@fripost.org>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -402,7 +402,7 @@ msgstr "Ingen utökningspunkt matchar %s i %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:2955
+#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:3066
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -2875,31 +2875,31 @@ msgstr "Exekveringsmiljö %s, gren %s är redan installerad"
 msgid "App %s, branch %s is already installed"
 msgstr "Program %s, gren %s är redan installerad"
 
-#: common/flatpak-run.c:654
+#: common/flatpak-run.c:660
 #, fuzzy
 msgid "Failed to open app info file"
 msgstr "Misslyckades med att öppna prog-info-fil: %s"
 
 # sebras: sync?
-#: common/flatpak-run.c:753
+#: common/flatpak-run.c:759
 msgid "Unable to create sync pipe"
 msgstr "Kan inte skapa sync-rör"
 
-#: common/flatpak-run.c:787
+#: common/flatpak-run.c:793
 msgid "Failed to sync with dbus proxy"
 msgstr "Misslyckades med att synkronisera med dbus-proxy"
 
-#: common/flatpak-run.c:1569
+#: common/flatpak-run.c:1678
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Misslyckades med att öppna temporär flatpak-info-fil: %s"
 
-#: common/flatpak-run.c:1672 common/flatpak-run.c:1682
+#: common/flatpak-run.c:1783 common/flatpak-run.c:1793
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Misslyckades med att öppna temporärfil: %s"
 
-#: common/flatpak-run.c:2608
+#: common/flatpak-run.c:2719
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "misslyckades med ldconfig, avslutningsstatus %d"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-11 12:22+0200\n"
+"POT-Creation-Date: 2018-06-13 12:17+0200\n"
 "PO-Revision-Date: 2018-01-25 14:08+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
@@ -403,7 +403,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:2955
+#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:3066
 msgid "Unable to start app"
 msgstr "Není možné spustit aplikaci"
 
@@ -2855,30 +2855,30 @@ msgstr "Prostředí %s, větev %s je již nainstalováno"
 msgid "App %s, branch %s is already installed"
 msgstr "Aplikace %s, větev %s je již nainstalováno"
 
-#: common/flatpak-run.c:654
+#: common/flatpak-run.c:660
 #, fuzzy
 msgid "Failed to open app info file"
 msgstr "Selhalo otevření souboru s informacemi o aplikaci: %s"
 
-#: common/flatpak-run.c:753
+#: common/flatpak-run.c:759
 msgid "Unable to create sync pipe"
 msgstr "Selhalo vytvoření synchronizační roury"
 
-#: common/flatpak-run.c:787
+#: common/flatpak-run.c:793
 msgid "Failed to sync with dbus proxy"
 msgstr "Selhala synchronizace s dbus proxy"
 
-#: common/flatpak-run.c:1569
+#: common/flatpak-run.c:1678
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Selhalo otevření dočasného souboru flatpak-info: %s"
 
-#: common/flatpak-run.c:1672 common/flatpak-run.c:1682
+#: common/flatpak-run.c:1783 common/flatpak-run.c:1793
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Selhalo otevření dočasného souboru: %s"
 
-#: common/flatpak-run.c:2608
+#: common/flatpak-run.c:2719
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig selhal, návratová hodnota %d"

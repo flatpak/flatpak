@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-11 12:22+0200\n"
+"POT-Creation-Date: 2018-06-13 12:17+0200\n"
 "PO-Revision-Date: 2018-06-10 23:36-0200\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
@@ -402,7 +402,7 @@ msgstr "Nenhum ponto de extensão correspondendo %s em %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Faltando “=” na opção de montagem associativa “%s”"
 
-#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:2955
+#: app/flatpak-builtins-build.c:576 common/flatpak-run.c:3066
 msgid "Unable to start app"
 msgstr "Não foi possível iniciar o aplicativo"
 
@@ -2843,29 +2843,29 @@ msgstr "Runtime %s, ramo %s já está instalado"
 msgid "App %s, branch %s is already installed"
 msgstr "Aplicativo %s, ramo %s já está instalado"
 
-#: common/flatpak-run.c:654
+#: common/flatpak-run.c:660
 msgid "Failed to open app info file"
 msgstr "Falha ao abrir arquivo de informação do aplicativo"
 
-#: common/flatpak-run.c:753
+#: common/flatpak-run.c:759
 msgid "Unable to create sync pipe"
 msgstr "Não foi possível criar um pipe de sincronização"
 
-#: common/flatpak-run.c:787
+#: common/flatpak-run.c:793
 msgid "Failed to sync with dbus proxy"
 msgstr "Falha ao sincronizar com proxy de dbus"
 
-#: common/flatpak-run.c:1569
+#: common/flatpak-run.c:1678
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Falha ao abrir arquivo temporário de flatpak-info: %s"
 
-#: common/flatpak-run.c:1672 common/flatpak-run.c:1682
+#: common/flatpak-run.c:1783 common/flatpak-run.c:1793
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Falha ao abrir arquivo temporário: %s"
 
-#: common/flatpak-run.c:2608
+#: common/flatpak-run.c:2719
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig falhou, status de saída %d"
