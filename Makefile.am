@@ -157,8 +157,8 @@ pkgconfig_DATA = flatpak.pc
 EXTRA_DIST += flatpak.pc.in
 
 scriptsdir = $(bindir)
-scripts_SCRIPTS = scripts/flatpak-bisect
-EXTRA_DIST += scripts/flatpak-bisect
+scripts_SCRIPTS = scripts/flatpak-bisect scripts/flatpak-coredumpctl
+EXTRA_DIST += scripts/flatpak-bisect scripts/flatpak-coredumpctl
 
 EXTRA_DIST += README.md
 
