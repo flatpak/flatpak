@@ -850,7 +850,7 @@ add_related (FlatpakTransaction *self,
 
   if (related == NULL)
     {
-      g_warning (_("Warning: Problem looking for related refs: %s"), local_error->message);
+      g_message (_("Warning: Problem looking for related refs: %s"), local_error->message);
       g_clear_error (&local_error);
     }
   else if (source_kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
@@ -1157,7 +1157,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         }
       else if (!flatpak_remote_state_lookup_cache (state, ref, NULL, NULL, &metadata, &local_error))
         {
-          g_warning (_("Warning: Can't find dependencies: %s"), local_error->message);
+          g_message (_("Warning: Can't find dependencies: %s"), local_error->message);
           g_clear_error (&local_error);
         }
     }
@@ -1278,7 +1278,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 
       g_debug ("Updating remote metadata for %s", remote);
       if (!flatpak_dir_update_remote_configuration (priv->dir, remote, cancellable, &my_error))
-        g_warning (_("Error updating remote metadata for '%s': %s"), remote, my_error->message);
+        g_message (_("Error updating remote metadata for '%s': %s"), remote, my_error->message);
     }
 
   /* Reload changed configuration */
