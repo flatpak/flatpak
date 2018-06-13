@@ -620,6 +620,11 @@ start_p11_kit_server (const char *flatpak_dir)
   char *p11_argv[] =
     {
      "p11-kit", "server",
+     /* We explicitly request --sh here, because we then fail on earlier versions that doesn't support
+      * this flag. This is good, because those earlier versions did not properly daemonize and caused
+      * the spawn_sync to hang forever, waiting for the pipe to close.
+      */
+     "--sh",
      "-n", socket_path,
      "--provider",  "p11-kit-trust.so",
      "pkcs11:model=p11-kit-trust?write-protected=yes",
@@ -629,7 +634,7 @@ start_p11_kit_server (const char *flatpak_dir)
   g_debug ("starting p11-kit server");
 
   if (!g_spawn_sync (NULL,
-                     p11_argv, NULL, G_SPAWN_SEARCH_PATH,
+                     p11_argv, NULL, G_SPAWN_SEARCH_PATH|G_SPAWN_STDERR_TO_DEV_NULL,
                      NULL, NULL,
                      &p11_kit_stdout, NULL,
                      &exit_status, &local_error))
@@ -665,7 +670,13 @@ start_p11_kit_server (const char *flatpak_dir)
         }
     }
 
-  p11_kit_server_socket_path = g_steal_pointer (&socket_path);
+  if (p11_kit_server_pid != 0)
+    {
+      g_debug  ("Using p11-kit socket path %s, pid %d", socket_path, p11_kit_server_pid);
+      p11_kit_server_socket_path = g_steal_pointer (&socket_path);
+    }
+  else
+      g_debug  ("Not using p11-kit due to older version");
 }
 
 int
