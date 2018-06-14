@@ -740,6 +740,14 @@ GPtrArray * flatpak_dir_find_local_related (FlatpakDir *self,
                                             gboolean deployed,
                                             GCancellable *cancellable,
                                             GError **error);
+gboolean flatpak_dir_find_latest_rev (FlatpakDir               *self,
+                                      FlatpakRemoteState       *state,
+                                      const char               *ref,
+                                      const char               *checksum_or_latest,
+                                      char                    **out_rev,
+                                      OstreeRepoFinderResult ***out_results,
+                                      GCancellable             *cancellable,
+                                      GError                  **error);
 
 char ** flatpak_dir_get_default_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locale_languages (FlatpakDir *self);
