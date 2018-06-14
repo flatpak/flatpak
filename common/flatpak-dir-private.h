@@ -537,6 +537,11 @@ gboolean flatpak_dir_install_bundle (FlatpakDir          *self,
                                      char               **out_ref,
                                      GCancellable        *cancellable,
                                      GError             **error);
+gboolean flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir          *self,
+                                                           const char          *remote,
+                                                           const char          *ref,
+                                                           const char          *target_commit,
+                                                           const char         **opt_subpaths);
 char * flatpak_dir_check_for_update (FlatpakDir          *self,
                                      FlatpakRemoteState  *state,
                                      const char          *ref,

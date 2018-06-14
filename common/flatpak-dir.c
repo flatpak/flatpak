@@ -7042,6 +7042,62 @@ out:
   return ret;
 }
 
+gboolean
+flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir          *self,
+                                                  const char          *remote,
+                                                  const char          *ref,
+                                                  const char          *target_commit,
+                                                  const char         **opt_subpaths)
+{
+ g_autoptr(GVariant) deploy_data = NULL;
+  g_autofree const char **old_subpaths = NULL;
+  const char **subpaths;
+  g_autofree char *url = NULL;
+  const char *installed_commit;
+  const char *installed_alt_id;
+
+  g_assert (target_commit != NULL);
+
+  /* Never update from disabled remotes */
+  if (!ostree_repo_remote_get_url (self->repo, remote, &url, NULL))
+    return FALSE;
+
+  if (*url == 0)
+    return FALSE;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, NULL, NULL);
+  if (deploy_data != NULL)
+    old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+  else
+    old_subpaths = g_new0 (const char *, 1); /* Empty strv == all subpaths*/
+
+  if (opt_subpaths)
+    subpaths = opt_subpaths;
+  else
+    subpaths = old_subpaths;
+
+  /* Not deployed => need update */
+  if (deploy_data == NULL)
+    return TRUE;
+
+  installed_commit = flatpak_deploy_data_get_commit (deploy_data);
+  installed_alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
+
+  /* Different target commit than deployed => update */
+  if (g_strcmp0 (target_commit, installed_commit) != 0 &&
+      g_strcmp0 (target_commit, installed_alt_id) != 0)
+    return TRUE;
+
+  /* target commit is the same as current, but maybe something else that is different? */
+
+  /* Same commit, but different subpaths => update */
+  if (!_g_strv_equal0 ((char **)subpaths, (char **)old_subpaths))
+    return TRUE;
+
+  /* Same subpaths and commit, no need to update */
+  return FALSE;
+}
+
 char *
 flatpak_dir_check_for_update (FlatpakDir          *self,
                               FlatpakRemoteState  *state,
@@ -7053,43 +7109,9 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
                               GCancellable        *cancellable,
                               GError             **error)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
-  g_autofree const char **old_subpaths = NULL;
   g_autofree const char *remote_and_branch = NULL;
-  const char **subpaths;
-  g_autofree char *url = NULL;
   g_autofree char *latest_rev = NULL;
   const char *target_rev = NULL;
-  const char *installed_commit;
-  const char *installed_alt_id;
-
-  deploy_data = flatpak_dir_get_deploy_data (self, ref,
-                                             cancellable, NULL);
-  if (deploy_data != NULL)
-    old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
-  else
-    old_subpaths = g_new0 (const char *, 1); /* Empty strv == all subpaths*/
-
-  if (opt_subpaths)
-    subpaths = opt_subpaths;
-  else
-    subpaths = old_subpaths;
-
-  installed_commit = flatpak_deploy_data_get_commit (deploy_data);
-  installed_alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
-
-  if (!ostree_repo_remote_get_url (self->repo, state->remote_name, &url, error))
-    {
-      return NULL;
-    }
-
-  if (*url == 0)
-    {
-      /* Empty URL => disabled, but we pretend to be already installed to avoid warnings */
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                   _("%s branch %s already installed"), ref, installed_commit);
-      return NULL;
-    }
 
   if (no_pull)
     {
@@ -7097,7 +7119,7 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
       if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, FALSE, &latest_rev, NULL))
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                       _("%s branch %s already installed"), ref, installed_commit);
+                       _("%s branch already installed"), ref);
           return NULL; /* No update, because nothing to update to */
         }
     }
@@ -7113,23 +7135,11 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
   else
     target_rev = latest_rev;
 
-  /* Not deployed => update */
-  if (deploy_data == NULL)
-    return g_strdup (target_rev);
-
-  /* Different target commit than deployed => update */
-  if (g_strcmp0 (target_rev, installed_commit) != 0 &&
-      g_strcmp0 (target_rev, installed_alt_id) != 0)
-    return g_strdup (target_rev);
-
-  /* target rev is the same as latest, but maybe something else that is different? */
-
-  /* Same commit, but different subpaths => update */
-  if (!_g_strv_equal0 ((char **)subpaths, (char **)old_subpaths))
+  if (flatpak_dir_needs_update_for_commit_and_subpaths (self, state->remote_name, ref, target_rev, opt_subpaths))
     return g_strdup (target_rev);
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-               _("%s branch %s already installed"), ref, installed_commit);
+               _("%s branch %s already installed"), ref, target_rev);
   return NULL;
 }
 
