@@ -729,11 +729,23 @@ FlatpakRemoteState * flatpak_dir_get_remote_state_local_only (FlatpakDir   *self
                                                               const char   *remote,
                                                               GCancellable *cancellable,
                                                               GError      **error);
+GPtrArray * flatpak_dir_find_remote_related_for_metadata (FlatpakDir *self,
+                                                          FlatpakRemoteState *state,
+                                                          const char *ref,
+                                                          GKeyFile *metakey,
+                                                          GCancellable *cancellable,
+                                                          GError **error);
 GPtrArray * flatpak_dir_find_remote_related (FlatpakDir *dir,
                                              FlatpakRemoteState *state,
                                              const char *ref,
                                              GCancellable *cancellable,
                                              GError **error);
+GPtrArray * flatpak_dir_find_local_related_for_metadata (FlatpakDir *self,
+                                                         const char *ref,
+                                                         const char *remote_name,
+                                                         GKeyFile *metakey,
+                                                         GCancellable *cancellable,
+                                                         GError **error);
 GPtrArray * flatpak_dir_find_local_related (FlatpakDir *self,
                                             const char *remote_name,
                                             const char *ref,
