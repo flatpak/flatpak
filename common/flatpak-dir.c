@@ -2789,7 +2789,7 @@ repo_pull (OstreeRepo          *self,
       g_variant_builder_add (&find_builder, "{s@v}", "update-frequency",
                              g_variant_new_variant (g_variant_new_uint32 (update_freq)));
 
-      if (flatpak_flags & FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE && rev_to_fetch != NULL)
+      if (rev_to_fetch != NULL)
         {
           g_variant_builder_add (&find_builder, "{s@v}", "override-commit-ids",
                                  g_variant_new_variant (g_variant_new_strv (&rev_to_fetch, 1)));
@@ -6558,6 +6558,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             reinstall,
                      FlatpakRemoteState  *state,
                      const char          *ref,
+                     const char          *opt_commit,
                      const char         **opt_subpaths,
                      OstreeAsyncProgress *progress,
                      GCancellable        *cancellable,
@@ -6661,7 +6662,7 @@ flatpak_dir_install (FlatpakDir          *self,
            * so @ref and  %OSTREE_REPO_METADATA_REF are resolved atomically.
            * However, pulling them separately is no worse than the old code path
            * where the summary and ref were pulled separately. */
-          if (!flatpak_dir_pull (self, state, ref, NULL, NULL, subpaths,
+          if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, subpaths,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -6710,7 +6711,7 @@ flatpak_dir_install (FlatpakDir          *self,
     {
       /* Don’t resolve a rev or OstreeRepoFinderResult set early; the pull
        * code will do this. */
-      if (!flatpak_dir_pull (self, state, ref, NULL, NULL, opt_subpaths, NULL,
+      if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, opt_subpaths, NULL,
                              flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
