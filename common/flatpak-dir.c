@@ -4345,6 +4345,7 @@ GVariant *
 flatpak_dir_read_latest_commit (FlatpakDir   *self,
                                 const char   *remote,
                                 const char   *ref,
+                                char        **out_checksum,
                                 GCancellable *cancellable,
                                 GError      **error)
 {
@@ -4366,6 +4367,9 @@ flatpak_dir_read_latest_commit (FlatpakDir   *self,
 
   if (!ostree_repo_load_commit (self->repo, res, &commit_data, NULL, error))
     return NULL;
+
+  if (out_checksum)
+    *out_checksum = g_steal_pointer (&res);
 
   return g_steal_pointer (&commit_data);
 }
@@ -11277,7 +11281,7 @@ flatpak_dir_find_local_related (FlatpakDir *self,
     }
   else
     {
-      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, ref, NULL, NULL);
+      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, ref, NULL, NULL, NULL);
       if (commit_data)
         {
           g_autoptr(GVariant) commit_metadata = g_variant_get_child_value (commit_data, 0);

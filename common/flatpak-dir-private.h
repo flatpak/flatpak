@@ -448,6 +448,7 @@ gboolean    flatpak_dir_list_refs (FlatpakDir   *self,
 GVariant *  flatpak_dir_read_latest_commit (FlatpakDir   *self,
                                             const char   *remote,
                                             const char   *ref,
+                                            char        **out_checksum,
                                             GCancellable *cancellable,
                                             GError      **error);
 char *      flatpak_dir_read_latest (FlatpakDir   *self,

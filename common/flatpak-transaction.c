@@ -1135,7 +1135,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
       /* Should we use local state */
       if (transaction_is_local_only (self, kind))
         {
-          g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (priv->dir, remote, ref,
+          g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (priv->dir, remote, ref, NULL,
                                                                             NULL, NULL);
           if (commit_data)
             {
