@@ -96,15 +96,6 @@ static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *
                                                                  GError       **error);
 #endif
 
-static gboolean    flatpak_dir_find_latest_rev (FlatpakDir               *self,
-                                                FlatpakRemoteState       *state,
-                                                const char               *ref,
-                                                const char               *checksum_or_latest,
-                                                char                    **out_rev,
-                                                OstreeRepoFinderResult ***out_results,
-                                                GCancellable             *cancellable,
-                                                GError                  **error);
-
 typedef struct
 {
   GBytes *bytes;
@@ -2304,7 +2295,7 @@ async_result_cb (GObject      *obj,
 }
 #endif  /* FLATPAK_ENABLE_P2P */
 
-static gboolean
+gboolean
 flatpak_dir_find_latest_rev (FlatpakDir               *self,
                              FlatpakRemoteState       *state,
                              const char               *ref,
