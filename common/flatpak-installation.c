@@ -1582,7 +1582,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   if (dir == NULL)
     return NULL;
 
-  remote = flatpak_dir_ensure_bundle_remote (dir, file, NULL, &ref, NULL, NULL, cancellable, error);
+  remote = flatpak_dir_ensure_bundle_remote (dir, file, NULL, &ref, NULL, NULL, NULL, cancellable, error);
   if (remote == NULL)
     return NULL;
 

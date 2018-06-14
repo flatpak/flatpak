@@ -6740,6 +6740,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir          *self,
                                   GFile               *file,
                                   GBytes              *extra_gpg_data,
                                   char               **out_ref,
+                                  char               **out_checksum,
                                   char               **out_metadata,
                                   gboolean            *out_created_remote,
                                   GCancellable        *cancellable,
@@ -6820,6 +6821,9 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir          *self,
 
   if (out_ref)
     *out_ref = g_steal_pointer (&ref);
+
+  if (out_checksum)
+    *out_checksum = g_steal_pointer (&to_checksum);
 
   if (out_metadata)
     *out_metadata = g_steal_pointer (&fp_metadata);

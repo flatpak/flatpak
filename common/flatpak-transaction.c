@@ -1200,11 +1200,12 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
+  g_autofree char *commit = NULL;
   g_autofree char *metadata = NULL;
   gboolean created_remote;
 
   remote = flatpak_dir_ensure_bundle_remote (priv->dir, file, gpg_data,
-                                             &ref, &metadata, &created_remote,
+                                             &ref, &commit, &metadata, &created_remote,
                                              NULL, error);
   if (remote == NULL)
     return FALSE;
@@ -1212,7 +1213,7 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
   if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
     return FALSE;
 
-  return flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, FLATPAK_TRANSACTION_OP_KIND_BUNDLE, file, metadata, error);
+  return flatpak_transaction_add_ref (self, remote, ref, NULL, commit, FLATPAK_TRANSACTION_OP_KIND_BUNDLE, file, metadata, error);
 }
 
 gboolean
