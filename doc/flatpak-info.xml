@@ -25,7 +25,7 @@
 
     <refnamediv>
         <refname>flatpak-info</refname>
-        <refpurpose>Show information about installed application and/or runtime</refpurpose>
+        <refpurpose>Show information about an installed application or runtime</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
@@ -41,7 +41,7 @@
         <title>Description</title>
 
         <para>
-            Show info about and installed application and/or runtime.
+            Show info about an installed application or runtime.
         </para>
         <para>
             By default, the output is formatted in a friendly format.

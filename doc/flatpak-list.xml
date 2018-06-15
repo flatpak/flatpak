@@ -39,7 +39,7 @@
         <title>Description</title>
 
         <para>
-            Lists the names of the installed applications and/or runtime.
+            Lists the names of the installed applications and/or runtimes.
         </para>
         <para>
             By default, both per-user and system-wide installations

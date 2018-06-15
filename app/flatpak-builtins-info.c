@@ -123,7 +123,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   gboolean friendly = TRUE;
   g_autofree const char **subpaths = NULL;
 
-  context = g_option_context_new (_("NAME [BRANCH] - Get info about installed app and/or runtime"));
+  context = g_option_context_new (_("NAME [BRANCH] - Get info about an installed app or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
