@@ -64,6 +64,11 @@ static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (Flatpak
                                                                          GLnxLockFile *file_lock,
                                                                          GError      **error);
 
+static OstreeRepo * flatpak_dir_create_child_repo        (FlatpakDir   *self,
+                                                          GFile        *cache_dir,
+                                                          GLnxLockFile *file_lock,
+                                                          const char   *optional_commit,
+                                                          GError      **error);
 static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
                                                           const char   *optional_checksum,
@@ -6407,14 +6412,13 @@ flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
   return g_steal_pointer (&new_registry);
 }
 
-
 static OstreeRepo *
-flatpak_dir_create_system_child_repo (FlatpakDir   *self,
-                                      GLnxLockFile *file_lock,
-                                      const char   *optional_commit,
-                                      GError      **error)
+flatpak_dir_create_child_repo (FlatpakDir   *self,
+                               GFile        *cache_dir,
+                               GLnxLockFile *file_lock,
+                               const char   *optional_commit,
+                               GError      **error)
 {
-  g_autoptr(GFile) cache_dir = NULL;
   g_autoptr(GFile) repo_dir = NULL;
   g_autoptr(GFile) repo_dir_config = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
@@ -6435,16 +6439,10 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
   const char *mode_str = "bare-user-only";
 
-  g_assert (!self->user);
-
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
 
   orig_config = ostree_repo_get_config (self->repo);
-
-  cache_dir = flatpak_ensure_system_user_cache_dir_location (error);
-  if (cache_dir == NULL)
-    return NULL;
 
   if (!flatpak_allocate_tmpdir (AT_FDCWD,
                                 flatpak_file_get_path_cached (cache_dir),
@@ -6510,7 +6508,11 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
     return NULL;
 
   /* We need to reopen to apply the parent config */
-  repo = system_ostree_repo_new (repo_dir);
+  if (!self->user)
+    repo = system_ostree_repo_new (repo_dir);
+  else
+    repo = ostree_repo_new (repo_dir);
+
   if (!ostree_repo_open (repo, NULL, error))
     return NULL;
 
@@ -6530,6 +6532,23 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
       g_file_replace_contents (commitpartial, "", 0, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, NULL);
     }
   return g_steal_pointer (&repo);
+}
+
+static OstreeRepo *
+flatpak_dir_create_system_child_repo (FlatpakDir   *self,
+                                      GLnxLockFile *file_lock,
+                                      const char   *optional_commit,
+                                      GError      **error)
+{
+  g_autoptr(GFile) cache_dir = NULL;
+
+  g_assert (!self->user);
+
+  cache_dir = flatpak_ensure_system_user_cache_dir_location (error);
+  if (cache_dir == NULL)
+    return NULL;
+
+  return flatpak_dir_create_child_repo (self, cache_dir, file_lock, optional_commit, error);
 }
 
 gboolean
