@@ -45,8 +45,18 @@
         </para>
         <para>
             By default, the output is formatted in a friendly format.
-            If you specify one of the options --show-ref, --show-commit,
-            --show-origin, --show-metadata or --show-size, the output is instead formatted
+            If you specify one of the options
+            --show-ref,
+            --show-origin,
+            --show-commit,
+            --show-size,
+            --show-metadata,
+            --show-permissions,
+            --file-access,
+            --show-location,
+            --show-runtime or
+            --show-sdk,
+            the output is instead formatted
             in a machine-readable format.
         </para>
         <para>
