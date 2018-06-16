@@ -153,6 +153,39 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--show-runtime</option></term>
+
+                <listitem><para>
+                    Show the runtime.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--show-sdk</option></term>
+
+                <listitem><para>
+                    Show the SDK.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-M</option></term>
+                <term><option>--show-permissions</option></term>
+
+                <listitem><para>
+                    Show the permissions.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--file-access=PATH</option></term>
+
+                <listitem><para>
+                    Show the level of access to the given path.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-e</option></term>
                 <term><option>--show-extensions</option></term>
 
@@ -171,10 +204,10 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--version</option></term>
+                <term><option>--ostree-verbose</option></term>
 
                 <listitem><para>
-                    Print version information and exit.
+                    Print OSTree debug information during command processing.
                 </para></listitem>
             </varlistentry>
         </variablelist>
