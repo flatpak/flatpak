@@ -37,6 +37,7 @@ gboolean flatpak_cli_transaction_add_install (FlatpakTransaction *self,
                                               const char *ref,
                                               const char **subpaths,
                                               GError **error);
+gboolean flatpak_cli_transaction_was_aborted (FlatpakTransaction *transaction);
 
 gboolean flatpak_cli_transaction_run (FlatpakTransaction *transaction,
                                       GCancellable *cancellable,

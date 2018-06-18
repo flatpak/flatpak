@@ -35,6 +35,7 @@ struct _FlatpakCliTransaction {
   gboolean disable_interaction;
   gboolean stop_on_first_error;
   gboolean is_user;
+  gboolean aborted;
   GError *first_operation_error;
 
   gboolean progress_initialized;
@@ -403,11 +404,17 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
 
   /* If we got some weird error (i.e. not ABORTED because we chose to abort
      on an error, report that */
-  if (!res &&
-      !g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+  if (!res)
     {
-      g_propagate_error (error, g_steal_pointer (&local_error));
-      return FALSE;
+      if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        {
+          self->aborted = TRUE;
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
     }
 
   if (self->first_operation_error)
@@ -433,4 +440,12 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
     }
 
   return TRUE;
+}
+
+gboolean
+flatpak_cli_transaction_was_aborted (FlatpakTransaction *transaction)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+
+  return self->aborted;
 }
