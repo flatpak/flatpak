@@ -45,12 +45,12 @@
  * thread and do your own forwarding to the GUI thread.
  */
 
-typedef struct FlatpakTransactionOperation FlatpakTransactionOperation;
-
 /* This is an internal-only element of FlatpakTransactionOperationType */
 #define FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE FLATPAK_TRANSACTION_OPERATION_LAST_TYPE + 1
 
-struct FlatpakTransactionOperation {
+struct _FlatpakTransactionOperation {
+  GObject parent;
+
   char *remote;
   char *ref;
   /* NULL means unspecified (normally keep whatever was there before), [] means force everything */
@@ -319,30 +319,13 @@ dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out, GVari
   return TRUE;
 }
 
-static FlatpakTransactionOperation *
-flatpak_transaction_operation_new (const char *remote,
-                                   const char *ref,
-                                   const char **subpaths,
-                                   const char *commit,
-                                   GFile *bundle,
-                                   FlatpakTransactionOperationType kind)
-{
-  FlatpakTransactionOperation *self = g_new0 (FlatpakTransactionOperation, 1);
-
-  self->remote = g_strdup (remote);
-  self->ref = g_strdup (ref);
-  self->subpaths = g_strdupv ((char **)subpaths);
-  self->commit = g_strdup (commit);
-  if (bundle)
-    self->bundle = g_object_ref (bundle);
-  self->kind = kind;
-
-  return self;
-}
+G_DEFINE_TYPE (FlatpakTransactionOperation, flatpak_transaction_operation, G_TYPE_OBJECT)
 
 static void
-flatpak_transaction_operation_free (FlatpakTransactionOperation *self)
+flatpak_transaction_operation_finalize (GObject *object)
 {
+  FlatpakTransactionOperation *self = (FlatpakTransactionOperation *)object;
+
   g_free (self->remote);
   g_free (self->ref);
   g_free (self->commit);
@@ -353,7 +336,44 @@ flatpak_transaction_operation_free (FlatpakTransactionOperation *self)
   if (self->resolved_metadata)
     g_key_file_unref (self->resolved_metadata);
   g_list_free (self->run_before_ops);
-  g_free (self);
+
+  G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
+}
+
+static void
+flatpak_transaction_operation_class_init (FlatpakTransactionOperationClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = flatpak_transaction_operation_finalize;
+}
+
+static void
+flatpak_transaction_operation_init (FlatpakTransactionOperation *self)
+{
+}
+
+static FlatpakTransactionOperation *
+flatpak_transaction_operation_new (const char *remote,
+                                   const char *ref,
+                                   const char **subpaths,
+                                   const char *commit,
+                                   GFile *bundle,
+                                   FlatpakTransactionOperationType kind)
+{
+  FlatpakTransactionOperation *self;
+
+  self = g_object_new (FLATPAK_TYPE_TRANSACTION_OPERATION, NULL);
+
+  self->remote = g_strdup (remote);
+  self->ref = g_strdup (ref);
+  self->subpaths = g_strdupv ((char **)subpaths);
+  self->commit = g_strdup (commit);
+  if (bundle)
+    self->bundle = g_object_ref (bundle);
+  self->kind = kind;
+
+  return self;
 }
 
 gboolean
@@ -373,7 +393,7 @@ flatpak_transaction_finalize (GObject *object)
 
   g_hash_table_unref (priv->last_op_for_ref);
   g_hash_table_unref (priv->remote_states);
-  g_list_free_full (priv->ops, (GDestroyNotify)flatpak_transaction_operation_free);
+  g_list_free_full (priv->ops, (GDestroyNotify)g_object_unref);
   g_object_unref (priv->dir);
 
   g_ptr_array_unref (priv->added_origin_remotes);
