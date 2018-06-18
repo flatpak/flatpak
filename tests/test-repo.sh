@@ -113,13 +113,13 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
     install_repo test-no-gpg
     echo "ok install without gpg key"
 
-    ${FLATPAK} ${U} uninstall org.test.Platform org.test.Hello
+    ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 else
     echo "ok install without gpg key # skip not supported for collections"
 fi
 
 install_repo local-test-no-gpg
-${FLATPAK} ${U} uninstall org.test.Platform org.test.Hello
+${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 ${FLATPAK} ${U} update --appstream local-test-no-gpg-repo
 
 echo "ok local without gpg key"
@@ -127,17 +127,17 @@ echo "ok local without gpg key"
 install_repo test-gpg2
 echo "ok with alternative gpg key"
 
-if ${FLATPAK} ${U} install test-repo org.test.Platform 2> install-error-log; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Platform 2> install-error-log; then
     assert_not_reached "Should not be able to install again from different remote without reinstall"
 fi
 echo "ok failed to install again from different remote"
 
-${FLATPAK} ${U} install --reinstall test-repo org.test.Platform
+${FLATPAK} ${U} install -y --reinstall test-repo org.test.Platform
 echo "ok re-install"
 
-${FLATPAK} ${U} uninstall org.test.Platform org.test.Hello
+${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 
-if ${FLATPAK} ${U} install test-missing-gpg-repo org.test.Platform 2> install-error-log; then
+if ${FLATPAK} ${U} install -y test-missing-gpg-repo org.test.Platform 2> install-error-log; then
     assert_not_reached "Should not be able to install with missing gpg key"
 fi
 assert_file_has_content install-error-log "GPG signatures found, but none are in trusted keyring"
@@ -215,7 +215,7 @@ assert_file_has_content branches-log "^app/org.test.Hello/.*eol=Reason2"
 ${FLATPAK} ${U} remote-ls -d test-repo > remote-ls-log
 assert_file_has_content remote-ls-log "^app/org.test.Hello/.*eol=Reason2"
 
-${FLATPAK} ${U} update org.test.Hello 2> update-log
+${FLATPAK} ${U} update -y org.test.Hello 2> update-log
 assert_file_has_content update-log "app/org.test.Hello/.*Reason2"
 
 ${FLATPAK} ${U} info org.test.Hello > info-log
@@ -224,16 +224,17 @@ assert_file_has_content info-log "end-of-life: Reason2"
 ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "^org.test.Hello/.*eol=Reason2"
 
-${FLATPAK} ${U} uninstall org.test.Hello
+${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform
 
 echo "ok eol build-export"
 
+${FLATPAK} ${U} install -y test-repo org.test.Platform
 
 port=$(cat httpd-port-main)
 UPDATE_REPO_ARGS="--redirect-url=http://127.0.0.1:${port}/test-gpg3 --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg" update_repo
 GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo_no_add test-gpg3 org.test.Collection.test
 
-${FLATPAK} ${U} update org.test.Platform
+${FLATPAK} ${U} update -y org.test.Platform
 # Ensure we have the new uri
 ${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
 assert_file_has_content repo-info "/test-gpg3"
@@ -242,17 +243,17 @@ assert_file_has_content repo-info "/test-gpg3"
 GPGARGS="${FL_GPGARGS2}" make_updated_app test-gpg3 org.test.Collection.test
 update_repo test-gpg3 org.test.Collection.test
 
-${FLATPAK} ${U} install test-repo org.test.Hello
+${FLATPAK} ${U} install -y test-repo org.test.Hello
 assert_file_has_content $FL_DIR/app/org.test.Hello/$ARCH/master/active/files/bin/hello.sh UPDATED
 
 echo "ok redirect url and gpg key"
 
-if ${FLATPAK} ${INVERT_U} uninstall org.test.Platform org.test.Hello; then
+if ${FLATPAK} ${INVERT_U} uninstall -y org.test.Platform org.test.Hello; then
     assert_not_reached "Should not be able to uninstall ${INVERT_U} when installed ${U}"
 fi
 
 # Test that unspecified --user/--system finds the right one, so no ${U}
-${FLATPAK} uninstall org.test.Platform org.test.Hello
+${FLATPAK} uninstall -y org.test.Platform org.test.Hello
 
 ${FLATPAK} ${U} list -d > list-log
 assert_not_file_has_content list-log "^org.test.Hello"
@@ -266,12 +267,12 @@ ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "^org.test.Hello"
 assert_file_has_content list-log "^org.test.Platform"
 
-if ${FLATPAK} ${U} uninstall org.test.Platform; then
+if ${FLATPAK} ${U} uninstall -y org.test.Platform; then
     assert_not_reached "Should not be able to uninstall ${U} when there is a dependency installed"
 fi
 
-${FLATPAK} ${U} uninstall org.test.Hello
-${FLATPAK} ${U} uninstall org.test.Platform
+${FLATPAK} ${U} uninstall -y org.test.Hello
+${FLATPAK} ${U} uninstall -y org.test.Platform
 
 ${FLATPAK} ${U} list -d > list-log
 assert_not_file_has_content list-log "^org.test.Hello"
@@ -300,7 +301,7 @@ assert_file_has_content list-log "^org.test.Platform"
 
 echo "ok install with --no-deploy and then --no-pull"
 
-${FLATPAK} uninstall --all
+${FLATPAK} uninstall -y --all
 
 ${FLATPAK} ${U} list -d > list-log
 assert_not_file_has_content list-log "^org.test.Hello"

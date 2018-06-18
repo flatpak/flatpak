@@ -287,19 +287,19 @@ setup_python2_repo () {
 
 install_repo () {
     REPONAME=${1:-test}
-    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Platform master
-    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Hello master
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Platform master
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Hello master
 }
 
 install_sdk_repo () {
     REPONAME=${1:-test}
-    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Sdk master
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Sdk master
 }
 
 install_python2_repo () {
     REPONAME=${1:-test}
-    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.PythonPlatform master
-    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.PythonSdk master
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.PythonPlatform master
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.PythonSdk master
 }
 
 run () {

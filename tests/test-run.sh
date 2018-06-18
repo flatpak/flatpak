@@ -186,7 +186,7 @@ OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 # TODO: For weird reasons this breaks in the system case. Needs debugging
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
-    ${FLATPAK} ${U} update -v org.test.Hello master
+    ${FLATPAK} ${U} update -y -v org.test.Hello master
     ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
     assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
 fi
@@ -195,7 +195,7 @@ echo "ok null update"
 
 make_updated_app
 
-${FLATPAK} ${U} update org.test.Hello
+${FLATPAK} ${U} update -y org.test.Hello
 
 NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
@@ -209,7 +209,7 @@ echo "ok update"
 ostree --repo=repos/test reset app/org.test.Hello/$ARCH/master "$OLD_COMMIT"
 update_repo
 
-if ${FLATPAK} ${U} update org.test.Hello; then
+if ${FLATPAK} ${U} update -y org.test.Hello; then
     assert_not_reached "Should not be able to update to older commit"
 fi
 
@@ -236,7 +236,7 @@ ${FLATPAK} build-finish --command=hello.sh ${DIR}
 ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 update_repo
 
-${FLATPAK} ${U} install test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir master
+${FLATPAK} ${U} install -y test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir master
 
 COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
@@ -262,7 +262,7 @@ rm -rf  ${DIR}/files/b
 ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 update_repo
 
-${FLATPAK} ${U} update --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split
+${FLATPAK} ${U} update -y --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split
 
 COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
@@ -283,7 +283,7 @@ ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 update_repo
 
 # Test reusing the old subpath list
-${FLATPAK} ${U} update org.test.Split
+${FLATPAK} ${U} update -y org.test.Split
 
 COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
@@ -319,23 +319,23 @@ ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 
 update_repo
 
-${FLATPAK} ${U} install test-repo org.test.OldVersion master
-${FLATPAK} ${U} install test-repo org.test.CurrentVersion master
-(! ${FLATPAK} ${U} install test-repo org.test.NewVersion master)
+${FLATPAK} ${U} install -y test-repo org.test.OldVersion master
+${FLATPAK} ${U} install -y test-repo org.test.CurrentVersion master
+(! ${FLATPAK} ${U} install -y test-repo org.test.NewVersion master)
 
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
 ${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR}
 ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 
-(! ${FLATPAK} ${U} update org.test.OldVersion)
+(! ${FLATPAK} ${U} update -y org.test.OldVersion)
 
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
 ${FLATPAK} build-finish --require-version=0.1.1 --command=hello.sh ${DIR}
 ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 
-${FLATPAK} ${U} update org.test.OldVersion
+${FLATPAK} ${U} update -y org.test.OldVersion
 
 echo "ok version checks"
 
@@ -348,7 +348,7 @@ flatpak build-finish --command=hello.sh app
 ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/master app
 update_repo
 
-${FLATPAK} ${U} install test-repo org.test.Writable
+${FLATPAK} ${U} install -y test-repo org.test.Writable
 
 assert_file_has_mode $FL_DIR/app/org.test.Writable/$ARCH/master/active/files/a-dir 775
 
@@ -364,7 +364,7 @@ flatpak build-finish --command=hello.sh app
 ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/master app
 update_repo
 
-if ${FLATPAK} ${U} install test-repo org.test.Setuid &> err2.txt; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Setuid &> err2.txt; then
     assert_not_reached "Should not be able to install with setuid file"
 fi
 assert_file_has_content err2.txt [Ii]nvalid
