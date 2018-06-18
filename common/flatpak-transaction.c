@@ -398,6 +398,12 @@ flatpak_transaction_operation_get_remote (FlatpakTransactionOperation  *self)
   return self->remote;
 }
 
+GFile *
+flatpak_transaction_operation_get_bundle_path    (FlatpakTransactionOperation  *self)
+{
+  return self->bundle;
+}
+
 const char *
 flatpak_transaction_operation_get_commit (FlatpakTransactionOperation  *self)
 {
