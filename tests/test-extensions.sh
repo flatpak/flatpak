@@ -44,7 +44,7 @@ EOF
     ${FLATPAK} build-export --runtime ${GPGARGS-} repos/test ${DIR} ${VERSION}
     rm -rf ${DIR}
 
-    ${FLATPAK} --user install test-repo $ID $VERSION
+    ${FLATPAK} --user install -y test-repo $ID $VERSION
 }
 
 add_extensions () {
@@ -106,8 +106,8 @@ ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --canoni
 ${FLATPAK} build-update-repo repos/test
 
 ${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test
-${FLATPAK} --user install test-repo org.test.Platform master
-${FLATPAK} --user install test-repo org.test.Hello master
+${FLATPAK} --user install -y test-repo org.test.Platform master
+${FLATPAK} --user install -y test-repo org.test.Hello master
 
 make_extension org.test.Extension1 master
 make_extension org.test.Extension1 not-master
@@ -159,7 +159,7 @@ add_extensions hello
 ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --canonical-permissions --branch=app/org.test.Hello/${ARCH}/master -s "modified metadata" hello
 ${FLATPAK} build-update-repo repos/test
 
-${FLATPAK} --user update org.test.Hello master
+${FLATPAK} --user update -y org.test.Hello master
 
 assert_has_extension_file /app ext1/exists
 assert_has_extension_file /app ext1/extension-org.test.Extension1:master

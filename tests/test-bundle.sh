@@ -85,11 +85,11 @@ assert_has_file $FL_DIR/repo/org.test.Hello-origin.trustedkeys.gpg
 
 echo "ok install app bundle"
 
-${FLATPAK} uninstall --force-remove ${U} org.test.Platform
+${FLATPAK} uninstall -y --force-remove ${U} org.test.Platform
 
 assert_not_has_file $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master
 
-${FLATPAK} install ${U} --bundle bundles/platform.flatpak
+${FLATPAK} install -y ${U} --bundle bundles/platform.flatpak
 
 assert_has_file $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master
 RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master`
@@ -128,7 +128,7 @@ OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 # TODO: For weird reasons this breaks in the system case. Needs debugging
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
-    ${FLATPAK} ${U} update -v org.test.Hello master
+    ${FLATPAK} ${U} update -y -v org.test.Hello master
     ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
     assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
 fi
@@ -137,7 +137,7 @@ echo "ok null update"
 
 make_updated_app
 
-${FLATPAK} ${U} update org.test.Hello
+${FLATPAK} ${U} update -y org.test.Hello
 
 NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 

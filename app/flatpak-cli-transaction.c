@@ -23,6 +23,7 @@
 #include "flatpak-cli-transaction.h"
 #include "flatpak-transaction-private.h"
 #include "flatpak-installation-private.h"
+#include "flatpak-table-printer.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 #include <glib/gi18n.h>
@@ -32,6 +33,7 @@
 struct _FlatpakCliTransaction {
   FlatpakTransaction parent;
 
+  char *name;
   gboolean disable_interaction;
   gboolean stop_on_first_error;
   gboolean is_user;
@@ -308,6 +310,109 @@ end_of_lifed (FlatpakTransaction *transaction,
     }
 }
 
+static gboolean
+transaction_ready (FlatpakTransaction *transaction)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  GList *ops = flatpak_transaction_get_operations (transaction);
+  GList *l;
+  gboolean found_one;
+  FlatpakTablePrinter *printer = NULL;
+
+  if (ops == NULL)
+    return TRUE;
+
+  found_one = FALSE;
+  for (l = ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
+      const char *ref = flatpak_transaction_operation_get_ref (op);
+      const char *pref = strchr (ref, '/') + 1;
+
+      if (type != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+        continue;
+
+      if (!found_one)
+        g_print (_("Uninstalling from %s:\n"), self->name);
+      found_one = TRUE;
+      g_print ("%s\n", pref);
+    }
+
+  found_one = FALSE;
+  for (l = ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
+      const char *ref = flatpak_transaction_operation_get_ref (op);
+      const char *remote = flatpak_transaction_operation_get_remote (op);
+      const char *commit = flatpak_transaction_operation_get_commit (op);
+      const char *pref = strchr (ref, '/') + 1;
+
+      if (type != FLATPAK_TRANSACTION_OPERATION_INSTALL &&
+          type != FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
+        continue;
+
+      if (!found_one)
+        {
+          g_print (_("Installing in %s:\n"), self->name);
+          printer = flatpak_table_printer_new ();
+          found_one = TRUE;
+        }
+
+      flatpak_table_printer_add_column (printer, pref);
+      flatpak_table_printer_add_column (printer, remote);
+      flatpak_table_printer_add_column_len (printer, commit, 12);
+      flatpak_table_printer_finish_row (printer);
+    }
+  if (printer)
+    {
+      flatpak_table_printer_print (printer);
+      flatpak_table_printer_free (printer);
+      printer = NULL;
+    }
+
+  found_one = FALSE;
+  for (l = ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
+      const char *ref = flatpak_transaction_operation_get_ref (op);
+      const char *remote = flatpak_transaction_operation_get_remote (op);
+      const char *commit = flatpak_transaction_operation_get_commit (op);
+      const char *pref = strchr (ref, '/') + 1;
+
+      if (type != FLATPAK_TRANSACTION_OPERATION_UPDATE)
+        continue;
+
+      if (!found_one)
+        {
+          g_print (_("Updating in %s:\n"), self->name);
+          printer = flatpak_table_printer_new ();
+          found_one = TRUE;
+        }
+
+      flatpak_table_printer_add_column (printer, pref);
+      flatpak_table_printer_add_column (printer, remote);
+      flatpak_table_printer_add_column_len (printer, commit, 12);
+      flatpak_table_printer_finish_row (printer);
+    }
+  if (printer)
+    {
+      flatpak_table_printer_print (printer);
+      flatpak_table_printer_free (printer);
+      printer = NULL;
+    }
+
+  g_list_free_full (ops, g_object_unref);
+
+  if (!self->disable_interaction &&
+      !flatpak_yes_no_prompt (_("Is this ok")))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 flatpak_cli_transaction_finalize (GObject *object)
 {
@@ -315,6 +420,8 @@ flatpak_cli_transaction_finalize (GObject *object)
 
   if (self->first_operation_error)
     g_error_free (self->first_operation_error);
+
+  g_free (self->name);
 
   G_OBJECT_CLASS (flatpak_cli_transaction_parent_class)->finalize (object);
 }
@@ -331,6 +438,7 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   FlatpakTransactionClass *transaction_class = FLATPAK_TRANSACTION_CLASS (klass);
 
   object_class->finalize = flatpak_cli_transaction_finalize;
+  transaction_class->ready = transaction_ready;
   transaction_class->new_operation = new_operation;
   transaction_class->operation_done = operation_done;
   transaction_class->operation_error = operation_error;
@@ -360,6 +468,7 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
 
   self->disable_interaction = disable_interaction;
   self->stop_on_first_error = stop_on_first_error;
+  self->name = flatpak_dir_get_name (dir);
   self->is_user = flatpak_dir_is_user (dir);
 
   return (FlatpakTransaction *)g_steal_pointer (&self);
