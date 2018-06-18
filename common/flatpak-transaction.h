@@ -30,6 +30,7 @@
 
 #define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
 #define FLATPAK_TYPE_TRANSACTION_PROGRESS flatpak_transaction_progress_get_type ()
+#define FLATPAK_TYPE_TRANSACTION_OPERATION flatpak_transaction_operation_get_type ()
 
 /**
  * FlatpakTransactionOperationType
@@ -69,6 +70,9 @@ typedef enum {
 
 FLATPAK_EXTERN
 G_DECLARE_FINAL_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, FLATPAK, TRANSACTION_PROGRESS, GObject)
+
+FLATPAK_EXTERN
+G_DECLARE_FINAL_TYPE (FlatpakTransactionOperation, flatpak_transaction_operation, FLATPAK, TRANSACTION_OPERATION, GObject)
 
 FLATPAK_EXTERN
 G_DECLARE_DERIVABLE_TYPE (FlatpakTransaction, flatpak_transaction, FLATPAK, TRANSACTION, GObject)
