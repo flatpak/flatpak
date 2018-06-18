@@ -82,21 +82,13 @@ struct _FlatpakTransactionClass
   GObjectClass parent_class;
 
   void (*new_operation)        (FlatpakTransaction *transaction,
-                                const char *ref,
-                                const char *remote,
-                                const char *bundle_path,
-                                FlatpakTransactionOperationType operation_type,
+                                FlatpakTransactionOperation *operation,
                                 FlatpakTransactionProgress *progress);
   void (*operation_done)       (FlatpakTransaction *transaction,
-                                const char *ref,
-                                const char *remote,
-                                FlatpakTransactionOperationType operation_type,
-                                const char *commit,
+                                FlatpakTransactionOperation *operation,
                                 FlatpakTransactionResult details);
   gboolean (*operation_error)  (FlatpakTransaction *transaction,
-                                const char *ref,
-                                const char *remote,
-                                FlatpakTransactionOperationType operation_type,
+                                FlatpakTransactionOperation *operation,
                                 GError *error,
                                 FlatpakTransactionErrorDetails detail);
   int (*choose_remote_for_ref) (FlatpakTransaction *transaction,
