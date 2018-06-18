@@ -177,15 +177,16 @@ progress_done (FlatpakTransaction *transaction)
 
 static void
 new_operation (FlatpakTransaction *transaction,
-               const char *ref,
-               const char *remote,
-               const char *bundle_path,
-               FlatpakTransactionOperationType operation_type,
+               FlatpakTransactionOperation *operation,
                FlatpakTransactionProgress *progress)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   const char *pref;
   g_autofree char *bundle_basename = NULL;
+  const char *ref = flatpak_transaction_operation_get_ref (operation);
+  const char *remote = flatpak_transaction_operation_get_remote (operation);
+  GFile *bundle = flatpak_transaction_operation_get_bundle_path (operation);
+  FlatpakTransactionOperationType operation_type = flatpak_transaction_operation_get_operation_type (operation);
 
   pref = strchr (ref, '/') + 1;
 
@@ -205,7 +206,7 @@ new_operation (FlatpakTransaction *transaction,
       break;
     case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
       {
-        bundle_basename = g_path_get_basename (bundle_path);
+        bundle_basename = g_file_get_basename (bundle);
         if (self->is_user)
           g_print (_("Installing for user: %s from bundle %s\n"), pref, bundle_basename);
         else
@@ -231,12 +232,11 @@ new_operation (FlatpakTransaction *transaction,
 
 static void
 operation_done (FlatpakTransaction *transaction,
-                const char *ref,
-                const char *remote,
-                FlatpakTransactionOperationType operation_type,
-                const char *commit,
+                FlatpakTransactionOperation *operation,
                 FlatpakTransactionResult details)
 {
+  FlatpakTransactionOperationType operation_type = flatpak_transaction_operation_get_operation_type (operation);
+  const char *commit = flatpak_transaction_operation_get_commit (operation);
   g_autofree char *short_commit = g_strndup (commit, 12);
 
   progress_done (transaction);
@@ -252,13 +252,13 @@ operation_done (FlatpakTransaction *transaction,
 
 static gboolean
 operation_error (FlatpakTransaction *transaction,
-                 const char *ref,
-                 const char *remote,
-                 FlatpakTransactionOperationType operation_type,
+                FlatpakTransactionOperation *operation,
                  GError *error,
                  FlatpakTransactionErrorDetails detail)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  FlatpakTransactionOperationType operation_type = flatpak_transaction_operation_get_operation_type (operation);
+  const char *ref = flatpak_transaction_operation_get_ref (operation);
   const char *pref;
 
   progress_done (transaction);

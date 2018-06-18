@@ -537,7 +537,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_STRUCT_OFFSET (FlatpakTransactionClass, new_operation),
                   NULL, NULL,
                   NULL,
-                  G_TYPE_NONE, 5, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, FLATPAK_TYPE_TRANSACTION_PROGRESS);
+                  G_TYPE_NONE, 2, FLATPAK_TYPE_TRANSACTION_OPERATION, FLATPAK_TYPE_TRANSACTION_PROGRESS);
 
   /**
    * FlatpakTransaction::operation-error:
@@ -557,7 +557,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_STRUCT_OFFSET (FlatpakTransactionClass, operation_error),
                   NULL, NULL,
                   NULL,
-                  G_TYPE_BOOLEAN, 5, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_ERROR, G_TYPE_INT);
+                  G_TYPE_BOOLEAN, 3, FLATPAK_TYPE_TRANSACTION_OPERATION, G_TYPE_ERROR, G_TYPE_INT);
 
   /**
    * FlatpakTransaction::operation-done:
@@ -576,7 +576,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_STRUCT_OFFSET (FlatpakTransactionClass, operation_done),
                   NULL, NULL,
                   NULL,
-                  G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING);
+                  G_TYPE_NONE, 2, FLATPAK_TYPE_TRANSACTION_OPERATION, G_TYPE_INT);
 
   /**
    * FlatpakTransaction::choose-remote-for-ref:
@@ -1316,9 +1316,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 static void
 emit_new_op (FlatpakTransaction *self, FlatpakTransactionOperation *op, FlatpakTransactionProgress *progress)
 {
-  g_signal_emit (self, signals[NEW_OPERATION], 0, op->ref, op->remote,
-                 op->bundle ? flatpak_file_get_path_cached (op->bundle) : NULL,
-                 op_type_from_resolved_kind (op->kind), progress);
+  g_signal_emit (self, signals[NEW_OPERATION], 0, op, progress);
 }
 
 static void
@@ -1338,9 +1336,7 @@ emit_op_done (FlatpakTransaction *self,
         commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }
 
-  g_signal_emit (self, signals[OPERATION_DONE], 0, op->ref, op->remote,
-                 op_type_from_resolved_kind (op->kind),
-                 commit, details);
+  g_signal_emit (self, signals[OPERATION_DONE], 0, op, commit, details);
 }
 
 static void
@@ -1848,10 +1844,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           if (op->non_fatal)
             error_details |= FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL;
 
-          g_signal_emit (self, signals[OPERATION_ERROR], 0,
-                         op->ref,
-                         op->remote,
-                         op_type_from_resolved_kind (kind),
+          g_signal_emit (self, signals[OPERATION_ERROR], 0, op,
                          local_error, error_details,
                          &do_cont);
 
