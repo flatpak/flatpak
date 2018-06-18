@@ -10540,7 +10540,6 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
       g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
-      g_autofree char *collection_id = NULL;
       gboolean is_oci;
 
       system_helper = flatpak_dir_get_system_helper (self);
