@@ -45,12 +45,12 @@
  * thread and do your own forwarding to the GUI thread.
  */
 
-typedef struct FlatpakTransactionOp FlatpakTransactionOp;
+typedef struct FlatpakTransactionOperation FlatpakTransactionOperation;
 
 /* This is an internal-only element of FlatpakTransactionOperationType */
 #define FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE FLATPAK_TRANSACTION_OPERATION_LAST_TYPE + 1
 
-struct FlatpakTransactionOp {
+struct FlatpakTransactionOperation {
   char *remote;
   char *ref;
   /* NULL means unspecified (normally keep whatever was there before), [] means force everything */
@@ -68,7 +68,7 @@ struct FlatpakTransactionOp {
   int run_after_count;
   int run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList *run_before_ops;
-  FlatpakTransactionOp *fail_if_op_fails; /* main app/runtime for related extensions, runtime for apps */
+  FlatpakTransactionOperation *fail_if_op_fails; /* main app/runtime for related extensions, runtime for apps */
 };
 
 typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
@@ -319,7 +319,7 @@ dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out, GVari
   return TRUE;
 }
 
-static FlatpakTransactionOp *
+static FlatpakTransactionOperation *
 flatpak_transaction_operation_new (const char *remote,
                                    const char *ref,
                                    const char **subpaths,
@@ -327,7 +327,7 @@ flatpak_transaction_operation_new (const char *remote,
                                    GFile *bundle,
                                    FlatpakTransactionOperationType kind)
 {
-  FlatpakTransactionOp *self = g_new0 (FlatpakTransactionOp, 1);
+  FlatpakTransactionOperation *self = g_new0 (FlatpakTransactionOperation, 1);
 
   self->remote = g_strdup (remote);
   self->ref = g_strdup (ref);
@@ -341,7 +341,7 @@ flatpak_transaction_operation_new (const char *remote,
 }
 
 static void
-flatpak_transaction_operation_free (FlatpakTransactionOp *self)
+flatpak_transaction_operation_free (FlatpakTransactionOperation *self)
 {
   g_free (self->remote);
   g_free (self->ref);
@@ -663,12 +663,12 @@ flatpak_transaction_set_force_uninstall (FlatpakTransaction  *self,
   priv->force_uninstall = force_uninstall;
 }
 
-static FlatpakTransactionOp *
+static FlatpakTransactionOperation *
 flatpak_transaction_get_last_op_for_ref (FlatpakTransaction *self,
                                          const char *ref)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  FlatpakTransactionOp *op;
+  FlatpakTransactionOperation *op;
 
   op = g_hash_table_lookup (priv->last_op_for_ref, ref);
 
@@ -765,7 +765,7 @@ kind_compatible (FlatpakTransactionOperationType a,
   return FALSE;
 }
 
-static FlatpakTransactionOp *
+static FlatpakTransactionOperation *
 flatpak_transaction_add_op (FlatpakTransaction *self,
                             const char *remote,
                             const char *ref,
@@ -775,7 +775,7 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
                             FlatpakTransactionOperationType kind)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  FlatpakTransactionOp *op;
+  FlatpakTransactionOperation *op;
   g_autofree char *subpaths_str = NULL;
 
   subpaths_str = subpaths_to_string (subpaths);
@@ -805,8 +805,8 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
 }
 
 static void
-run_operation_before (FlatpakTransactionOp *op,
-                      FlatpakTransactionOp *before_this,
+run_operation_before (FlatpakTransactionOperation *op,
+                      FlatpakTransactionOperation *before_this,
                       int prio)
 {
   if (op == before_this)
@@ -818,7 +818,7 @@ run_operation_before (FlatpakTransactionOp *op,
 
 static gboolean
 add_related (FlatpakTransaction *self,
-             FlatpakTransactionOp *op,
+             FlatpakTransactionOperation *op,
              GError **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -857,7 +857,7 @@ add_related (FlatpakTransaction *self,
       for (i = 0; i < related->len; i++)
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
-          FlatpakTransactionOp *related_op;
+          FlatpakTransactionOperation *related_op;
 
           if (!rel->delete)
             continue;
@@ -875,7 +875,7 @@ add_related (FlatpakTransaction *self,
       for (i = 0; i < related->len; i++)
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
-          FlatpakTransactionOp *related_op;
+          FlatpakTransactionOperation *related_op;
 
           if (!rel->download)
             continue;
@@ -939,14 +939,14 @@ find_runtime_remote (FlatpakTransaction *self,
 
 static gboolean
 add_deps (FlatpakTransaction *self,
-          FlatpakTransactionOp *op,
+          FlatpakTransactionOperation *op,
           GError **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *runtime_ref = NULL;
   g_autofree char *full_runtime_ref = NULL;
   g_autofree char *runtime_remote = NULL;
-  FlatpakTransactionOp *runtime_op = NULL;
+  FlatpakTransactionOperation *runtime_op = NULL;
 
   if (!g_str_has_prefix (op->ref, "app/"))
     return TRUE;
@@ -1031,7 +1031,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   g_autofree char *origin = NULL;
   const char *pref;
   g_autofree char *origin_remote = NULL;
-  FlatpakTransactionOp *op;
+  FlatpakTransactionOperation *op;
 
   if (remote_name_is_file (remote))
     {
@@ -1196,7 +1196,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 
   for (l = priv->ops; l != NULL; l = l->next)
     {
-      FlatpakTransactionOp *op = l->data;
+      FlatpakTransactionOperation *op = l->data;
       g_hash_table_add (ht, g_strdup (op->remote));
     }
   remotes = (char **)g_hash_table_get_keys_as_array (ht, NULL);
@@ -1221,7 +1221,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
 }
 
 static void
-emit_new_op (FlatpakTransaction *self, FlatpakTransactionOp *op, FlatpakTransactionProgress *progress)
+emit_new_op (FlatpakTransaction *self, FlatpakTransactionOperation *op, FlatpakTransactionProgress *progress)
 {
   g_signal_emit (self, signals[NEW_OPERATION], 0, op->ref, op->remote,
                  op->bundle ? flatpak_file_get_path_cached (op->bundle) : NULL,
@@ -1230,7 +1230,7 @@ emit_new_op (FlatpakTransaction *self, FlatpakTransactionOp *op, FlatpakTransact
 
 static void
 emit_op_done (FlatpakTransaction *self,
-              FlatpakTransactionOp *op,
+              FlatpakTransactionOperation *op,
               FlatpakTransactionResult details)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -1251,7 +1251,7 @@ emit_op_done (FlatpakTransaction *self,
 }
 
 static void
-mark_op_resolved (FlatpakTransactionOp *op,
+mark_op_resolved (FlatpakTransactionOperation *op,
                   const char *commit,
                   const char *metadata)
 {
@@ -1285,7 +1285,7 @@ resolve_ops (FlatpakTransaction *self,
 
   for (l = priv->ops; l != NULL; l = l->next)
     {
-      FlatpakTransactionOp *op = l->data;
+      FlatpakTransactionOperation *op = l->data;
       FlatpakRemoteState *state = NULL;
       const char *metadata = NULL; /* owned by commit_data or state */
       g_autofree char *checksum = NULL;
@@ -1369,7 +1369,7 @@ resolve_ops (FlatpakTransaction *self,
 }
 
 static int
-compare_op_ref (FlatpakTransactionOp *a, FlatpakTransactionOp *b)
+compare_op_ref (FlatpakTransactionOperation *a, FlatpakTransactionOperation *b)
 {
   char *aa = strchr (a->ref, '/');
   char *bb = strchr (b->ref, '/');
@@ -1377,7 +1377,7 @@ compare_op_ref (FlatpakTransactionOp *a, FlatpakTransactionOp *b)
 }
 
 static int
-compare_op_prio (FlatpakTransactionOp *a, FlatpakTransactionOp *b)
+compare_op_prio (FlatpakTransactionOperation *a, FlatpakTransactionOperation *b)
 {
   return b->run_after_prio - a->run_after_prio;
 }
@@ -1399,7 +1399,7 @@ sort_ops (FlatpakTransaction *self)
      are in the same order as specified */
   for (l = remaining; l != NULL; l = next)
     {
-      FlatpakTransactionOp *op = l->data;
+      FlatpakTransactionOperation *op = l->data;
       next = l->next;
 
       if (op->run_after_count == 0)
@@ -1415,7 +1415,7 @@ sort_ops (FlatpakTransaction *self)
   while (runnable)
     {
       GList *run = runnable;
-      FlatpakTransactionOp *run_op = run->data;
+      FlatpakTransactionOperation *run_op = run->data;
 
       /* Put the first runnable on the sorted list */
       runnable = g_list_remove_link (runnable, run);
@@ -1426,7 +1426,7 @@ sort_ops (FlatpakTransaction *self)
       run_op->run_before_ops = g_list_sort (run_op->run_before_ops, (GCompareFunc)compare_op_prio);
       for (l = run_op->run_before_ops; l != NULL; l = l->next)
         {
-          FlatpakTransactionOp *after_op = l->data;
+          FlatpakTransactionOperation *after_op = l->data;
           after_op->run_after_count--;
           if (after_op->run_after_count == 0)
             {
@@ -1474,7 +1474,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
   /* Add all app -> runtime dependencies */
   for (l = priv->ops; l != NULL; l = l->next)
     {
-      FlatpakTransactionOp *op = l->data;
+      FlatpakTransactionOperation *op = l->data;
 
       if (!add_deps (self, op, error))
         return FALSE;
@@ -1487,7 +1487,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
   /* Add all related extensions */
   for (l = priv->ops; l != NULL; l = l->next)
     {
-      FlatpakTransactionOp *op = l->data;
+      FlatpakTransactionOperation *op = l->data;
 
       if (!add_related (self, op, error))
         return FALSE;
@@ -1501,7 +1501,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
   for (l = priv->ops; l != NULL; l = l->next)
     {
-      FlatpakTransactionOp *op = l->data;
+      FlatpakTransactionOperation *op = l->data;
       g_autoptr(GError) local_error = NULL;
       gboolean res = TRUE;
       const char *pref;
