@@ -47,13 +47,8 @@
 
 typedef struct FlatpakTransactionOp FlatpakTransactionOp;
 
-typedef enum {
-  FLATPAK_TRANSACTION_OP_KIND_INSTALL,
-  FLATPAK_TRANSACTION_OP_KIND_UPDATE,
-  FLATPAK_TRANSACTION_OP_KIND_BUNDLE,
-  FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE,
-  FLATPAK_TRANSACTION_OP_KIND_UNINSTALL,
-} FlatpakTransactionOpKind;
+/* This is an internal-only element of FlatpakTransactionOperationType */
+#define FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE FLATPAK_TRANSACTION_OPERATION_LAST_TYPE + 1
 
 struct FlatpakTransactionOp {
   char *remote;
@@ -63,7 +58,7 @@ struct FlatpakTransactionOp {
   char *commit;
   GFile *bundle;
   char *external_metadata;
-  FlatpakTransactionOpKind kind;
+  FlatpakTransactionOperationType kind;
   gboolean non_fatal;
   gboolean failed;
 
@@ -240,32 +235,18 @@ G_DEFINE_TYPE_WITH_CODE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
 static FlatpakTransactionOperationType
-op_type_from_resolved_kind (FlatpakTransactionOpKind kind)
+op_type_from_resolved_kind (FlatpakTransactionOperationType kind)
 {
-  switch (kind)
-    {
-    case FLATPAK_TRANSACTION_OP_KIND_INSTALL:
-      return FLATPAK_TRANSACTION_OPERATION_INSTALL;
-    case FLATPAK_TRANSACTION_OP_KIND_UPDATE:
-      return FLATPAK_TRANSACTION_OPERATION_UPDATE;
-    case FLATPAK_TRANSACTION_OP_KIND_BUNDLE:
-      return FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE;
-    case FLATPAK_TRANSACTION_OP_KIND_UNINSTALL:
-      return FLATPAK_TRANSACTION_OPERATION_UNINSTALL;
-
-      /* This should be resolve before converting to type */
-    case FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE:
-    default:
-      g_assert_not_reached ();
-    }
+  g_assert (kind < FLATPAK_TRANSACTION_OPERATION_LAST_TYPE);
+  return kind;
 }
 
 static gboolean
 transaction_is_local_only (FlatpakTransaction *self,
-                           FlatpakTransactionOpKind kind)
+                           FlatpakTransactionOperationType kind)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  return priv->no_pull || kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL;
+  return priv->no_pull || kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL;
 }
 
 static gboolean
@@ -344,7 +325,7 @@ flatpak_transaction_operation_new (const char *remote,
                                    const char **subpaths,
                                    const char *commit,
                                    GFile *bundle,
-                                   FlatpakTransactionOpKind kind)
+                                   FlatpakTransactionOperationType kind)
 {
   FlatpakTransactionOp *self = g_new0 (FlatpakTransactionOp, 1);
 
@@ -719,27 +700,29 @@ subpaths_to_string (const char **subpaths)
 }
 
 static const char *
-kind_to_str (FlatpakTransactionOpKind kind)
+kind_to_str (FlatpakTransactionOperationType kind)
 {
-  switch (kind)
+  switch ((int)kind)
     {
-    case FLATPAK_TRANSACTION_OP_KIND_INSTALL:
+    case FLATPAK_TRANSACTION_OPERATION_INSTALL:
       return "install";
-    case FLATPAK_TRANSACTION_OP_KIND_UPDATE:
+    case FLATPAK_TRANSACTION_OPERATION_UPDATE:
       return "update";
-    case FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE:
+    case FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE:
       return "install/update";
-    case FLATPAK_TRANSACTION_OP_KIND_BUNDLE:
+    case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
       return "install bundle";
-    case FLATPAK_TRANSACTION_OP_KIND_UNINSTALL:
+    case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
       return "uninstall";
+    case FLATPAK_TRANSACTION_OPERATION_LAST_TYPE:
+    default:
+      return "unknown";
     }
-  return "unknown";
 }
 
 static FlatpakRemoteState *
 flatpak_transaction_ensure_remote_state (FlatpakTransaction *self,
-                                         FlatpakTransactionOpKind kind,
+                                         FlatpakTransactionOperationType kind,
                                          const char *remote,
                                          GError **error)
 {
@@ -763,20 +746,20 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction *self,
 }
 
 static gboolean
-kind_compatible (FlatpakTransactionOpKind a,
-                 FlatpakTransactionOpKind b)
+kind_compatible (FlatpakTransactionOperationType a,
+                 FlatpakTransactionOperationType b)
 {
   if (a == b)
     return TRUE;
 
-  if (a == FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE &&
-      (b == FLATPAK_TRANSACTION_OP_KIND_INSTALL ||
-       b == FLATPAK_TRANSACTION_OP_KIND_UPDATE))
+  if (a == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE &&
+      (b == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
+       b == FLATPAK_TRANSACTION_OPERATION_UPDATE))
     return TRUE;
 
-  if (b == FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE &&
-      (a == FLATPAK_TRANSACTION_OP_KIND_INSTALL ||
-       a == FLATPAK_TRANSACTION_OP_KIND_UPDATE))
+  if (b == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE &&
+      (a == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
+       a == FLATPAK_TRANSACTION_OPERATION_UPDATE))
     return TRUE;
 
   return FALSE;
@@ -789,7 +772,7 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
                             const char **subpaths,
                             const char *commit,
                             GFile *bundle,
-                            FlatpakTransactionOpKind kind)
+                            FlatpakTransactionOperationType kind)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   FlatpakTransactionOp *op;
@@ -869,7 +852,7 @@ add_related (FlatpakTransaction *self,
       return TRUE;
     }
 
-  if (op->kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
+  if (op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
       for (i = 0; i < related->len; i++)
         {
@@ -881,7 +864,7 @@ add_related (FlatpakTransaction *self,
 
           related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
                                                    NULL, NULL, NULL,
-                                                   FLATPAK_TRANSACTION_OP_KIND_UNINSTALL);
+                                                   FLATPAK_TRANSACTION_OPERATION_UNINSTALL);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
           run_operation_before (op, related_op, 1);
@@ -900,7 +883,7 @@ add_related (FlatpakTransaction *self,
           related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
                                                    (const char **)rel->subpaths,
                                                    NULL, NULL,
-                                                   FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE);
+                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
           op->non_fatal = TRUE;
           op->fail_if_op_fails = op;
           run_operation_before (op, related_op, 1);
@@ -914,7 +897,7 @@ static char *
 find_runtime_remote (FlatpakTransaction *self,
                      const char *app_ref,
                      const char *runtime_ref,
-                     FlatpakTransactionOpKind source_kind,
+                     FlatpakTransactionOperationType source_kind,
                      GError **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -978,11 +961,11 @@ add_deps (FlatpakTransaction *self,
 
   runtime_op = flatpak_transaction_get_last_op_for_ref (self, full_runtime_ref);
 
-  if (op->kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
+  if (op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
       /* If the runtime this app uses is already to be uninstalled, then this uninstall must happen before
          the runtime is installed */
-      if (runtime_op && op->kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
+      if (runtime_op && op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         run_operation_before (op, runtime_op, 1);
 
       return TRUE;
@@ -1008,7 +991,7 @@ add_deps (FlatpakTransaction *self,
             return FALSE;
 
           runtime_op = flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
-                                                   FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE);
+                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
         }
       else
         {
@@ -1017,7 +1000,7 @@ add_deps (FlatpakTransaction *self,
             {
               g_debug ("Updating dependent runtime %s", full_runtime_ref);
               runtime_op = flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
-                                                       FLATPAK_TRANSACTION_OP_KIND_UPDATE);
+                                                       FLATPAK_TRANSACTION_OPERATION_UPDATE);
               runtime_op->non_fatal = TRUE;
             }
         }
@@ -1039,7 +1022,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
                              const char *ref,
                              const char **subpaths,
                              const char *commit,
-                             FlatpakTransactionOpKind kind,
+                             FlatpakTransactionOperationType kind,
                              GFile *bundle,
                              const char *external_metadata,
                              GError **error)
@@ -1074,7 +1057,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   pref = strchr (ref, '/') + 1;
 
   /* install or update */
-  if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
+  if (kind == FLATPAK_TRANSACTION_OPERATION_UPDATE)
     {
       if (!dir_ref_is_installed (priv->dir, ref, &origin, NULL))
         {
@@ -1090,7 +1073,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         }
       remote = origin;
     }
-  else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
+  else if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
     {
       if (!priv->reinstall &&
           dir_ref_is_installed (priv->dir, ref, &origin, NULL))
@@ -1109,7 +1092,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
             }
         }
     }
-  else if (kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
+  else if (kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
       if (!dir_ref_is_installed (priv->dir, ref, &origin, NULL))
         {
@@ -1146,7 +1129,7 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
   if (subpaths == NULL)
     subpaths = all_paths;
 
-  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, FLATPAK_TRANSACTION_OP_KIND_INSTALL, NULL, NULL, error);
+  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL, NULL, NULL, error);
 }
 
 gboolean
@@ -1171,7 +1154,7 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
   if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
     return FALSE;
 
-  return flatpak_transaction_add_ref (self, remote, ref, NULL, commit, FLATPAK_TRANSACTION_OP_KIND_BUNDLE, file, metadata, error);
+  return flatpak_transaction_add_ref (self, remote, ref, NULL, commit, FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE, file, metadata, error);
 }
 
 gboolean
@@ -1187,7 +1170,7 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
   if (subpaths != NULL && subpaths[0] != NULL && subpaths[0][0] == 0)
     subpaths = all_paths;
 
-  return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, FLATPAK_TRANSACTION_OP_KIND_UPDATE, NULL, NULL, error);
+  return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, error);
 }
 
 gboolean
@@ -1195,7 +1178,7 @@ flatpak_transaction_add_uninstall (FlatpakTransaction  *self,
                                    const char          *ref,
                                    GError             **error)
 {
-  return flatpak_transaction_add_ref (self, NULL, ref, NULL, NULL, FLATPAK_TRANSACTION_OP_KIND_UNINSTALL, NULL, NULL, error);
+  return flatpak_transaction_add_ref (self, NULL, ref, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, error);
 }
 
 static gboolean
@@ -1274,7 +1257,7 @@ mark_op_resolved (FlatpakTransactionOp *op,
 {
   g_assert (op != NULL);
 
-  if (op->kind != FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
+  if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     g_assert (commit != NULL);
 
   op->resolved = TRUE;
@@ -1312,7 +1295,7 @@ resolve_ops (FlatpakTransaction *self,
       if (op->resolved)
         continue;
 
-      if (op->kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
+      if (op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         {
           g_autoptr(GFile) deploy_dir = NULL;
           g_autoptr(GFile) metadata_file = NULL;
@@ -1331,7 +1314,7 @@ resolve_ops (FlatpakTransaction *self,
           continue;
         }
 
-      if (op->kind == FLATPAK_TRANSACTION_OP_KIND_BUNDLE)
+      if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
         {
           g_assert (op->commit != NULL);
           mark_op_resolved (op, op->commit, op->external_metadata);
@@ -1522,11 +1505,11 @@ flatpak_transaction_run (FlatpakTransaction *self,
       g_autoptr(GError) local_error = NULL;
       gboolean res = TRUE;
       const char *pref;
-      FlatpakTransactionOpKind kind;
+      FlatpakTransactionOperationType kind;
       FlatpakRemoteState *state;
 
       kind = op->kind;
-      if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE)
+      if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE)
         {
           g_autoptr(GVariant) deploy_data = NULL;
 
@@ -1537,10 +1520,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
               g_free (op->remote);
               op->remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
 
-              kind = FLATPAK_TRANSACTION_OP_KIND_UPDATE;
+              kind = FLATPAK_TRANSACTION_OPERATION_UPDATE;
             }
           else
-            kind = FLATPAK_TRANSACTION_OP_KIND_INSTALL;
+            kind = FLATPAK_TRANSACTION_OPERATION_INSTALL;
 
           op->kind = kind;
         }
@@ -1551,7 +1534,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           /* Allow installing an app if the runtime failed to update (i.e. is installed) because
            * the app should still run, and otherwise you could never install the app until the runtime
            * remote is fixed. */
-          !(op->fail_if_op_fails->kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE && g_str_has_prefix (op->ref, "app/")))
+          !(op->fail_if_op_fails->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE && g_str_has_prefix (op->ref, "app/")))
         {
           g_set_error (&local_error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED,
                        _("Skipping %s due to previous error"), pref);
@@ -1561,7 +1544,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           res = FALSE;
         }
-      else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
+      else if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
         {
           g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
 
@@ -1596,7 +1579,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
                 needs_triggers = TRUE;
             }
         }
-      else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
+      else if (kind == FLATPAK_TRANSACTION_OPERATION_UPDATE)
         {
           g_assert (op->resolved_commit != NULL); /* We resolved this before */
 
@@ -1646,7 +1629,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           else
             g_debug ("%s need no update", op->ref);
         }
-      else if (kind == FLATPAK_TRANSACTION_OP_KIND_BUNDLE)
+      else if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
         {
           g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
           emit_new_op (self, op, progress);
@@ -1665,7 +1648,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
               needs_triggers = TRUE;
             }
         }
-      else if (kind == FLATPAK_TRANSACTION_OP_KIND_UNINSTALL)
+      else if (kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         {
           g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
           FlatpakHelperUninstallFlags flags = 0;
