@@ -107,8 +107,9 @@ struct _FlatpakTransactionClass
                                 const char *ref,
                                 const char *reason,
                                 const char *rebase);
+  gboolean (*ready)            (FlatpakTransaction *transaction);
 
-  gpointer padding[12];
+  gpointer padding[11];
 };
 
 FLATPAK_EXTERN
@@ -125,6 +126,17 @@ FLATPAK_EXTERN
 gboolean    flatpak_transaction_progress_get_is_estimating    (FlatpakTransactionProgress  *self);
 FLATPAK_EXTERN
 int         flatpak_transaction_progress_get_progress         (FlatpakTransactionProgress  *self);
+
+
+FLATPAK_EXTERN
+FlatpakTransactionOperationType flatpak_transaction_operation_get_operation_type (FlatpakTransactionOperation  *self);
+FLATPAK_EXTERN
+const char *                    flatpak_transaction_operation_get_ref            (FlatpakTransactionOperation  *self);
+FLATPAK_EXTERN
+const char *                    flatpak_transaction_operation_get_remote         (FlatpakTransactionOperation  *self);
+FLATPAK_EXTERN
+const char *                    flatpak_transaction_operation_get_commit         (FlatpakTransactionOperation  *self);
+
 
 FLATPAK_EXTERN
 void                flatpak_transaction_set_no_pull               (FlatpakTransaction  *self,
@@ -154,6 +166,11 @@ FLATPAK_EXTERN
 gboolean            flatpak_transaction_run                       (FlatpakTransaction  *self,
                                                                    GCancellable        *cancellable,
                                                                    GError             **error);
+FLATPAK_EXTERN
+FlatpakTransactionOperation *flatpak_transaction_get_current_operation (FlatpakTransaction  *self);
+FLATPAK_EXTERN
+GList *flatpak_transaction_get_operations (FlatpakTransaction  *self);
+
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install               (FlatpakTransaction  *self,
                                                                    const char          *remote,
