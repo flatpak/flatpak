@@ -61,6 +61,7 @@ struct _FlatpakTransactionOperation {
   FlatpakTransactionOperationType kind;
   gboolean non_fatal;
   gboolean failed;
+  gboolean skip;
 
   gboolean resolved;
   char *resolved_commit;
@@ -84,6 +85,8 @@ struct _FlatpakTransactionPrivate {
   GList *ops;
   GPtrArray *added_origin_remotes;
 
+  FlatpakTransactionOperation *current_op;
+
   gboolean no_pull;
   gboolean no_deploy;
   gboolean disable_static_deltas;
@@ -100,6 +103,7 @@ enum {
   OPERATION_ERROR,
   CHOOSE_REMOTE_FOR_REF,
   END_OF_LIFED,
+  READY,
   LAST_SIGNAL
 };
 
@@ -376,6 +380,30 @@ flatpak_transaction_operation_new (const char *remote,
   return self;
 }
 
+FlatpakTransactionOperationType
+flatpak_transaction_operation_get_operation_type (FlatpakTransactionOperation  *self)
+{
+  return self->kind;
+}
+
+const char *
+flatpak_transaction_operation_get_ref (FlatpakTransactionOperation  *self)
+{
+  return self->ref;
+}
+
+const char *
+flatpak_transaction_operation_get_remote (FlatpakTransactionOperation  *self)
+{
+  return self->remote;
+}
+
+const char *
+flatpak_transaction_operation_get_commit (FlatpakTransactionOperation  *self)
+{
+  return self->resolved_commit;
+}
+
 gboolean
 flatpak_transaction_is_empty (FlatpakTransaction  *self)
 {
@@ -426,6 +454,22 @@ flatpak_transaction_set_property (GObject      *object,
     }
 }
 
+static gboolean
+signal_accumulator_false_abort (GSignalInvocationHint *ihint,
+                                GValue                *return_accu,
+                                const GValue          *handler_return,
+                                gpointer               dummy)
+{
+  gboolean continue_emission;
+  gboolean signal_continue;
+
+  signal_continue = g_value_get_boolean (handler_return);
+  g_value_set_boolean (return_accu, signal_continue);
+  continue_emission = signal_continue;
+
+  return continue_emission;
+}
+
 static void
 flatpak_transaction_get_property (GObject    *object,
                                   guint       prop_id,
@@ -447,11 +491,18 @@ flatpak_transaction_get_property (GObject    *object,
     }
 }
 
+static gboolean
+flatpak_transaction_ready (FlatpakTransaction *transaction)
+{
+  return TRUE;
+}
+
 static void
 flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+  klass->ready = flatpak_transaction_ready;
   object_class->finalize = flatpak_transaction_finalize;
   object_class->get_property = flatpak_transaction_get_property;
   object_class->set_property = flatpak_transaction_set_property;
@@ -553,6 +604,22 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  /**
+   * FlatpakTransaction::ready:
+   * @object: A #FlatpakTransaction
+   *
+   * This is is emitted when all the refs involved in the operation. At this point
+   * flatpak_transaction_get_operations() will return all the operations that will be
+   * executed as part of the transactions. If this returns FALSE, the operation is aborted.
+   */
+  signals[READY] =
+    g_signal_new ("ready",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, ready),
+                  signal_accumulator_false_abort, NULL,
+                  NULL,
+                  G_TYPE_BOOLEAN, 0);
 }
 
 static void
@@ -1467,18 +1534,45 @@ sort_ops (FlatpakTransaction *self)
   priv->ops = g_list_reverse (sorted);
 }
 
+GList *
+flatpak_transaction_get_operations (FlatpakTransaction  *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  GList *l;
+  GList *non_skipped = NULL;
+
+  non_skipped = NULL;
+  for (l = priv->ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      if (!op->skip)
+        non_skipped = g_list_prepend (non_skipped, g_object_ref (op));
+    }
+  return g_list_reverse (non_skipped);
+}
+
+FlatpakTransactionOperation *
+flatpak_transaction_get_current_operation (FlatpakTransaction  *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  return g_object_ref (priv->current_op);
+}
+
 gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          GCancellable *cancellable,
                          GError **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  GList *l;
+  GList *l, *next;
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
   gboolean needs_triggers = FALSE;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
+  gboolean ready_res = FALSE;
   int i;
+
+  priv->current_op = NULL;
 
   if (!priv->no_pull &&
       !flatpak_transaction_update_metadata (self, cancellable, error))
@@ -1519,17 +1613,13 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
   sort_ops (self);
 
-  for (l = priv->ops; l != NULL; l = l->next)
+  /* Ensure the operation kind is normalized and not no-op */
+  for (l = priv->ops; l != NULL; l = next)
     {
       FlatpakTransactionOperation *op = l->data;
-      g_autoptr(GError) local_error = NULL;
-      gboolean res = TRUE;
-      const char *pref;
-      FlatpakTransactionOperationType kind;
-      FlatpakRemoteState *state;
+      next = l->next;
 
-      kind = op->kind;
-      if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE)
+      if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE)
         {
           g_autoptr(GVariant) deploy_data = NULL;
 
@@ -1540,14 +1630,42 @@ flatpak_transaction_run (FlatpakTransaction *self,
               g_free (op->remote);
               op->remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
 
-              kind = FLATPAK_TRANSACTION_OPERATION_UPDATE;
+              op->kind = FLATPAK_TRANSACTION_OPERATION_UPDATE;
             }
           else
-            kind = FLATPAK_TRANSACTION_OPERATION_INSTALL;
-
-          op->kind = kind;
+            op->kind = FLATPAK_TRANSACTION_OPERATION_INSTALL;
         }
 
+      /* Skip no-op updates */
+      if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE &&
+          !flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, op->ref, op->resolved_commit,
+                                                             (const char **)op->subpaths))
+        op->skip = TRUE;
+    }
+
+
+  g_signal_emit (self, signals[READY], 0, &ready_res);
+  if (!ready_res)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED, _("Aborted by user"));
+      return FALSE;
+    }
+
+  for (l = priv->ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      g_autoptr(GError) local_error = NULL;
+      gboolean res = TRUE;
+      const char *pref;
+      FlatpakTransactionOperationType kind;
+      FlatpakRemoteState *state;
+
+      if (op->skip)
+        continue;
+
+      priv->current_op = op;
+
+      kind = op->kind;
       pref = strchr (op->ref, '/') + 1;
 
       if (op->fail_if_op_fails && (op->fail_if_op_fails->failed) &&
@@ -1740,6 +1858,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
             }
         }
     }
+  priv->current_op = NULL;
 
   if (needs_triggers)
     flatpak_dir_run_triggers (priv->dir, cancellable, NULL);
