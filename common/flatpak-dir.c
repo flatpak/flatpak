@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <sys/file.h>
 #include <sys/types.h>
+#include <sys/statfs.h>
 #include <utime.h>
 #include <glnx-console.h>
 
@@ -59,6 +60,7 @@
 #define SYSTEM_DIR_DEFAULT_DISPLAY_NAME "Default system directory"
 #define SYSTEM_DIR_DEFAULT_STORAGE_TYPE FLATPAK_DIR_STORAGE_TYPE_DEFAULT
 #define SYSTEM_DIR_DEFAULT_PRIORITY 0
+#define CACHE_THRESHOLD 5 /* minimum free space required to hold caches (in GB) */
 
 static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
                                                                          GLnxLockFile *file_lock,
@@ -2714,6 +2716,38 @@ get_common_pull_options (GVariantBuilder     *builder,
                          g_variant_new_variant (g_variant_new_uint32 (update_freq)));
 }
 
+static void
+flatpak_dir_cache_clean (OstreeRepo *repo)
+{
+  int dfd;
+  g_autoptr (GFile) file = NULL;
+
+  dfd = ostree_repo_get_dfd (repo);
+  file = g_file_new_for_path (glnx_fdrel_abspath (dfd, "tmp"));
+
+  flatpak_rm_rf (file, NULL, NULL);
+}
+
+static gboolean
+flatpak_dir_check_for_free_space (OstreeRepo *repo)
+{
+  int dfd;
+  int free_space;
+  struct statfs st_buf;
+
+  dfd = ostree_repo_get_dfd (repo);
+
+  if(fstatfs (dfd, &st_buf) < 0)
+    return FALSE;
+
+  free_space = st_buf.f_bavail * st_buf.f_bsize >> 30; /* Convert to GB */
+
+  if (free_space < CACHE_THRESHOLD)
+	return TRUE;
+
+  return FALSE;
+}
+
 static gboolean
 repo_pull (OstreeRepo          *self,
            const char          *remote_name,
@@ -3486,6 +3520,7 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
+  g_autoptr(GError) my_error = NULL;
 #ifdef FLATPAK_ENABLE_P2P
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
 #endif
@@ -3653,8 +3688,15 @@ flatpak_dir_pull (FlatpakDir          *self,
                   subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
                   ref, rev, results, flatpak_flags, flags,
                   progress,
-                  cancellable, error))
+                  cancellable, &my_error))
     {
+      if (g_error_matches (my_error, G_IO_ERROR, G_FILE_ERROR_NOSPC) ||
+          flatpak_dir_check_for_free_space (repo))
+        {
+          flatpak_dir_cache_clean (repo);
+          g_propagate_error (error, g_steal_pointer (&my_error));
+        }
+
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, state->remote_name);
       goto out;
     }
@@ -3808,6 +3850,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
+  g_autoptr(GError) my_error = NULL;
   gboolean ret = FALSE;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
@@ -3998,8 +4041,15 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!repo_pull_local_untrusted (self, self->repo, remote_name, url,
                                   subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
                                   ref, checksum, progress,
-                                  cancellable, error))
+                                  cancellable, &my_error))
     {
+      if (g_error_matches (my_error, G_IO_ERROR, G_FILE_ERROR_NOSPC) ||
+          flatpak_dir_check_for_free_space (self->repo))
+        {
+          flatpak_dir_cache_clean (self->repo);
+          g_propagate_error (error, g_steal_pointer (&my_error));
+        }
+
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, remote_name);
       goto out;
     }
