@@ -258,7 +258,7 @@ remote_name_is_file (const char *remote_name)
 
 /**
  * flatpak_transaction_add_dependency_source:
- * @transaction: a #FlatpakTransaction
+ * @self: a #FlatpakTransaction
  * @installation: a #FlatpakInstallation
  *
  * Adds an extra installation as a source for application dependencies.
@@ -279,7 +279,7 @@ flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
 
 /**
  * flatpak_transaction_add_default_dependency_sources:
- * @transaction: a #FlatpakTransaction
+ * @self: a #FlatpakTransaction
  *
  * Similar to flatpak_transaction_add_dependency_source(), but adds
  * all the default installations, which means all the defined system-wide
@@ -439,6 +439,14 @@ flatpak_transaction_operation_get_remote (FlatpakTransactionOperation  *self)
   return self->remote;
 }
 
+/**
+ * flatpak_transaction_operation_get_bundle_path:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the path to the bundle.
+ *
+ * Returns: (transfer none): the bundle #GFile or %NULL
+ */
 GFile *
 flatpak_transaction_operation_get_bundle_path    (FlatpakTransactionOperation  *self)
 {
@@ -1628,6 +1636,14 @@ sort_ops (FlatpakTransaction *self)
   priv->ops = g_list_reverse (sorted);
 }
 
+/**
+ * flatpak_transaction_get_operations:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets the list of operations.
+ *
+ * Returns: (transfer full) (element-type FlatpakTransactionOperation): a #GList of operations
+ */
 GList *
 flatpak_transaction_get_operations (FlatpakTransaction  *self)
 {
@@ -1645,6 +1661,14 @@ flatpak_transaction_get_operations (FlatpakTransaction  *self)
   return g_list_reverse (non_skipped);
 }
 
+/**
+ * flatpak_transaction_get_current_operation:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets the current operation.
+ *
+ * Returns: (transfer full): the current #FlatpakTransactionOperation
+ */
 FlatpakTransactionOperation *
 flatpak_transaction_get_current_operation (FlatpakTransaction  *self)
 {
