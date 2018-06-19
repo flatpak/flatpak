@@ -59,6 +59,7 @@ const char *flatpak_context_sockets[] = {
   "session-bus",
   "system-bus",
   "fallback-x11",
+  "ssh-auth",
   NULL
 };
 
