@@ -89,12 +89,10 @@ static GVariant * flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
                                                        GCancellable *cancellable,
                                                        GError      **error);
 
-#ifdef FLATPAK_ENABLE_P2P
 static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
                                                                  FlatpakRemoteState *state,
                                                                  GCancellable  *cancellable,
                                                                  GError       **error);
-#endif
 
 typedef struct
 {
@@ -2284,7 +2282,6 @@ repo_get_remote_collection_id (OstreeRepo  *repo,
                                char       **collection_id_out,
                                GError     **error);
 
-#ifdef FLATPAK_ENABLE_P2P
 static void
 async_result_cb (GObject      *obj,
                  GAsyncResult *result,
@@ -2293,7 +2290,6 @@ async_result_cb (GObject      *obj,
   GAsyncResult **result_out = user_data;
   *result_out = g_object_ref (result);
 }
-#endif  /* FLATPAK_ENABLE_P2P */
 
 gboolean
 flatpak_dir_find_latest_rev (FlatpakDir               *self,
@@ -2311,7 +2307,6 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 
   if (state->collection_id != NULL)
     {
-#ifdef FLATPAK_ENABLE_P2P
       /* Find the latest rev from the remote and its available mirrors, including
        * LAN and USB sources. */
       g_auto(GVariantBuilder) find_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
@@ -2365,10 +2360,6 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 
       if (out_rev != NULL)
         *out_rev = g_steal_pointer (&latest_rev);
-
-#else  /* if !FLATPAK_ENABLE_P2P */
-      g_assert_not_reached ();
-#endif  /* !FLATPAK_ENABLE_P2P */
     }
   else
     {
@@ -2645,7 +2636,6 @@ repo_get_remote_collection_id (OstreeRepo  *repo,
                                char       **collection_id_out,
                                GError     **error)
 {
-#ifdef FLATPAK_ENABLE_P2P
   if (collection_id_out != NULL)
     {
       if (!ostree_repo_get_remote_option (repo, remote_name, "collection-id",
@@ -2654,10 +2644,6 @@ repo_get_remote_collection_id (OstreeRepo  *repo,
       if (*collection_id_out != NULL && **collection_id_out == '\0')
         g_clear_pointer (collection_id_out, g_free);
     }
-#else  /* if !FLATPAK_ENABLE_P2P */
-  if (collection_id_out != NULL)
-    *collection_id_out = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
 
   return TRUE;
 }
@@ -2754,7 +2740,6 @@ repo_pull (OstreeRepo          *self,
   if (!repo_get_remote_collection_id (self, remote_name, &collection_id, NULL))
     g_clear_pointer (&collection_id, g_free);
 
-#ifdef FLATPAK_ENABLE_P2P
   if (collection_id != NULL)
     {
       GVariantBuilder find_builder, pull_builder;
@@ -2843,7 +2828,6 @@ repo_pull (OstreeRepo          *self,
         g_debug ("Failed to pull using find-remotes; falling back to normal pull: %s", (*error)->message);
       g_clear_error (error);
     }
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (!res)
     {
@@ -3486,9 +3470,7 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
-#ifdef FLATPAK_ENABLE_P2P
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
-#endif
   const OstreeRepoFinderResult * const *results;
   g_auto(GLnxLockFile) lock = { 0, };
 
@@ -3541,7 +3523,6 @@ flatpak_dir_pull (FlatpakDir          *self,
     }
   else
     {
-#ifdef FLATPAK_ENABLE_P2P
       if (state->collection_id)
         {
           GVariantBuilder find_builder;
@@ -3602,7 +3583,6 @@ flatpak_dir_pull (FlatpakDir          *self,
                                  collection_ref.collection_id, collection_ref.ref_name, state->remote_name);
         }
       else
-#endif  /* FLATPAK_ENABLE_P2P */
         {
           flatpak_remote_state_lookup_ref (state, ref, &rev, NULL, error);
           if (rev == NULL && error != NULL && *error == NULL)
@@ -3916,7 +3896,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!ostree_repo_load_commit (src_repo, checksum, &new_commit, NULL, error))
     return FALSE;
 
-#ifdef FLATPAK_ENABLE_P2P
   if (gpg_verify)
     {
       /* Verify the commit’s binding to the ref and to the repo. See
@@ -3965,7 +3944,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                  commit_collection_id, collection_id);
         }
     }
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (old_commit)
     {
@@ -6669,7 +6647,6 @@ flatpak_dir_install (FlatpakDir          *self,
                                  progress, cancellable, error))
             return FALSE;
 
-#ifdef FLATPAK_ENABLE_P2P
           if (state->collection_id != NULL &&
               !flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
                                  child_repo,
@@ -6677,7 +6654,6 @@ flatpak_dir_install (FlatpakDir          *self,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
           if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             return FALSE;
@@ -7289,14 +7265,12 @@ flatpak_dir_update (FlatpakDir          *self,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
-#ifdef FLATPAK_ENABLE_P2P
           if (state->collection_id != NULL &&
               !flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
           if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             return FALSE;
@@ -8473,7 +8447,6 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
     }
   else
     {
-#ifdef FLATPAK_ENABLE_P2P
       g_autofree char *latest_rev = NULL;
       g_autoptr(GVariant) commit_v = NULL;
       g_autoptr(GError) local_error = NULL;
@@ -8507,9 +8480,6 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 
           state->metadata = g_variant_get_child_value (commit_v, 0);
         }
-#else  /* if !FLATPAK_ENABLE_P2P */
-      g_assert_not_reached ();
-#endif  /* !FLATPAK_ENABLE_P2P */
     }
 
   return g_steal_pointer (&state);
@@ -9732,10 +9702,8 @@ create_origin_remote_config (OstreeRepo   *repo,
   if (main_ref)
     g_key_file_set_string (*new_config, group, "xa.main-ref", main_ref);
 
-#ifdef FLATPAK_ENABLE_P2P
   if (collection_id)
     g_key_file_set_string (*new_config, group, "collection-id", collection_id);
-#endif  /* FLATPAK_ENABLE_P2P */
 
   return g_steal_pointer (&remote);
 }
@@ -9854,12 +9822,8 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
       g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
     }
 
-#ifdef FLATPAK_ENABLE_P2P
   collection_id = g_key_file_get_string (keyfile, source_group,
                                          FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
-#else  /* if !FLATPAK_ENABLE_P2P */
-  collection_id = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
   if (collection_id != NULL)
     {
       if (gpg_key == NULL)
@@ -9958,12 +9922,8 @@ parse_ref_file (GBytes *data,
       gpg_data = g_bytes_new_take (decoded, decoded_len);
     }
 
-#ifdef FLATPAK_ENABLE_P2P
   collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                          FLATPAK_REF_COLLECTION_ID_KEY, NULL);
-#else  /* if !FLATPAK_ENABLE_P2P */
-  collection_id = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
   if (collection_id != NULL && gpg_data == NULL)
     return flatpak_fail (error, "Collection ID requires GPG key to be provided");
 
@@ -10043,12 +10003,6 @@ flatpak_dir_find_remote_by_uri (FlatpakDir   *self,
 
   if (!flatpak_dir_ensure_repo (self, NULL, NULL))
     return NULL;
-
-#ifndef FLATPAK_ENABLE_P2P
-  /* If we don’t have P2P support enabled, we always want to ignore collection IDs
-   * in comparisons. */
-  collection_id = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
 
   remotes = flatpak_dir_list_enumerated_remotes (self, NULL, NULL);
   if (remotes)
@@ -10482,7 +10436,6 @@ flatpak_dir_list_remote_refs (FlatpakDir   *self,
   return TRUE;
 }
 
-#ifdef FLATPAK_ENABLE_P2P
 gboolean
 _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
                                                  FlatpakRemoteState *state, /* This state does not have metadata filled out yet */
@@ -10627,7 +10580,6 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir    *self,
 
   return TRUE;
 }
-#endif  /* FLATPAK_ENABLE_P2P */
 
 gboolean
 flatpak_dir_update_remote_configuration_for_state (FlatpakDir    *self,
@@ -11133,10 +11085,8 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir *self,
               branches = default_branches;
             }
 
-#ifdef FLATPAK_ENABLE_P2P
           extension_collection_id = g_key_file_get_string (metakey, groups[i],
                                                            FLATPAK_METADATA_KEY_COLLECTION_ID, NULL);
-#endif  /* FLATPAK_ENABLE_P2P */
 
           /* For the moment, none of the related ref machinery handles
            * collection IDs which don’t match the original ref. */
@@ -11331,10 +11281,8 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir *self,
           else
             branch = parts[3];
 
-#ifdef FLATPAK_ENABLE_P2P
           extension_collection_id = g_key_file_get_string (metakey, groups[i],
                                                            FLATPAK_METADATA_KEY_COLLECTION_ID, NULL);
-#endif  /* FLATPAK_ENABLE_P2P */
 
           /* As we’re looking locally, we can’t support extension
            * collection IDs which don’t match the current remote (since the

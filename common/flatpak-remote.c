@@ -28,9 +28,7 @@
 #include <string.h>
 #include <ostree.h>
 
-#ifdef FLATPAK_ENABLE_P2P
 #include <ostree-repo-finder-avahi.h>
-#endif  /* FLATPAK_ENABLE_P2P */
 
 /**
  * SECTION:flatpak-remote
@@ -345,7 +343,6 @@ flatpak_remote_set_url (FlatpakRemote *self,
 char *
 flatpak_remote_get_collection_id (FlatpakRemote *self)
 {
-#ifdef FLATPAK_ENABLE_P2P
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
   if (priv->local_collection_id_set)
@@ -353,7 +350,6 @@ flatpak_remote_get_collection_id (FlatpakRemote *self)
 
   if (priv->dir)
     return flatpak_dir_get_remote_collection_id (priv->dir, priv->name);
-#endif  /** FLATPAK_ENABLE_P2P */
 
   return NULL;
 }
@@ -373,7 +369,6 @@ void
 flatpak_remote_set_collection_id (FlatpakRemote *self,
                                   const char    *collection_id)
 {
-#ifdef FLATPAK_ENABLE_P2P
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
   if (collection_id != NULL && *collection_id == '\0')
@@ -382,7 +377,6 @@ flatpak_remote_set_collection_id (FlatpakRemote *self,
   g_free (priv->local_collection_id);
   priv->local_collection_id = g_strdup (collection_id);
   priv->local_collection_id_set = TRUE;
-#endif  /* FLATPAK_ENABLE_P2P */
 }
 
 /**
@@ -734,7 +728,6 @@ flatpak_remote_new_with_dir (const char *name,
   return self;
 }
 
-#ifdef FLATPAK_ENABLE_P2P
 static FlatpakRemoteType
 repo_finder_to_remote_type (OstreeRepoFinder *repo_finder)
 {
@@ -768,7 +761,6 @@ flatpak_remote_new_from_ostree (OstreeRemote     *remote,
 
   return self;
 }
-#endif  /* FLATPAK_ENABLE_P2P */
 
 /**
  * flatpak_remote_new:

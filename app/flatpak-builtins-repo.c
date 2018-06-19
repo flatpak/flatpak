@@ -198,14 +198,12 @@ flatpak_builtin_repo (int argc, char **argv,
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
-#ifdef FLATPAK_ENABLE_P2P
   /* Try loading the metadata from the ostree-metadata branch first. If that
    * fails, fall back to the summary file. */
   ostree_metadata_ref = OSTREE_REPO_METADATA_REF;
   if (!ostree_repo_resolve_rev (repo, ostree_metadata_ref,
                                 TRUE, &ostree_metadata_checksum, error))
     return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (ostree_metadata_checksum != NULL)
     {

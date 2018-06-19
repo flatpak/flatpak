@@ -76,9 +76,7 @@ static GOptionEntry common_options[] = {
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this remote"), N_("TITLE") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this remote"), N_("BRANCH") },
-#ifdef FLATPAK_ENABLE_P2P
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
-#endif  /* FLATPAK_ENABLE_P2P */
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Add OCI registry"), NULL },
@@ -255,11 +253,9 @@ load_options (const char *filename,
   if (str != NULL)
     opt_url = str;
 
-#ifdef FLATPAK_ENABLE_P2P
   str = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
   if (str != NULL)
     opt_collection_id = str;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   str = g_key_file_get_locale_string (keyfile, FLATPAK_REPO_GROUP,
                                       FLATPAK_REPO_TITLE_KEY, NULL, NULL);
@@ -338,7 +334,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
 
-#ifdef FLATPAK_ENABLE_P2P
   if (opt_collection_id != NULL &&
       !ostree_validate_collection_id (opt_collection_id, &local_error))
     return flatpak_fail (error, _("‘%s’ is not a valid collection ID: %s"), opt_collection_id, local_error->message);
@@ -346,7 +341,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (opt_collection_id != NULL &&
       (opt_no_gpg_verify || opt_gpg_import == NULL || opt_gpg_import[0] == NULL))
     return flatpak_fail (error, _("GPG verification is required if collections are enabled"));
-#endif  /* FLATPAK_ENABLE_P2P */
 
   remote_name = argv[1];
   location = argv[2];

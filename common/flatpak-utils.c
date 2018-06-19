@@ -2581,7 +2581,6 @@ flatpak_repo_set_collection_id (OstreeRepo  *repo,
                                 const char  *collection_id,
                                 GError     **error)
 {
-#ifdef FLATPAK_ENABLE_P2P
   g_autoptr(GKeyFile) config = NULL;
 
   if (!ostree_repo_set_collection_id (repo, collection_id, error))
@@ -2590,7 +2589,6 @@ flatpak_repo_set_collection_id (OstreeRepo  *repo,
   config = ostree_repo_copy_config (repo);
   if (!ostree_repo_write_config (repo, config, error))
     return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   return TRUE;
 }
@@ -2853,12 +2851,8 @@ populate_commit_data_cache (GVariant   *metadata,
   gsize n, i;
   const char *old_collection_id;
 
-#if FLATPAK_ENABLE_P2P
   if (!g_variant_lookup (metadata, "ostree.summary.collection-id", "&s", &old_collection_id))
     old_collection_id = NULL;
-#else  /* if !FLATPAK_ENABLE_P2P */
-  old_collection_id = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
 
   cache_v = g_variant_lookup_value (metadata, "xa.cache", NULL);
 
@@ -2960,11 +2954,7 @@ flatpak_repo_update (OstreeRepo   *repo,
       deploy_collection_id = g_key_file_get_boolean (config, "flatpak", "deploy-collection-id", NULL);
     }
 
-#ifdef FLATPAK_ENABLE_P2P
   collection_id = ostree_repo_get_collection_id (repo);
-#else  /* if !FLATPAK_ENABLE_P2P */
-  collection_id = NULL;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (title)
     g_variant_builder_add (&builder, "{sv}", "xa.title",
@@ -3028,11 +3018,9 @@ flatpak_repo_update (OstreeRepo   *repo,
 
   old_summary = flatpak_repo_load_summary (repo, NULL);
 
-#ifdef FLATPAK_ENABLE_P2P
   if (!ostree_repo_resolve_rev (repo, OSTREE_REPO_METADATA_REF,
                                 TRUE, &old_ostree_metadata_checksum, error))
     return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (old_summary != NULL &&
       old_ostree_metadata_checksum != NULL &&
@@ -3155,7 +3143,6 @@ flatpak_repo_update (OstreeRepo   *repo,
   /* Write out a new metadata commit for the repository. */
   if (collection_id != NULL)
     {
-#ifdef FLATPAK_ENABLE_P2P
       OstreeCollectionRef collection_ref = { (gchar *) collection_id, (gchar *) OSTREE_REPO_METADATA_REF };
       g_autofree gchar *new_ostree_metadata_checksum = NULL;
       g_autoptr(OstreeMutableTree) mtree = NULL;
@@ -3210,10 +3197,6 @@ flatpak_repo_update (OstreeRepo   *repo,
 
       if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
         goto out;
-#else  /* if !FLATPAK_ENABLE_P2P */
-      g_assert_not_reached ();
-      goto out;
-#endif  /* FLATPAK_ENABLE_P2P */
     }
 
   /* Regenerate and re-sign the summary file. */
@@ -3685,11 +3668,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
   arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
-#ifdef FLATPAK_ENABLE_P2P
   collection_id = ostree_repo_get_collection_id (repo);
-#else  /* if !FLATPAK_ENABLE_P2P */
-  collection_id = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
 
   if (!ostree_repo_list_refs (repo,
                               NULL,
@@ -3932,14 +3911,12 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                     }
                 }
 
-#ifdef FLATPAK_ENABLE_P2P
               if (collection_id != NULL)
                 {
                   const OstreeCollectionRef collection_ref = { (char *) collection_id, branch };
                   ostree_repo_transaction_set_collection_ref (repo, &collection_ref, commit_checksum);
                 }
               else
-#endif  /* FLATPAK_ENABLE_P2P */
                 {
                   ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
                 }
@@ -4641,12 +4618,8 @@ flatpak_bundle_load (GFile   *file,
 
   if (collection_id != NULL)
     {
-#ifdef FLATPAK_ENABLE_P2P
       if (!g_variant_lookup (metadata, "collection-id", "s", collection_id))
         *collection_id = NULL;
-#else  /* if !FLATPAK_ENABLE_P2P */
-      *collection_id = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
     }
 
   if (app_metadata != NULL)
@@ -4705,11 +4678,9 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   if (metadata == NULL)
     return FALSE;
 
-#ifdef FLATPAK_ENABLE_P2P
   if (!ostree_repo_get_remote_option (repo, remote, "collection-id", NULL,
                                       &remote_collection_id, NULL))
     remote_collection_id = NULL;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (remote_collection_id != NULL && collection_id != NULL &&
       strcmp (remote_collection_id, collection_id) != 0)

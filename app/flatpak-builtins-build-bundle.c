@@ -234,11 +234,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
   if (opt_runtime_repo)
     g_variant_builder_add (&metadata_builder, "{sv}", "runtime-repo", g_variant_new_string (opt_runtime_repo));
 
-#ifdef FLATPAK_ENABLE_P2P
   collection_id = ostree_repo_get_collection_id (repo);
-#else  /* if !FLATPAK_ENABLE_P2P */
-  collection_id = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
   g_variant_builder_add (&metadata_builder, "{sv}", "collection-id",
                          g_variant_new_string (collection_id ? collection_id : ""));
 
