@@ -665,7 +665,6 @@
                         Available since 0.6.7.
                     </para></listitem>
                 </varlistentry>
-                <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
                 <varlistentry>
                     <term><option>collection-id</option> (string)</term>
                     <listitem><para>
@@ -674,10 +673,9 @@
                         or runtime that the extension point is for.
                         Currently, extension points must be in the same collection as the
                         application or runtime that they are for.
-                        Available since FIXME.
+                        Available since 0.99.1.
                     </para></listitem>
                 </varlistentry>
-                -->
             </variablelist>
         </refsect2>
         <refsect2>

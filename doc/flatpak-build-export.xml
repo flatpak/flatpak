@@ -63,16 +63,14 @@
             subdirectories and the <filename>metadata</filename> file are included
             in the commit, anything else is ignored.
         </para>
-        <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
         <para>
             When exporting a flatpak to be published to the internet,
-            <option>-FIXME-collection-id=COLLECTION-ID</option> should be specified
+            <option>--collection-id=COLLECTION-ID</option> should be specified
             as a globally unique reverse DNS value to identify the collection of
             flatpaks this will be added to. Setting a globally unique collection
             ID allows the apps in the repository to be shared over peer to peer
             systems without needing further configuration.
         </para>
-        -->
         <para>
             The build-update-repo command should be used to update repository
             metadata whenever application builds are added to a repository.
@@ -112,9 +110,8 @@
                 </para></listitem>
             </varlistentry>
 
-            <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
             <varlistentry>
-                <term><option>-FIXME-collection-id=COLLECTION-ID</option></term>
+                <term><option>--collection-id=COLLECTION-ID</option></term>
 
                 <listitem><para>
                     Set as the collection ID of the repository. Setting a globally
@@ -125,7 +122,6 @@
                     repository.
                 </para></listitem>
             </varlistentry>
-            -->
 
             <varlistentry>
                 <term><option>--arch=ARCH</option></term>

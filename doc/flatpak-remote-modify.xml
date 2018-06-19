@@ -189,18 +189,16 @@
                 </para></listitem>
             </varlistentry>
 
-            <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
             <varlistentry>
-                <term><option>-FIXME-collection-id=COLLECTION-ID</option></term>
+                <term><option>--collection-id=COLLECTION-ID</option></term>
 
                 <listitem><para>
                     The globally unique identifier of the remote repository, to
                     allow mirrors to be grouped. This must only be set to the
                     collection ID provided by the remote, and must not be set if the
-                    remote does not provide an collection ID.
+                    remote does not provide a collection ID.
                 </para></listitem>
             </varlistentry>
-            -->
 
             <varlistentry>
                 <term><option>--url=URL</option></term>

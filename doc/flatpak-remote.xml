@@ -80,18 +80,13 @@
                     <term><option>gpg-verify-summary</option> (boolean)</term>
                     <listitem>
                         <para>Whether to use GPG verification for the summary of this remote.</para>
-                        <!--
-                        FIXME: Uncomment this when P2P support is made unconditional on enable-p2p.
                         <para>This is ignored if <option>collection-id</option> is set, as refs are verified in commit metadata in that case. Enabling <option>gpg-verify-summary</option> would break peer to peer distribution of refs.</para>
-                        -->
                     </listitem>
                 </varlistentry>
-                <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
                 <varlistentry>
                     <term><option>collection-id</option> (string)</term>
                     <listitem><para>The globally unique identifier for the upstream collection repository, to allow mirrors to be grouped.</para></listitem>
                 </varlistentry>
-                -->
             </variablelist>
             <para>
                 All flatpak-specific keys have a xa. prefix:
@@ -148,13 +143,17 @@
 [remote "gnome-nightly-apps"]
 gpg-verify=true
 gpg-verify-summary=true
-<!--
-FIXME: Uncomment this when P2P support is made unconditional on enable-p2p.
-gpg-verify-summary=false
-collection-id=org.gnome.Apps.Nightly
--->
 url=https://sdk.gnome.org/nightly/repo-apps/
 xa.title=GNOME Applications
+</programlisting>
+
+<programlisting>
+[remote "flathub"]
+gpg-verify=true
+gpg-verify-summary=false
+collection-id=org.flathub.Stable
+url=https://dl.flathub.org/repo/
+xa.title=Flathub
 </programlisting>
 
     </refsect1>
