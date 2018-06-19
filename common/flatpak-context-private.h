@@ -109,6 +109,7 @@ void           flatpak_context_add_bus_filters (FlatpakContext *context,
 gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context);
 gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context);
 
+void           flatpak_context_reset_permissions (FlatpakContext *context);
 void           flatpak_context_make_sandboxed (FlatpakContext *context);
 
 gboolean       flatpak_context_allows_features (FlatpakContext *context,
