@@ -12,7 +12,7 @@ pkg_install sudo which attr fuse bison \
     /usr/bin/{update-mime-database,update-desktop-database,gtk-update-icon-cache}
 pkg_install_testing ostree-devel ostree
 pkg_install_if_os fedora gjs parallel clang python2
-pkg_install_builddeps flatpak
+pkg_install_builddeps flatpak ostree
 
 (git clone --depth=1 https://github.com/ostreedev/ostree.git
  cd ostree
