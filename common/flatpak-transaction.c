@@ -67,6 +67,8 @@ struct _FlatpakTransactionOperation {
   char *resolved_commit;
   GBytes *resolved_metadata;
   GKeyFile *resolved_metakey;
+  GBytes *resolved_old_metadata;
+  GKeyFile *resolved_old_metakey;
   int run_after_count;
   int run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList *run_before_ops;
@@ -374,6 +376,10 @@ flatpak_transaction_operation_finalize (GObject *object)
     g_bytes_unref (self->resolved_metadata);
   if (self->resolved_metakey)
     g_key_file_unref (self->resolved_metakey);
+  if (self->resolved_old_metadata)
+    g_bytes_unref (self->resolved_old_metadata);
+  if (self->resolved_old_metakey)
+    g_key_file_unref (self->resolved_old_metakey);
   g_list_free (self->run_before_ops);
 
   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
@@ -1375,10 +1381,35 @@ emit_op_done (FlatpakTransaction *self,
   g_signal_emit (self, signals[OPERATION_DONE], 0, op, commit, details);
 }
 
+static GBytes *
+load_deployed_metadata (FlatpakTransaction *self, const char *ref)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
+  g_autofree char *metadata_contents = NULL;
+  gsize metadata_contents_length;
+
+  deploy_dir = flatpak_dir_get_if_deployed (priv->dir, ref, NULL, NULL);
+  if (deploy_dir == NULL)
+    return NULL;
+
+  metadata_file = g_file_get_child (deploy_dir, "metadata");
+
+  if (!g_file_load_contents (metadata_file, NULL, &metadata_contents, &metadata_contents_length, NULL, NULL))
+    {
+      g_debug ("No metadata in local deploy of %s", ref);
+      return NULL;
+    }
+
+  return g_bytes_new_take (g_steal_pointer (&metadata_contents), metadata_contents_length + 1);
+}
+
 static void
 mark_op_resolved (FlatpakTransactionOperation *op,
                   const char *commit,
-                  GBytes *metadata)
+                  GBytes *metadata,
+                  GBytes *old_metadata)
 {
   g_assert (op != NULL);
 
@@ -1397,6 +1428,17 @@ mark_op_resolved (FlatpakTransactionOperation *op,
         }
       else
         g_message ("Warning: Failed to parse metadata for %s\n", op->ref);
+    }
+  if (old_metadata)
+    {
+      g_autoptr(GKeyFile) metakey = g_key_file_new ();
+      if (g_key_file_load_from_bytes (metakey, old_metadata, G_KEY_FILE_NONE, NULL))
+        {
+          op->resolved_old_metadata = g_bytes_ref (old_metadata);
+          op->resolved_old_metakey = g_steal_pointer (&metakey);
+        }
+      else
+        g_message ("Warning: Failed to parse old metadata for %s\n", op->ref);
     }
 }
 
@@ -1419,35 +1461,24 @@ resolve_ops (FlatpakTransaction *self,
       g_autoptr(GVariant) commit_data = NULL;
       g_autoptr(GVariant) commit_metadata = NULL;
       g_autoptr(GBytes) metadata_bytes = NULL;
+      g_autoptr(GBytes) old_metadata_bytes = NULL;
 
       if (op->resolved)
         continue;
 
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         {
-          g_autoptr(GFile) deploy_dir = NULL;
-          g_autoptr(GFile) metadata_file = NULL;
-          g_autofree char *metadata_contents = NULL;
-          gsize metadata_contents_length;
-
           /* We resolve to the deployed metadata, becasue we need it to uninstall related ops */
 
-          deploy_dir = flatpak_dir_get_if_deployed (priv->dir, op->ref, NULL, cancellable);
-          metadata_file = g_file_get_child (deploy_dir, "metadata");
-
-          if (!g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_contents_length, NULL, NULL))
-            g_debug ("No metadata in local deploy");
-          else
-            metadata_bytes = g_bytes_new_take (g_steal_pointer (&metadata_contents), metadata_contents_length + 1);
-
-          mark_op_resolved (op, NULL, metadata_bytes);
+          metadata_bytes = load_deployed_metadata (self, op->ref);
+          mark_op_resolved (op, NULL, metadata_bytes, NULL);
           continue;
         }
 
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
         {
           g_assert (op->commit != NULL);
-          mark_op_resolved (op, op->commit, op->external_metadata);
+          mark_op_resolved (op, op->commit, op->external_metadata, NULL);
           continue;
         }
 
@@ -1498,7 +1529,9 @@ resolve_ops (FlatpakTransaction *self,
             metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
         }
 
-      mark_op_resolved (op, checksum, metadata_bytes);
+      old_metadata_bytes = load_deployed_metadata (self, op->ref);
+
+      mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
     }
 
   return TRUE;
