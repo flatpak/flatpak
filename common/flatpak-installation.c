@@ -386,6 +386,20 @@ flatpak_installation_get_dir_maybe_no_repo (FlatpakInstallation *self)
 }
 
 FlatpakDir *
+flatpak_installation_clone_dir_noensure (FlatpakInstallation *self)
+{
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir_maybe_no_repo (self);
+
+  /* Pull, prune, etc are not threadsafe, so we work on a copy */
+  dir_clone = flatpak_dir_clone (dir);
+
+  return g_steal_pointer (&dir_clone);
+}
+
+FlatpakDir *
 flatpak_installation_clone_dir (FlatpakInstallation *self,
                                 GCancellable  *cancellable,
                                 GError       **error)
