@@ -188,9 +188,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
             return FALSE;
         }
 
-#ifdef FLATPAK_ENABLE_P2P
       g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
-#endif
 
       if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
         installed_size = GUINT64_FROM_BE (installed_size);

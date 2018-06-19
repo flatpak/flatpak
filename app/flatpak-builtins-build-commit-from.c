@@ -439,16 +439,12 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       if (opt_body)
         body = (const char *)opt_body;
 
-#ifdef FLATPAK_ENABLE_P2P
       dst_collection_id = ostree_repo_get_collection_id (dst_repo);
-#endif  /* FLATPAK_ENABLE_P2P */
 
       /* Copy old metadata */
       g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
 
-      /* Bindings. xa.ref is deprecated but added anyway for backwards compatibility.
-       * Add the bindings even if we are not built with P2P support, since other
-       * flatpak builds might be. */
+      /* Bindings. xa.ref is deprecated but added anyway for backwards compatibility. */
       g_variant_builder_add (&metadata_builder, "{sv}", "ostree.collection-binding",
                              g_variant_new_string (dst_collection_id ? dst_collection_id : ""));
       g_variant_builder_add (&metadata_builder, "{sv}", "ostree.ref-binding",
@@ -526,14 +522,12 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
             }
         }
 
-#ifdef FLATPAK_ENABLE_P2P
       if (dst_collection_id != NULL)
         {
           OstreeCollectionRef ref = { (char *) dst_collection_id, (char *) dst_ref };
           ostree_repo_transaction_set_collection_ref (dst_repo, &ref, commit_checksum);
         }
       else
-#endif  /* FLATPAK_ENABLE_P2P */
         {
           ostree_repo_transaction_set_ref (dst_repo, NULL, dst_ref, commit_checksum);
         }

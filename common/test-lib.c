@@ -359,9 +359,7 @@ main (int argc, char *argv[])
       g_autoptr(GPtrArray) refs = NULL;
       const char *collection_id = NULL;
 
-#ifdef FLATPAK_ENABLE_P2P
       collection_id = flatpak_remote_get_collection_id (remote);
-#endif  /* !FLATPAK_ENABLE_P2P */
 
       g_print ("\nRemote: %s %u %d %s %s %s %s %d %d %s\n",
                flatpak_remote_get_name (remote),

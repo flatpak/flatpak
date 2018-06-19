@@ -201,9 +201,7 @@ handle_runtime_repo_deps (FlatpakDir *dir, const char *dep_url, GError **error)
   group = g_strdup_printf ("remote \"%s\"", new_remote);
   runtime_url = g_key_file_get_string (config, group, "url", NULL);
   g_assert (runtime_url != NULL);
-#ifdef FLATPAK_ENABLE_P2P
   runtime_collection_id = g_key_file_get_string (config, group, "collection-id", NULL);
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (remote_is_already_configured (dir, runtime_url, runtime_collection_id))
     return TRUE;
@@ -331,9 +329,7 @@ handle_suggested_remote_name (FlatpakDir *dir, GBytes *data, GError **error)
   if (url == NULL)
     return TRUE;
 
-#ifdef FLATPAK_ENABLE_P2P
   collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP, FLATPAK_REF_COLLECTION_ID_KEY, NULL);
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (remote_is_already_configured (dir, url, collection_id))
     return TRUE;

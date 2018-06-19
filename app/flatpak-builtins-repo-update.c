@@ -52,10 +52,8 @@ static GOptionEntry options[] = {
   { "redirect-url", 0, 0, G_OPTION_ARG_STRING, &opt_redirect_url, N_("Redirect this repo to a new URL"), N_("URL") },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this repository"), N_("TITLE") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
-#ifdef FLATPAK_ENABLE_P2P
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
   { "deploy-collection-id", 0, 0, G_OPTION_ARG_NONE, &opt_deploy_collection_id, N_("Permanently deploy collection ID to client remote configurations"), NULL },
-#endif  /* FLATPAK_ENABLE_P2P */
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import new default GPG public key from FILE"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
@@ -455,11 +453,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
        * Changing the collection ID between two different non-empty values is too
        * dangerous: it will break all clients who have previously pulled from the repository.
        * Require the user to recreate the repository from scratch in that case. */
-#ifdef FLATPAK_ENABLE_P2P
       const char *old_collection_id = ostree_repo_get_collection_id (repo);
-#else  /* if !FLATPAK_ENABLE_P2P */
-      const char *old_collection_id = NULL;
-#endif  /* !FLATPAK_ENABLE_P2P */
       const char *new_collection_id = opt_collection_id[0] ? opt_collection_id : NULL;
 
       if (old_collection_id != NULL &&
