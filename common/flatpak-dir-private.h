@@ -48,10 +48,7 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REF_IS_RUNTIME_KEY "IsRuntime"
 #define FLATPAK_REF_NAME_KEY "Name"
 #define FLATPAK_REF_BRANCH_KEY "Branch"
-
-#ifdef FLATPAK_ENABLE_P2P
 #define FLATPAK_REF_COLLECTION_ID_KEY "CollectionID"
-#endif  /* FLATPAK_ENABLE_P2P */
 
 #define FLATPAK_REPO_GROUP "Flatpak Repo"
 #define FLATPAK_REPO_VERSION_KEY "Version"
@@ -61,9 +58,7 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
 #define FLATPAK_REPO_NODEPS_KEY "NoDeps"
 
-#ifdef FLATPAK_ENABLE_P2P
 #define FLATPAK_REPO_COLLECTION_ID_KEY "CollectionID"
-#endif  /* FLATPAK_ENABLE_P2P */
 
 #define FLATPAK_DEFAULT_UPDATE_FREQUENCY 100
 #define FLATPAK_CLI_UPDATE_FREQUENCY 300
@@ -199,19 +194,6 @@ typedef enum {
 } FlatpakDirStorageType;
 
 GQuark       flatpak_dir_error_quark (void);
-
-#ifndef FLATPAK_ENABLE_P2P
-/* Rather than putting #ifdefs around all the function arguments for result sets,
- * define away OstreeRepoFinderResult if we’re compiling without P2P support.
- * The surrounding code should always pass in NULL if P2P support is disabled. */
-typedef void OstreeRepoFinderResult;
-typedef void** OstreeRepoFinderResultv;
-
-static inline void no_op (gpointer data) {}
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoFinderResult, no_op)
-G_DEFINE_AUTO_CLEANUP_FREE_FUNC (OstreeRepoFinderResultv, no_op, NULL)
-#endif  /* !FLATPAK_ENABLE_P2P */
 
 /**
  * FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT:

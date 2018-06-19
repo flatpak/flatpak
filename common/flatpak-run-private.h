@@ -88,9 +88,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_VERSION "version"
 #define FLATPAK_METADATA_KEY_VERSIONS "versions"
 
-#ifdef FLATPAK_ENABLE_P2P
 #define FLATPAK_METADATA_KEY_COLLECTION_ID "collection-id"
-#endif  /* FLATPAK_ENABLE_P2P */
 
 #define FLATPAK_METADATA_GROUP_EXTRA_DATA "Extra Data"
 #define FLATPAK_METADATA_KEY_EXTRA_DATA_CHECKSUM "checksum"

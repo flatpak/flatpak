@@ -19,9 +19,7 @@ static char *flatpak_installationsdir;
 static char *gpg_homedir;
 static char *gpg_args;
 static char *repo_url;
-#ifdef FLATPAK_ENABLE_P2P
 static char *repo_collection_id;
-#endif  /* FLATPAK_ENABLE_P2P */
 int httpd_pid = -1;
 
 static const char *gpg_id = "7B0961FD";
@@ -212,9 +210,7 @@ test_ref (void)
   g_assert_cmpstr (flatpak_ref_get_name (ref), ==, "org.flatpak.Hello");
   g_assert_cmpstr (flatpak_ref_get_arch (ref), ==, "x86_64");
   g_assert_cmpstr (flatpak_ref_get_branch (ref), ==, "master");
-#ifdef FLATPAK_ENABLE_P2P
   g_assert_null (flatpak_ref_get_collection_id (ref));
-#endif  /* FLATPAK_ENABLE_P2P */
 
   formatted = flatpak_ref_format_ref (ref);
   g_assert_cmpstr (formatted, ==, valid);
@@ -290,9 +286,7 @@ test_remote_by_name (void)
   g_assert_true (flatpak_remote_get_gpg_verify (remote));
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 1);
 
-#ifdef FLATPAK_ENABLE_P2P
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
-#endif  /* FLATPAK_ENABLE_P2P */
 }
 
 static void
@@ -301,12 +295,10 @@ test_remote (void)
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakRemote) remote = NULL;
-#ifdef FLATPAK_ENABLE_P2P
   g_autoptr(GFile) inst_file = NULL;
   g_autoptr(GFile) repo_file = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   gboolean gpg_verify_summary;
-#endif
   gboolean res;
 
   inst = flatpak_installation_new_user (NULL, &error);
@@ -315,7 +307,6 @@ test_remote (void)
   remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
 
-#ifdef FLATPAK_ENABLE_P2P
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
 
   /* Flatpak doesn't provide access to gpg-verify-summary, so use ostree */
@@ -350,7 +341,6 @@ test_remote (void)
 
   flatpak_remote_set_collection_id (remote, repo_collection_id);
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
-#endif  /* FLATPAK_ENABLE_P2P */
 
   g_assert_cmpstr (flatpak_remote_get_title (remote), ==, NULL);
   flatpak_remote_set_title (remote, "Test Repo");
@@ -389,7 +379,6 @@ test_list_refs (void)
   g_assert_cmpint (refs->len, ==, 0);
 }
 
-#ifdef FLATPAK_ENABLE_P2P
 static void
 create_multi_collection_id_repo (const char *repo_dir)
 {
@@ -501,7 +490,6 @@ test_list_refs_in_remotes (void)
       g_assert_nonnull (g_hash_table_lookup (ref_specs, ref_spec));
     }
 }
-#endif /* FLATPAK_ENABLE_P2P */
 
 static void
 test_list_remote_refs (void)
@@ -665,9 +653,7 @@ test_install_launch_uninstall (void)
   g_assert_cmpstr (flatpak_ref_get_arch (FLATPAK_REF (ref)), ==, flatpak_get_default_arch ());
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "master");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (ref)), ==, FLATPAK_REF_KIND_RUNTIME);
-#ifdef FLATPAK_ENABLE_P2P
   g_assert_null (flatpak_ref_get_collection_id (FLATPAK_REF (ref)));
-#endif  /* FLATPAK_ENABLE_P2P */
 
   g_assert_cmpuint (flatpak_installed_ref_get_installed_size (ref), >, 0);
 
@@ -715,9 +701,7 @@ test_install_launch_uninstall (void)
   g_assert_cmpstr (flatpak_ref_get_arch (FLATPAK_REF (ref)), ==, flatpak_get_default_arch ());
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "master");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (ref)), ==, FLATPAK_REF_KIND_APP);
-#ifdef FLATPAK_ENABLE_P2P
   g_assert_null (flatpak_ref_get_collection_id (FLATPAK_REF (ref)));
-#endif  /* FLATPAK_ENABLE_P2P */
 
   g_assert_cmpuint (flatpak_installed_ref_get_installed_size (ref), >, 0);
   g_assert_true (flatpak_installed_ref_get_is_current (ref));
@@ -935,9 +919,7 @@ make_test_runtime (void)
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
   argv[0] = arg0;
-#ifdef FLATPAK_ENABLE_P2P
   argv[3] = repo_collection_id;
-#endif /* FLATPAK_ENABLE_P2P */
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -950,9 +932,7 @@ make_test_app (void)
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
-#ifdef FLATPAK_ENABLE_P2P
   argv[3] = repo_collection_id;
-#endif /* FLATPAK_ENABLE_P2P */
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -965,9 +945,7 @@ update_test_app (void)
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
-#ifdef FLATPAK_ENABLE_P2P
   argv[3] = repo_collection_id;
-#endif /* FLATPAK_ENABLE_P2P */
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -1003,10 +981,8 @@ add_remote (void)
   g_autofree char *gpgimport = NULL;
   g_autofree char *port = NULL;
   g_autofree char *pid = NULL;
-#ifdef FLATPAK_ENABLE_P2P
   g_autofree char *collection_id_arg = NULL;
   g_autofree char *argv_str = NULL;
-#endif /* FLATPAK_ENABLE_P2P */
 
   launch_httpd ();
 
@@ -1024,16 +1000,10 @@ add_remote (void)
 
   gpgimport = g_strdup_printf ("--gpg-import=%s/pubring.gpg", gpg_homedir);
   repo_url = g_strdup_printf ("http://127.0.0.1:%s/test", port);
-#ifdef FLATPAK_ENABLE_P2P
   collection_id_arg = g_strdup_printf ("--collection-id=%s", repo_collection_id);
-#endif /* FLATPAK_ENABLE_P2P */
 
   argv[3] = gpgimport;
-#ifdef FLATPAK_ENABLE_P2P
   argv[4] = collection_id_arg;
-#else
-  argv[4] = "--";
-#endif /* FLATPAK_ENABLE_P2P */
   argv[5] = (char *)repo_name;
   argv[6] = repo_url;
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
@@ -1092,9 +1062,7 @@ setup_multiple_installations (void)
 static void
 setup_repo (void)
 {
-#ifdef FLATPAK_ENABLE_P2P
   repo_collection_id = "com.example.Test";
-#endif /* FLATPAK_ENABLE_P2P */
 
   make_test_runtime ();
   make_test_app ();
@@ -1238,9 +1206,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/list-remote-refs", test_list_remote_refs);
   g_test_add_func ("/library/list-refs", test_list_refs);
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
-#ifdef FLATPAK_ENABLE_P2P
   g_test_add_func ("/library/list-refs-in-remote", test_list_refs_in_remotes);
-#endif /* FLATPAK_ENABLE_P2P */
   g_test_add_func ("/library/list-updates", test_list_updates);
 
   global_setup ();

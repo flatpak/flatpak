@@ -307,9 +307,7 @@ flatpak_bundle_ref_new (GFile   *file,
                       "branch", parts[3],
                       "commit", commit,
                       "file", file,
-#ifdef FLATPAK_ENABLE_P2P
                       "collection-id", collection_id,
-#endif  /* FLATPAK_ENABLE_P2P */
                       NULL);
   priv = flatpak_bundle_ref_get_instance_private (ref);
 

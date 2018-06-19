@@ -286,9 +286,7 @@ flatpak_related_ref_new (const char  *collection_id,
                       "subpaths", subpaths,
                       "should-download", download,
                       "should-delete", delete,
-#ifdef FLATPAK_ENABLE_P2P
                       "collection-id", collection_id,
-#endif  /* FLATPAK_ENABLE_P2P */
                       NULL);
 
   return ref;

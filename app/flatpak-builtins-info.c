@@ -212,9 +212,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           if (xa_metadata == NULL)
             g_printerr (_("Warning: Commit has no flatpak metadata\n"));
 
-#ifdef FLATPAK_ENABLE_P2P
           g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
-#endif
         }
 
       g_print ("%s%s%s %s\n", on, _("Ref:"), off, ref);

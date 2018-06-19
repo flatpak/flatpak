@@ -32,7 +32,6 @@ AC_INIT([Flatpak],
 GLIB_REQS=2.44
 SYSTEM_BWRAP_REQS=0.2.1
 OSTREE_REQS=2018.6
-OSTREE_P2P_REQS=2018.2
 
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
@@ -265,29 +264,6 @@ AC_ARG_ENABLE(sudo,
               [SUDO_BIN="sudo"], [SUDO_BIN=""])
 AC_SUBST([SUDO_BIN])
 
-# Decide whether to build with peer to peer support. This requires API in
-# libostree which before 2018.6 was experimental.
-#FIXME: Clean up when flatpak depends on 2018.6
-enable_p2p=no
-PKG_CHECK_MODULES(OSTREE_P2P_REQ, [ostree-1 >= $OSTREE_P2P_REQS],[
-
-  ostree_features=$($PKG_CONFIG --variable=features ostree-1)
-  AS_CASE(["$ostree_features"],
-          [*experimental*],[have_ostree_experimental=yes],
-          [*p2p*],[have_ostree_p2p=yes])
-
-  AS_IF([test "x$have_ostree_experimental" != "xyes" && test "x$have_ostree_p2p" != "xyes"],[
-      AC_MSG_WARN([Experimental/P2P API not found in ostree-1, so flatpak will be compiled without P2P support. OSTree < 2018.6 must be compiled with --enable-experimental-api.])
-    ],[
-      enable_p2p=yes
-      AC_DEFINE([FLATPAK_ENABLE_P2P],[1],[Define if peer to peer support should be enabled])
-      AS_IF([test "x$have_ostree_experimental" == "xyes"],[
-        AC_DEFINE([OSTREE_ENABLE_EXPERIMENTAL_API],[1],[Define if libostree experimental API should be enabled])
-      ])
-    ])
-], :)
-AM_CONDITIONAL([ENABLE_P2P],[test x$enable_p2p = xyes])
-
 AC_ARG_WITH(system-install-dir,
            [AS_HELP_STRING([--with-system-install-dir=DIR],
                            [Location of system installation [LOCALSTATEDIR/lib/flatpak]])],
@@ -461,5 +437,4 @@ echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
 echo "          Use seccomp:            $enable_seccomp"
 echo "          Privileged group:       $PRIVILEGED_GROUP"
 echo "          Privilege mode:         $with_priv_mode"
-echo "          Peer to peer support:   $enable_p2p"
 echo ""
