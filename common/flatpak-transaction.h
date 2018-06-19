@@ -157,6 +157,11 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_force_uninstall       (FlatpakTransaction  *self,
                                                                    gboolean             force_uninstall);
 FLATPAK_EXTERN
+void                flatpak_transaction_add_dependency_source     (FlatpakTransaction  *self,
+                                                                   FlatpakInstallation *installation);
+FLATPAK_EXTERN
+void                flatpak_transaction_add_default_dependency_sources (FlatpakTransaction  *self);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_run                       (FlatpakTransaction  *self,
                                                                    GCancellable        *cancellable,
                                                                    GError             **error);

@@ -81,7 +81,7 @@ struct _FlatpakTransactionPrivate {
   FlatpakDir *dir;
   GHashTable *last_op_for_ref;
   GHashTable *remote_states; /* (element-type utf8 FlatpakRemoteState) */
-  GPtrArray *system_dirs;
+  GPtrArray *extra_dependency_dirs;
   GList *ops;
   GPtrArray *added_origin_remotes;
 
@@ -238,13 +238,6 @@ G_DEFINE_TYPE_WITH_CODE (FlatpakTransaction, flatpak_transaction, G_TYPE_OBJECT,
                          G_ADD_PRIVATE(FlatpakTransaction)
                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
-static FlatpakTransactionOperationType
-op_type_from_resolved_kind (FlatpakTransactionOperationType kind)
-{
-  g_assert (kind < FLATPAK_TRANSACTION_OPERATION_LAST_TYPE);
-  return kind;
-}
-
 static gboolean
 transaction_is_local_only (FlatpakTransaction *self,
                            FlatpakTransactionOperationType kind)
@@ -260,7 +253,60 @@ remote_name_is_file (const char *remote_name)
     g_str_has_prefix (remote_name, "file://");
 }
 
-/* Check if the ref is in the dir, or in the system dir, in case its a
+/**
+ * flatpak_transaction_add_dependency_source:
+ * @transaction: a #FlatpakTransaction
+ * @installation: a #FlatpakInstallation
+ *
+ * Adds an extra installation as a source for application dependencies.
+ * This means that applications can be installed in this transaction relying
+ * on runtimes from this additional installation (wheres it would normally
+ * install required runtimes that are not installed in the installation
+ * the transaction works on).
+ */
+void
+flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
+                                           FlatpakInstallation *installation)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  g_ptr_array_add (priv->extra_dependency_dirs,
+                   flatpak_installation_clone_dir_noensure (installation));
+}
+
+/**
+ * flatpak_transaction_add_default_dependency_sources:
+ * @transaction: a #FlatpakTransaction
+ *
+ * Similar to flatpak_transaction_add_dependency_source(), but adds
+ * all the default installations, which means all the defined system-wide
+ * (but not per-user) installations.
+ */
+void
+flatpak_transaction_add_default_dependency_sources (FlatpakTransaction  *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GPtrArray) system_dirs = NULL;
+  GFile *path = flatpak_dir_get_path (priv->dir);
+  int i;
+
+  system_dirs = flatpak_dir_get_system_list (NULL, NULL);
+  if (system_dirs == NULL)
+    return;
+
+  for (i = 0; i < system_dirs->len; i++)
+    {
+      FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+      GFile *system_path = flatpak_dir_get_path (system_dir);
+
+      if (g_file_equal (path, system_path))
+        continue;
+
+      g_ptr_array_add (priv->extra_dependency_dirs, g_object_ref (system_dir));
+    }
+}
+
+/* Check if the ref is in the dir, or in the extra dependency source dir, in case its a
  * user-dir or another system-wide installation. We want to avoid depending
  * on user-installed things when installing to the system dir.
  */
@@ -278,26 +324,11 @@ ref_is_installed (FlatpakTransaction *self,
   if (deploy_dir != NULL)
     return TRUE;
 
-  /* Don't try to fallback for the system's default directory. */
-  if (!flatpak_dir_is_user (dir) && flatpak_dir_get_id (dir) == NULL)
-    return FALSE;
-
-  /* Lazy initialization of this, once per transaction */
-  if (priv->system_dirs == NULL)
+  for (i = 0; i < priv->extra_dependency_dirs->len; i++)
     {
-      priv->system_dirs = flatpak_dir_get_system_list (NULL, error);
-      if (priv->system_dirs == NULL)
-        return FALSE;
-    }
+      FlatpakDir *dependency_dir = g_ptr_array_index (priv->extra_dependency_dirs, i);
 
-  for (i = 0; i < priv->system_dirs->len; i++)
-    {
-      FlatpakDir *system_dir = g_ptr_array_index (priv->system_dirs, i);
-
-      if (g_strcmp0 (flatpak_dir_get_id (dir), flatpak_dir_get_id (system_dir)) == 0)
-        continue;
-
-      deploy_dir = flatpak_dir_get_if_deployed (system_dir, ref, NULL, NULL);
+      deploy_dir = flatpak_dir_get_if_deployed (dependency_dir, ref, NULL, NULL);
       if (deploy_dir != NULL)
         return TRUE;
     }
@@ -432,8 +463,7 @@ flatpak_transaction_finalize (GObject *object)
 
   g_ptr_array_unref (priv->added_origin_remotes);
 
-  if (priv->system_dirs != NULL)
-    g_ptr_array_free (priv->system_dirs, TRUE);
+  g_ptr_array_free (priv->extra_dependency_dirs, TRUE);
 
   G_OBJECT_CLASS (flatpak_transaction_parent_class)->finalize (object);
 }
@@ -636,6 +666,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
   priv->last_op_for_ref = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)flatpak_remote_state_free);
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
+  priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
 }
 
 

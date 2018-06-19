@@ -471,6 +471,8 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   self->name = flatpak_dir_get_name (dir);
   self->is_user = flatpak_dir_is_user (dir);
 
+  flatpak_transaction_add_default_dependency_sources (FLATPAK_TRANSACTION (self));
+
   return (FlatpakTransaction *)g_steal_pointer (&self);
 }
 

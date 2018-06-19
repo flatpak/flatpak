@@ -26,6 +26,9 @@
 #include "flatpak-dir-private.h"
 
 FlatpakDir *
+flatpak_installation_clone_dir_noensure (FlatpakInstallation *self);
+
+FlatpakDir *
 flatpak_installation_clone_dir (FlatpakInstallation *self,
                                 GCancellable  *cancellable,
                                 GError       **error);
