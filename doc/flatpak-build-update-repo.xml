@@ -102,9 +102,8 @@
                 </para></listitem>
             </varlistentry>
 
-            <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
             <varlistentry>
-                <term><option>-FIXME-collection-id=COLLECTION-ID</option></term>
+                <term><option>--collection-id=COLLECTION-ID</option></term>
 
                 <listitem><para>
                     The globally unique identifier of the remote repository, to
@@ -117,10 +116,10 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>-FIXME-deploy-collection-id</option></term>
+                <term><option>--deploy-collection-id</option></term>
 
                 <listitem><para>
-                    Deploy the collection ID (set using <option>-FIXME-collection-id</option>
+                    Deploy the collection ID (set using <option>--collection-id</option>
                     in the static remote configuration for all clients. This is
                     irrevocable once published in a repository. Use it to decide
                     when to roll out a collection ID to users of an existing repository.
@@ -128,7 +127,6 @@
                     you should typically always pass this option.
                 </para></listitem>
             </varlistentry>
-            -->
 
             <varlistentry>
                 <term><option>--gpg-sign=KEYID</option></term>
