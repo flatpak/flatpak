@@ -451,6 +451,18 @@ flatpak_transaction_operation_get_commit (FlatpakTransactionOperation  *self)
   return self->resolved_commit;
 }
 
+GKeyFile *
+flatpak_transaction_operation_get_metadata (FlatpakTransactionOperation  *self)
+{
+  return self->resolved_metakey;
+}
+
+GKeyFile *
+flatpak_transaction_operation_get_old_metadata   (FlatpakTransactionOperation  *self)
+{
+  return self->resolved_old_metakey;
+}
+
 gboolean
 flatpak_transaction_is_empty (FlatpakTransaction  *self)
 {
