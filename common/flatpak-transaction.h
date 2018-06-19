@@ -130,7 +130,10 @@ FLATPAK_EXTERN
 GFile *                         flatpak_transaction_operation_get_bundle_path    (FlatpakTransactionOperation  *self);
 FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_get_commit         (FlatpakTransactionOperation  *self);
-
+FLATPAK_EXTERN
+GKeyFile *                      flatpak_transaction_operation_get_metadata       (FlatpakTransactionOperation  *self);
+FLATPAK_EXTERN
+GKeyFile *                      flatpak_transaction_operation_get_old_metadata   (FlatpakTransactionOperation  *self);
 
 FLATPAK_EXTERN
 void                flatpak_transaction_set_no_pull               (FlatpakTransaction  *self,

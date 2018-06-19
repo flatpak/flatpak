@@ -40,6 +40,8 @@ void                flatpak_table_printer_add_decimal_column (FlatpakTablePrinte
 void                flatpak_table_printer_add_column_len     (FlatpakTablePrinter *printer,
                                                               const char          *text,
                                                               gsize                len);
+void                flatpak_table_printer_add_span           (FlatpakTablePrinter *printer,
+                                                              const char          *text);
 void                flatpak_table_printer_append_with_comma  (FlatpakTablePrinter *printer,
                                                               const char          *text);
 void                flatpak_table_printer_append_with_comma_printf  (FlatpakTablePrinter *printer,

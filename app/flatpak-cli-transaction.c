@@ -23,6 +23,7 @@
 #include "flatpak-cli-transaction.h"
 #include "flatpak-transaction-private.h"
 #include "flatpak-installation-private.h"
+#include "flatpak-run-private.h"
 #include "flatpak-table-printer.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
@@ -310,6 +311,161 @@ end_of_lifed (FlatpakTransaction *transaction,
     }
 }
 
+
+static int
+cmpstringp (const void *p1, const void *p2)
+{
+  return strcmp (*(char * const *) p1, *(char * const *) p2);
+}
+
+static void
+append_permissions (GPtrArray *permissions,
+                    GKeyFile *metadata,
+                    GKeyFile *old_metadata,
+                    const char *group)
+{
+  g_auto(GStrv) options = g_key_file_get_string_list (metadata, FLATPAK_METADATA_GROUP_CONTEXT, group, NULL, NULL);
+  g_auto(GStrv) old_options = NULL;
+  int i;
+
+  if (options == NULL)
+    return;
+
+  qsort (options, g_strv_length (options), sizeof (const char *), cmpstringp);
+
+  if (old_metadata)
+    old_options = g_key_file_get_string_list (old_metadata, FLATPAK_METADATA_GROUP_CONTEXT, group, NULL, NULL);
+
+  for (i = 0; options[i] != NULL; i++)
+    {
+      const char *option = options[i];
+      if (option[0] == '!')
+        continue;
+
+      if (old_options && g_strv_contains ((const char * const*)old_options, option))
+        continue;
+
+      if (strcmp (group, FLATPAK_METADATA_KEY_DEVICES) == 0 && strcmp (option, "all") == 0)
+        option = "devices";
+
+      g_ptr_array_add (permissions, g_strdup (option));
+    }
+}
+
+static void
+append_bus (GPtrArray *talk,
+            GPtrArray *own,
+            GKeyFile *metadata,
+            GKeyFile *old_metadata,
+            const char *group)
+{
+  g_auto(GStrv) keys = NULL;
+  gsize i, keys_count;
+
+  keys = g_key_file_get_keys (metadata, group, &keys_count, NULL);
+  if (keys == NULL)
+    return;
+
+  qsort (keys, g_strv_length (keys), sizeof (const char *), cmpstringp);
+
+  for (i = 0; i < keys_count; i++)
+    {
+      const char *key = keys[i];
+      g_autofree char *value = g_key_file_get_string (metadata, group, key, NULL);
+
+      if (g_strcmp0 (value, "none") == 0)
+        continue;
+
+      if (old_metadata)
+        {
+          g_autofree char *old_value = g_key_file_get_string (old_metadata, group, key, NULL);
+          if (g_strcmp0 (old_value, value) == 0)
+            continue;
+        }
+
+      if (g_strcmp0 (value, "own") == 0)
+        g_ptr_array_add (own, g_strdup (key));
+      else
+        g_ptr_array_add (talk, g_strdup (key));
+    }
+}
+
+static void
+print_perm_line (FlatpakTablePrinter *printer,
+                 const char *title,
+                 GPtrArray *items)
+{
+  g_autoptr(GString) res = g_string_new (NULL);
+  int i;
+
+  if (items->len == 0)
+    return;
+
+  g_string_append_printf (res, "  %s: ", title);
+  for (i = 0; i < items->len; i++)
+    {
+      if (i != 0)
+        g_string_append (res, ", ");
+      g_string_append (res, (char *)items->pdata[i]);
+    }
+
+  flatpak_table_printer_add_span (printer, res->str);
+  flatpak_table_printer_finish_row (printer);
+}
+
+static void
+print_permissions (FlatpakTablePrinter *printer,
+                   GKeyFile *metadata,
+                   GKeyFile *old_metadata,
+                   const char *ref)
+{
+  g_autoptr(GPtrArray) permissions = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) files = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) session_bus_talk = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) session_bus_own = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) system_bus_talk = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) system_bus_own = g_ptr_array_new_with_free_func (g_free);
+
+  if (metadata == NULL)
+    return;
+
+  /* Only apps have permissions */
+  if (!g_str_has_prefix (ref, "app/"))
+    return;
+
+  append_permissions (permissions, metadata, old_metadata, FLATPAK_METADATA_KEY_SHARED);
+  append_permissions (permissions, metadata, old_metadata, FLATPAK_METADATA_KEY_SOCKETS);
+  append_permissions (permissions, metadata, old_metadata, FLATPAK_METADATA_KEY_DEVICES);
+  append_permissions (permissions, metadata, old_metadata, FLATPAK_METADATA_KEY_FEATURES);
+
+  print_perm_line (printer,
+                   old_metadata ?  _("new permissions") : _("permissions"),
+                   permissions);
+
+  append_permissions (files, metadata, old_metadata, FLATPAK_METADATA_KEY_FILESYSTEMS);
+  print_perm_line (printer,
+                   old_metadata ?  _("new file access") : _("file access"),
+                   files);
+
+  append_bus (session_bus_talk, session_bus_own,
+              metadata, old_metadata, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY);
+  print_perm_line (printer,
+                   old_metadata ? _("new dbus access") :_("dbus access") ,
+                   session_bus_talk);
+  print_perm_line (printer,
+                   old_metadata ? _("new dbus ownership") :_("dbus ownership") ,
+                   session_bus_own);
+
+  append_bus (system_bus_talk, system_bus_own,
+              metadata, old_metadata, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY);
+  print_perm_line (printer,
+                   old_metadata ? _("new system dbus access") :_("system dbus access") ,
+                   system_bus_talk);
+  print_perm_line (printer,
+                   old_metadata ? _("new system dbus ownership") :_("system dbus ownership") ,
+                   system_bus_own);
+}
+
 static gboolean
 transaction_ready (FlatpakTransaction *transaction)
 {
@@ -347,6 +503,7 @@ transaction_ready (FlatpakTransaction *transaction)
       const char *ref = flatpak_transaction_operation_get_ref (op);
       const char *remote = flatpak_transaction_operation_get_remote (op);
       const char *commit = flatpak_transaction_operation_get_commit (op);
+      GKeyFile *metadata = flatpak_transaction_operation_get_metadata (op);
       const char *pref = strchr (ref, '/') + 1;
 
       if (type != FLATPAK_TRANSACTION_OPERATION_INSTALL &&
@@ -364,6 +521,9 @@ transaction_ready (FlatpakTransaction *transaction)
       flatpak_table_printer_add_column (printer, remote);
       flatpak_table_printer_add_column_len (printer, commit, 12);
       flatpak_table_printer_finish_row (printer);
+
+      print_permissions (printer, metadata, NULL, ref);
+
     }
   if (printer)
     {
@@ -380,6 +540,8 @@ transaction_ready (FlatpakTransaction *transaction)
       const char *ref = flatpak_transaction_operation_get_ref (op);
       const char *remote = flatpak_transaction_operation_get_remote (op);
       const char *commit = flatpak_transaction_operation_get_commit (op);
+      GKeyFile *metadata = flatpak_transaction_operation_get_metadata (op);
+      GKeyFile *old_metadata = flatpak_transaction_operation_get_old_metadata (op);
       const char *pref = strchr (ref, '/') + 1;
 
       if (type != FLATPAK_TRANSACTION_OPERATION_UPDATE)
@@ -396,6 +558,8 @@ transaction_ready (FlatpakTransaction *transaction)
       flatpak_table_printer_add_column (printer, remote);
       flatpak_table_printer_add_column_len (printer, commit, 12);
       flatpak_table_printer_finish_row (printer);
+
+      print_permissions (printer, metadata, old_metadata, ref);
     }
   if (printer)
     {
