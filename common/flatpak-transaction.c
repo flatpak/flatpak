@@ -57,7 +57,7 @@ struct _FlatpakTransactionOperation {
   char **subpaths;
   char *commit;
   GFile *bundle;
-  char *external_metadata;
+  GBytes *external_metadata;
   FlatpakTransactionOperationType kind;
   gboolean non_fatal;
   gboolean failed;
@@ -65,7 +65,8 @@ struct _FlatpakTransactionOperation {
 
   gboolean resolved;
   char *resolved_commit;
-  GKeyFile *resolved_metadata;
+  GBytes *resolved_metadata;
+  GKeyFile *resolved_metakey;
   int run_after_count;
   int run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList *run_before_ops;
@@ -366,10 +367,13 @@ flatpak_transaction_operation_finalize (GObject *object)
   g_free (self->commit);
   g_strfreev (self->subpaths);
   g_clear_object (&self->bundle);
-  g_free (self->external_metadata);
+  if (self->external_metadata)
+    g_bytes_unref (self->external_metadata);
   g_free (self->resolved_commit);
   if (self->resolved_metadata)
-    g_key_file_unref (self->resolved_metadata);
+    g_bytes_unref (self->resolved_metadata);
+  if (self->resolved_metakey)
+    g_key_file_unref (self->resolved_metakey);
   g_list_free (self->run_before_ops);
 
   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
@@ -958,17 +962,17 @@ add_related (FlatpakTransaction *self,
   if (state == NULL)
     return FALSE;
 
-  if (op->resolved_metadata == NULL)
+  if (op->resolved_metakey == NULL)
     {
       g_debug ("no resolved metadata for related to %s", op->ref);
       return TRUE;
     }
 
   if (transaction_is_local_only (self, op->kind))
-    related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref, op->remote, op->resolved_metadata,
+    related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref, op->remote, op->resolved_metakey,
                                                            NULL, &local_error);
   else
-    related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref, op->resolved_metadata,
+    related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref, op->resolved_metakey,
                                                             NULL, &local_error);
   if (related == NULL)
     {
@@ -1075,8 +1079,8 @@ add_deps (FlatpakTransaction *self,
   if (!g_str_has_prefix (op->ref, "app/"))
     return TRUE;
 
-  if (op->resolved_metadata)
-    runtime_ref = g_key_file_get_string (op->resolved_metadata, "Application", "runtime", NULL);
+  if (op->resolved_metakey)
+    runtime_ref = g_key_file_get_string (op->resolved_metakey, "Application", "runtime", NULL);
 
   if (runtime_ref == NULL)
     return TRUE;
@@ -1235,7 +1239,8 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
     return FALSE;
 
   op = flatpak_transaction_add_op (self, remote, ref, subpaths, commit, bundle, kind);
-  op->external_metadata = g_strdup (external_metadata);
+  if (external_metadata)
+    op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata) + 1);
 
   return TRUE;
 }
@@ -1373,7 +1378,7 @@ emit_op_done (FlatpakTransaction *self,
 static void
 mark_op_resolved (FlatpakTransactionOperation *op,
                   const char *commit,
-                  const char *metadata)
+                  GBytes *metadata)
 {
   g_assert (op != NULL);
 
@@ -1385,8 +1390,11 @@ mark_op_resolved (FlatpakTransactionOperation *op,
   if (metadata)
     {
       g_autoptr(GKeyFile) metakey = g_key_file_new ();
-      if (g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
-        op->resolved_metadata = g_steal_pointer (&metakey);
+      if (g_key_file_load_from_bytes (metakey, metadata, G_KEY_FILE_NONE, NULL))
+        {
+          op->resolved_metadata = g_bytes_ref (metadata);
+          op->resolved_metakey = g_steal_pointer (&metakey);
+        }
       else
         g_message ("Warning: Failed to parse metadata for %s\n", op->ref);
     }
@@ -1407,10 +1415,10 @@ resolve_ops (FlatpakTransaction *self,
     {
       FlatpakTransactionOperation *op = l->data;
       FlatpakRemoteState *state = NULL;
-      const char *metadata = NULL; /* owned by commit_data or state */
       g_autofree char *checksum = NULL;
       g_autoptr(GVariant) commit_data = NULL;
       g_autoptr(GVariant) commit_metadata = NULL;
+      g_autoptr(GBytes) metadata_bytes = NULL;
 
       if (op->resolved)
         continue;
@@ -1420,17 +1428,19 @@ resolve_ops (FlatpakTransaction *self,
           g_autoptr(GFile) deploy_dir = NULL;
           g_autoptr(GFile) metadata_file = NULL;
           g_autofree char *metadata_contents = NULL;
+          gsize metadata_contents_length;
 
           /* We resolve to the deployed metadata, becasue we need it to uninstall related ops */
 
           deploy_dir = flatpak_dir_get_if_deployed (priv->dir, op->ref, NULL, cancellable);
           metadata_file = g_file_get_child (deploy_dir, "metadata");
 
-          if (!g_file_load_contents (metadata_file, cancellable, &metadata_contents, NULL, NULL, NULL))
+          if (!g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_contents_length, NULL, NULL))
             g_debug ("No metadata in local deploy");
-          metadata = metadata_contents;
+          else
+            metadata_bytes = g_bytes_new_take (g_steal_pointer (&metadata_contents), metadata_contents_length + 1);
 
-          mark_op_resolved (op, NULL, metadata);
+          mark_op_resolved (op, NULL, metadata_bytes);
           continue;
         }
 
@@ -1450,17 +1460,21 @@ resolve_ops (FlatpakTransaction *self,
       /* Should we use local state */
       if (transaction_is_local_only (self, op->kind))
         {
+          const char *xa_metadata = NULL;
           commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref, &checksum, NULL, error);
           if (commit_data == NULL)
             return FALSE;
 
           commit_metadata = g_variant_get_child_value (commit_data, 0);
-          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &metadata);
-          if (metadata == NULL)
+          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+          if (xa_metadata == NULL)
             g_message ("Warning: No xa.metadata in local commit");
+          else
+            metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
         }
       else
         {
+          const char *metadata = NULL;
           g_autoptr(GError) local_error = NULL;
 
           if (op->commit != NULL)
@@ -1480,9 +1494,11 @@ resolve_ops (FlatpakTransaction *self,
               g_message (_("Warning: Can't find %s metadata for dependencies: %s"), op->ref, local_error->message);
               g_clear_error (&local_error);
             }
+          else
+            metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
         }
 
-      mark_op_resolved (op, checksum, metadata);
+      mark_op_resolved (op, checksum, metadata_bytes);
     }
 
   return TRUE;
@@ -1723,7 +1739,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
           g_assert (op->resolved_commit != NULL); /* We resolved this before */
 
-          if (op->resolved_metadata && !flatpak_check_required_version (op->ref, op->resolved_metadata, error))
+          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
             res = FALSE;
           else
             res = flatpak_dir_install (priv->dir,
@@ -1762,7 +1778,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
               emit_new_op (self, op, progress);
 
-              if (op->resolved_metadata && !flatpak_check_required_version (op->ref, op->resolved_metadata, error))
+              if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
                 res = FALSE;
               else
                 res = flatpak_dir_update (priv->dir,
@@ -1804,7 +1820,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
           emit_new_op (self, op, progress);
-          if (op->resolved_metadata && !flatpak_check_required_version (op->ref, op->resolved_metadata, error))
+          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
             res = FALSE;
           else
             res = flatpak_dir_install_bundle (priv->dir, op->bundle,
