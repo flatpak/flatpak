@@ -32,6 +32,7 @@
 typedef struct {
   char *text;
   int align;
+  gboolean span;
 } Cell;
 
 static void
@@ -85,9 +86,20 @@ flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
                                           const char          *text,
                                           int                  align)
 {
-  Cell *cell = g_new (Cell, 1);
+  Cell *cell = g_new0 (Cell, 1);
   cell->text = text ? g_strdup (text) : g_strdup ("");
   cell->align = align;
+  g_ptr_array_add (printer->current, cell);
+}
+
+void
+flatpak_table_printer_add_span (FlatpakTablePrinter *printer,
+                                const char          *text)
+{
+  Cell *cell = g_new0 (Cell, 1);
+  cell->text = text ? g_strdup (text) : g_strdup ("");
+  cell->align = -1;
+  cell->span = TRUE;
   g_ptr_array_add (printer->current, cell);
 }
 
@@ -126,7 +138,7 @@ flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
                                       const char          *text,
                                       gsize                len)
 {
-  Cell *cell = g_new (Cell, 1);
+  Cell *cell = g_new0 (Cell, 1);
   cell->text = text ? g_strndup (text, len) : g_strdup ("");
   cell->align = -1;
   g_ptr_array_add (printer->current, cell);
@@ -213,7 +225,10 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
           Cell *cell = g_ptr_array_index (row, j);
           int width;
 
-          width = strlen (cell->text);
+          if (cell->span)
+            width = 0;
+          else
+            width = strlen (cell->text);
           widths[j] = MAX (widths[j], width);
           if (cell->align >= 0)
             {
@@ -245,7 +260,9 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
           Cell *cell = g_ptr_array_index (row, j);
           if (flatpak_fancy_output ())
             {
-              if (cell->align < 0)
+              if (cell->span)
+                g_print ("%s%s", (j == 0) ? "" : " ", cell->text);
+              else if (cell->align < 0)
                 g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
               else
                 g_print ("%s%*s%-*s", (j == 0) ? "" : " ", lwidths[j] - cell->align, "", widths[j] - (lwidths[j] - cell->align), cell->text);
