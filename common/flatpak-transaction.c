@@ -674,9 +674,10 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * FlatpakTransaction::ready:
    * @object: A #FlatpakTransaction
    *
-   * This is is emitted when all the refs involved in the operation. At this point
-   * flatpak_transaction_get_operations() will return all the operations that will be
-   * executed as part of the transactions. If this returns FALSE, the operation is aborted.
+   * This is is emitted when all the refs involved in the operation have been
+   * resolved to commits. At this point flatpak_transaction_get_operations()
+   * will return all the operations that will be executed as part of the
+   * transaction. If this returns FALSE, the operation is aborted.
    */
   signals[READY] =
     g_signal_new ("ready",
