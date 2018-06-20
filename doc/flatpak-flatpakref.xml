@@ -107,13 +107,10 @@
                     <term><option>Homepage</option> (string)</term>
                     <listitem><para>The url of a webpage describing the application or runtime.</para></listitem>
                 </varlistentry>
-                <!--
-                FIXME: Uncomment this when P2P support is made unconditional on enable-p2p.
                 <varlistentry>
                     <term><option>CollectionID</option> (string)</term>
                     <listitem><para>The collection ID of the remote, if it has one. This uniquely identifies the collection of apps in the remote, to allow peer to peer redistribution.</para></listitem>
                 </varlistentry>
-                -->
 
                 <varlistentry>
                     <term><option>IsRuntime</option> (boolean)</term>
