@@ -6636,19 +6636,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
           /* Don’t resolve a rev or OstreeRepoFinderResult set early; the pull
            * code will do this. */
-          /* FIXME: Ideally we could merge these two flatpak_dir_pull() calls
-           * so @ref and  %OSTREE_REPO_METADATA_REF are resolved atomically.
-           * However, pulling them separately is no worse than the old code path
-           * where the summary and ref were pulled separately. */
           if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, subpaths,
-                                 child_repo,
-                                 flatpak_flags,
-                                 OSTREE_REPO_PULL_FLAGS_MIRROR,
-                                 progress, cancellable, error))
-            return FALSE;
-
-          if (state->collection_id != NULL &&
-              !flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -7255,18 +7243,8 @@ flatpak_dir_update (FlatpakDir          *self,
           if (child_repo == NULL)
             return FALSE;
 
-          /* FIXME: Ideally we could merge these two flatpak_dir_pull() calls
-           * so @ref and  %OSTREE_REPO_METADATA_REF are resolved atomically.
-           * However, pulling them separately is no worse than the old code path
-           * where the summary and ref were pulled separately. */
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
           if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths,
-                                 child_repo,
-                                 flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
-                                 progress, cancellable, error))
-            return FALSE;
-          if (state->collection_id != NULL &&
-              !flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
