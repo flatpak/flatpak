@@ -2632,9 +2632,14 @@ flatpak_dir_resolve_p2p_refs (FlatpakDir               *self,
       FlatpakDirResolveData *data = g_new0 (FlatpakDirResolveData, 1);
       g_autofree char *refspec = g_strdup_printf ("%s:%s", resolve->remote, resolve->ref);
 
+      g_assert (resolve->ref != NULL);
+      g_assert (resolve->remote != NULL);
+
       data->resolve = resolve;
       data->collection_ref.ref_name = resolve->ref;
       data->collection_ref.collection_id = flatpak_dir_get_remote_collection_id (self, resolve->remote);
+
+      g_assert (data->collection_ref.collection_id != NULL);
 
       if (resolve->opt_commit == NULL)
         ostree_repo_resolve_rev (self->repo, refspec, TRUE, &data->local_commit, NULL);
