@@ -6514,6 +6514,10 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   if (!ostree_repo_open (repo, NULL, error))
     return NULL;
 
+  /* We don't need to sync the child repos, they are never used for stable storage, and we
+     verify + fsync when importing to stable storage */
+  ostree_repo_set_disable_fsync (repo, TRUE);
+
   /* Create a commitpartial in the child repo to ensure we download everything, because
      any commitpartial state in the parent will not be inherited */
   if (optional_commit)
