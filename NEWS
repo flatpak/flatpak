@@ -1,3 +1,29 @@
+Major changes in 0.99.1
+=======================
+
+This is the first pre-release before flatpak 1.0. This is considered
+feature-complete and we expect no features or major changes before
+1.0, only bugfixes.
+
+Note: There were some (minor) API changes in the FlatpakTransaction
+APIs that were added in 0.11.8, so please don't use the old
+version. (Note: I know of no user of this API).
+
+Changes since last minor release:
+ * Ostree 2018.6 is required, and with this, the p2p code in
+   flatpak is made non-optional.
+ * flatpak install/update/ininstall now lists all the operations
+   that it will do and asks for confirmation before starting.
+ * In the above confirmation the permissions (new permissions
+   for updates) are shown for all applications.
+ * The FlatpakTranscation API has a new ::ready signal that
+   allows users to do similar confirmation prompts.
+ * P2P updates are more efficient
+ * system-wide installation uses less fsync calls so should
+   installation should be faster.
+ * New ssh agent permissions allows granting an app
+   ssh access.
+
 Major changes in 0.11.8.3
 =========================
 
