@@ -1432,6 +1432,8 @@ mark_op_resolved (FlatpakTransactionOperation *op,
                   GBytes *metadata,
                   GBytes *old_metadata)
 {
+  g_debug ("marking op %s:%s resolved to %s", kind_to_str (op->kind), op->ref, commit ? commit : "-");
+
   g_assert (op != NULL);
 
   if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
@@ -1463,6 +1465,51 @@ mark_op_resolved (FlatpakTransactionOperation *op,
     }
 }
 
+static gboolean
+resolve_p2p_ops (FlatpakTransaction *self,
+                 GList *p2p_ops,
+                 GCancellable *cancellable,
+                 GError **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GPtrArray) resolves = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_dir_resolve_free);;
+  GList *l;
+  int i;
+
+  for (l = p2p_ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakDirResolve *resolve;
+
+      g_debug ("resolving %s using p2p", op->ref);
+
+      g_assert (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL);
+      g_assert (op->kind != FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE);
+      g_assert (!op->resolved);
+
+      resolve = flatpak_dir_resolve_new (op->remote, op->ref, op->commit);
+      g_ptr_array_add (resolves, resolve);
+    }
+
+  g_ptr_array_add (resolves, NULL);
+
+  if (!flatpak_dir_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **)resolves->pdata,
+                                     cancellable, error))
+    return FALSE;
+
+  for (i = 0, l = p2p_ops; l != NULL; i++, l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakDirResolve *resolve = g_ptr_array_index (resolves, i);
+      g_autoptr(GBytes) old_metadata_bytes = NULL;
+
+      old_metadata_bytes = load_deployed_metadata (self, op->ref);
+      mark_op_resolved (op, resolve->resolved_commit, resolve->resolved_metadata, old_metadata_bytes);
+    }
+
+  return TRUE;
+}
+
 /* Resolving an operation means figuring out the target commit
    checksum and the metadata for that commit, so that we can handle
    dependencies from it, and verify versions. */
@@ -1473,6 +1520,8 @@ resolve_ops (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   GList *l;
+  g_autoptr(GList) collection_id_ops = NULL;
+
 
   for (l = priv->ops; l != NULL; l = l->next)
     {
@@ -1523,21 +1572,20 @@ resolve_ops (FlatpakTransaction *self,
             g_message ("Warning: No xa.metadata in local commit");
           else
             metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
+
+          old_metadata_bytes = load_deployed_metadata (self, op->ref);
+          mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
         }
-      else
+      else if (state->collection_id == NULL) /* In the non-p2p case we have all the info available in the summary, so use it */
         {
           const char *metadata = NULL;
           g_autoptr(GError) local_error = NULL;
 
           if (op->commit != NULL)
             checksum = g_strdup (op->commit);
-          else
-            {
-              /* TODO: For the p2p case, calling this for each ref separately is very inefficient */
-              if (!flatpak_dir_find_latest_rev (priv->dir, state, op->ref, op->commit, &checksum,
-                                                NULL, cancellable, error))
-                return FALSE;
-            }
+          else if (!flatpak_dir_find_latest_rev (priv->dir, state, op->ref, op->commit, &checksum,
+                                                 NULL, cancellable, error))
+            return FALSE;
 
           /* TODO: This only gets the metadata for the latest only, we need to handle the case
              where the user specified a commit, or p2p doesn't have the latest commit available */
@@ -1548,12 +1596,21 @@ resolve_ops (FlatpakTransaction *self,
             }
           else
             metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
+
+          old_metadata_bytes = load_deployed_metadata (self, op->ref);
+          mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
         }
+      else
+        {
+          /* This is a (potential) p2p operation, so rather than do these individually we queue them up in an operation later */
 
-      old_metadata_bytes = load_deployed_metadata (self, op->ref);
-
-      mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
+          collection_id_ops = g_list_prepend (collection_id_ops, op);
+        }
     }
+
+  if (collection_id_ops != NULL &&
+      !resolve_p2p_ops (self, collection_id_ops, cancellable, error))
+    return FALSE;
 
   return TRUE;
 }
