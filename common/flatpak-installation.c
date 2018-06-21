@@ -1060,14 +1060,10 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
             continue;
 
           /* The ref_to_checksum map only tells us if this remote is offering
-           * the latest commit of the available remotes, not what the timestamp
-           * is. So unless we're using a new enough version of ostree to
-           * provide ref_to_timestamp, we have no way of knowing if the commit
-           * is an update or a downgrade (we could check the summary but
-           * there's no signature, and we'd have to add the temporary remote to
-           * the local configuration).
+           * the latest commit of the available remotes; we have to check
+           * ref_to_timestamp to know if the commit is an update or a
+           * downgrade.
            */
-#ifdef OSTREE_VERSION_2018_5
             {
               guint64 local_timestamp = 0;
               guint64 *remote_timestamp;
@@ -1088,7 +1084,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
               if (*remote_timestamp != 0 && *remote_timestamp <= local_timestamp)
                 continue;
             }
-#endif /* OSTREE_VERSION_2018_5 */
 
           g_ptr_array_add (updates, g_object_ref (installed_ref));
 
