@@ -252,6 +252,21 @@ g_key_file_save_to_file (GKeyFile    *key_file,
 }
 #endif
 
+#if !GLIB_CHECK_VERSION (2, 50, 0)
+static inline gboolean
+g_key_file_load_from_bytes (GKeyFile             *key_file,
+                            GBytes               *bytes,
+                            GKeyFileFlags         flags,
+                            GError              **error)
+{
+  const guchar *data;
+  gsize size;
+
+  data = g_bytes_get_data (bytes, &size);
+  return g_key_file_load_from_data (key_file, (const gchar *) data, size, flags, error);
+}
+#endif
+
 gboolean flatpak_g_ptr_array_contains_string (GPtrArray *array, const char *str);
 
 /* Returns the first string in subset that is not in strv */
