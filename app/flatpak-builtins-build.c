@@ -475,10 +475,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                             "--tmpfs", extension_tmpfs_point,
                             NULL);
 
-  if (extension_point)
-    flatpak_bwrap_add_args (bwrap,
-                            "--bind", flatpak_file_get_path_cached (res_files), extension_point,
-                            NULL);
+  /* We add the actual bind below so that we're not shadowed by other extensions or their tmpfs */
 
   if (extension_point)
     dest = extension_point;
@@ -516,9 +513,15 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
         return FALSE;
     }
 
-  if (!custom_usr && !(is_extension && !is_app_extension) &&
+  if (!custom_usr &&
       !flatpak_run_add_extension_args (bwrap, runtime_metakey, runtime_ref, FALSE, &runtime_extensions, cancellable, error))
     return FALSE;
+
+  /* Mount this after the above extensions so we always win */
+  if (extension_point)
+    flatpak_bwrap_add_args (bwrap,
+                            "--bind", flatpak_file_get_path_cached (res_files), extension_point,
+                            NULL);
 
   if (!flatpak_run_add_app_info_args (bwrap,
                                       app_files, NULL, app_extensions,
