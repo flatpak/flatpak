@@ -197,6 +197,13 @@
                     Manage flatpak configuration.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-repair</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Repair flatpak installation.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
 
@@ -391,6 +398,13 @@
 
                 <listitem><para>
                     Create a new commit based on an existing ref.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Print information about a repo.
                 </para></listitem>
             </varlistentry>
         </variablelist>
