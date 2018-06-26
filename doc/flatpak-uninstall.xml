@@ -52,9 +52,9 @@
             will list the alternatives.
         </para>
         <para>
-            By default this looks for both installed apps and runtime
-            with the given <arg choice="plain">NAME</arg>, but you can
-            limit this by using the --app or --runtime option.
+            By default this looks for both installed apps and runtimes with the given
+            <arg choice="plain">REF</arg>, but you can limit this by using the --app
+            or --runtime option, or by supplying the initial element in the REF.
         </para>
         <para>
             Normally, this command removes the ref for this application/runtime from the
