@@ -576,7 +576,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoCommitModifier, ostree_repo_commit_modi
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoDevInoCache, ostree_repo_devino_cache_unref)
 #endif
 
-#ifndef SOUP_AUTOCLEANUPS_H
+#if !defined(SOUP_AUTOCLEANUPS_H) && !defined(__SOUP_AUTOCLEANUPS_H__)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupSession, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupMessage, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequest, g_object_unref)
