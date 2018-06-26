@@ -132,14 +132,6 @@
                     GPG Homedir to use when looking for keyrings
                 </para></listitem>
             </varlistentry>
-
-            <varlistentry>
-                <term><option>--version</option></term>
-
-                <listitem><para>
-                    Print version information and exit.
-                </para></listitem>
-            </varlistentry>
         </variablelist>
     </refsect1>
 

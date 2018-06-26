@@ -321,10 +321,10 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
-                <term><option>--version</option></term>
+                <term><option>--ostree-verbose</option></term>
 
                 <listitem><para>
-                    Print version information and exit.
+                    Print OSTree debug information during command processing.
                 </para></listitem>
             </varlistentry>
         </variablelist>

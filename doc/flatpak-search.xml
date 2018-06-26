@@ -96,6 +96,14 @@
                     Print debug information during command processing.
                 </para></listitem>
             </varlistentry>
+
+            <varlistentry>
+                <term><option>--ostree-verbose</option></term>
+
+                <listitem><para>
+                    Print OSTree debug information during command processing.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
     </refsect1>
 
