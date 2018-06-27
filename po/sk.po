@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-21 17:07+0200\n"
+"POT-Creation-Date: 2018-06-27 14:49+0200\n"
 "PO-Revision-Date: 2017-01-23 18:19+0100\n"
 "Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
@@ -407,7 +407,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:579 common/flatpak-run.c:3101
+#: app/flatpak-builtins-build.c:579 common/flatpak-run.c:3107
 msgid "Unable to start app"
 msgstr "Nie je možné spustiť aplikáciu"
 
@@ -2968,17 +2968,17 @@ msgstr ""
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
-#: common/flatpak-run.c:1713
+#: common/flatpak-run.c:1719
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Zlyhalo otvorenie dočasného súboru flatpak-info"
 
-#: common/flatpak-run.c:1818 common/flatpak-run.c:1828
+#: common/flatpak-run.c:1824 common/flatpak-run.c:1834
 #, fuzzy, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Zlyhalo otvorenie súboru temp"
 
-#: common/flatpak-run.c:2754
+#: common/flatpak-run.c:2760
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr ""

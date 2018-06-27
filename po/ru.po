@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-21 17:07+0200\n"
+"POT-Creation-Date: 2018-06-27 14:49+0200\n"
 "PO-Revision-Date: 2017-02-10 11:59+0300\n"
 "Last-Translator: Roman Kharin <romiq.kh@gmail.com>\n"
 "Language-Team: romiq.kh@gmail.com\n"
@@ -412,7 +412,7 @@ msgstr "Не найдена точка расширения подходящая
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Отсутствует '=' в параметре связанного монтирования '%s'"
 
-#: app/flatpak-builtins-build.c:579 common/flatpak-run.c:3101
+#: app/flatpak-builtins-build.c:579 common/flatpak-run.c:3107
 msgid "Unable to start app"
 msgstr "Невозможно запустить приложение"
 
@@ -2991,17 +2991,17 @@ msgstr "Невозможно создать канал синхронизаци�
 msgid "Failed to sync with dbus proxy"
 msgstr "Ошибка при синхронизации с прокси dbus"
 
-#: common/flatpak-run.c:1713
+#: common/flatpak-run.c:1719
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Ошибка при открытии временного файла flatpak-info: %s"
 
-#: common/flatpak-run.c:1818 common/flatpak-run.c:1828
+#: common/flatpak-run.c:1824 common/flatpak-run.c:1834
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Ошибка при открытии временного файла: %s"
 
-#: common/flatpak-run.c:2754
+#: common/flatpak-run.c:2760
 #, fuzzy, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "скрипт apply_extra закончился с ошибкой"

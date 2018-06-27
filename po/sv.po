@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-06-21 17:07+0200\n"
+"POT-Creation-Date: 2018-06-27 14:49+0200\n"
 "PO-Revision-Date: 2017-12-01 03:20+0100\n"
 "Last-Translator: Josef Andersson <josef.andersson@fripost.org>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -402,7 +402,7 @@ msgstr "Ingen utökningspunkt matchar %s i %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:579 common/flatpak-run.c:3101
+#: app/flatpak-builtins-build.c:579 common/flatpak-run.c:3107
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -2966,17 +2966,17 @@ msgstr "Kan inte skapa sync-rör"
 msgid "Failed to sync with dbus proxy"
 msgstr "Misslyckades med att synkronisera med dbus-proxy"
 
-#: common/flatpak-run.c:1713
+#: common/flatpak-run.c:1719
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Misslyckades med att öppna temporär flatpak-info-fil: %s"
 
-#: common/flatpak-run.c:1818 common/flatpak-run.c:1828
+#: common/flatpak-run.c:1824 common/flatpak-run.c:1834
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Misslyckades med att öppna temporärfil: %s"
 
-#: common/flatpak-run.c:2754
+#: common/flatpak-run.c:2760
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "misslyckades med ldconfig, avslutningsstatus %d"
