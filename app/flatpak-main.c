@@ -89,6 +89,10 @@ static FlatpakCommand commands[] = {
   { "document-list", N_("List exported files"), flatpak_builtin_document_list, flatpak_complete_document_list },
 
    /* translators: please keep the leading newline and space */
+  { N_("\n Manage dynamic permissions") },
+  { "permission-list", N_("List permissions"), flatpak_builtin_permission_list, flatpak_complete_permission_list },
+
+   /* translators: please keep the leading newline and space */
   { N_("\n Manage remote repositories") },
   { "remotes", N_("List all configured remotes"), flatpak_builtin_list_remotes, flatpak_complete_list_remotes },
   { "remote-add", N_("Add a new remote repository (by URL)"), flatpak_builtin_add_remote, flatpak_complete_add_remote },
