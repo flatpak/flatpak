@@ -96,6 +96,7 @@ BUILTINPROTO (repo)
 BUILTINPROTO (config)
 BUILTINPROTO (search)
 BUILTINPROTO (repair)
+BUILTINPROTO (create_usb)
 
 #undef BUILTINPROTO
 

@@ -1,0 +1,201 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-create-usb">
+
+    <refentryinfo>
+        <title>flatpak create-usb</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Matthew</firstname>
+                <surname>Leeds</surname>
+                <email>matthew.leeds@endlessm.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak create-usb</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-create-usb</refname>
+        <refpurpose>Copy apps and/or runtimes onto removable media.</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak create-usb</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">MOUNT-PATH</arg>
+                <arg choice="plain" rep="repeat">REF</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Copies the specified apps and/or runtimes <arg choice="plain">REF</arg>s onto the removable
+            media mounted at <arg choice="plain">MOUNT-PATH</arg>, along with all the dependencies and
+            metadata needed for installing them. This is one way of transferring flatpaks
+            between computers that doesn't require an Internet connection. After using
+            this comand, the USB drive can be connected to another computer and
+            <command>flatpak install</command> will prefer to install from it rather than
+            the Internet if the refs are the newest available. For this process to work a
+            collection ID must be configured on the relevant remotes on both the source
+            and destination computers, and on the remote server.
+        </para>
+        <para>
+            Each <arg choice="plain">REF</arg> argument is a full or partial indentifier in the
+            flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH". All elements
+            except ID are optional and can be left out, including the slashes,
+            so most of the time you need only specify ID. Any part left out will be matched
+            against what is installed, and if there are multiple matches an error message
+            will list the alternatives.
+        </para>
+        <para>
+            By default this looks for both installed apps and runtimes
+            with the given <arg choice="plain">REF</arg>, but you can
+            limit this by using the --app or --runtime option.
+        </para>
+        <para>
+            All <arg choice="plain">REF</arg>s must be in the same installation (user, system, or other).
+            Otherwise it's ambiguous which repository metadata refs to put on the USB drive.
+        </para>
+        <para>
+            This command relies on the summary file in the source repo, so you
+            may want to run <command>ostree summary -u</command> before running
+            this command.
+        </para>
+        <para>
+            By default <command>flatpak create-usb</command> uses <filename>.ostree/repo</filename>,
+            as the destination directory under <arg choice="plan">MOUNT-PATH</arg> but if you
+            specify another location using <option>--destination-repo</option>
+            a symbolic link will be created for you in <filename>.ostree/repos.d</filename>.
+            This ensures that either way the repository will be found by flatpak (and other
+            consumers of libostree) for install/update operations.
+        </para>
+        <para>
+            Unless overridden with the --system, --user, or --installation
+            options, this command searches both the system-wide installation
+            and the per-user one for <arg choice="plain">REF</arg> and errors
+            out if it exists in more than one.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Uninstalls from a per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Uninstalls from the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Copies refs from a system-wide installation specified by
+                    <arg choice="plain">NAME</arg> among those defined in
+                    <filename>/etc/flatpak/installations.d/</filename>.  Using
+                    <arg choice="plain">--installation=default</arg> is
+                    equivalent to using <arg choice="plain">--system</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--app</option></term>
+
+                <listitem><para>
+                    Assume that all <arg choice="plain">REF</arg>s are apps if not explicitly specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+                <listitem><para>
+                    Assume that all <arg choice="plain">REF</arg>s are runtimes if not explicitly specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--destination-repo</option>=DEST</term>
+
+                <listitem><para>
+                  Create the repository in DEST under MOUNT-PATH, rather than
+                  the default location.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--ostree-verbose</option></term>
+
+                <listitem><para>
+                    Print OSTree debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak create-usb /run/media/mwleeds/1a9b4cb2-a7ef-4d9b-91a5-6eaf8fdd2bf6/ com.endlessm.wiki_art.en</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-install</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>ostree-create-usb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>
