@@ -102,6 +102,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-document-info.c \
 	app/flatpak-builtins-document-list.c \
 	app/flatpak-builtins-permission-remove.c \
+	app/flatpak-builtins-permission-set.c \
 	app/flatpak-builtins-permission-list.c \
 	app/flatpak-builtins-permission-show.c \
 	app/flatpak-builtins-permission-reset.c \
