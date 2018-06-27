@@ -1,0 +1,163 @@
+<!DOCTYPE node PUBLIC
+"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<!--
+ Copyright (C) 2015 Red Hat, Inc.
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General
+ Public License along with this library; if not, write to the
+ Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+
+ Author: Alexander Larsson <alexl@redhat.com>
+-->
+
+<node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+  <!--
+      org.freedesktop.impl.portal.PermissionStore:
+      @short_description: Database to store permissions
+
+      The permission store can be used by portals to store permissions
+      that sandboxed applications have to various resources, such as
+      files outside the sandbox.
+
+      Since the resources managed by portals can be varied, the permission
+      store is fairly free-form: there can be multiple tables; resources are
+      identified by an ID, as are applications, and permissions are stored as
+      string arrays. None of these strings are interpreted by the permission
+      store in any way.
+
+      In addition, the permission store allows to associate extra data
+      (in the form of a GVariant) with each resource.
+  -->
+  <interface name='org.freedesktop.impl.portal.PermissionStore'>
+    <property name="version" type="u" access="read"/>
+
+    <!--
+        Lookup:
+        @table: the name of the table to use
+        @id: the resource ID to look up
+        @permissions: map from application ID to permissions
+        @data: data that is associated with the resource
+
+        Looks up the entry for a resource in one of the tables and returns
+        all associated application permissions and data.
+    -->
+    <method name="Lookup">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='permissions' type='a{sas}' direction='out'/>
+      <arg name='data' type='v' direction='out'/>
+    </method>
+
+    <!--
+        Set:
+        @table: the name of the table to use
+        @create: whether to create the table if it does not exist
+        @id: the resource ID to modify
+        @app_permissions: map from application ID to permissions
+        @data: data to associate with the resource
+
+        Writes the entry for a resource in the given table.
+    -->
+    <method name="Set">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='app_permissions' type='a{sas}' direction='in'/>
+      <arg name='data' type='v' direction='in'/>
+    </method>
+
+    <!--
+        Delete:
+        @table: the name of the table to use
+        @id: the resource ID to delete
+
+        Removes the entry for a resource in the given table.
+    -->
+    <method name="Delete">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+    </method>
+
+    <!--
+        SetValue:
+        @table: the name of the table to use
+        @create: whether to create the table if it does not exist
+        @id: the resource ID to modify
+        @data: data to associate with the resource
+
+        Sets just the data for a resource in the given table.
+    -->
+    <method name="SetValue">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='data' type='v' direction='in'/>
+    </method>
+
+    <!--
+        SetPermission:
+        @table: the name of the table to use
+        @create: whether to create the table if it does not exist
+        @id: the resource ID to modify
+        @app: the application ID to modify
+        @permissions: permissions to set
+
+        Sets the permissions for an application and a resource
+        in the given table.
+    -->
+    <method name="SetPermission">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='app' type='s' direction='in'/>
+      <arg name='permissions' type='as' direction='in'/>
+    </method>
+
+    <!--
+        List:
+        @table: the name of the table to use
+        @ids: IDs of all resources that are present in the table
+
+        Returns all the resources that are present in the table.
+    -->
+    <method name="List">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='ids' type='as' direction='out'/>
+    </method>
+
+    <!--
+        Changed:
+        @table: the name of the table
+        @ids: IDs of the changed resource
+        @deleted: whether the resource was deleted
+        @data: the data that is associated the resource
+        @permissions: the permissions that are associated with the resource
+
+        The Changed signal is emitted when the entry for a resource
+        is modified or deleted. If the entry was deleted, then @data
+        and @permissions contain the last values that were found in the
+        database. If the entry was modified, they contain the new values.
+    -->
+    <signal name="Changed">
+      <arg name='table' type='s' direction='out'/>
+      <arg name='id' type='s' direction='out'/>
+      <arg name='deleted' type='b' direction='out'/>
+      <arg name='data' type='v' direction='out'/>
+      <arg name='permissions' type='a{sas}' direction='out'/>
+    </signal>
+  </interface>
+
+</node>
