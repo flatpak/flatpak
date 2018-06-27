@@ -1950,7 +1950,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
           orig_min_free_space_percent = g_key_file_get_value (orig_config, "core", "min-free-space-percent", NULL);
           if (orig_min_free_space_percent == NULL)
             {
-              GKeyFile *config = ostree_repo_copy_config (repo);
+              g_autoptr(GKeyFile) config = ostree_repo_copy_config (repo);
 
               g_key_file_set_string (config, "core", "min-free-space-percent", "0");
               if (!ostree_repo_write_config (repo, config, error))
@@ -2002,7 +2002,7 @@ flatpak_dir_set_config (FlatpakDir *self,
                         const char *value,
                         GError    **error)
 {
-  GKeyFile *config = ostree_repo_copy_config (self->repo);
+  g_autoptr(GKeyFile) config = ostree_repo_copy_config (self->repo);
   g_autofree char *ostree_key = g_strconcat ("xa.", key, NULL);
 
   if (flatpak_dir_use_system_helper (self, NULL))
