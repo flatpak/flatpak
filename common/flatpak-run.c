@@ -1587,6 +1587,7 @@ flatpak_run_gc_ids (void)
       if (dent->d_type == DT_DIR)
         {
           g_autofree char *ref_file = g_strconcat (dent->d_name, "/.ref", NULL);
+          struct stat statbuf;
           struct flock l = {
             .l_type = F_WRLCK,
             .l_whence = SEEK_SET,
@@ -1595,6 +1596,9 @@ flatpak_run_gc_ids (void)
           };
           glnx_autofd int lock_fd = openat (iter.fd, ref_file, O_RDWR | O_CLOEXEC);
           if (lock_fd != -1 &&
+              fstat (lock_fd, &statbuf) == 0 &&
+              /* Only gc if created at least 3 secs ago, to work around race mentioned in flatpak_run_allocate_id() */
+              statbuf.st_mtime + 3 < time (NULL) &&
               fcntl (lock_fd, F_GETLK, &l) == 0 &&
               l.l_type == F_UNLCK)
             {
@@ -1643,6 +1647,8 @@ flatpak_run_allocate_id (int *lock_fd_out)
            * file and take a write lock on .ref to ensure its not in
            * use. */
           lock_fd = open (lock_file, O_RDWR | O_CREAT | O_CLOEXEC, 0644);
+          /* There is a tiny race here between the open creating the file and the lock suceeding.
+             We work around that by only gc:ing "old" .ref files */
           if (lock_fd != -1 && fcntl (lock_fd, F_SETLK, &l) == 0)
             {
               *lock_fd_out = glnx_steal_fd (&lock_fd);
