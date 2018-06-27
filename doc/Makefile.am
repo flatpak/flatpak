@@ -45,6 +45,7 @@ man1 = \
 	flatpak-permissions.1		\
 	flatpak-permission-show.1	\
 	flatpak-permission-reset.1	\
+	flatpak-permission-set.1	\
 	flatpak-build-init.1		\
 	flatpak-build.1			\
 	flatpak-build-bundle.1		\
