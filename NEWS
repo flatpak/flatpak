@@ -1,3 +1,12 @@
+Major changes in 0.99.2
+=======================
+
+ * Fix race condition on instance id allocation
+ * Translation updates
+ * Build fixes for new glibc versions
+ * Build fixes for new libsoup versions
+ * Build fixes for old glib versions
+
 Major changes in 0.99.1
 =======================
 
