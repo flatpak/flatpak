@@ -41,6 +41,7 @@ man1 = \
 	flatpak-document-list.1		\
 	flatpak-permission-set.1	\
 	flatpak-permission-add.1	\
+	flatpak-permission-remove.1	\
 	flatpak-permission-list.1	\
 	flatpak-build-init.1		\
 	flatpak-build.1			\
