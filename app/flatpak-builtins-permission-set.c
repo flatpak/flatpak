@@ -196,9 +196,6 @@ gboolean
 flatpak_complete_permission_set (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
-  g_autoptr(GError) error = NULL;
   g_autoptr(GDBusConnection) session_bus = NULL;
   XdpDbusPermissionStore *store = NULL;
   int i;
