@@ -108,6 +108,110 @@ read_gpg_data (GCancellable *cancellable,
 }
 
 static gboolean
+get_bundle_appstream_data (GFile        *root,
+                           const char   *full_branch,
+                           const char   *name,
+                           GKeyFile     *metadata,
+                           gboolean      compress,
+                           GBytes      **result,
+                           GCancellable *cancellable,
+                           GError      **error)
+{
+  g_autoptr(GFile) xmls_dir = NULL;
+  g_autofree char *appstream_basename = NULL;
+  g_autoptr(GFile) appstream_file = NULL;
+  g_autoptr(GInputStream) xml_in = NULL;
+
+  *result = NULL;
+
+  xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
+  appstream_basename = g_strconcat (name, ".xml.gz", NULL);
+  appstream_file = g_file_get_child (xmls_dir, appstream_basename);
+
+  xml_in = (GInputStream *) g_file_read (appstream_file, cancellable, NULL);
+  if (xml_in)
+    {
+      g_autoptr(FlatpakXml) appstream_root = NULL;
+      g_autoptr(FlatpakXml) xml_root = flatpak_xml_parse (xml_in, TRUE,
+                                                          cancellable, error);
+      if (xml_root == NULL)
+        return FALSE;
+
+      appstream_root = flatpak_appstream_xml_new ();
+      if (flatpak_appstream_xml_migrate (xml_root, appstream_root,
+                                         full_branch, name, metadata))
+        {
+          g_autoptr(GBytes) xml_data = NULL;
+          gboolean success = FALSE;
+
+          if (compress)
+            success = flatpak_appstream_xml_root_to_data (appstream_root, NULL, &xml_data, error);
+          else
+            success = flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, NULL, error);
+
+          if (!success)
+            return FALSE;
+
+          *result = g_steal_pointer (&xml_data);
+        }
+    }
+
+  return TRUE;
+}
+
+typedef void (*IterateBundleIconsCallback) (const char *icon_size_name,
+                                            GBytes     *png_data,
+                                            gpointer    user_data);
+
+static gboolean
+iterate_bundle_icons (GFile                      *root,
+                      const char                 *name,
+                      IterateBundleIconsCallback  callback,
+                      gpointer                    user_data,
+                      GCancellable               *cancellable,
+                      GError                    **error)
+{
+  g_autoptr(GFile) icons_dir =
+    g_file_resolve_relative_path (root,
+                                  "files/share/app-info/icons/flatpak");
+  const char *icon_sizes[] = { "64x64", "128x128" };
+  const char *icon_sizes_key[] = { "icon-64", "icon-128" };
+  g_autofree char *icon_name = g_strconcat (name, ".png", NULL);
+  gint i;
+
+  for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
+    {
+      g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, icon_sizes[i]);
+      g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
+      g_autoptr(GInputStream) png_in = NULL;
+
+      png_in = (GInputStream *) g_file_read (icon_file, cancellable, NULL);
+      if (png_in != NULL)
+        {
+          g_autoptr(GBytes) png_data = flatpak_read_stream (png_in, FALSE, error);
+          if (png_data == NULL)
+            return FALSE;
+
+          callback (icon_sizes_key[i], png_data, user_data);
+        }
+    }
+
+  return TRUE;
+}
+
+static void
+add_icon_to_metadata (const char *icon_size_name,
+                      GBytes     *png_data,
+                      gpointer    user_data)
+{
+  GVariantBuilder *metadata_builder = user_data;
+
+  g_variant_builder_add (metadata_builder, "{sv}", icon_size_name,
+                         g_variant_new_from_bytes (G_VARIANT_TYPE_BYTESTRING,
+                                                   png_data, TRUE));
+}
+
+static gboolean
 build_bundle (OstreeRepo *repo, GFile *file,
               const char *name, const char *full_branch,
               const char *from_commit,
@@ -117,12 +221,9 @@ build_bundle (OstreeRepo *repo, GFile *file,
   GVariantBuilder param_builder;
 
   g_autoptr(GKeyFile) keyfile = NULL;
-  g_autoptr(GFile) xmls_dir = NULL;
+  g_autoptr(GBytes) xml_data = NULL;
   g_autoptr(GFile) metadata_file = NULL;
-  g_autoptr(GFile) appstream_file = NULL;
-  g_autofree char *appstream_basename = NULL;
   g_autoptr(GInputStream) in = NULL;
-  g_autoptr(GInputStream) xml_in = NULL;
   g_autoptr(GFile) root = NULL;
   g_autofree char *commit_checksum = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
@@ -173,59 +274,19 @@ build_bundle (OstreeRepo *repo, GFile *file,
                              g_variant_new_string (g_bytes_get_data (bytes, NULL)));
     }
 
-  xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
-  appstream_basename = g_strconcat (name, ".xml.gz", NULL);
-  appstream_file = g_file_get_child (xmls_dir, appstream_basename);
+  if (!get_bundle_appstream_data (root, full_branch, name, keyfile, TRUE,
+                                  &xml_data, cancellable, error))
+    return FALSE;
 
-  xml_in = (GInputStream *) g_file_read (appstream_file, cancellable, NULL);
-  if (xml_in)
+  if (xml_data)
     {
-      g_autoptr(FlatpakXml) appstream_root = NULL;
-      g_autoptr(FlatpakXml) xml_root = flatpak_xml_parse (xml_in, TRUE,
-                                                          cancellable, error);
-      if (xml_root == NULL)
+      g_variant_builder_add (&metadata_builder, "{sv}", "appdata",
+                             g_variant_new_from_bytes (G_VARIANT_TYPE_BYTESTRING,
+                                                       xml_data, TRUE));
+
+      if (!iterate_bundle_icons (root, name, add_icon_to_metadata,
+                                 &metadata_builder, cancellable, error))
         return FALSE;
-
-      appstream_root = flatpak_appstream_xml_new ();
-      if (flatpak_appstream_xml_migrate (xml_root, appstream_root,
-                                         full_branch, name, keyfile))
-        {
-          g_autoptr(GBytes) xml_data = NULL;
-          int i;
-          g_autoptr(GFile) icons_dir =
-            g_file_resolve_relative_path (root,
-                                          "files/share/app-info/icons/flatpak");
-          const char *icon_sizes[] = { "64x64", "128x128" };
-          const char *icon_sizes_key[] = { "icon-64", "icon-128" };
-          g_autofree char *icon_name = g_strconcat (name, ".png", NULL);
-
-          if (!flatpak_appstream_xml_root_to_data (appstream_root, NULL, &xml_data, error))
-            return FALSE;
-
-          g_variant_builder_add (&metadata_builder, "{sv}", "appdata",
-                                 g_variant_new_from_bytes (G_VARIANT_TYPE_BYTESTRING,
-                                                           xml_data, TRUE));
-
-          for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
-            {
-              g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, icon_sizes[i]);
-              g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
-              g_autoptr(GInputStream) png_in = NULL;
-
-              png_in = (GInputStream *) g_file_read (icon_file, cancellable, NULL);
-              if (png_in != NULL)
-                {
-                  g_autoptr(GBytes) png_data = flatpak_read_stream (png_in, FALSE, error);
-                  if (png_data == NULL)
-                    return FALSE;
-
-                  g_variant_builder_add (&metadata_builder, "{sv}", icon_sizes_key[i],
-                                         g_variant_new_from_bytes (G_VARIANT_TYPE_BYTESTRING,
-                                                                   png_data, TRUE));
-                }
-            }
-        }
-
     }
 
   if (opt_repo_url)
@@ -307,6 +368,20 @@ export_commit_to_archive (OstreeRepo *repo,
   return TRUE;
 }
 
+static void
+add_icon_to_annotations (const char *icon_size_name,
+                         GBytes     *png_data,
+                         gpointer    user_data)
+{
+  GHashTable *annotations = user_data;
+  g_autofree char *encoded = g_base64_encode (g_bytes_get_data (png_data, NULL),
+                                              g_bytes_get_size (png_data));
+
+  g_hash_table_replace (annotations,
+                        g_strconcat ("org.freedesktop.appstream.", icon_size_name, NULL),
+                        g_strconcat ("data:image/png;base64,", encoded, NULL));
+}
+
 static gboolean
 build_oci (OstreeRepo *repo, GFile *dir,
            const char *name, const char *ref,
@@ -329,6 +404,8 @@ build_oci (OstreeRepo *repo, GFile *dir,
   g_autoptr(FlatpakOciManifest) manifest = NULL;
   g_autoptr(FlatpakOciIndex) index = NULL;
   g_autoptr(GFile) metadata_file = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
+  g_autoptr(GBytes) xml_data = NULL;
   guint64 installed_size = 0;
   GHashTable *annotations;
   gsize metadata_size;
@@ -396,6 +473,14 @@ build_oci (OstreeRepo *repo, GFile *dir,
   if (g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, NULL) &&
       g_utf8_validate (metadata_contents, -1, NULL))
     {
+      keyfile = g_key_file_new ();
+
+      if (!g_key_file_load_from_data (keyfile,
+                                      metadata_contents,
+                                      metadata_size,
+                                      G_KEY_FILE_NONE, error))
+        return FALSE;
+
       g_hash_table_replace (annotations,
                             g_strdup ("org.flatpak.metadata"),
                             g_steal_pointer (&metadata_contents));
@@ -411,6 +496,23 @@ build_oci (OstreeRepo *repo, GFile *dir,
   g_hash_table_replace (annotations,
                         g_strdup ("org.flatpak.download-size"),
                         g_strdup_printf ("%" G_GUINT64_FORMAT, layer_desc->size));
+
+  if (!get_bundle_appstream_data (root, ref, name, keyfile, FALSE,
+                                  &xml_data, cancellable, error))
+    return FALSE;
+
+  if (xml_data)
+    {
+      gsize xml_data_len;
+
+      g_hash_table_replace (annotations,
+                            g_strdup ("org.freedesktop.appstream.appdata"),
+                            g_bytes_unref_to_data (g_steal_pointer (&xml_data), &xml_data_len));
+
+      if (!iterate_bundle_icons (root, name, add_icon_to_annotations,
+                                 annotations, cancellable, error))
+        return FALSE;
+    }
 
   manifest_desc = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (manifest), cancellable, error);
   if (manifest_desc == NULL)
