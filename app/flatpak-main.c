@@ -90,6 +90,7 @@ static FlatpakCommand commands[] = {
 
    /* translators: please keep the leading newline and space */
   { N_("\n Manage dynamic permissions") },
+  { "permission-remove", N_("Remove item from permission store"), flatpak_builtin_permission_remove, flatpak_complete_permission_remove },
   { "permission-list", N_("List permissions"), flatpak_builtin_permission_list, flatpak_complete_permission_list },
 
    /* translators: please keep the leading newline and space */
