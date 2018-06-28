@@ -86,7 +86,6 @@ list_for_app (XdpDbusPermissionStore  *store,
       g_autoptr(GVariant) data = NULL;
       g_autoptr(GVariant) d = NULL;
       g_autofree char *txt = NULL;
-      g_autofree char *perms = NULL;
       GVariantIter iter;
       char *key;
       GVariantIter *val;
