@@ -95,6 +95,7 @@ static FlatpakCommand commands[] = {
   { "permission-set", N_("Set permissions"), flatpak_builtin_permission_set, flatpak_complete_permission_set },
   { "permission-list", N_("List permissions"), flatpak_builtin_permission_list, flatpak_complete_permission_list },
   { "permission-show", N_("Show app permissions"), flatpak_builtin_permission_show, flatpak_complete_permission_show },
+  { "permission-reset", N_("Reset app permissions"), flatpak_builtin_permission_reset, flatpak_complete_permission_reset },
 
    /* translators: please keep the leading newline and space */
   { N_("\n Manage remote repositories") },
