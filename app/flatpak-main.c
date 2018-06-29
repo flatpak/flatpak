@@ -89,6 +89,13 @@ static FlatpakCommand commands[] = {
   { "document-list", N_("List exported files"), flatpak_builtin_document_list, flatpak_complete_document_list },
 
    /* translators: please keep the leading newline and space */
+  { N_("\n Manage dynamic permissions") },
+  { "permission-remove", N_("Remove item from permission store"), flatpak_builtin_permission_remove, flatpak_complete_permission_remove },
+  { "permission-list", N_("List permissions"), flatpak_builtin_permission_list, flatpak_complete_permission_list },
+  { "permission-show", N_("Show app permissions"), flatpak_builtin_permission_show, flatpak_complete_permission_show },
+  { "permission-reset", N_("Reset app permissions"), flatpak_builtin_permission_reset, flatpak_complete_permission_reset },
+
+   /* translators: please keep the leading newline and space */
   { N_("\n Manage remote repositories") },
   { "remotes", N_("List all configured remotes"), flatpak_builtin_list_remotes, flatpak_complete_list_remotes },
   { "remote-add", N_("Add a new remote repository (by URL)"), flatpak_builtin_add_remote, flatpak_complete_add_remote },

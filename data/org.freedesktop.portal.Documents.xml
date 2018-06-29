@@ -194,7 +194,7 @@
         RevokePermissions:
         @doc_id: the ID of the file in the document store
         @app_id: the ID of the application to which permissions are granted
-        @permissions: the permissions to grant, possible values are 'read', 'write', 'grant-permissions' and 'delete'
+        @permissions: the permissions to revoke, possible values are 'read', 'write', 'grant-permissions' and 'delete'
 
         Revokes access permissions for a file in the document store
         from an application.

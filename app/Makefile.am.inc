@@ -4,7 +4,20 @@ bin_PROGRAMS += \
 
 EXTRA_DIST += app/parse-datetime.y
 
+flatpak_dbus_built_sources = app/flatpak-permission-dbus-generated.c app/flatpak-permission-dbus-generated.h
+
+app/flatpak-permission-dbus-generated.c: data/org.freedesktop.impl.portal.PermissionStore.xml Makefile
+	mkdir -p $(builddir)/common
+	$(AM_V_GEN) $(GDBUS_CODEGEN)                            \
+		--interface-prefix org.freedesktop.impl.portal  \
+		--c-namespace XdpDbus                           \
+		--generate-c-code $(builddir)/app/flatpak-permission-dbus-generated  \
+		$(srcdir)/data/org.freedesktop.impl.portal.PermissionStore.xml  \
+		$(NULL)
+
+
 flatpak_SOURCES = \
+	$(flatpak_dbus_built_sources) \
 	app/flatpak-main.c \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
@@ -38,6 +51,10 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-document-unexport.c \
 	app/flatpak-builtins-document-info.c \
 	app/flatpak-builtins-document-list.c \
+	app/flatpak-builtins-permission-remove.c \
+	app/flatpak-builtins-permission-list.c \
+	app/flatpak-builtins-permission-show.c \
+	app/flatpak-builtins-permission-reset.c \
 	app/flatpak-builtins-search.c \
 	app/flatpak-builtins-repair.c \
 	app/flatpak-table-printer.c \
