@@ -223,8 +223,18 @@ flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
                                       GError            **error)
 {
   if (self->metadata == NULL)
-    return flatpak_fail (error, "Unable to load metadata from remote %s: %s", self->remote_name,
-                         self->metadata_fetch_error != NULL ? self->metadata_fetch_error->message : "unknown error");
+    {
+      g_autofree char *error_msg = NULL;
+
+      /* If the collection ID is NULL the metadata comes from the summary */
+      if (self->metadata_fetch_error != NULL)
+        error_msg = g_strdup (self->metadata_fetch_error->message);
+      else if (self->collection_id == NULL && self->summary_fetch_error != NULL)
+        error_msg = g_strdup_printf ("summary fetch error: %s", self->summary_fetch_error->message);
+
+      return flatpak_fail (error, "Unable to load metadata from remote %s: %s", self->remote_name,
+                           error_msg != NULL ? error_msg : "unknown error");
+    }
 
   return TRUE;
 }
