@@ -44,6 +44,13 @@ for i in oci/registry/blobs/sha256/*; do
 done
 sha256sum -c sums
 
+digest=$(grep sha256: oci/registry/index.json | sed s'@.*sha256:\([a-fA-F0-9]\+\).*@\1@')
+manifest=oci/registry/blobs/sha256/$digest
+
+assert_has_file $manifest
+assert_file_has_content $manifest "org.freedesktop.appstream.appdata.*<summary>Print a greeting</summary>"
+assert_file_has_content $manifest "org.freedesktop.appstream.icon-64"
+
 echo "ok export oci"
 
 ostree --repo=repo2 init --mode=archive-z2
