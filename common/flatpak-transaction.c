@@ -1734,6 +1734,21 @@ flatpak_transaction_get_current_operation (FlatpakTransaction  *self)
   return g_object_ref (priv->current_op);
 }
 
+/**
+ * flatpak_transaction_get_installation:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the installation this transaction was created for.
+ *
+ * Returns: (transfer full): a #FlatpakInstallation
+ */
+FlatpakInstallation *
+flatpak_transaction_get_installation (FlatpakTransaction  *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  return g_object_ref (priv->installation);
+}
+
 gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          GCancellable *cancellable,
