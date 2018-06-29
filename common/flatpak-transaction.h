@@ -171,6 +171,8 @@ gboolean            flatpak_transaction_run                       (FlatpakTransa
 FLATPAK_EXTERN
 FlatpakTransactionOperation *flatpak_transaction_get_current_operation (FlatpakTransaction  *self);
 FLATPAK_EXTERN
+FlatpakInstallation *flatpak_transaction_get_installation         (FlatpakTransaction  *self);
+FLATPAK_EXTERN
 GList *flatpak_transaction_get_operations (FlatpakTransaction  *self);
 
 FLATPAK_EXTERN
