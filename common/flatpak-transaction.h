@@ -89,7 +89,7 @@ struct _FlatpakTransactionClass
                                 FlatpakTransactionResult details);
   gboolean (*operation_error)  (FlatpakTransaction *transaction,
                                 FlatpakTransactionOperation *operation,
-                                GError *error,
+                                const GError *error,
                                 FlatpakTransactionErrorDetails detail);
   int (*choose_remote_for_ref) (FlatpakTransaction *transaction,
                                 const char *for_ref,
@@ -170,6 +170,8 @@ gboolean            flatpak_transaction_run                       (FlatpakTransa
                                                                    GError             **error);
 FLATPAK_EXTERN
 FlatpakTransactionOperation *flatpak_transaction_get_current_operation (FlatpakTransaction  *self);
+FLATPAK_EXTERN
+FlatpakInstallation *flatpak_transaction_get_installation         (FlatpakTransaction  *self);
 FLATPAK_EXTERN
 GList *flatpak_transaction_get_operations (FlatpakTransaction  *self);
 

@@ -254,7 +254,7 @@ operation_done (FlatpakTransaction *transaction,
 static gboolean
 operation_error (FlatpakTransaction *transaction,
                 FlatpakTransactionOperation *operation,
-                 GError *error,
+                 const GError *error,
                  FlatpakTransactionErrorDetails detail)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
