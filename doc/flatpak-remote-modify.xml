@@ -185,7 +185,7 @@
                 <term><option>--default-branch=BRANCH</option></term>
 
                 <listitem><para>
-                    A default branch to for the remote, mainly for use in a UI.
+                    A default branch for the remote, mainly for use in a UI.
                 </para></listitem>
             </varlistentry>
 
@@ -211,9 +211,6 @@
             <varlistentry>
                 <term><option>--update-metadata</option></term>
 
-                <listitem><para>
-                    A default branch to for the remote, mainly for use in a UI.
-                </para></listitem>
                 <listitem><para>
                     Update the remote's extra metadata from the OSTree repository's summary
                     file. Only xa.title and xa.default-branch are supported at the moment.
