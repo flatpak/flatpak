@@ -24,7 +24,6 @@ set -euo pipefail
 export FLATPAK_ENABLE_EXPERIMENTAL_OCI=1
 
 skip_without_bwrap
-[ x${USE_SYSTEMDIR-} != xyes ] || skip_without_user_xattrs
 
 echo "1..2"
 
