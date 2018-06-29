@@ -27,11 +27,11 @@
 #include <flatpak-common-types-private.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
-#include <libsoup/soup.h>
 #include "flatpak-dbus-generated.h"
 #include "flatpak-document-dbus-generated.h"
 #include "flatpak-context-private.h"
 #include "flatpak-error.h"
+#include "flatpak-utils-http-private.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
 
@@ -40,9 +40,6 @@
 typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
 } FlatpakHostCommandFlags;
-
-typedef void (*FlatpakLoadUriProgress) (guint64  downloaded_bytes,
-                                        gpointer user_data);
 
 
 #define FLATPAK_ANSI_BOLD_ON "\x1b[1m"
@@ -693,31 +690,6 @@ long flatpak_number_prompt (int         min,
                             int         max,
                             const char *prompt,
                             ...) G_GNUC_PRINTF (3, 4);
-
-SoupSession * flatpak_create_soup_session (const char *user_agent);
-
-typedef enum {
-  FLATPAK_HTTP_FLAGS_NONE = 0,
-  FLATPAK_HTTP_FLAGS_ACCEPT_OCI = 1 << 0,
-} FlatpakHTTPFlags;
-
-GBytes * flatpak_load_http_uri (SoupSession           *soup_session,
-                                const char            *uri,
-                                FlatpakHTTPFlags       flags,
-                                const char            *etag,
-                                char                 **out_etag,
-                                FlatpakLoadUriProgress progress,
-                                gpointer               user_data,
-                                GCancellable          *cancellable,
-                                GError               **error);
-gboolean flatpak_download_http_uri (SoupSession           *soup_session,
-                                    const char            *uri,
-                                    FlatpakHTTPFlags       flags,
-                                    GOutputStream         *out,
-                                    FlatpakLoadUriProgress progress,
-                                    gpointer               user_data,
-                                    GCancellable          *cancellable,
-                                    GError               **error);
 
 typedef void (*FlatpakProgressCallback)(const char *status,
                                         guint       progress,

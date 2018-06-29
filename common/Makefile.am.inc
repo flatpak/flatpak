@@ -94,6 +94,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-transaction.h \
 	common/flatpak-transaction.c \
 	common/flatpak-utils.c \
+	common/flatpak-utils-http.c \
+	common/flatpak-utils-http-private.h \
 	common/flatpak-utils-private.h \
 	common/flatpak-chain-input-stream.c \
 	common/flatpak-chain-input-stream-private.h \
