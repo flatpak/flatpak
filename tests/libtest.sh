@@ -311,14 +311,6 @@ run_sh () {
     ${CMD_PREFIX} flatpak run --command=bash ${ARGS-} org.test.Hello -c "$*"
 }
 
-skip_without_user_xattrs () {
-    touch ${TEST_DATA_DIR}/test-xattrs
-    if ! setfattr -n user.testvalue -v somevalue ${TEST_DATA_DIR}/test-xattrs; then
-        echo "1..0 # SKIP this test requires xattr support"
-        exit 0
-    fi
-}
-
 skip_without_bwrap () {
     if [ -z "${FLATPAK_BWRAP:-}" ]; then
         # running installed-tests: assume we know what we're doing
