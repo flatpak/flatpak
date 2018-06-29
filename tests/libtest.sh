@@ -72,8 +72,7 @@ fi
 export MALLOC_CHECK_=3
 export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
-# We need this to be in /var/tmp because /tmp has no xattr support
-TEST_DATA_DIR=`mktemp -d /var/tmp/test-flatpak-XXXXXX`
+TEST_DATA_DIR=`mktemp -d /tmp/test-flatpak-XXXXXX`
 mkdir -p ${TEST_DATA_DIR}/home
 mkdir -p ${TEST_DATA_DIR}/runtime
 mkdir -p ${TEST_DATA_DIR}/system
@@ -309,14 +308,6 @@ run () {
 
 run_sh () {
     ${CMD_PREFIX} flatpak run --command=bash ${ARGS-} org.test.Hello -c "$*"
-}
-
-skip_without_user_xattrs () {
-    touch ${TEST_DATA_DIR}/test-xattrs
-    if ! setfattr -n user.testvalue -v somevalue ${TEST_DATA_DIR}/test-xattrs; then
-        echo "1..0 # SKIP this test requires xattr support"
-        exit 0
-    fi
 }
 
 skip_without_bwrap () {
