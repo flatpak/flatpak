@@ -73,7 +73,8 @@ nodist_flatpak_SOURCES = \
 app/parse-datetime.c: app/parse-datetime.y Makefile
 	$(AM_V_GEN) $(YACC) $< -o $@
 
-CLEANFILES += app/parse-datetime.c
+BUILT_SOURCES += $(flatpak_dbus_built_sources)
+CLEANFILES += app/parse-datetime.c $(flatpak_dbus_built_sources)
 
 flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
 	libglnx.la libflatpak-common.la
