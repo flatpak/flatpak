@@ -982,7 +982,6 @@ add_remote (void)
   g_autofree char *port = NULL;
   g_autofree char *pid = NULL;
   g_autofree char *collection_id_arg = NULL;
-  g_autofree char *argv_str = NULL;
 
   launch_httpd ();
 
