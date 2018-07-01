@@ -83,4 +83,5 @@ flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS
 flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
 	-DFLATPAK_COMPILATION \
         -I$(srcdir)/app \
+        -I$(builddir)/app \
         -DLOCALEDIR=\"$(localedir)\"
