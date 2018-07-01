@@ -15,6 +15,8 @@ app/flatpak-permission-dbus-generated.c: data/org.freedesktop.impl.portal.Permis
 		$(srcdir)/data/org.freedesktop.impl.portal.PermissionStore.xml  \
 		$(NULL)
 
+app/%-dbus-generated.h: app/%-dbus-generated.c
+	@true # Built as a side-effect of the rules for the .c
 
 flatpak_SOURCES = \
 	$(flatpak_dbus_built_sources) \
