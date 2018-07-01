@@ -25,6 +25,15 @@ int httpd_pid = -1;
 static const char *gpg_id = "7B0961FD";
 const char *repo_name = "test-repo";
 
+typedef enum
+{
+  RUN_TEST_SUBPROCESS_DEFAULT = 0,
+  RUN_TEST_SUBPROCESS_IGNORE_FAILURE = (1 << 0),
+  RUN_TEST_SUBPROCESS_NO_CAPTURE = (1 << 1),
+} RunTestSubprocessFlags;
+
+static void run_test_subprocess (char **argv, RunTestSubprocessFlags flags);
+
 typedef struct
 {
   const char *id;
@@ -382,35 +391,19 @@ test_list_refs (void)
 static void
 create_multi_collection_id_repo (const char *repo_dir)
 {
-  int status;
   g_autoptr(GError) error = NULL;
-  GSpawnFlags flags = G_SPAWN_DEFAULT;
   g_autofree char *arg0 = NULL;
-  g_autofree char *argv_str = NULL;
 
   /* Create a repository in which each app has a different collection-id */
   arg0 = g_test_build_filename (G_TEST_DIST, "make-multi-collection-id-repo.sh", NULL);
   const char *argv[] = { arg0, repo_dir, NULL };
-  argv_str = g_strjoinv (" ", (char **) argv);
-
-  if (g_test_verbose ())
-    g_print ("running %s\n", argv_str);
-  else
-    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
-
-  g_test_message ("Spawning %s", argv_str);
-  g_spawn_sync (NULL, (char **) argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (status, ==, 0);
+  run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
 test_list_refs_in_remotes (void)
 {
-  int status;
   const char *repo_name = "multi-refs-repo";
-  GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
-  g_autofree char *argv_str = NULL;
   g_autofree char *repo_url = NULL;
   g_autoptr(GPtrArray) refs1 = NULL;
   g_autoptr(GPtrArray) refs2 = NULL;
@@ -434,19 +427,8 @@ test_list_refs_in_remotes (void)
   const char *argv[] = { "flatpak", "remote-add", "--user", "--no-gpg-verify",
                          repo_name, repo_url, NULL };
 
-  argv_str = g_strjoinv (" ", (char **) argv);
-
-  if (g_test_verbose ())
-    g_print ("running %s\n", argv_str);
-  else
-    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
-
   /* Add the repo we created above, which holds one collection ID per ref */
-  g_test_message ("Spawning %s", argv_str);
-  flags = G_SPAWN_SEARCH_PATH;
-  g_spawn_sync (NULL, (char **) argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (status, ==, 0);
+  run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -852,13 +834,6 @@ test_list_updates (void)
   g_assert_no_error (error);
   g_assert_true (res);
 }
-
-typedef enum
-{
-  RUN_TEST_SUBPROCESS_DEFAULT = 0,
-  RUN_TEST_SUBPROCESS_IGNORE_FAILURE = (1 << 0),
-  RUN_TEST_SUBPROCESS_NO_CAPTURE = (1 << 1),
-} RunTestSubprocessFlags;
 
 static void
 run_test_subprocess (char **argv,
