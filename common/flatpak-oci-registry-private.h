@@ -133,13 +133,19 @@ FlatpakOciSignature *flatpak_oci_verify_signature (OstreeRepo *repo,
                                                    GBytes     *signature,
                                                    GError    **error);
 
-GVariant *flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
-                                           const char   *uri,
-                                           const char   *etag,
-                                           GCancellable *cancellable,
-                                           GError      **error);
+gboolean flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
+                                          const char   *uri,
+                                          GFile        *index,
+                                          char        **index_uri_out,
+                                          GCancellable *cancellable,
+                                          GError      **error);
 
-gboolean flatpak_oci_index_verify_ref (SoupSession  *soup_session,
+GVariant *flatpak_oci_index_make_summary (GFile        *index,
+                                          const char   *index_uri,
+                                          GCancellable *cancellable,
+                                          GError      **error);
+
+gboolean flatpak_oci_index_verify_ref (SoupSession  *soup_soession,
                                        const char   *uri,
                                        const char   *ref,
                                        const char   *digest,
