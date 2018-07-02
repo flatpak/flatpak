@@ -52,5 +52,14 @@ gboolean flatpak_download_http_uri (SoupSession           *soup_session,
                                     gpointer               user_data,
                                     GCancellable          *cancellable,
                                     GError               **error);
+gboolean flatpak_cache_http_uri (SoupSession           *soup_session,
+                                 const char            *uri,
+                                 FlatpakHTTPFlags       flags,
+                                 int                    dest_dfd,
+                                 const char            *dest_subpath,
+                                 FlatpakLoadUriProgress progress,
+                                 gpointer               user_data,
+                                 GCancellable          *cancellable,
+                                 GError               **error);
 
 #endif /* __FLATPAK_UTILS_HTTP_H__ */
