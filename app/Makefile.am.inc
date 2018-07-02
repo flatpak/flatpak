@@ -15,6 +15,8 @@ app/flatpak-permission-dbus-generated.c: data/org.freedesktop.impl.portal.Permis
 		$(srcdir)/data/org.freedesktop.impl.portal.PermissionStore.xml  \
 		$(NULL)
 
+app/%-dbus-generated.h: app/%-dbus-generated.c
+	@true # Built as a side-effect of the rules for the .c
 
 flatpak_SOURCES = \
 	$(flatpak_dbus_built_sources) \
@@ -81,4 +83,5 @@ flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS
 flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
 	-DFLATPAK_COMPILATION \
         -I$(srcdir)/app \
+        -I$(builddir)/app \
         -DLOCALEDIR=\"$(localedir)\"
