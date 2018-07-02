@@ -2296,7 +2296,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                              FlatpakRunFlags flags,
                              GError        **error)
 {
-  g_autofree char *run_dir;
+  g_autofree char *run_dir = NULL;
   g_autofree char *passwd_contents = NULL;
   g_autofree char *group_contents = NULL;
   const char *pkcs11_conf_contents = NULL;
@@ -2304,13 +2304,13 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   gulong pers;
   gid_t gid = getgid ();
 
+  g_autoptr(GFile) etc = NULL;
+
   g = getgrgid (gid);
   if(g == NULL)
       return flatpak_fail (error, "Invalid gid: %d", gid);
 
   run_dir = g_strdup_printf ("/run/user/%d", getuid ());
-
-  g_autoptr(GFile) etc = NULL;
 
   passwd_contents = g_strdup_printf ("%s:x:%d:%d:%s:%s:%s\n"
                                      "nfsnobody:x:65534:65534:Unmapped user:/:/sbin/nologin\n",
