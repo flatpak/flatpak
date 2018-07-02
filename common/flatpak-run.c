@@ -2296,19 +2296,26 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                              FlatpakRunFlags flags,
                              GError        **error)
 {
-  g_autofree char *run_dir = g_strdup_printf ("/run/user/%d", getuid ());
+  g_autofree char *run_dir;
   g_autofree char *passwd_contents = NULL;
   g_autofree char *group_contents = NULL;
   const char *pkcs11_conf_contents = NULL;
-  struct group *g = getgrgid (getgid ());
+  struct group *g;
   gulong pers;
+  gid_t gid = getgid ();
+
+  g = getgrgid (gid);
+  if(g == NULL)
+      return flatpak_fail (error, "Invalid gid: %d", gid);
+
+  run_dir = g_strdup_printf ("/run/user/%d", getuid ());
 
   g_autoptr(GFile) etc = NULL;
 
   passwd_contents = g_strdup_printf ("%s:x:%d:%d:%s:%s:%s\n"
                                      "nfsnobody:x:65534:65534:Unmapped user:/:/sbin/nologin\n",
                                      g_get_user_name (),
-                                     getuid (), getgid (),
+                                     getuid (), gid,
                                      g_get_real_name (),
                                      g_get_home_dir (),
                                      DEFAULT_SHELL);
@@ -2316,7 +2323,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   group_contents = g_strdup_printf ("%s:x:%d:%s\n"
                                     "nfsnobody:x:65534:\n",
                                     g->gr_name,
-                                    getgid (), g_get_user_name ());
+                                    gid, g_get_user_name ());
 
   pkcs11_conf_contents =
     "# Disable user pkcs11 config, because the host modules don't work in the runtime\n"
