@@ -3,10 +3,11 @@
 set -euo pipefail
 
 dir=$1
+cmd=${2:-python -m SimpleHTTPServer 0}
 test_tmpdir=$(pwd)
 
-cd ${dir}
-env PYTHONUNBUFFERED=1 setsid python -m SimpleHTTPServer 0 >${test_tmpdir}/httpd-output &
+[ "$dir" != "" ] && cd ${dir}
+env PYTHONUNBUFFERED=1 setsid $cmd >${test_tmpdir}/httpd-output &
 child_pid=$!
 echo "Web server pid: $child_pid" >&2
 
