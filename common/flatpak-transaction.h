@@ -68,6 +68,16 @@ typedef enum {
   FLATPAK_TRANSACTION_RESULT_NO_CHANGE = 1 << 0,
 } FlatpakTransactionResult;
 
+/**
+ * FlatpakTransactionRemoteReason
+ * @FLATPAK_TRANSACTION_REMOTE_GENERIC_REPO: The remote specified in the flatpakref has other apps too
+ * @FLATPAK_TRANSACTION_REMOTE_RUNTIME_DEPS: The remote has runtimes needed for the app
+ */
+typedef enum {
+  FLATPAK_TRANSACTION_REMOTE_GENERIC_REPO,
+  FLATPAK_TRANSACTION_REMOTE_RUNTIME_DEPS,
+} FlatpakTransactionRemoteReason;
+
 FLATPAK_EXTERN
 G_DECLARE_FINAL_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, FLATPAK, TRANSACTION_PROGRESS, GObject)
 
@@ -101,7 +111,12 @@ struct _FlatpakTransactionClass
                                 const char *rebase);
   gboolean (*ready)            (FlatpakTransaction *transaction);
 
-  gpointer padding[11];
+  gboolean (*add_new_remote) (FlatpakTransaction *transaction,
+                              FlatpakTransactionRemoteReason reason,
+                              const char *from_id,
+                              const char *remote_name,
+                              const char *url);
+  gpointer padding[10];
 };
 
 FLATPAK_EXTERN
@@ -188,6 +203,10 @@ FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install_bundle        (FlatpakTransaction  *self,
                                                                    GFile               *file,
                                                                    GBytes              *gpg_data,
+                                                                   GError             **error);
+FLATPAK_EXTERN
+gboolean            flatpak_transaction_add_install_flatpakref    (FlatpakTransaction *self,
+                                                                   GBytes              *flatpakref_data,
                                                                    GError             **error);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_update                (FlatpakTransaction  *self,
