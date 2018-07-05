@@ -2170,6 +2170,9 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   else
     do_compress = TRUE;
 
+  if (new_checksum == NULL)
+    return flatpak_fail (error, "No appstream commit to deploy");
+
   real_checkout_dir = g_file_get_child (arch_dir, new_checksum);
   checkout_exists = g_file_query_exists (real_checkout_dir, NULL);
 
