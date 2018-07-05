@@ -237,6 +237,7 @@ flatpak_transaction_set_no_deploy
 flatpak_transaction_set_no_pull
 flatpak_transaction_set_reinstall
 flatpak_transaction_set_force_uninstall
+flatpak_transaction_set_default_arch
 <SUBSECTION Standard>
 FlatpakTransactionClass
 FLATPAK_IS_TRANSACTION
