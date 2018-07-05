@@ -98,6 +98,7 @@ struct _FlatpakTransactionPrivate {
   gboolean disable_related;
   gboolean reinstall;
   gboolean force_uninstall;
+  char *default_arch;
 };
 
 enum {
@@ -486,6 +487,7 @@ flatpak_transaction_finalize (GObject *object)
 
   g_clear_object (&priv->installation);
 
+  g_free (priv->default_arch);
   g_hash_table_unref (priv->last_op_for_ref);
   g_hash_table_unref (priv->remote_states);
   g_list_free_full (priv->ops, (GDestroyNotify)g_object_unref);
@@ -816,6 +818,15 @@ flatpak_transaction_set_force_uninstall (FlatpakTransaction  *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   priv->force_uninstall = force_uninstall;
+}
+
+void
+flatpak_transaction_set_default_arch (FlatpakTransaction  *self,
+                                      const char *default_arch)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_free (priv->default_arch);
+  priv->default_arch = g_strdup (default_arch);
 }
 
 static FlatpakTransactionOperation *

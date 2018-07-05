@@ -160,6 +160,9 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_force_uninstall       (FlatpakTransaction  *self,
                                                                    gboolean             force_uninstall);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_default_arch          (FlatpakTransaction  *self,
+                                                                   const char          *arch);
+FLATPAK_EXTERN
 void                flatpak_transaction_add_dependency_source     (FlatpakTransaction  *self,
                                                                    FlatpakInstallation *installation);
 FLATPAK_EXTERN
