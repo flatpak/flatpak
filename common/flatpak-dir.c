@@ -10072,12 +10072,11 @@ GKeyFile *
 flatpak_dir_parse_repofile (FlatpakDir   *self,
                             const char   *remote_name,
                             gboolean      from_ref,
-                            GBytes       *data,
+                            GKeyFile     *keyfile,
                             GBytes      **gpg_data_out,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autofree char *uri = NULL;
@@ -10095,15 +10094,6 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
 
   GKeyFile *config = g_key_file_new ();
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
-
-  if (!g_key_file_load_from_data (keyfile,
-                                  g_bytes_get_data (data, NULL),
-                                  g_bytes_get_size (data),
-                                  0, &local_error))
-    {
-      flatpak_fail (error, "Invalid .flatpakref: %s", local_error->message);
-      return NULL;
-    }
 
   if (!g_key_file_has_group (keyfile, source_group))
     {
@@ -10179,7 +10169,7 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
 }
 
 static gboolean
-parse_ref_file (GBytes *data,
+parse_ref_file (GKeyFile *keyfile,
                 char **name_out,
                 char **branch_out,
                 char **url_out,
@@ -10189,7 +10179,6 @@ parse_ref_file (GBytes *data,
                 char **collection_id_out,
                 GError **error)
 {
-  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autofree char *url = NULL;
   g_autofree char *title = NULL;
   g_autofree char *name = NULL;
@@ -10206,10 +10195,6 @@ parse_ref_file (GBytes *data,
   *title_out = NULL;
   *gpg_data_out = NULL;
   *is_runtime_out = FALSE;
-
-  if (!g_key_file_load_from_data (keyfile, g_bytes_get_data (data, NULL), g_bytes_get_size (data),
-                                  0, error))
-    return FALSE;
 
   if (!g_key_file_has_group (keyfile, FLATPAK_REF_GROUP))
     return flatpak_fail (error, "Invalid file format, no %s group", FLATPAK_REF_GROUP);
@@ -10273,7 +10258,7 @@ parse_ref_file (GBytes *data,
 
 gboolean
 flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
-                                        GBytes     *data,
+                                        GKeyFile   *keyfile,
                                         const char *default_arch,
                                         char      **remote_name_out,
                                         char      **collection_id_out,
@@ -10291,7 +10276,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
   g_autofree char *collection_id = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
 
-  if (!parse_ref_file (data, &name, &branch, &url, &title, &gpg_data, &is_runtime, &collection_id, error))
+  if (!parse_ref_file (keyfile, &name, &branch, &url, &title, &gpg_data, &is_runtime, &collection_id, error))
     return FALSE;
 
   ref = flatpak_compose_ref (!is_runtime, name, branch, default_arch, error);
