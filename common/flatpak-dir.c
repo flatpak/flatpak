@@ -1877,12 +1877,85 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
   g_autoptr(GFile) repodir = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   g_autoptr(GError) my_error = NULL;
-  gboolean use_helper = FALSE;
+  gboolean use_helper;
 
-  if (self->repo == NULL)
+  if (self->repo != NULL)
+    return TRUE;
+
+  use_helper =
+    !self->no_system_helper && !self->user && getuid () != 0;
+
+  if (!g_file_query_exists (self->basedir, cancellable))
     {
-      if (!flatpak_dir_ensure_path (self, cancellable, &my_error))
+      if (use_helper)
         {
+          g_autoptr(GError) local_error = NULL;
+          FlatpakSystemHelper *system_helper;
+
+          system_helper = flatpak_dir_get_system_helper (self);
+          if (system_helper)
+            {
+              const char *installation = flatpak_dir_get_id (self);
+              if (!flatpak_system_helper_call_ensure_repo_sync (system_helper,
+                                                                installation ? installation : "",
+                                                                NULL, &local_error))
+                {
+                  if (allow_empty)
+                    return TRUE;
+
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+            }
+        }
+      else
+        {
+          g_autoptr(GError) local_error = NULL;
+          if (!flatpak_dir_ensure_path (self, cancellable, &local_error))
+            {
+              if (allow_empty)
+                return TRUE;
+
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+        }
+    }
+
+  repodir = g_file_get_child (self->basedir, "repo");
+
+  if (use_helper)
+    {
+      g_autoptr(GFile) cache_dir = NULL;
+      g_autofree char *cache_path = NULL;
+
+      repo = system_ostree_repo_new (repodir);
+
+      cache_dir = flatpak_ensure_user_cache_dir_location (error);
+      if (cache_dir == NULL)
+        return FALSE;
+
+      cache_path = g_file_get_path (cache_dir);
+      if (!ostree_repo_set_cache_dir (repo,
+                                      AT_FDCWD, cache_path,
+                                      cancellable, error))
+        return FALSE;
+    }
+  else if (self->user)
+    repo = ostree_repo_new (repodir);
+  else
+    repo = system_ostree_repo_new (repodir);
+
+  if (!g_file_query_exists (repodir, cancellable))
+    {
+      /* We always use bare-user-only these days, except old installations
+         that still user bare-user */
+      OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
+
+      if (!ostree_repo_create (repo, mode, cancellable, &my_error))
+        {
+          flatpak_rm_rf (repodir, cancellable, NULL);
+
           if (allow_empty)
             return TRUE;
 
@@ -1890,91 +1963,49 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
           return FALSE;
         }
 
-      repodir = g_file_get_child (self->basedir, "repo");
-      if (self->no_system_helper || self->user || getuid () == 0)
+      /* Create .changes file early to avoid polling non-existing file in monitor */
+      if (!flatpak_dir_mark_changed (self, &my_error))
         {
-          repo = system_ostree_repo_new (repodir);
+          g_warning ("Error marking directory as changed: %s", my_error->message);
+          g_clear_error (&my_error);
         }
-      else
-        {
-          g_autoptr(GFile) cache_dir = NULL;
-          g_autofree char *cache_path = NULL;
-
-          repo = system_ostree_repo_new (repodir);
-          use_helper = TRUE;
-
-          cache_dir = flatpak_ensure_user_cache_dir_location (error);
-          if (cache_dir == NULL)
-            return FALSE;
-
-          cache_path = g_file_get_path (cache_dir);
-          if (!ostree_repo_set_cache_dir (repo,
-                                          AT_FDCWD, cache_path,
-                                          cancellable, error))
-            return FALSE;
-        }
-
-      if (!g_file_query_exists (repodir, cancellable))
-        {
-          /* We always use bare-user-only these days, except old installations
-             that still user bare-user */
-          OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
-
-          if (!ostree_repo_create (repo, mode, cancellable, &my_error))
-            {
-              flatpak_rm_rf (repodir, cancellable, NULL);
-
-              if (allow_empty)
-                return TRUE;
-
-              g_propagate_error (error, g_steal_pointer (&my_error));
-              return FALSE;
-            }
-
-          /* Create .changes file early to avoid polling non-existing file in monitor */
-          if (!flatpak_dir_mark_changed (self, &my_error))
-            {
-              g_warning ("Error marking directory as changed: %s", my_error->message);
-              g_clear_error (&my_error);
-            }
-        }
-      else
-        {
-          if (!ostree_repo_open (repo, cancellable, error))
-            {
-              g_autofree char *repopath = NULL;
-
-              repopath = g_file_get_path (repodir);
-              g_prefix_error (error, _("While opening repository %s: "), repopath);
-              return FALSE;
-            }
-        }
-
-      /* Reset min-free-space-percent to 0, this keeps being a problem for a lot of people */
-      if (!use_helper)
-        {
-          GKeyFile *orig_config = NULL;
-          g_autofree char *orig_min_free_space_percent = NULL;
-
-          orig_config = ostree_repo_get_config (repo);
-          orig_min_free_space_percent = g_key_file_get_value (orig_config, "core", "min-free-space-percent", NULL);
-          if (orig_min_free_space_percent == NULL)
-            {
-              g_autoptr(GKeyFile) config = ostree_repo_copy_config (repo);
-
-              g_key_file_set_string (config, "core", "min-free-space-percent", "0");
-              if (!ostree_repo_write_config (repo, config, error))
-                return FALSE;
-
-              if (!ostree_repo_reload_config (repo, cancellable, error))
-                return FALSE;
-            }
-        }
-
-      /* Make sure we didn't reenter weirdly */
-      g_assert (self->repo == NULL);
-      self->repo = g_object_ref (repo);
     }
+  else
+    {
+      if (!ostree_repo_open (repo, cancellable, error))
+        {
+          g_autofree char *repopath = NULL;
+
+          repopath = g_file_get_path (repodir);
+          g_prefix_error (error, _("While opening repository %s: "), repopath);
+          return FALSE;
+        }
+    }
+
+  /* Reset min-free-space-percent to 0, this keeps being a problem for a lot of people */
+  if (!use_helper)
+    {
+      GKeyFile *orig_config = NULL;
+      g_autofree char *orig_min_free_space_percent = NULL;
+
+      orig_config = ostree_repo_get_config (repo);
+      orig_min_free_space_percent = g_key_file_get_value (orig_config, "core", "min-free-space-percent", NULL);
+      if (orig_min_free_space_percent == NULL)
+        {
+          g_autoptr(GKeyFile) config = ostree_repo_copy_config (repo);
+
+          g_key_file_set_string (config, "core", "min-free-space-percent", "0");
+          if (!ostree_repo_write_config (repo, config, error))
+            return FALSE;
+
+          if (!ostree_repo_reload_config (repo, cancellable, error))
+            return FALSE;
+        }
+    }
+
+  /* Make sure we didn't reenter weirdly */
+  g_assert (self->repo == NULL);
+  self->repo = g_object_ref (repo);
 
   return TRUE;
 }
