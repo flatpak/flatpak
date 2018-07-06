@@ -136,6 +136,10 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="EnsureRepo">
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
   </interface>
 
 </node>
