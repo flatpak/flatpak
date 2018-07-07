@@ -589,7 +589,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
         {
           if (!flatpak_dir_pull (system, state, old_branch, NULL, NULL, NULL, NULL,
                                  FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
-                                 NULL, NULL))
+                                 NULL, &second_error))
             {
               g_prefix_error (&first_error, "Error updating appstream2: ");
               g_prefix_error (&second_error, "%s; Error updating appstream: ", first_error->message);
