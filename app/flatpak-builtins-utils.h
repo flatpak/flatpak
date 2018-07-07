@@ -29,25 +29,25 @@
 /* Appstream data expires after a day */
 #define FLATPAK_APPSTREAM_TTL 86400
 
-gboolean    looks_like_branch (const char  *branch);
-GBytes *    download_uri      (const char  *url,
-                               GError     **error);
+gboolean    looks_like_branch (const char *branch);
+GBytes *    download_uri (const char *url,
+                          GError    **error);
 
-GBytes * flatpak_load_gpg_keys (char **gpg_import,
+GBytes * flatpak_load_gpg_keys (char        **gpg_import,
                                 GCancellable *cancellable,
                                 GError      **error);
 
-FlatpakDir * flatpak_find_installed_pref (const char *pref,
-                                          FlatpakKinds kinds,
-                                          const char *default_arch,
-                                          const char *default_branch,
-                                          gboolean search_all,
-                                          gboolean search_user,
-                                          gboolean search_system,
-                                          char **search_installations,
-                                          char **out_ref,
+FlatpakDir * flatpak_find_installed_pref (const char   *pref,
+                                          FlatpakKinds  kinds,
+                                          const char   *default_arch,
+                                          const char   *default_branch,
+                                          gboolean      search_all,
+                                          gboolean      search_user,
+                                          gboolean      search_system,
+                                          char        **search_installations,
+                                          char        **out_ref,
                                           GCancellable *cancellable,
-                                          GError **error);
+                                          GError      **error);
 
 gboolean flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
                                             const char   *remote_name,

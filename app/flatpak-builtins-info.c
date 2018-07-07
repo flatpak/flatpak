@@ -80,7 +80,7 @@ maybe_print_space (gboolean *first)
 }
 
 static gchar *
-format_timestamp (guint64  timestamp)
+format_timestamp (guint64 timestamp)
 {
   GDateTime *dt;
   gchar *str;
@@ -375,51 +375,51 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (opt_show_extensions)
     {
-       GList *extensions, *l;
+      GList *extensions, *l;
 
-       extensions = flatpak_list_extensions (metakey, parts[2], parts[3]);
-       for (l = extensions; l; l = l->next)
-         {
-           FlatpakExtension *ext = l->data;
-           g_autofree const char **subpaths = NULL;
-           g_autoptr(GVariant) ext_deploy_data = NULL;
-           g_autofree char *formatted = NULL;
+      extensions = flatpak_list_extensions (metakey, parts[2], parts[3]);
+      for (l = extensions; l; l = l->next)
+        {
+          FlatpakExtension *ext = l->data;
+          g_autofree const char **subpaths = NULL;
+          g_autoptr(GVariant) ext_deploy_data = NULL;
+          g_autofree char *formatted = NULL;
 
-           if (ext->is_unmaintained)
-             {
-               commit = "unmaintained";
-               origin = NULL;
-               size = 0;
-               formatted = g_strdup ("unknown");
-               subpaths = NULL;
-             }
-           else
-             {
-               ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, error);
-               if (ext_deploy_data == NULL)
-                 return FALSE;
+          if (ext->is_unmaintained)
+            {
+              commit = "unmaintained";
+              origin = NULL;
+              size = 0;
+              formatted = g_strdup ("unknown");
+              subpaths = NULL;
+            }
+          else
+            {
+              ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, error);
+              if (ext_deploy_data == NULL)
+                return FALSE;
 
-               commit = flatpak_deploy_data_get_commit (ext_deploy_data);
-               origin = flatpak_deploy_data_get_origin (ext_deploy_data);
-               size = flatpak_deploy_data_get_installed_size (ext_deploy_data);
-               formatted = g_format_size (size);
-               subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
-             }
+              commit = flatpak_deploy_data_get_commit (ext_deploy_data);
+              origin = flatpak_deploy_data_get_origin (ext_deploy_data);
+              size = flatpak_deploy_data_get_installed_size (ext_deploy_data);
+              formatted = g_format_size (size);
+              subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
+            }
 
-           g_print ("\n%s%s%s %s\n", on, _("Extension:"), off, ext->ref);
-           g_print ("%s%s%s %s\n", on, _("ID:"), off, ext->id);
-           g_print ("%s%s%s %s\n", on, _("Origin:"), off, origin ? origin : "-");
-           g_print ("%s%s%s %s\n", on, _("Commit:"), off, commit);
-           g_print ("%s%s%s %s%s\n", on, _("Installed size:"), off, subpaths && subpaths[0] ? "<" : "", formatted);
+          g_print ("\n%s%s%s %s\n", on, _("Extension:"), off, ext->ref);
+          g_print ("%s%s%s %s\n", on, _("ID:"), off, ext->id);
+          g_print ("%s%s%s %s\n", on, _("Origin:"), off, origin ? origin : "-");
+          g_print ("%s%s%s %s\n", on, _("Commit:"), off, commit);
+          g_print ("%s%s%s %s%s\n", on, _("Installed size:"), off, subpaths && subpaths[0] ? "<" : "", formatted);
 
-           if (subpaths && subpaths[0])
-             {
-               g_autofree char *subpath_str = NULL;
+          if (subpaths && subpaths[0])
+            {
+              g_autofree char *subpath_str = NULL;
 
-               subpath_str = g_strjoinv (",", (char **)subpaths);
-               g_print ("%s%s%s %s\n", on, _("Subpaths:"), off, subpath_str);
-             }
-         }
+              subpath_str = g_strjoinv (",", (char **) subpaths);
+              g_print ("%s%s%s %s\n", on, _("Subpaths:"), off, subpath_str);
+            }
+        }
     }
 
   return TRUE;
@@ -436,7 +436,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS|FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO, &dirs, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO, &dirs, NULL, NULL))
     return FALSE;
 
   kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;

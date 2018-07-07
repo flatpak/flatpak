@@ -114,11 +114,12 @@ _ostree_get_relative_static_delta_path (const char *from,
 
 static GVariant *
 new_bytearray (const guchar *data,
-               gsize len)
+               gsize         len)
 {
   gpointer data_copy = g_memdup (data, len);
   GVariant *ret = g_variant_new_from_data (G_VARIANT_TYPE ("ay"), data_copy,
                                            len, FALSE, g_free, data_copy);
+
   return ret;
 }
 
@@ -127,9 +128,9 @@ rewrite_delta (OstreeRepo *src_repo,
                const char *src_commit,
                OstreeRepo *dst_repo,
                const char *dst_commit,
-               GVariant *dst_commitv,
+               GVariant   *dst_commitv,
                const char *from,
-               GError **error)
+               GError    **error)
 {
   g_autoptr(GFile) src_delta_file = NULL;
   g_autoptr(GFile) dst_delta_file = NULL;
@@ -178,7 +179,7 @@ rewrite_delta (OstreeRepo *src_repo,
 
   g_variant_builder_add_value (&superblock_builder, g_variant_dict_end (&dst_metadata_dict));
   g_variant_builder_add_value (&superblock_builder, g_variant_get_child_value (src_superblock, 1)); /* timestamp */
-  g_variant_builder_add_value (&superblock_builder, from ? ostree_checksum_to_bytes_v (from) : new_bytearray ((guchar *)"", 0));
+  g_variant_builder_add_value (&superblock_builder, from ? ostree_checksum_to_bytes_v (from) : new_bytearray ((guchar *) "", 0));
   g_variant_builder_add_value (&superblock_builder, ostree_checksum_to_bytes_v (dst_commit));
   g_variant_builder_add_value (&superblock_builder, dst_commitv);
   g_variant_builder_add_value (&superblock_builder, src_recurse);
@@ -244,7 +245,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
 
   dst_repo_arg = argv[1];
 
-  dst_refs = (const char **)argv + 2;
+  dst_refs = (const char **) argv + 2;
   n_dst_refs = argc - 2;
 
   if (opt_src_repo == NULL && n_dst_refs != 1)
@@ -304,7 +305,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
                                       cancellable, error))
             return FALSE;
 
-          keys = (const char **)g_hash_table_get_keys_as_array (all_src_refs, NULL);
+          keys = (const char **) g_hash_table_get_keys_as_array (all_src_refs, NULL);
 
           for (i = 0; keys[i] != NULL; i++)
             {
@@ -313,7 +314,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
                 g_ptr_array_add (src_refs, g_strdup (keys[i]));
             }
           n_dst_refs = src_refs->len;
-          dst_refs = (const char **)src_refs->pdata;
+          dst_refs = (const char **) src_refs->pdata;
         }
       else
         {
@@ -353,7 +354,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       g_variant_builder_add (&builder, "{s@v}", "flags",
                              g_variant_new_variant (g_variant_new_int32 (pullflags)));
       g_variant_builder_add (&builder, "{s@v}", "refs",
-                             g_variant_new_variant (g_variant_new_strv ((const char *const*) resolved_src_refs->pdata,
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *) resolved_src_refs->pdata,
                                                                         resolved_src_refs->len)));
       g_variant_builder_add (&builder, "{s@v}", "depth",
                              g_variant_new_variant (g_variant_new_int32 (0)));
@@ -380,7 +381,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
   if (transaction == NULL)
     return FALSE;
 
-  for (i = 0; i < resolved_src_refs->len; i ++)
+  for (i = 0; i < resolved_src_refs->len; i++)
     {
       const char *dst_ref = dst_refs[i];
       const char *resolved_ref = g_ptr_array_index (resolved_src_refs, i);
@@ -434,10 +435,10 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
 
       g_variant_get_child (src_commitv, 3, "s", &subject);
       if (opt_subject)
-        subject = (const char *)opt_subject;
+        subject = (const char *) opt_subject;
       g_variant_get_child (src_commitv, 4, "s", &body);
       if (opt_body)
-        body = (const char *)opt_body;
+        body = (const char *) opt_body;
 
       dst_collection_id = ostree_repo_get_collection_id (dst_repo);
 

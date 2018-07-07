@@ -34,9 +34,9 @@ static GList *proxies;
 static int sync_fd = -1;
 
 static void
-add_args (GBytes *bytes,
+add_args (GBytes    *bytes,
           GPtrArray *args,
-          int pos)
+          int        pos)
 {
   gsize data_len, remainder_len;
   const guchar *data = g_bytes_get_data (bytes, &data_len);
@@ -49,7 +49,7 @@ add_args (GBytes *bytes,
   while (s)
     {
       gsize len = s - remainder;
-      char *arg = g_strndup ((char *)remainder, len);
+      char *arg = g_strndup ((char *) remainder, len);
       g_ptr_array_insert (args, pos++, arg);
       remainder = s + 1;
       remainder_len -= len + 1;
@@ -58,7 +58,7 @@ add_args (GBytes *bytes,
 
   if (remainder_len)
     {
-      char *arg = g_strndup ((char *)remainder, remainder_len);
+      char *arg = g_strndup ((char *) remainder, remainder_len);
       g_ptr_array_insert (args, pos++, arg);
     }
 }
@@ -131,7 +131,7 @@ start_proxy (GPtrArray *args, int *args_i)
   const char *bus_address, *socket_path;
   const char *arg;
 
-  if (*args_i >= args->len || ((char *)g_ptr_array_index (args, *args_i))[0] == '-')
+  if (*args_i >= args->len || ((char *) g_ptr_array_index (args, *args_i))[0] == '-')
     {
       g_printerr ("No bus address given\n");
       return FALSE;
@@ -140,7 +140,7 @@ start_proxy (GPtrArray *args, int *args_i)
   bus_address = g_ptr_array_index (args, *args_i);
   *args_i += 1;
 
-  if (*args_i >= args->len || ((char *)g_ptr_array_index (args, *args_i))[0] == '-')
+  if (*args_i >= args->len || ((char *) g_ptr_array_index (args, *args_i))[0] == '-')
     {
       g_printerr ("No socket path given\n");
       return FALSE;
@@ -272,10 +272,11 @@ main (int argc, const char *argv[])
 {
   GMainLoop *service_loop;
   int i, args_i;
+
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
 
   for (i = 1; i < argc; i++)
-    g_ptr_array_add (args, g_strdup ((char *)argv[i]));
+    g_ptr_array_add (args, g_strdup ((char *) argv[i]));
 
   args_i = 0;
   while (args_i < args->len)

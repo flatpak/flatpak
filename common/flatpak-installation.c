@@ -192,7 +192,7 @@ flatpak_get_default_arch (void)
 const char * const *
 flatpak_get_supported_arches (void)
 {
-  return (const char * const *)flatpak_get_arches ();
+  return (const char * const *) flatpak_get_arches ();
 }
 
 /**
@@ -250,7 +250,7 @@ flatpak_get_system_installations (GCancellable *cancellable,
 
   ret = g_steal_pointer (&installs);
 
- out:
+out:
   return ret;
 }
 
@@ -399,8 +399,8 @@ flatpak_installation_clone_dir_noensure (FlatpakInstallation *self)
 
 FlatpakDir *
 flatpak_installation_clone_dir (FlatpakInstallation *self,
-                                GCancellable  *cancellable,
-                                GError       **error)
+                                GCancellable        *cancellable,
+                                GError             **error)
 {
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
@@ -430,8 +430,8 @@ flatpak_installation_clone_dir (FlatpakInstallation *self,
  */
 gboolean
 flatpak_installation_drop_caches (FlatpakInstallation *self,
-                                  GCancellable *cancellable,
-                                  GError      **error)
+                                  GCancellable        *cancellable,
+                                  GError             **error)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   FlatpakDir *clone, *old;
@@ -632,10 +632,10 @@ flatpak_installation_launch (FlatpakInstallation *self,
 
 
 static FlatpakInstalledRef *
-get_ref (FlatpakDir          *dir,
-         const char          *full_ref,
-         GCancellable        *cancellable,
-         GError **error)
+get_ref (FlatpakDir   *dir,
+         const char   *full_ref,
+         GCancellable *cancellable,
+         GError      **error)
 {
   g_auto(GStrv) parts = NULL;
   const char *origin = NULL;
@@ -889,6 +889,7 @@ async_result_cb (GObject      *obj,
                  gpointer      user_data)
 {
   GAsyncResult **result_out = user_data;
+
   *result_out = g_object_ref (result);
 }
 
@@ -1064,26 +1065,26 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
            * ref_to_timestamp to know if the commit is an update or a
            * downgrade.
            */
-            {
-              guint64 local_timestamp = 0;
-              guint64 *remote_timestamp;
-              g_autoptr(GVariant) commit_v = NULL;
+          {
+            guint64 local_timestamp = 0;
+            guint64 *remote_timestamp;
+            g_autoptr(GVariant) commit_v = NULL;
 
-              if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), local_commit, &commit_v, NULL, NULL))
-                local_timestamp = ostree_commit_get_timestamp (commit_v);
+            if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), local_commit, &commit_v, NULL, NULL))
+              local_timestamp = ostree_commit_get_timestamp (commit_v);
 
-              remote_timestamp = g_hash_table_lookup (results[j]->ref_to_timestamp, collection_ref);
-              *remote_timestamp = GUINT64_FROM_BE (*remote_timestamp);
+            remote_timestamp = g_hash_table_lookup (results[j]->ref_to_timestamp, collection_ref);
+            *remote_timestamp = GUINT64_FROM_BE (*remote_timestamp);
 
-              g_debug ("%s: Comparing local timestamp %" G_GUINT64_FORMAT " to remote timestamp %"
-                       G_GUINT64_FORMAT " on ref (%s, %s)", G_STRFUNC, local_timestamp, *remote_timestamp,
-                       collection_ref->collection_id, collection_ref->ref_name);
+            g_debug ("%s: Comparing local timestamp %" G_GUINT64_FORMAT " to remote timestamp %"
+                     G_GUINT64_FORMAT " on ref (%s, %s)", G_STRFUNC, local_timestamp, *remote_timestamp,
+                     collection_ref->collection_id, collection_ref->ref_name);
 
-              /* The timestamp could be 0 due to an error reading it. Assume
-               * it's an update until proven otherwise. */
-              if (*remote_timestamp != 0 && *remote_timestamp <= local_timestamp)
-                continue;
-            }
+            /* The timestamp could be 0 due to an error reading it. Assume
+             * it's an update until proven otherwise. */
+            if (*remote_timestamp != 0 && *remote_timestamp <= local_timestamp)
+              continue;
+          }
 
           g_ptr_array_add (updates, g_object_ref (installed_ref));
 
@@ -1102,18 +1103,19 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
  *
  * FIXME: If this were async, the parallelisation could be handled in the caller. */
 static gboolean
-list_remotes_for_configured_remote (FlatpakInstallation  *self,
-                                    const gchar          *remote_name,
-                                    FlatpakDir           *dir,
-                                    gboolean              types_filter[],
-                                    GPtrArray            *remotes  /* (element-type FlatpakRemote) */,
-                                    GCancellable         *cancellable,
-                                    GError              **error)
+list_remotes_for_configured_remote (FlatpakInstallation *self,
+                                    const gchar         *remote_name,
+                                    FlatpakDir          *dir,
+                                    gboolean             types_filter[],
+                                    GPtrArray           *remotes /* (element-type FlatpakRemote) */,
+                                    GCancellable        *cancellable,
+                                    GError             **error)
 {
   g_autofree gchar *collection_id = NULL;
   OstreeCollectionRef ref;
   const OstreeCollectionRef *refs[2] = { NULL, };
   g_autofree gchar *appstream_ref = NULL;
+
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GAsyncResult) result = NULL;
   g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
@@ -1281,6 +1283,7 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
                                    GError             **error)
 {
   const FlatpakRemoteType types[] = { FLATPAK_REMOTE_TYPE_STATIC };
+
   return flatpak_installation_list_remotes_by_type (self, types, 1, cancellable, error);
 }
 
@@ -1375,10 +1378,10 @@ flatpak_installation_remove_remote (FlatpakInstallation *self,
  */
 gboolean
 flatpak_installation_set_config_sync (FlatpakInstallation *self,
-				      const char          *key,
-				      const char          *value,
-				      GCancellable        *cancellable,
-				      GError             **error)
+                                      const char          *key,
+                                      const char          *value,
+                                      GCancellable        *cancellable,
+                                      GError             **error)
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
@@ -1416,9 +1419,9 @@ flatpak_installation_set_config_sync (FlatpakInstallation *self,
  */
 char *
 flatpak_installation_get_config (FlatpakInstallation *self,
-				 const char          *key,
-				 GCancellable        *cancellable,
-				 GError             **error)
+                                 const char          *key,
+                                 GCancellable        *cancellable,
+                                 GError             **error)
 {
   g_autoptr(FlatpakDir) dir = NULL;
 
@@ -1749,7 +1752,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
                             FALSE, state,
-                            ref, NULL, (const char **)subpaths,
+                            ref, NULL, (const char **) subpaths,
                             ostree_progress, cancellable, error))
     goto out;
 
@@ -1897,7 +1900,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
     return NULL;
 
   target_commit = flatpak_dir_check_for_update (dir, state, ref, NULL,
-                                                (const char **)subpaths,
+                                                (const char **) subpaths,
                                                 (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                                                 &check_results,
                                                 cancellable, error);
@@ -1924,7 +1927,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            FALSE, state,
                            ref, target_commit,
                            (const OstreeRepoFinderResult * const *) check_results,
-                           (const char **)subpaths,
+                           (const char **) subpaths,
                            ostree_progress, cancellable, error))
     goto out;
 
@@ -2365,14 +2368,14 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
  * Returns: %TRUE on success, or %FALSE on error
  */
 gboolean
-flatpak_installation_update_appstream_full_sync (FlatpakInstallation *self,
-                                                 const char          *remote_name,
-                                                 const char          *arch,
+flatpak_installation_update_appstream_full_sync (FlatpakInstallation    *self,
+                                                 const char             *remote_name,
+                                                 const char             *arch,
                                                  FlatpakProgressCallback progress,
                                                  gpointer                progress_data,
-                                                 gboolean            *out_changed,
-                                                 GCancellable        *cancellable,
-                                                 GError             **error)
+                                                 gboolean               *out_changed,
+                                                 GCancellable           *cancellable,
+                                                 GError                **error)
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;

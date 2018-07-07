@@ -21,64 +21,65 @@
 #ifndef __FLATPAK_BWRAP_H__
 #define __FLATPAK_BWRAP_H__
 
-typedef struct {
+typedef struct
+{
   GPtrArray *argv;
-  GArray *noinherit_fds; /* Just keep these open while the bwrap lives */
-  GArray *fds;
-  GStrv envp;
+  GArray    *noinherit_fds; /* Just keep these open while the bwrap lives */
+  GArray    *fds;
+  GStrv      envp;
 } FlatpakBwrap;
 
 extern char *flatpak_bwrap_empty_env[1];
 
-FlatpakBwrap *flatpak_bwrap_new              (char         **env);
-void          flatpak_bwrap_free             (FlatpakBwrap  *bwrap);
-void          flatpak_bwrap_set_env          (FlatpakBwrap  *bwrap,
-                                              const char    *variable,
-                                              const char    *value,
-                                              gboolean       overwrite);
-gboolean      flatpak_bwrap_is_empty         (FlatpakBwrap  *bwrap);
-void          flatpak_bwrap_finish           (FlatpakBwrap  *bwrap);
-void          flatpak_bwrap_unset_env        (FlatpakBwrap  *bwrap,
-                                              const char    *variable);
-void          flatpak_bwrap_add_arg          (FlatpakBwrap  *bwrap,
-                                              const char    *arg);
-void          flatpak_bwrap_add_noinherit_fd (FlatpakBwrap  *bwrap,
-                                              int            fd);
-void          flatpak_bwrap_add_fd           (FlatpakBwrap  *bwrap,
-                                              int            fd);
-void          flatpak_bwrap_add_args         (FlatpakBwrap  *bwrap,
-                                              ...);
-void          flatpak_bwrap_add_arg_printf   (FlatpakBwrap *bwrap,
-                                              const char *format,
-                                              ...) G_GNUC_PRINTF (2, 3);
-void          flatpak_bwrap_append_argsv     (FlatpakBwrap *bwrap,
-                                              char        **args,
-                                              int           len);
-void          flatpak_bwrap_append_bwrap      (FlatpakBwrap  *bwrap,
-                                               FlatpakBwrap  *other); /* Steals the fds */
-void          flatpak_bwrap_append_args      (FlatpakBwrap  *bwrap,
-                                              GPtrArray     *other_array);
-void          flatpak_bwrap_add_args_data_fd (FlatpakBwrap  *bwrap,
-                                              const char    *op,
-                                              int            fd,
-                                              const char    *path_optional);
-gboolean      flatpak_bwrap_add_args_data    (FlatpakBwrap  *bwrap,
-                                              const char    *name,
-                                              const char    *content,
-                                              gssize         content_size,
-                                              const char    *path,
-                                              GError       **error);
-void          flatpak_bwrap_add_bind_arg     (FlatpakBwrap  *bwrap,
-                                              const char    *type,
-                                              const char    *src,
-                                              const char    *dest);
-gboolean      flatpak_bwrap_bundle_args      (FlatpakBwrap  *bwrap,
-                                              int            start,
-                                              int            end,
-                                              gboolean       one_arg,
-                                              GError       **error);
+FlatpakBwrap *flatpak_bwrap_new (char **env);
+void          flatpak_bwrap_free (FlatpakBwrap *bwrap);
+void          flatpak_bwrap_set_env (FlatpakBwrap *bwrap,
+                                     const char   *variable,
+                                     const char   *value,
+                                     gboolean      overwrite);
+gboolean      flatpak_bwrap_is_empty (FlatpakBwrap *bwrap);
+void          flatpak_bwrap_finish (FlatpakBwrap *bwrap);
+void          flatpak_bwrap_unset_env (FlatpakBwrap *bwrap,
+                                       const char   *variable);
+void          flatpak_bwrap_add_arg (FlatpakBwrap *bwrap,
+                                     const char   *arg);
+void          flatpak_bwrap_add_noinherit_fd (FlatpakBwrap *bwrap,
+                                              int           fd);
+void          flatpak_bwrap_add_fd (FlatpakBwrap *bwrap,
+                                    int           fd);
+void          flatpak_bwrap_add_args (FlatpakBwrap *bwrap,
+                                      ...);
+void          flatpak_bwrap_add_arg_printf (FlatpakBwrap *bwrap,
+                                            const char   *format,
+                                            ...) G_GNUC_PRINTF (2, 3);
+void          flatpak_bwrap_append_argsv (FlatpakBwrap *bwrap,
+                                          char        **args,
+                                          int           len);
+void          flatpak_bwrap_append_bwrap (FlatpakBwrap *bwrap,
+                                          FlatpakBwrap *other);       /* Steals the fds */
+void          flatpak_bwrap_append_args (FlatpakBwrap *bwrap,
+                                         GPtrArray    *other_array);
+void          flatpak_bwrap_add_args_data_fd (FlatpakBwrap *bwrap,
+                                              const char   *op,
+                                              int           fd,
+                                              const char   *path_optional);
+gboolean      flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
+                                           const char   *name,
+                                           const char   *content,
+                                           gssize        content_size,
+                                           const char   *path,
+                                           GError      **error);
+void          flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
+                                          const char   *type,
+                                          const char   *src,
+                                          const char   *dest);
+gboolean      flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
+                                         int           start,
+                                         int           end,
+                                         gboolean      one_arg,
+                                         GError      **error);
 
-void          flatpak_bwrap_child_setup_cb   (gpointer       user_data);
+void          flatpak_bwrap_child_setup_cb (gpointer user_data);
 
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakBwrap, flatpak_bwrap_free)

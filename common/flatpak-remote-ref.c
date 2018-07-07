@@ -39,12 +39,12 @@ typedef struct _FlatpakRemoteRefPrivate FlatpakRemoteRefPrivate;
 
 struct _FlatpakRemoteRefPrivate
 {
-  char *remote_name;
+  char   *remote_name;
   guint64 installed_size;
   guint64 download_size;
   GBytes *metadata;
-  char *eol;
-  char *eol_rebase;
+  char   *eol;
+  char   *eol_rebase;
 
 };
 
@@ -176,42 +176,42 @@ flatpak_remote_ref_class_init (FlatpakRemoteRefClass *klass)
                                                         "Remote Name",
                                                         "The name of the remote",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_INSTALLED_SIZE,
                                    g_param_spec_uint64 ("installed-size",
                                                         "Installed Size",
                                                         "The installed size of the application",
                                                         0, G_MAXUINT64, 0,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_DOWNLOAD_SIZE,
                                    g_param_spec_uint64 ("download-size",
                                                         "Download Size",
                                                         "The download size of the application",
                                                         0, G_MAXUINT64, 0,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_METADATA,
                                    g_param_spec_boxed ("metadata",
                                                        "Metadata",
                                                        "The metadata info for the application",
                                                        G_TYPE_BYTES,
-                                                       G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_EOL,
                                    g_param_spec_string ("end-of-life",
                                                         "End of life",
                                                         "The reason for the ref to be end of life",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_EOL_REBASE,
                                    g_param_spec_string ("end-of-life-rebase",
                                                         "End of life rebase",
                                                         "The new ref for the end of lifeed ref",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -320,13 +320,14 @@ flatpak_remote_ref_get_eol_rebase (FlatpakRemoteRef *self)
 
 FlatpakRemoteRef *
 flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
-                        const char *commit,
-                        const char *remote_name,
-                        FlatpakRemoteState *state)
+                        const char           *commit,
+                        const char           *remote_name,
+                        FlatpakRemoteState   *state)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   guint64 download_size = 0, installed_size = 0;
   const char *metadata = NULL;
+
   g_autoptr(GBytes) metadata_bytes = NULL;
   g_auto(GStrv) parts = NULL;
   FlatpakRemoteRef *ref;

@@ -44,6 +44,7 @@ static void
 clear_fd (gpointer data)
 {
   int *fd_p = data;
+
   if (fd_p != NULL && *fd_p != -1)
     close (*fd_p);
 }
@@ -80,15 +81,15 @@ flatpak_bwrap_free (FlatpakBwrap *bwrap)
 }
 
 gboolean
-flatpak_bwrap_is_empty (FlatpakBwrap  *bwrap)
+flatpak_bwrap_is_empty (FlatpakBwrap *bwrap)
 {
   return bwrap->argv->len == 0;
 }
 
 void
 flatpak_bwrap_set_env (FlatpakBwrap *bwrap,
-                       const char  *variable,
-                       const char  *value,
+                       const char   *variable,
+                       const char   *value,
                        gboolean      overwrite)
 {
   bwrap->envp = g_environ_setenv (bwrap->envp, variable, value, overwrite);
@@ -96,7 +97,7 @@ flatpak_bwrap_set_env (FlatpakBwrap *bwrap,
 
 void
 flatpak_bwrap_unset_env (FlatpakBwrap *bwrap,
-                         const char  *variable)
+                         const char   *variable)
 {
   bwrap->envp = g_environ_unsetenv (bwrap->envp, variable);
 }
@@ -108,21 +109,21 @@ flatpak_bwrap_add_arg (FlatpakBwrap *bwrap, const char *arg)
 }
 
 void
-flatpak_bwrap_finish (FlatpakBwrap  *bwrap)
+flatpak_bwrap_finish (FlatpakBwrap *bwrap)
 {
   g_ptr_array_add (bwrap->argv, NULL);
 }
 
 void
-flatpak_bwrap_add_noinherit_fd (FlatpakBwrap  *bwrap,
-                                int            fd)
+flatpak_bwrap_add_noinherit_fd (FlatpakBwrap *bwrap,
+                                int           fd)
 {
   g_array_append_val (bwrap->noinherit_fds, fd);
 }
 
 void
-flatpak_bwrap_add_fd (FlatpakBwrap  *bwrap,
-                      int            fd)
+flatpak_bwrap_add_fd (FlatpakBwrap *bwrap,
+                      int           fd)
 {
   g_array_append_val (bwrap->fds, fd);
 }
@@ -150,8 +151,8 @@ flatpak_bwrap_add_args (FlatpakBwrap *bwrap, ...)
 
 void
 flatpak_bwrap_append_argsv (FlatpakBwrap *bwrap,
-                            char **args,
-                            int len)
+                            char        **args,
+                            int           len)
 {
   int i;
 
@@ -164,19 +165,19 @@ flatpak_bwrap_append_argsv (FlatpakBwrap *bwrap,
 
 void
 flatpak_bwrap_append_args (FlatpakBwrap *bwrap,
-                           GPtrArray *other_array)
+                           GPtrArray    *other_array)
 {
   flatpak_bwrap_append_argsv (bwrap,
-                              (char **)other_array->pdata,
+                              (char **) other_array->pdata,
                               other_array->len);
 }
 
 static int *
-flatpak_bwrap_steal_fds (FlatpakBwrap  *bwrap,
-                         gsize         *len_out)
+flatpak_bwrap_steal_fds (FlatpakBwrap *bwrap,
+                         gsize        *len_out)
 {
   gsize len = bwrap->fds->len;
-  int *res = (int *)g_array_free (bwrap->fds, FALSE);
+  int *res = (int *) g_array_free (bwrap->fds, FALSE);
 
   bwrap->fds = g_array_new (FALSE, TRUE, sizeof (int));
   *len_out = len;
@@ -184,8 +185,8 @@ flatpak_bwrap_steal_fds (FlatpakBwrap  *bwrap,
 }
 
 void
-flatpak_bwrap_append_bwrap (FlatpakBwrap  *bwrap,
-                            FlatpakBwrap  *other)
+flatpak_bwrap_append_bwrap (FlatpakBwrap *bwrap,
+                            FlatpakBwrap *other)
 {
   g_autofree int *fds = NULL;
   gsize n_fds, i;
@@ -195,7 +196,7 @@ flatpak_bwrap_append_bwrap (FlatpakBwrap  *bwrap,
     flatpak_bwrap_add_fd (bwrap, fds[i]);
 
   flatpak_bwrap_append_argsv (bwrap,
-                              (char **)other->argv->pdata,
+                              (char **) other->argv->pdata,
                               other->argv->len);
 
   for (i = 0; other->envp[i] != NULL; i++)
@@ -213,9 +214,9 @@ flatpak_bwrap_append_bwrap (FlatpakBwrap  *bwrap,
 
 void
 flatpak_bwrap_add_args_data_fd (FlatpakBwrap *bwrap,
-                                const char *op,
-                                int fd,
-                                const char *path_optional)
+                                const char   *op,
+                                int           fd,
+                                const char   *path_optional)
 {
   g_autofree char *fd_str = g_strdup_printf ("%d", fd);
 
@@ -233,11 +234,11 @@ flatpak_bwrap_add_args_data_fd (FlatpakBwrap *bwrap,
  */
 gboolean
 flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
-                             const char *name,
-                             const char *content,
-                             gssize content_size,
-                             const char *path,
-                             GError **error)
+                             const char   *name,
+                             const char   *content,
+                             gssize        content_size,
+                             const char   *path,
+                             GError      **error)
 {
   g_auto(GLnxTmpfile) args_tmpf  = { 0, };
 
@@ -257,9 +258,9 @@ flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
  */
 void
 flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
-                            const char *type,
-                            const char *src,
-                            const char *dest)
+                            const char   *type,
+                            const char   *src,
+                            const char   *dest)
 {
   g_autofree char *dest_dirname = g_path_get_dirname (dest);
   g_autofree char *dest_dirname_real = realpath (dest_dirname, NULL);
@@ -273,17 +274,18 @@ flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
 }
 
 gboolean
-flatpak_bwrap_bundle_args (FlatpakBwrap  *bwrap,
-                           int            start,
-                           int            end,
-                           gboolean       one_arg,
-                           GError       **error)
+flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
+                           int           start,
+                           int           end,
+                           gboolean      one_arg,
+                           GError      **error)
 {
   gchar *data;
   gchar *ptr;
   gint i;
   gsize data_len = 0;
   int fd;
+
   g_auto(GLnxTmpfile) args_tmpf  = { 0, };
 
   if (end == -1)
@@ -317,7 +319,7 @@ flatpak_bwrap_bundle_args (FlatpakBwrap  *bwrap,
   else
     {
       g_ptr_array_insert (bwrap->argv, start, g_strdup ("--args"));
-      g_ptr_array_insert (bwrap->argv, start+1, g_strdup_printf ("%d", fd));
+      g_ptr_array_insert (bwrap->argv, start + 1, g_strdup_printf ("%d", fd));
     }
 
   return TRUE;

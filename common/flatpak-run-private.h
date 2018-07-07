@@ -103,27 +103,29 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_REF "ref"
 #define FLATPAK_METADATA_KEY_TAG "tag"
 
-gboolean  flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
+gboolean  flatpak_run_add_extension_args (FlatpakBwrap *bwrap,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,
                                           gboolean      use_ld_so_cache,
                                           char        **extensions_out,
                                           GCancellable *cancellable,
                                           GError      **error);
-gboolean flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
-                                           const char     *app_info_path,
-                                           FlatpakRunFlags flags,
-                                           const char     *app_id,
-                                           FlatpakContext *context,
-                                           GFile          *app_id_dir,
+gboolean flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
+                                           const char      *app_info_path,
+                                           FlatpakRunFlags  flags,
+                                           const char      *app_id,
+                                           FlatpakContext  *context,
+                                           GFile           *app_id_dir,
                                            FlatpakExports **exports_out,
-                                           GCancellable *cancellable,
-                                           GError      **error);
-char **  flatpak_run_get_minimal_env (gboolean devel, gboolean use_ld_so_cache);
-void     flatpak_run_apply_env_default (FlatpakBwrap *bwrap, gboolean use_ld_so_cache);
+                                           GCancellable    *cancellable,
+                                           GError         **error);
+char **  flatpak_run_get_minimal_env (gboolean devel,
+                                      gboolean use_ld_so_cache);
+void     flatpak_run_apply_env_default (FlatpakBwrap *bwrap,
+                                        gboolean      use_ld_so_cache);
 void     flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
-                                      GFile *app_dir);
-void      flatpak_run_apply_env_vars (FlatpakBwrap *bwrap,
+                                      GFile        *app_dir);
+void      flatpak_run_apply_env_vars (FlatpakBwrap   *bwrap,
                                       FlatpakContext *context);
 FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                                  GKeyFile *runtime_metadata,

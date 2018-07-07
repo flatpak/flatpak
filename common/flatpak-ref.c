@@ -186,28 +186,28 @@ flatpak_ref_class_init (FlatpakRefClass *klass)
                                                         "Name",
                                                         "The name of the application or runtime",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_ARCH,
                                    g_param_spec_string ("arch",
                                                         "Architecture",
                                                         "The architecture of the application or runtime",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_BRANCH,
                                    g_param_spec_string ("branch",
                                                         "Branch",
                                                         "The branch of the application or runtime",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_COMMIT,
                                    g_param_spec_string ("commit",
                                                         "Commit",
                                                         "The commit",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_KIND,
                                    g_param_spec_enum ("kind",
@@ -215,14 +215,14 @@ flatpak_ref_class_init (FlatpakRefClass *klass)
                                                       "The kind of artifact",
                                                       FLATPAK_TYPE_REF_KIND,
                                                       FLATPAK_REF_KIND_APP,
-                                                      G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_COLLECTION_ID,
                                    g_param_spec_string ("collection-id",
                                                         "Collection ID",
                                                         "The collection ID",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
 
 static void

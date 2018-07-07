@@ -153,7 +153,7 @@ write_xauth (char *number, FILE *output)
 
 static void
 flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
-                          gboolean allowed)
+                          gboolean      allowed)
 {
   g_autofree char *x11_socket = NULL;
   const char *display;
@@ -253,7 +253,7 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
 }
 
 static void
-flatpak_run_add_ssh_args(FlatpakBwrap *bwrap)
+flatpak_run_add_ssh_args (FlatpakBwrap *bwrap)
 {
   const char * auth_socket;
   g_autofree char * sandbox_auth_socket = NULL;
@@ -266,11 +266,11 @@ flatpak_run_add_ssh_args(FlatpakBwrap *bwrap)
   if (!g_file_test (auth_socket, G_FILE_TEST_EXISTS))
     {
       /* Let's clean it up, so that the application will not try to connect */
-      flatpak_bwrap_unset_env(bwrap, "SSH_AUTH_SOCK");
+      flatpak_bwrap_unset_env (bwrap, "SSH_AUTH_SOCK");
       return;
     }
 
-  sandbox_auth_socket = g_strdup_printf ("/run/user/%d/ssh-auth", getuid());
+  sandbox_auth_socket = g_strdup_printf ("/run/user/%d/ssh-auth", getuid ());
 
   flatpak_bwrap_add_args (bwrap,
                           "--bind", auth_socket, sandbox_auth_socket,
@@ -295,7 +295,7 @@ flatpak_run_get_pulseaudio_server_user_config (const char *path)
       return NULL;
     }
 
-  data_stream = g_data_input_stream_new (G_INPUT_STREAM(input_stream));
+  data_stream = g_data_input_stream_new (G_INPUT_STREAM (input_stream));
 
   while (TRUE)
     {
@@ -310,7 +310,7 @@ flatpak_run_get_pulseaudio_server_user_config (const char *path)
 
       if (g_str_has_prefix (line, ".include "))
         {
-          g_autofree char *rec_path = g_strdup (line+9);
+          g_autofree char *rec_path = g_strdup (line + 9);
           g_strstrip (rec_path);
           char *found = flatpak_run_get_pulseaudio_server_user_config (rec_path);
           if (found)
@@ -330,7 +330,7 @@ flatpak_run_get_pulseaudio_server_user_config (const char *path)
               if (strcmp ("default-server", tokens[0]) == 0)
                 {
                   g_strstrip (tokens[1]);
-                  g_debug("Found pulseaudio socket from configuration file '%s': %s", path, tokens[1]);
+                  g_debug ("Found pulseaudio socket from configuration file '%s': %s", path, tokens[1]);
                   return g_strdup (tokens[1]);
                 }
             }
@@ -343,7 +343,7 @@ flatpak_run_get_pulseaudio_server_user_config (const char *path)
 static char *
 flatpak_run_get_pulseaudio_server (void)
 {
-  const char* pulse_clientconfig;
+  const char * pulse_clientconfig;
   char *pulse_server;
   g_autofree char *pulse_user_config = NULL;
 
@@ -355,7 +355,7 @@ flatpak_run_get_pulseaudio_server (void)
   if (pulse_clientconfig)
     return flatpak_run_get_pulseaudio_server_user_config (pulse_clientconfig);
 
-  pulse_user_config = g_build_filename (g_get_user_config_dir(), "pulse/client.conf", NULL);
+  pulse_user_config = g_build_filename (g_get_user_config_dir (), "pulse/client.conf", NULL);
   pulse_server = flatpak_run_get_pulseaudio_server_user_config (pulse_user_config);
   if (pulse_server)
     return pulse_server;
@@ -378,13 +378,13 @@ flatpak_run_parse_pulse_server (const char *value)
       const char *server = servers[i];
       if (g_str_has_prefix (server, "{"))
         {
-          const char* closing = strstr (server, "}");
+          const char * closing = strstr (server, "}");
           if (closing == NULL)
             continue;
           server = closing + 1;
         }
       if (g_str_has_prefix (server, "unix:"))
-        return g_strdup (server+5);
+        return g_strdup (server + 5);
     }
 
   return NULL;
@@ -673,10 +673,11 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
    taken from app_info_path */
 static gboolean
 add_bwrap_wrapper (FlatpakBwrap *bwrap,
-                   const char *app_info_path,
-                   GError **error)
+                   const char   *app_info_path,
+                   GError      **error)
 {
   glnx_autofd int app_info_fd = -1;
+
   g_auto(GLnxDirFdIterator) dir_iter = { 0 };
   struct dirent *dent;
   g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy/", NULL);
@@ -752,14 +753,15 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
 }
 
 static gboolean
-start_dbus_proxy (FlatpakBwrap   *app_bwrap,
-                  FlatpakBwrap   *proxy_arg_bwrap,
-                  const char *app_info_path,
-                  GError   **error)
+start_dbus_proxy (FlatpakBwrap *app_bwrap,
+                  FlatpakBwrap *proxy_arg_bwrap,
+                  const char   *app_info_path,
+                  GError      **error)
 {
   char x = 'x';
   const char *proxy;
   g_autofree char *commandline = NULL;
+
   g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
   int sync_fds[2] = {-1, -1};
   int proxy_start_index;
@@ -824,8 +826,8 @@ start_dbus_proxy (FlatpakBwrap   *app_bwrap,
 }
 
 static int
-flatpak_extension_compare_by_path (gconstpointer  _a,
-                                   gconstpointer  _b)
+flatpak_extension_compare_by_path (gconstpointer _a,
+                                   gconstpointer _b)
 {
   const FlatpakExtension *a = _a;
   const FlatpakExtension *b = _b;
@@ -834,7 +836,7 @@ flatpak_extension_compare_by_path (gconstpointer  _a,
 }
 
 gboolean
-flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
+flatpak_run_add_extension_args (FlatpakBwrap *bwrap,
                                 GKeyFile     *metakey,
                                 const char   *full_ref,
                                 gboolean      use_ld_so_cache,
@@ -988,7 +990,7 @@ flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
             }
         }
 
-      flatpak_bwrap_set_env (bwrap, "LD_LIBRARY_PATH", ld_library_path->str , TRUE);
+      flatpak_bwrap_set_env (bwrap, "LD_LIBRARY_PATH", ld_library_path->str, TRUE);
     }
 
   if (extensions_out)
@@ -998,15 +1000,15 @@ flatpak_run_add_extension_args (FlatpakBwrap   *bwrap,
 }
 
 gboolean
-flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
-                                  const char     *app_info_path,
-                                  FlatpakRunFlags flags,
-                                  const char     *app_id,
-                                  FlatpakContext *context,
-                                  GFile          *app_id_dir,
+flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
+                                  const char      *app_info_path,
+                                  FlatpakRunFlags  flags,
+                                  const char      *app_id,
+                                  FlatpakContext  *context,
+                                  GFile           *app_id_dir,
                                   FlatpakExports **exports_out,
-                                  GCancellable   *cancellable,
-                                  GError        **error)
+                                  GCancellable    *cancellable,
+                                  GError         **error)
 {
   g_autoptr(GError) my_error = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
@@ -1014,7 +1016,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
   gboolean has_wayland = FALSE;
   gboolean allow_x11 = FALSE;
 
- if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
+  if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
       g_debug ("Disallowing ipc access");
       flatpak_bwrap_add_args (bwrap, "--unshare-ipc", NULL);
@@ -1053,7 +1055,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
             "/dev/nvidia-modeset",
           };
 
-          for (i = 0; i < G_N_ELEMENTS(dri_devices); i++)
+          for (i = 0; i < G_N_ELEMENTS (dri_devices); i++)
             {
               if (g_file_test (dri_devices[i], G_FILE_TEST_EXISTS))
                 flatpak_bwrap_add_args (bwrap, "--dev-bind", dri_devices[i], dri_devices[i], NULL);
@@ -1083,9 +1085,10 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
 
   flatpak_run_add_x11_args (bwrap, allow_x11);
 
-  if (context->sockets & FLATPAK_CONTEXT_SOCKET_SSH_AUTH) {
-    flatpak_run_add_ssh_args (bwrap);
-  }
+  if (context->sockets & FLATPAK_CONTEXT_SOCKET_SSH_AUTH)
+    {
+      flatpak_run_add_ssh_args (bwrap);
+    }
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_PULSEAUDIO)
     {
@@ -1126,7 +1129,8 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
   return TRUE;
 }
 
-typedef struct {
+typedef struct
+{
   const char *env;
   const char *val;
 } ExportData;
@@ -1164,9 +1168,9 @@ static const ExportData devel_exports[] = {
 };
 
 static void
-add_exports (GPtrArray *env_array,
+add_exports (GPtrArray        *env_array,
              const ExportData *exports,
-             gsize n_exports)
+             gsize             n_exports)
 {
   int i;
 
@@ -1247,9 +1251,9 @@ flatpak_run_get_minimal_env (gboolean devel, gboolean use_ld_so_cache)
 }
 
 static char **
-apply_exports (char **envp,
+apply_exports (char            **envp,
                const ExportData *exports,
-               gsize n_exports)
+               gsize             n_exports)
 {
   int i;
 
@@ -1277,7 +1281,7 @@ flatpak_run_apply_env_default (FlatpakBwrap *bwrap, gboolean use_ld_so_cache)
 
 void
 flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
-                             GFile *app_dir)
+                             GFile        *app_dir)
 {
   g_autoptr(GFile) app_dir_data = NULL;
   g_autoptr(GFile) app_dir_config = NULL;
@@ -1569,6 +1573,7 @@ static void
 flatpak_run_gc_ids (void)
 {
   g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
+
   g_auto(GLnxDirFdIterator) iter = { 0 };
   struct dirent *dent;
 
@@ -1682,6 +1687,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 {
   g_autofree char *tmp_path = NULL;
   int fd, fd2;
+
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime_path = NULL;
   g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
@@ -1795,7 +1801,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
         {
           g_key_file_set_string_list (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                                       FLATPAK_METADATA_KEY_EXTRA_ARGS,
-                                      (const char * const *)cmdline_args->pdata,
+                                      (const char * const *) cmdline_args->pdata,
                                       cmdline_args->len);
         }
     }
@@ -1814,7 +1820,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
      .flatpak-info will be empty. We fix this by first creating a real file
      with the real info in, then bind-mounting on top of that, the same info.
      This way even if the bind-mount is unmounted we can find the real data.
-  */
+   */
 
   fd = open (tmp_path, O_RDONLY);
   if (fd == -1)
@@ -1852,7 +1858,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 }
 
 static void
-add_monitor_path_args (gboolean use_session_helper,
+add_monitor_path_args (gboolean      use_session_helper,
                        FlatpakBwrap *bwrap)
 {
   g_autoptr(AutoFlatpakSessionHelper) session_helper = NULL;
@@ -1895,10 +1901,10 @@ add_monitor_path_args (gboolean use_session_helper,
                                            trusted_module_contents, -1,
                                            "/etc/pkcs11/modules/p11-kit-trust.module", NULL))
             {
-             flatpak_bwrap_add_args (bwrap,
-                                     "--ro-bind", pkcs11_socket_path, sandbox_pkcs11_socket_path,
-                                     NULL);
-             flatpak_bwrap_unset_env (bwrap, "P11_KIT_SERVER_ADDRESS");
+              flatpak_bwrap_add_args (bwrap,
+                                      "--ro-bind", pkcs11_socket_path, sandbox_pkcs11_socket_path,
+                                      NULL);
+              flatpak_bwrap_unset_env (bwrap, "P11_KIT_SERVER_ADDRESS");
             }
         }
     }
@@ -1962,8 +1968,8 @@ add_monitor_path_args (gboolean use_session_helper,
 
 static void
 add_document_portal_args (FlatpakBwrap *bwrap,
-                          const char  *app_id,
-                          char       **out_mount_path)
+                          const char   *app_id,
+                          char        **out_mount_path)
 {
   g_autoptr(GDBusConnection) session_bus = NULL;
   g_autofree char *doc_mount_path = NULL;
@@ -2030,14 +2036,15 @@ cleanup_seccomp (void *p)
 }
 
 static gboolean
-setup_seccomp (FlatpakBwrap *bwrap,
-               const char *arch,
-               gulong      allowed_personality,
+setup_seccomp (FlatpakBwrap   *bwrap,
+               const char     *arch,
+               gulong          allowed_personality,
                FlatpakRunFlags run_flags,
-               GError    **error)
+               GError        **error)
 {
   gboolean multiarch = (run_flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0;
   gboolean devel = (run_flags & FLATPAK_RUN_FLAG_DEVEL) != 0;
+
   __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx seccomp = NULL;
 
   /**** BEGIN NOTE ON CODE SHARING
@@ -2105,7 +2112,7 @@ setup_seccomp (FlatpakBwrap *bwrap,
     {SCMP_SYS (clone), &SCMP_A0 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
 
     /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
-    {SCMP_SYS (ioctl), &SCMP_A1(SCMP_CMP_EQ, (int)TIOCSTI)},
+    {SCMP_SYS (ioctl), &SCMP_A1 (SCMP_CMP_EQ, (int) TIOCSTI)},
   };
 
   struct
@@ -2118,12 +2125,13 @@ setup_seccomp (FlatpakBwrap *bwrap,
      */
     {SCMP_SYS (perf_event_open)},
     /* Don't allow you to switch to bsd emulation or whatnot */
-    {SCMP_SYS (personality), &SCMP_A0(SCMP_CMP_NE, allowed_personality)},
+    {SCMP_SYS (personality), &SCMP_A0 (SCMP_CMP_NE, allowed_personality)},
     {SCMP_SYS (ptrace)}
   };
   /* Blacklist all but unix, inet, inet6 and netlink */
-  struct {
-    int family;
+  struct
+  {
+    int             family;
     FlatpakRunFlags flags_mask;
   } socket_family_whitelist[] = {
     /* NOTE: Keep in numerical order */
@@ -2265,7 +2273,7 @@ setup_seccomp (FlatpakBwrap *bwrap,
 
 static void
 flatpak_run_setup_usr_links (FlatpakBwrap *bwrap,
-                             GFile          *runtime_files)
+                             GFile        *runtime_files)
 {
   const char *usr_links[] = {"lib", "lib32", "lib64", "bin", "sbin"};
   int i;
@@ -2308,7 +2316,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
 
   g = getgrgid (gid);
   if(g == NULL)
-      return flatpak_fail (error, "Invalid gid: %d", gid);
+    return flatpak_fail (error, "Invalid gid: %d", gid);
 
   run_dir = g_strdup_printf ("/run/user/%d", getuid ());
 
@@ -2464,14 +2472,15 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
 }
 
 static gboolean
-forward_file (XdpDbusDocuments  *documents,
-              const char        *app_id,
-              const char        *file,
-              char             **out_doc_id,
-              GError           **error)
+forward_file (XdpDbusDocuments *documents,
+              const char       *app_id,
+              const char       *file,
+              char            **out_doc_id,
+              GError          **error)
 {
   int fd, fd_id;
   g_autofree char *doc_id = NULL;
+
   g_autoptr(GUnixFDList) fd_list = NULL;
   const char *perms[] = { "read", "write", NULL };
 
@@ -2511,7 +2520,7 @@ static gboolean
 add_rest_args (FlatpakBwrap   *bwrap,
                const char     *app_id,
                FlatpakExports *exports,
-               gboolean       file_forwarding,
+               gboolean        file_forwarding,
                const char     *doc_mount_path,
                char           *args[],
                int             n_args,
@@ -2563,7 +2572,7 @@ add_rest_args (FlatpakBwrap   *bwrap,
             {
               if (g_str_has_prefix (args[i], "file:"))
                 file = g_file_new_for_uri (args[i]);
-              else if (G_IS_DIR_SEPARATOR(args[i][0]))
+              else if (G_IS_DIR_SEPARATOR (args[i][0]))
                 file = g_file_new_for_path (args[i]);
             }
           else
@@ -2603,7 +2612,7 @@ add_rest_args (FlatpakBwrap   *bwrap,
 
 FlatpakContext *
 flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
-                                 GError        **error)
+                                 GError       **error)
 {
   g_autoptr(FlatpakContext) context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
@@ -2621,10 +2630,11 @@ flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
 }
 
 FlatpakContext *
-flatpak_context_load_for_app (const char     *app_id,
-                              GError        **error)
+flatpak_context_load_for_app (const char *app_id,
+                              GError    **error)
 {
   g_autofree char *app_ref = NULL;
+
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
 
   app_ref = flatpak_find_current_ref (app_id, NULL, error);
@@ -2639,26 +2649,26 @@ flatpak_context_load_for_app (const char     *app_id,
 }
 
 static char *
-calculate_ld_cache_checksum (GVariant *app_deploy_data,
-                             GVariant *runtime_deploy_data,
+calculate_ld_cache_checksum (GVariant   *app_deploy_data,
+                             GVariant   *runtime_deploy_data,
                              const char *app_extensions,
                              const char *runtime_extensions)
 {
   g_autoptr(GChecksum) ld_so_checksum = g_checksum_new (G_CHECKSUM_SHA256);
   if (app_deploy_data)
-    g_checksum_update (ld_so_checksum, (guchar *)flatpak_deploy_data_get_commit (app_deploy_data), -1);
-  g_checksum_update (ld_so_checksum, (guchar *)flatpak_deploy_data_get_commit (runtime_deploy_data), -1);
+    g_checksum_update (ld_so_checksum, (guchar *) flatpak_deploy_data_get_commit (app_deploy_data), -1);
+  g_checksum_update (ld_so_checksum, (guchar *) flatpak_deploy_data_get_commit (runtime_deploy_data), -1);
   if (app_extensions)
-    g_checksum_update (ld_so_checksum, (guchar *)app_extensions, -1);
+    g_checksum_update (ld_so_checksum, (guchar *) app_extensions, -1);
   if (runtime_extensions)
-    g_checksum_update (ld_so_checksum, (guchar *)runtime_extensions, -1);
+    g_checksum_update (ld_so_checksum, (guchar *) runtime_extensions, -1);
 
   return g_strdup (g_checksum_get_string (ld_so_checksum));
 }
 
 static gboolean
-add_ld_so_conf (FlatpakBwrap   *bwrap,
-                GError        **error)
+add_ld_so_conf (FlatpakBwrap *bwrap,
+                GError      **error)
 {
   const char *contents =
     "include /run/flatpak/ld.so.conf.d/app-*.conf\n"
@@ -2671,14 +2681,14 @@ add_ld_so_conf (FlatpakBwrap   *bwrap,
 }
 
 static int
-regenerate_ld_cache (GPtrArray      *base_argv_array,
-                     GArray         *base_fd_array,
-                     GFile          *app_id_dir,
-                     const char     *checksum,
-                     GFile          *runtime_files,
-                     gboolean        generate_ld_so_conf,
-                     GCancellable   *cancellable,
-                     GError        **error)
+regenerate_ld_cache (GPtrArray    *base_argv_array,
+                     GArray       *base_fd_array,
+                     GFile        *app_id_dir,
+                     const char   *checksum,
+                     GFile        *runtime_files,
+                     gboolean      generate_ld_so_conf,
+                     GCancellable *cancellable,
+                     GError      **error)
 {
   g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_autoptr(GArray) combined_fd_array = NULL;
@@ -2761,7 +2771,7 @@ regenerate_ld_cache (GPtrArray      *base_argv_array,
                      error))
     return -1;
 
-  if (!WIFEXITED(exit_status) || WEXITSTATUS(exit_status) != 0)
+  if (!WIFEXITED (exit_status) || WEXITSTATUS (exit_status) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    _("ldconfig failed, exit status %d"), exit_status);

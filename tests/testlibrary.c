@@ -25,20 +25,20 @@ int httpd_pid = -1;
 static const char *gpg_id = "7B0961FD";
 const char *repo_name = "test-repo";
 
-typedef enum
-{
+typedef enum {
   RUN_TEST_SUBPROCESS_DEFAULT = 0,
   RUN_TEST_SUBPROCESS_IGNORE_FAILURE = (1 << 0),
   RUN_TEST_SUBPROCESS_NO_CAPTURE = (1 << 1),
 } RunTestSubprocessFlags;
 
-static void run_test_subprocess (char **argv, RunTestSubprocessFlags flags);
+static void run_test_subprocess (char                 **argv,
+                                 RunTestSubprocessFlags flags);
 
 typedef struct
 {
-  const char *id;
-  const char *display_name;
-  gint        priority;
+  const char        *id;
+  const char        *display_name;
+  gint               priority;
   FlatpakStorageType storage_type;
 } InstallationExtraData;
 
@@ -47,7 +47,7 @@ test_library_version (void)
 {
   g_autofree char *version = NULL;
 
-  version = g_strdup_printf ("%d.%d.%d" G_STRINGIFY(PACKAGE_EXTRA_VERSION),
+  version = g_strdup_printf ("%d.%d.%d" G_STRINGIFY (PACKAGE_EXTRA_VERSION),
                              FLATPAK_MAJOR_VERSION,
                              FLATPAK_MINOR_VERSION,
                              FLATPAK_MICRO_VERSION);
@@ -122,11 +122,11 @@ test_multiple_system_installations (void)
 
   for (i = 0; i < system_dirs->len; i++)
     {
-      g_autoptr (FlatpakInstallation) new_install = NULL;
+      g_autoptr(FlatpakInstallation) new_install = NULL;
       g_autoptr(GFile) installation_path = NULL;
       g_autofree char *path_str = NULL;
 
-      installation = (FlatpakInstallation*) g_ptr_array_index (system_dirs, i);
+      installation = (FlatpakInstallation *) g_ptr_array_index (system_dirs, i);
       g_assert_false (flatpak_installation_get_is_user (installation));
 
       installation_path = flatpak_installation_get_path (installation);
@@ -155,10 +155,10 @@ test_multiple_system_installations (void)
       new_install = flatpak_installation_new_system_with_id (current_id, NULL, &error);
       g_assert_nonnull (new_install);
 
-      g_assert_cmpstr(current_id, ==, flatpak_installation_get_id (new_install));
-      g_assert_cmpstr(current_display_name, ==, flatpak_installation_get_display_name (new_install));
-      g_assert_cmpint(current_priority, ==, flatpak_installation_get_priority (new_install));
-      g_assert_cmpint(current_storage_type, ==, flatpak_installation_get_storage_type (new_install));
+      g_assert_cmpstr (current_id, ==, flatpak_installation_get_id (new_install));
+      g_assert_cmpstr (current_display_name, ==, flatpak_installation_get_display_name (new_install));
+      g_assert_cmpint (current_priority, ==, flatpak_installation_get_priority (new_install));
+      g_assert_cmpint (current_storage_type, ==, flatpak_installation_get_storage_type (new_install));
     }
 }
 
@@ -405,6 +405,7 @@ test_list_refs_in_remotes (void)
 {
   const char *repo_name = "multi-refs-repo";
   g_autofree char *repo_url = NULL;
+
   g_autoptr(GPtrArray) refs1 = NULL;
   g_autoptr(GPtrArray) refs2 = NULL;
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -523,30 +524,32 @@ test_list_remote_refs (void)
       g_assert (metadata != NULL);
 
       if (strcmp ("org.test.Hello", flatpak_ref_get_name (ref)) == 0)
-        g_assert (g_str_has_prefix ((char *)g_bytes_get_data (metadata, NULL), "[Application]"));
+        g_assert (g_str_has_prefix ((char *) g_bytes_get_data (metadata, NULL), "[Application]"));
       else
-        g_assert (g_str_has_prefix ((char *)g_bytes_get_data (metadata, NULL), "[Runtime]"));
+        g_assert (g_str_has_prefix ((char *) g_bytes_get_data (metadata, NULL), "[Runtime]"));
     }
 }
 
 static void
 progress_cb (const char *status,
-             guint progress,
-             gboolean estimating,
-             gpointer user_data)
+             guint       progress,
+             gboolean    estimating,
+             gpointer    user_data)
 {
   int *count = user_data;
+
   *count += 1;
 }
 
 static void
-changed_cb (GFileMonitor *monitor,
-            GFile *file,
-            GFile *other_file,
+changed_cb (GFileMonitor     *monitor,
+            GFile            *file,
+            GFile            *other_file,
             GFileMonitorEvent event_type,
-            gpointer user_data)
+            gpointer          user_data)
 {
   int *count = user_data;
+
   *count += 1;
 }
 
@@ -554,6 +557,7 @@ static gboolean
 timeout_cb (gpointer data)
 {
   gboolean *timeout_reached = data;
+
   *timeout_reached = TRUE;
   return G_SOURCE_CONTINUE;
 }
@@ -579,8 +583,8 @@ test_install_launch_uninstall (void)
   if (bwrap != NULL)
     {
       gint exit_code = 0;
-      char *argv[] = { (char *)bwrap, "--unshare-ipc", "--unshare-net",
-          "--unshare-pid", "--ro-bind", "/", "/", "/bin/true", NULL };
+      char *argv[] = { (char *) bwrap, "--unshare-ipc", "--unshare-net",
+                       "--unshare-pid", "--ro-bind", "/", "/", "/bin/true", NULL };
       g_autofree char *argv_str = g_strjoinv (" ", argv);
       g_test_message ("Spawning %s", argv_str);
       g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &exit_code, &error);
@@ -836,10 +840,11 @@ test_list_updates (void)
 }
 
 static void
-run_test_subprocess (char **argv,
+run_test_subprocess (char                 **argv,
                      RunTestSubprocessFlags flags)
 {
   int status;
+
   g_autoptr(GError) error = NULL;
   g_autofree char *argv_str = g_strjoinv (" ", argv);
   g_autofree char *output = NULL;
@@ -929,6 +934,7 @@ static void
 update_repo (void)
 {
   char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test", NULL };
+
   g_auto(GStrv) gpgargs = NULL;
 
   gpgargs = g_strsplit (gpg_args, " ", 0);
@@ -941,7 +947,7 @@ static void
 launch_httpd (void)
 {
   g_autofree char *path = g_test_build_filename (G_TEST_DIST, "test-webserver.sh", NULL);
-  char *argv[] = {path , "repos", NULL };
+  char *argv[] = {path, "repos", NULL };
 
   /* The web server puts itself in the background, so we can't wait
    * for EOF on its stdout, stderr */
@@ -978,7 +984,7 @@ add_remote (void)
 
   argv[3] = gpgimport;
   argv[4] = collection_id_arg;
-  argv[5] = (char *)repo_name;
+  argv[5] = (char *) repo_name;
   argv[6] = repo_url;
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -992,18 +998,19 @@ add_extra_installation (const char *id,
   g_autofree char *conffile_path = NULL;
   g_autofree char *contents_string = NULL;
   g_autofree char *path = NULL;
+
   g_autoptr(GPtrArray) contents_array = NULL;
   g_autoptr(GError) error = NULL;
 
   path = g_strconcat (testdir, "/system-", id, NULL);
-  g_mkdir_with_parents (path, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (path, S_IRWXU | S_IRWXG | S_IRWXO);
 
-  contents_array = g_ptr_array_new_with_free_func ((GDestroyNotify)g_free);
+  contents_array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 
   g_ptr_array_add (contents_array,
-      g_strdup_printf ("[Installation \"%s\"]\n"
-                       "Path=%s",
-                       id, path));
+                   g_strdup_printf ("[Installation \"%s\"]\n"
+                                    "Path=%s",
+                                    id, path));
 
   if (display_name != NULL)
     g_ptr_array_add (contents_array, g_strdup_printf ("DisplayName=%s", display_name));
@@ -1015,7 +1022,7 @@ add_extra_installation (const char *id,
     g_ptr_array_add (contents_array, g_strdup_printf ("Priority=%s", priority));
 
   g_ptr_array_add (contents_array, NULL);
-  contents_string = g_strjoinv ("\n", (char**)contents_array->pdata);
+  contents_string = g_strjoinv ("\n", (char **) contents_array->pdata);
 
   conffile_path = g_strconcat (flatpak_installationsdir, "/", id, ".conf", NULL);
   g_file_set_contents (conffile_path, contents_string, -1, &error);
@@ -1026,7 +1033,7 @@ static void
 setup_multiple_installations (void)
 {
   flatpak_installationsdir = g_strconcat (flatpak_configdir, "/installations.d", NULL);
-  g_mkdir_with_parents (flatpak_installationsdir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (flatpak_installationsdir, S_IRWXU | S_IRWXG | S_IRWXO);
 
   add_extra_installation ("extra-installation-1", "Extra system installation 1", "mmc", "10");
   add_extra_installation ("extra-installation-2", "Extra system installation 2", "sdcard", "25");
@@ -1049,6 +1056,7 @@ copy_file (const char *src, const char *dest)
 {
   gchar *buffer = NULL;
   gsize length;
+
   g_autoptr(GError) error = NULL;
 
   g_test_message ("copying %s to %s", src, dest);
@@ -1091,54 +1099,54 @@ global_setup (void)
   g_test_message ("testdir: %s", testdir);
 
   homedir = g_strconcat (testdir, "/home", NULL);
-  g_mkdir_with_parents (homedir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (homedir, S_IRWXU | S_IRWXG | S_IRWXO);
 
   g_setenv ("HOME", homedir, TRUE);
   g_test_message ("setting HOME=%s", homedir);
 
   cachedir = g_strconcat (testdir, "/home/cache", NULL);
-  g_mkdir_with_parents (cachedir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (cachedir, S_IRWXU | S_IRWXG | S_IRWXO);
   g_setenv ("XDG_CACHE_HOME", cachedir, TRUE);
   g_test_message ("setting XDG_CACHE_HOME=%s", cachedir);
 
   configdir = g_strconcat (testdir, "/home/config", NULL);
-  g_mkdir_with_parents (configdir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (configdir, S_IRWXU | S_IRWXG | S_IRWXO);
   g_setenv ("XDG_CONFIG_HOME", configdir, TRUE);
   g_test_message ("setting XDG_CONFIG_HOME=%s", configdir);
 
   datadir = g_strconcat (testdir, "/home/share", NULL);
-  g_mkdir_with_parents (datadir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (datadir, S_IRWXU | S_IRWXG | S_IRWXO);
   g_setenv ("XDG_DATA_HOME", datadir, TRUE);
   g_test_message ("setting XDG_DATA_HOME=%s", datadir);
 
   flatpak_runtimedir = g_strconcat (testdir, "/runtime", NULL);
-  g_mkdir_with_parents (flatpak_runtimedir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (flatpak_runtimedir, S_IRWXU | S_IRWXG | S_IRWXO);
   g_test_message ("setting XDG_RUNTIME_DIR=%s", flatpak_runtimedir);
 
   flatpak_systemdir = g_strconcat (testdir, "/system", NULL);
-  g_mkdir_with_parents (flatpak_systemdir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (flatpak_systemdir, S_IRWXU | S_IRWXG | S_IRWXO);
   g_setenv ("FLATPAK_SYSTEM_DIR", flatpak_systemdir, TRUE);
   g_test_message ("setting FLATPAK_SYSTEM_DIR=%s", flatpak_systemdir);
 
   flatpak_systemcachedir = g_strconcat (testdir, "/system-cache", NULL);
-  g_mkdir_with_parents (flatpak_systemcachedir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (flatpak_systemcachedir, S_IRWXU | S_IRWXG | S_IRWXO);
   g_setenv ("FLATPAK_SYSTEM_CACHE_DIR", flatpak_systemcachedir, TRUE);
   g_test_message ("setting FLATPAK_SYSTEM_CACHE_DIR=%s", flatpak_systemcachedir);
 
   flatpak_configdir = g_strconcat (testdir, "/config", NULL);
-  g_mkdir_with_parents (flatpak_configdir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (flatpak_configdir, S_IRWXU | S_IRWXG | S_IRWXO);
   g_setenv ("FLATPAK_CONFIG_DIR", flatpak_configdir, TRUE);
   g_test_message ("setting FLATPAK_CONFIG_DIR=%s", flatpak_configdir);
 
   gpg_homedir = g_strconcat (testdir, "/gpghome", NULL);
-  g_mkdir_with_parents (gpg_homedir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_mkdir_with_parents (gpg_homedir, S_IRWXU | S_IRWXG | S_IRWXO);
 
   gpg_args = g_strdup_printf ("--gpg-homedir=%s --gpg-sign=%s", gpg_homedir, gpg_id);
   g_setenv ("GPGARGS", gpg_args, TRUE);
   g_test_message ("setting GPGARGS=%s", gpg_args);
 
   copy_gpg ();
-  setup_multiple_installations();
+  setup_multiple_installations ();
   setup_repo ();
 }
 

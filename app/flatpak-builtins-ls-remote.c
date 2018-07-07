@@ -51,10 +51,11 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-typedef struct RemoteDirPair {
-  gchar *remote_name;
+typedef struct RemoteDirPair
+{
+  gchar              *remote_name;
   FlatpakRemoteState *state;
-  FlatpakDir *dir;
+  FlatpakDir         *dir;
 } RemoteDirPair;
 
 static void
@@ -70,6 +71,7 @@ static RemoteDirPair *
 remote_dir_pair_new (const char *remote_name, FlatpakDir *dir, FlatpakRemoteState *state)
 {
   RemoteDirPair *pair = g_new (RemoteDirPair, 1);
+
   pair->remote_name = g_strdup (remote_name);
   pair->state = state;
   pair->dir = g_object_ref (dir);
@@ -94,7 +96,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   const char *opt_arches[] = {NULL, NULL};
   gboolean has_remote;
   g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  g_autoptr(GHashTable) refs_hash = g_hash_table_new_full(g_direct_hash, g_direct_equal, (GDestroyNotify)g_hash_table_unref, (GDestroyNotify)remote_dir_pair_free);
+  g_autoptr(GHashTable) refs_hash = g_hash_table_new_full (g_direct_hash, g_direct_equal, (GDestroyNotify) g_hash_table_unref, (GDestroyNotify) remote_dir_pair_free);
 
   context = g_option_context_new (_(" [REMOTE or URI] - Show available runtimes and applications"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -310,7 +312,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
           flatpak_table_printer_add_column (printer, ref);
 
           if (!has_remote)
-              flatpak_table_printer_add_column (printer, remote);
+            flatpak_table_printer_add_column (printer, remote);
 
           if (opt_show_details)
             {

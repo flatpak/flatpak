@@ -70,11 +70,12 @@ get_lang_default (FlatpakDir *dir)
   return g_strjoinv (";", langs);
 }
 
-typedef struct {
+typedef struct
+{
   const char *name;
   char *(*parse)(const char *value);
   char *(*print)(const char *value);
-  char *(*get_default)(FlatpakDir *dir);
+  char *(*get_default)(FlatpakDir * dir);
 } ConfigKey;
 
 ConfigKey keys[] = {

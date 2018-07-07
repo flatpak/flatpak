@@ -76,11 +76,11 @@ child_setup (gpointer user_data)
 }
 
 static gboolean
-find_matching_extension_group_in_metakey (GKeyFile    *metakey,
-                                          const char  *id,
-                                          const char  *specified_tag,
-                                          char       **out_extension_group,
-                                          GError     **error)
+find_matching_extension_group_in_metakey (GKeyFile   *metakey,
+                                          const char *id,
+                                          const char *specified_tag,
+                                          char      **out_extension_group,
+                                          GError    **error)
 {
   g_auto(GStrv) groups = NULL;
   g_autofree char *extension_prefix = NULL;
@@ -98,7 +98,8 @@ find_matching_extension_group_in_metakey (GKeyFile    *metakey,
   for (iter = groups; *iter != NULL; ++iter)
     {
       const char *group_name = *iter;
-      const char *extension_name = NULL;;
+      const char *extension_name = NULL;
+      ;
       g_autofree char *extension_tag = NULL;
 
       if (!g_str_has_prefix (group_name, extension_prefix))
@@ -120,22 +121,22 @@ find_matching_extension_group_in_metakey (GKeyFile    *metakey,
         }
 
       /* Check 2: Keep track of this extension group as the last
-        * seen one. If it was the only one then we can use it. */
+       * seen one. If it was the only one then we can use it. */
       last_seen_group = group_name;
     }
 
-    if (n_extension_groups == 1 && last_seen_group != NULL)
-      {
-        *out_extension_group = g_strdup (last_seen_group);
-        return TRUE;
-      }
-    else if (n_extension_groups == 0)
-      {
-        /* Check 2: No extension groups, this is not an error case as
-         * we check the parent later. */
-        *out_extension_group = NULL;
-        return TRUE;
-      }
+  if (n_extension_groups == 1 && last_seen_group != NULL)
+    {
+      *out_extension_group = g_strdup (last_seen_group);
+      return TRUE;
+    }
+  else if (n_extension_groups == 0)
+    {
+      /* Check 2: No extension groups, this is not an error case as
+       * we check the parent later. */
+      *out_extension_group = NULL;
+      return TRUE;
+    }
 
   g_set_error (error,
                G_IO_ERROR,
@@ -485,10 +486,10 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     dest = g_strdup ("/usr");
 
   flatpak_bwrap_add_args (bwrap,
-            "--setenv", "FLATPAK_DEST", dest,
-            "--setenv", "FLATPAK_ID", id,
-            "--setenv", "FLATPAK_ARCH", runtime_ref_parts[2],
-            NULL);
+                          "--setenv", "FLATPAK_DEST", dest,
+                          "--setenv", "FLATPAK_ID", id,
+                          "--setenv", "FLATPAK_ARCH", runtime_ref_parts[2],
+                          NULL);
 
   /* Persist some stuff in /var. We can't persist everything because  that breaks /var things
    * from the host to work. For example the /home -> /var/home on atomic.

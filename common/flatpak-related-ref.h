@@ -50,7 +50,7 @@ typedef struct
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRelatedRef, g_object_unref)
 #endif
 
-FLATPAK_EXTERN const char * const *flatpak_related_ref_get_subpaths (FlatpakRelatedRef *self);
+FLATPAK_EXTERN const char * const *flatpak_related_ref_get_subpaths (FlatpakRelatedRef * self);
 FLATPAK_EXTERN gboolean     flatpak_related_ref_should_download (FlatpakRelatedRef *self);
 FLATPAK_EXTERN gboolean     flatpak_related_ref_should_delete (FlatpakRelatedRef *self);
 FLATPAK_EXTERN gboolean     flatpak_related_ref_should_autoprune (FlatpakRelatedRef *self);

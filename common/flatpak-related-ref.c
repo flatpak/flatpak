@@ -72,9 +72,9 @@ flatpak_related_ref_finalize (GObject *object)
 
 static void
 flatpak_related_ref_set_property (GObject      *object,
-                                    guint         prop_id,
-                                    const GValue *value,
-                                    GParamSpec   *pspec)
+                                  guint         prop_id,
+                                  const GValue *value,
+                                  GParamSpec   *pspec)
 {
   FlatpakRelatedRef *self = FLATPAK_RELATED_REF (object);
   FlatpakRelatedRefPrivate *priv = flatpak_related_ref_get_instance_private (self);
@@ -106,9 +106,9 @@ flatpak_related_ref_set_property (GObject      *object,
 
 static void
 flatpak_related_ref_get_property (GObject    *object,
-                                    guint       prop_id,
-                                    GValue     *value,
-                                    GParamSpec *pspec)
+                                  guint       prop_id,
+                                  GValue     *value,
+                                  GParamSpec *pspec)
 {
   FlatpakRelatedRef *self = FLATPAK_RELATED_REF (object);
   FlatpakRelatedRefPrivate *priv = flatpak_related_ref_get_instance_private (self);
@@ -152,28 +152,28 @@ flatpak_related_ref_class_init (FlatpakRelatedRefClass *klass)
                                                          "Should download",
                                                          "Whether to auto-download the ref with the main ref",
                                                          FALSE,
-                                                         G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_SHOULD_DELETE,
                                    g_param_spec_boolean ("should-delete",
                                                          "Should delete",
                                                          "Whether to auto-delete the ref with the main ref",
                                                          FALSE,
-                                                         G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_SHOULD_AUTOPRUNE,
                                    g_param_spec_boolean ("should-autoprune",
                                                          "Should autoprune",
                                                          "Whether to delete when pruning unused refs",
                                                          FALSE,
-                                                         G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_SUBPATHS,
                                    g_param_spec_boxed ("subpaths",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
-                                                       G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -189,8 +189,8 @@ flatpak_related_ref_init (FlatpakRelatedRef *self)
  *
  * Returns: %TRUE if the ref should be downloaded with the main ref.
  *
- * Since: 0.6.7 
-*/
+ * Since: 0.6.7
+ */
 gboolean
 flatpak_related_ref_should_download (FlatpakRelatedRef *self)
 {
@@ -207,7 +207,7 @@ flatpak_related_ref_should_download (FlatpakRelatedRef *self)
  *
  * Returns: %TRUE if the ref should be deleted with the main ref.
  *
- * Since: 0.6.7 
+ * Since: 0.6.7
  */
 gboolean
 flatpak_related_ref_should_delete (FlatpakRelatedRef *self)
@@ -244,7 +244,7 @@ flatpak_related_ref_should_autoprune (FlatpakRelatedRef *self)
  *
  * Returns: (transfer none): A strv, or %NULL
  *
- * Since: 0.6.7 
+ * Since: 0.6.7
  */
 const char * const *
 flatpak_related_ref_get_subpaths (FlatpakRelatedRef *self)
@@ -256,12 +256,12 @@ flatpak_related_ref_get_subpaths (FlatpakRelatedRef *self)
 
 
 FlatpakRelatedRef *
-flatpak_related_ref_new (const char  *collection_id,
-                         const char  *full_ref,
-                         const char  *commit,
-                         char       **subpaths,
-                         gboolean     download,
-                         gboolean     delete)
+flatpak_related_ref_new (const char *collection_id,
+                         const char *full_ref,
+                         const char *commit,
+                         char      **subpaths,
+                         gboolean    download,
+                         gboolean    delete)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakRelatedRef *ref;
@@ -276,7 +276,7 @@ flatpak_related_ref_new (const char  *collection_id,
   /* Canonicalize the "no subpaths" case */
   if (subpaths && *subpaths == NULL)
     subpaths = NULL;
-  
+
   ref = g_object_new (FLATPAK_TYPE_RELATED_REF,
                       "kind", kind,
                       "name", parts[1],

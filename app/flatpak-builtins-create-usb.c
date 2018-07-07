@@ -47,25 +47,27 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-typedef struct CommitAndSubpaths {
-  gchar *commit;
+typedef struct CommitAndSubpaths
+{
+  gchar  *commit;
   gchar **subpaths;
 } CommitAndSubpaths;
 
 static void
 commit_and_subpaths_free (CommitAndSubpaths *c_s)
 {
-    g_free (c_s->commit);
-    g_strfreev (c_s->subpaths);
-    g_free (c_s);
+  g_free (c_s->commit);
+  g_strfreev (c_s->subpaths);
+  g_free (c_s);
 }
 
 static CommitAndSubpaths *
 commit_and_subpaths_new (const char *commit, const char * const *subpaths)
 {
   CommitAndSubpaths *c_s = g_new (CommitAndSubpaths, 1);
+
   c_s->commit = g_strdup (commit);
-  c_s->subpaths = g_strdupv ((char **)subpaths);
+  c_s->subpaths = g_strdupv ((char **) subpaths);
   return c_s;
 }
 
@@ -74,12 +76,12 @@ commit_and_subpaths_new (const char *commit, const char * const *subpaths)
  * printed for related refs that are not installed, and they won't be added to
  * the list. */
 static gboolean
-add_related (GHashTable    *all_refs,
-             GHashTable    *all_collection_ids,
-             const char    *ref,
-             FlatpakDir    *dir,
-             GCancellable  *cancellable,
-             GError       **error)
+add_related (GHashTable   *all_refs,
+             GHashTable   *all_collection_ids,
+             const char   *ref,
+             FlatpakDir   *dir,
+             GCancellable *cancellable,
+             GError      **error)
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(FlatpakDeploy) deploy = NULL;
@@ -159,12 +161,12 @@ add_related (GHashTable    *all_refs,
 /* Add the runtime and its related refs to @all_refs, also updating
  * @all_collection_ids with any new collection IDs */
 static gboolean
-add_runtime (GHashTable    *all_refs,
-             GHashTable    *all_collection_ids,
-             const char    *ref,
-             FlatpakDir    *dir,
-             GCancellable  *cancellable,
-             GError       **error)
+add_runtime (GHashTable   *all_refs,
+             GHashTable   *all_collection_ids,
+             const char   *ref,
+             FlatpakDir   *dir,
+             GCancellable *cancellable,
+             GError      **error)
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(GVariant) runtime_deploy_data = NULL;
@@ -226,14 +228,14 @@ add_runtime (GHashTable    *all_refs,
 
 /* Copied from src/ostree/ot-builtin-create-usb.c in ostree.git, with slight modifications */
 static gboolean
-ostree_create_usb (GOptionContext  *context,
-                   OstreeRepo      *src_repo,
-                   const char      *mount_root_path,
-                   struct stat      mount_root_stbuf,
-                   int              mount_root_dfd,
-                   GHashTable      *all_refs,
-                   GCancellable    *cancellable,
-                   GError         **error)
+ostree_create_usb (GOptionContext *context,
+                   OstreeRepo     *src_repo,
+                   const char     *mount_root_path,
+                   struct stat     mount_root_stbuf,
+                   int             mount_root_dfd,
+                   GHashTable     *all_refs,
+                   GCancellable   *cancellable,
+                   GError        **error)
 {
   g_autoptr(OstreeAsyncProgress) progress = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
@@ -285,6 +287,7 @@ ostree_create_usb (GOptionContext  *context,
   GLNX_HASH_TABLE_FOREACH_KV (all_refs, OstreeCollectionRef *, c_r, CommitAndSubpaths *, c_s)
   {
     GVariantBuilder builder;
+
     g_autoptr(GVariant) opts = NULL;
     OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_MIRROR;
     GVariantBuilder refs_builder;
@@ -308,7 +311,7 @@ ostree_create_usb (GOptionContext  *context,
     if (c_s->subpaths != NULL)
       {
         g_variant_builder_add (&builder, "{s@v}", "subdirs",
-                               g_variant_new_variant (g_variant_new_strv ((const char * const *)c_s->subpaths, -1)));
+                               g_variant_new_variant (g_variant_new_strv ((const char * const *) c_s->subpaths, -1)));
       }
     g_variant_builder_add (&builder, "{s@v}", "flags",
                            g_variant_new_variant (g_variant_new_int32 (flags)));
@@ -461,7 +464,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
                                     (GDestroyNotify) commit_and_subpaths_free);
 
   /* This maps from each remote name to a set of architectures */
-  remote_arch_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)g_strfreev);
+  remote_arch_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) g_strfreev);
 
   for (i = 0; i < n_prefs; i++)
     {
@@ -626,84 +629,84 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
 
   /* Add ostree-metadata and appstream refs for each collection ID */
   GLNX_HASH_TABLE_FOREACH_KV (all_collection_ids, const char *, collection_id, const char *, remote_name)
-    {
-      g_autoptr(OstreeCollectionRef) metadata_collection_ref = NULL;
-      g_autoptr(OstreeCollectionRef) appstream_collection_ref = NULL;
-      g_autoptr(OstreeCollectionRef) appstream2_collection_ref = NULL;
-      g_autoptr(FlatpakRemoteState) state = NULL;
-      g_autoptr(GError) local_error = NULL;
-      g_autoptr(GPtrArray) dirs = NULL;
-      g_autofree char *appstream_ref = NULL;
-      g_autofree char *appstream2_ref = NULL;
-      const char **remote_arches;
+  {
+    g_autoptr(OstreeCollectionRef) metadata_collection_ref = NULL;
+    g_autoptr(OstreeCollectionRef) appstream_collection_ref = NULL;
+    g_autoptr(OstreeCollectionRef) appstream2_collection_ref = NULL;
+    g_autoptr(FlatpakRemoteState) state = NULL;
+    g_autoptr(GError) local_error = NULL;
+    g_autoptr(GPtrArray) dirs = NULL;
+    g_autofree char *appstream_ref = NULL;
+    g_autofree char *appstream2_ref = NULL;
+    const char **remote_arches;
 
-      /* First try to update the repo metadata by creating a FlatpakRemoteState,
-       * but don't fail on error because we want this to work offline. */
-      state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, &local_error);
-      if (state == NULL)
-        {
-          g_printerr (_("Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"),
-                      remote_name, local_error->message);
-          g_clear_error (&local_error);
-        }
+    /* First try to update the repo metadata by creating a FlatpakRemoteState,
+     * but don't fail on error because we want this to work offline. */
+    state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, &local_error);
+    if (state == NULL)
+      {
+        g_printerr (_("Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"),
+                    remote_name, local_error->message);
+        g_clear_error (&local_error);
+      }
 
-      /* Add the ostree-metadata ref to the list */
-      metadata_collection_ref = ostree_collection_ref_new (collection_id, OSTREE_REPO_METADATA_REF);
-      g_hash_table_insert (all_refs, g_steal_pointer (&metadata_collection_ref),
-                           commit_and_subpaths_new (NULL, NULL));
+    /* Add the ostree-metadata ref to the list */
+    metadata_collection_ref = ostree_collection_ref_new (collection_id, OSTREE_REPO_METADATA_REF);
+    g_hash_table_insert (all_refs, g_steal_pointer (&metadata_collection_ref),
+                         commit_and_subpaths_new (NULL, NULL));
 
-      remote_arches = g_hash_table_lookup (remote_arch_map, remote_name);
-      for (const char **iter = remote_arches; iter != NULL && *iter != NULL; ++iter)
-        {
-          /* Try to update the appstream data */
-          const char *current_arch = *iter;
-          dirs = g_ptr_array_new ();
-          g_ptr_array_add (dirs, dir);
-          if (!update_appstream (dirs, remote_name, current_arch, 0, TRUE, cancellable, &local_error))
-            {
-              g_printerr (_("Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"),
-                          remote_name, current_arch, local_error->message);
-              g_clear_error (&local_error);
-            }
+    remote_arches = g_hash_table_lookup (remote_arch_map, remote_name);
+    for (const char **iter = remote_arches; iter != NULL && *iter != NULL; ++iter)
+      {
+        /* Try to update the appstream data */
+        const char *current_arch = *iter;
+        dirs = g_ptr_array_new ();
+        g_ptr_array_add (dirs, dir);
+        if (!update_appstream (dirs, remote_name, current_arch, 0, TRUE, cancellable, &local_error))
+          {
+            g_printerr (_("Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"),
+                        remote_name, current_arch, local_error->message);
+            g_clear_error (&local_error);
+          }
 
-          /* Copy the appstream data if it exists. It's optional because without it
-           * the USB will still be useful to the flatpak CLI even if GNOME Software
-           * wouldn't display the contents. */
-          appstream_ref = g_strdup_printf ("appstream/%s", current_arch);
-          appstream_collection_ref = ostree_collection_ref_new (collection_id, appstream_ref);
-          if (ostree_repo_resolve_collection_ref (src_repo, appstream_collection_ref, FALSE,
-                                                  OSTREE_REPO_RESOLVE_REV_EXT_NONE,
-                                                  NULL, cancellable, &local_error))
-            {
-              g_hash_table_insert (all_refs, g_steal_pointer (&appstream_collection_ref),
-                                   commit_and_subpaths_new (NULL, NULL));
-            }
-          else
-            {
-              g_printerr (_("Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s\n"),
-                          remote_name, current_arch, local_error->message);
-              g_clear_error (&local_error);
-            }
+        /* Copy the appstream data if it exists. It's optional because without it
+         * the USB will still be useful to the flatpak CLI even if GNOME Software
+         * wouldn't display the contents. */
+        appstream_ref = g_strdup_printf ("appstream/%s", current_arch);
+        appstream_collection_ref = ostree_collection_ref_new (collection_id, appstream_ref);
+        if (ostree_repo_resolve_collection_ref (src_repo, appstream_collection_ref, FALSE,
+                                                OSTREE_REPO_RESOLVE_REV_EXT_NONE,
+                                                NULL, cancellable, &local_error))
+          {
+            g_hash_table_insert (all_refs, g_steal_pointer (&appstream_collection_ref),
+                                 commit_and_subpaths_new (NULL, NULL));
+          }
+        else
+          {
+            g_printerr (_("Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s\n"),
+                        remote_name, current_arch, local_error->message);
+            g_clear_error (&local_error);
+          }
 
-          /* Appstream2 is only for efficiency, so just print a debug message if
-           * it's missing. */
-          appstream2_ref = g_strdup_printf ("appstream2/%s", current_arch);
-          appstream2_collection_ref = ostree_collection_ref_new (collection_id, appstream2_ref);
-          if (ostree_repo_resolve_collection_ref (src_repo, appstream2_collection_ref, FALSE,
-                                                  OSTREE_REPO_RESOLVE_REV_EXT_NONE,
-                                                  NULL, cancellable, &local_error))
-            {
-              g_hash_table_insert (all_refs, g_steal_pointer (&appstream2_collection_ref),
-                                   commit_and_subpaths_new (NULL, NULL));
-            }
-          else
-            {
-              g_debug (_("Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"),
-                          remote_name, current_arch, local_error->message);
-              g_clear_error (&local_error);
-            }
-        }
-    }
+        /* Appstream2 is only for efficiency, so just print a debug message if
+         * it's missing. */
+        appstream2_ref = g_strdup_printf ("appstream2/%s", current_arch);
+        appstream2_collection_ref = ostree_collection_ref_new (collection_id, appstream2_ref);
+        if (ostree_repo_resolve_collection_ref (src_repo, appstream2_collection_ref, FALSE,
+                                                OSTREE_REPO_RESOLVE_REV_EXT_NONE,
+                                                NULL, cancellable, &local_error))
+          {
+            g_hash_table_insert (all_refs, g_steal_pointer (&appstream2_collection_ref),
+                                 commit_and_subpaths_new (NULL, NULL));
+          }
+        else
+          {
+            g_debug (_("Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"),
+                     remote_name, current_arch, local_error->message);
+            g_clear_error (&local_error);
+          }
+      }
+  }
 
   /* Now use code copied from `ostree create-usb` to do the actual copying. We
    * can't just call out to `ostree` because (a) flatpak doesn't have a
@@ -714,14 +717,14 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
     g_autoptr(GString) all_refs_str = g_string_new ("");
 
     GLNX_HASH_TABLE_FOREACH (all_refs, OstreeCollectionRef *, collection_ref)
-      {
-        if (!ostree_validate_collection_id (collection_ref->collection_id, error))
-          return FALSE;
-        if (!ostree_validate_rev (collection_ref->ref_name, error))
-          return FALSE;
+    {
+      if (!ostree_validate_collection_id (collection_ref->collection_id, error))
+        return FALSE;
+      if (!ostree_validate_rev (collection_ref->ref_name, error))
+        return FALSE;
 
-        g_string_append_printf (all_refs_str, "(%s, %s) ", collection_ref->collection_id, collection_ref->ref_name);
-      }
+      g_string_append_printf (all_refs_str, "(%s, %s) ", collection_ref->collection_id, collection_ref->ref_name);
+    }
     g_debug ("Copying the following refs: %s", all_refs_str->str);
 
     if (!ostree_create_usb (context, src_repo, mount_root_path, mount_root_stbuf,

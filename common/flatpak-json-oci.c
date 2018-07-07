@@ -40,7 +40,7 @@ flatpak_arch_to_oci_arch (const char *flatpak_arch)
 FlatpakOciDescriptor *
 flatpak_oci_descriptor_new (const char *mediatype,
                             const char *digest,
-                            gint64 size)
+                            gint64      size)
 {
   FlatpakOciDescriptor *desc = g_new0 (FlatpakOciDescriptor, 1);
 
@@ -61,7 +61,7 @@ flatpak_oci_descriptor_copy (FlatpakOciDescriptor *source,
   dest->mediatype = g_strdup (source->mediatype);
   dest->digest = g_strdup (source->digest);
   dest->size = source->size;
-  dest->urls = g_strdupv ((char **)source->urls);
+  dest->urls = g_strdupv ((char **) source->urls);
   dest->annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   if (source->annotations)
     flatpak_oci_copy_annotations (source->annotations, dest->annotations);
@@ -89,7 +89,7 @@ static FlatpakJsonProp flatpak_oci_descriptor_props[] = {
   FLATPAK_JSON_STRING_PROP (FlatpakOciDescriptor, digest, "digest"),
   FLATPAK_JSON_INT64_PROP (FlatpakOciDescriptor, size, "size"),
   FLATPAK_JSON_STRV_PROP (FlatpakOciDescriptor, urls, "urls"),
-  FLATPAK_JSON_STRMAP_PROP(FlatpakOciDescriptor, annotations, "annotations"),
+  FLATPAK_JSON_STRMAP_PROP (FlatpakOciDescriptor, annotations, "annotations"),
   FLATPAK_JSON_LAST_PROP
 };
 
@@ -245,9 +245,9 @@ flatpak_oci_manifest_class_init (FlatpakOciManifestClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
   static FlatpakJsonProp props[] = {
-    FLATPAK_JSON_STRUCT_PROP(FlatpakOciManifest, config, "config", flatpak_oci_descriptor_props),
-    FLATPAK_JSON_STRUCTV_PROP(FlatpakOciManifest, layers, "layers", flatpak_oci_descriptor_props),
-    FLATPAK_JSON_STRMAP_PROP(FlatpakOciManifest, annotations, "annotations"),
+    FLATPAK_JSON_STRUCT_PROP (FlatpakOciManifest, config, "config", flatpak_oci_descriptor_props),
+    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciManifest, layers, "layers", flatpak_oci_descriptor_props),
+    FLATPAK_JSON_STRMAP_PROP (FlatpakOciManifest, annotations, "annotations"),
     FLATPAK_JSON_LAST_PROP
   };
 
@@ -276,7 +276,7 @@ flatpak_oci_manifest_new (void)
 }
 
 void
-flatpak_oci_manifest_set_config (FlatpakOciManifest *self,
+flatpak_oci_manifest_set_config (FlatpakOciManifest   *self,
                                  FlatpakOciDescriptor *desc)
 {
   g_free (self->config.mediatype);
@@ -298,15 +298,16 @@ ptrv_count (gpointer *ptrs)
 }
 
 void
-flatpak_oci_manifest_set_layer (FlatpakOciManifest  *self,
+flatpak_oci_manifest_set_layer (FlatpakOciManifest   *self,
                                 FlatpakOciDescriptor *desc)
 {
   FlatpakOciDescriptor *descs[2] = { desc, NULL };
+
   flatpak_oci_manifest_set_layers (self, descs);
 }
 
 void
-flatpak_oci_manifest_set_layers (FlatpakOciManifest *self,
+flatpak_oci_manifest_set_layers (FlatpakOciManifest    *self,
                                  FlatpakOciDescriptor **descs)
 {
   int i, count;
@@ -315,7 +316,7 @@ flatpak_oci_manifest_set_layers (FlatpakOciManifest *self,
     flatpak_oci_descriptor_free (self->layers[i]);
   g_free (self->layers);
 
-  count = ptrv_count ((gpointer *)descs);
+  count = ptrv_count ((gpointer *) descs);
 
   self->layers = g_new0 (FlatpakOciDescriptor *, count + 1);
   for (i = 0; i < count; i++)
@@ -330,12 +331,12 @@ flatpak_oci_manifest_set_layers (FlatpakOciManifest *self,
 int
 flatpak_oci_manifest_get_n_layers (FlatpakOciManifest *self)
 {
-  return ptrv_count ((gpointer *)self->layers);
+  return ptrv_count ((gpointer *) self->layers);
 }
 
 const char *
 flatpak_oci_manifest_get_layer_digest (FlatpakOciManifest *self,
-                                      int i)
+                                       int                 i)
 {
   return self->layers[i]->digest;
 }
@@ -371,8 +372,8 @@ flatpak_oci_index_class_init (FlatpakOciIndexClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
   static FlatpakJsonProp props[] = {
-    FLATPAK_JSON_STRUCTV_PROP(FlatpakOciIndex, manifests, "manifests", flatpak_oci_manifest_descriptor_props),
-    FLATPAK_JSON_STRMAP_PROP(FlatpakOciIndex, annotations, "annotations"),
+    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndex, manifests, "manifests", flatpak_oci_manifest_descriptor_props),
+    FLATPAK_JSON_STRMAP_PROP (FlatpakOciIndex, annotations, "annotations"),
     FLATPAK_JSON_LAST_PROP
   };
 
@@ -409,19 +410,19 @@ manifest_desc_for_desc (FlatpakOciDescriptor *src_descriptor, const char *ref)
   flatpak_oci_descriptor_copy (src_descriptor, &desc->parent);
 
   g_hash_table_replace (desc->parent.annotations,
-			g_strdup ("org.opencontainers.image.ref.name"),
-			g_strdup (ref));
+                        g_strdup ("org.opencontainers.image.ref.name"),
+                        g_strdup (ref));
   return desc;
 }
 
 int
 flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self)
 {
-  return ptrv_count ((gpointer *)self->manifests);
+  return ptrv_count ((gpointer *) self->manifests);
 }
 
 void
-flatpak_oci_index_add_manifest (FlatpakOciIndex *self,
+flatpak_oci_index_add_manifest (FlatpakOciIndex      *self,
                                 FlatpakOciDescriptor *desc)
 {
   FlatpakOciManifestDescriptor *m;
@@ -439,7 +440,7 @@ flatpak_oci_index_add_manifest (FlatpakOciIndex *self,
   m = manifest_desc_for_desc (desc, m_ref);
   self->manifests = g_renew (FlatpakOciManifestDescriptor *, self->manifests, count + 2);
   self->manifests[count] = m;
-  self->manifests[count+1] = NULL;
+  self->manifests[count + 1] = NULL;
 }
 
 const char *
@@ -457,7 +458,7 @@ flatpak_oci_manifest_descriptor_get_ref (FlatpakOciManifestDescriptor *m)
 
 static int
 index_find_ref (FlatpakOciIndex *self,
-                const char *ref)
+                const char      *ref)
 {
   int i;
 
@@ -480,7 +481,7 @@ index_find_ref (FlatpakOciIndex *self,
 
 FlatpakOciManifestDescriptor *
 flatpak_oci_index_get_manifest (FlatpakOciIndex *self,
-                                const char *ref)
+                                const char      *ref)
 {
   int i = index_find_ref (self, ref);
 
@@ -527,7 +528,7 @@ flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
     return FALSE;
 
   for (; self->manifests[i] != NULL; i++)
-    self->manifests[i] = self->manifests[i+1];
+    self->manifests[i] = self->manifests[i + 1];
 
   return TRUE;
 }
@@ -601,7 +602,7 @@ flatpak_oci_image_class_init (FlatpakOciImageClass *klass)
     FLATPAK_JSON_STRV_PROP (FlatpakOciImageConfig, cmd, "Cmd"),
     FLATPAK_JSON_BOOLMAP_PROP (FlatpakOciImageConfig, volumes, "Volumes"),
     FLATPAK_JSON_STRING_PROP (FlatpakOciImageConfig, working_dir, "WorkingDir"),
-    FLATPAK_JSON_STRMAP_PROP(FlatpakOciImageConfig, labels, "Labels"),
+    FLATPAK_JSON_STRMAP_PROP (FlatpakOciImageConfig, labels, "Labels"),
     FLATPAK_JSON_LAST_PROP
   };
   static FlatpakJsonProp rootfs_props[] = {
@@ -662,7 +663,7 @@ flatpak_oci_image_new (void)
 
 void
 flatpak_oci_image_set_created (FlatpakOciImage *image,
-                              const char *created)
+                               const char      *created)
 {
   g_free (image->created);
   image->created = g_strdup (created);
@@ -670,7 +671,7 @@ flatpak_oci_image_set_created (FlatpakOciImage *image,
 
 void
 flatpak_oci_image_set_architecture (FlatpakOciImage *image,
-                                   const char *arch)
+                                    const char      *arch)
 {
   g_free (image->architecture);
   image->architecture = g_strdup (arch);
@@ -678,7 +679,7 @@ flatpak_oci_image_set_architecture (FlatpakOciImage *image,
 
 void
 flatpak_oci_image_set_os (FlatpakOciImage *image,
-                         const char *os)
+                          const char      *os)
 {
   g_free (image->os);
   image->os = g_strdup (os);
@@ -686,15 +687,15 @@ flatpak_oci_image_set_os (FlatpakOciImage *image,
 
 void
 flatpak_oci_image_set_layers (FlatpakOciImage *image,
-                             const char **layers)
+                              const char     **layers)
 {
   g_strfreev (image->rootfs.diff_ids);
-  image->rootfs.diff_ids = g_strdupv ((char **)layers);
+  image->rootfs.diff_ids = g_strdupv ((char **) layers);
 }
 
 void
 flatpak_oci_image_set_layer (FlatpakOciImage *image,
-                             const char *layer)
+                             const char      *layer)
 {
   const char *layers[] = {layer, NULL};
 
@@ -728,35 +729,35 @@ void
 flatpak_oci_copy_annotations (GHashTable *source,
                               GHashTable *dest)
 {
- GHashTableIter iter;
- gpointer key, value;
+  GHashTableIter iter;
+  gpointer key, value;
 
- g_hash_table_iter_init (&iter, source);
- while (g_hash_table_iter_next (&iter, &key, &value))
-   g_hash_table_replace (dest,
-                         g_strdup ((char *)key),
-                         g_strdup ((char *)value));
+  g_hash_table_iter_init (&iter, source);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    g_hash_table_replace (dest,
+                          g_strdup ((char *) key),
+                          g_strdup ((char *) value));
 }
 
 static void
 add_annotation (GHashTable *annotations, const char *key, const char *value)
 {
-    g_hash_table_replace (annotations,
-                          g_strdup (key),
-                          g_strdup (value));
+  g_hash_table_replace (annotations,
+                        g_strdup (key),
+                        g_strdup (value));
 }
 
 void
 flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
-                                       const char *ref,
-                                       const char *commit,
-                                       GVariant *commit_data)
+                                        const char *ref,
+                                        const char *commit,
+                                        GVariant   *commit_data)
 {
   if (ref)
-    add_annotation (annotations,"org.flatpak.ref", ref);
+    add_annotation (annotations, "org.flatpak.ref", ref);
 
   if (commit)
-    add_annotation (annotations,"org.flatpak.commit", commit);
+    add_annotation (annotations, "org.flatpak.commit", commit);
 
   if (commit_data)
     {
@@ -795,17 +796,17 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
 
       g_variant_get_child (commit_data, 4, "s", &body);
       add_annotation (annotations, "org.flatpak.body", body);
-   }
+    }
 }
 
 void
-flatpak_oci_parse_commit_annotations (GHashTable *annotations,
-                                      guint64 *out_timestamp,
-                                      char **out_subject,
-                                      char **out_body,
-                                      char **out_ref,
-                                      char **out_commit,
-                                      char **out_parent_commit,
+flatpak_oci_parse_commit_annotations (GHashTable      *annotations,
+                                      guint64         *out_timestamp,
+                                      char           **out_subject,
+                                      char           **out_body,
+                                      char           **out_ref,
+                                      char           **out_commit,
+                                      char           **out_parent_commit,
                                       GVariantBuilder *metadata_builder)
 {
   const char *oci_timestamp, *oci_subject, *oci_body, *oci_parent_commit, *oci_commit, *oci_ref;
@@ -852,7 +853,7 @@ flatpak_oci_parse_commit_annotations (GHashTable *annotations,
           key += strlen ("org.flatpak.commit-metadata.");
 
           bin = g_base64_decode (value, &bin_len);
-          data = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE("v"), bin, bin_len, FALSE,
+          data = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("v"), bin, bin_len, FALSE,
                                                               g_free, bin));
           g_variant_builder_add (metadata_builder, "{s@v}", key, data);
         }
@@ -902,8 +903,8 @@ flatpak_oci_signature_class_init (FlatpakOciSignatureClass *klass)
   };
   static FlatpakJsonProp critical_props[] = {
     FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciSignatureCritical, type, "type"),
-    FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP(FlatpakOciSignatureCritical, image, "image", image_props),
-    FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP(FlatpakOciSignatureCritical, identity, "identity", identity_props),
+    FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP (FlatpakOciSignatureCritical, image, "image", image_props),
+    FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP (FlatpakOciSignatureCritical, identity, "identity", identity_props),
     FLATPAK_JSON_LAST_PROP
   };
   static FlatpakJsonProp optional_props[] = {
@@ -1015,8 +1016,8 @@ flatpak_oci_index_response_class_init (FlatpakOciIndexResponseClass *klass)
     FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, mediatype, "MediaType"),
     FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, os, "OS"),
     FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, architecture, "Architecture"),
-    FLATPAK_JSON_STRMAP_PROP(FlatpakOciIndexImage, annotations, "Annotations"),
-    FLATPAK_JSON_STRMAP_PROP(FlatpakOciIndexImage, labels, "Labels"),
+    FLATPAK_JSON_STRMAP_PROP (FlatpakOciIndexImage, annotations, "Annotations"),
+    FLATPAK_JSON_STRMAP_PROP (FlatpakOciIndexImage, labels, "Labels"),
     FLATPAK_JSON_STRV_PROP (FlatpakOciIndexImage, tags, "Tags"),
     FLATPAK_JSON_LAST_PROP
   };

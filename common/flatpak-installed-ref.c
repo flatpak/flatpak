@@ -180,7 +180,7 @@ flatpak_installed_ref_get_property (GObject    *object,
       g_value_set_string (value, priv->eol_rebase);
       break;
 
-   default:
+    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
     }
@@ -243,14 +243,14 @@ flatpak_installed_ref_class_init (FlatpakInstalledRefClass *klass)
                                                         "End of life",
                                                         "The reason for the ref to be end of life",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_EOL_REBASE,
                                    g_param_spec_string ("end-of-life-rebase",
                                                         "End of life rebase",
                                                         "The new ref for the end of lifeed ref",
                                                         NULL,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
 
 static void

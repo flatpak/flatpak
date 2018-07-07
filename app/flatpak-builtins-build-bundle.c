@@ -164,12 +164,12 @@ typedef void (*IterateBundleIconsCallback) (const char *icon_size_name,
                                             gpointer    user_data);
 
 static gboolean
-iterate_bundle_icons (GFile                      *root,
-                      const char                 *name,
-                      IterateBundleIconsCallback  callback,
-                      gpointer                    user_data,
-                      GCancellable               *cancellable,
-                      GError                    **error)
+iterate_bundle_icons (GFile                     *root,
+                      const char                *name,
+                      IterateBundleIconsCallback callback,
+                      gpointer                   user_data,
+                      GCancellable              *cancellable,
+                      GError                   **error)
 {
   g_autoptr(GFile) icons_dir =
     g_file_resolve_relative_path (root,

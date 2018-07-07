@@ -27,20 +27,20 @@
 #define FLATPAK_TYPE_CLI_TRANSACTION flatpak_cli_transaction_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakCliTransaction, flatpak_cli_transaction, FLATPAK, CLI_TRANSACTION, FlatpakTransaction)
 
-FlatpakTransaction *flatpak_cli_transaction_new (FlatpakDir *dir,
-                                                 gboolean disable_interaction,
-                                                 gboolean stop_on_first_error,
-                                                 GError **error);
+FlatpakTransaction * flatpak_cli_transaction_new (FlatpakDir * dir,
+                                                  gboolean disable_interaction,
+                                                  gboolean stop_on_first_error,
+                                                  GError * *error);
 
 gboolean flatpak_cli_transaction_add_install (FlatpakTransaction *self,
-                                              const char *remote,
-                                              const char *ref,
-                                              const char **subpaths,
-                                              GError **error);
+                                              const char         *remote,
+                                              const char         *ref,
+                                              const char        **subpaths,
+                                              GError            **error);
 gboolean flatpak_cli_transaction_was_aborted (FlatpakTransaction *transaction);
 
 gboolean flatpak_cli_transaction_run (FlatpakTransaction *transaction,
-                                      GCancellable *cancellable,
-                                      GError **error);
+                                      GCancellable       *cancellable,
+                                      GError            **error);
 
 #endif /* __FLATPAK_CLI_TRANSACTION_H__ */

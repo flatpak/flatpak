@@ -33,8 +33,7 @@
  *
  * Different types of @FlatpakRemote.
  */
-typedef enum
-{
+typedef enum {
   FLATPAK_REMOTE_TYPE_STATIC,
   FLATPAK_REMOTE_TYPE_USB,
   FLATPAK_REMOTE_TYPE_LAN,

@@ -36,26 +36,26 @@ G_DEFINE_QUARK (flatpak_oci_error, flatpak_oci_error)
 #define MAX_JSON_SIZE (1024 * 1024)
 
 typedef struct archive FlatpakAutoArchiveWrite;
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(FlatpakAutoArchiveWrite, archive_write_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAutoArchiveWrite, archive_write_free)
 
 static void flatpak_oci_registry_initable_iface_init (GInitableIface *iface);
 
 struct FlatpakOciRegistry
 {
-  GObject parent;
+  GObject  parent;
 
   gboolean for_write;
   gboolean valid;
   gboolean is_docker;
-  char *uri;
-  int tmp_dfd;
+  char    *uri;
+  int      tmp_dfd;
 
   /* Local repos */
   int dfd;
 
   /* Remote repos */
   SoupSession *soup_session;
-  SoupURI *base_uri;
+  SoupURI     *base_uri;
 };
 
 typedef struct
@@ -91,10 +91,10 @@ flatpak_oci_registry_finalize (GObject *object)
 }
 
 static void
-flatpak_oci_registry_set_property (GObject         *object,
-                                  guint            prop_id,
-                                  const GValue    *value,
-                                  GParamSpec      *pspec)
+flatpak_oci_registry_set_property (GObject      *object,
+                                   guint         prop_id,
+                                   const GValue *value,
+                                   GParamSpec   *pspec)
 {
   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (object);
   const char *uri;
@@ -109,12 +109,15 @@ flatpak_oci_registry_set_property (GObject         *object,
       else
         self->uri = g_strconcat (uri, "/", NULL);
       break;
+
     case PROP_FOR_WRITE:
       self->for_write = g_value_get_boolean (value);
       break;
+
     case PROP_TMP_DFD:
       self->tmp_dfd = g_value_get_int (value);
       break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -122,10 +125,10 @@ flatpak_oci_registry_set_property (GObject         *object,
 }
 
 static void
-flatpak_oci_registry_get_property (GObject         *object,
-				   guint            prop_id,
-				   GValue          *value,
-				   GParamSpec      *pspec)
+flatpak_oci_registry_get_property (GObject    *object,
+                                   guint       prop_id,
+                                   GValue     *value,
+                                   GParamSpec *pspec)
 {
   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (object);
 
@@ -134,12 +137,15 @@ flatpak_oci_registry_get_property (GObject         *object,
     case PROP_URI:
       g_value_set_string (value, self->uri);
       break;
+
     case PROP_FOR_WRITE:
       g_value_set_boolean (value, self->for_write);
       break;
+
     case PROP_TMP_DFD:
       g_value_set_int (value, self->tmp_dfd);
       break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -186,17 +192,17 @@ flatpak_oci_registry_init (FlatpakOciRegistry *self)
 }
 
 const char *
-flatpak_oci_registry_get_uri (FlatpakOciRegistry   *self)
+flatpak_oci_registry_get_uri (FlatpakOciRegistry *self)
 {
   return self->uri;
 }
 
 FlatpakOciRegistry *
-flatpak_oci_registry_new (const char *uri,
-			  gboolean for_write,
-			  int tmp_dfd,
-			  GCancellable *cancellable,
-			  GError **error)
+flatpak_oci_registry_new (const char   *uri,
+                          gboolean      for_write,
+                          int           tmp_dfd,
+                          GCancellable *cancellable,
+                          GError      **error)
 {
   FlatpakOciRegistry *oci_registry;
 
@@ -211,11 +217,11 @@ flatpak_oci_registry_new (const char *uri,
 }
 
 static int
-local_open_file (int dfd,
-                 const char *subpath,
-                 struct stat *st_buf,
+local_open_file (int           dfd,
+                 const char   *subpath,
+                 struct stat  *st_buf,
                  GCancellable *cancellable,
-                 GError **error)
+                 GError      **error)
 {
   glnx_autofd int fd = -1;
   struct stat tmp_st_buf;
@@ -249,12 +255,12 @@ local_open_file (int dfd,
 }
 
 static GBytes *
-local_load_file (int dfd,
-                 const char *subpath,
-                 const char *etag,
-                 char **etag_out,
+local_load_file (int           dfd,
+                 const char   *subpath,
+                 const char   *etag,
+                 char        **etag_out,
                  GCancellable *cancellable,
-                 GError **error)
+                 GError      **error)
 {
   glnx_autofd int fd = -1;
   struct stat st_buf;
@@ -285,13 +291,13 @@ local_load_file (int dfd,
 }
 
 static GBytes *
-remote_load_file (SoupSession *soup_session,
-                  SoupURI *base,
-                  const char *subpath,
-                  const char *etag,
-                  char **etag_out,
+remote_load_file (SoupSession  *soup_session,
+                  SoupURI      *base,
+                  const char   *subpath,
+                  const char   *etag,
+                  char        **etag_out,
                   GCancellable *cancellable,
-                  GError **error)
+                  GError      **error)
 {
   g_autoptr(SoupURI) uri = NULL;
   g_autoptr(GBytes) bytes = NULL;
@@ -317,12 +323,12 @@ remote_load_file (SoupSession *soup_session,
 }
 
 static GBytes *
-flatpak_oci_registry_load_file (FlatpakOciRegistry  *self,
-                                const char *subpath,
-                                const char *etag,
-                                char **etag_out,
-                                GCancellable *cancellable,
-                                GError **error)
+flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
+                                const char         *subpath,
+                                const char         *etag,
+                                char              **etag_out,
+                                GCancellable       *cancellable,
+                                GError            **error)
 {
   if (self->dfd != -1)
     return local_load_file (self->dfd, subpath, etag, etag_out, cancellable, error);
@@ -357,6 +363,7 @@ static gboolean
 verify_oci_version (GBytes *oci_layout_bytes, gboolean *not_json, GCancellable *cancellable, GError **error)
 {
   const char *version;
+
   g_autoptr(JsonNode) node = NULL;
   JsonObject *oci_layout;
 
@@ -389,9 +396,9 @@ verify_oci_version (GBytes *oci_layout_bytes, gboolean *not_json, GCancellable *
 
 static gboolean
 flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
-				   gboolean for_write,
-				   GCancellable *cancellable,
-				   GError **error)
+                                   gboolean            for_write,
+                                   GCancellable       *cancellable,
+                                   GError            **error)
 {
   g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
   glnx_autofd int local_dfd = -1;
@@ -444,7 +451,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
           g_clear_error (&local_error);
 
           if (!glnx_file_replace_contents_at (dfd, "oci-layout",
-                                              (const guchar *)new_layout_data,
+                                              (const guchar *) new_layout_data,
                                               strlen (new_layout_data),
                                               0,
                                               cancellable, error))
@@ -467,9 +474,9 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
 
 static gboolean
 flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
-				    gboolean for_write,
-				    GCancellable *cancellable,
-				    GError **error)
+                                    gboolean            for_write,
+                                    GCancellable       *cancellable,
+                                    GError            **error)
 {
   g_autoptr(SoupURI) baseuri = NULL;
   g_autoptr(GBytes) oci_layout_bytes = NULL;
@@ -497,15 +504,15 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
       gboolean not_json;
 
       if (!verify_oci_version (oci_layout_bytes, &not_json, cancellable, &local_error))
-	{
-	  if (not_json)
-	    self->is_docker = TRUE;
-	  else
-	    {
+        {
+          if (not_json)
+            self->is_docker = TRUE;
+          else
+            {
               g_propagate_error (error, g_steal_pointer (&local_error));
-	      return FALSE;
-	    }
-	}
+              return FALSE;
+            }
+        }
     }
   else
     self->is_docker = TRUE;
@@ -516,9 +523,9 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
 }
 
 static gboolean
-flatpak_oci_registry_initable_init (GInitable     *initable,
-				    GCancellable  *cancellable,
-				    GError       **error)
+flatpak_oci_registry_initable_init (GInitable    *initable,
+                                    GCancellable *cancellable,
+                                    GError      **error)
 {
   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (initable);
   gboolean res;
@@ -547,9 +554,9 @@ flatpak_oci_registry_initable_iface_init (GInitableIface *iface)
 }
 
 FlatpakOciIndex *
-flatpak_oci_registry_load_index (FlatpakOciRegistry  *self,
-                                 const char           *etag,
-                                 char               **etag_out,
+flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
+                                 const char         *etag,
+                                 char              **etag_out,
                                  GCancellable       *cancellable,
                                  GError            **error)
 {
@@ -568,14 +575,14 @@ flatpak_oci_registry_load_index (FlatpakOciRegistry  *self,
       return NULL;
     }
 
-  return (FlatpakOciIndex *)flatpak_json_from_bytes (bytes, FLATPAK_TYPE_OCI_INDEX, error);
+  return (FlatpakOciIndex *) flatpak_json_from_bytes (bytes, FLATPAK_TYPE_OCI_INDEX, error);
 }
 
 gboolean
-flatpak_oci_registry_save_index (FlatpakOciRegistry  *self,
-                                 FlatpakOciIndex     *index,
-                                 GCancellable        *cancellable,
-                                 GError             **error)
+flatpak_oci_registry_save_index (FlatpakOciRegistry *self,
+                                 FlatpakOciIndex    *index,
+                                 GCancellable       *cancellable,
+                                 GError            **error)
 {
   g_autoptr(GBytes) bytes = NULL;
 
@@ -593,13 +600,13 @@ flatpak_oci_registry_save_index (FlatpakOciRegistry  *self,
 }
 
 static gboolean
-write_update_checksum (GOutputStream  *out,
-                       gconstpointer   data,
-                       gsize           len,
-                       gsize          *out_bytes_written,
-                       GChecksum      *checksum,
-                       GCancellable   *cancellable,
-                       GError        **error)
+write_update_checksum (GOutputStream *out,
+                       gconstpointer  data,
+                       gsize          len,
+                       gsize         *out_bytes_written,
+                       GChecksum     *checksum,
+                       GCancellable  *cancellable,
+                       GError       **error)
 {
   if (out)
     {
@@ -619,11 +626,11 @@ write_update_checksum (GOutputStream  *out,
 }
 
 static gboolean
-splice_update_checksum (GOutputStream  *out,
-                        GInputStream   *in,
-                        GChecksum      *checksum,
-                        GCancellable   *cancellable,
-                        GError        **error)
+splice_update_checksum (GOutputStream *out,
+                        GInputStream  *in,
+                        GChecksum     *checksum,
+                        GCancellable  *cancellable,
+                        GError       **error)
 {
   g_return_val_if_fail (out != NULL || checksum != NULL, FALSE);
 
@@ -633,7 +640,7 @@ splice_update_checksum (GOutputStream  *out,
       char buf[4096];
       do
         {
-          if (!g_input_stream_read_all (in, buf, sizeof(buf), &bytes_read, cancellable, error))
+          if (!g_input_stream_read_all (in, buf, sizeof (buf), &bytes_read, cancellable, error))
             return FALSE;
           if (!write_update_checksum (out, buf, bytes_read, &bytes_written, checksum,
                                       cancellable, error))
@@ -652,10 +659,10 @@ splice_update_checksum (GOutputStream  *out,
 
 static char *
 get_digest_subpath (FlatpakOciRegistry *self,
-		    const char *repository,
-		    gboolean is_manifest,
-		    const char *digest,
-                    GError **error)
+                    const char         *repository,
+                    gboolean            is_manifest,
+                    const char         *digest,
+                    GError            **error)
 {
   g_autoptr(GString) s = g_string_new ("");
 
@@ -678,9 +685,9 @@ get_digest_subpath (FlatpakOciRegistry *self,
   if (self->is_docker)
     {
       if (is_manifest)
-	g_string_append (s, "manifests/");
+        g_string_append (s, "manifests/");
       else
-	g_string_append (s, "blobs/");
+        g_string_append (s, "blobs/");
       g_string_append (s, digest);
     }
   else
@@ -708,8 +715,8 @@ checksum_fd (int fd, GCancellable *cancellable, GError **error)
 
 int
 flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
-				    const char            *repository,
-				    gboolean               manifest,
+                                    const char            *repository,
+                                    gboolean               manifest,
                                     const char            *digest,
                                     FlatpakLoadUriProgress progress_cb,
                                     gpointer               user_data,
@@ -757,14 +764,14 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
         return -1;
 
       fd = local_open_file (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
-      (void)unlinkat (self->tmp_dfd, tmpfile_name, 0);
+      (void) unlinkat (self->tmp_dfd, tmpfile_name, 0);
 
       if (fd == -1)
         return -1;
 
       if (!flatpak_download_http_uri (self->soup_session, uri_s,
-				      FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-				      out_stream,
+                                      FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                      out_stream,
                                       progress_cb, user_data,
                                       cancellable, error))
         return -1;
@@ -792,16 +799,17 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
 gboolean
 flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
                                   FlatpakOciRegistry    *source_registry,
-				  const char           *repository,
-				  gboolean              manifest,
+                                  const char            *repository,
+                                  gboolean               manifest,
                                   const char            *digest,
                                   FlatpakLoadUriProgress progress_cb,
                                   gpointer               user_data,
-                                  GCancellable         *cancellable,
-                                  GError              **error)
+                                  GCancellable          *cancellable,
+                                  GError               **error)
 {
   g_autofree char *src_subpath = NULL;
   g_autofree char *dst_subpath = NULL;
+
   g_auto(GLnxTmpfile) tmpf = { 0 };
   g_autoptr(GOutputStream) out_stream = NULL;
   struct stat stbuf;
@@ -841,7 +849,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       if (src_fd == -1)
         return FALSE;
 
-      if (glnx_regfile_copy_bytes (src_fd, tmpf.fd, (off_t)-1) < 0)
+      if (glnx_regfile_copy_bytes (src_fd, tmpf.fd, (off_t) -1) < 0)
         return glnx_throw_errno_prefix (error, "copyfile");
     }
   else
@@ -861,7 +869,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
       uri_s = soup_uri_to_string (uri, FALSE);
       if (!flatpak_download_http_uri (source_registry->soup_session, uri_s,
-				      FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
+                                      FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
                                       progress_cb, user_data,
                                       cancellable, error))
         return FALSE;
@@ -893,14 +901,15 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 }
 
 GBytes *
-flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
-				const char          *repository,
-				gboolean             manifest,
-				const char          *digest,
-				GCancellable        *cancellable,
-				GError             **error)
+flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
+                                const char         *repository,
+                                gboolean            manifest,
+                                const char         *digest,
+                                GCancellable       *cancellable,
+                                GError            **error)
 {
   g_autofree char *subpath = NULL;
+
   g_autoptr(GBytes) bytes = NULL;
   g_autofree char *json_checksum = NULL;
 
@@ -914,7 +923,7 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
   if (bytes == NULL)
     return NULL;
 
-  json_checksum = g_compute_checksum_for_bytes  (G_CHECKSUM_SHA256, bytes);
+  json_checksum = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
 
   if (strcmp (json_checksum, digest + strlen ("sha256:")) != 0)
     {
@@ -927,10 +936,10 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
 }
 
 char *
-flatpak_oci_registry_store_blob (FlatpakOciRegistry  *self,
-                                GBytes             *data,
-                                GCancellable       *cancellable,
-                                GError            **error)
+flatpak_oci_registry_store_blob (FlatpakOciRegistry *self,
+                                 GBytes             *data,
+                                 GCancellable       *cancellable,
+                                 GError            **error)
 {
   g_autofree char *sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, data);
   g_autofree char *subpath = NULL;
@@ -948,10 +957,10 @@ flatpak_oci_registry_store_blob (FlatpakOciRegistry  *self,
 }
 
 FlatpakOciDescriptor *
-flatpak_oci_registry_store_json (FlatpakOciRegistry    *self,
-                                FlatpakJson           *json,
-                                GCancellable         *cancellable,
-                                GError              **error)
+flatpak_oci_registry_store_json (FlatpakOciRegistry *self,
+                                 FlatpakJson        *json,
+                                 GCancellable       *cancellable,
+                                 GError            **error)
 {
   g_autoptr(GBytes) bytes = flatpak_json_to_bytes (json);
   g_autofree char *digest = NULL;
@@ -964,12 +973,12 @@ flatpak_oci_registry_store_json (FlatpakOciRegistry    *self,
 }
 
 FlatpakOciVersioned *
-flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
-				     const char          *repository,
-                                     const char          *digest,
-                                     gsize               *out_size,
-                                     GCancellable        *cancellable,
-                                     GError             **error)
+flatpak_oci_registry_load_versioned (FlatpakOciRegistry *self,
+                                     const char         *repository,
+                                     const char         *digest,
+                                     gsize              *out_size,
+                                     GCancellable       *cancellable,
+                                     GError            **error)
 {
   g_autoptr(GBytes) bytes = NULL;
 
@@ -986,17 +995,17 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
 
 struct FlatpakOciLayerWriter
 {
-  GObject parent;
+  GObject             parent;
 
   FlatpakOciRegistry *registry;
 
-  GChecksum *uncompressed_checksum;
-  GChecksum *compressed_checksum;
-  struct archive *archive;
-  GZlibCompressor *compressor;
-  guint64 uncompressed_size;
-  guint64 compressed_size;
-  GLnxTmpfile tmpf;
+  GChecksum          *uncompressed_checksum;
+  GChecksum          *compressed_checksum;
+  struct archive     *archive;
+  GZlibCompressor    *compressor;
+  guint64             uncompressed_size;
+  guint64             compressed_size;
+  GLnxTmpfile         tmpf;
 };
 
 typedef struct
@@ -1007,7 +1016,7 @@ typedef struct
 G_DEFINE_TYPE (FlatpakOciLayerWriter, flatpak_oci_layer_writer, G_TYPE_OBJECT)
 
 static gboolean
-propagate_libarchive_error (GError      **error,
+propagate_libarchive_error (GError        **error,
                             struct archive *a)
 {
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -1067,21 +1076,22 @@ flatpak_oci_layer_writer_init (FlatpakOciLayerWriter *self)
 
 static int
 flatpak_oci_layer_writer_open_cb (struct archive *archive,
-                                 void *client_data)
+                                  void           *client_data)
 {
   return ARCHIVE_OK;
 }
 
 static gssize
 flatpak_oci_layer_writer_compress (FlatpakOciLayerWriter *self,
-                                  const void *buffer,
-                                  size_t length,
-                                  gboolean at_end)
+                                   const void            *buffer,
+                                   size_t                 length,
+                                   gboolean               at_end)
 {
   guchar compressed_buffer[8192];
   GConverterResult res;
   gsize total_bytes_read, bytes_read, bytes_written, to_write_len;
   guchar *to_write;
+
   g_autoptr(GError) local_error = NULL;
   GConverterFlags flags = 0;
   bytes_read = 0;
@@ -1136,9 +1146,9 @@ flatpak_oci_layer_writer_compress (FlatpakOciLayerWriter *self,
 
 static ssize_t
 flatpak_oci_layer_writer_write_cb (struct archive *archive,
-                                   void *client_data,
-                                   const void *buffer,
-                                   size_t length)
+                                   void           *client_data,
+                                   const void     *buffer,
+                                   size_t          length)
 {
   FlatpakOciLayerWriter *self = FLATPAK_OCI_LAYER_WRITER (client_data);
 
@@ -1147,7 +1157,7 @@ flatpak_oci_layer_writer_write_cb (struct archive *archive,
 
 static int
 flatpak_oci_layer_writer_close_cb (struct archive *archive,
-                                   void *client_data)
+                                   void           *client_data)
 {
   FlatpakOciLayerWriter *self = FLATPAK_OCI_LAYER_WRITER (client_data);
   gssize res;
@@ -1161,9 +1171,9 @@ flatpak_oci_layer_writer_close_cb (struct archive *archive,
 }
 
 FlatpakOciLayerWriter *
-flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
-                                 GCancellable         *cancellable,
-                                 GError              **error)
+flatpak_oci_registry_write_layer (FlatpakOciRegistry *self,
+                                  GCancellable       *cancellable,
+                                  GError            **error)
 {
   g_autoptr(FlatpakOciLayerWriter) oci_layer_writer = NULL;
   g_autoptr(FlatpakAutoArchiveWrite) a = NULL;
@@ -1215,18 +1225,19 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
 
   oci_layer_writer->archive = g_steal_pointer (&a);
   /* Transfer ownership of the tmpfile */
-  oci_layer_writer->tmpf = tmpf; tmpf.initialized = 0;
+  oci_layer_writer->tmpf = tmpf;
+  tmpf.initialized = 0;
   oci_layer_writer->compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
 
   return g_steal_pointer (&oci_layer_writer);
 }
 
 gboolean
-flatpak_oci_layer_writer_close (FlatpakOciLayerWriter  *self,
-                               char                  **uncompressed_digest_out,
-                               FlatpakOciDescriptor  **res_out,
-                               GCancellable           *cancellable,
-                               GError                **error)
+flatpak_oci_layer_writer_close (FlatpakOciLayerWriter *self,
+                                char                 **uncompressed_digest_out,
+                                FlatpakOciDescriptor **res_out,
+                                GCancellable          *cancellable,
+                                GError               **error)
 {
   g_autofree char *path = NULL;
 
@@ -1256,15 +1267,16 @@ flatpak_oci_layer_writer_close (FlatpakOciLayerWriter  *self,
 }
 
 struct archive *
-flatpak_oci_layer_writer_get_archive (FlatpakOciLayerWriter  *self)
+flatpak_oci_layer_writer_get_archive (FlatpakOciLayerWriter *self)
 {
   return self->archive;
 }
 
-typedef struct {
-  int fd;
+typedef struct
+{
+  int        fd;
   GChecksum *checksum;
-  char buffer[16*1024];
+  char       buffer[16 * 1024];
 } FlatpakArchiveReadWithChecksum;
 
 static int
@@ -1291,7 +1303,7 @@ checksum_read_cb (struct archive *a, void *user_data, const void **buff)
       return -1;
     }
 
-  g_checksum_update (data->checksum, (guchar *)data->buffer, bytes_read);
+  g_checksum_update (data->checksum, (guchar *) data->buffer, bytes_read);
 
   return bytes_read;
 }
@@ -1322,9 +1334,9 @@ checksum_close_cb (struct archive *a, void *user_data)
 
 gboolean
 flatpak_archive_read_open_fd_with_checksum (struct archive *a,
-                                            int fd,
-                                            GChecksum *checksum,
-                                            GError **error)
+                                            int             fd,
+                                            GChecksum      *checksum,
+                                            GError        **error)
 {
   FlatpakArchiveReadWithChecksum *data = g_new0 (FlatpakArchiveReadWithChecksum, 1);
 
@@ -1341,13 +1353,13 @@ flatpak_archive_read_open_fd_with_checksum (struct archive *a,
   return TRUE;
 }
 
-G_DEFINE_AUTO_CLEANUP_FREE_FUNC(gpgme_data_t, gpgme_data_release, NULL)
-G_DEFINE_AUTO_CLEANUP_FREE_FUNC(gpgme_ctx_t, gpgme_release, NULL)
-G_DEFINE_AUTO_CLEANUP_FREE_FUNC(gpgme_key_t, gpgme_key_unref, NULL)
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC (gpgme_data_t, gpgme_data_release, NULL)
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC (gpgme_ctx_t, gpgme_release, NULL)
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC (gpgme_key_t, gpgme_key_unref, NULL)
 
 static void
-flatpak_gpgme_error_to_gio_error (gpgme_error_t   gpg_error,
-                                  GError        **error)
+flatpak_gpgme_error_to_gio_error (gpgme_error_t gpg_error,
+                                  GError      **error)
 {
   GIOErrorEnum errcode;
 
@@ -1355,22 +1367,22 @@ flatpak_gpgme_error_to_gio_error (gpgme_error_t   gpg_error,
 
   switch (gpgme_err_code (gpg_error))
     {
-      /* special case - shouldn't be here */
-      case GPG_ERR_NO_ERROR:
-        g_return_if_reached ();
+    /* special case - shouldn't be here */
+    case GPG_ERR_NO_ERROR:
+      g_return_if_reached ();
 
-      /* special case - abort on out-of-memory */
-      case GPG_ERR_ENOMEM:
-        g_error ("%s: out of memory",
-                 gpgme_strsource (gpg_error));
+    /* special case - abort on out-of-memory */
+    case GPG_ERR_ENOMEM:
+      g_error ("%s: out of memory",
+               gpgme_strsource (gpg_error));
 
-      case GPG_ERR_INV_VALUE:
-        errcode = G_IO_ERROR_INVALID_ARGUMENT;
-        break;
+    case GPG_ERR_INV_VALUE:
+      errcode = G_IO_ERROR_INVALID_ARGUMENT;
+      break;
 
-      default:
-        errcode = G_IO_ERROR_FAILED;
-        break;
+    default:
+      errcode = G_IO_ERROR_FAILED;
+      break;
     }
 
   g_set_error (error, G_IO_ERROR, errcode, "%s: error code %d",
@@ -1388,98 +1400,127 @@ set_errno_from_gio_error (GError *error)
 
   switch (error->code)
     {
-      case G_IO_ERROR_FAILED:
-        errno = EIO;
-        break;
-      case G_IO_ERROR_NOT_FOUND:
-        errno = ENOENT;
-        break;
-      case G_IO_ERROR_EXISTS:
-        errno = EEXIST;
-        break;
-      case G_IO_ERROR_IS_DIRECTORY:
-        errno = EISDIR;
-        break;
-      case G_IO_ERROR_NOT_DIRECTORY:
-        errno = ENOTDIR;
-        break;
-      case G_IO_ERROR_NOT_EMPTY:
-        errno = ENOTEMPTY;
-        break;
-      case G_IO_ERROR_NOT_REGULAR_FILE:
-      case G_IO_ERROR_NOT_SYMBOLIC_LINK:
-      case G_IO_ERROR_NOT_MOUNTABLE_FILE:
-        errno = EBADF;
-        break;
-      case G_IO_ERROR_FILENAME_TOO_LONG:
-        errno = ENAMETOOLONG;
-        break;
-      case G_IO_ERROR_INVALID_FILENAME:
-        errno = EINVAL;
-        break;
-      case G_IO_ERROR_TOO_MANY_LINKS:
-        errno = EMLINK;
-        break;
-      case G_IO_ERROR_NO_SPACE:
-        errno = ENOSPC;
-        break;
-      case G_IO_ERROR_INVALID_ARGUMENT:
-        errno = EINVAL;
-        break;
-      case G_IO_ERROR_PERMISSION_DENIED:
-        errno = EPERM;
-        break;
-      case G_IO_ERROR_NOT_SUPPORTED:
-        errno = ENOTSUP;
-        break;
-      case G_IO_ERROR_NOT_MOUNTED:
-        errno = ENOENT;
-        break;
-      case G_IO_ERROR_ALREADY_MOUNTED:
-        errno = EALREADY;
-        break;
-      case G_IO_ERROR_CLOSED:
-        errno = EBADF;
-        break;
-      case G_IO_ERROR_CANCELLED:
-        errno = EINTR;
-        break;
-      case G_IO_ERROR_PENDING:
-        errno = EALREADY;
-        break;
-      case G_IO_ERROR_READ_ONLY:
-        errno = EACCES;
-        break;
-      case G_IO_ERROR_CANT_CREATE_BACKUP:
-        errno = EIO;
-        break;
-      case G_IO_ERROR_WRONG_ETAG:
-        errno = EACCES;
-        break;
-      case G_IO_ERROR_TIMED_OUT:
-        errno = EIO;
-        break;
-      case G_IO_ERROR_WOULD_RECURSE:
-        errno = ELOOP;
-        break;
-      case G_IO_ERROR_BUSY:
-        errno = EBUSY;
-        break;
-      case G_IO_ERROR_WOULD_BLOCK:
-        errno = EWOULDBLOCK;
-        break;
-      case G_IO_ERROR_HOST_NOT_FOUND:
-        errno = EHOSTDOWN;
-        break;
-      case G_IO_ERROR_WOULD_MERGE:
-        errno = EIO;
-        break;
-      case G_IO_ERROR_FAILED_HANDLED:
-        errno = 0;
-        break;
-      default:
-        errno = EIO;
-        break;
+    case G_IO_ERROR_FAILED:
+      errno = EIO;
+      break;
+
+    case G_IO_ERROR_NOT_FOUND:
+      errno = ENOENT;
+      break;
+
+    case G_IO_ERROR_EXISTS:
+      errno = EEXIST;
+      break;
+
+    case G_IO_ERROR_IS_DIRECTORY:
+      errno = EISDIR;
+      break;
+
+    case G_IO_ERROR_NOT_DIRECTORY:
+      errno = ENOTDIR;
+      break;
+
+    case G_IO_ERROR_NOT_EMPTY:
+      errno = ENOTEMPTY;
+      break;
+
+    case G_IO_ERROR_NOT_REGULAR_FILE:
+    case G_IO_ERROR_NOT_SYMBOLIC_LINK:
+    case G_IO_ERROR_NOT_MOUNTABLE_FILE:
+      errno = EBADF;
+      break;
+
+    case G_IO_ERROR_FILENAME_TOO_LONG:
+      errno = ENAMETOOLONG;
+      break;
+
+    case G_IO_ERROR_INVALID_FILENAME:
+      errno = EINVAL;
+      break;
+
+    case G_IO_ERROR_TOO_MANY_LINKS:
+      errno = EMLINK;
+      break;
+
+    case G_IO_ERROR_NO_SPACE:
+      errno = ENOSPC;
+      break;
+
+    case G_IO_ERROR_INVALID_ARGUMENT:
+      errno = EINVAL;
+      break;
+
+    case G_IO_ERROR_PERMISSION_DENIED:
+      errno = EPERM;
+      break;
+
+    case G_IO_ERROR_NOT_SUPPORTED:
+      errno = ENOTSUP;
+      break;
+
+    case G_IO_ERROR_NOT_MOUNTED:
+      errno = ENOENT;
+      break;
+
+    case G_IO_ERROR_ALREADY_MOUNTED:
+      errno = EALREADY;
+      break;
+
+    case G_IO_ERROR_CLOSED:
+      errno = EBADF;
+      break;
+
+    case G_IO_ERROR_CANCELLED:
+      errno = EINTR;
+      break;
+
+    case G_IO_ERROR_PENDING:
+      errno = EALREADY;
+      break;
+
+    case G_IO_ERROR_READ_ONLY:
+      errno = EACCES;
+      break;
+
+    case G_IO_ERROR_CANT_CREATE_BACKUP:
+      errno = EIO;
+      break;
+
+    case G_IO_ERROR_WRONG_ETAG:
+      errno = EACCES;
+      break;
+
+    case G_IO_ERROR_TIMED_OUT:
+      errno = EIO;
+      break;
+
+    case G_IO_ERROR_WOULD_RECURSE:
+      errno = ELOOP;
+      break;
+
+    case G_IO_ERROR_BUSY:
+      errno = EBUSY;
+      break;
+
+    case G_IO_ERROR_WOULD_BLOCK:
+      errno = EWOULDBLOCK;
+      break;
+
+    case G_IO_ERROR_HOST_NOT_FOUND:
+      errno = EHOSTDOWN;
+      break;
+
+    case G_IO_ERROR_WOULD_MERGE:
+      errno = EIO;
+      break;
+
+    case G_IO_ERROR_FAILED_HANDLED:
+      errno = 0;
+      break;
+
+    default:
+      errno = EIO;
+      break;
     }
 }
 
@@ -1520,24 +1561,28 @@ data_seek_cb (void *handle, off_t offset, int whence)
   g_return_val_if_fail (G_IS_INPUT_STREAM (stream) ||
                         G_IS_OUTPUT_STREAM (stream), -1);
 
-  if (!G_IS_SEEKABLE (stream)) {
-    errno = EOPNOTSUPP;
-    goto out;
-  }
+  if (!G_IS_SEEKABLE (stream))
+    {
+      errno = EOPNOTSUPP;
+      goto out;
+    }
 
   switch (whence)
     {
-      case SEEK_SET:
-        seek_type = G_SEEK_SET;
-        break;
-      case SEEK_CUR:
-        seek_type = G_SEEK_CUR;
-        break;
-      case SEEK_END:
-        seek_type = G_SEEK_END;
-        break;
-      default:
-        g_assert_not_reached ();
+    case SEEK_SET:
+      seek_type = G_SEEK_SET;
+      break;
+
+    case SEEK_CUR:
+      seek_type = G_SEEK_CUR;
+      break;
+
+    case SEEK_END:
+      seek_type = G_SEEK_END;
+      break;
+
+    default:
+      g_assert_not_reached ();
     }
 
   seekable = G_SEEKABLE (stream);
@@ -1598,9 +1643,10 @@ flatpak_gpgme_data_output (GOutputStream *output_stream)
 
 static gpgme_ctx_t
 flatpak_gpgme_new_ctx (const char *homedir,
-                       GError **error)
+                       GError    **error)
 {
   gpgme_error_t err;
+
   g_auto(gpgme_ctx_t) context = NULL;
 
   if ((err = gpgme_new (&context)) != GPG_ERR_NO_ERROR)
@@ -1630,10 +1676,10 @@ flatpak_gpgme_new_ctx (const char *homedir,
 }
 
 GBytes *
-flatpak_oci_sign_data (GBytes *data,
+flatpak_oci_sign_data (GBytes       *data,
                        const gchar **key_ids,
-                       const char *homedir,
-                       GError **error)
+                       const char   *homedir,
+                       GError      **error)
 {
   g_auto(GLnxTmpfile) tmpf = { 0 };
   g_autoptr(GOutputStream) tmp_signature_output = NULL;
@@ -1662,7 +1708,7 @@ flatpak_oci_sign_data (GBytes *data,
       err = gpgme_get_key (context, key_ids[i], &key, 1);
       if (gpgme_err_code (err) == GPG_ERR_EOF)
         {
-          flatpak_fail (error,"No gpg key found with ID %s (homedir: %s)", key_ids[i],
+          flatpak_fail (error, "No gpg key found with ID %s (homedir: %s)", key_ids[i],
                         homedir ? homedir : "<default>");
           return NULL;
         }
@@ -1740,7 +1786,7 @@ read_gpg_buffer (gpgme_data_t buffer, GError **error)
       flatpak_fail (error, "Can't seek in gpg plain text");
       return NULL;
     }
-  while ((ret = gpgme_data_read (buffer, buf, sizeof(buf)-1)) > 0)
+  while ((ret = gpgme_data_read (buffer, buf, sizeof (buf) - 1)) > 0)
     g_string_append_len (res, buf, ret);
   if (ret < 0)
     {
@@ -1752,15 +1798,16 @@ read_gpg_buffer (gpgme_data_t buffer, GError **error)
 }
 
 static gboolean
-flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t     gpgme_ctx,
-                                GLnxTmpDir     *tmpdir,
-                                OstreeRepo     *repo,
-                                const char     *remote_name,
-                                GCancellable   *cancellable,
-                                GError        **error)
+flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t   gpgme_ctx,
+                                GLnxTmpDir   *tmpdir,
+                                OstreeRepo   *repo,
+                                const char   *remote_name,
+                                GCancellable *cancellable,
+                                GError      **error)
 {
   g_autofree char *tmp_home_dir_pattern = NULL;
   gpgme_error_t gpg_error;
+
   g_autoptr(GFile) keyring_file = NULL;
   g_autofree char *keyring_name = NULL;
 
@@ -1805,11 +1852,12 @@ flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t     gpgme_ctx,
 FlatpakOciSignature *
 flatpak_oci_verify_signature (OstreeRepo *repo,
                               const char *remote_name,
-                              GBytes *signed_data,
-                              GError **error)
+                              GBytes     *signed_data,
+                              GError    **error)
 {
   gpgme_ctx_t context;
   gpgme_error_t gpg_error;
+
   g_auto(gpgme_data_t) signed_data_buffer = NULL;
   g_auto(gpgme_data_t) plain_buffer = NULL;
   gpgme_verify_result_t vresult;
@@ -1882,7 +1930,7 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
   if (json == NULL)
     return FALSE;
 
-  return (FlatpakOciSignature *)g_steal_pointer (&json);
+  return (FlatpakOciSignature *) g_steal_pointer (&json);
 }
 
 static const char *
@@ -1891,8 +1939,9 @@ get_image_ref (FlatpakOciIndexImage *img)
   return g_hash_table_lookup (img->annotations, "org.flatpak.ref");
 }
 
-typedef struct {
-  char *repository;
+typedef struct
+{
+  char                 *repository;
   FlatpakOciIndexImage *image;
 } ImageInfo;
 
@@ -1907,11 +1956,11 @@ compare_image_by_ref (ImageInfo *a,
 }
 
 GVariant *
-flatpak_oci_index_fetch_summary (SoupSession *soup_session,
-                                 const char *uri,
-                                 const char *etag,
+flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
+                                 const char   *uri,
+                                 const char   *etag,
                                  GCancellable *cancellable,
-                                 GError **error)
+                                 GError      **error)
 {
   g_autoptr(GBytes) res = NULL;
   g_autofree char *new_etag = NULL;
@@ -1939,10 +1988,10 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
   g_string_append (index_uri, "/static");
   soup_uri = soup_uri_new (index_uri->str);
   soup_uri_set_query_from_fields (soup_uri,
-				  "os", "linux",
-				  "tag", "latest",
-				  "annotation:org.flatpak.ref:exists", "1",
-				  NULL);
+                                  "os", "linux",
+                                  "tag", "latest",
+                                  "annotation:org.flatpak.ref:exists", "1",
+                                  NULL);
   query_uri = soup_uri_to_string (soup_uri, FALSE);
 
   res = flatpak_load_http_uri (soup_session,
@@ -1957,7 +2006,7 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
   if (json == NULL)
     return NULL;
 
-  response = (FlatpakOciIndexResponse *)json;
+  response = (FlatpakOciIndexResponse *) json;
 
   registry_uri = soup_uri_new_with_base (soup_uri, response->registry);
   registry_uri_s = soup_uri_to_string (registry_uri, FALSE);
@@ -1969,10 +2018,10 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
       ImageInfo info = { r->name };
 
       for (j = 0; r->images != NULL && r->images[j] != NULL; j++)
-	{
-	  info.image = r->images[j];
-	  g_array_append_val (images, info);
-	}
+        {
+          info.image = r->images[j];
+          g_array_append_val (images, info);
+        }
 
       for (j = 0; r->lists != NULL && r->lists[j] != NULL; j++)
         {
@@ -1980,10 +2029,10 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
           int k;
 
           for (k = 0; list->images != NULL && list->images[k] != NULL; k++)
-	    {
-	      info.image = list->images[k];
-	      g_array_append_val (images, info);
-	    }
+            {
+              info.image = list->images[k];
+              g_array_append_val (images, info);
+            }
         }
     }
 
@@ -1992,7 +2041,7 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
   additional_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
   /* The summary has to be sorted by ref */
-  g_array_sort (images, (GCompareFunc)compare_image_by_ref);
+  g_array_sort (images, (GCompareFunc) compare_image_by_ref);
 
   for (i = 0; i < images->len; i++)
     {
@@ -2033,7 +2082,7 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
       ref_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
       g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.oci-repository",
-			     g_variant_new_string (info->repository));
+                             g_variant_new_string (info->repository));
 
       g_variant_builder_add_value (refs_builder,
                                    g_variant_new ("(s(t@ay@a{sv}))", ref,
@@ -2067,12 +2116,12 @@ flatpak_oci_index_fetch_summary (SoupSession *soup_session,
 }
 
 gboolean
-flatpak_oci_index_verify_ref (SoupSession *soup_session,
-			      const char *uri,
-			      const char *ref,
-			      const char *digest,
-			      GCancellable *cancellable,
-			      GError **error)
+flatpak_oci_index_verify_ref (SoupSession  *soup_session,
+                              const char   *uri,
+                              const char   *ref,
+                              const char   *digest,
+                              GCancellable *cancellable,
+                              GError      **error)
 {
   g_autoptr(GBytes) res = NULL;
   g_autoptr(FlatpakJson) json = NULL;
@@ -2093,9 +2142,9 @@ flatpak_oci_index_verify_ref (SoupSession *soup_session,
 
   soup_uri = soup_uri_new (index_uri->str);
   soup_uri_set_query_from_fields (soup_uri,
-				  "os", "linux",
-				  "annotation:org.flatpak.ref", ref,
-				  NULL);
+                                  "os", "linux",
+                                  "annotation:org.flatpak.ref", ref,
+                                  NULL);
   query_uri = soup_uri_to_string (soup_uri, FALSE);
 
   res = flatpak_load_http_uri (soup_session,
@@ -2109,7 +2158,7 @@ flatpak_oci_index_verify_ref (SoupSession *soup_session,
   if (json == NULL)
     return FALSE;
 
-  response = (FlatpakOciIndexResponse *)json;
+  response = (FlatpakOciIndexResponse *) json;
 
   for (i = 0; response->results != NULL && response->results[i] != NULL; i++)
     {
@@ -2117,14 +2166,14 @@ flatpak_oci_index_verify_ref (SoupSession *soup_session,
       int j;
 
       for (j = 0; r->images != NULL && r->images[j] != NULL; j++)
-	{
-	  FlatpakOciIndexImage *image = r->images[j];
-	  const char *image_ref = get_image_ref (image);
-	  if (image_ref != NULL &&
-	      g_strcmp0 (image_ref, ref) == 0 &&
-	      g_strcmp0 (digest, image->digest) == 0)
-	    return TRUE;
-	}
+        {
+          FlatpakOciIndexImage *image = r->images[j];
+          const char *image_ref = get_image_ref (image);
+          if (image_ref != NULL &&
+              g_strcmp0 (image_ref, ref) == 0 &&
+              g_strcmp0 (digest, image->digest) == 0)
+            return TRUE;
+        }
 
       for (j = 0; r->lists != NULL && r->lists[j] != NULL; j++)
         {
@@ -2132,14 +2181,14 @@ flatpak_oci_index_verify_ref (SoupSession *soup_session,
           int k;
 
           for (k = 0; list->images != NULL && list->images[k] != NULL; k++)
-	    {
-	      FlatpakOciIndexImage *image = list->images[k];
-	      const char *image_ref = get_image_ref (image);
-	      if (image_ref != NULL &&
-		  g_strcmp0 (image_ref, ref) == 0 &&
-		  g_strcmp0 (digest, image->digest) == 0)
-		return TRUE;
-	    }
+            {
+              FlatpakOciIndexImage *image = list->images[k];
+              const char *image_ref = get_image_ref (image);
+              if (image_ref != NULL &&
+                  g_strcmp0 (image_ref, ref) == 0 &&
+                  g_strcmp0 (digest, image->digest) == 0)
+                return TRUE;
+            }
         }
     }
 
