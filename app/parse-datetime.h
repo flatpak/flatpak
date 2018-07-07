@@ -19,4 +19,6 @@
 #include <stdbool.h>
 #include <time.h>
 
-bool parse_datetime (struct timespec *, char const *, struct timespec const *);
+bool parse_datetime (struct timespec *,
+                     char const *,
+                     struct timespec const *);

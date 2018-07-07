@@ -83,13 +83,15 @@ make_relative (const char *base, const char *path)
 #define FAKE_MODE_TMPFS 0
 #define FAKE_MODE_SYMLINK G_MAXINT
 
-typedef struct {
+typedef struct
+{
   char *path;
-  gint mode;
+  gint  mode;
 } ExportedPath;
 
-struct _FlatpakExports {
-  GHashTable *hash;
+struct _FlatpakExports
+{
+  GHashTable           *hash;
   FlatpakFilesystemMode host_fs;
 };
 
@@ -104,7 +106,8 @@ FlatpakExports *
 flatpak_exports_new (void)
 {
   FlatpakExports *exports = g_new0 (FlatpakExports, 1);
-  exports->hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GFreeFunc)exported_path_free);
+
+  exports->hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GFreeFunc) exported_path_free);
   return exports;
 }
 
@@ -119,9 +122,9 @@ flatpak_exports_free (FlatpakExports *exports)
    is not visible due to parents being exported */
 static gboolean
 path_parent_is_mapped (const char **keys,
-                       guint n_keys,
-                       GHashTable *hash_table,
-                       const char *path)
+                       guint        n_keys,
+                       GHashTable  *hash_table,
+                       const char  *path)
 {
   guint i;
   gboolean is_mapped = FALSE;
@@ -148,10 +151,10 @@ path_parent_is_mapped (const char **keys,
 
 static gboolean
 path_is_mapped (const char **keys,
-                guint n_keys,
-                GHashTable *hash_table,
-                const char *path,
-                gboolean *is_readonly_out)
+                guint        n_keys,
+                GHashTable  *hash_table,
+                const char  *path,
+                gboolean    *is_readonly_out)
 {
   guint i;
   gboolean is_mapped = FALSE;
@@ -218,15 +221,16 @@ path_is_symlink (const char *path)
 
 void
 flatpak_exports_append_bwrap_args (FlatpakExports *exports,
-                                   FlatpakBwrap *bwrap)
+                                   FlatpakBwrap   *bwrap)
 {
   guint n_keys;
-  g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (exports->hash, &n_keys);
+  g_autofree const char **keys = (const char **) g_hash_table_get_keys_as_array (exports->hash, &n_keys);
+
   g_autoptr(GList) eps = NULL;
   GList *l;
 
   eps = g_hash_table_get_values (exports->hash);
-  eps = g_list_sort (eps, (GCompareFunc)compare_eps);
+  eps = g_list_sort (eps, (GCompareFunc) compare_eps);
 
   g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
 
@@ -290,12 +294,13 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
 /* Returns 0 if not visible */
 FlatpakFilesystemMode
 flatpak_exports_path_get_mode (FlatpakExports *exports,
-                               const char *path)
+                               const char     *path)
 {
   guint n_keys;
-  g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (exports->hash, &n_keys);
+  g_autofree const char **keys = (const char **) g_hash_table_get_keys_as_array (exports->hash, &n_keys);
   g_autofree char *canonical = NULL;
   gboolean is_readonly = FALSE;
+
   g_auto(GStrv) parts = NULL;
   int i;
   g_autoptr(GString) path_builder = g_string_new ("");
@@ -305,7 +310,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
 
   path = canonical = flatpak_canonicalize_filename (path);
 
-  parts = g_strsplit (path+1, "/", -1);
+  parts = g_strsplit (path + 1, "/", -1);
 
   /* A path is visible in the sandbox if no parent
    * path element that is mapped in the sandbox is
@@ -322,7 +327,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
         {
           if (lstat (path_builder->str, &st) != 0)
             {
-              if (errno == ENOENT && parts[i+1] == NULL && !is_readonly)
+              if (errno == ENOENT && parts[i + 1] == NULL && !is_readonly)
                 {
                   /* Last element was mapped but isn't there, this is
                    * OK (used for the save case) if we the parent is
@@ -355,7 +360,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
               return flatpak_exports_path_get_mode (exports, path2_builder->str);
             }
         }
-      else if (parts[i+1] == NULL)
+      else if (parts[i + 1] == NULL)
         return 0; /* Last part was not mapped */
     }
 
@@ -367,7 +372,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
 
 gboolean
 flatpak_exports_path_is_visible (FlatpakExports *exports,
-                                 const char *path)
+                                 const char     *path)
 {
   return flatpak_exports_path_get_mode (exports, path) > 0;
 }
@@ -386,8 +391,8 @@ never_export_as_symlink (const char *path)
 
 static void
 do_export_path (FlatpakExports *exports,
-                const char *path,
-                gint mode)
+                const char     *path,
+                gint            mode)
 {
   ExportedPath *old_ep = g_hash_table_lookup (exports->hash, path);
   ExportedPath *ep;
@@ -425,7 +430,7 @@ check_if_autofs_works (const char *path)
   fcntl (selfpipe[0], F_SETFL, fcntl (selfpipe[0], F_GETFL) | O_NONBLOCK);
   fcntl (selfpipe[1], F_SETFL, fcntl (selfpipe[1], F_GETFL) | O_NONBLOCK);
 
-  pid = fork();
+  pid = fork ();
   if (pid == -1)
     {
       close (selfpipe[0]);
@@ -438,7 +443,7 @@ check_if_autofs_works (const char *path)
       /* Note: open, close and _exit are signal-async-safe, so it is ok to call in the child after fork */
 
       close (selfpipe[0]); /* Close unused read end */
-      int dir_fd = open (path, O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY);
+      int dir_fd = open (path, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY);
       _exit (dir_fd == -1 ? 1 : 0);
     }
 
@@ -451,7 +456,7 @@ check_if_autofs_works (const char *path)
 
   FD_ZERO (&rfds);
   FD_SET (selfpipe[0], &rfds);
-  res = select (selfpipe[0]+1, &rfds, NULL, NULL, &timeout);
+  res = select (selfpipe[0] + 1, &rfds, NULL, NULL, &timeout);
 
   close (selfpipe[0]);
 
@@ -467,7 +472,7 @@ check_if_autofs_works (const char *path)
   if (res == -1 /* Error */ || res == 0) /* Timeout */
     return FALSE;
 
-  if (!WIFEXITED(wstatus) || WEXITSTATUS(wstatus) != 0)
+  if (!WIFEXITED (wstatus) || WEXITSTATUS (wstatus) != 0)
     return FALSE;
 
   return TRUE;
@@ -476,9 +481,9 @@ check_if_autofs_works (const char *path)
 /* We use level to avoid infinite recursion */
 static gboolean
 _exports_path_expose (FlatpakExports *exports,
-                      int mode,
-                      const char *path,
-                      int level)
+                      int             mode,
+                      const char     *path,
+                      int             level)
 {
   g_autofree char *canonical = NULL;
   struct stat st;
@@ -581,24 +586,24 @@ _exports_path_expose (FlatpakExports *exports,
 }
 
 void
-flatpak_exports_add_path_expose (FlatpakExports *exports,
+flatpak_exports_add_path_expose (FlatpakExports       *exports,
                                  FlatpakFilesystemMode mode,
-                                 const char *path)
+                                 const char           *path)
 {
   _exports_path_expose (exports, mode, path, 0);
 }
 
 void
 flatpak_exports_add_path_tmpfs (FlatpakExports *exports,
-                                const char *path)
+                                const char     *path)
 {
   _exports_path_expose (exports, FAKE_MODE_TMPFS, path, 0);
 }
 
 void
-flatpak_exports_add_path_expose_or_hide (FlatpakExports *exports,
+flatpak_exports_add_path_expose_or_hide (FlatpakExports       *exports,
                                          FlatpakFilesystemMode mode,
-                                         const char *path)
+                                         const char           *path)
 {
   if (mode == 0)
     flatpak_exports_add_path_tmpfs (exports, path);
@@ -608,13 +613,13 @@ flatpak_exports_add_path_expose_or_hide (FlatpakExports *exports,
 
 void
 flatpak_exports_add_path_dir (FlatpakExports *exports,
-                              const char *path)
+                              const char     *path)
 {
   _exports_path_expose (exports, FAKE_MODE_DIR, path, 0);
 }
 
 void
-flatpak_exports_add_home_expose (FlatpakExports *exports,
+flatpak_exports_add_home_expose (FlatpakExports       *exports,
                                  FlatpakFilesystemMode mode)
 {
   exports->host_fs = mode;

@@ -39,13 +39,13 @@ static guint name_owner_id = 0;
 static gboolean on_session_bus = FALSE;
 static gboolean no_idle_exit = FALSE;
 
-#define IDLE_TIMEOUT_SECS 10*60
+#define IDLE_TIMEOUT_SECS 10 * 60
 
 /* This uses a weird Auto prefix to avoid conflicts with later added polkit types.
  */
 typedef PolkitAuthorizationResult AutoPolkitAuthorizationResult;
-typedef PolkitDetails AutoPolkitDetails;
-typedef PolkitSubject AutoPolkitSubject;
+typedef PolkitDetails             AutoPolkitDetails;
+typedef PolkitSubject             AutoPolkitSubject;
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitAuthorizationResult, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitDetails, g_object_unref)
@@ -62,6 +62,7 @@ static gboolean
 unref_skeleton_in_timeout_cb (gpointer user_data)
 {
   static gboolean unreffed = FALSE;
+
   g_debug ("unreffing helper main ref");
   if (!unreffed)
     {
@@ -104,7 +105,7 @@ schedule_idle_callback (void)
 {
   static guint idle_timeout_id = 0;
 
-  G_LOCK(idle);
+  G_LOCK (idle);
 
   if (!no_idle_exit)
     {
@@ -114,7 +115,7 @@ schedule_idle_callback (void)
       idle_timeout_id = g_timeout_add_seconds (IDLE_TIMEOUT_SECS, idle_timeout_cb, NULL);
     }
 
-  G_UNLOCK(idle);
+  G_UNLOCK (idle);
 }
 
 static FlatpakDir *
@@ -250,11 +251,11 @@ handle_deploy (FlatpakSystemHelper   *object,
                                   NULL);
 
       if (upstream_url == NULL)
-	{
-	  g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-						 "Remote %s is disabled", arg_origin);
-	  return TRUE;
-	}
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Remote %s is disabled", arg_origin);
+          return TRUE;
+        }
 
       registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
       if (registry == NULL)
@@ -291,14 +292,14 @@ handle_deploy (FlatpakSystemHelper   *object,
 
       soup_session = flatpak_create_soup_session (PACKAGE_STRING);
       if (!flatpak_oci_index_verify_ref (soup_session,
-					 upstream_url,
-					 arg_ref,
-					 desc->parent.digest,
-					 NULL, &error))
-	{
-	  g_dbus_method_invocation_return_gerror (invocation, error);
-	  return TRUE;
-	}
+                                         upstream_url,
+                                         arg_ref,
+                                         desc->parent.digest,
+                                         NULL, &error))
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return TRUE;
+        }
 
       checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
                                         arg_origin, arg_ref, NULL, NULL, NULL, &error);
@@ -368,7 +369,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-      if (!flatpak_dir_pull (system, state, arg_ref, NULL, NULL, (const char **)arg_subpaths, NULL,
+      if (!flatpak_dir_pull (system, state, arg_ref, NULL, NULL, (const char **) arg_subpaths, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &error))
         {
@@ -386,7 +387,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       if (is_update)
         {
           if (!flatpak_dir_deploy_update (system, arg_ref,
-                                          NULL, (const char **)arg_subpaths, NULL, &error))
+                                          NULL, (const char **) arg_subpaths, NULL, &error))
             {
               if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
                 g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
@@ -621,11 +622,11 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 }
 
 static gboolean
-handle_uninstall (FlatpakSystemHelper *object,
+handle_uninstall (FlatpakSystemHelper   *object,
                   GDBusMethodInvocation *invocation,
-                  guint arg_flags,
-                  const gchar *arg_ref,
-                  const gchar *arg_installation)
+                  guint                  arg_flags,
+                  const gchar           *arg_ref,
+                  const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
@@ -712,13 +713,13 @@ handle_install_bundle (FlatpakSystemHelper   *object,
 
 
 static gboolean
-handle_configure_remote (FlatpakSystemHelper *object,
+handle_configure_remote (FlatpakSystemHelper   *object,
                          GDBusMethodInvocation *invocation,
-                         guint arg_flags,
-                         const gchar *arg_remote,
-                         const gchar *arg_config,
-                         GVariant *arg_gpg_key,
-                         const gchar *arg_installation)
+                         guint                  arg_flags,
+                         const gchar           *arg_remote,
+                         const gchar           *arg_config,
+                         GVariant              *arg_gpg_key,
+                         const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
@@ -798,12 +799,12 @@ handle_configure_remote (FlatpakSystemHelper *object,
 }
 
 static gboolean
-handle_configure (FlatpakSystemHelper *object,
-		  GDBusMethodInvocation *invocation,
-		  guint arg_flags,
-		  const gchar *arg_key,
-		  const gchar *arg_value,
-		  const gchar *arg_installation)
+handle_configure (FlatpakSystemHelper   *object,
+                  GDBusMethodInvocation *invocation,
+                  guint                  arg_flags,
+                  const gchar           *arg_key,
+                  const gchar           *arg_value,
+                  const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
@@ -853,13 +854,13 @@ handle_configure (FlatpakSystemHelper *object,
 }
 
 static gboolean
-handle_update_remote (FlatpakSystemHelper *object,
+handle_update_remote (FlatpakSystemHelper   *object,
                       GDBusMethodInvocation *invocation,
-                      guint arg_flags,
-                      const gchar *arg_remote,
-                      const gchar *arg_installation,
-                      const gchar *arg_summary_path,
-                      const gchar *arg_summary_sig_path)
+                      guint                  arg_flags,
+                      const gchar           *arg_remote,
+                      const gchar           *arg_installation,
+                      const gchar           *arg_summary_path,
+                      const gchar           *arg_summary_sig_path)
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
@@ -1084,6 +1085,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   const gchar *method_name = g_dbus_method_invocation_get_method_name (invocation);
   const gchar *sender = g_dbus_method_invocation_get_sender (invocation);
   GVariant *parameters = g_dbus_method_invocation_get_parameters (invocation);
+
   g_autoptr(AutoPolkitSubject) subject = polkit_system_bus_name_new (sender);
   g_autoptr(AutoPolkitDetails) details = polkit_details_new ();
   const gchar *action = NULL;
@@ -1256,7 +1258,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   flatpak_system_helper_set_version (FLATPAK_SYSTEM_HELPER (helper), 1);
 
-  g_object_set_data_full (G_OBJECT(helper), "track-alive", GINT_TO_POINTER(42), skeleton_died_cb);
+  g_object_set_data_full (G_OBJECT (helper), "track-alive", GINT_TO_POINTER (42), skeleton_died_cb);
 
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (helper),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
@@ -1305,11 +1307,11 @@ on_name_lost (GDBusConnection *connection,
 }
 
 static void
-binary_file_changed_cb (GFileMonitor *file_monitor,
-                        GFile *file,
-                        GFile *other_file,
+binary_file_changed_cb (GFileMonitor     *file_monitor,
+                        GFile            *file,
+                        GFile            *other_file,
                         GFileMonitorEvent event_type,
-                        gpointer data)
+                        gpointer          data)
 {
   static gboolean got_it = FALSE;
 
@@ -1339,13 +1341,14 @@ int
 main (int    argc,
       char **argv)
 {
-  gchar exe_path[PATH_MAX+1];
+  gchar exe_path[PATH_MAX + 1];
   ssize_t exe_path_len;
   gboolean replace;
   gboolean verbose;
   gboolean show_version;
   GBusNameOwnerFlags flags;
   GOptionContext *context;
+
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
@@ -1375,7 +1378,7 @@ main (int    argc,
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      g_printerr ("%s: %s", g_get_application_name(), error->message);
+      g_printerr ("%s: %s", g_get_application_name (), error->message);
       g_printerr ("\n");
       g_printerr ("Try \"%s --help\" for more information.",
                   g_get_prgname ());

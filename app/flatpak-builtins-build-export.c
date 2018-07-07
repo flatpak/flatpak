@@ -180,7 +180,7 @@ commit_filter (OstreeRepo *repo,
    * case. So, we canonicalize the mode to writable only by the user,
    * readable to all, and executable for all for directories and
    * files that the user can execute.
-  */
+   */
   mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
   if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
     mode = 0755 | S_IFDIR;
@@ -266,26 +266,28 @@ find_file_in_tree (GFile *base, const char *filename)
   if (!enumerator)
     return FALSE;
 
-  do {
-    g_autoptr(GFileInfo) info = g_file_enumerator_next_file (enumerator, NULL, NULL);
-    GFileType type;
-    const char *name;
+  do
+    {
+      g_autoptr(GFileInfo) info = g_file_enumerator_next_file (enumerator, NULL, NULL);
+      GFileType type;
+      const char *name;
 
-    if (!info)
-      return FALSE;
+      if (!info)
+        return FALSE;
 
-    type = g_file_info_get_file_type (info);
-    name = g_file_info_get_name (info);
+      type = g_file_info_get_file_type (info);
+      name = g_file_info_get_name (info);
 
-    if (type == G_FILE_TYPE_REGULAR && strcmp (name, filename) == 0)
-      return TRUE;
-    else if (type == G_FILE_TYPE_DIRECTORY)
-      {
-        g_autoptr(GFile) dir = g_file_get_child (base, name);
-        if (find_file_in_tree (dir, filename))
-          return TRUE;
-      }
-  } while (1);
+      if (type == G_FILE_TYPE_REGULAR && strcmp (name, filename) == 0)
+        return TRUE;
+      else if (type == G_FILE_TYPE_DIRECTORY)
+        {
+          g_autoptr(GFile) dir = g_file_get_child (base, name);
+          if (find_file_in_tree (dir, filename))
+            return TRUE;
+        }
+    }
+  while (1);
 
   return FALSE;
 }
@@ -309,15 +311,16 @@ convert_app_absolute_path (const char *path, GFile *files)
 }
 
 static gboolean
-validate_desktop_file (GFile *desktop_file,
-                       GFile *export,
-                       GFile *files,
+validate_desktop_file (GFile      *desktop_file,
+                       GFile      *export,
+                       GFile      *files,
                        const char *app_id,
-                       char **icon,
-                       gboolean *activatable,
-                       GError **error)
+                       char      **icon,
+                       gboolean   *activatable,
+                       GError    **error)
 {
   g_autofree char *path = g_file_get_path (desktop_file);
+
   g_autoptr(GSubprocess) subprocess = NULL;
   g_autofree char *stdout_buf = NULL;
   g_autofree char *stderr_buf = NULL;
@@ -393,9 +396,9 @@ check_refs:
 
 static gboolean
 validate_icon (const char *icon,
-               GFile *export,
+               GFile      *export,
                const char *app_id,
-               GError **error)
+               GError    **error)
 {
   g_autoptr(GFile) icondir = NULL;
   g_autofree char *png = NULL;
@@ -415,13 +418,14 @@ validate_icon (const char *icon,
 }
 
 static gboolean
-validate_service_file (GFile *service_file,
-                       gboolean activatable,
-                       GFile *files,
+validate_service_file (GFile      *service_file,
+                       gboolean    activatable,
+                       GFile      *files,
                        const char *app_id,
-                       GError **error)
+                       GError    **error)
 {
   g_autofree char *path = g_file_get_path (service_file);
+
   g_autoptr(GKeyFile) key_file = NULL;
   g_autofree char *name = NULL;
   g_autofree char *command = NULL;
@@ -480,6 +484,7 @@ static gboolean
 validate_exports (GFile *export, GFile *files, const char *app_id, GError **error)
 {
   g_autofree char *desktop_path = NULL;
+
   g_autoptr(GFile) desktop_file = NULL;
   g_autofree char *service_path = NULL;
   g_autoptr(GFile) service_file = NULL;
@@ -654,7 +659,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GVariant) metadata_dict_v = NULL;
   gboolean is_runtime = FALSE;
   gboolean is_extension = FALSE;
-  guint64 installed_size = 0,download_size = 0;
+  guint64 installed_size = 0, download_size = 0;
   struct timespec ts;
   const char *collection_id;
 
@@ -769,7 +774,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     body = g_strdup_printf ("Name: %s\n"
                             "Arch: %s\n"
                             "Branch: %s\n"
-                            "Built with: "PACKAGE_STRING"\n",
+                            "Built with: "PACKAGE_STRING "\n",
                             id, arch, branch);
 
   full_branch = g_strconcat ((opt_runtime || is_runtime) ? "runtime/" : "app/", id, "/", arch, "/", branch, NULL);

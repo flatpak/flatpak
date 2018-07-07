@@ -36,24 +36,24 @@ typedef struct _FlatpakExports FlatpakExports;
 void flatpak_exports_free (FlatpakExports *exports);
 FlatpakExports *flatpak_exports_new (void);
 void flatpak_exports_append_bwrap_args (FlatpakExports *exports,
-                                        FlatpakBwrap *bwrap);
-void flatpak_exports_add_home_expose (FlatpakExports *exports,
+                                        FlatpakBwrap   *bwrap);
+void flatpak_exports_add_home_expose (FlatpakExports       *exports,
                                       FlatpakFilesystemMode mode);
-void flatpak_exports_add_path_expose (FlatpakExports *exports,
+void flatpak_exports_add_path_expose (FlatpakExports       *exports,
                                       FlatpakFilesystemMode mode,
-                                      const char *path);
+                                      const char           *path);
 void flatpak_exports_add_path_tmpfs (FlatpakExports *exports,
-                                 const char *path);
-void flatpak_exports_add_path_expose_or_hide (FlatpakExports *exports,
-                                          FlatpakFilesystemMode mode,
-                                          const char *path);
+                                     const char     *path);
+void flatpak_exports_add_path_expose_or_hide (FlatpakExports       *exports,
+                                              FlatpakFilesystemMode mode,
+                                              const char           *path);
 void flatpak_exports_add_path_dir (FlatpakExports *exports,
-                                   const char *path);
+                                   const char     *path);
 
 gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
-                                          const char *path);
+                                          const char     *path);
 FlatpakFilesystemMode flatpak_exports_path_get_mode (FlatpakExports *exports,
-                                                     const char *path);
+                                                     const char     *path);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 

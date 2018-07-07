@@ -67,9 +67,9 @@ static GOptionEntry options[] = {
 };
 
 static void
-_ostree_parse_delta_name (const char  *delta_name,
-                          char        **out_from,
-                          char        **out_to)
+_ostree_parse_delta_name (const char *delta_name,
+                          char      **out_from,
+                          char      **out_to)
 {
   g_auto(GStrv) parts = g_strsplit (delta_name, "-", 2);
 
@@ -132,10 +132,10 @@ _ostree_get_relative_static_delta_path (const char *from,
 }
 
 static gboolean
-_ostree_repo_static_delta_delete (OstreeRepo                    *self,
-                                  const char                    *delta_id,
-                                  GCancellable                  *cancellable,
-                                  GError                      **error)
+_ostree_repo_static_delta_delete (OstreeRepo   *self,
+                                  const char   *delta_id,
+                                  GCancellable *cancellable,
+                                  GError      **error)
 {
   gboolean ret = FALSE;
   g_autofree char *from = NULL;
@@ -163,17 +163,17 @@ _ostree_repo_static_delta_delete (OstreeRepo                    *self,
     goto out;
 
   ret = TRUE;
- out:
+out:
   return ret;
 }
 
 static gboolean
-generate_one_delta (OstreeRepo *repo,
-                    const char *from,
-                    const char *to,
-                    const char *ref,
+generate_one_delta (OstreeRepo   *repo,
+                    const char   *from,
+                    const char   *to,
+                    const char   *ref,
                     GCancellable *cancellable,
-                    GError **error)
+                    GError      **error)
 {
   g_autoptr(GVariantBuilder) parambuilder = NULL;
   g_autoptr(GVariant) params = NULL;
@@ -217,18 +217,19 @@ delta_generation_done (GObject      *source_object,
                        gpointer      user_data)
 {
   int *n_spawned_delta_generate = user_data;
+
   (*n_spawned_delta_generate)--;
 }
 
 static gboolean
 spawn_delete_generation (GMainContext *context,
-                         int *n_spawned_delta_generate,
-                         OstreeRepo *repo,
-                         GVariant *params,
-                         const char *ref,
-                         const char *from,
-                         const char *to,
-                         GError **error)
+                         int          *n_spawned_delta_generate,
+                         OstreeRepo   *repo,
+                         GVariant     *params,
+                         const char   *ref,
+                         const char   *from,
+                         const char   *to,
+                         GError      **error)
 {
   g_autoptr(GSubprocessLauncher) launcher = g_subprocess_launcher_new (0);
   g_autoptr(GSubprocess) subprocess = NULL;
@@ -274,10 +275,10 @@ spawn_delete_generation (GMainContext *context,
 }
 
 static gboolean
-generate_all_deltas (OstreeRepo *repo,
-                     GPtrArray **unwanted_deltas,
+generate_all_deltas (OstreeRepo   *repo,
+                     GPtrArray   **unwanted_deltas,
                      GCancellable *cancellable,
-                     GError **error)
+                     GError      **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) all_deltas_hash = NULL;

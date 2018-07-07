@@ -53,14 +53,15 @@ static GOptionEntry options[] = {
 typedef struct
 {
   FlatpakDir *dir;
-  GStrv app_refs;
-  GStrv runtime_refs;
+  GStrv       app_refs;
+  GStrv       runtime_refs;
 } RefsData;
 
 static RefsData *
 refs_data_new (FlatpakDir *dir, const GStrv app_refs, const GStrv runtime_refs)
 {
   RefsData *refs_data = g_new0 (RefsData, 1);
+
   refs_data->dir = g_object_ref (dir);
   refs_data->app_refs = g_strdupv ((char **) app_refs);
   refs_data->runtime_refs = g_strdupv ((char **) runtime_refs);
@@ -116,7 +117,7 @@ find_refs_for_dir (FlatpakDir *dir, GStrv *apps, GStrv *runtimes, GCancellable *
 }
 
 static gboolean
-print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *arch, GCancellable *cancellable, GError **error)
+print_table_for_refs (gboolean print_apps, GPtrArray * refs_array, const char *arch, GCancellable *cancellable, GError **error)
 {
   FlatpakTablePrinter *printer = flatpak_table_printer_new ();
   int i;
@@ -313,7 +314,7 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS|FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
                                      &dirs, cancellable, error))
     return FALSE;
 

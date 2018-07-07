@@ -41,7 +41,7 @@ get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
 {
   GError *error = NULL;
   GPtrArray *ret = g_ptr_array_new_with_free_func (g_object_unref);
-  guint i,j;
+  guint i, j;
 
   if (arch == NULL)
     arch = flatpak_get_arch ();
@@ -69,7 +69,7 @@ get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
         {
           g_autoptr(AsStore) store = as_store_new ();
 
-#if AS_CHECK_VERSION(0, 6, 1)
+#if AS_CHECK_VERSION (0, 6, 1)
           // We want to see multiple versions/branches of same app-id's, e.g. org.gnome.Platform
           as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
 #endif
@@ -89,7 +89,7 @@ get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
               g_clear_error (&error);
             }
 
-          g_object_set_data_full (G_OBJECT(store), "remote-name", g_strdup (remotes[j]), g_free);
+          g_object_set_data_full (G_OBJECT (store), "remote-name", g_strdup (remotes[j]), g_free);
           g_ptr_array_add (ret, g_steal_pointer (&store));
         }
     }
@@ -100,13 +100,15 @@ static void
 clear_app_arches (AsApp *app)
 {
   GPtrArray *arches = as_app_get_architectures (app);
+
   g_ptr_array_set_size (arches, 0);
 }
 
-typedef struct MatchResult {
-  AsApp *app;
+typedef struct MatchResult
+{
+  AsApp     *app;
   GPtrArray *remotes;
-  guint score;
+  guint      score;
 } MatchResult;
 
 static void
@@ -121,6 +123,7 @@ static MatchResult *
 match_result_new (AsApp *app, guint score)
 {
   MatchResult *result = g_new (MatchResult, 1);
+
   result->app = g_object_ref (app);
   result->remotes = g_ptr_array_new_with_free_func (g_free);
   result->score = score;
@@ -134,23 +137,24 @@ static void
 match_result_add_remote (MatchResult *self, const char *remote)
 {
   guint i;
+
   for (i = 0; i < self->remotes->len; ++i)
-   {
-     const char *remote_entry = g_ptr_array_index (self->remotes, i);
-     if (!strcmp (remote, remote_entry))
+    {
+      const char *remote_entry = g_ptr_array_index (self->remotes, i);
+      if (!strcmp (remote, remote_entry))
         return;
-   }
-   g_ptr_array_add (self->remotes, g_strdup(remote));
+    }
+  g_ptr_array_add (self->remotes, g_strdup (remote));
 }
 
 static int
 compare_by_score (MatchResult *a, MatchResult *b, gpointer user_data)
 {
   // Reverse order, higher score comes first
-  return (int)b->score - (int)a->score;
+  return (int) b->score - (int) a->score;
 }
 
-#if !AS_CHECK_VERSION(0, 6, 1)
+#if !AS_CHECK_VERSION (0, 6, 1)
 /* Roughly copied directly from appstream-glib */
 
 static const gchar *
@@ -172,8 +176,8 @@ as_app_get_unique_id (AsApp *app)
     kind_str = as_app_kind_to_string (kind);
   id_str = as_app_get_id_no_prefix (app);
   return g_strdup_printf ("%s/%s",
-           as_app_fix_unique_nullable (kind_str),
-           as_app_fix_unique_nullable (id_str));
+                          as_app_fix_unique_nullable (kind_str),
+                          as_app_fix_unique_nullable (id_str));
 }
 
 static gboolean
@@ -225,7 +229,7 @@ print_app (MatchResult *res, FlatpakTablePrinter *printer)
 
   flatpak_table_printer_add_column (printer, id);
   flatpak_table_printer_add_column (printer, version);
-#if AS_CHECK_VERSION(0, 6, 1)
+#if AS_CHECK_VERSION (0, 6, 1)
   flatpak_table_printer_add_column (printer, as_app_get_branch (res->app));
 #endif
   flatpak_table_printer_add_column (printer, g_ptr_array_index (res->remotes, 0));
@@ -281,7 +285,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
 
           // Avoid duplicate entries, but show multiple remotes
           GSList *list_entry = g_slist_find_custom (matches, app,
-                                 (GCompareFunc)compare_apps);
+                                                    (GCompareFunc) compare_apps);
           MatchResult *result = NULL;
           if (list_entry != NULL)
             result = list_entry->data;
@@ -289,10 +293,10 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
             {
               result = match_result_new (app, score);
               matches = g_slist_insert_sorted_with_data (matches, result,
-                          (GCompareDataFunc)compare_by_score, NULL);
+                                                         (GCompareDataFunc) compare_by_score, NULL);
             }
           match_result_add_remote (result,
-                                   g_object_get_data (G_OBJECT(store), "remote-name"));
+                                   g_object_get_data (G_OBJECT (store), "remote-name"));
         }
     }
 
@@ -303,16 +307,16 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
 
       flatpak_table_printer_set_column_title (printer, col++, _("Application ID"));
       flatpak_table_printer_set_column_title (printer, col++, _("Version"));
-#if AS_CHECK_VERSION(0, 6, 1)
+#if AS_CHECK_VERSION (0, 6, 1)
       flatpak_table_printer_set_column_title (printer, col++, _("Branch"));
 #endif
       flatpak_table_printer_set_column_title (printer, col++, _("Remotes"));
       flatpak_table_printer_set_column_title (printer, col++, _("Description"));
-      g_slist_foreach (matches, (GFunc)print_app, printer);
+      g_slist_foreach (matches, (GFunc) print_app, printer);
       flatpak_table_printer_print (printer);
       flatpak_table_printer_free (printer);
 
-      g_slist_free_full (matches, (GDestroyNotify)match_result_free);
+      g_slist_free_full (matches, (GDestroyNotify) match_result_free);
     }
   else
     {

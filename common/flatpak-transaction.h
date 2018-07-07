@@ -91,134 +91,134 @@ struct _FlatpakTransactionClass
 {
   GObjectClass parent_class;
 
-  void (*new_operation)        (FlatpakTransaction *transaction,
+  void         (*new_operation)        (FlatpakTransaction          *transaction,
+                                        FlatpakTransactionOperation *operation,
+                                        FlatpakTransactionProgress  *progress);
+  void (*operation_done)       (FlatpakTransaction          *transaction,
                                 FlatpakTransactionOperation *operation,
-                                FlatpakTransactionProgress *progress);
-  void (*operation_done)       (FlatpakTransaction *transaction,
-                                FlatpakTransactionOperation *operation,
-                                FlatpakTransactionResult details);
-  gboolean (*operation_error)  (FlatpakTransaction *transaction,
-                                FlatpakTransactionOperation *operation,
-                                const GError *error,
+                                FlatpakTransactionResult     details);
+  gboolean (*operation_error)  (FlatpakTransaction            *transaction,
+                                FlatpakTransactionOperation   *operation,
+                                const GError                  *error,
                                 FlatpakTransactionErrorDetails detail);
   int (*choose_remote_for_ref) (FlatpakTransaction *transaction,
-                                const char *for_ref,
-                                const char *runtime_ref,
+                                const char         *for_ref,
+                                const char         *runtime_ref,
                                 const char * const *remotes);
   void (*end_of_lifed)         (FlatpakTransaction *transaction,
-                                const char *ref,
-                                const char *reason,
-                                const char *rebase);
+                                const char         *ref,
+                                const char         *reason,
+                                const char         *rebase);
   gboolean (*ready)            (FlatpakTransaction *transaction);
 
-  gboolean (*add_new_remote) (FlatpakTransaction *transaction,
+  gboolean (*add_new_remote) (FlatpakTransaction            *transaction,
                               FlatpakTransactionRemoteReason reason,
-                              const char *from_id,
-                              const char *remote_name,
-                              const char *url);
+                              const char                    *from_id,
+                              const char                    *remote_name,
+                              const char                    *url);
   gpointer padding[10];
 };
 
 FLATPAK_EXTERN
-FlatpakTransaction *flatpak_transaction_new_for_installation (FlatpakInstallation          *installation,
-                                                              GCancellable                 *cancellable,
-                                                              GError                      **error);
+FlatpakTransaction *flatpak_transaction_new_for_installation (FlatpakInstallation *installation,
+                                                              GCancellable        *cancellable,
+                                                              GError             **error);
 
 FLATPAK_EXTERN
-void        flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress  *self,
-                                                               guint update_frequency);
+void        flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *self,
+                                                               guint                       update_frequency);
 FLATPAK_EXTERN
-char *      flatpak_transaction_progress_get_status           (FlatpakTransactionProgress  *self);
+char *      flatpak_transaction_progress_get_status (FlatpakTransactionProgress *self);
 FLATPAK_EXTERN
-gboolean    flatpak_transaction_progress_get_is_estimating    (FlatpakTransactionProgress  *self);
+gboolean    flatpak_transaction_progress_get_is_estimating (FlatpakTransactionProgress *self);
 FLATPAK_EXTERN
-int         flatpak_transaction_progress_get_progress         (FlatpakTransactionProgress  *self);
+int         flatpak_transaction_progress_get_progress (FlatpakTransactionProgress *self);
 
 
 FLATPAK_EXTERN
-FlatpakTransactionOperationType flatpak_transaction_operation_get_operation_type (FlatpakTransactionOperation  *self);
+FlatpakTransactionOperationType flatpak_transaction_operation_get_operation_type (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
-const char *                    flatpak_transaction_operation_get_ref            (FlatpakTransactionOperation  *self);
+const char *                    flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
-const char *                    flatpak_transaction_operation_get_remote         (FlatpakTransactionOperation  *self);
+const char *                    flatpak_transaction_operation_get_remote (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
-GFile *                         flatpak_transaction_operation_get_bundle_path    (FlatpakTransactionOperation  *self);
+GFile *                         flatpak_transaction_operation_get_bundle_path (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
-const char *                    flatpak_transaction_operation_get_commit         (FlatpakTransactionOperation  *self);
+const char *                    flatpak_transaction_operation_get_commit (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
-GKeyFile *                      flatpak_transaction_operation_get_metadata       (FlatpakTransactionOperation  *self);
+GKeyFile *                      flatpak_transaction_operation_get_metadata (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
-GKeyFile *                      flatpak_transaction_operation_get_old_metadata   (FlatpakTransactionOperation  *self);
+GKeyFile *                      flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *self);
 
 FLATPAK_EXTERN
-void                flatpak_transaction_set_no_pull               (FlatpakTransaction  *self,
-                                                                   gboolean             no_pull);
+void                flatpak_transaction_set_no_pull (FlatpakTransaction *self,
+                                                     gboolean            no_pull);
 FLATPAK_EXTERN
-void                flatpak_transaction_set_no_deploy             (FlatpakTransaction  *self,
-                                                                   gboolean             no_deploy);
+void                flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
+                                                       gboolean            no_deploy);
 FLATPAK_EXTERN
-void                flatpak_transaction_set_disable_static_deltas (FlatpakTransaction  *self,
-                                                                   gboolean             disable_static_deltas);
+void                flatpak_transaction_set_disable_static_deltas (FlatpakTransaction *self,
+                                                                   gboolean            disable_static_deltas);
 FLATPAK_EXTERN
-void                flatpak_transaction_set_disable_prune         (FlatpakTransaction  *self,
-                                                                   gboolean             disable_prune);
+void                flatpak_transaction_set_disable_prune (FlatpakTransaction *self,
+                                                           gboolean            disable_prune);
 FLATPAK_EXTERN
-void                flatpak_transaction_set_disable_dependencies  (FlatpakTransaction  *self,
-                                                                   gboolean             disable_dependencies);
+void                flatpak_transaction_set_disable_dependencies (FlatpakTransaction *self,
+                                                                  gboolean            disable_dependencies);
 FLATPAK_EXTERN
-void                flatpak_transaction_set_disable_related       (FlatpakTransaction  *self,
-                                                                   gboolean             disable_related);
+void                flatpak_transaction_set_disable_related (FlatpakTransaction *self,
+                                                             gboolean            disable_related);
 FLATPAK_EXTERN
-void                flatpak_transaction_set_reinstall             (FlatpakTransaction   *self,
-                                                                   gboolean             reinstall);
+void                flatpak_transaction_set_reinstall (FlatpakTransaction *self,
+                                                       gboolean            reinstall);
 FLATPAK_EXTERN
-void                flatpak_transaction_set_force_uninstall       (FlatpakTransaction  *self,
-                                                                   gboolean             force_uninstall);
+void                flatpak_transaction_set_force_uninstall (FlatpakTransaction *self,
+                                                             gboolean            force_uninstall);
 FLATPAK_EXTERN
-void                flatpak_transaction_set_default_arch          (FlatpakTransaction  *self,
-                                                                   const char          *arch);
+void                flatpak_transaction_set_default_arch (FlatpakTransaction *self,
+                                                          const char         *arch);
 FLATPAK_EXTERN
-void                flatpak_transaction_add_dependency_source     (FlatpakTransaction  *self,
-                                                                   FlatpakInstallation *installation);
+void                flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
+                                                               FlatpakInstallation *installation);
 FLATPAK_EXTERN
-void                flatpak_transaction_add_default_dependency_sources (FlatpakTransaction  *self);
+void                flatpak_transaction_add_default_dependency_sources (FlatpakTransaction *self);
 FLATPAK_EXTERN
-gboolean            flatpak_transaction_run                       (FlatpakTransaction  *self,
-                                                                   GCancellable        *cancellable,
-                                                                   GError             **error);
+gboolean            flatpak_transaction_run (FlatpakTransaction *self,
+                                             GCancellable       *cancellable,
+                                             GError            **error);
 FLATPAK_EXTERN
-FlatpakTransactionOperation *flatpak_transaction_get_current_operation (FlatpakTransaction  *self);
+FlatpakTransactionOperation *flatpak_transaction_get_current_operation (FlatpakTransaction *self);
 FLATPAK_EXTERN
-FlatpakInstallation *flatpak_transaction_get_installation         (FlatpakTransaction  *self);
+FlatpakInstallation *flatpak_transaction_get_installation (FlatpakTransaction *self);
 FLATPAK_EXTERN
-GList *flatpak_transaction_get_operations (FlatpakTransaction  *self);
+GList *flatpak_transaction_get_operations (FlatpakTransaction *self);
 
 FLATPAK_EXTERN
-gboolean            flatpak_transaction_add_install               (FlatpakTransaction  *self,
-                                                                   const char          *remote,
-                                                                   const char          *ref,
-                                                                   const char         **subpaths,
-                                                                   GError             **error);
+gboolean            flatpak_transaction_add_install (FlatpakTransaction *self,
+                                                     const char         *remote,
+                                                     const char         *ref,
+                                                     const char        **subpaths,
+                                                     GError            **error);
 FLATPAK_EXTERN
-gboolean            flatpak_transaction_add_install_bundle        (FlatpakTransaction  *self,
-                                                                   GFile               *file,
-                                                                   GBytes              *gpg_data,
-                                                                   GError             **error);
+gboolean            flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
+                                                            GFile              *file,
+                                                            GBytes             *gpg_data,
+                                                            GError            **error);
 FLATPAK_EXTERN
-gboolean            flatpak_transaction_add_install_flatpakref    (FlatpakTransaction *self,
-                                                                   GBytes              *flatpakref_data,
-                                                                   GError             **error);
+gboolean            flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
+                                                                GBytes             *flatpakref_data,
+                                                                GError            **error);
 FLATPAK_EXTERN
-gboolean            flatpak_transaction_add_update                (FlatpakTransaction  *self,
-                                                                   const char          *ref,
-                                                                   const char         **subpaths,
-                                                                   const char          *commit,
-                                                                   GError             **error);
+gboolean            flatpak_transaction_add_update (FlatpakTransaction *self,
+                                                    const char         *ref,
+                                                    const char        **subpaths,
+                                                    const char         *commit,
+                                                    GError            **error);
 FLATPAK_EXTERN
-gboolean            flatpak_transaction_add_uninstall             (FlatpakTransaction  *self,
-                                                                   const char          *ref,
-                                                                   GError             **error);
+gboolean            flatpak_transaction_add_uninstall (FlatpakTransaction *self,
+                                                       const char         *ref,
+                                                       GError            **error);
 FLATPAK_EXTERN
-gboolean            flatpak_transaction_is_empty                  (FlatpakTransaction  *self);
+gboolean            flatpak_transaction_is_empty (FlatpakTransaction *self);
 
 #endif /* __FLATPAK_TRANSACTION_H__ */

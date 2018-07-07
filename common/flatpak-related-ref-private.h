@@ -32,7 +32,7 @@ FlatpakRelatedRef *flatpak_related_ref_new (const char  *collection_id,
                                             const char  *full_ref,
                                             const char  *commit,
                                             char       **subpaths,
-                                            gboolean     download,
+                                            gboolean download,
                                             gboolean     delete);
 
 #endif /* __FLATPAK_RELATED_REF_PRIVATE_H__ */

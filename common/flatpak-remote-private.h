@@ -36,9 +36,9 @@ FlatpakRemote *flatpak_remote_new_from_ostree (OstreeRemote     *remote,
                                                OstreeRepoFinder *repo_finder,
                                                FlatpakDir       *dir);
 
-gboolean flatpak_remote_commit (FlatpakRemote   *self,
-                                FlatpakDir      *dir,
-                                GCancellable    *cancellable,
-                                GError         **error);
+gboolean flatpak_remote_commit (FlatpakRemote *self,
+                                FlatpakDir    *dir,
+                                GCancellable  *cancellable,
+                                GError       **error);
 
 #endif /* __FLATPAK_REMOTE_PRIVATE_H__ */

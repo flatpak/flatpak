@@ -200,11 +200,11 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_get_current_installed_
 FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_remotes (FlatpakInstallation *self,
                                                                        GCancellable        *cancellable,
                                                                        GError             **error);
-FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
-                                                                               const FlatpakRemoteType  types[],
-                                                                               gsize                    num_types,
-                                                                               GCancellable            *cancellable,
-                                                                               GError                 **error);
+FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_remotes_by_type (FlatpakInstallation    *self,
+                                                                               const FlatpakRemoteType types[],
+                                                                               gsize                   num_types,
+                                                                               GCancellable           *cancellable,
+                                                                               GError                **error);
 FLATPAK_EXTERN FlatpakRemote        *flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
                                                                               const gchar         *name,
                                                                               GCancellable        *cancellable,
@@ -222,14 +222,14 @@ FLATPAK_EXTERN gboolean              flatpak_installation_update_remote_sync (Fl
                                                                               GCancellable        *cancellable,
                                                                               GError             **error);
 FLATPAK_EXTERN gboolean              flatpak_installation_set_config_sync (FlatpakInstallation *self,
-									   const char          *key,
-									   const char          *value,
-									   GCancellable        *cancellable,
-									   GError             **error);
-FLATPAK_EXTERN char *                flatpak_installation_get_config      (FlatpakInstallation *self,
-									   const char          *key,
-									   GCancellable        *cancellable,
-									   GError             **error);
+                                                                           const char          *key,
+                                                                           const char          *value,
+                                                                           GCancellable        *cancellable,
+                                                                           GError             **error);
+FLATPAK_EXTERN char *                flatpak_installation_get_config (FlatpakInstallation *self,
+                                                                      const char          *key,
+                                                                      GCancellable        *cancellable,
+                                                                      GError             **error);
 FLATPAK_EXTERN char *              flatpak_installation_load_app_overrides (FlatpakInstallation *self,
                                                                             const char          *app_id,
                                                                             GCancellable        *cancellable,
@@ -338,14 +338,14 @@ FLATPAK_EXTERN gboolean          flatpak_installation_update_appstream_sync (Fla
                                                                              gboolean            *out_changed,
                                                                              GCancellable        *cancellable,
                                                                              GError             **error);
-FLATPAK_EXTERN gboolean          flatpak_installation_update_appstream_full_sync (FlatpakInstallation *self,
-                                                                                  const char          *remote_name,
-                                                                                  const char          *arch,
+FLATPAK_EXTERN gboolean          flatpak_installation_update_appstream_full_sync (FlatpakInstallation    *self,
+                                                                                  const char             *remote_name,
+                                                                                  const char             *arch,
                                                                                   FlatpakProgressCallback progress,
                                                                                   gpointer                progress_data,
-                                                                                  gboolean            *out_changed,
-                                                                                  GCancellable        *cancellable,
-                                                                                  GError             **error);
+                                                                                  gboolean               *out_changed,
+                                                                                  GCancellable           *cancellable,
+                                                                                  GError                **error);
 FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
                                                                                      const char          *remote_name,
                                                                                      const char          *ref,
@@ -361,13 +361,13 @@ FLATPAK_EXTERN gboolean          flatpak_installation_remove_local_ref_sync (Fla
                                                                              const char          *remote_name,
                                                                              const char          *ref,
                                                                              GCancellable        *cancellable,
-                                                                             GError              **error);
+                                                                             GError             **error);
 FLATPAK_EXTERN gboolean          flatpak_installation_cleanup_local_refs_sync (FlatpakInstallation *self,
                                                                                GCancellable        *cancellable,
-                                                                               GError              **error);
+                                                                               GError             **error);
 FLATPAK_EXTERN gboolean          flatpak_installation_prune_local_repo (FlatpakInstallation *self,
                                                                         GCancellable        *cancellable,
-                                                                        GError              **error);
+                                                                        GError             **error);
 
 
 #endif /* __FLATPAK_INSTALLATION_H__ */

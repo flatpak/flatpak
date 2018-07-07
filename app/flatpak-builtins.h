@@ -56,7 +56,7 @@ gboolean usage_error (GOptionContext *context,
 
 #define BUILTINPROTO(name) \
   gboolean flatpak_builtin_ ## name (int argc, char **argv, GCancellable * cancellable, GError * *error); \
-  gboolean flatpak_complete_ ## name (FlatpakCompletion *completion);
+  gboolean flatpak_complete_ ## name (FlatpakCompletion * completion);
 
 
 BUILTINPROTO (add_remote)

@@ -29,9 +29,10 @@
 #include <locale.h>
 
 
-typedef struct {
-  char *text;
-  int align;
+typedef struct
+{
+  char    *text;
+  int      align;
   gboolean span;
 } Cell;
 
@@ -87,6 +88,7 @@ flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
                                           int                  align)
 {
   Cell *cell = g_new0 (Cell, 1);
+
   cell->text = text ? g_strdup (text) : g_strdup ("");
   cell->align = align;
   g_ptr_array_add (printer->current, cell);
@@ -97,6 +99,7 @@ flatpak_table_printer_add_span (FlatpakTablePrinter *printer,
                                 const char          *text)
 {
   Cell *cell = g_new0 (Cell, 1);
+
   cell->text = text ? g_strdup (text) : g_strdup ("");
   cell->align = -1;
   cell->span = TRUE;
@@ -139,6 +142,7 @@ flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
                                       gsize                len)
 {
   Cell *cell = g_new0 (Cell, 1);
+
   cell->text = text ? g_strndup (text, len) : g_strdup ("");
   cell->align = -1;
   g_ptr_array_add (printer->current, cell);
@@ -165,9 +169,9 @@ flatpak_table_printer_append_with_comma (FlatpakTablePrinter *printer,
 }
 
 void
-flatpak_table_printer_append_with_comma_printf  (FlatpakTablePrinter *printer,
-                                                 const char          *format,
-                                                 ...)
+flatpak_table_printer_append_with_comma_printf (FlatpakTablePrinter *printer,
+                                                const char          *format,
+                                                ...)
 {
   va_list var_args;
   g_autofree char *s = NULL;

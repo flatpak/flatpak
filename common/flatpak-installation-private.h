@@ -25,17 +25,14 @@
 
 #include "flatpak-dir-private.h"
 
-FlatpakDir *
-flatpak_installation_clone_dir_noensure (FlatpakInstallation *self);
+FlatpakDir *flatpak_installation_clone_dir_noensure (FlatpakInstallation *self);
 
-FlatpakDir *
-flatpak_installation_clone_dir (FlatpakInstallation *self,
-                                GCancellable  *cancellable,
-                                GError       **error);
+FlatpakDir *flatpak_installation_clone_dir (FlatpakInstallation *self,
+                                            GCancellable        *cancellable,
+                                            GError             **error);
 
-FlatpakInstallation *
-flatpak_installation_new_for_dir (FlatpakDir   *dir,
-                                  GCancellable *cancellable,
-                                  GError      **error);
+FlatpakInstallation *flatpak_installation_new_for_dir (FlatpakDir   *dir,
+                                                       GCancellable *cancellable,
+                                                       GError      **error);
 
 #endif /* __FLATPAK_INSTALLATION_PRIVATE_H__ */

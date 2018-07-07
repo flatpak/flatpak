@@ -57,20 +57,20 @@ typedef enum {
 
 struct FlatpakContext
 {
-  FlatpakContextShares  shares;
-  FlatpakContextShares  shares_valid;
-  FlatpakContextSockets sockets;
-  FlatpakContextSockets sockets_valid;
-  FlatpakContextDevices devices;
-  FlatpakContextDevices devices_valid;
-  FlatpakContextFeatures  features;
-  FlatpakContextFeatures  features_valid;
-  GHashTable           *env_vars;
-  GHashTable           *persistent;
-  GHashTable           *filesystems;
-  GHashTable           *session_bus_policy;
-  GHashTable           *system_bus_policy;
-  GHashTable           *generic_policy;
+  FlatpakContextShares   shares;
+  FlatpakContextShares   shares_valid;
+  FlatpakContextSockets  sockets;
+  FlatpakContextSockets  sockets_valid;
+  FlatpakContextDevices  devices;
+  FlatpakContextDevices  devices_valid;
+  FlatpakContextFeatures features;
+  FlatpakContextFeatures features_valid;
+  GHashTable            *env_vars;
+  GHashTable            *persistent;
+  GHashTable            *filesystems;
+  GHashTable            *session_bus_policy;
+  GHashTable            *system_bus_policy;
+  GHashTable            *generic_policy;
 };
 
 extern const char *flatpak_context_sockets[];
@@ -99,7 +99,7 @@ void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       const char     *name,
                                                       FlatpakPolicy   policy);
 void           flatpak_context_to_args (FlatpakContext *context,
-                                        GPtrArray *args);
+                                        GPtrArray      *args);
 FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
 void           flatpak_context_add_bus_filters (FlatpakContext *context,
                                                 const char     *app_id,
@@ -112,21 +112,21 @@ gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *conte
 void           flatpak_context_reset_permissions (FlatpakContext *context);
 void           flatpak_context_make_sandboxed (FlatpakContext *context);
 
-gboolean       flatpak_context_allows_features (FlatpakContext *context,
+gboolean       flatpak_context_allows_features (FlatpakContext        *context,
                                                 FlatpakContextFeatures features);
 
 FlatpakContext *flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
-                                                 GError        **error);
-FlatpakContext *flatpak_context_load_for_app (const char     *app_id,
-                                              GError        **error);
+                                                 GError       **error);
+FlatpakContext *flatpak_context_load_for_app (const char *app_id,
+                                              GError    **error);
 
 FlatpakExports *flatpak_context_get_exports (FlatpakContext *context,
-                                             const char *app_id);
+                                             const char     *app_id);
 
-void flatpak_context_append_bwrap_filesystem (FlatpakContext *context,
-                                              FlatpakBwrap *bwrap,
-                                              const char *app_id,
-                                              GFile *app_id_dir,
+void flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
+                                              FlatpakBwrap    *bwrap,
+                                              const char      *app_id,
+                                              GFile           *app_id_dir,
                                               FlatpakExports **exports_out);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)

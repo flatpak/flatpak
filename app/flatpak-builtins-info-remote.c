@@ -71,7 +71,7 @@ maybe_print_space (gboolean *first)
 }
 
 static gchar *
-format_timestamp (guint64  timestamp)
+format_timestamp (guint64 timestamp)
 {
   GDateTime *dt;
   gchar *str;

@@ -84,10 +84,11 @@ get_soup_session (void)
 }
 
 GBytes *
-download_uri (const char     *url,
-              GError        **error)
+download_uri (const char *url,
+              GError    **error)
 {
   SoupSession *session;
+
   g_autoptr(SoupRequest) req = NULL;
   g_autoptr(GInputStream) input = NULL;
   g_autoptr(GOutputStream) out = NULL;
@@ -121,6 +122,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
+
   g_autoptr(GError) lookup_error = NULL;
   FlatpakDir *dir = NULL;
   g_autofree char *ref = NULL;
@@ -255,7 +257,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
 
 
 static gboolean
-open_source_stream (char **gpg_import,
+open_source_stream (char         **gpg_import,
                     GInputStream **out_source_stream,
                     GCancellable  *cancellable,
                     GError       **error)
@@ -304,7 +306,7 @@ open_source_stream (char **gpg_import,
 }
 
 GBytes *
-flatpak_load_gpg_keys (char **gpg_import,
+flatpak_load_gpg_keys (char        **gpg_import,
                        GCancellable *cancellable,
                        GError      **error)
 {
@@ -367,7 +369,7 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
         {
           FlatpakDir *dir = g_ptr_array_index (dirs_with_remote, i);
           g_autofree char *dir_name = flatpak_dir_get_name (dir);
-          g_print("%d) %s\n", i + 1, dir_name);
+          g_print ("%d) %s\n", i + 1, dir_name);
         }
       chosen = flatpak_number_prompt (0, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)
@@ -393,24 +395,25 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
 static guint64
 get_file_age (GFile *file)
 {
-    guint64 now;
-    guint64 mtime;
-    g_autoptr(GFileInfo) info = NULL;
+  guint64 now;
+  guint64 mtime;
 
-    info = g_file_query_info (file,
-                              G_FILE_ATTRIBUTE_TIME_MODIFIED,
-                              G_FILE_QUERY_INFO_NONE,
-                              NULL,
-                              NULL);
-    if (info == NULL)
-      return G_MAXUINT64;
+  g_autoptr(GFileInfo) info = NULL;
 
-    mtime = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
-    now = (guint64) g_get_real_time () / G_USEC_PER_SEC;
-    if (mtime > now)
-      return G_MAXUINT64;
+  info = g_file_query_info (file,
+                            G_FILE_ATTRIBUTE_TIME_MODIFIED,
+                            G_FILE_QUERY_INFO_NONE,
+                            NULL,
+                            NULL);
+  if (info == NULL)
+    return G_MAXUINT64;
 
-    return (guint64) (now - mtime);
+  mtime = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+  now = (guint64) g_get_real_time () / G_USEC_PER_SEC;
+  if (mtime > now)
+    return G_MAXUINT64;
+
+  return (guint64) (now - mtime);
 }
 
 static void

@@ -51,8 +51,9 @@ handle_sigterm (int signum)
   _exit (1);
 }
 
-typedef struct {
-  GPid pid;
+typedef struct
+{
+  GPid  pid;
   char *client;
   guint child_watch;
 } PidData;
@@ -65,7 +66,7 @@ pid_data_free (PidData *data)
 }
 
 static gboolean
-handle_request_monitor (FlatpakSessionHelper   *object,
+handle_request_monitor (FlatpakSessionHelper  *object,
                         GDBusMethodInvocation *invocation,
                         gpointer               user_data)
 {
@@ -76,7 +77,7 @@ handle_request_monitor (FlatpakSessionHelper   *object,
 }
 
 static gboolean
-handle_request_session (FlatpakSessionHelper   *object,
+handle_request_session (FlatpakSessionHelper  *object,
                         GDBusMethodInvocation *invocation,
                         gpointer               user_data)
 {
@@ -103,6 +104,7 @@ child_watch_died (GPid     pid,
                   gpointer user_data)
 {
   PidData *pid_data = user_data;
+
   g_autoptr(GVariant) signal_variant = NULL;
 
   g_debug ("Client Pid %d died", pid_data->pid);
@@ -117,26 +119,28 @@ child_watch_died (GPid     pid,
                                  NULL);
 
   /* This frees the pid_data, so be careful */
-  g_hash_table_remove (client_pid_data_hash, GUINT_TO_POINTER(pid_data->pid));
+  g_hash_table_remove (client_pid_data_hash, GUINT_TO_POINTER (pid_data->pid));
 }
 
-typedef struct {
+typedef struct
+{
   int from;
   int to;
   int final;
 } FdMapEntry;
 
-typedef struct {
+typedef struct
+{
   FdMapEntry *fd_map;
-  int fd_map_len;
-  gboolean set_tty;
-  int tty;
+  int         fd_map_len;
+  gboolean    set_tty;
+  int         tty;
 } ChildSetupData;
 
 static void
 child_setup_func (gpointer user_data)
 {
-  ChildSetupData *data = (ChildSetupData *)user_data;
+  ChildSetupData *data = (ChildSetupData *) user_data;
   FdMapEntry *fd_map = data->fd_map;
   sigset_t set;
   int i;
@@ -147,7 +151,7 @@ child_setup_func (gpointer user_data)
     {
       g_error ("Failed to unblock signals when starting child");
       return;
-  }
+    }
 
   /* Reset the handlers for all signals to their defaults. */
   for (i = 1; i < NSIG; i++)
@@ -200,13 +204,13 @@ child_setup_func (gpointer user_data)
 
 
 static gboolean
-handle_host_command (FlatpakDevelopment *object,
+handle_host_command (FlatpakDevelopment    *object,
                      GDBusMethodInvocation *invocation,
-                     const gchar *arg_cwd_path,
-                     const gchar *const *arg_argv,
-                     GVariant *arg_fds,
-                     GVariant *arg_envs,
-                     guint flags)
+                     const gchar           *arg_cwd_path,
+                     const gchar *const    *arg_argv,
+                     GVariant              *arg_fds,
+                     GVariant              *arg_envs,
+                     guint                  flags)
 {
   g_autoptr(GError) error = NULL;
   GDBusMessage *message = g_dbus_method_invocation_get_message (invocation);
@@ -315,9 +319,9 @@ handle_host_command (FlatpakDevelopment *object,
     }
 
   if (!g_spawn_async_with_pipes (arg_cwd_path,
-                                 (char **)arg_argv,
+                                 (char **) arg_argv,
                                  env,
-                                 G_SPAWN_SEARCH_PATH|G_SPAWN_DO_NOT_REAP_CHILD,
+                                 G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
                                  child_setup_func, &child_setup_data,
                                  &pid,
                                  NULL,
@@ -347,7 +351,7 @@ handle_host_command (FlatpakDevelopment *object,
 
   g_debug ("Client Pid is %d", pid_data->pid);
 
-  g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER(pid_data->pid),
+  g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER (pid_data->pid),
                         pid_data);
 
 
@@ -357,15 +361,15 @@ handle_host_command (FlatpakDevelopment *object,
 }
 
 static gboolean
-handle_host_command_signal (FlatpakDevelopment *object,
+handle_host_command_signal (FlatpakDevelopment    *object,
                             GDBusMethodInvocation *invocation,
-                            guint arg_pid,
-                            guint arg_signal,
-                            gboolean to_process_group)
+                            guint                  arg_pid,
+                            guint                  arg_signal,
+                            gboolean               to_process_group)
 {
   PidData *pid_data = NULL;
 
-  pid_data = g_hash_table_lookup (client_pid_data_hash, GUINT_TO_POINTER(arg_pid));
+  pid_data = g_hash_table_lookup (client_pid_data_hash, GUINT_TO_POINTER (arg_pid));
   if (pid_data == NULL ||
       strcmp (pid_data->client, g_dbus_method_invocation_get_sender (invocation)) != 0)
     {
@@ -449,9 +453,10 @@ on_name_lost (GDBusConnection *connection,
  * which on stateless systems is often a symlink to a dyamically-generated
  * or updated file in /run.
  */
-typedef struct {
-  const gchar *source;
-  char *real;
+typedef struct
+{
+  const gchar  *source;
+  char         *real;
   GFileMonitor *monitor_source;
   GFileMonitor *monitor_real;
 } MonitorData;
@@ -489,17 +494,17 @@ copy_file (const char *source,
   g_free (contents);
 }
 
-static void
-file_changed (GFileMonitor     *monitor,
-              GFile            *file,
-              GFile            *other_file,
-              GFileMonitorEvent event_type,
-              MonitorData      *data);
+static void file_changed (GFileMonitor     *monitor,
+                          GFile            *file,
+                          GFile            *other_file,
+                          GFileMonitorEvent event_type,
+                          MonitorData      *data);
 
 static void
 update_real_monitor (MonitorData *data)
 {
   char *real = realpath (data->source, NULL);
+
   if (real == NULL)
     {
       g_debug ("unable to get real path to monitor host file %s: %s", data->source,
@@ -614,27 +619,27 @@ start_p11_kit_server (const char *flatpak_dir)
   g_autofree char *socket_path = g_build_filename (flatpak_dir, socket_basename, NULL);
   g_autofree char *p11_kit_stdout = NULL;
   gint exit_status;
+
   g_autoptr(GError) local_error = NULL;
   g_auto(GStrv) stdout_lines = NULL;
   int i;
-  char *p11_argv[] =
-    {
-     "p11-kit", "server",
-     /* We explicitly request --sh here, because we then fail on earlier versions that doesn't support
-      * this flag. This is good, because those earlier versions did not properly daemonize and caused
-      * the spawn_sync to hang forever, waiting for the pipe to close.
-      */
-     "--sh",
-     "-n", socket_path,
-     "--provider",  "p11-kit-trust.so",
-     "pkcs11:model=p11-kit-trust?write-protected=yes",
-     NULL
-    };
+  char *p11_argv[] = {
+    "p11-kit", "server",
+    /* We explicitly request --sh here, because we then fail on earlier versions that doesn't support
+     * this flag. This is good, because those earlier versions did not properly daemonize and caused
+     * the spawn_sync to hang forever, waiting for the pipe to close.
+     */
+    "--sh",
+    "-n", socket_path,
+    "--provider",  "p11-kit-trust.so",
+    "pkcs11:model=p11-kit-trust?write-protected=yes",
+    NULL
+  };
 
   g_debug ("starting p11-kit server");
 
   if (!g_spawn_sync (NULL,
-                     p11_argv, NULL, G_SPAWN_SEARCH_PATH|G_SPAWN_STDERR_TO_DEV_NULL,
+                     p11_argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
                      NULL, NULL,
                      &p11_kit_stdout, NULL,
                      &exit_status, &local_error))
@@ -653,7 +658,7 @@ start_p11_kit_server (const char *flatpak_dir)
   /* Output is something like:
      P11_KIT_SERVER_ADDRESS=unix:path=/run/user/1000/p11-kit/pkcs11-2603742; export P11_KIT_SERVER_ADDRESS;
      P11_KIT_SERVER_PID=2603743; export P11_KIT_SERVER_PID;
-  */
+   */
   for (i = 0; stdout_lines[i] != NULL; i++)
     {
       char *line = stdout_lines[i];
@@ -672,11 +677,11 @@ start_p11_kit_server (const char *flatpak_dir)
 
   if (p11_kit_server_pid != 0)
     {
-      g_debug  ("Using p11-kit socket path %s, pid %d", socket_path, p11_kit_server_pid);
+      g_debug ("Using p11-kit socket path %s, pid %d", socket_path, p11_kit_server_pid);
       p11_kit_server_socket_path = g_steal_pointer (&socket_path);
     }
   else
-      g_debug  ("Not using p11-kit due to older version");
+    g_debug ("Not using p11-kit due to older version");
 }
 
 int
@@ -691,6 +696,7 @@ main (int    argc,
   GOptionContext *context;
   GBusNameOwnerFlags flags;
   g_autofree char *flatpak_dir = NULL;
+
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
@@ -703,11 +709,11 @@ main (int    argc,
 
   atexit (do_atexit);
 
-  memset(&action, 0, sizeof(struct sigaction));
+  memset (&action, 0, sizeof (struct sigaction));
   action.sa_handler = handle_sigterm;
-  sigaction(SIGTERM, &action, NULL);
-  sigaction(SIGHUP, &action, NULL);
-  sigaction(SIGINT, &action, NULL);
+  sigaction (SIGTERM, &action, NULL);
+  sigaction (SIGHUP, &action, NULL);
+  sigaction (SIGINT, &action, NULL);
 
   setlocale (LC_ALL, "");
 
@@ -728,7 +734,7 @@ main (int    argc,
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      g_printerr ("%s: %s", g_get_application_name(), error->message);
+      g_printerr ("%s: %s", g_get_application_name (), error->message);
       g_printerr ("\n");
       g_printerr ("Try \"%s --help\" for more information.",
                   g_get_prgname ());
@@ -748,7 +754,7 @@ main (int    argc,
 
   flatpak_migrate_from_xdg_app ();
 
-  client_pid_data_hash = g_hash_table_new_full (NULL, NULL, NULL, (GDestroyNotify)pid_data_free);
+  client_pid_data_hash = g_hash_table_new_full (NULL, NULL, NULL, (GDestroyNotify) pid_data_free);
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
@@ -764,7 +770,7 @@ main (int    argc,
       exit (1);
     }
 
-  if (g_find_program_in_path  ("p11-kit"))
+  if (g_find_program_in_path ("p11-kit"))
     start_p11_kit_server (flatpak_dir);
   else
     g_debug ("p11-kit not found");

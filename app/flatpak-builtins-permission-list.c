@@ -64,7 +64,7 @@ get_permission_tables (XdpDbusPermissionStore *store)
 
   g_ptr_array_add (tables, NULL);
 
-  return (char **)g_ptr_array_free (tables, FALSE);
+  return (char **) g_ptr_array_free (tables, FALSE);
 }
 
 static char **
@@ -79,11 +79,11 @@ get_ids_for_table (XdpDbusPermissionStore *store,
 }
 
 static gboolean
-list_table (XdpDbusPermissionStore  *store,
-            const char              *table,
-            const char              *id,
-            FlatpakTablePrinter     *printer,
-            GError                 **error)
+list_table (XdpDbusPermissionStore *store,
+            const char             *table,
+            const char             *id,
+            FlatpakTablePrinter    *printer,
+            GError                **error)
 {
   const char *one_id[2];
   char **ids;
@@ -93,7 +93,7 @@ list_table (XdpDbusPermissionStore  *store,
     {
       one_id[0] = id;
       one_id[1] = NULL;
-      ids = (char **)one_id;
+      ids = (char **) one_id;
     }
   else
     {

@@ -96,7 +96,7 @@ flatpak_complete_word (FlatpakCompletion *completion,
 
   rest = string + strlen (completion->cur);
 
-  shell_cur_end = shell_cur + strlen(shell_cur);
+  shell_cur_end = shell_cur + strlen (shell_cur);
   while (shell_cur_end > shell_cur &&
          rest > string &&
          shell_cur_end[-1] == rest[-1] &&
@@ -114,7 +114,7 @@ flatpak_complete_word (FlatpakCompletion *completion,
 
 void
 flatpak_complete_ref (FlatpakCompletion *completion,
-                      OstreeRepo *repo)
+                      OstreeRepo        *repo)
 {
   g_autoptr(GHashTable) refs = NULL;
   flatpak_completion_debug ("completing REF");
@@ -129,7 +129,7 @@ flatpak_complete_ref (FlatpakCompletion *completion,
       g_hash_table_iter_init (&hashiter, refs);
       while ((g_hash_table_iter_next (&hashiter, &hashkey, &hashvalue)))
         {
-          const char *ref = (const char *)hashkey;
+          const char *ref = (const char *) hashkey;
           if (!(g_str_has_prefix (ref, "runtime/") ||
                 g_str_has_prefix (ref, "app/")))
             continue;
@@ -161,16 +161,17 @@ find_current_element (const char *str)
 
 void
 flatpak_complete_partial_ref (FlatpakCompletion *completion,
-                              FlatpakKinds kinds,
-                              const char *only_arch,
-                              FlatpakDir *dir,
-                              const char *remote)
+                              FlatpakKinds       kinds,
+                              const char        *only_arch,
+                              FlatpakDir        *dir,
+                              const char        *remote)
 {
   FlatpakKinds matched_kinds;
   const char *pref;
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
+
   g_auto(GStrv) refs = NULL;
   int element;
   const char *cur_parts[4] = { NULL };
@@ -193,7 +194,7 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
       refs = flatpak_dir_find_remote_refs (dir, completion->argv[1],
                                            (element > 1) ? id : NULL,
                                            (element > 3) ? branch : NULL,
-                                           (element > 2 )? arch : only_arch,
+                                           (element > 2) ? arch : only_arch,
                                            matched_kinds, NULL, &error);
     }
   else
@@ -201,7 +202,7 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
       refs = flatpak_dir_find_installed_refs (dir,
                                               (element > 1) ? id : NULL,
                                               (element > 3) ? branch : NULL,
-                                              (element > 2 )? arch : only_arch,
+                                              (element > 2) ? arch : only_arch,
                                               matched_kinds, &error);
     }
   if (refs == NULL)
@@ -278,21 +279,22 @@ should_filter_out_option_from_completion (FlatpakCompletion *completion,
 {
   switch (entry->arg)
     {
-      case G_OPTION_ARG_NONE:
-      case G_OPTION_ARG_STRING:
-      case G_OPTION_ARG_INT:
-      case G_OPTION_ARG_FILENAME:
-      case G_OPTION_ARG_DOUBLE:
-      case G_OPTION_ARG_INT64:
-        return switch_already_in_line (completion, entry);
-      default:
-        return FALSE;
+    case G_OPTION_ARG_NONE:
+    case G_OPTION_ARG_STRING:
+    case G_OPTION_ARG_INT:
+    case G_OPTION_ARG_FILENAME:
+    case G_OPTION_ARG_DOUBLE:
+    case G_OPTION_ARG_INT64:
+      return switch_already_in_line (completion, entry);
+
+    default:
+      return FALSE;
     }
 }
 
 void
 flatpak_complete_options (FlatpakCompletion *completion,
-                          GOptionEntry *entries)
+                          GOptionEntry      *entries)
 {
   GOptionEntry *e = entries;
   int i;
@@ -345,11 +347,14 @@ flatpak_complete_options (FlatpakCompletion *completion,
         {
           /* If this is just a switch, then don't add it multiple
            * times */
-          if (!should_filter_out_option_from_completion (completion, e)) {
-            flatpak_complete_word (completion, "--%s ", e->long_name);
-          }  else {
-            flatpak_completion_debug ("switch --%s is already in line %s", e->long_name, completion->line);
-          }
+          if (!should_filter_out_option_from_completion (completion, e))
+            {
+              flatpak_complete_word (completion, "--%s ", e->long_name);
+            }
+          else
+            {
+              flatpak_completion_debug ("switch --%s is already in line %s", e->long_name, completion->line);
+            }
         }
 
       /* We may end up checking switch_already_in_line twice, but this is
@@ -360,11 +365,14 @@ flatpak_complete_options (FlatpakCompletion *completion,
           /* This is a switch, we may not want to add it */
           if (!e->arg_description)
             {
-              if (!should_filter_out_option_from_completion (completion, e)) {
-                flatpak_complete_word (completion, "-%c ", e->short_name);
-              } else {
-                flatpak_completion_debug ("switch -%c is already in line %s", e->short_name, completion->line);
-              }
+              if (!should_filter_out_option_from_completion (completion, e))
+                {
+                  flatpak_complete_word (completion, "-%c ", e->short_name);
+                }
+              else
+                {
+                  flatpak_completion_debug ("switch -%c is already in line %s", e->short_name, completion->line);
+                }
             }
           else
             {
@@ -382,9 +390,9 @@ flatpak_complete_context (FlatpakCompletion *completion)
 }
 
 static gchar *
-pick_word_at (const char  *s,
-              int          cursor,
-              int         *out_word_begins_at)
+pick_word_at (const char *s,
+              int         cursor,
+              int        *out_word_begins_at)
 {
   int begin, end;
 
@@ -395,7 +403,7 @@ pick_word_at (const char  *s,
       return NULL;
     }
 
-  if (is_word_separator (s[cursor]) && ((cursor > 0 && is_word_separator(s[cursor-1])) || cursor == 0))
+  if (is_word_separator (s[cursor]) && ((cursor > 0 && is_word_separator (s[cursor - 1])) || cursor == 0))
     {
       if (out_word_begins_at != NULL)
         *out_word_begins_at = cursor;

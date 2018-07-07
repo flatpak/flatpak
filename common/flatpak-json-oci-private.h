@@ -40,17 +40,18 @@ void flatpak_oci_export_annotations (GHashTable *source,
 void flatpak_oci_copy_annotations (GHashTable *source,
                                    GHashTable *dest);
 
-typedef struct {
-  char *mediatype;
-  char *digest;
-  gint64 size;
-  char **urls;
+typedef struct
+{
+  char       *mediatype;
+  char       *digest;
+  gint64      size;
+  char      **urls;
   GHashTable *annotations;
 } FlatpakOciDescriptor;
 
 FlatpakOciDescriptor *flatpak_oci_descriptor_new (const char *mediatype,
                                                   const char *digest,
-                                                  gint64 size);
+                                                  gint64      size);
 void flatpak_oci_descriptor_copy (FlatpakOciDescriptor *source,
                                   FlatpakOciDescriptor *dest);
 void flatpak_oci_descriptor_destroy (FlatpakOciDescriptor *self);
@@ -60,17 +61,17 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciDescriptor, flatpak_oci_descriptor_free
 
 typedef struct
 {
-  char *architecture;
-  char *os;
-  char *os_version;
+  char  *architecture;
+  char  *os;
+  char  *os_version;
   char **os_features;
-  char *variant;
+  char  *variant;
   char **features;
 } FlatpakOciManifestPlatform;
 
 typedef struct
 {
-  FlatpakOciDescriptor parent;
+  FlatpakOciDescriptor       parent;
   FlatpakOciManifestPlatform platform;
 } FlatpakOciManifestDescriptor;
 
@@ -83,32 +84,34 @@ void flatpak_oci_manifest_descriptor_free (FlatpakOciManifestDescriptor *self);
 #define FLATPAK_TYPE_OCI_VERSIONED flatpak_oci_versioned_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciVersioned, flatpak_oci_versioned, FLATPAK_OCI, VERSIONED, FlatpakJson)
 
-struct _FlatpakOciVersioned {
+struct _FlatpakOciVersioned
+{
   FlatpakJson parent;
 
-  int version;
-  char *mediatype;
+  int         version;
+  char       *mediatype;
 };
 
-struct _FlatpakOciVersionedClass {
+struct _FlatpakOciVersionedClass
+{
   FlatpakJsonClass parent_class;
 };
 
-FlatpakOciVersioned *flatpak_oci_versioned_from_json     (GBytes               *bytes,
-                                                          GError              **error);
-const char *         flatpak_oci_versioned_get_mediatype (FlatpakOciVersioned  *self);
-gint64               flatpak_oci_versioned_get_version   (FlatpakOciVersioned  *self);
+FlatpakOciVersioned *flatpak_oci_versioned_from_json (GBytes  *bytes,
+                                                      GError **error);
+const char *         flatpak_oci_versioned_get_mediatype (FlatpakOciVersioned *self);
+gint64               flatpak_oci_versioned_get_version (FlatpakOciVersioned *self);
 
 #define FLATPAK_TYPE_OCI_MANIFEST flatpak_oci_manifest_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciManifest, flatpak_oci_manifest, FLATPAK, OCI_MANIFEST, FlatpakOciVersioned)
 
 struct _FlatpakOciManifest
 {
-  FlatpakOciVersioned parent;
+  FlatpakOciVersioned    parent;
 
-  FlatpakOciDescriptor config;
+  FlatpakOciDescriptor   config;
   FlatpakOciDescriptor **layers;
-  GHashTable     *annotations;
+  GHashTable            *annotations;
 };
 
 struct _FlatpakOciManifestClass
@@ -117,27 +120,27 @@ struct _FlatpakOciManifestClass
 };
 
 
-FlatpakOciManifest *flatpak_oci_manifest_new              (void);
-void                flatpak_oci_manifest_set_config       (FlatpakOciManifest  *self,
-                                                           FlatpakOciDescriptor *desc);
-void                flatpak_oci_manifest_set_layers       (FlatpakOciManifest  *self,
-                                                           FlatpakOciDescriptor **descs);
-void                flatpak_oci_manifest_set_layer        (FlatpakOciManifest  *self,
-                                                           FlatpakOciDescriptor *desc);
-int                 flatpak_oci_manifest_get_n_layers     (FlatpakOciManifest  *self);
-const char *        flatpak_oci_manifest_get_layer_digest (FlatpakOciManifest  *self,
-                                                           int                  i);
-GHashTable *        flatpak_oci_manifest_get_annotations  (FlatpakOciManifest  *self);
+FlatpakOciManifest *flatpak_oci_manifest_new (void);
+void                flatpak_oci_manifest_set_config (FlatpakOciManifest   *self,
+                                                     FlatpakOciDescriptor *desc);
+void                flatpak_oci_manifest_set_layers (FlatpakOciManifest    *self,
+                                                     FlatpakOciDescriptor **descs);
+void                flatpak_oci_manifest_set_layer (FlatpakOciManifest   *self,
+                                                    FlatpakOciDescriptor *desc);
+int                 flatpak_oci_manifest_get_n_layers (FlatpakOciManifest *self);
+const char *        flatpak_oci_manifest_get_layer_digest (FlatpakOciManifest *self,
+                                                           int                 i);
+GHashTable *        flatpak_oci_manifest_get_annotations (FlatpakOciManifest *self);
 
 #define FLATPAK_TYPE_OCI_INDEX flatpak_oci_index_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciIndex, flatpak_oci_index, FLATPAK, OCI_INDEX, FlatpakOciVersioned)
 
 struct _FlatpakOciIndex
 {
-  FlatpakOciVersioned parent;
+  FlatpakOciVersioned            parent;
 
   FlatpakOciManifestDescriptor **manifests;
-  GHashTable     *annotations;
+  GHashTable                    *annotations;
 };
 
 struct _FlatpakOciIndexClass
@@ -145,13 +148,13 @@ struct _FlatpakOciIndexClass
   FlatpakOciVersionedClass parent_class;
 };
 
-FlatpakOciIndex *             flatpak_oci_index_new             (void);
-void                          flatpak_oci_index_add_manifest    (FlatpakOciIndex *self,
-                                                                 FlatpakOciDescriptor *desc);
+FlatpakOciIndex *             flatpak_oci_index_new (void);
+void                          flatpak_oci_index_add_manifest (FlatpakOciIndex      *self,
+                                                              FlatpakOciDescriptor *desc);
 gboolean                      flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
                                                                  const char      *ref);
-FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest    (FlatpakOciIndex *self,
-                                                                 const char      *ref);
+FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest (FlatpakOciIndex *self,
+                                                              const char      *ref);
 FlatpakOciManifestDescriptor *flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self);
 int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
 
@@ -160,44 +163,44 @@ G_DECLARE_FINAL_TYPE (FlatpakOciImage, flatpak_oci_image, FLATPAK, OCI_IMAGE, Fl
 
 typedef struct
 {
-  char *type;
+  char  *type;
   char **diff_ids;
 } FlatpakOciImageRootfs;
 
 typedef struct
 {
-  char *user;
-  char *working_dir;
-  gint64 memory;
-  gint64 memory_swap;
-  gint64 cpu_shares;
-  char **env;
-  char **cmd;
-  char **entrypoint;
-  char **exposed_ports;
-  char **volumes;
+  char       *user;
+  char       *working_dir;
+  gint64      memory;
+  gint64      memory_swap;
+  gint64      cpu_shares;
+  char      **env;
+  char      **cmd;
+  char      **entrypoint;
+  char      **exposed_ports;
+  char      **volumes;
   GHashTable *labels;
 } FlatpakOciImageConfig;
 
 typedef struct
 {
-  char *created;
-  char *created_by;
-  char *author;
-  char *comment;
+  char    *created;
+  char    *created_by;
+  char    *author;
+  char    *comment;
   gboolean empty_layer;
 } FlatpakOciImageHistory;
 
 struct _FlatpakOciImage
 {
-  FlatpakJson parent;
+  FlatpakJson              parent;
 
-  char *created;
-  char *author;
-  char *architecture;
-  char *os;
-  FlatpakOciImageRootfs rootfs;
-  FlatpakOciImageConfig config;
+  char                    *created;
+  char                    *author;
+  char                    *architecture;
+  char                    *os;
+  FlatpakOciImageRootfs    rootfs;
+  FlatpakOciImageConfig    config;
   FlatpakOciImageHistory **history;
 };
 
@@ -206,30 +209,30 @@ struct _FlatpakOciImageClass
   FlatpakJsonClass parent_class;
 };
 
-FlatpakOciImage *flatpak_oci_image_new              (void);
-void             flatpak_oci_image_set_created      (FlatpakOciImage  *image,
-                                                     const char       *created);
-void             flatpak_oci_image_set_architecture (FlatpakOciImage  *image,
-                                                     const char       *arch);
-void             flatpak_oci_image_set_os           (FlatpakOciImage  *image,
-                                                     const char       *os);
-void             flatpak_oci_image_set_layers       (FlatpakOciImage  *image,
-                                                     const char      **layers);
-void             flatpak_oci_image_set_layer        (FlatpakOciImage  *image,
-                                                     const char       *layer);
+FlatpakOciImage *flatpak_oci_image_new (void);
+void             flatpak_oci_image_set_created (FlatpakOciImage *image,
+                                                const char      *created);
+void             flatpak_oci_image_set_architecture (FlatpakOciImage *image,
+                                                     const char      *arch);
+void             flatpak_oci_image_set_os (FlatpakOciImage *image,
+                                           const char      *os);
+void             flatpak_oci_image_set_layers (FlatpakOciImage *image,
+                                               const char     **layers);
+void             flatpak_oci_image_set_layer (FlatpakOciImage *image,
+                                              const char      *layer);
 
-void flatpak_oci_add_annotations_for_commit (GHashTable       *annotations,
-                                             const char       *ref,
-                                             const char       *commit,
-                                             GVariant         *commit_data);
-void flatpak_oci_parse_commit_annotations  (GHashTable       *annotations,
-                                            guint64          *out_timestamp,
-                                            char            **out_subject,
-                                            char            **out_body,
-                                            char            **out_ref,
-                                            char            **out_commit,
-                                            char            **out_parent_commit,
-                                            GVariantBuilder  *metadata_builder);
+void flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
+                                             const char *ref,
+                                             const char *commit,
+                                             GVariant   *commit_data);
+void flatpak_oci_parse_commit_annotations (GHashTable      *annotations,
+                                           guint64         *out_timestamp,
+                                           char           **out_subject,
+                                           char           **out_body,
+                                           char           **out_ref,
+                                           char           **out_commit,
+                                           char           **out_parent_commit,
+                                           GVariantBuilder *metadata_builder);
 
 #define FLATPAK_TYPE_OCI_SIGNATURE flatpak_oci_signature_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK, OCI_SIGNATURE, FlatpakJson)
@@ -246,20 +249,20 @@ typedef struct
 
 typedef struct
 {
-  char *type;
-  FlatpakOciSignatureCriticalImage image;
+  char                               *type;
+  FlatpakOciSignatureCriticalImage    image;
   FlatpakOciSignatureCriticalIdentity identity;
 } FlatpakOciSignatureCritical;
 
 typedef struct
 {
-  char *creator;
+  char  *creator;
   gint64 timestamp;
 } FlatpakOciSignatureOptional;
 
 struct _FlatpakOciSignature
 {
-  FlatpakJson parent;
+  FlatpakJson                 parent;
 
   FlatpakOciSignatureCritical critical;
   FlatpakOciSignatureOptional optional;
@@ -270,7 +273,8 @@ struct _FlatpakOciSignatureClass
   FlatpakJsonClass parent_class;
 };
 
-FlatpakOciSignature *flatpak_oci_signature_new (const char *digest, const char *ref);
+FlatpakOciSignature *flatpak_oci_signature_new (const char *digest,
+                                                const char *ref);
 
 
 #define FLATPAK_TYPE_OCI_INDEX_RESPONSE flatpak_oci_index_response_get_type ()
@@ -278,35 +282,35 @@ G_DECLARE_FINAL_TYPE (FlatpakOciIndexResponse, flatpak_oci_index_response, FLATP
 
 typedef struct
 {
-  char *digest;
-  char *mediatype;
-  char *os;
-  char *architecture;
+  char       *digest;
+  char       *mediatype;
+  char       *os;
+  char       *architecture;
   GHashTable *annotations;
   GHashTable *labels;
-  char **tags;
+  char      **tags;
 } FlatpakOciIndexImage;
 
 typedef struct
 {
-  char *digest;
-  char *mediatype;
-  char **tags;
+  char                  *digest;
+  char                  *mediatype;
+  char                 **tags;
   FlatpakOciIndexImage **images;
 } FlatpakOciIndexImageList;
 
 typedef struct
 {
-  char *name;
-  FlatpakOciIndexImage **images;
+  char                      *name;
+  FlatpakOciIndexImage     **images;
   FlatpakOciIndexImageList **lists;
 } FlatpakOciIndexRepository;
 
 struct _FlatpakOciIndexResponse
 {
-  FlatpakJson parent;
+  FlatpakJson                 parent;
 
-  char *registry;
+  char                       *registry;
   FlatpakOciIndexRepository **results;
 };
 

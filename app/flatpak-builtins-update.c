@@ -106,7 +106,7 @@ flatpak_builtin_update (int           argc,
       n_prefs = 1;
     }
 
-  transactions = g_ptr_array_new_with_free_func ((GDestroyNotify)g_object_unref);
+  transactions = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
   for (k = 0; k < dirs->len; k++)
     {
@@ -178,7 +178,7 @@ flatpak_builtin_update (int           argc,
                     continue;
 
                   found = TRUE;
-                  if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, opt_commit, error))
+                  if (!flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
                     return FALSE;
                 }
             }
@@ -209,7 +209,7 @@ flatpak_builtin_update (int           argc,
                     continue;
 
                   found = TRUE;
-                  if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, opt_commit, error))
+                  if (!flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
                     return FALSE;
                 }
             }

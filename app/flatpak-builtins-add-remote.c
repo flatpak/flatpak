@@ -194,7 +194,7 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
 
 static void
 load_options (const char *filename,
-              GBytes **gpg_data)
+              GBytes    **gpg_data)
 {
   g_autoptr(GError) error = NULL;
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
@@ -349,7 +349,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (remotes == NULL)
     return FALSE;
 
-  if (g_strv_contains ((const char **)remotes, remote_name))
+  if (g_strv_contains ((const char **) remotes, remote_name))
     {
       if (opt_if_not_exists)
         return TRUE; /* Do nothing */
