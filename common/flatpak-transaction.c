@@ -2066,8 +2066,6 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
       GKeyFile *flatpakref = l->data;
       g_autofree char *remote = NULL;
       g_autofree char *ref = NULL;
-      g_autofree char *commit = NULL;
-      g_autofree char *metadata = NULL;
 
       /* Handle this before the runtime deps, because they might be the same */
       if (!handle_suggested_remote_name (self, flatpakref, error))

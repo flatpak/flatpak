@@ -10077,7 +10077,6 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  g_autoptr(GError) local_error = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autofree char *uri = NULL;
   g_autofree char *title = NULL;
