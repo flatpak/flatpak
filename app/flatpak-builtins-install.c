@@ -330,7 +330,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (ref == NULL)
         return FALSE;
 
-      if (!flatpak_cli_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
+      if (!flatpak_cli_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, error))
         return FALSE;
     }
 

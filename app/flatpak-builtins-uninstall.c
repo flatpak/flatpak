@@ -59,10 +59,11 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-typedef struct {
+typedef struct
+{
   FlatpakDir *dir;
   GHashTable *refs_hash;
-  GPtrArray *refs;
+  GPtrArray  *refs;
 } UninstallDir;
 
 static UninstallDir *
@@ -88,7 +89,7 @@ uninstall_dir_free (UninstallDir *udir)
 
 static void
 uninstall_dir_add_ref (UninstallDir *udir,
-                       const char *ref)
+                       const char   *ref)
 {
   if (g_hash_table_insert (udir->refs_hash, g_strdup (ref), NULL))
     g_ptr_array_add (udir->refs, g_strdup (ref));
@@ -171,7 +172,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     }
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
-  uninstall_dirs = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify)uninstall_dir_free);
+  uninstall_dirs = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) uninstall_dir_free);
 
   if (opt_all)
     {
@@ -242,34 +243,35 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
                 g_hash_table_add (used_runtimes, g_steal_pointer (&runtime));
             }
 
-          GLNX_HASH_TABLE_FOREACH(used_runtimes, const char *, runtime)
-            {
-              g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
-              g_autoptr(FlatpakDeploy) deploy = NULL;
-              g_autofree char *origin = NULL;
-              g_autofree char *sdk = NULL;
-              g_autoptr(GKeyFile) metakey = NULL;
+          GLNX_HASH_TABLE_FOREACH (used_runtimes, const char *, runtime)
+          {
+            g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
 
-              deploy = flatpak_dir_load_deployed (dir, runtime_ref, NULL, NULL, NULL);
-              if (deploy == NULL)
-                continue;
+            g_autoptr(FlatpakDeploy) deploy = NULL;
+            g_autofree char *origin = NULL;
+            g_autofree char *sdk = NULL;
+            g_autoptr(GKeyFile) metakey = NULL;
 
-              origin = flatpak_dir_get_origin (dir, runtime_ref, NULL, NULL);
-              if (origin == NULL)
-                continue;
+            deploy = flatpak_dir_load_deployed (dir, runtime_ref, NULL, NULL, NULL);
+            if (deploy == NULL)
+              continue;
 
-              find_used_refs (dir, used_refs, runtime_ref, origin);
+            origin = flatpak_dir_get_origin (dir, runtime_ref, NULL, NULL);
+            if (origin == NULL)
+              continue;
 
-              metakey = flatpak_deploy_get_metadata (deploy);
-              sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
-              if (sdk)
-                {
-                  g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
-                  g_autofree char *sdk_origin = flatpak_dir_get_origin (dir, sdk_ref, NULL, NULL);
-                  if (sdk_origin)
-                    find_used_refs (dir, used_refs, sdk_ref, sdk_origin);
-                }
-            }
+            find_used_refs (dir, used_refs, runtime_ref, origin);
+
+            metakey = flatpak_deploy_get_metadata (deploy);
+            sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
+            if (sdk)
+              {
+                g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
+                g_autofree char *sdk_origin = flatpak_dir_get_origin (dir, sdk_ref, NULL, NULL);
+                if (sdk_origin)
+                  find_used_refs (dir, used_refs, sdk_ref, sdk_origin);
+              }
+          }
 
           for (i = 0; runtime_refs[i] != NULL; i++)
             {
@@ -288,7 +290,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
               g_print (_("Uninstalling from %s:\n"), flatpak_dir_get_name (dir));
               g_ptr_array_sort (udir->refs, flatpak_strcmp0_ptr);
               for (i = 0; i < udir->refs->len; i++)
-                g_print (" %s\n", (char *)udir->refs->pdata[i]);
+                g_print (" %s\n", (char *) udir->refs->pdata[i]);
               found_something_to_uninstall = TRUE;
             }
         }
@@ -388,30 +390,30 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     }
 
   GLNX_HASH_TABLE_FOREACH_V (uninstall_dirs, UninstallDir *, udir)
-    {
-      g_autoptr(FlatpakTransaction) transaction = NULL;
+  {
+    g_autoptr(FlatpakTransaction) transaction = NULL;
 
-      transaction = flatpak_cli_transaction_new (udir->dir, opt_yes, TRUE, error);
-      if (transaction == NULL)
-        return FALSE;
+    transaction = flatpak_cli_transaction_new (udir->dir, opt_yes, TRUE, error);
+    if (transaction == NULL)
+      return FALSE;
 
-      flatpak_transaction_set_disable_prune (transaction, opt_keep_ref);
-      flatpak_transaction_set_force_uninstall (transaction, opt_force_remove);
+    flatpak_transaction_set_disable_prune (transaction, opt_keep_ref);
+    flatpak_transaction_set_force_uninstall (transaction, opt_force_remove);
 
-      /* This disables the remote metadata update, since uninstall is a local-only op */
-      flatpak_transaction_set_no_pull (transaction, TRUE);
+    /* This disables the remote metadata update, since uninstall is a local-only op */
+    flatpak_transaction_set_no_pull (transaction, TRUE);
 
-      for (i = 0; i < udir->refs->len; i++)
-        {
-          const char *ref = (char *)g_ptr_array_index (udir->refs, i);
+    for (i = 0; i < udir->refs->len; i++)
+      {
+        const char *ref = (char *) g_ptr_array_index (udir->refs, i);
 
-          if (!flatpak_transaction_add_uninstall (transaction, ref, error))
-            return FALSE;
-        }
+        if (!flatpak_transaction_add_uninstall (transaction, ref, error))
+          return FALSE;
+      }
 
-      if (!flatpak_cli_transaction_run (transaction, cancellable, error))
-        return FALSE;
-    }
+    if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+      return FALSE;
+  }
 
 
   return TRUE;

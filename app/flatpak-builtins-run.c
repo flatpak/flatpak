@@ -247,10 +247,11 @@ flatpak_complete_run (FlatpakCompletion *completion)
       }
 
       system_dirs = flatpak_dir_get_system_list (NULL, &error);
-      if (system_dirs == NULL) {
-        flatpak_completion_debug ("find system installations error: %s", error->message);
-        break;
-      }
+      if (system_dirs == NULL)
+        {
+          flatpak_completion_debug ("find system installations error: %s", error->message);
+          break;
+        }
 
       for (i = 0; i < system_dirs->len; i++)
         {

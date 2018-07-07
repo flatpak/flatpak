@@ -64,14 +64,14 @@ get_permission_tables (XdpDbusPermissionStore *store)
 
   g_ptr_array_add (tables, NULL);
 
-  return (char **)g_ptr_array_free (tables, FALSE);
+  return (char **) g_ptr_array_free (tables, FALSE);
 }
 
 static gboolean
-remove_for_app (XdpDbusPermissionStore  *store,
-                const char              *table,
-                const char              *app_id,
-                GError                 **error)
+remove_for_app (XdpDbusPermissionStore *store,
+                const char             *table,
+                const char             *app_id,
+                GError                **error)
 {
   char **ids;
   int i;

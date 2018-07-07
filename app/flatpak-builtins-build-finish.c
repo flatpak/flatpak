@@ -61,16 +61,16 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-export_dir (int                            source_parent_fd,
-            const char                    *source_name,
-            const char                    *source_relpath,
-            int                            destination_parent_fd,
-            const char                    *destination_name,
-            char                         **allowed_prefixes,
-            char                         **allowed_extensions,
-            gboolean                       require_exact_match,
-            GCancellable                  *cancellable,
-            GError                       **error)
+export_dir (int           source_parent_fd,
+            const char   *source_name,
+            const char   *source_relpath,
+            int           destination_parent_fd,
+            const char   *destination_name,
+            char        **allowed_prefixes,
+            char        **allowed_extensions,
+            gboolean      require_exact_match,
+            GCancellable *cancellable,
+            GError      **error)
 {
   int res;
 
@@ -196,14 +196,14 @@ export_dir (int                            source_parent_fd,
 }
 
 static gboolean
-copy_exports (GFile                         *source,
-              GFile                         *destination,
-              const char                    *source_prefix,
-              char                         **allowed_prefixes,
-              char                         **allowed_extensions,
-              gboolean                       require_exact_match,
-              GCancellable                  *cancellable,
-              GError                       **error)
+copy_exports (GFile        *source,
+              GFile        *destination,
+              const char   *source_prefix,
+              char        **allowed_prefixes,
+              char        **allowed_extensions,
+              gboolean      require_exact_match,
+              GCancellable *cancellable,
+              GError      **error)
 {
   if (!flatpak_mkdir_p (destination, cancellable, error))
     return FALSE;

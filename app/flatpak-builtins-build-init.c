@@ -67,7 +67,7 @@ static GOptionEntry options[] = {
 
 static gboolean
 ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
-                 char *src_extensions[], GFile *top_dir, GCancellable *cancellable, GError **error)
+                   char *src_extensions[], GFile *top_dir, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GKeyFile) metakey = flatpak_deploy_get_metadata (src_deploy);
   GList *extensions = NULL, *l;

@@ -47,14 +47,14 @@ flatpak_json_init (FlatpakJson *self)
 }
 
 static gboolean
-demarshal (JsonNode *parent_node,
-           const char *name,
-           gpointer dest,
-           FlatpakJsonPropType type,
-           gpointer type_data,
-           gpointer type_data2,
+demarshal (JsonNode            *parent_node,
+           const char          *name,
+           gpointer             dest,
+           FlatpakJsonPropType  type,
+           gpointer             type_data,
+           gpointer             type_data2,
            FlatpakJsonPropFlags flags,
-           GError **error)
+           GError             **error)
 {
   JsonObject *parent_object;
   JsonNode *node;
@@ -87,7 +87,7 @@ demarshal (JsonNode *parent_node,
                        "Expecting string for property %s", name);
           return FALSE;
         }
-      *(char **)dest = g_strdup (json_node_get_string (node));
+      *(char **) dest = g_strdup (json_node_get_string (node));
       break;
 
     case FLATPAK_JSON_PROP_TYPE_INT64:
@@ -98,7 +98,7 @@ demarshal (JsonNode *parent_node,
                        "Expecting int64 for property %s", name);
           return FALSE;
         }
-      *(gint64 *)dest = json_node_get_int (node);
+      *(gint64 *) dest = json_node_get_int (node);
       break;
 
     case FLATPAK_JSON_PROP_TYPE_BOOL:
@@ -109,7 +109,7 @@ demarshal (JsonNode *parent_node,
                        "Expecting bool for property %s", name);
           return FALSE;
         }
-      *(gboolean *)dest = json_node_get_boolean (node);
+      *(gboolean *) dest = json_node_get_boolean (node);
       break;
 
     case FLATPAK_JSON_PROP_TYPE_STRV:
@@ -136,7 +136,7 @@ demarshal (JsonNode *parent_node,
           }
 
         g_ptr_array_add (str_array, NULL);
-        *(char ***)dest = (char **)g_ptr_array_free (g_steal_pointer (&str_array), FALSE);
+        *(char ***) dest = (char **) g_ptr_array_free (g_steal_pointer (&str_array), FALSE);
       }
 
       break;
@@ -212,7 +212,7 @@ demarshal (JsonNode *parent_node,
                 break;
               }
 
-            new_element = g_malloc0 ((gsize)type_data2);
+            new_element = g_malloc0 ((gsize) type_data2);
             g_ptr_array_add (obj_array, new_element);
 
             for (i = 0; struct_props[i].name != NULL; i++)
@@ -234,7 +234,7 @@ demarshal (JsonNode *parent_node,
 
         /* We always set the array, even if it is partial, because we don't know how
            to free what we demarshalled so far */
-        *(gpointer *)dest = (gpointer *)g_ptr_array_free (g_steal_pointer (&obj_array), FALSE);
+        *(gpointer *) dest = (gpointer *) g_ptr_array_free (g_steal_pointer (&obj_array), FALSE);
         return res;
       }
       break;
@@ -273,7 +273,7 @@ demarshal (JsonNode *parent_node,
             g_hash_table_insert (h, g_strdup (member_name), g_strdup (val_str));
           }
 
-        *(GHashTable **)dest = g_steal_pointer (&h);
+        *(GHashTable **) dest = g_steal_pointer (&h);
       }
       break;
 
@@ -300,7 +300,7 @@ demarshal (JsonNode *parent_node,
 
         g_ptr_array_add (res, NULL);
 
-        *(char ***)dest =  (char **)g_ptr_array_free (g_steal_pointer (&res), FALSE);
+        *(char ***) dest =  (char **) g_ptr_array_free (g_steal_pointer (&res), FALSE);
       }
       break;
 
@@ -352,9 +352,9 @@ flatpak_json_from_node (JsonNode *node, GType type, GError **error)
 }
 
 FlatpakJson *
-flatpak_json_from_bytes (GBytes         *bytes,
-                        GType           type,
-                        GError        **error)
+flatpak_json_from_bytes (GBytes  *bytes,
+                         GType    type,
+                         GError **error)
 {
   g_autoptr(JsonParser) parser = NULL;
   JsonNode *root = NULL;
@@ -372,11 +372,11 @@ flatpak_json_from_bytes (GBytes         *bytes,
 }
 
 static JsonNode *
-marshal (JsonObject *parent,
-         const char *name,
-         gpointer src,
-         FlatpakJsonPropType type,
-         gpointer type_data,
+marshal (JsonObject          *parent,
+         const char          *name,
+         gpointer             src,
+         FlatpakJsonPropType  type,
+         gpointer             type_data,
          FlatpakJsonPropFlags flags)
 {
   JsonNode *retval = NULL;
@@ -385,7 +385,7 @@ marshal (JsonObject *parent,
     {
     case FLATPAK_JSON_PROP_TYPE_STRING:
       {
-        const char *str = *(const char **)src;
+        const char *str = *(const char **) src;
         if (str != NULL)
           retval = json_node_init_string (json_node_alloc (), str);
         break;
@@ -393,13 +393,13 @@ marshal (JsonObject *parent,
 
     case FLATPAK_JSON_PROP_TYPE_INT64:
       {
-        retval = json_node_init_int (json_node_alloc (), *(gint64 *)src);
+        retval = json_node_init_int (json_node_alloc (), *(gint64 *) src);
         break;
       }
 
     case FLATPAK_JSON_PROP_TYPE_BOOL:
       {
-        gboolean val = *(gboolean *)src;
+        gboolean val = *(gboolean *) src;
         if (val)
           retval = json_node_init_boolean (json_node_alloc (), val);
         break;
@@ -407,7 +407,7 @@ marshal (JsonObject *parent,
 
     case FLATPAK_JSON_PROP_TYPE_STRV:
       {
-        char **strv = *(char ***)src;
+        char **strv = *(char ***) src;
         int i;
         JsonArray *array;
 
@@ -466,7 +466,7 @@ marshal (JsonObject *parent,
     case FLATPAK_JSON_PROP_TYPE_STRUCTV:
       {
         FlatpakJsonProp *struct_props = type_data;
-        gpointer *structv = *(gpointer **)src;
+        gpointer *structv = *(gpointer **) src;
         int i, j;
         JsonArray *array;
 
@@ -504,7 +504,7 @@ marshal (JsonObject *parent,
 
     case FLATPAK_JSON_PROP_TYPE_STRMAP:
       {
-        GHashTable *map = *(GHashTable **)src;
+        GHashTable *map = *(GHashTable **) src;
 
         if (map != NULL && g_hash_table_size (map) > 0)
           {
@@ -533,7 +533,7 @@ marshal (JsonObject *parent,
 
     case FLATPAK_JSON_PROP_TYPE_BOOLMAP:
       {
-        char **map = *(char ***)src;
+        char **map = *(char ***) src;
 
         if (map != NULL && map[0] != NULL)
           {
@@ -566,9 +566,9 @@ marshal (JsonObject *parent,
 }
 
 static void
-marshal_props_for_class (FlatpakJson *self,
+marshal_props_for_class (FlatpakJson      *self,
                          FlatpakJsonClass *class,
-                         JsonObject *obj)
+                         JsonObject       *obj)
 {
   FlatpakJsonProp *props = NULL;
   int i;
@@ -578,7 +578,7 @@ marshal_props_for_class (FlatpakJson *self,
 
   if (FLATPAK_JSON_CLASS (parent_class)->props != NULL)
     marshal_props_for_class (self,
-                             FLATPAK_JSON_CLASS(parent_class),
+                             FLATPAK_JSON_CLASS (parent_class),
                              obj);
 
   props = FLATPAK_JSON_CLASS (class)->props;
@@ -617,7 +617,7 @@ flatpak_json_to_node (FlatpakJson *self)
 }
 
 GBytes *
-flatpak_json_to_bytes (FlatpakJson  *self)
+flatpak_json_to_bytes (FlatpakJson *self)
 {
   g_autoptr(JsonNode) node = NULL;
   g_autoptr(JsonGenerator) generator = NULL;

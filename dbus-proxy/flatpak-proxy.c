@@ -232,24 +232,24 @@ typedef struct
 } Header;
 
 typedef enum {
-  FILTER_TYPE_CALL = 1<<0,
-  FILTER_TYPE_BROADCAST = 1<<1,
+  FILTER_TYPE_CALL = 1 << 0,
+  FILTER_TYPE_BROADCAST = 1 << 1,
 } FilterTypeMask;
 
-#define FILTER_TYPE_ALL (FILTER_TYPE_CALL|FILTER_TYPE_BROADCAST)
+#define FILTER_TYPE_ALL (FILTER_TYPE_CALL | FILTER_TYPE_BROADCAST)
 
 typedef struct
 {
-  char *name;
-  gboolean name_is_subtree;
+  char         *name;
+  gboolean      name_is_subtree;
   FlatpakPolicy policy;
 
   /* More detailed filter */
   FilterTypeMask types;
-  char *path;
-  gboolean path_is_subtree;
-  char *interface;
-  char *member;
+  char          *path;
+  gboolean       path_is_subtree;
+  char          *interface;
+  char          *member;
 } Filter;
 
 static void header_free (Header *header);
@@ -352,7 +352,7 @@ static void stop_reading (ProxySide *side);
 static void
 string_list_free (GList *filters)
 {
-  g_list_free_full (filters, (GDestroyNotify)g_free);
+  g_list_free_full (filters, (GDestroyNotify) g_free);
 }
 
 static void
@@ -442,7 +442,7 @@ flatpak_proxy_client_init (FlatpakProxyClient *client)
   client->rewrite_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_object_unref);
   client->get_owner_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
   client->unique_id_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  client->unique_id_owned_names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)string_list_free);
+  client->unique_id_owned_names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) string_list_free);
 }
 
 static FlatpakProxyClient *
@@ -495,13 +495,13 @@ filter_free (Filter *filter)
 static void
 filter_list_free (GList *filters)
 {
-  g_list_free_full (filters, (GDestroyNotify)filter_free);
+  g_list_free_full (filters, (GDestroyNotify) filter_free);
 }
 
 
 static Filter *
-filter_new (const char *name,
-            gboolean name_is_subtree,
+filter_new (const char   *name,
+            gboolean      name_is_subtree,
             FlatpakPolicy policy)
 {
   Filter *filter = g_new0 (Filter, 1);
@@ -516,10 +516,10 @@ filter_new (const char *name,
 
 // rules are of the form [*|org.the.interface.[method|*]]|[@/obj/path[/*]]
 static Filter *
-filter_new_from_rule (const char *name,
-                      gboolean name_is_subtree,
+filter_new_from_rule (const char    *name,
+                      gboolean       name_is_subtree,
                       FilterTypeMask types,
-                      const char *rule)
+                      const char    *rule)
 {
   Filter *filter;
   const char *obj_path_start = NULL;
@@ -543,7 +543,7 @@ filter_new_from_rule (const char *name,
   if (obj_path_start != NULL)
     method_end = obj_path_start;
   else
-    method_end = rule + strlen(rule);
+    method_end = rule + strlen (rule);
 
   if (method_end != rule)
     {
@@ -558,7 +558,7 @@ filter_new_from_rule (const char *name,
           if (dot != NULL)
             {
               *dot = 0;
-              if (strcmp (dot+1, "*") != 0)
+              if (strcmp (dot + 1, "*") != 0)
                 filter->member = g_strdup (dot + 1);
             }
         }
@@ -568,11 +568,11 @@ filter_new_from_rule (const char *name,
 }
 
 static gboolean
-filter_matches (Filter *filter,
+filter_matches (Filter        *filter,
                 FilterTypeMask type,
-                const char *path,
-                const char *interface,
-                const char *member)
+                const char    *path,
+                const char    *interface,
+                const char    *member)
 {
   if ((filter->types & type) == 0)
     return FALSE;
@@ -603,11 +603,11 @@ filter_matches (Filter *filter,
 }
 
 static gboolean
-any_filter_matches (GList *filters,
+any_filter_matches (GList         *filters,
                     FilterTypeMask type,
-                    const char *path,
-                    const char *interface,
-                    const char *member)
+                    const char    *path,
+                    const char    *interface,
+                    const char    *member)
 {
   GList *l;
 
@@ -624,13 +624,13 @@ any_filter_matches (GList *filters,
 
 static void
 flatpak_proxy_add_filter (FlatpakProxy *proxy,
-                          Filter *filter)
+                          Filter       *filter)
 {
   GList *filters, *new_filters;
 
   if (g_hash_table_lookup_extended (proxy->filters,
                                     filter->name,
-                                    NULL, (void **)&filters))
+                                    NULL, (void **) &filters))
     {
       new_filters = g_list_append (filters, filter);
       g_assert (new_filters == filters);
@@ -645,7 +645,7 @@ flatpak_proxy_add_filter (FlatpakProxy *proxy,
 void
 flatpak_proxy_add_policy (FlatpakProxy *proxy,
                           const char   *name,
-                          gboolean name_is_subtree,
+                          gboolean      name_is_subtree,
                           FlatpakPolicy policy)
 {
   Filter *filter = filter_new (name, name_is_subtree, policy);
@@ -656,7 +656,7 @@ flatpak_proxy_add_policy (FlatpakProxy *proxy,
 void
 flatpak_proxy_add_call_rule (FlatpakProxy *proxy,
                              const char   *name,
-                             gboolean name_is_subtree,
+                             gboolean      name_is_subtree,
                              const char   *rule)
 {
   Filter *filter = filter_new_from_rule (name, name_is_subtree, FILTER_TYPE_CALL, rule);
@@ -667,7 +667,7 @@ flatpak_proxy_add_call_rule (FlatpakProxy *proxy,
 void
 flatpak_proxy_add_broadcast_rule (FlatpakProxy *proxy,
                                   const char   *name,
-                                  gboolean name_is_subtree,
+                                  gboolean      name_is_subtree,
                                   const char   *rule)
 {
   Filter *filter = filter_new_from_rule (name, name_is_subtree, FILTER_TYPE_BROADCAST, rule);
@@ -1134,6 +1134,7 @@ parse_header (Buffer *buffer, guint32 serial_offset, guint32 reply_serial_offset
   guint8 header_type;
   guint32 reply_serial_pos = 0;
   const char *signature;
+
   g_autoptr(Header) header = g_new0 (Header, 1);
 
   header->buffer = buffer_ref (buffer);
@@ -1402,13 +1403,13 @@ print_incoming_header (Header *header)
 }
 
 
-static Filter *match_all[FLATPAK_POLICY_OWN+1] = { NULL };
+static Filter *match_all[FLATPAK_POLICY_OWN + 1] = { NULL };
 
 
 static FlatpakPolicy
 flatpak_proxy_client_get_max_policy_and_matched (FlatpakProxyClient *client,
-                                                 const char *source,
-                                                 GList **matched_filters)
+                                                 const char         *source,
+                                                 GList             **matched_filters)
 {
   GList *names, *filters, *l;
   FlatpakPolicy max_policy = FLATPAK_POLICY_NONE;
@@ -1480,7 +1481,7 @@ flatpak_proxy_client_get_max_policy_and_matched (FlatpakProxyClient *client,
 
 static FlatpakPolicy
 flatpak_proxy_client_get_max_policy (FlatpakProxyClient *client,
-                                     const char *source)
+                                     const char         *source)
 {
   return flatpak_proxy_client_get_max_policy_and_matched (client, source, NULL);
 }
@@ -1511,7 +1512,7 @@ flatpak_proxy_client_add_unique_id_owned_name (FlatpakProxyClient *client,
   names = NULL;
   already_added = g_hash_table_lookup_extended (client->unique_id_owned_names,
                                                 unique_id,
-                                                NULL, (void **)&names);
+                                                NULL, (void **) &names);
   names = g_list_append (names, g_strdup (owned_name));
 
   if (!already_added)
@@ -1660,6 +1661,7 @@ get_dbus_method_handler (FlatpakProxyClient *client, Header *header)
 {
   FlatpakPolicy policy;
   const char *method;
+
   g_autoptr(GList) filters = NULL;
 
   if (header->has_reply_serial)
@@ -1773,6 +1775,7 @@ get_arg0_string (Buffer *buffer)
 {
   GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
   GVariant *body;
+
   g_autoptr(GVariant) arg0 = NULL;
   char *name = NULL;
 
@@ -2132,7 +2135,8 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
 
   if (client->authenticated && client->proxy->filter)
     {
-      g_autoptr(Header) header = NULL;;
+      g_autoptr(Header) header = NULL;
+      ;
       BusHandler handler;
 
       /* Filter and rewrite outgoing messages as needed */
@@ -2300,7 +2304,8 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
 {
   if (client->authenticated && client->proxy->filter)
     {
-      g_autoptr(Header) header = NULL;;
+      g_autoptr(Header) header = NULL;
+      ;
       GDBusMessage *rewritten;
       FlatpakPolicy policy;
       ExpectedReplyType expected_reply;
@@ -2506,7 +2511,7 @@ auth_line_is_valid (guint8 *line, guint8 *line_end)
 
   for (p = line; p < line_end; p++)
     {
-      if (!_DBUS_ISASCII(*p))
+      if (!_DBUS_ISASCII (*p))
         return FALSE;
 
       /* Technically, the dbus spec allows all ASCII characters, but for robustness we also
@@ -2531,14 +2536,14 @@ auth_line_is_begin (guint8 *line)
 {
   guint8 next_char;
 
-  if (!g_str_has_prefix ((char *)line, AUTH_BEGIN))
+  if (!g_str_has_prefix ((char *) line, AUTH_BEGIN))
     return FALSE;
 
   /* dbus-daemon accepts either nothing, or a whitespace followed by anything as end of auth */
   next_char = line[strlen (AUTH_BEGIN)];
-  return (next_char == 0 ||
-          next_char == ' ' ||
-          next_char == '\t');
+  return next_char == 0 ||
+         next_char == ' ' ||
+         next_char == '\t';
 }
 
 static gssize
@@ -2577,7 +2582,7 @@ find_auth_end (FlatpakProxyClient *client, Buffer *buffer)
           g_byte_array_remove_range (client->auth_buffer, 0, offset);
 
           /* Abort if more than 16k before newline, similar to what dbus-daemon does */
-          if (client->auth_buffer->len >= 16*1024)
+          if (client->auth_buffer->len >= 16 * 1024)
             return FIND_AUTH_END_ABORT;
 
           return FIND_AUTH_END_CONTINUE;
@@ -2608,7 +2613,7 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
       if (!buffer_read (side, buffer, socket))
         {
           if (buffer != side->current_read_buffer)
-              buffer_unref (buffer);
+            buffer_unref (buffer);
           break;
         }
 
@@ -2766,7 +2771,7 @@ flatpak_proxy_incoming (GSocketService    *service,
 static void
 flatpak_proxy_init (FlatpakProxy *proxy)
 {
-  proxy->filters = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)filter_list_free);
+  proxy->filters = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) filter_list_free);
   flatpak_proxy_add_policy (proxy, "org.freedesktop.DBus", FALSE, FLATPAK_POLICY_TALK);
 }
 

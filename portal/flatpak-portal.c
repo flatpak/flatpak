@@ -33,7 +33,7 @@
 #include "flatpak-portal-app-info.h"
 #include "flatpak-portal-error.h"
 
-#define IDLE_TIMEOUT_SECS 10*60
+#define IDLE_TIMEOUT_SECS 10 * 60
 
 static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
@@ -54,6 +54,7 @@ static gboolean
 unref_skeleton_in_timeout_cb (gpointer user_data)
 {
   static gboolean unreffed = FALSE;
+
   g_debug ("unreffing portal main ref");
   if (!unreffed)
     {
@@ -98,7 +99,7 @@ G_LOCK_DEFINE_STATIC (idle);
 static void
 schedule_idle_callback (void)
 {
-  G_LOCK(idle);
+  G_LOCK (idle);
 
   if (!no_idle_exit)
     {
@@ -108,11 +109,12 @@ schedule_idle_callback (void)
       idle_timeout_id = g_timeout_add_seconds (IDLE_TIMEOUT_SECS, idle_timeout_cb, NULL);
     }
 
-  G_UNLOCK(idle);
+  G_UNLOCK (idle);
 }
 
-typedef struct {
-  GPid pid;
+typedef struct
+{
+  GPid  pid;
   char *client;
   guint child_watch;
 } PidData;
@@ -130,6 +132,7 @@ child_watch_died (GPid     pid,
                   gpointer user_data)
 {
   PidData *pid_data = user_data;
+
   g_autoptr(GVariant) signal_variant = NULL;
 
   g_debug ("Client Pid %d died", pid_data->pid);
@@ -144,29 +147,31 @@ child_watch_died (GPid     pid,
                                  NULL);
 
   /* This frees the pid_data, so be careful */
-  g_hash_table_remove (client_pid_data_hash, GUINT_TO_POINTER(pid_data->pid));
+  g_hash_table_remove (client_pid_data_hash, GUINT_TO_POINTER (pid_data->pid));
 
   /* This might have caused us to go to idle (zero children) */
   schedule_idle_callback ();
 }
 
-typedef struct {
+typedef struct
+{
   int from;
   int to;
   int final;
 } FdMapEntry;
 
-typedef struct {
+typedef struct
+{
   FdMapEntry *fd_map;
-  int fd_map_len;
-  gboolean set_tty;
-  int tty;
+  int         fd_map_len;
+  gboolean    set_tty;
+  int         tty;
 } ChildSetupData;
 
 static void
 child_setup_func (gpointer user_data)
 {
-  ChildSetupData *data = (ChildSetupData *)user_data;
+  ChildSetupData *data = (ChildSetupData *) user_data;
   FdMapEntry *fd_map = data->fd_map;
   sigset_t set;
   int i;
@@ -177,7 +182,7 @@ child_setup_func (gpointer user_data)
     {
       g_error ("Failed to unblock signals when starting child");
       return;
-  }
+    }
 
   /* Reset the handlers for all signals to their defaults. */
   for (i = 1; i < NSIG; i++)
@@ -241,7 +246,7 @@ is_valid_expose (const char *expose)
 static char *
 filesystem_sandbox_arg (const char *path,
                         const char *sandbox,
-                        gboolean readonly)
+                        gboolean    readonly)
 {
   g_autoptr(GString) s = g_string_new ("--filesystem=");
   const char *p;
@@ -271,15 +276,15 @@ filesystem_sandbox_arg (const char *path,
 }
 
 static gboolean
-handle_spawn (PortalFlatpak *object,
+handle_spawn (PortalFlatpak         *object,
               GDBusMethodInvocation *invocation,
-              GUnixFDList *fd_list,
-              const gchar *arg_cwd_path,
-              const gchar *const *arg_argv,
-              GVariant *arg_fds,
-              GVariant *arg_envs,
-              guint arg_flags,
-              GVariant *arg_options)
+              GUnixFDList           *fd_list,
+              const gchar           *arg_cwd_path,
+              const gchar *const    *arg_argv,
+              GVariant              *arg_fds,
+              GVariant              *arg_envs,
+              guint                  arg_flags,
+              GVariant              *arg_options)
 {
   g_autoptr(GError) error = NULL;
   ChildSetupData child_setup_data = { NULL };
@@ -497,7 +502,7 @@ handle_spawn (PortalFlatpak *object,
 
   /* Inherit launcher network access from launcher, unless
      NO_NETWORK set. */
-  if (shares != NULL && g_strv_contains ((const char * const *)shares, "network") &&
+  if (shares != NULL && g_strv_contains ((const char * const *) shares, "network") &&
       !(arg_flags & FLATPAK_SPAWN_FLAGS_NO_NETWORK))
     g_ptr_array_add (flatpak_argv, g_strdup ("--share=network"));
   else
@@ -555,9 +560,9 @@ handle_spawn (PortalFlatpak *object,
     }
 
   if (!g_spawn_async_with_pipes (arg_cwd_path,
-                                 (char **)flatpak_argv->pdata,
+                                 (char **) flatpak_argv->pdata,
                                  env,
-                                 G_SPAWN_SEARCH_PATH|G_SPAWN_DO_NOT_REAP_CHILD,
+                                 G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
                                  child_setup_func, &child_setup_data,
                                  &pid,
                                  NULL,
@@ -587,7 +592,7 @@ handle_spawn (PortalFlatpak *object,
 
   g_debug ("Client Pid is %d", pid_data->pid);
 
-  g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER(pid_data->pid),
+  g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER (pid_data->pid),
                         pid_data);
 
   portal_flatpak_complete_spawn (object, invocation, NULL, pid);
@@ -595,17 +600,17 @@ handle_spawn (PortalFlatpak *object,
 }
 
 static gboolean
-handle_spawn_signal (PortalFlatpak *object,
+handle_spawn_signal (PortalFlatpak         *object,
                      GDBusMethodInvocation *invocation,
-                     guint arg_pid,
-                     guint arg_signal,
-                     gboolean arg_to_process_group)
+                     guint                  arg_pid,
+                     guint                  arg_signal,
+                     gboolean               arg_to_process_group)
 {
   PidData *pid_data = NULL;
 
   g_debug ("spawn_signal(%d %d)", arg_pid, arg_signal);
 
-  pid_data = g_hash_table_lookup (client_pid_data_hash, GUINT_TO_POINTER(arg_pid));
+  pid_data = g_hash_table_lookup (client_pid_data_hash, GUINT_TO_POINTER (arg_pid));
   if (pid_data == NULL ||
       strcmp (pid_data->client, g_dbus_method_invocation_get_sender (invocation)) != 0)
     {
@@ -657,7 +662,7 @@ authorize_method_handler (GDBusInterfaceSkeleton *interface,
       return FALSE;
     }
 
-  g_object_set_data_full (G_OBJECT (invocation), "app-info", g_steal_pointer (&keyfile), (GDestroyNotify)g_key_file_unref);
+  g_object_set_data_full (G_OBJECT (invocation), "app-info", g_steal_pointer (&keyfile), (GDestroyNotify) g_key_file_unref);
 
   return TRUE;
 }
@@ -673,7 +678,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   portal = portal_flatpak_skeleton_new ();
 
-  g_object_set_data_full (G_OBJECT(portal), "track-alive", GINT_TO_POINTER(42), skeleton_died_cb);
+  g_object_set_data_full (G_OBJECT (portal), "track-alive", GINT_TO_POINTER (42), skeleton_died_cb);
 
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
@@ -712,11 +717,11 @@ on_name_lost (GDBusConnection *connection,
 }
 
 static void
-binary_file_changed_cb (GFileMonitor *file_monitor,
-                        GFile *file,
-                        GFile *other_file,
+binary_file_changed_cb (GFileMonitor     *file_monitor,
+                        GFile            *file,
+                        GFile            *other_file,
                         GFileMonitorEvent event_type,
-                        gpointer data)
+                        gpointer          data)
 {
   static gboolean got_it = FALSE;
 
@@ -747,12 +752,13 @@ int
 main (int    argc,
       char **argv)
 {
-  gchar exe_path[PATH_MAX+1];
+  gchar exe_path[PATH_MAX + 1];
   ssize_t exe_path_len;
   gboolean replace;
   gboolean show_version;
   GOptionContext *context;
   GBusNameOwnerFlags flags;
+
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
@@ -781,7 +787,7 @@ main (int    argc,
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      g_printerr ("%s: %s", g_get_application_name(), error->message);
+      g_printerr ("%s: %s", g_get_application_name (), error->message);
       g_printerr ("\n");
       g_printerr ("Try \"%s --help\" for more information.",
                   g_get_prgname ());
@@ -799,7 +805,7 @@ main (int    argc,
   if (opt_verbose)
     g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
-  client_pid_data_hash = g_hash_table_new_full (NULL, NULL, NULL, (GDestroyNotify)pid_data_free);
+  client_pid_data_hash = g_hash_table_new_full (NULL, NULL, NULL, (GDestroyNotify) pid_data_free);
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
@@ -835,13 +841,13 @@ main (int    argc,
     flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
 
   name_owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
-                             "org.freedesktop.portal.Flatpak",
-                             flags,
-                             on_bus_acquired,
-                             on_name_acquired,
-                             on_name_lost,
-                             NULL,
-                             NULL);
+                                  "org.freedesktop.portal.Flatpak",
+                                  flags,
+                                  on_bus_acquired,
+                                  on_name_acquired,
+                                  on_name_lost,
+                                  NULL,
+                                  NULL);
 
   /* Ensure we don't idle exit */
   schedule_idle_callback ();

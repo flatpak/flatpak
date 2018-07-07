@@ -47,10 +47,10 @@ typedef enum {
 } FsckStatus;
 
 static FsckStatus
-fsck_one_object (OstreeRepo            *repo,
-                 const char            *checksum,
-                 OstreeObjectType       objtype,
-                 gboolean               allow_missing)
+fsck_one_object (OstreeRepo      *repo,
+                 const char      *checksum,
+                 OstreeObjectType objtype,
+                 gboolean         allow_missing)
 {
   g_autoptr(GError) local_error = NULL;
 
@@ -77,10 +77,10 @@ fsck_one_object (OstreeRepo            *repo,
 
 /* This is used for leaf object types */
 static FsckStatus
-fsck_leaf_object (OstreeRepo            *repo,
-                  const char            *checksum,
-                  OstreeObjectType       objtype,
-                  GHashTable            *object_status_cache)
+fsck_leaf_object (OstreeRepo      *repo,
+                  const char      *checksum,
+                  OstreeObjectType objtype,
+                  GHashTable      *object_status_cache)
 {
   g_autoptr(GVariant) key = NULL;
   gpointer cached_status;
@@ -103,19 +103,20 @@ fsck_leaf_object (OstreeRepo            *repo,
 
 
 static FsckStatus
-fsck_dirtree (OstreeRepo            *repo,
-              gboolean               partial,
-              const char            *checksum,
-              GHashTable            *object_status_cache)
+fsck_dirtree (OstreeRepo *repo,
+              gboolean    partial,
+              const char *checksum,
+              GHashTable *object_status_cache)
 {
   OstreeRepoCommitIterResult iterres;
+
   g_autoptr(GError) local_error = NULL;
   FsckStatus status = 0;
   g_autoptr(GVariant) key = NULL;
   g_autoptr(GVariant) dirtree = NULL;
   gpointer cached_status;
   ostree_cleanup_repo_commit_traverse_iter
-    OstreeRepoCommitTraverseIter iter = { 0, };
+  OstreeRepoCommitTraverseIter iter = { 0, };
 
   key = g_variant_ref_sink (ostree_object_name_serialize (checksum, OSTREE_OBJECT_TYPE_DIR_TREE));
   if (g_hash_table_lookup_extended (object_status_cache, key, NULL, &cached_status))
@@ -188,9 +189,9 @@ fsck_dirtree (OstreeRepo            *repo,
 }
 
 static FsckStatus
-fsck_commit (OstreeRepo            *repo,
-             const char            *checksum,
-             GHashTable            *object_status_cache)
+fsck_commit (OstreeRepo *repo,
+             const char *checksum,
+             GHashTable *object_status_cache)
 {
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GVariant) commit = NULL;
@@ -235,9 +236,9 @@ fsck_commit (OstreeRepo            *repo,
 }
 
 static void
-transaction_add_local_ref (FlatpakDir *dir,
+transaction_add_local_ref (FlatpakDir         *dir,
                            FlatpakTransaction *transaction,
-                           const char *ref)
+                           const char         *ref)
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(GError) local_error = NULL;
@@ -313,7 +314,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
    */
 
   object_status_cache = g_hash_table_new_full (ostree_hash_object_name, g_variant_equal,
-                                               (GDestroyNotify)g_variant_unref, NULL);
+                                               (GDestroyNotify) g_variant_unref, NULL);
 
   invalid_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
@@ -322,38 +323,38 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
                               cancellable, error))
     return FALSE;
 
-  GLNX_HASH_TABLE_FOREACH_KV(all_refs, const char *, refspec, const char *, checksum)
-    {
-      g_autofree char *remote = NULL;
-      g_autofree char *ref_name = NULL;
-      FsckStatus status;
+  GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, refspec, const char *, checksum)
+  {
+    g_autofree char *remote = NULL;
+    g_autofree char *ref_name = NULL;
+    FsckStatus status;
 
-      if (!ostree_parse_refspec (refspec, &remote, &ref_name, error))
-        return FALSE;
+    if (!ostree_parse_refspec (refspec, &remote, &ref_name, error))
+      return FALSE;
 
-      /* Does this look like a regular ref? */
-      if (g_str_has_prefix (ref_name, "app/") || g_str_has_prefix (ref_name, "runtime/"))
-        {
-          g_autofree char *origin = flatpak_dir_get_origin (dir, ref_name, cancellable, NULL);
+    /* Does this look like a regular ref? */
+    if (g_str_has_prefix (ref_name, "app/") || g_str_has_prefix (ref_name, "runtime/"))
+      {
+        g_autofree char *origin = flatpak_dir_get_origin (dir, ref_name, cancellable, NULL);
 
-          /* If so, is it deployed, and from this remote? */
-          if (remote == NULL || g_strcmp0 (origin, remote) != 0)
-            {
-              g_print (_("Removing non-deployed ref %s...\n"), refspec);
-              (void)ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
-              continue;
-            }
-        }
+        /* If so, is it deployed, and from this remote? */
+        if (remote == NULL || g_strcmp0 (origin, remote) != 0)
+          {
+            g_print (_("Removing non-deployed ref %s...\n"), refspec);
+            (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+            continue;
+          }
+      }
 
-      g_print (_("Verifying %s...\n"), refspec);
+    g_print (_("Verifying %s...\n"), refspec);
 
-      status = fsck_commit (repo, checksum, object_status_cache);
-      if (status != FSCK_STATUS_OK)
-        {
-          g_printerr (_("Deleting ref %s due to missing objects\n"), refspec);
-          (void)ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
-        }
-    }
+    status = fsck_commit (repo, checksum, object_status_cache);
+    if (status != FSCK_STATUS_OK)
+      {
+        g_printerr (_("Deleting ref %s due to missing objects\n"), refspec);
+        (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+      }
+  }
 
   g_print (_("Pruning objects\n"));
 

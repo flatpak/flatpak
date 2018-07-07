@@ -75,6 +75,7 @@ parse_app_id_from_fileinfo (int pid)
   glnx_autofd int root_fd = -1;
   glnx_autofd int info_fd = -1;
   struct stat stat_buf;
+
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GMappedFile) mapped = NULL;
   g_autoptr(GKeyFile) metadata = NULL;
@@ -84,7 +85,7 @@ parse_app_id_from_fileinfo (int pid)
   if (root_fd == -1)
     {
       /* Not able to open the root dir shouldn't happen. Probably the app died and
-         *we're failing due to /proc/$pid not existing. In that case fail instead
+       * we're failing due to /proc/$pid not existing. In that case fail instead
          of treating this as privileged. */
       g_debug ("Unable to open %s", root_path);
       return NULL;
@@ -109,7 +110,7 @@ parse_app_id_from_fileinfo (int pid)
   if (fstat (info_fd, &stat_buf) != 0 || !S_ISREG (stat_buf.st_mode))
     return NULL; /* Some weird fd => failure */
 
-  mapped = g_mapped_file_new_from_fd  (info_fd, FALSE, &local_error);
+  mapped = g_mapped_file_new_from_fd (info_fd, FALSE, &local_error);
   if (mapped == NULL)
     {
       g_warning ("Can't map .flatpak-info file: %s", local_error->message);
@@ -135,6 +136,7 @@ flatpak_invocation_lookup_app_info (GDBusMethodInvocation *invocation,
 {
   GDBusConnection *connection = g_dbus_method_invocation_get_connection (invocation);
   const gchar *sender = g_dbus_method_invocation_get_sender (invocation);
+
   g_autoptr(GDBusMessage) msg = NULL;
   g_autoptr(GDBusMessage) reply = NULL;
   g_autoptr(GVariantIter) iter = NULL;

@@ -89,7 +89,7 @@ flatpak_context_new (void)
   context->session_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->generic_policy = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                                   g_free, (GDestroyNotify)g_strfreev);
+                                                   g_free, (GDestroyNotify) g_strfreev);
 
   return context;
 }
@@ -172,7 +172,7 @@ flatpak_context_share_from_string (const char *string, GError **error)
 
   if (shares == 0)
     {
-      g_autofree char *values = g_strjoinv (", ", (char **)flatpak_context_shares);
+      g_autofree char *values = g_strjoinv (", ", (char **) flatpak_context_shares);
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                    _("Unknown share type %s, valid types are: %s"), string, values);
     }
@@ -189,7 +189,7 @@ flatpak_context_shared_to_string (FlatpakContextShares shares, FlatpakContextSha
 static void
 flatpak_context_shared_to_args (FlatpakContextShares shares,
                                 FlatpakContextShares valid,
-                                GPtrArray *args)
+                                GPtrArray           *args)
 {
   return flatpak_context_bitmask_to_args (shares, valid, flatpak_context_shares, "--share", "--unshare", args);
 }
@@ -207,7 +207,7 @@ flatpak_policy_from_string (const char *string, GError **error)
         return i;
     }
 
-  values = g_strjoinv (", ", (char **)policies);
+  values = g_strjoinv (", ", (char **) policies);
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                _("Unknown policy type %s, valid types are: %s"), string, values);
 
@@ -258,7 +258,7 @@ flatpak_context_socket_from_string (const char *string, GError **error)
 
   if (sockets == 0)
     {
-      g_autofree char *values = g_strjoinv (", ", (char **)flatpak_context_sockets);
+      g_autofree char *values = g_strjoinv (", ", (char **) flatpak_context_sockets);
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                    _("Unknown socket type %s, valid types are: %s"), string, values);
     }
@@ -275,7 +275,7 @@ flatpak_context_sockets_to_string (FlatpakContextSockets sockets, FlatpakContext
 static void
 flatpak_context_sockets_to_args (FlatpakContextSockets sockets,
                                  FlatpakContextSockets valid,
-                                 GPtrArray *args)
+                                 GPtrArray            *args)
 {
   return flatpak_context_bitmask_to_args (sockets, valid, flatpak_context_sockets, "--socket", "--nosocket", args);
 }
@@ -287,7 +287,7 @@ flatpak_context_device_from_string (const char *string, GError **error)
 
   if (devices == 0)
     {
-      g_autofree char *values = g_strjoinv (", ", (char **)flatpak_context_devices);
+      g_autofree char *values = g_strjoinv (", ", (char **) flatpak_context_devices);
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                    _("Unknown device type %s, valid types are: %s"), string, values);
     }
@@ -303,7 +303,7 @@ flatpak_context_devices_to_string (FlatpakContextDevices devices, FlatpakContext
 static void
 flatpak_context_devices_to_args (FlatpakContextDevices devices,
                                  FlatpakContextDevices valid,
-                                 GPtrArray *args)
+                                 GPtrArray            *args)
 {
   return flatpak_context_bitmask_to_args (devices, valid, flatpak_context_devices, "--device", "--nodevice", args);
 }
@@ -315,7 +315,7 @@ flatpak_context_feature_from_string (const char *string, GError **error)
 
   if (feature == 0)
     {
-      g_autofree char *values = g_strjoinv (", ", (char **)flatpak_context_features);
+      g_autofree char *values = g_strjoinv (", ", (char **) flatpak_context_features);
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                    _("Unknown feature type %s, valid types are: %s"), string, values);
     }
@@ -331,8 +331,8 @@ flatpak_context_features_to_string (FlatpakContextFeatures features, FlatpakCont
 
 static void
 flatpak_context_features_to_args (FlatpakContextFeatures features,
-                                FlatpakContextFeatures valid,
-                                GPtrArray *args)
+                                  FlatpakContextFeatures valid,
+                                  GPtrArray             *args)
 {
   return flatpak_context_bitmask_to_args (features, valid, flatpak_context_features, "--allow", "--disallow", args);
 }
@@ -386,16 +386,16 @@ flatpak_context_remove_devices (FlatpakContext       *context,
 }
 
 static void
-flatpak_context_add_features (FlatpakContext       *context,
-                           FlatpakContextFeatures   features)
+flatpak_context_add_features (FlatpakContext        *context,
+                              FlatpakContextFeatures features)
 {
   context->features_valid |= features;
   context->features |= features;
 }
 
 static void
-flatpak_context_remove_features (FlatpakContext       *context,
-                               FlatpakContextFeatures  features)
+flatpak_context_remove_features (FlatpakContext        *context,
+                                 FlatpakContextFeatures features)
 {
   context->features_valid |= features;
   context->features &= ~features;
@@ -422,6 +422,7 @@ flatpak_context_get_session_bus_policy_allowed_own_names (FlatpakContext *contex
 {
   GHashTableIter iter;
   gpointer key, value;
+
   g_autoptr(GPtrArray) names = g_ptr_array_new_with_free_func (g_free);
 
   g_hash_table_iter_init (&iter, context->session_bus_policy);
@@ -481,7 +482,7 @@ flatpak_context_set_persistent (FlatpakContext *context,
 }
 
 static gboolean
-get_xdg_dir_from_prefix (const char *prefix,
+get_xdg_dir_from_prefix (const char  *prefix,
                          const char **where,
                          const char **dir)
 {
@@ -515,7 +516,7 @@ get_xdg_dir_from_prefix (const char *prefix,
 /* This looks only in the xdg dirs (config, cache, data), not the user
    definable ones */
 static char *
-get_xdg_dir_from_string (const char *filesystem,
+get_xdg_dir_from_string (const char  *filesystem,
                          const char **suffix,
                          const char **where)
 {
@@ -659,7 +660,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
 }
 
 static char *
-unparse_filesystem_flags (const char *path,
+unparse_filesystem_flags (const char           *path,
                           FlatpakFilesystemMode mode)
 {
   g_autoptr(GString) s = g_string_new ("");
@@ -680,11 +681,14 @@ unparse_filesystem_flags (const char *path,
     case FLATPAK_FILESYSTEM_MODE_READ_ONLY:
       g_string_append (s, ":ro");
       break;
+
     case FLATPAK_FILESYSTEM_MODE_CREATE:
       g_string_append (s, ":create");
       break;
+
     case FLATPAK_FILESYSTEM_MODE_READ_WRITE:
       break;
+
     default:
       g_warning ("Unexpected filesystem mode %d", mode);
       break;
@@ -694,7 +698,7 @@ unparse_filesystem_flags (const char *path,
 }
 
 static char *
-parse_filesystem_flags (const char *filesystem,
+parse_filesystem_flags (const char            *filesystem,
                         FlatpakFilesystemMode *mode_out)
 {
   g_autoptr(GString) s = g_string_new ("");
@@ -824,11 +828,11 @@ flatpak_context_merge (FlatpakContext *context,
   g_hash_table_iter_init (&iter, other->generic_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      const char **policy_values = (const char **)value;
+      const char **policy_values = (const char **) value;
       int i;
 
       for (i = 0; policy_values[i] != NULL; i++)
-        flatpak_context_apply_generic_policy (context, (char *)key, policy_values[i]);
+        flatpak_context_apply_generic_policy (context, (char *) key, policy_values[i]);
     }
 
 }
@@ -1242,6 +1246,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
                                GError        **error)
 {
   gboolean remove;
+
   g_auto(GStrv) groups = NULL;
   int i;
 
@@ -1317,7 +1322,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FEATURES, NULL))
     {
       g_auto(GStrv) features = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
-                                                         FLATPAK_METADATA_KEY_FEATURES, NULL, error);
+                                                           FLATPAK_METADATA_KEY_FEATURES, NULL, error);
       if (features == NULL)
         return FALSE;
 
@@ -1491,7 +1496,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
       /* A flattened format means we don't expect this to be merged on top of
          another context. In that case we never need to negate any flags.
          We calculate this by removing the zero parts of the mask from the valid set.
-      */
+       */
       /* First we make sure only the valid parts of the mask are set, in case we
          got some leftover */
       shares_mask &= shares_valid;
@@ -1659,10 +1664,10 @@ flatpak_context_save_metadata (FlatpakContext *context,
   g_hash_table_iter_init (&iter, context->generic_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      g_auto(GStrv) parts = g_strsplit ((const char *)key, ".", 2);
+      g_auto(GStrv) parts = g_strsplit ((const char *) key, ".", 2);
       g_autofree char *group = NULL;
       g_assert (parts[1] != NULL);
-      const char **policy_values = (const char **)value;
+      const char **policy_values = (const char **) value;
       g_autoptr(GPtrArray) new = g_ptr_array_new ();
 
       for (i = 0; policy_values[i] != NULL; i++)
@@ -1670,7 +1675,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
           const char *policy_value = policy_values[i];
 
           if (!flatten || policy_value[0] != '!')
-            g_ptr_array_add (new, (char *)policy_value);
+            g_ptr_array_add (new, (char *) policy_value);
         }
 
       if (new->len > 0)
@@ -1678,7 +1683,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
           group = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_POLICY,
                                parts[0], NULL);
           g_key_file_set_string_list (metakey, group, parts[1],
-                                      (const char * const*)new->pdata,
+                                      (const char * const *) new->pdata,
                                       new->len);
         }
     }
@@ -1703,7 +1708,7 @@ flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context)
 }
 
 gboolean
-flatpak_context_allows_features (FlatpakContext *context,
+flatpak_context_allows_features (FlatpakContext        *context,
                                  FlatpakContextFeatures features)
 {
   return (context->features & features) == features;
@@ -1711,7 +1716,7 @@ flatpak_context_allows_features (FlatpakContext *context,
 
 void
 flatpak_context_to_args (FlatpakContext *context,
-                         GPtrArray *args)
+                         GPtrArray      *args)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -1723,11 +1728,11 @@ flatpak_context_to_args (FlatpakContext *context,
 
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
-    g_ptr_array_add (args, g_strdup_printf ("--env=%s=%s", (char *)key, (char *)value));
+    g_ptr_array_add (args, g_strdup_printf ("--env=%s=%s", (char *) key, (char *) value));
 
   g_hash_table_iter_init (&iter, context->persistent);
   while (g_hash_table_iter_next (&iter, &key, &value))
-    g_ptr_array_add (args, g_strdup_printf ("--persist=%s", (char *)key));
+    g_ptr_array_add (args, g_strdup_printf ("--persist=%s", (char *) key));
 
   g_hash_table_iter_init (&iter, context->session_bus_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -1758,7 +1763,7 @@ flatpak_context_to_args (FlatpakContext *context,
           g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", fs));
         }
       else
-        g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", (char *)key));
+        g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", (char *) key));
     }
 }
 
@@ -1844,10 +1849,10 @@ const char *dont_mount_in_root[] = {
 static void
 flatpak_context_export (FlatpakContext *context,
                         FlatpakExports *exports,
-                        GFile *app_id_dir,
-                        gboolean do_create,
-                        GString *xdg_dirs_conf,
-                        gboolean *home_access_out)
+                        GFile          *app_id_dir,
+                        gboolean        do_create,
+                        GString        *xdg_dirs_conf,
+                        gboolean       *home_access_out)
 {
   gboolean home_access = FALSE;
   FlatpakFilesystemMode fs_mode, home_mode;
@@ -1982,7 +1987,7 @@ flatpak_context_export (FlatpakContext *context,
 
 FlatpakExports *
 flatpak_context_get_exports (FlatpakContext *context,
-                             const char *app_id)
+                             const char     *app_id)
 {
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autoptr(GFile) app_id_dir = flatpak_get_data_dir (app_id);
@@ -2009,10 +2014,10 @@ flatpak_context_get_run_flags (FlatpakContext *context)
 }
 
 void
-flatpak_context_append_bwrap_filesystem (FlatpakContext *context,
-                                         FlatpakBwrap *bwrap,
-                                         const char *app_id,
-                                         GFile *app_id_dir,
+flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
+                                         FlatpakBwrap    *bwrap,
+                                         const char      *app_id,
+                                         GFile           *app_id_dir,
                                          FlatpakExports **exports_out)
 {
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();

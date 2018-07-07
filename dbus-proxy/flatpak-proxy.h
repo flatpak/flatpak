@@ -51,16 +51,16 @@ void         flatpak_proxy_set_sloppy_names (FlatpakProxy *proxy,
                                              gboolean      sloppy_names);
 void         flatpak_proxy_add_policy (FlatpakProxy *proxy,
                                        const char   *name,
-                                       gboolean name_is_subtree,
+                                       gboolean      name_is_subtree,
                                        FlatpakPolicy policy);
 void         flatpak_proxy_add_call_rule (FlatpakProxy *proxy,
                                           const char   *name,
-                                          gboolean name_is_subtree,
+                                          gboolean      name_is_subtree,
                                           const char   *rule);
 void         flatpak_proxy_add_broadcast_rule (FlatpakProxy *proxy,
                                                const char   *name,
-                                               gboolean name_is_subtree,
-                                          const char   *rule);
+                                               gboolean      name_is_subtree,
+                                               const char   *rule);
 gboolean     flatpak_proxy_start (FlatpakProxy *proxy,
                                   GError      **error);
 void         flatpak_proxy_stop (FlatpakProxy *proxy);

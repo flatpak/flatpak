@@ -31,22 +31,24 @@
 #include <sys/ioctl.h>
 
 
-struct _FlatpakCliTransaction {
+struct _FlatpakCliTransaction
+{
   FlatpakTransaction parent;
 
-  char *name;
-  gboolean disable_interaction;
-  gboolean stop_on_first_error;
-  gboolean is_user;
-  gboolean aborted;
-  GError *first_operation_error;
+  char              *name;
+  gboolean           disable_interaction;
+  gboolean           stop_on_first_error;
+  gboolean           is_user;
+  gboolean           aborted;
+  GError            *first_operation_error;
 
-  gboolean progress_initialized;
-  int progress_n_columns;
-  int progress_last_width;
+  gboolean           progress_initialized;
+  int                progress_n_columns;
+  int                progress_last_width;
 };
 
-struct _FlatpakCliTransactionClass {
+struct _FlatpakCliTransactionClass
+{
   FlatpakCliTransactionClass parent_class;
 };
 
@@ -54,12 +56,12 @@ G_DEFINE_TYPE (FlatpakCliTransaction, flatpak_cli_transaction, FLATPAK_TYPE_TRAN
 
 static int
 choose_remote_for_ref (FlatpakTransaction *transaction,
-                       const char *for_ref,
-                       const char *runtime_ref,
+                       const char         *for_ref,
+                       const char         *runtime_ref,
                        const char * const *remotes)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
-  int n_remotes = g_strv_length ((char **)remotes);
+  int n_remotes = g_strv_length ((char **) remotes);
   int chosen = -1;
   const char *pref;
   int i;
@@ -95,11 +97,11 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
 }
 
 static gboolean
-add_new_remote (FlatpakTransaction *transaction,
+add_new_remote (FlatpakTransaction            *transaction,
                 FlatpakTransactionRemoteReason reason,
-                const char *from_id,
-                const char *remote_name,
-                const char *url)
+                const char                    *from_id,
+                const char                    *remote_name,
+                const char                    *url)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
 
@@ -134,12 +136,16 @@ op_type_to_string (FlatpakTransactionOperationType operation_type)
     {
     case FLATPAK_TRANSACTION_OPERATION_INSTALL:
       return _("install");
+
     case FLATPAK_TRANSACTION_OPERATION_UPDATE:
       return _("update");
+
     case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
       return _("install bundle");
+
     case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
       return _("uninstall");
+
     default:
       return "Unknown type"; /* Should not happen */
     }
@@ -151,9 +157,10 @@ op_type_to_string (FlatpakTransactionOperationType operation_type)
 
 static void
 progress_changed_cb (FlatpakTransactionProgress *progress,
-                     gpointer data)
+                     gpointer                    data)
 {
   FlatpakCliTransaction *cli = data;
+
   g_autoptr(GString) str = g_string_new ("");
   int i;
   int n_full, remainder, partial;
@@ -176,10 +183,10 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
 
   n_full = (BAR_LENGTH * percent) / 100;
   remainder = percent - (n_full * 100 / BAR_LENGTH);
-  partial = (remainder * strlen(BAR_CHARS) * BAR_LENGTH) / 100;
+  partial = (remainder * strlen (BAR_CHARS) * BAR_LENGTH) / 100;
 
   for (i = 0; i < n_full; i++)
-    g_string_append_c (str, BAR_CHARS[strlen(BAR_CHARS)-1]);
+    g_string_append_c (str, BAR_CHARS[strlen (BAR_CHARS) - 1]);
 
   if (i < BAR_LENGTH)
     {
@@ -206,13 +213,13 @@ progress_done (FlatpakTransaction *transaction)
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
 
   if (self->progress_initialized)
-    g_print("\n");
+    g_print ("\n");
 }
 
 static void
-new_operation (FlatpakTransaction *transaction,
+new_operation (FlatpakTransaction          *transaction,
                FlatpakTransactionOperation *operation,
-               FlatpakTransactionProgress *progress)
+               FlatpakTransactionProgress  *progress)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   const char *pref;
@@ -232,12 +239,14 @@ new_operation (FlatpakTransaction *transaction,
       else
         g_print (_("Installing: %s from %s\n"), pref, remote);
       break;
+
     case FLATPAK_TRANSACTION_OPERATION_UPDATE:
       if (self->is_user)
         g_print (_("Updating for user: %s from %s\n"), pref, remote);
       else
         g_print (_("Updating: %s from %s\n"), pref, remote);
       break;
+
     case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
       {
         bundle_basename = g_file_get_basename (bundle);
@@ -247,12 +256,14 @@ new_operation (FlatpakTransaction *transaction,
           g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
       }
       break;
+
     case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
       if (self->is_user)
         g_print (_("Uninstalling for user: %s\n"), pref);
       else
         g_print (_("Uninstalling: %s\n"), pref);
       break;
+
     default:
       g_assert_not_reached ();
       break;
@@ -265,9 +276,9 @@ new_operation (FlatpakTransaction *transaction,
 }
 
 static void
-operation_done (FlatpakTransaction *transaction,
+operation_done (FlatpakTransaction          *transaction,
                 FlatpakTransactionOperation *operation,
-                FlatpakTransactionResult details)
+                FlatpakTransactionResult     details)
 {
   FlatpakTransactionOperationType operation_type = flatpak_transaction_operation_get_operation_type (operation);
   const char *commit = flatpak_transaction_operation_get_commit (operation);
@@ -285,9 +296,9 @@ operation_done (FlatpakTransaction *transaction,
 }
 
 static gboolean
-operation_error (FlatpakTransaction *transaction,
-                FlatpakTransactionOperation *operation,
-                 const GError *error,
+operation_error (FlatpakTransaction            *transaction,
+                 FlatpakTransactionOperation   *operation,
+                 const GError                  *error,
                  FlatpakTransactionErrorDetails detail)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
@@ -330,9 +341,9 @@ operation_error (FlatpakTransaction *transaction,
 
 static void
 end_of_lifed (FlatpakTransaction *transaction,
-                 const char *ref,
-                 const char *reason,
-                 const char *rebase)
+              const char         *ref,
+              const char         *reason,
+              const char         *rebase)
 {
   if (rebase)
     {
@@ -352,9 +363,9 @@ cmpstringp (const void *p1, const void *p2)
 }
 
 static void
-append_permissions (GPtrArray *permissions,
-                    GKeyFile *metadata,
-                    GKeyFile *old_metadata,
+append_permissions (GPtrArray  *permissions,
+                    GKeyFile   *metadata,
+                    GKeyFile   *old_metadata,
                     const char *group)
 {
   g_auto(GStrv) options = g_key_file_get_string_list (metadata, FLATPAK_METADATA_GROUP_CONTEXT, group, NULL, NULL);
@@ -375,7 +386,7 @@ append_permissions (GPtrArray *permissions,
       if (option[0] == '!')
         continue;
 
-      if (old_options && g_strv_contains ((const char * const*)old_options, option))
+      if (old_options && g_strv_contains ((const char * const *) old_options, option))
         continue;
 
       if (strcmp (group, FLATPAK_METADATA_KEY_DEVICES) == 0 && strcmp (option, "all") == 0)
@@ -386,10 +397,10 @@ append_permissions (GPtrArray *permissions,
 }
 
 static void
-append_bus (GPtrArray *talk,
-            GPtrArray *own,
-            GKeyFile *metadata,
-            GKeyFile *old_metadata,
+append_bus (GPtrArray  *talk,
+            GPtrArray  *own,
+            GKeyFile   *metadata,
+            GKeyFile   *old_metadata,
             const char *group)
 {
   g_auto(GStrv) keys = NULL;
@@ -425,8 +436,8 @@ append_bus (GPtrArray *talk,
 
 static void
 print_perm_line (FlatpakTablePrinter *printer,
-                 const char *title,
-                 GPtrArray *items)
+                 const char          *title,
+                 GPtrArray           *items)
 {
   g_autoptr(GString) res = g_string_new (NULL);
   int i;
@@ -439,7 +450,7 @@ print_perm_line (FlatpakTablePrinter *printer,
     {
       if (i != 0)
         g_string_append (res, ", ");
-      g_string_append (res, (char *)items->pdata[i]);
+      g_string_append (res, (char *) items->pdata[i]);
     }
 
   flatpak_table_printer_add_span (printer, res->str);
@@ -448,9 +459,9 @@ print_perm_line (FlatpakTablePrinter *printer,
 
 static void
 print_permissions (FlatpakTablePrinter *printer,
-                   GKeyFile *metadata,
-                   GKeyFile *old_metadata,
-                   const char *ref)
+                   GKeyFile            *metadata,
+                   GKeyFile            *old_metadata,
+                   const char          *ref)
 {
   g_autoptr(GPtrArray) permissions = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) files = g_ptr_array_new_with_free_func (g_free);
@@ -483,19 +494,19 @@ print_permissions (FlatpakTablePrinter *printer,
   append_bus (session_bus_talk, session_bus_own,
               metadata, old_metadata, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY);
   print_perm_line (printer,
-                   old_metadata ? _("new dbus access") :_("dbus access") ,
+                   old_metadata ? _("new dbus access") : _("dbus access"),
                    session_bus_talk);
   print_perm_line (printer,
-                   old_metadata ? _("new dbus ownership") :_("dbus ownership") ,
+                   old_metadata ? _("new dbus ownership") : _("dbus ownership"),
                    session_bus_own);
 
   append_bus (system_bus_talk, system_bus_own,
               metadata, old_metadata, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY);
   print_perm_line (printer,
-                   old_metadata ? _("new system dbus access") :_("system dbus access") ,
+                   old_metadata ? _("new system dbus access") : _("system dbus access"),
                    system_bus_talk);
   print_perm_line (printer,
-                   old_metadata ? _("new system dbus ownership") :_("system dbus ownership") ,
+                   old_metadata ? _("new system dbus ownership") : _("system dbus ownership"),
                    system_bus_own);
 }
 
@@ -646,9 +657,9 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
 
 FlatpakTransaction *
 flatpak_cli_transaction_new (FlatpakDir *dir,
-                             gboolean disable_interaction,
-                             gboolean stop_on_first_error,
-                             GError **error)
+                             gboolean    disable_interaction,
+                             gboolean    stop_on_first_error,
+                             GError    **error)
 {
   g_autoptr(FlatpakInstallation) installation = NULL;
   g_autoptr(FlatpakCliTransaction) self = NULL;
@@ -671,40 +682,41 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
 
   flatpak_transaction_add_default_dependency_sources (FLATPAK_TRANSACTION (self));
 
-  return (FlatpakTransaction *)g_steal_pointer (&self);
+  return (FlatpakTransaction *) g_steal_pointer (&self);
 }
 
 gboolean
 flatpak_cli_transaction_add_install (FlatpakTransaction *transaction,
-                                     const char *remote,
-                                     const char *ref,
-                                     const char **subpaths,
-                                     GError **error)
+                                     const char         *remote,
+                                     const char         *ref,
+                                     const char        **subpaths,
+                                     GError            **error)
 {
   g_autoptr(GError) local_error = NULL;
 
-    if (!flatpak_transaction_add_install (transaction, remote, ref, subpaths, &local_error))
-      {
-        if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-          {
-            g_printerr (_("Skipping: %s\n"), local_error->message);
-            return TRUE;
-          }
+  if (!flatpak_transaction_add_install (transaction, remote, ref, subpaths, &local_error))
+    {
+      if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+        {
+          g_printerr (_("Skipping: %s\n"), local_error->message);
+          return TRUE;
+        }
 
-        g_propagate_error (error, g_steal_pointer (&local_error));
-        return FALSE;
-      }
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
 
-    return TRUE;
+  return TRUE;
 }
 
 
 gboolean
 flatpak_cli_transaction_run (FlatpakTransaction *transaction,
-                             GCancellable *cancellable,
-                             GError **error)
+                             GCancellable       *cancellable,
+                             GError            **error)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+
   g_autoptr(GError) local_error = NULL;
   gboolean res;
 

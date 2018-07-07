@@ -64,7 +64,7 @@ get_permission_tables (XdpDbusPermissionStore *store)
 
   g_ptr_array_add (tables, NULL);
 
-  return (char **)g_ptr_array_free (tables, FALSE);
+  return (char **) g_ptr_array_free (tables, FALSE);
 }
 
 static char **
@@ -79,10 +79,10 @@ get_ids_for_table (XdpDbusPermissionStore *store,
 }
 
 static gboolean
-remove_item (XdpDbusPermissionStore  *store,
-             const char              *table,
-             const char              *id,
-             GError                 **error)
+remove_item (XdpDbusPermissionStore *store,
+             const char             *table,
+             const char             *id,
+             GError                **error)
 {
   /* FIXME some portals cache their permission tables and assume that they're
    * the only writers, so they may miss these changes.

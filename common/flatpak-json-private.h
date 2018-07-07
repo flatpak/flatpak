@@ -43,20 +43,21 @@ typedef enum {
 
 typedef enum {
   FLATPAK_JSON_PROP_FLAGS_NONE = 0,
-  FLATPAK_JSON_PROP_FLAGS_OPTIONAL = 1<<0,
-  FLATPAK_JSON_PROP_FLAGS_STRICT = 1<<1,
-  FLATPAK_JSON_PROP_FLAGS_MANDATORY = 1<<2,
+  FLATPAK_JSON_PROP_FLAGS_OPTIONAL = 1 << 0,
+  FLATPAK_JSON_PROP_FLAGS_STRICT = 1 << 1,
+  FLATPAK_JSON_PROP_FLAGS_MANDATORY = 1 << 2,
 } FlatpakJsonPropFlags;
 
 
-struct _FlatpakJsonProp {
-  const char *name;
-  gsize offset;
-  FlatpakJsonPropType type;
-  gpointer type_data;
-  gpointer type_data2;
+struct _FlatpakJsonProp
+{
+  const char          *name;
+  gsize                offset;
+  FlatpakJsonPropType  type;
+  gpointer             type_data;
+  gpointer             type_data2;
   FlatpakJsonPropFlags flags;
-} ;
+};
 
 #define FLATPAK_JSON_STRING_PROP(_struct, _field, _name) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRING }
@@ -73,36 +74,37 @@ struct _FlatpakJsonProp {
 #define FLATPAK_JSON_BOOLMAP_PROP(_struct, _field, _name) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_BOOLMAP }
 #define FLATPAK_JSON_STRUCT_PROP(_struct, _field, _name, _props) \
-  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer)_props}
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer) _props}
 #define FLATPAK_JSON_OPT_STRUCT_PROP(_struct, _field, _name, _props) \
-  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer)_props, 0, FLATPAK_JSON_PROP_FLAGS_OPTIONAL}
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer) _props, 0, FLATPAK_JSON_PROP_FLAGS_OPTIONAL}
 #define FLATPAK_JSON_STRICT_STRUCT_PROP(_struct, _field, _name, _props) \
-  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer)_props, 0, FLATPAK_JSON_PROP_FLAGS_STRICT}
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer) _props, 0, FLATPAK_JSON_PROP_FLAGS_STRICT}
 #define FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP(_struct, _field, _name, _props) \
-  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer)_props, 0, FLATPAK_JSON_PROP_FLAGS_STRICT | FLATPAK_JSON_PROP_FLAGS_MANDATORY}
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer) _props, 0, FLATPAK_JSON_PROP_FLAGS_STRICT | FLATPAK_JSON_PROP_FLAGS_MANDATORY}
 #define FLATPAK_JSON_PARENT_PROP(_struct, _field, _props) \
-  { "parent", G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_PARENT, (gpointer)_props}
+  { "parent", G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_PARENT, (gpointer) _props}
 #define FLATPAK_JSON_STRUCTV_PROP(_struct, _field, _name, _props) \
-  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCTV, (gpointer)_props, (gpointer) sizeof (**((_struct *) 0)->_field) }
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCTV, (gpointer) _props, (gpointer) sizeof (**((_struct *) 0)->_field) }
 #define FLATPAK_JSON_LAST_PROP { NULL }
 
 G_DECLARE_DERIVABLE_TYPE (FlatpakJson, flatpak_json, FLATPAK, JSON, GObject)
 
-struct _FlatpakJsonClass {
-  GObjectClass parent_class;
+struct _FlatpakJsonClass
+{
+  GObjectClass     parent_class;
 
   FlatpakJsonProp *props;
-  const char *mediatype;
+  const char      *mediatype;
 };
 
-FlatpakJson *flatpak_json_from_node (JsonNode       *node,
-                                     GType           type,
-                                     GError        **error);
-JsonNode   *flatpak_json_to_node   (FlatpakJson  *self);
-FlatpakJson *flatpak_json_from_bytes (GBytes         *bytes,
-                                      GType           type,
-                                      GError        **error);
-GBytes     *flatpak_json_to_bytes  (FlatpakJson  *self);
+FlatpakJson *flatpak_json_from_node (JsonNode *node,
+                                     GType     type,
+                                     GError  **error);
+JsonNode   *flatpak_json_to_node (FlatpakJson *self);
+FlatpakJson *flatpak_json_from_bytes (GBytes  *bytes,
+                                      GType    type,
+                                      GError **error);
+GBytes     *flatpak_json_to_bytes (FlatpakJson *self);
 
 G_END_DECLS
 

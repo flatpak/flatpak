@@ -49,9 +49,9 @@ main (int argc, char *argv[])
       const char *list[] = { "gnome-apps", "app/org.gnome.iagno/x86_64/stable",
                              "gnome", "runtime/org.gnome.Sdk/x86_64/3.20" };
 
-      for (j = 0; j < G_N_ELEMENTS(list); j += 2)
+      for (j = 0; j < G_N_ELEMENTS (list); j += 2)
         {
-          g_print ("looking for related to ref: %s\n", list[j+1]);
+          g_print ("looking for related to ref: %s\n", list[j + 1]);
 
           for (k = 0; k < 2; k++)
             {
@@ -62,13 +62,13 @@ main (int argc, char *argv[])
               if (k == 0)
                 related = flatpak_installation_list_remote_related_refs_sync (installation,
                                                                               list[j],
-                                                                              list[j+1],
+                                                                              list[j + 1],
                                                                               NULL,
                                                                               &error);
               else
                 related = flatpak_installation_list_installed_related_refs_sync (installation,
                                                                                  list[j],
-                                                                                 list[j+1],
+                                                                                 list[j + 1],
                                                                                  NULL,
                                                                                  &error);
 

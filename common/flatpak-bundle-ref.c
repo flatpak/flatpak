@@ -123,7 +123,7 @@ flatpak_bundle_ref_class_init (FlatpakBundleRefClass *klass)
                                                         "",
                                                         "",
                                                         G_TYPE_FILE,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY|G_PARAM_STATIC_STRINGS));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
 
 static void

@@ -64,15 +64,15 @@ get_permission_tables (XdpDbusPermissionStore *store)
 
   g_ptr_array_add (tables, NULL);
 
-  return (char **)g_ptr_array_free (tables, FALSE);
+  return (char **) g_ptr_array_free (tables, FALSE);
 }
 
 static gboolean
-list_for_app (XdpDbusPermissionStore  *store,
-              const char              *table,
-              const char              *app_id,
-              FlatpakTablePrinter     *printer,
-              GError                 **error)
+list_for_app (XdpDbusPermissionStore *store,
+              const char             *table,
+              const char             *app_id,
+              FlatpakTablePrinter    *printer,
+              GError                **error)
 {
   char **ids;
   int i;

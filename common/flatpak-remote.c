@@ -53,31 +53,31 @@ typedef struct _FlatpakRemotePrivate FlatpakRemotePrivate;
 
 struct _FlatpakRemotePrivate
 {
-  char       *name;
-  FlatpakDir *dir;
+  char             *name;
+  FlatpakDir       *dir;
 
-  char       *local_url;
-  char       *local_collection_id;
-  char       *local_title;
-  char       *local_default_branch;
-  gboolean    local_gpg_verify;
-  gboolean    local_noenumerate;
-  gboolean    local_nodeps;
-  gboolean    local_disabled;
-  int         local_prio;
+  char             *local_url;
+  char             *local_collection_id;
+  char             *local_title;
+  char             *local_default_branch;
+  gboolean          local_gpg_verify;
+  gboolean          local_noenumerate;
+  gboolean          local_nodeps;
+  gboolean          local_disabled;
+  int               local_prio;
   FlatpakRemoteType type;
 
-  guint       local_url_set : 1;
-  guint       local_collection_id_set : 1;
-  guint       local_title_set : 1;
-  guint       local_default_branch_set : 1;
-  guint       local_gpg_verify_set : 1;
-  guint       local_noenumerate_set : 1;
-  guint       local_nodeps_set : 1;
-  guint       local_disabled_set : 1;
-  guint       local_prio_set : 1;
+  guint             local_url_set            : 1;
+  guint             local_collection_id_set  : 1;
+  guint             local_title_set          : 1;
+  guint             local_default_branch_set : 1;
+  guint             local_gpg_verify_set     : 1;
+  guint             local_noenumerate_set    : 1;
+  guint             local_nodeps_set         : 1;
+  guint             local_disabled_set       : 1;
+  guint             local_prio_set           : 1;
 
-  GBytes     *local_gpg_key;
+  GBytes           *local_gpg_key;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRemote, flatpak_remote, G_TYPE_OBJECT)
@@ -506,7 +506,7 @@ flatpak_remote_get_noenumerate (FlatpakRemote *self)
  */
 void
 flatpak_remote_set_noenumerate (FlatpakRemote *self,
-                                gboolean noenumerate)
+                                gboolean       noenumerate)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
@@ -549,7 +549,7 @@ flatpak_remote_get_nodeps (FlatpakRemote *self)
  */
 void
 flatpak_remote_set_nodeps (FlatpakRemote *self,
-                           gboolean nodeps)
+                           gboolean       nodeps)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
@@ -591,7 +591,7 @@ flatpak_remote_get_disabled (FlatpakRemote *self)
  */
 void
 flatpak_remote_set_disabled (FlatpakRemote *self,
-                             gboolean disabled)
+                             gboolean       disabled)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
@@ -634,7 +634,7 @@ flatpak_remote_get_prio (FlatpakRemote *self)
  */
 void
 flatpak_remote_set_prio (FlatpakRemote *self,
-                         int prio)
+                         int            prio)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
@@ -682,7 +682,7 @@ flatpak_remote_get_gpg_verify (FlatpakRemote *self)
  */
 void
 flatpak_remote_set_gpg_verify (FlatpakRemote *self,
-                               gboolean gpg_verify)
+                               gboolean       gpg_verify)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
@@ -781,14 +781,15 @@ flatpak_remote_new (const char *name)
 }
 
 gboolean
-flatpak_remote_commit (FlatpakRemote   *self,
-                       FlatpakDir      *dir,
-                       GCancellable    *cancellable,
-                       GError         **error)
+flatpak_remote_commit (FlatpakRemote *self,
+                       FlatpakDir    *dir,
+                       GCancellable  *cancellable,
+                       GError       **error)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
   OstreeRepo *repo;
   g_autofree char *url = NULL;
+
   g_autoptr(GKeyFile) config = NULL;
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", priv->name);
 

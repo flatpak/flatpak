@@ -54,11 +54,11 @@ typedef struct
                  GCancellable *cancellable,
                  GError      **error);
   gboolean (*complete)(FlatpakCompletion *completion);
-  gboolean    deprecated;
+  gboolean deprecated;
 } FlatpakCommand;
 
 static FlatpakCommand commands[] = {
-   /* translators: please keep the leading space */
+  /* translators: please keep the leading space */
   { N_(" Manage installed apps and runtimes") },
   { "install", N_("Install an application or runtime"), flatpak_builtin_install, flatpak_complete_install },
   { "update", N_("Update an installed application or runtime"), flatpak_builtin_update, flatpak_complete_update },
@@ -71,32 +71,32 @@ static FlatpakCommand commands[] = {
   { "repair", N_("Repair flatpak installation"), flatpak_builtin_repair, flatpak_complete_repair },
   { "create-usb", N_("Put apps and/or runtimes onto removable media"), flatpak_builtin_create_usb, flatpak_complete_create_usb },
 
-   /* translators: please keep the leading newline and space */
+  /* translators: please keep the leading newline and space */
   { N_("\n Finding applications and runtimes") },
   { "search", N_("Search for remote apps/runtimes"), flatpak_builtin_search, flatpak_complete_search },
 
-   /* translators: please keep the leading newline and space */
+  /* translators: please keep the leading newline and space */
   { N_("\n Running applications") },
   { "run", N_("Run an application"), flatpak_builtin_run, flatpak_complete_run },
   { "override", N_("Override permissions for an application"), flatpak_builtin_override, flatpak_complete_override },
   { "make-current", N_("Specify default version to run"), flatpak_builtin_make_current_app, flatpak_complete_make_current_app },
   { "enter", N_("Enter the namespace of a running application"), flatpak_builtin_enter, flatpak_complete_enter },
 
-   /* translators: please keep the leading newline and space */
+  /* translators: please keep the leading newline and space */
   { N_("\n Manage file access") },
   { "document-export", N_("Grant an application access to a specific file"), flatpak_builtin_document_export, flatpak_complete_document_export },
   { "document-unexport", N_("Revoke access to a specific file"), flatpak_builtin_document_unexport, flatpak_complete_document_unexport },
   { "document-info", N_("Show information about a specific file"), flatpak_builtin_document_info, flatpak_complete_document_info },
   { "document-list", N_("List exported files"), flatpak_builtin_document_list, flatpak_complete_document_list },
 
-   /* translators: please keep the leading newline and space */
+  /* translators: please keep the leading newline and space */
   { N_("\n Manage dynamic permissions") },
   { "permission-remove", N_("Remove item from permission store"), flatpak_builtin_permission_remove, flatpak_complete_permission_remove },
   { "permission-list", N_("List permissions"), flatpak_builtin_permission_list, flatpak_complete_permission_list },
   { "permission-show", N_("Show app permissions"), flatpak_builtin_permission_show, flatpak_complete_permission_show },
   { "permission-reset", N_("Reset app permissions"), flatpak_builtin_permission_reset, flatpak_complete_permission_reset },
 
-   /* translators: please keep the leading newline and space */
+  /* translators: please keep the leading newline and space */
   { N_("\n Manage remote repositories") },
   { "remotes", N_("List all configured remotes"), flatpak_builtin_list_remotes, flatpak_complete_list_remotes },
   { "remote-add", N_("Add a new remote repository (by URL)"), flatpak_builtin_add_remote, flatpak_complete_add_remote },
@@ -106,7 +106,7 @@ static FlatpakCommand commands[] = {
   { "remote-ls", N_("List contents of a configured remote"), flatpak_builtin_ls_remote, flatpak_complete_ls_remote },
   { "remote-info", N_("Show information about a remote app or runtime"), flatpak_builtin_info_remote, flatpak_complete_info_remote },
 
-   /* translators: please keep the leading newline and space */
+  /* translators: please keep the leading newline and space */
   { N_("\n Build applications") },
   { "build-init", N_("Initialize a directory for building"), flatpak_builtin_build_init, flatpak_complete_build_init },
   { "build", N_("Run a build command inside the build dir"), flatpak_builtin_build, flatpak_complete_build  },
@@ -426,8 +426,8 @@ usage_error (GOptionContext *context, const char *message, GError **error)
 }
 
 static FlatpakCommand *
-extract_command (int     *argc,
-                 char   **argv,
+extract_command (int         *argc,
+                 char       **argv,
                  const char **command_name_out)
 {
   FlatpakCommand *command;
@@ -592,7 +592,7 @@ main (int    argc,
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
   textdomain (GETTEXT_PACKAGE);
 
-  g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING, message_handler, NULL);
+  g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING, message_handler, NULL);
 
   g_set_prgname (argv[0]);
 
