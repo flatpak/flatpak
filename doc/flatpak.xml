@@ -204,6 +204,13 @@
                     Repair flatpak installation.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-create-usb</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Copy apps and/or runtimes onto removable media.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
 

@@ -34,6 +34,7 @@
       <xi:include href="@srcdir@/flatpak-build-update-repo.xml"/>
       <xi:include href="@srcdir@/flatpak-build.xml"/>
       <xi:include href="@srcdir@/flatpak-config.xml"/>
+      <xi:include href="@srcdir@/flatpak-create-usb.xml"/>
       <xi:include href="@srcdir@/flatpak-document-export.xml"/>
       <xi:include href="@srcdir@/flatpak-document-info.xml"/>
       <xi:include href="@srcdir@/flatpak-document-list.xml"/>
