@@ -94,6 +94,39 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
   return chosen;
 }
 
+static gboolean
+add_new_remote (FlatpakTransaction *transaction,
+                FlatpakTransactionRemoteReason reason,
+                const char *from_id,
+                const char *remote_name,
+                const char *url)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+
+  if (self->disable_interaction)
+    {
+      g_print (_("Configuring %s as new remote '%s'"), url, remote_name);
+      return TRUE;
+    }
+
+  if (reason == FLATPAK_TRANSACTION_REMOTE_GENERIC_REPO)
+    {
+      if (flatpak_yes_no_prompt (_("The remote '%s', refered to by '%s' at location %s contains additional applications.\n"
+                                   "Should the remote be kept for future installations?"),
+                                 remote_name, from_id, url))
+        return TRUE;
+    }
+  else if (reason == FLATPAK_TRANSACTION_REMOTE_RUNTIME_DEPS)
+    {
+      if (flatpak_yes_no_prompt (_("The application %s depends on runtimes from:\n  %s\n"
+                                   "Configure this as new remote '%s'"),
+                                 from_id, url, remote_name))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
 static char *
 op_type_to_string (FlatpakTransactionOperationType operation_type)
 {
@@ -602,6 +635,7 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   FlatpakTransactionClass *transaction_class = FLATPAK_TRANSACTION_CLASS (klass);
 
   object_class->finalize = flatpak_cli_transaction_finalize;
+  transaction_class->add_new_remote = add_new_remote;
   transaction_class->ready = transaction_ready;
   transaction_class->new_operation = new_operation;
   transaction_class->operation_done = operation_done;

@@ -1638,12 +1638,19 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   g_autofree char *ref = NULL;
   g_autofree char *collection_id = NULL;
   g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return NULL;
 
-  if (!flatpak_dir_create_remote_for_ref_file (dir, ref_file_data, NULL, &remote, &collection_id, &ref, error))
+  if (!g_key_file_load_from_data (keyfile, g_bytes_get_data (ref_file_data, NULL),
+                                  g_bytes_get_size (ref_file_data),
+                                  0, error))
+    return FALSE;
+
+
+  if (!flatpak_dir_create_remote_for_ref_file (dir, keyfile, NULL, &remote, &collection_id, &ref, error))
     return NULL;
 
   if (!flatpak_installation_drop_caches (self, cancellable, error))
