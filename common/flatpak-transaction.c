@@ -78,6 +78,13 @@ struct _FlatpakTransactionOperation {
 
 typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
 
+typedef struct _BundleData BundleData;
+
+struct _BundleData {
+  GFile *file;
+  GBytes *gpg_data;
+};
+
 struct _FlatpakTransactionPrivate {
   GObject parent;
 
@@ -90,6 +97,7 @@ struct _FlatpakTransactionPrivate {
   GPtrArray *added_origin_remotes;
 
   GList *flatpakrefs; /* GKeyFiles */
+  GList *bundles; /* BundleData */
 
   FlatpakTransactionOperation *current_op;
 
@@ -135,6 +143,27 @@ enum {
   CHANGED,
   LAST_PROGRESS_SIGNAL
 };
+
+static BundleData *
+bundle_data_new (GFile *file,
+                 GBytes *gpg_data)
+{
+  BundleData *data = g_new0 (BundleData, 1);
+
+  data->file = g_object_ref (file);
+  if (gpg_data)
+    data->gpg_data = g_object_ref (gpg_data);
+
+  return data;
+}
+
+static void
+bundle_data_free (BundleData *data)
+{
+  g_clear_object (&data->file);
+  g_clear_object (&data->gpg_data);
+  g_free (data);
+}
 
 static guint progress_signals[LAST_SIGNAL] = { 0 };
 
@@ -492,6 +521,7 @@ flatpak_transaction_finalize (GObject *object)
   g_clear_object (&priv->installation);
 
   g_list_free_full (priv->flatpakrefs, (GDestroyNotify)g_key_file_unref);
+  g_list_free_full (priv->bundles, (GDestroyNotify)bundle_data_free);
   g_free (priv->default_arch);
   g_hash_table_unref (priv->last_op_for_ref);
   g_hash_table_unref (priv->remote_states);
@@ -1342,22 +1372,10 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
                                         GError **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_autofree char *remote = NULL;
-  g_autofree char *ref = NULL;
-  g_autofree char *commit = NULL;
-  g_autofree char *metadata = NULL;
-  gboolean created_remote;
 
-  remote = flatpak_dir_ensure_bundle_remote (priv->dir, file, gpg_data,
-                                             &ref, &commit, &metadata, &created_remote,
-                                             NULL, error);
-  if (remote == NULL)
-    return FALSE;
+  priv->bundles = g_list_append (priv->flatpakrefs, bundle_data_new (file, gpg_data));
 
-  if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
-    return FALSE;
-
-  return flatpak_transaction_add_ref (self, remote, ref, NULL, commit, FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE, file, metadata, error);
+  return TRUE;
 }
 
 gboolean
@@ -2073,6 +2091,78 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
   return TRUE;
 }
 
+static gboolean
+handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
+                                      GFile *file,
+                                      GError **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autofree char *dep_url = NULL;
+  g_autofree char *ref = NULL;
+  g_auto(GStrv) ref_parts = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+
+  if (priv->disable_deps)
+    return TRUE;
+
+  metadata = flatpak_bundle_load (file, NULL,
+                                  NULL,
+                                  &ref,
+                                  &dep_url,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL);
+
+  if (metadata == NULL || dep_url == NULL || ref == NULL)
+    return TRUE;
+
+  ref_parts = g_strsplit (ref, "/", -1);
+
+  return handle_runtime_repo_deps (self, ref_parts[1], dep_url, error);
+}
+
+static gboolean
+flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
+                                     GCancellable *cancellable,
+                                     GError **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  GList *l;
+
+  for (l = priv->bundles; l != NULL; l = l->next)
+    {
+      BundleData *data = l->data;
+      g_autofree char *remote = NULL;
+      g_autofree char *ref = NULL;
+      g_autofree char *commit = NULL;
+      g_autofree char *metadata = NULL;
+      gboolean created_remote;
+
+      if (!handle_runtime_repo_deps_from_bundle (self, data->file, error))
+        return FALSE;
+
+      if (!flatpak_dir_ensure_repo (priv->dir, cancellable, error))
+        return FALSE;
+
+      remote = flatpak_dir_ensure_bundle_remote (priv->dir, data->file, data->gpg_data,
+                                                 &ref, &commit, &metadata, &created_remote,
+                                                 NULL, error);
+      if (remote == NULL)
+        return FALSE;
+
+      if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
+        return FALSE;
+
+      if (!flatpak_transaction_add_ref (self, remote, ref, NULL, commit,
+                                        FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE, data->file, metadata, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          GCancellable *cancellable,
@@ -2097,6 +2187,9 @@ flatpak_transaction_run (FlatpakTransaction *self,
   main_context = flatpak_main_context_new_default ();
 
   if (!flatpak_transaction_resolve_flatpakrefs (self, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_transaction_resolve_bundles (self, cancellable, error))
     return FALSE;
 
   /* Resolve initial ops */
