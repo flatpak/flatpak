@@ -27,7 +27,6 @@
    ioctl(generic)
    fun:ioctl
    fun:glnx_regfile_copy_bytes
-   fun:glnx_file_copy_at
 }
 
 # There seem to be some leaks in "ostree pull", lets just ignore them for now
