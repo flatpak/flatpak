@@ -1046,11 +1046,14 @@ flatpak_dir_system_helper_call (FlatpakDir   *self,
       /* To ensure reverse mapping */
       flatpak_error_quark ();
 
-      g_once_init_leave (&self->system_helper_bus, system_helper_bus);
+      g_once_init_leave (&self->system_helper_bus, system_helper_bus ? system_helper_bus : (gpointer) 1 );
     }
 
-  if (self->system_helper_bus == NULL)
-    return NULL; /* Error was set above */
+  if (self->system_helper_bus == (gpointer) 1)
+    {
+      flatpak_fail (error, _("Unable to connect to system bus"));
+      return NULL;
+    }
 
   g_debug ("Calling system helper: %s", method_name);
   return g_dbus_connection_call_sync (self->system_helper_bus,
