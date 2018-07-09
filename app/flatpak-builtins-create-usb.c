@@ -633,33 +633,39 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
     g_autoptr(OstreeCollectionRef) metadata_collection_ref = NULL;
     g_autoptr(OstreeCollectionRef) appstream_collection_ref = NULL;
     g_autoptr(OstreeCollectionRef) appstream2_collection_ref = NULL;
-    g_autoptr(FlatpakRemoteState) state = NULL;
     g_autoptr(GError) local_error = NULL;
-    g_autoptr(GPtrArray) dirs = NULL;
     g_autofree char *appstream_ref = NULL;
     g_autofree char *appstream2_ref = NULL;
     const char **remote_arches;
 
-    /* First try to update the repo metadata by creating a FlatpakRemoteState,
-     * but don't fail on error because we want this to work offline. */
+    /* FIXME: Uncomment this to try to update the repo metadata after fixing
+     * https://github.com/ostreedev/ostree/issues/1664 so the summary doesn't
+     * get out of date. This is done by creating a FlatpakRemoteState, but
+     * don't fail on error because we want this to work offline.
+    g_autoptr(FlatpakRemoteState) state = NULL;
     state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, &local_error);
     if (state == NULL)
       {
         g_printerr (_("Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"),
                     remote_name, local_error->message);
         g_clear_error (&local_error);
-      }
+      } */
 
     /* Add the ostree-metadata ref to the list */
     metadata_collection_ref = ostree_collection_ref_new (collection_id, OSTREE_REPO_METADATA_REF);
     g_hash_table_insert (all_refs, g_steal_pointer (&metadata_collection_ref),
                          commit_and_subpaths_new (NULL, NULL));
 
+    /* Add whatever appstream data is available for each arch */
     remote_arches = g_hash_table_lookup (remote_arch_map, remote_name);
     for (const char **iter = remote_arches; iter != NULL && *iter != NULL; ++iter)
       {
-        /* Try to update the appstream data */
         const char *current_arch = *iter;
+
+        /* FIXME: Uncomment this to try to update the appstream data after
+         * fixing https://github.com/ostreedev/ostree/issues/1664 so the
+         * summary doesn't become incorrect
+        g_autoptr(GPtrArray) dirs = NULL;
         dirs = g_ptr_array_new ();
         g_ptr_array_add (dirs, dir);
         if (!update_appstream (dirs, remote_name, current_arch, 0, TRUE, cancellable, &local_error))
@@ -667,7 +673,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
             g_printerr (_("Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"),
                         remote_name, current_arch, local_error->message);
             g_clear_error (&local_error);
-          }
+          } */
 
         /* Copy the appstream data if it exists. It's optional because without it
          * the USB will still be useful to the flatpak CLI even if GNOME Software
