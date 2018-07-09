@@ -1014,11 +1014,7 @@ static gboolean
 flatpak_dir_use_system_helper (FlatpakDir *self,
                                const char *installing_from_remote)
 {
-#ifndef USE_SYSTEM_HELPER
-  if (TRUE)
-    return FALSE;
-#endif
-
+#ifdef USE_SYSTEM_HELPER
   if (self->no_system_helper || self->user || getuid () == 0)
     return FALSE;
 
@@ -1027,6 +1023,10 @@ flatpak_dir_use_system_helper (FlatpakDir *self,
     return FALSE;
 
   return TRUE;
+#else
+  return FALSE;
+#endif
+
 }
 
 static GVariant *
@@ -1041,7 +1041,7 @@ flatpak_dir_system_helper_call (FlatpakDir   *self,
       const char *on_session = g_getenv ("FLATPAK_SYSTEM_HELPER_ON_SESSION");
       GDBusConnection *system_helper_bus =
         g_bus_get_sync (on_session != NULL ? G_BUS_TYPE_SESSION : G_BUS_TYPE_SYSTEM,
-                        cancellable, error);
+                        cancellable, NULL);
 
       /* To ensure reverse mapping */
       flatpak_error_quark ();
@@ -5009,8 +5009,6 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
     {
       const char *installation = flatpak_dir_get_id (self);
 
-      /* If we don't have the system helper, we'll have to try as an
-       * unprivileged user, which might fail later */
       if (!flatpak_dir_system_helper_call_run_triggers (self,
                                                         installation ? installation : "",
                                                         cancellable,
@@ -8401,8 +8399,6 @@ flatpak_dir_remove_ref (FlatpakDir   *self,
     {
       const char *installation = flatpak_dir_get_id (self);
 
-      /* If we don't have the system helper, we'll have to try and just remove
-       * the ref as an unprivileged user, which might fail later */
       if (!flatpak_dir_system_helper_call_remove_local_ref (self,
                                                             remote_name,
                                                             ref,
@@ -8499,8 +8495,6 @@ flatpak_dir_prune (FlatpakDir   *self,
     {
       const char *installation = flatpak_dir_get_id (self);
 
-      /* If we don't have the system helper, we'll have to try and just remove
-       * the ref as an unprivileged user, which might fail later */
       if (!flatpak_dir_system_helper_call_prune_local_repo (self,
                                                             installation ? installation : "",
                                                             cancellable,
