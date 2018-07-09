@@ -71,7 +71,9 @@
         <para>
             This command relies on the summary file in the source repo, so you
             may want to run <command>ostree summary -u</command> before running
-            this command.
+            this command. Since appstream data is copied to the USB when it's
+            available, you might also want to run <command>flatpak update --appstream</command>
+            before updating the summary file.
         </para>
         <para>
             By default <command>flatpak create-usb</command> uses <filename>.ostree/repo</filename>,
