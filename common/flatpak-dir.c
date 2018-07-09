@@ -2089,17 +2089,13 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
   g_autoptr(GFile) repodir = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   g_autoptr(GError) my_error = NULL;
-  gboolean use_helper;
 
   if (self->repo != NULL)
     return TRUE;
 
-  use_helper =
-    !self->no_system_helper && !self->user && getuid () != 0;
-
   if (!g_file_query_exists (self->basedir, cancellable))
     {
-      if (use_helper)
+      if (flatpak_dir_use_system_helper (self, NULL))
         {
           g_autoptr(GError) local_error = NULL;
           const char *installation = flatpak_dir_get_id (self);
@@ -2131,7 +2127,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
 
   repodir = g_file_get_child (self->basedir, "repo");
 
-  if (use_helper)
+  if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(GFile) cache_dir = NULL;
       g_autofree char *cache_path = NULL;
@@ -2190,7 +2186,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
     }
 
   /* Reset min-free-space-percent to 0, this keeps being a problem for a lot of people */
-  if (!use_helper)
+  if (!flatpak_dir_use_system_helper (self, NULL))
     {
       GKeyFile *orig_config = NULL;
       g_autofree char *orig_min_free_space_percent = NULL;
