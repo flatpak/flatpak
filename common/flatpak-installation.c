@@ -1003,7 +1003,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
       if (collection_id != NULL)
         {
-          const char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
+          g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
           OstreeCollectionRef *c_r = ostree_collection_ref_new (collection_id, ref);
           g_ptr_array_add (collection_refs, c_r);
         }
