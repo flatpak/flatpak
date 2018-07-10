@@ -5358,12 +5358,13 @@ export_mime_file (int           parent_fd,
 static char *
 format_flatpak_run_args_from_run_opts (GStrv flatpak_run_args)
 {
-  GString *str = g_string_new ("");
+  GString *str;
   GStrv iter = flatpak_run_args;
 
   if (flatpak_run_args == NULL)
     return NULL;
 
+  str = g_string_new ("");
   for (; *iter != NULL; ++iter)
     {
       if (g_strcmp0 (*iter, "no-a11y-bus") == 0)
