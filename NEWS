@@ -1,3 +1,24 @@
+Major changes in 0.99.3
+=======================
+
+ * Fixed case where system install would sometimes fail
+   due to the system-helper idle exiting.
+ * Support installing flatpakref files in FlatpakTransaction,
+   including a new signal add-new-remote for when remotes
+   might be added.
+ * Added some new FlatpakError codes.
+ * We now support .flatpakrepo files with no gpg signatures
+ * Fix crash in system-helper when updating appstream
+ * New command create-usb which can be used to prepare
+   an repo for offline updates.
+ * Fix some non-handled cases of the CLI not working when
+   /var/lib/flatpak doesn't exist.
+ * Fix crash when running with a gid that is not in
+   /etc/groups.
+ * Add new permission-* commands to interact with the
+   permissions store from the portals.
+ * Include appdata in OCI bundle.
+
 Major changes in 0.99.2
 =======================
 
