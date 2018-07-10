@@ -11282,7 +11282,8 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
             return FALSE;
 
           unlink (summary_path);
-          unlink (summary_sig_path);
+          if (summary_sig_path)
+            unlink (summary_sig_path);
         }
 
       return TRUE;
