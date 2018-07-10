@@ -82,7 +82,7 @@
         <para>
             If the specified <arg choice="plain">REMOTE</arg> has a collection ID configured on it,
             flatpak will search mounted filesystems such as USB drives as well as Avahi services
-            advertised on the local network for the needed refs, in order to support to support
+            advertised on the local network for the needed refs, in order to support
             offline updates. See <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             for more information.
         </para>
