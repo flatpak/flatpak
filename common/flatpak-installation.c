@@ -1494,29 +1494,17 @@ flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_auto(GStrv) remote_names = NULL;
-  int i;
 
-  remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
-  if (remote_names == NULL)
+  if (!flatpak_dir_has_remote (dir, name, error))
     return NULL;
 
-  for (i = 0; remote_names[i] != NULL; i++)
-    {
-      if (strcmp (remote_names[i], name) == 0)
-        {
-          /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
-             it has local changes */
-          dir_clone = flatpak_dir_clone (dir);
-          if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
-            return NULL;
-          return flatpak_remote_new_with_dir (remote_names[i], dir_clone);
-        }
-    }
+  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+     it has local changes */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+    return NULL;
 
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-               "No remote named '%s'", name);
-  return NULL;
+  return flatpak_remote_new_with_dir (name, dir_clone);
 }
 
 /**

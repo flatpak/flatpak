@@ -379,11 +379,8 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
   if (out_dir)
     {
       if (dirs_with_remote->len == 0)
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                       "Remote \"%s\" not found", remote_name);
-          return FALSE;
-        }
+        return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND,
+                                   "Remote \"%s\" not found", remote_name);
       else
         *out_dir = g_object_ref (g_ptr_array_index (dirs_with_remote, chosen - 1));
     }
@@ -526,7 +523,7 @@ update_appstream (GPtrArray    *dirs,
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
 
-          if (flatpak_dir_has_remote (dir, remote))
+          if (flatpak_dir_has_remote (dir, remote, NULL))
             {
               g_autoptr(OstreeAsyncProgress) progress = NULL;
               guint64 ts_file_age;
@@ -552,7 +549,8 @@ update_appstream (GPtrArray    *dirs,
         }
 
       if (!found)
-        return flatpak_fail (error, _("Remote \"%s\" not found"), remote);
+        return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND,
+                                   _("Remote \"%s\" not found"), remote);
     }
 
   return TRUE;

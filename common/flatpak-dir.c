@@ -8884,8 +8884,13 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 
   state->remote_name = g_strdup (remote_or_uri);
   is_local = g_str_has_prefix (remote_or_uri, "file:");
-  if (!is_local && !repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
-    return NULL;
+  if (!is_local)
+    {
+      if (!flatpak_dir_has_remote (self, remote_or_uri, error))
+        return NULL;
+      if (!repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
+        return NULL;
+    }
 
   if (local_only)
     {
@@ -10533,20 +10538,22 @@ flatpak_dir_find_remote_by_uri (FlatpakDir *self,
 
 gboolean
 flatpak_dir_has_remote (FlatpakDir *self,
-                        const char *remote_name)
+                        const char *remote_name,
+                        GError **error)
 {
   GKeyFile *config = NULL;
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
 
-  if (!flatpak_dir_maybe_ensure_repo (self, NULL, NULL))
-    return FALSE;
+  if (flatpak_dir_maybe_ensure_repo (self, NULL, NULL) &&
+      self->repo != NULL)
+    {
+      config = ostree_repo_get_config (self->repo);
+      if (config && g_key_file_has_group (config, group))
+        return TRUE;
+    }
 
-  if (self->repo == NULL)
-    return FALSE;
-
-  config = ostree_repo_get_config (self->repo);
-
-  return g_key_file_has_group (config, group);
+  return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND,
+                             "Remote \"%s\" not found", remote_name);
 }
 
 
