@@ -31,6 +31,7 @@
 #include "flatpak-dbus-generated.h"
 #include "flatpak-document-dbus-generated.h"
 #include "flatpak-context-private.h"
+#include "flatpak-error.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
 
@@ -63,6 +64,10 @@ typedef void (*FlatpakLoadUriProgress) (guint64  downloaded_bytes,
  * don't have to re-define attributes like G_GNUC_PRINTF.
  */
 #define flatpak_fail glnx_throw
+
+gboolean flatpak_fail_error (GError **error,
+                             FlatpakError code,
+                             const char *fmt, ...) G_GNUC_PRINTF (3,4);
 
 void flatpak_debug2 (const char *format,
                      ...) G_GNUC_PRINTF (1, 2);
