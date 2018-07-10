@@ -59,7 +59,7 @@ FlatpakOciRegistry  *  flatpak_oci_registry_new (const char           *uri,
                                                  gboolean for_write,
                                                  int tmp_dfd,
                                                  GCancellable         * cancellable,
-                                                 GError              * *error);
+                                                 GError              **error);
 const char          *  flatpak_oci_registry_get_uri (FlatpakOciRegistry *self);
 FlatpakOciIndex     *  flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
                                                         const char         *etag,
@@ -142,6 +142,14 @@ gboolean flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
 
 GVariant *flatpak_oci_index_make_summary (GFile        *index,
                                           const char   *index_uri,
+                                          GCancellable *cancellable,
+                                          GError      **error);
+
+GBytes *flatpak_oci_index_make_appstream (SoupSession  *soup_session,
+                                          GFile        *index,
+                                          const char   *index_uri,
+                                          const char   *arch,
+                                          int           icons_dfd,
                                           GCancellable *cancellable,
                                           GError      **error);
 

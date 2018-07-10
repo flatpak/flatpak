@@ -2135,6 +2135,314 @@ flatpak_oci_index_make_summary (GFile        *index,
   return g_steal_pointer (&summary);
 }
 
+static gboolean
+add_icon_image (SoupSession  *soup_session,
+                const char   *index_uri,
+                int           icons_dfd,
+                GHashTable   *used_icons,
+                const char   *subdir,
+                const char   *id,
+                const char   *icon_data,
+                GCancellable *cancellable,
+                GError      **error)
+{
+  g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
+  g_autofree char *icon_path = g_build_filename (subdir, icon_name, NULL);
+
+  /* Create the destination directory */
+
+  if (!glnx_shutil_mkdir_p_at (icons_dfd, subdir, 0755, cancellable, error))
+    return FALSE;
+
+  if (g_str_has_prefix (icon_data, "data:"))
+    {
+      if (g_str_has_prefix (icon_data, "data:image/png;base64,"))
+        {
+          const char *base64_data = icon_data + strlen ("data:image/png;base64,");
+          gsize decoded_size;
+          g_autofree guint8 *decoded = g_base64_decode (base64_data, &decoded_size);
+
+          if (!glnx_file_replace_contents_at (icons_dfd, icon_path,
+                                              decoded, decoded_size,
+                                              0 /* flags */, cancellable, error))
+            return FALSE;
+
+          g_hash_table_replace (used_icons, g_steal_pointer (&icon_path), GUINT_TO_POINTER (1));
+
+          return TRUE;
+        }
+      else
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                       "Data URI for icon has an unsupported type");
+          return FALSE;
+        }
+    }
+  else
+    {
+      g_autoptr(SoupURI) base_uri = soup_uri_new (index_uri);
+      g_autoptr(SoupURI) icon_uri = soup_uri_new_with_base (base_uri, icon_data);
+      g_autofree char *icon_uri_s = soup_uri_to_string (icon_uri, FALSE);
+
+      if (!flatpak_cache_http_uri (soup_session, icon_uri_s,
+                                   0 /* flags */,
+                                   icons_dfd, icon_path,
+                                   NULL, NULL,
+                                   cancellable, error))
+        return FALSE;
+
+      g_hash_table_replace (used_icons, g_steal_pointer (&icon_path), GUINT_TO_POINTER (1));
+
+      return TRUE;
+    }
+}
+
+static void
+add_image_to_appstream (SoupSession               *soup_session,
+                        const char                *index_uri,
+                        FlatpakXml                *appstream_root,
+                        int                        icons_dfd,
+                        GHashTable                *used_icons,
+                        FlatpakOciIndexRepository *repository,
+                        FlatpakOciIndexImage      *image,
+                        GCancellable              *cancellable)
+{
+  g_autoptr(GInputStream) in = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakXml) xml_root = NULL;
+  g_auto(GStrv) ref_parts = NULL;
+  const char *ref;
+  const char *id = NULL;
+  FlatpakXml *source_components;
+  FlatpakXml *dest_components;
+  FlatpakXml *component;
+  FlatpakXml *prev_component;
+  const char *appdata;
+  int i;
+
+  static struct
+  {
+    const char *annotation;
+    const char *subdir;
+  } icon_sizes[] = {
+    { "org.freedesktop.appstream.icon-64", "64x64" },
+    { "org.freedesktop.appstream.icon-128", "128x128" },
+  };
+
+  ref = g_hash_table_lookup (image->annotations, "org.flatpak.ref");
+  if (!ref)
+    return;
+
+  ref_parts = g_strsplit (ref, "/", -1);
+  if (g_strv_length (ref_parts) != 4 || strcmp (ref_parts[0], "app") != 0)
+    return;
+
+  id = ref_parts[1];
+
+  appdata = g_hash_table_lookup (image->annotations, "org.freedesktop.appstream.appdata");
+  if (!appdata)
+    return;
+
+  in = g_memory_input_stream_new_from_data (appdata, -1, NULL);
+
+  xml_root = flatpak_xml_parse (in, FALSE, cancellable, &error);
+  if (xml_root == NULL)
+    {
+      g_print ("%s: Failed to parse appdata annotation: %s\n",
+               repository->name,
+               error->message);
+      return;
+    }
+
+  if (xml_root->first_child == NULL ||
+      xml_root->first_child->next_sibling != NULL ||
+      g_strcmp0 (xml_root->first_child->element_name, "components") != 0)
+    {
+      return;
+    }
+
+  source_components = xml_root->first_child;
+  dest_components = appstream_root->first_child;
+
+  component = source_components->first_child;
+  prev_component = NULL;
+  while (component != NULL)
+    {
+      FlatpakXml *next = component->next_sibling;
+
+      if (g_strcmp0 (component->element_name, "component") == 0)
+        {
+          flatpak_xml_add (dest_components,
+                           flatpak_xml_unlink (component, prev_component));
+        }
+      else
+        {
+          prev_component = component;
+        }
+
+      component = next;
+    }
+
+  for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
+    {
+      const char *icon_data = g_hash_table_lookup (image->annotations,
+                                                   icon_sizes[i].annotation);
+      if (icon_data)
+        {
+          if (!add_icon_image (soup_session,
+                               index_uri,
+                               icons_dfd,
+                               used_icons,
+                               icon_sizes[i].subdir, id, icon_data,
+                               cancellable, &error))
+            {
+              g_print ("%s: Failed to add %s icon: %s\n",
+                       repository->name,
+                       icon_sizes[i].subdir,
+                       error->message);
+              g_clear_error (&error);
+            }
+        }
+    }
+}
+
+static gboolean
+clean_unused_icons_recurse (int           icons_dfd,
+                            const char   *dirpath,
+                            GHashTable   *used_icons,
+                            gboolean     *any_found_parent,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  GLnxDirFdIterator iter = { 0, };
+  gboolean any_found = FALSE;
+
+  if (!glnx_dirfd_iterator_init_at (icons_dfd,
+                                    dirpath ? dirpath : ".",
+                                    FALSE, &iter, error))
+    return FALSE;
+
+  while (TRUE)
+    {
+      struct dirent *out_dent;
+      g_autofree char *subpath = NULL;
+
+      if (!glnx_dirfd_iterator_next_dent (&iter, &out_dent, cancellable, error))
+        return FALSE;
+
+      if (out_dent == NULL)
+        break;
+
+      if (dirpath)
+        subpath = g_build_filename (dirpath, out_dent->d_name, NULL);
+      else
+        subpath = g_strdup (out_dent->d_name);
+
+      if (out_dent->d_type == DT_DIR)
+        clean_unused_icons_recurse (icons_dfd, subpath, used_icons, &any_found, cancellable, error);
+      else if (g_hash_table_lookup (used_icons, subpath) == NULL)
+        {
+          if (!glnx_unlinkat (icons_dfd, subpath, 0, error))
+            return FALSE;
+        }
+      else
+        any_found = TRUE;
+    }
+
+  if (any_found)
+    {
+      if (any_found_parent)
+        *any_found_parent = TRUE;
+    }
+  else
+    {
+      if (dirpath) /* Don't remove the toplevel icons/ directory */
+        if (!glnx_unlinkat (icons_dfd, dirpath, AT_REMOVEDIR, error))
+          return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+clean_unused_icons (int           icons_dfd,
+                    GHashTable   *used_icons,
+                    GCancellable *cancellable,
+                    GError      **error)
+{
+  return clean_unused_icons_recurse (icons_dfd, NULL, used_icons, NULL, cancellable, error);
+}
+
+GBytes *
+flatpak_oci_index_make_appstream (SoupSession  *soup_session,
+                                  GFile        *index,
+                                  const char   *index_uri,
+                                  const char   *arch,
+                                  int           icons_dfd,
+                                  GCancellable *cancellable,
+                                  GError      **error)
+{
+  g_autoptr(FlatpakOciIndexResponse) response = NULL;
+  g_autoptr(FlatpakXml) appstream_root = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GHashTable) used_icons = NULL;
+  int i;
+
+  const char *oci_arch = flatpak_arch_to_oci_arch (arch);
+
+  response = load_oci_index (index, cancellable, error);
+  if (!response)
+    return NULL;
+
+  used_icons = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                      g_free, NULL);
+
+  appstream_root = flatpak_appstream_xml_new ();
+
+  for (i = 0; response->results != NULL && response->results[i] != NULL; i++)
+    {
+      FlatpakOciIndexRepository *r = response->results[i];
+      int j;
+
+      for (j = 0; r->images != NULL && r->images[j] != NULL; j++)
+        {
+          FlatpakOciIndexImage *image = r->images[j];
+          if (g_strcmp0 (image->architecture, oci_arch) == 0)
+            add_image_to_appstream (soup_session,
+                                    index_uri,
+                                    appstream_root, icons_dfd, used_icons,
+                                    r, image,
+                                    cancellable);
+        }
+
+      for (j = 0; r->lists != NULL && r->lists[j] != NULL; j++)
+        {
+          FlatpakOciIndexImageList *list =  r->lists[j];
+          int k;
+
+          for (k = 0; list->images != NULL && list->images[k] != NULL; k++)
+            {
+              FlatpakOciIndexImage *image = list->images[k];
+              if (g_strcmp0 (image->architecture, oci_arch) == 0)
+                add_image_to_appstream (soup_session,
+                                        index_uri,
+                                        appstream_root, icons_dfd, used_icons,
+                                        r, image,
+                                        cancellable);
+            }
+        }
+    }
+
+  if (!flatpak_appstream_xml_root_to_data (appstream_root,
+                                           &bytes, NULL, error))
+    return NULL;
+
+  if (!clean_unused_icons (icons_dfd, used_icons, cancellable, error))
+    return FALSE;
+
+  return g_steal_pointer (&bytes);
+}
+
 gboolean
 flatpak_oci_index_verify_ref (SoupSession  *soup_session,
                               const char   *uri,

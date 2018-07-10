@@ -464,55 +464,24 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
   if (is_oci)
     {
-      g_autoptr(GFile) registry_file = g_file_new_for_path (arg_repo_path);
-      g_autofree char *registry_uri = g_file_get_uri (registry_file);
-      g_autoptr(FlatpakOciRegistry) registry = NULL;
-      g_autoptr(FlatpakOciIndex) index = NULL;
-      const FlatpakOciManifestDescriptor *desc;
-      g_autoptr(FlatpakOciVersioned) versioned = NULL;
-      g_autofree char *checksum = NULL;
-
-      registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
-      if (registry == NULL)
+      /* In the OCI case, we just do the full update, including network i/o, in the
+       * system helper, see comment in flatpak_dir_update_appstream()
+       */
+      if (!flatpak_dir_update_appstream (system,
+                                         arg_origin,
+                                         arg_arch,
+                                         NULL,
+                                         NULL,
+                                         NULL,
+                                         &error))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child OCI registry: %s", error->message);
+                                                 "Error updating appstream: %s", error->message);
           return TRUE;
         }
 
-      index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, &error);
-      if (index == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child OCI registry index: %s", error->message);
-          return TRUE;
-        }
-
-      desc = flatpak_oci_index_get_manifest (index, new_branch);
-      if (desc == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't find ref %s in child OCI registry index", new_branch);
-          return TRUE;
-        }
-
-      versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, NULL,
-                                                       NULL, &error);
-      if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child manifest");
-          return TRUE;
-        }
-
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
-                                        arg_origin, new_branch, NULL, NULL, NULL, &error);
-      if (checksum == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't pull ref %s from child OCI registry index: %s", new_branch, error->message);
-          return TRUE;
-        }
+      flatpak_system_helper_complete_deploy_appstream (object, invocation);
+      return TRUE;
     }
   else if (strlen (arg_repo_path) > 0)
     {
