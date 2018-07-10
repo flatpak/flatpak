@@ -1043,7 +1043,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
       const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
-      const char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
+      g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
       g_autofree char *collection_id = NULL;
       g_autoptr(OstreeCollectionRef) collection_ref = NULL;
 
