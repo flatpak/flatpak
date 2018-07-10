@@ -1483,6 +1483,8 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
   if (!flatpak_dir_recreate_repo (priv->dir, cancellable, error))
     return FALSE;
 
+  flatpak_installation_drop_caches (priv->installation, NULL, NULL);
+
   return TRUE;
 }
 
@@ -1971,6 +1973,8 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
 
       if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
         return FALSE;
+
+      flatpak_installation_drop_caches (priv->installation, NULL, NULL);
     }
 
   return TRUE;
@@ -2061,6 +2065,8 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
 
       if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
         return FALSE;
+
+      flatpak_installation_drop_caches (priv->installation, NULL, NULL);
     }
 
   return TRUE;
@@ -2188,6 +2194,8 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
 
       if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
         return FALSE;
+
+      flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
       if (!flatpak_transaction_add_ref (self, remote, ref, NULL, commit,
                                         FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE, data->file, metadata, error))
