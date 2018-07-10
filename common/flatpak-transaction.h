@@ -149,7 +149,7 @@ FLATPAK_EXTERN
 GKeyFile *                      flatpak_transaction_operation_get_metadata (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
 GKeyFile *                      flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *self);
-
+FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_type_to_string (FlatpakTransactionOperationType kind);
 
 FLATPAK_EXTERN
