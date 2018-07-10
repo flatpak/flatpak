@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..22"
+echo "1..23"
 
 #Regular repo
 setup_repo
@@ -169,6 +169,46 @@ ${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
 assert_file_has_content repo-info "new-title"
 
 echo "ok update metadata"
+
+# Test that you can put an app onto a USB (in this case a bind mount) and install from it.
+if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] || [ x${USE_COLLECTIONS_IN_SERVER-} != xyes ]; then
+    echo "ok install from USB created using create-usb # skip not supported without collection IDs"
+elif ! which bindfs; then
+    echo "ok install from USB created using create-usb # skip not supported without bindfs"
+else
+    mount_fake_usb_drive
+    OLD_COMMIT=`G_MESSAGES_DEBUG=none ${FLATPAK} ${U} remote-info --show-commit test-repo org.test.Hello 2>/dev/null`
+    echo "OLD_COMMIT=$OLD_COMMIT"
+    make_updated_app
+    NEW_COMMIT=`G_MESSAGES_DEBUG=none ${FLATPAK} ${U} remote-info --show-commit test-repo org.test.Hello 2>/dev/null`
+    echo "NEW_COMMIT=$NEW_COMMIT"
+    assert_not_streq "$OLD_COMMIT" "$NEW_COMMIT"
+    ${FLATPAK} uninstall -y --all
+    ${FLATPAK} ${U} install -y test-repo org.test.Hello
+    ${FLATPAK} ${U} update --appstream test-repo
+    ostree --repo=$FL_DIR/repo summary -u
+
+    ${FLATPAK} ${U} create-usb ${TEST_DATA_DIR}/fakeusbmount org.test.Hello
+
+    ostree --repo=${TEST_DATA_DIR}/fakeusbmount/.ostree/repo refs --collections > refs-on-usb
+    assert_file_has_content refs-on-usb app/org.test.Hello/$ARCH/master
+    assert_file_has_content refs-on-usb runtime/org.test.Platform/$ARCH/master
+    assert_file_has_content refs-on-usb ostree-metadata
+    assert_file_has_content refs-on-usb appstream2/$ARCH
+
+    # Reset the app in test-repo to the old version so we can be sure we're
+    # getting the new version from the USB
+    ostree --repo=repos/test reset app/org.test.Hello/$ARCH/master "$OLD_COMMIT"
+    ostree --repo=repos/test summary -u
+
+    # Now install from the usb
+    ${FLATPAK} uninstall -y --all
+    ${FLATPAK} ${U} install -y test-repo org.test.Hello
+    INSTALLED_COMMIT=`G_MESSAGES_DEBUG=none ${FLATPAK} ${U} info --show-commit org.test.Hello 2>/dev/null`
+    assert_streq "$NEW_COMMIT" "$INSTALLED_COMMIT"
+
+    echo "ok install from USB created using create-usb"
+fi
 
 if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     COPY_COLLECTION_ID=org.test.Collection.test

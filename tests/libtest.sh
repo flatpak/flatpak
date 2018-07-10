@@ -329,6 +329,11 @@ skip_without_python2 () {
     fi
 }
 
+mount_fake_usb_drive () {
+    mkdir ${TEST_DATA_DIR}/fakeusb ${TEST_DATA_DIR}/fakeusbmount
+    bindfs --no-allow-other ${TEST_DATA_DIR}/fakeusb ${TEST_DATA_DIR}/fakeusbmount
+}
+
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf
 dbus-daemon --fork --config-file=session.conf --print-address=3 --print-pid=4 \
     3> dbus-session-bus-address 4> dbus-session-bus-pid
@@ -343,6 +348,7 @@ cleanup () {
     /bin/kill -9 $DBUS_SESSION_BUS_PID ${FLATPAK_HTTP_PID:-}
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
     fusermount -u $XDG_RUNTIME_DIR/doc || :
+    fusermount -u ${TEST_DATA_DIR}/fakeusbmount || :
     if test -n "${TEST_SKIP_CLEANUP:-}"; then
         echo "Skipping cleanup of ${TEST_DATA_DIR}"
     else
