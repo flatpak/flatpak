@@ -80,6 +80,13 @@
             will be created for the lifetime of the <arg choice="plain">REF</arg>.
         </para>
         <para>
+            If the specified <arg choice="plain">REMOTE</arg> has a collection ID configured on it,
+            flatpak will search mounted filesystems such as USB drives as well as Avahi services
+            advertised on the local network for the needed refs, in order to support to support
+            offline updates. See <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            for more information.
+        </para>
+        <para>
             The alternative form of the command (<arg>--from</arg> or
             <arg>--bundle</arg> allows you to
             install directly from a source such as a .flatpak
