@@ -480,6 +480,20 @@ flatpak_transaction_operation_get_remote (FlatpakTransactionOperation *self)
   return self->remote;
 }
 
+const char *
+flatpak_transaction_operation_type_to_string (FlatpakTransactionOperationType kind)
+{
+  if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
+    return "install";
+  if (kind == FLATPAK_TRANSACTION_OPERATION_UPDATE)
+    return "update";
+  if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
+    return "install-bundle";
+  if (kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    return "uninstall";
+  return NULL;
+}
+
 /**
  * flatpak_transaction_operation_get_bundle_path:
  * @self: a #FlatpakTransactionOperation
