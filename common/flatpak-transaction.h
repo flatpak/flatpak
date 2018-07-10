@@ -150,6 +150,8 @@ GKeyFile *                      flatpak_transaction_operation_get_metadata (Flat
 FLATPAK_EXTERN
 GKeyFile *                      flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *self);
 
+const char *                    flatpak_transaction_operation_type_to_string (FlatpakTransactionOperationType kind);
+
 FLATPAK_EXTERN
 void                flatpak_transaction_set_no_pull (FlatpakTransaction *self,
                                                      gboolean            no_pull);
