@@ -250,7 +250,11 @@ flatpak_remote_get_appstream_dir (FlatpakRemote *self,
   if (arch == NULL)
     arch = flatpak_get_arch ();
 
-  subdir = g_strdup_printf ("appstream/%s/%s/active", priv->name, arch);
+  if (flatpak_dir_get_remote_oci (priv->dir, priv->name))
+    subdir = g_strdup_printf ("appstream/%s/%s", priv->name, arch);
+  else
+    subdir = g_strdup_printf ("appstream/%s/%s/active", priv->name, arch);
+
   return g_file_resolve_relative_path (flatpak_dir_get_path (priv->dir),
                                        subdir);
 }

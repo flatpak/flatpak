@@ -99,6 +99,8 @@ static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir     
                                                                  GCancellable       *cancellable,
                                                                  GError            **error);
 
+static void ensure_soup_session (FlatpakDir *self);
+
 typedef struct
 {
   GBytes *bytes;
@@ -3116,6 +3118,114 @@ flatpak_dir_update_oci_index (FlatpakDir   *self,
   return g_steal_pointer (&index_cache);
 }
 
+static gboolean
+replace_contents_compressed (GFile        *dest,
+                             GBytes       *contents,
+                             GCancellable *cancellable,
+                             GError      **error)
+{
+  g_autoptr(GZlibCompressor) compressor;
+  g_autoptr(GFileOutputStream) out;
+  g_autoptr(GOutputStream) out2;
+
+  compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
+  out = g_file_replace (dest, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
+                        NULL, error);
+  out2 = g_converter_output_stream_new (G_OUTPUT_STREAM (out), G_CONVERTER (compressor));
+  if (out == NULL)
+    return FALSE;
+
+  if (!g_output_stream_write_all (out2,
+                                  g_bytes_get_data (contents, NULL),
+                                  g_bytes_get_size (contents),
+                                  NULL,
+                                  cancellable, error))
+    return FALSE;
+
+  if (!g_output_stream_close (out2, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_dir_update_appstream_oci (FlatpakDir          *self,
+                                  const char          *remote,
+                                  const char          *arch,
+                                  gboolean            *out_changed,
+                                  OstreeAsyncProgress *progress,
+                                  GCancellable        *cancellable,
+                                  GError             **error)
+{
+  g_autoptr(GFile) arch_dir = NULL;
+  g_autoptr(GFile) lock_file = NULL;
+  g_auto(GLnxLockFile) lock = { 0, };
+  g_autoptr(GFile) index_cache = NULL;
+  g_autofree char *index_uri = NULL;
+  g_autoptr(GFile) timestamp_file = NULL;
+  g_autoptr(GFile) icons_dir = NULL;
+  glnx_autofd int icons_dfd = -1;
+  g_autoptr(GBytes) appstream = NULL;
+  g_autoptr(GFile) new_appstream_file = NULL;
+
+  arch_dir = flatpak_build_file (flatpak_dir_get_path (self),
+                                 "appstream", remote, arch, NULL);
+  if (g_mkdir_with_parents (flatpak_file_get_path_cached (arch_dir), 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  lock_file = g_file_get_child (arch_dir, "lock");
+  if (!glnx_make_lock_file (AT_FDCWD, flatpak_file_get_path_cached (lock_file),
+                            LOCK_EX, &lock, error))
+    return FALSE;
+
+  index_cache = flatpak_dir_update_oci_index (self, remote, &index_uri, cancellable, error);
+  if (index_cache == NULL)
+    return FALSE;
+
+  timestamp_file = g_file_get_child (arch_dir, ".timestamp");
+  if (check_destination_mtime (index_cache, timestamp_file, cancellable))
+    return TRUE;
+
+  icons_dir = g_file_get_child (arch_dir, "icons");
+  if (g_mkdir_with_parents (flatpak_file_get_path_cached (icons_dir), 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (icons_dir),
+                       FALSE, &icons_dfd, error))
+    return FALSE;
+
+  ensure_soup_session (self);
+
+  appstream = flatpak_oci_index_make_appstream (self->soup_session,
+                                                index_cache,
+                                                index_uri,
+                                                arch,
+                                                icons_dfd,
+                                                cancellable,
+                                                error);
+  if (appstream == NULL)
+    return FALSE;
+
+  new_appstream_file = g_file_get_child (arch_dir, "appstream.xml.gz");
+  if (!replace_contents_compressed (new_appstream_file, appstream, cancellable, error))
+    return FALSE;
+
+  if (!g_file_replace_contents (timestamp_file, "", 0, NULL, FALSE,
+                                G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, error))
+    return FALSE;
+
+  if (out_changed)
+    *out_changed = TRUE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_update_appstream (FlatpakDir          *self,
                               const char          *remote,
@@ -3135,6 +3245,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   g_autoptr(GError) second_error = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   const char *installation;
+  gboolean is_oci;
 
   if (out_changed)
     *out_changed = FALSE;
@@ -3145,6 +3256,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   new_branch = g_strdup_printf ("appstream2/%s", arch);
   old_branch = g_strdup_printf ("appstream/%s", arch);
 
+  is_oci = flatpak_dir_get_remote_oci (self, remote);
+
   state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
   if (state == NULL)
     return FALSE;
@@ -3152,7 +3265,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_auto(GLnxLockFile) child_repo_lock = { 0, };
-      gboolean is_oci;
       g_autofree char *url = NULL;
       g_autoptr(GFile) child_repo_file = NULL;
       g_autofree char *child_repo_path = NULL;
@@ -3165,8 +3277,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                        error))
         return FALSE;
 
-      is_oci = flatpak_dir_get_remote_oci (self, remote);
-
       if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote_name,
                                                       &gpg_verify_summary, error))
         return FALSE;
@@ -3177,27 +3287,13 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
       if (is_oci)
         {
-          g_autoptr(FlatpakOciRegistry) registry = NULL;
-          g_autoptr(GError) local_error = NULL;
-          g_autofree char *latest_alt_commit = NULL;
-          G_GNUC_UNUSED g_autofree char *latest_commit = flatpak_dir_read_latest (self, remote, used_branch, &latest_alt_commit, cancellable, NULL);
-
-          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, error);
-          if (registry == NULL)
-            return FALSE;
-
-          child_repo_file = g_file_new_for_uri (flatpak_oci_registry_get_uri (registry));
-
-          if (!flatpak_dir_mirror_oci (self, registry, state, new_branch, latest_alt_commit, progress, cancellable, &local_error))
-            {
-              if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-                return TRUE;
-              else
-                {
-                  g_propagate_error (error, g_steal_pointer (&local_error));
-                  return FALSE;
-                }
-            }
+          /* In the OCI case, we just ask the system helper do the network i/o, since
+           * there is no way to verify the index validity without actually downloading it.
+           * While we try to avoid network i/o as root, there's no hard line where doing
+           * network i/o as root is much worse than parsing the results of network i/o
+           * as root. A trusted, but unprivileged helper could be used to do the download
+           * if necessary.
+           */
         }
       else if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
         {
@@ -3267,6 +3363,13 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
         (void) flatpak_rm_rf (child_repo_file, NULL, NULL);
 
       return TRUE;
+    }
+
+  if (is_oci)
+    {
+      return flatpak_dir_update_appstream_oci (self, remote, arch,
+                                               out_changed, progress, cancellable,
+                                               error);
     }
 
   /* No need to use an existing OstreeRepoFinderResult array, since
