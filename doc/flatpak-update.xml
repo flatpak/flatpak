@@ -69,6 +69,13 @@
             with the --commit option.
         </para>
         <para>
+            If the configured remote for a ref being updated has a collection ID configured on it,
+            flatpak will search mounted filesystems such as USB drives as well as Avahi services
+            advertised on the local network for the needed refs, in order to support to support
+            offline updates. See <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            for more information.
+        </para>
+        <para>
             Note that updating a runtime is different from installing
             a different branch, and runtime updates are expected to keep
             strict compatibility. If an application update does cause
