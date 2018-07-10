@@ -116,6 +116,7 @@ fi
 install_repo local-test-no-gpg
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 ${FLATPAK} ${U} update --appstream local-test-no-gpg-repo
+${FLATPAK} ${U} remote-delete local-test-no-gpg-repo
 
 echo "ok local without gpg key"
 
