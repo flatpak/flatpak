@@ -40,6 +40,7 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_ABORTED: The transaction was aborted (returned TRUE in operation-error signal).
  * @FLATPAK_ERROR_SKIPPED: The App/Runtime install was skipped due to earlier errors.
  * @FLATPAK_ERROR_NEED_NEW_FLATPAK: The App/Runtime needs a more recent version of flatpak.
+ * @FLATPAK_ERROR_REMOTE_NOT_FOUND: The specified remote was not found.
  *
  * Error codes for library functions.
  */
@@ -51,6 +52,7 @@ typedef enum {
   FLATPAK_ERROR_ABORTED,
   FLATPAK_ERROR_SKIPPED,
   FLATPAK_ERROR_NEED_NEW_FLATPAK,
+  FLATPAK_ERROR_REMOTE_NOT_FOUND,
 } FlatpakError;
 
 #define FLATPAK_ERROR flatpak_error_quark ()
