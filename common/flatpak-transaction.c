@@ -2123,6 +2123,8 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
       if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
         return FALSE;
 
+      flatpak_installation_drop_caches (priv->installation, NULL, NULL);
+
       if (!flatpak_transaction_add_install (self, remote, ref, NULL, error))
         return FALSE;
     }
