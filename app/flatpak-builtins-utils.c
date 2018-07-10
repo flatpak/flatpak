@@ -483,16 +483,7 @@ update_appstream (GPtrArray    *dirs,
 
               if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
                   flatpak_dir_get_remote_noenumerate (dir, remotes[i]))
-                {
-                  if (local_error)
-                    {
-                      if (quiet)
-                        g_debug ("%s: %s", _("Error updating"), local_error->message);
-                      else
-                        g_printerr ("%s: %s\n", _("Error updating"), local_error->message);
-                    }
-                  continue;
-                }
+                continue;
 
               if (flatpak_dir_is_user (dir))
                 {
