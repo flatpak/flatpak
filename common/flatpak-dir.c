@@ -10320,6 +10320,10 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
       gpg_data = g_bytes_new_take (decoded, decoded_len);
       g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
     }
+  else
+    {
+      g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
+    }
 
   collection_id = g_key_file_get_string (keyfile, source_group,
                                          FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
