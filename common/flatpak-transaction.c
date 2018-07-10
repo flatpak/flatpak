@@ -1414,7 +1414,7 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
 
   if (!g_key_file_load_from_data (keyfile, g_bytes_get_data (flatpakref_data, NULL),
                                   g_bytes_get_size (flatpakref_data),
-                                  0, error))
+                                  0, &local_error))
     return flatpak_fail (error, "Invalid .flatpakref: %s", local_error->message);
 
   priv->flatpakrefs = g_list_append (priv->flatpakrefs, g_steal_pointer (&keyfile));
