@@ -7,6 +7,7 @@ AC_CHECK_DECLS([
         [], [], [[
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <sys/mount.h>
 #include <fcntl.h>
 #include <sched.h>
