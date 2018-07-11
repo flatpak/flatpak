@@ -105,7 +105,7 @@ flatpak_builtin_permission_remove (int argc, char **argv,
   const char *table;
   const char *id;
 
-  context = g_option_context_new (_("TABLE ID - Remove item to permission store"));
+  context = g_option_context_new (_("TABLE ID - Remove item from permission store"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
