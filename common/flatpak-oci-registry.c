@@ -104,7 +104,7 @@ flatpak_oci_registry_set_property (GObject      *object,
     case PROP_URI:
       /* Ensure the base uri ends with a / so relative urls work */
       uri = g_value_get_string (value);
-      if (g_str_has_prefix (uri, "/"))
+      if (g_str_has_suffix (uri, "/"))
         self->uri = g_strdup (uri);
       else
         self->uri = g_strconcat (uri, "/", NULL);
@@ -1985,7 +1985,7 @@ flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
   if (!g_str_has_suffix (uri, "/index/"))
     g_string_append (index_uri, "index/");
 
-  g_string_append (index_uri, "/static");
+  g_string_append (index_uri, "static");
   soup_uri = soup_uri_new (index_uri->str);
   soup_uri_set_query_from_fields (soup_uri,
                                   "os", "linux",
@@ -2138,7 +2138,7 @@ flatpak_oci_index_verify_ref (SoupSession  *soup_session,
   if (!g_str_has_suffix (uri, "/index/"))
     g_string_append (index_uri, "index/");
 
-  g_string_append (index_uri, "/dynamic");
+  g_string_append (index_uri, "dynamic");
 
   soup_uri = soup_uri_new (index_uri->str);
   soup_uri_set_query_from_fields (soup_uri,
