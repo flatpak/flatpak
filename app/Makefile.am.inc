@@ -19,7 +19,6 @@ app/%-dbus-generated.h: app/%-dbus-generated.c
 	@true # Built as a side-effect of the rules for the .c
 
 flatpak_SOURCES = \
-	$(flatpak_dbus_built_sources) \
 	app/flatpak-main.c \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
@@ -70,6 +69,7 @@ flatpak_SOURCES = \
 	$(NULL)
 
 nodist_flatpak_SOURCES = \
+	$(flatpak_dbus_built_sources) \
 	app/parse-datetime.c \
 	$(NULL)
 
