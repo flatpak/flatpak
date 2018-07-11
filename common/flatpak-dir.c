@@ -415,7 +415,7 @@ flatpak_remote_state_save_summary (FlatpakRemoteState *self,
   if (!g_file_replace_contents (summary_file,
                                 g_bytes_get_data (summary_bytes, NULL),
                                 g_bytes_get_size (summary_bytes),
-                                NULL, FALSE, 0, NULL, cancellable, NULL))
+                                NULL, FALSE, 0, NULL, cancellable, error))
     return FALSE;
 
   if (self->summary_sig_bytes != NULL)
@@ -424,7 +424,7 @@ flatpak_remote_state_save_summary (FlatpakRemoteState *self,
       if (!g_file_replace_contents (summary_sig_file,
                                     g_bytes_get_data (self->summary_sig_bytes, NULL),
                                     g_bytes_get_size (self->summary_sig_bytes),
-                                    NULL, FALSE, 0, NULL, cancellable, NULL))
+                                    NULL, FALSE, 0, NULL, cancellable, error))
         return FALSE;
     }
 
