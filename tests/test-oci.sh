@@ -27,12 +27,10 @@ skip_without_bwrap
 
 echo "1..2"
 
-setup_repo
-
-${FLATPAK} ${U} install test-repo org.test.Platform master
+setup_repo_no_add oci
 
 mkdir -p oci
-${FLATPAK} build-bundle --oci $FL_GPGARGS repos/test oci/image org.test.Hello
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/image org.test.Hello
 
 assert_has_file oci/image/oci-layout
 assert_has_dir oci/image/blobs/sha256

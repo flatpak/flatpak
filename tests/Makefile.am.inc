@@ -100,6 +100,8 @@ dist_test_scripts = \
 	tests/test-bundle.sh \
 	tests/test-bundle-system.sh \
 	tests/test-oci.sh \
+	tests/test-oci-registry.sh \
+	tests/test-oci-registry-system.sh \
 	tests/test-unsigned-summaries.sh \
 	tests/test-update-remote-configuration.sh \
 	$(NULL)
