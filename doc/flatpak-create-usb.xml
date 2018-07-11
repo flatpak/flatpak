@@ -76,7 +76,7 @@
             before updating the summary file.
         </para>
         <para>
-            By default <command>flatpak create-usb</command> uses <filename>.ostree/repo</filename>,
+            By default <command>flatpak create-usb</command> uses <filename>.ostree/repo</filename>
             as the destination directory under <arg choice="plain">MOUNT-PATH</arg> but if you
             specify another location using <option>--destination-repo</option>
             a symbolic link will be created for you in <filename>.ostree/repos.d</filename>.
