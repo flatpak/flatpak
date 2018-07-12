@@ -3622,7 +3622,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       extra_local_file = flatpak_build_file (base_dir, "extra-data", extra_data_sha256, extra_data_name, NULL);
       if (g_file_query_exists (extra_local_file, cancellable))
         {
-          g_debug ("Loading extra-data from local file %s", g_file_get_path (extra_local_file));
+          g_debug ("Loading extra-data from local file %s", flatpak_file_get_path_cached (extra_local_file));
           gsize extra_local_size;
           g_autofree char *extra_local_contents = NULL;
           g_autoptr(GError) my_error = NULL;
@@ -5957,7 +5957,7 @@ extract_extra_data (FlatpakDir   *self,
   if (n_extra_data_sources == 0)
     return TRUE;
 
-  g_debug ("extracting extra data to %s", g_file_get_path (extradir));
+  g_debug ("extracting extra data to %s", flatpak_file_get_path_cached (extradir));
 
   if (!ostree_repo_read_commit_detached_metadata (self->repo, checksum, &detached_metadata,
                                                   cancellable, error))
@@ -11464,7 +11464,7 @@ add_related (FlatpakDir *self,
     {
       g_debug ("Skipping related extension ‘%s’ because it is already "
                "installed as an unmaintained extension in ‘%s’.",
-               ref_parts[1], g_file_get_path (unmaintained_path));
+               ref_parts[1], flatpak_file_get_path_cached (unmaintained_path));
       download = FALSE;
     }
 
