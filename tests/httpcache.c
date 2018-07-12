@@ -4,19 +4,32 @@ int
 main (int argc, char *argv[])
 {
   SoupSession *session = flatpak_create_soup_session (PACKAGE_STRING);
-  g_autoptr(GFile) dest = NULL;
   GError *error = NULL;
+  const char *url, *dest;
+  int flags = 0;
 
-  if (argc != 3)
+  if (argc == 3)
     {
-      g_printerr("Usage testhttp URL DEST\n");
+      url = argv[1];
+      dest = argv[2];
+    }
+  else if (argc == 4 && g_strcmp0 (argv[1], "--compressed") == 0)
+    {
+      url = argv[2];
+      dest = argv[3];
+      flags |= FLATPAK_HTTP_FLAGS_STORE_COMPRESSED;
+    }
+  else
+    {
+      g_printerr("Usage httpcache [--compressed] URL DEST\n");
       return 1;
     }
 
+
   if (!flatpak_cache_http_uri (session,
-			       argv[1],
-			       0,
-			       AT_FDCWD, argv[2],
+			       url,
+			       flags,
+			       AT_FDCWD, dest,
 			       NULL, NULL, NULL, &error))
     {
       g_print ("%s\n", error->message);

@@ -28,10 +28,15 @@ port=$(cat httpd-port-main)
 
 assert_result() {
     test_string=$1
+    compressed=
+    if [ "$2" = "--compressed" ] ; then
+	compressed="--compressed"
+	shift
+    fi
     remote=$2
     local=$3
 
-    out=`httpcache "http://localhost:$port$remote" $local || :`
+    out=`httpcache $compressed "http://localhost:$port$remote" $local || :`
 
     case "$out" in
 	$test_string*)
@@ -62,7 +67,7 @@ have_xattrs() {
     setfattr -n user.testvalue -v somevalue $1/test-xattrs > /dev/null 2>&1
 }
 
-echo "1..4"
+echo "1..6"
 
 # Without anything else, cached for 30 minutes
 assert_ok "/" $test_tmpdir/output
@@ -107,12 +112,26 @@ rm -f $test_tmpdir/output*
 
 echo 'ok http revalidation'
 
+# Test compressd downloading and storage
+assert_ok --compressed "/compress" $test_tmpdir/output
+contents=$(gunzip -c < $test_tmpdir/output)
+assert_streq $contents path=/compress
+rm -f $test_tmpdir/output*
+
+echo 'ok compressed download'
+
+# Test uncompressed downloading with compressed storage
+assert_ok --compressed "/compress?ignore-accept-encoding" $test_tmpdir/output
+contents=$(gunzip -c < $test_tmpdir/output)
+assert_streq $contents path=/compress?ignore-accept-encoding
+rm -f $test_tmpdir/output*
+
+echo 'ok compress after download'
+
 # Testing that things work with without xattr support
 
 if have_xattrs $test_tmpdir ; then
-    ls $test_tmpdir 1>&2
     assert_ok "/?etag&no-cache" $test_tmpdir/output
-    ls $test_tmpdir 1>&2
     assert_not_has_file $test_tmpdir/output.flatpak.http
     assert_304 "/?etag&no-cache" $test_tmpdir/output
     rm -f $test_tmpdir/output*

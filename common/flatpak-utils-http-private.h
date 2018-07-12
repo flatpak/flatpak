@@ -30,6 +30,7 @@ SoupSession * flatpak_create_soup_session (const char *user_agent);
 typedef enum {
   FLATPAK_HTTP_FLAGS_NONE = 0,
   FLATPAK_HTTP_FLAGS_ACCEPT_OCI = 1 << 0,
+  FLATPAK_HTTP_FLAGS_STORE_COMPRESSED = 2 << 0,
 } FlatpakHTTPFlags;
 
 typedef void (*FlatpakLoadUriProgress) (guint64  downloaded_bytes,
