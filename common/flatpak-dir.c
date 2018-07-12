@@ -1019,7 +1019,7 @@ flatpak_dir_get_oci_index_location (FlatpakDir *self,
                                     const char *remote,
                                     GError    **error)
 {
-  return flatpak_dir_get_oci_cache_file (self, remote, ".index", error);
+  return flatpak_dir_get_oci_cache_file (self, remote, ".index.gz", error);
 }
 
 static GFile *
@@ -1053,7 +1053,7 @@ flatpak_dir_remove_oci_files (FlatpakDir   *self,
                               GCancellable *cancellable,
                               GError      **error)
 {
-  if (!flatpak_dir_remove_oci_file (self, remote, ".index", cancellable, error) ||
+  if (!flatpak_dir_remove_oci_file (self, remote, ".index.gz", cancellable, error) ||
       !flatpak_dir_remove_oci_file (self, remote, ".summary", cancellable, error))
     return FALSE;
 
