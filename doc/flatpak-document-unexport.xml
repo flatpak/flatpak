@@ -30,7 +30,7 @@
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>flatpak document-export</command>
+                <command>flatpak document-unexport</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">FILE</arg>
             </cmdsynopsis>
