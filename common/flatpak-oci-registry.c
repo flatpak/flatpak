@@ -1955,7 +1955,7 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
 
   if (!flatpak_cache_http_uri (soup_session,
                                query_uri,
-                               0,
+                               FLATPAK_HTTP_FLAGS_STORE_COMPRESSED,
                                AT_FDCWD, index_path,
                                NULL, NULL,
                                cancellable, error))
@@ -1969,18 +1969,26 @@ load_oci_index (GFile        *index,
                 GCancellable *cancellable,
                 GError      **error)
 {
-  g_autoptr(GMappedFile) mfile = NULL;
-  g_autoptr(GBytes) index_bytes = NULL;
+  g_autoptr(GFileInputStream) in = NULL;
+  g_autoptr(GZlibDecompressor) decompressor = NULL;
+  g_autoptr(GInputStream) converter = NULL;
+  g_autoptr(GError) local_error = NULL;
   g_autoptr(FlatpakJson) json = NULL;
 
-  mfile = g_mapped_file_new (flatpak_file_get_path_cached (index), FALSE, error);
-  if (!mfile)
+  in = g_file_read (index, cancellable, error);
+  if (in == NULL)
     return FALSE;
 
-  index_bytes = g_mapped_file_get_bytes (mfile);
-  json = flatpak_json_from_bytes (index_bytes, FLATPAK_TYPE_OCI_INDEX_RESPONSE, error);
+  decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+  converter = g_converter_input_stream_new (G_INPUT_STREAM (in), G_CONVERTER (decompressor));
+
+  json = flatpak_json_from_stream (G_INPUT_STREAM (converter), FLATPAK_TYPE_OCI_INDEX_RESPONSE,
+                                   cancellable, error);
   if (json == NULL)
     return NULL;
+
+  if (!g_input_stream_close (G_INPUT_STREAM (in), cancellable, error))
+    g_warning ("Error closing http stream: %s", local_error->message);
 
   return (FlatpakOciIndexResponse *) g_steal_pointer (&json);
 }

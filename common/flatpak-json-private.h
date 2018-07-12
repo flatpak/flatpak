@@ -104,6 +104,10 @@ JsonNode   *flatpak_json_to_node (FlatpakJson *self);
 FlatpakJson *flatpak_json_from_bytes (GBytes  *bytes,
                                       GType    type,
                                       GError **error);
+FlatpakJson *flatpak_json_from_stream (GInputStream *stream,
+                                       GType         type,
+                                       GCancellable *cancellable,
+                                       GError      **error);
 GBytes     *flatpak_json_to_bytes (FlatpakJson *self);
 
 G_END_DECLS
