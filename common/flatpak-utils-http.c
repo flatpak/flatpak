@@ -21,6 +21,7 @@
 #include "flatpak-utils-http-private.h"
 #include "flatpak-oci-registry-private.h"
 
+#include <gio/gunixoutputstream.h>
 #include <libsoup/soup.h>
 #include "libglnx/libglnx.h"
 
@@ -39,6 +40,7 @@ typedef struct
 {
   GMainLoop             *loop;
   GError                *error;
+  gboolean               store_compressed;
 
   GOutputStream         *out; /*or */
   GString               *content; /* or */
@@ -333,6 +335,17 @@ stream_closed (GObject *source, GAsyncResult *res, gpointer user_data)
   if (!g_input_stream_close_finish (stream, res, &error))
     g_warning ("Error closing http stream: %s", error->message);
 
+  if (data->out_tmpfile)
+    {
+      if (!g_output_stream_close (data->out, data->cancellable, &error))
+        {
+          if (data->error == NULL)
+            g_propagate_error (&data->error, g_steal_pointer (&error));
+        }
+
+      g_clear_pointer (&data->out, g_object_unref);
+    }
+
   g_main_loop_quit (data->loop);
 }
 
@@ -351,6 +364,7 @@ load_uri_read_cb (GObject *source, GAsyncResult *res, gpointer user_data)
       g_input_stream_close_async (stream,
                                   G_PRIORITY_DEFAULT, NULL,
                                   stream_closed, data);
+
       return;
     }
 
@@ -369,15 +383,6 @@ load_uri_read_cb (GObject *source, GAsyncResult *res, gpointer user_data)
         }
 
       data->downloaded_bytes += n_written;
-    }
-  else if (data->out_tmpfile != NULL)
-    {
-      if (glnx_loop_write (data->out_tmpfile->fd,
-                           data->buffer, nread) < 0)
-        {
-          glnx_throw_errno_prefix (&data->error, "write");
-          return;
-        }
     }
   else
     {
@@ -452,10 +457,26 @@ load_uri_callback (GObject      *source_object,
 
   if (data->out_tmpfile)
     {
+      g_autoptr(GOutputStream) out = NULL;
+
       if (!glnx_open_tmpfile_linkable_at (data->out_tmpfile_parent_dfd, ".",
                                           O_WRONLY, data->out_tmpfile,
                                           &data->error))
         return;
+
+      g_assert (data->out == NULL);
+
+      out = g_unix_output_stream_new (data->out_tmpfile->fd, FALSE);
+      if (data->store_compressed &&
+          g_strcmp0 (soup_message_headers_get_one (msg->response_headers, "Content-Encoding"), "gzip") != 0)
+        {
+          g_autoptr(GZlibCompressor) compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
+          data->out = g_converter_output_stream_new (out, G_CONVERTER (compressor));
+        }
+      else
+        {
+          data->out = g_steal_pointer (&out);
+        }
     }
 
   g_input_stream_read_async (in, data->buffer, sizeof (data->buffer),
@@ -722,6 +743,13 @@ flatpak_cache_http_uri (SoupSession           *soup_session,
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
     soup_message_headers_replace (m->request_headers, "Accept",
                                   "application/vnd.oci.image.manifest.v1+json");
+
+  if (flags & FLATPAK_HTTP_FLAGS_STORE_COMPRESSED)
+    {
+      soup_message_headers_replace (m->request_headers, "Accept-Encoding",
+                                    "gzip");
+      data.store_compressed = TRUE;
+    }
 
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,

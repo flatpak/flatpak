@@ -3,9 +3,12 @@
 from wsgiref.handlers import format_date_time
 from email.utils import parsedate
 from calendar import timegm
+import gzip
 from urlparse import parse_qs
 import BaseHTTPServer
 import time
+import zlib
+from StringIO import StringIO
 
 server_start_time = int(time.time())
 
@@ -59,10 +62,23 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if response == 200:
             self.send_header("Content-Type", "text/plain; charset=UTF-8")
 
+        contents = "path=" + self.path + "\n"
+
+        if not 'ignore-accept-encoding' in query:
+            accept_encoding = self.headers.get("Accept-Encoding")
+            if accept_encoding and accept_encoding == 'gzip':
+                self.send_header("Content-Encoding", "gzip")
+
+                buf = StringIO()
+                gzfile = gzip.GzipFile(mode='w', fileobj=buf)
+                gzfile.write(contents)
+                gzfile.close()
+                contents = buf.getvalue()
+
         self.end_headers()
 
         if response == 200:
-            self.wfile.write("path=" + self.path + "\n");
+            self.wfile.write(contents)
 
 def test():
     BaseHTTPServer.test(RequestHandler)
