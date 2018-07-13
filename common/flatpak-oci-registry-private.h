@@ -151,11 +151,4 @@ GBytes *flatpak_oci_index_make_appstream (SoupSession  *soup_session,
                                           GCancellable *cancellable,
                                           GError      **error);
 
-gboolean flatpak_oci_index_verify_ref (SoupSession  *soup_soession,
-                                       const char   *uri,
-                                       const char   *ref,
-                                       const char   *digest,
-                                       GCancellable *cancellable,
-                                       GError      **error);
-
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */
