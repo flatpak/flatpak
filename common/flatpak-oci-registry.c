@@ -40,6 +40,17 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAutoArchiveWrite, archive_write_free)
 
 static void flatpak_oci_registry_initable_iface_init (GInitableIface *iface);
 
+/* A FlatpakOciRegistry represents either:
+ *
+ *  A local directory with a layout corresponding to the OCI image specification -
+ *    we usually use this to store a single image, but it could be used for multiple
+ *    images.
+ *  A remote docker registry.
+ *
+ * This code used to support OCI image layouts on remote HTTP servers, but that's not
+ * really a thing anybody does. It would be inefficient for storing large numbers of
+ * images, since all versions need to be listed in index.json.
+ */
 struct FlatpakOciRegistry
 {
   GObject  parent;
@@ -479,7 +490,6 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
                                     GError            **error)
 {
   g_autoptr(SoupURI) baseuri = NULL;
-  g_autoptr(GBytes) oci_layout_bytes = NULL;
 
   if (for_write)
     {
@@ -497,26 +507,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
       return FALSE;
     }
 
-  oci_layout_bytes = remote_load_file (self->soup_session, baseuri, "oci-layout", NULL, NULL, cancellable, NULL);
-  if (oci_layout_bytes != NULL)
-    {
-      g_autoptr(GError) local_error = NULL;
-      gboolean not_json;
-
-      if (!verify_oci_version (oci_layout_bytes, &not_json, cancellable, &local_error))
-        {
-          if (not_json)
-            self->is_docker = TRUE;
-          else
-            {
-              g_propagate_error (error, g_steal_pointer (&local_error));
-              return FALSE;
-            }
-        }
-    }
-  else
-    self->is_docker = TRUE;
-
+  self->is_docker = TRUE;
   self->base_uri = g_steal_pointer (&baseuri);
 
   return TRUE;
