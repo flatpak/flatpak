@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-07-10 19:49+0200\n"
-"PO-Revision-Date: 2018-07-08 16:15+0200\n"
+"POT-Creation-Date: 2018-07-15 17:33+0000\n"
+"PO-Revision-Date: 2018-07-15 19:38+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -1704,7 +1704,7 @@ msgid "Data"
 msgstr "Dane"
 
 #: app/flatpak-builtins-permission-remove.c:108
-msgid "TABLE ID - Remove item to permission store"
+msgid "TABLE ID - Remove item from permission store"
 msgstr "TABLICA IDENTYFIKATOR — usuwa element z przechowalni uprawnień"
 
 #: app/flatpak-builtins-permission-remove.c:117
@@ -2803,9 +2803,8 @@ msgstr ""
 "repozytorium "
 
 #: common/flatpak-dir.c:1054
-#, fuzzy
 msgid "Unable to connect to system bus"
-msgstr "Zezwala programowi na posiadanie nazwy na magistrali systemu"
+msgstr "Nie można połączyć się z magistralą systemu"
 
 #: common/flatpak-dir.c:1496
 #, c-format
@@ -3360,14 +3359,3 @@ msgstr ""
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "Aktualizacja danych AppStream"
-
-#~ msgid "Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"
-#~ msgstr ""
-#~ "Ostrzeżenie: nie można zaktualizować metadanych dla repozytorium „%s”: "
-#~ "%s\n"
-
-#~ msgid ""
-#~ "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
-#~ msgstr ""
-#~ "Ostrzeżenie: nie można zaktualizować danych AppStream dla repozytorium "
-#~ "„%s”, architektury „%s”: %s\n"
