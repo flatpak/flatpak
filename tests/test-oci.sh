@@ -21,8 +21,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-export FLATPAK_ENABLE_EXPERIMENTAL_OCI=1
-
 skip_without_bwrap
 
 echo "1..2"

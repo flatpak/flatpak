@@ -374,9 +374,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
       opt_url = remote_url;
     }
 
-  if (opt_oci && g_getenv ("FLATPAK_ENABLE_EXPERIMENTAL_OCI") == NULL)
-    return flatpak_fail (error, "flatpak remote-add --oci is currently unsupported and experimental, enable it by setting the FLATPAK_ENABLE_EXPERIMENTAL_OCI env var");
-
   /* Default to gpg verify, except for --oci */
   if (!opt_no_gpg_verify && !opt_oci)
     opt_do_gpg_verify = TRUE;
