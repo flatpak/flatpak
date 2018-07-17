@@ -268,35 +268,20 @@ local_open_file (int           dfd,
 static GBytes *
 local_load_file (int           dfd,
                  const char   *subpath,
-                 const char   *etag,
-                 char        **etag_out,
                  GCancellable *cancellable,
                  GError      **error)
 {
   glnx_autofd int fd = -1;
   struct stat st_buf;
   GBytes *bytes;
-  g_autofree char *current_etag = NULL;
 
   fd = local_open_file (dfd, subpath, &st_buf, cancellable, error);
   if (fd == -1)
     return NULL;
 
-  current_etag = g_strdup_printf ("%lu", st_buf.st_mtime);
-
-  if (etag != NULL && strcmp (current_etag, etag) == 0)
-    {
-      g_set_error (error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED,
-                   "File %s was not changed", subpath);
-      return NULL;
-    }
-
   bytes = glnx_fd_readall_bytes (fd, cancellable, error);
   if (bytes == NULL)
     return NULL;
-
-  if (etag_out)
-    *etag_out = g_steal_pointer (&current_etag);
 
   return bytes;
 }
@@ -305,8 +290,6 @@ static GBytes *
 remote_load_file (SoupSession  *soup_session,
                   SoupURI      *base,
                   const char   *subpath,
-                  const char   *etag,
-                  char        **etag_out,
                   GCancellable *cancellable,
                   GError      **error)
 {
@@ -324,7 +307,7 @@ remote_load_file (SoupSession  *soup_session,
 
   uri_s = soup_uri_to_string (uri, FALSE);
   bytes = flatpak_load_http_uri (soup_session,
-                                 uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI, etag, etag_out,
+                                 uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                                  NULL, NULL,
                                  cancellable, error);
   if (bytes == NULL)
@@ -336,15 +319,13 @@ remote_load_file (SoupSession  *soup_session,
 static GBytes *
 flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
                                 const char         *subpath,
-                                const char         *etag,
-                                char              **etag_out,
                                 GCancellable       *cancellable,
                                 GError            **error)
 {
   if (self->dfd != -1)
-    return local_load_file (self->dfd, subpath, etag, etag_out, cancellable, error);
+    return local_load_file (self->dfd, subpath, cancellable, error);
   else
-    return remote_load_file (self->soup_session, self->base_uri, subpath, etag, etag_out, cancellable, error);
+    return remote_load_file (self->soup_session, self->base_uri, subpath, cancellable, error);
 }
 
 static JsonNode *
@@ -452,7 +433,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
         return FALSE;
     }
 
-  oci_layout_bytes = local_load_file (dfd, "oci-layout", NULL, NULL, cancellable, &local_error);
+  oci_layout_bytes = local_load_file (dfd, "oci-layout", cancellable, &local_error);
   if (oci_layout_bytes == NULL)
     {
       if (for_write && g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -546,20 +527,15 @@ flatpak_oci_registry_initable_iface_init (GInitableIface *iface)
 
 FlatpakOciIndex *
 flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
-                                 const char         *etag,
-                                 char              **etag_out,
                                  GCancellable       *cancellable,
                                  GError            **error)
 {
   g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GError) local_error = NULL;
 
-  if (etag_out)
-    *etag_out = NULL;
-
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_file (self, "index.json", etag, etag_out, cancellable, &local_error);
+  bytes = flatpak_oci_registry_load_file (self, "index.json", cancellable, &local_error);
   if (bytes == NULL)
     {
       g_propagate_error (error, g_steal_pointer (&local_error));
@@ -910,7 +886,7 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
   if (subpath == NULL)
     return NULL;
 
-  bytes = flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
+  bytes = flatpak_oci_registry_load_file (self, subpath, cancellable, error);
   if (bytes == NULL)
     return NULL;
 

@@ -4889,7 +4889,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
     }
 
 
-  index = flatpak_oci_registry_load_index (dst_registry, NULL, NULL, NULL, NULL);
+  index = flatpak_oci_registry_load_index (dst_registry, NULL, NULL);
   if (index == NULL)
     index = flatpak_oci_index_new ();
 

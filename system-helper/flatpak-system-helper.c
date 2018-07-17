@@ -265,7 +265,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, &error);
+      index = flatpak_oci_registry_load_index (registry, NULL, &error);
       if (index == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,

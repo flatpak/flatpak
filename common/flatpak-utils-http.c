@@ -52,7 +52,6 @@ typedef struct
   gpointer               user_data;
   guint64                last_progress_time;
   CacheHttpData         *cache_data;
-  char                  *etag;
 } LoadUriData;
 
 #define CACHE_HTTP_XATTR "user.flatpak.http"
@@ -451,8 +450,6 @@ load_uri_callback (GObject      *source_object,
   if (data->cache_data)
     set_cache_http_data_from_headers (data->cache_data, msg);
 
-  data->etag = g_strdup (soup_message_headers_get_one (msg->response_headers, "ETag"));
-
   if (data->out_tmpfile)
     {
       if (!glnx_open_tmpfile_linkable_at (data->out_tmpfile_parent_dfd, ".",
@@ -496,8 +493,6 @@ GBytes *
 flatpak_load_http_uri (SoupSession           *soup_session,
                        const char            *uri,
                        FlatpakHTTPFlags       flags,
-                       const char            *etag,
-                       char                 **out_etag,
                        FlatpakLoadUriProgress progress,
                        gpointer               user_data,
                        GCancellable          *cancellable,
@@ -530,8 +525,6 @@ flatpak_load_http_uri (SoupSession           *soup_session,
     return NULL;
 
   m = soup_request_http_get_message (request);
-  if (etag)
-    soup_message_headers_replace (m->request_headers, "If-None-Match", etag);
 
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
     soup_message_headers_replace (m->request_headers, "Accept",
@@ -546,17 +539,11 @@ flatpak_load_http_uri (SoupSession           *soup_session,
   if (data.error)
     {
       g_propagate_error (error, data.error);
-      g_free (data.etag);
       return NULL;
     }
 
   bytes = g_string_free_to_bytes (g_steal_pointer (&content));
   g_debug ("Received %" G_GUINT64_FORMAT " bytes", data.downloaded_bytes);
-
-  if (out_etag)
-    *out_etag = g_steal_pointer (&data.etag);
-
-  g_free (data.etag);
 
   return bytes;
 }

@@ -3914,7 +3914,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       else
         {
           ensure_soup_session (self);
-          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, 0, NULL, NULL,
+          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, 0,
                                          extra_data_progress_report, &extra_data_progress,
                                          cancellable, error);
         }
@@ -9046,7 +9046,6 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
   g_autoptr(GFile) index_cache = NULL;
   g_autofree char *index_uri = NULL;
   g_autoptr(GFile) summary_cache = NULL;
-  g_autofree char *cache_etag = NULL;
   g_autofree char *self_name = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GMappedFile) mfile = NULL;
@@ -11632,7 +11631,7 @@ flatpak_dir_fetch_remote_object (FlatpakDir   *self,
   object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
 
   bytes = flatpak_load_http_uri (self->soup_session, object_url, 0,
-                                 NULL, NULL, NULL, NULL,
+                                 NULL, NULL,
                                  cancellable, error);
   if (bytes == NULL)
     return NULL;
