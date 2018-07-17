@@ -80,7 +80,7 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Configure per-user installation.
+                    Repair per-user installation.
                 </para></listitem>
             </varlistentry>
 
@@ -88,7 +88,7 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Configure system-wide installation.
+                    Repair system-wide installation.
                 </para></listitem>
             </varlistentry>
 
@@ -96,7 +96,7 @@
                 <term><option>--installation=NAME</option></term>
 
                 <listitem><para>
-                    Configure the system-wide installation
+                    Repair the system-wide installation
                     specified by <arg choice="plain">NAME</arg> among those defined in
                     <filename>/etc/flatpak/installations.d/</filename>. Using
                     <arg choice="plain">--installation=default</arg> is equivalent to using
