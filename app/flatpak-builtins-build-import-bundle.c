@@ -71,7 +71,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (registry == NULL)
     return NULL;
 
-  index = flatpak_oci_registry_load_index (registry, NULL, NULL, cancellable, error);
+  index = flatpak_oci_registry_load_index (registry, cancellable, error);
   if (index == NULL)
     return NULL;
 

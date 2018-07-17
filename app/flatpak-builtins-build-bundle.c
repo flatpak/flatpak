@@ -520,7 +520,7 @@ build_oci (OstreeRepo *repo, GFile *dir,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
-  index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, NULL);
+  index = flatpak_oci_registry_load_index (registry, NULL, NULL);
   if (index == NULL)
     index = flatpak_oci_index_new ();
 

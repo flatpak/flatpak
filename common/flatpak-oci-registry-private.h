@@ -62,8 +62,6 @@ FlatpakOciRegistry  *  flatpak_oci_registry_new (const char           *uri,
                                                  GError              **error);
 const char          *  flatpak_oci_registry_get_uri (FlatpakOciRegistry *self);
 FlatpakOciIndex     *  flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
-                                                        const char         *etag,
-                                                        char              **etag_out,
                                                         GCancellable       *cancellable,
                                                         GError            **error);
 gboolean               flatpak_oci_registry_save_index (FlatpakOciRegistry *self,
