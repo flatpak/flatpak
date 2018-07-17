@@ -55,6 +55,7 @@
       <xi:include href="@srcdir@/flatpak-remote-ls.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-modify.xml"/>
       <xi:include href="@srcdir@/flatpak-remotes.xml"/>
+      <xi:include href="@srcdir@/flatpak-repair.xml"/>
       <xi:include href="@srcdir@/flatpak-repo.xml"/>
       <xi:include href="@srcdir@/flatpak-run.xml"/>
       <xi:include href="@srcdir@/flatpak-search.xml"/>
