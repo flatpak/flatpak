@@ -6993,6 +6993,7 @@ flatpak_dir_create_child_repo (FlatpakDir   *self,
   g_autofree char *current_mode = NULL;
   GKeyFile *orig_config = NULL;
   g_autofree char *orig_min_free_space_percent = NULL;
+  g_autofree char *orig_min_free_space_size = NULL;
 
   /* We use bare-user-only here now, which means we don't need xattrs
    * for the child repo. This only works as long as the pulled repo
@@ -7068,6 +7069,11 @@ flatpak_dir_create_child_repo (FlatpakDir   *self,
   orig_min_free_space_percent = g_key_file_get_value (orig_config, "core", "min-free-space-percent", NULL);
   if (orig_min_free_space_percent)
     g_key_file_set_value (config, "core", "min-free-space-percent", orig_min_free_space_percent);
+
+  /* Copy the min space size value so it affects the temporary repo too */
+  orig_min_free_space_size = g_key_file_get_value (orig_config, "core", "min-free-space-size", NULL);
+  if (orig_min_free_space_size)
+    g_key_file_set_value (config, "core", "min-free-space-size", orig_min_free_space_size);
 
   if (!ostree_repo_write_config (new_repo, config, error))
     return NULL;
