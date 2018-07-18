@@ -1,0 +1,148 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-repair">
+
+    <refentryinfo>
+        <title>flatpak repair</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Matthew</firstname>
+                <surname>Leeds</surname>
+                <email>matthew.leeds@endlessm.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak repair</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-repair</refname>
+        <refpurpose>Repair a flatpak installation</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak repair</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Repair a flatpak installation by pruning and reinstalling invalid objects. The repair command does all of the following:
+        </para>
+        <itemizedlist>
+            <listitem><para>
+                Scan all locally available refs, removing any that don't correspond to a deployed ref.
+            </para></listitem>
+            <listitem><para>
+                Verify each commit they point to, removing any invalid objects and noting any missing objects.
+            </para></listitem>
+            <listitem><para>
+                Remove any refs that had an invalid object, and any non-partial refs that had missing objects.
+            </para></listitem>
+            <listitem><para>
+                Prune all objects not referenced by a ref, which gets rid of any possibly invalid non-scanned objects.
+            </para></listitem>
+            <listitem><para>
+                Enumerate all deployed refs and re-install any that are not in the repo (or are partial for a non-subdir deploy).
+            </para></listitem>
+        </itemizedlist>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Repair per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Repair system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Repair the system-wide installation
+                    specified by <arg choice="plain">NAME</arg> among those defined in
+                    <filename>/etc/flatpak/installations.d/</filename>. Using
+                    <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--ostree-verbose</option></term>
+
+                <listitem><para>
+                    Print OSTree debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ sudo flatpak repair</command>
+        </para>
+
+        <para>
+            <command>$ flatpak repair --user</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+        </para>
+
+    </refsect1>
+
+</refentry>

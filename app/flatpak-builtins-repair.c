@@ -285,7 +285,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   OstreeRepo *repo;
   int i;
 
-  context = g_option_context_new (_(" REMOTE REF - Show information about an application or runtime in a remote"));
+  context = g_option_context_new (_("- Repair a flatpak installation"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
