@@ -2185,20 +2185,51 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
         }
     }
 
-  /* Reset min-free-space-percent to 0, this keeps being a problem for a lot of people */
+  /* Earlier flatpak used to reset min-free-space-percent to 0 everytime, but now we
+   * favor min-free-space-size instead of it (See below).
+   */
   if (!flatpak_dir_use_system_helper (self, NULL))
     {
       GKeyFile *orig_config = NULL;
+      g_autoptr(GKeyFile) new_config = NULL;
       g_autofree char *orig_min_free_space_percent = NULL;
+      g_autofree char *orig_min_free_space_size = NULL;
+      const char *min_free_space_size = "500MB";
+      guint64 min_free_space_percent_int;
 
       orig_config = ostree_repo_get_config (repo);
       orig_min_free_space_percent = g_key_file_get_value (orig_config, "core", "min-free-space-percent", NULL);
-      if (orig_min_free_space_percent == NULL)
-        {
-          g_autoptr(GKeyFile) config = ostree_repo_copy_config (repo);
+      orig_min_free_space_size = g_key_file_get_value (orig_config, "core", "min-free-space-size", NULL);
 
-          g_key_file_set_string (config, "core", "min-free-space-percent", "0");
-          if (!ostree_repo_write_config (repo, config, error))
+      if (orig_min_free_space_size == NULL)
+        new_config = ostree_repo_copy_config (repo);
+
+      /* Scrap previously written min-free-space-percent=0 and replace it with min-free-space-size */
+      if (orig_min_free_space_size == NULL &&
+          orig_min_free_space_percent != NULL &&
+          flatpak_utils_ascii_string_to_unsigned (orig_min_free_space_percent, 10,
+                                                  0, G_MAXUINT64,
+                                                  &min_free_space_percent_int, &my_error))
+        {
+          if (min_free_space_percent_int == 0)
+            {
+              g_key_file_remove_key (new_config, "core", "min-free-space-percent", NULL);
+              g_key_file_set_string (new_config, "core", "min-free-space-size", min_free_space_size);
+            }
+        }
+      else if (my_error != NULL)
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+
+      if (orig_min_free_space_size == NULL &&
+          orig_min_free_space_percent == NULL)
+        g_key_file_set_string (new_config, "core", "min-free-space-size", min_free_space_size);
+
+      if (new_config != NULL)
+        {
+          if (!ostree_repo_write_config (repo, new_config, error))
             return FALSE;
 
           if (!ostree_repo_reload_config (repo, cancellable, error))
