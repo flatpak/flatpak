@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-07-15 17:33+0000\n"
-"PO-Revision-Date: 2018-07-15 19:38+0200\n"
+"POT-Creation-Date: 2018-07-22 15:24+0000\n"
+"PO-Revision-Date: 2018-07-22 19:05+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -1440,7 +1440,7 @@ msgstr "Wyświetla dziennik"
 msgid "Show parent"
 msgstr "Wyświetla element nadrzędny"
 
-#: app/flatpak-builtins-info-remote.c:126 app/flatpak-builtins-repair.c:288
+#: app/flatpak-builtins-info-remote.c:126
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
@@ -1748,6 +1748,10 @@ msgstr "Problemy podczas wczytywania danych dla %s: %s\n"
 #, c-format
 msgid "Error reinstalling %s: %s\n"
 msgstr "Błąd podczas ponownej instalacji %s: %s\n"
+
+#: app/flatpak-builtins-repair.c:288
+msgid "- Repair a flatpak installation"
+msgstr "— naprawia instalację Flatpak"
 
 #: app/flatpak-builtins-repair.c:343
 #, c-format
