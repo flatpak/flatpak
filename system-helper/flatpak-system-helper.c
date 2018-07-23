@@ -219,7 +219,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   else if (!deploy_dir && is_update)
     {
       /* Can't update not installed app */
-      g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+      g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                                              "%s is not installed", arg_ref);
       return TRUE;
     }
