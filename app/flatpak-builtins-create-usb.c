@@ -484,6 +484,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       g_auto(GStrv) parts = NULL;
       unsigned int j = 0;
       const char **arches;
+      FlatpakKinds first_ref_kind = 0;
 
       pref = prefs[i];
 
@@ -496,9 +497,10 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
           g_autofree char *ref = NULL;
+          FlatpakKinds kind;
 
           ref = flatpak_dir_find_installed_ref (dir, id, branch, arch,
-                                                kinds, NULL, &local_error);
+                                                kinds, &kind, &local_error);
           if (ref == NULL)
             {
               if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
@@ -517,7 +519,10 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
             {
               g_ptr_array_add (dirs_with_ref, dir);
               if (first_ref == NULL)
-                first_ref = g_strdup (ref);
+                {
+                  first_ref = g_strdup (ref);
+                  first_ref_kind = kind;
+                }
             }
         }
 
@@ -617,7 +622,8 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       }
 
       /* Add dependencies and related refs */
-      if (!add_runtime (all_refs, all_collection_ids, first_ref, dir, cancellable, error))
+      if (!(first_ref_kind & FLATPAK_KINDS_RUNTIME) &&
+          !add_runtime (all_refs, all_collection_ids, first_ref, dir, cancellable, error))
         return FALSE;
       if (!add_related (all_refs, all_collection_ids, first_ref, dir, cancellable, error))
         return FALSE;
