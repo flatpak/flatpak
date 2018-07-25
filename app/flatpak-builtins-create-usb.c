@@ -475,7 +475,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       g_autofree char *branch = NULL;
       g_autoptr(GError) local_error = NULL;
       g_autoptr(GError) first_error = NULL;
-      g_autofree char *first_ref = NULL;
+      g_autofree char *installed_ref = NULL;
       g_autoptr(GPtrArray) dirs_with_ref = NULL;
       FlatpakDir *this_ref_dir = NULL;
       g_autofree char *remote = NULL;
@@ -484,7 +484,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       g_auto(GStrv) parts = NULL;
       unsigned int j = 0;
       const char **arches;
-      FlatpakKinds first_ref_kind = 0;
+      FlatpakKinds installed_ref_kind = 0;
 
       pref = prefs[i];
 
@@ -518,10 +518,10 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
           else
             {
               g_ptr_array_add (dirs_with_ref, dir);
-              if (first_ref == NULL)
+              if (installed_ref == NULL)
                 {
-                  first_ref = g_strdup (ref);
-                  first_ref_kind = kind;
+                  installed_ref = g_strdup (ref);
+                  installed_ref_kind = kind;
                 }
             }
         }
@@ -564,14 +564,14 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
                                dir_name, this_ref_dir_name);
         }
 
-      g_assert (first_ref);
-      parts = g_strsplit (first_ref, "/", 0);
+      g_assert (installed_ref);
+      parts = g_strsplit (installed_ref, "/", 0);
       if (arch == NULL)
         arch = g_strdup (parts[2]);
       if (branch == NULL)
         branch = g_strdup (parts[3]);
 
-      remote = flatpak_dir_get_origin (dir, first_ref, cancellable, error);
+      remote = flatpak_dir_get_origin (dir, installed_ref, cancellable, error);
       if (remote == NULL)
         return FALSE;
 
@@ -579,7 +579,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       if (ref_collection_id == NULL)
         return flatpak_fail (error,
                              _("Remote ‘%s’ does not have a collection ID set, which is required for P2P distribution of ‘%s’."),
-                             remote, first_ref);
+                             remote, installed_ref);
 
       arches = g_hash_table_lookup (remote_arch_map, remote);
       if (arches == NULL)
@@ -610,22 +610,22 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         const char *commit;
         CommitAndSubpaths *c_s;
 
-        deploy_data = flatpak_dir_get_deploy_data (dir, first_ref, cancellable, error);
+        deploy_data = flatpak_dir_get_deploy_data (dir, installed_ref, cancellable, error);
         if (deploy_data == NULL)
           return FALSE;
         commit = flatpak_deploy_data_get_commit (deploy_data);
         c_s = commit_and_subpaths_new (commit, NULL);
 
         g_hash_table_insert (all_collection_ids, g_strdup (ref_collection_id), g_strdup (remote));
-        collection_ref = ostree_collection_ref_new (ref_collection_id, first_ref);
+        collection_ref = ostree_collection_ref_new (ref_collection_id, installed_ref);
         g_hash_table_insert (all_refs, g_steal_pointer (&collection_ref), c_s);
       }
 
       /* Add dependencies and related refs */
-      if (!(first_ref_kind & FLATPAK_KINDS_RUNTIME) &&
-          !add_runtime (all_refs, all_collection_ids, first_ref, dir, cancellable, error))
+      if (!(installed_ref_kind & FLATPAK_KINDS_RUNTIME) &&
+          !add_runtime (all_refs, all_collection_ids, installed_ref, dir, cancellable, error))
         return FALSE;
-      if (!add_related (all_refs, all_collection_ids, first_ref, dir, cancellable, error))
+      if (!add_related (all_refs, all_collection_ids, installed_ref, dir, cancellable, error))
         return FALSE;
 
     }
