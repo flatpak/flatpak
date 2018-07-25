@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-07-11 15:24+0000\n"
-"PO-Revision-Date: 2018-07-14 22:23+0700\n"
+"POT-Creation-Date: 2018-07-18 15:24+0000\n"
+"PO-Revision-Date: 2018-07-25 15:30+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -1405,7 +1405,7 @@ msgstr "Tampilkan log"
 msgid "Show parent"
 msgstr "Tampilkan induk"
 
-#: app/flatpak-builtins-info-remote.c:126 app/flatpak-builtins-repair.c:288
+#: app/flatpak-builtins-info-remote.c:126
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
@@ -1709,6 +1709,10 @@ msgid "Error reinstalling %s: %s\n"
 msgstr ""
 "Galat memasang ulang %s: %s\n"
 "\n"
+
+#: app/flatpak-builtins-repair.c:288
+msgid "- Repair a flatpak installation"
+msgstr "- Perbaiki pemasangan flatpak"
 
 #: app/flatpak-builtins-repair.c:343
 #, c-format
