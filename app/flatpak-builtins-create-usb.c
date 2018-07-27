@@ -466,6 +466,11 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
   /* This maps from each remote name to a set of architectures */
   remote_arch_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) g_strfreev);
 
+  /* This is a mapping from collection IDs to remote names. It is possible
+   * for multiple remotes to have the same collection ID, but in that case
+   * they should be mirrors of each other. */
+  all_collection_ids = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
   for (i = 0; i < n_prefs; i++)
     {
       const char *pref = NULL;
@@ -598,11 +603,6 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
           g_ptr_array_add (arches_array, NULL);
           g_hash_table_replace (remote_arch_map, g_strdup (remote), g_ptr_array_free (arches_array, FALSE));
         }
-
-      /* This is a mapping from collection IDs to remote names. It is possible
-       * for multiple remotes to have the same collection ID, but in that case
-       * they should be mirrors of each other. */
-      all_collection_ids = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
       /* Add the main ref */
       {
