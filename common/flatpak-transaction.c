@@ -2362,7 +2362,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
           g_assert (op->resolved_commit != NULL); /* We resolved this before */
 
-          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
+          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, &local_error))
             res = FALSE;
           else
             res = flatpak_dir_install (priv->dir,
@@ -2401,7 +2401,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
               emit_new_op (self, op, progress);
 
-              if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
+              if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, &local_error))
                 res = FALSE;
               else
                 res = flatpak_dir_update (priv->dir,
@@ -2443,7 +2443,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
           emit_new_op (self, op, progress);
-          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
+          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, &local_error))
             res = FALSE;
           else
             res = flatpak_dir_install_bundle (priv->dir, op->bundle,
