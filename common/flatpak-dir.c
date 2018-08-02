@@ -11895,13 +11895,10 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
 static GDBusProxy *
 get_accounts_dbus_proxy (void)
 {
-  g_autoptr(GDBusConnection) conn = NULL;
-
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_object_path = "/org/freedesktop/Accounts";
   const char *accounts_interface_name = accounts_bus_name;
 
-  conn = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, NULL);
   return g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
                                         G_DBUS_PROXY_FLAGS_NONE,
                                         NULL,
