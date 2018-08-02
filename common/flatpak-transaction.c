@@ -1376,7 +1376,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
       remote = origin;
     }
 
-  /* This should have been passed int or found out above */
+  /* This should have been passed in or found out above */
   g_assert (remote != NULL);
 
   if (flatpak_transaction_ensure_remote_state (self, kind, remote, error) == NULL)

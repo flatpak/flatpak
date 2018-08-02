@@ -12006,7 +12006,7 @@ flatpak_dir_get_default_locale_languages (FlatpakDir *self)
   if (proxy != NULL)
     langs = get_locale_langs_from_accounts_dbus (proxy);
 
-  /* Iif langs is NULL, it means using all languages */
+  /* If langs is NULL, it means using all languages */
   if (langs == NULL)
     langs = g_new0 (char *, 1);
 
