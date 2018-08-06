@@ -704,11 +704,18 @@ append_locations_from_config_file (GPtrArray    *locations,
       size_t len;
 
       if (!g_str_has_prefix (groups[i], "Installation \""))
-        continue;
+        {
+          if (g_str_has_prefix (groups[i], "Installation "))
+            g_warning ("Installation without quotes (%s). Ignoring", groups[i]);
+          continue;
+        }
 
       id = g_strdup (&groups[i][14]);
       if (!g_str_has_suffix (id, "\""))
-        continue;
+        {
+          g_warning ("Installation without closing quote (%s). Ignoring", groups[i]);
+          continue;
+        }
 
       len = strlen (id);
       if (len > 0)
