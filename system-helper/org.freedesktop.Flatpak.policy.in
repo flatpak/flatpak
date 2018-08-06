@@ -10,7 +10,7 @@
   -->
 
   <vendor>The Flatpak Project</vendor>
-  <vendor_url>https://cgit.freedesktop.org/xdg-app/xdg-app/</vendor_url>
+  <vendor_url>https://github.com/flatpak/flatpak</vendor_url>
   <icon_name>package-x-generic</icon_name>
 
   <action id="org.freedesktop.Flatpak.app-install">
