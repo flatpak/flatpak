@@ -639,23 +639,21 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
     g_autoptr(OstreeCollectionRef) metadata_collection_ref = NULL;
     g_autoptr(OstreeCollectionRef) appstream_collection_ref = NULL;
     g_autoptr(OstreeCollectionRef) appstream2_collection_ref = NULL;
+    g_autoptr(FlatpakRemoteState) state = NULL;
     g_autoptr(GError) local_error = NULL;
     g_autofree char *appstream_ref = NULL;
     g_autofree char *appstream2_ref = NULL;
     const char **remote_arches;
 
-    /* FIXME: Uncomment this to try to update the repo metadata after fixing
-     * https://github.com/ostreedev/ostree/issues/1664 so the summary doesn't
-     * get out of date. This is done by creating a FlatpakRemoteState, but
-     * don't fail on error because we want this to work offline.
-    g_autoptr(FlatpakRemoteState) state = NULL;
+    /* Try to update the repo metadata by creating a FlatpakRemoteState object,
+     * but don't fail on error because we want this to work offline. */
     state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, &local_error);
     if (state == NULL)
       {
         g_printerr (_("Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"),
                     remote_name, local_error->message);
         g_clear_error (&local_error);
-      } */
+      }
 
     /* Add the ostree-metadata ref to the list */
     metadata_collection_ref = ostree_collection_ref_new (collection_id, OSTREE_REPO_METADATA_REF);
@@ -667,11 +665,10 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
     for (const char **iter = remote_arches; iter != NULL && *iter != NULL; ++iter)
       {
         const char *current_arch = *iter;
-
-        /* FIXME: Uncomment this to try to update the appstream data after
-         * fixing https://github.com/ostreedev/ostree/issues/1664 so the
-         * summary doesn't become incorrect
         g_autoptr(GPtrArray) dirs = NULL;
+
+        /* Try to update the appstream data, but don't fail on error because we
+         * want this to work offline. */
         dirs = g_ptr_array_new ();
         g_ptr_array_add (dirs, dir);
         if (!update_appstream (dirs, remote_name, current_arch, 0, TRUE, cancellable, &local_error))
@@ -679,7 +676,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
             g_printerr (_("Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"),
                         remote_name, current_arch, local_error->message);
             g_clear_error (&local_error);
-          } */
+          }
 
         /* Copy the appstream data if it exists. It's optional because without it
          * the USB will still be useful to the flatpak CLI even if GNOME Software
@@ -719,6 +716,10 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
           }
       }
   }
+
+  /* Update the summary in the repo; otherwise ostree_create_usb() will fail */
+  if (!flatpak_dir_update_summary (dir, cancellable, error))
+    return FALSE;
 
   /* Now use code copied from `ostree create-usb` to do the actual copying. We
    * can't just call out to `ostree` because (a) flatpak doesn't have a
