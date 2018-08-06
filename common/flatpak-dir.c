@@ -1286,6 +1286,19 @@ flatpak_dir_system_helper_call_ensure_repo (FlatpakDir   *self,
   return ret != NULL;
 }
 
+static gboolean
+flatpak_dir_system_helper_call_update_summary (FlatpakDir   *self,
+                                               const gchar  *arg_installation,
+                                               GCancellable *cancellable,
+                                               GError      **error)
+{
+  g_autoptr(GVariant) ret =
+    flatpak_dir_system_helper_call (self, "UpdateSummary",
+                                    g_variant_new ("(s)",
+                                                   arg_installation),
+                                    cancellable, error);
+  return ret != NULL;
+}
 
 static OstreeRepo *
 system_ostree_repo_new (GFile *repodir)
@@ -8588,6 +8601,35 @@ out:
 
   return ret;
 
+}
+
+gboolean
+flatpak_dir_update_summary (FlatpakDir   *self,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  g_auto(GLnxLockFile) lock = { 0, };
+
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      const char *installation = flatpak_dir_get_id (self);
+
+      return flatpak_dir_system_helper_call_update_summary (self,
+                                                            installation ? installation : "",
+                                                            cancellable,
+                                                            error);
+    }
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  /* Keep a shared repo lock to avoid prunes removing objects we're relying on
+   * while generating the summary. */
+  if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
+    return FALSE;
+
+  g_debug ("Updating summary");
+  return ostree_repo_regenerate_summary (self->repo, NULL, cancellable, error);
 }
 
 GFile *
