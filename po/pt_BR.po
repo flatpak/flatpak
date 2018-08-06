@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-07-10 19:49+0200\n"
-"PO-Revision-Date: 2018-06-10 23:36-0200\n"
+"POT-Creation-Date: 2018-08-05 15:24+0000\n"
+"PO-Revision-Date: 2018-08-05 23:29-0200\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
@@ -1017,19 +1017,17 @@ msgid "Look for app with the specified name"
 msgstr "Procura pelo aplicativo com o nome especificado"
 
 #: app/flatpak-builtins-create-usb.c:44
-#, fuzzy
 msgid "Arch to copy"
-msgstr "Arquitetura para mostrar"
+msgstr "Arquitetura para copiar"
 
 #: app/flatpak-builtins-create-usb.c:45
-#, fuzzy
 msgid "DEST"
-msgstr "DEST=ORIG"
+msgstr "DEST"
 
 #: app/flatpak-builtins-create-usb.c:133
 #, c-format
 msgid "Warning: Omitting related ref ‘%s’ because it is not installed.\n"
-msgstr ""
+msgstr "Aviso: Omitindo ref “%s” relacionado porque não está instalado.\n"
 
 #: app/flatpak-builtins-create-usb.c:144
 #, c-format
@@ -1037,44 +1035,52 @@ msgid ""
 "Warning: Omitting related ref ‘%s’ because its remote ‘%s’ does not have a "
 "collection ID set.\n"
 msgstr ""
+"Aviso: Omitindo ref “%s” relacionado porque seu remoto “%s” não tem um "
+"conjunto de ID de coleção.\n"
 
-#: app/flatpak-builtins-create-usb.c:212 app/flatpak-builtins-create-usb.c:576
+#: app/flatpak-builtins-create-usb.c:212 app/flatpak-builtins-create-usb.c:586
 #, c-format
 msgid ""
 "Remote ‘%s’ does not have a collection ID set, which is required for P2P "
 "distribution of ‘%s’."
 msgstr ""
+"O remoto “%s” não possui um conjunto de ID de coleção, necessário para a "
+"distribuição P2P de “%s”."
 
 #: app/flatpak-builtins-create-usb.c:430
 msgid ""
 "MOUNT-PATH REF [REF...] - Copy apps and/or runtimes onto removable media"
-msgstr ""
+msgstr "CAMINHO-MONT REF [REF…] – Copia apps e/ou runtimes em mídia removível"
 
 #: app/flatpak-builtins-create-usb.c:439
-#, fuzzy
 msgid "MOUNT-PATH and REF must be specified"
-msgstr "REMOTO e REF devem ser especificados"
+msgstr "CAMINHO-MONT e REF devem ser especificados"
 
-#: app/flatpak-builtins-create-usb.c:545 app/flatpak-builtins-uninstall.c:380
+#: app/flatpak-builtins-create-usb.c:555 app/flatpak-builtins-uninstall.c:380
 #, c-format
 msgid "Ref ‘%s’ found in multiple installations: %s. You must specify one."
 msgstr ""
 "Ref “%s” localizada em múltiplas instalações: %s. Você deve especificar uma."
 
-#: app/flatpak-builtins-create-usb.c:558
+#: app/flatpak-builtins-create-usb.c:568
 #, c-format
 msgid "Refs must all be in the same installation (found in %s and %s)."
 msgstr ""
+"As refs devem estar todas na mesma instalação (encontradas em %s e %s)."
 
-#: app/flatpak-builtins-create-usb.c:692
-#, fuzzy, c-format
+#: app/flatpak-builtins-create-usb.c:698
+#, c-format
 msgid "Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s\n"
-msgstr "Aviso: Não foi possível localizar dependências: %s"
+msgstr ""
+"Aviso: Não foi possível localizar dados de appstream para remoto “%s” "
+"arquitetura “%s”: %s\n"
 
-#: app/flatpak-builtins-create-usb.c:710
-#, fuzzy, c-format
+#: app/flatpak-builtins-create-usb.c:716
+#, c-format
 msgid "Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"
-msgstr "Atualizando dados de appstream para remoto %s"
+msgstr ""
+"Não foi possível localizar dados de appstream para remoto “%s” arquitetura "
+"“%s”: %s\n"
 
 #: app/flatpak-builtins-delete-remote.c:38
 msgid "Remove remote even if in use"
@@ -1293,7 +1299,6 @@ msgid "Show location"
 msgstr "Mostra localização"
 
 #: app/flatpak-builtins-info.c:126
-#, fuzzy
 msgid "NAME [BRANCH] - Get info about an installed app or runtime"
 msgstr "NOME [RAMO] – Obtém info sobre aplicativo e/ou runtime instalados"
 
@@ -1408,7 +1413,7 @@ msgstr "Exibe log"
 msgid "Show parent"
 msgstr "Mostra pai"
 
-#: app/flatpak-builtins-info-remote.c:126 app/flatpak-builtins-repair.c:288
+#: app/flatpak-builtins-info-remote.c:126
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
@@ -1637,59 +1642,53 @@ msgstr "[APLICATIVO] – Sobrepõe as configurações [para um aplicativo]"
 
 #: app/flatpak-builtins-permission-list.c:164
 msgid "[TABLE] [ID] - List permissions"
-msgstr ""
+msgstr "[TABELA] [ID] – Lista permissões"
 
 #: app/flatpak-builtins-permission-list.c:200
 #: app/flatpak-builtins-permission-show.c:165
 msgid "Table"
-msgstr ""
+msgstr "Tabela"
 
 #: app/flatpak-builtins-permission-list.c:201
 #: app/flatpak-builtins-permission-show.c:166
-#, fuzzy
 msgid "Object"
-msgstr "Assunto:"
+msgstr "Objeto"
 
 #: app/flatpak-builtins-permission-list.c:202
 #: app/flatpak-builtins-permission-show.c:167
 msgid "App"
-msgstr ""
+msgstr "App"
 
 #: app/flatpak-builtins-permission-list.c:203
 #: app/flatpak-builtins-permission-show.c:168
-#, fuzzy
 msgid "Permissions"
-msgstr "Mostra permissões"
+msgstr "Permissões"
 
 #: app/flatpak-builtins-permission-list.c:204
 #: app/flatpak-builtins-permission-show.c:169
 msgid "Data"
-msgstr ""
+msgstr "Dados"
 
 #: app/flatpak-builtins-permission-remove.c:108
-msgid "TABLE ID - Remove item to permission store"
-msgstr ""
+msgid "TABLE ID - Remove item from permission store"
+msgstr "ID TABELA – Remove item do armazenamento de permissão"
 
 #: app/flatpak-builtins-permission-remove.c:117
-#, fuzzy
 msgid "Too few arguments"
-msgstr "Número excessivo de argumentos"
+msgstr "Número insuficiente de argumentos"
 
 #: app/flatpak-builtins-permission-reset.c:134
-#, fuzzy
 msgid "APP_ID - Reset permissions for an app"
-msgstr "Adiciona permissões para este aplicativo"
+msgstr "ID_APP – Redefine permissões para este aplicativo"
 
 #: app/flatpak-builtins-permission-reset.c:143
 #: app/flatpak-builtins-permission-show.c:147
-#, fuzzy
 msgid "Wrong number of arguments"
-msgstr "Número excessivo de argumentos"
+msgstr "Número incorreto de argumentos"
 
 #: app/flatpak-builtins-permission-show.c:138
-#, fuzzy
 msgid "APP_ID - Show permissions for an app"
-msgstr "Adiciona permissões para este aplicativo"
+msgstr "ID_APP – Mostra permissões para este aplicativo"
 
 #: app/flatpak-builtins-repair.c:63
 #, c-format
@@ -1715,6 +1714,10 @@ msgstr "Problemas ao carregar dados para %s: %s\n"
 #, c-format
 msgid "Error reinstalling %s: %s\n"
 msgstr "Erro ao reinstalar %s: %s\n"
+
+#: app/flatpak-builtins-repair.c:288
+msgid "- Repair a flatpak installation"
+msgstr "– Corrige uma instalação do flatpak"
 
 #: app/flatpak-builtins-repair.c:343
 #, c-format
@@ -2019,9 +2022,8 @@ msgid "Uninstalling from %s:\n"
 msgstr "Desinstalando de %s:\n"
 
 #: app/flatpak-builtins-uninstall.c:300
-#, fuzzy
 msgid "Nothing unused to uninstall\n"
-msgstr "Arquitetura para desinstalar"
+msgstr "Nada não usado para desinstalar\n"
 
 #: app/flatpak-builtins-uninstall.c:305
 msgid "Is this ok?"
@@ -2121,23 +2123,24 @@ msgid "Configuring %s as new remote '%s'"
 msgstr "Configurando %s como novo remoto “%s”"
 
 #: app/flatpak-cli-transaction.c:116
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The remote '%s', refered to by '%s' at location %s contains additional "
 "applications.\n"
 "Should the remote be kept for future installations?"
 msgstr ""
-"O remoto “%s”, na localização %s contém aplicativos adicionais.\n"
+"O remoto “%s”, referido por “%s” na localização %s contém aplicativos "
+"adicionais.\n"
 "O remoto deve ser mantido para instalações futuras?"
 
 #: app/flatpak-cli-transaction.c:123
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The application %s depends on runtimes from:\n"
 "  %s\n"
 "Configure this as new remote '%s'"
 msgstr ""
-"Esse aplicativo depende de runtimes de:\n"
+"Esse aplicativo %s depende de runtimes de:\n"
 "  %s\n"
 "Configure esse como o novo remoto “%s”"
 
@@ -2232,73 +2235,66 @@ msgid "Warning: %s is end-of-life, with reason: %s\n"
 msgstr "Aviso: %s está em fim de vida, com motivo: %s\n"
 
 #: app/flatpak-cli-transaction.c:486
-#, fuzzy
 msgid "new permissions"
-msgstr "Mostra permissões"
+msgstr "novas permissões"
 
 #: app/flatpak-cli-transaction.c:486
-#, fuzzy
 msgid "permissions"
-msgstr "Mostra permissões"
+msgstr "permissões"
 
 #: app/flatpak-cli-transaction.c:491
-#, fuzzy
 msgid "new file access"
-msgstr "Consulta acesso a arquivos"
+msgstr "novo acesso a arquivo"
 
 #: app/flatpak-cli-transaction.c:491
-#, fuzzy
 msgid "file access"
-msgstr "Consulta acesso a arquivos"
+msgstr "acesso a arquivo"
 
 #: app/flatpak-cli-transaction.c:497
 msgid "new dbus access"
-msgstr ""
+msgstr "novo acesso a dbus"
 
 #: app/flatpak-cli-transaction.c:497
 msgid "dbus access"
-msgstr ""
+msgstr "acesso a dbus"
 
 #: app/flatpak-cli-transaction.c:500
 msgid "new dbus ownership"
-msgstr ""
+msgstr "nova propriedade dbus"
 
 #: app/flatpak-cli-transaction.c:500
 msgid "dbus ownership"
-msgstr ""
+msgstr "propriedade dbus"
 
 #: app/flatpak-cli-transaction.c:506
-#, fuzzy
 msgid "new system dbus access"
-msgstr "Registra o log das chamadas de barramento de sistema"
+msgstr "novo acesso dbus de sistema"
 
 #: app/flatpak-cli-transaction.c:506
-#, fuzzy
 msgid "system dbus access"
-msgstr "Registra o log das chamadas de barramento de sistema"
+msgstr "acesso dbus de sistema"
 
 #: app/flatpak-cli-transaction.c:509
 msgid "new system dbus ownership"
-msgstr ""
+msgstr "nova propriedade dbus de sistema"
 
 #: app/flatpak-cli-transaction.c:509
 msgid "system dbus ownership"
-msgstr ""
+msgstr "propriedade dbus de sistema"
 
 #: app/flatpak-cli-transaction.c:559
-#, fuzzy, c-format
+#, c-format
 msgid "Installing in %s:\n"
-msgstr "Instalando: %s\n"
+msgstr "Instalando em %s:\n"
 
 #: app/flatpak-cli-transaction.c:596
-#, fuzzy, c-format
+#, c-format
 msgid "Updating in %s:\n"
-msgstr "Atualizando: %s de %s\n"
+msgstr "Atualizando em %s:\n"
 
 #: app/flatpak-cli-transaction.c:618
-#, fuzzy
 msgid "Is this ok"
-msgstr "Isto está bom?"
+msgstr "Isto está bom"
 
 #: app/flatpak-cli-transaction.c:701
 #, c-format
@@ -2346,7 +2342,7 @@ msgstr "Corrige instalação do flatpak"
 
 #: app/flatpak-main.c:72
 msgid "Put apps and/or runtimes onto removable media"
-msgstr ""
+msgstr "Coloca aplicativos e/ou runtimes em mídia removível"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:75
@@ -2413,31 +2409,28 @@ msgstr "Lista arquivos exportados"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:93
-#, fuzzy
 msgid ""
 "\n"
 " Manage dynamic permissions"
-msgstr "Mostra permissões"
+msgstr ""
+"\n"
+" Mostra permissões dinâmicas"
 
 #: app/flatpak-main.c:94
-#, fuzzy
 msgid "Remove item from permission store"
-msgstr "Revoga permissões de escrita do aplicativo"
+msgstr "Remove item para armazenamento de permissão"
 
 #: app/flatpak-main.c:95
-#, fuzzy
 msgid "List permissions"
-msgstr "Mostra permissões"
+msgstr "Lista permissões"
 
 #: app/flatpak-main.c:96
-#, fuzzy
 msgid "Show app permissions"
-msgstr "Mostra permissões"
+msgstr "Mostra permissões de aplicativo"
 
 #: app/flatpak-main.c:97
-#, fuzzy
 msgid "Reset app permissions"
-msgstr "Mostra permissões"
+msgstr "Redefine permissões de aplicativo"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:100
@@ -2627,7 +2620,7 @@ msgid ""
 "*[/...], ~/dir, /dir"
 msgstr ""
 "Localização de sistema de arquivos desconhecida %s, localizações válidas "
-"são: host, home, xdg-*[/…], ~/dir, /dir"
+"são: host, home, xdg-*[/...], ~/dir, /dir"
 
 #: common/flatpak-context.c:1033
 #, c-format
@@ -2769,9 +2762,8 @@ msgid "No entry for %s in remote summary flatpak sparse cache "
 msgstr "Nenhuma entrada para %s no cache esparso de flatpak de sumário remoto "
 
 #: common/flatpak-dir.c:1054
-#, fuzzy
 msgid "Unable to connect to system bus"
-msgstr "Permite o aplicativo ter um nome no barramento de sistema"
+msgstr "Não foi possível conectar ao barramento de sistema"
 
 #: common/flatpak-dir.c:1496
 #, c-format
@@ -2993,9 +2985,9 @@ msgid "Can't change remote during bundle install"
 msgstr "Não é possível alterar remoto durante instalação de pacote"
 
 #: common/flatpak-dir.c:7620
-#, fuzzy, c-format
+#, c-format
 msgid "%s branch already installed"
-msgstr "%s ramo %s já está instalado"
+msgstr "%s ramo já está instalado"
 
 #: common/flatpak-dir.c:7957
 #, c-format
@@ -3125,13 +3117,13 @@ msgid "Error updating remote metadata for '%s': %s"
 msgstr "Erro ao atualizar metadados de remoto para “%s”: %s"
 
 #: common/flatpak-transaction.c:1726
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Can't find %s metadata for dependencies: %s"
-msgstr "Aviso: Não foi possível localizar dependências: %s"
+msgstr "Aviso: Não foi possível localizar metadados %s para dependências: %s"
 
 #: common/flatpak-transaction.c:2322
 msgid "Aborted by user"
-msgstr ""
+msgstr "Abortado pelo usuário"
 
 #: common/flatpak-transaction.c:2350
 #, c-format
