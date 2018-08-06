@@ -450,6 +450,50 @@
     </refsect1>
 
     <refsect1>
+        <title>File formats</title>
+
+        <para>File formats that are used by Flatpak commands:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-flatpakref</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Reference to a remote for an application or runtime
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Reference to a remote
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remote</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Configuration for a remote 
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-installation</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Configuration for an installation location
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-metadata</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Information about an application or runtime
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
         <title>Environment</title>
             <para>
               Besides standard environment variables such as <envar>XDG_DATA_DIRS</envar> and
