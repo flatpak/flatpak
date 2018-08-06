@@ -11895,16 +11895,16 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
 static GDBusProxy *
 get_localed_dbus_proxy (void)
 {
-  const char *accounts_bus_name = "org.freedesktop.locale1";
-  const char *accounts_object_path = "/org/freedesktop/locale1";
-  const char *accounts_interface_name = accounts_bus_name;
+  const char *localed_bus_name = "org.freedesktop.locale1";
+  const char *localed_object_path = "/org/freedesktop/locale1";
+  const char *localed_interface_name = localed_bus_name;
 
   return g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
                                         G_DBUS_PROXY_FLAGS_NONE,
                                         NULL,
-                                        accounts_bus_name,
-                                        accounts_object_path,
-                                        accounts_interface_name,
+                                        localed_bus_name,
+                                        localed_object_path,
+                                        localed_interface_name,
                                         NULL,
                                         NULL);
 }
