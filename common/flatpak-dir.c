@@ -1311,7 +1311,8 @@ flatpak_dir_finalize (GObject *object)
   g_clear_object (&self->basedir);
   g_clear_pointer (&self->extra_data, dir_extra_data_free);
 
-  g_clear_object (&self->system_helper_bus);
+  if (self->system_helper_bus != (gpointer)1)
+    g_clear_object (&self->system_helper_bus);
 
   g_clear_object (&self->soup_session);
   g_clear_pointer (&self->summary_cache, g_hash_table_unref);
