@@ -12042,7 +12042,7 @@ sort_strv (char **strv)
 char **
 flatpak_dir_get_default_locale_languages (FlatpakDir *self)
 {
-  g_autoptr(GPtrArray) langs = g_ptr_array_new ();
+  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GDBusProxy) localed_proxy = NULL;
   g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
