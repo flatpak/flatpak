@@ -1930,38 +1930,84 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
                                  GCancellable *cancellable,
                                  GError      **error)
 {
-  g_autoptr(GString) index_uri = g_string_new (uri);
   g_autofree char *index_path = g_file_get_path (index);
-  g_autoptr(SoupURI) soup_uri = NULL;
-  g_autofree char *query_uri = NULL;
+  g_autoptr(SoupURI) base_uri = NULL;
+  g_autoptr(SoupURI) query_uri = NULL;
+  g_autofree char *query_uri_s = NULL;
+  g_autoptr(GString) path = NULL;
+  g_autofree char *tag = NULL;
+  const char *oci_arch = NULL;
+  gboolean success = FALSE;
+  g_autoptr(GError) local_error = NULL;
 
-  if (!g_str_has_suffix (index_uri->str, "/"))
-    g_string_append_c (index_uri, '/');
+  base_uri = soup_uri_new (uri);
+  if (base_uri == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                   "Cannot parse index url %s", uri);
+      return FALSE;
+    }
 
-  if (!g_str_has_suffix (uri, "/index/"))
-    g_string_append (index_uri, "index/");
+  path = g_string_new (soup_uri_get_path (base_uri));
 
-  g_string_append (index_uri, "static");
-  soup_uri = soup_uri_new (index_uri->str);
-  soup_uri_set_query_from_fields (soup_uri,
-                                  "os", "linux",
-                                  "tag", "latest",
+  /* Append /index/static or /static to the path.
+   */
+  if (!g_str_has_suffix (path->str, "/"))
+    g_string_append_c (path, '/');
+
+  if (!g_str_has_suffix (path->str, "/index/"))
+    g_string_append (path, "index/");
+
+  g_string_append (path, "static");
+
+  soup_uri_set_path (base_uri, path->str);
+
+  /* The fragment of the URI defines a tag to look for; if absent
+   * or empty, we use 'latest'
+   */
+  tag = g_strdup (soup_uri_get_fragment (base_uri));
+  if (tag == NULL || tag[0] == '\0')
+    {
+      g_clear_pointer (&tag, g_free);
+      tag = g_strdup ("latest");
+    }
+  soup_uri_set_fragment (base_uri, NULL);
+
+  query_uri = soup_uri_copy (base_uri);
+
+  oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
+
+  soup_uri_set_query_from_fields (query_uri,
                                   "annotation:org.flatpak.ref:exists", "1",
+                                  "architecture", oci_arch,
+                                  "os", "linux",
+                                  "tag", tag,
                                   NULL);
-  query_uri = soup_uri_to_string (soup_uri, FALSE);
+  query_uri_s = soup_uri_to_string (query_uri, FALSE);
 
-  if (index_uri_out)
-    *index_uri_out = g_strdup (index_uri->str);
+  success = flatpak_cache_http_uri (soup_session,
+                                    query_uri_s,
+                                    FLATPAK_HTTP_FLAGS_STORE_COMPRESSED,
+                                    AT_FDCWD, index_path,
+                                    NULL, NULL,
+                                    cancellable, &local_error);
 
-  if (!flatpak_cache_http_uri (soup_session,
-                               query_uri,
-                               FLATPAK_HTTP_FLAGS_STORE_COMPRESSED,
-                               AT_FDCWD, index_path,
-                               NULL, NULL,
-                               cancellable, error))
-    return FALSE;
+  if (success ||
+      g_error_matches (local_error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED))
+    {
+      if (index_uri_out)
+        *index_uri_out = soup_uri_to_string (base_uri, FALSE);
+    }
+  else
+    {
+      if (index_uri_out)
+        *index_uri_out = NULL;
+    }
 
-  return TRUE;
+  if (!success)
+    g_propagate_error (error, g_steal_pointer (&local_error));
+
+  return success;
 }
 
 static FlatpakOciIndexResponse *
