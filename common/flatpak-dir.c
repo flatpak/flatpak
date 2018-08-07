@@ -8571,11 +8571,7 @@ flatpak_dir_update_summary (FlatpakDir   *self,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  g_autoptr(GError) local_error = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
-
-  if (error == NULL)
-    error = &local_error;
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
