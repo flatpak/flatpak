@@ -195,15 +195,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--oci</option></term>
-
-                <listitem><para>
-                    This is a OCI format registry rather than a regular
-                    flatpak repository.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

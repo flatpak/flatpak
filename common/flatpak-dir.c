@@ -10269,13 +10269,15 @@ gboolean
 flatpak_dir_get_remote_oci (FlatpakDir *self,
                             const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
-  g_autofree char *group = get_group (remote_name);
+  g_autofree char *url = NULL;
 
-  if (config)
-    return g_key_file_get_boolean (config, group, "xa.oci", NULL);
+  if (!ostree_repo_remote_get_url (self->repo,
+                                   remote_name,
+                                   &url,
+                                   NULL))
+    return FALSE;
 
-  return FALSE;
+  return url && g_str_has_prefix (url, "oci+");
 }
 
 char *
