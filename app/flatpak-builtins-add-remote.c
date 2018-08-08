@@ -41,7 +41,6 @@ static gboolean opt_do_deps;
 static gboolean opt_no_deps;
 static gboolean opt_if_not_exists;
 static gboolean opt_enable;
-static gboolean opt_oci;
 static gboolean opt_update_metadata;
 static gboolean opt_disable;
 static int opt_prio = -1;
@@ -79,7 +78,6 @@ static GOptionEntry common_options[] = {
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
-  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Add OCI registry"), NULL },
   { NULL }
 };
 
@@ -173,12 +171,6 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
   else if (opt_enable)
     {
       g_key_file_set_boolean (config, group, "xa.disable", FALSE);
-      *changed = TRUE;
-    }
-
-  if (opt_oci)
-    {
-      g_key_file_set_boolean (config, group, "xa.oci", TRUE);
       *changed = TRUE;
     }
 
@@ -312,6 +304,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
   g_autoptr(GBytes) gpg_data = NULL;
   gboolean changed = FALSE;
   g_autoptr(GError) local_error = NULL;
+  gboolean is_oci;
 
   context = g_option_context_new (_("NAME LOCATION - Add a remote repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -374,8 +367,9 @@ flatpak_builtin_add_remote (int argc, char **argv,
       opt_url = remote_url;
     }
 
-  /* Default to gpg verify, except for --oci */
-  if (!opt_no_gpg_verify && !opt_oci)
+  /* Default to gpg verify, except for OCI registries */
+  is_oci = opt_url && g_str_has_prefix (opt_url, "oci+");
+  if (!opt_no_gpg_verify && !is_oci)
     opt_do_gpg_verify = TRUE;
 
   config = get_config_from_opts (dir, remote_name, &changed);

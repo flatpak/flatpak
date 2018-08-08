@@ -1940,7 +1940,14 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
   gboolean success = FALSE;
   g_autoptr(GError) local_error = NULL;
 
-  base_uri = soup_uri_new (uri);
+  if (!g_str_has_prefix (uri, "oci+http:") && !g_str_has_prefix (uri, "oci+https:"))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                   "OCI Index URI %s does not start with oci+http(s)://", uri);
+      return FALSE;
+    }
+
+  base_uri = soup_uri_new (uri + 4);
   if (base_uri == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,

@@ -70,7 +70,12 @@
             <variablelist>
                 <varlistentry>
                     <term><option>url</option> (string)</term>
-                    <listitem><para>The url for the remote.</para></listitem>
+                    <listitem><para>
+                      The url for the remote. An URL of the form oci+https:// or oci+http://
+                      is a Flatpak extension that indicates that the remote is not an ostree
+                      repository, but is rather an URL to an index of OCI images that are stored
+                      within a container image registry.
+                    </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>gpg-verify</option> (boolean)</term>
@@ -127,10 +132,6 @@
                 <varlistentry>
                     <term><option>xa.main-ref</option> (string)</term>
                     <listitem><para>The main reference served by this remote. This is used for origin remotes of applications installed via a flatpakref file.</para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term><option>xa.oci</option> (boolean)</term>
-                    <listitem><para>Whether this is an OCI remote. Defaults to false.</para></listitem>
                 </varlistentry>
             </variablelist>
         </refsect2>
