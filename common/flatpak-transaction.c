@@ -2163,9 +2163,10 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
   if (priv->disable_deps)
     return TRUE;
 
-  metadata = flatpak_bundle_load (file, NULL,
+  metadata = flatpak_bundle_load (file,
                                   NULL,
                                   &ref,
+                                  NULL,
                                   &dep_url,
                                   NULL,
                                   NULL,
