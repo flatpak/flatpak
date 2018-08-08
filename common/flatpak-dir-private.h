@@ -580,6 +580,9 @@ gboolean    flatpak_dir_prune (FlatpakDir   *self,
 gboolean    flatpak_dir_run_triggers (FlatpakDir   *self,
                                       GCancellable *cancellable,
                                       GError      **error);
+gboolean    flatpak_dir_update_summary (FlatpakDir   *self,
+                                        GCancellable *cancellable,
+                                        GError      **error);
 gboolean    flatpak_dir_cleanup_removed (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error);
