@@ -383,6 +383,15 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>-p</option></term>
+                <term><option>--die-with-parent</option></term>
+
+                <listitem><para>
+                    Kill the entire sandbox when the launching process dies.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--file-forwarding</option></term>
 
                 <listitem><para>

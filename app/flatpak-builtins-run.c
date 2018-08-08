@@ -47,6 +47,7 @@ static gboolean opt_log_a11y_bus;
 static gboolean opt_no_a11y_bus;
 static gboolean opt_no_documents_portal;
 static gboolean opt_file_forwarding;
+static gboolean opt_die_with_parent;
 static gboolean opt_sandbox;
 static char *opt_runtime;
 static char *opt_runtime_version;
@@ -69,6 +70,7 @@ static GOptionEntry options[] = {
   { "commit", 0, 0, G_OPTION_ARG_STRING, &opt_commit, N_("Run specified commit"), NULL },
   { "runtime-commit", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_commit, N_("Use specified runtime commit"), NULL },
   { "sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_sandbox, N_("Run completely sandboxed"), NULL },
+  { "die-with-parent", 'p', 0, G_OPTION_ARG_NONE, &opt_die_with_parent, N_("Kill processes when the parent process dies"), NULL },
   { NULL }
 };
 
@@ -187,6 +189,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         opt_runtime_version,
                         opt_runtime_commit,
                         (opt_sandbox ? FLATPAK_RUN_FLAG_SANDBOX : 0) |
+                        (opt_die_with_parent ? FLATPAK_RUN_FLAG_DIE_WITH_PARENT : 0) |
                         (opt_devel ? FLATPAK_RUN_FLAG_DEVEL : 0) |
                         (opt_log_session_bus ? FLATPAK_RUN_FLAG_LOG_SESSION_BUS : 0) |
                         (opt_log_system_bus ? FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS : 0) |
