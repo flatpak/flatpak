@@ -21,30 +21,26 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-export FLATPAK_ENABLE_EXPERIMENTAL_OCI=1
-
 skip_without_bwrap
 
 echo "1..2"
 
-setup_repo
-
-${FLATPAK} ${U} install test-repo org.test.Platform master
+setup_repo_no_add oci
 
 mkdir -p oci
-${FLATPAK} build-bundle --oci $FL_GPGARGS repos/test oci/registry org.test.Hello
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/image org.test.Hello
 
-assert_has_file oci/registry/oci-layout
-assert_has_dir oci/registry/blobs/sha256
-assert_has_file oci/registry/index.json
+assert_has_file oci/image/oci-layout
+assert_has_dir oci/image/blobs/sha256
+assert_has_file oci/image/index.json
 
-for i in oci/registry/blobs/sha256/*; do
+for i in oci/image/blobs/sha256/*; do
      echo $(basename $i) $i >> sums
 done
 sha256sum -c sums
 
-digest=$(grep sha256: oci/registry/index.json | sed s'@.*sha256:\([a-fA-F0-9]\+\).*@\1@')
-manifest=oci/registry/blobs/sha256/$digest
+digest=$(grep sha256: oci/image/index.json | sed s'@.*sha256:\([a-fA-F0-9]\+\).*@\1@')
+manifest=oci/image/blobs/sha256/$digest
 
 assert_has_file $manifest
 assert_file_has_content $manifest "org.freedesktop.appstream.appdata.*<summary>Print a greeting</summary>"
@@ -54,7 +50,7 @@ echo "ok export oci"
 
 ostree --repo=repo2 init --mode=archive-z2
 
-$FLATPAK build-import-bundle --oci repo2 oci/registry
+$FLATPAK build-import-bundle --oci repo2 oci/image
 
 ostree checkout -U --repo=repo2 app/org.test.Hello/$ARCH/master checked-out
 

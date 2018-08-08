@@ -241,9 +241,12 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciIndex) index = NULL;
       const FlatpakOciManifestDescriptor *desc;
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
+      g_autoptr(FlatpakRemoteState) state = NULL;
+      FlatpakCollectionRef collection_ref;
+      g_autoptr(GHashTable) remote_refs = NULL;
       g_autofree char *checksum = NULL;
+      const char *verified_digest;
       g_autofree char *upstream_url = NULL;
-      g_autoptr(SoupSession) soup_session = NULL;
 
       ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
                                   arg_origin,
@@ -265,7 +268,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, &error);
+      index = flatpak_oci_registry_load_index (registry, NULL, &error);
       if (index == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -290,14 +293,37 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-      if (!flatpak_oci_index_verify_ref (soup_session,
-                                         upstream_url,
-                                         arg_ref,
-                                         desc->parent.digest,
-                                         NULL, &error))
+      state = flatpak_dir_get_remote_state (system, arg_origin, NULL, &error);
+      if (state == NULL)
         {
-          g_dbus_method_invocation_return_gerror (invocation, error);
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "%s: Can't get remote state: %s", arg_origin, error->message);
+          return TRUE;
+        }
+
+      if (!flatpak_dir_list_remote_refs (system, state, &remote_refs, NULL, &error))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "%s: Can't list refs: %s", arg_origin, error->message);
+          return TRUE;
+        }
+
+      collection_ref.collection_id = state->collection_id;
+      collection_ref.ref_name = (char *) arg_ref;
+
+      verified_digest = g_hash_table_lookup (remote_refs, &collection_ref);
+      if (!verified_digest)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "%s: ref %s not found", arg_origin, arg_ref);
+          return TRUE;
+        }
+
+      if (!g_str_has_prefix (desc->parent.digest, "sha256:") ||
+          strcmp (desc->parent.digest + strlen ("sha256:"), verified_digest) != 0)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "%s: manifest hash in downloaded content does not match ref %s", arg_origin, arg_ref);
           return TRUE;
         }
 
@@ -464,55 +490,24 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
   if (is_oci)
     {
-      g_autoptr(GFile) registry_file = g_file_new_for_path (arg_repo_path);
-      g_autofree char *registry_uri = g_file_get_uri (registry_file);
-      g_autoptr(FlatpakOciRegistry) registry = NULL;
-      g_autoptr(FlatpakOciIndex) index = NULL;
-      const FlatpakOciManifestDescriptor *desc;
-      g_autoptr(FlatpakOciVersioned) versioned = NULL;
-      g_autofree char *checksum = NULL;
-
-      registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
-      if (registry == NULL)
+      /* In the OCI case, we just do the full update, including network i/o, in the
+       * system helper, see comment in flatpak_dir_update_appstream()
+       */
+      if (!flatpak_dir_update_appstream (system,
+                                         arg_origin,
+                                         arg_arch,
+                                         NULL,
+                                         NULL,
+                                         NULL,
+                                         &error))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child OCI registry: %s", error->message);
+                                                 "Error updating appstream: %s", error->message);
           return TRUE;
         }
 
-      index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, &error);
-      if (index == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child OCI registry index: %s", error->message);
-          return TRUE;
-        }
-
-      desc = flatpak_oci_index_get_manifest (index, new_branch);
-      if (desc == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't find ref %s in child OCI registry index", new_branch);
-          return TRUE;
-        }
-
-      versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, NULL,
-                                                       NULL, &error);
-      if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child manifest");
-          return TRUE;
-        }
-
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
-                                        arg_origin, new_branch, NULL, NULL, NULL, &error);
-      if (checksum == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't pull ref %s from child OCI registry index: %s", new_branch, error->message);
-          return TRUE;
-        }
+      flatpak_system_helper_complete_deploy_appstream (object, invocation);
+      return TRUE;
     }
   else if (strlen (arg_repo_path) > 0)
     {

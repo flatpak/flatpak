@@ -22,6 +22,13 @@ testlibrary_LDADD = \
              $(NULL)
 testlibrary_SOURCES = tests/testlibrary.c
 
+httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+        -DLOCALEDIR=\"$(localedir)\"
+httpcache_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
+	libglnx.la libflatpak-common.la
+httpcache_SOURCES = tests/httpcache.c
+
 tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
@@ -46,6 +53,7 @@ tests/test-basic.sh: tests/package_version.txt
 
 dist_installed_test_extra_scripts += \
 	buildutil/tap-driver.sh \
+	tests/http-utils-test-server.py \
 	tests/make-multi-collection-id-repo.sh \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \
@@ -79,6 +87,7 @@ endif
 dist_test_scripts = \
 	tests/test-basic.sh \
 	tests/test-build-update-repo.sh \
+	tests/test-http-utils.sh \
 	tests/test-run.sh \
 	tests/test-run-system.sh \
 	tests/test-run-deltas.sh \
@@ -91,11 +100,14 @@ dist_test_scripts = \
 	tests/test-bundle.sh \
 	tests/test-bundle-system.sh \
 	tests/test-oci.sh \
+	tests/test-oci-registry.sh \
+	tests/test-oci-registry-system.sh \
 	tests/test-unsigned-summaries.sh \
 	tests/test-update-remote-configuration.sh \
 	$(NULL)
 
 test_programs = testlibrary
+noinst_PROGRAMS += httpcache
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp

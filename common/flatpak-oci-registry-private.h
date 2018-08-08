@@ -59,11 +59,9 @@ FlatpakOciRegistry  *  flatpak_oci_registry_new (const char           *uri,
                                                  gboolean for_write,
                                                  int tmp_dfd,
                                                  GCancellable         * cancellable,
-                                                 GError              * *error);
+                                                 GError              **error);
 const char          *  flatpak_oci_registry_get_uri (FlatpakOciRegistry *self);
 FlatpakOciIndex     *  flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
-                                                        const char         *etag,
-                                                        char              **etag_out,
                                                         GCancellable       *cancellable,
                                                         GError            **error);
 gboolean               flatpak_oci_registry_save_index (FlatpakOciRegistry *self,
@@ -133,17 +131,24 @@ FlatpakOciSignature *flatpak_oci_verify_signature (OstreeRepo *repo,
                                                    GBytes     *signature,
                                                    GError    **error);
 
-GVariant *flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
-                                           const char   *uri,
-                                           const char   *etag,
-                                           GCancellable *cancellable,
-                                           GError      **error);
+gboolean flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
+                                          const char   *uri,
+                                          GFile        *index,
+                                          char        **index_uri_out,
+                                          GCancellable *cancellable,
+                                          GError      **error);
 
-gboolean flatpak_oci_index_verify_ref (SoupSession  *soup_session,
-                                       const char   *uri,
-                                       const char   *ref,
-                                       const char   *digest,
-                                       GCancellable *cancellable,
-                                       GError      **error);
+GVariant *flatpak_oci_index_make_summary (GFile        *index,
+                                          const char   *index_uri,
+                                          GCancellable *cancellable,
+                                          GError      **error);
+
+GBytes *flatpak_oci_index_make_appstream (SoupSession  *soup_session,
+                                          GFile        *index,
+                                          const char   *index_uri,
+                                          const char   *arch,
+                                          int           icons_dfd,
+                                          GCancellable *cancellable,
+                                          GError      **error);
 
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */

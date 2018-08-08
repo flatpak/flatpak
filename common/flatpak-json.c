@@ -371,6 +371,27 @@ flatpak_json_from_bytes (GBytes  *bytes,
   return flatpak_json_from_node (root, type, error);
 }
 
+FlatpakJson *
+flatpak_json_from_stream (GInputStream *stream,
+                          GType         type,
+                          GCancellable *cancellable,
+                          GError      **error)
+{
+  g_autoptr(JsonParser) parser = NULL;
+  JsonNode *root = NULL;
+
+  parser = json_parser_new ();
+  if (!json_parser_load_from_stream (parser,
+                                     stream,
+                                     cancellable,
+                                     error))
+    return NULL;
+
+  root = json_parser_get_root (parser);
+
+  return flatpak_json_from_node (root, type, error);
+}
+
 static JsonNode *
 marshal (JsonObject          *parent,
          const char          *name,

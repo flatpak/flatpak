@@ -40,6 +40,17 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAutoArchiveWrite, archive_write_free)
 
 static void flatpak_oci_registry_initable_iface_init (GInitableIface *iface);
 
+/* A FlatpakOciRegistry represents either:
+ *
+ *  A local directory with a layout corresponding to the OCI image specification -
+ *    we usually use this to store a single image, but it could be used for multiple
+ *    images.
+ *  A remote docker registry.
+ *
+ * This code used to support OCI image layouts on remote HTTP servers, but that's not
+ * really a thing anybody does. It would be inefficient for storing large numbers of
+ * images, since all versions need to be listed in index.json.
+ */
 struct FlatpakOciRegistry
 {
   GObject  parent;
@@ -104,7 +115,7 @@ flatpak_oci_registry_set_property (GObject      *object,
     case PROP_URI:
       /* Ensure the base uri ends with a / so relative urls work */
       uri = g_value_get_string (value);
-      if (g_str_has_prefix (uri, "/"))
+      if (g_str_has_suffix (uri, "/"))
         self->uri = g_strdup (uri);
       else
         self->uri = g_strconcat (uri, "/", NULL);
@@ -257,35 +268,20 @@ local_open_file (int           dfd,
 static GBytes *
 local_load_file (int           dfd,
                  const char   *subpath,
-                 const char   *etag,
-                 char        **etag_out,
                  GCancellable *cancellable,
                  GError      **error)
 {
   glnx_autofd int fd = -1;
   struct stat st_buf;
   GBytes *bytes;
-  g_autofree char *current_etag = NULL;
 
   fd = local_open_file (dfd, subpath, &st_buf, cancellable, error);
   if (fd == -1)
     return NULL;
 
-  current_etag = g_strdup_printf ("%lu", st_buf.st_mtime);
-
-  if (etag != NULL && strcmp (current_etag, etag) == 0)
-    {
-      g_set_error (error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED,
-                   "File %s was not changed", subpath);
-      return NULL;
-    }
-
   bytes = glnx_fd_readall_bytes (fd, cancellable, error);
   if (bytes == NULL)
     return NULL;
-
-  if (etag_out)
-    *etag_out = g_steal_pointer (&current_etag);
 
   return bytes;
 }
@@ -294,8 +290,6 @@ static GBytes *
 remote_load_file (SoupSession  *soup_session,
                   SoupURI      *base,
                   const char   *subpath,
-                  const char   *etag,
-                  char        **etag_out,
                   GCancellable *cancellable,
                   GError      **error)
 {
@@ -313,7 +307,7 @@ remote_load_file (SoupSession  *soup_session,
 
   uri_s = soup_uri_to_string (uri, FALSE);
   bytes = flatpak_load_http_uri (soup_session,
-                                 uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI, etag, etag_out,
+                                 uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                                  NULL, NULL,
                                  cancellable, error);
   if (bytes == NULL)
@@ -325,15 +319,13 @@ remote_load_file (SoupSession  *soup_session,
 static GBytes *
 flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
                                 const char         *subpath,
-                                const char         *etag,
-                                char              **etag_out,
                                 GCancellable       *cancellable,
                                 GError            **error)
 {
   if (self->dfd != -1)
-    return local_load_file (self->dfd, subpath, etag, etag_out, cancellable, error);
+    return local_load_file (self->dfd, subpath, cancellable, error);
   else
-    return remote_load_file (self->soup_session, self->base_uri, subpath, etag, etag_out, cancellable, error);
+    return remote_load_file (self->soup_session, self->base_uri, subpath, cancellable, error);
 }
 
 static JsonNode *
@@ -441,7 +433,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
         return FALSE;
     }
 
-  oci_layout_bytes = local_load_file (dfd, "oci-layout", NULL, NULL, cancellable, &local_error);
+  oci_layout_bytes = local_load_file (dfd, "oci-layout", cancellable, &local_error);
   if (oci_layout_bytes == NULL)
     {
       if (for_write && g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -479,7 +471,6 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
                                     GError            **error)
 {
   g_autoptr(SoupURI) baseuri = NULL;
-  g_autoptr(GBytes) oci_layout_bytes = NULL;
 
   if (for_write)
     {
@@ -497,26 +488,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
       return FALSE;
     }
 
-  oci_layout_bytes = remote_load_file (self->soup_session, baseuri, "oci-layout", NULL, NULL, cancellable, NULL);
-  if (oci_layout_bytes != NULL)
-    {
-      g_autoptr(GError) local_error = NULL;
-      gboolean not_json;
-
-      if (!verify_oci_version (oci_layout_bytes, &not_json, cancellable, &local_error))
-        {
-          if (not_json)
-            self->is_docker = TRUE;
-          else
-            {
-              g_propagate_error (error, g_steal_pointer (&local_error));
-              return FALSE;
-            }
-        }
-    }
-  else
-    self->is_docker = TRUE;
-
+  self->is_docker = TRUE;
   self->base_uri = g_steal_pointer (&baseuri);
 
   return TRUE;
@@ -555,20 +527,15 @@ flatpak_oci_registry_initable_iface_init (GInitableIface *iface)
 
 FlatpakOciIndex *
 flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
-                                 const char         *etag,
-                                 char              **etag_out,
                                  GCancellable       *cancellable,
                                  GError            **error)
 {
   g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GError) local_error = NULL;
 
-  if (etag_out)
-    *etag_out = NULL;
-
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_file (self, "index.json", etag, etag_out, cancellable, &local_error);
+  bytes = flatpak_oci_registry_load_file (self, "index.json", cancellable, &local_error);
   if (bytes == NULL)
     {
       g_propagate_error (error, g_steal_pointer (&local_error));
@@ -919,7 +886,7 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
   if (subpath == NULL)
     return NULL;
 
-  bytes = flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
+  bytes = flatpak_oci_registry_load_file (self, subpath, cancellable, error);
   if (bytes == NULL)
     return NULL;
 
@@ -1955,27 +1922,16 @@ compare_image_by_ref (ImageInfo *a,
   return g_strcmp0 (a_ref, b_ref);
 }
 
-GVariant *
-flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
+gboolean
+flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
                                  const char   *uri,
-                                 const char   *etag,
+                                 GFile        *index,
+                                 char        **index_uri_out,
                                  GCancellable *cancellable,
                                  GError      **error)
 {
-  g_autoptr(GBytes) res = NULL;
-  g_autofree char *new_etag = NULL;
-  g_autoptr(FlatpakJson) json = NULL;
-  FlatpakOciIndexResponse *response;
-  g_autoptr(SoupURI) registry_uri = NULL;
-  g_autofree char *registry_uri_s = NULL;
-  int i;
-  g_autoptr(GArray) images = g_array_new (FALSE, TRUE, sizeof (ImageInfo));
-  g_autoptr(GVariantBuilder) refs_builder = NULL;
-  g_autoptr(GVariantBuilder) additional_metadata_builder = NULL;
-  g_autoptr(GVariantBuilder) summary_builder = NULL;
-  g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GVariantBuilder) ref_data_builder = NULL;
   g_autoptr(GString) index_uri = g_string_new (uri);
+  g_autofree char *index_path = g_file_get_path (index);
   g_autoptr(SoupURI) soup_uri = NULL;
   g_autofree char *query_uri = NULL;
 
@@ -1985,7 +1941,7 @@ flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
   if (!g_str_has_suffix (uri, "/index/"))
     g_string_append (index_uri, "index/");
 
-  g_string_append (index_uri, "/static");
+  g_string_append (index_uri, "static");
   soup_uri = soup_uri_new (index_uri->str);
   soup_uri_set_query_from_fields (soup_uri,
                                   "os", "linux",
@@ -1994,20 +1950,72 @@ flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
                                   NULL);
   query_uri = soup_uri_to_string (soup_uri, FALSE);
 
-  res = flatpak_load_http_uri (soup_session,
-                               query_uri,
-                               0, etag,
-                               &new_etag, NULL, NULL,
-                               cancellable, error);
-  if (res == NULL)
-    return NULL;
+  if (index_uri_out)
+    *index_uri_out = g_strdup (index_uri->str);
 
-  json = flatpak_json_from_bytes (res, FLATPAK_TYPE_OCI_INDEX_RESPONSE, error);
+  if (!flatpak_cache_http_uri (soup_session,
+                               query_uri,
+                               FLATPAK_HTTP_FLAGS_STORE_COMPRESSED,
+                               AT_FDCWD, index_path,
+                               NULL, NULL,
+                               cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static FlatpakOciIndexResponse *
+load_oci_index (GFile        *index,
+                GCancellable *cancellable,
+                GError      **error)
+{
+  g_autoptr(GFileInputStream) in = NULL;
+  g_autoptr(GZlibDecompressor) decompressor = NULL;
+  g_autoptr(GInputStream) converter = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(FlatpakJson) json = NULL;
+
+  in = g_file_read (index, cancellable, error);
+  if (in == NULL)
+    return FALSE;
+
+  decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+  converter = g_converter_input_stream_new (G_INPUT_STREAM (in), G_CONVERTER (decompressor));
+
+  json = flatpak_json_from_stream (G_INPUT_STREAM (converter), FLATPAK_TYPE_OCI_INDEX_RESPONSE,
+                                   cancellable, error);
   if (json == NULL)
     return NULL;
 
-  response = (FlatpakOciIndexResponse *) json;
+  if (!g_input_stream_close (G_INPUT_STREAM (in), cancellable, error))
+    g_warning ("Error closing http stream: %s", local_error->message);
 
+  return (FlatpakOciIndexResponse *) g_steal_pointer (&json);
+}
+
+GVariant *
+flatpak_oci_index_make_summary (GFile        *index,
+                                const char   *index_uri,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  g_autoptr(FlatpakOciIndexResponse) response = NULL;
+  g_autoptr(SoupURI) registry_uri = NULL;
+  g_autofree char *registry_uri_s = NULL;
+  int i;
+  g_autoptr(GArray) images = g_array_new (FALSE, TRUE, sizeof (ImageInfo));
+  g_autoptr(GVariantBuilder) refs_builder = NULL;
+  g_autoptr(GVariantBuilder) additional_metadata_builder = NULL;
+  g_autoptr(GVariantBuilder) summary_builder = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariantBuilder) ref_data_builder = NULL;
+  g_autoptr(SoupURI) soup_uri = NULL;
+
+  response = load_oci_index (index, cancellable, error);
+  if (!response)
+    return NULL;
+
+  soup_uri = soup_uri_new (index_uri);
   registry_uri = soup_uri_new_with_base (soup_uri, response->registry);
   registry_uri_s = soup_uri_to_string (registry_uri, FALSE);
 
@@ -2098,10 +2106,6 @@ flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
 
   g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.cache",
                          g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
-  if (new_etag)
-    g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.oci-etag",
-                           g_variant_new_string (new_etag));
-
   g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.oci-registry-uri",
                          g_variant_new_string (registry_uri_s));
 
@@ -2115,50 +2119,269 @@ flatpak_oci_index_fetch_summary (SoupSession  *soup_session,
   return g_steal_pointer (&summary);
 }
 
-gboolean
-flatpak_oci_index_verify_ref (SoupSession  *soup_session,
-                              const char   *uri,
-                              const char   *ref,
-                              const char   *digest,
-                              GCancellable *cancellable,
-                              GError      **error)
+static gboolean
+add_icon_image (SoupSession  *soup_session,
+                const char   *index_uri,
+                int           icons_dfd,
+                GHashTable   *used_icons,
+                const char   *subdir,
+                const char   *id,
+                const char   *icon_data,
+                GCancellable *cancellable,
+                GError      **error)
 {
-  g_autoptr(GBytes) res = NULL;
-  g_autoptr(FlatpakJson) json = NULL;
-  g_autoptr(SoupURI) soup_uri = NULL;
-  g_autofree char *query_uri = NULL;
+  g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
+  g_autofree char *icon_path = g_build_filename (subdir, icon_name, NULL);
 
-  FlatpakOciIndexResponse *response;
+  /* Create the destination directory */
+
+  if (!glnx_shutil_mkdir_p_at (icons_dfd, subdir, 0755, cancellable, error))
+    return FALSE;
+
+  if (g_str_has_prefix (icon_data, "data:"))
+    {
+      if (g_str_has_prefix (icon_data, "data:image/png;base64,"))
+        {
+          const char *base64_data = icon_data + strlen ("data:image/png;base64,");
+          gsize decoded_size;
+          g_autofree guint8 *decoded = g_base64_decode (base64_data, &decoded_size);
+
+          if (!glnx_file_replace_contents_at (icons_dfd, icon_path,
+                                              decoded, decoded_size,
+                                              0 /* flags */, cancellable, error))
+            return FALSE;
+
+          g_hash_table_replace (used_icons, g_steal_pointer (&icon_path), GUINT_TO_POINTER (1));
+
+          return TRUE;
+        }
+      else
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                       "Data URI for icon has an unsupported type");
+          return FALSE;
+        }
+    }
+  else
+    {
+      g_autoptr(SoupURI) base_uri = soup_uri_new (index_uri);
+      g_autoptr(SoupURI) icon_uri = soup_uri_new_with_base (base_uri, icon_data);
+      g_autofree char *icon_uri_s = soup_uri_to_string (icon_uri, FALSE);
+
+      if (!flatpak_cache_http_uri (soup_session, icon_uri_s,
+                                   0 /* flags */,
+                                   icons_dfd, icon_path,
+                                   NULL, NULL,
+                                   cancellable, error))
+        return FALSE;
+
+      g_hash_table_replace (used_icons, g_steal_pointer (&icon_path), GUINT_TO_POINTER (1));
+
+      return TRUE;
+    }
+}
+
+static void
+add_image_to_appstream (SoupSession               *soup_session,
+                        const char                *index_uri,
+                        FlatpakXml                *appstream_root,
+                        int                        icons_dfd,
+                        GHashTable                *used_icons,
+                        FlatpakOciIndexRepository *repository,
+                        FlatpakOciIndexImage      *image,
+                        GCancellable              *cancellable)
+{
+  g_autoptr(GInputStream) in = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakXml) xml_root = NULL;
+  g_auto(GStrv) ref_parts = NULL;
+  const char *ref;
+  const char *id = NULL;
+  FlatpakXml *source_components;
+  FlatpakXml *dest_components;
+  FlatpakXml *component;
+  FlatpakXml *prev_component;
+  const char *appdata;
   int i;
-  g_autoptr(GString) index_uri = g_string_new (uri);
 
-  if (!g_str_has_suffix (index_uri->str, "/"))
-    g_string_append_c (index_uri, '/');
+  static struct
+  {
+    const char *annotation;
+    const char *subdir;
+  } icon_sizes[] = {
+    { "org.freedesktop.appstream.icon-64", "64x64" },
+    { "org.freedesktop.appstream.icon-128", "128x128" },
+  };
 
-  if (!g_str_has_suffix (uri, "/index/"))
-    g_string_append (index_uri, "index/");
+  ref = g_hash_table_lookup (image->annotations, "org.flatpak.ref");
+  if (!ref)
+    return;
 
-  g_string_append (index_uri, "/dynamic");
+  ref_parts = g_strsplit (ref, "/", -1);
+  if (g_strv_length (ref_parts) != 4 || strcmp (ref_parts[0], "app") != 0)
+    return;
 
-  soup_uri = soup_uri_new (index_uri->str);
-  soup_uri_set_query_from_fields (soup_uri,
-                                  "os", "linux",
-                                  "annotation:org.flatpak.ref", ref,
-                                  NULL);
-  query_uri = soup_uri_to_string (soup_uri, FALSE);
+  id = ref_parts[1];
 
-  res = flatpak_load_http_uri (soup_session,
-                               query_uri,
-                               0, NULL, NULL, NULL, NULL,
-                               cancellable, error);
-  if (res == NULL)
+  appdata = g_hash_table_lookup (image->annotations, "org.freedesktop.appstream.appdata");
+  if (!appdata)
+    return;
+
+  in = g_memory_input_stream_new_from_data (appdata, -1, NULL);
+
+  xml_root = flatpak_xml_parse (in, FALSE, cancellable, &error);
+  if (xml_root == NULL)
+    {
+      g_print ("%s: Failed to parse appdata annotation: %s\n",
+               repository->name,
+               error->message);
+      return;
+    }
+
+  if (xml_root->first_child == NULL ||
+      xml_root->first_child->next_sibling != NULL ||
+      g_strcmp0 (xml_root->first_child->element_name, "components") != 0)
+    {
+      return;
+    }
+
+  source_components = xml_root->first_child;
+  dest_components = appstream_root->first_child;
+
+  component = source_components->first_child;
+  prev_component = NULL;
+  while (component != NULL)
+    {
+      FlatpakXml *next = component->next_sibling;
+
+      if (g_strcmp0 (component->element_name, "component") == 0)
+        {
+          flatpak_xml_add (dest_components,
+                           flatpak_xml_unlink (component, prev_component));
+        }
+      else
+        {
+          prev_component = component;
+        }
+
+      component = next;
+    }
+
+  for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
+    {
+      const char *icon_data = g_hash_table_lookup (image->annotations,
+                                                   icon_sizes[i].annotation);
+      if (icon_data)
+        {
+          if (!add_icon_image (soup_session,
+                               index_uri,
+                               icons_dfd,
+                               used_icons,
+                               icon_sizes[i].subdir, id, icon_data,
+                               cancellable, &error))
+            {
+              g_print ("%s: Failed to add %s icon: %s\n",
+                       repository->name,
+                       icon_sizes[i].subdir,
+                       error->message);
+              g_clear_error (&error);
+            }
+        }
+    }
+}
+
+static gboolean
+clean_unused_icons_recurse (int           icons_dfd,
+                            const char   *dirpath,
+                            GHashTable   *used_icons,
+                            gboolean     *any_found_parent,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  GLnxDirFdIterator iter = { 0, };
+  gboolean any_found = FALSE;
+
+  if (!glnx_dirfd_iterator_init_at (icons_dfd,
+                                    dirpath ? dirpath : ".",
+                                    FALSE, &iter, error))
     return FALSE;
 
-  json = flatpak_json_from_bytes (res, FLATPAK_TYPE_OCI_INDEX_RESPONSE, error);
-  if (json == NULL)
-    return FALSE;
+  while (TRUE)
+    {
+      struct dirent *out_dent;
+      g_autofree char *subpath = NULL;
 
-  response = (FlatpakOciIndexResponse *) json;
+      if (!glnx_dirfd_iterator_next_dent (&iter, &out_dent, cancellable, error))
+        return FALSE;
+
+      if (out_dent == NULL)
+        break;
+
+      if (dirpath)
+        subpath = g_build_filename (dirpath, out_dent->d_name, NULL);
+      else
+        subpath = g_strdup (out_dent->d_name);
+
+      if (out_dent->d_type == DT_DIR)
+        clean_unused_icons_recurse (icons_dfd, subpath, used_icons, &any_found, cancellable, error);
+      else if (g_hash_table_lookup (used_icons, subpath) == NULL)
+        {
+          if (!glnx_unlinkat (icons_dfd, subpath, 0, error))
+            return FALSE;
+        }
+      else
+        any_found = TRUE;
+    }
+
+  if (any_found)
+    {
+      if (any_found_parent)
+        *any_found_parent = TRUE;
+    }
+  else
+    {
+      if (dirpath) /* Don't remove the toplevel icons/ directory */
+        if (!glnx_unlinkat (icons_dfd, dirpath, AT_REMOVEDIR, error))
+          return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+clean_unused_icons (int           icons_dfd,
+                    GHashTable   *used_icons,
+                    GCancellable *cancellable,
+                    GError      **error)
+{
+  return clean_unused_icons_recurse (icons_dfd, NULL, used_icons, NULL, cancellable, error);
+}
+
+GBytes *
+flatpak_oci_index_make_appstream (SoupSession  *soup_session,
+                                  GFile        *index,
+                                  const char   *index_uri,
+                                  const char   *arch,
+                                  int           icons_dfd,
+                                  GCancellable *cancellable,
+                                  GError      **error)
+{
+  g_autoptr(FlatpakOciIndexResponse) response = NULL;
+  g_autoptr(FlatpakXml) appstream_root = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GHashTable) used_icons = NULL;
+  int i;
+
+  const char *oci_arch = flatpak_arch_to_oci_arch (arch);
+
+  response = load_oci_index (index, cancellable, error);
+  if (!response)
+    return NULL;
+
+  used_icons = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                      g_free, NULL);
+
+  appstream_root = flatpak_appstream_xml_new ();
 
   for (i = 0; response->results != NULL && response->results[i] != NULL; i++)
     {
@@ -2168,11 +2391,12 @@ flatpak_oci_index_verify_ref (SoupSession  *soup_session,
       for (j = 0; r->images != NULL && r->images[j] != NULL; j++)
         {
           FlatpakOciIndexImage *image = r->images[j];
-          const char *image_ref = get_image_ref (image);
-          if (image_ref != NULL &&
-              g_strcmp0 (image_ref, ref) == 0 &&
-              g_strcmp0 (digest, image->digest) == 0)
-            return TRUE;
+          if (g_strcmp0 (image->architecture, oci_arch) == 0)
+            add_image_to_appstream (soup_session,
+                                    index_uri,
+                                    appstream_root, icons_dfd, used_icons,
+                                    r, image,
+                                    cancellable);
         }
 
       for (j = 0; r->lists != NULL && r->lists[j] != NULL; j++)
@@ -2183,14 +2407,22 @@ flatpak_oci_index_verify_ref (SoupSession  *soup_session,
           for (k = 0; list->images != NULL && list->images[k] != NULL; k++)
             {
               FlatpakOciIndexImage *image = list->images[k];
-              const char *image_ref = get_image_ref (image);
-              if (image_ref != NULL &&
-                  g_strcmp0 (image_ref, ref) == 0 &&
-                  g_strcmp0 (digest, image->digest) == 0)
-                return TRUE;
+              if (g_strcmp0 (image->architecture, oci_arch) == 0)
+                add_image_to_appstream (soup_session,
+                                        index_uri,
+                                        appstream_root, icons_dfd, used_icons,
+                                        r, image,
+                                        cancellable);
             }
         }
     }
 
-  return flatpak_fail (error, "No matching image for %s", ref);
+  if (!flatpak_appstream_xml_root_to_data (appstream_root,
+                                           &bytes, NULL, error))
+    return NULL;
+
+  if (!clean_unused_icons (icons_dfd, used_icons, cancellable, error))
+    return FALSE;
+
+  return g_steal_pointer (&bytes);
 }
