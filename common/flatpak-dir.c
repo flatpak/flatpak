@@ -11980,15 +11980,72 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
 }
 
 static GDBusProxy *
+get_localed_dbus_proxy (void)
+{
+  const char *localed_bus_name = "org.freedesktop.locale1";
+  const char *localed_object_path = "/org/freedesktop/locale1";
+  const char *localed_interface_name = localed_bus_name;
+
+  return g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                        G_DBUS_PROXY_FLAGS_NONE,
+                                        NULL,
+                                        localed_bus_name,
+                                        localed_object_path,
+                                        localed_interface_name,
+                                        NULL,
+                                        NULL);
+}
+
+static void
+get_locale_langs_from_localed_dbus (GDBusProxy *proxy, GPtrArray *langs)
+{
+  g_autoptr(GVariant) locale_variant = NULL;
+  g_autofree const gchar **strv = NULL;
+  gsize i, j;
+
+  locale_variant = g_dbus_proxy_get_cached_property (proxy, "Locale");
+  if (locale_variant == NULL)
+    return;
+
+  strv = g_variant_get_strv (locale_variant, NULL);
+
+  for (i = 0; strv[i]; i++)
+    {
+      const gchar *locale = NULL;
+      g_autofree char *lang = NULL;
+
+      /* See locale(7) for these categories */
+      const char* const categories[] = { "LANG=", "LC_ALL=", "LC_MESSAGES=", "LC_ADDRESS=",
+                                         "LC_COLLATE=", "LC_CTYPE=", "LC_IDENTIFICATION=",
+                                         "LC_MONETARY=", "LC_MEASUREMENT=", "LC_NAME=",
+                                         "LC_NUMERIC=", "LC_PAPER=", "LC_TELEPHONE=",
+                                         "LC_TIME=", NULL };
+
+      for (j = 0; categories[j]; j++)
+        {
+          if (g_str_has_prefix (strv[i], categories[j]))
+            {
+              locale = strv[i] + strlen (categories[j]);
+              break;
+            }
+        }
+
+      if (locale == NULL || strcmp (locale, "") == 0)
+        continue;
+
+      lang = flatpak_get_lang_from_locale (locale);
+      if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
+        g_ptr_array_add (langs, g_steal_pointer (&lang));
+    }
+}
+
+static GDBusProxy *
 get_accounts_dbus_proxy (void)
 {
-  g_autoptr(GDBusConnection) conn = NULL;
-
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_object_path = "/org/freedesktop/Accounts";
   const char *accounts_interface_name = accounts_bus_name;
 
-  conn = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, NULL);
   return g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
                                         G_DBUS_PROXY_FLAGS_NONE,
                                         NULL,
@@ -11999,14 +12056,12 @@ get_accounts_dbus_proxy (void)
                                         NULL);
 }
 
-static char **
-get_locale_langs_from_accounts_dbus (GDBusProxy *proxy)
+static void
+get_locale_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
 {
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_interface_name = "org.freedesktop.Accounts.User";
   char **object_paths = NULL;
-
-  g_autoptr(GPtrArray) langs = g_ptr_array_new ();
   int i;
   g_autoptr(GVariant) ret = NULL;
 
@@ -12047,7 +12102,7 @@ get_locale_langs_from_accounts_dbus (GDBusProxy *proxy)
                   g_autofree char *lang = NULL;
 
                   if (strcmp (locale, "") == 0)
-                    return NULL; /* At least one user with no defined language, fall back to all languages */
+                    continue; /* This user wants the system default locale */
 
                   lang = flatpak_get_lang_from_locale (locale);
                   if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
@@ -12056,14 +12111,6 @@ get_locale_langs_from_accounts_dbus (GDBusProxy *proxy)
             }
         }
     }
-
-  if (langs->len == 0)
-    return NULL; /* No defined languages, fall back to all languages */
-
-  g_ptr_array_sort (langs, flatpak_strcmp0_ptr);
-  g_ptr_array_add (langs, NULL);
-
-  return (char **) g_ptr_array_free (g_steal_pointer (&langs), FALSE);
 }
 
 static int
@@ -12082,22 +12129,32 @@ sort_strv (char **strv)
 char **
 flatpak_dir_get_default_locale_languages (FlatpakDir *self)
 {
-  char **langs = NULL;
+  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GDBusProxy) localed_proxy = NULL;
+  g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
   if (flatpak_dir_is_user (self))
     return flatpak_get_current_locale_langs ();
 
-  /* If proxy is not NULL, it means that AccountService exists
-   * and gets the list of languages from AccountService. */
-  g_autoptr(GDBusProxy) proxy = get_accounts_dbus_proxy ();
-  if (proxy != NULL)
-    langs = get_locale_langs_from_accounts_dbus (proxy);
+  /* First get the system default locales */
+  localed_proxy = get_localed_dbus_proxy ();
+  if (localed_proxy != NULL)
+    get_locale_langs_from_localed_dbus (localed_proxy, langs);
 
-  /* If langs is NULL, it means using all languages */
-  if (langs == NULL)
-    langs = g_new0 (char *, 1);
+  /* Now add the user account locales from AccountsService. If accounts_proxy is
+   * not NULL, it means that AccountsService exists */
+  accounts_proxy = get_accounts_dbus_proxy ();
+  if (accounts_proxy != NULL)
+    get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
 
-  return langs;
+  /* If none were found, fall back to using all languages */
+  if (langs->len == 0)
+    return g_new0 (char *, 1);
+
+  g_ptr_array_sort (langs, flatpak_strcmp0_ptr);
+  g_ptr_array_add (langs, NULL);
+
+  return (char **) g_ptr_array_free (g_steal_pointer (&langs), FALSE);
 }
 
 char **
