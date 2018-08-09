@@ -39,6 +39,7 @@ static char *opt_arch;
 static gboolean opt_runtime;
 static gboolean opt_update_appstream;
 static gboolean opt_no_update_summary;
+static gboolean opt_disable_fsync;
 static char **opt_gpg_key_ids;
 static char **opt_exclude;
 static char **opt_include;
@@ -65,6 +66,7 @@ static GOptionEntry options[] = {
   { "end-of-life", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife, N_("Mark build as end-of-life"), N_("REASON") },
   { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit"), N_("TIMESTAMP") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), "COLLECTION-ID" },
+  { "disable-fsync", 0, 0, G_OPTION_ARG_NONE, &opt_disable_fsync, "Do not invoke fsync()", NULL },
 
   { NULL }
 };
@@ -807,6 +809,9 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       if (!ostree_repo_create (repo, OSTREE_REPO_MODE_ARCHIVE_Z2, cancellable, error))
         goto out;
     }
+
+  if (opt_disable_fsync)
+    ostree_repo_set_disable_fsync (repo, TRUE);
 
   /* Get the canonical collection ID which we’ll use for the commit. This might
    * be %NULL if the existing repo doesn’t have one and none was specified on
