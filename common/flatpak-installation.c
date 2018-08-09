@@ -129,6 +129,8 @@ flatpak_installation_class_init (FlatpakInstallationClass *klass)
   object_class->set_property = flatpak_installation_set_property;
   object_class->finalize = flatpak_installation_finalize;
 
+  /* Avoid weird recursive type initialization deadlocks from libsoup */
+  g_type_ensure (G_TYPE_SOCKET);
 }
 
 static void
