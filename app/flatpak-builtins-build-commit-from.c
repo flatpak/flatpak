@@ -40,6 +40,7 @@ static char *opt_body;
 static gboolean opt_update_appstream;
 static gboolean opt_no_update_summary;
 static gboolean opt_untrusted;
+static gboolean opt_disable_fsync;
 static gboolean opt_force;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
@@ -59,6 +60,7 @@ static GOptionEntry options[] = {
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { "end-of-life", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife, N_("Mark build as end-of-life"), N_("REASON") },
   { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit (NOW for current time)"), N_("TIMESTAMP") },
+  { "disable-fsync", 0, 0, G_OPTION_ARG_NONE, &opt_disable_fsync, "Do not invoke fsync()", NULL },
   { NULL }
 };
 
@@ -270,6 +272,9 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
   dst_repo = ostree_repo_new (dst_repofile);
   if (!ostree_repo_open (dst_repo, cancellable, error))
     return FALSE;
+
+  if (opt_disable_fsync)
+    ostree_repo_set_disable_fsync (dst_repo, TRUE);
 
   if (opt_src_repo)
     {
