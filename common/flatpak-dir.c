@@ -3545,6 +3545,10 @@ repo_pull (OstreeRepo                           *self,
   if (!ostree_repo_resolve_rev (self, remote_and_branch, TRUE, &current_checksum, error))
     return FALSE;
 
+  if (current_checksum != NULL &&
+      !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
+    return FALSE;
+
   if (!repo_get_remote_collection_id (self, remote_name, &collection_id, NULL))
     g_clear_pointer (&collection_id, g_free);
 
@@ -3659,10 +3663,6 @@ repo_pull (OstreeRepo                           *self,
                              g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
 
       options = g_variant_ref_sink (g_variant_builder_end (&builder));
-
-      if (current_checksum != NULL &&
-          !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
-        return FALSE;
 
       if (!ostree_repo_pull_with_options (self, remote_name, options,
                                           progress, cancellable, error))
