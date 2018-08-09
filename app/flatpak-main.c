@@ -596,6 +596,9 @@ main (int    argc,
 
   g_set_prgname (argv[0]);
 
+  /* Avoid weird recursive type initialization deadlocks from libsoup */
+  g_type_ensure (G_TYPE_SOCKET);
+
   /* avoid gvfs (http://bugzilla.gnome.org/show_bug.cgi?id=526454) */
   old_env = g_strdup (g_getenv ("GIO_USE_VFS"));
   g_setenv ("GIO_USE_VFS", "local", TRUE);
