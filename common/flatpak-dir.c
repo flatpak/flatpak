@@ -7002,7 +7002,7 @@ flatpak_dir_prune_origin_remote (FlatpakDir *self,
                                                            NULL, NULL);
         }
       else
-        ostree_repo_remote_delete (self->repo, remote, NULL, NULL);
+        flatpak_dir_remove_remote (self, FALSE, remote, NULL, NULL);
     }
 }
 
