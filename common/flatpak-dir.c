@@ -9401,12 +9401,12 @@ populate_hash_table_from_refs_map (GHashTable *ret_all_refs, GVariant *ref_map,
  * flatpak_remote_state_ensure_summary and get caching. */
 /* FIXME: For command line completion support for collection–refs over P2P,
  * we need a version of ostree_repo_list_collection_refs(). */
-static gboolean
-flatpak_dir_remote_list_refs (FlatpakDir         *self,
-                              FlatpakRemoteState *state,
-                              GHashTable        **out_all_refs,
-                              GCancellable       *cancellable,
-                              GError            **error)
+gboolean
+flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
+                                  FlatpakRemoteState *state,
+                                  GHashTable        **out_all_refs,
+                                  GCancellable       *cancellable,
+                                  GError            **error)
 {
   g_autoptr(GHashTable) ret_all_refs = NULL;
   g_autoptr(GVariant) ref_map = NULL;
@@ -9686,8 +9686,8 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
   if (state == NULL)
     return NULL;
 
-  if (!flatpak_dir_remote_list_refs (self, state,
-                                     &remote_refs, cancellable, error))
+  if (!flatpak_dir_list_all_remote_refs (self, state,
+                                         &remote_refs, cancellable, error))
     return NULL;
 
   collection_id = flatpak_dir_get_remote_collection_id (self, remote);
@@ -9784,8 +9784,8 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
   if (state == NULL)
     return NULL;
 
-  if (!flatpak_dir_remote_list_refs (self, state,
-                                     &remote_refs, cancellable, error))
+  if (!flatpak_dir_list_all_remote_refs (self, state,
+                                         &remote_refs, cancellable, error))
     return NULL;
 
   collection_id = flatpak_dir_get_remote_collection_id (self, remote);
@@ -11196,8 +11196,8 @@ flatpak_dir_list_remote_refs (FlatpakDir         *self,
   if (error == NULL)
     error = &my_error;
 
-  if (!flatpak_dir_remote_list_refs (self, state, refs,
-                                     cancellable, error))
+  if (!flatpak_dir_list_all_remote_refs (self, state, refs,
+                                         cancellable, error))
     return FALSE;
 
   if (flatpak_dir_get_remote_noenumerate (self, state->remote_name))
