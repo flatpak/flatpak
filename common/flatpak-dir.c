@@ -1045,11 +1045,17 @@ flatpak_dir_remove_oci_file (FlatpakDir   *self,
                              GError      **error)
 {
   g_autoptr(GFile) file = flatpak_dir_get_oci_cache_file (self, remote, suffix, error);
+  g_autoptr(GError) local_error = NULL;
+
   if (file == NULL)
     return FALSE;
 
-  if (!g_file_delete (file, cancellable, error))
-    return FALSE;
+  if (!g_file_delete (file, cancellable, &local_error) &&
+      !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
 
   return TRUE;
 }
