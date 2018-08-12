@@ -94,6 +94,12 @@ static GVariant * flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
                                                        GCancellable *cancellable,
                                                        GError      **error);
 
+static gboolean flatpak_dir_cleanup_remote_for_url_change (FlatpakDir   *self,
+                                                           const char   *remote_name,
+                                                           const char   *url,
+                                                           GCancellable *cancellable,
+                                                           GError      **error);
+
 static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
                                                                  FlatpakRemoteState *state,
                                                                  GCancellable       *cancellable,
@@ -7767,6 +7773,10 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
 
       if (new_config)
         {
+          if (!flatpak_dir_cleanup_remote_for_url_change (self, remote,
+                                                          origin, cancellable, error))
+            return FALSE;
+
           if (!ostree_repo_write_config (self->repo, new_config, error))
             return FALSE;
         }
@@ -11058,6 +11068,45 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   return TRUE;
 }
 
+static gboolean
+flatpak_dir_cleanup_remote_for_url_change (FlatpakDir   *self,
+                                           const char   *remote_name,
+                                           const char   *url,
+                                           GCancellable *cancellable,
+                                           GError      **error)
+{
+  g_autofree char *old_url = NULL;
+
+  /* We store things a bit differently for OCI and non-OCI remotes,
+   * so when changing from one to the other, we need to clean up cached
+   * files.
+   */
+  if (ostree_repo_remote_get_url (self->repo,
+                                  remote_name,
+                                  &old_url,
+                                  NULL))
+    {
+      gboolean was_oci = g_str_has_prefix (old_url, "oci+");
+      gboolean will_be_oci = g_str_has_prefix (url, "oci+");
+
+      if (was_oci != will_be_oci)
+        {
+          if (!flatpak_dir_remove_appstream (self, remote_name,
+                                             cancellable, error))
+            return FALSE;
+        }
+
+      if (was_oci && !will_be_oci)
+        {
+          if (!flatpak_dir_remove_oci_files (self, remote_name,
+                                             cancellable, error))
+            return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_modify_remote (FlatpakDir   *self,
                            const char   *remote_name,
@@ -11117,6 +11166,9 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   /* No url => disabled */
   if (url == NULL)
     url = g_strdup ("");
+
+  if (!flatpak_dir_cleanup_remote_for_url_change (self, remote_name, url, cancellable, error))
+    return FALSE;
 
   /* Add it if its not there yet */
   if (!ostree_repo_remote_change (self->repo, NULL,
