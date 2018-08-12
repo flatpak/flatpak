@@ -4084,7 +4084,6 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                         GError             **error)
 {
   g_autoptr(FlatpakOciRegistry) registry = NULL;
-  g_autofree char *oci_uri = NULL;
   g_autofree char *registry_uri = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *latest_rev = NULL;
@@ -4094,12 +4093,6 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *oci_repository = NULL;
   gboolean res;
-
-  if (!ostree_repo_remote_get_url (self->repo,
-                                   state->remote_name,
-                                   &oci_uri,
-                                   error))
-    return FALSE;
 
   /* We use the summary so that we can reuse any cached json */
   flatpak_remote_state_lookup_ref (state, ref, &latest_rev, &summary_element, error);
@@ -4171,7 +4164,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   g_autofree char *full_ref = NULL;
-  g_autofree char *oci_uri = NULL;
   g_autofree char *registry_uri = NULL;
   g_autofree char *oci_repository = NULL;
   g_autofree char *oci_digest = NULL;
@@ -4184,14 +4176,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *latest_rev = NULL;
   G_GNUC_UNUSED g_autofree char *latest_commit =
     flatpak_dir_read_latest (self, state->remote_name, ref, &latest_alt_commit, cancellable, NULL);
-
-  /* This doesn't support specifying a specific digest, because that can't work
-     with OCI signatures. We need to get that from the index */
-  if (!ostree_repo_remote_get_url (self->repo,
-                                   state->remote_name,
-                                   &oci_uri,
-                                   error))
-    return FALSE;
 
   /* We use the summary so that we can reuse any cached json */
   flatpak_remote_state_lookup_ref (state, ref, &latest_rev, &summary_element, error);
