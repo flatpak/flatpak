@@ -100,7 +100,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autofree char *ref = NULL;
-  FlatpakDir *dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
