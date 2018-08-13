@@ -11929,7 +11929,6 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
           g_autofree char *extension_collection_id = NULL;
           const char *default_branches[] = { NULL, NULL};
           const char **branches;
-          g_autofree char *extension_ref = NULL;
           g_autofree char *checksum = NULL;
           int branch_i;
 
@@ -11966,6 +11965,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
 
           for (branch_i = 0; branches[branch_i] != NULL; branch_i++)
             {
+              g_autofree char *extension_ref = NULL;
               const char *branch = branches[branch_i];
 
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
