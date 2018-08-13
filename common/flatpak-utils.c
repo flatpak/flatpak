@@ -5206,7 +5206,7 @@ flatpak_yes_no_prompt (const char *prompt, ...)
 {
   char buf[512];
   va_list var_args;
-  gchar *s;
+  g_autofree char *s = NULL;
 
 
 #pragma GCC diagnostic push
