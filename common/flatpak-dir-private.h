@@ -91,9 +91,11 @@ typedef struct
   GError   *summary_fetch_error;
   GVariant *metadata;
   GError   *metadata_fetch_error;
+  int      refcount;
 } FlatpakRemoteState;
 
-void flatpak_remote_state_free (FlatpakRemoteState *remote_state);
+FlatpakRemoteState *flatpak_remote_state_ref (FlatpakRemoteState *remote_state);
+void flatpak_remote_state_unref (FlatpakRemoteState *remote_state);
 gboolean flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                               GError            **error);
 gboolean flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
@@ -122,7 +124,7 @@ GVariant *flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRelated, flatpak_related_free)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemoteState, flatpak_remote_state_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemoteState, flatpak_remote_state_unref)
 
 typedef struct
 {

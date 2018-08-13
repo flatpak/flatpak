@@ -62,7 +62,7 @@ static void
 remote_dir_pair_free (RemoteDirPair *pair)
 {
   g_free (pair->remote_name);
-  flatpak_remote_state_free (pair->state);
+  flatpak_remote_state_unref (pair->state);
   g_object_unref (pair->dir);
   g_free (pair);
 }

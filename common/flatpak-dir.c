@@ -198,21 +198,37 @@ get_config_dir_location (void)
 static FlatpakRemoteState *
 flatpak_remote_state_new (void)
 {
-  return g_new0 (FlatpakRemoteState, 1);
+  FlatpakRemoteState *state = g_new0 (FlatpakRemoteState, 1);
+  state->refcount = 1;
+  return state;
+}
+
+FlatpakRemoteState *
+flatpak_remote_state_ref (FlatpakRemoteState *remote_state)
+{
+  g_assert (remote_state->refcount > 0);
+  remote_state->refcount++;
+  return remote_state;
 }
 
 void
-flatpak_remote_state_free (FlatpakRemoteState *remote_state)
+flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
 {
-  g_free (remote_state->remote_name);
-  g_free (remote_state->collection_id);
-  g_clear_pointer (&remote_state->summary, g_variant_unref);
-  g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
-  g_clear_error (&remote_state->summary_fetch_error);
-  g_clear_pointer (&remote_state->metadata, g_variant_unref);
-  g_clear_error (&remote_state->metadata_fetch_error);
+  g_assert (remote_state->refcount > 0);
+  remote_state->refcount--;
 
-  g_free (remote_state);
+   if (remote_state->refcount == 0)
+     {
+       g_free (remote_state->remote_name);
+       g_free (remote_state->collection_id);
+       g_clear_pointer (&remote_state->summary, g_variant_unref);
+       g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
+       g_clear_error (&remote_state->summary_fetch_error);
+       g_clear_pointer (&remote_state->metadata, g_variant_unref);
+       g_clear_error (&remote_state->metadata_fetch_error);
+
+       g_free (remote_state);
+     }
 }
 
 gboolean
