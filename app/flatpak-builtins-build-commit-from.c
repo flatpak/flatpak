@@ -346,6 +346,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       GVariantBuilder builder;
       g_autoptr(OstreeAsyncProgress) progress = NULL;
       g_auto(GLnxConsoleRef) console = { 0, };
+      g_autoptr(GVariant) options = NULL;
       gboolean res;
 
       if (opt_untrusted)
@@ -364,8 +365,9 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       g_variant_builder_add (&builder, "{s@v}", "depth",
                              g_variant_new_variant (g_variant_new_int32 (0)));
 
+      options = g_variant_ref_sink (g_variant_builder_end (&builder));
       res = ostree_repo_pull_with_options (dst_repo, src_repo_uri,
-                                           g_variant_builder_end (&builder),
+                                           options,
                                            progress,
                                            cancellable, error);
 
@@ -398,6 +400,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       g_autoptr(OstreeMutableTree) mtree = NULL;
       g_autoptr(GFile) dst_root = NULL;
       g_autoptr(GVariant) commitv_metadata = NULL;
+      g_autoptr(GVariant) metadata = NULL;
       const char *subject;
       const char *body;
       g_autofree char *commit_checksum = NULL;
@@ -490,7 +493,8 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       if (opt_timestamp)
         timestamp = ts.tv_sec;
 
-      if (!ostree_repo_write_commit_with_time (dst_repo, dst_parent, subject, body, g_variant_builder_end (&metadata_builder),
+      metadata = g_variant_ref_sink (g_variant_builder_end (&metadata_builder));
+      if (!ostree_repo_write_commit_with_time (dst_repo, dst_parent, subject, body, metadata,
                                                OSTREE_REPO_FILE (dst_root),
                                                timestamp,
                                                &commit_checksum, cancellable, error))
