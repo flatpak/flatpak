@@ -5164,7 +5164,7 @@ flatpak_dir_read_latest (FlatpakDir   *self,
 {
   g_autofree char *remote_and_ref = NULL;
   g_autofree char *alt_id = NULL;
-  char *res = NULL;
+  g_autofree char *res = NULL;
 
   /* There may be several remotes with the same branch (if we for
    * instance changed the origin, so prepend the current origin to
@@ -5192,7 +5192,7 @@ flatpak_dir_read_latest (FlatpakDir   *self,
       *out_alt_id = g_steal_pointer (&alt_id);
     }
 
-  return res;
+  return g_steal_pointer (&res);
 }
 
 char *
