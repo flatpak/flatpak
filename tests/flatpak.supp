@@ -155,3 +155,15 @@
   fun:ioctl
   fun:_check_support_reflink
 }
+
+# ostree pthread_create issue
+{
+   ostree_pthread_create_issue
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:g_system_thread_new
+}
