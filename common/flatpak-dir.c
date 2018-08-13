@@ -9254,8 +9254,10 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       g_autoptr(GVariant) commit_v = NULL;
       g_autoptr(GError) local_error = NULL;
 
-      /* Make sure the branch is up to date. */
-      if (!_flatpak_dir_fetch_remote_state_metadata_branch (self, state, cancellable, &local_error))
+      /* Make sure the branch is up to date, but ignore downgrade errors (see
+       * below for the explanation). */
+      if (!_flatpak_dir_fetch_remote_state_metadata_branch (self, state, cancellable, &local_error) &&
+          !g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_DOWNGRADE))
         {
           if (optional)
             {
@@ -9272,6 +9274,18 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
       else
         {
+          if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_DOWNGRADE))
+            {
+              /* The latest metadata available is a downgrade, which means we're offline and using a
+               * LAN/USB source. Downgrading the metadata in the system repo would be a security
+               * risk, so instead ignore the downgrade and use the later metadata.  There's some
+               * chance its information won't be accurate for the refs that are pulled, but using
+               * the old metadata wouldn't always be correct either because there's no guarantee the
+               * refs will be pulled from the same peer source as the metadata. Long term, we should
+               * figure out how to rely less on it. */
+              g_debug ("Ignoring downgrade of ostree-metadata; using the newer one instead");
+            }
+
           /* Look up the commit containing the latest repository metadata. */
           latest_rev = flatpak_dir_read_latest (self, remote_or_uri, OSTREE_REPO_METADATA_REF,
                                                 NULL, cancellable, error);
@@ -11323,13 +11337,6 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
   /* Do the pull into the local repository. */
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
-
-  /* TODO: This is somewhat weird. as it means downgrade the ostree-metadata branch
-   * if the currently available branch is older. However, it matches what we did before
-   * PR #1961 where we started disallowing downgrades in p2p updates.
-   * Long term we should have a better solution to this.
-   */
-  flatpak_flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
