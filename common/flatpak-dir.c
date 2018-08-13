@@ -3694,7 +3694,7 @@ repo_pull (OstreeRepo                           *self,
       new_timestamp = ostree_commit_get_timestamp (new_commit);
 
       if (new_timestamp < old_timestamp)
-        return flatpak_fail (error, "Update is older than current version");
+        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Update is older than current version");
     }
 
   return TRUE;
@@ -4761,7 +4761,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       new_timestamp = ostree_commit_get_timestamp (new_commit);
 
       if (new_timestamp < old_timestamp)
-        return flatpak_fail (error, "Not allowed to downgrade %s", ref);
+        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Not allowed to downgrade %s", ref);
     }
 
   if (subpaths != NULL && subpaths[0] != NULL)
