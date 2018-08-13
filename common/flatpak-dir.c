@@ -11324,6 +11324,13 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
 
+  /* TODO: This is somewhat weird. as it means downgrade the ostree-metadata branch
+   * if the currently available branch is older. However, it matches what we did before
+   * PR #1961 where we started disallowing downgrades in p2p updates.
+   * Long term we should have a better solution to this.
+   */
+  flatpak_flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
+
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
