@@ -3437,9 +3437,11 @@ default_progress_changed (OstreeAsyncProgress *progress,
     }
   else
     {
+      g_autoptr(GVariant) outstanding_fetches = NULL;
       /* We get some extra calls before we've really started due to the initialization of the
          extra data, so ignore those */
-      if (ostree_async_progress_get_variant (progress, "outstanding-fetches") == NULL)
+      outstanding_fetches = ostree_async_progress_get_variant (progress, "outstanding-fetches");
+      if (outstanding_fetches == NULL)
         return;
 
       ostree_repo_pull_default_console_progress_changed (progress, user_data);
