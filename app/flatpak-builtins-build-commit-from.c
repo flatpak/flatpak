@@ -438,10 +438,10 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
 
       commitv_metadata = g_variant_get_child_value (src_commitv, 0);
 
-      g_variant_get_child (src_commitv, 3, "s", &subject);
+      g_variant_get_child (src_commitv, 3, "&s", &subject);
       if (opt_subject)
         subject = (const char *) opt_subject;
-      g_variant_get_child (src_commitv, 4, "s", &body);
+      g_variant_get_child (src_commitv, 4, "&s", &body);
       if (opt_body)
         body = (const char *) opt_body;
 
