@@ -191,13 +191,13 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       const gchar *subject = NULL;
       const gchar *body = NULL;
       g_autofree char *parent = NULL;
-      const char *latest;
+      g_autofree char *latest = NULL;
       const char *xa_metadata = NULL;
       const char *collection_id = NULL;
 
       latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
       if (latest == NULL)
-        latest = _("ref not present in origin");
+        latest = g_strdup (_("ref not present in origin"));
 
       if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), commit, &commit_v, NULL, NULL))
         {
