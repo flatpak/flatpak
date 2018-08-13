@@ -475,11 +475,15 @@ marshal (JsonObject          *parent,
             json_object_set_member (obj, struct_props[i].name, val);
           }
 
-        if (type != FLATPAK_JSON_PROP_TYPE_PARENT &&
-            (!empty || (flags & FLATPAK_JSON_PROP_FLAGS_OPTIONAL) == 0))
+        if (type != FLATPAK_JSON_PROP_TYPE_PARENT)
           {
-            retval = json_node_new (JSON_NODE_OBJECT);
-            json_node_take_object (retval, obj);
+            if (!empty || (flags & FLATPAK_JSON_PROP_FLAGS_OPTIONAL) == 0)
+              {
+                retval = json_node_new (JSON_NODE_OBJECT);
+                json_node_take_object (retval, obj);
+              }
+            else
+              json_object_unref (obj);
           }
         break;
       }

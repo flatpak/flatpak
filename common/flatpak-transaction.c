@@ -785,7 +785,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   priv->last_op_for_ref = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) flatpak_remote_state_free);
+  priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) flatpak_remote_state_unref);
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
   priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
 }
@@ -1003,12 +1003,12 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
 
   state = g_hash_table_lookup (priv->remote_states, remote);
   if (state)
-    return state;
+    return flatpak_remote_state_ref (state);
 
   state = flatpak_dir_get_remote_state_optional (priv->dir, remote, NULL, error);
 
   if (state)
-    g_hash_table_insert (priv->remote_states, state->remote_name, state);
+    g_hash_table_insert (priv->remote_states, state->remote_name, flatpak_remote_state_ref (state));
 
   return state;
 }
@@ -1090,8 +1090,7 @@ add_related (FlatpakTransaction          *self,
              GError                     **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  FlatpakRemoteState *state = NULL;
-
+  g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GPtrArray) related = NULL;
   g_autoptr(GError) local_error = NULL;
   int i;
@@ -1303,6 +1302,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   g_autofree char *origin = NULL;
   const char *pref;
   g_autofree char *origin_remote = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
   FlatpakTransactionOperation *op;
 
   if (remote_name_is_file (remote))
@@ -1379,7 +1379,8 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   /* This should have been passed in or found out above */
   g_assert (remote != NULL);
 
-  if (flatpak_transaction_ensure_remote_state (self, kind, remote, error) == NULL)
+  state = flatpak_transaction_ensure_remote_state (self, kind, remote, error);
+  if (state == NULL)
     return FALSE;
 
   op = flatpak_transaction_add_op (self, remote, ref, subpaths, commit, bundle, kind);
@@ -1658,7 +1659,7 @@ resolve_ops (FlatpakTransaction *self,
   for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
-      FlatpakRemoteState *state = NULL;
+      g_autoptr(FlatpakRemoteState) state = NULL;
       g_autofree char *checksum = NULL;
       g_autoptr(GVariant) commit_data = NULL;
       g_autoptr(GVariant) commit_metadata = NULL;
@@ -2331,7 +2332,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
       gboolean res = TRUE;
       const char *pref;
       FlatpakTransactionOperationType kind;
-      FlatpakRemoteState *state;
+      g_autoptr(FlatpakRemoteState) state = NULL;
 
       if (op->skip)
         continue;

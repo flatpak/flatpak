@@ -198,21 +198,37 @@ get_config_dir_location (void)
 static FlatpakRemoteState *
 flatpak_remote_state_new (void)
 {
-  return g_new0 (FlatpakRemoteState, 1);
+  FlatpakRemoteState *state = g_new0 (FlatpakRemoteState, 1);
+  state->refcount = 1;
+  return state;
+}
+
+FlatpakRemoteState *
+flatpak_remote_state_ref (FlatpakRemoteState *remote_state)
+{
+  g_assert (remote_state->refcount > 0);
+  remote_state->refcount++;
+  return remote_state;
 }
 
 void
-flatpak_remote_state_free (FlatpakRemoteState *remote_state)
+flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
 {
-  g_free (remote_state->remote_name);
-  g_free (remote_state->collection_id);
-  g_clear_pointer (&remote_state->summary, g_variant_unref);
-  g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
-  g_clear_error (&remote_state->summary_fetch_error);
-  g_clear_pointer (&remote_state->metadata, g_variant_unref);
-  g_clear_error (&remote_state->metadata_fetch_error);
+  g_assert (remote_state->refcount > 0);
+  remote_state->refcount--;
 
-  g_free (remote_state);
+   if (remote_state->refcount == 0)
+     {
+       g_free (remote_state->remote_name);
+       g_free (remote_state->collection_id);
+       g_clear_pointer (&remote_state->summary, g_variant_unref);
+       g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
+       g_clear_error (&remote_state->summary_fetch_error);
+       g_clear_pointer (&remote_state->metadata, g_variant_unref);
+       g_clear_error (&remote_state->metadata_fetch_error);
+
+       g_free (remote_state);
+     }
 }
 
 gboolean
@@ -3437,9 +3453,11 @@ default_progress_changed (OstreeAsyncProgress *progress,
     }
   else
     {
+      g_autoptr(GVariant) outstanding_fetches = NULL;
       /* We get some extra calls before we've really started due to the initialization of the
          extra data, so ignore those */
-      if (ostree_async_progress_get_variant (progress, "outstanding-fetches") == NULL)
+      outstanding_fetches = ostree_async_progress_get_variant (progress, "outstanding-fetches");
+      if (outstanding_fetches == NULL)
         return;
 
       ostree_repo_pull_default_console_progress_changed (progress, user_data);
@@ -4485,7 +4503,7 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   /* The latter flag was introduced in https://github.com/ostreedev/ostree/pull/926 */
   const OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED | OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
   GVariantBuilder builder;
-
+  g_autoptr(GVariant) options = NULL;
   g_auto(GVariantBuilder) refs_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
@@ -4553,7 +4571,8 @@ repo_pull_local_untrusted (FlatpakDir          *self,
                              g_variant_new_variant (g_variant_new_boolean (TRUE)));
     }
 
-  res = ostree_repo_pull_with_options (repo, url, g_variant_builder_end (&builder),
+  options = g_variant_ref_sink (g_variant_builder_end (&builder));
+  res = ostree_repo_pull_with_options (repo, url, options,
                                        progress, cancellable, error);
 
   if (progress)
@@ -5162,7 +5181,7 @@ flatpak_dir_read_latest (FlatpakDir   *self,
 {
   g_autofree char *remote_and_ref = NULL;
   g_autofree char *alt_id = NULL;
-  char *res = NULL;
+  g_autofree char *res = NULL;
 
   /* There may be several remotes with the same branch (if we for
    * instance changed the origin, so prepend the current origin to
@@ -5190,7 +5209,7 @@ flatpak_dir_read_latest (FlatpakDir   *self,
       *out_alt_id = g_steal_pointer (&alt_id);
     }
 
-  return res;
+  return g_steal_pointer (&res);
 }
 
 char *
@@ -11911,7 +11930,6 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
           g_autofree char *extension_collection_id = NULL;
           const char *default_branches[] = { NULL, NULL};
           const char **branches;
-          g_autofree char *extension_ref = NULL;
           g_autofree char *checksum = NULL;
           int branch_i;
 
@@ -11948,6 +11966,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
 
           for (branch_i = 0; branches[branch_i] != NULL; branch_i++)
             {
+              g_autofree char *extension_ref = NULL;
               const char *branch = branches[branch_i];
 
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);

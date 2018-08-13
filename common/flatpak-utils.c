@@ -3738,9 +3738,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     g_autoptr(FlatpakTempDir) tmpdir_file = NULL;
     g_autoptr(GFile) appstream_file = NULL;
     g_autoptr(GFile) appstream_gz_file = NULL;
-    g_autofree char *commit_checksum = NULL;
     OstreeRepoTransactionStats stats;
-    g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
     g_autoptr(FlatpakXml) appstream_root = NULL;
     g_autoptr(GBytes) xml_data = NULL;
     g_autoptr(GBytes) xml_gz_data = NULL;
@@ -3859,6 +3857,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
         g_autoptr(GFile) root = NULL;
         g_autofree char *branch = NULL;
         g_autofree char *parent = NULL;
+        g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
+        g_autofree char *commit_checksum = NULL;
 
         branch = g_strdup_printf ("%s/%s", branch_prefix, arch);
         if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
@@ -5206,7 +5206,7 @@ flatpak_yes_no_prompt (const char *prompt, ...)
 {
   char buf[512];
   va_list var_args;
-  gchar *s;
+  g_autofree char *s = NULL;
 
 
 #pragma GCC diagnostic push
@@ -5429,10 +5429,12 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint requested;
   guint64 total_transferred;
   g_autofree gchar *formatted_bytes_total_transferred = NULL;
+  g_autoptr(GVariant) outstanding_fetchesv = NULL;
 
   /* We get some extra calls before we've really started due to the initialization of the
      extra data, so ignore those */
-  if (ostree_async_progress_get_variant (progress, "outstanding-fetches") == NULL)
+  outstanding_fetchesv = ostree_async_progress_get_variant (progress, "outstanding-fetches");
+  if (outstanding_fetchesv == NULL)
     return;
 
   buf = g_string_new ("");
