@@ -3738,9 +3738,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     g_autoptr(FlatpakTempDir) tmpdir_file = NULL;
     g_autoptr(GFile) appstream_file = NULL;
     g_autoptr(GFile) appstream_gz_file = NULL;
-    g_autofree char *commit_checksum = NULL;
     OstreeRepoTransactionStats stats;
-    g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
     g_autoptr(FlatpakXml) appstream_root = NULL;
     g_autoptr(GBytes) xml_data = NULL;
     g_autoptr(GBytes) xml_gz_data = NULL;
@@ -3859,6 +3857,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
         g_autoptr(GFile) root = NULL;
         g_autofree char *branch = NULL;
         g_autofree char *parent = NULL;
+        g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
+        g_autofree char *commit_checksum = NULL;
 
         branch = g_strdup_printf ("%s/%s", branch_prefix, arch);
         if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
