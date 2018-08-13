@@ -4503,7 +4503,7 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   /* The latter flag was introduced in https://github.com/ostreedev/ostree/pull/926 */
   const OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED | OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
   GVariantBuilder builder;
-
+  g_autoptr(GVariant) options = NULL;
   g_auto(GVariantBuilder) refs_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
@@ -4571,7 +4571,8 @@ repo_pull_local_untrusted (FlatpakDir          *self,
                              g_variant_new_variant (g_variant_new_boolean (TRUE)));
     }
 
-  res = ostree_repo_pull_with_options (repo, url, g_variant_builder_end (&builder),
+  options = g_variant_ref_sink (g_variant_builder_end (&builder));
+  res = ostree_repo_pull_with_options (repo, url, options,
                                        progress, cancellable, error);
 
   if (progress)
