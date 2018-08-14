@@ -207,7 +207,7 @@ set_cache_http_data_from_headers (CacheHttpData *data,
 
   if (cache_control && *cache_control)
     {
-      GHashTable *params = soup_header_parse_param_list (cache_control);
+      g_autoptr(GHashTable) params = soup_header_parse_param_list (cache_control);
       GHashTableIter iter;
       gpointer key, value;
 
