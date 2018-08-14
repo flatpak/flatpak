@@ -9087,6 +9087,7 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
         {
           cache_bytes = g_mapped_file_get_bytes (mfile);
           *out_summary = g_steal_pointer (&cache_bytes);
+          return TRUE;
         }
     }
 
