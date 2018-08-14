@@ -319,7 +319,7 @@ flatpak_remote_ref_get_eol_rebase (FlatpakRemoteRef *self)
 }
 
 FlatpakRemoteRef *
-flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
+flatpak_remote_ref_new (OstreeCollectionRef *coll_ref,
                         const char           *commit,
                         const char           *remote_name,
                         FlatpakRemoteState   *state)

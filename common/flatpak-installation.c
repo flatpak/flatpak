@@ -1630,7 +1630,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *collection_id = NULL;
-  g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
+  g_autoptr(OstreeCollectionRef) coll_ref = NULL;
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
 
   dir = flatpak_installation_get_dir (self, error);
@@ -1649,7 +1649,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   if (!flatpak_installation_drop_caches (self, cancellable, error))
     return NULL;
 
-  coll_ref = flatpak_collection_ref_new (collection_id, ref);
+  coll_ref = ostree_collection_ref_new (collection_id, ref);
   return flatpak_remote_ref_new (coll_ref, NULL, remote, NULL);
 }
 
@@ -2208,7 +2208,7 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       FlatpakRemoteRef *ref;
-      FlatpakCollectionRef *coll_ref = key;
+      OstreeCollectionRef *coll_ref = key;
       const gchar *ref_commit = value;
 
       ref = flatpak_remote_ref_new (coll_ref, ref_commit, remote_or_uri, state);
@@ -2249,7 +2249,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
   g_autoptr(GHashTable) ht = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *ref = NULL;
-  g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
+  g_autoptr(OstreeCollectionRef) coll_ref = NULL;
   g_autofree gchar *collection_id = NULL;
   const char *checksum;
 
@@ -2283,7 +2283,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
                                      branch,
                                      arch);
 
-  coll_ref = flatpak_collection_ref_new (collection_id, ref);
+  coll_ref = ostree_collection_ref_new (collection_id, ref);
   checksum = g_hash_table_lookup (ht, coll_ref);
 
   /* If there was not a match, it may be because the collection ID is
@@ -2297,7 +2297,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
       g_hash_table_iter_init (&iter, ht);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          FlatpakCollectionRef *current =  (FlatpakCollectionRef *) key;
+          OstreeCollectionRef *current =  (OstreeCollectionRef *) key;
           if (g_strcmp0 (current->ref_name, ref) == 0)
             {
               checksum = (const gchar *) value;

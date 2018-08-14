@@ -9402,14 +9402,14 @@ populate_hash_table_from_refs_map (GHashTable *ret_all_refs, GVariant *ref_map,
       g_autoptr(GVariant) csum_v = NULL;
       char tmp_checksum[65];
       const guchar *csum_bytes;
-      FlatpakCollectionRef *ref;
+      OstreeCollectionRef *ref;
 
       g_variant_get_child (child, 1, "(t@aya{sv})", NULL, &csum_v, NULL);
       csum_bytes = ostree_checksum_bytes_peek_validate (csum_v, NULL);
       if (csum_bytes == NULL)
         continue;
 
-      ref = flatpak_collection_ref_new (collection_id, ref_name);
+      ref = ostree_collection_ref_new (collection_id, ref_name);
       ostree_checksum_inplace_from_bytes (csum_bytes, tmp_checksum);
 
       g_hash_table_insert (ret_all_refs, ref, g_strdup (tmp_checksum));
@@ -9434,9 +9434,9 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   const gchar *collection_id;
   GVariantIter iter;
 
-  ret_all_refs = g_hash_table_new_full (flatpak_collection_ref_hash,
-                                        flatpak_collection_ref_equal,
-                                        (GDestroyNotify) flatpak_collection_ref_free,
+  ret_all_refs = g_hash_table_new_full (ostree_collection_ref_hash,
+                                        ostree_collection_ref_equal,
+                                        (GDestroyNotify) ostree_collection_ref_free,
                                         g_free);
 
   /* If the remote has P2P enabled and we're offline, get the refs list from
@@ -9461,13 +9461,13 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         {
           g_autoptr(GVariant) child = NULL;
           g_autoptr(GVariant) cur_v = NULL;
-          g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
+          g_autoptr(OstreeCollectionRef) coll_ref = NULL;
           const char *ref;
 
           child = g_variant_get_child_value (cache, i);
           cur_v = g_variant_get_child_value (child, 0);
           ref = g_variant_get_string (cur_v, NULL);
-          coll_ref = flatpak_collection_ref_new (state->collection_id, ref);
+          coll_ref = ostree_collection_ref_new (state->collection_id, ref);
 
           g_hash_table_insert (ret_all_refs, g_steal_pointer (&coll_ref), NULL);
         }
@@ -9551,7 +9551,7 @@ find_matching_refs (GHashTable           *refs,
       g_autofree char *ref = NULL;
       g_auto(GStrv) parts = NULL;
       gboolean is_app, is_runtime;
-      FlatpakCollectionRef *coll_ref = key;
+      OstreeCollectionRef *coll_ref = key;
 
       /* Unprefix any remote name if needed */
       ostree_parse_refspec (coll_ref->ref_name, NULL, &ref, NULL);
@@ -9849,15 +9849,15 @@ list_collection_refs_from_ostree_repo (OstreeRepo   *repo,
   if (!ostree_repo_list_refs (repo, refspec_prefix, &refs, cancellable, error))
     return FALSE;
 
-  coll_refs = g_hash_table_new_full (flatpak_collection_ref_hash,
-                                     flatpak_collection_ref_equal,
-                                     (GDestroyNotify) flatpak_collection_ref_free,
+  coll_refs = g_hash_table_new_full (ostree_collection_ref_hash,
+                                     ostree_collection_ref_equal,
+                                     (GDestroyNotify) ostree_collection_ref_free,
                                      NULL);
 
   g_hash_table_iter_init (&iter, refs);
   while (g_hash_table_iter_next (&iter, &key, NULL))
     {
-      FlatpakCollectionRef *ref = flatpak_collection_ref_new (opt_collection_id, key);
+      OstreeCollectionRef *ref = ostree_collection_ref_new (opt_collection_id, key);
       g_hash_table_add (coll_refs, ref);
     }
 
@@ -9927,9 +9927,9 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
   if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
     return NULL;
 
-  local_refs = g_hash_table_new_full (flatpak_collection_ref_hash,
-                                      flatpak_collection_ref_equal,
-                                      (GDestroyNotify) flatpak_collection_ref_free,
+  local_refs = g_hash_table_new_full (ostree_collection_ref_hash,
+                                      ostree_collection_ref_equal,
+                                      (GDestroyNotify) ostree_collection_ref_free,
                                       NULL);
   if (kinds & FLATPAK_KINDS_APP)
     {
@@ -9945,7 +9945,7 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
           remote = flatpak_dir_get_origin (self, app_refs[i], NULL, NULL);
           if (remote != NULL)
             collection_id = flatpak_dir_get_remote_collection_id (self, remote);
-          FlatpakCollectionRef *ref = flatpak_collection_ref_new (collection_id, app_refs[i]);
+          OstreeCollectionRef *ref = ostree_collection_ref_new (collection_id, app_refs[i]);
           g_hash_table_add (local_refs, ref);
         }
     }
@@ -9963,7 +9963,7 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
           remote = flatpak_dir_get_origin (self, runtime_refs[i], NULL, NULL);
           if (remote != NULL)
             collection_id = flatpak_dir_get_remote_collection_id (self, remote);
-          FlatpakCollectionRef *ref = flatpak_collection_ref_new (collection_id, runtime_refs[i]);
+          OstreeCollectionRef *ref = ostree_collection_ref_new (collection_id, runtime_refs[i]);
           g_hash_table_add (local_refs, ref);
         }
     }
@@ -10391,7 +10391,7 @@ flatpak_dir_remote_has_deploys (FlatpakDir *self,
   g_hash_table_iter_init (&hash_iter, refs);
   while (g_hash_table_iter_next (&hash_iter, &key, NULL))
     {
-      FlatpakCollectionRef *coll_ref = key;
+      OstreeCollectionRef *coll_ref = key;
       const char *ref = coll_ref->ref_name;
       g_autofree char *origin = flatpak_dir_get_origin (self, ref, NULL, NULL);
 
@@ -11242,7 +11242,7 @@ remove_unless_in_hash (gpointer key,
                        gpointer user_data)
 {
   GHashTable *table = user_data;
-  FlatpakCollectionRef *ref = key;
+  OstreeCollectionRef *ref = key;
 
   return !g_hash_table_contains (table, ref->ref_name);
 }
@@ -12473,50 +12473,4 @@ flatpak_dir_get_locale_subpaths (FlatpakDir *self)
         }
     }
   return subpaths;
-}
-
-/* The flatpak_collection_ref_* methods were copied from the
- * ostree_collection_ref_* ones */
-FlatpakCollectionRef *
-flatpak_collection_ref_new (const gchar *collection_id,
-                            const gchar *ref_name)
-{
-  g_autoptr(FlatpakCollectionRef) collection_ref = NULL;
-
-  collection_ref = g_new0 (FlatpakCollectionRef, 1);
-  collection_ref->collection_id = g_strdup (collection_id);
-  collection_ref->ref_name = g_strdup (ref_name);
-
-  return g_steal_pointer (&collection_ref);
-}
-
-void
-flatpak_collection_ref_free (FlatpakCollectionRef *ref)
-{
-  g_return_if_fail (ref != NULL);
-
-  g_free (ref->collection_id);
-  g_free (ref->ref_name);
-  g_free (ref);
-}
-
-guint
-flatpak_collection_ref_hash (gconstpointer ref)
-{
-  const FlatpakCollectionRef *_ref = ref;
-
-  if (_ref->collection_id != NULL)
-    return g_str_hash (_ref->collection_id) ^ g_str_hash (_ref->ref_name);
-  else
-    return g_str_hash (_ref->ref_name);
-}
-
-gboolean
-flatpak_collection_ref_equal (gconstpointer ref1,
-                              gconstpointer ref2)
-{
-  const FlatpakCollectionRef *_ref1 = ref1, *_ref2 = ref2;
-
-  return g_strcmp0 (_ref1->collection_id, _ref2->collection_id) == 0 &&
-         g_strcmp0 (_ref1->ref_name, _ref2->ref_name) == 0;
 }

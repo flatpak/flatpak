@@ -215,7 +215,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          FlatpakCollectionRef *coll_ref = key;
+          OstreeCollectionRef *coll_ref = key;
           char *ref = coll_ref->ref_name;
           char *partial_ref;
           const char *slash = strchr (ref, '/');
@@ -233,7 +233,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          FlatpakCollectionRef *coll_ref = key;
+          OstreeCollectionRef *coll_ref = key;
           const char *ref = coll_ref->ref_name;
           const char *checksum = value;
           const char *name = NULL;
@@ -294,7 +294,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
               strcmp (arches[0], parts[2]) != 0)
             {
               g_autofree char *alt_arch_ref = g_strconcat (parts[0], "/", parts[1], "/", arches[0], "/", parts[3], NULL);
-              g_autoptr(FlatpakCollectionRef) alt_arch_coll_ref = flatpak_collection_ref_new (coll_ref->collection_id, alt_arch_ref);
+              g_autoptr(OstreeCollectionRef) alt_arch_coll_ref = ostree_collection_ref_new (coll_ref->collection_id, alt_arch_ref);
               if (g_hash_table_lookup (refs, alt_arch_coll_ref))
                 continue;
             }
