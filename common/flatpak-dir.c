@@ -3152,9 +3152,9 @@ replace_contents_compressed (GFile        *dest,
                              GCancellable *cancellable,
                              GError      **error)
 {
-  g_autoptr(GZlibCompressor) compressor;
-  g_autoptr(GFileOutputStream) out;
-  g_autoptr(GOutputStream) out2;
+  g_autoptr(GZlibCompressor) compressor = NULL;
+  g_autoptr(GFileOutputStream) out = NULL;
+  g_autoptr(GOutputStream) out2 = NULL;
 
   compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
   out = g_file_replace (dest, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
