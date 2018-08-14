@@ -74,7 +74,7 @@ get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
           as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
 #endif
 
-          g_autofree char *appstream_path;
+          g_autofree char *appstream_path = NULL;
 
           if (flatpak_dir_get_remote_oci (dir, remotes[j]))
             appstream_path = g_build_filename (install_path, "appstream", remotes[j],
