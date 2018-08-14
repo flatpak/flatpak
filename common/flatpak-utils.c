@@ -3878,7 +3878,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
         /* No need to commit if nothing changed */
         if (parent)
           {
-            g_autoptr(GFile) parent_root;
+            g_autoptr(GFile) parent_root = NULL;
 
             if (!ostree_repo_read_commit (repo, parent, &parent_root, NULL, cancellable, error))
               return FALSE;
