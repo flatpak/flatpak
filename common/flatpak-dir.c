@@ -10690,7 +10690,7 @@ parse_ref_file (GKeyFile *keyfile,
   g_autoptr(GBytes) gpg_data = NULL;
   gboolean is_runtime = FALSE;
   g_autofree char *collection_id = NULL;
-  char *str;
+  g_autofree char *str = NULL;
 
   *name_out = NULL;
   *branch_out = NULL;
@@ -10732,7 +10732,7 @@ parse_ref_file (GKeyFile *keyfile,
                                FLATPAK_REF_GPGKEY_KEY, NULL);
   if (str != NULL)
     {
-      guchar *decoded;
+      g_autofree guchar *decoded = NULL;
       gsize decoded_len;
 
       str = g_strstrip (str);
@@ -10740,7 +10740,7 @@ parse_ref_file (GKeyFile *keyfile,
       if (decoded_len < 10) /* Check some minimal size so we don't get crap */
         return flatpak_fail (error, "Invalid file format, gpg key invalid");
 
-      gpg_data = g_bytes_new_take (decoded, decoded_len);
+      gpg_data = g_bytes_new_take (g_steal_pointer (&decoded), decoded_len);
     }
 
   collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
