@@ -167,3 +167,19 @@
    fun:pthread_create@@GLIBC_2.2.5
    fun:g_system_thread_new
 }
+
+# Weird leak of UnixInputStream in ostree, can't figure it out
+{
+   ostree_unix_stream_leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   ...
+   fun:g_type_create_instance
+   ...
+   fun:g_object_new
+   fun:g_unix_input_stream_new
+   fun:repo_load_file_archive
+   fun:ostree_repo_load_file
+   fun:_ostree_repo_import_object
+   fun:async_import_in_thread
+}
