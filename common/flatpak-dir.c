@@ -6715,7 +6715,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                         checksum,
                                         cancellable, error))
             {
-              g_prefix_error (error, _("While trying to checkout metadata subpath: "));
+              g_prefix_error (error, _("While trying to checkout subpath ‘%s’: "), subpath);
               return FALSE;
             }
         }
