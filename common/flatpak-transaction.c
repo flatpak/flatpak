@@ -1717,8 +1717,22 @@ resolve_ops (FlatpakTransaction *self,
           if (op->commit != NULL)
             checksum = g_strdup (op->commit);
           else if (!flatpak_dir_find_latest_rev (priv->dir, state, op->ref, op->commit, &checksum,
-                                                 NULL, cancellable, error))
-            return FALSE;
+                                                 NULL, cancellable, &local_error))
+            {
+              /* An unavailable remote summary shouldn't be fatal if we already have the ref */
+              commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref, &checksum, NULL, NULL);
+              if (commit_data == NULL)
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+              else
+                {
+                  g_message (_("Warning: Treating remote fetch error as non-fatal since %s is already installed: %s"),
+                             op->ref, local_error->message);
+                  g_clear_error (&local_error);
+                }
+            }
 
           /* TODO: This only gets the metadata for the latest only, we need to handle the case
              where the user specified a commit, or p2p doesn't have the latest commit available */
