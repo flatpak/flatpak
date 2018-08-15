@@ -71,6 +71,24 @@ commit_and_subpaths_new (const char *commit, const char * const *subpaths)
   return c_s;
 }
 
+static char **
+get_flatpak_subpaths_from_deploy_subpaths (const char * const *subpaths)
+{
+  g_autoptr(GPtrArray) resolved_subpaths = NULL;
+  gsize i;
+
+  if (subpaths == NULL || subpaths[0] == NULL)
+    return NULL;
+
+  resolved_subpaths = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (resolved_subpaths, g_strdup ("/metadata"));
+  for (i = 0; subpaths[i] != NULL; i++)
+    g_ptr_array_add (resolved_subpaths, g_build_filename ("/files", subpaths[i], NULL));
+  g_ptr_array_add (resolved_subpaths, NULL);
+
+  return (char **)g_ptr_array_free (g_steal_pointer (&resolved_subpaths), FALSE);
+}
+
 /* Add related refs specified in the metadata of @ref to @all_refs, also
  * updating @all_collection_ids with any new collection IDs. A warning will be
  * printed for related refs that are not installed, and they won't be added to
@@ -118,6 +136,7 @@ add_related (GHashTable   *all_refs,
       g_autoptr(OstreeCollectionRef) ext_collection_ref = NULL;
       g_autofree char *ext_collection_id = NULL;
       g_autofree const char **ext_subpaths = NULL;
+      g_auto(GStrv) resolved_ext_subpaths = NULL;
       const char *ext_remote;
       const char *ext_commit = NULL;
       CommitAndSubpaths *c_s;
@@ -148,7 +167,8 @@ add_related (GHashTable   *all_refs,
 
       ext_commit = flatpak_deploy_data_get_commit (ext_deploy_data);
       ext_subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
-      c_s = commit_and_subpaths_new (ext_commit, ext_subpaths[0] == NULL ? NULL : ext_subpaths);
+      resolved_ext_subpaths = get_flatpak_subpaths_from_deploy_subpaths (ext_subpaths);
+      c_s = commit_and_subpaths_new (ext_commit, (const char * const *)resolved_ext_subpaths);
 
       g_hash_table_insert (all_collection_ids, g_strdup (ext_collection_id), g_strdup (ext_remote));
       ext_collection_ref = ostree_collection_ref_new (ext_collection_id, ext->ref);
@@ -178,6 +198,7 @@ add_runtime (GHashTable   *all_refs,
   g_autofree char *runtime_remote = NULL;
   g_autofree char *runtime_collection_id = NULL;
   g_autofree const char **runtime_subpaths = NULL;
+  g_auto(GStrv) resolved_runtime_subpaths = NULL;
   const char *commit = NULL;
   const char *runtime_commit = NULL;
   CommitAndSubpaths *c_s;
@@ -214,7 +235,8 @@ add_runtime (GHashTable   *all_refs,
 
   runtime_commit = flatpak_deploy_data_get_commit (runtime_deploy_data);
   runtime_subpaths = flatpak_deploy_data_get_subpaths (runtime_deploy_data);
-  c_s = commit_and_subpaths_new (runtime_commit, runtime_subpaths[0] == NULL ? NULL : runtime_subpaths);
+  resolved_runtime_subpaths = get_flatpak_subpaths_from_deploy_subpaths (runtime_subpaths);
+  c_s = commit_and_subpaths_new (runtime_commit, (const char * const *)resolved_runtime_subpaths);
 
   g_hash_table_insert (all_collection_ids, g_strdup (runtime_collection_id), g_strdup (runtime_remote));
   runtime_collection_ref = ostree_collection_ref_new (runtime_collection_id, runtime_ref);
