@@ -158,6 +158,15 @@
     </refsect1>
 
     <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak build-bundle /var/lib/flatpak/repo gnome-calculator.flatpak org.gnome.Calculator stable</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
         <title>See also</title>
 
         <para>
