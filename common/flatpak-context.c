@@ -1919,6 +1919,7 @@ static void
 flatpak_context_export (FlatpakContext *context,
                         FlatpakExports *exports,
                         GFile          *app_id_dir,
+                        GPtrArray       *extra_app_id_dirs,
                         gboolean        do_create,
                         GString        *xdg_dirs_conf,
                         gboolean       *home_access_out)
@@ -2043,11 +2044,22 @@ flatpak_context_export (FlatpakContext *context,
   if (app_id_dir)
     {
       g_autoptr(GFile) apps_dir = g_file_get_parent (app_id_dir);
+      int i;
       /* Hide the .var/app dir by default (unless explicitly made visible) */
       flatpak_exports_add_path_tmpfs (exports, flatpak_file_get_path_cached (apps_dir));
       /* But let the app write to the per-app dir in it */
       flatpak_exports_add_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
                                        flatpak_file_get_path_cached (app_id_dir));
+
+      if (extra_app_id_dirs != NULL)
+        {
+          for (i = 0; i < extra_app_id_dirs->len; i++)
+            {
+              GFile *extra_app_id_dir = g_ptr_array_index (extra_app_id_dirs, i);
+              flatpak_exports_add_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                               flatpak_file_get_path_cached (extra_app_id_dir));
+            }
+        }
     }
 
   if (home_access_out != NULL)
@@ -2061,7 +2073,7 @@ flatpak_context_get_exports (FlatpakContext *context,
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autoptr(GFile) app_id_dir = flatpak_get_data_dir (app_id);
 
-  flatpak_context_export (context, exports, app_id_dir, FALSE, NULL, NULL);
+  flatpak_context_export (context, exports, app_id_dir, NULL, FALSE, NULL, NULL);
   return g_steal_pointer (&exports);
 }
 
@@ -2090,6 +2102,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                          FlatpakBwrap    *bwrap,
                                          const char      *app_id,
                                          GFile           *app_id_dir,
+                                         GPtrArray       *extra_app_id_dirs,
                                          FlatpakExports **exports_out)
 {
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
@@ -2099,7 +2112,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
   GHashTableIter iter;
   gpointer key, value;
 
-  flatpak_context_export (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
+  flatpak_context_export (context, exports, app_id_dir, extra_app_id_dirs, TRUE, xdg_dirs_conf, &home_access);
   if (app_id_dir != NULL)
     flatpak_run_apply_env_appid (bwrap, app_id_dir);
 
@@ -2182,7 +2195,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
         }
     }
 
-  if (home_access  && app_id_dir != NULL)
+  if (home_access && app_id_dir != NULL)
     {
       g_autofree char *src_path = g_build_filename (g_get_user_config_dir (),
                                                     "user-dirs.dirs",

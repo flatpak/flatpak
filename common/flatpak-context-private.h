@@ -128,6 +128,7 @@ void flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                               FlatpakBwrap    *bwrap,
                                               const char      *app_id,
                                               GFile           *app_id_dir,
+                                              GPtrArray       *extra_app_id_dirs,
                                               FlatpakExports **exports_out);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
