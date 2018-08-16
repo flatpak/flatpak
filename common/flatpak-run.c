@@ -1136,7 +1136,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
         }
     }
 
-  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, &exports);
+  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, NULL, &exports);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
