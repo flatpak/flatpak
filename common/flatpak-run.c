@@ -573,9 +573,11 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
         {
           flatpak_context_add_bus_filters (context, app_id, TRUE, proxy_arg_bwrap);
 
-          /* Allow calling any interface+method on all portals, but don't receive broadcasts */
+          /* Allow calling any interface+method on all portals, but only receive broadcasts under /org/desktop/portal */
           flatpak_bwrap_add_arg (proxy_arg_bwrap,
                                  "--call=org.freedesktop.portal.*=*");
+          flatpak_bwrap_add_arg (proxy_arg_bwrap,
+                                 "--broadcast=org.freedesktop.portal.*=@/org/freedesktop/portal/*");
         }
 
       if ((flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0)
