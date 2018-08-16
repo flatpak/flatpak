@@ -1043,6 +1043,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                                   const char      *app_id,
                                   FlatpakContext  *context,
                                   GFile           *app_id_dir,
+                                  GPtrArray       *previous_app_id_dirs,
                                   FlatpakExports **exports_out,
                                   GCancellable    *cancellable,
                                   GError         **error)
@@ -1136,7 +1137,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
         }
     }
 
-  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, NULL, &exports);
+  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, previous_app_id_dirs, &exports);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
@@ -3228,6 +3229,7 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GError) my_error = NULL;
   g_auto(GStrv) runtime_parts = NULL;
   int i;
+  g_autoptr(GPtrArray) previous_app_id_dirs = NULL;
   g_autofree char *app_info_path = NULL;
   g_autofree char *instance_id_host_dir = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
@@ -3354,8 +3356,85 @@ flatpak_run_app (const char     *app_ref,
 
   if (app_deploy != NULL)
     {
+      g_autofree const char **previous_ids = NULL;
+      gsize len = 0;
+      gboolean do_migrate;
+      int i;
+
       real_app_id_dir = flatpak_get_data_dir (app_ref_parts[1]);
       app_files = flatpak_deploy_get_files (app_deploy);
+
+      previous_app_id_dirs = g_ptr_array_new_with_free_func (g_object_unref);
+      previous_ids = flatpak_deploy_data_get_previous_ids (app_deploy_data, &len);
+
+      do_migrate = !g_file_query_exists (real_app_id_dir, cancellable);
+
+      /* When migrating, find most recent old existing source and rename that to
+       * the new name.
+       *
+       * We ignore other names than that. For more recent names that don't exist
+       * we never ran them so nothing will even reference them. For older names
+       * either they were not used, or they were used but then the more recent
+       * name was used and a symlink to it was created.
+       *
+       * This means we may end up with a chain of symlinks: oldest -> old -> current.
+       * This is unfortunate but not really a problem, but for robustness reasons we
+       * don't want to mess with user files unnecessary. For example, the app dir could
+       * actually be a symlink for other reasons. Imagine for instance that you want to put the
+       * steam games somewhere else so you leave the app dir as a symlink to /mnt/steam.
+       */
+      for (i = len - 1; i >= 0; i--)
+        {
+          g_autoptr(GFile) previous_app_id_dir = NULL;
+          g_autoptr(GFileInfo) previous_app_id_dir_info = NULL;
+          g_autoptr(GError) local_error = NULL;
+
+          previous_app_id_dir = flatpak_get_data_dir (previous_ids[i]);
+          previous_app_id_dir_info = g_file_query_info (previous_app_id_dir,
+                                                        G_FILE_ATTRIBUTE_STANDARD_IS_SYMLINK ","
+                                                        G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                                        cancellable,
+                                                        &local_error);
+          /* Warn about the migration failures, but don't make them fatal, then you can never run the app */
+          if (previous_app_id_dir_info == NULL)
+            {
+              if  (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) && do_migrate)
+                {
+                  g_warning (_("Failed to migrate from %s: %s"), flatpak_file_get_path_cached (previous_app_id_dir),
+                             local_error->message);
+                  do_migrate = FALSE; /* Don't migrate older things, they are likely symlinks to the thing that we failed on */
+                }
+
+              g_clear_error (&local_error);
+              continue;
+            }
+
+          if (do_migrate)
+            {
+              do_migrate = FALSE; /* Don't migrate older things, they are likely symlinks to this dir */
+
+              if (!flatpak_file_rename (previous_app_id_dir, real_app_id_dir, cancellable, &local_error))
+                {
+                  g_warning (_("Failed to migrate old app data directory %s to new name %s: %s"),
+                             flatpak_file_get_path_cached (previous_app_id_dir), app_ref_parts[1],
+                             local_error->message);
+                }
+              else
+                {
+                  /* Leave a symlink in place of the old data dir */
+                  if (!g_file_make_symbolic_link (previous_app_id_dir, app_ref_parts[1], cancellable, &local_error))
+                    {
+                      g_warning (_("Failed to create symlink while migrating %s: %s"),
+                                 flatpak_file_get_path_cached (previous_app_id_dir),
+                                 local_error->message);
+                    }
+                }
+            }
+
+          /* Give app access to this old dir */
+          g_ptr_array_add (previous_app_id_dirs, g_steal_pointer (&previous_app_id_dir));
+        }
 
       if (!flatpak_ensure_data_dir (real_app_id_dir, cancellable, error))
         return FALSE;
@@ -3453,7 +3532,8 @@ flatpak_run_app (const char     *app_ref,
     add_document_portal_args (bwrap, app_ref_parts[1], &doc_mount_path);
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
-                                         app_ref_parts[1], app_context, app_id_dir, &exports, cancellable, error))
+                                         app_ref_parts[1], app_context, app_id_dir, previous_app_id_dirs,
+                                         &exports, cancellable, error))
     return FALSE;
 
   flatpak_run_add_journal_args (bwrap);
