@@ -574,7 +574,8 @@ filter_matches (Filter        *filter,
                 const char    *interface,
                 const char    *member)
 {
-  if ((filter->types & type) == 0)
+  if (filter->policy < FLATPAK_POLICY_TALK ||
+      (filter->types & type) == 0)
     return FALSE;
 
   if (filter->path)
