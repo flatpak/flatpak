@@ -1152,8 +1152,8 @@ add_related (FlatpakTransaction          *self,
                                                    (const char **) rel->subpaths,
                                                    NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
-          op->non_fatal = TRUE;
-          op->fail_if_op_fails = op;
+          related_op->non_fatal = TRUE;
+          related_op->fail_if_op_fails = op;
           run_operation_before (op, related_op, 1);
         }
     }
