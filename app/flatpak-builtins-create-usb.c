@@ -155,6 +155,8 @@ add_related (GHashTable   *all_refs,
       g_hash_table_insert (all_refs, g_steal_pointer (&ext_collection_ref), c_s);
     }
 
+  g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
+
   return TRUE;
 }
 
