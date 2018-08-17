@@ -1702,7 +1702,7 @@ resolve_ops (FlatpakTransaction *self,
           commit_metadata = g_variant_get_child_value (commit_data, 0);
           g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
           if (xa_metadata == NULL)
-            g_message ("Warning: No xa.metadata in local commit");
+            g_message ("Warning: No xa.metadata in local commit %s ref %s", checksum, op->ref);
           else
             metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
 
