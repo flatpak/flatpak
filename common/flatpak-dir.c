@@ -10733,7 +10733,7 @@ parse_ref_file (GKeyFile *keyfile,
                                FLATPAK_REF_GPGKEY_KEY, NULL);
   if (str != NULL)
     {
-      g_autofree guchar *decoded;
+      g_autofree guchar *decoded = NULL;
       gsize decoded_len;
 
       str = g_strstrip (str);
