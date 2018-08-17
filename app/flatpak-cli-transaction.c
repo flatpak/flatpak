@@ -312,7 +312,7 @@ operation_error (FlatpakTransaction            *transaction,
 
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED))
     {
-      g_printerr ("%s", error->message);
+      g_printerr ("%s\n", error->message);
       return TRUE;
     }
 
