@@ -170,7 +170,7 @@
 
 # Weird leak of UnixInputStream in ostree, can't figure it out
 {
-   <insert_a_suppression_name_here>
+   ostree_unix_stream_leak
    Memcheck:Leak
    match-leak-kinds: definite
    ...
