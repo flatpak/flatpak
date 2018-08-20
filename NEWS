@@ -1,3 +1,106 @@
+Changes in 1.0
+==============
+
+Flatpak 1.0 is the first version in a new stable release series. This
+new 1.x series is the successor to the 0.10.x series, which was first
+introduced in October 2017. We recommend everyone shipping flatpak to
+update to 1.0 so it can become a basic dependency that everyone can
+rely on.
+
+The following release notes describe the major changes since
+0.10.0. For a complete overview of Flatpak, please see
+[docs.flatpak.org](http://docs.flatpak.org/en/latest/).
+
+## For users, app developers and distributors
+
+Flatpak 1.0 marks a significant improvement in performance and
+reliability, and includes a big collection of bug fixes. 1.0 also
+includes a collection of new features, including:
+
+ * Faster installation and updates.
+ * Applications can now be marked as end-of-life. App centers and
+   desktops can use this information to warn users and prompt them to
+   update, remove the app or just be aware that support may not be
+   available.
+ * Static permissions now use an up-front verification model: users are
+   asked to confirm app permissions at install time, if an update
+   requires additional permissions, the user must also confirm.
+ * A [new portal](https://flatpak.github.io/xdg-desktop-portal/portal-docs.html#gdbus-org.freedesktop.portal.Flatpak)
+   allows apps to create sandboxes and restart themselves. This allows
+   applications to restart themselves after they have been updated (to
+   start using the new version), and to increase sandboxing for parts
+   of the application.
+ * `flatpak-spawn` is a new tool for running host commands (if
+   permissions allow) and creating new sandboxes from an app (this
+   uses the above portals APIs).
+ * Apps can now export D-Bus services for all the D-Bus names they are
+   privileged to own (rather than just the application ID).
+ * Flatpak's support for OCI bundles has been updated to the latest
+   specification. Also, AppData can now be distributed through OCI
+   repositories.
+ * Host TLS certificates are now exposed to applications, using
+   p11-kit-server. This removes a point of friction when accessing
+   network services in some environments.
+ * Apps can now request access the host SSH agent to securely access
+   remote servers or Git repositories.
+ * A new application permission can be used to grant access to
+   Bluetooth devices.
+ * A new `fallback-x11` permission grants X11 access, but only if the
+   user is running in a X11 session. For applications that support
+   both Wayland and X11, this can be used to ensure that the app
+   doesn't have unnecessary X11 access while in Wayland, but still
+   works in an X11 session.
+ * Peer-to-peer installation (via USB sticks or local network) is now
+   enabled and supported by default in all builds.
+
+The Flatpak command line also introduces new commands and options, including:
+
+ * `uninstall --unused` automatically removes unused runtimes and
+   extensions (if you've removed all apps that depend on a runtime, or
+   all the apps you had depending on it have upgraded to a newer
+   version).
+ * New `info` options, including `--show-permissions`,
+   `--file-access`, `--show-location`, `--show-runtime`, `--show-sdk`.
+ * `repair` - fixes broken installs by scanning for errors, removing
+   invalid objects and reinstalling anything that's missing.
+ * `permission-*` - allows interaction with the portals permissions
+   store. This is useful for testing and for getting back to a clean
+   state.
+ * `create-usb` - can be used to prepare an repository to be used as a
+   local updates source.
+
+Finally, the command line has a collection of other improvements, such as:
+
+ * If `--system` or `--user` aren't specified, one is automatically
+   picked if it is obvious (or it will ask if the correct option isn't
+   obvious).
+ * The `install`, `update` and `uninstall` commands now ask for
+   confirmation of changes before proceeding, in order to prevent
+   mistakes, and to show the required application permissions.
+ * The `uninstall` command now does not allow you to remove a runtime
+   if some installed application requires it.
+ * `flatpak remove` is now an alias for `flatpak uninstall`.
+
+## For Linux distributors, OS and platform developers
+
+ * Flatpak no longer requires a filesystem that supports `xattr`.
+ * Portals are now more cleanly separated from Flatpak, thanks to the
+   document portal and permission store having been moved to
+   `xdg-desktop-portal`. Its recommended that the flatpak package has
+   a weak dependency on `xdg-desktop-portal`.
+ * `libflatpak` now has a transaction API for install, update and
+   uninstall operations. This means that it is much easier to use as
+   the basis of app centers and other graphical app management
+   software.
+ * Flatpak now sets several HTTP headers when installing applications,
+   which make it easier for Flatpak repositories to log things like
+   app download statistics and Flatpak versions in use.
+ * It is now recommended that Flatpak packages add a dependency on
+   p11-kit-server, as this allows apps to access host
+   certificates. However, this does not need to be a hard dependency.
+ * Requires bubblewrap 0.2.1 or later, and comes bundled with 0.3.0.
+ * Requires OSTree 2018.7.
+
 Major changes in 0.99.3
 =======================
 
