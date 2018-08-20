@@ -355,8 +355,12 @@ handle_deploy (FlatpakSystemHelper   *object,
                                              ostree_progress,
                                              NULL, &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error pulling from repo: %s", error->message);
+          if (error->domain == FLATPAK_ERROR)
+            g_dbus_method_invocation_return_gerror (invocation, error);
+          else
+            g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                   "Error pulling from repo: %s", error->message);
+
           return TRUE;
         }
 
@@ -402,8 +406,12 @@ handle_deploy (FlatpakSystemHelper   *object,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error pulling from repo: %s", error->message);
+          if (error->domain == FLATPAK_ERROR)
+            g_dbus_method_invocation_return_gerror (invocation, error);
+          else
+            g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                   "Error pulling from repo: %s", error->message);
+
           return TRUE;
         }
 

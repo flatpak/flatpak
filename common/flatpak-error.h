@@ -30,6 +30,7 @@
 
 G_BEGIN_DECLS
 
+/* NOTE: If you add an error code below, also update the list in common/flatpak-utils.c */
 /**
  * FlatpakError:
  * @FLATPAK_ERROR_ALREADY_INSTALLED: App/runtime is already installed
@@ -42,6 +43,8 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_NEED_NEW_FLATPAK: The App/Runtime needs a more recent version of flatpak.
  * @FLATPAK_ERROR_REMOTE_NOT_FOUND: The specified remote was not found.
  * @FLATPAK_ERROR_RUNTIME_NOT_FOUND: An runtime needed for the app was not found.
+ * @FLATPAK_ERROR_DOWNGRADE: The pulled commit is a downgrade, and a downgrade wasn't
+ *                           specifically allowed. (Since: 1.0)
  *
  * Error codes for library functions.
  */
@@ -55,6 +58,7 @@ typedef enum {
   FLATPAK_ERROR_NEED_NEW_FLATPAK,
   FLATPAK_ERROR_REMOTE_NOT_FOUND,
   FLATPAK_ERROR_RUNTIME_NOT_FOUND,
+  FLATPAK_ERROR_DOWNGRADE,
 } FlatpakError;
 
 #define FLATPAK_ERROR flatpak_error_quark ()
