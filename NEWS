@@ -3,9 +3,8 @@ Changes in 1.0
 
 Flatpak 1.0 is the first version in a new stable release series. This
 new 1.x series is the successor to the 0.10.x series, which was first
-introduced in October 2017. We recommend everyone shipping flatpak to
-update to 1.0 so it can become a basic dependency that everyone can
-rely on.
+introduced in October 2017. 1.0 is the new standard Flatpak version,
+and distributions are recommended to update to it as soon as possible.
 
 The following release notes describe the major changes since
 0.10.0. For a complete overview of Flatpak, please see
@@ -19,10 +18,9 @@ includes a collection of new features, including:
 
  * Faster installation and updates.
  * Applications can now be marked as end-of-life. App centers and
-   desktops can use this information to warn users and prompt them to
-   update, remove the app or just be aware that support may not be
-   available.
- * Static permissions now use an up-front verification model: users are
+   desktops can use this information to warn users who have an end-of-life
+   version installed.
+ * Permissions now use an up-front verification model: users are
    asked to confirm app permissions at install time, if an update
    requires additional permissions, the user must also confirm.
  * A [new portal](https://flatpak.github.io/xdg-desktop-portal/portal-docs.html#gdbus-org.freedesktop.portal.Flatpak)
@@ -86,7 +84,7 @@ Finally, the command line has a collection of other improvements, such as:
  * Flatpak no longer requires a filesystem that supports `xattr`.
  * Portals are now more cleanly separated from Flatpak, thanks to the
    document portal and permission store having been moved to
-   `xdg-desktop-portal`. Its recommended that the flatpak package has
+   `xdg-desktop-portal`. It is recommended that the flatpak package has
    a weak dependency on `xdg-desktop-portal`.
  * `libflatpak` now has a transaction API for install, update and
    uninstall operations. This means that it is much easier to use as
@@ -1310,7 +1308,7 @@ Other changes:
    as an OCI tarball.
  * builder: Fix creation of locale extensions if there was no locale data in the
    build.
- * Its now possible to disable/enable configured remotes.
+ * It is now possible to disable/enable configured remotes.
  * A lot of new tests where added, and we now support installed tests.
  * builder now has an optional --arch argument for multiarch building.
  * Builder modules can be disabled with "disabled": true.
