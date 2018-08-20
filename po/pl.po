@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-08-19 15:24+0000\n"
+"POT-Creation-Date: 2018-08-20 10:28+0200\n"
 "PO-Revision-Date: 2018-08-19 20:05+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -2826,9 +2826,9 @@ msgstr "Nie odnaleziono zastępników dla %s"
 
 #: common/flatpak-dir.c:1712 common/flatpak-dir.c:2067
 #: common/flatpak-dir.c:2090 common/flatpak-dir.c:2112
-#: common/flatpak-dir.c:12234 common/flatpak-transaction.c:1337
-#: common/flatpak-transaction.c:1372 common/flatpak-utils.c:1426
-#: common/flatpak-utils.c:1521
+#: common/flatpak-dir.c:12241 common/flatpak-transaction.c:1337
+#: common/flatpak-transaction.c:1372 common/flatpak-utils.c:1434
+#: common/flatpak-utils.c:1529
 #, c-format
 msgid "%s not installed"
 msgstr "Nie zainstalowano %s"
@@ -3064,54 +3064,54 @@ msgstr "Nie zainstalowano %s gałęzi %s"
 msgid "Pruning repo failed: %s"
 msgstr "Usuwanie nieużywanych obiektów z repozytorium się nie powiodło: %s"
 
-#: common/flatpak-dir.c:9456
+#: common/flatpak-dir.c:9470
 #, c-format
 msgid "No summary or Flatpak cache available for remote %s"
 msgstr ""
 "Brak dostępnego podsumowania lub pamięci podręcznej Flatpak dla repozytorium "
 "%s"
 
-#: common/flatpak-dir.c:9652
+#: common/flatpak-dir.c:9666
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr "Dla %s dostępnych jest wiele gałęzi, należy podać jedną z: "
 
-#: common/flatpak-dir.c:9673
+#: common/flatpak-dir.c:9687
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Nic nie pasuje do %s"
 
-#: common/flatpak-dir.c:9773
+#: common/flatpak-dir.c:9787
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Nie można odnaleźć odniesienia %s%s%s%s%s"
 
-#: common/flatpak-dir.c:9820
+#: common/flatpak-dir.c:9834
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Błąd podczas wyszukiwania repozytorium %s: %s"
 
-#: common/flatpak-dir.c:9905
+#: common/flatpak-dir.c:9919
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Błąd podczas wyszukiwania lokalnego repozytorium: %s"
 
-#: common/flatpak-dir.c:10050
+#: common/flatpak-dir.c:10064
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "Nie zainstalowano %s/%s/%s"
 
-#: common/flatpak-dir.c:10220
+#: common/flatpak-dir.c:10234
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Nie można odnaleźć instalacji %s"
 
-#: common/flatpak-dir.c:10794
+#: common/flatpak-dir.c:10808
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Już zainstalowano środowisko wykonawcze %s, gałąź %s"
 
-#: common/flatpak-dir.c:10795
+#: common/flatpak-dir.c:10809
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Już zainstalowano program %s, gałąź %s"
@@ -3205,80 +3205,80 @@ msgstr "Pomijanie %s z powodu poprzedniego błędu"
 msgid "Aborted due to failure"
 msgstr "Przerwano z powodu niepowodzenia"
 
-#: common/flatpak-utils.c:622
+#: common/flatpak-utils.c:630
 #, c-format
 msgid "Migrating %s to %s\n"
 msgstr "Migrowanie %s do %s\n"
 
-#: common/flatpak-utils.c:628
+#: common/flatpak-utils.c:636
 #, c-format
 msgid "Error during migration: %s\n"
 msgstr "Błąd podczas migracji: %s\n"
 
-#: common/flatpak-utils.c:2633
+#: common/flatpak-utils.c:2641
 msgid "No extra data sources"
 msgstr "Brak źródeł dodatkowych danych"
 
-#: common/flatpak-utils.c:3601
+#: common/flatpak-utils.c:3609
 #, c-format
 msgid "Extracting icons for component %s\n"
 msgstr "Rozpakowywanie ikon dla składnika %s\n"
 
-#: common/flatpak-utils.c:3605
+#: common/flatpak-utils.c:3613
 #, c-format
 msgid "Error copying 64x64 icon: %s\n"
 msgstr "Błąd podczas kopiowania ikony 64×64: %s\n"
 
-#: common/flatpak-utils.c:3610
+#: common/flatpak-utils.c:3618
 #, c-format
 msgid "Error copying 128x128 icon: %s\n"
 msgstr "Błąd podczas kopiowania ikony 128×128: %s\n"
 
-#: common/flatpak-utils.c:3806
+#: common/flatpak-utils.c:3814
 #, c-format
 msgid "%s is end-of-life, ignoring\n"
 msgstr "%s jest niewspierane, ignorowanie\n"
 
-#: common/flatpak-utils.c:3815
+#: common/flatpak-utils.c:3823
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Brak danych AppStream dla %s: %s\n"
 
-#: common/flatpak-utils.c:5534
+#: common/flatpak-utils.c:5542
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Pobieranie metadanych: %u/(szacowanie) %s"
 
-#: common/flatpak-utils.c:5558
+#: common/flatpak-utils.c:5566
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Pobieranie: %s/%s"
 
-#: common/flatpak-utils.c:5579
+#: common/flatpak-utils.c:5587
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Pobieranie dodatkowych danych: %s/%s"
 
-#: common/flatpak-utils.c:5584
+#: common/flatpak-utils.c:5592
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Pobieranie plików: %d/%d %s"
 
-#: common/flatpak-utils.c:5674
+#: common/flatpak-utils.c:5682
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s wymaga nowszej wersji Flatpak (%s)"
 
-#: common/flatpak-utils.c:5721
+#: common/flatpak-utils.c:5729
 msgid "Empty string is not a number"
 msgstr "Pusty ciąg nie jest liczbą"
 
-#: common/flatpak-utils.c:5747
+#: common/flatpak-utils.c:5755
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "„%s” nie jest liczbą bez znaku"
 
-#: common/flatpak-utils.c:5757
+#: common/flatpak-utils.c:5765
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Liczba „%s” jest poza zakresem [%s, %s]"
