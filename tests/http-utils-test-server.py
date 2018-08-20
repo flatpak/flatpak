@@ -1,14 +1,21 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 from wsgiref.handlers import format_date_time
 from email.utils import parsedate
 from calendar import timegm
 import gzip
-from urlparse import parse_qs
-import BaseHTTPServer
+import sys
 import time
 import zlib
-from StringIO import StringIO
+
+if sys.version_info[0] >= 3:
+    from urllib.parse import parse_qs
+    import http.server as http_server
+    from io import BytesIO
+else:
+    from urlparse import parse_qs
+    import BaseHTTPServer as http_server
+    from StringIO import StringIO as BytesIO
 
 server_start_time = int(time.time())
 
@@ -19,7 +26,7 @@ def parse_http_date(date):
     else:
         return None
 
-class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class RequestHandler(http_server.BaseHTTPRequestHandler):
     def do_GET(self):
         parts = self.path.split('?', 1)
         path = parts[0]
@@ -69,19 +76,28 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if accept_encoding and accept_encoding == 'gzip':
                 self.send_header("Content-Encoding", "gzip")
 
-                buf = StringIO()
-                gzfile = gzip.GzipFile(mode='w', fileobj=buf)
-                gzfile.write(contents)
+                buf = BytesIO()
+                gzfile = gzip.GzipFile(mode='wb', fileobj=buf)
+                if isinstance(contents, bytes):
+                    gzfile.write(contents)
+                else:
+                    gzfile.write(contents.encode('utf-8'))
                 gzfile.close()
                 contents = buf.getvalue()
 
         self.end_headers()
 
         if response == 200:
-            self.wfile.write(contents)
+            if isinstance(contents, bytes):
+                self.wfile.write(contents)
+            else:
+                self.wfile.write(contents.encode('utf-8'))
 
 def test():
-    BaseHTTPServer.test(RequestHandler)
+    if sys.version_info[0] >= 3:
+        http_server.test(RequestHandler, port=0)
+    else:
+        http_server.test(RequestHandler)
 
 if __name__ == '__main__':
     test()
