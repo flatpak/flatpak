@@ -61,31 +61,6 @@ add_bin() {
 for i in $@; do
     I=`which $i`
     add_bin $I
-    if test $i == python2; then
-        mkdir -p ${DIR}/usr/lib/python2.7/lib-dynload
-        # This is a hardcoded minimal set of modules we need in the current tests.
-        # Pretty hacky stuff. Add modules as needed.
-        PYDIR=/usr/lib/python2.7
-        if test -d /usr/lib64/python2.7; then PYDIR=/usr/lib64/python2.7; fi
-        for py in site os stat posixpath genericpath warnings \
-                       linecache types UserDict abc _abcoll \
-                       _weakrefset copy_reg traceback sysconfig \
-                       re sre_compile sre_parse sre_constants \
-                       _sysconfigdata ; do
-            cp ${PYDIR}/$py.py ${DIR}/usr/lib/python2.7
-        done
-        # These might not exist, depending how Python was configured; and the
-        # part after ${so} might be "module" or ".x86_64-linux-gnu" or
-        # something else
-        for so in _locale strop ; do
-            cp ${PYDIR}/lib-dynload/${so}*.so ${DIR}/usr/lib/python2.7/lib-dynload || :
-        done
-        for plat in $( cd ${PYDIR} && echo plat-* ); do
-            test -e ${PYDIR}/${plat} || continue
-            mkdir -p ${DIR}/usr/lib/python2.7/${plat}
-            cp ${PYDIR}/${plat}/*.py ${DIR}/usr/lib/python2.7/${plat}/
-        done
-    fi
 done
 for i in `cat $BINS`; do
     echo Adding binary $i 1>&2

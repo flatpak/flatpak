@@ -271,19 +271,6 @@ setup_sdk_repo () {
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
-setup_python2_repo () {
-    REPONAME=${1:-test}
-    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
-        COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
-    else
-        COLLECTION_ID=""
-    fi
-
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonPlatform "${COLLECTION_ID}" bash python2 ls cat echo rm readlink > /dev/null
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonSdk "${COLLECTION_ID}" python2 bash ls cat echo rm readlink make mkdir cp touch > /dev/null
-    update_repo $REPONAME "${COLLECTION_ID}"
-}
-
 install_repo () {
     REPONAME=${1:-test}
     ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Platform master
@@ -293,12 +280,6 @@ install_repo () {
 install_sdk_repo () {
     REPONAME=${1:-test}
     ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Sdk master
-}
-
-install_python2_repo () {
-    REPONAME=${1:-test}
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.PythonPlatform master
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.PythonSdk master
 }
 
 run () {
@@ -318,13 +299,6 @@ skip_without_bwrap () {
             --ro-bind / / /bin/true > bwrap-result 2>&1; then
         sed -e 's/^/# /' < bwrap-result
         echo "1..0 # SKIP Cannot run bwrap"
-        exit 0
-    fi
-}
-
-skip_without_python2 () {
-    if ! test -f /usr/bin/python2 || ! /usr/bin/python2 -c "import sys; sys.exit(0 if sys.version_info >= (2, 7) else 1)" ; then
-        echo "1..0 # SKIP this test requires /usr/bin/python2 (2.7) support"
         exit 0
     fi
 }
