@@ -109,7 +109,7 @@ dist_test_scripts = \
 	$(NULL)
 
 test_programs = testlibrary
-noinst_PROGRAMS += httpcache
+test_extra_programs = httpcache
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
