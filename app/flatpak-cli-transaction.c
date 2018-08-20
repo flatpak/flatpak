@@ -435,6 +435,28 @@ append_bus (GPtrArray  *talk,
 }
 
 static void
+append_tags (GPtrArray *tags_array,
+             GKeyFile  *metadata,
+             GKeyFile  *old_metadata)
+{
+  gsize i, size = 0;
+  g_auto(GStrv) tags = g_key_file_get_string_list (metadata, FLATPAK_METADATA_GROUP_APPLICATION, "tags",
+                                                   &size, NULL);
+  g_auto(GStrv) old_tags = NULL;
+
+  if (old_metadata)
+    old_tags = g_key_file_get_string_list (old_metadata, FLATPAK_METADATA_GROUP_APPLICATION, "tags",
+                                           NULL, NULL);
+
+  for (i = 0; i < size; i++)
+    {
+      const char *tag = tags[i];
+      if (old_tags == NULL || !g_strv_contains ((const char * const *)old_tags, tag))
+        g_ptr_array_add (tags_array, g_strdup (tag));
+    }
+}
+
+static void
 print_perm_line (FlatpakTablePrinter *printer,
                  const char          *title,
                  GPtrArray           *items)
@@ -469,6 +491,7 @@ print_permissions (FlatpakTablePrinter *printer,
   g_autoptr(GPtrArray) session_bus_own = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) system_bus_talk = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) system_bus_own = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) tags = g_ptr_array_new_with_free_func (g_free);
 
   if (metadata == NULL)
     return;
@@ -508,6 +531,10 @@ print_permissions (FlatpakTablePrinter *printer,
   print_perm_line (printer,
                    old_metadata ? _("new system dbus ownership") : _("system dbus ownership"),
                    system_bus_own);
+  append_tags (tags, metadata, old_metadata);
+  print_perm_line (printer,
+                   old_metadata ? _("new tags") : _("tags"),
+                   tags);
 }
 
 static gboolean
