@@ -5725,7 +5725,7 @@ flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
   if (str[0] == '\0')
     {
       g_set_error_literal (error,
-                           G_NUMBER_PARSER_ERROR, G_NUMBER_PARSER_ERROR_INVALID,
+                           G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
                            _("Empty string is not a number"));
       return FALSE;
     }
@@ -5751,7 +5751,7 @@ flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
       *end_ptr != '\0')
     {
       g_set_error (error,
-                   G_NUMBER_PARSER_ERROR, G_NUMBER_PARSER_ERROR_INVALID,
+                   G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
                    _("“%s” is not an unsigned number"), str);
       return FALSE;
     }
@@ -5761,7 +5761,7 @@ flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
       gchar *max_str = g_strdup_printf ("%" G_GUINT64_FORMAT, max);
 
       g_set_error (error,
-                   G_NUMBER_PARSER_ERROR, G_NUMBER_PARSER_ERROR_OUT_OF_BOUNDS,
+                   G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
                    _("Number “%s” is out of bounds [%s, %s]"),
                    str, min_str, max_str);
       g_free (min_str);
