@@ -30,6 +30,7 @@
 
 G_BEGIN_DECLS
 
+/* NOTE: If you add an error code below, also update the list in common/flatpak-utils.c */
 /**
  * FlatpakError:
  * @FLATPAK_ERROR_ALREADY_INSTALLED: App/runtime is already installed
