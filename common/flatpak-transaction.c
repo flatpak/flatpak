@@ -1399,6 +1399,9 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
 {
   const char *all_paths[] = { NULL };
 
+  g_return_val_if_fail (ref != NULL, FALSE);
+  g_return_val_if_fail (remote != NULL, FALSE);
+
   /* If we install with no special args pull all subpaths */
   if (subpaths == NULL)
     subpaths = all_paths;
@@ -1429,6 +1432,8 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autoptr(GError) local_error = NULL;
 
+  g_return_val_if_fail (flatpakref_data != NULL, FALSE);
+
   if (!g_key_file_load_from_data (keyfile, g_bytes_get_data (flatpakref_data, NULL),
                                   g_bytes_get_size (flatpakref_data),
                                   0, &local_error))
@@ -1448,6 +1453,8 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
 {
   const char *all_paths[] = { NULL };
 
+  g_return_val_if_fail (ref != NULL, FALSE);
+
   /* If specify an empty subpath, that means all subpaths */
   if (subpaths != NULL && subpaths[0] != NULL && subpaths[0][0] == 0)
     subpaths = all_paths;
@@ -1460,6 +1467,8 @@ flatpak_transaction_add_uninstall (FlatpakTransaction *self,
                                    const char         *ref,
                                    GError            **error)
 {
+  g_return_val_if_fail (ref != NULL, FALSE);
+
   return flatpak_transaction_add_ref (self, NULL, ref, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, error);
 }
 
