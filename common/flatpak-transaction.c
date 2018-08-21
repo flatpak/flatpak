@@ -548,7 +548,7 @@ flatpak_transaction_finalize (GObject *object)
   g_hash_table_unref (priv->last_op_for_ref);
   g_hash_table_unref (priv->remote_states);
   g_list_free_full (priv->ops, (GDestroyNotify) g_object_unref);
-  g_object_unref (priv->dir);
+  g_clear_object (&priv->dir);
 
   g_ptr_array_unref (priv->added_origin_remotes);
 
