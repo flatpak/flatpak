@@ -1300,16 +1300,18 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *origin = NULL;
+  g_auto(GStrv) parts = NULL;
   const char *pref;
   g_autofree char *origin_remote = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   FlatpakTransactionOperation *op;
 
+  parts = flatpak_decompose_ref (ref, error);
+  if (parts == NULL)
+    return FALSE;
+
   if (remote_name_is_file (remote))
     {
-      g_auto(GStrv) parts = NULL;
-      parts = g_strsplit (ref, "/", -1);
-
       origin_remote = flatpak_dir_create_origin_remote (priv->dir,
                                                         remote, /* uri */
                                                         parts[1],
@@ -1326,6 +1328,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
       remote = origin_remote;
     }
 
+  /* safe because flatpak_decompose_ref() has validated ref */
   pref = strchr (ref, '/') + 1;
 
   /* install or update */
