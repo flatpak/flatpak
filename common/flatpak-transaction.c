@@ -752,7 +752,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::add-new-remote:
    * @object: A #FlatpakTransaction
-   * @reason: The reason for the new remote is needed
+   * @reason: A #FlatpakTransactionRemoteReason for this suggestion
    * @from_id: The id of the app/runtime
    * @suggested_remote_name: The suggested remote name
    * @url: The repo url

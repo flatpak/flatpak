@@ -40,7 +40,7 @@
  * @FLATPAK_TRANSACTION_OPERATION_UNINSTALL: Uninstall a ref
  * @FLATPAK_TRANSACTION_OPERATION_LAST_TYPE: The (currently) last operation type
  *
- * The type of a transaction, used in FlatpakTransaction::new-operation
+ * The type of a #FlatpakTransactionOperation.
  */
 typedef enum {
   FLATPAK_TRANSACTION_OPERATION_INSTALL,
@@ -54,7 +54,7 @@ typedef enum {
  * FlatpakTransactionErrorDetails
  * @FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL: The operation failure was not fatal
  *
- * The details for FlatpakTransaction::operation-error
+ * The details for #FlatpakTransaction::operation-error.
  */
 typedef enum {
   FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL = 1 << 0,
@@ -63,6 +63,8 @@ typedef enum {
 /**
  * FlatpakTransactionResult
  * @FLATPAK_TRANSACTION_RESULT_NO_CHANGE: The update caused no changes
+ *
+ * The details for #FlatpakTransaction::operation-done.
  */
 typedef enum {
   FLATPAK_TRANSACTION_RESULT_NO_CHANGE = 1 << 0,
@@ -72,6 +74,8 @@ typedef enum {
  * FlatpakTransactionRemoteReason
  * @FLATPAK_TRANSACTION_REMOTE_GENERIC_REPO: The remote specified in the flatpakref has other apps too
  * @FLATPAK_TRANSACTION_REMOTE_RUNTIME_DEPS: The remote has runtimes needed for the app
+ *
+ * The reason for #FlatpakTransaction::add-new-remote.
  */
 typedef enum {
   FLATPAK_TRANSACTION_REMOTE_GENERIC_REPO,
