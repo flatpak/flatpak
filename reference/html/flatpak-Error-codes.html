@@ -6,9 +6,9 @@
 <meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="index.html" title="Flatpak Library Reference Manual">
 <link rel="up" href="ch01.html" title="Flatpak">
-<link rel="prev" href="flatpak-flatpak-bundle-ref.html" title="flatpak-bundle-ref">
+<link rel="prev" href="FlatpakBundleRef.html" title="FlatpakBundleRef">
 <link rel="next" href="flatpak-Version-information.html" title="Version information">
-<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.28 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -19,7 +19,7 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="flatpak-flatpak-bundle-ref.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="FlatpakBundleRef.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="flatpak-Version-information.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -38,14 +38,24 @@
 <col width="150px" class="functions_return">
 <col class="functions_name">
 </colgroup>
-<tbody><tr>
+<tbody>
+<tr>
 <td class="function_type">
-<span class="returnvalue">GQuark</span>
+<a href="/usr/share/gtk-doc/html/glib/glib-Quarks.html#GQuark"><span class="returnvalue">GQuark</span></a>
 </td>
 <td class="function_name">
 <a class="link" href="flatpak-Error-codes.html#flatpak-error-quark" title="flatpak_error_quark ()">flatpak_error_quark</a> <span class="c_punctuation">()</span>
 </td>
-</tr></tbody>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Quarks.html#GQuark"><span class="returnvalue">GQuark</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="flatpak-Error-codes.html#flatpak-portal-error-quark" title="flatpak_portal_error_quark ()">flatpak_portal_error_quark</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+</tbody>
 </table></div>
 </div>
 <div class="refsect1">
@@ -64,6 +74,14 @@
 <td class="datatype_keyword">enum</td>
 <td class="function_name"><a class="link" href="flatpak-Error-codes.html#FlatpakError" title="enum FlatpakError">FlatpakError</a></td>
 </tr>
+<tr>
+<td class="define_keyword">#define</td>
+<td class="function_name"><a class="link" href="flatpak-Error-codes.html#FLATPAK-PORTAL-ERROR:CAPS" title="FLATPAK_PORTAL_ERROR">FLATPAK_PORTAL_ERROR</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="flatpak-Error-codes.html#FlatpakPortalError" title="enum FlatpakPortalError">FlatpakPortalError</a></td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -74,8 +92,14 @@
 <a name="flatpak-Error-codes.functions_details"></a><h2>Functions</h2>
 <div class="refsect2">
 <a name="flatpak-error-quark"></a><h3>flatpak_error_quark ()</h3>
-<pre class="programlisting"><span class="returnvalue">GQuark</span>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Quarks.html#GQuark"><span class="returnvalue">GQuark</span></a>
 flatpak_error_quark (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-portal-error-quark"></a><h3>flatpak_portal_error_quark ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Quarks.html#GQuark"><span class="returnvalue">GQuark</span></a>
+flatpak_portal_error_quark (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
 </div>
 </div>
 <div class="refsect1">
@@ -120,6 +144,127 @@ flatpak_error_quark (<em class="parameter"><code><span class="type">void</span><
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-ERROR-DIFFERENT-REMOTE:CAPS"></a>FLATPAK_ERROR_DIFFERENT_REMOTE</p></td>
+<td class="enum_member_description">
+<p>The App/Runtime is already installed, but from a different remote.</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-ERROR-ABORTED:CAPS"></a>FLATPAK_ERROR_ABORTED</p></td>
+<td class="enum_member_description">
+<p>The transaction was aborted (returned TRUE in operation-error signal).</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-ERROR-SKIPPED:CAPS"></a>FLATPAK_ERROR_SKIPPED</p></td>
+<td class="enum_member_description">
+<p>The App/Runtime install was skipped due to earlier errors.</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-ERROR-NEED-NEW-FLATPAK:CAPS"></a>FLATPAK_ERROR_NEED_NEW_FLATPAK</p></td>
+<td class="enum_member_description">
+<p>The App/Runtime needs a more recent version of flatpak.</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-ERROR-REMOTE-NOT-FOUND:CAPS"></a>FLATPAK_ERROR_REMOTE_NOT_FOUND</p></td>
+<td class="enum_member_description">
+<p>The specified remote was not found.</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-ERROR-RUNTIME-NOT-FOUND:CAPS"></a>FLATPAK_ERROR_RUNTIME_NOT_FOUND</p></td>
+<td class="enum_member_description">
+<p>An runtime needed for the app was not found.</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-ERROR-DOWNGRADE:CAPS"></a>FLATPAK_ERROR_DOWNGRADE</p></td>
+<td class="enum_member_description">
+<p>The pulled commit is a downgrade, and a downgrade wasn't
+                          specifically allowed. (Since: 1.0)</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FLATPAK-PORTAL-ERROR:CAPS"></a><h3>FLATPAK_PORTAL_ERROR</h3>
+<pre class="programlisting">#define FLATPAK_PORTAL_ERROR flatpak_portal_error_quark ()
+</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakPortalError"></a><h3>enum FlatpakPortalError</h3>
+<div class="refsect3">
+<a name="FlatpakPortalError.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-PORTAL-ERROR-FAILED:CAPS"></a>FLATPAK_PORTAL_ERROR_FAILED</p></td>
+<td class="enum_member_description">
+<p>General portal failure</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-PORTAL-ERROR-INVALID-ARGUMENT:CAPS"></a>FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT</p></td>
+<td class="enum_member_description">
+<p>An argument was invalid</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-PORTAL-ERROR-NOT-FOUND:CAPS"></a>FLATPAK_PORTAL_ERROR_NOT_FOUND</p></td>
+<td class="enum_member_description">
+<p>The object was not fount</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-PORTAL-ERROR-EXISTS:CAPS"></a>FLATPAK_PORTAL_ERROR_EXISTS</p></td>
+<td class="enum_member_description">
+<p>The object already exists</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-PORTAL-ERROR-NOT-ALLOWED:CAPS"></a>FLATPAK_PORTAL_ERROR_NOT_ALLOWED</p></td>
+<td class="enum_member_description">
+<p>The call was not allowed</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-PORTAL-ERROR-CANCELLED:CAPS"></a>FLATPAK_PORTAL_ERROR_CANCELLED</p></td>
+<td class="enum_member_description">
+<p>The call was cancelled by the user</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-PORTAL-ERROR-WINDOW-DESTROYED:CAPS"></a>FLATPAK_PORTAL_ERROR_WINDOW_DESTROYED</p></td>
+<td class="enum_member_description">
+<p>The window was destroyed by the user</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -127,6 +272,6 @@ flatpak_error_quark (<em class="parameter"><code><span class="type">void</span><
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.27</div>
+<hr>Generated by GTK-Doc V1.28</div>
 </body>
 </html>

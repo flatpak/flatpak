@@ -30,6 +30,10 @@ body
   vertical-align: top;
 }
 
+span.nowrap {
+  white-space: nowrap;
+}
+
 div.gallery-float
 {
   float: left;

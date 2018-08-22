@@ -7,8 +7,8 @@
 <link rel="home" href="index.html" title="Flatpak Library Reference Manual">
 <link rel="up" href="ch01.html" title="Flatpak">
 <link rel="prev" href="FlatpakRelatedRef.html" title="FlatpakRelatedRef">
-<link rel="next" href="FlatpakRemote.html" title="FlatpakRemote">
-<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
+<link rel="next" href="FlatpakBundleRef.html" title="FlatpakBundleRef">
+<meta name="generator" content="GTK-Doc V1.28 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -22,7 +22,7 @@
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
 <td><a accesskey="p" href="FlatpakRelatedRef.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="FlatpakRemote.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="FlatpakBundleRef.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="FlatpakRemoteRef"></a><div class="titlepage"></div>
@@ -40,13 +40,53 @@
 <col width="150px" class="functions_return">
 <col class="functions_name">
 </colgroup>
-<tbody><tr>
+<tbody>
+<tr>
 <td class="function_type">const <span class="returnvalue">char</span> *
 </td>
 <td class="function_name">
 <a class="link" href="FlatpakRemoteRef.html#flatpak-remote-ref-get-remote-name" title="flatpak_remote_ref_get_remote_name ()">flatpak_remote_ref_get_remote_name</a> <span class="c_punctuation">()</span>
 </td>
-</tr></tbody>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="returnvalue">guint64</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakRemoteRef.html#flatpak-remote-ref-get-download-size" title="flatpak_remote_ref_get_download_size ()">flatpak_remote_ref_get_download_size</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">const <span class="returnvalue">char</span> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakRemoteRef.html#flatpak-remote-ref-get-eol" title="flatpak_remote_ref_get_eol ()">flatpak_remote_ref_get_eol</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">const <span class="returnvalue">char</span> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakRemoteRef.html#flatpak-remote-ref-get-eol-rebase" title="flatpak_remote_ref_get_eol_rebase ()">flatpak_remote_ref_get_eol_rebase</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="returnvalue">guint64</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakRemoteRef.html#flatpak-remote-ref-get-installed-size" title="flatpak_remote_ref_get_installed_size ()">flatpak_remote_ref_get_installed_size</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakRemoteRef.html#flatpak-remote-ref-get-metadata" title="flatpak_remote_ref_get_metadata ()">flatpak_remote_ref_get_metadata</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+</tbody>
 </table></div>
 </div>
 <div class="refsect1">
@@ -57,12 +97,42 @@
 <col width="300px" class="properties_name">
 <col width="200px" class="properties_flags">
 </colgroup>
-<tbody><tr>
+<tbody>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="FlatpakRemoteRef.html#FlatpakRemoteRef--download-size" title="The “download-size” property">download-size</a></td>
+<td class="property_flags">Read / Write / Construct Only</td>
+</tr>
+<tr>
 <td class="property_type">
-<span class="type">gchar</span> *</td>
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<td class="property_name"><a class="link" href="FlatpakRemoteRef.html#FlatpakRemoteRef--end-of-life" title="The “end-of-life” property">end-of-life</a></td>
+<td class="property_flags">Read / Write / Construct Only</td>
+</tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<td class="property_name"><a class="link" href="FlatpakRemoteRef.html#FlatpakRemoteRef--end-of-life-rebase" title="The “end-of-life-rebase” property">end-of-life-rebase</a></td>
+<td class="property_flags">Read / Write / Construct Only</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="FlatpakRemoteRef.html#FlatpakRemoteRef--installed-size" title="The “installed-size” property">installed-size</a></td>
+<td class="property_flags">Read / Write / Construct Only</td>
+</tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> *</td>
+<td class="property_name"><a class="link" href="FlatpakRemoteRef.html#FlatpakRemoteRef--metadata" title="The “metadata” property">metadata</a></td>
+<td class="property_flags">Read / Write / Construct Only</td>
+</tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
 <td class="property_name"><a class="link" href="FlatpakRemoteRef.html#FlatpakRemoteRef--remote-name" title="The “remote-name” property">remote-name</a></td>
-<td class="property_flags">Read / Write</td>
-</tr></tbody>
+<td class="property_flags">Read / Write / Construct Only</td>
+</tr>
+</tbody>
 </table></div>
 </div>
 <div class="refsect1">
@@ -80,7 +150,7 @@
 </div>
 <div class="refsect1">
 <a name="FlatpakRemoteRef.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    GObject
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
     <span class="lineart">╰──</span> <a class="link" href="FlatpakRef.html" title="FlatpakRef">FlatpakRef</a>
         <span class="lineart">╰──</span> FlatpakRemoteRef
 </pre>
@@ -118,6 +188,142 @@ flatpak_remote_ref_get_remote_name (<em class="parameter"><code><a class="link" 
 <p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
 </div>
 </div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-remote-ref-get-download-size"></a><h3>flatpak_remote_ref_get_download_size ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="returnvalue">guint64</span></a>
+flatpak_remote_ref_get_download_size (<em class="parameter"><code><a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> *self</code></em>);</pre>
+<p>Returns the download size of the ref.</p>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-download-size.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-download-size.returns"></a><h4>Returns</h4>
+<p> the download size</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-remote-ref-get-eol"></a><h3>flatpak_remote_ref_get_eol ()</h3>
+<pre class="programlisting">const <span class="returnvalue">char</span> *
+flatpak_remote_ref_get_eol (<em class="parameter"><code><a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> *self</code></em>);</pre>
+<p>Returns the end-of-life reason string, or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if the
+ref is not end-of-lifed.</p>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-eol.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-eol.returns"></a><h4>Returns</h4>
+<p>the end-of-life reason or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a>. </p>
+<p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-remote-ref-get-eol-rebase"></a><h3>flatpak_remote_ref_get_eol_rebase ()</h3>
+<pre class="programlisting">const <span class="returnvalue">char</span> *
+flatpak_remote_ref_get_eol_rebase (<em class="parameter"><code><a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> *self</code></em>);</pre>
+<p>Returns the end-of-life rebased ref, or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if the
+ref is not end-of-lifed.</p>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-eol-rebase.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-eol-rebase.returns"></a><h4>Returns</h4>
+<p>the end-of-life rebased ref or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a>. </p>
+<p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-remote-ref-get-installed-size"></a><h3>flatpak_remote_ref_get_installed_size ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="returnvalue">guint64</span></a>
+flatpak_remote_ref_get_installed_size (<em class="parameter"><code><a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> *self</code></em>);</pre>
+<p>Returns the installed size of the ref.</p>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-installed-size.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-installed-size.returns"></a><h4>Returns</h4>
+<p> the installed size</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-remote-ref-get-metadata"></a><h3>flatpak_remote_ref_get_metadata ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Byte-Arrays.html#GBytes"><span class="returnvalue">GBytes</span></a> *
+flatpak_remote_ref_get_metadata (<em class="parameter"><code><a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a> *self</code></em>);</pre>
+<p>Returns the app metadata from the metadata cach of the ref.</p>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-metadata.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef"><span class="type">FlatpakRemoteRef</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-remote-ref-get-metadata.returns"></a><h4>Returns</h4>
+<p>a <a href="/usr/share/gtk-doc/html/glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> with the metadata file
+contents or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a>. </p>
+<p><span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>][<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></p>
+</div>
+</div>
 </div>
 <div class="refsect1">
 <a name="FlatpakRemoteRef.other_details"></a><h2>Types and Values</h2>
@@ -129,15 +335,54 @@ flatpak_remote_ref_get_remote_name (<em class="parameter"><code><a class="link" 
 <div class="refsect1">
 <a name="FlatpakRemoteRef.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
+<a name="FlatpakRemoteRef--download-size"></a><h3>The <code class="literal">“download-size”</code> property</h3>
+<pre class="programlisting">  “download-size”            <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>The download size of the application.</p>
+<p>Flags: Read / Write / Construct Only</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakRemoteRef--end-of-life"></a><h3>The <code class="literal">“end-of-life”</code> property</h3>
+<pre class="programlisting">  “end-of-life”              <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<p>The reason for the ref to be end of life.</p>
+<p>Flags: Read / Write / Construct Only</p>
+<p>Default value: NULL</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakRemoteRef--end-of-life-rebase"></a><h3>The <code class="literal">“end-of-life-rebase”</code> property</h3>
+<pre class="programlisting">  “end-of-life-rebase”       <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<p>The new ref for the end of lifeed ref.</p>
+<p>Flags: Read / Write / Construct Only</p>
+<p>Default value: NULL</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakRemoteRef--installed-size"></a><h3>The <code class="literal">“installed-size”</code> property</h3>
+<pre class="programlisting">  “installed-size”           <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>The installed size of the application.</p>
+<p>Flags: Read / Write / Construct Only</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakRemoteRef--metadata"></a><h3>The <code class="literal">“metadata”</code> property</h3>
+<pre class="programlisting">  “metadata”                 <a href="/usr/share/gtk-doc/html/glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> *</pre>
+<p>The metadata info for the application.</p>
+<p>Flags: Read / Write / Construct Only</p>
+</div>
+<hr>
+<div class="refsect2">
 <a name="FlatpakRemoteRef--remote-name"></a><h3>The <code class="literal">“remote-name”</code> property</h3>
-<pre class="programlisting">  “remote-name”              <span class="type">gchar</span> *</pre>
+<pre class="programlisting">  “remote-name”              <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The name of the remote.</p>
-<p>Flags: Read / Write</p>
+<p>Flags: Read / Write / Construct Only</p>
 <p>Default value: NULL</p>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.27</div>
+<hr>Generated by GTK-Doc V1.28</div>
 </body>
 </html>
