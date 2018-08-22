@@ -1984,8 +1984,10 @@ flatpak_installation_update (FlatpakInstallation    *self,
  * @self: a #FlatpakInstallation
  * @kind: what this ref contains (an #FlatpakRefKind)
  * @name: name of the app or runtime to uninstall
- * @arch: architecture of the app or runtime to uninstall
- * @branch: name of the branch of the app or runtime to uninstall
+ * @arch: (nullable): architecture of the app or runtime to uninstall; if
+ *  %NULL, flatpak_get_default_arch() is assumed
+ * @branch: (nullable): name of the branch of the app or runtime to uninstall;
+ *  if %NULL, `master` is assumed
  * @progress: (scope call) (nullable): the callback
  * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
@@ -2018,8 +2020,10 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
  * @flags: set of #FlatpakUninstallFlags flags
  * @kind: what this ref contains (an #FlatpakRefKind)
  * @name: name of the app or runtime to uninstall
- * @arch: architecture of the app or runtime to uninstall
- * @branch: name of the branch of the app or runtime to uninstall
+ * @arch: (nullable): architecture of the app or runtime to uninstall; if
+ *  %NULL, flatpak_get_default_arch() is assumed
+ * @branch: (nullable): name of the branch of the app or runtime to uninstall;
+ *  if %NULL, `master` is assumed
  * @progress: (scope call) (nullable): the callback
  * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
