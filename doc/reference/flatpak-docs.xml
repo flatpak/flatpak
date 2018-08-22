@@ -17,6 +17,7 @@
     <title>Flatpak</title>
     <xi:include href="xml/flatpak-installation.xml"/>
     <xi:include href="xml/flatpak-remote.xml"/>
+    <xi:include href="xml/flatpak-transaction-operation.xml"/>
     <xi:include href="xml/flatpak-transaction-progress.xml"/>
     <xi:include href="xml/flatpak-transaction.xml"/>
     <xi:include href="xml/flatpak-ref.xml"/>
