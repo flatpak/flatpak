@@ -654,11 +654,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::new-operation:
    * @object: A #FlatpakTransaction
-   * @ref: The ref the operation will be working on
-   * @remote: The ref the operation will be working on
-   * @bundle: The bundle path (or %NULL)
-   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
-   * @progress: A #FlatpakTransactionProgress
+   * @operation: The new #FlatpakTransactionOperation
+   * @progress: A #FlatpakTransactionProgress for @operation
    */
   signals[NEW_OPERATION] =
     g_signal_new ("new-operation",
@@ -672,11 +669,9 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::operation-error:
    * @object: A #FlatpakTransaction
-   * @ref: The ref the operation was working on
-   * @remote: The remote
-   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
+   * @operation: The #FlatpakTransactionOperation which failed
    * @error: A #GError
-   * @details: A #FlatpakTransactionErrorDetails with Details about the error
+   * @details: A #FlatpakTransactionErrorDetails with details about the error
    *
    * Returns: the %TRUE to contine transaction, %FALSE to stop
    */
@@ -692,10 +687,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::operation-done:
    * @object: A #FlatpakTransaction
-   * @ref: The ref the operation was working on
-   * @remote: The remote
-   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
-   * @commit: The new commit checksum
+   * @operation: The #FlatpakTransactionOperation which finished
    * @result: A #FlatpakTransactionResult giving details about the result
    *
    */
