@@ -6,9 +6,9 @@
 <meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="index.html" title="Flatpak Library Reference Manual">
 <link rel="up" href="ch01.html" title="Flatpak">
-<link rel="prev" href="FlatpakInstallation.html" title="FlatpakInstallation">
+<link rel="prev" href="FlatpakTransaction.html" title="FlatpakTransaction">
 <link rel="next" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef">
-<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.28 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -21,7 +21,7 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="FlatpakInstallation.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="FlatpakTransaction.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="FlatpakInstalledRef.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -114,38 +114,38 @@
 <tbody>
 <tr>
 <td class="property_type">
-<span class="type">gchar</span> *</td>
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
 <td class="property_name"><a class="link" href="FlatpakRef.html#FlatpakRef--arch" title="The “arch” property">arch</a></td>
-<td class="property_flags">Read / Write</td>
+<td class="property_flags">Read / Write / Construct Only</td>
 </tr>
 <tr>
 <td class="property_type">
-<span class="type">gchar</span> *</td>
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
 <td class="property_name"><a class="link" href="FlatpakRef.html#FlatpakRef--branch" title="The “branch” property">branch</a></td>
-<td class="property_flags">Read / Write</td>
+<td class="property_flags">Read / Write / Construct Only</td>
 </tr>
 <tr>
 <td class="property_type">
-<span class="type">gchar</span> *</td>
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
 <td class="property_name"><a class="link" href="FlatpakRef.html#FlatpakRef--collection-id" title="The “collection-id” property">collection-id</a></td>
-<td class="property_flags">Read / Write</td>
+<td class="property_flags">Read / Write / Construct Only</td>
 </tr>
 <tr>
 <td class="property_type">
-<span class="type">gchar</span> *</td>
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
 <td class="property_name"><a class="link" href="FlatpakRef.html#FlatpakRef--commit" title="The “commit” property">commit</a></td>
-<td class="property_flags">Read / Write</td>
+<td class="property_flags">Read / Write / Construct Only</td>
 </tr>
 <tr>
 <td class="property_type"><a class="link" href="FlatpakRef.html#FlatpakRefKind" title="enum FlatpakRefKind"><span class="type">FlatpakRefKind</span></a></td>
 <td class="property_name"><a class="link" href="FlatpakRef.html#FlatpakRef--kind" title="The “kind” property">kind</a></td>
-<td class="property_flags">Read / Write</td>
+<td class="property_flags">Read / Write / Construct Only</td>
 </tr>
 <tr>
 <td class="property_type">
-<span class="type">gchar</span> *</td>
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
 <td class="property_name"><a class="link" href="FlatpakRef.html#FlatpakRef--name" title="The “name” property">name</a></td>
-<td class="property_flags">Read / Write</td>
+<td class="property_flags">Read / Write / Construct Only</td>
 </tr>
 </tbody>
 </table></div>
@@ -171,9 +171,9 @@
 </div>
 <div class="refsect1">
 <a name="FlatpakRef.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    GObject
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
     <span class="lineart">╰──</span> FlatpakRef
-        <span class="lineart">├──</span> <a class="link" href="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef">FlatpakBundleRef</a>
+        <span class="lineart">├──</span> <a class="link" href="FlatpakBundleRef.html" title="FlatpakBundleRef">FlatpakBundleRef</a>
         <span class="lineart">├──</span> <a class="link" href="FlatpakInstalledRef.html" title="FlatpakInstalledRef">FlatpakInstalledRef</a>
         <span class="lineart">├──</span> <a class="link" href="FlatpakRelatedRef.html" title="FlatpakRelatedRef">FlatpakRelatedRef</a>
         <span class="lineart">╰──</span> <a class="link" href="FlatpakRemoteRef.html" title="FlatpakRemoteRef">FlatpakRemoteRef</a>
@@ -389,7 +389,7 @@ flatpak_ref_get_name (<em class="parameter"><code><a class="link" href="FlatpakR
 <a name="flatpak-ref-parse"></a><h3>flatpak_ref_parse ()</h3>
 <pre class="programlisting"><a class="link" href="FlatpakRef.html" title="FlatpakRef"><span class="returnvalue">FlatpakRef</span></a> *
 flatpak_ref_parse (<em class="parameter"><code>const <span class="type">char</span> *ref</code></em>,
-                   <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+                   <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
 <p>Tries to parse a full ref name and return a <a class="link" href="FlatpakRef.html" title="FlatpakRef"><span class="type">FlatpakRef</span></a> (without a
 commit set) or fail if the ref is invalid somehow.</p>
 <div class="refsect3">
@@ -408,7 +408,7 @@ commit set) or fail if the ref is invalid somehow.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
-<td class="parameter_description"><p>return location for a <span class="type">GError</span></p></td>
+<td class="parameter_description"><p>return location for a <a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 </tbody>
@@ -416,7 +416,7 @@ commit set) or fail if the ref is invalid somehow.</p>
 </div>
 <div class="refsect3">
 <a name="flatpak-ref-parse.returns"></a><h4>Returns</h4>
-<p>an <a class="link" href="FlatpakRef.html" title="FlatpakRef"><span class="type">FlatpakRef</span></a>, or <code class="literal">NULL</code>. </p>
+<p>an <a class="link" href="FlatpakRef.html" title="FlatpakRef"><span class="type">FlatpakRef</span></a>, or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a>. </p>
 <p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
 </div>
 </div>
@@ -463,33 +463,33 @@ commit set) or fail if the ref is invalid somehow.</p>
 <a name="FlatpakRef.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="FlatpakRef--arch"></a><h3>The <code class="literal">“arch”</code> property</h3>
-<pre class="programlisting">  “arch”                     <span class="type">gchar</span> *</pre>
+<pre class="programlisting">  “arch”                     <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The architecture of the application or runtime.</p>
-<p>Flags: Read / Write</p>
+<p>Flags: Read / Write / Construct Only</p>
 <p>Default value: NULL</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="FlatpakRef--branch"></a><h3>The <code class="literal">“branch”</code> property</h3>
-<pre class="programlisting">  “branch”                   <span class="type">gchar</span> *</pre>
+<pre class="programlisting">  “branch”                   <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The branch of the application or runtime.</p>
-<p>Flags: Read / Write</p>
+<p>Flags: Read / Write / Construct Only</p>
 <p>Default value: NULL</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="FlatpakRef--collection-id"></a><h3>The <code class="literal">“collection-id”</code> property</h3>
-<pre class="programlisting">  “collection-id”            <span class="type">gchar</span> *</pre>
+<pre class="programlisting">  “collection-id”            <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The collection ID.</p>
-<p>Flags: Read / Write</p>
+<p>Flags: Read / Write / Construct Only</p>
 <p>Default value: NULL</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="FlatpakRef--commit"></a><h3>The <code class="literal">“commit”</code> property</h3>
-<pre class="programlisting">  “commit”                   <span class="type">gchar</span> *</pre>
+<pre class="programlisting">  “commit”                   <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The commit.</p>
-<p>Flags: Read / Write</p>
+<p>Flags: Read / Write / Construct Only</p>
 <p>Default value: NULL</p>
 </div>
 <hr>
@@ -497,20 +497,20 @@ commit set) or fail if the ref is invalid somehow.</p>
 <a name="FlatpakRef--kind"></a><h3>The <code class="literal">“kind”</code> property</h3>
 <pre class="programlisting">  “kind”                     <a class="link" href="FlatpakRef.html#FlatpakRefKind" title="enum FlatpakRefKind"><span class="type">FlatpakRefKind</span></a></pre>
 <p>The kind of artifact.</p>
-<p>Flags: Read / Write</p>
+<p>Flags: Read / Write / Construct Only</p>
 <p>Default value: FLATPAK_REF_KIND_APP</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="FlatpakRef--name"></a><h3>The <code class="literal">“name”</code> property</h3>
-<pre class="programlisting">  “name”                     <span class="type">gchar</span> *</pre>
+<pre class="programlisting">  “name”                     <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The name of the application or runtime.</p>
-<p>Flags: Read / Write</p>
+<p>Flags: Read / Write / Construct Only</p>
 <p>Default value: NULL</p>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.27</div>
+<hr>Generated by GTK-Doc V1.28</div>
 </body>
 </html>

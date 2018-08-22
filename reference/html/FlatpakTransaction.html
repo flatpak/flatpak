@@ -1,0 +1,1299 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>FlatpakTransaction: Flatpak Library Reference Manual</title>
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
+<link rel="home" href="index.html" title="Flatpak Library Reference Manual">
+<link rel="up" href="ch01.html" title="Flatpak">
+<link rel="prev" href="FlatpakTransactionProgress.html" title="FlatpakTransactionProgress">
+<link rel="next" href="FlatpakRef.html" title="FlatpakRef">
+<meta name="generator" content="GTK-Doc V1.28 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
+<td width="100%" align="left" class="shortcuts">
+<a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
+                  <a href="#FlatpakTransaction.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
+                  <a href="#FlatpakTransaction.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_interfaces">  <span class="dim">|</span> 
+                  <a href="#FlatpakTransaction.implemented-interfaces" class="shortcut">Implemented Interfaces</a></span><span id="nav_properties">  <span class="dim">|</span> 
+                  <a href="#FlatpakTransaction.properties" class="shortcut">Properties</a></span><span id="nav_signals">  <span class="dim">|</span> 
+                  <a href="#FlatpakTransaction.signals" class="shortcut">Signals</a></span>
+</td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
+<td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
+<td><a accesskey="p" href="FlatpakTransactionProgress.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="FlatpakRef.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+</tr></table>
+<div class="refentry">
+<a name="FlatpakTransaction"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="FlatpakTransaction.top_of_page"></a>FlatpakTransaction</span></h2>
+<p>FlatpakTransaction — Transaction information</p>
+</td>
+<td class="gallery_image" valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsect1">
+<a name="FlatpakTransaction.functions"></a><h2>Functions</h2>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="functions_return">
+<col class="functions_name">
+</colgroup>
+<tbody>
+<tr>
+<td class="function_type">
+<a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="returnvalue">FlatpakTransaction</span></a> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-new-for-installation" title="flatpak_transaction_new_for_installation ()">flatpak_transaction_new_for_installation</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-add-install" title="flatpak_transaction_add_install ()">flatpak_transaction_add_install</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-add-install-bundle" title="flatpak_transaction_add_install_bundle ()">flatpak_transaction_add_install_bundle</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-add-install-flatpakref" title="flatpak_transaction_add_install_flatpakref ()">flatpak_transaction_add_install_flatpakref</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-add-update" title="flatpak_transaction_add_update ()">flatpak_transaction_add_update</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-add-uninstall" title="flatpak_transaction_add_uninstall ()">flatpak_transaction_add_uninstall</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-add-default-dependency-sources" title="flatpak_transaction_add_default_dependency_sources ()">flatpak_transaction_add_default_dependency_sources</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-add-dependency-source" title="flatpak_transaction_add_dependency_source ()">flatpak_transaction_add_dependency_source</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-run" title="flatpak_transaction_run ()">flatpak_transaction_run</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="returnvalue">FlatpakTransactionOperation</span></a> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-get-current-operation" title="flatpak_transaction_get_current_operation ()">flatpak_transaction_get_current_operation</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="returnvalue">FlatpakInstallation</span></a> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-get-installation" title="flatpak_transaction_get_installation ()">flatpak_transaction_get_installation</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Doubly-Linked-Lists.html#GList"><span class="returnvalue">GList</span></a> *
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-get-operations" title="flatpak_transaction_get_operations ()">flatpak_transaction_get_operations</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-is-empty" title="flatpak_transaction_is_empty ()">flatpak_transaction_is_empty</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-disable-dependencies" title="flatpak_transaction_set_disable_dependencies ()">flatpak_transaction_set_disable_dependencies</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-disable-prune" title="flatpak_transaction_set_disable_prune ()">flatpak_transaction_set_disable_prune</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-disable-related" title="flatpak_transaction_set_disable_related ()">flatpak_transaction_set_disable_related</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-disable-static-deltas" title="flatpak_transaction_set_disable_static_deltas ()">flatpak_transaction_set_disable_static_deltas</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-no-deploy" title="flatpak_transaction_set_no_deploy ()">flatpak_transaction_set_no_deploy</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-no-pull" title="flatpak_transaction_set_no_pull ()">flatpak_transaction_set_no_pull</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-reinstall" title="flatpak_transaction_set_reinstall ()">flatpak_transaction_set_reinstall</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-force-uninstall" title="flatpak_transaction_set_force_uninstall ()">flatpak_transaction_set_force_uninstall</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">void</span>
+</td>
+<td class="function_name">
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-set-default-arch" title="flatpak_transaction_set_default_arch ()">flatpak_transaction_set_default_arch</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.properties"></a><h2>Properties</h2>
+<div class="informaltable"><table class="informaltable" border="0">
+<colgroup>
+<col width="150px" class="properties_type">
+<col width="300px" class="properties_name">
+<col width="200px" class="properties_flags">
+</colgroup>
+<tbody><tr>
+<td class="property_type">
+<a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *</td>
+<td class="property_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction--installation" title="The “installation” property">installation</a></td>
+<td class="property_flags">Read / Write / Construct Only</td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.signals"></a><h2>Signals</h2>
+<div class="informaltable"><table class="informaltable" border="0">
+<colgroup>
+<col width="150px" class="signals_return">
+<col width="300px" class="signals_name">
+<col width="200px" class="signals_flags">
+</colgroup>
+<tbody>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
+<td class="signal_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction-add-new-remote" title="The “add-new-remote” signal">add-new-remote</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="returnvalue">gint</span></a></td>
+<td class="signal_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction-choose-remote-for-ref" title="The “choose-remote-for-ref” signal">choose-remote-for-ref</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction-end-of-lifed" title="The “end-of-lifed” signal">end-of-lifed</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction-new-operation" title="The “new-operation” signal">new-operation</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction-operation-done" title="The “operation-done” signal">operation-done</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
+<td class="signal_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction-operation-error" title="The “operation-error” signal">operation-error</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
+<td class="signal_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction-ready" title="The “ready” signal">ready</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.other"></a><h2>Types and Values</h2>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="name">
+<col class="description">
+</colgroup>
+<tbody>
+<tr>
+<td class="datatype_keyword"> </td>
+<td class="function_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransaction-struct" title="FlatpakTransaction">FlatpakTransaction</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransactionOperationType" title="enum FlatpakTransactionOperationType">FlatpakTransactionOperationType</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransactionErrorDetails" title="enum FlatpakTransactionErrorDetails">FlatpakTransactionErrorDetails</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransactionRemoteReason" title="enum FlatpakTransactionRemoteReason">FlatpakTransactionRemoteReason</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="FlatpakTransaction.html#FlatpakTransactionResult" title="enum FlatpakTransactionResult">FlatpakTransactionResult</a></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> FlatpakTransaction
+</pre>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.implemented-interfaces"></a><h2>Implemented Interfaces</h2>
+<p>
+FlatpakTransaction implements
+ <a href="/usr/share/gtk-doc/html/gio/GInitable.html#GInitable-struct">GInitable</a>.</p>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.description"></a><h2>Description</h2>
+<p>FlatpakTransaction is an object representing an install/update
+transaction. You create an object like this using <a class="link" href="FlatpakTransaction.html#flatpak-transaction-new-for-installation" title="flatpak_transaction_new_for_installation ()"><code class="function">flatpak_transaction_new_for_installation()</code></a>
+and then you add all the operations (installs, updates, etc) you wish to do. Then
+you start the transaction with <a class="link" href="FlatpakTransaction.html#flatpak-transaction-run" title="flatpak_transaction_run ()"><code class="function">flatpak_transaction_run()</code></a> which will resolve all kinds
+of dependencies and report progress and status while downloading and installing these.</p>
+<p>A transaction is a blocking operation, and all signals are emitted in the same thread.
+This means you should either handle the signals directly (say, by doing blocking console
+interaction, or by just returning without interaction), or run the operation in a separate
+thread and do your own forwarding to the GUI thread.</p>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.functions_details"></a><h2>Functions</h2>
+<div class="refsect2">
+<a name="flatpak-transaction-new-for-installation"></a><h3>flatpak_transaction_new_for_installation ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="returnvalue">FlatpakTransaction</span></a> *
+flatpak_transaction_new_for_installation
+                               (<em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *installation</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+<p>Creates a new <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> object that can be used to do installation
+and updates of multiple refs, as well as their dependencies, in a single
+operation. Set the options you want on the transaction and add the
+refs you want to install/update, then start the transaction with
+<a class="link" href="FlatpakTransaction.html#flatpak-transaction-run" title="flatpak_transaction_run ()"><code class="function">flatpak_transaction_run()</code></a>.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-new-for-installation.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>installation</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>a <a href="/usr/share/gtk-doc/html/gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-transaction-new-for-installation.returns"></a><h4>Returns</h4>
+<p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a>, or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> on failure. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-add-install"></a><h3>flatpak_transaction_add_install ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+flatpak_transaction_add_install (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                 <em class="parameter"><code>const <span class="type">char</span> *remote</code></em>,
+                                 <em class="parameter"><code>const <span class="type">char</span> *ref</code></em>,
+                                 <em class="parameter"><code>const <span class="type">char</span> **subpaths</code></em>,
+                                 <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+<p>Adds installing the given ref to this transaction.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-add-install.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>remote</p></td>
+<td class="parameter_description"><p>the name of the remote</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>ref</p></td>
+<td class="parameter_description"><p>the ref</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>subpaths</p></td>
+<td class="parameter_description"><p>subpaths to install, or the
+empty list or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> to pull all subpaths. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>][<acronym title="Parameter points to an array of items."><span class="acronym">array</span></acronym> zero-terminated=1]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-transaction-add-install.returns"></a><h4>Returns</h4>
+<p> <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> on success; <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> with <em class="parameter"><code>error</code></em>
+set on failure.</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-add-install-bundle"></a><h3>flatpak_transaction_add_install_bundle ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+flatpak_transaction_add_install_bundle
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/gio/GFile.html#GFile-struct"><span class="type">GFile</span></a> *file</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> *gpg_data</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+<p>Adds installing the given bundle to this transaction.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-add-install-bundle.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>file</p></td>
+<td class="parameter_description"><p>a <a href="/usr/share/gtk-doc/html/gio/GFile.html#GFile-struct"><span class="type">GFile</span></a> that is an flatpak bundle</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>gpg_data</p></td>
+<td class="parameter_description"><p>GPG key with which to check bundle signatures, or
+<a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> to use the key embedded in the bundle (if any). </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-transaction-add-install-bundle.returns"></a><h4>Returns</h4>
+<p> <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> on success; <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> with <em class="parameter"><code>error</code></em>
+set on failure.</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-add-install-flatpakref"></a><h3>flatpak_transaction_add_install_flatpakref ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+flatpak_transaction_add_install_flatpakref
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Byte-Arrays.html#GBytes"><span class="type">GBytes</span></a> *flatpakref_data</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-add-update"></a><h3>flatpak_transaction_add_update ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+flatpak_transaction_add_update (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *ref</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> **subpaths</code></em>,
+                                <em class="parameter"><code>const <span class="type">char</span> *commit</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+<p>Adds updating the given ref to this transaction.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-add-update.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>ref</p></td>
+<td class="parameter_description"><p>the ref</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>subpaths</p></td>
+<td class="parameter_description"><p>subpaths to install; <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a>
+to use the current set, or <code class="literal">{ "", NULL }</code> to pull all subpaths. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>][<acronym title="Parameter points to an array of items."><span class="acronym">array</span></acronym> zero-terminated=1]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>commit</p></td>
+<td class="parameter_description"><p>the commit to update to, or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> to use the latest. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<acronym title="NULL may be passed as the value in, out, in-out; or as a return value."><span class="acronym">nullable</span></acronym>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-transaction-add-update.returns"></a><h4>Returns</h4>
+<p> <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> on success; <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> with <em class="parameter"><code>error</code></em>
+set on failure.</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-add-uninstall"></a><h3>flatpak_transaction_add_uninstall ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+flatpak_transaction_add_uninstall (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                   <em class="parameter"><code>const <span class="type">char</span> *ref</code></em>,
+                                   <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+<p>Adds uninstalling the given ref to this transaction.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-add-uninstall.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>ref</p></td>
+<td class="parameter_description"><p>the ref</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>return location for a <a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-transaction-add-uninstall.returns"></a><h4>Returns</h4>
+<p> <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> on success; <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> with <em class="parameter"><code>error</code></em>
+set on failure.</p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-add-default-dependency-sources"></a><h3>flatpak_transaction_add_default_dependency_sources ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_add_default_dependency_sources
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>);</pre>
+<p>Similar to <a class="link" href="FlatpakTransaction.html#flatpak-transaction-add-dependency-source" title="flatpak_transaction_add_dependency_source ()"><code class="function">flatpak_transaction_add_dependency_source()</code></a>, but adds
+all the default installations, which means all the defined system-wide
+(but not per-user) installations.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-add-default-dependency-sources.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-add-dependency-source"></a><h3>flatpak_transaction_add_dependency_source ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_add_dependency_source
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                <em class="parameter"><code><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *installation</code></em>);</pre>
+<p>Adds an extra installation as a source for application dependencies.
+This means that applications can be installed in this transaction relying
+on runtimes from this additional installation (wheres it would normally
+install required runtimes that are not installed in the installation
+the transaction works on).</p>
+<div class="refsect3">
+<a name="flatpak-transaction-add-dependency-source.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>installation</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-run"></a><h3>flatpak_transaction_run ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+flatpak_transaction_run (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                         <em class="parameter"><code><a href="/usr/share/gtk-doc/html/gio/GCancellable.html#GCancellable-struct"><span class="type">GCancellable</span></a> *cancellable</code></em>,
+                         <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> **error</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-get-current-operation"></a><h3>flatpak_transaction_get_current_operation ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="returnvalue">FlatpakTransactionOperation</span></a> *
+flatpak_transaction_get_current_operation
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>);</pre>
+<p>Gets the current operation.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-get-current-operation.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-transaction-get-current-operation.returns"></a><h4>Returns</h4>
+<p>the current <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a>. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-get-installation"></a><h3>flatpak_transaction_get_installation ()</h3>
+<pre class="programlisting"><a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="returnvalue">FlatpakInstallation</span></a> *
+flatpak_transaction_get_installation (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>);</pre>
+<p>Gets the installation this transaction was created for.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-get-installation.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-transaction-get-installation.returns"></a><h4>Returns</h4>
+<p>a <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a>. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-get-operations"></a><h3>flatpak_transaction_get_operations ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Doubly-Linked-Lists.html#GList"><span class="returnvalue">GList</span></a> *
+flatpak_transaction_get_operations (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>);</pre>
+<p>Gets the list of operations.</p>
+<div class="refsect3">
+<a name="flatpak-transaction-get-operations.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody><tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>a <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="flatpak-transaction-get-operations.returns"></a><h4>Returns</h4>
+<p>a <a href="/usr/share/gtk-doc/html/glib/glib-Doubly-Linked-Lists.html#GList"><span class="type">GList</span></a> of operations. </p>
+<p><span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>][<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> FlatpakTransactionOperation]</span></p>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-is-empty"></a><h3>flatpak_transaction_is_empty ()</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+flatpak_transaction_is_empty (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-disable-dependencies"></a><h3>flatpak_transaction_set_disable_dependencies ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_disable_dependencies
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> disable_dependencies</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-disable-prune"></a><h3>flatpak_transaction_set_disable_prune ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_disable_prune (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                       <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> disable_prune</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-disable-related"></a><h3>flatpak_transaction_set_disable_related ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_disable_related
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> disable_related</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-disable-static-deltas"></a><h3>flatpak_transaction_set_disable_static_deltas ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_disable_static_deltas
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> disable_static_deltas</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-no-deploy"></a><h3>flatpak_transaction_set_no_deploy ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_no_deploy (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                   <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> no_deploy</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-no-pull"></a><h3>flatpak_transaction_set_no_pull ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_no_pull (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                 <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> no_pull</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-reinstall"></a><h3>flatpak_transaction_set_reinstall ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_reinstall (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                   <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> reinstall</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-force-uninstall"></a><h3>flatpak_transaction_set_force_uninstall ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_force_uninstall
+                               (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> force_uninstall</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="flatpak-transaction-set-default-arch"></a><h3>flatpak_transaction_set_default_arch ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+flatpak_transaction_set_default_arch (<em class="parameter"><code><a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *self</code></em>,
+                                      <em class="parameter"><code>const <span class="type">char</span> *arch</code></em>);</pre>
+</div>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.other_details"></a><h2>Types and Values</h2>
+<div class="refsect2">
+<a name="FlatpakTransaction-struct"></a><h3>FlatpakTransaction</h3>
+<pre class="programlisting">typedef struct _FlatpakTransaction FlatpakTransaction;</pre>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransactionOperationType"></a><h3>enum FlatpakTransactionOperationType</h3>
+<p>The type of a <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a>.</p>
+<div class="refsect3">
+<a name="FlatpakTransactionOperationType.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-OPERATION-INSTALL:CAPS"></a>FLATPAK_TRANSACTION_OPERATION_INSTALL</p></td>
+<td class="enum_member_description">
+<p>Install a ref from a remote</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-OPERATION-UPDATE:CAPS"></a>FLATPAK_TRANSACTION_OPERATION_UPDATE</p></td>
+<td class="enum_member_description">
+<p>Update an installed ref</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-OPERATION-INSTALL-BUNDLE:CAPS"></a>FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE</p></td>
+<td class="enum_member_description">
+<p>Install a bundle from a file</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-OPERATION-UNINSTALL:CAPS"></a>FLATPAK_TRANSACTION_OPERATION_UNINSTALL</p></td>
+<td class="enum_member_description">
+<p>Uninstall a ref</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-OPERATION-LAST-TYPE:CAPS"></a>FLATPAK_TRANSACTION_OPERATION_LAST_TYPE</p></td>
+<td class="enum_member_description">
+<p>The (currently) last operation type</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransactionErrorDetails"></a><h3>enum FlatpakTransactionErrorDetails</h3>
+<p>The details for <a class="link" href="FlatpakTransaction.html#FlatpakTransaction-operation-error" title="The “operation-error” signal"><span class="type">“operation-error”</span></a>.</p>
+<div class="refsect3">
+<a name="FlatpakTransactionErrorDetails.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody><tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-ERROR-DETAILS-NON-FATAL:CAPS"></a>FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL</p></td>
+<td class="enum_member_description">
+<p>The operation failure was not fatal</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransactionRemoteReason"></a><h3>enum FlatpakTransactionRemoteReason</h3>
+<p>The reason for <a class="link" href="FlatpakTransaction.html#FlatpakTransaction-add-new-remote" title="The “add-new-remote” signal"><span class="type">“add-new-remote”</span></a>.</p>
+<div class="refsect3">
+<a name="FlatpakTransactionRemoteReason.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-REMOTE-GENERIC-REPO:CAPS"></a>FLATPAK_TRANSACTION_REMOTE_GENERIC_REPO</p></td>
+<td class="enum_member_description">
+<p>The remote specified in the flatpakref has other apps too</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-REMOTE-RUNTIME-DEPS:CAPS"></a>FLATPAK_TRANSACTION_REMOTE_RUNTIME_DEPS</p></td>
+<td class="enum_member_description">
+<p>The remote has runtimes needed for the app</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransactionResult"></a><h3>enum FlatpakTransactionResult</h3>
+<p>The details for <a class="link" href="FlatpakTransaction.html#FlatpakTransaction-operation-done" title="The “operation-done” signal"><span class="type">“operation-done”</span></a>.</p>
+<div class="refsect3">
+<a name="FlatpakTransactionResult.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody><tr>
+<td class="enum_member_name"><p><a name="FLATPAK-TRANSACTION-RESULT-NO-CHANGE:CAPS"></a>FLATPAK_TRANSACTION_RESULT_NO_CHANGE</p></td>
+<td class="enum_member_description">
+<p>The update caused no changes</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr></tbody>
+</table></div>
+</div>
+</div>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.property-details"></a><h2>Property Details</h2>
+<div class="refsect2">
+<a name="FlatpakTransaction--installation"></a><h3>The <code class="literal">“installation”</code> property</h3>
+<pre class="programlisting">  “installation”             <a class="link" href="FlatpakInstallation.html" title="FlatpakInstallation"><span class="type">FlatpakInstallation</span></a> *</pre>
+<p>The installation instance.</p>
+<p>Flags: Read / Write / Construct Only</p>
+</div>
+</div>
+<div class="refsect1">
+<a name="FlatpakTransaction.signal-details"></a><h2>Signal Details</h2>
+<div class="refsect2">
+<a name="FlatpakTransaction-add-new-remote"></a><h3>The <code class="literal">“add-new-remote”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+user_function (<a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *object,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                reason,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>              *from_id,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>              *suggested_remote_name,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>              *url,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>            user_data)</pre>
+<p>As part of the transaction, it is required or recommended
+that a new remote is added, for the reason described in <em class="parameter"><code>reason</code></em>
+.
+Return <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> to add it.</p>
+<div class="refsect3">
+<a name="FlatpakTransaction-add-new-remote.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>object</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>reason</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html#FlatpakTransactionRemoteReason" title="enum FlatpakTransactionRemoteReason"><span class="type">FlatpakTransactionRemoteReason</span></a> for this suggestion</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>from_id</p></td>
+<td class="parameter_description"><p>The id of the app/runtime</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>suggested_remote_name</p></td>
+<td class="parameter_description"><p>The suggested remote name</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>url</p></td>
+<td class="parameter_description"><p>The repo url</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransaction-choose-remote-for-ref"></a><h3>The <code class="literal">“choose-remote-for-ref”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="returnvalue">gint</span></a>
+user_function (<a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *object,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>              *for_ref,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>              *runtime_ref,
+               <a href="/usr/share/gtk-doc/html/glib/glib-String-Utility-Functions.html#GStrv"><span class="type">GStrv</span></a>               remotes,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>            user_data)</pre>
+<div class="refsect3">
+<a name="FlatpakTransaction-choose-remote-for-ref.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>object</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>for_ref</p></td>
+<td class="parameter_description"><p>The ref we are installing</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>runtime_ref</p></td>
+<td class="parameter_description"><p>The ref we are looking for</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>remotes</p></td>
+<td class="parameter_description"><p>the remotes that has the ref, sorted in prio order</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="FlatpakTransaction-choose-remote-for-ref.returns"></a><h4>Returns</h4>
+<p> the index of the remote to use, or -1 to not pick one (and fail)</p>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransaction-end-of-lifed"></a><h3>The <code class="literal">“end-of-lifed”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *object,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>              *ref,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>              *reason,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>              *rebase,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>            user_data)</pre>
+<div class="refsect3">
+<a name="FlatpakTransaction-end-of-lifed.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>object</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>ref</p></td>
+<td class="parameter_description"><p>The ref we are installing</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>reason</p></td>
+<td class="parameter_description"><p>The eol reason, or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>rebase</p></td>
+<td class="parameter_description"><p>The new name, if rebased, or <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransaction-new-operation"></a><h3>The <code class="literal">“new-operation”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a>          *object,
+               <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a> *operation,
+               <a class="link" href="FlatpakTransactionProgress.html" title="FlatpakTransactionProgress"><span class="type">FlatpakTransactionProgress</span></a>  *progress,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>                     user_data)</pre>
+<div class="refsect3">
+<a name="FlatpakTransaction-new-operation.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>object</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>operation</p></td>
+<td class="parameter_description"><p>The new <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>progress</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransactionProgress.html" title="FlatpakTransactionProgress"><span class="type">FlatpakTransactionProgress</span></a> for <em class="parameter"><code>operation</code></em>
+</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransaction-operation-done"></a><h3>The <code class="literal">“operation-done”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a>          *object,
+               <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a> *operation,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                         result,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>                     user_data)</pre>
+<div class="refsect3">
+<a name="FlatpakTransaction-operation-done.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>object</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>operation</p></td>
+<td class="parameter_description"><p>The <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a> which finished</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>result</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html#FlatpakTransactionResult" title="enum FlatpakTransactionResult"><span class="type">FlatpakTransactionResult</span></a> giving details about the result</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransaction-operation-error"></a><h3>The <code class="literal">“operation-error”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+user_function (<a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a>          *object,
+               <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a> *operation,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a>                      *error,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                         details,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>                     user_data)</pre>
+<div class="refsect3">
+<a name="FlatpakTransaction-operation-error.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>object</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>operation</p></td>
+<td class="parameter_description"><p>The <a class="link" href="FlatpakTransactionOperation.html" title="FlatpakTransactionOperation"><span class="type">FlatpakTransactionOperation</span></a> which failed</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>A <a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>details</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html#FlatpakTransactionErrorDetails" title="enum FlatpakTransactionErrorDetails"><span class="type">FlatpakTransactionErrorDetails</span></a> with details about the error</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="FlatpakTransaction-operation-error.returns"></a><h4>Returns</h4>
+<p> the <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> to contine transaction, <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> to stop</p>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="FlatpakTransaction-ready"></a><h3>The <code class="literal">“ready”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+user_function (<a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a> *object,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>            user_data)</pre>
+<p>This is is emitted when all the refs involved in the operation have been
+resolved to commits. At this point <a class="link" href="FlatpakTransaction.html#flatpak-transaction-get-operations" title="flatpak_transaction_get_operations ()"><code class="function">flatpak_transaction_get_operations()</code></a>
+will return all the operations that will be executed as part of the
+transaction. If this returns FALSE, the operation is aborted.</p>
+<div class="refsect3">
+<a name="FlatpakTransaction-ready.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>object</p></td>
+<td class="parameter_description"><p>A <a class="link" href="FlatpakTransaction.html" title="FlatpakTransaction"><span class="type">FlatpakTransaction</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>Generated by GTK-Doc V1.28</div>
+</body>
+</html>
