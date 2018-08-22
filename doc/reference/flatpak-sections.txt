@@ -275,6 +275,7 @@ flatpak_portal_error_quark
 
 <SECTION>
 <FILE>flatpak-bundle-ref</FILE>
+<TITLE>FlatpakBundleRef</TITLE>
 FlatpakBundleRef
 flatpak_bundle_ref_new
 flatpak_bundle_ref_get_file
