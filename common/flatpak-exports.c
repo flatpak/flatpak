@@ -51,7 +51,7 @@
 /* We don't want to export paths pointing into these, because they are readonly
    (so we can't create mountpoints there) and don't match whats on the host anyway */
 const char *dont_export_in[] = {
-  "/lib", "/lib32", "/lib64", "/bin", "/sbin", "/usr", "/etc", "/app", "/dev", NULL
+  "/lib", "/lib32", "/lib64", "/bin", "/sbin", "/usr", "/etc", "/app", "/dev", "/proc", NULL
 };
 
 static char *
