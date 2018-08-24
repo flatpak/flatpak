@@ -501,7 +501,10 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
   if (is_oci)
     {
-      /* In the OCI case, we just do the full update, including network i/o, in the
+      /* This does soup http requests spinning the current mainloop, so we need one
+         for this thread. */
+      g_autoptr(GMainContextPopDefault) context = flatpak_main_context_new_default ();
+    /* In the OCI case, we just do the full update, including network i/o, in the
        * system helper, see comment in flatpak_dir_update_appstream()
        */
       if (!flatpak_dir_update_appstream (system,
