@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2018-08-20 10:28+0200\n"
-"PO-Revision-Date: 2018-07-11 13:32+0200\n"
+"PO-Revision-Date: 2018-08-26 01:08+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.0.8\n"
+"X-Generator: Poedit 2.1.1\n"
 
 #: app/flatpak-builtins-add-remote.c:56
 msgid "Do nothing if the provided remote exists"
@@ -1051,16 +1051,18 @@ msgid "Refs must all be in the same installation (found in %s and %s)."
 msgstr "Refy musí být všechny ve stejné instalaci (nalezeno v %s a %s)."
 
 #: app/flatpak-builtins-create-usb.c:677
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"
-msgstr "Varování: Nepodařilo se aktualizovat dodatečná metadata pro „%s“: %s\n"
+msgstr ""
+"Varování: Nepodařilo se aktualizovat repo metadata pro vzdálený repozitář "
+"„%s“: %s\n"
 
 #: app/flatpak-builtins-create-usb.c:700
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
 msgstr ""
-"Varování: Nelze nalézt appstream data pro vzdálený repozitář „%s“ "
-"architektura „%s“: %s\n"
+"Varování: Nepodařilo se aktualizovat appstream data pro vzdálený repozitář "
+"„%s“ architektura „%s“: %s\n"
 
 #: app/flatpak-builtins-create-usb.c:719
 #, c-format
@@ -1712,9 +1714,8 @@ msgid "Error reinstalling %s: %s\n"
 msgstr "Chyba při reinstalování %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:288
-#, fuzzy
 msgid "- Repair a flatpak installation"
-msgstr "Opravit flatpak instalaci"
+msgstr "- Opravit flatpak instalaci"
 
 #: app/flatpak-builtins-repair.c:343
 #, c-format
@@ -2925,9 +2926,9 @@ msgid "While trying to checkout metadata subpath: "
 msgstr ""
 
 #: common/flatpak-dir.c:6718
-#, fuzzy, c-format
+#, c-format
 msgid "While trying to checkout subpath ‘%s’: "
-msgstr "Během pokusu o vyřešení ref %s: "
+msgstr ""
 
 #: common/flatpak-dir.c:6728
 msgid "While trying to remove existing extra dir: "
@@ -3208,7 +3209,7 @@ msgstr "%s vyžaduje novější verzi flatpaku (%s)"
 
 #: common/flatpak-utils.c:5729
 msgid "Empty string is not a number"
-msgstr ""
+msgstr "Prázdný řetězec není číslo"
 
 #: common/flatpak-utils.c:5755
 #, c-format
