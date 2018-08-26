@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-08-20 10:28+0200\n"
-"PO-Revision-Date: 2018-07-25 15:30+0700\n"
+"POT-Creation-Date: 2018-08-20 13:42+0000\n"
+"PO-Revision-Date: 2018-08-26 19:54+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -1056,15 +1056,15 @@ msgstr ""
 "Ref harus semuanya berada pada pemasangan yang sama (ditemukan di %s dan %s)."
 
 #: app/flatpak-builtins-create-usb.c:677
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"
-msgstr "Peringatan: Tidak dapat memperbarui metadata tambahan untuk '%s': %s\n"
+msgstr "Peringatan: Tidak dapat memperbarui metadata repo untuk '%s': %s\n"
 
 #: app/flatpak-builtins-create-usb.c:700
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
 msgstr ""
-"Peringatan: Tidak dapat menemukan data appstream untuk remote ‘%s’ "
+"Peringatan: Tidak dapat memperbarui data appstream untuk remote ‘%s’ "
 "arsitektur ‘%s’:%s\n"
 
 #: app/flatpak-builtins-create-usb.c:719
@@ -2937,9 +2937,9 @@ msgid "While trying to checkout metadata subpath: "
 msgstr "Saat mencoba melakukan checkout metadata subpath: "
 
 #: common/flatpak-dir.c:6718
-#, fuzzy, c-format
+#, c-format
 msgid "While trying to checkout subpath ‘%s’: "
-msgstr "Saat mencoba melakukan checkout %s ke %s: "
+msgstr "Saat mencoba melakukan checkout subpath ‘%s’: "
 
 #: common/flatpak-dir.c:6728
 msgid "While trying to remove existing extra dir: "
@@ -3136,6 +3136,8 @@ msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
 "installed: %s"
 msgstr ""
+"Peringatan: Memperlakukan kesalahan pengambilan remote sebagai non-fatal "
+"sejak %s sudah dipasang: %s"
 
 #: common/flatpak-transaction.c:1741
 #, c-format
@@ -3221,17 +3223,17 @@ msgstr "%s membutuhkan versi flatpak kelak (%s)"
 
 #: common/flatpak-utils.c:5729
 msgid "Empty string is not a number"
-msgstr ""
+msgstr "String kosong bukan angka"
 
 #: common/flatpak-utils.c:5755
 #, c-format
 msgid "“%s” is not an unsigned number"
-msgstr ""
+msgstr "\"%s\" bukan bilangan tak bertanda"
 
 #: common/flatpak-utils.c:5765
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
-msgstr ""
+msgstr "Nomor \"%s\" berada di luar batas [%s, %s]"
 
 #. SECURITY:
 #. - Normal users do not need authentication to install signed applications
