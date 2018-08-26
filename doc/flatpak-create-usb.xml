@@ -104,7 +104,7 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Uninstalls from a per-user installation.
+                    Copy refs from the per-user installation.
                 </para></listitem>
             </varlistentry>
 
@@ -112,7 +112,7 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Uninstalls from the default system-wide installation.
+                    Copy refs from the default system-wide installation.
                 </para></listitem>
             </varlistentry>
 
@@ -120,7 +120,7 @@
                 <term><option>--installation=NAME</option></term>
 
                 <listitem><para>
-                    Copies refs from a system-wide installation specified by
+                    Copy refs from a system-wide installation specified by
                     <arg choice="plain">NAME</arg> among those defined in
                     <filename>/etc/flatpak/installations.d/</filename>.  Using
                     <arg choice="plain">--installation=default</arg> is
