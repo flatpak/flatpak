@@ -2147,7 +2147,7 @@ flatpak_oci_index_make_summary (GFile        *index,
 
       g_variant_builder_add_value (refs_builder,
                                    g_variant_new ("(s(t@ay@a{sv}))", ref,
-                                                  0,
+                                                  (guint64)0,
                                                   ostree_checksum_to_bytes_v (fake_commit),
                                                   g_variant_builder_end (ref_metadata_builder)));
       g_variant_builder_add (ref_data_builder, "{s(tts)}",
