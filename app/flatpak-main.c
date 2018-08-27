@@ -81,6 +81,7 @@ static FlatpakCommand commands[] = {
   { "override", N_("Override permissions for an application"), flatpak_builtin_override, flatpak_complete_override },
   { "make-current", N_("Specify default version to run"), flatpak_builtin_make_current_app, flatpak_complete_make_current_app },
   { "enter", N_("Enter the namespace of a running application"), flatpak_builtin_enter, flatpak_complete_enter },
+  { "ps", N_("Enumerate running applications"), flatpak_builtin_ps, flatpak_complete_ps },
 
   /* translators: please keep the leading newline and space */
   { N_("\n Manage file access") },
