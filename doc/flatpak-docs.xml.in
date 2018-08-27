@@ -49,6 +49,7 @@
       <xi:include href="@srcdir@/flatpak-list.xml"/>
       <xi:include href="@srcdir@/flatpak-make-current.xml"/>
       <xi:include href="@srcdir@/flatpak-override.xml"/>
+      <xi:include href="@srcdir@/flatpak-ps.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-add.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-delete.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-info.xml"/>

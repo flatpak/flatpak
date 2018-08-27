@@ -38,6 +38,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-config.c \
 	app/flatpak-builtins-run.c \
 	app/flatpak-builtins-enter.c \
+	app/flatpak-builtins-ps.c \
 	app/flatpak-builtins-build-init.c \
 	app/flatpak-builtins-build.c \
 	app/flatpak-builtins-build-finish.c \

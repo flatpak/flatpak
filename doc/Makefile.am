@@ -35,6 +35,7 @@ man1 = \
 	flatpak-run.1			\
 	flatpak-override.1		\
 	flatpak-enter.1			\
+	flatpak-ps.1			\
 	flatpak-document-export.1	\
 	flatpak-document-unexport.1	\
 	flatpak-document-info.1		\

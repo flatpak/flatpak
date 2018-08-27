@@ -157,6 +157,7 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                         gboolean        sandbox,
                                         gboolean        build,
                                         char          **app_info_path_out,
+                                        char          **host_instance_id_host_dir_out,
                                         GError        **error);
 
 gboolean flatpak_run_app (const char     *app_ref,
@@ -172,5 +173,6 @@ gboolean flatpak_run_app (const char     *app_ref,
                           GCancellable   *cancellable,
                           GError        **error);
 
+void flatpak_run_gc_ids (void);
 
 #endif /* __FLATPAK_RUN_H__ */

@@ -1571,7 +1571,7 @@ flatpak_app_compute_permissions (GKeyFile *app_metadata,
   return g_steal_pointer (&app_context);
 }
 
-static void
+void
 flatpak_run_gc_ids (void)
 {
   g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
@@ -1685,9 +1685,10 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                gboolean        sandbox,
                                gboolean        build,
                                char          **app_info_path_out,
+                               char          **instance_id_host_dir_out,
                                GError        **error)
 {
-  g_autofree char *tmp_path = NULL;
+  g_autofree char *info_path = NULL;
   int fd, fd2;
 
   g_autoptr(GKeyFile) keyfile = NULL;
@@ -1719,16 +1720,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   /* Keep the .ref lock held until we've started bwrap to avoid races */
   flatpak_bwrap_add_noinherit_fd (bwrap, glnx_steal_fd (&lock_fd));
 
-  fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
-  if (fd < 0)
-    {
-      int errsv = errno;
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open flatpak-info temp file: %s"), g_strerror (errsv));
-      return FALSE;
-    }
-
-  close (fd);
+  info_path = g_build_filename (instance_id_host_dir, "info", NULL);
 
   keyfile = g_key_file_new ();
 
@@ -1810,7 +1802,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 
   flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
 
-  if (!g_key_file_save_to_file (keyfile, tmp_path, error))
+  if (!g_key_file_save_to_file (keyfile, info_path, error))
     return FALSE;
 
   /* We want to create a file on /.flatpak-info that the app cannot modify, which
@@ -1824,26 +1816,24 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
      This way even if the bind-mount is unmounted we can find the real data.
    */
 
-  fd = open (tmp_path, O_RDONLY);
+  fd = open (info_path, O_RDONLY);
   if (fd == -1)
     {
       int errsv = errno;
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open temp file: %s"), g_strerror (errsv));
+                   _("Failed to open flatpak-info file: %s"), g_strerror (errsv));
       return FALSE;
     }
 
-  fd2 = open (tmp_path, O_RDONLY);
+  fd2 = open (info_path, O_RDONLY);
   if (fd2 == -1)
     {
       close (fd);
       int errsv = errno;
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open temp file: %s"), g_strerror (errsv));
+                   _("Failed to open flatpak-info file: %s"), g_strerror (errsv));
       return FALSE;
     }
-
-  unlink (tmp_path);
 
   flatpak_bwrap_add_args_data_fd (bwrap,
                                   "--file", fd, "/.flatpak-info");
@@ -1855,6 +1845,9 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 
   if (app_info_path_out != NULL)
     *app_info_path_out = g_strdup_printf ("/proc/self/fd/%d", fd);
+
+  if (instance_id_host_dir_out != NULL)
+    *instance_id_host_dir_out = g_steal_pointer (&instance_id_host_dir);
 
   return TRUE;
 }
@@ -2839,6 +2832,7 @@ flatpak_run_app (const char     *app_ref,
   g_auto(GStrv) runtime_parts = NULL;
   int i;
   g_autofree char *app_info_path = NULL;
+  g_autofree char *instance_id_host_dir = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
@@ -3051,7 +3045,7 @@ flatpak_run_app (const char     *app_ref,
                                       app_ref_parts[1], app_ref_parts[3],
                                       runtime_ref, app_id_dir, app_context, extra_context,
                                       sandboxed, FALSE,
-                                      &app_info_path, error))
+                                      &app_info_path, &instance_id_host_dir, error))
     return FALSE;
 
   if (!sandboxed && !(flags & FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL))
@@ -3107,17 +3101,32 @@ flatpak_run_app (const char     *app_ref,
 
   if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
     {
+      GPid child_pid;
+      char pid_str[64];
+      g_autofree char *pid_path = NULL;
+
       if (!g_spawn_async (NULL,
                           (char **) bwrap->argv->pdata,
                           bwrap->envp,
                           G_SPAWN_SEARCH_PATH,
                           flatpak_bwrap_child_setup_cb, bwrap->fds,
-                          NULL,
+                          &child_pid,
                           error))
         return FALSE;
+
+      g_snprintf (pid_str, sizeof (pid_str), "%" G_PID_FORMAT, child_pid);
+      pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
+      g_file_set_contents (pid_path, pid_str, -1, NULL);
     }
   else
     {
+      char pid_str[64];
+      g_autofree char *pid_path = NULL;
+
+      g_snprintf (pid_str, sizeof (pid_str), "%" G_PID_FORMAT, getpid ());
+      pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
+      g_file_set_contents (pid_path, pid_str, -1, NULL);
+
       /* Ensure we unset O_CLOEXEC */
       flatpak_bwrap_child_setup_cb (bwrap->fds);
       if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
