@@ -187,6 +187,11 @@
                 </para></listitem>
             </varlistentry>
         </variablelist>
+
+        <para>
+          Note that field names can be abbreviated to a unique prefix.
+        </para>
+
     </refsect1>
 
     <refsect1>
