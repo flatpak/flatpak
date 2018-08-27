@@ -36,7 +36,7 @@ assert_result() {
     remote=$2
     local=$3
 
-    out=`httpcache $compressed "http://localhost:$port$remote" $local || :`
+    out=`${test_builddir}/httpcache $compressed "http://localhost:$port$remote" $local || :`
 
     case "$out" in
 	$test_string*)
