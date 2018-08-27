@@ -197,13 +197,7 @@ flatpak_transaction_progress_get_type
 <SECTION>
 <FILE>flatpak-transaction-operation</FILE>
 <TITLE>FlatpakTransactionOperation</TITLE>
-<SUBSECTION Standard>
-flatpak_transaction_add_default_dependency_sources
-flatpak_transaction_add_dependency_source
-flatpak_transaction_add_uninstall
-flatpak_transaction_get_current_operation
-flatpak_transaction_get_operations
-flatpak_transaction_get_installation
+FlatpakTransactionOperation
 flatpak_transaction_operation_get_bundle_path
 flatpak_transaction_operation_get_commit
 flatpak_transaction_operation_get_operation_type
@@ -212,8 +206,12 @@ flatpak_transaction_operation_get_remote
 flatpak_transaction_operation_get_metadata
 flatpak_transaction_operation_get_old_metadata
 flatpak_transaction_operation_type_to_string
+<SUBSECTION Standard>
+FlatpakTransactionOperationClass
+FLATPAK_IS_TRANSACTION_OPERATION
+FLATPAK_TRANSACTION_OPERATION
 FLATPAK_TYPE_TRANSACTION_OPERATION
-FlatpakTransactionOperation
+flatpak_transaction_operation_get_type
 </SECTION>
 
 <SECTION>
@@ -222,13 +220,22 @@ FlatpakTransactionOperation
 FlatpakTransaction
 FlatpakTransactionOperationType
 FlatpakTransactionErrorDetails
+FlatpakTransactionRemoteReason
 FlatpakTransactionResult
 flatpak_transaction_new_for_installation
 flatpak_transaction_add_install
 flatpak_transaction_add_install_bundle
+flatpak_transaction_add_install_flatpakref
 flatpak_transaction_add_update
-flatpak_transaction_is_empty
+flatpak_transaction_add_uninstall
+flatpak_transaction_add_default_dependency_sources
+flatpak_transaction_add_dependency_source
 flatpak_transaction_run
+<SUBSECTION>
+flatpak_transaction_get_current_operation
+flatpak_transaction_get_installation
+flatpak_transaction_get_operations
+flatpak_transaction_is_empty
 <SUBSECTION>
 flatpak_transaction_set_disable_dependencies
 flatpak_transaction_set_disable_prune
@@ -239,7 +246,6 @@ flatpak_transaction_set_no_pull
 flatpak_transaction_set_reinstall
 flatpak_transaction_set_force_uninstall
 flatpak_transaction_set_default_arch
-flatpak_transaction_add_install_flatpakref
 <SUBSECTION Standard>
 FlatpakTransactionClass
 FLATPAK_IS_TRANSACTION
@@ -269,6 +275,7 @@ flatpak_portal_error_quark
 
 <SECTION>
 <FILE>flatpak-bundle-ref</FILE>
+<TITLE>FlatpakBundleRef</TITLE>
 FlatpakBundleRef
 flatpak_bundle_ref_new
 flatpak_bundle_ref_get_file

@@ -548,7 +548,7 @@ flatpak_transaction_finalize (GObject *object)
   g_hash_table_unref (priv->last_op_for_ref);
   g_hash_table_unref (priv->remote_states);
   g_list_free_full (priv->ops, (GDestroyNotify) g_object_unref);
-  g_object_unref (priv->dir);
+  g_clear_object (&priv->dir);
 
   g_ptr_array_unref (priv->added_origin_remotes);
 
@@ -654,11 +654,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::new-operation:
    * @object: A #FlatpakTransaction
-   * @ref: The ref the operation will be working on
-   * @remote: The ref the operation will be working on
-   * @bundle: The bundle path (or %NULL)
-   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
-   * @progress: A #FlatpakTransactionProgress
+   * @operation: The new #FlatpakTransactionOperation
+   * @progress: A #FlatpakTransactionProgress for @operation
    */
   signals[NEW_OPERATION] =
     g_signal_new ("new-operation",
@@ -672,11 +669,9 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::operation-error:
    * @object: A #FlatpakTransaction
-   * @ref: The ref the operation was working on
-   * @remote: The remote
-   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
+   * @operation: The #FlatpakTransactionOperation which failed
    * @error: A #GError
-   * @details: A #FlatpakTransactionErrorDetails with Details about the error
+   * @details: A #FlatpakTransactionErrorDetails with details about the error
    *
    * Returns: the %TRUE to contine transaction, %FALSE to stop
    */
@@ -692,10 +687,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::operation-done:
    * @object: A #FlatpakTransaction
-   * @ref: The ref the operation was working on
-   * @remote: The remote
-   * @operation_type: A #FlatpakTransactionOperationType specifying operation type
-   * @commit: The new commit checksum
+   * @operation: The #FlatpakTransactionOperation which finished
    * @result: A #FlatpakTransactionResult giving details about the result
    *
    */
@@ -760,7 +752,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::add-new-remote:
    * @object: A #FlatpakTransaction
-   * @reason: The reason for the new remote is needed
+   * @reason: A #FlatpakTransactionRemoteReason for this suggestion
    * @from_id: The id of the app/runtime
    * @suggested_remote_name: The suggested remote name
    * @url: The repo url
@@ -1300,16 +1292,18 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *origin = NULL;
+  g_auto(GStrv) parts = NULL;
   const char *pref;
   g_autofree char *origin_remote = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   FlatpakTransactionOperation *op;
 
+  parts = flatpak_decompose_ref (ref, error);
+  if (parts == NULL)
+    return FALSE;
+
   if (remote_name_is_file (remote))
     {
-      g_auto(GStrv) parts = NULL;
-      parts = g_strsplit (ref, "/", -1);
-
       origin_remote = flatpak_dir_create_origin_remote (priv->dir,
                                                         remote, /* uri */
                                                         parts[1],
@@ -1326,6 +1320,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
       remote = origin_remote;
     }
 
+  /* safe because flatpak_decompose_ref() has validated ref */
   pref = strchr (ref, '/') + 1;
 
   /* install or update */
@@ -1390,6 +1385,19 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   return TRUE;
 }
 
+/**
+ * flatpak_transaction_add_install:
+ * @self: a #FlatpakTransaction
+ * @remote: the name of the remote
+ * @ref: the ref
+ * @subpaths: (nullable) (array zero-terminated=1): subpaths to install, or the
+ *  empty list or %NULL to pull all subpaths
+ * @error: return location for a #GError
+ *
+ * Adds installing the given ref to this transaction.
+ *
+ * Returns: %TRUE on success; %FALSE with @error set on failure.
+ */
 gboolean
 flatpak_transaction_add_install (FlatpakTransaction *self,
                                  const char         *remote,
@@ -1399,6 +1407,9 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
 {
   const char *all_paths[] = { NULL };
 
+  g_return_val_if_fail (ref != NULL, FALSE);
+  g_return_val_if_fail (remote != NULL, FALSE);
+
   /* If we install with no special args pull all subpaths */
   if (subpaths == NULL)
     subpaths = all_paths;
@@ -1406,6 +1417,18 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
   return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL, NULL, NULL, error);
 }
 
+/**
+ * flatpak_transaction_add_install_bundle:
+ * @self: a #FlatpakTransaction
+ * @file: a #GFile that is an flatpak bundle
+ * @gpg_data: (nullable): GPG key with which to check bundle signatures, or
+ *  %NULL to use the key embedded in the bundle (if any)
+ * @error: return location for a #GError
+ *
+ * Adds installing the given bundle to this transaction.
+ *
+ * Returns: %TRUE on success; %FALSE with @error set on failure.
+ */
 gboolean
 flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
                                         GFile              *file,
@@ -1429,6 +1452,8 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autoptr(GError) local_error = NULL;
 
+  g_return_val_if_fail (flatpakref_data != NULL, FALSE);
+
   if (!g_key_file_load_from_data (keyfile, g_bytes_get_data (flatpakref_data, NULL),
                                   g_bytes_get_size (flatpakref_data),
                                   0, &local_error))
@@ -1439,6 +1464,19 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
   return TRUE;
 }
 
+/**
+ * flatpak_transaction_add_update:
+ * @self: a #FlatpakTransaction
+ * @ref: the ref
+ * @subpaths: (nullable) (array zero-terminated=1): subpaths to install; %NULL
+ *  to use the current set, or `{ "", NULL }` to pull all subpaths.
+ * @commit: (nullable): the commit to update to, or %NULL to use the latest
+ * @error: return location for a #GError
+ *
+ * Adds updating the given ref to this transaction.
+ *
+ * Returns: %TRUE on success; %FALSE with @error set on failure.
+ */
 gboolean
 flatpak_transaction_add_update (FlatpakTransaction *self,
                                 const char         *ref,
@@ -1448,6 +1486,8 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
 {
   const char *all_paths[] = { NULL };
 
+  g_return_val_if_fail (ref != NULL, FALSE);
+
   /* If specify an empty subpath, that means all subpaths */
   if (subpaths != NULL && subpaths[0] != NULL && subpaths[0][0] == 0)
     subpaths = all_paths;
@@ -1455,11 +1495,23 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
   return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, error);
 }
 
+/**
+ * flatpak_transaction_add_uninstall:
+ * @self: a #FlatpakTransaction
+ * @ref: the ref
+ * @error: return location for a #GError
+ *
+ * Adds uninstalling the given ref to this transaction.
+ *
+ * Returns: %TRUE on success; %FALSE with @error set on failure.
+ */
 gboolean
 flatpak_transaction_add_uninstall (FlatpakTransaction *self,
                                    const char         *ref,
                                    GError            **error)
 {
+  g_return_val_if_fail (ref != NULL, FALSE);
+
   return flatpak_transaction_add_ref (self, NULL, ref, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, error);
 }
 
