@@ -7,6 +7,7 @@ cmd=${2:-python -m SimpleHTTPServer 0}
 test_tmpdir=$(pwd)
 
 [ "$dir" != "" ] && cd ${dir}
+echo "Running web server: PYTHONUNBUFFERED=1 setsid $cmd" >&2
 env PYTHONUNBUFFERED=1 setsid $cmd >${test_tmpdir}/httpd-output &
 child_pid=$!
 echo "Web server pid: $child_pid" >&2
@@ -30,3 +31,4 @@ done
 port=$(cat ${test_tmpdir}/httpd-port)
 echo "http://127.0.0.1:${port}" > ${test_tmpdir}/httpd-address
 echo "$child_pid" > ${test_tmpdir}/httpd-pid
+echo "Started web server '$cmd': process $child_pid on port $port" >&2

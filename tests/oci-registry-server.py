@@ -1,13 +1,20 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
-import BaseHTTPServer
+from __future__ import print_function
+
 import base64
 import hashlib
 import json
 import os
 import sys
-from urlparse import parse_qs
 import time
+
+if sys.version_info[0] >= 3:
+    from urllib.parse import parse_qs
+    import http.server as http_server
+else:
+    from urlparse import parse_qs
+    import BaseHTTPServer as http_server
 
 repositories = {}
 icons = {}
@@ -56,7 +63,7 @@ def parse_http_date(date):
     else:
         return None
 
-class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class RequestHandler(http_server.BaseHTTPRequestHandler):
     def check_route(self, route):
         parts = self.path.split('?', 1)
         path = parts[0].split('/')
@@ -64,7 +71,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         result = []
 
         route_path = route.split('/')
-        print(route_path, path)
+        print((route_path, path))
         if len(route_path) != len(path):
             return False
 
@@ -126,9 +133,13 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         if response == 200:
             if response_file:
-                with open(response_file) as f:
+                with open(response_file, 'rb') as f:
                     response_string = f.read()
-            self.wfile.write(response_string)
+
+            if isinstance(response_string, bytes):
+                self.wfile.write(response_string)
+            else:
+                self.wfile.write(response_string.encode('utf-8'))
 
     def do_POST(self):
         if self.check_route('/testing/@repo_name/@tag'):
@@ -227,7 +238,10 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             return
 
 def test():
-    BaseHTTPServer.test(RequestHandler)
+    if sys.version_info[0] >= 3:
+        http_server.test(RequestHandler, port=0)
+    else:
+        http_server.test(RequestHandler)
 
 if __name__ == '__main__':
     test()

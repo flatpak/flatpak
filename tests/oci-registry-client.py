@@ -1,8 +1,15 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
-import httplib
-import urllib
+from __future__ import print_function
+
 import sys
+
+if sys.version_info[0] >= 3:
+    import http.client as http_client
+    import urllib.parse as urllib_parse
+else:
+    import httplib as http_client
+    import urllib as urllib_parse
 
 if sys.argv[2] == 'add':
     detach_icons = '--detach-icons' in sys.argv
@@ -11,28 +18,28 @@ if sys.argv[2] == 'add':
     params = {'d': sys.argv[5]}
     if detach_icons:
         params['detach-icons'] = 1
-    query = urllib.urlencode(params)
-    conn = httplib.HTTPConnection(sys.argv[1])
+    query = urllib_parse.urlencode(params)
+    conn = http_client.HTTPConnection(sys.argv[1])
     path = "/testing/{repo}/{tag}?{query}".format(repo=sys.argv[3],
                                                    tag=sys.argv[4],
                                                    query=query)
     conn.request("POST", path)
     response = conn.getresponse()
     if response.status != 200:
-        print >>sys.stderr, response.read()
-        print >>sys.stderr, "Failed: status={}".format(response.status)
+        print(response.read(), file=sys.stderr)
+        print("Failed: status={}".format(response.status), file=sys.stderr)
         sys.exit(1)
 elif sys.argv[2] == 'delete':
-    conn = httplib.HTTPConnection(sys.argv[1])
+    conn = http_client.HTTPConnection(sys.argv[1])
     path = "/testing/{repo}/{ref}".format(repo=sys.argv[3],
                                           ref=sys.argv[4])
     conn.request("DELETE", path)
     response = conn.getresponse()
     if response.status != 200:
-        print >>sys.stderr, response.read()
-        print >>sys.stderr, "Failed: status={}".format(response.status)
+        print(response.read(), file=sys.stderr)
+        print("Failed: status={}".format(response.status), file=sys.stderr)
         sys.exit(1)
 else:
-    print >>sys.stderr, "Usage: oci-registry-client.py [add|remove] ARGS"
+    print("Usage: oci-registry-client.py [add|remove] ARGS", file=sys.stderr)
     sys.exit(1)
 
