@@ -64,16 +64,37 @@ static struct {
 #define DEFAULT_COLUMNS "pid,application,runtime"
 
 static int
-find_column (const char *name)
+find_column (const char *name,
+             GError **error)
 {
   int i;
+  int candidate;
 
+  candidate = -1;
   for (i = 0; i < G_N_ELEMENTS(all_columns); i++)
     {
-      if (strcmp (name, all_columns[i].name) == 0)
-        return i;
+      if (g_str_equal (all_columns[i].name, name))
+        {
+          return i;
+        }
+      else if (g_str_has_prefix (all_columns[i].name, name))
+        {
+          if (candidate == -1)
+            {
+              candidate = i;
+            }
+          else
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Ambiguous column: %s"), name);
+              return -1;
+            }
+        }
     }
 
+  if (candidate >= 0)
+    return candidate;
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Unknown colum: %s"), name);
   return -1;
 }
 
@@ -196,10 +217,9 @@ enumerate_instances (const char *columns,
   col_idx = g_new (int, n_cols); 
   for (i = 0; i < n_cols; i++)
     {
-      col_idx[i] = find_column (cols[i]);
+      col_idx[i] = find_column (cols[i], error);
       if (col_idx[i] == -1)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Unknown colum: %s"), cols[i]);
           return FALSE;
         }
     }
