@@ -173,5 +173,6 @@ gboolean flatpak_run_app (const char     *app_ref,
                           GCancellable   *cancellable,
                           GError        **error);
 
+void flatpak_run_gc_ids (void);
 
 #endif /* __FLATPAK_RUN_H__ */
