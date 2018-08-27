@@ -48,13 +48,16 @@ static struct {
   const char *name;
   const char *title;
   const char *desc;
+  int len;
 } all_columns[] = {
-  { "application",    N_("Application"),    N_("Show the application ID") },
-  { "arch",           N_("Architecture"),   N_("Show the architecture") },
-  { "branch",         N_("Branch"),         N_("Show the application branch") },
-  { "runtime",        N_("Runtime"),        N_("Show the runtime ID") },
-  { "runtime-branch", N_("Runtime Branch"), N_("Show the runtime branch") },
-  { "pid",            N_("PID"),            N_("Show the PID of the main process") },
+  { "application",    N_("Application"),    N_("Show the application ID"),           0 },
+  { "arch",           N_("Architecture"),   N_("Show the architecture"),             0 },
+  { "branch",         N_("Branch"),         N_("Show the application branch"),       0 },
+  { "commit",         N_("Commit"),         N_("Show the application commit"),      12 },
+  { "runtime",        N_("Runtime"),        N_("Show the runtime ID"),               0 },
+  { "runtime-branch", N_("Runtime Branch"), N_("Show the runtime branch"),           0 },
+  { "runtime-commit", N_("Runtime Commit"), N_("Show the runtime commit"),          12 },
+  { "pid",            N_("PID"),            N_("Show the PID of the main process"),  0 },
 };
 
 #define ALL_COLUMNS "pid,application,arch,branch,runtime,runtime-branch"
@@ -154,6 +157,8 @@ get_instance_column (GKeyFile *info,
     return g_key_file_get_string (info, "Instance", "arch", NULL);
   if (strcmp (name, "branch") == 0)
     return g_key_file_get_string (info, "Instance", "branch", NULL);
+  else if (strcmp (name, "commit") == 0)
+    return g_key_file_get_string (info, "Instance", "app-commit", NULL);
   else if (strcmp (name, "runtime") == 0)
     {
       g_autofree char *full_ref = g_key_file_get_string (info, "Application", "runtime", NULL);
@@ -166,6 +171,8 @@ get_instance_column (GKeyFile *info,
       g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
       return g_strdup (ref[3]);
     }
+  else if (strcmp (name, "runtime-commit") == 0)
+    return g_key_file_get_string (info, "Instance", "runtime-commit", NULL);
 
   return NULL;
 }
@@ -219,13 +226,18 @@ enumerate_instances (const char *columns,
       for (i = 0; i < n_cols; i++)
         {
           g_autofree char *col = NULL;
+          int len;
 
           if (strcmp (all_columns[col_idx[i]].name, "pid") == 0)
             col = get_instance_pid (instance);
           else 
             col = get_instance_column (info, all_columns[col_idx[i]].name);
 
-          flatpak_table_printer_add_column (printer, col ? col : "");
+          len = all_columns[col_idx[i]].len;
+          if (len == 0)
+            flatpak_table_printer_add_column (printer, col);
+          else
+            flatpak_table_printer_add_column_len (printer, col, len);
         }
 
       flatpak_table_printer_finish_row (printer);

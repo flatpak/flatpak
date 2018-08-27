@@ -132,6 +132,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term>commit</term>
+
+                <listitem><para>
+                    Show the application commit
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>runtime</term>
 
                 <listitem><para>
@@ -144,6 +152,14 @@
 
                 <listitem><para>
                     Show the runtime branch
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>runtime-commit</term>
+
+                <listitem><para>
+                    Show the runtime commit
                 </para></listitem>
             </varlistentry>
 
