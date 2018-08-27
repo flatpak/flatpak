@@ -1687,7 +1687,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                char          **app_info_path_out,
                                GError        **error)
 {
-  g_autofree char *tmp_path = NULL;
+  g_autofree char *info_path = NULL;
   int fd, fd2;
 
   g_autoptr(GKeyFile) keyfile = NULL;
@@ -1719,16 +1719,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   /* Keep the .ref lock held until we've started bwrap to avoid races */
   flatpak_bwrap_add_noinherit_fd (bwrap, glnx_steal_fd (&lock_fd));
 
-  fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
-  if (fd < 0)
-    {
-      int errsv = errno;
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open flatpak-info temp file: %s"), g_strerror (errsv));
-      return FALSE;
-    }
-
-  close (fd);
+  info_path = g_build_filename (instance_id_host_dir, "info", NULL);
 
   keyfile = g_key_file_new ();
 
@@ -1810,7 +1801,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 
   flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
 
-  if (!g_key_file_save_to_file (keyfile, tmp_path, error))
+  if (!g_key_file_save_to_file (keyfile, info_path, error))
     return FALSE;
 
   /* We want to create a file on /.flatpak-info that the app cannot modify, which
@@ -1824,26 +1815,24 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
      This way even if the bind-mount is unmounted we can find the real data.
    */
 
-  fd = open (tmp_path, O_RDONLY);
+  fd = open (info_path, O_RDONLY);
   if (fd == -1)
     {
       int errsv = errno;
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open temp file: %s"), g_strerror (errsv));
+                   _("Failed to open flatpak-info file: %s"), g_strerror (errsv));
       return FALSE;
     }
 
-  fd2 = open (tmp_path, O_RDONLY);
+  fd2 = open (info_path, O_RDONLY);
   if (fd2 == -1)
     {
       close (fd);
       int errsv = errno;
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open temp file: %s"), g_strerror (errsv));
+                   _("Failed to open flatpak-info file: %s"), g_strerror (errsv));
       return FALSE;
     }
-
-  unlink (tmp_path);
 
   flatpak_bwrap_add_args_data_fd (bwrap,
                                   "--file", fd, "/.flatpak-info");
