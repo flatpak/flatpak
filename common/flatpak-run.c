@@ -1685,6 +1685,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                gboolean        sandbox,
                                gboolean        build,
                                char          **app_info_path_out,
+                               char          **instance_id_host_dir_out,
                                GError        **error)
 {
   g_autofree char *info_path = NULL;
@@ -1844,6 +1845,9 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 
   if (app_info_path_out != NULL)
     *app_info_path_out = g_strdup_printf ("/proc/self/fd/%d", fd);
+
+  if (instance_id_host_dir_out != NULL)
+    *instance_id_host_dir_out = g_steal_pointer (&instance_id_host_dir);
 
   return TRUE;
 }
@@ -2828,6 +2832,7 @@ flatpak_run_app (const char     *app_ref,
   g_auto(GStrv) runtime_parts = NULL;
   int i;
   g_autofree char *app_info_path = NULL;
+  g_autofree char *instance_id_host_dir = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
@@ -3040,7 +3045,7 @@ flatpak_run_app (const char     *app_ref,
                                       app_ref_parts[1], app_ref_parts[3],
                                       runtime_ref, app_id_dir, app_context, extra_context,
                                       sandboxed, FALSE,
-                                      &app_info_path, error))
+                                      &app_info_path, &instance_id_host_dir, error))
     return FALSE;
 
   if (!sandboxed && !(flags & FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL))
@@ -3096,17 +3101,32 @@ flatpak_run_app (const char     *app_ref,
 
   if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
     {
+      GPid child_pid;
+      char pid_str[64];
+      g_autofree char *pid_path = NULL;
+
       if (!g_spawn_async (NULL,
                           (char **) bwrap->argv->pdata,
                           bwrap->envp,
                           G_SPAWN_SEARCH_PATH,
                           flatpak_bwrap_child_setup_cb, bwrap->fds,
-                          NULL,
+                          &child_pid,
                           error))
         return FALSE;
+
+      g_snprintf (pid_str, sizeof (pid_str), "%" G_PID_FORMAT, child_pid);
+      pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
+      g_file_set_contents (pid_path, pid_str, -1, NULL);
     }
   else
     {
+      char pid_str[64];
+      g_autofree char *pid_path = NULL;
+
+      g_snprintf (pid_str, sizeof (pid_str), "%" G_PID_FORMAT, getpid ());
+      pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
+      g_file_set_contents (pid_path, pid_str, -1, NULL);
+
       /* Ensure we unset O_CLOEXEC */
       flatpak_bwrap_child_setup_cb (bwrap->fds);
       if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
