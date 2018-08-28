@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-08-20 10:28+0200\n"
+"POT-Creation-Date: 2018-08-28 11:33+0200\n"
 "PO-Revision-Date: 2018-08-19 20:05+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -379,36 +379,36 @@ msgstr "Zapisywanie wywołań magistrali sesji w dzienniku"
 msgid "Log system bus calls"
 msgstr "Zapisywanie wywołań magistrali systemu w dzienniku"
 
-#: app/flatpak-builtins-build.c:203
+#: app/flatpak-builtins-build.c:206
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
 msgstr "KATALOG [POLECENIE [parametry…]] — buduje w katalogu"
 
-#: app/flatpak-builtins-build.c:226 app/flatpak-builtins-build-finish.c:585
+#: app/flatpak-builtins-build.c:229 app/flatpak-builtins-build-finish.c:585
 msgid "DIRECTORY must be specified"
 msgstr "Należy podać KATALOG"
 
-#: app/flatpak-builtins-build.c:237 app/flatpak-builtins-build-export.c:725
+#: app/flatpak-builtins-build.c:240 app/flatpak-builtins-build-export.c:725
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr ""
 "Nie zainicjowano katalogu budowania %s, należy użyć „flatpak build-init”"
 
-#: app/flatpak-builtins-build.c:256
+#: app/flatpak-builtins-build.c:259
 msgid "metadata invalid, not application or runtime"
 msgstr ""
 "nieprawidłowe metadane, nie jest programem lub środowiskiem wykonawczym"
 
-#: app/flatpak-builtins-build.c:383
+#: app/flatpak-builtins-build.c:386
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Brak punktu rozszerzeń pasującego do %s w %s"
 
-#: app/flatpak-builtins-build.c:548
+#: app/flatpak-builtins-build.c:552
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Brak „=” w opcji montowania dowiązania „%s”"
 
-#: app/flatpak-builtins-build.c:580 common/flatpak-run.c:3126
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3135
 msgid "Unable to start app"
 msgstr "Nie można uruchomić programu"
 
@@ -676,7 +676,7 @@ msgid "Command to set"
 msgstr "Ustawiane polecenie"
 
 #: app/flatpak-builtins-build-finish.c:50 app/flatpak-builtins-run.c:59
-#: app/flatpak-main.c:177
+#: app/flatpak-main.c:178
 msgid "COMMAND"
 msgstr "POLECENIE"
 
@@ -708,7 +708,7 @@ msgstr "NAZWA=ZMIENNA[=WARTOŚĆ]"
 msgid "Remove extension point info"
 msgstr "Usuwa informacje o punkcie rozszerzeń"
 
-#: app/flatpak-builtins-build-finish.c:55 app/flatpak-main.c:154
+#: app/flatpak-builtins-build-finish.c:55 app/flatpak-main.c:155
 msgid "NAME"
 msgstr "NAZWA"
 
@@ -1650,7 +1650,7 @@ msgid " [REMOTE or URI] - Show available runtimes and applications"
 msgstr ""
 " [REPOZYTORIUM lub URI] — wyświetla dostępne środowiska wykonawcze i programy"
 
-#: app/flatpak-builtins-ls-remote.c:199
+#: app/flatpak-builtins-ls-remote.c:199 app/flatpak-builtins-ps.c:56
 msgid "Commit"
 msgstr "Zatwierdzenie"
 
@@ -1732,6 +1732,125 @@ msgstr "Błędna liczba parametrów"
 #: app/flatpak-builtins-permission-show.c:138
 msgid "APP_ID - Show permissions for an app"
 msgstr "IDENTYFIKATOR_PROGRAMU — wyświetla uprawnienia programu"
+
+#: app/flatpak-builtins-ps.c:42 app/flatpak-builtins-ps.c:119
+#, fuzzy
+msgid "Show available columns"
+msgstr "Wyświetla wyłączone repozytoria"
+
+#: app/flatpak-builtins-ps.c:43
+#, fuzzy
+msgid "What information to show"
+msgstr "Wyświetla informacje o repozytorium"
+
+#: app/flatpak-builtins-ps.c:43
+msgid "FIELD,…"
+msgstr ""
+
+#: app/flatpak-builtins-ps.c:53
+#, fuzzy
+msgid "Application"
+msgstr "Identyfikator programu"
+
+#: app/flatpak-builtins-ps.c:53
+#, fuzzy
+msgid "Show the application ID"
+msgstr "Identyfikator programu"
+
+#: app/flatpak-builtins-ps.c:54
+#, fuzzy
+msgid "Architecture"
+msgstr "Używana architektura"
+
+#: app/flatpak-builtins-ps.c:54
+msgid "Show the architecture"
+msgstr ""
+
+#: app/flatpak-builtins-ps.c:55 app/flatpak-builtins-search.c:319
+msgid "Branch"
+msgstr "Gałąź"
+
+#: app/flatpak-builtins-ps.c:55
+#, fuzzy
+msgid "Show the application branch"
+msgstr "Wyświetla architektury i gałęzie"
+
+#: app/flatpak-builtins-ps.c:56
+#, fuzzy
+msgid "Show the application commit"
+msgstr "Wyświetla położenie"
+
+#: app/flatpak-builtins-ps.c:57
+#, fuzzy
+msgid "Runtime"
+msgstr "Środowisko wykonawcze:"
+
+#: app/flatpak-builtins-ps.c:57
+#, fuzzy
+msgid "Show the runtime ID"
+msgstr "Wyświetla środowisko wykonawcze"
+
+#: app/flatpak-builtins-ps.c:58
+#, fuzzy
+msgid "Runtime Branch"
+msgstr "Środowisko wykonawcze:"
+
+#: app/flatpak-builtins-ps.c:58
+#, fuzzy
+msgid "Show the runtime branch"
+msgstr "Wyświetla środowisko wykonawcze"
+
+#: app/flatpak-builtins-ps.c:59
+#, fuzzy
+msgid "Runtime Commit"
+msgstr "Aktywne zatwierdzenie"
+
+#: app/flatpak-builtins-ps.c:59
+#, fuzzy
+msgid "Show the runtime commit"
+msgstr "Wyświetla środowisko wykonawcze"
+
+#: app/flatpak-builtins-ps.c:60
+#, fuzzy
+msgid "PID"
+msgstr "IDENTYFIKATOR-PROGRAMU"
+
+#: app/flatpak-builtins-ps.c:60
+msgid "Show the PID of the main process"
+msgstr ""
+
+#: app/flatpak-builtins-ps.c:88
+#, c-format
+msgid "Ambiguous column: %s"
+msgstr ""
+
+#: app/flatpak-builtins-ps.c:97
+#, fuzzy, c-format
+msgid "Unknown colum: %s"
+msgstr "Nieznane polecenie „%s”"
+
+#: app/flatpak-builtins-ps.c:108
+msgid "Available columns:\n"
+msgstr ""
+
+#: app/flatpak-builtins-ps.c:118
+#, fuzzy
+msgid "Show all columns"
+msgstr "Wyświetla położenie"
+
+#: app/flatpak-builtins-ps.c:228
+#, fuzzy
+msgid "Instance"
+msgstr "Zainstalowano"
+
+#: app/flatpak-builtins-ps.c:295
+msgid " - Enumerate running sandboxes"
+msgstr ""
+
+#: app/flatpak-builtins-ps.c:305
+#, fuzzy
+msgid "Extra arguments given"
+msgstr "Informacje o dodatkowych danych"
 
 #: app/flatpak-builtins-repair.c:63
 #, c-format
@@ -2006,10 +2125,6 @@ msgstr "Identyfikator programu"
 msgid "Version"
 msgstr "Wersja"
 
-#: app/flatpak-builtins-search.c:319
-msgid "Branch"
-msgstr "Gałąź"
-
 #: app/flatpak-builtins-search.c:321
 msgid "Remotes"
 msgstr "Repozytoria"
@@ -2062,7 +2177,7 @@ msgstr "Nie można podać ODNIESIEŃ podczas używania parametru --all"
 msgid "Must not specify REFs when using --unused"
 msgstr "Nie można podać ODNIESIEŃ podczas używania parametru --unused"
 
-#: app/flatpak-builtins-uninstall.c:290 app/flatpak-cli-transaction.c:537
+#: app/flatpak-builtins-uninstall.c:290 app/flatpak-cli-transaction.c:564
 #, c-format
 msgid "Uninstalling from %s:\n"
 msgstr "Odinstalowywanie z %s:\n"
@@ -2285,76 +2400,84 @@ msgstr "Ostrzeżenie: %s jest niewspierane, w zamian jest %s\n"
 msgid "Warning: %s is end-of-life, with reason: %s\n"
 msgstr "Ostrzeżenie: %s jest niewspierane z powodu: %s\n"
 
-#: app/flatpak-cli-transaction.c:486
+#: app/flatpak-cli-transaction.c:509
 msgid "new permissions"
 msgstr "nowe uprawnienia"
 
-#: app/flatpak-cli-transaction.c:486
+#: app/flatpak-cli-transaction.c:509
 msgid "permissions"
 msgstr "uprawnienia"
 
-#: app/flatpak-cli-transaction.c:491
+#: app/flatpak-cli-transaction.c:514
 msgid "new file access"
 msgstr "nowy dostęp do plików"
 
-#: app/flatpak-cli-transaction.c:491
+#: app/flatpak-cli-transaction.c:514
 msgid "file access"
 msgstr "dostęp do plików"
 
-#: app/flatpak-cli-transaction.c:497
+#: app/flatpak-cli-transaction.c:520
 msgid "new dbus access"
 msgstr "nowy dostęp do magistrali D-Bus"
 
-#: app/flatpak-cli-transaction.c:497
+#: app/flatpak-cli-transaction.c:520
 msgid "dbus access"
 msgstr "dostęp do magistrali D-Bus"
 
-#: app/flatpak-cli-transaction.c:500
+#: app/flatpak-cli-transaction.c:523
 msgid "new dbus ownership"
 msgstr "nowy właściciel magistrali D-Bus"
 
-#: app/flatpak-cli-transaction.c:500
+#: app/flatpak-cli-transaction.c:523
 msgid "dbus ownership"
 msgstr "właściciel magistrali D-Bus"
 
-#: app/flatpak-cli-transaction.c:506
+#: app/flatpak-cli-transaction.c:529
 msgid "new system dbus access"
 msgstr "nowy dostęp do systemowej magistrali D-Bus"
 
-#: app/flatpak-cli-transaction.c:506
+#: app/flatpak-cli-transaction.c:529
 msgid "system dbus access"
 msgstr "dostęp do systemowej magistrali D-Bus"
 
-#: app/flatpak-cli-transaction.c:509
+#: app/flatpak-cli-transaction.c:532
 msgid "new system dbus ownership"
 msgstr "nowy właściciel systemowej magistrali D-Bus"
 
-#: app/flatpak-cli-transaction.c:509
+#: app/flatpak-cli-transaction.c:532
 msgid "system dbus ownership"
 msgstr "właściciel systemowej magistrali D-Bus"
 
-#: app/flatpak-cli-transaction.c:559
+#: app/flatpak-cli-transaction.c:536
+msgid "new tags"
+msgstr ""
+
+#: app/flatpak-cli-transaction.c:536
+msgid "tags"
+msgstr ""
+
+#: app/flatpak-cli-transaction.c:586
 #, c-format
 msgid "Installing in %s:\n"
 msgstr "Instalowanie w %s:\n"
 
-#: app/flatpak-cli-transaction.c:596
+#: app/flatpak-cli-transaction.c:623
 #, c-format
 msgid "Updating in %s:\n"
 msgstr "Aktualizowanie w %s:\n"
 
-#: app/flatpak-cli-transaction.c:618
+#: app/flatpak-cli-transaction.c:645
 msgid "Is this ok"
 msgstr "Czy to w porządku"
 
-#: app/flatpak-cli-transaction.c:701
+#: app/flatpak-cli-transaction.c:728
 #, c-format
 msgid "Skipping: %s\n"
 msgstr "Pomijanie: %s\n"
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:759
+#: app/flatpak-cli-transaction.c:786
 msgid "There were one or more errors"
 msgstr "Wystąpił jeden lub więcej błędów"
 
@@ -2434,8 +2557,15 @@ msgstr "Podaje domyślnie uruchamianą wersję"
 msgid "Enter the namespace of a running application"
 msgstr "Przestrzeń nazw działającego programu"
 
+#: app/flatpak-main.c:84
+#, fuzzy
+msgid "Enumerate running applications"
+msgstr ""
+"\n"
+" Uruchamianie programów"
+
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:86
+#: app/flatpak-main.c:87
 msgid ""
 "\n"
 " Manage file access"
@@ -2443,24 +2573,24 @@ msgstr ""
 "\n"
 " Zarządza dostępem do plików"
 
-#: app/flatpak-main.c:87
+#: app/flatpak-main.c:88
 msgid "Grant an application access to a specific file"
 msgstr "Nadaje programowi dostęp do podanego pliku"
 
-#: app/flatpak-main.c:88
+#: app/flatpak-main.c:89
 msgid "Revoke access to a specific file"
 msgstr "Odbiera dostęp do podanego pliku"
 
-#: app/flatpak-main.c:89
+#: app/flatpak-main.c:90
 msgid "Show information about a specific file"
 msgstr "Wyświetla informacje o podanym pliku"
 
-#: app/flatpak-main.c:90
+#: app/flatpak-main.c:91
 msgid "List exported files"
 msgstr "Wyświetla listę wyeksportowanych plików"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:93
+#: app/flatpak-main.c:94
 msgid ""
 "\n"
 " Manage dynamic permissions"
@@ -2468,24 +2598,24 @@ msgstr ""
 "\n"
 " Zarządza dynamicznymi uprawnieniami"
 
-#: app/flatpak-main.c:94
+#: app/flatpak-main.c:95
 msgid "Remove item from permission store"
 msgstr "Usuwa element z przechowalni uprawnień"
 
-#: app/flatpak-main.c:95
+#: app/flatpak-main.c:96
 msgid "List permissions"
 msgstr "Wyświetla listę uprawnień"
 
-#: app/flatpak-main.c:96
+#: app/flatpak-main.c:97
 msgid "Show app permissions"
 msgstr "Wyświetla uprawnienia programu"
 
-#: app/flatpak-main.c:97
+#: app/flatpak-main.c:98
 msgid "Reset app permissions"
 msgstr "Przywraca uprawnienia programu"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:100
+#: app/flatpak-main.c:101
 msgid ""
 "\n"
 " Manage remote repositories"
@@ -2493,33 +2623,33 @@ msgstr ""
 "\n"
 " Zarządza zdalnymi repozytoriami"
 
-#: app/flatpak-main.c:101
+#: app/flatpak-main.c:102
 msgid "List all configured remotes"
 msgstr "Wyświetla listę wszystkich skonfigurowanych repozytoriów"
 
-#: app/flatpak-main.c:102
+#: app/flatpak-main.c:103
 msgid "Add a new remote repository (by URL)"
 msgstr "Dodaje nowe zdalne repozytorium (według adresu URL)"
 
-#: app/flatpak-main.c:103
+#: app/flatpak-main.c:104
 msgid "Modify properties of a configured remote"
 msgstr "Modyfikuje właściwości skonfigurowanego repozytorium"
 
-#: app/flatpak-main.c:104
+#: app/flatpak-main.c:105
 msgid "Delete a configured remote"
 msgstr "Usuwa skonfigurowane repozytorium"
 
-#: app/flatpak-main.c:106
+#: app/flatpak-main.c:107
 msgid "List contents of a configured remote"
 msgstr "Wyświetla listę zawartości skonfigurowanego repozytorium"
 
-#: app/flatpak-main.c:107
+#: app/flatpak-main.c:108
 msgid "Show information about a remote app or runtime"
 msgstr ""
 "Wyświetla informacje o programie lub środowisku wykonawczym repozytorium"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:110
+#: app/flatpak-main.c:111
 msgid ""
 "\n"
 " Build applications"
@@ -2527,93 +2657,93 @@ msgstr ""
 "\n"
 " Buduje programy"
 
-#: app/flatpak-main.c:111
+#: app/flatpak-main.c:112
 msgid "Initialize a directory for building"
 msgstr "Inicjuje katalog do budowania"
 
-#: app/flatpak-main.c:112
+#: app/flatpak-main.c:113
 msgid "Run a build command inside the build dir"
 msgstr "Wykonuje polecenie budowania w katalogu budowania"
 
-#: app/flatpak-main.c:113
+#: app/flatpak-main.c:114
 msgid "Finish a build dir for export"
 msgstr "Kończy katalog budowania do eksportu"
 
-#: app/flatpak-main.c:114
+#: app/flatpak-main.c:115
 msgid "Export a build dir to a repository"
 msgstr "Eksportuje katalog budowania do repozytorium"
 
-#: app/flatpak-main.c:115
+#: app/flatpak-main.c:116
 msgid "Create a bundle file from a ref in a local repository"
 msgstr "Tworzy pakiet z odniesienia w lokalnym repozytorium"
 
-#: app/flatpak-main.c:116
+#: app/flatpak-main.c:117
 msgid "Import a bundle file"
 msgstr "Importuje pakiet"
 
-#: app/flatpak-main.c:117
+#: app/flatpak-main.c:118
 msgid "Sign an application or runtime"
 msgstr "Podpisuje program lub środowisko wykonawcze"
 
-#: app/flatpak-main.c:118
+#: app/flatpak-main.c:119
 msgid "Update the summary file in a repository"
 msgstr "Aktualizuje plik podsumowania w repozytorium"
 
-#: app/flatpak-main.c:119
+#: app/flatpak-main.c:120
 msgid "Create new commit based on existing ref"
 msgstr "Tworzy nowe zatwierdzenie na podstawie istniejącego odniesienia"
 
-#: app/flatpak-main.c:120
+#: app/flatpak-main.c:121
 msgid "Print information about a repo"
 msgstr "Wyświetla informacje o repozytorium"
 
-#: app/flatpak-main.c:137
+#: app/flatpak-main.c:138
 msgid "Print debug information during command processing, -vv for more detail"
 msgstr ""
 "Wyświetla informacje debugowania podczas przetwarzania poleceń, -vv "
 "wyświetla więcej"
 
-#: app/flatpak-main.c:138
+#: app/flatpak-main.c:139
 msgid "Print OSTree debug information during command processing"
 msgstr "Wyświetla informacje debugowania OSTree podczas przetwarzania poleceń"
 
-#: app/flatpak-main.c:139
+#: app/flatpak-main.c:140
 msgid "Show help options"
 msgstr "Wyświetla opcje pomocy"
 
-#: app/flatpak-main.c:144
+#: app/flatpak-main.c:145
 msgid "Print version information and exit"
 msgstr "Wyświetla informacje o wersji i kończy działanie"
 
-#: app/flatpak-main.c:145
+#: app/flatpak-main.c:146
 msgid "Print default arch and exit"
 msgstr "Wyświetla domyślną architekturę i kończy działanie"
 
-#: app/flatpak-main.c:146
+#: app/flatpak-main.c:147
 msgid "Print supported arches and exit"
 msgstr "Wyświetla obsługiwane architektury i kończy działanie"
 
-#: app/flatpak-main.c:147
+#: app/flatpak-main.c:148
 msgid "Print active gl drivers and exit"
 msgstr "Wyświetla aktywne sterowniki GL i kończy działanie"
 
-#: app/flatpak-main.c:152
+#: app/flatpak-main.c:153
 msgid "Work on user installations"
 msgstr "Działa na instalacjach użytkownika"
 
-#: app/flatpak-main.c:153
+#: app/flatpak-main.c:154
 msgid "Work on system-wide installations (default)"
 msgstr "Działa na instalacjach systemowych (domyślnie)"
 
-#: app/flatpak-main.c:154
+#: app/flatpak-main.c:155
 msgid "Work on specific system-wide installation(s)"
 msgstr "Działa na podanych instalacjach systemowych"
 
-#: app/flatpak-main.c:180
+#: app/flatpak-main.c:181
 msgid "Builtin Commands:"
 msgstr "Wbudowane polecenia:"
 
-#: app/flatpak-main.c:381
+#: app/flatpak-main.c:382
 msgid ""
 "The --installation option was used multiple times for a command that works "
 "on one installation"
@@ -2621,16 +2751,16 @@ msgstr ""
 "Opcja --installation została użyta wiele razy dla polecenia, które działa na "
 "jednej instalacji"
 
-#: app/flatpak-main.c:500
+#: app/flatpak-main.c:501
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Nieznane polecenie „%s”"
 
-#: app/flatpak-main.c:508
+#: app/flatpak-main.c:509
 msgid "No command specified"
 msgstr "Nie podano polecenia"
 
-#: app/flatpak-main.c:629
+#: app/flatpak-main.c:630
 msgid "error:"
 msgstr "błąd:"
 
@@ -2826,8 +2956,8 @@ msgstr "Nie odnaleziono zastępników dla %s"
 
 #: common/flatpak-dir.c:1712 common/flatpak-dir.c:2067
 #: common/flatpak-dir.c:2090 common/flatpak-dir.c:2112
-#: common/flatpak-dir.c:12241 common/flatpak-transaction.c:1337
-#: common/flatpak-transaction.c:1372 common/flatpak-utils.c:1434
+#: common/flatpak-dir.c:12241 common/flatpak-transaction.c:1332
+#: common/flatpak-transaction.c:1367 common/flatpak-utils.c:1434
 #: common/flatpak-utils.c:1529
 #, c-format
 msgid "%s not installed"
@@ -3128,57 +3258,52 @@ msgstr "Utworzenie potoku synchronizacji się nie powiodło"
 msgid "Failed to sync with dbus proxy"
 msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 
-#: common/flatpak-run.c:1727
-#, c-format
-msgid "Failed to open flatpak-info temp file: %s"
+#: common/flatpak-run.c:1824 common/flatpak-run.c:1834
+#, fuzzy, c-format
+msgid "Failed to open flatpak-info file: %s"
 msgstr "Otwarcie pliku tymczasowego „flatpak-info” się nie powiodło: %s"
 
-#: common/flatpak-run.c:1832 common/flatpak-run.c:1842
-#, c-format
-msgid "Failed to open temp file: %s"
-msgstr "Otwarcie pliku tymczasowego się nie powiodło: %s"
-
-#: common/flatpak-run.c:2779
+#: common/flatpak-run.c:2772
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig się nie powiodło, stan wyjścia %d"
 
-#: common/flatpak-transaction.c:1119
+#: common/flatpak-transaction.c:1111
 #, c-format
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "Ostrzeżenie: problem podczas wyszukiwania powiązanych odniesień: %s"
 
-#: common/flatpak-transaction.c:1189
+#: common/flatpak-transaction.c:1181
 #, c-format
 msgid "The Application %s requires the %s which was not found"
 msgstr "Program %s wymaga %s, którego nie odnaleziono"
 
-#: common/flatpak-transaction.c:1205
+#: common/flatpak-transaction.c:1197
 #, c-format
 msgid "The Application %s requires the %s which is not installed"
 msgstr "Program %s wymaga %s, które nie jest zainstalowane"
 
-#: common/flatpak-transaction.c:1343
+#: common/flatpak-transaction.c:1338
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Repozytorium %s jest wyłączone, ignorowanie aktualizacji %s"
 
-#: common/flatpak-transaction.c:1356
+#: common/flatpak-transaction.c:1351
 #, c-format
 msgid "%s is already installed"
 msgstr "Już zainstalowano %s"
 
-#: common/flatpak-transaction.c:1362
+#: common/flatpak-transaction.c:1357
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s jest już zainstalowane z repozytorium %s"
 
-#: common/flatpak-transaction.c:1496
+#: common/flatpak-transaction.c:1548
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Błąd podczas aktualizowania metadanych repozytorium dla „%s”: %s"
 
-#: common/flatpak-transaction.c:1731
+#: common/flatpak-transaction.c:1783
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -3187,21 +3312,21 @@ msgstr ""
 "Ostrzeżenie: traktowanie błędu pobierania repozytorium jako niekrytycznego, "
 "ponieważ %s jest już zainstalowane: %s"
 
-#: common/flatpak-transaction.c:1741
+#: common/flatpak-transaction.c:1793
 #, c-format
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Ostrzeżenie: nie można odnaleźć metadanych %s dla zależności: %s"
 
-#: common/flatpak-transaction.c:2338
+#: common/flatpak-transaction.c:2390
 msgid "Aborted by user"
 msgstr "Przerwane przez użytkownika"
 
-#: common/flatpak-transaction.c:2366
+#: common/flatpak-transaction.c:2418
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Pomijanie %s z powodu poprzedniego błędu"
 
-#: common/flatpak-transaction.c:2540
+#: common/flatpak-transaction.c:2592
 msgid "Aborted due to failure"
 msgstr "Przerwano z powodu niepowodzenia"
 
@@ -3400,3 +3525,6 @@ msgstr ""
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "Aktualizacja danych AppStream"
+
+#~ msgid "Failed to open temp file: %s"
+#~ msgstr "Otwarcie pliku tymczasowego się nie powiodło: %s"
