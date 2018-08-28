@@ -71,7 +71,7 @@ find_column (const char *name,
   int candidate;
 
   candidate = -1;
-  for (i = 0; i < G_N_ELEMENTS(all_columns); i++)
+  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
     {
       if (g_str_equal (all_columns[i].name, name))
         {
@@ -108,11 +108,11 @@ column_help (void)
   g_string_append (s, _("Available columns:\n"));
   
   len = 0;
-  for (i = 0; i < G_N_ELEMENTS(all_columns); i++)
+  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
     len = MAX (len, strlen (all_columns[i].name));
 
   len += 4;
-  for (i = 0; i < G_N_ELEMENTS(all_columns); i++)
+  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
     g_string_append_printf (s, "  %-*s %s\n", len, all_columns[i].name, all_columns[i].desc);
 
   g_string_append_printf (s, "  %-*s %s\n", len, "all", _("Show all columns"));
