@@ -48,29 +48,53 @@ static struct {
   const char *name;
   const char *title;
   const char *desc;
+  int len;
 } all_columns[] = {
-  { "application",    N_("Application"),    N_("Show the application ID") },
-  { "arch",           N_("Architecture"),   N_("Show the architecture") },
-  { "branch",         N_("Branch"),         N_("Show the application branch") },
-  { "runtime",        N_("Runtime"),        N_("Show the runtime ID") },
-  { "runtime-branch", N_("Runtime Branch"), N_("Show the runtime branch") },
-  { "pid",            N_("PID"),            N_("Show the PID of the main process") },
+  { "application",    N_("Application"),    N_("Show the application ID"),           0 },
+  { "arch",           N_("Architecture"),   N_("Show the architecture"),             0 },
+  { "branch",         N_("Branch"),         N_("Show the application branch"),       0 },
+  { "commit",         N_("Commit"),         N_("Show the application commit"),      12 },
+  { "runtime",        N_("Runtime"),        N_("Show the runtime ID"),               0 },
+  { "runtime-branch", N_("Runtime Branch"), N_("Show the runtime branch"),           0 },
+  { "runtime-commit", N_("Runtime Commit"), N_("Show the runtime commit"),          12 },
+  { "pid",            N_("PID"),            N_("Show the PID of the main process"),  0 },
 };
 
 #define ALL_COLUMNS "pid,application,arch,branch,runtime,runtime-branch"
 #define DEFAULT_COLUMNS "pid,application,runtime"
 
 static int
-find_column (const char *name)
+find_column (const char *name,
+             GError **error)
 {
   int i;
+  int candidate;
 
-  for (i = 0; i < G_N_ELEMENTS(all_columns); i++)
+  candidate = -1;
+  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
     {
-      if (strcmp (name, all_columns[i].name) == 0)
-        return i;
+      if (g_str_equal (all_columns[i].name, name))
+        {
+          return i;
+        }
+      else if (g_str_has_prefix (all_columns[i].name, name))
+        {
+          if (candidate == -1)
+            {
+              candidate = i;
+            }
+          else
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Ambiguous column: %s"), name);
+              return -1;
+            }
+        }
     }
 
+  if (candidate >= 0)
+    return candidate;
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Unknown colum: %s"), name);
   return -1;
 }
 
@@ -84,11 +108,11 @@ column_help (void)
   g_string_append (s, _("Available columns:\n"));
   
   len = 0;
-  for (i = 0; i < G_N_ELEMENTS(all_columns); i++)
+  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
     len = MAX (len, strlen (all_columns[i].name));
 
   len += 4;
-  for (i = 0; i < G_N_ELEMENTS(all_columns); i++)
+  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
     g_string_append_printf (s, "  %-*s %s\n", len, all_columns[i].name, all_columns[i].desc);
 
   g_string_append_printf (s, "  %-*s %s\n", len, "all", _("Show all columns"));
@@ -154,6 +178,8 @@ get_instance_column (GKeyFile *info,
     return g_key_file_get_string (info, "Instance", "arch", NULL);
   if (strcmp (name, "branch") == 0)
     return g_key_file_get_string (info, "Instance", "branch", NULL);
+  else if (strcmp (name, "commit") == 0)
+    return g_key_file_get_string (info, "Instance", "app-commit", NULL);
   else if (strcmp (name, "runtime") == 0)
     {
       g_autofree char *full_ref = g_key_file_get_string (info, "Application", "runtime", NULL);
@@ -166,6 +192,8 @@ get_instance_column (GKeyFile *info,
       g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
       return g_strdup (ref[3]);
     }
+  else if (strcmp (name, "runtime-commit") == 0)
+    return g_key_file_get_string (info, "Instance", "runtime-commit", NULL);
 
   return NULL;
 }
@@ -189,10 +217,9 @@ enumerate_instances (const char *columns,
   col_idx = g_new (int, n_cols); 
   for (i = 0; i < n_cols; i++)
     {
-      col_idx[i] = find_column (cols[i]);
+      col_idx[i] = find_column (cols[i], error);
       if (col_idx[i] == -1)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Unknown colum: %s"), cols[i]);
           return FALSE;
         }
     }
@@ -207,7 +234,15 @@ enumerate_instances (const char *columns,
   file = g_file_new_for_path (base_dir);
   enumerator = g_file_enumerate_children (file, "standard::name", G_FILE_QUERY_INFO_NONE, NULL, error);
   if (enumerator == NULL)
-    return FALSE;
+    {
+      if (g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          /* nothing to show */
+          g_clear_error (error);
+          return TRUE;
+        }
+      return FALSE;
+    }
 
   while ((dir_info = g_file_enumerator_next_file (enumerator, NULL, error)) != NULL)
     {
@@ -219,13 +254,18 @@ enumerate_instances (const char *columns,
       for (i = 0; i < n_cols; i++)
         {
           g_autofree char *col = NULL;
+          int len;
 
           if (strcmp (all_columns[col_idx[i]].name, "pid") == 0)
             col = get_instance_pid (instance);
           else 
             col = get_instance_column (info, all_columns[col_idx[i]].name);
 
-          flatpak_table_printer_add_column (printer, col ? col : "");
+          len = all_columns[col_idx[i]].len;
+          if (len == 0)
+            flatpak_table_printer_add_column (printer, col);
+          else
+            flatpak_table_printer_add_column_len (printer, col, len);
         }
 
       flatpak_table_printer_finish_row (printer);
