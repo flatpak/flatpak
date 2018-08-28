@@ -234,7 +234,15 @@ enumerate_instances (const char *columns,
   file = g_file_new_for_path (base_dir);
   enumerator = g_file_enumerate_children (file, "standard::name", G_FILE_QUERY_INFO_NONE, NULL, error);
   if (enumerator == NULL)
-    return FALSE;
+    {
+      if (g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          /* nothing to show */
+          g_clear_error (error);
+          return TRUE;
+        }
+      return FALSE;
+    }
 
   while ((dir_info = g_file_enumerator_next_file (enumerator, NULL, error)) != NULL)
     {
