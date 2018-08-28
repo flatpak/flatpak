@@ -50,17 +50,18 @@ static struct {
   const char *desc;
   int len;
 } all_columns[] = {
-  { "application",    N_("Application"),    N_("Show the application ID"),           0 },
-  { "arch",           N_("Architecture"),   N_("Show the architecture"),             0 },
-  { "branch",         N_("Branch"),         N_("Show the application branch"),       0 },
-  { "commit",         N_("Commit"),         N_("Show the application commit"),      12 },
-  { "runtime",        N_("Runtime"),        N_("Show the runtime ID"),               0 },
-  { "runtime-branch", N_("Runtime Branch"), N_("Show the runtime branch"),           0 },
-  { "runtime-commit", N_("Runtime Commit"), N_("Show the runtime commit"),          12 },
-  { "pid",            N_("PID"),            N_("Show the PID of the main process"),  0 },
+  { "application",    N_("Application"),    N_("Show the application ID"),              0 },
+  { "arch",           N_("Architecture"),   N_("Show the architecture"),                0 },
+  { "branch",         N_("Branch"),         N_("Show the application branch"),          0 },
+  { "commit",         N_("Commit"),         N_("Show the application commit"),         12 },
+  { "runtime",        N_("Runtime"),        N_("Show the runtime ID"),                  0 },
+  { "runtime-branch", N_("Runtime Branch"), N_("Show the runtime branch"),              0 },
+  { "runtime-commit", N_("Runtime Commit"), N_("Show the runtime commit"),             12 },
+  { "pid",            N_("PID"),            N_("Show the PID of the wrapper process"),  0 },
+  { "child-pid",      N_("Child PID"),      N_("Show the PID of the sandbox process"),  0 },
 };
 
-#define ALL_COLUMNS "pid,application,arch,branch,runtime,runtime-branch"
+#define ALL_COLUMNS "pid,child-pid,application,arch,branch,runtime,runtime-branch"
 #define DEFAULT_COLUMNS "pid,application,runtime"
 
 static int
@@ -144,6 +145,38 @@ get_instance_pid (const char *instance)
     }
 
   return pid; 
+}
+
+static int
+get_child_pid (const char *instance)
+{
+  g_autofree char *path = NULL;
+  g_autofree char *contents = NULL;
+  gsize length;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonParser) parser = NULL;
+  g_autoptr(JsonNode) node = NULL;
+  g_autoptr(JsonObject) obj = NULL;
+
+  path = g_build_filename (g_get_user_runtime_dir (), ".flatpak", instance, "bwrapinfo.json", NULL);
+
+  if (!g_file_get_contents (path, &contents, &length, &error))
+    {
+      g_debug ("Failed to load bwrapinfo.json file for instance '%s': %s", instance, error->message);
+      return 0;
+    }
+
+  parser = json_parser_new ();
+  if (!json_parser_load_from_data (parser, contents, length, &error))
+    {
+      g_debug ("Failed to parse bwrapinfo.json file for instance '%s': %s", instance, error->message);
+      return 0;
+    }
+
+  node = json_parser_get_root (parser);
+  obj = json_node_get_object (node);
+
+  return json_object_get_int_member (obj, "child-pid");
 }
 
 static GKeyFile *
@@ -258,6 +291,8 @@ enumerate_instances (const char *columns,
 
           if (strcmp (all_columns[col_idx[i]].name, "pid") == 0)
             col = get_instance_pid (instance);
+          else if (strcmp (all_columns[col_idx[i]].name, "child-pid") == 0)
+            col = g_strdup_printf ("%d", get_child_pid (instance));
           else 
             col = get_instance_column (info, all_columns[col_idx[i]].name);
 
