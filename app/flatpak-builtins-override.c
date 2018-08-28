@@ -36,9 +36,11 @@
 #include "flatpak-run-private.h"
 
 static gboolean opt_reset;
+static gboolean opt_show;
 
 static GOptionEntry options[] = {
   { "reset", 0, 0, G_OPTION_ARG_NONE, &opt_reset, N_("Remove existing overrides"), NULL },
+  { "show", 0, 0, G_OPTION_ARG_NONE, &opt_show, N_("Show existing overrides"), NULL },
   { NULL }
 };
 
@@ -91,6 +93,18 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
           return FALSE;
         }
       metakey = g_key_file_new ();
+    }
+
+  if (opt_show)
+    {
+      g_autofree char *data = NULL;
+
+      data = g_key_file_to_data (metakey, NULL, error);
+      if (data == NULL)
+        return FALSE;
+
+      g_print ("%s", data);
+      return TRUE;
     }
 
   overrides = flatpak_context_new ();
