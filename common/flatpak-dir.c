@@ -1684,6 +1684,38 @@ flatpak_save_override_keyfile (GKeyFile   *metakey,
   return g_key_file_save_to_file (metakey, filename, error);
 }
 
+gboolean
+flatpak_remove_override_keyfile (const char *app_id,
+                                 gboolean    user,
+                                 GError    **error)
+{
+  g_autoptr(GFile) base_dir = NULL;
+  g_autoptr(GFile) override_dir = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (user)
+    base_dir = flatpak_get_user_base_dir_location ();
+  else
+    base_dir = flatpak_get_system_default_base_dir_location ();
+
+  override_dir = g_file_get_child (base_dir, "overrides");
+
+  if (app_id)
+    file = g_file_get_child (override_dir, app_id);
+  else
+    file = g_file_get_child (override_dir, "global");
+
+  if (!g_file_delete (file, NULL, &local_error) &&
+      !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 /* Note: passing a checksum only works here for non-sub-set deploys, not
    e.g. a partial locale install, because it will not find the real
    deploy directory. This is ok for now, because checksum is only
