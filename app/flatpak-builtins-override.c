@@ -35,7 +35,10 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 
+static gboolean opt_reset;
+
 static GOptionEntry options[] = {
+  { "reset", 0, 0, G_OPTION_ARG_NONE, &opt_reset, N_("Remove existing overrides"), NULL },
   { NULL }
 };
 
@@ -75,6 +78,9 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
     }
   else
     app = NULL;
+
+  if (opt_reset)
+    return flatpak_remove_override_keyfile (app, flatpak_dir_is_user (dir), &my_error);
 
   metakey = flatpak_load_override_keyfile (app, flatpak_dir_is_user (dir), &my_error);
   if (metakey == NULL)
