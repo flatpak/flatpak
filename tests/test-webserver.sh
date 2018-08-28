@@ -8,6 +8,7 @@ test_tmpdir=$(pwd)
 
 [ "$dir" != "" ] && cd ${dir}
 echo "Running web server: PYTHONUNBUFFERED=1 setsid $cmd" >&2
+touch ${test_tmpdir}/httpd-output
 env PYTHONUNBUFFERED=1 setsid $cmd >${test_tmpdir}/httpd-output &
 child_pid=$!
 echo "Web server pid: $child_pid" >&2
