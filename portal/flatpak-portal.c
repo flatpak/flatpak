@@ -234,11 +234,22 @@ child_setup_func (gpointer user_data)
 }
 
 static gboolean
-is_valid_expose (const char *expose)
+is_valid_expose (const char *expose,
+                 GError **error)
 {
   /* No subdirs or absolute paths */
-  if (strchr (expose, '/'))
-    return FALSE;
+  if (expose[0] == '/')
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                   "Invalid sandbox expose: absolute paths not allowed");
+      return FALSE;
+    }
+  else if (strchr (expose, '/'))
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                   "Invalid sandbox expose: subdirectories not allowed");
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -381,12 +392,11 @@ handle_spawn (PortalFlatpak         *object,
   for (i = 0; sandbox_expose != NULL && sandbox_expose[i] != NULL; i++)
     {
       const char *expose = sandbox_expose[i];
+
       g_debug ("exposing %s", expose);
-      if (!is_valid_expose (expose))
+      if (!is_valid_expose (expose, &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                 G_DBUS_ERROR_INVALID_ARGS,
-                                                 "Invalid sandbox expose");
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return TRUE;
         }
     }
@@ -395,11 +405,9 @@ handle_spawn (PortalFlatpak         *object,
     {
       const char *expose = sandbox_expose_ro[i];
       g_debug ("exposing %s", expose);
-      if (!is_valid_expose (expose))
+      if (!is_valid_expose (expose, &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                 G_DBUS_ERROR_INVALID_ARGS,
-                                                 "Invalid sandbox expose");
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return TRUE;
         }
     }
