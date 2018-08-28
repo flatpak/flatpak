@@ -320,6 +320,14 @@ key=v1;v2;
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--show</option></term>
+
+                <listitem><para>
+                    Shows overrides. If an APP is given, shows the overrides for that
+                    application, otherwise shows the global overrides.
+                </para></listitem>
+            </varlistentry>
 
             <varlistentry>
                 <term><option>-v</option></term>
