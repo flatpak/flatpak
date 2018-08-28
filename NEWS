@@ -1,3 +1,28 @@
+Changes in 1.0.1
+================
+
+This fixes various build and test failures that were detected when
+packaging 1.0, as well as translations and doc udpates. It also
+has some minor features, including a new subcommand "flatpak ps"
+to list the running flatpak instances for your user.
+
+ * Print application tags in the prompt when installing/updating.
+ * Make sure we don't accidentally leak the host /proc into
+   the sandbox.
+ * Translation updates.
+ * Added a "flatpak ps" command that lists running flatpak instances.
+ * Improve error reporting when exporting documents.
+ * Improve detection of dynamic p2p remotes.
+ * Build fixes for older versions of glib.
+ * Fix threading issue in the OCI support that was causing the
+   installed tests to sometimes fail.
+ * Fix OCI AppStream support on 32bit architectures.
+ * Fix utf8 issue in the dbus API description.
+ * Some install fixes to make installed tests work
+ * Make the tests work with python3 (as well as python2)
+ * Improve introspection annotations in libflatpak
+ * Improve libflatpak API docs
+
 Changes in 1.0
 ==============
 
