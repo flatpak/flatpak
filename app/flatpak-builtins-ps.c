@@ -94,7 +94,7 @@ find_column (const char *name,
   if (candidate >= 0)
     return candidate;
 
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Unknown colum: %s"), name);
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Unknown column: %s"), name);
   return -1;
 }
 
