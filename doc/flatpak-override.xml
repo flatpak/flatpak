@@ -312,6 +312,24 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--reset</option></term>
+
+                <listitem><para>
+                    Remove overrides. If an APP is given, remove the overrides for that
+                    application, otherwise remove the global overrides.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--show</option></term>
+
+                <listitem><para>
+                    Shows overrides. If an APP is given, shows the overrides for that
+                    application, otherwise shows the global overrides.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
