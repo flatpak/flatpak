@@ -198,6 +198,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *app_info_path = NULL;
   g_autofree char *app_extensions = NULL;
   g_autofree char *runtime_extensions = NULL;
+  g_autofree char *instance_id_host_dir = NULL;
+  char pid_str[64];
+  g_autofree char *pid_path = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
 
   context = g_option_context_new (_("DIRECTORY [COMMAND [args...]] - Build in directory"));
@@ -532,7 +535,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       app_id_dir, app_context, NULL,
                                       FALSE, TRUE,
                                       &app_info_path,
-                                      NULL,
+                                      &instance_id_host_dir,
                                       error))
     return FALSE;
 
@@ -572,6 +575,10 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                               rest_argc - 2);
 
   g_ptr_array_add (bwrap->argv, NULL);
+
+  g_snprintf (pid_str, sizeof (pid_str), "%" G_PID_FORMAT, getpid ());
+  pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
+  g_file_set_contents (pid_path, pid_str, -1, NULL);
 
   /* Ensure we unset O_CLOEXEC */
   child_setup (bwrap->fds);
