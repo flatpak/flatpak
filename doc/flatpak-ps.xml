@@ -167,7 +167,15 @@
                 <term>pid</term>
 
                 <listitem><para>
-                    Show the PID of the main process
+                    Show the PID of the wrapper process
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>child-pid</term>
+
+                <listitem><para>
+                    Show the PID of the sandbox process
                 </para></listitem>
             </varlistentry>
 
