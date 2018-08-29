@@ -576,7 +576,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (bwrap->argv, NULL);
 
-  g_snprintf (pid_str, sizeof (pid_str), "%" G_PID_FORMAT, getpid ());
+  g_snprintf (pid_str, sizeof (pid_str), "%d", getpid ());
   pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
   g_file_set_contents (pid_path, pid_str, -1, NULL);
 
