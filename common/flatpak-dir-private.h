@@ -224,6 +224,9 @@ gboolean       flatpak_save_override_keyfile (GKeyFile   *metakey,
                                               const char *app_id,
                                               gboolean    user,
                                               GError    **error);
+gboolean       flatpak_remove_override_keyfile (const char  *app_id,
+                                                gboolean     user,
+                                                GError     **error);
 
 const char *        flatpak_deploy_data_get_origin (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_commit (GVariant *deploy_data);
