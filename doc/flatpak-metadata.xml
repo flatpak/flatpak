@@ -399,6 +399,22 @@
             here. -->
             <variablelist>
                 <varlistentry>
+                    <term><option>instance-id</option> (string)</term>
+                    <listitem><para>
+                        The ID of the running instance. This number is
+                        used as the name of the directory in
+                        <filename><envar>XDG_RUNTIME_DIR</envar>/.flatpak</filename>
+                        where Flatpak stores information about this instance.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>instance-path</option> (string)</term>
+                    <listitem><para>
+                        The absolute path on the host system of the app's
+                        persistent storage area in <filename>$HOME/.var</filename>.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>app-path</option> (string)</term>
                     <listitem><para>
                         The absolute path on the host system of the app's
@@ -407,11 +423,31 @@
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>app-commit</option> (string)</term>
+                    <listitem><para>
+                        The commit ID or the application that is running.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>app-extensions</option> (list of strings)</term>
+                    <listitem><para>
+                        A list of app extensions that are mounted into
+                        the running instance. The format for each list item is
+                        <option>EXTENSION_ID=COMMIT</option>.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>branch</option> (string)</term>
                     <listitem><para>
                         The branch of the app, for example
                         <literal>stable</literal>. Available since
                         0.6.10.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>arch</option> (string)</term>
+                    <listitem><para>
+                        The architecture of the running instance.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -427,6 +463,39 @@
                         The absolute path on the host system of the app's
                         runtime files, as mounted at <filename>/usr</filename>
                         inside the container. Available since 0.6.10.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>runtime-commit</option> (string)</term>
+                    <listitem><para>
+                        The commit ID or the runtime that is used.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>runtime-extensions</option> (list of strings)</term>
+                    <listitem><para>
+                        A list of runtime extensions that are mounted into
+                        the running instance. The format for each list item is
+                        <option>EXTENSION_ID=COMMIT</option>.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>extra-args</option> (string)</term>
+                    <listitem><para>
+                        Extra arguments that were passed to flatpak run.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>sandbox</option> (boolean)</term>
+                    <listitem><para>
+                        Whether the <option>--sandbox</option> option was passed
+                        to flatpak run.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>build</option> (boolean)</term>
+                    <listitem><para>
+                        Whether this instance was created by flatpak build. 
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
