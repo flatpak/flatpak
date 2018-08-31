@@ -26,6 +26,15 @@
 #include "flatpak-bundle-ref.h"
 #include "flatpak-enum-types.h"
 
+/**
+ * SECTION:flatpak-bundle-ref
+ * @Title: FlatpakBundleRef
+ * @Short_description: Application bundle reference
+ *
+ * A FlatpakBundleRef refers to a single-file bundle containing an
+ * application or runtime.
+ */
+
 typedef struct _FlatpakBundleRefPrivate FlatpakBundleRefPrivate;
 
 struct _FlatpakBundleRefPrivate
@@ -117,6 +126,11 @@ flatpak_bundle_ref_class_init (FlatpakBundleRefClass *klass)
   object_class->set_property = flatpak_bundle_ref_set_property;
   object_class->finalize = flatpak_bundle_ref_finalize;
 
+  /**
+   * FlatpakBundleRef:file:
+   *
+   * The bundle file that this ref refers to.
+   */
   g_object_class_install_property (object_class,
                                    PROP_FILE,
                                    g_param_spec_object ("file",
@@ -225,7 +239,7 @@ flatpak_bundle_ref_get_origin (FlatpakBundleRef *self)
 
 
 /**
- * flatpak_bundle_ref_get_runtime_repo:
+ * flatpak_bundle_ref_get_runtime_repo_url:
  * @self: a #FlatpakBundleRef
  *
  * Get the runtime flatpakrepo url stored in the bundle (if any)

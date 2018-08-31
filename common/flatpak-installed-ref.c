@@ -233,8 +233,8 @@ flatpak_installed_ref_class_init (FlatpakInstalledRefClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_SUBPATHS,
                                    g_param_spec_boxed ("subpaths",
-                                                       "",
-                                                       "",
+                                                       "Subpaths",
+                                                       "The subpaths for a partially installed ref",
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
@@ -248,7 +248,7 @@ flatpak_installed_ref_class_init (FlatpakInstalledRefClass *klass)
                                    PROP_EOL_REBASE,
                                    g_param_spec_string ("end-of-life-rebase",
                                                         "End of life rebase",
-                                                        "The new ref for the end of lifeed ref",
+                                                        "The new ref for the end-of-lifed ref",
                                                         NULL,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }

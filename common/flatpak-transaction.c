@@ -171,8 +171,25 @@ bundle_data_free (BundleData *data)
 
 static guint progress_signals[LAST_SIGNAL] = { 0 };
 
+/**
+ * SECTION:flatpak-transaction-progress
+ * @Title: FlatpakTransactionProgress
+ * @Short_description: Progress of an operation
+ *
+ * FlatpakTransactionProgress is an object that represents the progress
+ * of a single operation in a transaction. You obtain a FlatpakTransactionProgress
+ * with the #FlatpakTransaction::new-operation signal.
+ */
+
 G_DEFINE_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, G_TYPE_OBJECT)
 
+/**
+ * flatpak_transaction_progress_set_update_frequency:
+ * @self: a #FlatpakTransactionProgress
+ * @update_frequency: the update frequency, in milliseconds
+ *
+ * Sets how often progress should be updated.
+ */
 void
 flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *self,
                                                    guint                       update_frequency)
@@ -180,19 +197,42 @@ flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *s
   g_object_set_data (G_OBJECT (self->ostree_progress), "update-frequency", GUINT_TO_POINTER (update_frequency));
 }
 
-
+/**
+ * flatpak_transaction_progress_get_status:
+ * @self: a #FlatpakTransactionProgress
+ *
+ * Gets the current status string
+ * 
+ * Returns: (transfer none): the current status 
+ */
 char *
 flatpak_transaction_progress_get_status (FlatpakTransactionProgress *self)
 {
   return g_strdup (self->status);
 }
 
+/**
+ * flatpak_transaction_progress_get_is_estimating:
+ * @self: a #FlatpakTransactionProgress
+ *
+ * Gets whether the progress is currently estimating
+ *
+ * Returns: whether we're estimating
+ */
 gboolean
 flatpak_transaction_progress_get_is_estimating (FlatpakTransactionProgress *self)
 {
   return self->estimating;
 }
 
+/**
+ * flatpak_transaction_progress_get_progress:
+ * @self: a #FlatpakTransactionProgress
+ *
+ * Gets the current progress.
+ * 
+ * Returns: the current progress, as an integer between 0 and 100
+ */
 int
 flatpak_transaction_progress_get_progress (FlatpakTransactionProgress *self)
 {
@@ -398,6 +438,16 @@ dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out, GVari
   return TRUE;
 }
 
+/**
+ * SECTION:flatpak-transaction-operation
+ * @Title: FlatpakTransactionOperation
+ * @Short_description: Operation in a transaction
+ *
+ * FlatpakTransactionOperation is an object that represents a single operation
+ * in a transaction. You receive a FlatpakTransactionOperation object with the
+ * #FlatpakTransaction::new-operation signal.
+ */
+
 G_DEFINE_TYPE (FlatpakTransactionOperation, flatpak_transaction_operation, G_TYPE_OBJECT)
 
 static void
@@ -462,24 +512,56 @@ flatpak_transaction_operation_new (const char                     *remote,
   return self;
 }
 
+/**
+ * flatpak_transaction_operation_get_operation_type:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the type of the operation.
+ *
+ * Returns: the type of operation, as #FlatpakTransactionOperationType
+ */
 FlatpakTransactionOperationType
 flatpak_transaction_operation_get_operation_type (FlatpakTransactionOperation *self)
 {
   return self->kind;
 }
 
+/**
+ * flatpak_transaction_operation_get_ref:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the ref that the operation applies to.
+ *
+ * Returns: (transfer none): the ref
+ */ 
 const char *
 flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
 {
   return self->ref;
 }
 
+/**
+ * flatpak_transaction_operation_get_remote:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the remote that the operation applies to.
+ *
+ * Returns: (transfer none): the remote
+ */ 
 const char *
 flatpak_transaction_operation_get_remote (FlatpakTransactionOperation *self)
 {
   return self->remote;
 }
 
+/**
+ * flatpak_transaction_operation_type_to_string:
+ * @kind: a #FlatpakTransactionOperationType
+ *
+ * Converts the operation type to a string.
+ *
+ * Returns: (transfer none): a string representing @kind
+ */
 const char *
 flatpak_transaction_operation_type_to_string (FlatpakTransactionOperationType kind)
 {
@@ -508,24 +590,71 @@ flatpak_transaction_operation_get_bundle_path (FlatpakTransactionOperation *self
   return self->bundle;
 }
 
+/**
+ * flatpak_transaction_operation_get_commit:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the commit ID for the operation.
+ *
+ * This information is available when the transaction is resolved,
+ * i.e. when #FlatpakTransaction::ready is emitted.
+ *
+ * Returns: (transfer none): the commit ID
+ */
 const char *
 flatpak_transaction_operation_get_commit (FlatpakTransactionOperation *self)
 {
   return self->resolved_commit;
 }
 
+/**
+ * flatpak_transaction_operation_get_metadata:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the metadata that will be applicable when the
+ * operation is done.
+ *
+ * This can be compared to the current metadata returned
+ * by flatpak_transaction_operation_get_old_metadata()
+ * to find new required permissions and similar changes.
+ *
+ * This information is available when the transaction is resolved,
+ * i.e. when #FlatpakTransaction::ready is emitted.
+ *
+ * Returns: (transfer none): the metadata #GKeyFile
+ */
 GKeyFile *
 flatpak_transaction_operation_get_metadata (FlatpakTransactionOperation *self)
 {
   return self->resolved_metakey;
 }
 
+/**
+ * flatpak_transaction_operation_get_old_metadata:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the metadata current metadata for the ref that @self works on.
+ * Also see flatpak_transaction_operation_get_metadata().
+ *
+ * This information is available when the transaction is resolved,
+ * i.e. when #FlatpakTransaction::ready is emitted.
+ *
+ * Returns: (transfer none): the old metadata #GKeyFile
+ */
 GKeyFile *
 flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *self)
 {
   return self->resolved_old_metakey;
 }
 
+/**
+ * flatpak_transaction_is_empty:
+ * @self: a #FlatpakTransaction
+ *
+ * Returns whether the transaction contains any operations.
+ *
+ * Returns: %TRUE if the transaction is empty
+ */
 gboolean
 flatpak_transaction_is_empty (FlatpakTransaction *self)
 {
@@ -643,6 +772,11 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   object_class->get_property = flatpak_transaction_get_property;
   object_class->set_property = flatpak_transaction_set_property;
 
+  /**
+   * FlatpakTransaction:installation:
+   *
+   * The installation that the transaction operates on.
+   */
   g_object_class_install_property (object_class,
                                    PROP_INSTALLATION,
                                    g_param_spec_object ("installation",
@@ -656,6 +790,9 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @object: A #FlatpakTransaction
    * @operation: The new #FlatpakTransactionOperation
    * @progress: A #FlatpakTransactionProgress for @operation
+   *
+   * The ::new-operation signal gets emitted during the execution of
+   * the transaction when a new operation is beginning.
    */
   signals[NEW_OPERATION] =
     g_signal_new ("new-operation",
@@ -672,6 +809,9 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @operation: The #FlatpakTransactionOperation which failed
    * @error: A #GError
    * @details: A #FlatpakTransactionErrorDetails with details about the error
+   *
+   * The ::operation-error signal gets emitted when an error occurs during the
+   * execution of the transaction.
    *
    * Returns: the %TRUE to contine transaction, %FALSE to stop
    */
@@ -690,6 +830,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @operation: The #FlatpakTransactionOperation which finished
    * @result: A #FlatpakTransactionResult giving details about the result
    *
+   * The ::operation-done signal gets emitted during the execution of
+   * the transaction when an operation is finished.
    */
   signals[OPERATION_DONE] =
     g_signal_new ("operation-done",
@@ -707,6 +849,9 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @runtime_ref: The ref we are looking for
    * @remotes: the remotes that has the ref, sorted in prio order
    *
+   * The ::choose-remote-for-ref signal gets emitted when a
+   * remote needs to be selected during the execution of the transaction.
+   *
    * Returns: the index of the remote to use, or -1 to not pick one (and fail)
    */
   signals[CHOOSE_REMOTE_FOR_REF] =
@@ -717,12 +862,16 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   NULL, NULL,
                   NULL,
                   G_TYPE_INT, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRV);
+
   /**
    * FlatpakTransaction::end-of-lifed:
    * @object: A #FlatpakTransaction
    * @ref: The ref we are installing
    * @reason: The eol reason, or %NULL
    * @rebase: The new name, if rebased, or %NULL
+   *
+   * The ::end-of-lifed signal gets emitted when a ref is found to
+   * be marked as end-of-life during the execution of the transaction.
    */
   signals[END_OF_LIFED] =
     g_signal_new ("end-of-lifed",
@@ -732,14 +881,17 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+
   /**
    * FlatpakTransaction::ready:
    * @object: A #FlatpakTransaction
    *
-   * This is is emitted when all the refs involved in the operation have been
-   * resolved to commits. At this point flatpak_transaction_get_operations()
+   * The ::ready signal is emitted when all the refs involved in the operation
+   * have been resolved to commits. At this point flatpak_transaction_get_operations()
    * will return all the operations that will be executed as part of the
-   * transaction. If this returns FALSE, the operation is aborted.
+   * transaction.
+   *
+   * Returns: %TRUE to carry on with the transaction, %FALSE to abort
    */
   signals[READY] =
     g_signal_new ("ready",
@@ -749,6 +901,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   signal_accumulator_false_abort, NULL,
                   NULL,
                   G_TYPE_BOOLEAN, 0);
+
   /**
    * FlatpakTransaction::add-new-remote:
    * @object: A #FlatpakTransaction
@@ -757,9 +910,11 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @suggested_remote_name: The suggested remote name
    * @url: The repo url
    *
-   * As part of the transaction, it is required or recommended
-   * that a new remote is added, for the reason described in @reason.
-   * Return %TRUE to add it.
+   * The ::add-new-remote signal gets emitted if, as part of the transaction,
+   * it is required or recommended that a new remote is added, for the reason
+   * described in @reason.
+   *
+   * Returns: %TRUE to add the remote
    */
   signals[ADD_NEW_REMOTE] =
     g_signal_new ("add-new-remote",
@@ -836,6 +991,14 @@ flatpak_transaction_new_for_installation (FlatpakInstallation *installation,
                          NULL);
 }
 
+/**
+ * flatpak_transaction_set_no_pull:
+ * @self: a #FlatpakTransaction
+ * @no_pull: whether to avoid pulls
+ *
+ * Sets whether the transaction should operate only on locally
+ * available data.
+ */
 void
 flatpak_transaction_set_no_pull (FlatpakTransaction *self,
                                  gboolean            no_pull)
@@ -845,6 +1008,14 @@ flatpak_transaction_set_no_pull (FlatpakTransaction *self,
   priv->no_pull = no_pull;
 }
 
+/**
+ * flatpak_transaction_set_no_deploy:
+ * @self: a #FlatpakTransaction
+ * @no_deploy: whether to avoid deploying
+ *
+ * Sets whether the transaction should download updates, but
+ * not deploy them.
+ */
 void
 flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
                                    gboolean            no_deploy)
@@ -854,6 +1025,14 @@ flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
   priv->no_deploy = no_deploy;
 }
 
+/**
+ * flatpak_transaction_set_disable_static_deltas:
+ * @self: a #FlatpakTransaction
+ * @disable_static_deltas: whether to avoid static deltas
+ *
+ * Sets whether the transaction should avoid using static
+ * deltas when pulling.
+ */
 void
 flatpak_transaction_set_disable_static_deltas (FlatpakTransaction *self,
                                                gboolean            disable_static_deltas)
@@ -863,6 +1042,14 @@ flatpak_transaction_set_disable_static_deltas (FlatpakTransaction *self,
   priv->disable_static_deltas = disable_static_deltas;
 }
 
+/**
+ * flatpak_transaction_set_disable_prune:
+ * @self: a #FlatpakTransaction
+ * @disable_prune: whether to avoid pruning
+ *
+ * Sets whether the transaction should avoid pruning the local OSTree
+ * repository after updating.
+ */
 void
 flatpak_transaction_set_disable_prune (FlatpakTransaction *self,
                                        gboolean            disable_prune)
@@ -872,6 +1059,14 @@ flatpak_transaction_set_disable_prune (FlatpakTransaction *self,
   priv->disable_prune = disable_prune;
 }
 
+/**
+ * flatpak_transaction_set_disable_dependencies:
+ * @self: a #FlatpakTransaction
+ * @disable_dependencies: whether to disable runtime dependencies
+ *
+ * Sets whether the transaction should ignore runtime dependencies
+ * when resolving operations for applications.
+ */
 void
 flatpak_transaction_set_disable_dependencies (FlatpakTransaction *self,
                                               gboolean            disable_dependencies)
@@ -881,6 +1076,15 @@ flatpak_transaction_set_disable_dependencies (FlatpakTransaction *self,
   priv->disable_deps = disable_dependencies;
 }
 
+/**
+ * flatpak_transaction_set_disable_related:
+ * @self: a #FlatpakTransaction
+ * @disable_related: whether to avoid adding related refs
+ *
+ * Sets whether the transaction should avoid adding related refs
+ * when resolving operations. Related refs are extensions that are
+ * suggested by apps, such as locales.
+ */
 void
 flatpak_transaction_set_disable_related (FlatpakTransaction *self,
                                          gboolean            disable_related)
@@ -890,6 +1094,14 @@ flatpak_transaction_set_disable_related (FlatpakTransaction *self,
   priv->disable_related = disable_related;
 }
 
+/**
+ * flatpak_transaction_set_reinstall:
+ * @self: a #FlatpakTransaction
+ * @reinstall: whether to reinstall refs
+ *
+ * Sets whether the transaction should uninstall first if a
+ * ref is already installed.
+ */
 void
 flatpak_transaction_set_reinstall (FlatpakTransaction *self,
                                    gboolean            reinstall)
@@ -899,6 +1111,14 @@ flatpak_transaction_set_reinstall (FlatpakTransaction *self,
   priv->reinstall = reinstall;
 }
 
+/**
+ * flatpak_transaction_set_force_uninstall:
+ * @self: a #FlatpakTransaction
+ * @force_uninstall: whether to force-uninstall refs
+ *
+ * Sets whether the transaction should uninstall files even
+ * if they're used by a running application.
+ */
 void
 flatpak_transaction_set_force_uninstall (FlatpakTransaction *self,
                                          gboolean            force_uninstall)
@@ -908,14 +1128,21 @@ flatpak_transaction_set_force_uninstall (FlatpakTransaction *self,
   priv->force_uninstall = force_uninstall;
 }
 
+/**
+ * flatpak_transaction_set_default_arch:
+ * @self: a #FlatpakTransaction
+ * @arch: the arch to make default
+ *
+ * Sets the architecture to default to where it is unspecified.
+ */ 
 void
 flatpak_transaction_set_default_arch (FlatpakTransaction *self,
-                                      const char         *default_arch)
+                                      const char         *arch)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   g_free (priv->default_arch);
-  priv->default_arch = g_strdup (default_arch);
+  priv->default_arch = g_strdup (arch);
 }
 
 static FlatpakTransactionOperation *
@@ -1183,8 +1410,8 @@ find_runtime_remote (FlatpakTransaction             *self,
       return NULL;
     }
 
-  /* In the no-puil case, if only one local ref is available, assume that is the one becasue
-     the user chosed it interactively when pulling */
+  /* In the no-puil case, if only one local ref is available, assume that is the one because
+     the user chose it interactively when pulling */
   if (priv->no_pull && g_strv_length (remotes) == 1)
     res = 0;
   else
@@ -1442,6 +1669,16 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
   return TRUE;
 }
 
+/**
+ * flatpak_transaction_add_install_flatpakref:
+ * @self: a #FlatpakTransaction
+ * @flatpakref_data: data from a flatpakref file
+ * @error: return location for a #GError
+ *
+ * Adds installing the given flatpakref to this transaction.
+ *
+ * Returns: %TRUE on success; %FALSE with @error set on failure.
+ */
 gboolean
 flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
                                             GBytes             *flatpakref_data,
@@ -2291,6 +2528,27 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
   return TRUE;
 }
 
+/**
+ * flatpak_transaction_run:
+ * @self: a #FlatpakTransaction
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for an error
+ *
+ * Executes the transaction.
+ *
+ * During the cause of the execution, various signal will get emitted.
+ * The FlatpakTransaction::choose-remote-for-ref  and
+ * #FlatpakTransaction::add-new-remote signals may get emitted while
+ * resolving operations. #FlatpakTransaction::ready is emitted when
+ * the transaction has been fully resolved, and #FlatpakTransaction::new-operation
+ * and #FlatpakTransaction::operation-done are emitted while the operations
+ * are carried out. If an error occurs at any point during the execution,
+ * #FlatpakTransaction::operation-error is emitted.
+ *
+ * Note that this call blocks until the transaction is done.
+ *
+ * Returns: %TRUE on success, %FALSE if an error occurred
+ */
 gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          GCancellable       *cancellable,
