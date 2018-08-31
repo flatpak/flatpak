@@ -221,6 +221,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
               g_autoptr(FlatpakDeploy) deploy = NULL;
               g_autofree char *origin = NULL;
               g_autofree char *runtime = NULL;
+              g_autofree char *sdk = NULL;
               g_autoptr(GKeyFile) metakey = NULL;
               g_auto(GStrv) parts = g_strsplit (ref, "/", -1);
 
@@ -241,6 +242,10 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
               runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
               if (runtime)
                 g_hash_table_add (used_runtimes, g_steal_pointer (&runtime));
+
+              sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
+              if (sdk)
+                g_hash_table_add (used_runtimes, g_steal_pointer (&sdk));
             }
 
           GLNX_HASH_TABLE_FOREACH (used_runtimes, const char *, runtime)
