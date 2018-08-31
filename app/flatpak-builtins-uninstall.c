@@ -143,6 +143,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   FlatpakKinds kinds;
   FlatpakKinds kind;
   g_autoptr(GHashTable) uninstall_dirs = NULL;
+  gboolean found_something_unused_to_uninstall = FALSE;
 
   context = g_option_context_new (_("REF... - Uninstall an application"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -198,7 +199,6 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     }
   else if (opt_unused)
     {
-      gboolean found_something_to_uninstall = FALSE;
 
       for (j = 0; j < dirs->len; j++)
         {
@@ -291,11 +291,11 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
               g_ptr_array_sort (udir->refs, flatpak_strcmp0_ptr);
               for (i = 0; i < udir->refs->len; i++)
                 g_print (" %s\n", (char *) udir->refs->pdata[i]);
-              found_something_to_uninstall = TRUE;
+              found_something_unused_to_uninstall = TRUE;
             }
         }
 
-      if (!found_something_to_uninstall)
+      if (!found_something_unused_to_uninstall)
         {
           g_print (_("Nothing unused to uninstall\n"));
           return TRUE;
@@ -392,8 +392,12 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   GLNX_HASH_TABLE_FOREACH_V (uninstall_dirs, UninstallDir *, udir)
   {
     g_autoptr(FlatpakTransaction) transaction = NULL;
+    gboolean disable_interaction = opt_yes;
 
-    transaction = flatpak_cli_transaction_new (udir->dir, opt_yes, TRUE, error);
+    if (found_something_unused_to_uninstall)
+      disable_interaction = TRUE;
+
+    transaction = flatpak_cli_transaction_new (udir->dir, disable_interaction, TRUE, error);
     if (transaction == NULL)
       return FALSE;
 
