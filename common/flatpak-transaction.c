@@ -614,6 +614,10 @@ flatpak_transaction_operation_get_commit (FlatpakTransactionOperation *self)
  * Gets the metadata that will be applicable when the
  * operation is done.
  *
+ * This can be compared to the current metadata returned
+ * by flatpak_transaction_operation_get_old_metadata()
+ * to find new required permissions and similar changes.
+ *
  * This information is available when the transaction is resolved,
  * i.e. when #FlatpakTransaction::ready is emitted.
  *
@@ -629,8 +633,8 @@ flatpak_transaction_operation_get_metadata (FlatpakTransactionOperation *self)
  * flatpak_transaction_operation_get_old_metadata:
  * @self: a #FlatpakTransactionOperation
  *
- * Gets the metadata that will is applicable before the
- * operation is done.
+ * Gets the metadata current metadata for the ref that @self works on.
+ * Also see flatpak_transaction_operation_get_metadata().
  *
  * This information is available when the transaction is resolved,
  * i.e. when #FlatpakTransaction::ready is emitted.
@@ -1058,10 +1062,10 @@ flatpak_transaction_set_disable_prune (FlatpakTransaction *self,
 /**
  * flatpak_transaction_set_disable_dependencies:
  * @self: a #FlatpakTransaction
- * @disable_dependencies: whether to disable dependencies
+ * @disable_dependencies: whether to disable runtime dependencies
  *
- * Sets whether the transaction should ignore dependencies when resolving
- * operations.
+ * Sets whether the transaction should ignore runtime dependencies
+ * when resolving operations for applications.
  */
 void
 flatpak_transaction_set_disable_dependencies (FlatpakTransaction *self,
@@ -1078,7 +1082,8 @@ flatpak_transaction_set_disable_dependencies (FlatpakTransaction *self,
  * @disable_related: whether to avoid adding related refs
  *
  * Sets whether the transaction should avoid adding related refs
- * when resolving operations.
+ * when resolving operations. Related refs are extensions that are
+ * suggested by apps, such as locales.
  */
 void
 flatpak_transaction_set_disable_related (FlatpakTransaction *self,
