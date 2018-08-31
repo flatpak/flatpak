@@ -1420,7 +1420,7 @@ flatpak_installation_set_config_sync (FlatpakInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Get a global configuration option for the remote, see
+ * Get a global configuration option for the installation, see
  * flatpak_installation_set_config_sync() for supported keys.
  *
  * Returns: The (newly allocated) value, or %NULL on error (%G_KEY_FILE_ERROR_KEY_NOT_FOUND error if key is not set)
