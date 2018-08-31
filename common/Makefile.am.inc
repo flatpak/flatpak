@@ -120,6 +120,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-error.c \
 	common/flatpak-installation-private.h \
 	common/flatpak-installation.c \
+	common/flatpak-instance-private.h \
+	common/flatpak-instance.c \
 	common/valgrind-private.h \
 	$(NULL)
 
