@@ -61,6 +61,11 @@ typedef enum {
   FLATPAK_ERROR_DOWNGRADE,
 } FlatpakError;
 
+/**
+ * FLATPAK_ERROR:
+ *
+ * The error domain for #FlatpakError errors.
+ */
 #define FLATPAK_ERROR flatpak_error_quark ()
 
 FLATPAK_EXTERN GQuark  flatpak_error_quark (void);

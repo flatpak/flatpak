@@ -53,6 +53,9 @@
  * FlatpakInstallation can list configured remotes as well as installed application
  * and runtime references (in short: refs). It can also run, install, update and
  * uninstall applications and runtimes, using #FlatpakTransaction.
+ *
+ * To get a list of all configured installations, use flatpak_get_system_installations(),
+ * together with flatpak_installation_new_user().
  */
 
 typedef struct _FlatpakInstallationPrivate FlatpakInstallationPrivate;

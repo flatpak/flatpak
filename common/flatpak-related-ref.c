@@ -170,8 +170,8 @@ flatpak_related_ref_class_init (FlatpakRelatedRefClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_SUBPATHS,
                                    g_param_spec_boxed ("subpaths",
-                                                       "",
-                                                       "",
+                                                       "Subpaths",
+                                                       "The subpaths for a partially installed ref",
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
@@ -182,7 +182,7 @@ flatpak_related_ref_init (FlatpakRelatedRef *self)
 }
 
 /**
- * flatpak_related_ref_get_download:
+ * flatpak_related_ref_should_download:
  * @self: a #FlatpakRelatedRef
  *
  * Returns whether to auto-download the ref with the main ref.
@@ -254,7 +254,19 @@ flatpak_related_ref_get_subpaths (FlatpakRelatedRef *self)
   return (const char * const *) priv->subpaths;
 }
 
-
+/**
+ * flatpak_related_ref_new:
+ * @collection_id: (nullable): the collection ID
+ * @full_ref: a full ref to refer to
+ * @commit: (nullable): a commit ID to refer to
+ * @subpaths: (nullable): a nul-terminated array of subpaths
+ * @download: whether to auto-download the ref with the main ref
+ * @delete: whether to auto-delete the ref with the main ref
+ *
+ * Creates a new FlatpakRelatedRef object.
+ *
+ * Returns: a new ref
+ */
 FlatpakRelatedRef *
 flatpak_related_ref_new (const char *collection_id,
                          const char *full_ref,
