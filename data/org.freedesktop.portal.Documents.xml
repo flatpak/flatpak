@@ -45,6 +45,8 @@
       The permissions that the application has for a document store entry
       (see org.freedesktop.portal.Documents.GrantPermissions()) are reflected
       in the POSIX mode bits in the fuse filesystem.
+
+      This documentation describes version 3 of this interface.
   -->
   <interface name='org.freedesktop.portal.Documents'>
     <property name="version" type="u" access="read"/>
@@ -101,7 +103,7 @@
     <!--
         AddFull:
         @o_path_fds: open file descriptors for the files to export
-        @flags: flags, 1 == reuse_existing, 2 == persistent, 3 == as-needed-by-app
+        @flags: flags, 1 == reuse_existing, 2 == persistent, 4 == as-needed-by-app
         @app_id: an application ID, or empty string
         @permissions: the permissions to grant, possible values are 'read', 'write', 'grant-permissions' and 'delete'
         @doc_ids: the IDs of the files in the document store
@@ -139,7 +141,7 @@
         AddNamedFull:
         @o_path_fds: open file descriptor for the parent directory
         @filename: the basename for the file
-        @flags: flags, 1 == reuse_existing, 2 == persistent, 3 == as-needed-by-app
+        @flags: flags, 1 == reuse_existing, 2 == persistent, 4 == as-needed-by-app
         @app_id: an application ID, or empty string
         @permissions: the permissions to grant, possible values are 'read', 'write', 'grant-permissions' and 'delete'
         @doc_id: the ID of the file in the document store
@@ -193,7 +195,7 @@
     <!--
         RevokePermissions:
         @doc_id: the ID of the file in the document store
-        @app_id: the ID of the application to which permissions are granted
+        @app_id: the ID of the application from which permissions are revoked
         @permissions: the permissions to revoke, possible values are 'read', 'write', 'grant-permissions' and 'delete'
 
         Revokes access permissions for a file in the document store
@@ -229,7 +231,7 @@
 
         Looks up the document ID for a file.
 
-        This call is no not available inside the sandbox.
+        This call is not available inside the sandbox.
     -->
     <method name="Lookup">
       <arg type='ay' name='filename' direction='in'/>
