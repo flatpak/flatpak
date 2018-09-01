@@ -627,6 +627,7 @@ main (int    argc,
           prefix = FLATPAK_ANSI_RED FLATPAK_ANSI_BOLD_ON;
           suffix = FLATPAK_ANSI_BOLD_OFF FLATPAK_ANSI_COLOR_RESET;
         }
+      g_dbus_error_strip_remote_error (error);
       g_printerr ("%s%s %s%s\n", prefix, _("error:"), suffix, error->message);
       g_error_free (error);
     }
