@@ -2511,7 +2511,11 @@ forward_file (XdpDbusDocuments *documents,
                                          NULL,
                                          NULL,
                                          error))
-    return FALSE;
+    {
+      if (error)
+        g_dbus_error_strip_remote_error (*error);
+      return FALSE;
+    }
 
   if (!xdp_dbus_documents_call_grant_permissions_sync (documents,
                                                        doc_id,
@@ -2519,7 +2523,11 @@ forward_file (XdpDbusDocuments *documents,
                                                        perms,
                                                        NULL,
                                                        error))
-    return FALSE;
+    {
+      if (error)
+        g_dbus_error_strip_remote_error (*error);
+      return FALSE;
+    }
 
   *out_doc_id = g_steal_pointer (&doc_id);
 
