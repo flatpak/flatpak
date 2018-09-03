@@ -51,6 +51,11 @@ typedef enum {
 } FlatpakPortalError;
 
 
+/**
+ * FLATPAK_PORTAL_ERROR:
+ *
+ * The error domain for #FlatpakPortalError errors.
+ */
 #define FLATPAK_PORTAL_ERROR flatpak_portal_error_quark ()
 
 FLATPAK_EXTERN GQuark  flatpak_portal_error_quark (void);

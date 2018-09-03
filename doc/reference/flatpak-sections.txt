@@ -260,6 +260,7 @@ FLATPAK_CHECK_VERSION
 FLATPAK_MAJOR_VERSION
 FLATPAK_MINOR_VERSION
 FLATPAK_MICRO_VERSION
+<SUBSECTION Standard>
 FLATPAK_EXTERN
 </SECTION>
 
@@ -267,9 +268,10 @@ FLATPAK_EXTERN
 <FILE>flatpak-error</FILE>
 FLATPAK_ERROR
 FlatpakError
-flatpak_error_quark
 FLATPAK_PORTAL_ERROR
 FlatpakPortalError
+<SUBSECTION Standard>
+flatpak_error_quark
 flatpak_portal_error_quark
 </SECTION>
 

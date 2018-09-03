@@ -25,10 +25,35 @@
 #ifndef __FLATPAK_VERSION_MACROS_H__
 #define __FLATPAK_VERSION_MACROS_H__
 
+/**
+ * FLATPAK_MAJOR_VERSION:
+ *
+ * The major version.
+ */
 #define FLATPAK_MAJOR_VERSION (@FLATPAK_MAJOR_VERSION@)
+
+/**
+ * FLATPAK_MINOR_VERSION:
+ *
+ * The minor version.
+ */
 #define FLATPAK_MINOR_VERSION (@FLATPAK_MINOR_VERSION@)
+
+/**
+ * FLATPAK_MICRO_VERSION:
+ *
+ * The micro version.
+ */
 #define FLATPAK_MICRO_VERSION (@FLATPAK_MICRO_VERSION@)
 
+/**
+ * FLATPAK_CHECK_VERSION:
+ * @major: major version to compare against
+ * @minor: minor version to compare against
+ * @micro: micro version to compare against
+ *
+ * Check that the current version is at least @major.@minor.@micro.
+ */
 #define FLATPAK_CHECK_VERSION(major,minor,micro)        \
     (FLATPAK_MAJOR_VERSION > (major) || \
      (FLATPAK_MAJOR_VERSION == (major) && FLATPAK_MINOR_VERSION > (minor)) || \

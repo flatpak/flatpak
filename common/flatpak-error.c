@@ -28,7 +28,9 @@
 /**
  * SECTION:flatpak-error
  * @Title: Error codes
- *
+ * 
+ * The FlatpakError and FlatpakPortalError enumerations contain error codes
+ * for some common errors.
  */
 
 /* This is actually defined in common/flatpak-utils.c so the common code can report errors */

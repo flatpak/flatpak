@@ -1967,7 +1967,7 @@ flatpak_deploy_data_get_runtime (GVariant *deploy_data)
   return runtime;
 }
 
-/**
+/*<private>
  * flatpak_deploy_data_get_subpaths:
  *
  * Returns: (array length=length zero-terminated=1) (transfer container): an array of constant strings
