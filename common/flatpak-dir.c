@@ -1121,6 +1121,8 @@ flatpak_dir_system_helper_call (FlatpakDir   *self,
                                 GCancellable *cancellable,
                                 GError      **error)
 {
+  GVariant *res;
+
   if (g_once_init_enter (&self->system_helper_bus))
     {
       const char *on_session = g_getenv ("FLATPAK_SYSTEM_HELPER_ON_SESSION");
@@ -1141,15 +1143,19 @@ flatpak_dir_system_helper_call (FlatpakDir   *self,
     }
 
   g_debug ("Calling system helper: %s", method_name);
-  return g_dbus_connection_call_sync (self->system_helper_bus,
-                                      "org.freedesktop.Flatpak.SystemHelper",
-                                      "/org/freedesktop/Flatpak/SystemHelper",
-                                      "org.freedesktop.Flatpak.SystemHelper",
-                                      method_name,
-                                      parameters,
-                                      NULL, G_DBUS_CALL_FLAGS_NONE, G_MAXINT,
-                                      cancellable,
-                                      error);
+  res = g_dbus_connection_call_sync (self->system_helper_bus,
+                                     "org.freedesktop.Flatpak.SystemHelper",
+                                     "/org/freedesktop/Flatpak/SystemHelper",
+                                     "org.freedesktop.Flatpak.SystemHelper",
+                                     method_name,
+                                     parameters,
+                                     NULL, G_DBUS_CALL_FLAGS_NONE, G_MAXINT,
+                                     cancellable,
+                                     error);
+  if (res == NULL && error)
+    g_dbus_error_strip_remote_error (*error);
+
+  return res;
 }
 
 static gboolean
