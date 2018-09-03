@@ -120,10 +120,15 @@
                 <term><option>--socket=SOCKET</option></term>
 
                 <listitem><para>
-                    Expose a well known socket to the application. This updates
+                    Expose a well-known socket to the application. This updates
                     the [Context] group in the metadata.
                     SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
                     This option can be used multiple times.
+                </para><para>
+                    The fallback-x11 option makes the X11 socket available only if
+                    there is no Wayland socket. This option was introduced in 0.11.3.
+                    To support older Flatpak releases, specify both x11 and fallback-x11.
+                    The fallback-x11 option takes precedence when both are supported.
                 </para></listitem>
             </varlistentry>
 
