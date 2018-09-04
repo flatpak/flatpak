@@ -325,11 +325,13 @@ flatpak_option_context_parse (GOptionContext     *context,
            * FLATPAK_BUILTIN_FLAG_STANDARD_DIRS or FLATPAK_BUILTIN_FLAG_ALL_DIRS
            * must be set.
            */
-          if (opt_user || (!opt_system && opt_installations == NULL))
-            g_ptr_array_add (dirs, flatpak_dir_get_user ());
 
+          /* If nothing is set, then we put the system dir first, which can be used as the default */
           if (opt_system || (!opt_user && opt_installations == NULL))
             g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
+
+          if (opt_user || (!opt_system && opt_installations == NULL))
+            g_ptr_array_add (dirs, flatpak_dir_get_user ());
 
           if (opt_installations != NULL)
             {

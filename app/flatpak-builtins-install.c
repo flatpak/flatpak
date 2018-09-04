@@ -244,15 +244,17 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autofree char *default_branch = NULL;
   FlatpakKinds kinds;
   g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(FlatpakDir) dir_with_remote = NULL;
 
   context = g_option_context_new (_("LOCATION/REMOTE [REF...] - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS,
                                      &dirs, cancellable, error))
     return FALSE;
 
+  /* Start with the default or specified dir, this is fine for opt_bundle or opt_from */
   dir = g_ptr_array_index (dirs, 0);
 
   if (!opt_bundle && !opt_from && argc >= 2)
@@ -280,7 +282,18 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       remote = remote_url;
     }
   else
-    remote = argv[1];
+    {
+      remote = argv[1];
+
+      /* If the remote was used, and no single dir was specified, find which one based on the remote */
+      if (dirs->len > 1)
+        {
+          if (!flatpak_resolve_duplicate_remotes (dirs, remote, &dir_with_remote, cancellable, error))
+            return FALSE;
+          dir = dir_with_remote;
+        }
+    }
+
   prefs = &argv[2];
   n_prefs = argc - 2;
 
