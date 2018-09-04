@@ -46,6 +46,10 @@
       (see org.freedesktop.portal.Documents.GrantPermissions()) are reflected
       in the POSIX mode bits in the fuse filesystem.
 
+      The D-Bus interface for the document portal is available under the
+      bus name org.freedesktop.portal.Documents and the object path
+      /org/freedesktop/portal/documents.
+ 
       This documentation describes version 3 of this interface.
   -->
   <interface name='org.freedesktop.portal.Documents'>
