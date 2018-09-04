@@ -32,6 +32,10 @@
       host to the sandbox. For example, it allows you to restart the
       applications or start a more sandboxed instance.
 
+      The D-Bus interface for the document portal is available under the
+      bus name org.freedesktop.portal.Flatpak and the object path
+      /org/freedesktop/portal/flatpak.
+
       This documentation describes version 1 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
