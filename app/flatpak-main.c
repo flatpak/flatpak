@@ -89,6 +89,7 @@ static FlatpakCommand commands[] = {
   { "document-unexport", N_("Revoke access to a specific file"), flatpak_builtin_document_unexport, flatpak_complete_document_unexport },
   { "document-info", N_("Show information about a specific file"), flatpak_builtin_document_info, flatpak_complete_document_info },
   { "document-list", N_("List exported files"), flatpak_builtin_document_list, flatpak_complete_document_list },
+  { "document-forward", N_("Make files available"), flatpak_builtin_document_forward, flatpak_complete_document_forward },
 
   /* translators: please keep the leading newline and space */
   { N_("\n Manage dynamic permissions") },
