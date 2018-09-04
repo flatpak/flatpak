@@ -6,3 +6,4 @@ BusName=org.freedesktop.Flatpak.SystemHelper
 Environment=XDG_DATA_DIRS=@localstatedir@/lib/flatpak/exports/share/:/usr/local/share/:/usr/share/
 ExecStart=@libexecdir@/flatpak-system-helper
 Type=dbus
+IOSchedulingClass=idle
