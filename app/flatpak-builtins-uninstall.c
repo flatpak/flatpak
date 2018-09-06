@@ -394,6 +394,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
     flatpak_transaction_set_disable_prune (transaction, opt_keep_ref);
     flatpak_transaction_set_force_uninstall (transaction, opt_force_remove);
+    flatpak_transaction_set_disable_related (transaction, opt_no_related);
 
     /* This disables the remote metadata update, since uninstall is a local-only op */
     flatpak_transaction_set_no_pull (transaction, TRUE);
