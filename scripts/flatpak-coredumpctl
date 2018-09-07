@@ -18,7 +18,7 @@ class CoreDumper():
 
     def clean_args(self):
         if not self.build_directory and not self.app:
-            print("Either `--build-dir` or `APP` must be specified.",
+            print("Either `--build-directory` or `APP` must be specified.",
                 file=sys.stderr)
             return False
 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Debug in gdb an application that crashed inside flatpak."
         " It uses (and thus requires) coredumpctl to retrieve the coredump file.")
-    parser.add_argument('-b', '--build-dir', default=None,
+    parser.add_argument('-b', '--build-directory', default=None,
                         help="The build directory to use. It allows you to retrieve a coredump"
                         " for applications being built")
     parser.add_argument('--extra-flatpak-args', default="",
