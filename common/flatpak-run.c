@@ -1571,7 +1571,7 @@ flatpak_app_compute_permissions (GKeyFile *app_metadata,
   return g_steal_pointer (&app_context);
 }
 
-void
+static void
 flatpak_run_gc_ids (void)
 {
   g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);

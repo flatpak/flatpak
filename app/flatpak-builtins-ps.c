@@ -33,7 +33,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-table-printer.h"
-#include "flatpak-run-private.h"
+#include "flatpak-instance-private.h"
 
 static gboolean opt_show_cols;
 static const char **opt_cols;
@@ -129,121 +129,16 @@ show_columns (void)
   g_print ("%s", col_help);
 }
 
-static char *
-get_instance_pid (const char *instance)
-{
-  g_autofree char *path = NULL;
-  char *pid;
-  g_autoptr(GError) error = NULL;
-
-  path = g_build_filename (g_get_user_runtime_dir (), ".flatpak", instance, "pid", NULL);
-
-  if (!g_file_get_contents (path, &pid, NULL, &error))
-    {
-      g_debug ("Failed to load pid file for instance '%s': %s", instance, error->message);
-      return NULL;
-    }
-
-  return pid; 
-}
-
-static int
-get_child_pid (const char *instance)
-{
-  g_autofree char *path = NULL;
-  g_autofree char *contents = NULL;
-  gsize length;
-  g_autoptr(GError) error = NULL;
-  g_autoptr(JsonParser) parser = NULL;
-  g_autoptr(JsonNode) node = NULL;
-  g_autoptr(JsonObject) obj = NULL;
-
-  path = g_build_filename (g_get_user_runtime_dir (), ".flatpak", instance, "bwrapinfo.json", NULL);
-
-  if (!g_file_get_contents (path, &contents, &length, &error))
-    {
-      g_debug ("Failed to load bwrapinfo.json file for instance '%s': %s", instance, error->message);
-      return 0;
-    }
-
-  parser = json_parser_new ();
-  if (!json_parser_load_from_data (parser, contents, length, &error))
-    {
-      g_debug ("Failed to parse bwrapinfo.json file for instance '%s': %s", instance, error->message);
-      return 0;
-    }
-
-  node = json_parser_get_root (parser);
-  obj = json_node_get_object (node);
-
-  return json_object_get_int_member (obj, "child-pid");
-}
-
-static GKeyFile *
-get_instance_info (const char *instance)
-{
-  g_autofree char *path = NULL;
-  GKeyFile *key_file = NULL;
-  g_autoptr(GError) error = NULL;
-
-  path = g_build_filename (g_get_user_runtime_dir (), ".flatpak", instance, "info", NULL);
-
-  key_file = g_key_file_new ();
-  if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, &error))
-    {
-      g_debug ("Failed to load info file for instance '%s': %s", instance, error->message);
-      return NULL;
-    }
-
-  return key_file;
-}
-
-static char *
-get_instance_column (GKeyFile *info,
-                     const char *name)
-{
-  if (info == NULL)
-    return NULL;
-
-  if (strcmp (name, "application") == 0)
-    return g_key_file_get_string (info, "Application", "name", NULL);
-  if (strcmp (name, "arch") == 0)
-    return g_key_file_get_string (info, "Instance", "arch", NULL);
-  if (strcmp (name, "branch") == 0)
-    return g_key_file_get_string (info, "Instance", "branch", NULL);
-  else if (strcmp (name, "commit") == 0)
-    return g_key_file_get_string (info, "Instance", "app-commit", NULL);
-  else if (strcmp (name, "runtime") == 0)
-    {
-      g_autofree char *full_ref = g_key_file_get_string (info, "Application", "runtime", NULL);
-      g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
-      return g_strdup (ref[1]);
-    }
-  else if (strcmp (name, "runtime-branch") == 0)
-    {
-      g_autofree char *full_ref = g_key_file_get_string (info, "Application", "runtime", NULL);
-      g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
-      return g_strdup (ref[3]);
-    }
-  else if (strcmp (name, "runtime-commit") == 0)
-    return g_key_file_get_string (info, "Instance", "runtime-commit", NULL);
-
-  return NULL;
-}
-
 static gboolean
 enumerate_instances (const char *columns,
                      GError **error)
 {
-  g_autofree char *base_dir = NULL;
-  g_autoptr(GFile) file = NULL;
-  g_autoptr(GFileEnumerator) enumerator = NULL;
-  GFileInfo *dir_info;
+  g_autoptr(GPtrArray) instances = NULL;
   FlatpakTablePrinter *printer;
   g_auto(GStrv) cols = NULL;
   g_autofree int *col_idx = NULL;
   int n_cols;
-  int i;
+  int i, j;
 
   cols = g_strsplit (columns, ",", 0);
   n_cols = g_strv_length (cols);
@@ -263,40 +158,58 @@ enumerate_instances (const char *columns,
   for (i = 0; i < n_cols; i++)
     flatpak_table_printer_set_column_title (printer, i + 1, all_columns[col_idx[i]].title);
  
-  base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
-  file = g_file_new_for_path (base_dir);
-  enumerator = g_file_enumerate_children (file, "standard::name", G_FILE_QUERY_INFO_NONE, NULL, error);
-  if (enumerator == NULL)
+  instances = flatpak_instance_get_all ();
+  if (instances->len == 0)
     {
-      if (g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        {
-          /* nothing to show */
-          g_clear_error (error);
-          return TRUE;
-        }
-      return FALSE;
+      /* nothing to show */
+      return TRUE;
     }
 
-  while ((dir_info = g_file_enumerator_next_file (enumerator, NULL, error)) != NULL)
+  for (j = 0; j < instances->len; j++)
     {
-      g_autofree char *instance = g_file_info_get_attribute_as_string (dir_info, "standard::name");
-      g_autoptr(GKeyFile) info = get_instance_info (instance);
+      FlatpakInstance *instance = (FlatpakInstance *)g_ptr_array_index (instances, j);
 
-      flatpak_table_printer_add_column (printer, instance);
+      flatpak_table_printer_add_column (printer, flatpak_instance_get_id (instance));
 
       for (i = 0; i < n_cols; i++)
         {
-          g_autofree char *col = NULL;
+          g_autofree char *freeme = NULL;
+          const char *col = NULL;
+          int idx = col_idx[i];
           int len;
 
-          if (strcmp (all_columns[col_idx[i]].name, "pid") == 0)
-            col = get_instance_pid (instance);
-          else if (strcmp (all_columns[col_idx[i]].name, "child-pid") == 0)
-            col = g_strdup_printf ("%d", get_child_pid (instance));
-          else 
-            col = get_instance_column (info, all_columns[col_idx[i]].name);
+          if (strcmp (all_columns[idx].name, "pid") == 0)
+            col = freeme = g_strdup_printf ("%d", flatpak_instance_get_pid (instance));
+          else if (strcmp (all_columns[idx].name, "child-pid") == 0)
+            col = freeme = g_strdup_printf ("%d", flatpak_instance_get_child_pid (instance));
+          else if (strcmp (all_columns[idx].name, "application") == 0)
+            col = flatpak_instance_get_app (instance);
+          else if (strcmp (all_columns[idx].name, "arch") == 0)
+            col = flatpak_instance_get_arch (instance);
+          else if (strcmp (all_columns[idx].name, "commit") == 0)
+            col = flatpak_instance_get_commit (instance);
+          else if (strcmp (all_columns[idx].name, "runtime") == 0)
+            {
+              const char *full_ref = flatpak_instance_get_runtime (instance);
+              if (full_ref != NULL)
+                {
+                  g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
+                  col = freeme = g_strdup (ref[1]);
+                }
+            }
+          else if (strcmp (all_columns[idx].name, "runtime-branch") == 0)
+            {
+              const char *full_ref = flatpak_instance_get_runtime (instance);
+              if (full_ref != NULL)
+                {
+                  g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
+                  col = freeme = g_strdup (ref[3]);
+                }
+            }
+          else if (strcmp (all_columns[idx].name, "runtime-commit") == 0)
+            col = flatpak_instance_get_runtime_commit (instance);
 
-          len = all_columns[col_idx[i]].len;
+          len = all_columns[idx].len;
           if (len == 0)
             flatpak_table_printer_add_column (printer, col);
           else
@@ -304,24 +217,35 @@ enumerate_instances (const char *columns,
         }
 
       flatpak_table_printer_finish_row (printer);
-
-      g_object_unref (dir_info);
     }
 
   flatpak_table_printer_print (printer);
   flatpak_table_printer_free (printer);
 
-  if (*error)
-    return FALSE;
-
   return TRUE;
 }
 
+static gboolean
+list_has (const char *list,
+          const char *term)
+{
+  const char *p;
+  int len;
+
+  p = strstr (list, term);
+  len = strlen (term);
+  if (p &&
+      (p == list || p[-1] == ',') &&
+      (p[len] == '\0' || p[len] == ','))
+    return TRUE;
+  return FALSE;
+}
+
 gboolean
-flatpak_builtin_ps (int           argc,
-                    char        **argv,
-                    GCancellable *cancellable,
-                    GError      **error)
+flatpak_builtin_ps (int            argc,
+                    char         **argv,
+                    GCancellable  *cancellable,
+                    GError       **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autofree char *col_help = NULL;
@@ -341,8 +265,6 @@ flatpak_builtin_ps (int           argc,
       return FALSE;
     }
 
-  flatpak_run_gc_ids ();
-
   if (opt_show_cols)
     {
       show_columns ();
@@ -351,38 +273,24 @@ flatpak_builtin_ps (int           argc,
 
   if (opt_cols)
     {
-      gboolean show_help = FALSE;
       gboolean show_all = FALSE;
       int i;
 
       for (i = 0; opt_cols[i]; i++)
         {
-          const char *p;
-          p = strstr (opt_cols[i], "help");
-          if (p &&
-              (p == opt_cols[i] || p[-1] == ',') &&
-              (p[strlen("help")] == '\0' || p[strlen("help")] == ','))
+          if (list_has (opt_cols[i], "help"))
             {
-              show_help = TRUE;
-              break;
+              show_columns ();
+              return TRUE;
             }
-
-          p = strstr (opt_cols[i], "all");
-          if (p &&
-              (p == opt_cols[i] || p[-1] == ',') &&
-              (p[strlen("all")] == '\0' || p[strlen("all")] == ','))
+          if (list_has (opt_cols[i], "all"))
             {
               show_all = TRUE;
               break;
             }
         }
 
-      if (show_help)
-        {
-          show_columns ();
-          return TRUE;
-        }
-      else if (show_all)
+      if (show_all)
         {
           cols = g_strdup (ALL_COLUMNS);
         }
