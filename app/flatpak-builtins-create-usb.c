@@ -690,6 +690,8 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       {
         const char *current_arch = *iter;
         g_autoptr(GPtrArray) dirs = NULL;
+        g_autoptr(GError) appstream_error = NULL;
+        g_autoptr(GError) appstream2_error = NULL;
 
         /* Try to update the appstream data, but don't fail on error because we
          * want this to work offline. */
@@ -709,34 +711,36 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         appstream_collection_ref = ostree_collection_ref_new (collection_id, appstream_ref);
         if (ostree_repo_resolve_collection_ref (src_repo, appstream_collection_ref, FALSE,
                                                 OSTREE_REPO_RESOLVE_REV_EXT_NONE,
-                                                NULL, cancellable, &local_error))
+                                                NULL, cancellable, &appstream_error))
           {
             g_hash_table_insert (all_refs, g_steal_pointer (&appstream_collection_ref),
                                  commit_and_subpaths_new (NULL, NULL));
           }
-        else
-          {
-            g_printerr (_("Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s\n"),
-                        remote_name, current_arch, local_error->message);
-            g_clear_error (&local_error);
-          }
 
-        /* Appstream2 is only for efficiency, so just print a debug message if
-         * it's missing. */
+        /* Copy the appstream2 data if it exists. */
         appstream2_ref = g_strdup_printf ("appstream2/%s", current_arch);
         appstream2_collection_ref = ostree_collection_ref_new (collection_id, appstream2_ref);
         if (ostree_repo_resolve_collection_ref (src_repo, appstream2_collection_ref, FALSE,
                                                 OSTREE_REPO_RESOLVE_REV_EXT_NONE,
-                                                NULL, cancellable, &local_error))
+                                                NULL, cancellable, &appstream2_error))
           {
             g_hash_table_insert (all_refs, g_steal_pointer (&appstream2_collection_ref),
                                  commit_and_subpaths_new (NULL, NULL));
           }
         else
           {
-            g_debug (_("Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"),
-                     remote_name, current_arch, local_error->message);
-            g_clear_error (&local_error);
+            if (appstream_error != NULL)
+              {
+                /* Print a warning if both appstream and appstream2 are missing */
+                g_printerr (_("Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s; %s\n"),
+                            remote_name, current_arch, appstream2_error->message, appstream_error->message);
+              }
+            else
+              {
+                /* Appstream2 is only for efficiency, so just print a debug message */
+                g_debug (_("Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"),
+                         remote_name, current_arch, appstream2_error->message);
+              }
           }
       }
   }
