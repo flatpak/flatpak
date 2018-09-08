@@ -10798,6 +10798,9 @@ parse_ref_file (GKeyFile *keyfile,
 
   collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                          FLATPAK_REF_COLLECTION_ID_KEY, NULL);
+  if (collection_id != NULL && *collection_id == '\0')
+    collection_id = NULL;
+
   if (collection_id != NULL && gpg_data == NULL)
     return flatpak_fail (error, "Collection ID requires GPG key to be provided");
 
