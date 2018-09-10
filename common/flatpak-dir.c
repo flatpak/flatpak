@@ -9523,8 +9523,6 @@ populate_hash_table_from_refs_map (GHashTable *ret_all_refs, GVariant *ref_map,
 
 /* This duplicates ostree_repo_remote_list_refs so it can use
  * flatpak_remote_state_ensure_summary and get caching. */
-/* FIXME: For command line completion support for collection–refs over P2P,
- * we need a version of ostree_repo_list_collection_refs(). */
 gboolean
 flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
                                   FlatpakRemoteState *state,
@@ -9788,8 +9786,6 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
   return collection_id;
 }
 
-/* FIXME: For command line completion support for collection–refs over P2P,
- * we need a version which works with collections. */
 char **
 flatpak_dir_find_remote_refs (FlatpakDir   *self,
                               const char   *remote,
@@ -9883,8 +9879,6 @@ find_ref_for_refs_set (GHashTable   *refs,
   return NULL;
 }
 
-/* FIXME: For command line completion support for collection–refs over P2P,
- * we need a version which works with collections. */
 char *
 flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              const char   *remote,
