@@ -1520,6 +1520,42 @@ flatpak_installation_get_config (FlatpakInstallation *self,
 }
 
 /**
+ * flatpak_installation_get_min_free_space_bytes:
+ * @self: a #FlatpakInstallation
+ * @out_bytes: (out): Location to store the result
+ * @error: Return location for a #GError
+ *
+ * Returns the min-free-space config value from the OSTree repository of this installation.
+ *
+ * Applications can use this value, together with information about the available
+ * disk space and the size of pending updates or installs, to estimate whether a
+ * pull operation will fail due to running out of disk space.
+ *
+ * Returns: %TRUE on success, or %FALSE on error.
+ * Since: 1.1
+ */
+gboolean
+flatpak_installation_get_min_free_space_bytes (FlatpakInstallation *self,
+                                               guint64             *out_bytes,
+                                               GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  dir = flatpak_installation_get_dir (self, NULL);
+  if (dir == NULL)
+    return FALSE;
+
+  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+     it has local changes */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, NULL, error))
+    return FALSE;
+
+  return ostree_repo_get_min_free_space_bytes (flatpak_dir_get_repo (dir_clone), out_bytes, error);
+}
+
+/**
  * flatpak_installation_update_remote_sync:
  * @self: a #FlatpakInstallation
  * @name: the name of the remote to update

@@ -261,6 +261,9 @@ FLATPAK_EXTERN gboolean              flatpak_installation_set_config_sync (Flatp
                                                                            const char          *value,
                                                                            GCancellable        *cancellable,
                                                                            GError             **error);
+FLATPAK_EXTERN gboolean              flatpak_installation_get_min_free_space_bytes (FlatpakInstallation *self,
+                                                                                    guint64             *out_bytes,
+                                                                                    GError             **error);
 FLATPAK_EXTERN char *                flatpak_installation_get_config (FlatpakInstallation *self,
                                                                       const char          *key,
                                                                       GCancellable        *cancellable,
