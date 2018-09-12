@@ -581,3 +581,163 @@ get_permission_tables (XdpDbusPermissionStore *store)
 
   return (char **) g_ptr_array_free (tables, FALSE);
 }
+
+/*** column handling ***/
+
+static int
+find_column (Column *columns,
+             const char *name,
+             GError **error)
+{
+  int i;
+  int candidate;
+
+  candidate = -1;
+  for (i = 0; columns[i].name; i++)
+    {
+      if (g_str_equal (columns[i].name, name))
+        {
+          return i;
+        }
+      else if (g_str_has_prefix (columns[i].name, name))
+        {
+          if (candidate == -1)
+            {
+              candidate = i;
+            }
+          else
+            {
+              flatpak_fail (error, _("Ambiguous column: %s"), name);
+              return -1;
+            }
+        }
+    }
+
+  if (candidate >= 0)
+    return candidate;
+
+  flatpak_fail (error, _("Unknown column: %s"), name);
+  return -1;
+}
+
+static Column *
+column_filter (Column *columns,
+               const char *col_arg,
+               GError **error)
+{
+  g_auto(GStrv) cols = g_strsplit (col_arg, ",", 0);
+  int n_cols = g_strv_length (cols);
+  Column *result = g_new0 (Column, n_cols + 1);
+  int i;
+
+  for (i = 0; i < n_cols; i++)
+    {
+      int idx = find_column (columns, cols[i], error);
+      if (idx == -1)
+        return FALSE;
+      result[i] = columns[idx];
+    }
+
+  return result;
+}
+
+static gboolean
+list_has (const char *list,
+          const char *term)
+{
+  const char *p;
+  int len;
+
+  p = list;
+  while (p)
+    {
+      p = strstr (p, term);
+      len = strlen (term);
+      if (p &&
+          (p == list || p[-1] == ',') &&
+          (p[len] == '\0' || p[len] == ','))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+/* Returns column help suitable for passing to
+ * g_option_context_set_description()
+ */
+char *
+column_help (Column *columns)
+{
+  GString *s = g_string_new ("");
+  int len;
+  int i;
+
+  g_string_append (s, _("Available columns:\n"));
+
+  len = 0;
+  for (i = 0; columns[i].name; i++)
+    len = MAX (len, strlen (columns[i].name));
+
+  len += 4;
+  for (i = 0; columns[i].name; i++)
+    g_string_append_printf (s, "  %-*s %s\n", len, columns[i].name, _(columns[i].desc));
+
+  g_string_append_printf (s, "  %-*s %s\n", len, "all", _("Show all columns"));
+  g_string_append_printf (s, "  %-*s %s\n", len, "help", _("Show available columns"));
+
+  return g_string_free (s, FALSE);
+}
+
+/* Returns a filtered list of columns, free with g_free.
+ * opt_show_help should correspond to --show-columns
+ * opt_show_all should correspond to --show-details or be FALSE
+ * opt_cols should correspond to --columns
+ */
+Column *
+handle_column_args (Column *all_columns,
+                    gboolean opt_show_all,
+                    const char **opt_cols,
+                    GError **error)
+{
+  g_autofree char *cols = NULL;
+  gboolean show_help = FALSE;
+  gboolean show_all = opt_show_all;
+
+  if (opt_cols)
+    {
+      int i;
+
+      for (i = 0; opt_cols[i]; i++)
+        {
+          if (list_has (opt_cols[i], "help"))
+            show_help = TRUE;
+          else if (list_has (opt_cols[i], "all"))
+            show_all = TRUE;
+        }
+    }
+
+  if (show_help)
+    {
+      g_autofree char *col_help = column_help (all_columns);
+      g_print ("%s", col_help);
+      return g_new0 (Column, 1); 
+    }
+
+  if (opt_cols && !show_all)
+    cols = g_strjoinv (",", (char**)opt_cols);
+  else
+    {
+      GString *s;
+      int i;
+
+      s = g_string_new ("");
+      for (i = 0; all_columns[i].name; i++)
+        {
+          if ((show_all && all_columns[i].all) || all_columns[i].def)
+            g_string_append_printf (s, "%s%s", s->len > 0 ? "," : "", all_columns[i].name);
+        }
+      cols = g_string_free (s, FALSE);
+    }
+    
+  return column_filter (all_columns, cols, error);
+}
