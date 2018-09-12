@@ -30,48 +30,42 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
 
 static gboolean opt_show_details;
 static gboolean opt_show_disabled;
+static const char **opt_cols;
 
 static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show remote details"), NULL },
   { "show-disabled", 0, 0, G_OPTION_ARG_NONE, &opt_show_disabled, N_("Show disabled remotes"), NULL },
+  { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
   { NULL }
 };
 
-gboolean
-flatpak_builtin_remote_list (int argc, char **argv, GCancellable *cancellable, GError **error)
+static Column all_columns[] = {
+  { "name",       N_("Name"),          N_("Show the name"),          1, 1 },
+  { "title",      N_("Title"),         N_("Show the title"),         1, 0 },
+  { "url",        N_("URL"),           N_("Show the URL"),           1, 0 },
+  { "collection", N_("Collection ID"), N_("Show the collection ID"), 1, 0 },
+  { "priority",   N_("Priority"),      N_("Show the priority"),      1, 0 },
+  { "options",    N_("Options"),       N_("Show options"),           1, 1 },
+  { NULL }
+};
+
+static gboolean
+list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GError **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(GPtrArray) dirs = NULL;
-  guint i = 0, j;
   FlatpakTablePrinter *printer;
+  int i, j, k;
 
-  context = g_option_context_new (_(" - List remote repositories"));
-  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
-
-  if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO, &dirs, cancellable, error))
-    return FALSE;
-
-  if (argc > 1)
-    return usage_error (context, _("Too many arguments"), error);
+  if (columns[0].name == NULL)
+    return TRUE;
 
   printer = flatpak_table_printer_new ();
-
-  j = 0;
-  flatpak_table_printer_set_column_title (printer, j++, _("Name"));
-  if (opt_show_details)
-    {
-      flatpak_table_printer_set_column_title (printer, j++, _("Title"));
-      flatpak_table_printer_set_column_title (printer, j++, _("URL"));
-      flatpak_table_printer_set_column_title (printer, j++, _("Collection ID"));
-      flatpak_table_printer_set_column_title (printer, j++, _("Priority"));
-    }
-  flatpak_table_printer_set_column_title (printer, j++, _("Options"));
+  flatpak_table_printer_set_column_titles (printer, columns);
 
   for (j = 0; j < dirs->len; j++)
     {
@@ -86,64 +80,73 @@ flatpak_builtin_remote_list (int argc, char **argv, GCancellable *cancellable, G
         {
           char *remote_name = remotes[i];
           gboolean disabled;
-          g_autofree char *remote_url = NULL;
-          g_autofree char *title = NULL;
-          g_autofree char *collection_id = NULL;
-          int prio;
-          g_autofree char *prio_as_string = NULL;
-          gboolean gpg_verify = TRUE;
 
           disabled = flatpak_dir_get_remote_disabled (dir, remote_name);
           if (disabled && !opt_show_disabled)
             continue;
 
-          flatpak_table_printer_add_column (printer, remote_name);
-
-          if (opt_show_details)
+          for (k = 0; columns[k].name; k++)
             {
-              title = flatpak_dir_get_remote_title (dir, remote_name);
-              if (title)
-                flatpak_table_printer_add_column (printer, title);
-              else
-                flatpak_table_printer_add_column (printer, "-");
+              if (strcmp (columns[k].name, "name") == 0)
+                flatpak_table_printer_add_column (printer, remote_name);
+              else if (strcmp (columns[k].name, "title") == 0)
+                {
+                  g_autofree char *title = flatpak_dir_get_remote_title (dir, remote_name);
+                  if (title)
+                    flatpak_table_printer_add_column (printer, title);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
+              else if (strcmp (columns[k].name, "url") == 0)
+                {
+                  g_autofree char *remote_url = NULL;
 
-              if (ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, &remote_url, NULL))
-                flatpak_table_printer_add_column (printer, remote_url);
-              else
-                flatpak_table_printer_add_column (printer, "-");
+                  if (ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, &remote_url, NULL))
+                    flatpak_table_printer_add_column (printer, remote_url);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
+              else if (strcmp (columns[k].name, "collection") == 0)
+                {
+                  g_autofree char *id = flatpak_dir_get_remote_collection_id (dir, remote_name);
+                  if (id != NULL)
+                    flatpak_table_printer_add_column (printer, id);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
+              else if (strcmp (columns[k].name, "priority") == 0)
+                {
+                  int prio = flatpak_dir_get_remote_prio (dir, remote_name);
+                  g_autofree char *prio_as_string = g_strdup_printf ("%d", prio);
+                  flatpak_table_printer_add_column (printer, prio_as_string);
+                }
+              else if (strcmp (columns[k].name, "options") == 0)
+                {
+                  gboolean gpg_verify = TRUE;
 
-              collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
-              if (collection_id != NULL)
-                flatpak_table_printer_add_column (printer, collection_id);
-              else
-                flatpak_table_printer_add_column (printer, "-");
+                  flatpak_table_printer_add_column (printer, ""); /* Options */
 
-              prio = flatpak_dir_get_remote_prio (dir, remote_name);
-              prio_as_string = g_strdup_printf ("%d", prio);
-              flatpak_table_printer_add_column (printer, prio_as_string);
+                  if (dirs->len > 1)
+                    {
+                      g_autofree char *dir_id = flatpak_dir_get_name (dir);
+                      flatpak_table_printer_append_with_comma (printer, dir_id);
+                    }
+
+                  if (disabled)
+                    flatpak_table_printer_append_with_comma (printer, "disabled");
+
+                  if (flatpak_dir_get_remote_oci (dir, remote_name))
+                    flatpak_table_printer_append_with_comma (printer, "oci");
+
+                  if (flatpak_dir_get_remote_noenumerate (dir, remote_name))
+                    flatpak_table_printer_append_with_comma (printer, "no-enumerate");
+
+                  ostree_repo_remote_get_gpg_verify (flatpak_dir_get_repo (dir), remote_name,
+                                                     &gpg_verify, NULL);
+                  if (!gpg_verify)
+                    flatpak_table_printer_append_with_comma (printer, "no-gpg-verify");
+                }
             }
-
-          flatpak_table_printer_add_column (printer, ""); /* Options */
-
-          if (dirs->len > 1)
-            {
-              g_autofree char *dir_id = flatpak_dir_get_name (dir);
-              flatpak_table_printer_append_with_comma (printer, dir_id);
-            }
-
-          if (disabled)
-            flatpak_table_printer_append_with_comma (printer, "disabled");
-
-          if (flatpak_dir_get_remote_oci (dir, remote_name))
-            flatpak_table_printer_append_with_comma (printer, "oci");
-
-          if (flatpak_dir_get_remote_noenumerate (dir, remote_name))
-            flatpak_table_printer_append_with_comma (printer, "no-enumerate");
-
-          ostree_repo_remote_get_gpg_verify (flatpak_dir_get_repo (dir), remote_name,
-                                             &gpg_verify, NULL);
-          if (!gpg_verify)
-            flatpak_table_printer_append_with_comma (printer, "no-gpg-verify");
 
           flatpak_table_printer_finish_row (printer);
         }
@@ -153,6 +156,33 @@ flatpak_builtin_remote_list (int argc, char **argv, GCancellable *cancellable, G
   flatpak_table_printer_free (printer);
 
   return TRUE;
+}
+
+gboolean
+flatpak_builtin_remote_list (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autofree char *col_help = NULL;
+  g_autofree Column *columns = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
+
+  context = g_option_context_new (_(" - List remote repositories"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
+  col_help = column_help (all_columns);
+  g_option_context_set_description (context, col_help);
+
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO, &dirs, cancellable, error))
+    return FALSE;
+
+  if (argc > 1)
+    return usage_error (context, _("Too many arguments"), error);
+
+  columns = handle_column_args (all_columns, opt_show_details, opt_cols, error);
+  if (columns == NULL)
+    return FALSE;
+  
+  return list_remotes (dirs, columns, cancellable, error);
 }
 
 gboolean
