@@ -32,131 +32,43 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-table-printer.h"
 #include "flatpak-instance-private.h"
 
-static gboolean opt_show_cols;
 static const char **opt_cols;
 
 static GOptionEntry options[] = {
-  { "show-columns", 0, 0, G_OPTION_ARG_NONE, &opt_show_cols, N_("Show available columns"), NULL },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
   { NULL }
 };
 
-static struct {
-  const char *name;
-  const char *title;
-  const char *desc;
-  int len;
-} all_columns[] = {
-  { "application",    N_("Application"),    N_("Show the application ID"),              0 },
-  { "arch",           N_("Architecture"),   N_("Show the architecture"),                0 },
-  { "branch",         N_("Branch"),         N_("Show the application branch"),          0 },
-  { "commit",         N_("Commit"),         N_("Show the application commit"),         12 },
-  { "runtime",        N_("Runtime"),        N_("Show the runtime ID"),                  0 },
-  { "runtime-branch", N_("Runtime Branch"), N_("Show the runtime branch"),              0 },
-  { "runtime-commit", N_("Runtime Commit"), N_("Show the runtime commit"),             12 },
-  { "pid",            N_("PID"),            N_("Show the PID of the wrapper process"),  0 },
-  { "child-pid",      N_("Child PID"),      N_("Show the PID of the sandbox process"),  0 },
+static Column all_columns[] = {
+  { "instance",       N_("Instance"),       N_("Show the instance ID"),                1, 1 },
+  { "pid",            N_("PID"),            N_("Show the PID of the wrapper process"), 1, 1 },
+  { "child-pid",      N_("Child-PID"),      N_("Show the PID of the sandbox process"), 1, 0 },
+  { "application",    N_("Application"),    N_("Show the application ID"),             1, 1 },
+  { "arch",           N_("Architecture"),   N_("Show the architecture"),               1, 0 },
+  { "branch",         N_("Branch"),         N_("Show the application branch"),         1, 0 },
+  { "commit",         N_("Commit"),         N_("Show the application commit"),         1, 0 },
+  { "runtime",        N_("Runtime"),        N_("Show the runtime ID"),                 1, 1 },
+  { "runtime-branch", N_("R.-Branch"),      N_("Show the runtime branch"),             1, 0 },
+  { "runtime-commit", N_("R.-Commit"),      N_("Show the runtime commit"),             1, 0 },
+  { NULL }
 };
 
-#define ALL_COLUMNS "pid,child-pid,application,arch,branch,runtime,runtime-branch"
-#define DEFAULT_COLUMNS "pid,application,runtime"
-
-static int
-find_column (const char *name,
-             GError **error)
-{
-  int i;
-  int candidate;
-
-  candidate = -1;
-  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
-    {
-      if (g_str_equal (all_columns[i].name, name))
-        {
-          return i;
-        }
-      else if (g_str_has_prefix (all_columns[i].name, name))
-        {
-          if (candidate == -1)
-            {
-              candidate = i;
-            }
-          else
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Ambiguous column: %s"), name);
-              return -1;
-            }
-        }
-    }
-
-  if (candidate >= 0)
-    return candidate;
-
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("Unknown column: %s"), name);
-  return -1;
-}
-
-static char *
-column_help (void)
-{
-  GString *s = g_string_new ("");
-  int len;
-  int i;
-
-  g_string_append (s, _("Available columns:\n"));
-  
-  len = 0;
-  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
-    len = MAX (len, strlen (all_columns[i].name));
-
-  len += 4;
-  for (i = 0; i < G_N_ELEMENTS (all_columns); i++)
-    g_string_append_printf (s, "  %-*s %s\n", len, all_columns[i].name, all_columns[i].desc);
-
-  g_string_append_printf (s, "  %-*s %s\n", len, "all", _("Show all columns"));
-  g_string_append_printf (s, "  %-*s %s\n", len, "help", _("Show available columns"));
-
-  return g_string_free (s, FALSE);
-}
-
-static void
-show_columns (void)
-{
-  g_autofree char *col_help = column_help ();
-  g_print ("%s", col_help);
-}
-
 static gboolean
-enumerate_instances (const char *columns,
-                     GError **error)
+enumerate_instances (Column *columns, GError **error)
 {
   g_autoptr(GPtrArray) instances = NULL;
   FlatpakTablePrinter *printer;
-  g_auto(GStrv) cols = NULL;
-  g_autofree int *col_idx = NULL;
-  int n_cols;
   int i, j;
 
-  cols = g_strsplit (columns, ",", 0);
-  n_cols = g_strv_length (cols);
-  col_idx = g_new (int, n_cols); 
-  for (i = 0; i < n_cols; i++)
-    {
-      col_idx[i] = find_column (cols[i], error);
-      if (col_idx[i] == -1)
-        {
-          return FALSE;
-        }
-    }
+  if (columns[0].name == NULL)
+    return TRUE;
 
   printer = flatpak_table_printer_new ();
-  flatpak_table_printer_set_column_title (printer, 0, _("Instance"));
-
-  for (i = 0; i < n_cols; i++)
-    flatpak_table_printer_set_column_title (printer, i + 1, all_columns[col_idx[i]].title);
+  flatpak_table_printer_set_column_titles (printer, columns);
  
   instances = flatpak_instance_get_all ();
   if (instances->len == 0)
@@ -171,49 +83,50 @@ enumerate_instances (const char *columns,
 
       flatpak_table_printer_add_column (printer, flatpak_instance_get_id (instance));
 
-      for (i = 0; i < n_cols; i++)
+      for (i = 0; columns[i].name; i++)
         {
-          g_autofree char *freeme = NULL;
-          const char *col = NULL;
-          int idx = col_idx[i];
-          int len;
-
-          if (strcmp (all_columns[idx].name, "pid") == 0)
-            col = freeme = g_strdup_printf ("%d", flatpak_instance_get_pid (instance));
-          else if (strcmp (all_columns[idx].name, "child-pid") == 0)
-            col = freeme = g_strdup_printf ("%d", flatpak_instance_get_child_pid (instance));
-          else if (strcmp (all_columns[idx].name, "application") == 0)
-            col = flatpak_instance_get_app (instance);
-          else if (strcmp (all_columns[idx].name, "arch") == 0)
-            col = flatpak_instance_get_arch (instance);
-          else if (strcmp (all_columns[idx].name, "commit") == 0)
-            col = flatpak_instance_get_commit (instance);
-          else if (strcmp (all_columns[idx].name, "runtime") == 0)
+          if (strcmp (columns[i].name, "pid") == 0)
+            {
+              g_autofree char *pid = g_strdup_printf ("%d", flatpak_instance_get_pid (instance));
+              flatpak_table_printer_add_column (printer, pid);
+            }
+          else if (strcmp (columns[i].name, "child-pid") == 0)
+            {
+              g_autofree char *pid = g_strdup_printf ("%d", flatpak_instance_get_child_pid (instance));
+              flatpak_table_printer_add_column (printer, pid);
+            }
+          else if (strcmp (columns[i].name, "application") == 0)
+            flatpak_table_printer_add_column (printer, flatpak_instance_get_app (instance));
+          else if (strcmp (columns[i].name, "arch") == 0)
+            flatpak_table_printer_add_column (printer, flatpak_instance_get_arch (instance));
+          else if (strcmp (columns[i].name, "branch") == 0)
+            flatpak_table_printer_add_column (printer, flatpak_instance_get_branch (instance));
+          else if (strcmp (columns[i].name, "commit") == 0)
+            flatpak_table_printer_add_column_len (printer,
+                                                  flatpak_instance_get_commit (instance),
+                                                  12);
+          else if (strcmp (columns[i].name, "runtime") == 0)
             {
               const char *full_ref = flatpak_instance_get_runtime (instance);
               if (full_ref != NULL)
                 {
                   g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
-                  col = freeme = g_strdup (ref[1]);
+                  flatpak_table_printer_add_column (printer, ref[1]);
                 }
             }
-          else if (strcmp (all_columns[idx].name, "runtime-branch") == 0)
+          else if (strcmp (columns[i].name, "runtime-branch") == 0)
             {
               const char *full_ref = flatpak_instance_get_runtime (instance);
               if (full_ref != NULL)
                 {
                   g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
-                  col = freeme = g_strdup (ref[3]);
+                  flatpak_table_printer_add_column (printer, ref[3]);
                 }
             }
-          else if (strcmp (all_columns[idx].name, "runtime-commit") == 0)
-            col = flatpak_instance_get_runtime_commit (instance);
-
-          len = all_columns[idx].len;
-          if (len == 0)
-            flatpak_table_printer_add_column (printer, col);
-          else
-            flatpak_table_printer_add_column_len (printer, col, len);
+          else if (strcmp (columns[i].name, "runtime-commit") == 0)
+            flatpak_table_printer_add_column_len (printer,
+                                                  flatpak_instance_get_runtime_commit (instance),
+                                                  12);
         }
 
       flatpak_table_printer_finish_row (printer);
@@ -225,22 +138,6 @@ enumerate_instances (const char *columns,
   return TRUE;
 }
 
-static gboolean
-list_has (const char *list,
-          const char *term)
-{
-  const char *p;
-  int len;
-
-  p = strstr (list, term);
-  len = strlen (term);
-  if (p &&
-      (p == list || p[-1] == ',') &&
-      (p[len] == '\0' || p[len] == ','))
-    return TRUE;
-  return FALSE;
-}
-
 gboolean
 flatpak_builtin_ps (int            argc,
                     char         **argv,
@@ -249,11 +146,11 @@ flatpak_builtin_ps (int            argc,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autofree char *col_help = NULL;
-  g_autofree char *cols = NULL;
+  g_autofree Column *columns = NULL;
 
   context = g_option_context_new (_(" - Enumerate running sandboxes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
-  col_help = column_help ();
+  col_help = column_help (all_columns);
   g_option_context_set_description (context, col_help);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
@@ -265,44 +162,11 @@ flatpak_builtin_ps (int            argc,
       return FALSE;
     }
 
-  if (opt_show_cols)
-    {
-      show_columns ();
-      return TRUE;
-    }
+  columns = handle_column_args (all_columns, FALSE, opt_cols, error);
+  if (columns == NULL)
+    return FALSE;
 
-  if (opt_cols)
-    {
-      gboolean show_all = FALSE;
-      int i;
-
-      for (i = 0; opt_cols[i]; i++)
-        {
-          if (list_has (opt_cols[i], "help"))
-            {
-              show_columns ();
-              return TRUE;
-            }
-          if (list_has (opt_cols[i], "all"))
-            {
-              show_all = TRUE;
-              break;
-            }
-        }
-
-      if (show_all)
-        {
-          cols = g_strdup (ALL_COLUMNS);
-        }
-      else
-        {
-          cols = g_strjoinv (",", (char **)opt_cols);
-        }
-    }
-  else
-    cols = g_strdup (DEFAULT_COLUMNS);
-
-  return enumerate_instances (cols, error);
+  return enumerate_instances (columns, error);
 }
 
 gboolean

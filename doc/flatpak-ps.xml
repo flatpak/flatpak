@@ -82,14 +82,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--show-columns</option></term>
-
-                <listitem><para>
-                    Show the available values for the <option>--columns</option> option.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>--columns=FIELD,…</option></term>
 
                 <listitem><para>
@@ -107,6 +99,14 @@
         <para>The following fields are understood by the <option>--columns</option> option:</para>
 
         <variablelist>
+            <varlistentry>
+                <term>instance</term>
+
+                <listitem><para>
+                    Show the instance ID
+                </para></listitem>
+            </varlistentry>
+
             <varlistentry>
                 <term>application</term>
 
