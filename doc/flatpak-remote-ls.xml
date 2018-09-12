@@ -106,6 +106,7 @@
 
                 <listitem><para>
                     Show arches, branches and commit ids, in addition to the names.
+                    Equivalent to <option>--columns=all</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -168,7 +169,109 @@
                     Print OSTree debug information during command processing.
                 </para></listitem>
             </varlistentry>
+
+            <varlistentry>
+                <term><option>--show-columns</option></term>
+
+                <listitem><para>
+                    Show the available values for the <option>--columns</option> option.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--columns=FIELD,…</option></term>
+
+                <listitem><para>
+                    Specify what information to show about each ref. You can
+                    list multiple fields, or use this option multiple times.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
+    </refsect1>
+
+   <refsect1>
+        <title>Fields</title>
+
+        <para>The following fields are understood by the <option>--columns</option> option:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term>ref</term>
+
+                <listitem><para>
+                    Show the ref
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>application</term>
+
+                <listitem><para>
+                    Show the application ID
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>origin</term>
+
+                <listitem><para>
+                    Show the origin remote
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>commit</term>
+
+                <listitem><para>
+                    Show the active commit
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>installed-size</term>
+
+                <listitem><para>
+                    Show the installed size
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>download-size</term>
+
+                <listitem><para>
+                    Show the download size
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>options</term>
+
+                <listitem><para>
+                    Show options
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>all</term>
+
+                <listitem><para>
+                    Show all columns
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>help</term>
+
+                <listitem><para>
+                    Show the list of available columns
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+        <para>
+          Note that field names can be abbreviated to a unique prefix.
+        </para>
+
     </refsect1>
 
     <refsect1>
