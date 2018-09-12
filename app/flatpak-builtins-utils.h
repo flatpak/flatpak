@@ -66,5 +66,20 @@ gboolean update_appstream (GPtrArray    *dirs,
 
 char ** get_permission_tables (XdpDbusPermissionStore *store);
 
+/* --columns handling */
+
+typedef struct {
+  const char *name;
+  const char *title; /* use N_() */
+  const char *desc;  /* use N_() */
+  gboolean all;
+  gboolean def;
+} Column;
+
+char   *column_help        (Column *columns);
+Column *handle_column_args (Column *all_columns,
+                            gboolean opt_show_all,
+                            const char **opt_cols,
+                            GError **error);
 
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */
