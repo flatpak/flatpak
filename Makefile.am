@@ -46,7 +46,6 @@ AM_CPPFLAGS =							\
 	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\"		\
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"		\
 	-DSYSTEM_FONT_CACHE_DIRS=\"$(SYSTEM_FONT_CACHE_DIRS)\"		\
-	-DDBUSPROXY=\"$(libexecdir)/flatpak-dbus-proxy\"	\
 	-DG_LOG_DOMAIN=\"flatpak\"				\
 	-I$(srcdir)/libglnx					\
 	-I$(srcdir)/common					\
@@ -60,6 +59,12 @@ if WITH_SYSTEM_BWRAP
 AM_CPPFLAGS += -DHELPER=\"$(BWRAP)\"
 else
 AM_CPPFLAGS += -DHELPER=\"$(libexecdir)/flatpak-bwrap\"
+endif
+
+if WITH_SYSTEM_DBUS_PROXY
+AM_CPPFLAGS += -DDBUSPROXY=\"$(DBUS_PROXY)\"
+else
+AM_CPPFLAGS += -DDBUSPROXY=\"$(libexecdir)/flatpak-dbus-proxy\"
 endif
 
 triggersdir = $(pkgdatadir)/triggers
@@ -91,7 +96,9 @@ include app/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include portal/Makefile.am.inc
 include system-helper/Makefile.am.inc
+if !WITH_SYSTEM_DBUS_PROXY
 include dbus-proxy/Makefile.am.inc
+endif
 include tests/Makefile.am.inc
 
 if !WITH_SYSTEM_BWRAP

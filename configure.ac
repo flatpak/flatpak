@@ -31,6 +31,7 @@ AC_INIT([Flatpak],
 
 GLIB_REQS=2.44
 SYSTEM_BWRAP_REQS=0.2.1
+SYSTEM_DBUS_PROXY_REQS=0.1.0
 OSTREE_REQS=2018.7
 
 AC_USE_SYSTEM_EXTENSIONS
@@ -165,6 +166,27 @@ else
    AM_CONDITIONAL([WITH_SYSTEM_BWRAP], [false])
 fi
 AC_SUBST([CAP_LIB])
+
+AC_ARG_VAR([DBUS_PROXY], [dbus-proxy executable])
+AC_ARG_WITH([system-dbus-proxy],
+            [AS_HELP_STRING([--with-system-dbus-proxy], [Use system xdg-dbus-proxy executable [default=check $DBUS_PROXY]])],
+            [DBUS_PROXY="$withval"],
+            [DBUS_PROXY="${DBUS_PROXY:-false}"])
+AS_CASE([$DBUS_PROXY],
+        [yes],
+            [DBUS_PROXY=xdg-dbus-proxy],
+        [no],
+            [DBUS_PROXY=false],
+        [auto],
+            [AC_CHECK_PROG([DBUS_PROXY], [xdg-dbus-proxy], [xdg-dbus-proxy], [false])])
+if test "x$DBUS_PROXY" != xfalse; then
+   DBUS_PROXY_VERSION=[$( $DBUS_PROXY --version  | sed 's,.*\ \([0-9]*\.[0-9]*\.[0-9]*\)$,\1,')]
+   AX_COMPARE_VERSION([$SYSTEM_DBUS_PROXY_REQS],[gt],[$DBUS_PROXY_VERSION],
+                      [AC_MSG_ERROR([You need at least version $SYSTEM_DBUS_PROXY_REQS of xdg-dbus-proxy to use the system installed version (have $DBUS_PROXY_VERSION)])])
+   AM_CONDITIONAL([WITH_SYSTEM_DBUS_PROXY], [true])
+else
+   AM_CONDITIONAL([WITH_SYSTEM_DBUS_PROXY], [false])
+fi
 
 
 AC_CHECK_FUNCS(fdwalk)
@@ -424,12 +446,19 @@ else
   build_bwrap="no"
 fi
 
+if test x$DBUS_PROXY = xfalse ; then
+  build_dbus_proxy="yes"
+else
+  build_dbus_proxy="no"
+fi
+
 echo ""
 echo "          Flatpak $FLATPAK_VERSION"
 echo "          ============="
 echo ""
 echo "          Build system helper:    $enable_system_helper"
 echo "          Build bubblewrap:       $build_bwrap"
+echo "          Build dbus-proxy:       $build_dbus_proxy"
 echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
 echo "          Use seccomp:            $enable_seccomp"
 echo "          Privileged group:       $PRIVILEGED_GROUP"
