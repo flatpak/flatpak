@@ -1,3 +1,27 @@
+Changes in 1.0.2
+================
+
+ * The dbus proxy is now available in a separate git module, xdg-dbus-portal,
+   which is imported into flatpak as a submodule. It is possible to build
+   flatpak against the system xdg-dbus-portal instead, but this is not currently
+   very useful as no other applications yet depend on xdg-dbus-portal.
+ * Build regressions with older versions of glib have been fixed.
+ * Flatpak ps now also tracks the pid the main process inside the sandbox.
+ * Added flatpak override --reset to reset overrides for an app.
+ * Added flatpak override --show to show overrides for an app.
+ * flatpak install now automatically pick user or system based on the remote
+   name given (unless the remote exists in both).
+ * flatpak uninstall --unused now does not remove SDKs if some installed app
+   refers to them.
+ * Fixed bug where flatpak uninstall --unused prompted for uninstall twice.
+ * Set IO class on the system helper to "idle", which should cause backgroun
+   updates to affect the system less.
+ * Fixed regression in flatpak uninstall --no-related.
+ * Better handling of empty collection ids in flatpak bundles.
+ * Cleaned up some error messages.
+ * Various documentation fixes and cleanups.
+ * Updated translations.
+
 Changes in 1.0.1
 ================
 
