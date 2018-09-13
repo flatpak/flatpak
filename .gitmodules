@@ -5,3 +5,7 @@
 	path = bubblewrap
 	url = https://github.com/projectatomic/bubblewrap.git
 	ignore = dirty
+[submodule "dbus-proxy"]
+	path = dbus-proxy
+	url = https://github.com/flatpak/xdg-dbus-proxy.git
+	branch = master
