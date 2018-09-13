@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-09-09 17:18+0000\n"
+"POT-Creation-Date: 2018-09-13 13:55+0200\n"
 "PO-Revision-Date: 2018-09-09 19:28+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -1092,21 +1092,24 @@ msgid "Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"
 msgstr ""
 "Ostrzeżenie: nie można zaktualizować metadanych dla repozytorium „%s”: %s\n"
 
-#: app/flatpak-builtins-create-usb.c:700
+#: app/flatpak-builtins-create-usb.c:702
 #, c-format
 msgid "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
 msgstr ""
 "Ostrzeżenie: nie można zaktualizować danych AppStream dla repozytorium „%s”, "
 "architektury „%s”: %s\n"
 
-#: app/flatpak-builtins-create-usb.c:719
-#, c-format
-msgid "Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s\n"
+#. Print a warning if both appstream and appstream2 are missing
+#: app/flatpak-builtins-create-usb.c:735
+#, fuzzy, c-format
+msgid ""
+"Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s; %s\n"
 msgstr ""
 "Ostrzeżenie: nie można odnaleźć danych AppStream dla repozytorium „%s”, "
 "architektury „%s”: %s\n"
 
-#: app/flatpak-builtins-create-usb.c:737
+#. Appstream2 is only for efficiency, so just print a debug message
+#: app/flatpak-builtins-create-usb.c:741
 #, c-format
 msgid "Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"
 msgstr ""
@@ -2735,7 +2738,7 @@ msgstr "Działa na podanych instalacjach systemowych"
 msgid "Builtin Commands:"
 msgstr "Wbudowane polecenia:"
 
-#: app/flatpak-main.c:384
+#: app/flatpak-main.c:361
 msgid ""
 "The --installation option was used multiple times for a command that works "
 "on one installation"
@@ -2743,16 +2746,16 @@ msgstr ""
 "Opcja --installation została użyta wiele razy dla polecenia, które działa na "
 "jednej instalacji"
 
-#: app/flatpak-main.c:503
+#: app/flatpak-main.c:480
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Nieznane polecenie „%s”"
 
-#: app/flatpak-main.c:511
+#: app/flatpak-main.c:488
 msgid "No command specified"
 msgstr "Nie podano polecenia"
 
-#: app/flatpak-main.c:633
+#: app/flatpak-main.c:608
 msgid "error:"
 msgstr "błąd:"
 
@@ -2948,7 +2951,7 @@ msgstr "Nie odnaleziono zastępników dla %s"
 
 #: common/flatpak-dir.c:1750 common/flatpak-dir.c:2105
 #: common/flatpak-dir.c:2128 common/flatpak-dir.c:2150
-#: common/flatpak-dir.c:12279 common/flatpak-transaction.c:1559
+#: common/flatpak-dir.c:12282 common/flatpak-transaction.c:1559
 #: common/flatpak-transaction.c:1594 common/flatpak-utils.c:1434
 #: common/flatpak-utils.c:1529
 #, c-format
@@ -3228,12 +3231,12 @@ msgstr "Nie zainstalowano %s/%s/%s"
 msgid "Could not find installation %s"
 msgstr "Nie można odnaleźć instalacji %s"
 
-#: common/flatpak-dir.c:10846
+#: common/flatpak-dir.c:10849
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Już zainstalowano środowisko wykonawcze %s, gałąź %s"
 
-#: common/flatpak-dir.c:10847
+#: common/flatpak-dir.c:10850
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Już zainstalowano program %s, gałąź %s"
@@ -3366,41 +3369,41 @@ msgstr "%s jest niewspierane, ignorowanie\n"
 msgid "No appstream data for %s: %s\n"
 msgstr "Brak danych AppStream dla %s: %s\n"
 
-#: common/flatpak-utils.c:5542
+#: common/flatpak-utils.c:5549
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Pobieranie metadanych: %u/(szacowanie) %s"
 
-#: common/flatpak-utils.c:5566
+#: common/flatpak-utils.c:5573
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Pobieranie: %s/%s"
 
-#: common/flatpak-utils.c:5587
+#: common/flatpak-utils.c:5594
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Pobieranie dodatkowych danych: %s/%s"
 
-#: common/flatpak-utils.c:5592
+#: common/flatpak-utils.c:5599
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Pobieranie plików: %d/%d %s"
 
-#: common/flatpak-utils.c:5682
+#: common/flatpak-utils.c:5689
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s wymaga nowszej wersji Flatpak (%s)"
 
-#: common/flatpak-utils.c:5729
+#: common/flatpak-utils.c:5736
 msgid "Empty string is not a number"
 msgstr "Pusty ciąg nie jest liczbą"
 
-#: common/flatpak-utils.c:5755
+#: common/flatpak-utils.c:5762
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "„%s” nie jest liczbą bez znaku"
 
-#: common/flatpak-utils.c:5765
+#: common/flatpak-utils.c:5772
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Liczba „%s” jest poza zakresem [%s, %s]"
