@@ -4657,9 +4657,15 @@ flatpak_bundle_load (GFile   *file,
 
   if (collection_id != NULL)
     {
-      if (!g_variant_lookup (metadata, "collection-id", "s", collection_id) ||
-          **collection_id == '\0')
-        *collection_id = NULL;
+      if (!g_variant_lookup (metadata, "collection-id", "s", collection_id))
+        {
+          *collection_id = NULL;
+        }
+      else if (**collection_id == '\0')
+        {
+          g_free (*collection_id);
+          *collection_id = NULL;
+        }
     }
 
   if (app_metadata != NULL)
