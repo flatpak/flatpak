@@ -96,10 +96,19 @@ include app/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include portal/Makefile.am.inc
 include system-helper/Makefile.am.inc
-if !WITH_SYSTEM_DBUS_PROXY
-include dbus-proxy/Makefile.am.inc
-endif
 include tests/Makefile.am.inc
+
+if !WITH_SYSTEM_DBUS_PROXY
+libexec_PROGRAMS+=flatpak-dbus-proxy
+flatpak_dbus_proxy_SOURCES =		\
+	dbus-proxy/flatpak-proxy.c	\
+	dbus-proxy/flatpak-proxy.h	\
+	dbus-proxy/dbus-proxy.c		\
+	dbus-proxy/backport-autoptr.h	\
+	$(NULL)
+flatpak_dbus_proxy_LDADD = $(AM_LDADD) $(BASE_LIBS)
+flatpak_dbus_proxy_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
+endif
 
 if !WITH_SYSTEM_BWRAP
 
