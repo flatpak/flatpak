@@ -28,11 +28,14 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-table-printer.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-cli-transaction.h"
 
 static char *opt_arch;
+static gboolean opt_install;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to search for"), N_("ARCH") },
+  { "install", 0, 0, G_OPTION_ARG_NONE, &opt_install, N_("Ask to install"), NULL },
   { NULL}
 };
 
@@ -227,6 +230,8 @@ get_comment_localized (AsApp *app)
   return NULL;
 }
 
+static int print_count = 0;
+
 static void
 print_app (MatchResult *res, FlatpakTablePrinter *printer)
 {
@@ -234,6 +239,12 @@ print_app (MatchResult *res, FlatpakTablePrinter *printer)
   const char *version = release ? as_release_get_version (release) : NULL;
   const char *id = as_app_get_id_filename (res->app);
   guint i;
+
+  if (opt_install)
+    {
+      g_autofree char *num = g_strdup_printf ("%d)", ++print_count);
+      flatpak_table_printer_add_column (printer, num);
+     }
 
   flatpak_table_printer_add_column (printer, id);
   flatpak_table_printer_add_column (printer, version);
@@ -313,6 +324,8 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
       FlatpakTablePrinter *printer = flatpak_table_printer_new ();
       int col = 0;
 
+      if (opt_install)
+        flatpak_table_printer_set_column_title (printer, col++, "");
       flatpak_table_printer_set_column_title (printer, col++, _("Application ID"));
       flatpak_table_printer_set_column_title (printer, col++, _("Version"));
 #if AS_CHECK_VERSION (0, 6, 1)
@@ -324,6 +337,44 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
       flatpak_table_printer_print (printer);
       flatpak_table_printer_free (printer);
 
+      if (opt_install)
+        {
+          int chosen;
+
+          chosen = flatpak_number_prompt (0, print_count, _("Install one of these (0 to abort)?"));
+
+          if (chosen > 0)
+            {
+              FlatpakDir *dir;
+              g_autoptr(FlatpakTransaction) transaction = NULL;
+              MatchResult *res = g_slist_nth_data (matches, chosen - 1);
+              const char *name = as_app_get_id_filename (res->app);
+              AsAppKind kind = as_app_get_kind (res->app);
+              const char *remote = g_ptr_array_index (res->remotes, 0); // FIXME which remote
+#if AS_CHECK_VERSION (0, 6, 1)
+              const char *branch = as_app_get_branch (res->app);
+#else
+              const char *branch = NULL;
+#endif
+              const char *arch = NULL; // FIXME
+              g_autofree char *ref = NULL;
+
+              ref = flatpak_compose_ref (kind == AS_APP_KIND_DESKTOP, name, branch, arch, error);
+              if (ref == NULL)
+                return FALSE;
+
+              dir = g_ptr_array_index (dirs, 0);
+              transaction = flatpak_cli_transaction_new (dir, FALSE, TRUE, error);
+              if (transaction == NULL)
+                return FALSE;
+
+              if (!flatpak_cli_transaction_add_install (transaction, remote, ref, NULL, error))
+                return FALSE;
+
+              if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+                return FALSE;
+            }
+        }
       g_slist_free_full (matches, (GDestroyNotify) match_result_free);
     }
   else
