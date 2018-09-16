@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2018-09-13 13:55+0200\n"
-"PO-Revision-Date: 2018-08-26 01:08+0200\n"
+"PO-Revision-Date: 2018-09-15 17:06+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -1066,12 +1066,12 @@ msgstr ""
 
 #. Print a warning if both appstream and appstream2 are missing
 #: app/flatpak-builtins-create-usb.c:735
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s; %s\n"
 msgstr ""
 "Varování: Nelze nalézt appstream data pro vzdálený repozitář „%s“ "
-"architektura „%s“: %s\n"
+"architektura „%s“: %s; %s\n"
 
 #. Appstream2 is only for efficiency, so just print a debug message
 #: app/flatpak-builtins-create-usb.c:741
@@ -1639,11 +1639,11 @@ msgstr "Aplikace %s větev %s není nainstalována"
 
 #: app/flatpak-builtins-override.c:42
 msgid "Remove existing overrides"
-msgstr ""
+msgstr "Odstranit existující přepsání"
 
 #: app/flatpak-builtins-override.c:43
 msgid "Show existing overrides"
-msgstr ""
+msgstr "Zobrazit existující přepsání"
 
 #: app/flatpak-builtins-override.c:59
 msgid "[APP] - Override settings [for application]"
@@ -1700,131 +1700,114 @@ msgid "APP_ID - Show permissions for an app"
 msgstr "APP_ID - Zobrazit oprávnění pro aplikaci"
 
 #: app/flatpak-builtins-ps.c:42 app/flatpak-builtins-ps.c:120
-#, fuzzy
 msgid "Show available columns"
-msgstr "Zobrazit zakázané vzdálené repozitáře"
+msgstr "Zobrazit dostupné sloupce"
 
 #: app/flatpak-builtins-ps.c:43
-#, fuzzy
 msgid "What information to show"
-msgstr "Vypsat informace o repozitáři"
+msgstr "Jaké informace zobrazit"
 
 #: app/flatpak-builtins-ps.c:43
 msgid "FIELD,…"
-msgstr ""
+msgstr "POLE,…"
 
 #: app/flatpak-builtins-ps.c:53
-#, fuzzy
 msgid "Application"
-msgstr "ID aplikace"
+msgstr "Aplikace"
 
 #: app/flatpak-builtins-ps.c:53
-#, fuzzy
 msgid "Show the application ID"
-msgstr "ID aplikace"
+msgstr "Zobrazit ID aplikace"
 
 #: app/flatpak-builtins-ps.c:54
-#, fuzzy
 msgid "Architecture"
-msgstr "Architektura, která se má použít"
+msgstr "Architektura"
 
 #: app/flatpak-builtins-ps.c:54
 msgid "Show the architecture"
-msgstr ""
+msgstr "Zobrazit architekturu"
 
 #: app/flatpak-builtins-ps.c:55 app/flatpak-builtins-search.c:319
 msgid "Branch"
 msgstr "Větev"
 
 #: app/flatpak-builtins-ps.c:55
-#, fuzzy
 msgid "Show the application branch"
-msgstr "Zobrazit architektury a větve"
+msgstr "Zobrazit větev aplikace"
 
 #: app/flatpak-builtins-ps.c:56
-#, fuzzy
 msgid "Show the application commit"
-msgstr "Zobrazit umístění"
+msgstr "Zobrazit commit aplikace"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Runtime"
-msgstr "Prostředí:"
+msgstr "Prostředí"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Show the runtime ID"
-msgstr "Zobrazit prostředí"
+msgstr "Zobrazit ID prostředí"
 
 #: app/flatpak-builtins-ps.c:58
-#, fuzzy
 msgid "Runtime Branch"
-msgstr "Prostředí:"
+msgstr "Větev prostředí"
 
 #: app/flatpak-builtins-ps.c:58
-#, fuzzy
 msgid "Show the runtime branch"
-msgstr "Zobrazit prostředí"
+msgstr "Zobrazit větev prostředí"
 
 #: app/flatpak-builtins-ps.c:59
-#, fuzzy
 msgid "Runtime Commit"
-msgstr "Aktivní commit"
+msgstr "Commit prostředí"
 
 #: app/flatpak-builtins-ps.c:59
-#, fuzzy
 msgid "Show the runtime commit"
-msgstr "Zobrazit prostředí"
+msgstr "Zobrazit commit prostředí"
 
 #: app/flatpak-builtins-ps.c:60
-#, fuzzy
 msgid "PID"
-msgstr "APPID"
+msgstr "PID"
 
 #: app/flatpak-builtins-ps.c:60
 msgid "Show the PID of the wrapper process"
-msgstr ""
+msgstr "Zobrazit PID wrapper procesu"
 
 #: app/flatpak-builtins-ps.c:61
 msgid "Child PID"
-msgstr ""
+msgstr "PID potomka"
 
 #: app/flatpak-builtins-ps.c:61
 msgid "Show the PID of the sandbox process"
-msgstr ""
+msgstr "Zobrazit PID sandbox procesu"
 
 #: app/flatpak-builtins-ps.c:89
 #, c-format
 msgid "Ambiguous column: %s"
-msgstr ""
+msgstr "Nejednoznačný sloupec: %s"
 
 #: app/flatpak-builtins-ps.c:98
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown column: %s"
-msgstr "Neznámý příkaz „%s“"
+msgstr "Neznámý sloupec: %s"
 
 #: app/flatpak-builtins-ps.c:109
 msgid "Available columns:\n"
-msgstr ""
+msgstr "Dostupné sloupce:\n"
 
 #: app/flatpak-builtins-ps.c:119
-#, fuzzy
 msgid "Show all columns"
-msgstr "Zobrazit umístění"
+msgstr "Zobrazit všechny sloupce"
 
 #: app/flatpak-builtins-ps.c:156
-#, fuzzy
 msgid "Instance"
-msgstr "Instalováno"
+msgstr "Instance"
 
 #: app/flatpak-builtins-ps.c:254
 msgid " - Enumerate running sandboxes"
-msgstr ""
+msgstr " - Vypsat spuštěné sandboxy"
 
 #: app/flatpak-builtins-ps.c:264
-#, fuzzy
 msgid "Extra arguments given"
-msgstr "Informace o dodatečných údajích"
+msgstr "Zadány parametry navíc"
 
 #: app/flatpak-builtins-repair.c:63
 #, c-format
@@ -2410,11 +2393,11 @@ msgstr "vlastnictví systémové dbus"
 
 #: app/flatpak-cli-transaction.c:536
 msgid "new tags"
-msgstr ""
+msgstr "nové tagy"
 
 #: app/flatpak-cli-transaction.c:536
 msgid "tags"
-msgstr ""
+msgstr "tagy"
 
 #: app/flatpak-cli-transaction.c:564
 #, c-format
@@ -2522,11 +2505,8 @@ msgid "Enter the namespace of a running application"
 msgstr "Vstoupit do jmenného prostoru běžící aplikace"
 
 #: app/flatpak-main.c:84
-#, fuzzy
 msgid "Enumerate running applications"
-msgstr ""
-"\n"
-" Spuštěné aplikace"
+msgstr "Vypsat spuštěné aplikace"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:87
@@ -3214,14 +3194,14 @@ msgid "Failed to sync with dbus proxy"
 msgstr "Selhala synchronizace s dbus proxy"
 
 #: common/flatpak-run.c:1825 common/flatpak-run.c:1835
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open flatpak-info file: %s"
-msgstr "Selhalo otevření dočasného souboru flatpak-info: %s"
+msgstr "Selhalo otevření souboru flatpak-info: %s"
 
 #: common/flatpak-run.c:1855
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open brwapinfo.json file: %s"
-msgstr "Selhalo otevření dočasného souboru flatpak-info: %s"
+msgstr "Selhalo otevření souboru brwapinfo.json: %s"
 
 #: common/flatpak-run.c:2795
 #, c-format
