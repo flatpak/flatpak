@@ -175,6 +175,16 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
   g_debug ("Allowing x11 access");
 
   display = g_getenv ("DISPLAY");
+
+  /* WSL: The win32 Xserver has only TCP access, and anyway, there are no
+     network namespaces, so just hardcode the display */
+  {
+    if (display == NULL || strlen (display) == 0)
+      flatpak_bwrap_set_env (bwrap, "DISPLAY", ":0.0", TRUE);
+    return;
+  }
+
+  display = g_getenv ("DISPLAY");
   if (display && display[0] == ':' && g_ascii_isdigit (display[1]))
     {
       const char *display_nr = &display[1];
