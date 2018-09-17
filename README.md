@@ -1,3 +1,52 @@
+# Flatpak for Windows (WSL) branch
+
+This branch contains an experimental version of flatpak that works on windows
+using the WSL subsystem. Due to WSL bugs and missing features it isn't really
+"production" ready, but it is nevertheless interesting to play with.
+
+To use it you need (WSL with some distribution
+installed|https://docs.microsoft.com/en-us/windows/wsl/install-win10), and a Win32 X server, such as (VcXsrc|https://sourceforge.net/projects/vcxsrv/).
+
+To build it in Ubuntu (install in the microsoft store), first install the build dependencies:
+
+```
+ sudo apt-get update
+ sudo apt-get install build-essential libcurl4-gnutls-dev libsoup2.4-dev \
+      libext2fs-dev autoconf autopoint libtool libgpgme-dev bison \
+      liblzma-dev libgirepository1.0-dev libcap-dev libarchive-dev \
+      libjson-glib-dev libxau-dev libappstream-glib-dev
+```
+
+Then build OSTree:
+
+```
+ git clone https://github.com/ostreedev/ostree.git
+ cd ostree
+ ./autogen.sh --disable-rofiles-fuse --disable-man --with-curl
+ make
+ sudo make install
+ cd ..
+```
+
+Then the flatpak wip/WSL branch:
+
+```
+ git clone https://github.com/flatpak/flatpak.git
+ cd flatpak
+ git checkout wip/WSL
+ ./autogen.sh --disable-system-helper --disable-seccomp --disable-documentation --with-priv-mode=setuid
+ make
+ sudo make install
+ cd ..
+```
+
+Then you can use flatpak:
+```
+ flatpak remote-add --user flathub https://flathub.org/repo/flathub.flatpakrepo
+ flatpak install --user flathub org.gnome.eog
+ flatpak run org.gnome.eog
+```
+
 <p align="center">
   <img src="https://github.com/flatpak/flatpak/blob/master/flatpak.png?raw=true" alt="Flatpak icon"/>
 </p>
