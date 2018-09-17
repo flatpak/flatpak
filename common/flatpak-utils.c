@@ -2164,6 +2164,21 @@ flatpak_canonicalize_filename (const char *path)
   return g_file_get_path (file);
 }
 
+/* Check for non-empty regular files */
+gboolean
+flatpak_file_is_non_empty (const char *path)
+{
+  struct stat stbuf;
+
+  if (TEMP_FAILURE_RETRY (stat (path, &stbuf)) != 0)
+    return FALSE;
+
+  if (!S_ISREG (stbuf.st_mode) || stbuf.st_size == 0)
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_file_rename (GFile        *from,
                      GFile        *to,

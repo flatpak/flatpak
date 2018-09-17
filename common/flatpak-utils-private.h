@@ -493,6 +493,8 @@ char * flatpak_resolve_link (const char *path,
                              GError    **error);
 char * flatpak_canonicalize_filename (const char *path);
 
+gboolean flatpak_file_is_non_empty (const char *path);
+
 gboolean flatpak_file_rename (GFile        *from,
                               GFile        *to,
                               GCancellable *cancellable,
