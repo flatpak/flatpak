@@ -146,7 +146,7 @@ add_related (GHashTable   *all_refs,
 
       g_assert (ext->ref);
 
-      ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, error);
+      ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, NULL);
       if (ext_deploy_data == NULL)
         {
           g_printerr (_("Warning: Omitting related ref ‘%s’ because it is not installed.\n"),
