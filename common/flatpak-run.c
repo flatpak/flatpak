@@ -2393,10 +2393,32 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   if (!flatpak_bwrap_add_args_data (bwrap, "pkcs11.conf", pkcs11_conf_contents, -1, "/etc/pkcs11/pkcs11.conf", error))
     return FALSE;
 
-  if (g_file_test ("/etc/machine-id", G_FILE_TEST_EXISTS))
+  if (flatpak_file_is_non_empty ("/etc/machine-id"))
     flatpak_bwrap_add_args (bwrap, "--ro-bind", "/etc/machine-id", "/etc/machine-id", NULL);
-  else if (g_file_test ("/var/lib/dbus/machine-id", G_FILE_TEST_EXISTS))
+  else if (flatpak_file_is_non_empty ("/var/lib/dbus/machine-id"))
     flatpak_bwrap_add_args (bwrap, "--ro-bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
+  else
+    {
+      g_autofree char *machine_id = NULL;
+      guint32 ints[4];
+      guint8 *bytes;
+      int i;
+
+      /* If no machine-id exists, we generate one. This will not be the same between instances,
+	 but at least it will be there, as otherwise libdbus aborts. */
+      for (i = 0; i < 4; i++)
+	ints[i] = g_random_int ();
+      bytes = (guint8 *)ints;
+
+      machine_id = g_strdup_printf ("%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+				    bytes[0], bytes[1], bytes[2], bytes[3],
+				    bytes[4], bytes[5], bytes[6], bytes[7],
+				    bytes[8], bytes[9], bytes[10], bytes[11],
+				    bytes[12], bytes[13], bytes[14], bytes[15]);
+
+      if (!flatpak_bwrap_add_args_data (bwrap, "machine-id", machine_id, -1, "/etc/machine-id", error))
+	return FALSE;
+    }
 
   if (runtime_files)
     etc = g_file_get_child (runtime_files, "etc");
