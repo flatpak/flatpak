@@ -121,6 +121,15 @@ AC_ARG_WITH([systemdsystemunitdir],
     [with_systemdsystemunitdir='${prefix}/lib/systemd/system'])
 AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
 
+AC_ARG_WITH([systemduserenvgendir],
+            [AS_HELP_STRING([--with-systemduserenvgendir=DIR],
+                            [Directory for systemd user environment generators (default=PREFIX/lib/systemd/user-environment-generators)])],
+    [],
+    dnl This is deliberately not ${libdir}: systemd units always go in
+    dnl .../lib, never .../lib64 or .../lib/x86_64-linux-gnu
+    [with_systemduserenvgendir='${prefix}/lib/systemd/user-environment-generators'])
+AC_SUBST([systemduserenvgendir], [$with_systemduserenvgendir])
+
 AC_ARG_WITH(system_fonts_dir,
 		AS_HELP_STRING([--with-system-fonts-dir=PATH],[Directory where system fonts are, [default=/usr/share/fonts]]),
             with_system_fonts_dir="$withval", with_system_fonts_dir=/usr/share/fonts)
