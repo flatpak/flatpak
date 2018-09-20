@@ -86,10 +86,10 @@ echo "ok 2 update repo config to deploy collection ID"
 #for ref in app/org.test.App/x86_64/master app/org.test.Hello/x86_64/master appstream/x86_64 ostree-metadata runtime/org.test.Platform/x86_64/master; do
 #  ostree --repo=repos/test refs --collections --create=org.test.Collection:$ref $ref
 #done
-ostree --repo=repos/test summary --update --add-metadata="xa.collection-id='net.malicious.NewCollection'"
+ostree --repo=repos/test summary --update --add-metadata="ostree.deploy-collection-id='net.malicious.NewCollection'"
 ${FLATPAK} ${U} update org.test.App master
 
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org.test.Collection$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=net.malicious.NewCollection$'
 
-echo "ok 3 update repo config to with different collection ID"
+echo "ok 3 update repo config with different collection ID"

@@ -2941,11 +2941,12 @@ populate_commit_data_cache (GVariant   *metadata,
  * but kept for backwards compatibility).
  *
  * Note that there are two keys for the collection ID: collection-id, and
- * xa.collection-id. If a client does not currently have a collection ID configured
- * for this remote, it will *only* update its configuration from xa.collection-id.
- * This allows phased deployment of collection-based repositories. Clients will
- * only update their configuration from an unset to a set collection ID once
- * (otherwise the security properties of collection IDs are broken). */
+ * ostree.deploy-collection-id. If a client does not currently have a
+ * collection ID configured for this remote, it will *only* update its
+ * configuration from ostree.deploy-collection-id.  This allows phased
+ * deployment of collection-based repositories. Clients will only update their
+ * configuration from an unset to a set collection ID once (otherwise the
+ * security properties of collection IDs are broken). */
 gboolean
 flatpak_repo_update (OstreeRepo   *repo,
                      const char  **gpg_key_ids,
@@ -3002,8 +3003,13 @@ flatpak_repo_update (OstreeRepo   *repo,
     g_variant_builder_add (&builder, "{sv}", "xa.default-branch",
                            g_variant_new_string (default_branch));
 
+/* FIXME: Remove this check when we depend on ostree 2018.9 */
+#ifndef OSTREE_META_KEY_DEPLOY_COLLECTION_ID
+#define OSTREE_META_KEY_DEPLOY_COLLECTION_ID "ostree.deploy-collection-id"
+#endif
+
   if (deploy_collection_id && collection_id != NULL)
-    g_variant_builder_add (&builder, "{sv}", "xa.collection-id",
+    g_variant_builder_add (&builder, "{sv}", OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
                            g_variant_new_string (collection_id));
   else if (deploy_collection_id)
     g_debug ("Ignoring deploy-collection-id=true because no collection ID is set.");

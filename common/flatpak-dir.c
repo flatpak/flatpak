@@ -11502,6 +11502,11 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
                                                    GCancellable       *cancellable,
                                                    GError            **error)
 {
+/* FIXME: Remove this check when we depend on ostree 2018.9 */
+#ifndef OSTREE_META_KEY_DEPLOY_COLLECTION_ID
+#define OSTREE_META_KEY_DEPLOY_COLLECTION_ID "ostree.deploy-collection-id"
+#endif
+
   /* We only support those configuration parameters that can
      be set in the server when building the repo (see the
      flatpak_repo_set_* () family of functions) */
@@ -11510,7 +11515,7 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
     "xa.default-branch",
     "xa.gpg-keys",
     "xa.redirect-url",
-    "xa.collection-id",
+    OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
     NULL
   };
 
@@ -11553,7 +11558,7 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
                     {
                       if (strcmp (key, "xa.redirect-url") == 0)
                         g_ptr_array_add (updated_params, g_strdup ("url"));
-                      else if (strcmp (key, "xa.collection-id") == 0)
+                      else if (strcmp (key, OSTREE_META_KEY_DEPLOY_COLLECTION_ID) == 0)
                         g_ptr_array_add (updated_params, g_strdup ("collection-id"));
                       else
                         g_ptr_array_add (updated_params, g_strdup (key));
