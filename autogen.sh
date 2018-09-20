@@ -18,7 +18,7 @@ fi
 # regenerated from their corresponding *.in files by ./configure anyway.
 touch INSTALL
 
-if ! test -f libglnx/README.md -a -f bubblewrap/README.md; then
+if ! test -f libglnx/README.md -a -f bubblewrap/README.md -a -f dbus-proxy/README.md; then
     git submodule update --init
 fi
 # Workaround automake bug with subdir-objects and computed paths
