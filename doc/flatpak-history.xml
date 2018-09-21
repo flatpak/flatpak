@@ -1,0 +1,322 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-history">
+
+    <refentryinfo>
+        <title>flatpak history</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Matthias</firstname>
+                <surname>Clasen</surname>
+                <email>mclasen@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak history</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-history</refname>
+        <refpurpose>Show history</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak history</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Shows changes to the flatpak installations on the system. This includes
+            installs, updates and removals of applications and runtimes.
+        </para>
+        <para>
+            By default, both per-user and system-wide installations are shown. Use the
+            --user, --installation or --system options to change this.
+        </para>
+        <para>
+            The information for the history command is taken from the systemd journal,
+            and can also be accessed using e.g. the journalctl command.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Show changes to the user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Show changes to the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Show changes to the installation specified by <arg choice="plain">NAME</arg>
+                    among those defined in <filename>/etc/flatpak/installations.d/</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--since=TIME</option></term>
+
+                <listitem><para>
+                    Only show changes that are newer than the time specified by
+                    <arg choice="plain">TIME</arg>.
+                </para><para>
+                    <arg choice="plain">TIME</arg> can be either an absolute time
+                    in a format like YYYY-MM-DD HH:MM:SS, or a relative time like
+                    "2h", "7days", "4days 2hours".
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--until=TIME</option></term>
+
+                <listitem><para>
+                    Only show changes that are older than the time specified by
+                    <arg choice="plain">TIME</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--reverse</option></term>
+
+                <listitem><para>
+                    Show newest entries first.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--ostree-verbose</option></term>
+
+                <listitem><para>
+                    Print OSTree debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--show-columns</option></term>
+
+                <listitem><para>
+                    Show the available values for the <option>--columns</option> option.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--columns=FIELD,…</option></term>
+
+                <listitem><para>
+                    Specify what information to show about each ref. You can
+                    list multiple fields, or use this option multiple times.
+                </para></listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+   <refsect1>
+        <title>Fields</title>
+
+        <para>The following fields are understood by the <option>--columns</option> option:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term>time</term>
+
+                <listitem><para>
+                    Show when the change happened
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>change</term>
+
+                <listitem><para>
+                    Show the kind of change
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>ref</term>
+
+                <listitem><para>
+                    Show the ref
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>application</term>
+
+                <listitem><para>
+                    Show the application/runtime ID
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>arch</term>
+
+                <listitem><para>
+                    Show the architecture
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>branch</term>
+
+                <listitem><para>
+                    Show the branch
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>installation</term>
+
+                <listitem><para>
+                    Show the affected installation.
+                </para><para>
+                    This will be either the ID of a Flatpak installation,
+                    or the path to a temporary OSTree repository.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>remote</term>
+
+                <listitem><para>
+                    Show the remote that is used.
+                </para><para>
+                    This will be either the name of a configured remote,
+                    or the path to a temporary OSTree repository.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>old-commit</term>
+
+                <listitem><para>
+                    Show the previous commit. For pulls, this is the previous HEAD of the branch.
+                    For deploys, it is the previously active commit
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>commit</term>
+
+                <listitem><para>
+                    Show the current commit. For pulls, this is the HEAD of the branch.
+                    For deploys, it is the active commit
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>url</term>
+
+                <listitem><para>
+                    Show the remote url
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>user</term>
+
+                <listitem><para>
+                    Show the user doing the change.
+                </para><para>
+                    If this is the system helper operating as root,
+                    also show which user triggered the change.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>tool</term>
+
+                <listitem><para>
+                    Show the tool that was used.
+                </para><para>
+                    If this is the system helper, also show
+                    which tool was used to triggered the change.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>all</term>
+
+                <listitem><para>
+                    Show all columns
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>help</term>
+
+                <listitem><para>
+                    Show the list of available columns
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+        <para>
+          Note that field names can be abbreviated to a unique prefix.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>journalctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>

@@ -40,6 +40,7 @@
       <xi:include href="@srcdir@/flatpak-document-list.xml"/>
       <xi:include href="@srcdir@/flatpak-document-unexport.xml"/>
       <xi:include href="@srcdir@/flatpak-enter.xml"/>
+      <xi:include href="@srcdir@/flatpak-history.xml"/>
       <xi:include href="@srcdir@/flatpak-info.xml"/>
       <xi:include href="@srcdir@/flatpak-install.xml"/>
       <xi:include href="@srcdir@/flatpak-kill.xml"/>
