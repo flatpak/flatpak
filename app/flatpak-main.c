@@ -68,6 +68,7 @@ static FlatpakCommand commands[] = {
   { "remove", NULL, flatpak_builtin_uninstall, flatpak_complete_uninstall, TRUE },
   { "list", N_("List installed apps and/or runtimes"), flatpak_builtin_list, flatpak_complete_list },
   { "info", N_("Show info for installed app or runtime"), flatpak_builtin_info, flatpak_complete_info },
+  { "history", N_("Show history"), flatpak_builtin_history, flatpak_complete_history },
   { "config", N_("Configure flatpak"), flatpak_builtin_config, flatpak_complete_config },
   { "repair", N_("Repair flatpak installation"), flatpak_builtin_repair, flatpak_complete_repair },
   { "create-usb", N_("Put apps and/or runtimes onto removable media"), flatpak_builtin_create_usb, flatpak_complete_create_usb },
