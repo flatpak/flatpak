@@ -41,7 +41,7 @@ print_info (GVariant *meta)
   const char *collection_id;
   const char *default_branch;
   const char *redirect_url;
-  const char *redirect_collection_id;
+  const char *deploy_collection_id;
   g_autoptr(GVariant) gpg_keys = NULL;
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
@@ -56,8 +56,13 @@ print_info (GVariant *meta)
   if (g_variant_lookup (meta, "xa.redirect-url", "&s", &redirect_url))
     g_print (_("Redirect URL: %s\n"), redirect_url);
 
-  if (g_variant_lookup (meta, "xa.collection-id", "&s", &redirect_collection_id))
-    g_print (_("Redirect collection ID: %s\n"), redirect_collection_id);
+/* FIXME: Remove this check when we depend on ostree 2018.9 */
+#ifndef OSTREE_META_KEY_DEPLOY_COLLECTION_ID
+#define OSTREE_META_KEY_DEPLOY_COLLECTION_ID "ostree.deploy-collection-id"
+#endif
+
+  if (g_variant_lookup (meta, OSTREE_META_KEY_DEPLOY_COLLECTION_ID, "&s", &deploy_collection_id))
+    g_print (_("Deploy collection ID: %s\n"), deploy_collection_id);
 
   if ((gpg_keys = g_variant_lookup_value (meta, "xa.gpg-keys", G_VARIANT_TYPE_BYTESTRING)) != NULL)
     {
