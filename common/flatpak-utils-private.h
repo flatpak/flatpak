@@ -710,4 +710,23 @@ gboolean flatpak_check_required_version (const char *ref,
                                          GKeyFile   *metakey,
                                          GError    **error);
 
+#define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
+
+void  flatpak_log_change (const char *file,
+                          int line,
+                          const char *func,
+                          const char *change,
+                          int opid,
+                          const char *installation,
+                          const char *remote,
+                          const char *ref,
+                          const char *commit,
+                          const char *message,
+                          ...);
+
+#define flatpak_log_change(change,opid,installation,remote,ref,commit,message,...) \
+    (flatpak_log_change) (__FILE__, __LINE__, __FUNCTION__, \
+                          change,opid,installation,remote,ref,commit,message, \
+                          __VA_ARGS__)
+
 #endif /* __FLATPAK_UTILS_H__ */
