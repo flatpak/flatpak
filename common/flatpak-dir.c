@@ -49,6 +49,12 @@
 
 #include "errno.h"
 
+#ifdef HAVE_LIBSYSTEMD
+#define SD_JOURNAL_SUPPRESS_LOCATION
+#include <systemd/sd-journal.h>
+#endif
+
+
 #define NO_SYSTEM_HELPER ((FlatpakSystemHelper *) (gpointer) 1)
 
 #define SUMMARY_CACHE_TIMEOUT_SEC 5 *60
@@ -107,6 +113,25 @@ static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir     
                                                                  GError            **error);
 
 static void ensure_soup_session (FlatpakDir *self);
+
+static void flatpak_dir_log (FlatpakDir *self,
+                             const char *file,
+                             int line,
+                             const char *func,
+                             const char *source,
+                             const char *change,
+                             const char *remote,
+                             const char *ref,
+                             const char *commit,
+                             const char *old_commit,
+                             const char *url,
+                             const char *format,
+                             ...);
+
+#define flatpak_dir_log(self,change,remote,ref,commit,old_commit,url,format,...) \
+   (flatpak_dir_log) (self,__FILE__, __LINE__, __FUNCTION__, \
+                      NULL, change, remote, ref, commit, old_commit, url, format, __VA_ARGS__)
+
 
 typedef struct
 {
@@ -196,6 +221,7 @@ get_config_dir_location (void)
 
   return (const char *) path;
 }
+
 
 static FlatpakRemoteState *
 flatpak_remote_state_new (void)
@@ -1550,6 +1576,21 @@ flatpak_dir_get_name (FlatpakDir *self)
     return g_strdup_printf ("system (%s)", id);
 
   return g_strdup ("system");
+}
+
+static const char *
+flatpak_dir_get_name_cached (FlatpakDir *self)
+{
+  char *name;
+
+  name = g_object_get_data (G_OBJECT (self), "cached-name");
+  if (!name)
+    {
+      name = flatpak_dir_get_name (self),
+      g_object_set_data_full (G_OBJECT (self), "cached-name", name, g_free);
+    }
+
+  return (const char *)name;
 }
 
 const char *
@@ -4249,6 +4290,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *latest_rev = NULL;
   G_GNUC_UNUSED g_autofree char *latest_commit =
     flatpak_dir_read_latest (self, state->remote_name, ref, &latest_alt_commit, cancellable, NULL);
+  g_autofree char *name = NULL;
 
   /* We use the summary so that we can reuse any cached json */
   flatpak_remote_state_lookup_ref (state, ref, &latest_rev, &summary_element, error);
@@ -4315,6 +4357,18 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_debug ("Imported OCI image as checksum %s", checksum);
 
+  if (repo == self->repo)
+    name = flatpak_dir_get_name (self);
+  else
+    {
+      GFile *file = ostree_repo_get_path (repo);
+      name = g_file_get_path (file);
+    }
+
+  (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, name,
+                     "pull oci", registry_uri, ref, NULL, NULL, NULL,
+                      "Pulled %s from %s", ref, registry_uri);
+
   return TRUE;
 }
 
@@ -4342,6 +4396,9 @@ flatpak_dir_pull (FlatpakDir                           *self,
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
   const OstreeRepoFinderResult * const *results;
   g_auto(GLnxLockFile) lock = { 0, };
+  g_autofree char *name = NULL;
+  g_autofree char *remote_and_branch = NULL;
+  g_autofree char *current_checksum = NULL;
 
   /* If @opt_results is set, @opt_rev must be. */
   g_return_val_if_fail (opt_results == NULL || opt_rev != NULL, FALSE);
@@ -4498,6 +4555,9 @@ flatpak_dir_pull (FlatpakDir                           *self,
                                      error))
     goto out;
 
+  remote_and_branch = g_strdup_printf ("%s:%s", state->remote_name, ref);
+  ostree_repo_resolve_rev (repo, remote_and_branch, TRUE, &current_checksum, NULL);
+
   if (!repo_pull (repo, state->remote_name,
                   subdirs_arg ? (const char **) subdirs_arg->pdata : NULL,
                   ref, rev, results, flatpak_flags, flags,
@@ -4522,6 +4582,18 @@ flatpak_dir_pull (FlatpakDir                           *self,
     goto out;
 
   ret = TRUE;
+
+  if (repo == self->repo)
+    name = flatpak_dir_get_name (self);
+  else
+    {
+      GFile *file = ostree_repo_get_path (repo);
+      name = g_file_get_path (file);
+    }
+
+  (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, name,
+                     "pull", state->remote_name, ref, rev, current_checksum, NULL,
+                      "Pulled %s from %s", ref, state->remote_name);
 
 out:
   if (!ret)
@@ -4877,6 +4949,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   ret = TRUE;
 
+  flatpak_dir_log (self, "pull local", src_path, ref, checksum, current_checksum, NULL,
+                   "Pulled %s from %s", ref, src_path);
 out:
   if (!ret)
     ostree_repo_abort_transaction (self->repo, cancellable, NULL);
@@ -7070,6 +7144,8 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   g_autoptr(GError) local_error = NULL;
   g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
   g_autofree char *remove_ref_from_remote = NULL;
+  g_autofree char *commit = NULL;
+  g_autofree char *old_active = NULL;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -7078,9 +7154,10 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   old_deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
   if (old_deploy_dir != NULL)
     {
+      old_active = flatpak_dir_read_active (self, ref, cancellable);
+
       if (reinstall)
         {
-          g_autofree char *old_active = flatpak_dir_read_active (self, ref, cancellable);
           g_autoptr(GVariant) old_deploy = NULL;
           const char *old_origin;
 
@@ -7152,6 +7229,10 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
 
   ret = TRUE;
 
+  commit = flatpak_dir_read_active (self, ref, cancellable);
+  flatpak_dir_log (self, "deploy install", origin, ref, commit, old_active,
+                   "Installed %s from %s", ref, origin);
+
 out:
   if (created_deploy_base && !ret)
     flatpak_rm_rf (deploy_base, cancellable, NULL);
@@ -7173,6 +7254,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   g_autofree const char **old_subpaths = NULL;
   g_autofree char *old_active = NULL;
   const char *old_origin;
+  g_autofree char *commit = NULL;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -7217,6 +7299,10 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
     return FALSE;
 
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
+
+  commit = flatpak_dir_read_active (self, ref, cancellable);
+  flatpak_dir_log (self, "deploy update", old_origin, ref, commit, old_active, NULL,
+                   "Updated %s from %s", ref, old_origin);
 
   return TRUE;
 }
@@ -8180,6 +8266,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   gboolean was_deployed;
   gboolean is_app;
   const char *name;
+  g_autofree char *old_active = NULL;
 
   g_auto(GStrv) parts = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
@@ -8250,6 +8337,8 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
         }
     }
 
+  old_active = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+
   g_debug ("dropping active ref");
   if (!flatpak_dir_set_active (self, ref, NULL, cancellable, error))
     return FALSE;
@@ -8292,6 +8381,9 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
                    _("%s branch %s is not installed"), name, parts[3]);
       return FALSE;
     }
+
+  flatpak_dir_log (self, "uninstall", NULL, ref, NULL, old_active, NULL,
+                   "Uninstalled %s", ref);
 
   return TRUE;
 }
@@ -11053,6 +11145,7 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   g_autoptr(GHashTable) refs = NULL;
   GHashTableIter hash_iter;
   gpointer key;
+  g_autofree char *url = NULL;
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -11128,6 +11221,8 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
                                      cancellable, error))
     return FALSE;
 
+  ostree_repo_remote_get_url (self->repo, remote_name, &url, NULL);
+  
   if (!ostree_repo_remote_change (self->repo, NULL,
                                   OSTREE_REPO_REMOTE_CHANGE_DELETE,
                                   remote_name, NULL,
@@ -11137,6 +11232,10 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
 
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
+
+  flatpak_dir_log (self, "remove remote",
+                   remote_name, NULL, NULL, NULL, url,
+                   "Removed remote %s", remote_name);
 
   return TRUE;
 }
@@ -11195,11 +11294,13 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_auto(GStrv) keys = NULL;
   int i;
+  gboolean has_remote;
 
   if (strchr (remote_name, '/') != NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND, _("Invalid character '/' in remote name: %s"),
                                remote_name);
 
+  has_remote = flatpak_dir_has_remote (self, remote_name, NULL);
 
   if (!g_key_file_has_group (config, group))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No configuration for remote %s specified"),
@@ -11286,6 +11387,13 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
 
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
+
+  if (has_remote)
+    flatpak_dir_log (self, "modify remote", remote_name, NULL, NULL, NULL, url,
+                     "Modified remote %s to %s", remote_name, url);
+  else
+    flatpak_dir_log (self, "add remote", remote_name, NULL, NULL, NULL, url,
+                     "Added remote %s to %s", remote_name, url);
 
   return TRUE;
 }
@@ -12587,3 +12695,53 @@ flatpak_dir_get_source_pid (FlatpakDir *self)
   return self->source_pid;
 }
 
+static void
+(flatpak_dir_log) (FlatpakDir *self,
+                   const char *file,
+                   int line,
+                   const char *func,
+                   const char *source, /* overrides self->name */
+                   const char *change,
+                   const char *remote,
+                   const char *ref,
+                   const char *commit,
+                   const char *old_commit,
+                   const char *url,
+                   const char *format,
+                 ...)
+{
+#ifdef HAVE_LIBSYSTEMD
+  const char *installation = source ? source : flatpak_dir_get_name_cached (self);
+  pid_t source_pid = flatpak_dir_get_source_pid (self);
+  char message[1024];
+  int len;
+  va_list args;
+
+  len = g_snprintf (message, sizeof (message), "%s: ", installation);
+
+  va_start (args, format);
+  g_vsnprintf (message + len, sizeof (message) - len, format, args);
+  va_end (args);
+
+  /* See systemd.journal-fields(7) for the meaning of the
+   * standard fields we use, in particular OBJECT_PID
+   */
+  sd_journal_send ("MESSAGE_ID=" FLATPAK_MESSAGE_ID,
+                   "PRIORITY=5",
+                   "OBJECT_PID=%d", source_pid,
+                   "CODE_FILE=%s", file,
+                   "CODE_LINE=%d", line,
+                   "CODE_FUNC=%s", func,
+                   "MESSAGE=%s", message,
+                   /* custom fields below */
+                   "FLATPAK_VERSION=" PACKAGE_VERSION,
+                   "INSTALLATION=%s", installation,
+                   "OPERATION=%s", change,
+                   "REMOTE=%s", remote ? remote : "",
+                   "REF=%s", ref ? ref : "",
+                   "COMMIT=%s", commit ? commit : "",
+                   "OLD_COMMIT=%s", old_commit ? old_commit : "",
+                   "URL=%s", url ? url : "",
+                   NULL);
+#endif
+}

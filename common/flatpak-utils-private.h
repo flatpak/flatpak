@@ -700,4 +700,6 @@ gboolean flatpak_check_required_version (const char *ref,
                                          GKeyFile   *metakey,
                                          GError    **error);
 
+#define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485" 
+
 #endif /* __FLATPAK_UTILS_H__ */
