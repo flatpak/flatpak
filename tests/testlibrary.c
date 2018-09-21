@@ -1145,6 +1145,189 @@ test_install_launch_uninstall (void)
 static void update_test_app (void);
 static void update_repo (const char *update_repo_name);
 
+static const char *
+flatpak_deploy_data_get_origin (GVariant *deploy_data)
+{
+  const char *origin;
+
+  g_variant_get_child (deploy_data, 0, "&s", &origin);
+  return origin;
+}
+
+static const char *
+flatpak_deploy_data_get_commit (GVariant *deploy_data)
+{
+  const char *commit;
+
+  g_variant_get_child (deploy_data, 1, "&s", &commit);
+  return commit;
+}
+
+static const char *
+flatpak_deploy_data_get_runtime (GVariant *deploy_data)
+{
+  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  const char *runtime = NULL;
+
+  g_variant_lookup (metadata, "runtime", "&s", &runtime);
+
+  return runtime;
+}
+
+/**
+ * flatpak_deploy_data_get_subpaths:
+ *
+ * Returns: (array length=length zero-terminated=1) (transfer container): an array of constant strings
+ **/
+static const char **
+flatpak_deploy_data_get_subpaths (GVariant *deploy_data)
+{
+  const char **subpaths;
+
+  g_variant_get_child (deploy_data, 2, "^a&s", &subpaths);
+  return subpaths;
+}
+
+static guint64
+flatpak_deploy_data_get_installed_size (GVariant *deploy_data)
+{
+  guint64 size;
+
+  g_variant_get_child (deploy_data, 3, "t", &size);
+  return GUINT64_FROM_BE (size);
+}
+
+static GVariant *
+flatpak_dir_new_deploy_data (const char *origin,
+                             const char *commit,
+                             char      **subpaths,
+                             guint64     installed_size,
+                             GVariant   *metadata)
+{
+  char *empty_subpaths[] = {NULL};
+  GVariantBuilder builder;
+
+  if (metadata == NULL)
+    {
+      g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+      metadata = g_variant_builder_end (&builder);
+    }
+
+  return g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
+                                            origin,
+                                            commit,
+                                            subpaths ? subpaths : empty_subpaths,
+                                            GUINT64_TO_BE (installed_size),
+                                            metadata));
+}
+
+#define FLATPAK_DEPLOY_DATA_GVARIANT_STRING "(ssasta{sv})"
+#define FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT G_VARIANT_TYPE (FLATPAK_DEPLOY_DATA_GVARIANT_STRING)
+
+static GVariant *
+flatpak_load_deploy_data (GFile        *deploy_dir)
+{
+  g_autoptr(GFile) data_file = NULL;
+  g_autoptr(GError) error = NULL;
+  char *data = NULL;
+  gsize data_size;
+
+  data_file = g_file_get_child (deploy_dir, "deploy");
+  g_file_load_contents (data_file, NULL, &data, &data_size, NULL, &error);
+  g_assert_no_error (error);
+
+  return g_variant_ref_sink (g_variant_new_from_data (FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT,
+                                                      data, data_size,
+                                                      FALSE, g_free, data));
+}
+
+static gboolean
+flatpak_variant_save (GFile        *dest,
+                      GVariant     *variant,
+                      GCancellable *cancellable,
+                      GError      **error)
+{
+  g_autoptr(GOutputStream) out = NULL;
+  gsize bytes_written;
+
+  out = (GOutputStream *) g_file_replace (dest, NULL, FALSE,
+                                          G_FILE_CREATE_REPLACE_DESTINATION,
+                                          cancellable, error);
+  if (out == NULL)
+    return FALSE;
+
+  if (!g_output_stream_write_all (out,
+                                  g_variant_get_data (variant),
+                                  g_variant_get_size (variant),
+                                  &bytes_written,
+                                  cancellable,
+                                  error))
+    return FALSE;
+
+  if (!g_output_stream_close (out, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static void
+mangle_deploy_file (FlatpakInstalledRef *ref)
+{
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GVariant) data = NULL;
+  g_autoptr(GVariant) new_data = NULL;
+  g_autoptr(GFile) deploy_data_file = NULL;
+  GVariantBuilder metadata_builder;
+  g_autoptr(GError) error = NULL;
+  const char * const previous_ids[] = { "net.example.Goodbye", NULL };
+
+  dir = g_file_new_for_path (flatpak_installed_ref_get_deploy_dir (ref));
+  data = flatpak_load_deploy_data (dir);
+
+  g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&metadata_builder, "{s@v}", "runtime",
+                         g_variant_new_variant (g_variant_new_string (flatpak_deploy_data_get_runtime (data))));
+  g_variant_builder_add (&metadata_builder, "{s@v}", "previous-ids",
+                         g_variant_new_variant (g_variant_new_strv (previous_ids, -1)));
+
+  new_data = flatpak_dir_new_deploy_data (flatpak_deploy_data_get_origin (data),
+                                          flatpak_deploy_data_get_commit (data),
+                                          (char **) flatpak_deploy_data_get_subpaths (data),
+                                          flatpak_deploy_data_get_installed_size (data),
+                                          g_variant_builder_end (&metadata_builder));
+
+  deploy_data_file = g_file_get_child (dir, "deploy");
+  flatpak_variant_save (deploy_data_file, new_data, NULL, &error);
+  g_assert_no_error (error);
+}
+
+static void
+check_desktop_file (FlatpakInstalledRef *ref,
+                    const char          *file,
+                    const char          *expected_renamed_from)
+{
+  g_autofree char *path = g_build_path (G_DIR_SEPARATOR_S,
+                                        flatpak_installed_ref_get_deploy_dir (ref),
+                                        "export",
+                                        "share",
+                                        "applications",
+                                        file,
+                                        NULL);
+  g_autoptr(GKeyFile) kf = g_key_file_new ();
+  g_autofree char *renamed_from = NULL;
+  g_autoptr(GError) error = NULL;
+
+  g_key_file_load_from_file (kf, path, G_KEY_FILE_NONE, &error);
+  g_assert_no_error (error);
+
+  renamed_from = g_key_file_get_value (kf,
+                                       G_KEY_FILE_DESKTOP_GROUP,
+                                       "X-Flatpak-RenamedFrom",
+                                       &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (renamed_from, ==, expected_renamed_from);
+}
+
 static void
 test_list_updates (void)
 {
@@ -1154,6 +1337,7 @@ test_list_updates (void)
   g_autoptr(FlatpakInstalledRef) ref = NULL;
   g_autoptr(FlatpakInstalledRef) runtime_ref = NULL;
   FlatpakInstalledRef *update_ref = NULL;
+  g_autoptr(FlatpakInstalledRef) updated_ref = NULL;
   gboolean res;
 
   inst = flatpak_installation_new_user (NULL, &error);
@@ -1178,6 +1362,9 @@ test_list_updates (void)
   g_assert_no_error (error);
   g_assert (FLATPAK_IS_INSTALLED_REF (ref));
 
+  /* Add a previous-id to the deploy file */
+  mangle_deploy_file (ref);
+
   /* Update the test app and list the update */
   update_test_app ();
   update_repo ("test");
@@ -1193,6 +1380,23 @@ test_list_updates (void)
   update_ref = g_ptr_array_index (refs, 0);
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_APP);
+
+  /* Install the new update */
+  updated_ref = flatpak_installation_update (inst,
+                                             FLATPAK_UPDATE_FLAGS_NONE,
+                                             FLATPAK_REF_KIND_APP,
+                                             "org.test.Hello",
+                                             NULL, NULL, NULL, NULL, NULL,
+                                             &error);
+  g_assert_no_error (error);
+  g_assert (FLATPAK_IS_INSTALLED_REF (updated_ref));
+
+  check_desktop_file (updated_ref,
+                      "org.test.Hello.desktop",
+                      "net.example.Goodbye.desktop;");
+  check_desktop_file (updated_ref,
+                      "org.test.Hello.Again.desktop",
+                      "hello-again.desktop;net.example.Goodbye.Again.desktop;");
 
   /* Uninstall the runtime and app */
   res = flatpak_installation_uninstall (inst,

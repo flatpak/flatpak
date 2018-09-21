@@ -54,6 +54,16 @@ Exec=hello.sh
 Icon=$APP_ID
 MimeType=x-test/Hello;
 EOF
+cat > ${DIR}/files/share/applications/org.test.Hello.Again.desktop <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Hello Again
+Exec=hello.sh --again
+Icon=$APP_ID
+MimeType=x-test/Hello;
+X-Flatpak-RenamedFrom=hello-again.desktop;
+EOF
 
 mkdir -p ${DIR}/files/share/icons/hicolor/64x64/apps
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/${APP_ID}.png
