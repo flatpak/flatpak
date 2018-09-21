@@ -267,21 +267,17 @@ ostree_create_usb (GOptionContext *context,
 
   /* Open the destination repository on the USB stick or create it if it doesn’t exist.
    * Check it’s below @mount_root_path, and that it’s not the same as the source
-   * repository.
-   *
-   * If the destination file system supports xattrs (for example, ext4), we use
-   * a BARE_USER repository; if it doesn’t (for example, FAT), we use ARCHIVE.
-   * In either case, we want a lossless repository. */
+   * repository. */
   const char *dest_repo_path = (opt_destination_repo != NULL) ? opt_destination_repo : ".ostree/repo";
 
   if (!glnx_shutil_mkdir_p_at (mount_root_dfd, dest_repo_path, 0755, cancellable, error))
     return FALSE;
 
-  OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER;
-
-  if (TEMP_FAILURE_RETRY (fgetxattr (mount_root_dfd, "user.test", NULL, 0)) < 0 &&
-      (errno == ENOTSUP || errno == EOPNOTSUPP))
-    mode = OSTREE_REPO_MODE_ARCHIVE;
+  /* Always use the archive repo mode, which works on FAT file systems that
+   * don't support xattrs, compresses files to save space, doesn't store
+   * permission info directly in the file attributes, and is at least sometimes
+   * more performant than bare-user */
+  OstreeRepoMode mode = OSTREE_REPO_MODE_ARCHIVE;
 
   g_debug ("%s: Creating repository in mode %u", G_STRFUNC, mode);
 
