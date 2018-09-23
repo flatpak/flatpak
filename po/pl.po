@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-09-13 13:55+0200\n"
-"PO-Revision-Date: 2018-09-09 19:28+0200\n"
+"POT-Creation-Date: 2018-09-21 15:24+0000\n"
+"PO-Revision-Date: 2018-09-23 18:30+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -89,7 +89,7 @@ msgstr "TYTUŁ"
 msgid "Default branch to use for this remote"
 msgstr "Domyślna gałąź używana dla tego repozytorium"
 
-#: app/flatpak-builtins-add-remote.c:77 app/flatpak-builtins-repo.c:172
+#: app/flatpak-builtins-add-remote.c:77 app/flatpak-builtins-repo.c:177
 #: app/flatpak-builtins-repo-update.c:54 app/flatpak-builtins-run.c:60
 msgid "BRANCH"
 msgstr "GAŁĄŹ"
@@ -150,7 +150,7 @@ msgid "NAME must be specified"
 msgstr "Należy podać NAZWĘ"
 
 #: app/flatpak-builtins-add-remote.c:325 app/flatpak-builtins-build-sign.c:71
-#: app/flatpak-builtins-repo.c:194 app/flatpak-builtins-repo-update.c:422
+#: app/flatpak-builtins-repo.c:199 app/flatpak-builtins-repo-update.c:422
 msgid "LOCATION must be specified"
 msgstr "Należy podać POŁOŻENIE"
 
@@ -1101,12 +1101,12 @@ msgstr ""
 
 #. Print a warning if both appstream and appstream2 are missing
 #: app/flatpak-builtins-create-usb.c:735
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s; %s\n"
 msgstr ""
 "Ostrzeżenie: nie można odnaleźć danych AppStream dla repozytorium „%s”, "
-"architektury „%s”: %s\n"
+"architektury „%s”: %s; %s\n"
 
 #. Appstream2 is only for efficiency, so just print a debug message
 #: app/flatpak-builtins-create-usb.c:741
@@ -1574,7 +1574,7 @@ msgid "List all refs (including locale/debug)"
 msgstr "Wyświetla listę wszystkich odniesień (także lokalizacji/debugowania)"
 
 #: app/flatpak-builtins-list.c:126 app/flatpak-builtins-ls-remote.c:196
-#: app/flatpak-builtins-repo.c:100
+#: app/flatpak-builtins-repo.c:105
 msgid "Ref"
 msgstr "Odniesienie"
 
@@ -1595,7 +1595,7 @@ msgid "Installed size"
 msgstr "Rozmiar po instalacji"
 
 #: app/flatpak-builtins-list.c:134 app/flatpak-builtins-list-remotes.c:74
-#: app/flatpak-builtins-ls-remote.c:202 app/flatpak-builtins-repo.c:103
+#: app/flatpak-builtins-ls-remote.c:202 app/flatpak-builtins-repo.c:108
 msgid "Options"
 msgstr "Opcje"
 
@@ -1926,42 +1926,42 @@ msgstr "Domyślna gałąź: %s\n"
 msgid "Redirect URL: %s\n"
 msgstr "Adres URL przekierowania: %s\n"
 
-#: app/flatpak-builtins-repo.c:60
+#: app/flatpak-builtins-repo.c:65
 #, c-format
-msgid "Redirect collection ID: %s\n"
-msgstr "Identyfikator przekierowania kolekcji: %s\n"
+msgid "Deploy collection ID: %s\n"
+msgstr "Identyfikator wdrożenia kolekcji: %s\n"
 
-#: app/flatpak-builtins-repo.c:68
+#: app/flatpak-builtins-repo.c:73
 #, c-format
 msgid "GPG key hash: %s\n"
 msgstr "Suma klucza GPG: %s\n"
 
-#: app/flatpak-builtins-repo.c:77
+#: app/flatpak-builtins-repo.c:82
 #, c-format
 msgid "%zd branches\n"
 msgstr "Gałęzie: %zd\n"
 
-#: app/flatpak-builtins-repo.c:101
+#: app/flatpak-builtins-repo.c:106
 msgid "Installed"
 msgstr "Zainstalowano"
 
-#: app/flatpak-builtins-repo.c:102
+#: app/flatpak-builtins-repo.c:107
 msgid "Download"
 msgstr "Pobieranie"
 
-#: app/flatpak-builtins-repo.c:170
+#: app/flatpak-builtins-repo.c:175
 msgid "Print general information about the repository"
 msgstr "Wyświetla ogólne informacje o repozytorium"
 
-#: app/flatpak-builtins-repo.c:171
+#: app/flatpak-builtins-repo.c:176
 msgid "List the branches in the repository"
 msgstr "Wyświetla listę gałęzi w repozytorium"
 
-#: app/flatpak-builtins-repo.c:172
+#: app/flatpak-builtins-repo.c:177
 msgid "Print metadata for a branch"
 msgstr "Wyświetla metadane gałęzi"
 
-#: app/flatpak-builtins-repo.c:187
+#: app/flatpak-builtins-repo.c:192
 msgid "LOCATION - Repository maintenance"
 msgstr "POŁOŻENIE — zarządzanie repozytorium"
 
@@ -2951,7 +2951,7 @@ msgstr "Nie odnaleziono zastępników dla %s"
 
 #: common/flatpak-dir.c:1750 common/flatpak-dir.c:2105
 #: common/flatpak-dir.c:2128 common/flatpak-dir.c:2150
-#: common/flatpak-dir.c:12282 common/flatpak-transaction.c:1559
+#: common/flatpak-dir.c:12287 common/flatpak-transaction.c:1559
 #: common/flatpak-transaction.c:1594 common/flatpak-utils.c:1434
 #: common/flatpak-utils.c:1529
 #, c-format
@@ -3344,66 +3344,66 @@ msgstr "Błąd podczas migracji: %s\n"
 msgid "No extra data sources"
 msgstr "Brak źródeł dodatkowych danych"
 
-#: common/flatpak-utils.c:3609
+#: common/flatpak-utils.c:3615
 #, c-format
 msgid "Extracting icons for component %s\n"
 msgstr "Rozpakowywanie ikon dla składnika %s\n"
 
-#: common/flatpak-utils.c:3613
+#: common/flatpak-utils.c:3619
 #, c-format
 msgid "Error copying 64x64 icon: %s\n"
 msgstr "Błąd podczas kopiowania ikony 64×64: %s\n"
 
-#: common/flatpak-utils.c:3618
+#: common/flatpak-utils.c:3624
 #, c-format
 msgid "Error copying 128x128 icon: %s\n"
 msgstr "Błąd podczas kopiowania ikony 128×128: %s\n"
 
-#: common/flatpak-utils.c:3814
+#: common/flatpak-utils.c:3820
 #, c-format
 msgid "%s is end-of-life, ignoring\n"
 msgstr "%s jest niewspierane, ignorowanie\n"
 
-#: common/flatpak-utils.c:3823
+#: common/flatpak-utils.c:3829
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Brak danych AppStream dla %s: %s\n"
 
-#: common/flatpak-utils.c:5549
+#: common/flatpak-utils.c:5555
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Pobieranie metadanych: %u/(szacowanie) %s"
 
-#: common/flatpak-utils.c:5573
+#: common/flatpak-utils.c:5579
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Pobieranie: %s/%s"
 
-#: common/flatpak-utils.c:5594
+#: common/flatpak-utils.c:5600
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Pobieranie dodatkowych danych: %s/%s"
 
-#: common/flatpak-utils.c:5599
+#: common/flatpak-utils.c:5605
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Pobieranie plików: %d/%d %s"
 
-#: common/flatpak-utils.c:5689
+#: common/flatpak-utils.c:5695
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s wymaga nowszej wersji Flatpak (%s)"
 
-#: common/flatpak-utils.c:5736
+#: common/flatpak-utils.c:5742
 msgid "Empty string is not a number"
 msgstr "Pusty ciąg nie jest liczbą"
 
-#: common/flatpak-utils.c:5762
+#: common/flatpak-utils.c:5768
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "„%s” nie jest liczbą bez znaku"
 
-#: common/flatpak-utils.c:5772
+#: common/flatpak-utils.c:5778
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Liczba „%s” jest poza zakresem [%s, %s]"
