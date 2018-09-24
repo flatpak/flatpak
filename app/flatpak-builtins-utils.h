@@ -25,6 +25,7 @@
 #include "libglnx/libglnx.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
+#include "flatpak-permission-dbus-generated.h"
 
 /* Appstream data expires after a day */
 #define FLATPAK_APPSTREAM_TTL 86400
@@ -62,5 +63,8 @@ gboolean update_appstream (GPtrArray    *dirs,
                            gboolean      quiet,
                            GCancellable *cancellable,
                            GError      **error);
+
+char ** get_permission_tables (XdpDbusPermissionStore *store);
+
 
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */

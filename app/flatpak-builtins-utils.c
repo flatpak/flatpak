@@ -555,3 +555,29 @@ update_appstream (GPtrArray    *dirs,
 
   return TRUE;
 }
+
+char **
+get_permission_tables (XdpDbusPermissionStore *store)
+{
+  g_autofree char *path = NULL;
+  GDir *dir;
+  const char *name;
+  GPtrArray *tables = NULL;
+
+  tables = g_ptr_array_new ();
+
+  path = g_build_filename (g_get_user_data_dir (), "flatpak/db", NULL);
+  dir = g_dir_open (path, 0, NULL);
+  if (dir != NULL)
+    {
+      while ((name = g_dir_read_name (dir)) != NULL)
+        {
+          g_ptr_array_add (tables, g_strdup (name));
+        }
+      g_dir_close (dir);
+    }
+
+  g_ptr_array_add (tables, NULL);
+
+  return (char **) g_ptr_array_free (tables, FALSE);
+}
