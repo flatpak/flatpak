@@ -23,7 +23,8 @@ flatpak_SOURCES = \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
 	app/flatpak-builtins-utils.c \
-	app/flatpak-builtins-add-remote.c \
+	app/flatpak-builtins-remote-add.c \
+	app/flatpak-builtins-remote-modify.c \
 	app/flatpak-builtins-remote-delete.c \
 	app/flatpak-builtins-remote-list.c \
 	app/flatpak-builtins-remote-ls.c \
