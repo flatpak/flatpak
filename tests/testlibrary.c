@@ -185,6 +185,12 @@ test_ref (void)
   g_autoptr(GError) error = NULL;
   g_autofree char *formatted = NULL;
   const char *valid;
+  FlatpakRefKind kind;
+  g_autofree char *name = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
+  g_autofree char *commit = NULL;
+  g_autofree char *collection_id = NULL;
 
   ref = flatpak_ref_parse ("", &error);
   g_assert_null (ref);
@@ -223,6 +229,47 @@ test_ref (void)
 
   formatted = flatpak_ref_format_ref (ref);
   g_assert_cmpstr (formatted, ==, valid);
+
+  g_clear_object (&ref);
+
+  valid = "runtime/org.gnome.Platform/x86_64/stable";
+  ref = flatpak_ref_parse (valid, &error);
+  g_assert_no_error (error);
+  g_assert (FLATPAK_IS_REF (ref));
+
+  g_object_get (ref,
+                "kind", &kind,
+                "name", &name,
+                "arch", &arch,
+                "branch", &branch,
+                "commit", &commit,
+                "collection-id", &collection_id,
+                NULL);
+  g_assert_cmpint (kind, ==, FLATPAK_REF_KIND_RUNTIME);
+  g_assert_cmpstr (name, ==, "org.gnome.Platform");
+  g_assert_cmpstr (arch, ==, "x86_64");
+  g_assert_cmpstr (branch, ==, "stable");
+  g_assert_null (commit);
+  g_assert_null (collection_id);
+
+  formatted = flatpak_ref_format_ref (ref);
+  g_assert_cmpstr (formatted, ==, valid);
+
+  g_clear_object (&ref);
+
+  ref = g_object_new (FLATPAK_TYPE_REF,
+                      "kind", FLATPAK_REF_KIND_RUNTIME,
+                      "name", "org.gnome.Platform",
+                      "arch", "x86_64",
+                      "branch", "stable",
+                      "commit", "0123456789",
+                      "collection-id", "org.flathub.Stable",
+                      NULL);
+
+  g_assert_cmpstr (flatpak_ref_get_commit (ref), ==, "0123456789");
+  g_assert_cmpstr (flatpak_ref_get_collection_id (ref), ==, "org.flathub.Stable");
+
+  g_clear_object (&ref);
 }
 
 static void
