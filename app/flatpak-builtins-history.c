@@ -63,6 +63,7 @@ static Column all_columns[] = {
   { "installation", N_("Installation"),   N_("Show the affected installation"),     1, 1 },
   { "remote",       N_("Remote"),         N_("Show the remote"),                    1, 1 },
   { "commit",       N_("Commit"),         N_("Show the active commit"),             1, 0 },
+  { "url",          N_("URL"),            N_("Show the remote URL"),                1, 0 },
   { "user",         N_("User"),           N_("Show the user doing the change"),     1, 0 },
   { "tool",         N_("Tool"),           N_("Show the tool that was used"),        1, 0 },
   { "version",      N_("Version"),        N_("Show the Flatpak version"),           1, 0 },
@@ -258,6 +259,13 @@ print_history (GPtrArray *dirs,
               if (*error)
                 return FALSE;
               flatpak_table_printer_add_column_len (printer, commit, 12);
+            }
+          else if (strcmp (columns[k].name, "url") == 0)
+            {
+              g_autofree char *url = get_field (j, "URL", error);
+              if (*error)
+                return FALSE;
+              flatpak_table_printer_add_column (printer, url);
             }
           else if (strcmp (columns[k].name, "user") == 0)
             {
