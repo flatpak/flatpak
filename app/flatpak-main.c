@@ -100,8 +100,8 @@ static FlatpakCommand commands[] = {
   /* translators: please keep the leading newline and space */
   { N_("\n Manage remote repositories") },
   { "remotes", N_("List all configured remotes"), flatpak_builtin_remote_list, flatpak_complete_remote_list },
-  { "remote-add", N_("Add a new remote repository (by URL)"), flatpak_builtin_add_remote, flatpak_complete_add_remote },
-  { "remote-modify", N_("Modify properties of a configured remote"), flatpak_builtin_modify_remote, flatpak_complete_modify_remote },
+  { "remote-add", N_("Add a new remote repository (by URL)"), flatpak_builtin_remote_add, flatpak_complete_remote_add },
+  { "remote-modify", N_("Modify properties of a configured remote"), flatpak_builtin_remote_modify, flatpak_complete_remote_modify },
   { "remote-delete", N_("Delete a configured remote"), flatpak_builtin_remote_delete, flatpak_complete_remote_delete },
   { "remote-list", NULL, flatpak_builtin_remote_list, flatpak_complete_remote_list, TRUE },
   { "remote-ls", N_("List contents of a configured remote"), flatpak_builtin_remote_ls, flatpak_complete_remote_ls },

@@ -59,8 +59,8 @@ gboolean usage_error (GOptionContext *context,
   gboolean flatpak_complete_ ## name (FlatpakCompletion * completion);
 
 
-BUILTINPROTO (add_remote)
-BUILTINPROTO (modify_remote)
+BUILTINPROTO (remote_add)
+BUILTINPROTO (remote_modify)
 BUILTINPROTO (remote_delete)
 BUILTINPROTO (remote_ls)
 BUILTINPROTO (remote_info)
