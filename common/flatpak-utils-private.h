@@ -721,12 +721,13 @@ void  flatpak_log_change (const char *file,
                           const char *remote,
                           const char *ref,
                           const char *commit,
+			  const char *url,
                           const char *message,
                           ...);
 
-#define flatpak_log_change(change,opid,installation,remote,ref,commit,message,...) \
+#define flatpak_log_change(change,opid,installation,remote,ref,commit,url,message,...) \
     (flatpak_log_change) (__FILE__, __LINE__, __FUNCTION__, \
-                          change,opid,installation,remote,ref,commit,message, \
+                          change,opid,installation,remote,ref,commit,url,message, \
                           __VA_ARGS__)
 
 #endif /* __FLATPAK_UTILS_H__ */

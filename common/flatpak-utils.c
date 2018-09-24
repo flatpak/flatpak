@@ -5810,6 +5810,7 @@ void
                       const char *remote,
                       const char *ref,
                       const char *commit,
+                      const char *url,
                       const char *format,
                       ...)
 {
@@ -5835,6 +5836,7 @@ void
                      "REMOTE=%s", remote ? remote : "",
                      "REF=%s", ref ? ref : "",
                      "COMMIT=%s", commit ? commit : "",
+                     "URL=%s", url ? url : "",
                      "MESSAGE=%s", message,
                      NULL);
   else
@@ -5849,6 +5851,7 @@ void
                      "REMOTE=%s", remote ? remote : "",
                      "REF=%s", ref ? ref : "",
                      "COMMIT=%s", commit ? commit : "",
+                     "URL=%s", url ? url : "",
                      "MESSAGE=%s", message,
                      NULL);
 #endif

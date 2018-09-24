@@ -4325,7 +4325,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     }
 
   opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
-  flatpak_log_change ("pull oci", opid, name, registry_uri, ref, NULL,
+  flatpak_log_change ("pull oci", opid, name, registry_uri, ref, NULL, NULL,
                       "Pulled %s from %s in %s",
                       ref, registry_uri, name);
 
@@ -4548,7 +4548,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
     }
 
   opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
-  flatpak_log_change ("pull", opid, name, state->remote_name, ref, rev,
+  flatpak_log_change ("pull", opid, name, state->remote_name, ref, rev, NULL,
                       "Pulled %s from %s in %s",
                       ref, state->remote_name, name);
 
@@ -4910,7 +4910,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   name = flatpak_dir_get_name (self);
   opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
-  flatpak_log_change ("pull local", opid, name, src_path, ref, checksum,
+  flatpak_log_change ("pull local", opid, name, src_path, ref, checksum, NULL,
                       "Pulled %s from %s in %s",
                       ref, src_path, name);
 out:
@@ -7194,7 +7194,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   commit = flatpak_dir_read_active (self, ref, cancellable);
   name = flatpak_dir_get_name (self);
   opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
-  flatpak_log_change ("deploy install", opid, name, origin, ref, commit,
+  flatpak_log_change ("deploy install", opid, name, origin, ref, commit, NULL,
                       "Installed %s from %s in %s",
                       ref, origin, name);
 
@@ -7270,7 +7270,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   commit = flatpak_dir_read_active (self, ref, cancellable);
   name = flatpak_dir_get_name (self);
   opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
-  flatpak_log_change ("deploy update", opid, name, old_origin, ref, commit,
+  flatpak_log_change ("deploy update", opid, name, old_origin, ref, commit, NULL,
                       "Updated %s from %s in %s", ref, old_origin, name);
 
   return TRUE;
@@ -8352,7 +8352,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
 
   name = flatpak_dir_get_name (self);
   opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
-  flatpak_log_change ("uninstall", opid, name, NULL, ref, NULL,
+  flatpak_log_change ("uninstall", opid, name, NULL, ref, NULL, NULL,
                       "Uninstalled %s in %s", ref, name);
 
   return TRUE;
@@ -11115,6 +11115,8 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   g_autoptr(GHashTable) refs = NULL;
   GHashTableIter hash_iter;
   gpointer key;
+  g_autofree char *name = NULL;
+  int opid;
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -11200,6 +11202,11 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
 
+  name = flatpak_dir_get_name (self);
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  flatpak_log_change ("remove remote", opid, name, remote_name, NULL, NULL, NULL,
+                      "Removed remote %s on %s", remote_name, name);
+
   return TRUE;
 }
 
@@ -11257,11 +11264,15 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_auto(GStrv) keys = NULL;
   int i;
+  g_autofree char *name = NULL;
+  int opid;
+  gboolean has_remote;
 
   if (strchr (remote_name, '/') != NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND, _("Invalid character '/' in remote name: %s"),
                                remote_name);
 
+  has_remote = flatpak_dir_has_remote (self, remote_name, NULL);
 
   if (!g_key_file_has_group (config, group))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No configuration for remote %s specified"),
@@ -11348,6 +11359,15 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
 
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
+
+  name = flatpak_dir_get_name (self);
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  if (has_remote)
+    flatpak_log_change ("modify remote", opid, name, remote_name, NULL, NULL, url,
+                        "Modified remote %s on %s to %s", remote_name, name, url);
+  else
+    flatpak_log_change ("add remote", opid, name, remote_name, NULL, NULL, url,
+                        "Added remote %s on %s to %s", remote_name, name, url);
 
   return TRUE;
 }
