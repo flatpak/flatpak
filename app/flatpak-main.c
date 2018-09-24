@@ -104,7 +104,7 @@ static FlatpakCommand commands[] = {
   { "remote-modify", N_("Modify properties of a configured remote"), flatpak_builtin_modify_remote, flatpak_complete_modify_remote },
   { "remote-delete", N_("Delete a configured remote"), flatpak_builtin_remote_delete, flatpak_complete_remote_delete },
   { "remote-list", NULL, flatpak_builtin_remote_list, flatpak_complete_remote_list, TRUE },
-  { "remote-ls", N_("List contents of a configured remote"), flatpak_builtin_ls_remote, flatpak_complete_ls_remote },
+  { "remote-ls", N_("List contents of a configured remote"), flatpak_builtin_remote_ls, flatpak_complete_remote_ls },
   { "remote-info", N_("Show information about a remote app or runtime"), flatpak_builtin_remote_info, flatpak_complete_remote_info },
 
   /* translators: please keep the leading newline and space */

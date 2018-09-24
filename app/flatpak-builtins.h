@@ -62,7 +62,7 @@ gboolean usage_error (GOptionContext *context,
 BUILTINPROTO (add_remote)
 BUILTINPROTO (modify_remote)
 BUILTINPROTO (remote_delete)
-BUILTINPROTO (ls_remote)
+BUILTINPROTO (remote_ls)
 BUILTINPROTO (remote_info)
 BUILTINPROTO (remote_list)
 BUILTINPROTO (install)
