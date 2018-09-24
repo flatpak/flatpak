@@ -41,7 +41,7 @@ static GOptionEntry delete_options[] = {
 
 
 gboolean
-flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
@@ -76,7 +76,7 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 }
 
 gboolean
-flatpak_complete_delete_remote (FlatpakCompletion *completion)
+flatpak_complete_remote_delete (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
