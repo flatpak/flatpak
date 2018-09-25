@@ -99,13 +99,13 @@ static FlatpakCommand commands[] = {
 
   /* translators: please keep the leading newline and space */
   { N_("\n Manage remote repositories") },
-  { "remotes", N_("List all configured remotes"), flatpak_builtin_list_remotes, flatpak_complete_list_remotes },
-  { "remote-add", N_("Add a new remote repository (by URL)"), flatpak_builtin_add_remote, flatpak_complete_add_remote },
-  { "remote-modify", N_("Modify properties of a configured remote"), flatpak_builtin_modify_remote, flatpak_complete_modify_remote },
-  { "remote-delete", N_("Delete a configured remote"), flatpak_builtin_delete_remote, flatpak_complete_delete_remote },
-  { "remote-list", NULL, flatpak_builtin_list_remotes, flatpak_complete_list_remotes, TRUE },
-  { "remote-ls", N_("List contents of a configured remote"), flatpak_builtin_ls_remote, flatpak_complete_ls_remote },
-  { "remote-info", N_("Show information about a remote app or runtime"), flatpak_builtin_info_remote, flatpak_complete_info_remote },
+  { "remotes", N_("List all configured remotes"), flatpak_builtin_remote_list, flatpak_complete_remote_list },
+  { "remote-add", N_("Add a new remote repository (by URL)"), flatpak_builtin_remote_add, flatpak_complete_remote_add },
+  { "remote-modify", N_("Modify properties of a configured remote"), flatpak_builtin_remote_modify, flatpak_complete_remote_modify },
+  { "remote-delete", N_("Delete a configured remote"), flatpak_builtin_remote_delete, flatpak_complete_remote_delete },
+  { "remote-list", NULL, flatpak_builtin_remote_list, flatpak_complete_remote_list, TRUE },
+  { "remote-ls", N_("List contents of a configured remote"), flatpak_builtin_remote_ls, flatpak_complete_remote_ls },
+  { "remote-info", N_("Show information about a remote app or runtime"), flatpak_builtin_remote_info, flatpak_complete_remote_info },
 
   /* translators: please keep the leading newline and space */
   { N_("\n Build applications") },

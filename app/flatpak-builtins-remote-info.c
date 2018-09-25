@@ -88,7 +88,7 @@ format_timestamp (guint64 timestamp)
 
 
 gboolean
-flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
@@ -349,7 +349,7 @@ flatpak_builtin_info_remote (int argc, char **argv, GCancellable *cancellable, G
 }
 
 gboolean
-flatpak_complete_info_remote (FlatpakCompletion *completion)
+flatpak_complete_remote_info (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;

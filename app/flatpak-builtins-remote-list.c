@@ -43,7 +43,7 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_remote_list (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
@@ -156,7 +156,7 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 }
 
 gboolean
-flatpak_complete_list_remotes (FlatpakCompletion *completion)
+flatpak_complete_remote_list (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
 

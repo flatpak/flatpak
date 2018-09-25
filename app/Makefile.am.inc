@@ -23,11 +23,12 @@ flatpak_SOURCES = \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
 	app/flatpak-builtins-utils.c \
-	app/flatpak-builtins-add-remote.c \
-	app/flatpak-builtins-delete-remote.c \
-	app/flatpak-builtins-list-remotes.c \
-	app/flatpak-builtins-ls-remote.c \
-	app/flatpak-builtins-info-remote.c \
+	app/flatpak-builtins-remote-add.c \
+	app/flatpak-builtins-remote-modify.c \
+	app/flatpak-builtins-remote-delete.c \
+	app/flatpak-builtins-remote-list.c \
+	app/flatpak-builtins-remote-ls.c \
+	app/flatpak-builtins-remote-info.c \
 	app/flatpak-builtins-install.c \
 	app/flatpak-builtins-override.c \
 	app/flatpak-builtins-make-current.c \
@@ -47,7 +48,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-build-import-bundle.c \
 	app/flatpak-builtins-build-commit-from.c \
 	app/flatpak-builtins-build-sign.c \
-	app/flatpak-builtins-repo-update.c \
+	app/flatpak-builtins-build-update-repo.c \
 	app/flatpak-builtins-repo.c \
 	app/flatpak-builtins-document-export.c \
 	app/flatpak-builtins-document-unexport.c \

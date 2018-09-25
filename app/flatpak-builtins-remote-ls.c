@@ -79,7 +79,7 @@ remote_dir_pair_new (const char *remote_name, FlatpakDir *dir, FlatpakRemoteStat
 }
 
 gboolean
-flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
@@ -364,7 +364,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 }
 
 gboolean
-flatpak_complete_ls_remote (FlatpakCompletion *completion)
+flatpak_complete_remote_ls (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
