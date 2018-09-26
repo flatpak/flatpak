@@ -179,6 +179,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   const char *sdk_pref;
   const char *runtime_pref;
   const char *default_branch = NULL;
+  g_autofree char *base_ref = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autofree char *var_ref = NULL;
   g_autofree char *sdk_ref = NULL;
@@ -312,7 +313,6 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (opt_base)
     {
       const char *base_branch;
-      g_autofree char *base_ref = NULL;
       g_autoptr(GFile) base_deploy_files = NULL;
       g_autoptr(FlatpakDeploy) base_deploy = NULL;
 
@@ -373,6 +373,11 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     g_string_append_printf (metadata_contents,
                             "sdk=%s\n",
                             sdk_ref + strlen ("runtime/"));
+
+  if (base_ref)
+    g_string_append_printf (metadata_contents,
+                            "base=%s\n", base_ref);
+
 
   if (opt_tags != NULL)
     {
