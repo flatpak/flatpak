@@ -49,6 +49,9 @@
  * in the database sense. Individual operations are carried out sequentially, and are atomic.
  * They become visible to the system as they are completed. When an error occurs, already
  * completed operations are not rolled back.
+ *
+ * The FlatpakTransaction API is threadsafe in the sense that it is safe to run two
+ * transactions at the same time, in different threads (or processes).
  */
 
 /* This is an internal-only element of FlatpakTransactionOperationType */
