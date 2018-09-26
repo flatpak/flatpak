@@ -29,7 +29,7 @@
  * @Title: FlatpakRef
  * @Short_description: Application reference
  *
- * Currently flatpak manages two types of binary artifacts: applications, and
+ * Currently Flatpak manages two types of binary artifacts: applications, and
  * runtimes. Applications contain a program that desktop users can run, while
  * runtimes contain only libraries and data. An FlatpakRef object (or short: ref)
  * can refer to either of these.
@@ -38,6 +38,8 @@
  * name, arch and branch, e.g. app/org.gnome.evince/x86_64/master. The functions
  * flatpak_ref_parse() and flatpak_ref_format_ref() can be used to convert
  * FlatpakRef objects into this string representation and back.
+ *
+ * FlatpakRef objects are immutable and can be passed freely between threads.
  *
  * To uniquely identify a particular version of an application or runtime, you
  * need a commit.
