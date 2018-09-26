@@ -44,6 +44,11 @@
  * This means you should either handle the signals directly (say, by doing blocking console
  * interaction, or by just returning without interaction), or run the operation in a separate
  * thread and do your own forwarding to the GUI thread.
+ *
+ * Despite the name, a FlatpakTransaction is more like a batch operation than a transaction
+ * in the database sense. Individual operations are carried out sequentially, and are atomic.
+ * They become visible to the system as they are completed. When an error occurs, already
+ * completed operations are not rolled back.
  */
 
 /* This is an internal-only element of FlatpakTransactionOperationType */
