@@ -1405,7 +1405,7 @@ find_runtime_remote (FlatpakTransaction             *self,
   if (remotes == NULL || *remotes == NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_RUNTIME_NOT_FOUND,
-                          _("The Application %s requires the %s which was not found"),
+                          _("The application %s requires the runtime %s which was not found"),
                           app_pref, runtime_pref);
       return NULL;
     }
@@ -1421,7 +1421,7 @@ find_runtime_remote (FlatpakTransaction             *self,
     return g_strdup (remotes[res]);
 
   flatpak_fail_error (error, FLATPAK_ERROR_RUNTIME_NOT_FOUND,
-                      _("The Application %s requires the %s which is not installed"),
+                      _("The application %s requires the runtime %s which is not installed"),
                       app_pref, runtime_pref);
   return NULL;
 }
