@@ -42,6 +42,7 @@
  * SECTION:flatpak-installation
  * @Title: FlatpakInstallation
  * @Short_description: Installation information
+ * @See_also: FlatpakTransaction
  *
  * FlatpakInstallation is the toplevel object that software installers
  * should use to operate on an flatpak applications.
@@ -51,11 +52,16 @@
  * system-wide (in $prefix/var/lib/flatpak) or per-user (in ~/.local/share/flatpak).
  *
  * FlatpakInstallation can list configured remotes as well as installed application
- * and runtime references (in short: refs). It can also run, install, update and
- * uninstall applications and runtimes, using #FlatpakTransaction.
+ * and runtime references (in short: refs), and it can add, remove and modify remotes.
+ *
+ * FlatpakInstallation can also run, install, update and uninstall applications and
+ * runtimes, but #FlatpakTransaction is a better, high-level API for these tasks.
  *
  * To get a list of all configured installations, use flatpak_get_system_installations(),
  * together with flatpak_installation_new_user().
+ *
+ * The FlatpakInstallatio nAPI is threadsafe in the sense that it is safe to run two
+ * operations at the same time, in different threads (or processes).
  */
 
 typedef struct _FlatpakInstallationPrivate FlatpakInstallationPrivate;
