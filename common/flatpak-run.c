@@ -682,7 +682,8 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
 
   g_auto(GLnxDirFdIterator) dir_iter = { 0 };
   struct dirent *dent;
-  g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy/", NULL);
+  g_autofree char *user_runtime_dir = realpath (g_get_user_runtime_dir (), NULL);
+  g_autofree char *proxy_socket_dir = g_build_filename (user_runtime_dir, ".dbus-proxy/", NULL);
 
   app_info_fd = open (app_info_path, O_RDONLY | O_CLOEXEC);
   if (app_info_fd == -1)
