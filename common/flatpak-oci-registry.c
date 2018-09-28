@@ -1675,20 +1675,23 @@ flatpak_oci_sign_data (GBytes       *data,
       err = gpgme_get_key (context, key_ids[i], &key, 1);
       if (gpgme_err_code (err) == GPG_ERR_EOF)
         {
-          flatpak_fail (error, "No gpg key found with ID %s (homedir: %s)", key_ids[i],
-                        homedir ? homedir : "<default>");
+          flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED,
+                              _("No gpg key found with ID %s (homedir: %s)"),
+                              key_ids[i], homedir ? homedir : "<default>");
           return NULL;
         }
       else if (err != GPG_ERR_NO_ERROR)
         {
-          flatpak_fail (error, "Unable to lookup key ID %s: %d)", key_ids[i], err);
+          flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED,
+                              _("Unable to lookup key ID %s: %d)"),
+                              key_ids[i], err);
           return NULL;
         }
 
       /* Add the key to the context as a signer */
       if ((err = gpgme_signers_add (context, key)) != GPG_ERR_NO_ERROR)
         {
-          flatpak_fail (error, "Error signing commit: %d", err);
+          flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Error signing commit: %d"), err);
           return NULL;
         }
     }

@@ -45,7 +45,14 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_RUNTIME_NOT_FOUND: An runtime needed for the app was not found.
  * @FLATPAK_ERROR_DOWNGRADE: The pulled commit is a downgrade, and a downgrade wasn't
  *                           specifically allowed. (Since: 1.0)
- * @FLATPAK_ERROR_INVALID_REF: A ref could not be parsed (Since: 1.0.3)
+ * @FLATPAK_ERROR_INVALID_REF: A ref could not be parsed. (Since: 1.0.3)
+ * @FLATPAK_ERROR_INVALID_DATA: Invalid data. (Since: 1.0.3)
+ * @FLATPAK_ERROR_UNTRUSTED: Missing GPG key or signature. (Since: 1.0.3)
+ * @FLATPAK_ERROR_SETUP_FAILED: Sandbox setup failed. (Since: 1.0.3)
+ * @FLATPAK_ERROR_EXPORT_FAILED: Exporting data failed. (Since: 1.0.3)
+ * @FLATPAK_ERROR_REMOTE_USED: Remote can't be uninstalled. (Since: 1.0.3)
+ * @FLATPAK_ERROR_RUNTIME_USED: Runtime can't be uninstalled. (Since: 1.0.3)
+ * @FLATPAK_ERROR_INVALID_NAME: Application, runtime or remote name is invalid. (Since: 1.0.3)
  *
  * Error codes for library functions.
  */
@@ -61,6 +68,13 @@ typedef enum {
   FLATPAK_ERROR_RUNTIME_NOT_FOUND,
   FLATPAK_ERROR_DOWNGRADE,
   FLATPAK_ERROR_INVALID_REF,
+  FLATPAK_ERROR_INVALID_DATA,
+  FLATPAK_ERROR_UNTRUSTED,
+  FLATPAK_ERROR_SETUP_FAILED,
+  FLATPAK_ERROR_EXPORT_FAILED,
+  FLATPAK_ERROR_REMOTE_USED,
+  FLATPAK_ERROR_RUNTIME_USED,
+  FLATPAK_ERROR_INVALID_NAME,
 } FlatpakError;
 
 /**

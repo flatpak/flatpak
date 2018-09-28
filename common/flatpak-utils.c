@@ -61,6 +61,13 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_RUNTIME_NOT_FOUND,     "org.freedesktop.Flatpak.Error.RuntimeNotFound"}, /* Since: 1.0 */
   {FLATPAK_ERROR_DOWNGRADE,             "org.freedesktop.Flatpak.Error.Downgrade"}, /* Since: 1.0 */
   {FLATPAK_ERROR_INVALID_REF,           "org.freedesktop.Flatpak.Error.InvalidRef"}, /* Since: 1.0.3 */
+  {FLATPAK_ERROR_INVALID_DATA,          "org.freedesktop.Flatpak.Error.InvalidData"}, /* Since: 1.0.3 */
+  {FLATPAK_ERROR_UNTRUSTED,             "org.freedesktop.Flatpak.Error.Untrusted"}, /* Since: 1.0.3 */
+  {FLATPAK_ERROR_SETUP_FAILED,          "org.freedesktop.Flatpak.Error.SetupFailed"}, /* Since: 1.0.3 */
+  {FLATPAK_ERROR_EXPORT_FAILED,         "org.freedesktop.Flatpak.Error.ExportFailed"}, /* Since: 1.0.3 */
+  {FLATPAK_ERROR_REMOTE_USED,           "org.freedesktop.Flatpak.Error.RemoteUsed"}, /* Since: 1.0.3 */
+  {FLATPAK_ERROR_RUNTIME_USED,          "org.freedesktop.Flatpak.Error.RuntimeUsed"}, /* Since: 1.0.3 */
+  {FLATPAK_ERROR_INVALID_NAME,          "org.freedesktop.Flatpak.Error.InvalidName"}, /* Since: 1.0.3 */
 };
 
 typedef struct archive FlatpakAutoArchiveRead;
@@ -702,15 +709,15 @@ flatpak_is_valid_name (const char *string,
   len = strlen (string);
   if (G_UNLIKELY (len == 0))
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Name can't be empty");
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Name can't be empty"));
       goto out;
     }
 
   if (G_UNLIKELY (len > 255))
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Name can't be longer than 255 characters");
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Name can't be longer than 255 characters"));
       goto out;
     }
 
@@ -722,14 +729,14 @@ flatpak_is_valid_name (const char *string,
   s = string;
   if (G_UNLIKELY (*s == '.'))
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Name can't start with a period");
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Name can't start with a period"));
       goto out;
     }
   else if (G_UNLIKELY (!is_valid_initial_name_character (*s, last_element)))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Name can't start with %c", *s);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Name can't start with %c"), *s);
       goto out;
     }
 
@@ -744,18 +751,18 @@ flatpak_is_valid_name (const char *string,
           s += 1;
           if (G_UNLIKELY (s == end))
             {
-              g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                                   "Name can't end with a period");
+              flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                                  _("Name can't end with a period"));
               goto out;
             }
           if (!is_valid_initial_name_character (*s, last_element))
             {
               if (*s == '-')
-                g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                             "Only last name segment can contain -");
+                flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                                    _("Only last name segment can contain -"));
               else
-                g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                             "Name segment can't start with %c", *s);
+                flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                                    _("Name segment can't start with %c"), *s);
               goto out;
             }
           dot_count++;
@@ -763,11 +770,11 @@ flatpak_is_valid_name (const char *string,
       else if (G_UNLIKELY (!is_valid_name_character (*s, last_element)))
         {
           if (*s == '-')
-            g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                         "Only last name segment can contain -");
+            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                                _("Only last name segment can contain -"));
           else
-            g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                         "Name can't contain %c", *s);
+            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                                _("Name can't contain %c"), *s);
           goto out;
         }
       s += 1;
@@ -775,8 +782,8 @@ flatpak_is_valid_name (const char *string,
 
   if (G_UNLIKELY (dot_count < 2))
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Names must contain at least 2 periods");
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Names must contain at least 2 periods"));
       goto out;
     }
 
@@ -965,8 +972,8 @@ flatpak_is_valid_branch (const char *string,
   len = strlen (string);
   if (G_UNLIKELY (len == 0))
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Branch can't be empty");
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+                          _("Branch can't be empty"));
       goto out;
     }
 
@@ -975,8 +982,8 @@ flatpak_is_valid_branch (const char *string,
   s = string;
   if (G_UNLIKELY (!is_valid_initial_branch_character (*s)))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Branch can't start with %c", *s);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+                          _("Branch can't start with %c"), *s);
       goto out;
     }
 
@@ -985,8 +992,8 @@ flatpak_is_valid_branch (const char *string,
     {
       if (G_UNLIKELY (!is_valid_branch_character (*s)))
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Branch can't contain %c", *s);
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+                              _("Branch can't contain %c"), *s);
           goto out;
         }
       s += 1;
@@ -1432,7 +1439,7 @@ flatpak_find_deploy_dir_for_ref (const char   *ref,
 
   if (deploy == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("%s not installed"), ref);
+      flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED, _("%s not installed"), ref);
       return NULL;
     }
 
@@ -1526,8 +1533,7 @@ flatpak_find_current_ref (const char   *app_id,
   if (current_ref)
     return g_steal_pointer (&current_ref);
 
-  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-               _("%s not installed"), app_id);
+  flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED, _("%s not installed"), app_id);
   return NULL;
 }
 
@@ -4649,7 +4655,7 @@ flatpak_bundle_load (GFile   *file,
     {
       if (!g_variant_lookup (metadata, "ref", "s", ref))
         {
-          flatpak_fail (error, "Invalid bundle, no ref in metadata");
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid bundle, no ref in metadata"));
           return NULL;
         }
     }
@@ -4741,7 +4747,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
 
   if (remote_collection_id != NULL && collection_id != NULL &&
       strcmp (remote_collection_id, collection_id) != 0)
-    return flatpak_fail (error, "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote",
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"),
                          collection_id, remote_collection_id);
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
@@ -4781,7 +4787,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
          trust the source bundle. */
       if (ostree_gpg_verify_result_count_valid (gpg_result) == 0  &&
           require_gpg_signature)
-        return flatpak_fail (error, "GPG signatures found, but none are in trusted keyring");
+        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
     }
 
   if (!ostree_repo_read_commit (repo, to_checksum, &root, NULL, NULL, error))
@@ -4820,7 +4826,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
     {
       /* Immediately remove this broken commit */
       ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, error);
-      return flatpak_fail (error, "Metadata in header and app are inconsistent");
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Metadata in header and app are inconsistent"));
     }
 
   return TRUE;
@@ -4875,11 +4881,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
     return FALSE;
 
   if (!FLATPAK_IS_OCI_MANIFEST (versioned))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Image is not a manifest");
-      return FALSE;
-    }
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
 
   manifest = FLATPAK_OCI_MANIFEST (versioned);
 
@@ -4971,13 +4973,13 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                                           metadata_builder);
   if (manifest_ref == NULL)
     {
-      flatpak_fail (error, "No ref specified for OCI image %s", digest);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No ref specified for OCI image %s"), digest);
       return NULL;
     }
 
   if (strcmp (manifest_ref, ref) != 0)
     {
-      flatpak_fail (error, "Wrong ref (%s) specified for OCI image %s, expected %s", manifest_ref, digest, ref);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong ref (%s) specified for OCI image %s, expected %s"), manifest_ref, digest, ref);
       return NULL;
     }
 
@@ -5046,7 +5048,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
       if (!g_str_has_prefix (layer->digest, "sha256:") ||
           strcmp (layer->digest + strlen ("sha256:"), layer_checksum) != 0)
         {
-          flatpak_fail (error, "Wrong layer checksum, expected %s, was %s", layer->digest, layer_checksum);
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong layer checksum, expected %s, was %s"), layer->digest, layer_checksum);
           goto error;
         }
 
@@ -5696,10 +5698,9 @@ flatpak_check_required_version (const char *ref,
           if (required_major > PACKAGE_MAJOR_VERSION ||
               (required_major == PACKAGE_MAJOR_VERSION && required_minor > PACKAGE_MINOR_VERSION) ||
               (required_major == PACKAGE_MAJOR_VERSION && required_minor == PACKAGE_MINOR_VERSION && required_micro > PACKAGE_MICRO_VERSION))
-            {
-              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NEED_NEW_FLATPAK, _("%s needs a later flatpak version (%s)"), ref, required_version);
-              return FALSE;
-            }
+            return flatpak_fail_error (error, FLATPAK_ERROR_NEED_NEW_FLATPAK,
+                                       _("%s needs a later flatpak version (%s)"),
+                                       ref, required_version);
         }
     }
 
