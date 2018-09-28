@@ -20,6 +20,8 @@
 
 #include "config.h"
 
+#include <glib/gi18n.h>
+
 #include "flatpak-utils-private.h"
 #include "flatpak-remote-private.h"
 #include "flatpak-remote-ref-private.h"
@@ -799,7 +801,7 @@ flatpak_remote_commit (FlatpakRemote *self,
 
   url = flatpak_remote_get_url (self);
   if (url == NULL || *url == 0)
-    return flatpak_fail (error, "No url specified");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No url specified"));
 
   if (priv->type != FLATPAK_REMOTE_TYPE_STATIC)
     return flatpak_fail (error, "Dynamic remote cannot be committed");

@@ -20,6 +20,8 @@
 
 #include "config.h"
 
+#include <glib/gi18n.h>
+
 #include <string.h>
 
 #include <ostree.h>
@@ -745,8 +747,8 @@ flatpak_installation_get_installed_ref (FlatpakInstallation *self,
                                         ref, NULL, cancellable);
   if (deploy == NULL)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   "Ref %s not installed", ref);
+      flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
+                          _("Ref %s not installed"), ref);
       return NULL;
     }
 
@@ -787,8 +789,8 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
 
   if (deploy == NULL)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   "App %s not installed", name);
+      flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
+                          _("App %s not installed"), name);
       return NULL;
     }
 
@@ -1729,9 +1731,8 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
   deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
   if (deploy_dir != NULL)
     {
-      g_set_error (error,
-                   FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                   "%s branch %s already installed", name, branch ? branch : "master");
+      flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
+                          _("%s branch %s already installed"), name, branch ? branch : "master");
       return NULL;
     }
 
@@ -1770,10 +1771,8 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
    * always return an error. */
   if ((flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0)
     {
-      g_set_error (error,
-                   FLATPAK_ERROR, FLATPAK_ERROR_ONLY_PULLED,
-                   "As requested, %s was only pulled, but not installed",
-                   name);
+      flatpak_fail_error (error, FLATPAK_ERROR_ONLY_PULLED,
+                          _("As requested, %s was only pulled, but not installed"), name);
       goto out;
     }
 
@@ -1891,9 +1890,8 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
   if (deploy_dir == NULL)
     {
-      g_set_error (error,
-                   FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   "%s branch %s is not installed", name, branch ? branch : "master");
+      flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
+                          _("%s branch %s is not installed"), name, branch ? branch : "master");
       return NULL;
     }
 

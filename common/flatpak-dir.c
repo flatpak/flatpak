@@ -237,7 +237,7 @@ flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                      GError            **error)
 {
   if (self->summary == NULL)
-    return flatpak_fail (error, "Unable to load summary from remote %s: %s", self->remote_name,
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unable to load summary from remote %s: %s"), self->remote_name,
                          self->summary_fetch_error != NULL ? self->summary_fetch_error->message : "unknown error");
 
   return TRUE;
@@ -257,7 +257,7 @@ flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
       else if (self->collection_id == NULL && self->summary_fetch_error != NULL)
         error_msg = g_strdup_printf ("summary fetch error: %s", self->summary_fetch_error->message);
 
-      return flatpak_fail (error, "Unable to load metadata from remote %s: %s", self->remote_name,
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unable to load metadata from remote %s: %s"), self->remote_name,
                            error_msg != NULL ? error_msg : "unknown error");
     }
 
@@ -281,9 +281,9 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
       if (!flatpak_summary_lookup_ref (self->summary, self->collection_id, ref, out_checksum, out_variant))
         {
           if (self->collection_id != NULL)
-            flatpak_fail (error, "No such ref (%s, %s) in remote %s", self->collection_id, ref, self->remote_name);
+            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref (%s, %s) in remote %s"), self->collection_id, ref, self->remote_name);
           else
-            flatpak_fail (error, "No such ref '%s' in remote %s", ref, self->remote_name);
+            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref '%s' in remote %s"), ref, self->remote_name);
           return FALSE;
         }
     }
@@ -2578,7 +2578,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
     do_compress = TRUE;
 
   if (new_checksum == NULL)
-    return flatpak_fail (error, "No appstream commit to deploy");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No appstream commit to deploy"));
 
   real_checkout_dir = g_file_get_child (arch_dir, new_checksum);
   checkout_exists = g_file_query_exists (real_checkout_dir, NULL);
@@ -2775,7 +2775,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 
       if (latest_rev == NULL)
         {
-          flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref (%s, %s) in remote %s or elsewhere"),
                         collection_ref.collection_id, collection_ref.ref_name, state->remote_name);
           return FALSE;
         }
@@ -2792,7 +2792,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
       if (latest_rev == NULL)
         {
           if (error != NULL && *error == NULL)
-            flatpak_fail (error, "Couldn't find latest checksum for ref %s in remote %s",
+            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
                           ref, state->remote_name);
           return FALSE;
         }
@@ -3383,7 +3383,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
              If @collection_id is non-%NULL, we can verify the refs in commit
              metadata, so don’t need to verify the summary. */
           if (!g_str_has_prefix (url, "file:"))
-            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
+            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
         }
       else
         {
@@ -3850,7 +3850,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
   if (n_extra_data > 0)
     {
       if ((flatpak_flags & FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA) == 0)
-        return flatpak_fail (error, "extra data not supported for non-gpg-verified local system installs");
+        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Extra data not supported for non-gpg-verified local system installs"));
 
       for (i = 0; i < n_extra_data; i++)
         {
@@ -3919,7 +3919,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
     return TRUE;
 
   if ((flatpak_flags & FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA) == 0)
-    return flatpak_fail (error, "extra data not supported for non-gpg-verified local system installs");
+    return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Extra data not supported for non-gpg-verified local system installs"));
 
   extra_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ayay)"));
 
@@ -3956,19 +3956,19 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
                                              &extra_data_uri);
 
       if (sha256_bytes == NULL)
-        return flatpak_fail (error, _("Invalid sha256 for extra data uri %s"), extra_data_uri);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data uri %s"), extra_data_uri);
 
       extra_data_sha256 = ostree_checksum_from_bytes (sha256_bytes);
 
       if (*extra_data_name == 0)
-        return flatpak_fail (error, _("Empty name for extra data uri %s"), extra_data_uri);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Empty name for extra data uri %s"), extra_data_uri);
 
       /* Don't allow file uris here as that could read local files based on remote data */
       if (!g_str_has_prefix (extra_data_uri, "http:") &&
           !g_str_has_prefix (extra_data_uri, "https:"))
         {
           reset_async_progress_extra_data (progress);
-          return flatpak_fail (error, _("Unsupported extra data uri %s"), extra_data_uri);
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unsupported extra data uri %s"), extra_data_uri);
         }
 
       /* TODO: Download to disk to support resumed downloads on error */
@@ -3982,10 +3982,10 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
           g_autoptr(GError) my_error = NULL;
 
           if (!g_file_load_contents (extra_local_file, cancellable, &extra_local_contents, &extra_local_size, NULL, &my_error))
-            return flatpak_fail (error, _("Failed to load local extra-data %s: %s"),
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Failed to load local extra-data %s: %s"),
                                  flatpak_file_get_path_cached (extra_local_file), my_error->message);
           if (extra_local_size != download_size)
-            return flatpak_fail (error, _("Wrong size for extra-data %s"), flatpak_file_get_path_cached (extra_local_file));
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong size for extra-data %s"), flatpak_file_get_path_cached (extra_local_file));
 
           bytes = g_bytes_new (extra_local_contents, extra_local_size);
         }
@@ -4007,7 +4007,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       if (g_bytes_get_size (bytes) != download_size)
         {
           reset_async_progress_extra_data (progress);
-          return flatpak_fail (error, _("Wrong size for extra data %s"), extra_data_uri);
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong size for extra data %s"), extra_data_uri);
         }
 
       extra_data_progress.previous_dl += download_size;
@@ -4018,7 +4018,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       if (strcmp (sha256, extra_data_sha256) != 0)
         {
           reset_async_progress_extra_data (progress);
-          return flatpak_fail (error, _("Invalid checksum for extra data %s"), extra_data_uri);
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data %s"), extra_data_uri);
         }
 
       g_variant_builder_add (extra_data_builder,
@@ -4077,7 +4077,7 @@ lookup_oci_registry_uri_from_summary (GVariant *summary,
 
   if (!g_variant_lookup (extensions, "xa.oci-registry-uri", "s", &registry_uri))
     {
-      flatpak_fail (error, _("Remote OCI index has no registry uri"));
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Remote OCI index has no registry uri"));
       return NULL;
     }
 
@@ -4171,15 +4171,15 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   if (latest_rev == NULL)
     {
       if (error != NULL && *error == NULL)
-        flatpak_fail (error, "Couldn't find latest checksum for ref %s in remote %s",
+        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
                       ref, state->remote_name);
       return FALSE;
     }
 
   if (skip_if_current_is != NULL && strcmp (latest_rev, skip_if_current_is) == 0)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                   _("%s commit %s already installed"), ref, latest_rev);
+      flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED, _("%s commit %s already installed"),
+                          ref, latest_rev);
       return FALSE;
     }
 
@@ -4254,7 +4254,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (latest_rev == NULL)
     {
       if (error != NULL && *error == NULL)
-        flatpak_fail (error, "Couldn't find latest checksum for ref %s in remote %s",
+        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
                       ref, state->remote_name);
       return FALSE;
     }
@@ -4282,11 +4282,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     return FALSE;
 
   if (!FLATPAK_IS_OCI_MANIFEST (versioned))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Image is not a manifest");
-      return FALSE;
-    }
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
 
   full_ref = g_strdup_printf ("%s:%s", state->remote_name, ref);
 
@@ -4451,14 +4447,14 @@ flatpak_dir_pull (FlatpakDir                           *self,
             rev = g_strdup (g_hash_table_lookup (results[i]->ref_to_checksum, &collection_ref));
 
           if (rev == NULL)
-            return flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref (%s, %s) in remote %s or elsewhere"),
                                  collection_ref.collection_id, collection_ref.ref_name, state->remote_name);
         }
       else
         {
           flatpak_remote_state_lookup_ref (state, ref, &rev, NULL, error);
           if (rev == NULL && error != NULL && *error == NULL)
-            flatpak_fail (error, "Couldn't find latest checksum for ref %s in remote %s",
+            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
                           ref, state->remote_name);
 
           results = NULL;
@@ -4689,7 +4685,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   /* This was verified in the client, but lets do it here too */
   if ((!gpg_verify_summary && collection_id == NULL) || !gpg_verify)
-    return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
+    return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
 
   /* We verify the summary manually before anything else to make sure
      we've got something right before looking too hard at the repo and
@@ -4698,14 +4694,14 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   if (!g_file_load_contents (summary_file, cancellable,
                              &summary_data, &summary_data_size, NULL, NULL))
-    return flatpak_fail (error, "No summary found");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No summary found"));
   summary_bytes = g_bytes_new_take (summary_data, summary_data_size);
 
   if (gpg_verify_summary)
     {
       if (!g_file_load_contents (summary_sig_file, cancellable,
                                  &summary_sig_data, &summary_sig_data_size, NULL, NULL))
-        return flatpak_fail (error, "GPG verification enabled, but no summary signatures found for remote '%s'", remote_name);
+        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG verification enabled, but no summary signatures found for remote '%s'"), remote_name);
 
       summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_data_size);
 
@@ -4718,7 +4714,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
         return FALSE;
 
       if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
-        return flatpak_fail (error, "GPG signatures found for remote '%s', but none are in trusted keyring", remote_name);
+        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found for remote '%s', but none are in trusted keyring"), remote_name);
     }
 
   g_clear_object (&gpg_result);
@@ -4742,12 +4738,9 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                        NULL,
                                        ref,
                                        &checksum, NULL))
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                       _("No such ref '%s' in remote %s"), ref, remote_name);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref '%s' in remote %s"),
+                                     ref, remote_name);
 
-          return FALSE;
-        }
     }
   else
     {
@@ -4762,7 +4755,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
         return FALSE;
 
       if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
-        return flatpak_fail (error, "GPG signatures found, but none are in trusted keyring");
+        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
     }
 
   g_clear_object (&gpg_result);
@@ -4787,18 +4780,13 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
            * commit.
            */
           if (collection_id != NULL)
-            return flatpak_fail (error,
-                                 "expected commit metadata to have ref "
-                                 "binding information, found none");
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Expected commit metadata to have ref binding information, found none"));
         }
 
       if (collection_id != NULL &&
           !g_strv_contains ((const char * const *) commit_refs, ref))
-        {
-          return flatpak_fail (error, "commit has no requested ref ‘%s’ "
-                                      "in ref binding metadata",
-                               ref);
-        }
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),
+                                   ref);
 
       if (collection_id != NULL)
         {
@@ -4807,15 +4795,13 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                  "ostree.collection-binding",
                                  "&s",
                                  &commit_collection_id))
-            return flatpak_fail (error,
-                                 "expected commit metadata to have collection ID "
-                                 "binding information, found none");
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Expected commit metadata to have collection ID binding information, found none"));
           if (!g_str_equal (commit_collection_id, collection_id))
-            return flatpak_fail (error,
-                                 "commit has collection ID ‘%s’ in collection binding "
-                                 "metadata, while the remote it came from has "
-                                 "collection ID ‘%s’",
-                                 commit_collection_id, collection_id);
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                       _("Commit has collection ID ‘%s’ in collection binding "
+                                         "metadata, while the remote it came from has "
+                                         "collection ID ‘%s’"),
+                                         commit_collection_id, collection_id);
         }
     }
 
@@ -5672,12 +5658,12 @@ export_mime_file (int           parent_fd,
 
   doc = xmlReadMemory (data, data_len, NULL, NULL,  0);
   if (doc == NULL)
-    return flatpak_fail (error, _("Error reading mimetype xml file"));
+    return flatpak_fail_error (error, FLATPAK_ERROR_EXPORT_FAILED, _("Error reading mimetype xml file"));
 
   if (!rewrite_mime_xml (doc))
     {
       xmlFreeDoc (doc);
-      return flatpak_fail (error, _("Invalid mimetype xml file"));
+      return flatpak_fail_error (error, FLATPAK_ERROR_EXPORT_FAILED, _("Invalid mimetype xml file"));
     }
 
   xmlDocDumpFormatMemory (doc, &xmlbuff, &buffersize, 1);
@@ -5766,7 +5752,7 @@ export_desktop_file (const char   *app,
 
       if (dbus_name == NULL || strcmp (dbus_name, expected_dbus_name) != 0)
         {
-          flatpak_fail (error, "dbus service file %s has wrong name", name);
+          flatpak_fail_error (error, FLATPAK_ERROR_EXPORT_FAILED, _("D-Bus service file '%s' has wrong name"), name);
           return FALSE;
         }
     }
@@ -6306,16 +6292,16 @@ extract_extra_data (FlatpakDir   *self,
     }
 
   if (detached_metadata == NULL)
-    return flatpak_fail (error, "Extra data missing in detached metadata");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Extra data missing in detached metadata"));
 
   extra_data = g_variant_lookup_value (detached_metadata, "xa.extra-data",
                                        G_VARIANT_TYPE ("a(ayay)"));
   if (extra_data == NULL)
-    return flatpak_fail (error, "Extra data missing in detached metadata");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Extra data missing in detached metadata"));
 
   n_extra_data = g_variant_n_children (extra_data);
   if (n_extra_data < n_extra_data_sources)
-    return flatpak_fail (error, "Extra data missing in detached metadata");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Extra data missing in detached metadata"));
 
   if (!flatpak_mkdir_p (extradir, cancellable, error))
     {
@@ -6340,7 +6326,7 @@ extract_extra_data (FlatpakDir   *self,
                                              NULL);
 
       if (extra_data_sha256_bytes == NULL)
-        return flatpak_fail (error, _("Invalid sha256 for extra data"));
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data"));
 
       extra_data_sha256 = ostree_checksum_from_bytes (extra_data_sha256_bytes);
 
@@ -6369,11 +6355,11 @@ extract_extra_data (FlatpakDir   *self,
           len = g_variant_get_size (content);
 
           if (len != download_size)
-            return flatpak_fail (error, _("Wrong size for extra data"));
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong size for extra data"));
 
           sha256 = g_compute_checksum_for_data (G_CHECKSUM_SHA256, data, len);
           if (strcmp (sha256, extra_data_sha256) != 0)
-            return flatpak_fail (error, _("Invalid checksum for extra data"));
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data"));
 
           dest = g_file_get_child (extradir, extra_data_name);
           if (!g_file_replace_contents (dest,
@@ -6389,7 +6375,7 @@ extract_extra_data (FlatpakDir   *self,
         }
 
       if (!found)
-        return flatpak_fail (error, "Extra data %s missing in detached metadata", extra_data_source_name);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Extra data %s missing in detached metadata"), extra_data_source_name);
     }
 
   *created_extra_data = TRUE;
@@ -6651,7 +6637,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
       checksum = checksum_or_latest;
       g_debug ("Looking for checksum %s in local repo", checksum);
       if (!ostree_repo_read_commit (self->repo, checksum, &root, &commit, cancellable, NULL))
-        return flatpak_fail (error, _("%s is not available"), ref);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("%s is not available"), ref);
     }
 
   if (!ostree_repo_load_commit (self->repo, checksum, &commit_data, NULL, error))
@@ -6666,11 +6652,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   real_checkoutdir = g_file_get_child (deploy_base, checkout_basename);
   if (g_file_query_exists (real_checkoutdir, cancellable))
-    {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                   _("%s branch %s already installed"), ref, checksum);
-      return FALSE;
-    }
+    return flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
+                               _("%s branch %s already installed"), ref, checksum);
 
   g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checkout_basename);
   tmp_dir_template = g_file_get_child (deploy_base, template);
@@ -7510,7 +7493,7 @@ flatpak_dir_install (FlatpakDir          *self,
           if (g_str_has_prefix (url, "file:"))
             helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
           else
-            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
+            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
         }
       else
         {
@@ -8053,7 +8036,8 @@ flatpak_dir_update (FlatpakDir                           *self,
       gboolean gpg_verify;
 
       if (allow_downgrade)
-        return flatpak_fail (error, "Can't update to a specific commit without root permissions");
+        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE,
+                                   _("Can't update to a specific commit without root permissions"));
 
       if (!OSTREE_CHECK_VERSION (2017, 13))
         {
@@ -8102,7 +8086,7 @@ flatpak_dir_update (FlatpakDir                           *self,
           if (g_str_has_prefix (url, "file:"))
             helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
           else
-            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
+            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
         }
       else if (is_oci)
         {
@@ -8260,7 +8244,8 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
       if (blocking->len > 1)
         {
           g_autofree char *joined = g_strjoinv (", ", (char **) blocking->pdata);
-          return flatpak_fail (error, "Can't remove %s, it is needed for: %s", pref, joined);
+          return flatpak_fail_error (error, FLATPAK_ERROR_RUNTIME_USED,
+                                     _("Can't remove %s, it is needed for: %s"), pref, joined);
         }
     }
 
@@ -9214,7 +9199,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     }
 
   if (summary == NULL)
-    return flatpak_fail (error, "Remote listing for %s not available; server has no summary file. Check the URL passed to remote-add was valid.", name_or_uri);
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Remote listing for %s not available; server has no summary file. Check the URL passed to remote-add was valid."), name_or_uri);
 
   if (!is_local)
     flatpak_dir_cache_summary (self, summary, summary_sig, name_or_uri, url);
@@ -9515,8 +9500,8 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         return FALSE;
 
       if (!flatpak_remote_state_lookup_repo_metadata (state, "xa.cache", "@*", &xa_cache))
-        return flatpak_fail (error, _("No summary or Flatpak cache available for remote %s"),
-                             state->remote_name);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No summary or Flatpak cache available for remote %s"),
+                                   state->remote_name);
 
       cache = g_variant_get_child_value (xa_cache, 0);
       n = g_variant_n_children (cache);
@@ -9596,13 +9581,13 @@ find_matching_refs (GHashTable           *refs,
 
   if (opt_name && !flatpak_is_valid_name (opt_name, &local_error))
     {
-      flatpak_fail (error, "'%s' is not a valid name: %s", opt_name, local_error->message);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid name: %s"), opt_name, local_error->message);
       return NULL;
     }
 
   if (opt_branch && !flatpak_is_valid_branch (opt_branch, &local_error))
     {
-      flatpak_fail (error, "'%s' is not a valid branch name: %s", opt_branch, local_error->message);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid branch name: %s"), opt_branch, local_error->message);
       return NULL;
     }
 
@@ -10658,7 +10643,7 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
 
   if (!g_key_file_has_group (keyfile, source_group))
     {
-      flatpak_fail (error, "Invalid .flatpakref");
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakref"));
       return NULL;
     }
 
@@ -10666,7 +10651,7 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
                                FLATPAK_REPO_URL_KEY, NULL);
   if (uri == NULL)
     {
-      flatpak_fail (error, "Invalid .flatpakref");
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakref"));
       return NULL;
     }
 
@@ -10698,7 +10683,7 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
       decoded = g_base64_decode (gpg_key, &decoded_len);
       if (decoded_len < 10) /* Check some minimal size so we don't get crap */
         {
-          flatpak_fail (error, "Invalid gpg key");
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid gpg key"));
           return NULL;
         }
 
@@ -10716,7 +10701,7 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
     {
       if (gpg_key == NULL)
         {
-          flatpak_fail (error, "Collection ID requires GPG key to be provided");
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
           return NULL;
         }
 
@@ -10763,22 +10748,22 @@ parse_ref_file (GKeyFile *keyfile,
   *is_runtime_out = FALSE;
 
   if (!g_key_file_has_group (keyfile, FLATPAK_REF_GROUP))
-    return flatpak_fail (error, "Invalid file format, no %s group", FLATPAK_REF_GROUP);
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, no %s group"), FLATPAK_REF_GROUP);
 
   version = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                    FLATPAK_REF_VERSION_KEY, NULL);
   if (version != NULL && strcmp (version, "1") != 0)
-    return flatpak_fail (error, "Invalid version %s, only 1 supported", version);
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid version %s, only 1 supported"), version);
 
   url = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                FLATPAK_REF_URL_KEY, NULL);
   if (url == NULL)
-    return flatpak_fail (error, "Invalid file format, no Url specified");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, no %s specified"), FLATPAK_REF_URL_KEY);
 
   name = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                 FLATPAK_REF_NAME_KEY, NULL);
   if (name == NULL)
-    return flatpak_fail (error, "Invalid file format, no Name specified");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, no %s specified"), FLATPAK_REF_NAME_KEY);
 
   branch = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                   FLATPAK_REF_BRANCH_KEY, NULL);
@@ -10801,7 +10786,7 @@ parse_ref_file (GKeyFile *keyfile,
       str = g_strstrip (str);
       decoded = g_base64_decode (str, &decoded_len);
       if (decoded_len < 10) /* Check some minimal size so we don't get crap */
-        return flatpak_fail (error, "Invalid file format, gpg key invalid");
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, gpg key invalid"));
 
       gpg_data = g_bytes_new_take (g_steal_pointer (&decoded), decoded_len);
     }
@@ -10812,7 +10797,7 @@ parse_ref_file (GKeyFile *keyfile,
     collection_id = NULL;
 
   if (collection_id != NULL && gpg_data == NULL)
-    return flatpak_fail (error, "Collection ID requires GPG key to be provided");
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
 
   *name_out = g_steal_pointer (&name);
   *branch_out = g_steal_pointer (&branch);
@@ -11114,8 +11099,9 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
                                                                 cancellable, NULL);
 
               if (g_strcmp0 (origin, remote_name) == 0)
-                return flatpak_fail (error, "Can't remove remote '%s' with installed ref %s (at least)",
-                                     remote_name, unprefixed_refspec);
+                return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_USED,
+                                           _("Can't remove remote '%s' with installed ref %s (at least)"),
+                                           remote_name, unprefixed_refspec);
             }
         }
     }
@@ -11209,13 +11195,13 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   int i;
 
   if (strchr (remote_name, '/') != NULL)
-    return flatpak_fail (error, "Invalid character '/' in remote name: %s",
-                         remote_name);
+    return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND, _("Invalid character '/' in remote name: %s"),
+                               remote_name);
 
 
   if (!g_key_file_has_group (config, group))
-    return flatpak_fail (error, "No configuration for remote %s specified",
-                         remote_name);
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No configuration for remote %s specified"),
+                               remote_name);
 
   if (!flatpak_dir_check_add_remotes_config_dir (self, error))
     return FALSE;
@@ -11384,7 +11370,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
     return FALSE;
 
   if (!gpg_verify)
-    return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
+    return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
 
   /* Look up the checksum as advertised by the summary file. If it differs from
    * what we currently have on disk, try and pull the updated ostree-metadata ref.
@@ -11451,11 +11437,11 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
           if (g_str_has_prefix (url, "file:"))
             helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
           else
-            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
+            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
         }
       else if (is_oci)
         {
-          return flatpak_fail (error, "No metadata branch for OCI");
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No metadata branch for OCI"));
         }
       else
         {
@@ -11798,8 +11784,8 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
       if (latest_commit == NULL)
         {
           if (error != NULL && *error == NULL)
-            flatpak_fail (error, "Couldn't find latest checksum for ref %s in remote %s",
-                          ref, state->remote_name);
+            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
+                                ref, state->remote_name);
           return NULL;
         }
 
@@ -11830,7 +11816,7 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
           (g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_REF_BINDING, "^a&s", &commit_refs) &&
            !g_strv_contains ((const char * const *) commit_refs, ref)))
         {
-          flatpak_fail (error, "commit has no requested ref ‘%s’ in ref binding metadata",  ref);
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
           return NULL;
         }
     }
