@@ -2912,7 +2912,7 @@ flatpak_run_app (const char     *app_ref,
 
   runtime_parts = g_strsplit (default_runtime, "/", 0);
   if (g_strv_length (runtime_parts) != 3)
-    return flatpak_fail (error, "Wrong number of components in runtime %s", default_runtime);
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Wrong number of components in runtime %s"), default_runtime);
 
   if (custom_runtime)
     {
