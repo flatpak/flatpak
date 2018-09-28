@@ -860,7 +860,7 @@ flatpak_run_add_extension_args (FlatpakBwrap *bwrap,
 
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
-    return flatpak_fail (error, "Failed to determine parts from ref: %s", full_ref);
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Failed to determine parts from ref: %s"), full_ref);
 
   is_app = strcmp (parts[0], "app") == 0;
 
