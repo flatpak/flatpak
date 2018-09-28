@@ -60,6 +60,7 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_REMOTE_NOT_FOUND,      "org.freedesktop.Flatpak.Error.RemoteNotFound"}, /* Since: 1.0 */
   {FLATPAK_ERROR_RUNTIME_NOT_FOUND,     "org.freedesktop.Flatpak.Error.RuntimeNotFound"}, /* Since: 1.0 */
   {FLATPAK_ERROR_DOWNGRADE,             "org.freedesktop.Flatpak.Error.Downgrade"}, /* Since: 1.0 */
+  {FLATPAK_ERROR_INVALID_REF,           "org.freedesktop.Flatpak.Error.InvalidRef"}, /* Since: 1.0.3 */
 };
 
 typedef struct archive FlatpakAutoArchiveRead;
@@ -1036,31 +1037,31 @@ flatpak_decompose_ref (const char *full_ref,
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
     {
-      flatpak_fail (error, "Wrong number of components in %s", full_ref);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "Wrong number of components in %s", full_ref);
       return NULL;
     }
 
   if (strcmp (parts[0], "app") != 0 && strcmp (parts[0], "runtime") != 0)
     {
-      flatpak_fail (error, "Not application or runtime");
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "Not application or runtime");
       return NULL;
     }
 
   if (!flatpak_is_valid_name (parts[1], &local_error))
     {
-      flatpak_fail (error, "Invalid name %s: %s", parts[1], local_error->message);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "Invalid name %s: %s", parts[1], local_error->message);
       return NULL;
     }
 
   if (strlen (parts[2]) == 0)
     {
-      flatpak_fail (error, "Invalid arch %s", parts[2]);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "Invalid arch %s", parts[2]);
       return NULL;
     }
 
   if (!flatpak_is_valid_branch (parts[3], &local_error))
     {
-      flatpak_fail (error, "Invalid branch %s: %s", parts[3], local_error->message);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "Invalid branch %s: %s", parts[3], local_error->message);
       return NULL;
     }
 
@@ -1148,7 +1149,7 @@ _flatpak_split_partial_ref_arg (const char   *partial_ref,
   id = g_strndup (id_start, id_end - id_start);
 
   if (validate && !flatpak_is_valid_name (id, &local_error))
-    return flatpak_fail (error, "Invalid id %s: %s", id, local_error->message);
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "Invalid id %s: %s", id, local_error->message);
 
   arch_start = partial_ref;
   arch_end = next_element (&partial_ref);
@@ -1165,7 +1166,7 @@ _flatpak_split_partial_ref_arg (const char   *partial_ref,
     branch = g_strdup (default_branch);
 
   if (validate && branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
-    return flatpak_fail (error, "Invalid branch %s: %s", branch, local_error->message);
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "Invalid branch %s: %s", branch, local_error->message);
 
   if (out_kinds)
     *out_kinds = kinds;
@@ -1236,13 +1237,13 @@ flatpak_compose_ref (gboolean    app,
 
   if (!flatpak_is_valid_name (name, &local_error))
     {
-      flatpak_fail (error, "'%s' is not a valid name: %s", name, local_error->message);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "'%s' is not a valid name: %s", name, local_error->message);
       return NULL;
     }
 
   if (branch && !flatpak_is_valid_branch (branch, &local_error))
     {
-      flatpak_fail (error, "'%s' is not a valid branch name: %s", branch, local_error->message);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "'%s' is not a valid branch name: %s", branch, local_error->message);
       return NULL;
     }
 
