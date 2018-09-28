@@ -1853,7 +1853,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
       close (fd2);
       int errsv = errno;
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open brwapinfo.json file: %s"), g_strerror (errsv));
+                   _("Failed to open bwrapinfo.json file: %s"), g_strerror (errsv));
       return FALSE;
     }
 
