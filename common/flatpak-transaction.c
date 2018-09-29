@@ -3656,7 +3656,10 @@ handle_runtime_repo_deps_from_keyfile (FlatpakTransaction *self,
   dep_url = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                    FLATPAK_REF_RUNTIME_REPO_KEY, NULL);
   if (dep_url == NULL)
-    return TRUE;
+    {
+      g_warning ("Flatpakref file does not contain a %s", FLATPAK_REF_RUNTIME_REPO_KEY);
+      return TRUE;
+    }
 
   name = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP, FLATPAK_REF_NAME_KEY, NULL);
   if (name == NULL)
