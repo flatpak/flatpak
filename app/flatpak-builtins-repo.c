@@ -273,6 +273,9 @@ flatpak_builtin_repo (int argc, char **argv,
       meta = g_variant_get_child_value (summary, 1);
     }
 
+  if (!opt_info && !opt_branches && !opt_metadata_branch && !opt_size)
+    opt_info = TRUE;
+
   /* Print out the metadata. */
   if (opt_info)
     print_info (repo, meta);
