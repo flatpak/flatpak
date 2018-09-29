@@ -5692,7 +5692,8 @@ flatpak_check_required_version (const char *ref,
   if (required_version)
     {
       if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
-        g_warning ("Invalid require-flatpak argument %s", required_version);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   _("Invalid require-flatpak argument %s"), required_version);
       else
         {
           if (required_major > PACKAGE_MAJOR_VERSION ||
