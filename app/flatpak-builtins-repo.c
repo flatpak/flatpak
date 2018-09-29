@@ -259,6 +259,7 @@ flatpak_builtin_repo (int argc, char **argv,
         }
 
       meta = g_variant_get_child_value (commit_v, 0);
+      g_debug ("Using repository metadata from the ostree-metadata branch");
     }
   else
     {
@@ -271,6 +272,7 @@ flatpak_builtin_repo (int argc, char **argv,
           return FALSE;
         }
       meta = g_variant_get_child_value (summary, 1);
+      g_debug ("Using repository metadata from the summary file");
     }
 
   if (!opt_info && !opt_branches && !opt_metadata_branch && !opt_size)
