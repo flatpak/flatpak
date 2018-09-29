@@ -863,7 +863,7 @@ flatpak_get_allowed_exports (const char     *source_path,
 
   g_ptr_array_add (allowed_prefixes, g_strdup_printf ("%s.*", app_id));
 
-  if (flatpak_has_path_prefix (source_path, "share/applications"))
+  if (strcmp (source_path, "share/applications") == 0)
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".desktop"));
     }
@@ -874,7 +874,7 @@ flatpak_get_allowed_exports (const char     *source_path,
       g_ptr_array_add (allowed_extensions, g_strdup (".svg"));
       g_ptr_array_add (allowed_extensions, g_strdup (".ico"));
     }
-  else if (flatpak_has_path_prefix (source_path, "share/dbus-1/services"))
+  else if (strcmp (source_path, "share/dbus-1/services") == 0)
     {
       g_auto(GStrv) owned_dbus_names =  flatpak_context_get_session_bus_policy_allowed_own_names (context);
 
@@ -887,11 +887,11 @@ flatpak_get_allowed_exports (const char     *source_path,
        * and we can *only* match exactly these */
       require_exact_match = TRUE;
     }
-  else if (flatpak_has_path_prefix (source_path, "share/gnome-shell/search-providers"))
+  else if (strcmp (source_path, "share/gnome-shell/search-providers") == 0)
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".ini"));
     }
-  else if (flatpak_has_path_prefix (source_path, "share/mime/packages"))
+  else if (strcmp (source_path, "share/mime/packages") == 0)
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".xml"));
     }
