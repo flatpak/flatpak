@@ -218,6 +218,11 @@ GFile * flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
                                                            const char   *arch,
                                                            const char   *branch,
                                                            GCancellable *cancellable);
+FlatpakDeploy * flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
+                                                const char   *ref,
+                                                const char   *commit,
+                                                GCancellable *cancellable,
+                                                GError      **error);
 FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
                                              const char   *commit,
                                              GCancellable *cancellable,
