@@ -42,6 +42,11 @@
         <para>
             Show information about a local repository.
         </para>
+        <para>
+            If you need to modify a local repository, see the
+            flatpak build-update-repo command, or use the
+            ostree tool.
+        </para>
 
     </refsect1>
 
@@ -85,6 +90,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--commits=BRANCH</option></term>
+
+                <listitem><para>
+                  Show commits and deltas for a branch in the repository.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
@@ -118,6 +131,8 @@
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-info</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-build-update-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>
