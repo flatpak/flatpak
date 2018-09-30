@@ -90,6 +90,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autofree char *branch = NULL;
   FlatpakKinds kinds;
   g_autoptr(GError) local_error = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
 
   context = g_option_context_new (_("APP [args...] - Run an app"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -110,7 +111,9 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   arg_context = flatpak_context_new ();
   g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS,
+                                     &dirs, cancellable, error))
     return FALSE;
 
   if (rest_argc == 0)
@@ -146,7 +149,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       if (app_ref == NULL)
         return FALSE;
 
-      app_deploy = flatpak_find_deploy_for_ref (app_ref, opt_commit, cancellable, &local_error);
+      app_deploy = flatpak_find_deploy_for_ref_in (dirs, app_ref, opt_commit, cancellable, &local_error);
       if (app_deploy == NULL &&
           (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED) ||
            (kinds & FLATPAK_KINDS_RUNTIME) == 0))
@@ -168,7 +171,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       if (runtime_ref == NULL)
         return FALSE;
 
-      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, opt_commit ? opt_commit : opt_runtime_commit, cancellable, &local_error2);
+      runtime_deploy = flatpak_find_deploy_for_ref_in (dirs, runtime_ref, opt_commit ? opt_commit : opt_runtime_commit, cancellable, &local_error2);
       if (runtime_deploy == NULL)
         {
           /* Report old app-kind error, as its more likely right */
