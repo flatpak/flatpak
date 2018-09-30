@@ -1531,42 +1531,46 @@ flatpak_find_current_ref (const char   *app_id,
 }
 
 FlatpakDeploy *
+flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
+                                const char   *ref,
+                                const char   *commit,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  FlatpakDeploy *deploy = NULL;
+  int i;
+  g_autoptr(GError) my_error = NULL;
+
+  for (i = 0; deploy == NULL && i < dirs->len; i++)
+    {
+      FlatpakDir *dir = g_ptr_array_index (dirs, i);
+ 
+      flatpak_log_dir_access (dir);
+      g_clear_error (&my_error);
+      deploy = flatpak_dir_load_deployed (dir, ref, commit, cancellable, &my_error);
+    }
+
+  if (deploy == NULL)
+    g_propagate_error (error, g_steal_pointer (&my_error));
+
+  return deploy;
+}
+
+FlatpakDeploy *
 flatpak_find_deploy_for_ref (const char   *ref,
                              const char   *commit,
                              GCancellable *cancellable,
                              GError      **error)
 {
-  g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(GPtrArray) system_dirs = NULL;
-  g_autoptr(FlatpakDeploy) deploy = NULL;
-  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
 
-  user_dir = flatpak_dir_get_user ();
-  flatpak_log_dir_access (user_dir);
-  system_dirs = flatpak_dir_get_system_list (cancellable, error);
-  if (system_dirs == NULL)
+  dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (dirs == NULL)
     return NULL;
 
-  deploy = flatpak_dir_load_deployed (user_dir, ref, commit, cancellable, &my_error);
-  if (deploy == NULL &&
-      system_dirs->len > 0 &&
-      g_error_matches (my_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-    {
-      int i;
+  g_ptr_array_insert (dirs, 0, flatpak_dir_get_user ());
 
-      for (i = 0; deploy == NULL && i < system_dirs->len; i++)
-        {
-          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
-
-          flatpak_log_dir_access (system_dir);
-          g_clear_error (&my_error);
-          deploy = flatpak_dir_load_deployed (system_dir, ref, commit, cancellable, &my_error);
-        }
-    }
-  if (deploy == NULL)
-    g_propagate_error (error, g_steal_pointer (&my_error));
-
-  return g_steal_pointer (&deploy);
+  return flatpak_find_deploy_for_ref_in (dirs, ref, commit, cancellable, error);
 }
 
 static gboolean
