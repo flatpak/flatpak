@@ -2676,3 +2676,30 @@ flatpak_installation_prune_local_repo (FlatpakInstallation *self,
 
   return flatpak_dir_prune (dir, cancellable, error);
 }
+
+/**
+ * flatpak_installation_run_triggers
+ * @self: a #FlatpakInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Run the trigger commands to update the files exported by the apps in
+ * @self. Should be used after one or more app install, upgrade or
+ * uninstall operations with the NO_TRIGGERS flag set.
+ *
+ * Since: 1.0.3
+ * Returns: %TRUE on success
+ */
+gboolean
+flatpak_installation_run_triggers (FlatpakInstallation *self,
+                                   GCancellable        *cancellable,
+                                   GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return FALSE;
+
+  return flatpak_dir_run_triggers (dir, cancellable, error);
+}
