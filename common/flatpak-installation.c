@@ -1762,7 +1762,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             ostree_progress, cancellable, error))
     goto out;
 
-  if ((flags & FLATPAK_INSTALL_FLAGS_NO_TRIGGERS) == 0 &&
+  if (!(flags & FLATPAK_INSTALL_FLAGS_NO_TRIGGERS) &&
       g_str_has_prefix (ref, "app"))
     flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
 
@@ -1935,7 +1935,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            ostree_progress, cancellable, error))
     goto out;
 
-  if ((flags & FLATPAK_UPDATE_FLAGS_NO_TRIGGERS) == 0 &&
+  if (!(flags & FLATPAK_UPDATE_FLAGS_NO_TRIGGERS) &&
       g_str_has_prefix (ref, "app"))
     flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
 
@@ -2083,7 +2083,7 @@ flatpak_installation_uninstall_full (FlatpakInstallation    *self,
                               cancellable, error))
     return FALSE;
 
-  if ((flags & FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS) == 0 &&
+  if (!(flags & FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS) &&
       g_str_has_prefix (ref, "app"))
     flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
 
@@ -2685,8 +2685,8 @@ flatpak_installation_prune_local_repo (FlatpakInstallation *self,
  *
  * Run the trigger commands to update the files exported by the apps in
  * @self. Should be used after one or more app install, upgrade or
- * uninstall operations with the #FLATPAK_INSTALL_FLAGS_NO_TRIGGERS,
- * #FLATPAK_UPDATE_FLAGS_NO_TRIGGERS or #FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS
+ * uninstall operations with the %FLATPAK_INSTALL_FLAGS_NO_TRIGGERS,
+ * %FLATPAK_UPDATE_FLAGS_NO_TRIGGERS or %FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS
  * flags set.
  *
  * Since: 1.0.3
