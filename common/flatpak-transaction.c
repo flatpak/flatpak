@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <stdio.h>
-#include <glib/gi18n.h>
+#include <glib/gi18n-lib.h>
 #include <libsoup/soup.h>
 
 #include "flatpak-transaction-private.h"
