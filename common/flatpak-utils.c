@@ -27,7 +27,7 @@
 #include "flatpak-run-private.h"
 #include "valgrind-private.h"
 
-#include <glib/gi18n.h>
+#include <glib/gi18n-lib.h>
 
 #include <string.h>
 #include <stdlib.h>
