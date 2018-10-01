@@ -194,27 +194,27 @@ test_ref (void)
 
   ref = flatpak_ref_parse ("", &error);
   g_assert_null (ref);
-  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
   ref = flatpak_ref_parse ("ref/or not", &error);
   g_assert_null (ref);
-  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
   ref = flatpak_ref_parse ("ref/one/2/3", &error);
   g_assert_null (ref);
-  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
   ref = flatpak_ref_parse ("app/a/b/c", &error);
   g_assert_null (ref);
-  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
   ref = flatpak_ref_parse ("app/org.flatpak.Hello/b/.", &error);
   g_assert_null (ref);
-  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
   valid = "app/org.flatpak.Hello/x86_64/master";
