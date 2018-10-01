@@ -127,8 +127,16 @@ find_used_refs (FlatpakDir *dir, GHashTable *used_refs, const char *ref, const c
     {
       FlatpakRelated *rel = g_ptr_array_index (related, i);
 
-      if (!rel->auto_prune)
-        g_hash_table_add (used_refs, g_strdup (rel->ref));
+      if (!rel->auto_prune && !g_hash_table_contains (used_refs, rel->ref))
+        {
+          g_autofree char *related_origin = NULL;
+
+          g_hash_table_add (used_refs, g_strdup (rel->ref));
+
+          related_origin = flatpak_dir_get_origin (dir, rel->ref, NULL, NULL);
+          if (related_origin != NULL)
+            find_used_refs (dir, used_refs, rel->ref, related_origin);
+        }
     }
 }
 
