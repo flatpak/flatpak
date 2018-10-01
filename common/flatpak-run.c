@@ -1036,6 +1036,23 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
       flatpak_bwrap_add_args (bwrap,
                               "--dev-bind", "/dev", "/dev",
                               NULL);
+      /* Don't expose the host /dev/shm, just the device nodes */
+      if (g_file_test ("/dev/shm", G_FILE_TEST_IS_DIR))
+        flatpak_bwrap_add_args (bwrap,
+                                "--tmpfs", "/dev/shm",
+                                NULL);
+      else if (g_file_test ("/dev/shm", G_FILE_TEST_IS_SYMLINK))
+        {
+          g_autofree char *link = flatpak_readlink ("/dev/shm", NULL);
+          /* On debian (with sysv init) the host /dev/shm is a symlink to /run/shm, so we can't
+             mount on top of it. */
+          if (g_strcmp0 (link, "/run/shm") == 0)
+            flatpak_bwrap_add_args (bwrap,
+                                    "--dir", "/run/shm",
+                                    NULL);
+          else
+            g_warning ("Unexpected /dev/shm symlink %s", link);
+        }
     }
   else
     {
