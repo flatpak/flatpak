@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-09-13 15:24+0000\n"
-"PO-Revision-Date: 2018-09-14 20:05+0700\n"
+"POT-Creation-Date: 2018-09-27 03:24+0000\n"
+"PO-Revision-Date: 2018-10-01 13:07+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -16,208 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.0.6\n"
-
-#: app/flatpak-builtins-add-remote.c:56
-msgid "Do nothing if the provided remote exists"
-msgstr "Tidak melakukan apapun jika remote yang disediakan ada"
-
-#: app/flatpak-builtins-add-remote.c:57
-msgid "LOCATION specifies a configuration file, not the repo location"
-msgstr "LOKASI menentukan berkas konfigurasi, bukan lokasi repo"
-
-#: app/flatpak-builtins-add-remote.c:62
-msgid "Enable GPG verification"
-msgstr "Aktifkan verifikasi GPG"
-
-#: app/flatpak-builtins-add-remote.c:63
-msgid "Mark the remote as enumerate"
-msgstr "Tandai remote sebagai enumerasi"
-
-#: app/flatpak-builtins-add-remote.c:64
-msgid "Mark the remote as used for dependencies"
-msgstr "Tandai remote seperti yang digunakan untuk dependensi"
-
-#: app/flatpak-builtins-add-remote.c:65
-msgid "Set a new url"
-msgstr "Atur url baru"
-
-#: app/flatpak-builtins-add-remote.c:65 app/flatpak-builtins-build-bundle.c:58
-#: app/flatpak-builtins-build-bundle.c:59
-#: app/flatpak-builtins-list-remotes.c:70 app/flatpak-builtins-repo-update.c:52
-msgid "URL"
-msgstr "URL"
-
-#: app/flatpak-builtins-add-remote.c:66
-msgid "Enable the remote"
-msgstr "Aktifkan remote"
-
-#: app/flatpak-builtins-add-remote.c:67
-msgid "Update extra metadata from the summary file"
-msgstr "Perbarui metadata tambahan dari berkas ringkasan"
-
-#: app/flatpak-builtins-add-remote.c:72
-msgid "Disable GPG verification"
-msgstr "Nonaktifkan verifikasi GPG"
-
-#: app/flatpak-builtins-add-remote.c:73
-msgid "Mark the remote as don't enumerate"
-msgstr "Tandai remote jangan sebagai enumerasi"
-
-#: app/flatpak-builtins-add-remote.c:74
-msgid "Mark the remote as don't use for deps"
-msgstr "Tandai remote seperti yang jangan digunakan untuk dependensi"
-
-#: app/flatpak-builtins-add-remote.c:75
-msgid "Set priority (default 1, higher is more prioritized)"
-msgstr "Atur prioritas (bawaan 1, lebih tinggi berarti lebih diprioritaskan)"
-
-#: app/flatpak-builtins-add-remote.c:75
-msgid "PRIORITY"
-msgstr "PRIORITAS"
-
-#: app/flatpak-builtins-add-remote.c:76
-msgid "A nice name to use for this remote"
-msgstr "Sebuah nama yang bagus untuk digunakan bagi remote ini"
-
-#: app/flatpak-builtins-add-remote.c:76 app/flatpak-builtins-repo-update.c:53
-msgid "TITLE"
-msgstr "JUDUL"
-
-#: app/flatpak-builtins-add-remote.c:77
-msgid "Default branch to use for this remote"
-msgstr "Cabang bawaan yang digunakan untuk remote ini"
-
-#: app/flatpak-builtins-add-remote.c:77 app/flatpak-builtins-repo.c:172
-#: app/flatpak-builtins-repo-update.c:54 app/flatpak-builtins-run.c:60
-msgid "BRANCH"
-msgstr "CABANG"
-
-#: app/flatpak-builtins-add-remote.c:78 app/flatpak-builtins-build-export.c:68
-#: app/flatpak-builtins-list-remotes.c:71 app/flatpak-builtins-repo-update.c:55
-msgid "Collection ID"
-msgstr "ID Koleksi"
-
-#: app/flatpak-builtins-add-remote.c:78 app/flatpak-builtins-repo-update.c:55
-msgid "COLLECTION-ID"
-msgstr "ID-KOLEKSI"
-
-#: app/flatpak-builtins-add-remote.c:79
-msgid "Import GPG key from FILE (- for stdin)"
-msgstr "Impor kunci GPG dari BERKAS (- untuk stdin)"
-
-#: app/flatpak-builtins-add-remote.c:79 app/flatpak-builtins-build-bundle.c:60
-#: app/flatpak-builtins-build.c:54 app/flatpak-builtins-build-export.c:61
-#: app/flatpak-builtins-install.c:67 app/flatpak-builtins-repo-update.c:57
-msgid "FILE"
-msgstr "BERKAS"
-
-#: app/flatpak-builtins-add-remote.c:80
-msgid "Disable the remote"
-msgstr "Nonaktifkan remote"
-
-#: app/flatpak-builtins-add-remote.c:208 app/flatpak-builtins-add-remote.c:215
-#, c-format
-msgid "Can't load uri %s: %s\n"
-msgstr "Tidak dapat memuat uri %s: %s\n"
-
-#: app/flatpak-builtins-add-remote.c:223
-#, c-format
-msgid "Can't load file %s: %s\n"
-msgstr "Tidak dapat memuat berkas %s: %s\n"
-
-#: app/flatpak-builtins-add-remote.c:231
-msgid "Invalid file format"
-msgstr "Format berkas tidak valid"
-
-#: app/flatpak-builtins-add-remote.c:239
-#, c-format
-msgid "Invalid version %s, only 1 supported"
-msgstr "Versi %s tidak valid, hanya 1 yang didukung"
-
-#: app/flatpak-builtins-add-remote.c:281
-msgid "Invalid gpg key"
-msgstr "Kunci gpg tidak valid"
-
-#: app/flatpak-builtins-add-remote.c:309
-msgid "NAME LOCATION - Add a remote repository"
-msgstr "NAMA LOKASI - Tambah repositori remote"
-
-#: app/flatpak-builtins-add-remote.c:322
-#: app/flatpak-builtins-delete-remote.c:61 app/flatpak-builtins-info.c:134
-msgid "NAME must be specified"
-msgstr "NAMA harus ditentukan"
-
-#: app/flatpak-builtins-add-remote.c:325 app/flatpak-builtins-build-sign.c:71
-#: app/flatpak-builtins-repo.c:194 app/flatpak-builtins-repo-update.c:422
-msgid "LOCATION must be specified"
-msgstr "LOKASI harus ditentukan"
-
-#: app/flatpak-builtins-add-remote.c:328
-#: app/flatpak-builtins-build-bundle.c:559
-#: app/flatpak-builtins-build-export.c:682
-#: app/flatpak-builtins-build-import-bundle.c:183
-#: app/flatpak-builtins-build-init.c:206 app/flatpak-builtins-build-sign.c:74
-#: app/flatpak-builtins-delete-remote.c:66
-#: app/flatpak-builtins-document-export.c:102
-#: app/flatpak-builtins-document-info.c:75
-#: app/flatpak-builtins-document-list.c:70
-#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:141
-#: app/flatpak-builtins-install.c:132 app/flatpak-builtins-install.c:187
-#: app/flatpak-builtins-list.c:322 app/flatpak-builtins-list-remotes.c:61
-#: app/flatpak-builtins-ls-remote.c:112 app/flatpak-builtins-make-current.c:72
-#: app/flatpak-builtins-override.c:73
-#: app/flatpak-builtins-permission-list.c:183
-#: app/flatpak-builtins-permission-remove.c:120
-msgid "Too many arguments"
-msgstr "Terlalu banyak argumen"
-
-#: app/flatpak-builtins-add-remote.c:332
-#: app/flatpak-builtins-build-export.c:697
-#, c-format
-msgid "‘%s’ is not a valid collection ID: %s"
-msgstr "'%s' bukan ID koleksi yang valid: %s"
-
-#: app/flatpak-builtins-add-remote.c:336
-msgid "GPG verification is required if collections are enabled"
-msgstr "Verifikasi GPG diperlukan jika koleksi diaktifkan"
-
-#. Do nothing
-#: app/flatpak-builtins-add-remote.c:350
-#, c-format
-msgid "Remote %s already exists"
-msgstr "Remote %s sudah ada"
-
-#: app/flatpak-builtins-add-remote.c:358
-msgid "No url specified in flatpakrepo file"
-msgstr "Tidak ada url yang ditentukan dalam berkas flatpakrepo"
-
-#: app/flatpak-builtins-add-remote.c:400
-#, c-format
-msgid "Warning: Could not update extra metadata for '%s': %s\n"
-msgstr "Peringatan: Tidak dapat memperbarui metadata tambahan untuk '%s': %s\n"
-
-#: app/flatpak-builtins-add-remote.c:449
-msgid "NAME - Modify a remote repository"
-msgstr "NAMA - Mengubah repositori remote"
-
-#: app/flatpak-builtins-add-remote.c:459
-msgid "Remote NAME must be specified"
-msgstr "NAMA remote harus ditentukan"
-
-#: app/flatpak-builtins-add-remote.c:470
-#, c-format
-msgid "Updating extra metadata from remote summary for %s\n"
-msgstr "Memperbarui metadata ekstra dari ringkasan remote untuk %s\n"
-
-#: app/flatpak-builtins-add-remote.c:473
-#, c-format
-msgid "Error updating extra metadata for '%s': %s\n"
-msgstr "Galat memperbarui metadata tambahan untuk '%s': %s\n"
-
-#: app/flatpak-builtins-add-remote.c:474
-#, c-format
-msgid "Could not update extra metadata for %s"
-msgstr "Tidak dapat memperbarui metadata tambahan untuk %s"
 
 #: app/flatpak-builtins-build-bundle.c:56
 msgid "Export runtime instead of app"
@@ -230,9 +28,9 @@ msgstr "Arsitektur tujuan bundel"
 #: app/flatpak-builtins-build-bundle.c:57
 #: app/flatpak-builtins-build-export.c:56 app/flatpak-builtins-build-init.c:52
 #: app/flatpak-builtins-build-sign.c:41 app/flatpak-builtins-create-usb.c:44
-#: app/flatpak-builtins-info.c:54 app/flatpak-builtins-info-remote.c:50
-#: app/flatpak-builtins-install.c:57 app/flatpak-builtins-list.c:46
-#: app/flatpak-builtins-ls-remote.c:49 app/flatpak-builtins-make-current.c:38
+#: app/flatpak-builtins-info.c:54 app/flatpak-builtins-install.c:57
+#: app/flatpak-builtins-list.c:46 app/flatpak-builtins-make-current.c:38
+#: app/flatpak-builtins-remote-info.c:50 app/flatpak-builtins-remote-ls.c:49
 #: app/flatpak-builtins-run.c:58 app/flatpak-builtins-search.c:35
 #: app/flatpak-builtins-uninstall.c:50 app/flatpak-builtins-update.c:53
 msgid "ARCH"
@@ -242,6 +40,14 @@ msgstr "ARSITEKTUR"
 msgid "Url for repo"
 msgstr "Url untuk repo"
 
+#: app/flatpak-builtins-build-bundle.c:58
+#: app/flatpak-builtins-build-bundle.c:59
+#: app/flatpak-builtins-build-update-repo.c:52
+#: app/flatpak-builtins-remote-list.c:70
+#: app/flatpak-builtins-remote-modify.c:57
+msgid "URL"
+msgstr "URL"
+
 #: app/flatpak-builtins-build-bundle.c:59
 msgid "Url for runtime flatpakrepo file"
 msgstr "Url untuk berkas flatpakrepo runtime"
@@ -249,6 +55,14 @@ msgstr "Url untuk berkas flatpakrepo runtime"
 #: app/flatpak-builtins-build-bundle.c:60
 msgid "Add GPG key from FILE (- for stdin)"
 msgstr "Tambah kunci GPG dari BERKAS (- untuk stdin)"
+
+#: app/flatpak-builtins-build-bundle.c:60 app/flatpak-builtins-build.c:54
+#: app/flatpak-builtins-build-export.c:61
+#: app/flatpak-builtins-build-update-repo.c:57
+#: app/flatpak-builtins-install.c:67 app/flatpak-builtins-remote-add.c:67
+#: app/flatpak-builtins-remote-modify.c:71
+msgid "FILE"
+msgstr "BERKAS"
 
 #: app/flatpak-builtins-build-bundle.c:61
 msgid "Export oci image instead of flatpak bundle"
@@ -262,7 +76,8 @@ msgstr "ID kunci GPG untuk menandatangani citra OCI"
 #: app/flatpak-builtins-build-commit-from.c:59
 #: app/flatpak-builtins-build-export.c:62
 #: app/flatpak-builtins-build-import-bundle.c:46
-#: app/flatpak-builtins-build-sign.c:43 app/flatpak-builtins-repo-update.c:58
+#: app/flatpak-builtins-build-sign.c:43
+#: app/flatpak-builtins-build-update-repo.c:58
 msgid "KEY-ID"
 msgstr "ID KUNCI"
 
@@ -270,7 +85,8 @@ msgstr "ID KUNCI"
 #: app/flatpak-builtins-build-commit-from.c:60
 #: app/flatpak-builtins-build-export.c:65
 #: app/flatpak-builtins-build-import-bundle.c:47
-#: app/flatpak-builtins-build-sign.c:44 app/flatpak-builtins-repo-update.c:59
+#: app/flatpak-builtins-build-sign.c:44
+#: app/flatpak-builtins-build-update-repo.c:59
 msgid "GPG Homedir to use when looking for keyrings"
 msgstr "Homedir GPG untuk digunakan saat mencari ring kunci"
 
@@ -278,7 +94,8 @@ msgstr "Homedir GPG untuk digunakan saat mencari ring kunci"
 #: app/flatpak-builtins-build-commit-from.c:60
 #: app/flatpak-builtins-build-export.c:65
 #: app/flatpak-builtins-build-import-bundle.c:47
-#: app/flatpak-builtins-build-sign.c:44 app/flatpak-builtins-repo-update.c:59
+#: app/flatpak-builtins-build-sign.c:44
+#: app/flatpak-builtins-build-update-repo.c:59
 msgid "HOMEDIR"
 msgstr "HOMEDIR"
 
@@ -286,7 +103,7 @@ msgstr "HOMEDIR"
 msgid "OSTree commit to create a delta bundle from"
 msgstr "Komit OSTree untuk membuat bundel delta dari"
 
-#: app/flatpak-builtins-build-bundle.c:64 app/flatpak-builtins-info-remote.c:51
+#: app/flatpak-builtins-build-bundle.c:64 app/flatpak-builtins-remote-info.c:51
 #: app/flatpak-builtins-update.c:54
 msgid "COMMIT"
 msgstr "KOMIT"
@@ -302,6 +119,25 @@ msgstr ""
 #: app/flatpak-builtins-build-bundle.c:556
 msgid "LOCATION, FILENAME and NAME must be specified"
 msgstr "LOKASI, NAMABERKAS dan NAMA harus ditentukan"
+
+#: app/flatpak-builtins-build-bundle.c:559
+#: app/flatpak-builtins-build-export.c:682
+#: app/flatpak-builtins-build-import-bundle.c:183
+#: app/flatpak-builtins-build-init.c:207 app/flatpak-builtins-build-sign.c:74
+#: app/flatpak-builtins-document-export.c:102
+#: app/flatpak-builtins-document-info.c:75
+#: app/flatpak-builtins-document-list.c:70
+#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:141
+#: app/flatpak-builtins-install.c:132 app/flatpak-builtins-install.c:187
+#: app/flatpak-builtins-list.c:322 app/flatpak-builtins-make-current.c:72
+#: app/flatpak-builtins-override.c:73
+#: app/flatpak-builtins-permission-list.c:157
+#: app/flatpak-builtins-permission-remove.c:94
+#: app/flatpak-builtins-remote-add.c:311
+#: app/flatpak-builtins-remote-delete.c:66
+#: app/flatpak-builtins-remote-list.c:61 app/flatpak-builtins-remote-ls.c:112
+msgid "Too many arguments"
+msgstr "Terlalu banyak argumen"
 
 #: app/flatpak-builtins-build-bundle.c:574
 #: app/flatpak-builtins-build-commit-from.c:270
@@ -548,6 +384,13 @@ msgstr "Sertakan berkas yang dikecualikan"
 msgid "Override the timestamp of the commit"
 msgstr "Menimpa timestamp dari komit"
 
+#: app/flatpak-builtins-build-export.c:68
+#: app/flatpak-builtins-build-update-repo.c:55
+#: app/flatpak-builtins-remote-add.c:66 app/flatpak-builtins-remote-list.c:71
+#: app/flatpak-builtins-remote-modify.c:70
+msgid "Collection ID"
+msgstr "ID Koleksi"
+
 #: app/flatpak-builtins-build-export.c:345
 #, c-format
 msgid "WARNING: Error running desktop-file-validate: %s\n"
@@ -616,6 +459,12 @@ msgstr "LOKASI DIREKTORI [CABANG] - Buat repositori dari direktori bangun"
 #: app/flatpak-builtins-build-export.c:676
 msgid "LOCATION and DIRECTORY must be specified"
 msgstr "LOKASI dan DIREKTORI harus ditentukan"
+
+#: app/flatpak-builtins-build-export.c:697
+#: app/flatpak-builtins-remote-add.c:315
+#, c-format
+msgid "‘%s’ is not a valid collection ID: %s"
+msgstr "'%s' bukan ID koleksi yang valid: %s"
 
 #: app/flatpak-builtins-build-export.c:742
 #: app/flatpak-builtins-build-finish.c:613
@@ -768,7 +617,7 @@ msgstr ""
 "GRUP=KUNCI[=NILAI]]"
 
 #: app/flatpak-builtins-build-finish.c:532
-#: app/flatpak-builtins-build-init.c:412
+#: app/flatpak-builtins-build-init.c:417
 #, c-format
 msgid ""
 "Too few elements in --extension argument %s, format should be "
@@ -913,40 +762,40 @@ msgstr "Ekstensi %s yang diminta hanya terpasang sebagian"
 msgid "Requested extension %s not installed"
 msgstr "Ekstensi %s yang diminta tidak terpasang"
 
-#: app/flatpak-builtins-build-init.c:196
+#: app/flatpak-builtins-build-init.c:197
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
 msgstr ""
 "DIREKTORI NAMAAPL SDK RUNTIME [CABANG] - Menginisialisasi direktori untuk "
 "membangun"
 
-#: app/flatpak-builtins-build-init.c:203
+#: app/flatpak-builtins-build-init.c:204
 msgid "RUNTIME must be specified"
 msgstr "RUNTIME harus ditentukan"
 
-#: app/flatpak-builtins-build-init.c:224
+#: app/flatpak-builtins-build-init.c:225
 #, c-format
 msgid "'%s' is not a valid build type name, use app, runtime or extension"
 msgstr ""
 "'%s' bukan nama tipe bangun yang valid, gunakan app, runtime, atau ekstensi"
 
-#: app/flatpak-builtins-build-init.c:230 app/flatpak-builtins-override.c:79
+#: app/flatpak-builtins-build-init.c:231 app/flatpak-builtins-override.c:79
 #, c-format
 msgid "'%s' is not a valid application name: %s"
 msgstr "'%s' bukan nama aplikasi yang valid: %s"
 
-#: app/flatpak-builtins-build-init.c:261
+#: app/flatpak-builtins-build-init.c:262
 #, c-format
 msgid "Build directory %s already initialized"
 msgstr "Direktori bangun %s sudah diinisialisasi"
 
-#: app/flatpak-builtins-build-sign.c:41 app/flatpak-builtins-info-remote.c:50
-#: app/flatpak-builtins-install.c:57
+#: app/flatpak-builtins-build-sign.c:41 app/flatpak-builtins-install.c:57
+#: app/flatpak-builtins-remote-info.c:50
 msgid "Arch to install for"
 msgstr "Arsitektur tujuan pemasangan"
 
 #: app/flatpak-builtins-build-sign.c:42 app/flatpak-builtins-create-usb.c:46
-#: app/flatpak-builtins-info-remote.c:52 app/flatpak-builtins-install.c:63
+#: app/flatpak-builtins-install.c:63 app/flatpak-builtins-remote-info.c:52
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:61
 msgid "Look for runtime with the specified name"
 msgstr "Cari runtime dengan nama yang ditentukan"
@@ -955,9 +804,121 @@ msgstr "Cari runtime dengan nama yang ditentukan"
 msgid "LOCATION [ID [BRANCH]] - Sign an application or runtime"
 msgstr "LOKASI [ID [CABANG]] - Menandatangani sebuah aplikasi atau runtime"
 
+#: app/flatpak-builtins-build-sign.c:71
+#: app/flatpak-builtins-build-update-repo.c:422
+#: app/flatpak-builtins-remote-add.c:308 app/flatpak-builtins-repo.c:199
+msgid "LOCATION must be specified"
+msgstr "LOKASI harus ditentukan"
+
 #: app/flatpak-builtins-build-sign.c:92
 msgid "No gpg key ids specified"
 msgstr "Tidak ada id kunci gpg yang ditentukan"
+
+#: app/flatpak-builtins-build-update-repo.c:52
+msgid "Redirect this repo to a new URL"
+msgstr "Arahkan ulang repo ini ke URL baru"
+
+#: app/flatpak-builtins-build-update-repo.c:53
+msgid "A nice name to use for this repository"
+msgstr "Nama yang bagus untuk digunakan pada repositori ini"
+
+#: app/flatpak-builtins-build-update-repo.c:53
+#: app/flatpak-builtins-remote-add.c:64 app/flatpak-builtins-remote-modify.c:68
+msgid "TITLE"
+msgstr "JUDUL"
+
+#: app/flatpak-builtins-build-update-repo.c:54
+msgid "Default branch to use for this repository"
+msgstr "Cabang bawaan yang akan digunakan untuk repositori ini"
+
+#: app/flatpak-builtins-build-update-repo.c:54
+#: app/flatpak-builtins-remote-add.c:65 app/flatpak-builtins-remote-modify.c:69
+#: app/flatpak-builtins-repo.c:177 app/flatpak-builtins-run.c:60
+msgid "BRANCH"
+msgstr "CABANG"
+
+#: app/flatpak-builtins-build-update-repo.c:55
+#: app/flatpak-builtins-remote-add.c:66 app/flatpak-builtins-remote-modify.c:70
+msgid "COLLECTION-ID"
+msgstr "ID-KOLEKSI"
+
+#: app/flatpak-builtins-build-update-repo.c:56
+msgid "Permanently deploy collection ID to client remote configurations"
+msgstr "Deploy ID koleksi secara permanen ke konfigurasi klien remote"
+
+#: app/flatpak-builtins-build-update-repo.c:57
+msgid "Import new default GPG public key from FILE"
+msgstr "Impor kunci publik GPG bawaan baru dari BERKAS"
+
+#: app/flatpak-builtins-build-update-repo.c:58
+msgid "GPG Key ID to sign the summary with"
+msgstr "ID Kunci GPG untuk menandatangani ringkasan"
+
+#: app/flatpak-builtins-build-update-repo.c:60
+msgid "Generate delta files"
+msgstr "Bangkitkan berkas delta"
+
+#: app/flatpak-builtins-build-update-repo.c:61
+msgid "Prune unused objects"
+msgstr "Pangkas objek yang tidak terpakai"
+
+#: app/flatpak-builtins-build-update-repo.c:62
+msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
+msgstr ""
+"Hanya melintasi induk KEDALAMAN untuk setiap komit (bawaan: -1 = tak "
+"terbatas)"
+
+#: app/flatpak-builtins-build-update-repo.c:62
+msgid "DEPTH"
+msgstr "KEDALAMAN"
+
+#: app/flatpak-builtins-build-update-repo.c:191
+#, c-format
+msgid "Generating delta: %s (%.10s)\n"
+msgstr ""
+"Membangkitkan delta: %s (%.10s)\n"
+"\n"
+
+#: app/flatpak-builtins-build-update-repo.c:193
+#, c-format
+msgid "Generating delta: %s (%.10s-%.10s)\n"
+msgstr "Membangkitkan delta: %s (%.10s-%.10s)\n"
+
+#: app/flatpak-builtins-build-update-repo.c:201
+#, c-format
+msgid "Failed to generate delta %s (%.10s): "
+msgstr "Gagal membangkitkan delta %s (%.10s): "
+
+#: app/flatpak-builtins-build-update-repo.c:204
+#, c-format
+msgid "Failed to generate delta %s (%.10s-%.10s): "
+msgstr "Gagal membangkitkan delta %s (%.10s-%.10s): "
+
+#: app/flatpak-builtins-build-update-repo.c:415
+msgid "LOCATION - Update repository metadata"
+msgstr "LOKASI - Perbarui metadata repositori"
+
+#: app/flatpak-builtins-build-update-repo.c:483
+msgid "Updating appstream branch\n"
+msgstr "Memperbarui cabang appstream\n"
+
+#: app/flatpak-builtins-build-update-repo.c:504
+msgid "Updating summary\n"
+msgstr "Memperbarui ringkasan\n"
+
+#: app/flatpak-builtins-build-update-repo.c:523
+#, c-format
+msgid "Total objects: %u\n"
+msgstr "Total objek: %u\n"
+
+#: app/flatpak-builtins-build-update-repo.c:525
+msgid "No unreachable objects\n"
+msgstr "Tidak ada objek yang tidak terjangkau\n"
+
+#: app/flatpak-builtins-build-update-repo.c:527
+#, c-format
+msgid "Deleted %u objects, %s freed\n"
+msgstr "%u objek dihapus, %s dibebaskan\n"
 
 #: app/flatpak-builtins-config.c:41
 msgid "List configuration keys and values"
@@ -996,8 +957,8 @@ msgstr "[KUNCI [NILAI]] - Kelola konfigurasi"
 msgid "Must specify one of --list, --get, --set or --unset"
 msgstr "Harus menentukan salah satu dari --list, --get, --set atau --unset"
 
-#: app/flatpak-builtins-create-usb.c:43 app/flatpak-builtins-info-remote.c:53
-#: app/flatpak-builtins-install.c:64 app/flatpak-builtins-uninstall.c:55
+#: app/flatpak-builtins-create-usb.c:43 app/flatpak-builtins-install.c:64
+#: app/flatpak-builtins-remote-info.c:53 app/flatpak-builtins-uninstall.c:55
 #: app/flatpak-builtins-update.c:62
 msgid "Look for app with the specified name"
 msgstr "Cari aplikasi dengan nama yang ditentukan"
@@ -1024,7 +985,7 @@ msgstr ""
 "Peringatan: Menghilangkan ref terkait '%s' karena remote ‘%s’ tidak memiliki "
 "koleksi kumpulan ID.\n"
 
-#: app/flatpak-builtins-create-usb.c:235 app/flatpak-builtins-create-usb.c:610
+#: app/flatpak-builtins-create-usb.c:235 app/flatpak-builtins-create-usb.c:606
 #, c-format
 msgid ""
 "Remote ‘%s’ does not have a collection ID set, which is required for P2P "
@@ -1033,34 +994,34 @@ msgstr ""
 "Remote ‘%s’ tidak memiliki koleksi kumpulan ID, yang diperlukan untuk "
 "distribusi P2P ‘%s’."
 
-#: app/flatpak-builtins-create-usb.c:454
+#: app/flatpak-builtins-create-usb.c:450
 msgid ""
 "MOUNT-PATH REF [REF...] - Copy apps and/or runtimes onto removable media"
 msgstr ""
 "MOUNT-PATH REF [REF...] - Menyalin aplikasi dan/atau runtime ke media lepasan"
 
-#: app/flatpak-builtins-create-usb.c:463
+#: app/flatpak-builtins-create-usb.c:459
 msgid "MOUNT-PATH and REF must be specified"
 msgstr "MOUNT-PATH dan REF harus ditentukan"
 
-#: app/flatpak-builtins-create-usb.c:579 app/flatpak-builtins-uninstall.c:375
+#: app/flatpak-builtins-create-usb.c:575 app/flatpak-builtins-uninstall.c:375
 #, c-format
 msgid "Ref ‘%s’ found in multiple installations: %s. You must specify one."
 msgstr ""
 "Ref ‘%s’ ditemukan pada beberapa pemasangan: %s. Anda harus menentukan satu."
 
-#: app/flatpak-builtins-create-usb.c:592
+#: app/flatpak-builtins-create-usb.c:588
 #, c-format
 msgid "Refs must all be in the same installation (found in %s and %s)."
 msgstr ""
 "Ref harus semuanya berada pada pemasangan yang sama (ditemukan di %s dan %s)."
 
-#: app/flatpak-builtins-create-usb.c:677
+#: app/flatpak-builtins-create-usb.c:673
 #, c-format
 msgid "Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"
 msgstr "Peringatan: Tidak dapat memperbarui metadata repo untuk '%s': %s\n"
 
-#: app/flatpak-builtins-create-usb.c:702
+#: app/flatpak-builtins-create-usb.c:698
 #, c-format
 msgid "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
 msgstr ""
@@ -1068,7 +1029,7 @@ msgstr ""
 "arsitektur ‘%s’:%s\n"
 
 #. Print a warning if both appstream and appstream2 are missing
-#: app/flatpak-builtins-create-usb.c:735
+#: app/flatpak-builtins-create-usb.c:731
 #, c-format
 msgid ""
 "Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s; %s\n"
@@ -1077,19 +1038,11 @@ msgstr ""
 "arsitektur ‘%s’: %s; %s\n"
 
 #. Appstream2 is only for efficiency, so just print a debug message
-#: app/flatpak-builtins-create-usb.c:741
+#: app/flatpak-builtins-create-usb.c:737
 #, c-format
 msgid "Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"
 msgstr ""
 "Tidak dapat menemukan data appstream2 untuk remote ‘%s’ arsitektur ‘%s’:%s\n"
-
-#: app/flatpak-builtins-delete-remote.c:38
-msgid "Remove remote even if in use"
-msgstr "Hapus remote meskipun digunakan"
-
-#: app/flatpak-builtins-delete-remote.c:51
-msgid "NAME - Delete a remote repository"
-msgstr "NAMA - Menghapus repositori remote"
 
 #: app/flatpak-builtins-document-export.c:54
 msgid "Create a unique document reference"
@@ -1251,11 +1204,11 @@ msgstr "Tampilkan pemasangan di seluruh sistem"
 msgid "Show specific system-wide installations"
 msgstr "Tampilkan pemasangan tertentu di seluruh sistem"
 
-#: app/flatpak-builtins-info.c:58 app/flatpak-builtins-info-remote.c:55
+#: app/flatpak-builtins-info.c:58 app/flatpak-builtins-remote-info.c:55
 msgid "Show ref"
 msgstr "Tampilkan ref"
 
-#: app/flatpak-builtins-info.c:59 app/flatpak-builtins-info-remote.c:56
+#: app/flatpak-builtins-info.c:59 app/flatpak-builtins-remote-info.c:56
 msgid "Show commit"
 msgstr "Tampilkan komit"
 
@@ -1267,15 +1220,15 @@ msgstr "Tampilkan asal"
 msgid "Show size"
 msgstr "Tampilkan ukuran"
 
-#: app/flatpak-builtins-info.c:62 app/flatpak-builtins-info-remote.c:58
+#: app/flatpak-builtins-info.c:62 app/flatpak-builtins-remote-info.c:58
 msgid "Show metadata"
 msgstr "Tampilkan metadata"
 
-#: app/flatpak-builtins-info.c:63 app/flatpak-builtins-info-remote.c:59
+#: app/flatpak-builtins-info.c:63 app/flatpak-builtins-remote-info.c:59
 msgid "Show runtime"
 msgstr "Tampilkan runtime"
 
-#: app/flatpak-builtins-info.c:64 app/flatpak-builtins-info-remote.c:60
+#: app/flatpak-builtins-info.c:64 app/flatpak-builtins-remote-info.c:60
 msgid "Show sdk"
 msgstr "Tampilkan sdk"
 
@@ -1305,28 +1258,33 @@ msgid "NAME [BRANCH] - Get info about an installed app or runtime"
 msgstr ""
 "NAMA [CABANG] - Dapatkan info tentang aplikasi yang terpasang atau runtime"
 
+#: app/flatpak-builtins-info.c:134 app/flatpak-builtins-remote-add.c:305
+#: app/flatpak-builtins-remote-delete.c:61
+msgid "NAME must be specified"
+msgstr "NAMA harus ditentukan"
+
 #: app/flatpak-builtins-info.c:202
 msgid "ref not present in origin"
 msgstr "ref tidak ada di asal"
 
-#: app/flatpak-builtins-info.c:215 app/flatpak-builtins-info-remote.c:183
+#: app/flatpak-builtins-info.c:215 app/flatpak-builtins-remote-info.c:183
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Peringatan: Komit tidak memiliki metadata flatpak\n"
 
-#: app/flatpak-builtins-info.c:220 app/flatpak-builtins-info-remote.c:203
+#: app/flatpak-builtins-info.c:220 app/flatpak-builtins-remote-info.c:203
 msgid "Ref:"
 msgstr "Ref:"
 
 #: app/flatpak-builtins-info.c:221 app/flatpak-builtins-info.c:412
-#: app/flatpak-builtins-info-remote.c:204
+#: app/flatpak-builtins-remote-info.c:204
 msgid "ID:"
 msgstr "ID:"
 
-#: app/flatpak-builtins-info.c:222 app/flatpak-builtins-info-remote.c:205
+#: app/flatpak-builtins-info.c:222 app/flatpak-builtins-remote-info.c:205
 msgid "Arch:"
 msgstr "Arsitektur:"
 
-#: app/flatpak-builtins-info.c:223 app/flatpak-builtins-info-remote.c:206
+#: app/flatpak-builtins-info.c:223 app/flatpak-builtins-remote-info.c:206
 msgid "Branch:"
 msgstr "Cabang:"
 
@@ -1334,15 +1292,15 @@ msgstr "Cabang:"
 msgid "Origin:"
 msgstr "Asal:"
 
-#: app/flatpak-builtins-info.c:226 app/flatpak-builtins-info-remote.c:208
+#: app/flatpak-builtins-info.c:226 app/flatpak-builtins-remote-info.c:208
 msgid "Collection ID:"
 msgstr "ID Koleksi:"
 
-#: app/flatpak-builtins-info.c:228 app/flatpak-builtins-info-remote.c:209
+#: app/flatpak-builtins-info.c:228 app/flatpak-builtins-remote-info.c:209
 msgid "Date:"
 msgstr "Tanggal:"
 
-#: app/flatpak-builtins-info.c:230 app/flatpak-builtins-info-remote.c:210
+#: app/flatpak-builtins-info.c:230 app/flatpak-builtins-remote-info.c:210
 msgid "Subject:"
 msgstr "Subjek:"
 
@@ -1355,7 +1313,7 @@ msgid "Latest commit:"
 msgstr "Komit terbaru:"
 
 #: app/flatpak-builtins-info.c:238 app/flatpak-builtins-info.c:414
-#: app/flatpak-builtins-info-remote.c:211
+#: app/flatpak-builtins-remote-info.c:211
 msgid "Commit:"
 msgstr "Komit:"
 
@@ -1363,7 +1321,7 @@ msgstr "Komit:"
 msgid "alt-id:"
 msgstr "alt-id:"
 
-#: app/flatpak-builtins-info.c:241 app/flatpak-builtins-info-remote.c:212
+#: app/flatpak-builtins-info.c:241 app/flatpak-builtins-remote-info.c:212
 msgid "Parent:"
 msgstr "Induk:"
 
@@ -1372,7 +1330,7 @@ msgid "Location:"
 msgstr "Lokasi:"
 
 #: app/flatpak-builtins-info.c:243 app/flatpak-builtins-info.c:415
-#: app/flatpak-builtins-info-remote.c:214
+#: app/flatpak-builtins-remote-info.c:214
 msgid "Installed size:"
 msgstr "Ukuran terpasang:"
 
@@ -1384,11 +1342,11 @@ msgstr "habis-masa-hidup:"
 msgid "end-of-life-rebase:"
 msgstr "rebase-habis-masa-hidup:"
 
-#: app/flatpak-builtins-info.c:253 app/flatpak-builtins-info-remote.c:220
+#: app/flatpak-builtins-info.c:253 app/flatpak-builtins-remote-info.c:220
 msgid "Runtime:"
 msgstr "Runtime:"
 
-#: app/flatpak-builtins-info.c:255 app/flatpak-builtins-info-remote.c:222
+#: app/flatpak-builtins-info.c:255 app/flatpak-builtins-remote-info.c:222
 msgid "Sdk:"
 msgstr "Sdk:"
 
@@ -1403,53 +1361,6 @@ msgstr "Ekstensi:"
 #: app/flatpak-builtins-info.c:422
 msgid "Subpaths:"
 msgstr "Subpath:"
-
-#: app/flatpak-builtins-info-remote.c:51
-msgid "Commit to show info for"
-msgstr "Komit untuk menunjukkan info untuk"
-
-#: app/flatpak-builtins-info-remote.c:54
-msgid "Display log"
-msgstr "Tampilkan log"
-
-#: app/flatpak-builtins-info-remote.c:57
-msgid "Show parent"
-msgstr "Tampilkan induk"
-
-#: app/flatpak-builtins-info-remote.c:126
-msgid ""
-" REMOTE REF - Show information about an application or runtime in a remote"
-msgstr ""
-" REMOTE REF - Tampilkan informasi tentang aplikasi atau runtime pada remote"
-
-#: app/flatpak-builtins-info-remote.c:137 app/flatpak-builtins-install.c:275
-msgid "REMOTE and REF must be specified"
-msgstr "REMOTE dan REF harus ditentukan"
-
-#: app/flatpak-builtins-info-remote.c:213
-msgid "Download size:"
-msgstr "Ukuran unduh:"
-
-#: app/flatpak-builtins-info-remote.c:229
-msgid "History:\n"
-msgstr "Riwayat:\n"
-
-#: app/flatpak-builtins-info-remote.c:250
-msgid " Subject:"
-msgstr " Subjek:"
-
-#: app/flatpak-builtins-info-remote.c:251
-msgid " Date:"
-msgstr " Tanggal:"
-
-#: app/flatpak-builtins-info-remote.c:252
-msgid " Commit:"
-msgstr " Komit:"
-
-#: app/flatpak-builtins-info-remote.c:274
-#, c-format
-msgid "Warning: Commit %s has no flatpak metadata\n"
-msgstr "Peringatan: Komit %s tidak memiliki metadata flatpak\n"
 
 #: app/flatpak-builtins-install.c:58
 msgid "Don't pull, only install from local cache"
@@ -1513,6 +1424,10 @@ msgstr "Nama berkas atau uri harus ditentukan"
 msgid "LOCATION/REMOTE [REF...] - Install applications or runtimes"
 msgstr "LOKASI/REMOTE [REF...] - Pasang aplikasi atau runtime"
 
+#: app/flatpak-builtins-install.c:275 app/flatpak-builtins-remote-info.c:137
+msgid "REMOTE and REF must be specified"
+msgstr "REMOTE dan REF harus ditentukan"
+
 #: app/flatpak-builtins-list.c:43
 msgid "Show extra information"
 msgstr "Tampilkan informasi ekstra"
@@ -1529,16 +1444,16 @@ msgstr "Daftar aplikasi yang terpasang"
 msgid "Arch to show"
 msgstr "Arsitektur yang akan ditampilkan"
 
-#: app/flatpak-builtins-list.c:47 app/flatpak-builtins-ls-remote.c:50
+#: app/flatpak-builtins-list.c:47 app/flatpak-builtins-remote-ls.c:50
 msgid "List all refs (including locale/debug)"
 msgstr "Daftar semua ref (termasuk lokal/awakutu)"
 
-#: app/flatpak-builtins-list.c:126 app/flatpak-builtins-ls-remote.c:196
-#: app/flatpak-builtins-repo.c:100
+#: app/flatpak-builtins-list.c:126 app/flatpak-builtins-remote-ls.c:196
+#: app/flatpak-builtins-repo.c:105
 msgid "Ref"
 msgstr "Ref"
 
-#: app/flatpak-builtins-list.c:129 app/flatpak-builtins-ls-remote.c:198
+#: app/flatpak-builtins-list.c:129 app/flatpak-builtins-remote-ls.c:198
 msgid "Origin"
 msgstr "Asal"
 
@@ -1550,74 +1465,18 @@ msgstr "Komit aktif"
 msgid "Latest commit"
 msgstr "Komit terbaru"
 
-#: app/flatpak-builtins-list.c:132 app/flatpak-builtins-ls-remote.c:200
+#: app/flatpak-builtins-list.c:132 app/flatpak-builtins-remote-ls.c:200
 msgid "Installed size"
 msgstr "Ukuran terpasang"
 
-#: app/flatpak-builtins-list.c:134 app/flatpak-builtins-list-remotes.c:74
-#: app/flatpak-builtins-ls-remote.c:202 app/flatpak-builtins-repo.c:103
+#: app/flatpak-builtins-list.c:134 app/flatpak-builtins-remote-list.c:74
+#: app/flatpak-builtins-remote-ls.c:202 app/flatpak-builtins-repo.c:108
 msgid "Options"
 msgstr "Opsi"
 
 #: app/flatpak-builtins-list.c:313
 msgid " - List installed apps and/or runtimes"
 msgstr " - Daftar aplikasi dan/atau runtimes yang terpasang"
-
-#: app/flatpak-builtins-list-remotes.c:40
-msgid "Show remote details"
-msgstr "Tampilkan detail remote"
-
-#: app/flatpak-builtins-list-remotes.c:41
-msgid "Show disabled remotes"
-msgstr "Tampilkan remote yang dinonaktifkan"
-
-#: app/flatpak-builtins-list-remotes.c:53
-msgid " - List remote repositories"
-msgstr " - Daftar repositori remote"
-
-#: app/flatpak-builtins-list-remotes.c:66
-msgid "Name"
-msgstr "Nama"
-
-#: app/flatpak-builtins-list-remotes.c:69
-msgid "Title"
-msgstr "Judul"
-
-#: app/flatpak-builtins-list-remotes.c:72
-msgid "Priority"
-msgstr "Prioritas"
-
-#: app/flatpak-builtins-ls-remote.c:45
-msgid "Show arches and branches"
-msgstr "Tampilkan arsitektur dan cabang"
-
-#: app/flatpak-builtins-ls-remote.c:46
-msgid "Show only runtimes"
-msgstr "Hanya tampilkan runtime"
-
-#: app/flatpak-builtins-ls-remote.c:47
-msgid "Show only apps"
-msgstr "Hanya tampilkan aplikasi"
-
-#: app/flatpak-builtins-ls-remote.c:48
-msgid "Show only those where updates are available"
-msgstr "Hanya tampilkan itu ketika pembaruan tersedia"
-
-#: app/flatpak-builtins-ls-remote.c:49
-msgid "Limit to this arch (* for all)"
-msgstr "Batasi arsitektur ini (* untuk semua)"
-
-#: app/flatpak-builtins-ls-remote.c:101
-msgid " [REMOTE or URI] - Show available runtimes and applications"
-msgstr " [REMOTE atau URI] - Tampilkan runtime dan aplikasi yang tersedia"
-
-#: app/flatpak-builtins-ls-remote.c:199 app/flatpak-builtins-ps.c:56
-msgid "Commit"
-msgstr "Komit"
-
-#: app/flatpak-builtins-ls-remote.c:201
-msgid "Download size"
-msgstr "Ukuran unduh"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -1652,53 +1511,53 @@ msgstr "Tampilkan penimpa yang ada"
 msgid "[APP] - Override settings [for application]"
 msgstr "[APP] - Menimpa pengaturan [untuk aplikasi]"
 
-#: app/flatpak-builtins-permission-list.c:164
+#: app/flatpak-builtins-permission-list.c:138
 msgid "[TABLE] [ID] - List permissions"
 msgstr "[TABLE] [ID] - Daftar izin"
 
-#: app/flatpak-builtins-permission-list.c:200
-#: app/flatpak-builtins-permission-show.c:165
+#: app/flatpak-builtins-permission-list.c:174
+#: app/flatpak-builtins-permission-show.c:139
 msgid "Table"
 msgstr "Tabel"
 
-#: app/flatpak-builtins-permission-list.c:201
-#: app/flatpak-builtins-permission-show.c:166
+#: app/flatpak-builtins-permission-list.c:175
+#: app/flatpak-builtins-permission-show.c:140
 msgid "Object"
 msgstr "Objek"
 
-#: app/flatpak-builtins-permission-list.c:202
-#: app/flatpak-builtins-permission-show.c:167
+#: app/flatpak-builtins-permission-list.c:176
+#: app/flatpak-builtins-permission-show.c:141
 msgid "App"
 msgstr "Aplikasi"
 
-#: app/flatpak-builtins-permission-list.c:203
-#: app/flatpak-builtins-permission-show.c:168
+#: app/flatpak-builtins-permission-list.c:177
+#: app/flatpak-builtins-permission-show.c:142
 msgid "Permissions"
 msgstr "Izin"
 
-#: app/flatpak-builtins-permission-list.c:204
-#: app/flatpak-builtins-permission-show.c:169
+#: app/flatpak-builtins-permission-list.c:178
+#: app/flatpak-builtins-permission-show.c:143
 msgid "Data"
 msgstr "Data"
 
-#: app/flatpak-builtins-permission-remove.c:108
+#: app/flatpak-builtins-permission-remove.c:82
 msgid "TABLE ID - Remove item from permission store"
 msgstr "TABLE ID - Hapus butir dari menyimpan perizinan"
 
-#: app/flatpak-builtins-permission-remove.c:117
+#: app/flatpak-builtins-permission-remove.c:91
 msgid "Too few arguments"
 msgstr "Terlalu sedikit argumen"
 
-#: app/flatpak-builtins-permission-reset.c:134
+#: app/flatpak-builtins-permission-reset.c:108
 msgid "APP_ID - Reset permissions for an app"
 msgstr "APP_ID - Atur ulang izin untuk suatu aplikasi"
 
-#: app/flatpak-builtins-permission-reset.c:143
-#: app/flatpak-builtins-permission-show.c:147
+#: app/flatpak-builtins-permission-reset.c:117
+#: app/flatpak-builtins-permission-show.c:121
 msgid "Wrong number of arguments"
 msgstr "Jumlah argumen salah"
 
-#: app/flatpak-builtins-permission-show.c:138
+#: app/flatpak-builtins-permission-show.c:112
 msgid "APP_ID - Show permissions for an app"
 msgstr "APP_ID - Tampilkan izin untuk suatu aplikasi"
 
@@ -1737,6 +1596,10 @@ msgstr "Cabang"
 #: app/flatpak-builtins-ps.c:55
 msgid "Show the application branch"
 msgstr "Tampilkan cabang aplikasi"
+
+#: app/flatpak-builtins-ps.c:56 app/flatpak-builtins-remote-ls.c:199
+msgid "Commit"
+msgstr "Komit"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "Show the application commit"
@@ -1812,6 +1675,246 @@ msgstr " - Enumerasikan sandbox yang berjalan"
 msgid "Extra arguments given"
 msgstr "Argumen ekstra diberikan"
 
+#: app/flatpak-builtins-remote-add.c:54
+msgid "Do nothing if the provided remote exists"
+msgstr "Tidak melakukan apapun jika remote yang disediakan ada"
+
+#: app/flatpak-builtins-remote-add.c:55
+msgid "LOCATION specifies a configuration file, not the repo location"
+msgstr "LOKASI menentukan berkas konfigurasi, bukan lokasi repo"
+
+#: app/flatpak-builtins-remote-add.c:60 app/flatpak-builtins-remote-modify.c:64
+msgid "Disable GPG verification"
+msgstr "Nonaktifkan verifikasi GPG"
+
+#: app/flatpak-builtins-remote-add.c:61 app/flatpak-builtins-remote-modify.c:65
+msgid "Mark the remote as don't enumerate"
+msgstr "Tandai remote jangan sebagai enumerasi"
+
+#: app/flatpak-builtins-remote-add.c:62 app/flatpak-builtins-remote-modify.c:66
+msgid "Mark the remote as don't use for deps"
+msgstr "Tandai remote seperti yang jangan digunakan untuk dependensi"
+
+#: app/flatpak-builtins-remote-add.c:63 app/flatpak-builtins-remote-modify.c:67
+msgid "Set priority (default 1, higher is more prioritized)"
+msgstr "Atur prioritas (bawaan 1, lebih tinggi berarti lebih diprioritaskan)"
+
+#: app/flatpak-builtins-remote-add.c:63 app/flatpak-builtins-remote-modify.c:67
+msgid "PRIORITY"
+msgstr "PRIORITAS"
+
+#: app/flatpak-builtins-remote-add.c:64 app/flatpak-builtins-remote-modify.c:68
+msgid "A nice name to use for this remote"
+msgstr "Sebuah nama yang bagus untuk digunakan bagi remote ini"
+
+#: app/flatpak-builtins-remote-add.c:65 app/flatpak-builtins-remote-modify.c:69
+msgid "Default branch to use for this remote"
+msgstr "Cabang bawaan yang digunakan untuk remote ini"
+
+#: app/flatpak-builtins-remote-add.c:67 app/flatpak-builtins-remote-modify.c:71
+msgid "Import GPG key from FILE (- for stdin)"
+msgstr "Impor kunci GPG dari BERKAS (- untuk stdin)"
+
+#: app/flatpak-builtins-remote-add.c:68 app/flatpak-builtins-remote-modify.c:72
+msgid "Disable the remote"
+msgstr "Nonaktifkan remote"
+
+#: app/flatpak-builtins-remote-add.c:191 app/flatpak-builtins-remote-add.c:198
+#, c-format
+msgid "Can't load uri %s: %s\n"
+msgstr "Tidak dapat memuat uri %s: %s\n"
+
+#: app/flatpak-builtins-remote-add.c:206
+#, c-format
+msgid "Can't load file %s: %s\n"
+msgstr "Tidak dapat memuat berkas %s: %s\n"
+
+#: app/flatpak-builtins-remote-add.c:214
+msgid "Invalid file format"
+msgstr "Format berkas tidak valid"
+
+#: app/flatpak-builtins-remote-add.c:222
+#, c-format
+msgid "Invalid version %s, only 1 supported"
+msgstr "Versi %s tidak valid, hanya 1 yang didukung"
+
+#: app/flatpak-builtins-remote-add.c:264
+msgid "Invalid gpg key"
+msgstr "Kunci gpg tidak valid"
+
+#: app/flatpak-builtins-remote-add.c:292
+msgid "NAME LOCATION - Add a remote repository"
+msgstr "NAMA LOKASI - Tambah repositori remote"
+
+#: app/flatpak-builtins-remote-add.c:319
+msgid "GPG verification is required if collections are enabled"
+msgstr "Verifikasi GPG diperlukan jika koleksi diaktifkan"
+
+#. Do nothing
+#: app/flatpak-builtins-remote-add.c:333
+#, c-format
+msgid "Remote %s already exists"
+msgstr "Remote %s sudah ada"
+
+#: app/flatpak-builtins-remote-add.c:341
+msgid "No url specified in flatpakrepo file"
+msgstr "Tidak ada url yang ditentukan dalam berkas flatpakrepo"
+
+#: app/flatpak-builtins-remote-add.c:383
+#, c-format
+msgid "Warning: Could not update extra metadata for '%s': %s\n"
+msgstr "Peringatan: Tidak dapat memperbarui metadata tambahan untuk '%s': %s\n"
+
+#: app/flatpak-builtins-remote-delete.c:38
+msgid "Remove remote even if in use"
+msgstr "Hapus remote meskipun digunakan"
+
+#: app/flatpak-builtins-remote-delete.c:51
+msgid "NAME - Delete a remote repository"
+msgstr "NAMA - Menghapus repositori remote"
+
+#: app/flatpak-builtins-remote-info.c:51
+msgid "Commit to show info for"
+msgstr "Komit untuk menunjukkan info untuk"
+
+#: app/flatpak-builtins-remote-info.c:54
+msgid "Display log"
+msgstr "Tampilkan log"
+
+#: app/flatpak-builtins-remote-info.c:57
+msgid "Show parent"
+msgstr "Tampilkan induk"
+
+#: app/flatpak-builtins-remote-info.c:126
+msgid ""
+" REMOTE REF - Show information about an application or runtime in a remote"
+msgstr ""
+" REMOTE REF - Tampilkan informasi tentang aplikasi atau runtime pada remote"
+
+#: app/flatpak-builtins-remote-info.c:213
+msgid "Download size:"
+msgstr "Ukuran unduh:"
+
+#: app/flatpak-builtins-remote-info.c:229
+msgid "History:\n"
+msgstr "Riwayat:\n"
+
+#: app/flatpak-builtins-remote-info.c:250
+msgid " Subject:"
+msgstr " Subjek:"
+
+#: app/flatpak-builtins-remote-info.c:251
+msgid " Date:"
+msgstr " Tanggal:"
+
+#: app/flatpak-builtins-remote-info.c:252
+msgid " Commit:"
+msgstr " Komit:"
+
+#: app/flatpak-builtins-remote-info.c:274
+#, c-format
+msgid "Warning: Commit %s has no flatpak metadata\n"
+msgstr "Peringatan: Komit %s tidak memiliki metadata flatpak\n"
+
+#: app/flatpak-builtins-remote-list.c:40
+msgid "Show remote details"
+msgstr "Tampilkan detail remote"
+
+#: app/flatpak-builtins-remote-list.c:41
+msgid "Show disabled remotes"
+msgstr "Tampilkan remote yang dinonaktifkan"
+
+#: app/flatpak-builtins-remote-list.c:53
+msgid " - List remote repositories"
+msgstr " - Daftar repositori remote"
+
+#: app/flatpak-builtins-remote-list.c:66
+msgid "Name"
+msgstr "Nama"
+
+#: app/flatpak-builtins-remote-list.c:69
+msgid "Title"
+msgstr "Judul"
+
+#: app/flatpak-builtins-remote-list.c:72
+msgid "Priority"
+msgstr "Prioritas"
+
+#: app/flatpak-builtins-remote-ls.c:45
+msgid "Show arches and branches"
+msgstr "Tampilkan arsitektur dan cabang"
+
+#: app/flatpak-builtins-remote-ls.c:46
+msgid "Show only runtimes"
+msgstr "Hanya tampilkan runtime"
+
+#: app/flatpak-builtins-remote-ls.c:47
+msgid "Show only apps"
+msgstr "Hanya tampilkan aplikasi"
+
+#: app/flatpak-builtins-remote-ls.c:48
+msgid "Show only those where updates are available"
+msgstr "Hanya tampilkan itu ketika pembaruan tersedia"
+
+#: app/flatpak-builtins-remote-ls.c:49
+msgid "Limit to this arch (* for all)"
+msgstr "Batasi arsitektur ini (* untuk semua)"
+
+#: app/flatpak-builtins-remote-ls.c:101
+msgid " [REMOTE or URI] - Show available runtimes and applications"
+msgstr " [REMOTE atau URI] - Tampilkan runtime dan aplikasi yang tersedia"
+
+#: app/flatpak-builtins-remote-ls.c:201
+msgid "Download size"
+msgstr "Ukuran unduh"
+
+#: app/flatpak-builtins-remote-modify.c:54
+msgid "Enable GPG verification"
+msgstr "Aktifkan verifikasi GPG"
+
+#: app/flatpak-builtins-remote-modify.c:55
+msgid "Mark the remote as enumerate"
+msgstr "Tandai remote sebagai enumerasi"
+
+#: app/flatpak-builtins-remote-modify.c:56
+msgid "Mark the remote as used for dependencies"
+msgstr "Tandai remote seperti yang digunakan untuk dependensi"
+
+#: app/flatpak-builtins-remote-modify.c:57
+msgid "Set a new url"
+msgstr "Atur url baru"
+
+#: app/flatpak-builtins-remote-modify.c:58
+msgid "Enable the remote"
+msgstr "Aktifkan remote"
+
+#: app/flatpak-builtins-remote-modify.c:59
+msgid "Update extra metadata from the summary file"
+msgstr "Perbarui metadata tambahan dari berkas ringkasan"
+
+#: app/flatpak-builtins-remote-modify.c:190
+msgid "NAME - Modify a remote repository"
+msgstr "NAMA - Mengubah repositori remote"
+
+#: app/flatpak-builtins-remote-modify.c:200
+msgid "Remote NAME must be specified"
+msgstr "NAMA remote harus ditentukan"
+
+#: app/flatpak-builtins-remote-modify.c:211
+#, c-format
+msgid "Updating extra metadata from remote summary for %s\n"
+msgstr "Memperbarui metadata ekstra dari ringkasan remote untuk %s\n"
+
+#: app/flatpak-builtins-remote-modify.c:214
+#, c-format
+msgid "Error updating extra metadata for '%s': %s\n"
+msgstr "Galat memperbarui metadata tambahan untuk '%s': %s\n"
+
+#: app/flatpak-builtins-remote-modify.c:215
+#, c-format
+msgid "Could not update extra metadata for %s"
+msgstr "Tidak dapat memperbarui metadata tambahan untuk %s"
+
 #: app/flatpak-builtins-repair.c:63
 #, c-format
 msgid "Object missing: %s.%s\n"
@@ -1886,134 +1989,44 @@ msgstr "Cabang bawaan: %s\n"
 msgid "Redirect URL: %s\n"
 msgstr "URL pengalihan: %s\n"
 
-#: app/flatpak-builtins-repo.c:60
+#: app/flatpak-builtins-repo.c:65
 #, c-format
-msgid "Redirect collection ID: %s\n"
-msgstr "Mengalihkan ID koleksi: %s\n"
+msgid "Deploy collection ID: %s\n"
+msgstr "Deploy ID koleksi: %s\n"
 
-#: app/flatpak-builtins-repo.c:68
+#: app/flatpak-builtins-repo.c:73
 #, c-format
 msgid "GPG key hash: %s\n"
 msgstr "Hash kunci GPG: %s\n"
 
-#: app/flatpak-builtins-repo.c:77
+#: app/flatpak-builtins-repo.c:82
 #, c-format
 msgid "%zd branches\n"
 msgstr "%zd cabang\n"
 
-#: app/flatpak-builtins-repo.c:101
+#: app/flatpak-builtins-repo.c:106
 msgid "Installed"
 msgstr "Terpasang"
 
-#: app/flatpak-builtins-repo.c:102
+#: app/flatpak-builtins-repo.c:107
 msgid "Download"
 msgstr "Unduh"
 
-#: app/flatpak-builtins-repo.c:170
+#: app/flatpak-builtins-repo.c:175
 msgid "Print general information about the repository"
 msgstr "Cetak informasi umum tentang repositori"
 
-#: app/flatpak-builtins-repo.c:171
+#: app/flatpak-builtins-repo.c:176
 msgid "List the branches in the repository"
 msgstr "Daftar cabang di repositori"
 
-#: app/flatpak-builtins-repo.c:172
+#: app/flatpak-builtins-repo.c:177
 msgid "Print metadata for a branch"
 msgstr "Cetak metadata untuk cabang"
 
-#: app/flatpak-builtins-repo.c:187
+#: app/flatpak-builtins-repo.c:192
 msgid "LOCATION - Repository maintenance"
 msgstr "LOKASI - Perbaikan repositori"
-
-#: app/flatpak-builtins-repo-update.c:52
-msgid "Redirect this repo to a new URL"
-msgstr "Arahkan ulang repo ini ke URL baru"
-
-#: app/flatpak-builtins-repo-update.c:53
-msgid "A nice name to use for this repository"
-msgstr "Nama yang bagus untuk digunakan pada repositori ini"
-
-#: app/flatpak-builtins-repo-update.c:54
-msgid "Default branch to use for this repository"
-msgstr "Cabang bawaan yang akan digunakan untuk repositori ini"
-
-#: app/flatpak-builtins-repo-update.c:56
-msgid "Permanently deploy collection ID to client remote configurations"
-msgstr "Deploy ID koleksi secara permanen ke konfigurasi klien remote"
-
-#: app/flatpak-builtins-repo-update.c:57
-msgid "Import new default GPG public key from FILE"
-msgstr "Impor kunci publik GPG bawaan baru dari BERKAS"
-
-#: app/flatpak-builtins-repo-update.c:58
-msgid "GPG Key ID to sign the summary with"
-msgstr "ID Kunci GPG untuk menandatangani ringkasan"
-
-#: app/flatpak-builtins-repo-update.c:60
-msgid "Generate delta files"
-msgstr "Bangkitkan berkas delta"
-
-#: app/flatpak-builtins-repo-update.c:61
-msgid "Prune unused objects"
-msgstr "Pangkas objek yang tidak terpakai"
-
-#: app/flatpak-builtins-repo-update.c:62
-msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
-msgstr ""
-"Hanya melintasi induk KEDALAMAN untuk setiap komit (bawaan: -1 = tak "
-"terbatas)"
-
-#: app/flatpak-builtins-repo-update.c:62
-msgid "DEPTH"
-msgstr "KEDALAMAN"
-
-#: app/flatpak-builtins-repo-update.c:191
-#, c-format
-msgid "Generating delta: %s (%.10s)\n"
-msgstr ""
-"Membangkitkan delta: %s (%.10s)\n"
-"\n"
-
-#: app/flatpak-builtins-repo-update.c:193
-#, c-format
-msgid "Generating delta: %s (%.10s-%.10s)\n"
-msgstr "Membangkitkan delta: %s (%.10s-%.10s)\n"
-
-#: app/flatpak-builtins-repo-update.c:201
-#, c-format
-msgid "Failed to generate delta %s (%.10s): "
-msgstr "Gagal membangkitkan delta %s (%.10s): "
-
-#: app/flatpak-builtins-repo-update.c:204
-#, c-format
-msgid "Failed to generate delta %s (%.10s-%.10s): "
-msgstr "Gagal membangkitkan delta %s (%.10s-%.10s): "
-
-#: app/flatpak-builtins-repo-update.c:415
-msgid "LOCATION - Update repository metadata"
-msgstr "LOKASI - Perbarui metadata repositori"
-
-#: app/flatpak-builtins-repo-update.c:483
-msgid "Updating appstream branch\n"
-msgstr "Memperbarui cabang appstream\n"
-
-#: app/flatpak-builtins-repo-update.c:504
-msgid "Updating summary\n"
-msgstr "Memperbarui ringkasan\n"
-
-#: app/flatpak-builtins-repo-update.c:523
-#, c-format
-msgid "Total objects: %u\n"
-msgstr "Total objek: %u\n"
-
-#: app/flatpak-builtins-repo-update.c:525
-msgid "No unreachable objects\n"
-msgstr "Tidak ada objek yang tidak terjangkau\n"
-
-#: app/flatpak-builtins-repo-update.c:527
-#, c-format
-msgid "Deleted %u objects, %s freed\n"
-msgstr "%u objek dihapus, %s dibebaskan\n"
 
 #: app/flatpak-builtins-run.c:59
 msgid "Command to run"
@@ -2905,7 +2918,7 @@ msgstr "Tidak ada penimpaan yang ditemukan untuk %s"
 
 #: common/flatpak-dir.c:1750 common/flatpak-dir.c:2105
 #: common/flatpak-dir.c:2128 common/flatpak-dir.c:2150
-#: common/flatpak-dir.c:12282 common/flatpak-transaction.c:1559
+#: common/flatpak-dir.c:12287 common/flatpak-transaction.c:1559
 #: common/flatpak-transaction.c:1594 common/flatpak-utils.c:1434
 #: common/flatpak-utils.c:1529
 #, c-format
@@ -3227,13 +3240,13 @@ msgstr "Peringatan: Masalah mencari ref terkait: %s"
 
 #: common/flatpak-transaction.c:1408
 #, c-format
-msgid "The Application %s requires the %s which was not found"
-msgstr "Aplikasi%s membutuhkan %s yang tidak ditemukan"
+msgid "The application %s requires the runtime %s which was not found"
+msgstr "Aplikasi %s membutuhkan runtime %s yang tidak ditemukan"
 
 #: common/flatpak-transaction.c:1424
 #, c-format
-msgid "The Application %s requires the %s which is not installed"
-msgstr "Aplikasi %s membutuhkan %s yang tidak dipasang"
+msgid "The application %s requires the runtime %s which is not installed"
+msgstr "Aplikasi %s membutuhkan runtime %s yang tidak dipasang"
 
 #: common/flatpak-transaction.c:1565
 #, c-format
@@ -3296,66 +3309,66 @@ msgstr "Galat saat migrasi: %s\n"
 msgid "No extra data sources"
 msgstr "Tidak ada sumber data tambahan"
 
-#: common/flatpak-utils.c:3609
+#: common/flatpak-utils.c:3615
 #, c-format
 msgid "Extracting icons for component %s\n"
 msgstr "Mengekstrak ikon untuk komponen %s\n"
 
-#: common/flatpak-utils.c:3613
+#: common/flatpak-utils.c:3619
 #, c-format
 msgid "Error copying 64x64 icon: %s\n"
 msgstr "Galat menyalin ikon 64x64: %s\n"
 
-#: common/flatpak-utils.c:3618
+#: common/flatpak-utils.c:3624
 #, c-format
 msgid "Error copying 128x128 icon: %s\n"
 msgstr "Galat menyalin ikon 128x128: %s\n"
 
-#: common/flatpak-utils.c:3814
+#: common/flatpak-utils.c:3820
 #, c-format
 msgid "%s is end-of-life, ignoring\n"
 msgstr "%s is end-of-life, ignoring\n"
 
-#: common/flatpak-utils.c:3823
+#: common/flatpak-utils.c:3829
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Tidak ada data appstream untuk %s: %s\n"
 
-#: common/flatpak-utils.c:5549
+#: common/flatpak-utils.c:5555
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Mengunduh metadata: %u /(perkiraan) %s"
 
-#: common/flatpak-utils.c:5573
+#: common/flatpak-utils.c:5579
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Mengunduh: %s/%s"
 
-#: common/flatpak-utils.c:5594
+#: common/flatpak-utils.c:5600
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Mengunduh data ekstra: %s/%s"
 
-#: common/flatpak-utils.c:5599
+#: common/flatpak-utils.c:5605
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Mengunduh berkas: %d/%d %s"
 
-#: common/flatpak-utils.c:5689
+#: common/flatpak-utils.c:5695
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s membutuhkan versi flatpak kelak (%s)"
 
-#: common/flatpak-utils.c:5736
+#: common/flatpak-utils.c:5742
 msgid "Empty string is not a number"
 msgstr "String kosong bukan angka"
 
-#: common/flatpak-utils.c:5762
+#: common/flatpak-utils.c:5768
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "\"%s\" bukan bilangan tak bertanda"
 
-#: common/flatpak-utils.c:5772
+#: common/flatpak-utils.c:5778
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Nomor \"%s\" berada di luar batas [%s, %s]"
@@ -3476,6 +3489,9 @@ msgstr ""
 #: system-helper/org.freedesktop.Flatpak.policy.in:179
 msgid "Update appstream"
 msgstr "Perbarui appstream"
+
+#~ msgid "Redirect collection ID: %s\n"
+#~ msgstr "Mengalihkan ID koleksi: %s\n"
 
 #~ msgid "Is this ok?"
 #~ msgstr "Apakah ini ok?"
