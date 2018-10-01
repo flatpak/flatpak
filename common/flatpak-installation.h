@@ -374,6 +374,9 @@ FLATPAK_EXTERN gboolean          flatpak_installation_cleanup_local_refs_sync (F
 FLATPAK_EXTERN gboolean          flatpak_installation_prune_local_repo (FlatpakInstallation *self,
                                                                         GCancellable        *cancellable,
                                                                         GError             **error);
+FLATPAK_EXTERN gboolean          flatpak_installation_run_triggers (FlatpakInstallation *self,
+                                                                    GCancellable        *cancellable,
+                                                                    GError             **error);
 
 
 #endif /* __FLATPAK_INSTALLATION_H__ */
