@@ -50,6 +50,11 @@
             runtime. This is useful for development and testing.
         </para>
         <para>
+            By default, flatpak will look for the application or runtime in all per-user
+            and system installations. This can be overridden with the <option>--user</option>,
+            <option>--system</option> and <option>--installation</option> options.
+        </para>
+        <para>
             flatpak creates a sandboxed environment for the application to run in
             by mounting the right runtime at <filename>/usr</filename> and a writable
             directory at <filename>/var</filename>, whose content is preserved between
@@ -99,6 +104,34 @@
 
                 <listitem><para>
                     Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Look for the application and runtime in per-user installations.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Look for the application and runtime in the default system-wide installations.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Look for the application and runtime in the system-wide installation specified
+                    by <arg choice="plain">NAME</arg>
+                    among those defined in <filename>/etc/flatpak/installations.d/</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
                 </para></listitem>
             </varlistentry>
 
