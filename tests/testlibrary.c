@@ -1141,7 +1141,7 @@ global_setup (void)
   g_autofree char *datadir = NULL;
   g_autofree char *homedir = NULL;
 
-  testdir = g_strdup ("/var/tmp/flatpak-test-XXXXXX");
+  testdir = g_strdup ("/tmp/flatpak-test-XXXXXX");
   g_mkdtemp (testdir);
   g_test_message ("testdir: %s", testdir);
 
