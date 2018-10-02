@@ -85,34 +85,39 @@ dist_installed_test_keyring2_DATA = \
 	$(NULL)
 endif
 
-dist_test_scripts = \
+# Run make update-test-matrix after changing this
+TEST_MATRIX_SOURCE = \
 	tests/test-basic.sh \
 	tests/test-build-update-repo.sh \
 	tests/test-http-utils.sh \
-	tests/test-run.sh \
-	tests/test-run-system.sh \
-	tests/test-run-deltas.sh \
-	tests/test-run-system-deltas.sh \
-	tests/test-repo.sh \
-	tests/test-repo-collections.sh \
-	tests/test-repo-collections-server-only.sh \
-	tests/test-repo-system.sh \
+	tests/test-run.sh{{user+system},{nodeltas+deltas}} \
+	tests/test-repo.sh{user+system+collections+collections-server-only} \
 	tests/test-extensions.sh \
-	tests/test-bundle.sh \
-	tests/test-bundle-system.sh \
+	tests/test-bundle.sh{user+system} \
 	tests/test-oci.sh \
-	tests/test-oci-registry.sh \
-	tests/test-oci-registry-system.sh \
+	tests/test-oci-registry.sh{user+system} \
 	tests/test-unsigned-summaries.sh \
 	tests/test-update-remote-configuration.sh \
 	$(NULL)
+
+update-test-matrix:
+	$(srcdir)/tests/expand-test-matrix.sh "$(TEST_MATRIX_SOURCE)" > tests/Makefile-test-matrix.am.inc
+
+tests/test-%.wrap: tests/test-wrapper.sh
+	cp $< $@
+	chmod a+x $@
+
+include tests/Makefile-test-matrix.am.inc
+
+dist_test_scripts = ${TEST_MATRIX}
+dist_installed_test_extra_scripts += ${TEST_MATRIX_DIST}
 
 test_programs = testlibrary
 test_extra_programs = tests/httpcache
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
-EXTRA_DIST += tests/flatpak.supp tests/glib.supp
+EXTRA_DIST += tests/flatpak.supp tests/glib.supp tests/Makefile-test-matrix.am.inc tests/expand-test-matrix.sh tests/test-wrapper.sh
 DISTCLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
 	tests/services/org.freedesktop.Flatpak.SystemHelper.service \
