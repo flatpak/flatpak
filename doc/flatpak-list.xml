@@ -50,6 +50,10 @@
             By default this lists both installed apps and runtimes, but you can
             change this by using the --app or --runtime option.
         </para>
+        <para>
+            The list command can also be used to find installed apps that
+            use a certain runtime, with the --app-runtime option.
+        </para>
 
     </refsect1>
 
@@ -134,6 +138,14 @@
 
                 <listitem><para>
                     List all installed runtimes, including locale and debug extensions. These are hidden by default.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--app-runtime=RUNTIME</option></term>
+
+                <listitem><para>
+                    List applications that use the given runtime.
                 </para></listitem>
             </varlistentry>
 
