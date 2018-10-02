@@ -72,7 +72,7 @@ static OstreeRepo * flatpak_dir_create_child_repo (FlatpakDir   *self,
                                                    GError      **error);
 static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
-                                                          const char   *optional_checksum,
+                                                          const char   *optional_commit,
                                                           GError      **error);
 
 static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
