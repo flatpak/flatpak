@@ -356,13 +356,6 @@ ostree_create_usb (GOptionContext *context,
     glnx_console_unlock (&console);
   }
 
-  /* Ensure a summary file is present to make it easier to look up commit checksums. */
-  /* FIXME: It should be possible to work without this, but find_remotes_cb() in
-   * ostree-repo-pull.c currently assumes a summary file (signed or unsigned) is
-   * present. */
-  if (!ostree_repo_regenerate_summary (dest_repo, NULL, cancellable, error))
-    return FALSE;
-
   /* Add the symlinks .ostree/repos.d/@symlink_name → @dest_repo_path, unless
    * the @dest_repo_path is a well-known one like ostree/repo, in which case no
    * symlink is necessary; #OstreeRepoFinderMount always looks there. */
