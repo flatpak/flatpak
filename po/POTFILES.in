@@ -43,6 +43,9 @@ app/flatpak-cli-transaction.c
 app/flatpak-main.c
 common/flatpak-context.c
 common/flatpak-dir.c
+common/flatpak-installation.c
+common/flatpak-oci-registry.c
+common/flatpak-remote.c
 common/flatpak-run.c
 common/flatpak-transaction.c
 common/flatpak-utils.c
