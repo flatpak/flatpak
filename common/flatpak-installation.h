@@ -55,7 +55,7 @@ typedef struct
  * @FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS: Don't use static deltas when pulling
  * @FLATPAK_UPDATE_FLAGS_NO_PRUNE: Don't prune the local OSTree repository after updating (Since: 0.11.8)
  * @FLATPAK_UPDATE_FLAGS_NO_TRIGGERS: Don't call triggers after updating. If used,
- * the caller must later call @flatpak_installation_run_triggers to update
+ * the caller must later call flatpak_installation_run_triggers() to update
  * the exported files. (Since: 1.0.3)
  *
  * Flags to alter the behavior of flatpak_installation_update().
@@ -76,7 +76,7 @@ typedef enum {
  * @FLATPAK_INSTALL_FLAGS_NO_DEPLOY: Don't install any new builds that might be fetched
  * @FLATPAK_INSTALL_FLAGS_NO_PULL: Don't try to fetch new builds from the remote repo
  * @FLATPAK_INSTALL_FLAGS_NO_TRIGGERS: Don't call triggers after installing. If used,
- * the caller must later call @flatpak_installation_run_triggers to update
+ * the caller must later call flatpak_installation_run_triggers() to update
  * the exported files. (Since: 1.0.3)
  *
  * Flags to alter the behavior of flatpak_installation_install_full().
@@ -94,7 +94,7 @@ typedef enum {
  * @FLATPAK_UNINSTALL_FLAGS_NONE: Default
  * @FLATPAK_UNINSTALL_FLAGS_NO_PRUNE: Don't prune the local OSTree repository after uninstalling
  * @FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS: Don't call triggers after uninstalling. If used,
- * the caller must later call @flatpak_installation_run_triggers to update
+ * the caller must later call flatpak_installation_run_triggers() to update
  * the exported file. (Since: 1.0.3)
  *
  * Flags to alter the behavior of flatpak_installation_uninstall_full().
