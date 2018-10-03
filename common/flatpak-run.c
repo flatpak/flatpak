@@ -1045,7 +1045,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
           g_autofree char *link = flatpak_readlink ("/dev/shm", NULL);
           /* On debian (with sysv init) the host /dev/shm is a symlink to /run/shm, so we can't
              mount on top of it. */
-          if (strcmp (link, "/run/shm") == 0)
+          if (g_strcmp0 (link, "/run/shm") == 0)
             flatpak_bwrap_add_args (bwrap,
                                     "--dir", "/run/shm",
                                     NULL);
