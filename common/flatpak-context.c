@@ -74,6 +74,7 @@ const char *flatpak_context_features[] = {
   "devel",
   "multiarch",
   "bluetooth",
+  "canbus",
   NULL
 };
 
@@ -2033,6 +2034,9 @@ flatpak_context_get_run_flags (FlatpakContext *context)
 
   if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_BLUETOOTH))
     flags |= FLATPAK_RUN_FLAG_BLUETOOTH;
+
+  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_CANBUS))
+    flags |= FLATPAK_RUN_FLAG_CANBUS;
 
   return flags;
 }

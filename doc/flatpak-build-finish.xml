@@ -171,7 +171,7 @@
                 <listitem><para>
                     Allow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch, bluetooth.
+                    FEATURE must be one of: devel, multiarch, bluetooth, canbus.
                     This option can be used multiple times.
                  </para><para>
                     The <code>devel</code> feature allows the application to
@@ -187,6 +187,11 @@
                     The <code>bluetooth</code> feature allows the application to
                     use bluetooth (AF_BLUETOOTH) sockets. Note, for bluetooth to
                     fully work you must also have network access.
+                </para>
+                <para>
+                    The <code>canbus</code> feature allows the application to
+                    use canbus (AF_CAN) sockets.
+                    Note, for this work you must also have network access.
                 </para></listitem>
             </varlistentry>
 
@@ -196,7 +201,7 @@
                 <listitem><para>
                     Disallow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch, bluetooth.
+                    FEATURE must be one of: devel, multiarch, bluetooth, canbus.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
