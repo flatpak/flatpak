@@ -54,8 +54,64 @@ static Column all_columns[] = {
   { "runtime",        N_("Runtime"),     N_("Show the runtime ID"),                 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "runtime-branch", N_("R.-Branch"),   N_("Show the runtime branch"),             0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "runtime-commit", N_("R.-Commit"),   N_("Show the runtime commit"),             0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "active",         N_("Active"),      N_("Show whether the app is active"),      0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "background",     N_("Background"),  N_("Show whether the app is background"),  0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { NULL }
 };
+
+enum {
+  BACKGROUND,
+  RUNNING,
+  ACTIVE
+};
+
+static GVariant *
+get_compositor_apps (void)
+{
+  g_autoptr(GDBusConnection) bus = NULL;
+  g_autoptr(GVariant) ret = NULL;
+  GVariant *list = NULL;
+  const char *backends[] = {
+    "org.freedesktop.impl.portal.desktop.gtk",
+    "org.freedesktop.impl.portal.desktop.kde",
+    NULL
+  };
+  int i;
+
+  bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (!bus)
+    return NULL;
+
+  for (i = 0; backends[i]; i++)
+    {
+      g_autoptr(GError) error = NULL;
+
+      ret = g_dbus_connection_call_sync (bus,
+                                         backends[i],
+                                         "/org/freedesktop/portal/desktop",
+                                         "org.freedesktop.impl.portal.Background",
+                                         "GetAppState",
+                                         g_variant_new ("()"),
+                                         G_VARIANT_TYPE ("(a{sv})"),
+                                         G_DBUS_CALL_FLAGS_NO_AUTO_START,
+                                         -1,
+                                         NULL,
+                                         &error);
+      if (ret)
+        break;
+      if (error &&
+          !g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_NAME_HAS_NO_OWNER) &&
+          !g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD))
+        return NULL;
+    }
+
+  if (ret)
+    g_variant_get (ret, "(@a{sv})", &list);
+  else
+    g_debug ("Failed to get information about running apps from background portal backends");
+
+  return list;
+}
 
 static gboolean
 enumerate_instances (Column *columns, GError **error)
@@ -63,6 +119,7 @@ enumerate_instances (Column *columns, GError **error)
   g_autoptr(GPtrArray) instances = NULL;
   FlatpakTablePrinter *printer;
   int i, j;
+  g_autoptr(GVariant) compositor_apps = NULL;
 
   if (columns[0].name == NULL)
     return TRUE;
@@ -75,6 +132,16 @@ enumerate_instances (Column *columns, GError **error)
     {
       /* nothing to show */
       return TRUE;
+    }
+
+  for (i = 0; columns[i].name; i++)
+    {
+      if (strcmp (columns[i].name, "active") == 0 ||
+          strcmp (columns[i].name, "background") == 0)
+        {
+          compositor_apps = get_compositor_apps ();
+          break;
+        }
     }
 
   for (j = 0; j < instances->len; j++)
@@ -127,6 +194,26 @@ enumerate_instances (Column *columns, GError **error)
             flatpak_table_printer_add_column_len (printer,
                                                   flatpak_instance_get_runtime_commit (instance),
                                                   12);
+          else if (strcmp (columns[i].name, "active") == 0 ||
+                   strcmp (columns[i].name, "background") == 0)
+           {
+             if (compositor_apps)
+               {
+                 const char *app = flatpak_instance_get_app (instance);
+                 guint state;
+
+                 if (!g_variant_lookup (compositor_apps, app, "u", &state))
+                   state = BACKGROUND;
+
+                 if ((strcmp (columns[i].name, "background") == 0 && state == BACKGROUND) ||
+                     (strcmp (columns[i].name, "active") == 0 && state == ACTIVE))
+                   flatpak_table_printer_add_column (printer, "🗸");
+                 else
+                   flatpak_table_printer_add_column (printer, "");
+               }
+             else
+               flatpak_table_printer_add_column (printer, "?");
+           }
         }
 
       flatpak_table_printer_finish_row (printer);
