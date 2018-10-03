@@ -120,7 +120,10 @@ installed_test_meta_DATA = $(installed_testcases:=.test)
 %.test: %$(EXEEXT) Makefile
 	$(AM_V_GEN) (echo '[Test]' > $@.tmp; \
 	echo 'Type=session' >> $@.tmp; \
-	echo 'Exec=env G_TEST_SRCDIR=$(installed_testdir) G_TEST_BUILDDIR=$(installed_testdir)  $(installed_testdir)/$(notdir $<) --tap' >> $@.tmp; \
+	if [[ $(notdir $<) == *.wrap ]]; then \
+	    wrapper=$(installed_testdir)/test-wrapper.sh; \
+	fi; \
+	echo "Exec=env G_TEST_SRCDIR=$(installed_testdir) G_TEST_BUILDDIR=$(installed_testdir) $$wrapper $(installed_testdir)/$(notdir $<) --tap" >> $@.tmp; \
 	echo 'Output=TAP' >> $@.tmp; \
 	mv $@.tmp $@)
 

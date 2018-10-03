@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for feature in $(echo $0 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
+for feature in $(echo $1 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
     case $feature in
         system)
             export USE_SYSTEMDIR=yes
@@ -28,5 +28,5 @@ for feature in $(echo $0 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
     esac
 done
 
-WRAPPED=$(echo $0 | sed "s/@.*/\.sh/")
-. $WRAPPED
+WRAPPED=$(echo $1 | sed "s/@.*/\.sh/")
+. $WRAPPED "$@"

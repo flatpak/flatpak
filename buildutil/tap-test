@@ -18,4 +18,7 @@ function cleanup () {
 }
 trap cleanup EXIT
 cd ${tempdir}
-${srcd}/${bn} -k --tap
+if [[ $bn == *.wrap ]]; then
+    WRAPPER=${srcd}/test-wrapper.sh
+fi
+$WRAPPER ${srcd}/${bn} -k --tap

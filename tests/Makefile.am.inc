@@ -60,6 +60,7 @@ dist_installed_test_extra_scripts += \
 	tests/make-test-runtime.sh \
 	tests/make-test-bundles.sh \
 	tests/test-webserver.sh \
+	tests/test-wrapper.sh \
 	$(NULL)
 
 dist_installed_test_data = \
@@ -103,9 +104,8 @@ TEST_MATRIX_SOURCE = \
 update-test-matrix:
 	$(srcdir)/tests/expand-test-matrix.sh "$(TEST_MATRIX_SOURCE)" > tests/Makefile-test-matrix.am.inc
 
-tests/test-%.wrap: tests/test-wrapper.sh
-	cp $< $@
-	chmod a+x $@
+tests/test-%.wrap:
+	@true
 
 include tests/Makefile-test-matrix.am.inc
 
