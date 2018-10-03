@@ -2168,6 +2168,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     { AF_INET, 0 },
     { AF_INET6, 0 },
     { AF_NETLINK, 0 },
+    { AF_CAN, FLATPAK_RUN_FLAG_CANBUS },
     { AF_BLUETOOTH, FLATPAK_RUN_FLAG_BLUETOOTH },
   };
   int last_allowed_family;

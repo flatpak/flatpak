@@ -378,6 +378,13 @@
                               Available since 0.11.8.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>canbus</option></term>
+                            <listitem><para>
+                              Allow the application to use canbus (AF_CAN) sockets.
+                              Note, for this work you must also have network access.
+                              Available since 1.0.3.
+                            </para></listitem></varlistentry>
+
                         </variablelist>
                         A feature can be prefixed with <option>!</option> to
                         indicate the absence of that feature, for example
