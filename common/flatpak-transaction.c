@@ -2840,6 +2840,12 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
           if (!do_cont)
             {
+              if (g_cancellable_set_error_if_cancelled (cancellable, error))
+                {
+                  succeeded = FALSE;
+                  break;
+                }
+
               flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Aborted due to failure"));
               succeeded = FALSE;
               break;
