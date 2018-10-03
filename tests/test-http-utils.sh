@@ -128,33 +128,33 @@ rm -f $test_tmpdir/output*
 
 echo 'ok compress after download'
 
-# Testing that things work with without xattr support
+# Testing that things work without xattr support
 
 if have_xattrs $test_tmpdir ; then
+    echo "ok no-xattrs # skip /tmp doesn't have user xattr support"
+else
     assert_ok "/?etag&no-cache" $test_tmpdir/output
-    assert_not_has_file $test_tmpdir/output.flatpak.http
+    assert_has_file $test_tmpdir/output.flatpak.http
     assert_304 "/?etag&no-cache" $test_tmpdir/output
     rm -f $test_tmpdir/output*
-    echo "ok with-xattrs"
-else
-    echo "ok with-xattrs # skip /var/tmp doesn't have user xattr support"
+    echo "ok no-xattrs"
 fi
 
-# Testing fallback without xattr support
+# Testing with xattr support
 
-no_xattrs_tempdir=`mktemp -d /tmp/test-flatpak-XXXXXX`
-no_xattrs_cleanup () {
-    rm -rf test_tmpdir
+xattrs_tempdir=`mktemp -d /var/tmp/test-flatpak-XXXXXX`
+xattrs_cleanup () {
+    rm -rf xattrs_tempdir
     cleanup
 }
-trap no_xattrs_cleanup EXIT
+trap xattrs_cleanup EXIT
 
-if have_xattrs $no_xattrs_tempdir ; then
-    echo "ok no-xattrs # skip /tmp has user xattr support"
+if have_xattrs $xattrs_tempdir ; then
+    assert_ok "/?etag&no-cache" $xattrs_tempdir/output
+    assert_not_has_file $xattrs_tempdir/output.flatpak.http
+    assert_304 "/?etag&no-cache" $xattrs_tempdir/output
+    rm -f $xattrs_tempdir/output*
+    echo "ok xattrs"
 else
-    assert_ok "/?etag&no-cache" $no_xattrs_tempdir/output
-    assert_has_file $no_xattrs_tempdir/output.flatpak.http
-    assert_304 "/?etag&no-cache" $no_xattrs_tempdir/output
-    rm -f $no_xattrs_tempdir/output*
-    echo "ok no-xattrs"
+    echo "ok xattrs # skip /var/tmp has user no xattr support"
 fi

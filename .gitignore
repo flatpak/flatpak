@@ -99,6 +99,9 @@ Flatpak-1.0.*
 /tests/*.sh.log
 /tests/*.sh.test
 /tests/*.sh.trs
+/tests/*.wrap.log
+/tests/*.wrap.test
+/tests/*.wrap.trs
 po/.intltool-merge-cache
 po/Makefile.in.in
 po/POTFILES
