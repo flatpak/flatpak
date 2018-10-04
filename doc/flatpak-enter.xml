@@ -32,7 +32,7 @@
             <cmdsynopsis>
                 <command>flatpak enter</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">MONITORPID</arg>
+                <arg choice="plain">INSTANCE</arg>
                 <arg choice="plain">COMMAND</arg>
                 <arg choice="opt" rep="repeat">ARG</arg>
             </cmdsynopsis>
@@ -43,16 +43,19 @@
 
         <para>
             Enter a running sandbox.
-            <arg choice="plain">SANDBOXEDPID</arg> must be the pid of a process running in a flatpak sandbox.
+            <arg choice="plain">INSTANCE</arg> must be either the pid of a process running
+            in a flatpak sandbox, or the ID of a running application or a the instance ID
+             of a running sandbox.
             <arg choice="plain">COMMAND</arg> is the command to run in the sandbox.
             Extra arguments are passed on to the command.
         </para>
         <para>
-            This creates a new process within the running sandbox, with the same environment. This is useful
-            when you want to debug a problem with a running application.
+            This creates a new process within the running sandbox, with the same environment.
+            This is useful when you want to debug a problem with a running application.
         </para>
         <para>
             This command requires extra privileges, so must be run as root or via e.g. sudo.
+            To get TAB completion for the application ID, use sudo -E.
         </para>
 
     </refsect1>

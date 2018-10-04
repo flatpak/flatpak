@@ -35,6 +35,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-dbus-generated.h"
 #include "flatpak-run-private.h"
+#include "flatpak-instance.h"
 
 
 static GOptionEntry options[] = {
@@ -78,8 +79,10 @@ flatpak_builtin_enter (int           argc,
   struct stat stat_buf;
   uid_t uid;
   gid_t gid;
+  g_autoptr(GPtrArray) instances = NULL;
+  int j;
 
-  context = g_option_context_new (_("SANDBOXEDPID [COMMAND [args...]] - Run a command inside a running sandbox"));
+  context = g_option_context_new (_("INSTANCE [COMMAND [args...]] - Run a command inside a running sandbox"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   rest_argc = 0;
@@ -100,7 +103,7 @@ flatpak_builtin_enter (int           argc,
 
   if (rest_argc < 2)
     {
-      usage_error (context, _("SANDBOXEDPID and COMMAND must be specified"), error);
+      usage_error (context, _("INSTANCE and COMMAND must be specified"), error);
       return FALSE;
     }
 
@@ -108,11 +111,25 @@ flatpak_builtin_enter (int           argc,
   if (geteuid () != 0)
     g_printerr ("%s\n", _("Not running as root, may be unable to enter namespace"));
 
+  pid = 0;
   pid_s = argv[rest_argv_start];
+  i = atoi (pid_s);
+  instances = flatpak_instance_get_all ();
+  for (j = 0; j < instances->len; j++)
+    {
+      FlatpakInstance *instance = (FlatpakInstance *)g_ptr_array_index (instances, j);
+      
+      if (i == flatpak_instance_get_pid (instance) ||
+          strcmp (pid_s, flatpak_instance_get_app (instance)) == 0 ||
+          strcmp (pid_s, flatpak_instance_get_id (instance)) == 0)
+        {
+          pid = flatpak_instance_get_pid (instance);
+          break;
+        }
+    }
 
-  pid = atoi (pid_s);
   if (pid <= 0)
-    return flatpak_fail (error, _("Invalid pid %s"), pid_s);
+    return flatpak_fail (error, _("%s is neither a pid nor an application or instance ID"), pid_s);
 
   stat_path = g_strdup_printf ("/proc/%d/root", pid);
   if (stat (stat_path, &stat_buf))
@@ -243,6 +260,8 @@ gboolean
 flatpak_complete_enter (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(GPtrArray) instances = NULL;
+  int i;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
@@ -254,6 +273,14 @@ flatpak_complete_enter (FlatpakCompletion *completion)
     case 1:
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
+
+      instances = flatpak_instance_get_all ();
+      for (i = 0; i < instances->len; i++)
+        {
+          FlatpakInstance *instance = (FlatpakInstance *)g_ptr_array_index (instances, i);
+          flatpak_complete_word (completion, "%s ", flatpak_instance_get_app (instance));
+          flatpak_complete_word (completion, "%s ", flatpak_instance_get_id (instance));
+        }
       break;
 
     default:
