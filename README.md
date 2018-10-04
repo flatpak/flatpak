@@ -29,6 +29,11 @@ Flatpak uses a traditional autoconf-style build mechanism. To build just do
  make install
 ```
 
+Dependencies you will need include: autoconf, automake, libtool, bison, gettext,
+gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libsoup, gpgme,
+polkit, libXau, ostree, json-glib, appstream, libseccomp
+(or their devel packages).
+
 Most configure arguments are documented in `./configure --help`. However,
 there are some options that are a bit more complicated.
 
