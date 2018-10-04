@@ -61,6 +61,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-search.c \
 	app/flatpak-builtins-repair.c \
 	app/flatpak-builtins-create-usb.c \
+	app/flatpak-builtins-kill.c \
 	app/flatpak-table-printer.c \
 	app/flatpak-table-printer.h \
 	app/flatpak-complete.c \
