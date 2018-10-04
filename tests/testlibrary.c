@@ -1216,6 +1216,45 @@ global_teardown (void)
   g_free (testdir);
 }
 
+static void
+test_misc_transaction (void)
+{
+  struct { int op; const char *name; } kinds[] = {
+    { FLATPAK_TRANSACTION_OPERATION_INSTALL, "install" },
+    { FLATPAK_TRANSACTION_OPERATION_UPDATE, "update" },
+    { FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE, "install-bundle" },
+    { FLATPAK_TRANSACTION_OPERATION_UNINSTALL, "uninstall" },
+    { FLATPAK_TRANSACTION_OPERATION_LAST_TYPE, NULL }
+  };
+  int i;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakInstallation) inst2 = NULL;
+  g_autoptr(FlatpakInstallation) inst3 = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(FlatpakTransactionOperation) op = NULL;
+
+  for (i = 0; i < G_N_ELEMENTS (kinds); i++)
+    g_assert_cmpstr (kinds[i].name, ==, flatpak_transaction_operation_type_to_string (kinds[i].op));
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  g_object_get (transaction, "installation", &inst2, NULL);
+  g_assert (inst2 == inst);
+
+  inst3 = flatpak_transaction_get_installation (transaction);
+  g_assert (inst3 == inst);
+
+  op = flatpak_transaction_get_current_operation (transaction);
+  g_assert_null (op);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1237,6 +1276,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
   g_test_add_func ("/library/list-refs-in-remote", test_list_refs_in_remotes);
   g_test_add_func ("/library/list-updates", test_list_updates);
+  g_test_add_func ("/library/misc-transaction", test_misc_transaction);
 
   global_setup ();
 
