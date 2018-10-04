@@ -109,8 +109,9 @@ tests/test-%.wrap:
 
 include tests/Makefile-test-matrix.am.inc
 
-dist_test_scripts = ${TEST_MATRIX}
-dist_installed_test_extra_scripts += ${TEST_MATRIX_DIST}
+test_scripts = ${TEST_MATRIX}
+dist_test_scripts = ${TEST_MATRIX_DIST}
+dist_installed_test_extra_scripts += ${TEST_MATRIX_EXTRA_DIST}
 
 test_programs = testlibrary
 test_extra_programs = tests/httpcache
