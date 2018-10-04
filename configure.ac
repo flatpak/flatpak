@@ -395,6 +395,27 @@ case "$host" in
 esac
 AC_SUBST(HIDDEN_VISIBILITY_CFLAGS)
 
+##########################################
+# Coverage testing
+##########################################
+AC_ARG_ENABLE(coverage,
+  AS_HELP_STRING([--enable-coverage],
+                 [enable coverage testing with gcov]),
+  [use_lcov=$enableval], [use_lcov=no])
+
+if test x$use_lcov = xyes; then
+  AC_PATH_PROG(LCOV, lcov)
+  AC_PATH_PROG(GENHTML, genhtml)
+
+  # remove all optimization from CFLAGS
+  changequote({,})
+  CFLAGS=`echo "$CFLAGS" | $SED -e 's/-O[0-9]*//g'`
+  changequote([,])
+
+  CFLAGS="$CFLAGS -O0 -fprofile-arcs -ftest-coverage"
+  LDFLAGS="$LDFLAGS -lgcov"
+fi
+
 GLIB_TESTS
 
 FLATPAK_MAJOR_VERSION=flatpak_major_version
