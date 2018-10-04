@@ -2,37 +2,36 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="flatpak-remote-ls">
+<refentry id="flatpak-history">
 
     <refentryinfo>
-        <title>flatpak remote-ls</title>
+        <title>flatpak history</title>
         <productname>flatpak</productname>
 
         <authorgroup>
             <author>
                 <contrib>Developer</contrib>
-                <firstname>Alexander</firstname>
-                <surname>Larsson</surname>
-                <email>alexl@redhat.com</email>
+                <firstname>Matthias</firstname>
+                <surname>Clasen</surname>
+                <email>mclasen@redhat.com</email>
             </author>
         </authorgroup>
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>flatpak remote-ls</refentrytitle>
+        <refentrytitle>flatpak history</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>flatpak-remote-ls</refname>
-        <refpurpose>Show available runtimes and applications</refpurpose>
+        <refname>flatpak-history</refname>
+        <refpurpose>Show history</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>flatpak remote-ls</command>
+                <command>flatpak history</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="opt">REMOTE</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -40,20 +39,16 @@
         <title>Description</title>
 
         <para>
-            Shows runtimes and applications that are available in the
-            remote repository with the name <arg choice="plain">REMOTE</arg>,
-            or all remotes if one isn't specified. You can find all configured
-            remote repositories with <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+            Shows changes to the flatpak installations on the system. This includes
+            installs, updates and removals of applications and runtimes.
         </para>
         <para>
-            <arg choice="plain">REMOTE</arg> can be a file:// URI pointing to a
-            local repository instead of a remote name.
+            By default, both per-user and system-wide installations are shown. Use the
+            --user, --installation or --system options to change this.
         </para>
         <para>
-            Unless overridden with the --system, --user, or --installation options,
-            this command uses either the default system-wide installation or the
-            per-user one, depending on which has the specified
-            <arg choice="plain">REMOTE</arg>.
+            The information for the history command is taken from the systemd journal,
+            and can also be accessed using e.g. the journalctl command.
         </para>
 
     </refsect1>
@@ -77,7 +72,7 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Use the per-user configuration.
+                    Show changes to the user installation.
                 </para></listitem>
             </varlistentry>
 
@@ -85,7 +80,7 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Use the default system-wide configuration.
+                    Show changes to the default system-wide installation.
                 </para></listitem>
             </varlistentry>
 
@@ -93,7 +88,7 @@
                 <term><option>--installation=NAME</option></term>
 
                 <listitem><para>
-                    Use a system-wide installation specified by <arg choice="plain">NAME</arg>
+                    Show changes to the installation specified by <arg choice="plain">NAME</arg>
                     among those defined in <filename>/etc/flatpak/installations.d/</filename>.
                     Using <arg choice="plain">--installation=default</arg> is equivalent to using
                     <arg choice="plain">--system</arg>.
@@ -101,55 +96,24 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>-d</option></term>
-                <term><option>--show-details</option></term>
+                <term><option>--since=TIME</option></term>
 
                 <listitem><para>
-                    Show arches, branches and commit ids, in addition to the names.
-                    Equivalent to <option>--columns=all</option>.
+                    Only show changes that are newer than the time specified by
+                    <arg choice="plain">TIME</arg>.
+                </para><para>
+                    <arg choice="plain">TIME</arg> can be either an absolute time
+                    in a format like YYYY-MM-DD HH:MM:SS, or a relative time like
+                    "2h", "7days", "4days 2hours".
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>--runtime</option></term>
+                <term><option>--until=TIME</option></term>
 
                 <listitem><para>
-                    Show only runtimes, omit applications.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--app</option></term>
-
-                <listitem><para>
-                    Show only applications, omit runtimes.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--all</option></term>
-                <term><option>-a</option></term>
-
-                <listitem><para> Show everything. By default locale and
-                debug extensions as well as secondary arches when the primary
-                arch is available are hidden.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--updates</option></term>
-
-                <listitem><para>
-                    Show only those which have updates available.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--arch=ARCH</option></term>
-
-                <listitem><para>
-                    Show only those matching the specied architecture. By default, only
-                    supported architectures are shown. Use --arch=* to show all archtectures.
+                    Only show changes that are older than the time specified by
+                    <arg choice="plain">TIME</arg>.
                 </para></listitem>
             </varlistentry>
 
@@ -186,6 +150,7 @@
                     list multiple fields, or use this option multiple times.
                 </para></listitem>
             </varlistentry>
+
         </variablelist>
     </refsect1>
 
@@ -195,6 +160,22 @@
         <para>The following fields are understood by the <option>--columns</option> option:</para>
 
         <variablelist>
+            <varlistentry>
+                <term>time</term>
+
+                <listitem><para>
+                    Show when the change happened
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>change</term>
+
+                <listitem><para>
+                    Show the kind of change
+                </para></listitem>
+            </varlistentry>
+
             <varlistentry>
                 <term>ref</term>
 
@@ -207,15 +188,45 @@
                 <term>application</term>
 
                 <listitem><para>
-                    Show the application ID
+                    Show the application/runtime ID
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term>origin</term>
+                <term>arch</term>
 
                 <listitem><para>
-                    Show the origin remote
+                    Show the architecture
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>branch</term>
+
+                <listitem><para>
+                    Show the branch
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>installation</term>
+
+                <listitem><para>
+                    Show the affected installation.
+                </para><para>
+                    This will be either the ID of a Flatpak installation,
+                    or the path to a temporary OSTree repository.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>remote</term>
+
+                <listitem><para>
+                    Show the remote that is used.
+                </para><para>
+                    This will be either the name of a configured remote,
+                    or the path to a temporary OSTree repository.
                 </para></listitem>
             </varlistentry>
 
@@ -228,26 +239,32 @@
             </varlistentry>
 
             <varlistentry>
-                <term>installed-size</term>
+                <term>url</term>
 
                 <listitem><para>
-                    Show the installed size
+                    Show the remote url
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term>download-size</term>
+                <term>user</term>
 
                 <listitem><para>
-                    Show the download size
+                    Show the user doing the change.
+                </para><para>
+                    If this is the system helper operating as root,
+                    also show which user triggered the change.
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term>options</term>
+                <term>tool</term>
 
                 <listitem><para>
-                    Show options
+                    Show the tool that was used.
+                </para><para>
+                    If this is the system helper, also show
+                    which tool was used to triggered the change.
                 </para></listitem>
             </varlistentry>
 
@@ -275,34 +292,13 @@
     </refsect1>
 
     <refsect1>
-        <title>Examples</title>
-
-        <para>
-            <command>$ flatpak --user remote-ls --app testrepo</command>
-        </para>
-<programlisting>
-Ref
-org.gnome.Builder
-org.freedesktop.glxgears
-</programlisting>
-
-        <para>
-            <command>$ flatpak remote-ls file:///run/media/mwleeds/d4d37026-cde2-4e5e-8bcc-d23ebbf231f9/.ostree/repo</command>
-        </para>
-<programlisting>
-Ref
-org.kde.Khangman
-</programlisting>
-
-    </refsect1>
-
-    <refsect1>
         <title>See also</title>
 
-            <para>
-                <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-            </para>
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>journalctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
     </refsect1>
 
 </refentry>

@@ -55,8 +55,9 @@ man1 = \
 	flatpak-build-commit-from.1	\
 	flatpak-repo.1			\
 	flatpak-search.1		\
-	flatpak-create-usb.1 \
-	flatpak-repair.1 \
+	flatpak-create-usb.1 		\
+	flatpak-repair.1 		\
+	flatpak-history.1 		\
 	$(NULL)
 
 man5 = \

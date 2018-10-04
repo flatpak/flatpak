@@ -108,6 +108,14 @@
 
         <variablelist>
             <varlistentry>
+                <term>instance</term>
+
+                <listitem><para>
+                    Show the instance ID
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>application</term>
 
                 <listitem><para>

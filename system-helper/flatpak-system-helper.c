@@ -141,6 +141,55 @@ no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 {
 }
 
+#define DBUS_NAME_DBUS "org.freedesktop.DBus"
+#define DBUS_INTERFACE_DBUS DBUS_NAME_DBUS
+#define DBUS_PATH_DBUS "/org/freedesktop/DBus"
+
+static int
+get_sender_pid (GDBusMethodInvocation *invocation)
+{
+  g_autoptr(GDBusMessage) msg = NULL;
+  g_autoptr(GDBusMessage) reply = NULL;
+  GDBusConnection *connection;
+  const char *sender;
+  GVariant *body;
+  g_autoptr(GVariantIter) iter = NULL;
+  const char *key;
+  GVariant *value;
+
+  connection = g_dbus_method_invocation_get_connection (invocation);
+  sender = g_dbus_method_invocation_get_sender (invocation);
+
+  msg = g_dbus_message_new_method_call (DBUS_NAME_DBUS,
+                                        DBUS_PATH_DBUS,
+                                        DBUS_INTERFACE_DBUS,
+                                        "GetConnectionCredentials");
+  g_dbus_message_set_body (msg, g_variant_new ("(s)", sender));
+
+  reply = g_dbus_connection_send_message_with_reply_sync (connection, msg,
+                                                          G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+                                                          30000,
+                                                          NULL,
+                                                          NULL,
+                                                          NULL);
+  if (reply == NULL)
+    return 0;
+
+  if (g_dbus_message_get_message_type (reply) == G_DBUS_MESSAGE_TYPE_ERROR)
+    return 0;
+
+  body = g_dbus_message_get_body (reply);
+
+  g_variant_get (body, "(a{sv})", &iter);
+  while (g_variant_iter_loop (iter, "{&sv}", &key, &value))
+    {
+      if (strcmp (key, "ProcessID") == 0)
+        return g_variant_get_uint32 (value);
+    }
+
+  return 0;
+}
+
 static gboolean
 handle_deploy (FlatpakSystemHelper   *object,
                GDBusMethodInvocation *invocation,
@@ -171,6 +220,8 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
+
+  g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
 
   if ((arg_flags & ~FLATPAK_HELPER_DEPLOY_FLAGS_ALL) != 0)
     {
@@ -421,6 +472,8 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   if (!no_deploy)
     {
+      g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
+
       if (is_update)
         {
           if (!flatpak_dir_deploy_update (system, arg_ref,
@@ -651,6 +704,8 @@ handle_uninstall (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
+  g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
+
   if ((arg_flags & ~FLATPAK_HELPER_UNINSTALL_FLAGS_ALL) != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
@@ -663,6 +718,8 @@ handle_uninstall (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
+
+  g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
 
   if (!flatpak_dir_uninstall (system, arg_ref, arg_flags, NULL, &error))
     {
@@ -696,6 +753,8 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
+
+  g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
 
   if (arg_flags != 0)
     {
@@ -747,6 +806,8 @@ handle_configure_remote (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
+
+  g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
 
   if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
     {
@@ -829,6 +890,8 @@ handle_configure (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
+  g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
+
   if ((arg_flags & ~FLATPAK_HELPER_CONFIGURE_FLAGS_ALL) != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
@@ -891,6 +954,8 @@ handle_update_remote (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
+
+  g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
 
   if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
     {
@@ -966,6 +1031,8 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
+
+  g_object_set_data (G_OBJECT (system), "object-pid", GINT_TO_POINTER (get_sender_pid (invocation)));
 
   if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
     {

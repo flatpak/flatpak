@@ -109,6 +109,7 @@
 
                 <listitem><para>
                     Show origin, sizes and other extra information.
+                    Equivalent to <option>--columns=all</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -153,7 +154,126 @@
                     Print OSTree debug information during command processing.
                 </para></listitem>
             </varlistentry>
+
+            <varlistentry>
+                <term><option>--show-columns</option></term>
+
+                <listitem><para>
+                    Show the available values for the <option>--columns</option> option.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--columns=FIELD,…</option></term>
+
+                <listitem><para>
+                    Specify what information to show about each ref. You can
+                    list multiple fields, or use this option multiple times.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
+    </refsect1>
+
+   <refsect1>
+        <title>Fields</title>
+
+        <para>The following fields are understood by the <option>--columns</option> option:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term>ref</term>
+
+                <listitem><para>
+                    Show the ref
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>application</term>
+
+                <listitem><para>
+                    Show the application or runtime ID
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>arch</term>
+
+                <listitem><para>
+                    Show the architecture
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>branch</term>
+
+                <listitem><para>
+                    Show the branch
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>origin</term>
+
+                <listitem><para>
+                    Show the origin remote
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>active</term>
+
+                <listitem><para>
+                    Show the active commit
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>latest</term>
+
+                <listitem><para>
+                    Show the latest commit
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>size</term>
+
+                <listitem><para>
+                    Show the installed size
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>options</term>
+
+                <listitem><para>
+                    Show options
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>all</term>
+
+                <listitem><para>
+                    Show all columns
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>help</term>
+
+                <listitem><para>
+                    Show the list of available columns
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+        <para>
+          Note that field names can be abbreviated to a unique prefix.
+        </para>
+
     </refsect1>
 
     <refsect1>

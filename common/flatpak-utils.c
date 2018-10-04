@@ -43,6 +43,13 @@
 #include <sys/utsname.h>
 #include <sys/ioctl.h>
 
+#include "flatpak-transaction-private.h"
+
+#ifdef HAVE_LIBSYSTEMD
+#define SD_JOURNAL_SUPPRESS_LOCATION
+#include <systemd/sd-journal.h>
+#endif
+
 #include <glib.h>
 #include "libglnx/libglnx.h"
 #include <gio/gunixoutputstream.h>
@@ -5791,4 +5798,61 @@ flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
   if (out_num != NULL)
     *out_num = number;
   return TRUE;
+}
+
+void
+(flatpak_log_change) (const char *file,
+                      int line,
+                      const char *func,
+                      const char *change,
+                      int opid,
+                      const char *installation,
+                      const char *remote,
+                      const char *ref,
+                      const char *commit,
+                      const char *url,
+                      const char *format,
+                      ...)
+{
+#ifdef HAVE_LIBSYSTEMD
+
+  char message[1024];
+  va_list args;
+
+  va_start (args, format);
+  g_vsnprintf (message, sizeof (message), format, args);
+  va_end (args);
+
+  if (opid)
+    sd_journal_send ("MESSAGE_ID=" FLATPAK_MESSAGE_ID,
+                     "PRIORITY=5",
+                     "FLATPAK_VERSION=" PACKAGE_VERSION,
+                     "OBJECT_PID=%d", opid,
+                     "CODE_FILE=%s", file,
+                     "CODE_LINE=%d", line,
+                     "CODE_FUNC=%s", func,
+                     "INSTALLATION=%s", installation ? installation : "",
+                     "OPERATION=%s", change,
+                     "REMOTE=%s", remote ? remote : "",
+                     "REF=%s", ref ? ref : "",
+                     "COMMIT=%s", commit ? commit : "",
+                     "URL=%s", url ? url : "",
+                     "MESSAGE=%s", message,
+                     NULL);
+  else
+    sd_journal_send ("MESSAGE_ID=" FLATPAK_MESSAGE_ID,
+                     "PRIORITY=5",
+                     "FLATPAK_VERSION=" PACKAGE_VERSION,
+                     "CODE_FILE=%s", file,
+                     "CODE_LINE=%d", line,
+                     "CODE_FUNC=%s", func,
+                     "INSTALLATION=%s", installation,
+                     "OPERATION=%s", change,
+                     "REMOTE=%s", remote ? remote : "",
+                     "REF=%s", ref ? ref : "",
+                     "COMMIT=%s", commit ? commit : "",
+                     "URL=%s", url ? url : "",
+                     "MESSAGE=%s", message,
+                     NULL);
+#endif
 }

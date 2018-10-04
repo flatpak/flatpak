@@ -4248,6 +4248,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *latest_rev = NULL;
   G_GNUC_UNUSED g_autofree char *latest_commit =
     flatpak_dir_read_latest (self, state->remote_name, ref, &latest_alt_commit, cancellable, NULL);
+  g_autofree char *name = NULL;
+  int opid;
 
   /* We use the summary so that we can reuse any cached json */
   flatpak_remote_state_lookup_ref (state, ref, &latest_rev, &summary_element, error);
@@ -4314,6 +4316,19 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_debug ("Imported OCI image as checksum %s", checksum);
 
+  if (repo == self->repo)
+    name = flatpak_dir_get_name (self);
+  else
+    {
+      GFile *file = ostree_repo_get_path (repo);
+      name = g_file_get_path (file);
+    }
+
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  flatpak_log_change ("pull oci", opid, name, registry_uri, ref, NULL, NULL,
+                      "Pulled %s from %s in %s",
+                      ref, registry_uri, name);
+
   return TRUE;
 }
 
@@ -4341,6 +4356,8 @@ flatpak_dir_pull (FlatpakDir                           *self,
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
   const OstreeRepoFinderResult * const *results;
   g_auto(GLnxLockFile) lock = { 0, };
+  g_autofree char *name = NULL;
+  int opid;
 
   /* If @opt_results is set, @opt_rev must be. */
   g_return_val_if_fail (opt_results == NULL || opt_rev != NULL, FALSE);
@@ -4522,6 +4539,19 @@ flatpak_dir_pull (FlatpakDir                           *self,
 
   ret = TRUE;
 
+  if (repo == self->repo)
+    name = flatpak_dir_get_name (self);
+  else
+    {
+      GFile *file = ostree_repo_get_path (repo);
+      name = g_file_get_path (file);
+    }
+
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  flatpak_log_change ("pull", opid, name, state->remote_name, ref, rev, NULL,
+                      "Pulled %s from %s in %s",
+                      ref, state->remote_name, name);
+
 out:
   if (!ret)
     ostree_repo_abort_transaction (repo, cancellable, NULL);
@@ -4659,6 +4689,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(GPtrArray) subdirs_arg = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
   gboolean ret = FALSE;
+  g_autofree char *name = NULL;
+  int opid;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -4876,6 +4908,11 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   ret = TRUE;
 
+  name = flatpak_dir_get_name (self);
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  flatpak_log_change ("pull local", opid, name, src_path, ref, checksum, NULL,
+                      "Pulled %s from %s in %s",
+                      ref, src_path, name);
 out:
   if (!ret)
     ostree_repo_abort_transaction (self->repo, cancellable, NULL);
@@ -7069,6 +7106,9 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   g_autoptr(GError) local_error = NULL;
   g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
   g_autofree char *remove_ref_from_remote = NULL;
+  g_autofree char *name = NULL;
+  g_autofree char *commit = NULL;
+  int opid;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -7151,6 +7191,13 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
 
   ret = TRUE;
 
+  commit = flatpak_dir_read_active (self, ref, cancellable);
+  name = flatpak_dir_get_name (self);
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  flatpak_log_change ("deploy install", opid, name, origin, ref, commit, NULL,
+                      "Installed %s from %s in %s",
+                      ref, origin, name);
+
 out:
   if (created_deploy_base && !ret)
     flatpak_rm_rf (deploy_base, cancellable, NULL);
@@ -7172,6 +7219,9 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   g_autofree const char **old_subpaths = NULL;
   g_autofree char *old_active = NULL;
   const char *old_origin;
+  g_autofree char *name = NULL;
+  int opid;
+  g_autofree char *commit = NULL;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -7216,6 +7266,12 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
     return FALSE;
 
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
+
+  commit = flatpak_dir_read_active (self, ref, cancellable);
+  name = flatpak_dir_get_name (self);
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  flatpak_log_change ("deploy update", opid, name, old_origin, ref, commit, NULL,
+                      "Updated %s from %s in %s", ref, old_origin, name);
 
   return TRUE;
 }
@@ -8178,7 +8234,9 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   g_autofree char *current_ref = NULL;
   gboolean was_deployed;
   gboolean is_app;
-  const char *name;
+  const char *app;
+  g_autofree char *name = NULL;
+  int opid;
 
   g_auto(GStrv) parts = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
@@ -8189,7 +8247,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
     return FALSE;
-  name = parts[1];
+  app = parts[1];
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -8256,11 +8314,11 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   is_app = g_str_has_prefix (ref, "app/");
   if (is_app)
     {
-      current_ref = flatpak_dir_current_ref (self, name, cancellable);
+      current_ref = flatpak_dir_current_ref (self, app, cancellable);
       if (g_strcmp0 (ref, current_ref) == 0)
         {
           g_debug ("dropping current ref");
-          if (!flatpak_dir_drop_current_ref (self, name, cancellable, error))
+          if (!flatpak_dir_drop_current_ref (self, app, cancellable, error))
             return FALSE;
         }
     }
@@ -8273,7 +8331,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
     return FALSE;
 
   if (is_app &&
-      !flatpak_dir_update_exports (self, name, cancellable, error))
+      !flatpak_dir_update_exports (self, app, cancellable, error))
     return FALSE;
 
   glnx_release_lock_file (&lock);
@@ -8288,8 +8346,14 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   if (!was_deployed)
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s branch %s is not installed"), name, parts[3]);
+                   _("%s branch %s is not installed"), app, parts[3]);
+      return FALSE;
     }
+
+  name = flatpak_dir_get_name (self);
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  flatpak_log_change ("uninstall", opid, name, NULL, ref, NULL, NULL,
+                      "Uninstalled %s in %s", ref, name);
 
   return TRUE;
 }
@@ -11051,6 +11115,8 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   g_autoptr(GHashTable) refs = NULL;
   GHashTableIter hash_iter;
   gpointer key;
+  g_autofree char *name = NULL;
+  int opid;
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -11136,6 +11202,11 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
 
+  name = flatpak_dir_get_name (self);
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  flatpak_log_change ("remove remote", opid, name, remote_name, NULL, NULL, NULL,
+                      "Removed remote %s on %s", remote_name, name);
+
   return TRUE;
 }
 
@@ -11193,11 +11264,15 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_auto(GStrv) keys = NULL;
   int i;
+  g_autofree char *name = NULL;
+  int opid;
+  gboolean has_remote;
 
   if (strchr (remote_name, '/') != NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND, _("Invalid character '/' in remote name: %s"),
                                remote_name);
 
+  has_remote = flatpak_dir_has_remote (self, remote_name, NULL);
 
   if (!g_key_file_has_group (config, group))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No configuration for remote %s specified"),
@@ -11284,6 +11359,15 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
 
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
+
+  name = flatpak_dir_get_name (self);
+  opid = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (self), "object-pid"));
+  if (has_remote)
+    flatpak_log_change ("modify remote", opid, name, remote_name, NULL, NULL, url,
+                        "Modified remote %s on %s to %s", remote_name, name, url);
+  else
+    flatpak_log_change ("add remote", opid, name, remote_name, NULL, NULL, url,
+                        "Added remote %s on %s to %s", remote_name, name, url);
 
   return TRUE;
 }
