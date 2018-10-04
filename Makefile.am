@@ -182,3 +182,18 @@ AM_DISTCHECK_CONFIGURE_FLAGS =		\
 	--enable-documentation		\
 	--disable-maintainer-mode	\
 	--enable-introspection
+
+.PHONY: coverage lcov-clean genlcov
+
+coverage:
+	$(AM_V_GEN) $(MAKE) $(AM_MAKEFLAGS) lcov-clean
+	$(AM_V_GEN) $(MAKE) $(AM_MAKEFLAGS) check
+	$(AM_V_GEN) $(MAKE) $(AM_MAKEFLAGS) genlcov
+
+lcov-clean:
+	$(AM_V_GEN) $(LCOV) --directory $(top_builddir) --zerocounters
+
+genlcov:
+	$(AM_V_GEN) $(LCOV) --directory $(top_builddir) --capture --output-file coverage.info
+	$(AM_V_GEN) $(GENHTML) --prefix $(top_builddir) --output-directory coverage coverage.info
+	$(AM_V_GEN)
