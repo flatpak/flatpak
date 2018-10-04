@@ -2166,7 +2166,10 @@ flatpak_transaction_get_current_operation (FlatpakTransaction *self)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
-  return g_object_ref (priv->current_op);
+  if (priv->current_op)
+    return g_object_ref (priv->current_op);
+
+  return NULL;
 }
 
 /**
