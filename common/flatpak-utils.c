@@ -2977,7 +2977,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
-  const char *prefixes[] = { "appstream", "app", "runtime", NULL };
+  const char *prefixes[] = { "appstream", "appstream2", "app", "runtime", NULL };
   const char **prefix;
   g_autoptr(GList) ordered_keys = NULL;
   GList *l = NULL;
