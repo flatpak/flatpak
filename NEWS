@@ -1,3 +1,34 @@
+Changes in 1.0.3
+================
+
+ * run: You can now use --system to run an app that otherwise would run the
+   user version.
+ * New permission --allow=canbus that filters out access to AF_CAN sockets.
+ * lib: New install flags FLATPAK_INSTALL_FLAGS_NO_TRIGGERS and new function
+   flatpak_installation_run_triggers()
+ * lib: Better error reporting, including some new error values that
+   replace the generic FAILED.
+ * uninstall --unused: Improve handling of which .Locale extensions are used
+ * run: Make flatpak run on systems where $XDG_RUNTIME_DIR contains a symlink
+   beneath /var (commonly /var/run -> /run).
+ * Don't export any desktop/dbus/mimetype files in subdirectories.
+ * build-init: We now record the base ref (if used) in the metadata. Nothing
+   uses this atm, but it can be used by tools.
+ * We now respect the upstream ostree.deploy-collection-id instead of the
+   flatpak-specific xa.collection-id metadata key to decide whether to switch
+   to collection ids for a remote. This is useful, because if you use the
+   new one, only new clients (that support it better) will use it.
+ * create-usb: Fix assertion failure in some error cases
+ * create-usb: Always create archive-z2 repos
+ * create-usb: Don't create unnecessary summary in repo
+ * permissions: Avoid errors if there is no permissions table
+ * repo: Fix flatpak repo sometimes using the wrong ostree-metadata ref.
+ * Avoid fsync when updating $installation/.changed.
+ * Add the missing appstream2 ref to the xa.cache metadata
+ * The test-suite got some modifications to make it easier to maintain.
+ * Documentation updates
+ * Translation updates
+
 Changes in 1.0.2
 ================
 
