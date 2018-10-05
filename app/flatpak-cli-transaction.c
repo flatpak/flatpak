@@ -278,10 +278,10 @@ new_operation (FlatpakTransaction          *transaction,
 static void
 operation_done (FlatpakTransaction          *transaction,
                 FlatpakTransactionOperation *operation,
+                const char                  *commit,
                 FlatpakTransactionResult     details)
 {
   FlatpakTransactionOperationType operation_type = flatpak_transaction_operation_get_operation_type (operation);
-  const char *commit = flatpak_transaction_operation_get_commit (operation);
   g_autofree char *short_commit = g_strndup (commit, 12);
 
   progress_done (transaction);

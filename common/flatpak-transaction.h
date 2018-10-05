@@ -100,6 +100,7 @@ struct _FlatpakTransactionClass
                                         FlatpakTransactionProgress  *progress);
   void (*operation_done)       (FlatpakTransaction          *transaction,
                                 FlatpakTransactionOperation *operation,
+                                const char                  *commit,
                                 FlatpakTransactionResult     details);
   gboolean (*operation_error)  (FlatpakTransaction            *transaction,
                                 FlatpakTransactionOperation   *operation,
