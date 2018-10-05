@@ -197,12 +197,24 @@ flatpak_table_printer_finish_row (FlatpakTablePrinter *printer)
   printer->current = g_ptr_array_new_with_free_func (free_cell);
 }
 
+static void
+print_row (GString *row_s, gboolean bold)
+{
+  g_strchomp (row_s->str);
+  if (bold)
+    g_print (FLATPAK_ANSI_BOLD_ON"%s"FLATPAK_ANSI_BOLD_OFF"\n", row_s->str);
+  else
+    g_print ("%s\n", row_s->str);
+  g_string_truncate (row_s, 0);
+}
+
 void
 flatpak_table_printer_print (FlatpakTablePrinter *printer)
 {
   g_autofree int *widths = NULL;
   g_autofree int *lwidths = NULL;
   g_autofree int *rwidths = NULL;
+  g_autoptr(GString) row_s = g_string_new ("");
   int i, j;
 
   if (printer->current->len != 0)
@@ -244,15 +256,13 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
 
   if (flatpak_fancy_output () && printer->titles->len > 0)
     {
-      g_print (FLATPAK_ANSI_BOLD_ON);
       for (i = 0; i < printer->titles->len && i < printer->n_columns; i++)
         {
           char *title = g_ptr_array_index (printer->titles, i);
 
-          g_print ("%s%-*s", (i == 0) ? "" : " ", widths[i], title);
+          g_string_append_printf (row_s, "%s%-*s", (i == 0) ? "" : " ", widths[i], title);
         }
-      g_print (FLATPAK_ANSI_BOLD_OFF);
-      g_print ("\n");
+      print_row (row_s, TRUE);
     }
 
   for (i = 0; i < printer->rows->len; i++)
@@ -265,15 +275,15 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
           if (flatpak_fancy_output ())
             {
               if (cell->span)
-                g_print ("%s%s", (j == 0) ? "" : " ", cell->text);
+                g_string_append_printf (row_s, "%s%s", (j == 0) ? "" : " ", cell->text);
               else if (cell->align < 0)
-                g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
+                g_string_append_printf (row_s, "%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
               else
-                g_print ("%s%*s%-*s", (j == 0) ? "" : " ", lwidths[j] - cell->align, "", widths[j] - (lwidths[j] - cell->align), cell->text);
+                g_string_append_printf (row_s, "%s%*s%-*s", (j == 0) ? "" : " ", lwidths[j] - cell->align, "", widths[j] - (lwidths[j] - cell->align), cell->text);
             }
           else
-            g_print ("%s%s", cell->text, (j < row->len - 1) ? "\t" : "");
+            g_string_append_printf (row_s, "%s%s", cell->text, (j < row->len - 1) ? "\t" : "");
         }
-      g_print ("\n");
+      print_row (row_s, FALSE);
     }
 }
