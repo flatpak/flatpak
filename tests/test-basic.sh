@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..3"
+echo "1..41"
 
 ${FLATPAK} --version > version_out
 
@@ -46,3 +46,19 @@ ${FLATPAK} --supported-arches > arches
 assert_streq `head -1 arches` `cat arch`
 
 echo "ok default arch"
+
+for cmd in install update uninstall list info config repair create-usb \
+           search run override make-current enter ps document-export \
+           document-unexport document-info document-list permission-remove \
+           permission-list permission-show permission-reset remotes remote-add \
+           remote-modify remote-delete remote-ls remote-info build-init \
+           build build-finish build-export build-bundle build-import-bundle \
+           build-sign build-update-repo build-commit-from repo;
+do
+  ${FLATPAK} $cmd --help | head -2 > help_out
+
+  assert_file_has_content help_out "^Usage:$"
+  assert_file_has_content help_out "${FLATPAK} $cmd"
+
+  echo "ok $cmd help"
+done
