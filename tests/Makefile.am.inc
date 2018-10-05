@@ -107,6 +107,12 @@ update-test-matrix:
 tests/test-%.wrap:
 	@true
 
+tests/runtime-repo: tests/make-test-runtime.sh flatpak
+	rm -rf tests/runtime-repo
+	PATH=$$(cd $(top_builddir) && pwd):$${PATH} tests/make-test-runtime.sh tests/runtime-repo org.test.Platform ""
+
+check_DATA+=tests/runtime-repo
+
 include tests/Makefile-test-matrix.am.inc
 
 test_scripts = ${TEST_MATRIX}
