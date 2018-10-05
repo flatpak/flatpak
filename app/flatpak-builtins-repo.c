@@ -33,8 +33,40 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
 
+
+static gboolean
+ostree_repo_mode_to_string (OstreeRepoMode   mode,
+                            const char     **out_mode,
+                            GError         **error)
+{
+  const char *ret_mode;
+
+  switch (mode)
+    {
+    case OSTREE_REPO_MODE_BARE:
+      ret_mode = "bare";
+      break;
+    case OSTREE_REPO_MODE_BARE_USER:
+      ret_mode = "bare-user";
+      break;
+    case OSTREE_REPO_MODE_BARE_USER_ONLY:
+      ret_mode = "bare-user-only";
+      break;
+    case OSTREE_REPO_MODE_ARCHIVE:
+      /* Legacy alias */
+      ret_mode ="archive-z2";
+      break;
+    default:
+      return glnx_throw (error, "Invalid mode '%d'", mode);
+    }
+
+  *out_mode = ret_mode;
+  return TRUE;
+}
+
 static void
-print_info (GVariant *meta)
+print_info (OstreeRepo *repo,
+            GVariant *meta)
 {
   g_autoptr(GVariant) cache = NULL;
   const char *title;
@@ -43,6 +75,12 @@ print_info (GVariant *meta)
   const char *redirect_url;
   const char *deploy_collection_id;
   g_autoptr(GVariant) gpg_keys = NULL;
+  OstreeRepoMode mode;
+  const char *mode_string;
+
+  mode = ostree_repo_get_mode (repo);
+  ostree_repo_mode_to_string (mode, &mode_string, NULL);
+  g_print (_("Repo mode: %s\n"), mode_string);
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
     g_print (_("Title: %s\n"), title);
@@ -237,7 +275,7 @@ flatpak_builtin_repo (int argc, char **argv,
 
   /* Print out the metadata. */
   if (opt_info)
-    print_info (meta);
+    print_info (repo, meta);
 
   if (opt_branches)
     print_branches (meta);
