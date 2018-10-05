@@ -836,6 +836,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * FlatpakTransaction::operation-done:
    * @object: A #FlatpakTransaction
    * @operation: The #FlatpakTransactionOperation which finished
+   * @commit: The commit
    * @result: A #FlatpakTransactionResult giving details about the result
    *
    * The ::operation-done signal gets emitted during the execution of
@@ -848,7 +849,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_STRUCT_OFFSET (FlatpakTransactionClass, operation_done),
                   NULL, NULL,
                   NULL,
-                  G_TYPE_NONE, 2, FLATPAK_TYPE_TRANSACTION_OPERATION, G_TYPE_INT);
+                  G_TYPE_NONE, 3, FLATPAK_TYPE_TRANSACTION_OPERATION, G_TYPE_STRING, G_TYPE_INT);
 
   /**
    * FlatpakTransaction::choose-remote-for-ref:
