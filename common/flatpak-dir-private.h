@@ -784,4 +784,8 @@ char ** flatpak_dir_get_default_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locale_subpaths (FlatpakDir *self);
 
+void flatpak_dir_set_source_pid (FlatpakDir *self,
+                                  pid_t      pid);
+pid_t flatpak_dir_get_source_pid (FlatpakDir *self);
+
 #endif /* __FLATPAK_DIR_H__ */
