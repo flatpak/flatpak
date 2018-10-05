@@ -941,7 +941,7 @@ make_test_runtime (void)
 {
   g_autofree char *arg0 = NULL;
   char *argv[] = {
-    NULL, "repos/test", "org.test.Platform", "", "bash", "ls", "cat", "echo", "readlink", NULL
+    NULL, "repos/test", "org.test.Platform", "", NULL
   };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
