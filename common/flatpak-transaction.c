@@ -1419,7 +1419,7 @@ find_runtime_remote (FlatpakTransaction             *self,
       return NULL;
     }
 
-  /* In the no-puil case, if only one local ref is available, assume that is the one because
+  /* In the no-pull case, if only one local ref is available, assume that is the one because
      the user chose it interactively when pulling */
   if (priv->no_pull && g_strv_length (remotes) == 1)
     res = 0;
