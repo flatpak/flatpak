@@ -58,7 +58,7 @@ add_bin() {
     fi
 }
 
-for i in $@; do
+for i in $@ bash ls cat echo readlink; do
     I=`which $i`
     add_bin $I
 done
