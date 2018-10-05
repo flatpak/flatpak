@@ -33,8 +33,40 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
 
+
+static gboolean
+ostree_repo_mode_to_string (OstreeRepoMode   mode,
+                            const char     **out_mode,
+                            GError         **error)
+{
+  const char *ret_mode;
+
+  switch (mode)
+    {
+    case OSTREE_REPO_MODE_BARE:
+      ret_mode = "bare";
+      break;
+    case OSTREE_REPO_MODE_BARE_USER:
+      ret_mode = "bare-user";
+      break;
+    case OSTREE_REPO_MODE_BARE_USER_ONLY:
+      ret_mode = "bare-user-only";
+      break;
+    case OSTREE_REPO_MODE_ARCHIVE:
+      /* Legacy alias */
+      ret_mode ="archive-z2";
+      break;
+    default:
+      return glnx_throw (error, "Invalid mode '%d'", mode);
+    }
+
+  *out_mode = ret_mode;
+  return TRUE;
+}
+
 static void
-print_info (GVariant *meta)
+print_info (OstreeRepo *repo,
+            GVariant *meta)
 {
   g_autoptr(GVariant) cache = NULL;
   const char *title;
@@ -43,6 +75,12 @@ print_info (GVariant *meta)
   const char *redirect_url;
   const char *deploy_collection_id;
   g_autoptr(GVariant) gpg_keys = NULL;
+  OstreeRepoMode mode;
+  const char *mode_string;
+
+  mode = ostree_repo_get_mode (repo);
+  ostree_repo_mode_to_string (mode, &mode_string, NULL);
+  g_print (_("Repo mode: %s\n"), mode_string);
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
     g_print (_("Title: %s\n"), title);
@@ -162,19 +200,213 @@ print_metadata (GVariant   *meta,
       while (g_variant_iter_next (&iter, "{&s(tt&s)}", &ref, &installed_size, &download_size, &metadata))
         {
           if (strcmp (branch, ref) == 0)
-            g_print ("%s", metadata);
+            g_print ("%s\n", metadata);
         }
     }
+}
+
+static gchar *
+format_timestamp (guint64  timestamp,
+                  GError **error)
+{
+  GDateTime *dt;
+  gchar *str;
+
+  dt = g_date_time_new_from_unix_utc (timestamp);
+  if (dt == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                   "Invalid timestamp: %" G_GUINT64_FORMAT, timestamp);
+      return NULL;
+    }
+
+  str = g_date_time_format (dt, "%Y-%m-%d %H:%M:%S +0000");
+  g_date_time_unref (dt);
+
+  return str;
+}
+
+static void
+dump_indented_lines (const gchar *data)
+{
+  const char* indent = "    ";
+  const gchar *pos;
+
+  for (;;)
+    {
+      pos = strchr (data, '\n');
+      if (pos)
+        {
+          g_print ("%s%.*s", indent, (int)(pos + 1 - data), data);
+          data = pos + 1;
+        }
+      else
+        {
+          if (data[0] != '\0')
+            g_print ("%s%s\n", indent, data);
+          break;
+        }
+    }
+}
+
+static void
+dump_deltas_for_commit (GPtrArray *deltas,
+                        const char *checksum)
+{
+  int i;
+  gboolean header_printed = FALSE;
+
+  if (!deltas)
+    return;
+
+  for (i = 0; i < deltas->len; i++)
+    {
+      const char *delta = g_ptr_array_index (deltas, i);
+
+      if (g_str_equal (delta, checksum))
+        {
+          if (!header_printed)
+            {
+              g_print ("Static Deltas:\n");
+              header_printed = TRUE;
+            }
+          g_print ("  from scratch\n");
+        } 
+      else if (strchr (delta, '-'))
+        {
+          g_auto(GStrv) parts = g_strsplit (delta, "-", 0);
+
+          if (g_str_equal (parts[1], checksum))
+            {
+              if (!header_printed)
+                {
+                  g_print ("Static Deltas:\n");
+                  header_printed = TRUE;
+                }
+              g_print ("  from %s\n", parts[0]);
+            }
+        }
+    }
+
+  if (header_printed)
+    g_print ("\n");
+}
+
+static gboolean
+dump_commit (const char *commit,
+             GVariant *variant,
+             GPtrArray *deltas,
+             GError **error)
+{
+  const gchar *subject;
+  const gchar *body;
+  guint64 timestamp;
+  g_autofree char *str = NULL;
+
+  /* See OSTREE_COMMIT_GVARIANT_FORMAT */
+  g_variant_get (variant, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
+                 &subject, &body, &timestamp, NULL, NULL);
+
+  timestamp = GUINT64_FROM_BE (timestamp);
+  str = format_timestamp (timestamp, error);
+  if (!str)
+    return FALSE;
+  g_print ("Commit:  %s\n", commit);
+  g_print ("Date:  %s\n", str);
+
+  if (subject[0])
+    {
+      g_print ("\n");
+      dump_indented_lines (subject);
+    }
+  else
+    {
+      g_print ("(no subject)\n");
+    }
+
+  if (body[0])
+    {
+      g_print ("\n");
+      dump_indented_lines (body);
+    }
+  g_print ("\n");
+
+  dump_deltas_for_commit (deltas, commit);
+
+  return TRUE;
+}
+
+static gboolean
+log_commit (OstreeRepo *repo,
+            const char *checksum,
+            gboolean is_recurse,
+            GPtrArray *deltas,
+            GError **error)
+{
+  g_autoptr(GVariant) variant = NULL;
+  g_autofree char *parent = NULL;
+  gboolean ret = FALSE;
+  GError *local_error = NULL;
+
+  if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, checksum,
+                                 &variant, &local_error))
+    {
+      if (is_recurse && g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_print ("<< History beyond this commit not fetched >>\n");
+          g_clear_error (&local_error);
+          ret = TRUE;
+        }
+      else
+        {
+          g_propagate_error (error, local_error);
+        }
+      goto out;
+    }
+
+  if (!dump_commit (checksum, variant, deltas, error))
+    goto out;
+
+  /* Get the parent of this commit */
+  parent = ostree_commit_get_parent (variant);
+  if (parent && !log_commit (repo, parent, TRUE, deltas, error))
+    goto out;
+
+  ret = TRUE;
+out:
+  return ret;
+}
+
+static gboolean
+print_commits (OstreeRepo *repo,
+               const char *ref,
+               GError **error)
+{
+  g_autofree char *checksum = NULL;
+  g_autoptr(GPtrArray) deltas = NULL;
+
+  if (!ostree_repo_list_static_delta_names (repo, &deltas, NULL, error))
+    return FALSE;
+
+  if (!ostree_repo_resolve_rev (repo, ref, FALSE, &checksum, error))
+    return FALSE;
+
+  if (!log_commit (repo, checksum, FALSE, deltas, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 static gboolean opt_info;
 static gboolean opt_branches;
 static gchar *opt_metadata_branch;
+static gchar *opt_commits_branch;
 
 static GOptionEntry options[] = {
   { "info", 0, 0, G_OPTION_ARG_NONE, &opt_info, N_("Print general information about the repository"), NULL },
   { "branches", 0, 0, G_OPTION_ARG_NONE, &opt_branches, N_("List the branches in the repository"), NULL },
   { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata_branch, N_("Print metadata for a branch"), N_("BRANCH") },
+  { "commits", 0, 0, G_OPTION_ARG_STRING, &opt_commits_branch, N_("Show commits for a branch"), N_("BRANCH") },
   { NULL }
 };
 
@@ -221,6 +453,7 @@ flatpak_builtin_repo (int argc, char **argv,
         }
 
       meta = g_variant_get_child_value (commit_v, 0);
+      g_debug ("Using repository metadata from the ostree-metadata branch");
     }
   else
     {
@@ -233,17 +466,27 @@ flatpak_builtin_repo (int argc, char **argv,
           return FALSE;
         }
       meta = g_variant_get_child_value (summary, 1);
+      g_debug ("Using repository metadata from the summary file");
     }
+
+  if (!opt_info && !opt_branches && !opt_metadata_branch && !opt_commits_branch)
+    opt_info = TRUE;
 
   /* Print out the metadata. */
   if (opt_info)
-    print_info (meta);
+    print_info (repo, meta);
 
   if (opt_branches)
     print_branches (meta);
 
   if (opt_metadata_branch)
     print_metadata (meta, opt_metadata_branch);
+
+  if (opt_commits_branch)
+    {
+      if (!print_commits (repo, opt_commits_branch, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
