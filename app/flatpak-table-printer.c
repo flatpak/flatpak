@@ -20,6 +20,8 @@
 
 #include "config.h"
 
+#include <glib/gi18n.h>
+
 #include "flatpak-table-printer.h"
 #include "flatpak-utils-private.h"
 
@@ -80,6 +82,15 @@ flatpak_table_printer_set_column_title (FlatpakTablePrinter *printer,
                                         const char          *text)
 {
   g_ptr_array_insert (printer->titles, column, g_strdup (text));
+}
+
+void
+flatpak_table_printer_set_column_titles (FlatpakTablePrinter *printer,
+                                         Column              *columns)
+{
+  int i;
+  for (i = 0; columns[i].name; i++)
+    flatpak_table_printer_set_column_title (printer, i, _(columns[i].title));
 }
 
 void

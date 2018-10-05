@@ -23,6 +23,8 @@
 
 #include <gio/gio.h>
 
+#include "flatpak-builtins-utils.h"
+
 typedef struct FlatpakTablePrinter FlatpakTablePrinter;
 
 FlatpakTablePrinter *flatpak_table_printer_new (void);
@@ -30,6 +32,8 @@ void                flatpak_table_printer_free (FlatpakTablePrinter *printer);
 void                flatpak_table_printer_set_column_title (FlatpakTablePrinter *printer,
                                                             int                  column,
                                                             const char          *title);
+void                flatpak_table_printer_set_column_titles (FlatpakTablePrinter *printer,
+                                                             Column              *columns);
 void                flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
                                                       const char          *text);
 void                flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
