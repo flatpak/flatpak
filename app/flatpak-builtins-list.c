@@ -38,6 +38,7 @@ static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_all;
 static char *opt_arch;
+static char *opt_app_runtime;
 
 static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show extra information"), NULL },
@@ -45,6 +46,7 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to show"), N_("ARCH") },
   { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
+  { "app-runtime", 'a', 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
   { NULL }
 };
 
@@ -103,7 +105,11 @@ join_strv (char **a, char **b)
 }
 
 static gboolean
-find_refs_for_dir (FlatpakDir *dir, GStrv *apps, GStrv *runtimes, GCancellable *cancellable, GError **error)
+find_refs_for_dir (FlatpakDir *dir,
+                   GStrv *apps,
+                   GStrv *runtimes,
+                   GCancellable *cancellable,
+                   GError **error)
 {
   if (flatpak_dir_ensure_repo (dir, cancellable, NULL))
     {
@@ -117,10 +123,19 @@ find_refs_for_dir (FlatpakDir *dir, GStrv *apps, GStrv *runtimes, GCancellable *
 }
 
 static gboolean
-print_table_for_refs (gboolean print_apps, GPtrArray * refs_array, const char *arch, GCancellable *cancellable, GError **error)
+print_table_for_refs (gboolean print_apps,
+                      GPtrArray * refs_array,
+                      const char *arch,
+                      const char *app_runtime,
+                      GCancellable *cancellable,
+                      GError **error)
 {
   FlatpakTablePrinter *printer = flatpak_table_printer_new ();
   int i;
+  FlatpakKinds match_kinds;
+  g_autofree char *match_id = NULL;
+  g_autofree char *match_arch = NULL;
+  g_autofree char *match_branch = NULL;
 
   i = 0;
   flatpak_table_printer_set_column_title (printer, i++, _("Ref"));
@@ -132,6 +147,13 @@ print_table_for_refs (gboolean print_apps, GPtrArray * refs_array, const char *a
       flatpak_table_printer_set_column_title (printer, i++, _("Installed size"));
     }
   flatpak_table_printer_set_column_title (printer, i++, _("Options"));
+
+  if (app_runtime)
+    {
+      if (!flatpak_split_partial_ref_arg (app_runtime, FLATPAK_KINDS_RUNTIME, NULL, NULL,
+                                          &match_kinds, &match_id, &match_arch, &match_branch, error))
+        return FALSE;                                
+    }
 
   for (i = 0; i < refs_array->len; i++)
     {
@@ -178,6 +200,19 @@ print_table_for_refs (gboolean print_apps, GPtrArray * refs_array, const char *a
           deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, NULL);
           if (deploy_data == NULL)
             continue;
+
+          if (app_runtime)
+            {
+              const char *runtime = flatpak_deploy_data_get_runtime (deploy_data);
+              if (runtime)
+                {
+                  g_auto(GStrv) pref = g_strsplit (runtime, "/", 3);
+                  if ((match_id && pref[0] && strcmp (pref[0], match_id) != 0) ||
+                      (match_arch && pref[1] && strcmp (pref[1], match_arch) != 0) ||
+                      (match_branch && pref[2] && strcmp (pref[2], match_branch) != 0))
+                    continue;
+                }
+            }
 
           if (!opt_all && strcmp (parts[0], "runtime") == 0 &&
               flatpak_id_has_subref_suffix (parts[1]))
@@ -280,7 +315,13 @@ print_table_for_refs (gboolean print_apps, GPtrArray * refs_array, const char *a
 }
 
 static gboolean
-print_installed_refs (gboolean app, gboolean runtime, GPtrArray *dirs, const char *arch, GCancellable *cancellable, GError **error)
+print_installed_refs (gboolean app,
+                      gboolean runtime,
+                      GPtrArray *dirs,
+                      const char *arch,
+                      const char *app_runtime,
+                      GCancellable *cancellable,
+                      GError **error)
 {
   g_autoptr(GPtrArray) refs_array = NULL;
   int i;
@@ -298,7 +339,7 @@ print_installed_refs (gboolean app, gboolean runtime, GPtrArray *dirs, const cha
       g_ptr_array_add (refs_array, refs_data_new (dir, apps, runtimes));
     }
 
-  if (!print_table_for_refs (app, refs_array, arch, cancellable, error))
+  if (!print_table_for_refs (app, refs_array, arch, app_runtime, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -330,6 +371,7 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (!print_installed_refs (opt_app, opt_runtime,
                              dirs,
                              opt_arch,
+                             opt_app_runtime,
                              cancellable, error))
     return FALSE;
 
