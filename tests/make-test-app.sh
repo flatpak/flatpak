@@ -4,7 +4,7 @@ set -e
 
 DIR=`mktemp -d`
 
-REPONAME=$1
+REPO=$1
 shift
 APP_ID=$1
 shift
@@ -79,5 +79,5 @@ fi
 
 flatpak build-finish --command=hello.sh ${DIR}
 mkdir -p repos
-flatpak build-export ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} repos/${REPONAME} ${DIR}
+flatpak build-export ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR}
 rm -rf ${DIR}

@@ -203,8 +203,8 @@ setup_repo_no_add () {
         COLLECTION_ID=
     fi
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Platform "${COLLECTION_ID}" bash ls cat echo readlink > /dev/null
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} "" "${COLLECTION_ID}" > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Platform "${COLLECTION_ID}" bash ls cat echo readlink > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${COLLECTION_ID}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
         $(dirname $0)/test-webserver.sh repos
@@ -255,7 +255,7 @@ make_updated_app () {
         COLLECTION_ID=""
     fi
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} "" "${COLLECTION_ID}" ${3:-UPDATED} > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${COLLECTION_ID}" ${3:-UPDATED} > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -267,7 +267,7 @@ setup_sdk_repo () {
         COLLECTION_ID=""
     fi
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Sdk "${COLLECTION_ID}" bash ls cat echo readlink make mkdir cp touch > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Sdk "${COLLECTION_ID}" bash ls cat echo readlink make mkdir cp touch > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
