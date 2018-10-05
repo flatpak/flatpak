@@ -134,6 +134,7 @@ struct FlatpakDir
   DirExtraData    *extra_data;
   OstreeRepo      *repo;
   gboolean         no_system_helper;
+  pid_t            source_pid;
 
   GDBusConnection *system_helper_bus;
 
@@ -12571,3 +12572,17 @@ flatpak_collection_ref_equal (gconstpointer ref1,
   return g_strcmp0 (_ref1->collection_id, _ref2->collection_id) == 0 &&
          g_strcmp0 (_ref1->ref_name, _ref2->ref_name) == 0;
 }
+
+void
+flatpak_dir_set_source_pid (FlatpakDir *self,
+                            pid_t      pid)
+{
+  self->source_pid = pid;
+}
+
+pid_t
+flatpak_dir_get_source_pid (FlatpakDir *self)
+{
+  return self->source_pid;
+}
+
