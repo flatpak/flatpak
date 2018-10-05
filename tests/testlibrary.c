@@ -941,7 +941,7 @@ make_test_runtime (void)
 {
   g_autofree char *arg0 = NULL;
   char *argv[] = {
-    NULL, "test", "org.test.Platform", "", "bash", "ls", "cat", "echo", "readlink", NULL
+    NULL, "repos/test", "org.test.Platform", "", "bash", "ls", "cat", "echo", "readlink", NULL
   };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
@@ -955,7 +955,7 @@ static void
 make_test_app (void)
 {
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "test", "", "", NULL };
+  char *argv[] = { NULL, "repos/test", "", "", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
@@ -968,7 +968,7 @@ static void
 update_test_app (void)
 {
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "test", "", "", "UPDATED", NULL };
+  char *argv[] = { NULL, "repos/test", "", "", "UPDATED", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
