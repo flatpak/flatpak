@@ -200,7 +200,7 @@ print_metadata (GVariant   *meta,
       while (g_variant_iter_next (&iter, "{&s(tt&s)}", &ref, &installed_size, &download_size, &metadata))
         {
           if (strcmp (branch, ref) == 0)
-            g_print ("%s", metadata);
+            g_print ("%s\n", metadata);
         }
     }
 }
