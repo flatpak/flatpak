@@ -39,35 +39,17 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-gboolean
-flatpak_builtin_document_list (int argc, char **argv,
-                               GCancellable *cancellable,
-                               GError **error)
+static gboolean
+print_documents (const char *app_id,
+                 GCancellable *cancellable,
+                 GError **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GDBusConnection) session_bus = NULL;
   XdpDbusDocuments *documents;
   g_autoptr(GVariant) apps = NULL;
   g_autoptr(GVariantIter) iter = NULL;
-  const char *app_id;
   const char *id;
   const char *path;
-
-  context = g_option_context_new (_("[APPID] - List exported files"));
-  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
-
-  if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_NO_DIR,
-                                     NULL, cancellable, error))
-    return FALSE;
-
-  if (argc < 2)
-    app_id = "";
-  else
-    app_id = argv[1];
-
-  if (argc > 2)
-    return usage_error (context, _("Too many arguments"), error);
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
   if (session_bus == NULL)
@@ -81,16 +63,39 @@ flatpak_builtin_document_list (int argc, char **argv,
   if (documents == NULL)
     return FALSE;
 
-
-  if (!xdp_dbus_documents_call_list_sync (documents, app_id, &apps, NULL, error))
+  if (!xdp_dbus_documents_call_list_sync (documents, app_id ? app_id : "", &apps, NULL, error))
     return FALSE;
 
   iter = g_variant_iter_new (apps);
-
   while (g_variant_iter_next (iter, "{&s^&ay}", &id, &path))
     g_print ("%s\t%s\n", id, path);
 
   return TRUE;
+}
+
+gboolean
+flatpak_builtin_document_list (int argc, char **argv,
+                               GCancellable *cancellable,
+                               GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  const char *app_id = NULL;
+
+  context = g_option_context_new (_("[APPID] - List exported files"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
+
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_NO_DIR,
+                                     NULL, cancellable, error))
+    return FALSE;
+
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
+  if (argc == 2)
+    app_id = argv[1];
+
+  return print_documents (app_id, cancellable, error);
 }
 
 gboolean
