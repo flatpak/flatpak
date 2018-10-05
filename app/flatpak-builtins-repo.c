@@ -76,7 +76,7 @@ print_info (OstreeRepo *repo,
   const char *deploy_collection_id;
   g_autoptr(GVariant) gpg_keys = NULL;
   OstreeRepoMode mode;
-  const char *mode_string;
+  const char *mode_string = "unknown";
 
   mode = ostree_repo_get_mode (repo);
   ostree_repo_mode_to_string (mode, &mode_string, NULL);
