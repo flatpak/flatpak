@@ -1,2 +1,0 @@
-[Service]
-Environment=XDG_DATA_DIRS=%h/.local/share/flatpak/exports/share/:@localstatedir@/lib/flatpak/exports/share/:/usr/local/share/:/usr/share/
