@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..41"
+echo "1..4"
 
 ${FLATPAK} --version > version_out
 
@@ -59,6 +59,6 @@ do
 
   assert_file_has_content help_out "^Usage:$"
   assert_file_has_content help_out "${FLATPAK} $cmd"
-
-  echo "ok $cmd help"
 done
+
+echo "ok command help"
