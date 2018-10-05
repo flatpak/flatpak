@@ -120,6 +120,7 @@ struct _FlatpakTransactionPrivate
   gboolean                     disable_related;
   gboolean                     reinstall;
   gboolean                     force_uninstall;
+  gboolean                     can_run;
   char                        *default_arch;
 };
 
@@ -944,6 +945,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
   priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) flatpak_remote_state_unref);
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
   priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
+  priv->can_run = TRUE;
 }
 
 
@@ -2565,6 +2567,11 @@ flatpak_transaction_run (FlatpakTransaction *self,
   gboolean ready_res = FALSE;
   int i;
 
+  if (!priv->can_run)
+    return flatpak_fail (error, _("Transaction already executed"));
+
+  priv->can_run = FALSE;
+  
   priv->current_op = NULL;
 
   if (!priv->no_pull &&
