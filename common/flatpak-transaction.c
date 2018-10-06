@@ -2332,7 +2332,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
   if (!g_key_file_load_from_data (dep_keyfile,
                                   g_bytes_get_data (dep_data, NULL),
                                   g_bytes_get_size (dep_data),
-                                  0, error))
+                                  0, &local_error))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakrepo: %s"), local_error->message);
 
   uri = soup_uri_new (dep_url);
