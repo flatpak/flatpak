@@ -653,7 +653,8 @@ test_list_refs_in_remotes (void)
       g_hash_table_add (ref_specs, flatpak_ref_format_ref (ref));
     }
 
-  g_assert_cmpuint (g_hash_table_size (collection_ids), ==, refs1->len);
+  /* we have a locale extension for each app, thus the 2 */
+  g_assert_cmpuint (2 * g_hash_table_size (collection_ids), ==, refs1->len);
 
   /* Ensure that listing the refs by using a remote's URI will get us the
    * same results as using the name */
@@ -686,7 +687,7 @@ test_list_remote_refs (void)
   refs = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);
-  g_assert_cmpint (refs->len, ==, 2);
+  g_assert_cmpint (refs->len, >, 1);
 
 
   for (i = 0; i < refs->len; i++)
@@ -706,6 +707,10 @@ test_list_remote_refs (void)
       if (strcmp ("org.test.Hello", flatpak_ref_get_name (ref)) == 0)
         {
           g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_APP);
+        }
+      else if (strcmp ("org.test.Hello.Locale", flatpak_ref_get_name (ref)) == 0)
+        {
+          g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_RUNTIME);
         }
       else
         {
@@ -1504,7 +1509,7 @@ ready (FlatpakTransaction *transaction)
   ready_count++;
 
   ops = flatpak_transaction_get_operations (transaction);
-  g_assert_cmpint (g_list_length (ops), ==, 2);
+  g_assert_cmpint (g_list_length (ops), ==, 3);
 
   for (l = ops; l; l = l->next)
     {
@@ -1527,6 +1532,7 @@ new_op (FlatpakTransaction *transaction,
   const char *refs[] = {
     "runtime/org.test.Platform/x86_64/master",
     "app/org.test.Hello/x86_64/master",
+    "runtime/org.test.Hello.Locale/x86_64/master",
     NULL
   };
   g_autoptr(FlatpakTransactionOperation) current = NULL;
@@ -1554,6 +1560,7 @@ op_done (FlatpakTransaction *transaction,
   const char *refs[] = {
     "runtime/org.test.Platform/x86_64/master",
     "app/org.test.Hello/x86_64/master",
+    "runtime/org.test.Hello.Locale/x86_64/master",
     NULL
   };
 
@@ -1642,13 +1649,13 @@ test_transaction_install_uninstall (void)
   g_assert_true (res);
 
   g_assert_cmpint (ready_count, ==, 1);
-  g_assert_cmpint (new_op_count, ==, 2);
-  g_assert_cmpint (op_done_count, ==, 2);
+  g_assert_cmpint (new_op_count, ==, 3);
+  g_assert_cmpint (op_done_count, ==, 3);
 
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);
-  g_assert_cmpint (refs->len, ==, 2);
+  g_assert_cmpint (refs->len, ==, 3);
   g_clear_pointer (&refs, g_ptr_array_unref);
 
   ref = flatpak_installation_get_current_installed_app (inst, "org.test.Hello", NULL, &error);
@@ -1688,7 +1695,7 @@ test_transaction_install_uninstall (void)
                                                            NULL,
                                                            &error);
   g_assert_no_error (error);
-  g_assert_cmpint (refs->len, ==, 1);
+  g_assert_cmpint (refs->len, ==, 2);
   
   ref = g_object_ref (g_ptr_array_index (refs, 0));
   bytes = flatpak_installed_ref_load_metadata (ref, NULL, &error);
@@ -1742,7 +1749,7 @@ test_transaction_install_uninstall (void)
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);
-  g_assert_cmpint (refs->len, ==, 1); /* FIXME: this should be 2, we need the runtime */
+  g_assert_cmpint (refs->len, ==, 2); /* FIXME: this should be 3, we need the runtime */
   g_clear_pointer (&refs, g_ptr_array_unref);
 
   ref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_APP, "org.test.Hello", "xzy", "master", NULL, &error);
@@ -1842,7 +1849,7 @@ test_transaction_install_flatpakref (void)
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);
-  g_assert_cmpint (refs->len, ==, 2);
+  g_assert_cmpint (refs->len, ==, 3);
   g_clear_pointer (&refs, g_ptr_array_unref);
 
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
@@ -1912,13 +1919,13 @@ check_ready1_abort (FlatpakTransaction *transaction)
 }
 
 static gboolean
-check_ready2_abort (FlatpakTransaction *transaction)
+check_ready3_abort (FlatpakTransaction *transaction)
 {
   GList *ops;
   FlatpakTransactionOperation *op;
 
   ops = flatpak_transaction_get_operations (transaction);
-  g_assert_cmpint (g_list_length (ops), ==, 2);
+  g_assert_cmpint (g_list_length (ops), ==, 3);
   op = ops->data;
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
   g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, "runtime/org.test.Platform/x86_64/master");
@@ -1926,6 +1933,10 @@ check_ready2_abort (FlatpakTransaction *transaction)
   op = ops->next->data;
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
   g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, "app/org.test.Hello/x86_64/master");
+
+  op = ops->next->next->data;
+  g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
+  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, "runtime/org.test.Hello.Locale/x86_64/master");
 
   g_list_free_full (ops, g_object_unref);
 
@@ -1954,6 +1965,7 @@ test_transaction_deps (void)
   g_assert_nonnull (transaction);
 
   flatpak_transaction_set_disable_dependencies (transaction, TRUE);
+  flatpak_transaction_set_disable_related (transaction, TRUE);
 
   res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
   g_assert_no_error (error);
@@ -1971,12 +1983,13 @@ test_transaction_deps (void)
   g_assert_nonnull (transaction);
 
   flatpak_transaction_set_disable_dependencies (transaction, FALSE);
+  flatpak_transaction_set_disable_related (transaction, FALSE);
 
   res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
-  g_signal_connect (transaction, "ready", G_CALLBACK (check_ready2_abort), NULL);
+  g_signal_connect (transaction, "ready", G_CALLBACK (check_ready3_abort), NULL);
   flatpak_transaction_run (transaction, NULL, &error);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
 }
