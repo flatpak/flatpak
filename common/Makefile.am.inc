@@ -17,6 +17,7 @@ flatpakinclude_HEADERS = \
 	common/flatpak-version-macros.h \
 	common/flatpak-portal-error.h \
 	common/flatpak-transaction.h \
+	common/flatpak-instance.h \
 	$(NULL)
 
 nodist_flatpakinclude_HEADERS = \
@@ -120,7 +121,6 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-error.c \
 	common/flatpak-installation-private.h \
 	common/flatpak-installation.c \
-	common/flatpak-instance-private.h \
 	common/flatpak-instance.c \
 	common/valgrind-private.h \
 	$(NULL)

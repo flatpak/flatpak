@@ -25,6 +25,7 @@
     <xi:include href="xml/flatpak-related-ref.xml"/>
     <xi:include href="xml/flatpak-remote-ref.xml"/>
     <xi:include href="xml/flatpak-bundle-ref.xml"/>
+    <xi:include href="xml/flatpak-instance.xml"/>
     <xi:include href="xml/flatpak-error.xml"/>
     <xi:include href="xml/flatpak-version-macros.xml"/>
   </chapter>
