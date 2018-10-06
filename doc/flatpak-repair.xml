@@ -58,6 +58,9 @@
                 Enumerate all deployed refs and re-install any that are not in the repo (or are partial for a non-subdir deploy).
             </para></listitem>
         </itemizedlist>
+        <para>
+          An alternative command for repairing OSTree repositories is ostree fsck.
+        </para>
 
     </refsect1>
 
@@ -141,6 +144,7 @@
 
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>ostree-fsck</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>
