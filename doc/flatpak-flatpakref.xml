@@ -124,6 +124,10 @@
                     <term><option>RuntimeRepo</option> (string)</term>
                     <listitem><para>The url for a .flatpakref file for the runtime.</para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>SuggestRemoteName</option> (string)</term>
+                    <listitem><para>A suggested name for the remote.</para></listitem>
+                </varlistentry>
             </variablelist>
         </refsect2>
     </refsect1>
