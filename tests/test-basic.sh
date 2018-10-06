@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..4"
+echo "1..5"
 
 ${FLATPAK} --version > version_out
 
@@ -46,6 +46,13 @@ ${FLATPAK} --supported-arches > arches
 assert_streq `head -1 arches` `cat arch`
 
 echo "ok default arch"
+
+${FLATPAK} --gl-drivers > drivers
+
+assert_file_has_content drivers "^default$";
+assert_file_has_content drivers "^host$";
+
+echo "ok gl drivers"
 
 for cmd in install update uninstall list info config repair create-usb \
            search run override make-current enter ps document-export \
