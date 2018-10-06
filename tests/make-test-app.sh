@@ -25,6 +25,11 @@ cat > ${DIR}/metadata <<EOF
 name=$APP_ID
 runtime=org.test.Platform/$ARCH/master
 sdk=org.test.Platform/$ARCH/master
+
+[Extension org.test.Hello.Locale]
+directory=share/runtime/locale
+autodelete=true
+locale-subset=true
 EOF
 
 mkdir -p ${DIR}/files/bin
@@ -77,7 +82,36 @@ else
     collection_args=
 fi
 
+mkdir -p ${DIR}/files/share/runtime/locale
+
 flatpak build-finish --command=hello.sh ${DIR}
 mkdir -p repos
 flatpak build-export ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR}
 rm -rf ${DIR}
+
+# build a locale extension
+
+DIR=`mktemp -d`
+
+# Init dir
+cat > ${DIR}/metadata <<EOF
+[Runtime]
+name=${APP_ID}.Locale
+
+[ExtensionOf]
+ref=app/$APP_ID/$ARCH/master
+EOF
+
+cat > de.po <<EOF
+msgid "Hello world"
+msgstr "Hallo Welt"
+EOF
+mkdir -p ${DIR}/files/share/locale/de/LC_MESSAGES
+msgfmt --output-file ${DIR}/files/share/locale/de/LC_MESSAGES/helloworld.mo de.po
+
+flatpak build-finish ${DIR}
+mkdir -p repos
+flatpak build-export ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR}
+rm -rf ${DIR}
+
+
