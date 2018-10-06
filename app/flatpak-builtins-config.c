@@ -212,6 +212,9 @@ flatpak_builtin_config (int argc, char **argv, GCancellable *cancellable, GError
 
   dir = g_ptr_array_index (dirs, 0);
 
+  if (!opt_get && !opt_set && !opt_unset && !opt_list)
+    opt_list = TRUE;
+
   if (opt_get)
     return get_config (argc, argv, dir, cancellable, error);
   else if (opt_set)
