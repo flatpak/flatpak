@@ -756,6 +756,47 @@ test_list_remote_refs (void)
 }
 
 static void
+test_list_remote_related_refs (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  FlatpakRelatedRef *ref;
+  g_auto(GStrv) subpaths = NULL;
+  gboolean should_download;
+  gboolean should_delete;
+  gboolean should_autoprune;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  refs = flatpak_installation_list_remote_related_refs_sync (inst, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_nonnull (refs);
+  g_assert_no_error (error);
+
+  g_assert_cmpint (refs->len, ==, 1);
+  ref = g_ptr_array_index (refs, 0);
+
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
+  g_assert_true (flatpak_related_ref_should_download (ref));
+  g_assert_true (flatpak_related_ref_should_delete (ref));
+  g_assert_false (flatpak_related_ref_should_autoprune (ref));
+  g_assert (g_strv_length ((char **)flatpak_related_ref_get_subpaths (ref)) > 0);
+
+  g_object_get (ref,
+                "subpaths", &subpaths,
+                "should-download", &should_download,
+                "should-delete", &should_delete,
+                "should-autoprune", &should_autoprune,
+                NULL);
+
+  g_assert (g_strv_length (subpaths) > 0);
+  g_assert_true (should_download);
+  g_assert_true (should_delete);
+  g_assert_false (should_autoprune);
+}
+
+static void
 progress_cb (const char *status,
              guint       progress,
              gboolean    estimating,
@@ -2013,6 +2054,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/remote", test_remote);
   g_test_add_func ("/library/remote-new", test_remote_new);
   g_test_add_func ("/library/list-remote-refs", test_list_remote_refs);
+  g_test_add_func ("/library/list-remote-related-refs", test_list_remote_related_refs);
   g_test_add_func ("/library/list-refs", test_list_refs);
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
   g_test_add_func ("/library/list-refs-in-remote", test_list_refs_in_remotes);
