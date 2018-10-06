@@ -40,6 +40,17 @@
  * you start the transaction with flatpak_transaction_run() which will resolve all kinds
  * of dependencies and report progress and status while downloading and installing these.
  *
+ * The dependency resolution that is the first step of executing a transaction can
+ * be influenced by flatpak_transaction_set_disable_dependencies(),
+ * flatpak_transaction_set_disable_related(), flatpak_transaction_add_dependency_source()
+ * and flatpak_transaction_add_default_dependency_sources().
+ *
+ * The underlying operations that get orchestrated by a FlatpakTransaction are: pulling
+ * new data from remote repositories, deploying newer applications or runtimes and pruning
+ * old deployments. Which of these operations are carried out can be controlled with
+ * flatpak_transaction_set_no_pull(), flatpak_transaction_set_no_deploy() and
+ * flatpak_transaction_set_disable_prune().
+ *
  * A transaction is a blocking operation, and all signals are emitted in the same thread.
  * This means you should either handle the signals directly (say, by doing blocking console
  * interaction, or by just returning without interaction), or run the operation in a separate
@@ -354,6 +365,8 @@ remote_name_is_file (const char *remote_name)
  * on runtimes from this additional installation (wheres it would normally
  * install required runtimes that are not installed in the installation
  * the transaction works on).
+ *
+ * Also see flatpak_transaction_add_default_dependency_sources().
  */
 void
 flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
