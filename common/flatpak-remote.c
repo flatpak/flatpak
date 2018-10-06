@@ -860,6 +860,9 @@ flatpak_remote_commit (FlatpakRemote *self,
   if (priv->local_disabled_set)
     g_key_file_set_boolean (config, group, "xa.disable", priv->local_disabled);
 
+  if (priv->local_nodeps_set)
+    g_key_file_set_boolean (config, group, "xa.nodeps", priv->local_nodeps);
+
   if (priv->local_prio_set)
     {
       g_autofree char *prio_as_string = g_strdup_printf ("%d", priv->local_prio);
