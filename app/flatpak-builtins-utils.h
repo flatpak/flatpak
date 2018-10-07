@@ -82,4 +82,6 @@ Column *handle_column_args (Column *all_columns,
                             const char **opt_cols,
                             GError **error);
 
+int levenshtein_distance (const char *s, const char *t);
+
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */
