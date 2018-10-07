@@ -102,42 +102,10 @@ flatpak_installation_finalize (GObject *object)
 }
 
 static void
-flatpak_installation_set_property (GObject      *object,
-                                   guint         prop_id,
-                                   const GValue *value,
-                                   GParamSpec   *pspec)
-{
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
-    }
-}
-
-static void
-flatpak_installation_get_property (GObject    *object,
-                                   guint       prop_id,
-                                   GValue     *value,
-                                   GParamSpec *pspec)
-{
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
-    }
-}
-
-static void
 flatpak_installation_class_init (FlatpakInstallationClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->get_property = flatpak_installation_get_property;
-  object_class->set_property = flatpak_installation_set_property;
   object_class->finalize = flatpak_installation_finalize;
 
   /* Avoid weird recursive type initialization deadlocks from libsoup */
