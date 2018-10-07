@@ -99,10 +99,6 @@ char **flatpak_get_current_locale_langs (void);
 
 void flatpak_migrate_from_xdg_app (void);
 
-GFile *flatpak_file_new_tmp_in (GFile      *dir,
-                                const char *templatename,
-                                GError    **error);
-
 gboolean flatpak_write_update_checksum (GOutputStream *out,
                                         gconstpointer  data,
                                         gsize          len,
@@ -324,10 +320,6 @@ flatpak_auto_lock_helper (GMutex *mutex)
 gboolean flatpak_switch_symlink_and_remove (const char *symlink_path,
                                             const char *target,
                                             GError    **error);
-gint flatpak_mkstempat (int    dir_fd,
-                        gchar *tmpl,
-                        int    flags,
-                        int    mode);
 
 gboolean flatpak_repo_set_title (OstreeRepo *repo,
                                  const char *title,
