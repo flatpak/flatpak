@@ -37,7 +37,10 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 
+static gboolean opt_docid;
+
 static GOptionEntry options[] = {
+  { "docid", 0, 0, G_OPTION_ARG_NONE, &opt_docid, N_("Specify the document ID"), NULL },
   { NULL }
 };
 
@@ -79,7 +82,9 @@ flatpak_builtin_document_unexport (int argc, char **argv,
   if (documents == NULL)
     return FALSE;
 
-  if (!xdp_dbus_documents_call_lookup_sync (documents, file, &doc_id, NULL, error))
+  if (opt_docid)
+    doc_id = g_strdup (file);
+  else if (!xdp_dbus_documents_call_lookup_sync (documents, file, &doc_id, NULL, error))
     return FALSE;
 
   if (strcmp (doc_id, "") == 0)
