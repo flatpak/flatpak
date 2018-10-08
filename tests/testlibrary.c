@@ -781,7 +781,8 @@ test_list_remote_related_refs (void)
   g_assert_true (flatpak_related_ref_should_download (ref));
   g_assert_true (flatpak_related_ref_should_delete (ref));
   g_assert_false (flatpak_related_ref_should_autoprune (ref));
-  g_assert (g_strv_length ((char **)flatpak_related_ref_get_subpaths (ref)) > 0);
+  g_assert (g_strv_length ((char **)flatpak_related_ref_get_subpaths (ref)) == 1);
+  g_assert_cmpstr  (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
 
   g_object_get (ref,
                 "subpaths", &subpaths,
@@ -790,7 +791,8 @@ test_list_remote_related_refs (void)
                 "should-autoprune", &should_autoprune,
                 NULL);
 
-  g_assert (g_strv_length (subpaths) > 0);
+  g_assert (g_strv_length (subpaths) == 1);
+  g_assert_cmpstr (subpaths[0], ==, "/de");
   g_assert_true (should_download);
   g_assert_true (should_delete);
   g_assert_false (should_autoprune);
@@ -1325,6 +1327,14 @@ setup_multiple_installations (void)
 }
 
 static void
+configure_languages (void)
+{
+  char *argv[] = { "flatpak", "config", "--user", "--set", "languages", "de", NULL };
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
 setup_repo (void)
 {
   repo_collection_id = "com.example.Test";
@@ -1334,6 +1344,7 @@ setup_repo (void)
   update_repo ();
   add_remote ();
   add_flatpakrepo ();
+  configure_languages ();
 }
 
 static void
