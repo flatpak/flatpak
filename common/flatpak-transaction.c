@@ -1419,7 +1419,7 @@ find_runtime_remote (FlatpakTransaction             *self,
       return NULL;
     }
 
-  /* In the no-puil case, if only one local ref is available, assume that is the one because
+  /* In the no-pull case, if only one local ref is available, assume that is the one because
      the user chose it interactively when pulling */
   if (priv->no_pull && g_strv_length (remotes) == 1)
     res = 0;
@@ -2335,7 +2335,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
   if (!g_key_file_load_from_data (dep_keyfile,
                                   g_bytes_get_data (dep_data, NULL),
                                   g_bytes_get_size (dep_data),
-                                  0, error))
+                                  0, &local_error))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakrepo: %s"), local_error->message);
 
   uri = soup_uri_new (dep_url);
