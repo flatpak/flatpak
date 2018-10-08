@@ -646,6 +646,46 @@ flatpak_migrate_from_xdg_app (void)
     }
 }
 
+char *
+flatpak_get_timezone (void)
+{
+  g_autofree gchar *symlink = NULL;
+  gchar *etc_timezone = NULL;
+  const gchar *tzdir;
+
+  tzdir = getenv ("TZDIR");
+  if (tzdir == NULL)
+    tzdir = "/usr/share/zoneinfo";
+
+  symlink = flatpak_resolve_link ("/etc/localtime", NULL);
+  if (symlink != NULL)
+    {
+      /* Resolve relative path */
+      g_autofree gchar *canonical = flatpak_canonicalize_filename (symlink);
+      char *canonical_suffix;
+
+      /* Strip the prefix and slashes if possible. */
+      if (g_str_has_prefix (canonical, tzdir))
+        {
+          canonical_suffix = canonical + strlen (tzdir);
+          while (*canonical_suffix == '/')
+            canonical_suffix++;
+
+          return g_strdup (canonical_suffix);
+        }
+    }
+
+  if (g_file_get_contents ("/etc/timezeone", &etc_timezone,
+                           NULL, NULL))
+    {
+      g_strchomp (etc_timezone);
+      return etc_timezone;
+    }
+
+  /* Final fall-back is UTC */
+  return g_strdup ("UTC");
+ }
+
 static gboolean
 is_valid_initial_name_character (gint c, gboolean allow_dash)
 {
