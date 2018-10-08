@@ -45,12 +45,44 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static char *
-parse_lang (const char *value)
+static gboolean
+looks_like_a_language (const char *s)
 {
+  int len = strlen (s);
+  int i;
+
+  if (len < 2 || len > 3)
+    return FALSE;
+
+  for (i = 0; i < len; i++)
+    {
+      if (!g_ascii_isalpha (s[i]) || !g_ascii_islower (s[i]))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+static char *
+parse_lang (const char *value, GError **error)
+{
+  g_auto(GStrv) strs = NULL;
+  int i;
+
   if (strcmp (value, "*") == 0 ||
       strcmp (value, "*all*") == 0)
     return g_strdup ("");
+
+  strs = g_strsplit (value, ";", 0);
+  for (i = 0; strs[i]; i++)
+    {
+      if (!looks_like_a_language (strs[i]))
+        {
+          flatpak_fail (error, _("'%s' does not look like a language code"), strs[i]);
+          return NULL;
+        }
+    }
+
   return g_strdup (value);
 }
 
@@ -73,7 +105,7 @@ get_lang_default (FlatpakDir *dir)
 typedef struct
 {
   const char *name;
-  char *(*parse)(const char *value);
+  char *(*parse)(const char *value, GError **error);
   char *(*print)(const char *value);
   char *(*get_default)(FlatpakDir * dir);
 } ConfigKey;
@@ -177,7 +209,10 @@ set_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCa
   if (key == NULL)
     return FALSE;
 
-  parsed = key->parse (argv[2]);
+  parsed = key->parse (argv[2], error);
+  if (!parsed)
+    return FALSE;
+
   if (!flatpak_dir_set_config (dir, key->name, parsed, error))
     return FALSE;
 
