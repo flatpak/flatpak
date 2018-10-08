@@ -34,7 +34,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-table-printer.h"
-#include "flatpak-instance-private.h"
+#include "flatpak-instance.h"
 
 static const char **opt_cols;
 

@@ -295,3 +295,27 @@ FLATPAK_BUNDLE_REF
 FLATPAK_IS_BUNDLE_REF
 flatpak_bundle_ref_get_type
 </SECTION>
+
+<SECTION>
+<FILE>flatpak-instance</FILE>
+<TITLE>FlatpakInstance</TITLE>
+FlatpakInstance
+flatpak_instance_get_all
+flatpak_instance_get_id
+flatpak_instance_get_app
+flatpak_instance_get_arch
+flatpak_instance_get_branch
+flatpak_instance_get_commit
+flatpak_instance_get_runtime
+flatpak_instance_get_runtime_commit
+flatpak_instance_get_pid
+flatpak_instance_get_child_pid
+flatpak_instance_get_info
+flatpak_instance_is_running
+<SUBSECTION Standard>
+FlatpakInstanceClass
+FLATPAK_TYPE_INSTANCE
+FLATPAK_INSTANCE
+FLATPAK_IS_INSTANCE
+flatpak_instance_get_type
+</SECTION>

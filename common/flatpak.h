@@ -37,6 +37,7 @@
 #include <flatpak-remote.h>
 #include <flatpak-installation.h>
 #include <flatpak-transaction.h>
+#include <flatpak-instance.h>
 
 #undef __FLATPAK_H_INSIDE__
 
