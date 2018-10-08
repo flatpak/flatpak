@@ -752,8 +752,6 @@ main (int    argc,
   if (verbose)
     g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
-  flatpak_migrate_from_xdg_app ();
-
   client_pid_data_hash = g_hash_table_new_full (NULL, NULL, NULL, (GDestroyNotify) pid_data_free);
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);

@@ -302,8 +302,6 @@ FlatpakInstallation *
 flatpak_installation_new_user (GCancellable *cancellable,
                                GError      **error)
 {
-  flatpak_migrate_from_xdg_app ();
-
   return flatpak_installation_new_steal_dir (flatpak_dir_get_user (), cancellable, error);
 }
 
@@ -323,8 +321,6 @@ flatpak_installation_new_for_path (GFile *path, gboolean user,
                                    GCancellable *cancellable,
                                    GError **error)
 {
-  flatpak_migrate_from_xdg_app ();
-
   return flatpak_installation_new_steal_dir (flatpak_dir_new (path, user), cancellable, error);
 }
 
