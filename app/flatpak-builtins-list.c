@@ -317,7 +317,11 @@ print_table_for_refs (gboolean print_apps,
 
                   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
                   if (subpaths[0] != NULL)
-                    flatpak_table_printer_append_with_comma (printer, "partial");
+                    {
+                      g_autofree char *paths = g_strjoinv (" ", (char **)subpaths);
+                      g_autofree char *value = g_strconcat ("partial (", paths, ")", NULL);
+                      flatpak_table_printer_append_with_comma (printer, value);
+                    }
 
                   if (eol)
                     flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
