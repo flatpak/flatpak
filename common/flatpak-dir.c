@@ -8289,6 +8289,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    _("%s branch %s is not installed"), name, parts[3]);
+      return FALSE;
     }
 
   return TRUE;
