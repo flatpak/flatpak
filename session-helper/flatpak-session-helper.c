@@ -556,6 +556,25 @@ update_real_monitor (MonitorData *data)
 }
 
 static void
+file_monitor_do (MonitorData *data)
+{
+  update_real_monitor (data);
+  copy_file (data->source, monitor_dir);
+
+  if (strcmp (data->source, "/etc/localtime") == 0)
+    {
+      /* We can't update the /etc/localtime symlink at runtime, nor can we make it a of the
+       * correct form "../usr/share/zoneinfo/$timezone". So, instead we use the old debian
+       * /etc/timezone file for telling the sandbox the timezone. */
+      char *dest = g_build_filename (monitor_dir, "timezone", NULL);
+      g_autofree char *timezone = flatpak_get_timezone ();
+      g_autofree char *timezone_content = g_strdup_printf ("%s\n", timezone);
+
+      g_file_set_contents (dest, timezone_content, -1, NULL);
+    }
+}
+
+static void
 file_changed (GFileMonitor     *monitor,
               GFile            *file,
               GFile            *other_file,
@@ -565,9 +584,7 @@ file_changed (GFileMonitor     *monitor,
   if (event_type != G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
     return;
 
-  update_real_monitor (data);
-
-  copy_file (data->source, monitor_dir);
+  file_monitor_do (data);
 }
 
 static MonitorData *
@@ -592,9 +609,7 @@ setup_file_monitor (const char *source)
       g_debug ("failed to monitor host file %s: %s", source, err->message);
     }
 
-  update_real_monitor (data);
-
-  copy_file (source, monitor_dir);
+  file_monitor_do (data);
 
   return data;
 }

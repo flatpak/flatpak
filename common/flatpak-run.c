@@ -1916,6 +1916,7 @@ add_monitor_path_args (gboolean      use_session_helper,
                                 "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
                                 "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
                                 "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
+                                "--symlink", "/run/host/monitor/timezone", "/etc/timezone",
                                 NULL);
 
       if (g_variant_lookup (session_data, "pkcs11-socket", "s", &pkcs11_socket_path))
@@ -1947,6 +1948,8 @@ add_monitor_path_args (gboolean      use_session_helper,
           char localtime[PATH_MAX + 1];
           ssize_t symlink_size;
           gboolean is_reachable = FALSE;
+          g_autofree char *timezone = flatpak_get_timezone ();
+          g_autofree char *timezone_content = g_strdup_printf ("%s\n", timezone);
 
           symlink_size = readlink ("/etc/localtime", localtime, sizeof (localtime) - 1);
           if (symlink_size > 0)
@@ -1977,6 +1980,10 @@ add_monitor_path_args (gboolean      use_session_helper,
                                       "--ro-bind", "/etc/localtime", "/etc/localtime",
                                       NULL);
             }
+
+          flatpak_bwrap_add_args_data (bwrap, "timezone",
+                                       timezone_content, -1, "/etc/timezone",
+                                       NULL);
         }
 
       if (g_file_test ("/etc/resolv.conf", G_FILE_TEST_EXISTS))
@@ -2380,6 +2387,8 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                           "--ro-bind", "/sys/class", "/sys/class",
                           "--ro-bind", "/sys/dev", "/sys/dev",
                           "--ro-bind", "/sys/devices", "/sys/devices",
+                          /* glib uses this like /etc/timezone */
+                          "--symlink", "/etc/timezone", "/var/db/zoneinfo",
                           NULL);
 
   if (flags & FLATPAK_RUN_FLAG_DIE_WITH_PARENT)
@@ -2436,6 +2445,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
               strcmp (dent->d_name, "host.conf") == 0 ||
               strcmp (dent->d_name, "hosts") == 0 ||
               strcmp (dent->d_name, "localtime") == 0 ||
+              strcmp (dent->d_name, "timezone") == 0 ||
               strcmp (dent->d_name, "pkcs11") == 0)
             continue;
 
