@@ -97,8 +97,6 @@ char **flatpak_subpaths_merge (char **subpaths1,
 char *flatpak_get_lang_from_locale (const char *locale);
 char **flatpak_get_current_locale_langs (void);
 
-void flatpak_migrate_from_xdg_app (void);
-
 gboolean flatpak_write_update_checksum (GOutputStream *out,
                                         gconstpointer  data,
                                         gsize          len,

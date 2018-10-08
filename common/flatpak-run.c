@@ -2097,7 +2097,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
    *
    *  https://github.com/sandstorm-io/sandstorm
    *    in src/sandstorm/supervisor.c++
-   *  http://cgit.freedesktop.org/xdg-app/xdg-app/
+   *  https://github.com/flatpak/flatpak.git
    *    in common/flatpak-run.c
    *  https://git.gnome.org/browse/linux-user-chroot
    *    in src/setup-seccomp.c

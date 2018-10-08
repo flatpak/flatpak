@@ -623,8 +623,6 @@ main (int    argc,
   if (argc >= 4 && strcmp (argv[1], "complete") == 0)
     return complete (argc, argv);
 
-  flatpak_migrate_from_xdg_app ();
-
   ret = flatpak_run (argc, argv, &error);
 
   if (error != NULL)
