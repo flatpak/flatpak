@@ -82,7 +82,9 @@ else
     collection_args=
 fi
 
-mkdir -p ${DIR}/files/share/runtime/locale
+mkdir -p ${DIR}/files/share/runtime/locale/de
+mkdir -p ${DIR}/files/share/locale
+ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/de/share/de
 
 flatpak build-finish --command=hello.sh ${DIR}
 mkdir -p repos
@@ -106,12 +108,12 @@ cat > de.po <<EOF
 msgid "Hello world"
 msgstr "Hallo Welt"
 EOF
-mkdir -p ${DIR}/files/share/locale/de/LC_MESSAGES
-msgfmt --output-file ${DIR}/files/share/locale/de/LC_MESSAGES/helloworld.mo de.po
+mkdir -p ${DIR}/files/de/share/de/LC_MESSAGES
+msgfmt --output-file ${DIR}/files/de/share/de/LC_MESSAGES/helloworld.mo de.po
 
 flatpak build-finish ${DIR}
 mkdir -p repos
-flatpak build-export ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR}
+flatpak build-export --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR}
 rm -rf ${DIR}
 
 
