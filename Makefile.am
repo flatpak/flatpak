@@ -178,6 +178,8 @@ EXTRA_DIST += scripts/flatpak-bisect scripts/flatpak-coredumpctl
 
 EXTRA_DIST += README.md
 
+EXTRA_DIST += flatpak.png
+
 AM_DISTCHECK_CONFIGURE_FLAGS =		\
 	--enable-documentation		\
 	--disable-maintainer-mode	\
