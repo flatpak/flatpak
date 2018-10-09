@@ -1804,7 +1804,10 @@ flatpak_context_add_bus_filters (FlatpakContext *context,
 
   flatpak_bwrap_add_arg (bwrap, "--filter");
   if (app_id && session_bus)
-    flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.*", app_id);
+    {
+      flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.*", app_id);
+      flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.*", app_id);
+    }
 
   if (session_bus)
     ht = context->session_bus_policy;
