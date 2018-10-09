@@ -689,7 +689,6 @@ column_help (Column *columns)
 }
 
 /* Returns a filtered list of columns, free with g_free.
- * opt_show_help should correspond to --show-columns
  * opt_show_all should correspond to --show-details or be FALSE
  * opt_cols should correspond to --columns
  */
