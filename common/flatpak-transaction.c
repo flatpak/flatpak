@@ -1523,6 +1523,11 @@ add_deps (FlatpakTransaction          *self,
   /* Install/Update the runtime before the app */
   if (runtime_op)
     {
+      if (runtime_op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+        return flatpak_fail_error (error, FLATPAK_ERROR_RUNTIME_USED,
+                                   _("Can't uninstall %s which is needed by %s"),
+                                   runtime_op->ref, op->ref);
+
       op->fail_if_op_fails = runtime_op;
       run_operation_before (runtime_op, op, 2);
     }
