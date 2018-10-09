@@ -171,14 +171,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--show-columns</option></term>
-
-                <listitem><para>
-                    Show the available values for the <option>--columns</option> option.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>--app-runtime=RUNTIME</option></term>
 
                 <listitem><para>
