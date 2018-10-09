@@ -2046,6 +2046,83 @@ test_transaction_deps (void)
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
 }
 
+static void
+test_instance (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  gboolean res;
+  g_autofree char *s = NULL;
+  g_autoptr(GBytes) data = NULL;
+  g_autoptr(GPtrArray) instances = NULL;
+  FlatpakInstance *instance;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_clear_object (&transaction);
+
+  instances = flatpak_instance_get_all ();
+  g_assert_cmpint (instances->len, ==, 0);
+  g_clear_pointer (&instances, g_ptr_array_unref);
+
+  flatpak_installation_launch (inst, "org.test.Hello", NULL, NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+
+  sleep (1); /* FIXME: it seems flatpak_installation_launch returns before the instance
+                is fully set up */
+
+  instances = flatpak_instance_get_all ();
+  g_assert_cmpint (instances->len, ==, 1);
+  instance = g_ptr_array_index (instances, 0);
+
+  g_assert_cmpstr (flatpak_instance_get_app (instance), ==, "org.test.Hello");
+  g_assert_cmpstr (flatpak_instance_get_arch (instance), ==, "x86_64");
+  g_assert_cmpstr (flatpak_instance_get_branch (instance), ==, "master");
+  g_assert_nonnull (flatpak_instance_get_commit (instance));
+  g_assert_cmpstr (flatpak_instance_get_runtime (instance), ==, "runtime/org.test.Platform/x86_64/master");
+  g_assert_nonnull (flatpak_instance_get_runtime_commit (instance));
+  g_assert_cmpint (flatpak_instance_get_pid (instance), >, 0);
+  g_assert_cmpint (flatpak_instance_get_child_pid (instance), >, 0);
+  g_assert_true (flatpak_instance_is_running (instance));
+
+  kill (flatpak_instance_get_child_pid (instance), SIGKILL);
+
+  sleep (3); /* FIXME: Instances have a 3 second after-life */
+
+  g_assert_false (flatpak_instance_is_running (instance));
+  g_clear_pointer (&instances, g_ptr_array_unref);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_uninstall (transaction, "app/org.test.Hello/x86_64/master", &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -2074,6 +2151,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-install-uninstall", test_transaction_install_uninstall);
   g_test_add_func ("/library/transaction-install-flatpakref", test_transaction_install_flatpakref);
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
+  g_test_add_func ("/library/instance", test_instance);
 
   global_setup ();
 
