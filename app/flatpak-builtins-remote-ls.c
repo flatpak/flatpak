@@ -40,6 +40,7 @@ static gboolean opt_app;
 static gboolean opt_all;
 static gboolean opt_only_updates;
 static char *opt_arch;
+static char *opt_app_runtime;
 static const char **opt_cols;
 
 static GOptionEntry options[] = {
@@ -49,6 +50,7 @@ static GOptionEntry options[] = {
   { "updates", 0, 0, G_OPTION_ARG_NONE, &opt_only_updates, N_("Show only those where updates are available"), NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Limit to this arch (* for all)"), N_("ARCH") },
   { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
+  { "app-runtime", 'a', 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
   { NULL }
 };
@@ -58,6 +60,7 @@ static Column all_columns[] = {
   { "application",    N_("Application"),    N_("Show the application ID"), 0, 0 },
   { "origin",         N_("Origin"),         N_("Show the origin remote"),  1, 0 },
   { "commit",         N_("Commit"),         N_("Show the active commit"),  1, 0 },
+  { "runtime",        N_("Runtime"),        N_("Show the runtime"),        1, 0 },
   { "installed-size", N_("Installed size"), N_("Show the installed size"), 1, 0 },
   { "download-size",  N_("Download size"),  N_("Show the download size"),  1, 0 },
   { "options",        N_("Options"),        N_("Show options"),            1, 0 },
@@ -93,7 +96,7 @@ remote_dir_pair_new (const char *remote_name, FlatpakDir *dir, FlatpakRemoteStat
 }
 
 static gboolean
-ls_remote (GHashTable *refs_hash, const char **arches, Column *columns, GCancellable *cancellable, GError **error)
+ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, Column *columns, GCancellable *cancellable, GError **error)
 {
   GHashTableIter refs_iter;
   GHashTableIter iter;
@@ -105,9 +108,30 @@ ls_remote (GHashTable *refs_hash, const char **arches, Column *columns, GCancell
   g_autofree const char **keys = NULL;
   int i, j;
   g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  FlatpakKinds match_kinds;
+  g_autofree char *match_id = NULL;
+  g_autofree char *match_arch = NULL;
+  g_autofree char *match_branch = NULL;
+  gboolean need_cache_data = FALSE;
 
   FlatpakTablePrinter *printer = flatpak_table_printer_new ();
   flatpak_table_printer_set_column_titles (printer, columns);
+
+  if (app_runtime)
+    {
+      need_cache_data = TRUE;
+      if (!flatpak_split_partial_ref_arg (app_runtime, FLATPAK_KINDS_RUNTIME, NULL, NULL,
+                                          &match_kinds, &match_id, &match_arch, &match_branch, error))
+        return FALSE;
+    }
+
+  for (j = 0; columns[j].name && !need_cache_data; j++)
+    {
+      if (strcmp (columns[j].name, "download-size") == 0 ||
+          strcmp (columns[j].name, "installed-size") == 0 ||
+          strcmp (columns[j].name, "runtime") == 0)
+        need_cache_data = TRUE;
+    }
 
   g_hash_table_iter_init (&refs_iter, refs_hash);
   while (g_hash_table_iter_next (&refs_iter, &refs_key, &refs_value))
@@ -210,6 +234,33 @@ ls_remote (GHashTable *refs_hash, const char **arches, Column *columns, GCancell
       for (i = 0; i < n_keys; i++)
         {
           const char *ref = keys[i];
+          guint64 installed_size;
+          guint64 download_size;
+          g_autofree char *runtime = NULL;
+
+          if (need_cache_data)
+            {
+              const char *metadata = NULL;
+              g_autoptr(GKeyFile) metakey = NULL;
+
+              if (!flatpak_remote_state_lookup_cache (state, ref,
+                                                      &download_size, &installed_size, &metadata,
+                                                      error))
+                return FALSE;
+
+               metakey = g_key_file_new ();
+               if (g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
+                 runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+            }
+
+          if (app_runtime && runtime)
+            {
+              g_auto(GStrv) pref = g_strsplit (runtime, "/", 3);
+              if ((match_id && pref[0] && strcmp (pref[0], match_id) != 0) ||
+                  (match_arch && pref[1] && strcmp (pref[1], match_arch) != 0) ||
+                  (match_branch && pref[2] && strcmp (pref[2], match_branch) != 0))
+                continue;
+            }
 
           for (j = 0; columns[j].name; j++)
             {
@@ -233,13 +284,6 @@ ls_remote (GHashTable *refs_hash, const char **arches, Column *columns, GCancell
               else
                 {
                   g_autoptr(GVariant) sparse = NULL;
-                  guint64 installed_size;
-                  guint64 download_size;
-
-                  if (!flatpak_remote_state_lookup_cache (state, ref,
-                                                          &download_size, &installed_size, NULL,
-                                                          error))
-                    return FALSE;
 
                   /* The sparse cache is optional */
                   sparse = flatpak_remote_state_lookup_sparse_cache (state, ref, NULL);
@@ -253,6 +297,10 @@ ls_remote (GHashTable *refs_hash, const char **arches, Column *columns, GCancell
                     {
                       g_autofree char *download = g_format_size (download_size);
                       flatpak_table_printer_add_decimal_column (printer, download);
+                    }
+                  else if (strcmp (columns[j].name, "runtime") == 0)
+                    {
+                      flatpak_table_printer_add_column (printer, runtime);
                     }
                   else if (strcmp (columns[j].name, "options") == 0)
                     {
@@ -395,7 +443,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
   if (columns == NULL)
     return FALSE;
 
-  return ls_remote (refs_hash, arches, columns, cancellable, error);
+  return ls_remote (refs_hash, arches, opt_app_runtime, columns, cancellable, error);
 }
 
 gboolean
