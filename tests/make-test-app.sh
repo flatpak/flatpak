@@ -36,6 +36,9 @@ mkdir -p ${DIR}/files/bin
 cat > ${DIR}/files/bin/hello.sh <<EOF
 #!/bin/sh
 echo "Hello world, from a sandbox$EXTRA"
+if [ "$EXTRA" = "UPDATED" ]; then
+  exec sh
+fi
 EOF
 chmod a+x ${DIR}/files/bin/hello.sh
 
