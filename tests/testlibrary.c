@@ -2086,12 +2086,11 @@ test_instance (void)
   flatpak_installation_launch (inst, "org.test.Hello", NULL, NULL, NULL, NULL, &error);
   g_assert_no_error (error);
 
-  sleep (1); /* FIXME: it seems flatpak_installation_launch returns before the instance
-                is fully set up */
-
   instances = flatpak_instance_get_all ();
   g_assert_cmpint (instances->len, ==, 1);
   instance = g_ptr_array_index (instances, 0);
+
+  g_assert_true (flatpak_instance_is_running (instance));
 
   g_assert_cmpstr (flatpak_instance_get_app (instance), ==, "org.test.Hello");
   g_assert_cmpstr (flatpak_instance_get_arch (instance), ==, "x86_64");
@@ -2100,12 +2099,15 @@ test_instance (void)
   g_assert_cmpstr (flatpak_instance_get_runtime (instance), ==, "runtime/org.test.Platform/x86_64/master");
   g_assert_nonnull (flatpak_instance_get_runtime_commit (instance));
   g_assert_cmpint (flatpak_instance_get_pid (instance), >, 0);
+  /* FIXME: flatpak_installation_launch returns before bwrapinfo.json is written */
+  while (flatpak_instance_get_child_pid (instance) == 0)
+    sleep (1);
+
   g_assert_cmpint (flatpak_instance_get_child_pid (instance), >, 0);
-  g_assert_true (flatpak_instance_is_running (instance));
 
   kill (flatpak_instance_get_child_pid (instance), SIGKILL);
 
-  sleep (3); /* FIXME: Instances have a 3 second after-life */
+  sleep (4); /* FIXME: Instances have a 3 second after-life */
 
   g_assert_false (flatpak_instance_is_running (instance));
   g_clear_pointer (&instances, g_ptr_array_unref);
