@@ -1465,6 +1465,9 @@ global_teardown (void)
   g_free (testdir);
 }
 
+/* Check some basic transaction getters, without running a transaction
+ * or adding ops.
+ */
 static void
 test_misc_transaction (void)
 {
@@ -1510,6 +1513,37 @@ test_misc_transaction (void)
   g_assert (flatpak_transaction_is_empty (transaction));
 }
 
+static void
+empty_installation (FlatpakInstallation *inst)
+{
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(GError) error = NULL;
+  int i;
+
+  refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
+  g_assert_no_error (error);
+
+  for (i = 0; i < refs->len; i++)
+    {
+      FlatpakRef *ref = g_ptr_array_index (refs, i);
+
+      flatpak_installation_uninstall_full (inst,
+                                           FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS,
+                                           flatpak_ref_get_kind (ref),
+                                           flatpak_ref_get_name (ref),
+                                           flatpak_ref_get_arch (ref),
+                                           flatpak_ref_get_branch (ref),
+                                           NULL, NULL, NULL, &error);
+      g_assert_no_error (error);
+    }
+
+  flatpak_installation_run_triggers (inst, NULL, &error);
+  g_assert_no_error (error);
+
+  flatpak_installation_prune_local_repo (inst, NULL, &error);
+  g_assert_no_error (error);
+}
+
 static int ready_count;
 static int new_op_count;
 static int op_done_count;
@@ -1553,6 +1587,7 @@ add_new_remote (FlatpakTransaction *transaction,
   g_assert_not_reached ();
   return TRUE;
 }
+
 static gboolean
 ready (FlatpakTransaction *transaction)
 {
@@ -1568,6 +1603,7 @@ ready (FlatpakTransaction *transaction)
       FlatpakTransactionOperation *op = l->data;
 
       g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
+      g_assert_nonnull (flatpak_transaction_operation_get_commit (op));
     }
 
   g_list_free_full (ops, g_object_unref);
@@ -1635,6 +1671,9 @@ op_done_no_change (FlatpakTransaction *transaction,
   g_assert_cmpint (result, ==, FLATPAK_TRANSACTION_RESULT_NO_CHANGE);
 }
 
+/* Do a bunch of installs and uninstalls with a transaction, and check
+ * that ops looks as expected, and that signal are fired.
+ */
 static void
 test_transaction_install_uninstall (void)
 {
@@ -1660,6 +1699,12 @@ test_transaction_install_uninstall (void)
   g_assert_no_error (error);
   g_assert_nonnull (inst);
 
+  /* start from a clean slate */
+  empty_installation (inst);
+
+  /* install org.test.Hello, and have org.test.Hello.Locale and org.test.Platform
+   * added as deps/related
+   */
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
@@ -1759,6 +1804,9 @@ test_transaction_install_uninstall (void)
 
   g_clear_object (&transaction);
 
+  /* uninstall org.test.Hello, we expect org.test.Hello.Locale to be
+   * removed with it, but org.test.Platform to stay
+   */
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
@@ -1782,6 +1830,9 @@ test_transaction_install_uninstall (void)
 
   g_clear_object (&transaction);
 
+  /* install org.test.Hello and uninstall org.test.Platform. This is
+   * expected to yield an error
+   */
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
@@ -1795,13 +1846,29 @@ test_transaction_install_uninstall (void)
   g_assert_true (res);
 
   res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_RUNTIME_USED);
+  g_assert_false (res);
+  g_clear_error (&error);
+
+  g_clear_object (&transaction);
+
+  /* try again to install org.test.Hello. We'll end up with 3 refs */
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);
-  g_assert_cmpint (refs->len, ==, 2); /* FIXME: this should be 3, we need the runtime */
+  g_assert_cmpint (refs->len, ==, 3);
   g_clear_pointer (&refs, g_ptr_array_unref);
 
   ref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_APP, "org.test.Hello", "xzy", "master", NULL, &error);
@@ -1818,12 +1885,10 @@ test_transaction_install_uninstall (void)
 
   g_clear_object (&transaction);
 
+  /* update org.test.Hello. Check that this is a no-op */
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
-
-  /* we don't want to bring the runtime back here */
-  flatpak_transaction_set_disable_dependencies (transaction, TRUE);
 
   res = flatpak_transaction_add_update (transaction, "app/org.test.Hello/x86_64/master", NULL, NULL, &error);
   g_assert_no_error (error);
@@ -1837,6 +1902,7 @@ test_transaction_install_uninstall (void)
 
   g_clear_object (&transaction);
 
+  /* uninstall both org.test.Hello and org.test.Platform, leaving an empty installation */
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
@@ -1845,11 +1911,16 @@ test_transaction_install_uninstall (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
+  res = flatpak_transaction_add_uninstall (transaction, "runtime/org.test.Platform/x86_64/master", &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
   res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 }
 
+/* test installing a flatpakref with a transaction */
 static void
 test_transaction_install_flatpakref (void)
 {
@@ -1864,6 +1935,9 @@ test_transaction_install_flatpakref (void)
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (inst);
+
+  /* start from a clean slate */
+  empty_installation (inst);
 
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
@@ -1921,37 +1995,6 @@ test_transaction_install_flatpakref (void)
   g_assert_true (res);
 }
 
-static void
-empty_installation (FlatpakInstallation *inst)
-{
-  g_autoptr(GPtrArray) refs = NULL;
-  g_autoptr(GError) error = NULL;
-  int i;
-
-  refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
-  g_assert_no_error (error);
-
-  for (i = 0; i < refs->len; i++)
-    {
-      FlatpakRef *ref = g_ptr_array_index (refs, i);
-
-      flatpak_installation_uninstall_full (inst,
-                                           FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS,
-                                           flatpak_ref_get_kind (ref),
-                                           flatpak_ref_get_name (ref),
-                                           flatpak_ref_get_arch (ref),
-                                           flatpak_ref_get_branch (ref),
-                                           NULL, NULL, NULL, &error);
-      g_assert_no_error (error);
-    }
-
-  flatpak_installation_run_triggers (inst, NULL, &error);
-  g_assert_no_error (error);
-
-  flatpak_installation_prune_local_repo (inst, NULL, &error);
-  g_assert_no_error (error);
-}
-
 static gboolean
 check_ready1_abort (FlatpakTransaction *transaction)
 {
@@ -1995,6 +2038,7 @@ check_ready3_abort (FlatpakTransaction *transaction)
   return FALSE;
 }
 
+/* test disabling dependencies and related */
 static void
 test_transaction_deps (void)
 {
@@ -2046,6 +2090,7 @@ test_transaction_deps (void)
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
 }
 
+/* test the instance api: install an app, launch it, and then get the instance */
 static void
 test_instance (void)
 {
