@@ -119,7 +119,7 @@
                 <term><option>--deploy-collection-id</option></term>
 
                 <listitem><para>
-                    Deploy the collection ID (set using <option>--collection-id</option>
+                    Deploy the collection ID (set using <option>--collection-id</option>)
                     in the static remote configuration for all clients. This is
                     irrevocable once published in a repository. Use it to decide
                     when to roll out a collection ID to users of an existing repository.
