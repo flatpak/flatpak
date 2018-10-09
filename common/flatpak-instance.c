@@ -247,6 +247,8 @@ flatpak_instance_get_pid (FlatpakInstance *self)
   return priv->pid;
 }
 
+static int get_child_pid (const char *dir);
+
 /**
  * flatpak_instance_get_child_pid:
  * @self: a #FlatpakInstance
@@ -254,6 +256,9 @@ flatpak_instance_get_pid (FlatpakInstance *self)
  * Gets the PID of the application process in the sandbox.
  *
  * See flatpak_instance_get_pid().
+ * 
+ * Note that this function may return 0 immediately after launching
+ * a sandbox, for a short amount of time.
  *
  * Returns: the application process PID
  *
@@ -263,6 +268,9 @@ int
 flatpak_instance_get_child_pid (FlatpakInstance *self)
 {
   FlatpakInstancePrivate *priv = flatpak_instance_get_instance_private (self);
+
+  if (priv->child_pid == 0)
+    priv->child_pid = get_child_pid (priv->dir);
 
   return priv->child_pid;
 }
@@ -336,6 +344,12 @@ get_child_pid (const char *dir)
     }
 
   node = json_parser_get_root (parser);
+  if (!node)
+    {
+      g_debug ("Failed to parse bwrapinfo.json file '%s': %s", file, "empty");
+      return 0;
+    }
+
   obj = json_node_get_object (node);
 
   return json_object_get_int_member (obj, "child-pid");
