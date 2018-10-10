@@ -2,39 +2,36 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="flatpak-enter">
+<refentry id="flatpak-kill">
 
     <refentryinfo>
-        <title>flatpak enter</title>
+        <title>flatpak kill</title>
         <productname>flatpak</productname>
 
         <authorgroup>
             <author>
                 <contrib>Developer</contrib>
-                <firstname>Alexander</firstname>
-                <surname>Larsson</surname>
-                <email>alexl@redhat.com</email>
+                <firstname>Matthias</firstname>
+                <surname>Clasen</surname>
+                <email>mclasen@redhat.com</email>
             </author>
         </authorgroup>
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>flatpak enter</refentrytitle>
+        <refentrytitle>flatpak kill</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>flatpak-enter</refname>
-        <refpurpose>Enter an application</refpurpose>
+        <refname>flatpak-kill</refname>
+        <refpurpose>Stop a running application</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>flatpak enter</command>
-                <arg choice="opt" rep="repeat">OPTION</arg>
+                <command>flatpak kill</command>
                 <arg choice="plain">INSTANCE</arg>
-                <arg choice="plain">COMMAND</arg>
-                <arg choice="opt" rep="repeat">ARG</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -42,20 +39,9 @@
         <title>Description</title>
 
         <para>
-            Enter a running sandbox.
-            <arg choice="plain">INSTANCE</arg> must be either the pid of a process running
-            in a flatpak sandbox, or the ID of a running application or a the instance ID
-             of a running sandbox.
-            <arg choice="plain">COMMAND</arg> is the command to run in the sandbox.
-            Extra arguments are passed on to the command.
-        </para>
-        <para>
-            This creates a new process within the running sandbox, with the same environment.
-            This is useful when you want to debug a problem with a running application.
-        </para>
-        <para>
-            This command requires extra privileges, so must be run as root or via e.g. sudo.
-            To get TAB completion for the application ID, use sudo -E.
+            Kill a running sandbox. <replaceable>INSTANCE</replaceable> can be
+            either the numeric instance ID or the application ID of a running
+            Flatpak.
         </para>
 
     </refsect1>
@@ -98,7 +84,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak enter 15345 sh</command>
+            <command>$ flatpak kill org.gnome.Todo</command>
         </para>
 
     </refsect1>
@@ -108,7 +94,8 @@
 
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-ps</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

@@ -57,6 +57,7 @@ man1 = \
 	flatpak-search.1		\
 	flatpak-create-usb.1 \
 	flatpak-repair.1 \
+	flatpak-kill.1 \
 	$(NULL)
 
 man5 = \

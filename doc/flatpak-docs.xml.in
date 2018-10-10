@@ -39,6 +39,7 @@
       <xi:include href="@srcdir@/flatpak-document-info.xml"/>
       <xi:include href="@srcdir@/flatpak-document-list.xml"/>
       <xi:include href="@srcdir@/flatpak-document-unexport.xml"/>
+      <xi:include href="@srcdir@/flatpak-kill.xml"/>
       <xi:include href="@srcdir@/flatpak-permission-remove.xml"/>
       <xi:include href="@srcdir@/flatpak-permission-list.xml"/>
       <xi:include href="@srcdir@/flatpak-permission-show.xml"/>
