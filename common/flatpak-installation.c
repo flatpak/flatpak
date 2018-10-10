@@ -996,6 +996,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       const char *remote_commit = g_hash_table_lookup (remote_commits, key);
       const char *local_commit = flatpak_installed_ref_get_latest_commit (installed_ref);
 
+      /* Note: local_commit may be NULL here */
       if (remote_commit != NULL &&
           g_strcmp0 (remote_commit, local_commit) != 0)
         g_ptr_array_add (updates, g_object_ref (installed_ref));
@@ -1076,28 +1077,30 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
           /* The ref_to_checksum map only tells us if this remote is offering
            * the latest commit of the available remotes; we have to check
            * ref_to_timestamp to know if the commit is an update or a
-           * downgrade.
+           * downgrade. If local_commit is NULL assume it's an update until
+           * proven otherwise.
            */
-          {
-            guint64 local_timestamp = 0;
-            guint64 *remote_timestamp;
-            g_autoptr(GVariant) commit_v = NULL;
+          if (local_commit != NULL)
+            {
+              guint64 local_timestamp = 0;
+              guint64 *remote_timestamp;
+              g_autoptr(GVariant) commit_v = NULL;
 
-            if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), local_commit, &commit_v, NULL, NULL))
-              local_timestamp = ostree_commit_get_timestamp (commit_v);
+              if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), local_commit, &commit_v, NULL, NULL))
+                local_timestamp = ostree_commit_get_timestamp (commit_v);
 
-            remote_timestamp = g_hash_table_lookup (results[j]->ref_to_timestamp, collection_ref);
-            *remote_timestamp = GUINT64_FROM_BE (*remote_timestamp);
+              remote_timestamp = g_hash_table_lookup (results[j]->ref_to_timestamp, collection_ref);
+              *remote_timestamp = GUINT64_FROM_BE (*remote_timestamp);
 
-            g_debug ("%s: Comparing local timestamp %" G_GUINT64_FORMAT " to remote timestamp %"
-                     G_GUINT64_FORMAT " on ref (%s, %s)", G_STRFUNC, local_timestamp, *remote_timestamp,
-                     collection_ref->collection_id, collection_ref->ref_name);
+              g_debug ("%s: Comparing local timestamp %" G_GUINT64_FORMAT " to remote timestamp %"
+                       G_GUINT64_FORMAT " on ref (%s, %s)", G_STRFUNC, local_timestamp, *remote_timestamp,
+                       collection_ref->collection_id, collection_ref->ref_name);
 
-            /* The timestamp could be 0 due to an error reading it. Assume
-             * it's an update until proven otherwise. */
-            if (*remote_timestamp != 0 && *remote_timestamp <= local_timestamp)
-              continue;
-          }
+              /* The timestamp could be 0 due to an error reading it. Assume
+               * it's an update until proven otherwise. */
+              if (*remote_timestamp != 0 && *remote_timestamp <= local_timestamp)
+                continue;
+            }
 
           g_ptr_array_add (updates, g_object_ref (installed_ref));
 
