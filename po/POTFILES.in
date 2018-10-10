@@ -18,6 +18,7 @@ app/flatpak-builtins-document-unexport.c
 app/flatpak-builtins-enter.c
 app/flatpak-builtins-info.c
 app/flatpak-builtins-install.c
+app/flatpak-builtins-kill.c
 app/flatpak-builtins-list.c
 app/flatpak-builtins-make-current.c
 app/flatpak-builtins-override.c
