@@ -1189,7 +1189,7 @@ static void
 update_test_app (void)
 {
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "repos/test", "", "", "UPDATED", NULL };
+  char *argv[] = { NULL, "repos/test", "", "", "SPIN", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
