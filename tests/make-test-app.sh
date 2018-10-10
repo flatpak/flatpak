@@ -85,9 +85,11 @@ else
     collection_args=
 fi
 
-mkdir -p ${DIR}/files/share/runtime/locale/de
 mkdir -p ${DIR}/files/share/locale
+mkdir -p ${DIR}/files/share/runtime/locale/de
 ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/de/share/de
+mkdir -p ${DIR}/files/share/runtime/locale/fr
+ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/fr/share/fr
 
 flatpak build-finish --command=hello.sh ${DIR}
 mkdir -p repos
@@ -113,6 +115,12 @@ msgstr "Hallo Welt"
 EOF
 mkdir -p ${DIR}/files/de/share/de/LC_MESSAGES
 msgfmt --output-file ${DIR}/files/de/share/de/LC_MESSAGES/helloworld.mo de.po
+cat > fr.po <<EOF
+msgid "Hello world"
+msgstr "Bonjour le monde"
+EOF
+mkdir -p ${DIR}/files/fr/share/fr/LC_MESSAGES
+msgfmt --output-file ${DIR}/files/fr/share/fr/LC_MESSAGES/helloworld.mo fr.po
 
 flatpak build-finish ${DIR}
 mkdir -p repos
