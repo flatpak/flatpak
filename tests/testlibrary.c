@@ -2125,6 +2125,56 @@ test_instance (void)
   g_assert_true (res);
 }
 
+static void
+test_update_subpaths (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakInstalledRef) ref = NULL;
+  gboolean res;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  const char * const *subpaths;
+  const char * subpaths2[] = { "/de", "/fr", NULL };
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_clear_object (&transaction);
+
+  ref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_RUNTIME, "org.test.Hello.Locale", "x86_64", "master", NULL, &error);
+  g_assert_no_error (error);
+
+  subpaths = flatpak_installed_ref_get_subpaths (ref);
+  g_assert_cmpint (g_strv_length ((char **)subpaths), ==, 1);
+  g_assert_cmpstr (subpaths[0], ==, "/de");
+
+  g_clear_object (&transaction);
+  g_clear_object (&ref);
+
+  ref = flatpak_installation_update_full (inst, 0, FLATPAK_REF_KIND_RUNTIME, "org.test.Hello.Locale", "x86_64", "master", subpaths2, NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+
+  subpaths = flatpak_installed_ref_get_subpaths (ref);
+  g_assert_cmpint (g_strv_length ((char **)subpaths), ==, 2);
+  g_assert_cmpstr (subpaths[0], ==, "/de");
+  g_assert_cmpstr (subpaths[1], ==, "/fr");
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -2154,6 +2204,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-install-flatpakref", test_transaction_install_flatpakref);
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
   g_test_add_func ("/library/instance", test_instance);
+  g_test_add_func ("/library/update-subpaths", test_update_subpaths);
 
   global_setup ();
 
