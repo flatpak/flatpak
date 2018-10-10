@@ -36,7 +36,7 @@ mkdir -p ${DIR}/files/bin
 cat > ${DIR}/files/bin/hello.sh <<EOF
 #!/bin/sh
 echo "Hello world, from a sandbox$EXTRA"
-if [ "$EXTRA" = "UPDATED" ]; then
+if [ "$EXTRA" = "SPIN" ]; then
   exec sh
 fi
 EOF
