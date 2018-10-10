@@ -111,6 +111,7 @@ gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *cont
 gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context);
 
 void           flatpak_context_reset_permissions (FlatpakContext *context);
+void           flatpak_context_reset_non_permissions (FlatpakContext *context);
 void           flatpak_context_make_sandboxed (FlatpakContext *context);
 
 gboolean       flatpak_context_allows_features (FlatpakContext        *context,

@@ -399,6 +399,14 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-inherit-permissions</option></term>
+
+                <listitem><para>
+                    Don't inherit runtime permissions in the app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
