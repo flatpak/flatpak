@@ -52,6 +52,12 @@
             group are set according to the options.
         </para>
         <para>
+             As part of finalization you can also specify permissions that the
+             app needs, using the various options specified below. Additionally
+             during finalization the permissions from the runtime are inherited
+             into the app unless you specify <option>--no-inherit-permissions</option>
+        </para>
+        <para>
             You should review the exported files and the application metadata
             before creating and distributing an application bundle.
         </para>
@@ -395,6 +401,14 @@ key=v1;v2;
 
                 <listitem><para>
                     Don't look for exports in the build.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-inherit-permissions</option></term>
+
+                <listitem><para>
+                    Don't inherit runtime permissions in the app.
                 </para></listitem>
             </varlistentry>
 
