@@ -2362,7 +2362,31 @@ test_transaction_install_local (void)
   g_assert_nonnull (remote);
 }
 
-/* test the instance api: install an app, launch it, and then get the instance */
+static gboolean
+stop_waiting (gpointer data)
+{
+  GMainLoop *loop = data;
+
+  g_main_loop_quit (loop);
+
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean hello_dead;
+
+static void 
+hello_dead_cb (GPid pid,
+               int status,
+               gpointer data)
+{
+  hello_dead = TRUE;
+
+  stop_waiting (data);
+}
+
+/* test the instance api: install an app, launch it, get the instance,
+ * kill it, wait for it to die
+ */
 static void
 test_instance (void)
 {
@@ -2377,6 +2401,11 @@ test_instance (void)
   FlatpakInstance *instance;
   GKeyFile *info;
   g_autofree char *value = NULL;
+  int i;
+  g_autoptr(GMainLoop) loop = NULL;
+
+  update_test_app ();
+  update_repo ();
 
   if (!check_bwrap_support ())
     {
@@ -2404,16 +2433,21 @@ test_instance (void)
 
   g_clear_object (&transaction);
 
-  instances = flatpak_instance_get_all ();
-  g_assert_cmpint (instances->len, ==, 0);
-  g_clear_pointer (&instances, g_ptr_array_unref);
-
-  flatpak_installation_launch (inst, "org.test.Hello", NULL, NULL, NULL, NULL, &error);
+  res = flatpak_installation_launch_full (inst, FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP,
+                                          "org.test.Hello", NULL, NULL, NULL, &instance, NULL, &error);
   g_assert_no_error (error);
+  g_assert_true (res);
+  g_assert_nonnull (instance);
 
   instances = flatpak_instance_get_all ();
-  g_assert_cmpint (instances->len, ==, 1);
-  instance = g_ptr_array_index (instances, 0);
+  for (i = 0; i < instances->len; i++)
+    {
+      FlatpakInstance *instance2 = g_ptr_array_index (instances, i);
+      if (strcmp (flatpak_instance_get_id (instance), flatpak_instance_get_id (instance2)) == 0)
+        break;
+    }
+  g_assert_cmpint (i, <, instances->len);
+  g_clear_pointer (&instances, g_ptr_array_unref);
 
   g_assert_true (flatpak_instance_is_running (instance));
 
@@ -2434,18 +2468,22 @@ test_instance (void)
   g_assert_cmpstr (flatpak_instance_get_runtime (instance), ==, "runtime/org.test.Platform/x86_64/master");
   g_assert_nonnull (flatpak_instance_get_runtime_commit (instance));
   g_assert_cmpint (flatpak_instance_get_pid (instance), >, 0);
-  /* FIXME: flatpak_installation_launch returns before bwrapinfo.json is written */
   while (flatpak_instance_get_child_pid (instance) == 0)
-    sleep (1);
-
+    g_usleep (10000);
   g_assert_cmpint (flatpak_instance_get_child_pid (instance), >, 0);
+
+  loop = g_main_loop_new (NULL, FALSE);
+
+  hello_dead = FALSE;
+  g_child_watch_add (flatpak_instance_get_pid (instance), hello_dead_cb, loop);
+  g_timeout_add (5000, stop_waiting, loop);
 
   kill (flatpak_instance_get_child_pid (instance), SIGKILL);
 
-  sleep (4); /* FIXME: Instances have a 3 second after-life */
+  g_main_loop_run (loop);
 
+  g_assert (hello_dead);
   g_assert_false (flatpak_instance_is_running (instance));
-  g_clear_pointer (&instances, g_ptr_array_unref);
 
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
