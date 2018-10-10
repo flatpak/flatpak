@@ -1824,6 +1824,12 @@ flatpak_context_add_bus_filters (FlatpakContext *context,
 }
 
 void
+flatpak_context_reset_non_permissions (FlatpakContext *context)
+{
+  g_hash_table_remove_all (context->env_vars);
+}
+
+void
 flatpak_context_reset_permissions (FlatpakContext *context)
 {
   context->shares_valid = 0;
