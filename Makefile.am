@@ -187,7 +187,7 @@ AM_DISTCHECK_CONFIGURE_FLAGS =		\
 
 coverage:
 	$(AM_V_GEN) $(MAKE) $(AM_MAKEFLAGS) lcov-clean
-	$(AM_V_GEN) $(MAKE) -j $(getconf _NPROCESSORS_ONLN) check
+	$(AM_V_GEN) $(MAKE) check
 	$(AM_V_GEN) $(MAKE) $(AM_MAKEFLAGS) genlcov
 
 lcov-clean:
