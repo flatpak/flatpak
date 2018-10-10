@@ -31,6 +31,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 
 static int opt_verbose;
@@ -399,10 +400,10 @@ flatpak_option_context_parse (GOptionContext     *context,
 gboolean
 usage_error (GOptionContext *context, const char *message, GError **error)
 {
-  g_autofree gchar *help = g_option_context_get_help (context, TRUE, NULL);
+  g_autofree char *hint = NULL;
 
-  g_printerr ("%s", help);
-  g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, message);
+  hint = g_strdup_printf (_("See '%s --help'"), g_get_prgname ());
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "%s\n\n%s", message, hint);
   return FALSE;
 }
 
@@ -453,6 +454,26 @@ extract_command (int         *argc,
   return command;
 }
 
+static const char *
+find_similar_command (const char *word)
+{
+  int i, d, best;
+
+  d = G_MAXINT;
+  best = 0;
+
+  for (i = 0; commands[i].name; i++)
+    {
+      int d1 = levenshtein_distance (word, commands[i].name);
+      if (d1 < d)
+        {
+          d = d1;
+          best = i;
+        }
+    }
+
+  return commands[best].name;
+}
 
 static int
 flatpak_run (int      argc,
@@ -471,29 +492,39 @@ flatpak_run (int      argc,
   if (!command->fn)
     {
       GOptionContext *context;
-      g_autofree char *help = NULL;
+      g_autofree char *hint = NULL;
+      g_autofree char *msg = NULL;
 
       context = flatpak_option_context_new_with_commands (commands);
 
+      hint = g_strdup_printf (_("See '%s --help'"), g_get_prgname ());
+
       if (command_name != NULL)
         {
-          g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       _("Unknown command '%s'"), command_name);
+          const char *similar;
+
+          similar = find_similar_command (command_name);
+          if (similar)
+            msg = g_strdup_printf (_("'%s' is not a flatpak command. Did you mean '%s'?"),
+                                   command_name, similar);
+          else
+            msg = g_strdup_printf (_("'%s' is not a flatpak command"),
+                                   command_name);
         }
       else
         {
+          g_autoptr(GError) local_error = NULL;
+
           /* This will not return for some options (e.g. --version). */
-          if (flatpak_option_context_parse (context, empty_entries, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
-            {
-              g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                                   _("No command specified"));
-            }
+          if (flatpak_option_context_parse (context, empty_entries, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &local_error))
+            msg = g_strdup (_("No command specified"));
+          else
+            msg = g_strdup (local_error->message);
         }
 
-      help = g_option_context_get_help (context, FALSE, NULL);
-      g_printerr ("%s", help);
-
       g_option_context_free (context);
+
+      g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED, "%s\n\n%s", msg, hint);
 
       goto out;
     }
