@@ -42,6 +42,7 @@ static char **opt_extensions;
 static char **opt_remove_extensions;
 static char **opt_metadata;
 static gboolean opt_no_exports;
+static gboolean opt_no_inherit_permissions;
 static int opt_extension_prio = G_MININT;
 static char *opt_sdk;
 static char *opt_runtime;
@@ -57,7 +58,8 @@ static GOptionEntry options[] = {
   { "sdk", 0, 0, G_OPTION_ARG_STRING, &opt_sdk, N_("Change the sdk used for the app"),  N_("SDK") },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_metadata, N_("Set generic metadata option"),  N_("GROUP=KEY[=VALUE]") },
-  { NULL }
+  { "no-inherit-permissions", 0, 0, G_OPTION_ARG_NONE, &opt_no_inherit_permissions, N_("Don't inherit permissions from runtime"), NULL },
+ { NULL }
 };
 
 static gboolean
@@ -296,6 +298,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
+  g_autoptr(FlatpakContext) inherited_context = NULL;
   GError *temp_error = NULL;
   const char *group;
   int i;
@@ -445,12 +448,61 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
               g_print (_("No executable found\n"));
             }
         }
+
+      /* Inherit permissions from runtime by default */
+      if (!opt_no_inherit_permissions)
+        {
+          g_autofree char *runtime_pref = NULL;
+          g_autofree char *runtime_ref = NULL;
+          g_autoptr(GFile) runtime_deploy_dir = NULL;
+
+          runtime_pref = g_key_file_get_string (keyfile, group, FLATPAK_METADATA_KEY_RUNTIME, NULL);
+          if (runtime_pref != NULL)
+            {
+              runtime_ref = g_strconcat ("runtime/", runtime_pref, NULL);
+              runtime_deploy_dir = flatpak_find_deploy_dir_for_ref (runtime_ref, NULL, cancellable, NULL);
+            }
+
+          /* This is optional, because some weird uses of flatpak build-finish (like the test suite)
+             may not have the actual runtime installed. Most will though, as otherwise flatpak build
+             will not work. */
+          if (runtime_deploy_dir != NULL)
+            {
+              g_autoptr(GFile) runtime_metadata_file = NULL;
+              g_autofree char *runtime_metadata_contents = NULL;
+              gsize runtime_metadata_size;
+              g_autoptr(GKeyFile) runtime_metakey = NULL;
+
+
+              runtime_deploy_dir = flatpak_find_deploy_dir_for_ref (runtime_ref, NULL, cancellable, error);
+              if (runtime_deploy_dir == NULL)
+                goto out;
+
+              runtime_metadata_file = g_file_get_child (runtime_deploy_dir, "metadata");
+              if (!g_file_load_contents (runtime_metadata_file, cancellable,
+                                         &runtime_metadata_contents, &runtime_metadata_size, NULL, error))
+                goto out;
+
+              runtime_metakey = g_key_file_new ();
+              if (!g_key_file_load_from_data (runtime_metakey, runtime_metadata_contents, runtime_metadata_size, 0, error))
+                goto out;
+
+              inherited_context = flatpak_context_new ();
+              if (!flatpak_context_load_metadata (inherited_context, runtime_metakey, error))
+                goto out;
+
+              /* non-permissions are inherited at runtime, so no need to inherit them */
+              flatpak_context_reset_non_permissions (inherited_context);
+            }
+        }
     }
 
   if (opt_require_version)
     g_key_file_set_string (keyfile, group, "required-flatpak", opt_require_version);
 
   app_context = flatpak_context_new ();
+  if (inherited_context)
+    flatpak_context_merge (app_context, inherited_context);
   if (!flatpak_context_load_metadata (app_context, keyfile, error))
     goto out;
   flatpak_context_merge (app_context, arg_context);
