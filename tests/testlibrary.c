@@ -1417,6 +1417,7 @@ global_setup (void)
 
   flatpak_runtimedir = g_strconcat (testdir, "/runtime", NULL);
   g_mkdir_with_parents (flatpak_runtimedir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_setenv ("XDG_RUNTIME_DIR", flatpak_runtimedir, TRUE);
   g_test_message ("setting XDG_RUNTIME_DIR=%s", flatpak_runtimedir);
 
   flatpak_systemdir = g_strconcat (testdir, "/system", NULL);
@@ -1440,6 +1441,13 @@ global_setup (void)
   gpg_args = g_strdup_printf ("--gpg-homedir=%s --gpg-sign=%s", gpg_homedir, gpg_id);
   g_setenv ("GPGARGS", gpg_args, TRUE);
   g_test_message ("setting GPGARGS=%s", gpg_args);
+
+  g_reload_user_special_dirs_cache ();
+
+  g_assert_cmpstr (g_get_user_cache_dir (), ==, cachedir);
+  g_assert_cmpstr (g_get_user_config_dir (), ==, configdir);
+  g_assert_cmpstr (g_get_user_data_dir (), ==, datadir);
+  g_assert_cmpstr (g_get_user_runtime_dir (), ==, flatpak_runtimedir);
 
   copy_gpg ();
   setup_multiple_installations ();
