@@ -179,6 +179,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--app-runtime=RUNTIME</option></term>
+
+                <listitem><para>
+                    List applications that use the given runtime
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--columns=FIELD,…</option></term>
 
                 <listitem><para>
