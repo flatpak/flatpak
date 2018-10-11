@@ -167,11 +167,15 @@ static void
 test_installation_config (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autofree char *path = NULL;
+  g_autoptr(GFile) file = NULL;
   g_autoptr(GError) error = NULL;
   g_autofree char *value;
   gboolean res;
 
-  inst = flatpak_installation_new_user (NULL, &error);
+  path = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
+  file = g_file_new_for_path (path);
+  inst = flatpak_installation_new_for_path (file, TRUE, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (inst);
 
@@ -321,9 +325,14 @@ test_list_remotes (void)
   FlatpakRemote *remote;
   const FlatpakRemoteType types[] = { FLATPAK_REMOTE_TYPE_STATIC };
   const FlatpakRemoteType types2[] = { FLATPAK_REMOTE_TYPE_LAN };
+  gboolean res;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
+
+  res = flatpak_installation_update_remote_sync (inst, repo_name, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
 
   remotes = flatpak_installation_list_remotes (inst, NULL, &error);
   g_assert_no_error (error);
@@ -966,6 +975,13 @@ test_install_launch_uninstall (void)
 
   g_ptr_array_unref (refs);
 
+  /* first test an error */
+  res = flatpak_installation_launch (inst, "org.test.Hellooo", NULL, NULL, NULL, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
+  g_assert_false (res);
+  g_clear_error (&error);
+
+  /* now launch the right thing */
   res = flatpak_installation_launch (inst, "org.test.Hello", NULL, NULL, NULL, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
@@ -1710,6 +1726,12 @@ test_transaction_install_uninstall (void)
   /* start from a clean slate */
   empty_installation (inst);
 
+  /* Check that it is indeed empty */
+  ref = flatpak_installation_get_current_installed_app (inst, "org.test.Hello", NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
+  g_assert_null (ref);
+  g_clear_error (&error);
+
   /* install org.test.Hello, and have org.test.Hello.Locale and org.test.Platform
    * added as deps/related
    */
@@ -1884,7 +1906,7 @@ test_transaction_install_uninstall (void)
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
   g_clear_error (&error);
 
-  ref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_APP, "org.test.Hello", flatpak_get_default_arch (), "master", NULL, &error);
+  ref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_APP, "org.test.Hello", NULL, "master", NULL, &error);
   g_assert_nonnull (ref);
   g_assert_no_error (error);
 
@@ -2228,6 +2250,40 @@ test_update_subpaths (void)
   g_assert_cmpstr (subpaths[1], ==, "/fr");
 }
 
+static void
+test_overrides (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *data = NULL;
+  g_autoptr(GKeyFile) overrides = NULL;
+  gboolean res;
+  g_autofree char *value = NULL;
+ 
+  /* no library api to set overrides, so... */
+  const char *argv[] = { "flatpak", "override", "--user",
+                         "--allow=bluetooth",
+                         "org.test.Hello",
+                         NULL };
+  run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  data = flatpak_installation_load_app_overrides (inst, "org.test.Hello", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (data);
+
+  overrides = g_key_file_new ();
+  res = g_key_file_load_from_data (overrides, data, -1, 0, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  value = g_key_file_get_string (overrides, "Context", "features", &error);
+  g_assert_cmpstr (value, ==, "bluetooth;");
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -2258,6 +2314,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
   g_test_add_func ("/library/instance", test_instance);
   g_test_add_func ("/library/update-subpaths", test_update_subpaths);
+  g_test_add_func ("/library/overrides", test_overrides);
 
   global_setup ();
 
