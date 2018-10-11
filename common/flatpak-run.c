@@ -2862,6 +2862,7 @@ flatpak_run_app (const char     *app_ref,
                  const char     *custom_command,
                  char           *args[],
                  int             n_args,
+                 char          **instance_dir_out,
                  GCancellable   *cancellable,
                  GError        **error)
 {
@@ -3156,11 +3157,16 @@ flatpak_run_app (const char     *app_ref,
       GPid child_pid;
       char pid_str[64];
       g_autofree char *pid_path = NULL;
+      GSpawnFlags spawn_flags;
+
+      spawn_flags = G_SPAWN_SEARCH_PATH;
+      if (flags & FLATPAK_RUN_FLAG_DO_NOT_REAP)
+        spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
 
       if (!g_spawn_async (NULL,
                           (char **) bwrap->argv->pdata,
                           bwrap->envp,
-                          G_SPAWN_SEARCH_PATH,
+                          spawn_flags,
                           flatpak_bwrap_child_setup_cb, bwrap->fds,
                           &child_pid,
                           error))
@@ -3189,6 +3195,9 @@ flatpak_run_app (const char     *app_ref,
         }
       /* Not actually reached... */
     }
+
+  if (instance_dir_out)
+    *instance_dir_out = g_steal_pointer (&instance_id_host_dir);
 
   return TRUE;
 }

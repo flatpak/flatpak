@@ -16,6 +16,7 @@ flatpak_installation_update_full
 flatpak_installation_uninstall
 flatpak_installation_uninstall_full
 flatpak_installation_launch
+flatpak_installation_launch_full
 flatpak_installation_get_current_installed_app
 flatpak_installation_get_display_name
 flatpak_installation_get_id
@@ -56,6 +57,7 @@ FlatpakProgressCallback
 FlatpakUpdateFlags
 FlatpakInstallFlags
 FlatpakUninstallFlags
+FlatpakLaunchFlags
 FlatpakStorageType
 <SUBSECTION Standard>
 FLATPAK_INSTALLATION

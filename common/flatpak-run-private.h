@@ -170,6 +170,7 @@ gboolean flatpak_run_app (const char     *app_ref,
                           const char     *custom_command,
                           char           *args[],
                           int             n_args,
+                          char          **instance_dir_out,
                           GCancellable   *cancellable,
                           GError        **error);
 

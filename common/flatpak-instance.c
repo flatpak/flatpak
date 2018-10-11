@@ -23,6 +23,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-instance.h"
+#include "flatpak-instance-private.h"
 #include "flatpak-enum-types.h"
 
 /**
@@ -36,6 +37,9 @@
  *
  * Importantly, it also gives access to the PID of the main
  * processes in the sandbox.
+ *
+ * One way to obtain FlatpakInstances is to use flatpak_instance_get_all().
+ * Another way is to use flatpak_installation_launch_full().
  *
  * Note that process lifecycle tracking is fundamentally racy.
  * You have to be prepared for the sandbox and the processes
@@ -373,15 +377,14 @@ get_pid (const char *dir)
   return (int) g_ascii_strtoll (contents, NULL, 10);
 }
 
-static FlatpakInstance *
-flatpak_instance_new (const char *id)
+FlatpakInstance *
+flatpak_instance_new (const char *dir)
 {
   FlatpakInstance *self = g_object_new (flatpak_instance_get_type (), NULL);
   FlatpakInstancePrivate *priv = flatpak_instance_get_instance_private (self);
 
-  priv->id = g_strdup (id);
-
-  priv->dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", id, NULL);
+  priv->dir = g_strdup (dir);
+  priv->id = g_path_get_basename (dir);
 
   priv->pid = get_pid (priv->dir);
   priv->child_pid = get_child_pid (priv->dir);
@@ -405,6 +408,15 @@ flatpak_instance_new (const char *id)
     }
 
   return self;
+}
+
+static FlatpakInstance *
+flatpak_instance_new_for_id (const char *id)
+{
+  g_autofree char *dir = NULL;
+
+  dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", id, NULL);
+  return flatpak_instance_new (dir);
 }
 
 /**
@@ -463,7 +475,7 @@ flatpak_instance_get_all (void)
               continue;
             }
 
-          g_ptr_array_add (instances, flatpak_instance_new (dent->d_name));
+          g_ptr_array_add (instances, flatpak_instance_new_for_id (dent->d_name));
         }
     }
 
@@ -483,32 +495,9 @@ flatpak_instance_is_running (FlatpakInstance *self)
 {
   FlatpakInstancePrivate *priv = flatpak_instance_get_instance_private (self);
 
-  if (priv->dir)
-    {
-      g_autofree char *ref_file = g_strconcat (priv->dir, "/.ref", NULL);
-      struct stat statbuf;
-      struct flock l = {
-        .l_type = F_WRLCK,
-        .l_whence = SEEK_SET,
-        .l_start = 0,
-        .l_len = 0
-      };
-      glnx_autofd int lock_fd = open (ref_file, O_RDWR | O_CLOEXEC);
-      if (lock_fd != -1 &&
-          fstat (lock_fd, &statbuf) == 0 &&
-          /* Only gc if created at least 3 secs ago, to work around race mentioned in flatpak_run_allocate_id() */
-          statbuf.st_mtime + 3 < time (NULL) &&
-          fcntl (lock_fd, F_GETLK, &l) == 0 &&
-          l.l_type == F_UNLCK)
-        {
-          /* The instance is not used, remove it */
-          g_debug ("Cleaning up unused container id %s", priv->id);
-          glnx_shutil_rm_rf_at (-1, priv->dir, NULL, NULL);
+  if (kill (priv->pid, 0) == 0)
+    return TRUE;
 
-          g_clear_pointer (&priv->dir, g_free);
-        }
-    }
-
-  return priv->dir != NULL;
+  return FALSE;
 }
 
