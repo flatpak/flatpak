@@ -1548,7 +1548,7 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
                                          GError             **error)
 {
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autofree char *metadata_contents = NULL;
+  char *metadata_contents;
   gsize metadata_size;
 
   dir = flatpak_installation_get_dir (self, error);
