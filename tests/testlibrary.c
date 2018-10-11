@@ -334,6 +334,10 @@ test_list_remotes (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
+  res = flatpak_installation_update_appstream_sync (inst, repo_name, NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
   remotes = flatpak_installation_list_remotes (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (remotes);
@@ -2259,10 +2263,20 @@ test_overrides (void)
   g_autoptr(GKeyFile) overrides = NULL;
   gboolean res;
   g_autofree char *value = NULL;
+  g_autoptr(FlatpakInstalledRef) ref = NULL;
  
   /* no library api to set overrides, so... */
   const char *argv[] = { "flatpak", "override", "--user",
                          "--allow=bluetooth",
+                         "--disallow=canbus",
+                         "--device=dri",
+                         "--nodevice=kvm",
+                         "--filesystem=xdg-music",
+                         "--filesystem=~/foo:ro",
+                         "--filesystem=xdg-download/subdir:create",
+                         "--env=FOO=BAR",
+                         "--own-name=foo.bar.baz",
+                         "--talk-name=hello.bla.bla.*",
                          "org.test.Hello",
                          NULL };
   run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
@@ -2270,6 +2284,25 @@ test_overrides (void)
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  ref = flatpak_installation_update (inst, 0, FLATPAK_REF_KIND_APP, "org.test.Hello", NULL, "master", NULL, NULL, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
+  g_assert_null (ref);
+  g_clear_error (&error);
+
+  ref = flatpak_installation_install (inst, repo_name, FLATPAK_REF_KIND_APP, "org.test.Hello", NULL, "master", NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (ref);
+
+  ref = flatpak_installation_install (inst, repo_name, FLATPAK_REF_KIND_RUNTIME, "org.test.Platform", NULL, "master", NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (ref);
+
+  res = flatpak_installation_launch (inst, "org.test.Hello", NULL, "master", NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (ref);
 
   data = flatpak_installation_load_app_overrides (inst, "org.test.Hello", NULL, &error);
   g_assert_no_error (error);
@@ -2280,8 +2313,32 @@ test_overrides (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
+  value = g_key_file_get_string (overrides, "Context", "devices", &error);
+  g_assert_cmpstr (value, ==, "dri;!kvm;");
+  g_clear_pointer (&value, g_free);
+
   value = g_key_file_get_string (overrides, "Context", "features", &error);
-  g_assert_cmpstr (value, ==, "bluetooth;");
+  g_assert_cmpstr (value, ==, "bluetooth;!canbus;");
+  g_clear_pointer (&value, g_free);
+
+  value = g_key_file_get_string (overrides, "Context", "filesystems", &error);
+  g_assert_cmpstr (value, ==, "xdg-download/subdir:create;xdg-music;~/foo:ro;");
+  g_clear_pointer (&value, g_free);
+
+  value = g_key_file_get_string (overrides, "Session Bus Policy", "hello.bla.bla.*", &error);
+  g_assert_cmpstr (value, ==, "talk");
+  g_clear_pointer (&value, g_free);
+
+  value = g_key_file_get_string (overrides, "Session Bus Policy", "foo.bar.baz", &error);
+  g_assert_cmpstr (value, ==, "own");
+  g_clear_pointer (&value, g_free);
+
+  value = g_key_file_get_string (overrides, "Environment", "FOO", &error);
+  g_assert_cmpstr (value, ==, "BAR");
+  g_clear_pointer (&value, g_free);
+
+  const char *argv2[] = { "flatpak", "override", "--user", "--reset", "org.test.Hello", NULL };
+  run_test_subprocess ((char **) argv2, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 int
