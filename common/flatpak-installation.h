@@ -29,6 +29,7 @@ typedef struct _FlatpakInstallation FlatpakInstallation;
 
 #include <gio/gio.h>
 #include <flatpak-installed-ref.h>
+#include <flatpak-instance.h>
 #include <flatpak-remote.h>
 
 #define FLATPAK_TYPE_INSTALLATION flatpak_installation_get_type ()
@@ -108,6 +109,19 @@ typedef enum {
 } FlatpakUninstallFlags;
 
 /**
+ * FlatpakLaunchFlags:
+ * @FLATPAK_LAUNCH_FLAGS_NONE: Default
+ * @FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP: Do not reap the child. Use this if you want to wait
+ * for the child with g_child_watch_add(). (Snce: 1.1)
+ *
+ * Flags to alter the behavior of flatpak_installation_launch_full().
+ */
+typedef enum {
+  FLATPAK_LAUNCH_FLAGS_NONE        = 0,
+  FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP = (1 << 0),
+} FlatpakLaunchFlags;
+
+/**
  * FlatpakStorageType:
  * @FLATPAK_STORAGE_TYPE_DEFAULT: default
  * @FLATPAK_STORAGE_TYPE_HARD_DISK: installation is on a hard disk
@@ -184,6 +198,15 @@ FLATPAK_EXTERN gboolean             flatpak_installation_launch (FlatpakInstalla
                                                                  const char          *commit,
                                                                  GCancellable        *cancellable,
                                                                  GError             **error);
+FLATPAK_EXTERN gboolean             flatpak_installation_launch_full (FlatpakInstallation *self,
+                                                                      FlatpakLaunchFlags   flags,
+                                                                      const char          *name,
+                                                                      const char          *arch,
+                                                                      const char          *branch,
+                                                                      const char          *commit,
+                                                                      FlatpakInstance    **instance_out,
+                                                                      GCancellable        *cancellable,
+                                                                      GError             **error);
 FLATPAK_EXTERN GFileMonitor        *flatpak_installation_create_monitor (FlatpakInstallation *self,
                                                                          GCancellable        *cancellable,
                                                                          GError             **error);

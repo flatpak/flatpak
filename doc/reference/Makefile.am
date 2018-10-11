@@ -33,6 +33,7 @@ IGNORE_HFILES = \
 	flatpak-installation-private.h \
 	flatpak-transaction-private.h \
 	flatpak-utils-private.h \
+	flatpak-instance-private.h \
 	$(NULL)
 
 EXTRA_HFILES =

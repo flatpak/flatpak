@@ -38,6 +38,7 @@
 #include "flatpak-enum-types.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-run-private.h"
+#include "flatpak-instance-private.h"
 #include "flatpak-error.h"
 
 /**
@@ -579,9 +580,56 @@ flatpak_installation_launch (FlatpakInstallation *self,
                              GCancellable        *cancellable,
                              GError             **error)
 {
+  return flatpak_installation_launch_full (self,
+                                           FLATPAK_LAUNCH_FLAGS_NONE,
+                                           name, arch, branch, commit,
+                                           NULL,
+                                           cancellable, error);
+}
+
+/**
+ * flatpak_installation_launch_full:
+ * @self: a #FlatpakInstallation
+ * @flags: set of #FlatpakLaunchFlags
+ * @name: name of the app to launch
+ * @arch: (nullable): which architecture to launch (default: current architecture)
+ * @branch: (nullable): which branch of the application (default: "master")
+ * @commit: (nullable): the commit of @branch to launch
+ * @instance_out: (nullable): return location for a #FlatpakInstance
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Launch an installed application.
+ *
+ * You can use flatpak_installation_get_installed_ref() or
+ * flatpak_installation_get_current_installed_app() to find out what builds
+ * are available, in order to get a value for @commit.
+ *
+ * Compared to flatpak_installation_launch(), this function returns a #FlatpakInstance
+ * that can be used to get information about the running instance. You can also use
+ * it to wait for the instance to be done with g_child_watch_add() if you pass the
+ * #FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP flag.
+ *
+ * Returns: %TRUE, unless an error occurred
+ *
+ * Since: 1.1
+ */
+gboolean
+flatpak_installation_launch_full (FlatpakInstallation *self,
+                                  FlatpakLaunchFlags   flags,
+                                  const char          *name,
+                                  const char          *arch,
+                                  const char          *branch,
+                                  const char          *commit,
+                                  FlatpakInstance    **instance_out,
+                                  GCancellable        *cancellable,
+                                  GError             **error)
+{
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
   g_autofree char *app_ref = NULL;
+  g_autofree char *instance_dir = NULL;
+  FlatpakRunFlags run_flags;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -597,14 +645,25 @@ flatpak_installation_launch (FlatpakInstallation *self,
   if (app_deploy == NULL)
     return FALSE;
 
-  return flatpak_run_app (app_ref,
-                          app_deploy,
-                          NULL, NULL,
-                          NULL, NULL,
-                          FLATPAK_RUN_FLAG_BACKGROUND,
-                          NULL,
-                          NULL, 0,
-                          cancellable, error);
+  run_flags = FLATPAK_RUN_FLAG_BACKGROUND;
+  if (flags & FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP)
+    run_flags |= FLATPAK_RUN_FLAG_DO_NOT_REAP;
+
+  if (!flatpak_run_app (app_ref,
+                        app_deploy,
+                        NULL, NULL,
+                        NULL, NULL,
+                        run_flags,
+                        NULL,
+                        NULL, 0,
+                        &instance_dir,
+                        cancellable, error))
+    return FALSE;
+
+  if (instance_out)
+    *instance_out = flatpak_instance_new (instance_dir);
+
+  return TRUE;
 }
 
 

@@ -203,6 +203,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         opt_command,
                         &argv[rest_argv_start + 1],
                         rest_argc - 1,
+                        NULL,
                         cancellable,
                         error))
     return FALSE;
