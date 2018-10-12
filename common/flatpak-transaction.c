@@ -1809,6 +1809,9 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
 
   flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
+  /* These are potentially out of date now */
+  g_hash_table_remove_all (priv->remote_states);
+
   return TRUE;
 }
 
