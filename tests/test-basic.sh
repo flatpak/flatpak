@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..6"
+echo "1..9"
 
 ${FLATPAK} --version > version_out
 
@@ -65,7 +65,7 @@ do
   ${FLATPAK} $cmd --help | head -2 > help_out
 
   assert_file_has_content help_out "^Usage:$"
-  assert_file_has_content help_out "${FLATPAK} $cmd"
+  assert_file_has_content help_out "flatpak $cmd"
 done
 
 echo "ok command help"
@@ -80,3 +80,24 @@ do
 done
 
 echo "ok columns help"
+
+${FLATPAK} >out 2>&1 || true
+
+assert_file_has_content out "^error: No command specified$"
+assert_file_has_content out "flatpak --help"
+
+echo "ok missing command"
+
+${FLATPAK} indo >out 2>&1 || true
+
+assert_file_has_content out "^error: .* 'info'"
+assert_file_has_content out "flatpak --help"
+
+echo "ok misspelt command"
+
+${FLATPAK} info >out 2>&1 || true
+
+assert_file_has_content out "^error: NAME must be specified$"
+assert_file_has_content out "flatpak info --help"
+
+echo "ok info missing NAME"
