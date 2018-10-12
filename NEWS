@@ -13,6 +13,8 @@ Changes in 1.0.4
    into /usr/share/zoneinfo doesn't work when exposing the host timezone.
  * All apps now have automatic permissions to own their own app id as a
    subname of org.mpris.MediaPlayer2.
+ * We now properly re-load remote state in FlatpakTransaction if the
+   metadata was updated for the remote.
  * The signature of the FlatpakTransaction::operation-done signal was wrong
    in the header and has now been corrected to the signature that is actually
    emitted.
