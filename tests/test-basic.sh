@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..5"
+echo "1..6"
 
 ${FLATPAK} --version > version_out
 
@@ -60,7 +60,7 @@ for cmd in install update uninstall list info config repair create-usb \
            permission-list permission-show permission-reset remotes remote-add \
            remote-modify remote-delete remote-ls remote-info build-init \
            build build-finish build-export build-bundle build-import-bundle \
-           build-sign build-update-repo build-commit-from repo;
+           build-sign build-update-repo build-commit-from repo kill history;
 do
   ${FLATPAK} $cmd --help | head -2 > help_out
 
@@ -69,3 +69,14 @@ do
 done
 
 echo "ok command help"
+
+for cmd in list ps remote-ls remotes document-list history;
+do
+  ${FLATPAK} $cmd --columns=help > help_out
+
+  assert_file_has_content help_out "^Available columns:$"
+  assert_file_has_content help_out "^  all"
+  assert_file_has_content help_out "^  help"
+done
+
+echo "ok columns help"
