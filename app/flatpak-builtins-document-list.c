@@ -69,6 +69,9 @@ print_documents (const char *app_id,
   gboolean need_perms = FALSE;
   int i;
 
+  if (columns[0].name == NULL)
+    return TRUE;
+
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
   if (session_bus == NULL)
     return FALSE;
