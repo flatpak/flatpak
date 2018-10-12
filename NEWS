@@ -1,3 +1,30 @@
+Changes in 1.0.4
+================
+
+ * Flatpak 0.99.1 removed the inheritance of permissions from the runtime due
+   to concerns with dynamic app permissions. Due to popular requests, this
+   version re-introduces such inheritance, but does it instead at build time.
+   This solved the issues with dynamic permissions while still allowing runtimes
+   to have default permissions. Apps can disable this by passing
+   --no-inherit-permissions to build-finish.
+ * The sandbox now always includes a /etc/timezone file, following the (old)
+   debian standard for this. This is needed, because the more modern way
+   of exposing the timezone name by having /etc/localtime be a symlink
+   into /usr/share/zoneinfo doesn't work when exposing the host timezone.
+ * All apps now have automatic permissions to own their own app id as a
+   subname of org.mpris.MediaPlayer2.
+ * The signature of the FlatpakTransaction::operation-done signal was wrong
+   in the header and has now been corrected to the signature that is actually
+   emitted.
+ * A crash was fixed when reading invalid .flatpakref files.
+ * A crash during updates when a local ref was unexpectedly missing was fixed.
+ * An error case on uninstalling was incorrectly returning success even
+   thought there was an error.
+ * flatpak_installation_modify_remote did not correctly save the nodeps state.
+ * flatpak_installation_load_app_overrides() was improperly returning freed
+   memory.
+ * The tarball now ships with an icon (flatpak.png).
+
 Changes in 1.0.3
 ================
 
