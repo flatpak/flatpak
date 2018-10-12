@@ -291,6 +291,160 @@ flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
   return TRUE;
 }
 
+static gboolean repo_get_remote_collection_id (OstreeRepo *repo,
+                                               const char *remote_name,
+                                               char      **collection_id_out,
+                                               GError    **error);
+
+gboolean
+flatpak_remote_state_refresh (FlatpakRemoteState *self,
+                              FlatpakDir         *dir,
+                              gboolean            optional,
+                              gboolean            local_only,
+                              GBytes             *opt_summary,
+                              GBytes             *opt_summary_sig,
+                              GCancellable       *cancellable,
+                              GError            **error)
+{
+  OstreeRepo *repo = flatpak_dir_get_repo (dir);
+  g_autoptr(GError) my_error = NULL;
+  gboolean is_local;
+
+  g_return_val_if_fail (self->remote_name != NULL, FALSE);
+
+  g_clear_pointer (&self->collection_id, g_free);
+  g_clear_pointer (&self->summary, g_variant_unref);
+  g_clear_pointer (&self->summary_sig_bytes, g_bytes_unref);
+  g_clear_error (&self->summary_fetch_error);
+  g_clear_pointer (&self->metadata, g_variant_unref);
+  g_clear_error (&self->metadata_fetch_error);
+
+  if (error == NULL)
+    error = &my_error;
+
+  is_local = g_str_has_prefix (self->remote_name, "file:");
+  if (!is_local)
+    {
+      if (!flatpak_dir_has_remote (dir, self->remote_name, error))
+        return FALSE;
+      if (!repo_get_remote_collection_id (repo, self->remote_name, &self->collection_id, error))
+        return FALSE;
+    }
+
+  if (local_only)
+    {
+      flatpak_fail (&self->summary_fetch_error, "Internal error, local_only state");
+      flatpak_fail (&self->metadata_fetch_error, "Internal error, local_only state");
+      return TRUE;
+    }
+
+  if (opt_summary)
+    {
+      if (opt_summary_sig)
+        {
+          /* If specified, must be valid signature */
+          g_autoptr(OstreeGpgVerifyResult) gpg_result =
+            ostree_repo_verify_summary (repo,
+                                        self->remote_name,
+                                        opt_summary,
+                                        opt_summary_sig,
+                                        NULL, error);
+          if (gpg_result == NULL ||
+              !ostree_gpg_verify_result_require_valid_signature (gpg_result, error))
+            return FALSE;
+
+          self->summary_sig_bytes = g_bytes_ref (opt_summary_sig);
+        }
+      self->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                                     opt_summary, FALSE));
+    }
+  else
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GBytes) summary_bytes = NULL;
+      g_autoptr(GBytes) summary_sig_bytes = NULL;
+
+      if (flatpak_dir_remote_fetch_summary (dir, self->remote_name, &summary_bytes, &summary_sig_bytes,
+                                            cancellable, &local_error))
+        {
+          self->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
+          self->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                                         summary_bytes, FALSE));
+        }
+      else
+        {
+          if (optional)
+            {
+              self->summary_fetch_error = g_steal_pointer (&local_error);
+              g_debug ("Failed to download optional summary");
+            }
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+        }
+    }
+
+  if (self->collection_id == NULL)
+    {
+      if (self->summary != NULL) /* In the optional case we might not have a summary */
+        self->metadata = g_variant_get_child_value (self->summary, 1);
+    }
+  else
+    {
+      g_autofree char *latest_rev = NULL;
+      g_autoptr(GVariant) commit_v = NULL;
+      g_autoptr(GError) local_error = NULL;
+
+      /* Make sure the branch is up to date, but ignore downgrade errors (see
+       * below for the explanation). */
+      if (!_flatpak_dir_fetch_remote_state_metadata_branch (dir, self, cancellable, &local_error) &&
+          !g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_DOWNGRADE))
+        {
+          if (optional)
+            {
+              /* This happens for instance in the case where a p2p remote is invalid (wrong signature)
+                 and we should just silently fail to update to it. */
+              self->metadata_fetch_error = g_steal_pointer (&local_error);
+              g_debug ("Failed to download optional metadata");
+            }
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+        }
+      else
+        {
+          if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_DOWNGRADE))
+            {
+              /* The latest metadata available is a downgrade, which means we're offline and using a
+               * LAN/USB source. Downgrading the metadata in the system repo would be a security
+               * risk, so instead ignore the downgrade and use the later metadata.  There's some
+               * chance its information won't be accurate for the refs that are pulled, but using
+               * the old metadata wouldn't always be correct either because there's no guarantee the
+               * refs will be pulled from the same peer source as the metadata. Long term, we should
+               * figure out how to rely less on it. */
+              g_debug ("Ignoring downgrade of ostree-metadata; using the newer one instead");
+            }
+
+          /* Look up the commit containing the latest repository metadata. */
+          latest_rev = flatpak_dir_read_latest (dir, self->remote_name, OSTREE_REPO_METADATA_REF,
+                                                NULL, cancellable, error);
+          if (latest_rev == NULL)
+            return FALSE;
+
+          if (!ostree_repo_load_commit (repo, latest_rev, &commit_v, NULL, error))
+            return FALSE;
+
+          self->metadata = g_variant_get_child_value (commit_v, 0);
+        }
+    }
+
+  return TRUE;
+}
+
 /* Returns TRUE if the ref is found in the summary or cache. out_checksum and
  * out_variant are not guaranteed to be set even when the ref is found. */
 gboolean
@@ -2742,11 +2896,6 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
 
   return TRUE;
 }
-
-static gboolean repo_get_remote_collection_id (OstreeRepo *repo,
-                                               const char *remote_name,
-                                               char      **collection_id_out,
-                                               GError    **error);
 
 static void
 async_result_cb (GObject      *obj,
@@ -9317,7 +9466,6 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 {
   g_autoptr(FlatpakRemoteState) state = flatpak_remote_state_new ();
   g_autoptr(GError) my_error = NULL;
-  gboolean is_local;
 
   if (error == NULL)
     error = &my_error;
@@ -9326,125 +9474,11 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
     return NULL;
 
   state->remote_name = g_strdup (remote_or_uri);
-  is_local = g_str_has_prefix (remote_or_uri, "file:");
-  if (!is_local)
-    {
-      if (!flatpak_dir_has_remote (self, remote_or_uri, error))
-        return NULL;
-      if (!repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
-        return NULL;
-    }
 
-  if (local_only)
-    {
-      flatpak_fail (&state->summary_fetch_error, "Internal error, local_only state");
-      flatpak_fail (&state->metadata_fetch_error, "Internal error, local_only state");
-      return g_steal_pointer (&state);
-    }
-
-  if (opt_summary)
-    {
-      if (opt_summary_sig)
-        {
-          /* If specified, must be valid signature */
-          g_autoptr(OstreeGpgVerifyResult) gpg_result =
-            ostree_repo_verify_summary (self->repo,
-                                        state->remote_name,
-                                        opt_summary,
-                                        opt_summary_sig,
-                                        NULL, error);
-          if (gpg_result == NULL ||
-              !ostree_gpg_verify_result_require_valid_signature (gpg_result, error))
-            return NULL;
-
-          state->summary_sig_bytes = g_bytes_ref (opt_summary_sig);
-        }
-      state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                                     opt_summary, FALSE));
-    }
-  else
-    {
-      g_autoptr(GError) local_error = NULL;
-      g_autoptr(GBytes) summary_bytes = NULL;
-      g_autoptr(GBytes) summary_sig_bytes = NULL;
-
-      if (flatpak_dir_remote_fetch_summary (self, remote_or_uri, &summary_bytes, &summary_sig_bytes,
-                                            cancellable, &local_error))
-        {
-          state->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
-          state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                                         summary_bytes, FALSE));
-        }
-      else
-        {
-          if (optional)
-            {
-              state->summary_fetch_error = g_steal_pointer (&local_error);
-              g_debug ("Failed to download optional summary");
-            }
-          else
-            {
-              g_propagate_error (error, g_steal_pointer (&local_error));
-              return NULL;
-            }
-        }
-    }
-
-  if (state->collection_id == NULL)
-    {
-      if (state->summary != NULL) /* In the optional case we might not have a summary */
-        state->metadata = g_variant_get_child_value (state->summary, 1);
-    }
-  else
-    {
-      g_autofree char *latest_rev = NULL;
-      g_autoptr(GVariant) commit_v = NULL;
-      g_autoptr(GError) local_error = NULL;
-
-      /* Make sure the branch is up to date, but ignore downgrade errors (see
-       * below for the explanation). */
-      if (!_flatpak_dir_fetch_remote_state_metadata_branch (self, state, cancellable, &local_error) &&
-          !g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_DOWNGRADE))
-        {
-          if (optional)
-            {
-              /* This happens for instance in the case where a p2p remote is invalid (wrong signature)
-                 and we should just silently fail to update to it. */
-              state->metadata_fetch_error = g_steal_pointer (&local_error);
-              g_debug ("Failed to download optional metadata");
-            }
-          else
-            {
-              g_propagate_error (error, g_steal_pointer (&local_error));
-              return NULL;
-            }
-        }
-      else
-        {
-          if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_DOWNGRADE))
-            {
-              /* The latest metadata available is a downgrade, which means we're offline and using a
-               * LAN/USB source. Downgrading the metadata in the system repo would be a security
-               * risk, so instead ignore the downgrade and use the later metadata.  There's some
-               * chance its information won't be accurate for the refs that are pulled, but using
-               * the old metadata wouldn't always be correct either because there's no guarantee the
-               * refs will be pulled from the same peer source as the metadata. Long term, we should
-               * figure out how to rely less on it. */
-              g_debug ("Ignoring downgrade of ostree-metadata; using the newer one instead");
-            }
-
-          /* Look up the commit containing the latest repository metadata. */
-          latest_rev = flatpak_dir_read_latest (self, remote_or_uri, OSTREE_REPO_METADATA_REF,
-                                                NULL, cancellable, error);
-          if (latest_rev == NULL)
-            return NULL;
-
-          if (!ostree_repo_load_commit (self->repo, latest_rev, &commit_v, NULL, error))
-            return NULL;
-
-          state->metadata = g_variant_get_child_value (commit_v, 0);
-        }
-    }
+  if (!flatpak_remote_state_refresh (state, self, optional, local_only,
+                                     opt_summary, opt_summary_sig,
+                                     cancellable, error))
+    return NULL;
 
   return g_steal_pointer (&state);
 }

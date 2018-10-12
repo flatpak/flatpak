@@ -100,6 +100,14 @@ gboolean flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                               GError            **error);
 gboolean flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
                                                GError            **error);
+gboolean flatpak_remote_state_refresh (FlatpakRemoteState *self,
+                                       FlatpakDir         *dir,
+                                       gboolean            optional,
+                                       gboolean            local_only,
+                                       GBytes             *opt_summary,
+                                       GBytes             *opt_summary_sig,
+                                       GCancellable       *cancellable,
+                                       GError            **error);
 gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
                                           const char         *ref,
                                           char              **out_checksum,
