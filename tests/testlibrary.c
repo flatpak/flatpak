@@ -1178,6 +1178,24 @@ run_test_subprocess (char                 **argv,
 }
 
 static void
+make_bundle (void)
+{
+  g_autofree char *repo_url = g_strdup_printf ("http://127.0.01:%s/test", httpd_port);
+  g_autofree char *arg2 = g_strdup_printf ("--repo-url=%s", repo_url);
+  g_autofree char *path = g_build_filename (testdir, "bundles", NULL);
+  g_autofree char *file = g_build_filename (path, "hello.flatpak", NULL);
+  char *argv[] = { "flatpak", "build-bundle", "repo-url", "repos/test", "filename", "org.test.Hello", NULL };
+
+  argv[2] = arg2;
+  argv[4] = file;
+
+  g_debug ("Making dir %s", path);
+  g_mkdir_with_parents (path, S_IRWXU | S_IRWXG | S_IRWXO);
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
 make_test_runtime (void)
 {
   g_autofree char *arg0 = NULL;
@@ -1472,6 +1490,7 @@ global_setup (void)
   copy_gpg ();
   setup_multiple_installations ();
   setup_repo ();
+  make_bundle ();
 }
 
 static void
@@ -1736,14 +1755,26 @@ test_transaction_install_uninstall (void)
   g_assert_null (ref);
   g_clear_error (&error);
 
+  /* update org.test.Hello, we expect a non-installed error */
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  g_assert (flatpak_transaction_is_empty (transaction));
+
+  res = flatpak_transaction_add_update (transaction, "app/org.test.Hello/x86_64/master", NULL, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
+  g_assert_false (res);
+  g_clear_error (&error);
+
+  g_clear_object (&transaction);
+
   /* install org.test.Hello, and have org.test.Hello.Locale and org.test.Platform
    * added as deps/related
    */
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
-
-  g_assert (flatpak_transaction_is_empty (transaction));
 
   res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
   g_assert_no_error (error);
@@ -1838,6 +1869,18 @@ test_transaction_install_uninstall (void)
 
   g_clear_object (&transaction);
 
+  /* install org.test.Hello again. we expect an already-installed error */
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED);
+  g_assert_false (res);
+  g_clear_error (&error);
+
+  g_clear_object (&transaction);
+
   /* uninstall org.test.Hello, we expect org.test.Hello.Locale to be
    * removed with it, but org.test.Platform to stay
    */
@@ -1861,6 +1904,12 @@ test_transaction_install_uninstall (void)
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Platform");
   g_clear_object (&ref);
   g_clear_pointer (&refs, g_ptr_array_unref);
+
+  /* run the transaction again, expect an error */
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_nonnull (error);
+  g_assert_false (res);
+  g_clear_error (&error);
 
   g_clear_object (&transaction);
 
@@ -1952,6 +2001,15 @@ test_transaction_install_uninstall (void)
   res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
+
+  /* uninstall again, expect a not-installed error */
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_uninstall (transaction, "app/org.test.Hello/x86_64/master", &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
+  g_assert_false (res);
 }
 
 /* test installing a flatpakref with a transaction */
@@ -2137,6 +2195,8 @@ test_instance (void)
   g_autoptr(GBytes) data = NULL;
   g_autoptr(GPtrArray) instances = NULL;
   FlatpakInstance *instance;
+  GKeyFile *info;
+  g_autofree char *value = NULL;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -2170,6 +2230,16 @@ test_instance (void)
   instance = g_ptr_array_index (instances, 0);
 
   g_assert_true (flatpak_instance_is_running (instance));
+
+  g_assert_nonnull (flatpak_instance_get_id (instance));
+  info = flatpak_instance_get_info (instance);
+  g_assert_nonnull (info);
+  value = g_key_file_get_string (info, "Application", "name", &error);
+  g_assert_cmpstr (value, ==, "org.test.Hello");
+  g_clear_pointer (&value, g_free); 
+  value = g_key_file_get_string (info, "Instance", "instance-id", &error);
+  g_assert_cmpstr (value, ==, flatpak_instance_get_id (instance));
+  g_clear_pointer (&value, g_free); 
 
   g_assert_cmpstr (flatpak_instance_get_app (instance), ==, "org.test.Hello");
   g_assert_cmpstr (flatpak_instance_get_arch (instance), ==, "x86_64");
@@ -2341,6 +2411,157 @@ test_overrides (void)
   run_test_subprocess ((char **) argv2, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
+static void
+test_bundle (void)
+{
+  g_autoptr(FlatpakBundleRef) ref = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *path = NULL;
+  g_autoptr(GFile) file2 = NULL;
+  g_autofree char *origin = NULL;
+  g_autofree char *repo_url = g_strdup_printf ("http://127.0.01:%s/test", httpd_port);
+  g_autoptr(GBytes) metadata = NULL;
+  g_autoptr(GBytes) appstream = NULL;
+  g_autoptr(GBytes) icon = NULL;
+
+  file = g_file_new_for_path ("/dev/null");
+
+  ref = flatpak_bundle_ref_new (file, &error);
+  g_assert_nonnull (error);
+  g_assert_null (ref);
+  g_clear_error (&error);
+
+  g_clear_object (&file);
+
+  path = g_build_filename (testdir, "bundles", "hello.flatpak", NULL);
+  file = g_file_new_for_path (path);
+  ref = flatpak_bundle_ref_new (file, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (ref);
+
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello");
+  g_assert_cmpstr (flatpak_ref_get_arch (FLATPAK_REF (ref)), ==, flatpak_get_default_arch ());
+  g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "master");
+  g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (ref)), ==, FLATPAK_REF_KIND_APP);
+  g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, "com.example.Test");
+  
+  file2 = flatpak_bundle_ref_get_file (ref);
+  g_assert (g_file_equal (file, file2));
+
+  origin = flatpak_bundle_ref_get_origin (ref);
+  g_assert_cmpstr (origin, ==, repo_url);
+
+  g_assert_null (flatpak_bundle_ref_get_runtime_repo_url (ref));
+
+  g_assert_cmpint (flatpak_bundle_ref_get_installed_size (ref), >, 0);
+
+  metadata = flatpak_bundle_ref_get_metadata (ref);
+  g_assert_nonnull (metadata);
+  /* FIXME verify format */
+
+  appstream = flatpak_bundle_ref_get_appstream (ref);
+  g_assert_nonnull (appstream);
+  /* FIXME verify format */
+ 
+  icon = flatpak_bundle_ref_get_icon (ref, 64);
+  g_assert_nonnull (icon);
+  /* FIXME verify format */
+
+  icon = flatpak_bundle_ref_get_icon (ref, 128);
+  g_assert_null (icon);
+
+  g_clear_object (&file2);
+
+  g_object_get (ref, "file", &file2, NULL);
+  g_assert (g_file_equal (file, file2));
+}
+
+static void
+test_install_bundle (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autofree char *path = NULL;
+  g_autoptr(FlatpakInstalledRef) ref = NULL;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  path = g_build_filename (testdir, "bundles", "hello.flatpak", NULL);
+  file = g_file_new_for_path (path);
+
+  ref = flatpak_installation_install_bundle (inst, file, NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (ref);
+}
+
+static void
+test_list_installed_related_refs (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(GError) error = NULL;
+  FlatpakRelatedRef *ref;
+  FlatpakInstalledRef *iref;
+  gboolean res;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
+  g_assert_null (refs);
+  g_clear_error (&error);
+
+  iref = flatpak_installation_install (inst, repo_name, FLATPAK_REF_KIND_APP, "org.test.Hello", NULL, "master", NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (iref);
+  g_clear_object (&iref);
+
+  refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 0);
+  g_clear_pointer (&refs, g_ptr_array_unref);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_update (transaction, "app/org.test.Hello/x86_64/master", NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_clear_object (&transaction);
+
+  refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 1);
+
+  ref = g_ptr_array_index (refs, 0);
+
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
+  g_assert_true (flatpak_related_ref_should_download (ref));
+  g_assert_true (flatpak_related_ref_should_delete (ref));
+  g_assert_false (flatpak_related_ref_should_autoprune (ref));
+  g_assert (g_strv_length ((char **)flatpak_related_ref_get_subpaths (ref)) == 1);
+  g_assert_cmpstr  (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -2372,6 +2593,9 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/instance", test_instance);
   g_test_add_func ("/library/update-subpaths", test_update_subpaths);
   g_test_add_func ("/library/overrides", test_overrides);
+  g_test_add_func ("/library/bundle", test_bundle);
+  g_test_add_func ("/library/install-bundle", test_install_bundle);
+  g_test_add_func ("/library/list-installed-related-refs", test_list_installed_related_refs);
 
   global_setup ();
 
