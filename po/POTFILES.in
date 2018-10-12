@@ -16,6 +16,7 @@ app/flatpak-builtins-document-info.c
 app/flatpak-builtins-document-list.c
 app/flatpak-builtins-document-unexport.c
 app/flatpak-builtins-enter.c
+app/flatpak-builtins-history.c
 app/flatpak-builtins-info.c
 app/flatpak-builtins-install.c
 app/flatpak-builtins-kill.c
