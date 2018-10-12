@@ -352,6 +352,9 @@ print_history (GPtrArray *dirs,
                GCancellable *cancellable,
                GError **error)
 {
+  if (columns[0].name == NULL)
+    return TRUE;
+
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "history not available without libsystemd");
   return FALSE;
 }
