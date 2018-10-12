@@ -1809,6 +1809,12 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
 
   flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
+  GLNX_HASH_TABLE_FOREACH_KV (priv->remote_states, const char *, remote, FlatpakRemoteState *, state)
+    {
+      if (!flatpak_remote_state_refresh (state, priv->dir, TRUE, FALSE, NULL, NULL, cancellable, error))
+        return FALSE;
+    }
+
   return TRUE;
 }
 
