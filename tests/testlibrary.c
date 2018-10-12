@@ -2347,6 +2347,8 @@ test_overrides (void)
                          "--env=FOO=BAR",
                          "--own-name=foo.bar.baz",
                          "--talk-name=hello.bla.bla.*",
+                         "--socket=wayland",
+                         "--nosocket=pulseaudio",
                          "org.test.Hello",
                          NULL };
   run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
@@ -2393,6 +2395,10 @@ test_overrides (void)
 
   value = g_key_file_get_string (overrides, "Context", "filesystems", &error);
   g_assert_cmpstr (value, ==, "xdg-download/subdir:create;xdg-music;~/foo:ro;");
+  g_clear_pointer (&value, g_free);
+
+  value = g_key_file_get_string (overrides, "Context", "sockets", &error);
+  g_assert_cmpstr (value, ==, "wayland;!pulseaudio;");
   g_clear_pointer (&value, g_free);
 
   value = g_key_file_get_string (overrides, "Session Bus Policy", "hello.bla.bla.*", &error);
