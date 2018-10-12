@@ -26,7 +26,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..2"
+echo "1..5"
 
 # Configure a repository, then set a collection ID on it and check that the ID
 # is saved in the config file.
@@ -48,3 +48,21 @@ assert_file_has_content repos/test/config '^collection-id=org.test.Collection$'
 assert_not_file_has_content repos/test/config '^collection-id=org.test.Collection2$'
 
 echo "ok 2 collection ID cannot be changed"
+
+${FLATPAK} build-update-repo --title="My little repo" repos/test
+
+assert_file_has_content repos/test/config '^title=My little repo$'
+
+echo "ok can update repo title"
+
+${FLATPAK} build-update-repo --redirect-url=http://no.where/ repos/test
+
+assert_file_has_content repos/test/config '^redirect-url=http://no.where/$'
+
+echo "ok can update redirect url"
+
+${FLATPAK} build-update-repo --default-branch=no-such-branch repos/test
+
+assert_file_has_content repos/test/config '^default-branch=no-such-branch$'
+
+echo "ok can update default branch"
