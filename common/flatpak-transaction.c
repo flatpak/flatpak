@@ -1610,8 +1610,8 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   else if (kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
       if (!dir_ref_is_installed (priv->dir, ref, &origin, NULL))
-        flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
-                            _("%s not installed"), pref);
+        return flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
+                                   _("%s not installed"), pref);
 
       remote = origin;
     }
