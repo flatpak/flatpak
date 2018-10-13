@@ -2417,6 +2417,7 @@ test_overrides (void)
   run_test_subprocess ((char **) argv2, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
+/* basic tests for bundle ref apis */
 static void
 test_bundle (void)
 {
@@ -2483,6 +2484,7 @@ test_bundle (void)
   g_assert (g_file_equal (file, file2));
 }
 
+/* use the installation api to install a bundle */
 static void
 test_install_bundle (void)
 {
@@ -2506,6 +2508,39 @@ test_install_bundle (void)
   g_assert_nonnull (ref);
 }
 
+/* use the installation api to install a flatpakref */
+static void
+test_install_flatpakref (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakRemoteRef) ref = NULL;
+  g_autofree char *s = NULL;
+  g_autoptr(GBytes) data = NULL;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  s = g_strconcat ("[Flatpak Ref]\n"
+                   "Title=Test App\n"
+                   "Name=org.test.Hello\n"
+                   "Branch=master\n"
+                   "Url=http://127.0.0.1:", httpd_port, "/test\n"
+                   "IsRuntime=False\n"
+                   "SuggestRemoteName=test-repo\n"
+                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test.flatpakrepo\n",
+                   NULL);
+  data = g_bytes_new (s, strlen (s));
+
+  ref = flatpak_installation_install_ref_file (inst, data, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (ref);
+}
+
+/* test the installation method to list installed related refs */
 static void
 test_list_installed_related_refs (void)
 {
@@ -2568,6 +2603,71 @@ test_list_installed_related_refs (void)
   g_assert_cmpstr  (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
 }
 
+static void
+test_no_deploy (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakInstalledRef) ref = NULL;
+  gboolean res;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  ref = flatpak_installation_install_full (inst,
+                                           FLATPAK_INSTALL_FLAGS_NO_DEPLOY,
+                                           repo_name,
+                                           FLATPAK_REF_KIND_APP,
+                                           "org.test.Hello",
+                                           NULL,
+                                           "master",
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ONLY_PULLED);
+  g_assert_null (ref);
+  g_clear_error (&error);
+
+  res = flatpak_installation_remove_local_ref_sync (inst,
+                                                    repo_name,
+                                                    "app/org.test.Hello/x86_64/master",
+                                                    NULL,
+                                                    &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_installation_prune_local_repo (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+}
+
+static void
+test_bad_remote_name (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+  gboolean res;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  remote = flatpak_remote_new ("3X \n bad");
+  flatpak_remote_set_url (remote, "not a url at all");
+
+  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_DATA);
+  g_assert_false (res);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -2601,7 +2701,10 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/overrides", test_overrides);
   g_test_add_func ("/library/bundle", test_bundle);
   g_test_add_func ("/library/install-bundle", test_install_bundle);
+  g_test_add_func ("/library/install-flatpakref", test_install_flatpakref);
   g_test_add_func ("/library/list-installed-related-refs", test_list_installed_related_refs);
+  g_test_add_func ("/library/no-deploy", test_no_deploy);
+  g_test_add_func ("/library/bad-remote-name", test_bad_remote_name);
 
   global_setup ();
 
