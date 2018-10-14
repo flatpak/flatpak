@@ -1641,6 +1641,10 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
  *
  * Adds installing the given ref to this transaction.
  *
+ * The @remote can either be a configured remote of the installation,
+ * or a file:// uri pointing at a local repository to install from,
+ * in which case an origin remote is created.
+ *
  * Returns: %TRUE on success; %FALSE with @error set on failure.
  */
 gboolean
