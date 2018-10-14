@@ -56,6 +56,34 @@ test_library_version (void)
 }
 
 static void
+test_library_types (void)
+{
+  g_assert (g_type_is_a (FLATPAK_TYPE_REF, G_TYPE_OBJECT));
+  g_assert (g_type_is_a (FLATPAK_TYPE_INSTALLED_REF, FLATPAK_TYPE_REF));
+  g_assert (g_type_is_a (FLATPAK_TYPE_REMOTE_REF, FLATPAK_TYPE_REF));
+  g_assert (g_type_is_a (FLATPAK_TYPE_BUNDLE_REF, FLATPAK_TYPE_REF));
+  g_assert (g_type_is_a (FLATPAK_TYPE_RELATED_REF, FLATPAK_TYPE_REF));
+  g_assert (g_type_is_a (FLATPAK_TYPE_INSTALLATION, G_TYPE_OBJECT));
+  g_assert (g_type_is_a (FLATPAK_TYPE_INSTANCE, G_TYPE_OBJECT));
+  g_assert (g_type_is_a (FLATPAK_TYPE_REMOTE, G_TYPE_OBJECT));
+  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION, G_TYPE_OBJECT));
+  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_OPERATION, G_TYPE_OBJECT));
+  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_PROGRESS, G_TYPE_OBJECT));
+  g_assert (g_type_is_a (FLATPAK_TYPE_ERROR, G_TYPE_ENUM));
+  g_assert (g_type_is_a (FLATPAK_TYPE_PORTAL_ERROR, G_TYPE_ENUM));
+  g_assert (g_type_is_a (FLATPAK_TYPE_INSTALL_FLAGS, G_TYPE_FLAGS));
+  g_assert (g_type_is_a (FLATPAK_TYPE_UPDATE_FLAGS, G_TYPE_FLAGS));
+  g_assert (g_type_is_a (FLATPAK_TYPE_UNINSTALL_FLAGS, G_TYPE_FLAGS));
+  g_assert (g_type_is_a (FLATPAK_TYPE_STORAGE_TYPE, G_TYPE_ENUM));
+  g_assert (g_type_is_a (FLATPAK_TYPE_REF_KIND, G_TYPE_ENUM));
+  g_assert (g_type_is_a (FLATPAK_TYPE_REMOTE_TYPE, G_TYPE_ENUM));
+  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_OPERATION_TYPE, G_TYPE_ENUM));
+  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_ERROR_DETAILS, G_TYPE_FLAGS));
+  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_RESULT, G_TYPE_FLAGS));
+  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_REMOTE_REASON, G_TYPE_ENUM));
+}
+
+static void
 test_user_installation (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -256,6 +284,51 @@ test_ref (void)
   g_clear_error (&error);
 
   ref = flatpak_ref_parse ("app/org.flatpak.Hello/b/.", &error);
+  g_assert_null (ref);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  ref = flatpak_ref_parse ("foo/org.flatpak.Hello/b/.", &error);
+  g_assert_null (ref);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  ref = flatpak_ref_parse ("app//x86_64/master", &error);
+  g_assert_null (ref);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  ref = flatpak_ref_parse ("app/org.test.Hello/x86_64/", &error);
+  g_assert_null (ref);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  ref = flatpak_ref_parse ("app/org.test.Hello/x86_64/a[b]c", &error);
+  g_assert_null (ref);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  ref = flatpak_ref_parse ("app/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"/x86_64/master", &error);
+  g_assert_null (ref);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  ref = flatpak_ref_parse ("app/.abc/x86_64/master", &error);
+  g_assert_null (ref);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  ref = flatpak_ref_parse ("app/0abc/x86_64/master", &error);
   g_assert_null (ref);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
@@ -1541,6 +1614,11 @@ test_misc_transaction (void)
   g_assert_no_error (error);
   g_assert_nonnull (inst);
 
+  transaction = flatpak_transaction_new_for_installation (NULL, NULL, &error);
+  g_assert_nonnull (error);
+  g_assert_null (transaction);
+  g_clear_error (&error);
+
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
@@ -1718,6 +1796,17 @@ op_done_no_change (FlatpakTransaction *transaction,
   g_assert_cmpint (result, ==, FLATPAK_TRANSACTION_RESULT_NO_CHANGE);
 }
 
+static void
+op_done_with_change (FlatpakTransaction *transaction,
+                     FlatpakTransactionOperation *op,
+                     const char *commit,
+                     int result)
+{
+  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, "app/org.test.Hello/x86_64/master");
+  g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_UPDATE);
+  g_assert_cmpint (result, ==, 0);
+}
+
 /* Do a bunch of installs and uninstalls with a transaction, and check
  * that ops looks as expected, and that signal are fired.
  */
@@ -1741,6 +1830,7 @@ test_transaction_install_uninstall (void)
   g_autofree char *commit = NULL;
   g_autofree char *deploy = NULL;
   GBytes *bytes = NULL;
+  const char *empty_subpaths[] = { "", NULL };
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -1940,7 +2030,7 @@ test_transaction_install_uninstall (void)
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
 
-  res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", NULL, &error);
+  res = flatpak_transaction_add_install (transaction, repo_name, "app/org.test.Hello/x86_64/master", empty_subpaths, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
@@ -1985,6 +2075,23 @@ test_transaction_install_uninstall (void)
 
   g_clear_object (&transaction);
 
+  /* update again, using { "", NULL } as subpaths, to install all */
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_update (transaction, "app/org.test.Hello/x86_64/master", empty_subpaths, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (op_done_with_change), NULL);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_clear_object (&transaction);
+
   /* uninstall both org.test.Hello and org.test.Platform, leaving an empty installation */
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
@@ -2012,6 +2119,19 @@ test_transaction_install_uninstall (void)
   g_assert_false (res);
 }
 
+static int remote_added;
+
+static gboolean
+add_new_remote2 (FlatpakTransaction *transaction,
+                 const char *reason,
+                 const char *from_id,
+                 const char *suggested_name,
+                 const char *url)
+{
+  remote_added++;
+  g_assert_cmpstr (suggested_name, ==, "my-little-repo");
+  return TRUE;
+}
 /* test installing a flatpakref with a transaction */
 static void
 test_transaction_install_flatpakref (void)
@@ -2051,7 +2171,7 @@ test_transaction_install_flatpakref (void)
                    "Branch=master\n"
                    "Url=http://127.0.0.1:", httpd_port, "/test\n"
                    "IsRuntime=False\n"
-                   "SuggestRemoteName=test-repo\n"
+                   "SuggestRemoteName=my-little-repo\n"
                    "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test.flatpakrepo\n",
                    NULL);
 
@@ -2060,9 +2180,14 @@ test_transaction_install_flatpakref (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
+  remote_added = 0;
+  g_signal_connect (transaction, "add-new-remote", G_CALLBACK (add_new_remote2), NULL);
+
   res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
+
+  g_assert_cmpint (remote_added, >, 0);
 
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
@@ -2676,6 +2801,7 @@ main (int argc, char *argv[])
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/library/version", test_library_version);
+  g_test_add_func ("/library/types", test_library_types);
   g_test_add_func ("/library/user-installation", test_user_installation);
   g_test_add_func ("/library/system-installation", test_system_installation);
   g_test_add_func ("/library/multiple-system-installation", test_multiple_system_installations);
