@@ -353,26 +353,16 @@ FlatpakRef *
 flatpak_ref_parse (const char *ref, GError **error)
 {
   g_auto(GStrv) parts = NULL;
+  FlatpakRefKind kind;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
     return NULL;
 
-  FlatpakRefKind kind;
   if (g_strcmp0 (parts[0], "app") == 0)
-    {
-      kind = FLATPAK_REF_KIND_APP;
-    }
-  else if (g_strcmp0 (parts[0], "runtime") == 0)
-    {
-      kind = FLATPAK_REF_KIND_RUNTIME;
-    }
+    kind = FLATPAK_REF_KIND_APP;
   else
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Invalid kind: %s", parts[0]);
-      return NULL;
-    }
+    kind = FLATPAK_REF_KIND_RUNTIME;
 
   return FLATPAK_REF (g_object_new (FLATPAK_TYPE_REF,
                                     "kind", kind,
