@@ -1986,62 +1986,6 @@ out:
   return ret;
 }
 
-gboolean
-flatpak_zero_mtime (int           parent_dfd,
-                    const char   *rel_path,
-                    GCancellable *cancellable,
-                    GError      **error)
-{
-  struct stat stbuf;
-
-  if (TEMP_FAILURE_RETRY (fstatat (parent_dfd, rel_path, &stbuf, AT_SYMLINK_NOFOLLOW)) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      return FALSE;
-    }
-
-  if (S_ISDIR (stbuf.st_mode))
-    {
-      g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
-      gboolean inited;
-
-      inited = glnx_dirfd_iterator_init_at (parent_dfd, rel_path, FALSE, &dfd_iter, NULL);
-
-      while (inited)
-        {
-          struct dirent *dent;
-
-          if (!glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, NULL, NULL) || dent == NULL)
-            break;
-
-          if (!flatpak_zero_mtime (dfd_iter.fd, dent->d_name,
-                                   cancellable, error))
-            return FALSE;
-        }
-
-      /* Update stbuf */
-      if (TEMP_FAILURE_RETRY (fstat (dfd_iter.fd, &stbuf)) != 0)
-        {
-          glnx_set_error_from_errno (error);
-          return FALSE;
-        }
-    }
-
-  /* OSTree checks out to mtime 0, so we do the same */
-  if (stbuf.st_mtime != OSTREE_TIMESTAMP)
-    {
-      const struct timespec times[2] = { { 0, UTIME_OMIT }, { OSTREE_TIMESTAMP, } };
-
-      if (TEMP_FAILURE_RETRY (utimensat (parent_dfd, rel_path, times, AT_SYMLINK_NOFOLLOW)) != 0)
-        {
-          glnx_set_error_from_errno (error);
-          return FALSE;
-        }
-    }
-
-  return TRUE;
-}
-
 /* Make a directory, and its parent. Don't error if it already exists.
  * If you want a failure mode with EEXIST, use g_file_make_directory_with_parents. */
 gboolean
