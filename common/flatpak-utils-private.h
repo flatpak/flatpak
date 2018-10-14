@@ -471,11 +471,6 @@ gboolean   flatpak_cp_a (GFile         *src,
                          GCancellable  *cancellable,
                          GError       **error);
 
-gboolean flatpak_zero_mtime (int           parent_dfd,
-                             const char   *rel_path,
-                             GCancellable *cancellable,
-                             GError      **error);
-
 gboolean flatpak_mkdir_p (GFile        *dir,
                           GCancellable *cancellable,
                           GError      **error);
