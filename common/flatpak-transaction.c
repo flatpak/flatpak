@@ -164,7 +164,7 @@ bundle_data_new (GFile  *file,
 
   data->file = g_object_ref (file);
   if (gpg_data)
-    data->gpg_data = g_object_ref (gpg_data);
+    data->gpg_data = g_bytes_ref (gpg_data);
 
   return data;
 }
