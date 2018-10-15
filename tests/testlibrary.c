@@ -2307,6 +2307,50 @@ test_transaction_deps (void)
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
 }
 
+/* install from a local repository */
+static void
+test_transaction_install_local (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GError) error = NULL;
+  gboolean res;
+  g_autofree char *dir = NULL;
+  g_autofree char *path = NULL;
+  g_autofree char *url = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  dir = g_get_current_dir ();
+  path = g_build_filename (dir, "repos", "test", NULL);
+  url = g_strconcat ("file://", path, NULL); 
+  res = flatpak_transaction_add_install (transaction, url, "app/org.test.Hello/x86_64/master", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  remote = flatpak_installation_get_remote_by_name (inst, "org.test.Hello-origin", NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND);
+  g_assert_null (remote);
+  g_clear_error (&error);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  
+  remote = flatpak_installation_get_remote_by_name (inst, "org.test.Hello-origin", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remote);
+}
+
 /* test the instance api: install an app, launch it, and then get the instance */
 static void
 test_instance (void)
@@ -2822,6 +2866,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-install-uninstall", test_transaction_install_uninstall);
   g_test_add_func ("/library/transaction-install-flatpakref", test_transaction_install_flatpakref);
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
+  g_test_add_func ("/library/transaction-install-local", test_transaction_install_local);
   g_test_add_func ("/library/instance", test_instance);
   g_test_add_func ("/library/update-subpaths", test_update_subpaths);
   g_test_add_func ("/library/overrides", test_overrides);
