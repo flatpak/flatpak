@@ -5843,13 +5843,13 @@ export_desktop_file (const char   *app,
       if (tags != NULL)
         {
           g_key_file_set_string_list (keyfile,
-                                      "Desktop Entry",
+                                      G_KEY_FILE_DESKTOP_GROUP,
                                       "X-Flatpak-Tags",
                                       (const char * const *) tags, length);
         }
 
       /* Add a marker so consumers can easily find out that this launches a sandbox */
-      g_key_file_set_string (keyfile, "Desktop Entry", "X-Flatpak", app);
+      g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, "X-Flatpak", app);
     }
 
   groups = g_key_file_get_groups (keyfile, NULL);
