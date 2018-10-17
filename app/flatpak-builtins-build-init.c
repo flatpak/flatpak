@@ -247,6 +247,8 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     return FALSE;
 
   base = g_file_new_for_commandline_arg (directory);
+  if (flatpak_file_get_path_cached (base) == NULL)
+    return flatpak_fail (error, _("'%s' is not a valid filename"), directory);
 
   if (!flatpak_mkdir_p (base, cancellable, error))
     return FALSE;
