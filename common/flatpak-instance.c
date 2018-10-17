@@ -412,7 +412,8 @@ flatpak_instance_new (const char *id)
  *
  * Gets FlatpakInstance objects for all running sandboxes in the current session.
  *
- * Returns: (transfer full): a #GPtrArray of #FlatpakInstance objects
+ * Returns: (transfer full) (element-type FlatpakInstance): a #GPtrArray of
+ *   #FlatpakInstance objects
  *
  * Since: 1.1
  */
