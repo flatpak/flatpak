@@ -336,6 +336,29 @@ ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 
 ${FLATPAK} ${U} update -y org.test.OldVersion
 
+# Make sure a multi-ref update succeeds even if some update requires a newer version
+# Note that updates are in alphabetical order, so CurrentVersion will be pulled first
+# and should not block a successful install of OldVersion later
+
+DIR=`mktemp -d`
+${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform
+touch ${DIR}/files/updated
+${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+DIR=`mktemp -d`
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
+touch ${DIR}/files/updated
+${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+
+if ${FLATPAK} ${U} update -y &> err_version.txt; then
+    assert_not_reached "Should not have been able to update due to version"
+fi
+assert_file_has_content err_version.txt "needs a later flatpak version"
+
+assert_not_has_file $FL_DIR/app/org.test.CurrentVersion/$ARCH/master/active/files/updated
+assert_has_file $FL_DIR/app/org.test.OldVersion/$ARCH/master/active/files/updated
+
 echo "ok version checks"
 
 rm -rf app
