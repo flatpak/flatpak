@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..12"
+echo "1..13"
 
 setup_repo
 install_repo
@@ -392,3 +392,18 @@ fi
 assert_file_has_content err2.txt [Ii]nvalid
 
 echo "ok no setuid"
+
+rm -rf app
+flatpak build-init app org.test.App org.test.Platform org.test.Platform
+mkdir -p app/files/
+touch app/files/exe
+flatpak build-finish --command=hello.sh --sdk=org.test.Sdk app
+${FLATPAK} build-export ${FL_GPGARGS} repos/test app
+update_repo
+
+${FLATPAK} ${U} install -y test-repo org.test.App
+${FLATPAK} ${U} info -m org.test.App > out
+
+assert_file_has_content out ^sdk=org.test.Sdk/x86_64/master$
+
+echo "ok --sdk option"
