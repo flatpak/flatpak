@@ -659,13 +659,13 @@ start_p11_kit_server (const char *flatpak_dir)
                      &p11_kit_stdout, NULL,
                      &exit_status, &local_error))
     {
-      g_warning ("Unable to start p11-kit server: %s\n", local_error->message);
+      g_warning ("Unable to start p11-kit server: %s", local_error->message);
       return;
     }
 
-  if (exit_status != 0)
+  if (!g_spawn_check_exit_status (exit_status, &local_error))
     {
-      g_warning ("Unable to start p11-kit server, exited with status %d\n", exit_status);
+      g_warning ("Unable to start p11-kit server: %s", local_error->message);
       return;
     }
 
