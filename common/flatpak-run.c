@@ -2676,25 +2676,6 @@ flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
   return g_steal_pointer (&context);
 }
 
-FlatpakContext *
-flatpak_context_load_for_app (const char *app_id,
-                              GError    **error)
-{
-  g_autofree char *app_ref = NULL;
-
-  g_autoptr(FlatpakDeploy) app_deploy = NULL;
-
-  app_ref = flatpak_find_current_ref (app_id, NULL, error);
-  if (app_ref == NULL)
-    return NULL;
-
-  app_deploy = flatpak_find_deploy_for_ref (app_ref, NULL, NULL, error);
-  if (app_deploy == NULL)
-    return NULL;
-
-  return flatpak_context_load_for_deploy (app_deploy, error);
-}
-
 static char *
 calculate_ld_cache_checksum (GVariant   *app_deploy_data,
                              GVariant   *runtime_deploy_data,

@@ -119,8 +119,6 @@ gboolean       flatpak_context_allows_features (FlatpakContext        *context,
 
 FlatpakContext *flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
                                                  GError       **error);
-FlatpakContext *flatpak_context_load_for_app (const char *app_id,
-                                              GError    **error);
 
 FlatpakExports *flatpak_context_get_exports (FlatpakContext *context,
                                              const char     *app_id);
