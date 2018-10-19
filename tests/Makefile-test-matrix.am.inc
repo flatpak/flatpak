@@ -4,6 +4,8 @@ TEST_MATRIX= \
 	tests/test-run@user,deltas.wrap \
 	tests/test-run@system,nodeltas.wrap \
 	tests/test-run@system,deltas.wrap \
+	tests/test-info@user.wrap \
+	tests/test-info@system.wrap \
 	tests/test-repo@user.wrap \
 	tests/test-repo@system.wrap \
 	tests/test-repo@collections.wrap \
@@ -24,6 +26,7 @@ TEST_MATRIX_DIST= \
 	$(NULL)
 TEST_MATRIX_EXTRA_DIST= \
 	tests/test-run.sh \
+	tests/test-info.sh \
 	tests/test-repo.sh \
 	tests/test-bundle.sh \
 	tests/test-oci-registry.sh \
