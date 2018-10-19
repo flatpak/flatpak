@@ -113,6 +113,9 @@ tests/runtime-repo: tests/make-test-runtime.sh flatpak
 
 check_DATA+=tests/runtime-repo
 
+distclean-local:
+	rm -rf tests/runtime-repo
+
 include tests/Makefile-test-matrix.am.inc
 
 test_scripts = ${TEST_MATRIX}
