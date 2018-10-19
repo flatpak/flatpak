@@ -92,6 +92,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-build-update-repo.sh \
 	tests/test-http-utils.sh \
 	tests/test-run.sh{{user+system},{nodeltas+deltas}} \
+	tests/test-info.sh{user+system} \
 	tests/test-repo.sh{user+system+collections+collections-server-only} \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh{user+system} \
