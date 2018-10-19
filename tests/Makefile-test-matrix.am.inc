@@ -23,6 +23,7 @@ TEST_MATRIX_DIST= \
 	tests/test-oci.sh \
 	tests/test-unsigned-summaries.sh \
 	tests/test-update-remote-configuration.sh \
+	tests/test-override.sh \
 	$(NULL)
 TEST_MATRIX_EXTRA_DIST= \
 	tests/test-run.sh \

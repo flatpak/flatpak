@@ -100,6 +100,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-oci-registry.sh{user+system} \
 	tests/test-unsigned-summaries.sh \
 	tests/test-update-remote-configuration.sh \
+	tests/test-override.sh \
 	$(NULL)
 
 update-test-matrix:
