@@ -285,10 +285,6 @@ char *      flatpak_dir_get_origin (FlatpakDir   *self,
                                     const char   *ref,
                                     GCancellable *cancellable,
                                     GError      **error);
-char **     flatpak_dir_get_subpaths (FlatpakDir   *self,
-                                      const char   *ref,
-                                      GCancellable *cancellable,
-                                      GError      **error);
 GFile *     flatpak_dir_get_exports_dir (FlatpakDir *self);
 GFile *     flatpak_dir_get_removed_dir (FlatpakDir *self);
 GFile *     flatpak_dir_get_if_deployed (FlatpakDir   *self,
@@ -667,8 +663,6 @@ char      *flatpak_dir_get_remote_title (FlatpakDir *self,
                                          const char *remote_name);
 char      *flatpak_dir_get_remote_collection_id (FlatpakDir *self,
                                                  const char *remote_name);
-char      *flatpak_dir_get_remote_main_ref (FlatpakDir *self,
-                                            const char *remote_name);
 gboolean   flatpak_dir_get_remote_oci (FlatpakDir *self,
                                        const char *remote_name);
 char      *flatpak_dir_get_remote_default_branch (FlatpakDir *self,
