@@ -1210,6 +1210,7 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
   const guint NUM_FLATPAK_REMOTE_TYPES = 3;
   gboolean types_filter[NUM_FLATPAK_REMOTE_TYPES];
   gsize i;
+  const char * const *default_repo_finders = NULL;
 
   remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
   if (remote_names == NULL)
@@ -1221,10 +1222,32 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
   if (!flatpak_dir_maybe_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
+#if OSTREE_CHECK_VERSION (2018, 9)
+  OstreeRepo *repo = flatpak_dir_get_repo (dir_clone);
+  if (repo != NULL)
+    default_repo_finders = ostree_repo_get_default_repo_finders (repo);
+#endif
+
+  /* If NULL or an empty array of types is passed then we use the default set
+   * provided by ostree, or fall back to using all */
   for (i = 0; i < NUM_FLATPAK_REMOTE_TYPES; ++i)
     {
-      /* If NULL or an empty array of types is passed then we include all types */
-      types_filter[i] = (num_types == 0) ? TRUE : FALSE;
+      if (num_types != 0)
+        types_filter[i] = FALSE;
+      else if (default_repo_finders == NULL)
+        types_filter[i] = TRUE;
+    }
+
+  if (default_repo_finders != NULL && num_types == 0)
+    {
+      if (g_strv_contains (default_repo_finders, "config"))
+        types_filter[FLATPAK_REMOTE_TYPE_STATIC] = TRUE;
+      else if (g_strv_contains (default_repo_finders, "lan"))
+        types_filter[FLATPAK_REMOTE_TYPE_LAN] = TRUE;
+      else if (g_strv_contains (default_repo_finders, "mount"))
+        types_filter[FLATPAK_REMOTE_TYPE_USB] = TRUE;
+      else
+        g_debug ("Invalid value was returned by ostree_repo_get_default_repo_finders()");
     }
 
   for (i = 0; i < num_types; ++i)
