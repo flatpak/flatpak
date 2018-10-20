@@ -916,6 +916,28 @@ timeout_cb (gpointer data)
   return G_SOURCE_CONTINUE;
 }
 
+static gboolean
+check_bwrap_support (void)
+{
+  g_autoptr(GError) error = NULL;
+  const char *bwrap = g_getenv ("FLATPAK_BWRAP");
+
+  if (bwrap != NULL)
+    {
+      gint exit_code = 0;
+      char *argv[] = { (char *) bwrap, "--unshare-ipc", "--unshare-net",
+                       "--unshare-pid", "--ro-bind", "/", "/", "/bin/true", NULL };
+      g_autofree char *argv_str = g_strjoinv (" ", argv);
+      g_test_message ("Spawning %s", argv_str);
+      g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &exit_code, &error);
+      g_assert_no_error (error);
+      if (exit_code != 0)
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 static void
 test_install_launch_uninstall (void)
 {
@@ -932,22 +954,11 @@ test_install_launch_uninstall (void)
   gboolean timeout_reached;
   guint timeout_id;
   gboolean res;
-  const char *bwrap = g_getenv ("FLATPAK_BWRAP");
 
-  if (bwrap != NULL)
+  if (!check_bwrap_support ())
     {
-      gint exit_code = 0;
-      char *argv[] = { (char *) bwrap, "--unshare-ipc", "--unshare-net",
-                       "--unshare-pid", "--ro-bind", "/", "/", "/bin/true", NULL };
-      g_autofree char *argv_str = g_strjoinv (" ", argv);
-      g_test_message ("Spawning %s", argv_str);
-      g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &exit_code, &error);
-      g_assert_no_error (error);
-      if (exit_code != 0)
-        {
-          g_test_skip ("bwrap not supported");
-          return;
-        }
+      g_test_skip ("bwrap not supported");
+      return;
     }
 
   inst = flatpak_installation_new_user (NULL, &error);
@@ -2367,6 +2378,12 @@ test_instance (void)
   GKeyFile *info;
   g_autofree char *value = NULL;
 
+  if (!check_bwrap_support ())
+    {
+      g_test_skip ("bwrap not supported");
+      return;
+    }
+
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (inst);
@@ -2504,6 +2521,12 @@ test_overrides (void)
   g_autofree char *value = NULL;
   g_autoptr(FlatpakInstalledRef) ref = NULL;
  
+  if (!check_bwrap_support ())
+    {
+      g_test_skip ("bwrap not supported");
+      return;
+    }
+
   /* no library api to set overrides, so... */
   const char *argv[] = { "flatpak", "override", "--user",
                          "--allow=bluetooth",
