@@ -1308,6 +1308,18 @@ make_test_app (void)
 }
 
 static void
+make_test_app2 (void)
+{
+  g_autofree char *arg0 = NULL;
+  char *argv[] = { NULL, "repos/test-without-runtime", "", "", NULL };
+
+  arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
+  argv[0] = arg0;
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
 update_test_app (void)
 {
   g_autofree char *arg0 = NULL;
@@ -1324,6 +1336,19 @@ static void
 update_repo (void)
 {
   char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test", NULL };
+
+  g_auto(GStrv) gpgargs = NULL;
+
+  gpgargs = g_strsplit (gpg_args, " ", 0);
+  argv[2] = gpgargs[0];
+  argv[3] = gpgargs[1];
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
+update_repo2 (void)
+{
+  char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test-without-runtime", NULL };
 
   g_auto(GStrv) gpgargs = NULL;
 
@@ -1467,6 +1492,10 @@ setup_repo (void)
   add_remote ();
   add_flatpakrepo ();
   configure_languages ();
+
+  /* another repo, with only the app */
+  make_test_app2 ();
+  update_repo2 ();
 }
 
 static void
@@ -2898,6 +2927,73 @@ test_bad_remote_name (void)
   g_assert_false (res);
 }
 
+/* Disable all remotes, and install an app from a repo that does not have the runtime.
+ * We expect an error.
+ */
+static void
+test_transaction_no_runtime (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  gboolean res;
+  g_autofree char *s = NULL;
+  g_autoptr(GBytes) data = NULL;
+  FlatpakRemote *remote = NULL;
+  g_autoptr(GPtrArray) remotes = NULL;
+  int i;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  remotes = flatpak_installation_list_remotes (inst, NULL, &error);
+  g_assert_no_error (error);
+  for (i = 0; i < remotes->len; i++)
+    {
+      remote = g_ptr_array_index (remotes, i);
+      flatpak_remote_set_disabled (remote, TRUE);
+      res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+      g_assert_no_error (error);
+      g_assert_true (res);
+    }
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  s = g_strconcat ("[Flatpak Ref]\n"
+                   "Title=Test App\n"
+                   "Name=org.test.Hello\n"
+                   "Branch=master\n"
+                   "Url=http://127.0.0.1:", httpd_port, "/test-without-runtime\n"
+                   "IsRuntime=False\n"
+                   "SuggestRemoteName=my-little-repo\n"
+                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test.flatpakrepo\n",
+                   NULL);
+
+  data = g_bytes_new (s, strlen (s));
+  res = flatpak_transaction_add_install_flatpakref (transaction, data, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_RUNTIME_NOT_FOUND);
+  g_assert_false (res);
+  g_clear_error (&error);
+
+  for (i = 0; i < remotes->len; i++)
+    {
+      remote = g_ptr_array_index (remotes, i);
+      flatpak_remote_set_disabled (remote, FALSE);
+      res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+      g_assert_no_error (error);
+      g_assert_true (res);
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -2937,6 +3033,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/list-installed-related-refs", test_list_installed_related_refs);
   g_test_add_func ("/library/no-deploy", test_no_deploy);
   g_test_add_func ("/library/bad-remote-name", test_bad_remote_name);
+  g_test_add_func ("/library/transaction-no-runtime", test_transaction_no_runtime);
 
   global_setup ();
 
