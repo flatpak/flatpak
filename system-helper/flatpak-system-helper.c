@@ -201,7 +201,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
-  g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
+  g_autoptr(GFile) repo_file = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
@@ -230,7 +230,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (!g_file_query_exists (path, NULL))
+  if (!g_file_query_exists (repo_file, NULL))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
       return TRUE;
@@ -532,8 +532,8 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
   if (strlen (arg_repo_path) > 0)
     {
-      g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
-      if (!g_file_query_exists (path, NULL))
+      g_autoptr(GFile) repo_file = g_file_new_for_path (arg_repo_path);
+      if (!g_file_query_exists (repo_file, NULL))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
           return TRUE;
@@ -741,7 +741,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
                        const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
-  g_autoptr(GFile) path = g_file_new_for_path (arg_bundle_path);
+  g_autoptr(GFile) bundle_file = g_file_new_for_path (arg_bundle_path);
   g_autoptr(GError) error = NULL;
   g_autofree char *ref = NULL;
 
@@ -763,14 +763,14 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (!g_file_query_exists (path, NULL))
+  if (!g_file_query_exists (bundle_file, NULL))
     {
       g_dbus_method_invocation_return_error (invocation, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                                              "Bundle %s does not exist", arg_bundle_path);
       return TRUE;
     }
 
-  if (!flatpak_dir_install_bundle (system, path, arg_remote, &ref, NULL, &error))
+  if (!flatpak_dir_install_bundle (system, bundle_file, arg_remote, &ref, NULL, &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
