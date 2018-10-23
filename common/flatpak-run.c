@@ -234,6 +234,7 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
   g_autofree char *wayland_socket = NULL;
   g_autofree char *sandbox_wayland_socket = NULL;
   gboolean res = FALSE;
+  struct stat statbuf;
 
   wayland_display = g_getenv ("WAYLAND_DISPLAY");
   if (!wayland_display)
@@ -242,7 +243,8 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
   wayland_socket = g_build_filename (g_get_user_runtime_dir (), wayland_display, NULL);
   sandbox_wayland_socket = g_strdup_printf ("/run/user/%d/%s", getuid (), wayland_display);
 
-  if (g_file_test (wayland_socket, G_FILE_TEST_EXISTS))
+  if (stat (wayland_socket, &statbuf) == 0 &&
+      (statbuf.st_mode & S_IFMT) == S_IFSOCK)
     {
       res = TRUE;
       flatpak_bwrap_add_args (bwrap,
