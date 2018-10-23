@@ -1246,10 +1246,10 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
 #if OSTREE_CHECK_VERSION (2018, 9)
   if (default_repo_finders != NULL && num_types == 0)
     {
-      g_autofree char *default_repo_finders_str = g_strjoinv (" ", default_repo_finders);
+      g_autofree char *default_repo_finders_str = g_strjoinv (" ", (gchar **)default_repo_finders);
       g_debug ("Using default repo finder list: %s", default_repo_finders_str);
 
-      for (const char **iter = default_repo_finders; iter && *iter; iter++)
+      for (const char * const *iter = default_repo_finders; iter && *iter; iter++)
         {
           const char *default_repo_finder = *iter;
 
