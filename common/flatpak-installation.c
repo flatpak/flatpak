@@ -1234,12 +1234,18 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
     {
       if (num_types != 0)
         types_filter[i] = FALSE;
+#if OSTREE_CHECK_VERSION (2018, 9)
       else if (default_repo_finders == NULL)
         types_filter[i] = TRUE;
+#endif
     }
 
+#if OSTREE_CHECK_VERSION (2018, 9)
   if (default_repo_finders != NULL && num_types == 0)
     {
+      g_autofree char *default_repo_finders_str = g_strjoinv (" ", default_repo_finders);
+      g_debug ("Using default repo finder list: %s", default_repo_finders_str);
+
       if (g_strv_contains (default_repo_finders, "config"))
         types_filter[FLATPAK_REMOTE_TYPE_STATIC] = TRUE;
       else if (g_strv_contains (default_repo_finders, "lan"))
@@ -1247,8 +1253,10 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
       else if (g_strv_contains (default_repo_finders, "mount"))
         types_filter[FLATPAK_REMOTE_TYPE_USB] = TRUE;
       else
-        g_debug ("Invalid value was returned by ostree_repo_get_default_repo_finders()");
+        g_warning ("Unknown value in list returned by ostree_repo_get_default_repo_finders(): %s",
+                   default_repo_finders_str);
     }
+#endif
 
   for (i = 0; i < num_types; ++i)
     {
