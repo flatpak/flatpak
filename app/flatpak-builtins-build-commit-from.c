@@ -236,7 +236,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
   guint64 timestamp;
   int i;
 
-  context = g_option_context_new (_("DST-REPO [DST-REF]... - Make a new commit based on existing commit(s)"));
+  context = g_option_context_new (_("DST-REPO [DST-REF]... - Make a new commit from existing commits"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))

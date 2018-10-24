@@ -192,6 +192,8 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
     return flatpak_fail (error, _("'%s' is not a valid repository"), location);
 
   file = g_file_new_for_commandline_arg (filename);
+  if (flatpak_file_get_path_cached (file) == NULL)
+    return flatpak_fail (error, _("'%s' is not a valid filename"), filename);
 
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
