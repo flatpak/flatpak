@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..24"
+echo "1..25"
 
 #Regular repo
 setup_repo
@@ -140,6 +140,17 @@ ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "^org.test.Hello"
 
 echo "ok typo correction works for install"
+
+${FLATPAK} ${U} uninstall -y org.test.Hello
+
+# Note: The missing remote is only auto-corrected without user interaction because we're using -y
+${FLATPAK} ${U} install -y org.test.Hello >install-log
+assert_file_has_content install-log "org.test.Hello"
+
+${FLATPAK} ${U} list -d > list-log
+assert_file_has_content list-log "^org.test.Hello"
+
+echo "ok missing remote name auto-corrects for install"
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 

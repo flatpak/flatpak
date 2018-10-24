@@ -33,7 +33,7 @@
             <cmdsynopsis>
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">REMOTE-NAME</arg>
+                <arg choice="opt">REMOTE-NAME</arg>
                 <arg choice="plain" rep="repeat">REF</arg>
             </cmdsynopsis>
             <para>Install from a .flatpakref file:</para>
@@ -59,7 +59,9 @@
           Installs an application or runtime. The primary way to
           install is to specify a <arg>REMOTE</arg>
           name as the source and one ore more <arg>REF</arg>s to specify the
-          application or runtime to install.
+          application or runtime to install. If <arg>REMOTE</arg> is omitted,
+          the configured remotes are searched for the first <arg>REF</arg>
+          and the user is asked to confirm the resulting choice.
         </para>
         <para>
             Each <arg choice="plain">REF</arg> argument is a full or partial indentifier in the

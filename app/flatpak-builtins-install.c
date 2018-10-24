@@ -236,7 +236,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakDir *dir;
-  const char *remote;
+  g_autofree char *remote = NULL;
   g_autofree char *remote_url = NULL;
   char **prefs = NULL;
   int i, n_prefs;
@@ -245,6 +245,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   FlatpakKinds kinds;
   g_autoptr(FlatpakTransaction) transaction = NULL;
   g_autoptr(FlatpakDir) dir_with_remote = NULL;
+  gboolean auto_remote = FALSE;
 
   context = g_option_context_new (_("LOCATION/REMOTE [REF...] - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -271,31 +272,137 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (opt_from)
     return install_from (dir, context, argc, argv, cancellable, error);
 
-  if (argc < 3)
-    return usage_error (context, _("REMOTE and REF must be specified"), error);
+  if (argc < 2)
+    return usage_error (context, _("At least one REF must be specified"), error);
 
-  if (g_path_is_absolute (argv[1]) ||
-      g_str_has_prefix (argv[1], "./"))
+  if (argc == 2)
+    auto_remote = TRUE;
+
+  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+
+  if (!auto_remote &&
+      (g_path_is_absolute (argv[1]) ||
+       g_str_has_prefix (argv[1], "./")))
     {
       g_autoptr(GFile) remote_file = g_file_new_for_commandline_arg (argv[1]);
       remote_url = g_file_get_uri (remote_file);
-      remote = remote_url;
+      remote = g_strdup (remote_url);
     }
   else
     {
-      remote = argv[1];
+      g_autoptr(GError) local_error = NULL;
 
-      /* If the remote was used, and no single dir was specified, find which one based on the remote */
-      if (dirs->len > 1)
+      /* If the remote was used, and no single dir was specified, find which
+       * one based on the remote. If the remote isn't found assume it's a ref
+       * and we should auto-detect the remote. */
+      if (!auto_remote &&
+          !flatpak_resolve_duplicate_remotes (dirs, argv[1], &dir_with_remote, cancellable, &local_error))
         {
-          if (!flatpak_resolve_duplicate_remotes (dirs, remote, &dir_with_remote, cancellable, error))
-            return FALSE;
+          if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
+            {
+              auto_remote = TRUE;
+            }
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+        }
+
+      if (!auto_remote)
+        {
+          remote = g_strdup (argv[1]);
           dir = dir_with_remote;
+        }
+      else
+        {
+          gboolean found_remote = FALSE;
+
+          /* Try to find a remote with a matching ref. This is imperfect
+           * because it only takes the first specified ref into account and
+           * doesn't distinguish between an exact match and a fuzzy match, but
+           * that's okay because the user will be asked to confirm the remote
+           */
+          for (i = 0; i < dirs->len; i++)
+            {
+              FlatpakDir *this_dir = g_ptr_array_index (dirs, i);
+              g_auto(GStrv) remotes = NULL;
+              guint j = 0;
+
+              remotes = flatpak_dir_list_remotes (this_dir, cancellable, error);
+              if (remotes == NULL)
+                return FALSE;
+
+              for (j = 0; remotes[j] != NULL; j++)
+                {
+                  const char *this_remote = remotes[j];
+                  g_autofree char *this_default_branch = NULL;
+                  g_autofree char *id = NULL;
+                  g_autofree char *arch = NULL;
+                  g_autofree char *branch = NULL;
+                  FlatpakKinds matched_kinds;
+                  g_auto(GStrv) refs = NULL;
+
+                  if (flatpak_dir_get_remote_disabled (this_dir, this_remote))
+                    continue;
+
+                  this_default_branch = flatpak_dir_get_remote_default_branch (this_dir, this_remote);
+
+                  flatpak_split_partial_ref_arg_novalidate (argv[1], kinds, opt_arch, target_branch,
+                                                            &matched_kinds, &id, &arch, &branch);
+
+                  if (opt_no_pull)
+                    refs = flatpak_dir_find_local_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
+                                                        flatpak_get_default_arch (),
+                                                        matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                                        cancellable, error);
+                  else
+                    refs = flatpak_dir_find_remote_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
+                                                         flatpak_get_default_arch (),
+                                                         matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                                         cancellable, error);
+
+                  if (refs == NULL)
+                    return FALSE;
+
+                  if (g_strv_length (refs) == 0)
+                    continue;
+                  else
+                    {
+                      if (!flatpak_resolve_duplicate_remotes (dirs, this_remote, &dir_with_remote, cancellable, error))
+                        return FALSE;
+
+                      if (!opt_yes &&
+                          !flatpak_yes_no_prompt (_("Found refs similar to ‘%s’ in remote ‘%s’ (%s).\nIs that the remote you want to use?"),
+                                                  argv[1], this_remote, flatpak_dir_get_name (dir_with_remote)))
+                        continue;
+
+                      remote = g_strdup (this_remote);
+                      dir = dir_with_remote;
+                      found_remote = TRUE;
+                      break;
+                    }
+                }
+
+                if (found_remote)
+                  break;
+            }
+
+            if (remote == NULL)
+              return flatpak_fail (error, _("No remote selected to resolve matches for ‘%s’"), argv[1]);
         }
     }
 
-  prefs = &argv[2];
-  n_prefs = argc - 2;
+  if (auto_remote)
+    {
+      prefs = &argv[1];
+      n_prefs = argc - 1;
+    }
+  else
+    {
+      prefs = &argv[2];
+      n_prefs = argc - 2;
+    }
 
   /* Backwards compat for old "REMOTE NAME [BRANCH]" argument version */
   if (argc == 4 && looks_like_branch (argv[3]))
@@ -305,7 +412,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     }
 
   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
-  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
   if (transaction == NULL)
