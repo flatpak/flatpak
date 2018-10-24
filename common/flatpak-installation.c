@@ -1210,7 +1210,9 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
   const guint NUM_FLATPAK_REMOTE_TYPES = 3;
   gboolean types_filter[NUM_FLATPAK_REMOTE_TYPES];
   gsize i;
+#if OSTREE_CHECK_VERSION (2018, 9)
   const char * const *default_repo_finders = NULL;
+#endif
 
   remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
   if (remote_names == NULL)
