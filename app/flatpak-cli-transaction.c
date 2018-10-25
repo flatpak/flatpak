@@ -78,7 +78,7 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
     {
       g_print (_("Required runtime for %s (%s) found in remote %s\n"),
                pref, runtime_ref, remotes[0]);
-      if (flatpak_yes_no_prompt (_("Do you want to install it?")))
+      if (flatpak_yes_no_prompt (TRUE, _("Do you want to install it?")))
         chosen = 0;
     }
   else
@@ -113,14 +113,16 @@ add_new_remote (FlatpakTransaction            *transaction,
 
   if (reason == FLATPAK_TRANSACTION_REMOTE_GENERIC_REPO)
     {
-      if (flatpak_yes_no_prompt (_("The remote '%s', refered to by '%s' at location %s contains additional applications.\n"
+      if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
+                                 _("The remote '%s', refered to by '%s' at location %s contains additional applications.\n"
                                    "Should the remote be kept for future installations?"),
                                  remote_name, from_id, url))
         return TRUE;
     }
   else if (reason == FLATPAK_TRANSACTION_REMOTE_RUNTIME_DEPS)
     {
-      if (flatpak_yes_no_prompt (_("The application %s depends on runtimes from:\n  %s\n"
+      if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
+                                 _("The application %s depends on runtimes from:\n  %s\n"
                                    "Configure this as new remote '%s'"),
                                  from_id, url, remote_name))
         return TRUE;
@@ -642,7 +644,7 @@ transaction_ready (FlatpakTransaction *transaction)
   g_list_free_full (ops, g_object_unref);
 
   if (!self->disable_interaction &&
-      !flatpak_yes_no_prompt (_("Is this ok")))
+      !flatpak_yes_no_prompt (TRUE, _("Is this ok")))
     return FALSE;
 
   return TRUE;

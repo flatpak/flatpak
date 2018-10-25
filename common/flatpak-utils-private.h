@@ -655,8 +655,9 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   GError      **error);
 
 
-gboolean flatpak_yes_no_prompt (const char *prompt,
-                                ...) G_GNUC_PRINTF (1, 2);
+gboolean flatpak_yes_no_prompt (gboolean default_yes,
+                                const char *prompt,
+                                ...) G_GNUC_PRINTF (2, 3);
 long flatpak_number_prompt (int         min,
                             int         max,
                             const char *prompt,

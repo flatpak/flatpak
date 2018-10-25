@@ -373,7 +373,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                         return FALSE;
 
                       if (!opt_yes &&
-                          !flatpak_yes_no_prompt (_("Found refs similar to ‘%s’ in remote ‘%s’ (%s).\nIs that the remote you want to use?"),
+                          !flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
+                                                  _("Found refs similar to ‘%s’ in remote ‘%s’ (%s).\nIs that the remote you want to use?"),
                                                   argv[1], this_remote, flatpak_dir_get_name (dir_with_remote)))
                         continue;
 
