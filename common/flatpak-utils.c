@@ -5081,7 +5081,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
 }
 
 gboolean
-flatpak_yes_no_prompt (const char *prompt, ...)
+flatpak_yes_no_prompt (gboolean default_yes, const char *prompt, ...)
 {
   char buf[512];
   va_list var_args;
@@ -5097,7 +5097,7 @@ flatpak_yes_no_prompt (const char *prompt, ...)
 
   while (TRUE)
     {
-      g_print ("%s %s: ", s, "[y/n]");
+      g_print ("%s %s: ", s, default_yes ? "[Y/n]" : "[y/n]");
 
       if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
         {
@@ -5109,6 +5109,10 @@ flatpak_yes_no_prompt (const char *prompt, ...)
         return FALSE;
 
       g_strstrip (buf);
+
+      if (default_yes && strlen (buf) == 0)
+        return TRUE;
+
       if (g_ascii_strcasecmp (buf, "y") == 0 ||
           g_ascii_strcasecmp (buf, "yes") == 0)
         return TRUE;
