@@ -465,7 +465,7 @@ find_similar_command (const char *word)
 
   for (i = 0; commands[i].name; i++)
     {
-      int d1 = levenshtein_distance (word, commands[i].name);
+      int d1 = flatpak_levenshtein_distance (word, commands[i].name);
       if (d1 < d)
         {
           d = d1;

@@ -5643,3 +5643,51 @@ flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
     *out_num = number;
   return TRUE;
 }
+
+static int
+dist (const char *s, int ls, const char *t, int lt, int i, int j, int *d)
+{
+  int x, y;
+
+  if (d[i * (lt + 1) + j] >= 0)
+    return d[i * (lt + 1) + j];
+
+  if (i == ls)
+    x = lt - j;
+  else if (j == lt)
+    x = ls - i;
+  else if (s[i] == t[j])
+    x = dist(s, ls, t, lt, i + 1, j + 1, d);
+  else
+    {
+      x = dist (s, ls, t, lt, i + 1, j + 1, d);
+      y = dist (s, ls, t, lt, i, j + 1, d);
+      if (y < x)
+        x = y;
+      y = dist (s, ls, t, lt, i + 1, j, d);
+      if (y < x)
+        x = y;
+      x++;
+    }
+
+  d[i * (lt + 1) + j] = x;
+
+  return x;
+}
+
+int
+flatpak_levenshtein_distance (const char *s, const char *t)
+{
+  int ls = strlen (s);
+  int lt = strlen (t);
+  int i, j;
+  int *d;
+
+  d = alloca (sizeof (int) * (ls + 1) * (lt + 1));
+
+  for (i = 0; i <= ls; i++)
+    for (j = 0; j <= lt; j++)
+      d[i * (lt + 1) + j] = -1;
+
+  return dist (s, ls, t, lt, 0, 0, d);
+}
