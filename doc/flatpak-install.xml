@@ -33,7 +33,7 @@
             <cmdsynopsis>
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="opt">REMOTE-NAME</arg>
+                <arg choice="opt">REMOTE</arg>
                 <arg choice="plain" rep="repeat">REF</arg>
             </cmdsynopsis>
             <para>Install from a .flatpakref file:</para>
