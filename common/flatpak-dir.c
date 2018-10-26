@@ -9608,17 +9608,14 @@ out:
   return TRUE;
 }
 
-typedef enum {
-  FIND_MATCHING_REFS_FLAGS_NONE = 0,
-  FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE = (1 << 0),
-} FindMatchingRefsFlags;
-
 /* Guarantees to return refs which are decomposable. */
 static GPtrArray *
 find_matching_refs (GHashTable           *refs,
                     const char           *opt_name,
                     const char           *opt_branch,
+                    const char           *opt_default_branch,
                     const char           *opt_arch,
+                    const char           *opt_default_arch,
                     const char           *opt_collection_id,
                     FlatpakKinds          kinds,
                     FindMatchingRefsFlags flags,
@@ -9630,11 +9627,15 @@ find_matching_refs (GHashTable           *refs,
   GHashTableIter hash_iter;
   gpointer key;
   g_autoptr(GError) local_error = NULL;
+  gboolean found_exact_name_match = FALSE;
+  gboolean found_default_branch_match = FALSE;
+  gboolean found_default_arch_match = FALSE;
 
   if (opt_arch != NULL)
     arches = opt_arches;
 
-  if (opt_name && !flatpak_is_valid_name (opt_name, &local_error))
+  if (opt_name && !(flags & FIND_MATCHING_REFS_FLAGS_FUZZY) &&
+      !flatpak_is_valid_name (opt_name, &local_error))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid name: %s"), opt_name, local_error->message);
       return NULL;
@@ -9673,8 +9674,19 @@ find_matching_refs (GHashTable           *refs,
       if (parts == NULL)
         continue;
 
-      if (opt_name != NULL && strcmp (opt_name, parts[1]) != 0)
-        continue;
+      if ((flags & FIND_MATCHING_REFS_FLAGS_FUZZY) && !flatpak_id_has_subref_suffix (parts[1]))
+        {
+          /* See if the given name looks similar to this ref name. The
+           * Levenshtein distance constant was chosen pretty arbitrarily. */
+          if (opt_name != NULL && strcasestr (parts[1], opt_name) == NULL &&
+              flatpak_levenshtein_distance (opt_name, parts[1]) > 2)
+            continue;
+        }
+      else
+        {
+          if (opt_name != NULL && strcmp (opt_name, parts[1]) != 0)
+            continue;
+        }
 
       if (!g_strv_contains (arches, parts[2]))
         continue;
@@ -9685,10 +9697,44 @@ find_matching_refs (GHashTable           *refs,
       if (opt_collection_id != NULL && strcmp (opt_collection_id, coll_ref->collection_id))
         continue;
 
+      if (opt_name != NULL && strcmp (opt_name, parts[1]) == 0)
+        found_exact_name_match = TRUE;
+
+      if (opt_default_arch != NULL && strcmp (opt_default_arch, parts[2]) == 0)
+        found_default_arch_match = TRUE;
+
+      if (opt_default_branch != NULL && strcmp (opt_default_branch, parts[3]) == 0)
+        found_default_branch_match = TRUE;
+
       if (flags & FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE)
         g_ptr_array_add (matched_refs, g_strdup (coll_ref->ref_name));
       else
         g_ptr_array_add (matched_refs, g_steal_pointer (&ref));
+    }
+
+  /* Don't show fuzzy matches if we found at least one exact name match, and
+   * enforce the default arch/branch */
+  if (found_exact_name_match || found_default_arch_match || found_default_branch_match)
+    {
+      guint i;
+
+      /* Walk through the array backwards so we can safely remove */
+      for (i = matched_refs->len; i > 0; i--)
+        {
+          const char *matched_refspec = g_ptr_array_index (matched_refs, i - 1);
+          g_auto(GStrv) matched_parts = NULL;
+          g_autofree char *matched_ref = NULL;
+
+          ostree_parse_refspec (matched_refspec, NULL, &matched_ref, NULL);
+          matched_parts = flatpak_decompose_ref (matched_ref, NULL);
+
+          if (found_exact_name_match && strcmp (matched_parts[1], opt_name) != 0)
+            g_ptr_array_remove_index (matched_refs, i - 1);
+          else if (found_default_arch_match && strcmp (matched_parts[2], opt_default_arch) != 0)
+            g_ptr_array_remove_index (matched_refs, i - 1);
+          else if (found_default_branch_match && strcmp (matched_parts[3], opt_default_branch) != 0)
+            g_ptr_array_remove_index (matched_refs, i - 1);
+        }
     }
 
   return g_steal_pointer (&matched_refs);
@@ -9721,7 +9767,9 @@ find_matching_ref (GHashTable  *refs,
       matched_refs = find_matching_refs (refs,
                                          name,
                                          opt_branch,
+                                         opt_default_branch,
                                          arches[i],
+                                         NULL,
                                          opt_collection_id,
                                          kinds,
                                          FIND_MATCHING_REFS_FLAGS_NONE,
@@ -9734,20 +9782,6 @@ find_matching_ref (GHashTable  *refs,
 
       if (matched_refs->len == 1)
         return g_strdup (g_ptr_array_index (matched_refs, 0));
-
-      /* Multiple refs found, see if some belongs to the default branch, if passed */
-      if (opt_default_branch != NULL)
-        {
-          for (j = 0; j < matched_refs->len; j++)
-            {
-              char *current_ref = g_ptr_array_index (matched_refs, j);
-              g_auto(GStrv) parts = flatpak_decompose_ref (current_ref, NULL);
-              g_assert (parts != NULL);
-
-              if (g_strcmp0 (opt_default_branch, parts[3]) == 0)
-                return g_strdup (current_ref);
-            }
-        }
 
       /* Nothing to do other than reporting the different choices */
       g_autoptr(GString) err = g_string_new ("");
@@ -9787,17 +9821,19 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
 }
 
 char **
-flatpak_dir_find_remote_refs (FlatpakDir   *self,
-                              const char   *remote,
-                              const char   *name,
-                              const char   *opt_branch,
-                              const char   *opt_arch,
-                              FlatpakKinds  kinds,
-                              GCancellable *cancellable,
-                              GError      **error)
+flatpak_dir_find_remote_refs (FlatpakDir            *self,
+                              const char            *remote,
+                              const char            *name,
+                              const char            *opt_branch,
+                              const char            *opt_default_branch,
+                              const char            *opt_arch,
+                              const char            *opt_default_arch,
+                              FlatpakKinds           kinds,
+                              FindMatchingRefsFlags  flags,
+                              GCancellable          *cancellable,
+                              GError               **error)
 {
   g_autofree char *collection_id = NULL;
-
   g_autoptr(GHashTable) remote_refs = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   GPtrArray *matched_refs;
@@ -9814,10 +9850,12 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
   matched_refs = find_matching_refs (remote_refs,
                                      name,
                                      opt_branch,
+                                     opt_default_branch,
                                      opt_arch,
+                                     opt_default_arch,
                                      collection_id,
                                      kinds,
-                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                     flags,
                                      error);
   if (matched_refs == NULL)
     return NULL;
@@ -9965,24 +10003,24 @@ list_collection_refs_from_ostree_repo (OstreeRepo   *repo,
   return TRUE;
 }
 
-char *
-flatpak_dir_find_local_ref (FlatpakDir   *self,
-                            const char   *remote,
-                            const char   *name,
-                            const char   *opt_branch,
-                            const char   *opt_default_branch,
-                            const char   *opt_arch,
-                            FlatpakKinds  kinds,
-                            FlatpakKinds *out_kind,
-                            GCancellable *cancellable,
-                            GError      **error)
+char **
+flatpak_dir_find_local_refs (FlatpakDir           *self,
+                             const char           *remote,
+                             const char           *name,
+                             const char           *opt_branch,
+                             const char           *opt_default_branch,
+                             const char           *opt_arch,
+                             const char           *opt_default_arch,
+                             FlatpakKinds          kinds,
+                             FindMatchingRefsFlags flags,
+                             GCancellable          *cancellable,
+                             GError               **error)
 {
-  g_autofree char *local_ref = NULL;
   g_autofree char *collection_id = NULL;
-
   g_autoptr(GHashTable) local_refs = NULL;
   g_autoptr(GError) my_error = NULL;
   g_autofree char *refspec_prefix = g_strconcat (remote, ":.", NULL);
+  GPtrArray *matched_refs;
 
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
@@ -9992,10 +10030,17 @@ flatpak_dir_find_local_ref (FlatpakDir   *self,
                                               &local_refs, cancellable, error))
     return NULL;
 
-  local_ref = find_ref_for_refs_set (local_refs, name, opt_branch,
-                                     opt_default_branch, opt_arch,
-                                     collection_id, kinds, out_kind, &my_error);
-  if (!local_ref)
+  matched_refs = find_matching_refs (local_refs,
+                                     name,
+                                     opt_branch,
+                                     opt_default_branch,
+                                     opt_arch,
+                                     opt_default_arch,
+                                     collection_id,
+                                     kinds,
+                                     flags,
+                                     &my_error);
+  if (matched_refs == NULL)
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
         {
@@ -10011,9 +10056,9 @@ flatpak_dir_find_local_ref (FlatpakDir   *self,
         }
     }
 
-  return g_steal_pointer (&local_ref);
+  g_ptr_array_add (matched_refs, NULL);
+  return (char **) g_ptr_array_free (matched_refs, FALSE);
 }
-
 
 static GHashTable *
 flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
@@ -10088,7 +10133,9 @@ flatpak_dir_find_installed_refs (FlatpakDir  *self,
   matched_refs = find_matching_refs (local_refs,
                                      opt_name,
                                      opt_branch,
+                                     NULL, /* default branch */
                                      opt_arch,
+                                     NULL, /* default arch */
                                      NULL,
                                      kinds,
                                      FIND_MATCHING_REFS_FLAGS_NONE,
@@ -10216,7 +10263,7 @@ flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
     return FALSE;
 
   local_flatpak_refspecs = find_matching_refs (local_refspecs,
-                                               NULL, NULL, NULL, NULL,
+                                               NULL, NULL, NULL, NULL, NULL, NULL,
                                                FLATPAK_KINDS_APP |
                                                FLATPAK_KINDS_RUNTIME,
                                                FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE,

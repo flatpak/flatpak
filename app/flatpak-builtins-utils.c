@@ -388,6 +388,53 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
   return TRUE;
 }
 
+gboolean
+flatpak_resolve_matching_refs (gboolean      disable_interaction,
+                               char        **refs,
+                               const char   *opt_search_ref,
+                               char        **out_ref,
+                               GError      **error)
+{
+  guint chosen = 0;
+  guint refs_len;
+  guint i;
+
+  refs_len = g_strv_length (refs);
+  g_assert (refs_len > 0);
+
+  /* When there's only one match, we only choose it without user interaction if
+   * either the --assume-yes option was used or it's an exact match
+   */
+  if (refs_len == 1)
+    {
+      if (disable_interaction)
+        chosen = 1;
+      else
+        {
+          g_auto(GStrv) parts = NULL;
+          parts = flatpak_decompose_ref (refs[0], NULL);
+          g_assert (parts != NULL);
+          if (opt_search_ref != NULL && strcmp (parts[1], opt_search_ref) == 0)
+            chosen = 1;
+        }
+    }
+
+  if (chosen == 0)
+    {
+      g_print (_("Similar refs found for ‘%s’:\n"), opt_search_ref);
+      for (i = 0; i < refs_len; i++)
+        g_print ("%d) %s\n", i + 1, refs[i]);
+      chosen = flatpak_number_prompt (0, refs_len, _("Which do you want to use (0 to abort)?"));
+      if (chosen == 0)
+        return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
+    }
+
+  if (out_ref)
+    *out_ref = g_strdup (refs[chosen - 1]);
+
+  return TRUE;
+}
+
 /* Returns: the time in seconds since the file was modified, or %G_MAXUINT64 on error */
 static guint64
 get_file_age (GFile *file)

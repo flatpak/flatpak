@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..22"
+echo "1..24"
 
 #Regular repo
 setup_repo
@@ -129,6 +129,17 @@ echo "ok failed to install again from different remote"
 
 ${FLATPAK} ${U} install -y --reinstall test-repo org.test.Platform
 echo "ok re-install"
+
+${FLATPAK} ${U} uninstall -y org.test.Hello
+
+# Note: This typo is only auto-corrected without user interaction because we're using -y
+${FLATPAK} ${U} install -y test-repo org.test.Hllo >install-log
+assert_file_has_content install-log "org.test.Hello"
+
+${FLATPAK} ${U} list -d > list-log
+assert_file_has_content list-log "^org.test.Hello"
+
+echo "ok typo correction works for install"
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 
@@ -295,6 +306,30 @@ assert_file_has_content list-log "^org.test.Hello"
 assert_file_has_content list-log "^org.test.Platform"
 
 echo "ok install with --no-deploy and then --no-pull"
+
+${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform
+
+${FLATPAK} ${U} install -y --no-deploy test-repo hello
+
+${FLATPAK} ${U} list -d > list-log
+assert_not_file_has_content list-log "^org.test.Hello"
+assert_not_file_has_content list-log "^org.test.Platform"
+
+# Disable the remote to make sure we don't do i/o
+port=$(cat httpd-port-main)
+${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
+
+# Note: The partial ref is only auto-corrected without user interaction because we're using -y
+${FLATPAK} ${U} install -y --no-pull test-repo hello
+
+# re-enable remote
+${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
+
+${FLATPAK} ${U} list -d > list-log
+assert_file_has_content list-log "^org.test.Hello"
+assert_file_has_content list-log "^org.test.Platform"
+
+echo "ok install with --no-deploy and then --no-pull works with typo correction"
 
 ${FLATPAK} uninstall -y --all
 
