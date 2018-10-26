@@ -325,22 +325,42 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autofree char *id = NULL;
       g_autofree char *arch = NULL;
       g_autofree char *branch = NULL;
-      FlatpakKinds kind;
       g_autofree char *ref = NULL;
+      g_auto(GStrv) refs = NULL;
+      guint refs_len;
+      g_autoptr(GError) local_error = NULL;
 
-      if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, target_branch,
-                                          &matched_kinds, &id, &arch, &branch, error))
-        return FALSE;
+      flatpak_split_partial_ref_arg_novalidate (pref, kinds, opt_arch, target_branch,
+                                                &matched_kinds, &id, &arch, &branch);
 
+      /* We used _novalidate so that the id can be partial, but we can still validate the branch */
+      if (branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), branch, local_error->message);
 
       if (opt_no_pull)
-        ref = flatpak_dir_find_local_ref (dir, remote, id, branch, default_branch, arch,
-                                          matched_kinds, &kind, cancellable, error);
+        refs = flatpak_dir_find_local_refs (dir, remote, id, branch, default_branch, arch,
+                                           flatpak_get_default_arch (),
+                                           matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                           cancellable, error);
       else
-        ref = flatpak_dir_find_remote_ref (dir, remote, id, branch, default_branch, arch,
-                                           matched_kinds, &kind, cancellable, error);
+        refs = flatpak_dir_find_remote_refs (dir, remote, id, branch, default_branch, arch,
+                                             flatpak_get_default_arch (),
+                                             matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                             cancellable, error);
+      if (refs == NULL)
+        return FALSE;
 
-      if (ref == NULL)
+      refs_len = g_strv_length (refs);
+      if (refs_len == 0)
+        {
+          if (opt_no_pull)
+            g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND, _("Nothing matches %s in local repository for remote %s"), id, remote);
+          else
+            g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND, _("Nothing matches %s in remote %s"), id, remote);
+          return FALSE;
+        }
+
+      if (!flatpak_resolve_matching_refs (opt_yes, refs, id, &ref, error))
         return FALSE;
 
       if (!flatpak_cli_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, error))

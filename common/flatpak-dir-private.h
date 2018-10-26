@@ -195,6 +195,12 @@ typedef enum {
   FLATPAK_DIR_STORAGE_TYPE_NETWORK,
 } FlatpakDirStorageType;
 
+typedef enum {
+  FIND_MATCHING_REFS_FLAGS_NONE = 0,
+  FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE = (1 << 0),
+  FIND_MATCHING_REFS_FLAGS_FUZZY = (1 << 1),
+} FindMatchingRefsFlags;
+
 GQuark       flatpak_dir_error_quark (void);
 
 /**
@@ -315,24 +321,28 @@ char *      flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                          FlatpakKinds *out_kind,
                                          GCancellable *cancellable,
                                          GError      **error);
-char **     flatpak_dir_find_remote_refs (FlatpakDir   *self,
-                                          const char   *remote,
-                                          const char   *name,
-                                          const char   *opt_branch,
-                                          const char   *opt_arch,
-                                          FlatpakKinds  kinds,
-                                          GCancellable *cancellable,
-                                          GError      **error);
-char *      flatpak_dir_find_local_ref (FlatpakDir   *self,
-                                        const char   *remote,
-                                        const char   *name,
-                                        const char   *opt_branch,
-                                        const char   *opt_default_branch,
-                                        const char   *opt_arch,
-                                        FlatpakKinds  kinds,
-                                        FlatpakKinds *out_kind,
-                                        GCancellable *cancellable,
-                                        GError      **error);
+char **     flatpak_dir_find_remote_refs (FlatpakDir            *self,
+                                          const char            *remote,
+                                          const char            *name,
+                                          const char            *opt_branch,
+                                          const char            *opt_default_branch,
+                                          const char            *opt_arch,
+                                          const char            *opt_default_arch,
+                                          FlatpakKinds           kinds,
+                                          FindMatchingRefsFlags  flags,
+                                          GCancellable          *cancellable,
+                                          GError               **error);
+char **     flatpak_dir_find_local_refs (FlatpakDir           *self,
+                                         const char           *remote,
+                                         const char           *name,
+                                         const char           *opt_branch,
+                                         const char           *opt_default_branch,
+                                         const char           *opt_arch,
+                                         const char           *opt_default_arch,
+                                         FlatpakKinds          kinds,
+                                         FindMatchingRefsFlags flags,
+                                         GCancellable          *cancellable,
+                                         GError               **error);
 char *      flatpak_dir_find_installed_ref (FlatpakDir   *self,
                                             const char   *opt_name,
                                             const char   *opt_branch,

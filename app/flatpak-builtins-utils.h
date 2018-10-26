@@ -56,6 +56,12 @@ gboolean flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
                                             GCancellable *cancellable,
                                             GError      **error);
 
+gboolean flatpak_resolve_matching_refs (gboolean    disable_interaction,
+                                        char      **refs,
+                                        const char *opt_search_ref,
+                                        char      **out_ref,
+                                        GError    **error);
+
 gboolean update_appstream (GPtrArray    *dirs,
                            const char   *remote,
                            const char   *arch,

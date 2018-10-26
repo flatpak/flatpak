@@ -194,8 +194,12 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
       refs = flatpak_dir_find_remote_refs (dir, completion->argv[1],
                                            (element > 1) ? id : NULL,
                                            (element > 3) ? branch : NULL,
+                                           NULL, /* default branch */
                                            (element > 2) ? arch : only_arch,
-                                           matched_kinds, NULL, &error);
+                                           NULL, /* default arch */
+                                           matched_kinds,
+                                           FIND_MATCHING_REFS_FLAGS_NONE,
+                                           NULL, &error);
     }
   else
     {
