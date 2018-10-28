@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-10-12 11:25+0200\n"
-"PO-Revision-Date: 2018-10-08 00:33+0200\n"
+"POT-Creation-Date: 2018-10-28 15:24+0000\n"
+"PO-Revision-Date: 2018-10-28 17:27+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -595,9 +595,8 @@ msgid "GROUP=KEY[=VALUE]"
 msgstr "GRUPA=KLUCZ[=WARTOŚĆ]"
 
 #: app/flatpak-builtins-build-finish.c:61
-#, fuzzy
 msgid "Don't inherit permissions from runtime"
-msgstr "Odbiera programowi uprawnienia do zapisu"
+msgstr "Bez dziedziczenia uprawnień ze środowiska wykonawczego"
 
 #: app/flatpak-builtins-build-finish.c:155
 #, c-format
@@ -3477,7 +3476,12 @@ msgstr "Nie można wyszukać identyfikatora klucza %s: %d)"
 msgid "Error signing commit: %d"
 msgstr "Błąd podczas podpisywania zatwierdzenia: %d"
 
-#: common/flatpak-remote.c:804
+#: common/flatpak-remote.c:822
+#, c-format
+msgid "Bad remote name: %s"
+msgstr "Błędna nazwa repozytorium: %s"
+
+#: common/flatpak-remote.c:826
 msgid "No url specified"
 msgstr "Nie podano adresu URL"
 
@@ -3589,17 +3593,17 @@ msgstr "Już zainstalowano %s"
 msgid "%s is already installed from remote %s"
 msgstr "%s jest już zainstalowane z repozytorium %s"
 
-#: common/flatpak-transaction.c:1695
+#: common/flatpak-transaction.c:1699
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "Nieprawidłowy plik .flatpakref: %s"
 
-#: common/flatpak-transaction.c:1783
+#: common/flatpak-transaction.c:1787
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Błąd podczas aktualizowania metadanych repozytorium dla „%s”: %s"
 
-#: common/flatpak-transaction.c:2021
+#: common/flatpak-transaction.c:2025
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -3608,26 +3612,26 @@ msgstr ""
 "Ostrzeżenie: traktowanie błędu pobierania repozytorium jako niekrytycznego, "
 "ponieważ %s jest już zainstalowane: %s"
 
-#: common/flatpak-transaction.c:2031
+#: common/flatpak-transaction.c:2035
 #, c-format
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Ostrzeżenie: nie można odnaleźć metadanych %s dla zależności: %s"
 
-#: common/flatpak-transaction.c:2339
+#: common/flatpak-transaction.c:2343
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "Nieprawidłowy plik .flatpakrepo: %s"
 
-#: common/flatpak-transaction.c:2648
+#: common/flatpak-transaction.c:2652
 msgid "Aborted by user"
 msgstr "Przerwane przez użytkownika"
 
-#: common/flatpak-transaction.c:2674
+#: common/flatpak-transaction.c:2678
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Pomijanie %s z powodu poprzedniego błędu"
 
-#: common/flatpak-transaction.c:2853
+#: common/flatpak-transaction.c:2857
 msgid "Aborted due to failure"
 msgstr "Przerwano z powodu niepowodzenia"
 
