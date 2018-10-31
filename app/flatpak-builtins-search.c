@@ -90,8 +90,9 @@ get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
           as_store_from_file (store, appstream_file, NULL, cancellable, &error);
           if (error)
             {
-              // We want to ignore this error as it is harmless and valid
-              // NOTE: appstream-glib doesn't have granular file-not-found error
+              /* We want to ignore this error as it is harmless and valid TODO
+               * FIXME: appstream-glib doesn't have granular file-not-found error
+               * See: https://github.com/hughsie/appstream-glib/pull/268 */
               if (!g_str_has_suffix (error->message, "No such file or directory"))
                 g_warning ("%s", error->message);
               g_clear_error (&error);
