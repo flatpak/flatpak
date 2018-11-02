@@ -17,6 +17,8 @@
     <!-- SECURITY:
           - Normal users need admin authentication to install software
             system-wide.
+          - Note that we install polkit rules that allow local users
+            in the wheel group to install without authenticating.
      -->
     <description>Install signed application</description>
     <message>Authentication is required to install $(ref) from $(origin)</message>
@@ -32,6 +34,8 @@
     <!-- SECURITY:
           - Normal users need admin authentication to install software
             system-wide.
+          - Note that we install polkit rules that allow local users
+            in the wheel group to install without authenticating.
     -->
     <description>Install signed runtime</description>
     <message>Authentication is required to install $(ref) from $(origin)</message>
@@ -98,6 +102,8 @@
     <!-- SECURITY:
           - Normal users do not need authentication to modify the
             OSTree repository
+          - Note that we install polkit rules that allow local users
+            in the wheel group to modify repos without authenticating.
      -->
     <description>Update system repository</description>
     <message>Authentication is required to modify the remote $(remote)</message>
@@ -128,6 +134,8 @@
     <!-- SECURITY:
           - Normal users need admin authentication to uninstall software
             system-wide.
+          - Note that we install polkit rules that allow local users
+            in the wheel group to uninstall without authenticating.
      -->
     <description>Uninstall runtime</description>
     <message>Authentication is required to uninstall $(ref)</message>
@@ -143,6 +151,8 @@
     <!-- SECURITY:
           - Normal users need admin authentication to uninstall software
             system-wide.
+          - Note that we install polkit rules that allow local users
+            in the wheel group to uninstall without authenticating.
      -->
     <description>Uninstall app</description>
     <message>Authentication is required to uninstall $(ref)</message>
