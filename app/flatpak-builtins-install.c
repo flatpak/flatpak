@@ -247,7 +247,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autoptr(FlatpakDir) dir_with_remote = NULL;
   gboolean auto_remote = FALSE;
 
-  context = g_option_context_new (_("LOCATION/REMOTE [REF...] - Install applications or runtimes"));
+  context = g_option_context_new (_("[LOCATION/REMOTE] [REF...] - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
