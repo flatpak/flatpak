@@ -68,28 +68,25 @@ static Column all_columns[] = {
 };
 
 
-typedef struct RemoteDirPair
+typedef struct RemoteStateDirPair
 {
-  gchar              *remote_name;
   FlatpakRemoteState *state;
   FlatpakDir         *dir;
-} RemoteDirPair;
+} RemoteStateDirPair;
 
 static void
-remote_dir_pair_free (RemoteDirPair *pair)
+remote_state_dir_pair_free (RemoteStateDirPair *pair)
 {
-  g_free (pair->remote_name);
   flatpak_remote_state_unref (pair->state);
   g_object_unref (pair->dir);
   g_free (pair);
 }
 
-static RemoteDirPair *
-remote_dir_pair_new (const char *remote_name, FlatpakDir *dir, FlatpakRemoteState *state)
+static RemoteStateDirPair *
+remote_state_dir_pair_new (FlatpakDir *dir, FlatpakRemoteState *state)
 {
-  RemoteDirPair *pair = g_new (RemoteDirPair, 1);
+  RemoteStateDirPair *pair = g_new (RemoteStateDirPair, 1);
 
-  pair->remote_name = g_strdup (remote_name);
   pair->state = state;
   pair->dir = g_object_ref (dir);
   return pair;
@@ -137,10 +134,10 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
   while (g_hash_table_iter_next (&refs_iter, &refs_key, &refs_value))
     {
       GHashTable *refs = refs_key;
-      RemoteDirPair *remote_dir_pair = refs_value;
-      const char *remote = remote_dir_pair->remote_name;
-      FlatpakDir *dir = remote_dir_pair->dir;
-      FlatpakRemoteState *state = remote_dir_pair->state;
+      RemoteStateDirPair *remote_state_dir_pair = refs_value;
+      FlatpakDir *dir = remote_state_dir_pair->dir;
+      FlatpakRemoteState *state = remote_state_dir_pair->state;
+      const char *remote = state->remote_name;
 
       g_autoptr(GHashTable) names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
@@ -336,7 +333,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
   const char **arches = flatpak_get_arches ();
   const char *opt_arches[] = {NULL, NULL};
   gboolean has_remote;
-  g_autoptr(GHashTable) refs_hash = g_hash_table_new_full (g_direct_hash, g_direct_equal, (GDestroyNotify) g_hash_table_unref, (GDestroyNotify) remote_dir_pair_free);
+  g_autoptr(GHashTable) refs_hash = g_hash_table_new_full (g_direct_hash, g_direct_equal, (GDestroyNotify) g_hash_table_unref, (GDestroyNotify) remote_state_dir_pair_free);
   g_autofree char *col_help = NULL;
   g_autofree Column *columns = NULL;
 
@@ -361,7 +358,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
     {
       g_autoptr(FlatpakDir) preferred_dir = NULL;
       g_autoptr(GHashTable) refs = NULL;
-      RemoteDirPair *remote_dir_pair = NULL;
+      RemoteStateDirPair *remote_state_dir_pair = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
       gboolean is_local = FALSE;
 
@@ -382,8 +379,8 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
                                          cancellable, error))
         return FALSE;
 
-      remote_dir_pair = remote_dir_pair_new (argv[1], preferred_dir, g_steal_pointer (&state));
-      g_hash_table_insert (refs_hash, g_steal_pointer (&refs), remote_dir_pair);
+      remote_state_dir_pair = remote_state_dir_pair_new (preferred_dir, g_steal_pointer (&state));
+      g_hash_table_insert (refs_hash, g_steal_pointer (&refs), remote_state_dir_pair);
     }
   else
     {
@@ -402,7 +399,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
           for (j = 0; remotes[j] != NULL; j++)
             {
               g_autoptr(GHashTable) refs = NULL;
-              RemoteDirPair *remote_dir_pair = NULL;
+              RemoteStateDirPair *remote_state_dir_pair = NULL;
               const char *remote_name = remotes[j];
               g_autoptr(FlatpakRemoteState) state = NULL;
 
@@ -418,8 +415,8 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
                                                  cancellable, error))
                 return FALSE;
 
-              remote_dir_pair = remote_dir_pair_new (remote_name, dir, g_steal_pointer (&state));
-              g_hash_table_insert (refs_hash, g_steal_pointer (&refs), remote_dir_pair);
+              remote_state_dir_pair = remote_state_dir_pair_new (dir, g_steal_pointer (&state));
+              g_hash_table_insert (refs_hash, g_steal_pointer (&refs), remote_state_dir_pair);
             }
         }
     }
