@@ -15,10 +15,8 @@
 
   <action id="org.freedesktop.Flatpak.app-install">
     <!-- SECURITY:
-          - Normal users do not need authentication to install signed applications
-            from signed repositories, as this cannot exploit a system.
-          - Paranoid users (or parents!) can change this to 'auth_admin' or
-            'auth_admin_keep'.
+          - Normal users need admin authentication to install software
+            system-wide.
      -->
     <description>Install signed application</description>
     <message>Authentication is required to install software</message>
@@ -32,11 +30,9 @@
 
   <action id="org.freedesktop.Flatpak.runtime-install">
     <!-- SECURITY:
-          - Normal users do not need authentication to install signed applications
-            from signed repositories, as this cannot exploit a system.
-          - Paranoid users (or parents!) can change this to 'auth_admin' or
-            'auth_admin_keep'.
-     -->
+          - Normal users need admin authentication to install software
+            system-wide.
+    -->
     <description>Install signed runtime</description>
     <message>Authentication is required to install software</message>
     <icon_name>package-x-generic</icon_name>
@@ -114,6 +110,10 @@
   </action>
 
   <action id="org.freedesktop.Flatpak.install-bundle">
+    <!-- SECURITY:
+          - Normal users need admin authentication to install software
+            system-wide.
+     -->
     <description>Install bundle</description>
     <message>Authentication is required to install software</message>
     <icon_name>package-x-generic</icon_name>
@@ -125,6 +125,10 @@
   </action>
 
   <action id="org.freedesktop.Flatpak.runtime-uninstall">
+    <!-- SECURITY:
+          - Normal users need admin authentication to uninstall software
+            system-wide.
+     -->
     <description>Uninstall runtime</description>
     <message>Authentication is required to uninstall software</message>
     <icon_name>package-x-generic</icon_name>
@@ -136,6 +140,10 @@
   </action>
 
   <action id="org.freedesktop.Flatpak.app-uninstall">
+    <!-- SECURITY:
+          - Normal users need admin authentication to uninstall software
+            system-wide.
+     -->
     <description>Uninstall app</description>
     <message>Authentication is required to uninstall software</message>
     <icon_name>package-x-generic</icon_name>
@@ -147,6 +155,10 @@
   </action>
 
   <action id="org.freedesktop.Flatpak.configure-remote">
+    <!-- SECURITY:
+          - Normal users need admin authentication to configure system-wide
+            software repositories.
+     -->
     <description>Configure Remote</description>
     <message>Authentication is required to configure software repositories</message>
     <icon_name>package-x-generic</icon_name>
@@ -158,6 +170,10 @@
   </action>
 
   <action id="org.freedesktop.Flatpak.configure">
+    <!-- SECURITY:
+          - Normal users need admin authentication to configure the system-wide
+            Flatpak installation.
+     -->
     <description>Configure</description>
     <message>Authentication is required to configure software installation</message>
     <icon_name>package-x-generic</icon_name>
