@@ -30,6 +30,24 @@
 #include "flatpak-utils-private.h"
 
 
+void
+remote_dir_pair_free (RemoteDirPair *pair)
+{
+  g_free (pair->remote_name);
+  g_object_unref (pair->dir);
+  g_free (pair);
+}
+
+RemoteDirPair *
+remote_dir_pair_new (const char *remote_name, FlatpakDir *dir)
+{
+  RemoteDirPair *pair = g_new (RemoteDirPair, 1);
+
+  pair->remote_name = g_strdup (remote_name);
+  pair->dir = g_object_ref (dir);
+  return pair;
+}
+
 gboolean
 looks_like_branch (const char *branch)
 {
@@ -431,6 +449,40 @@ flatpak_resolve_matching_refs (gboolean      disable_interaction,
 
   if (out_ref)
     *out_ref = g_strdup (refs[chosen - 1]);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_resolve_matching_remotes (gboolean        disable_interaction,
+                                  GPtrArray      *remote_dir_pairs,
+                                  const char     *opt_search_ref,
+                                  RemoteDirPair **out_pair,
+                                  GError        **error)
+{
+  guint chosen = 0; /* 1 indexed */
+  guint i;
+
+  g_assert (remote_dir_pairs->len > 0);
+
+  if (disable_interaction && remote_dir_pairs->len == 1)
+    chosen = 1;
+
+  if (chosen == 0)
+    {
+      g_print (_("Multiple remotes found with refs similar to ‘%s’:\n"), opt_search_ref);
+      for (i = 0; i < remote_dir_pairs->len; i++)
+        {
+          RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, i);
+          g_print ("%d) %s (%s)\n", i + 1, pair->remote_name, flatpak_dir_get_name (pair->dir));
+        }
+      chosen = flatpak_number_prompt (0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
+      if (chosen == 0)
+        return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
+    }
+
+  if (out_pair)
+    *out_pair = g_ptr_array_index (remote_dir_pairs, chosen - 1);
 
   return TRUE;
 }
