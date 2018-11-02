@@ -466,7 +466,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
           return FALSE;
         }
 
-      if (!flatpak_resolve_matching_refs (opt_yes, refs, id, &ref, error))
+      if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, &ref, error))
         return FALSE;
 
       if (!flatpak_cli_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, error))
