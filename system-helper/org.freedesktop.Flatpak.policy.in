@@ -19,7 +19,7 @@
             system-wide.
      -->
     <description>Install signed application</description>
-    <message>Authentication is required to install software</message>
+    <message>Authentication is required to install $(ref) from $(origin)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -34,7 +34,7 @@
             system-wide.
     -->
     <description>Install signed runtime</description>
-    <message>Authentication is required to install software</message>
+    <message>Authentication is required to install $(ref) from $(origin)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -52,7 +52,7 @@
             updates.
      -->
     <description>Update signed application</description>
-    <message>Authentication is required to update software</message>
+    <message>Authentication is required to update $(ref) from $(origin)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -70,7 +70,7 @@
             updates.
      -->
     <description>Update signed runtime</description>
-    <message>Authentication is required to update software</message>
+    <message>Authentication is required to update $(ref) from $(origin)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -85,7 +85,7 @@
             from signed repositories.
      -->
     <description>Update remote metadata</description>
-    <message>Authentication is required to update remote info</message>
+    <message>Authentication is required to update the remote $(remote)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -100,7 +100,7 @@
             OSTree repository
      -->
     <description>Update system repository</description>
-    <message>Authentication is required to update the system repository</message>
+    <message>Authentication is required to modify the remote $(remote)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -115,7 +115,7 @@
             system-wide.
      -->
     <description>Install bundle</description>
-    <message>Authentication is required to install software</message>
+    <message>Authentication is required to install software from $(path)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -130,7 +130,7 @@
             system-wide.
      -->
     <description>Uninstall runtime</description>
-    <message>Authentication is required to uninstall software</message>
+    <message>Authentication is required to uninstall $(ref)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -145,7 +145,7 @@
             system-wide.
      -->
     <description>Uninstall app</description>
-    <message>Authentication is required to uninstall software</message>
+    <message>Authentication is required to uninstall $(ref)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -160,7 +160,7 @@
             software repositories.
      -->
     <description>Configure Remote</description>
-    <message>Authentication is required to configure software repositories</message>
+    <message>Authentication is required to configure the remote $(remote)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -193,7 +193,7 @@
             updates.
      -->
     <description>Update appstream</description>
-    <message>Authentication is required to update software</message>
+    <message>Authentication is required to update information from $(origin)</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
