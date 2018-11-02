@@ -407,7 +407,9 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
 }
 
 gboolean
-flatpak_resolve_matching_refs (gboolean      disable_interaction,
+flatpak_resolve_matching_refs (const char   *remote_name,
+                               FlatpakDir   *dir,
+                               gboolean      disable_interaction,
                                char        **refs,
                                const char   *opt_search_ref,
                                char        **out_ref,
@@ -439,7 +441,8 @@ flatpak_resolve_matching_refs (gboolean      disable_interaction,
 
   if (chosen == 0)
     {
-      g_print (_("Similar refs found for ‘%s’:\n"), opt_search_ref);
+      g_print (_("Similar refs found for ‘%s’ in remote ‘%s’ (%s):\n"),
+               opt_search_ref, remote_name, flatpak_dir_get_name (dir));
       for (i = 0; i < refs_len; i++)
         g_print ("%d) %s\n", i + 1, refs[i]);
       chosen = flatpak_number_prompt (0, refs_len, _("Which do you want to use (0 to abort)?"));
