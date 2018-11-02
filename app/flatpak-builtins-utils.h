@@ -30,6 +30,16 @@
 /* Appstream data expires after a day */
 #define FLATPAK_APPSTREAM_TTL 86400
 
+typedef struct RemoteDirPair
+{
+  gchar              *remote_name;
+  FlatpakDir         *dir;
+} RemoteDirPair;
+
+void            remote_dir_pair_free (RemoteDirPair *pair);
+RemoteDirPair * remote_dir_pair_new (const char *remote_name,
+                                     FlatpakDir *dir);
+
 gboolean    looks_like_branch (const char *branch);
 GBytes *    download_uri (const char *url,
                           GError    **error);
@@ -61,6 +71,12 @@ gboolean flatpak_resolve_matching_refs (gboolean    disable_interaction,
                                         const char *opt_search_ref,
                                         char      **out_ref,
                                         GError    **error);
+
+gboolean flatpak_resolve_matching_remotes (gboolean        disable_interaction,
+                                           GPtrArray      *remote_dir_pairs,
+                                           const char     *opt_search_ref,
+                                           RemoteDirPair **out_pair,
+                                           GError        **error);
 
 gboolean update_appstream (GPtrArray    *dirs,
                            const char   *remote,

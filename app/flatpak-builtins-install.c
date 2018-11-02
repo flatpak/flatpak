@@ -235,7 +235,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  FlatpakDir *dir;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *remote = NULL;
   g_autofree char *remote_url = NULL;
   char **prefs = NULL;
@@ -256,7 +256,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     return FALSE;
 
   /* Start with the default or specified dir, this is fine for opt_bundle or opt_from */
-  dir = g_ptr_array_index (dirs, 0);
+  dir = g_object_ref (g_ptr_array_index (dirs, 0));
 
   if (!opt_bundle && !opt_from && argc >= 2)
     {
@@ -312,13 +312,16 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!auto_remote)
         {
           remote = g_strdup (argv[1]);
-          dir = dir_with_remote;
+          dir = g_object_ref (dir_with_remote);
         }
       else
         {
-          gboolean found_remote = FALSE;
+          g_autoptr(GPtrArray) remote_dir_pairs = NULL;
+          RemoteDirPair *chosen_pair = NULL;
 
-          /* Try to find a remote with a matching ref. This is imperfect
+          remote_dir_pairs = g_ptr_array_new_with_free_func ((GDestroyNotify) remote_dir_pair_free);
+
+          /* Search all remotes for a matching ref. This is imperfect
            * because it only takes the first specified ref into account and
            * doesn't distinguish between an exact match and a fuzzy match, but
            * that's okay because the user will be asked to confirm the remote
@@ -369,28 +372,20 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                     continue;
                   else
                     {
-                      if (!flatpak_resolve_duplicate_remotes (dirs, this_remote, &dir_with_remote, cancellable, error))
-                        return FALSE;
-
-                      if (!opt_yes &&
-                          !flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
-                                                  _("Found refs similar to ‘%s’ in remote ‘%s’ (%s).\nIs that the remote you want to use?"),
-                                                  argv[1], this_remote, flatpak_dir_get_name (dir_with_remote)))
-                        continue;
-
-                      remote = g_strdup (this_remote);
-                      dir = dir_with_remote;
-                      found_remote = TRUE;
-                      break;
+                      RemoteDirPair *pair = remote_dir_pair_new (this_remote, this_dir);
+                      g_ptr_array_add (remote_dir_pairs, pair);
                     }
                 }
-
-                if (found_remote)
-                  break;
             }
 
-            if (remote == NULL)
-              return flatpak_fail (error, _("No remote selected to resolve matches for ‘%s’"), argv[1]);
+            if (remote_dir_pairs->len == 0)
+              return flatpak_fail (error, _("No remote refs found similar to ‘%s’"), argv[1]);
+
+            if (!flatpak_resolve_matching_remotes (opt_yes, remote_dir_pairs, argv[1], &chosen_pair, error))
+              return FALSE;
+
+            remote = g_strdup (chosen_pair->remote_name);
+            dir = g_object_ref (chosen_pair->dir);
         }
     }
 
