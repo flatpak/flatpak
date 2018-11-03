@@ -280,7 +280,7 @@ flatpak_installed_ref_get_origin (FlatpakInstalledRef *self)
  *
  * Gets the latest commit of the ref.
  *
- * Returns: (transfer none): the latest commit
+ * Returns: (transfer none) (nullable): the latest commit
  */
 const char *
 flatpak_installed_ref_get_latest_commit (FlatpakInstalledRef *self)
