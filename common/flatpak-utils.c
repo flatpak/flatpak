@@ -5140,7 +5140,7 @@ is_number (const char *s)
 }
 
 long
-flatpak_number_prompt (int min, int max, const char *prompt, ...)
+flatpak_number_prompt (gboolean default_yes, int min, int max, const char *prompt, ...)
 {
   char buf[512];
   va_list var_args;
@@ -5164,6 +5164,10 @@ flatpak_number_prompt (int min, int max, const char *prompt, ...)
         return 0;
 
       g_strstrip (buf);
+
+      if (default_yes && strlen (buf) == 0 &&
+          max - min == 1 && min == 0)
+        return 1;
 
       if (is_number (buf))
         {
