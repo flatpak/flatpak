@@ -345,6 +345,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                   g_autofree char *branch = NULL;
                   FlatpakKinds matched_kinds;
                   g_auto(GStrv) refs = NULL;
+                  g_autoptr(GError) local_error = NULL;
 
                   if (flatpak_dir_get_remote_disabled (this_dir, this_remote))
                     continue;
@@ -358,15 +359,18 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                     refs = flatpak_dir_find_local_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
                                                         flatpak_get_default_arch (),
                                                         matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
-                                                        cancellable, error);
+                                                        cancellable, &local_error);
                   else
                     refs = flatpak_dir_find_remote_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
                                                          flatpak_get_default_arch (),
                                                          matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
-                                                         cancellable, error);
+                                                         cancellable, &local_error);
 
                   if (refs == NULL)
-                    return FALSE;
+                    {
+                      g_warning ("An error was encountered searching remote ‘%s’ for ‘%s’: %s", this_remote, argv[1], local_error->message);
+                      continue;
+                    }
 
                   if (g_strv_length (refs) == 0)
                     continue;

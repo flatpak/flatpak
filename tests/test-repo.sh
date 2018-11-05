@@ -143,12 +143,25 @@ echo "ok typo correction works for install"
 
 ${FLATPAK} ${U} uninstall -y org.test.Hello
 
+# Temporarily disable some remotes so that org.test.Hello only exists in one
+${FLATPAK} ${U} remote-modify --disable test-missing-gpg-repo
+${FLATPAK} ${U} remote-modify --disable test-wrong-gpg-repo
+${FLATPAK} ${U} remote-modify --disable test-no-gpg-repo
+${FLATPAK} ${U} remote-modify --disable test-gpg2-repo
+${FLATPAK} ${U} remote-modify --disable local-test-no-gpg-repo
+
 # Note: The missing remote is only auto-corrected without user interaction because we're using -y
-${FLATPAK} ${U} install -y org.test.Hello >install-log
+${FLATPAK} ${U} install -y org.test.Hello |& tee install-log
 assert_file_has_content install-log "org.test.Hello"
 
 ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "^org.test.Hello"
+
+${FLATPAK} ${U} remote-modify --enable test-missing-gpg-repo
+${FLATPAK} ${U} remote-modify --enable test-wrong-gpg-repo
+${FLATPAK} ${U} remote-modify --enable test-no-gpg-repo
+${FLATPAK} ${U} remote-modify --enable test-gpg2-repo
+${FLATPAK} ${U} remote-modify --enable local-test-no-gpg-repo
 
 echo "ok missing remote name auto-corrects for install"
 
