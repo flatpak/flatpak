@@ -389,7 +389,7 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
           g_autofree char *dir_name = flatpak_dir_get_name (dir);
           g_print ("%d) %s\n", i + 1, dir_name);
         }
-      chosen = flatpak_number_prompt (0, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
+      chosen = flatpak_number_prompt (TRUE, 0, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)
         return flatpak_fail (error, _("No remote chosen to resolve ‘%s’ which exists in multiple installations"), remote_name);
     }
@@ -445,7 +445,7 @@ flatpak_resolve_matching_refs (const char   *remote_name,
                opt_search_ref, remote_name, flatpak_dir_get_name (dir));
       for (i = 0; i < refs_len; i++)
         g_print ("%d) %s\n", i + 1, refs[i]);
-      chosen = flatpak_number_prompt (0, refs_len, _("Which do you want to use (0 to abort)?"));
+      chosen = flatpak_number_prompt (TRUE, 0, refs_len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)
         return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
     }
@@ -479,7 +479,7 @@ flatpak_resolve_matching_remotes (gboolean        disable_interaction,
           RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, i);
           g_print ("%d) %s (%s)\n", i + 1, pair->remote_name, flatpak_dir_get_name (pair->dir));
         }
-      chosen = flatpak_number_prompt (0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
+      chosen = flatpak_number_prompt (TRUE, 0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)
         return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
     }

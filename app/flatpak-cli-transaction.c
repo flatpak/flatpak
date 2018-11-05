@@ -89,7 +89,7 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
         {
           g_print ("%d) %s\n", i + 1, remotes[i]);
         }
-      chosen = flatpak_number_prompt (0, n_remotes, _("Which do you want to install (0 to abort)?"));
+      chosen = flatpak_number_prompt (TRUE, 0, n_remotes, _("Which do you want to install (0 to abort)?"));
       chosen -= 1; /* convert from base-1 to base-0 (and -1 to abort) */
     }
 
