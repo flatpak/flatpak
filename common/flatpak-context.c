@@ -1114,7 +1114,7 @@ option_add_generic_policy_cb (const gchar *option_name,
   if (t == NULL)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                   _("--policy arguments must be in the form SUBSYSTEM.KEY=[!]VALUE"));
+                   _("--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"));
       return FALSE;
     }
   policy_value = t + 1;
@@ -1122,14 +1122,14 @@ option_add_generic_policy_cb (const gchar *option_name,
   if (strchr (key, '.') == NULL)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                   _("--policy arguments must be in the form SUBSYSTEM.KEY=[!]VALUE"));
+                   _("--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"));
       return FALSE;
     }
 
   if (policy_value[0] == '!')
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                   _("--policy values can't start with \"!\""));
+                   _("--add-policy values can't start with \"!\""));
       return FALSE;
     }
 
@@ -1154,7 +1154,7 @@ option_remove_generic_policy_cb (const gchar *option_name,
   if (t == NULL)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                   _("--policy arguments must be in the form SUBSYSTEM.KEY=[!]VALUE"));
+                   _("--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"));
       return FALSE;
     }
   policy_value = t + 1;
@@ -1162,14 +1162,14 @@ option_remove_generic_policy_cb (const gchar *option_name,
   if (strchr (key, '.') == NULL)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                   _("--policy arguments must be in the form SUBSYSTEM.KEY=[!]VALUE"));
+                   _("--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"));
       return FALSE;
     }
 
   if (policy_value[0] == '!')
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                   _("--policy values can't start with \"!\""));
+                   _("--remove-policy values can't start with \"!\""));
       return FALSE;
     }
 
