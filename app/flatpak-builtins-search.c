@@ -43,9 +43,6 @@ get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
   GPtrArray *ret = g_ptr_array_new_with_free_func (g_object_unref);
   guint i, j;
 
-  if (arch == NULL)
-    arch = flatpak_get_arch ();
-
   for (i = 0; i < dirs->len; ++i)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
@@ -74,27 +71,11 @@ get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
           as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
 #endif
 
-          g_autofree char *appstream_path = NULL;
+          flatpak_dir_load_appstream_store (dir, remotes[j], arch, store, cancellable, &error);
 
-          if (flatpak_dir_get_remote_oci (dir, remotes[j]))
-            appstream_path = g_build_filename (install_path, "appstream", remotes[j],
-                                               arch, "appstream.xml.gz",
-                                               NULL);
-          else
-            appstream_path = g_build_filename (install_path, "appstream", remotes[j],
-                                               arch, "active", "appstream.xml.gz",
-                                               NULL);
-
-          g_autoptr(GFile) appstream_file = g_file_new_for_path (appstream_path);
-
-          as_store_from_file (store, appstream_file, NULL, cancellable, &error);
           if (error)
             {
-              /* We want to ignore this error as it is harmless and valid TODO
-               * FIXME: appstream-glib doesn't have granular file-not-found error
-               * See: https://github.com/hughsie/appstream-glib/pull/268 */
-              if (!g_str_has_suffix (error->message, "No such file or directory"))
-                g_warning ("%s", error->message);
+              g_warning ("%s", error->message);
               g_clear_error (&error);
             }
 
