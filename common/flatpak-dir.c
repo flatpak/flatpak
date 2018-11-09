@@ -7466,6 +7466,66 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   return flatpak_dir_create_child_repo (self, cache_dir, file_lock, optional_commit, error);
 }
 
+/**
+ * flatpak_dir_load_appstream_store:
+ * @self: a #FlatpakDir
+ * @remote_name: name of the remote to load the AppStream data for
+ * @arch: (nullable): name of the architecture to load the AppStream data for,
+ *    or %NULL to use the default
+ * @store: the store to load into
+ * @cancellable: (nullable): a #GCancellable, or %NULL
+ * @error: return location for a #GError
+ *
+ * Load the cached AppStream data for the given @remote_name into @store, which
+ * must have already been constructed using as_store_new(). If no cache
+ * exists, %FALSE is returned with no error set. If there is an error loading or
+ * parsing the cache, an error is returned.
+ *
+ * Returns: %TRUE if the cache exists and was loaded into @store; %FALSE
+ *    otherwise
+ */
+gboolean
+flatpak_dir_load_appstream_store (FlatpakDir    *self,
+                                  const gchar   *remote_name,
+                                  const gchar   *arch,
+                                  AsStore       *store,
+                                  GCancellable  *cancellable,
+                                  GError       **error)
+{
+  const char *install_path = flatpak_file_get_path_cached (flatpak_dir_get_path (self));
+  g_autoptr(GFile) appstream_file = NULL;
+  g_autofree char *appstream_path = NULL;
+  g_autoptr(GError) local_error = NULL;
+  gboolean success;
+
+  if (arch == NULL)
+    arch = flatpak_get_arch ();
+
+  if (flatpak_dir_get_remote_oci (self, remote_name))
+    appstream_path = g_build_filename (install_path, "appstream", remote_name,
+                                       arch, "appstream.xml.gz",
+                                       NULL);
+  else
+    appstream_path = g_build_filename (install_path, "appstream", remote_name,
+                                       arch, "active", "appstream.xml.gz",
+                                       NULL);
+
+  appstream_file = g_file_new_for_path (appstream_path);
+  as_store_from_file (store, appstream_file, NULL, cancellable, &local_error);
+  success = (local_error == NULL);
+
+  /* We want to ignore ENOENT error as it is harmless and valid
+   * FIXME: appstream-glib doesn't have granular file-not-found error
+   * See: https://github.com/hughsie/appstream-glib/pull/268 */
+  if (local_error != NULL &&
+      g_str_has_suffix (local_error->message, "No such file or directory"))
+    g_clear_error (&local_error);
+  else if (local_error != NULL)
+    g_propagate_error (error, g_steal_pointer (&local_error));
+
+  return success;
+}
+
 gboolean
 flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_pull,

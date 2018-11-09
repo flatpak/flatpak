@@ -23,6 +23,7 @@
 
 #include <ostree.h>
 
+#include <appstream-glib.h>
 #include "libglnx/libglnx.h"
 #include <flatpak-common-types-private.h>
 #include <flatpak-context-private.h>
@@ -407,6 +408,12 @@ gboolean    flatpak_dir_update_appstream (FlatpakDir          *self,
                                           OstreeAsyncProgress *progress,
                                           GCancellable        *cancellable,
                                           GError             **error);
+gboolean    flatpak_dir_load_appstream_store (FlatpakDir    *self,
+                                              const gchar   *remote_name,
+                                              const gchar   *arch,
+                                              AsStore       *store,
+                                              GCancellable  *cancellable,
+                                              GError       **error);
 gboolean    flatpak_dir_pull (FlatpakDir                           *self,
                               FlatpakRemoteState                   *state,
                               const char                           *ref,
