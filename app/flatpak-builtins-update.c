@@ -99,7 +99,7 @@ flatpak_builtin_update (int           argc,
   prefs = &argv[1];
   n_prefs = argc - 1;
 
-  /* Backwards compat for old "REPOSITORY NAME [BRANCH]" argument version */
+  /* Backwards compat for old "NAME [BRANCH]" argument version */
   if (argc == 3 && looks_like_branch (argv[2]))
     {
       default_branch = argv[2];
