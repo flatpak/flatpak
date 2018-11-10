@@ -54,7 +54,7 @@
             but the per-application overrides can override the global overrides.
         </para>
         <para>
-            Unless overridden with the --user or --installation options, this command
+            Unless overridden with the <option>--user</option> or <option>--installation</option> options, this command
             changes the default system-wide installation.
         </para>
 
@@ -97,8 +97,8 @@
                 <listitem><para>
                     Updates a system-wide installation specified by <arg choice="plain">NAME</arg>
                     among those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -108,7 +108,7 @@
                 <listitem><para>
                     Share a subsystem with the host session. This overrides
                     the Context section from the application metadata.
-                    SUBSYSTEM must be one of: network, ipc.
+                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -119,7 +119,7 @@
                 <listitem><para>
                     Don't share a subsystem with the host session. This overrides
                     the Context section from the application metadata.
-                    SUBSYSTEM must be one of: network, ipc.
+                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -130,7 +130,7 @@
                 <listitem><para>
                     Expose a well-known socket to the application. This overrides to
                     the Context section from the application metadata.
-                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
+                    <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -141,7 +141,7 @@
                 <listitem><para>
                     Don't expose a well-known socket to the application. This overrides to
                     the Context section from the application metadata.
-                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
+                    <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -152,7 +152,7 @@
                 <listitem><para>
                     Expose a device to the application. This overrides to
                     the Context section from the application metadata.
-                    DEVICE must be one of: dri, kvm, all.
+                    <arg choice="plain">DEVICE</arg> must be one of: dri, kvm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -163,7 +163,7 @@
                 <listitem><para>
                     Don't expose a device to the application. This overrides to
                     the Context section from the application metadata.
-                    DEVICE must be one of: dri, kvm, all.
+                    <arg choice="plain">DEVICE</arg> must be one of: dri, kvm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -174,7 +174,7 @@
                 <listitem><para>
                     Allow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch, bluetooth, canbus.
+                    <arg choice="plain">FEATURE</arg> must be one of: devel, multiarch, bluetooth, canbus.
                     This option can be used multiple times.
                  </para><para>
                     See <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -188,18 +188,18 @@
                 <listitem><para>
                     Disallow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch, bluetooth, canbus.
+                    <arg choice="plain">FEATURE</arg> must be one of: devel, multiarch, bluetooth, canbus.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>--filesystem=FS</option></term>
+                <term><option>--filesystem=FILESYSTEM</option></term>
 
                 <listitem><para>
                     Allow the application access to a subset of the filesystem.
                     This overrides to the Context section from the application metadata.
-                    FS can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    <arg choice="plain">FILESYSTEM</arg> can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
                     xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos, xdg-run,
                     xdg-config, xdg-cache, xdg-data,
                     an absolute path, or a homedir-relative path like ~/dir or paths
@@ -217,7 +217,7 @@
                     Remove access to the specified subset of the filesystem from
                     the application. This overrides to the Context section from the
                     application metadata.
-                    FILESYSTEM can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    <arg choice="plain">FILESYSTEM</arg> can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
                     xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
                     an absolute path, or a homedir-relative path like ~/dir.
                     This option can be used multiple times.
@@ -261,7 +261,7 @@ key=v1;v2;
                 <term><option>--own-name=NAME</option></term>
 
                 <listitem><para>
-                    Allow the application to own the well-known name NAME on the session bus.
+                    Allow the application to own the well-known name <arg choice="plain">NAME</arg> on the session bus.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -271,7 +271,7 @@ key=v1;v2;
                 <term><option>--talk-name=NAME</option></term>
 
                 <listitem><para>
-                    Allow the application to talk to the well-known name NAME on the session bus.
+                    Allow the application to talk to the well-known name <arg choice="plain">NAME</arg> on the session bus.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -281,8 +281,8 @@ key=v1;v2;
                 <term><option>--system-own-name=NAME</option></term>
 
                 <listitem><para>
-                    Allow the application to own the well known name NAME on the system bus.
-                    If NAME ends with .*, it allows the application to own all matching names.
+                    Allow the application to own the well known name <arg choice="plain">NAME</arg> on the system bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to own all matching names.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -292,8 +292,8 @@ key=v1;v2;
                 <term><option>--system-talk-name=NAME</option></term>
 
                 <listitem><para>
-                    Allow the application to talk to the well known name NAME on the system bus.
-                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    Allow the application to talk to the well known name <arg choice="plain">NAME</arg> on the system bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to talk to all matching names.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -304,7 +304,7 @@ key=v1;v2;
 
                 <listitem><para>
                     If the application doesn't have access to the real homedir, make the (homedir-relative) path
-                    FILENAME a bind mount to the corresponding path in the per-application directory,
+                    <arg choice="plain">FILENAME</arg> a bind mount to the corresponding path in the per-application directory,
                     allowing that location to be used for persistent data.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
@@ -315,7 +315,7 @@ key=v1;v2;
                 <term><option>--reset</option></term>
 
                 <listitem><para>
-                    Remove overrides. If an APP is given, remove the overrides for that
+                    Remove overrides. If an <arg choice="plain">APP</arg> is given, remove the overrides for that
                     application, otherwise remove the global overrides.
                 </para></listitem>
             </varlistentry>
@@ -324,7 +324,7 @@ key=v1;v2;
                 <term><option>--show</option></term>
 
                 <listitem><para>
-                    Shows overrides. If an APP is given, shows the overrides for that
+                    Shows overrides. If an <arg choice="plain">APP</arg> is given, shows the overrides for that
                     application, otherwise shows the global overrides.
                 </para></listitem>
             </varlistentry>

@@ -53,22 +53,22 @@
         </para>
         <para>
             By default this looks for both installed apps and runtimes with the given
-            <arg choice="plain">REF</arg>, but you can limit this by using the --app
-            or --runtime option, or by supplying the initial element in the REF.
+            <arg choice="plain">REF</arg>, but you can limit this by using the <option>--app</option>
+            or <option>--runtime</option> option, or by supplying the initial element in the <arg choice="plain">REF</arg>.
         </para>
         <para>
             Normally, this command removes the ref for this application/runtime from the
             local OSTree repository and purges any objects that are no longer
             needed to free up disk space. If the same application is later
             reinstalled, the objects will be pulled from the remote repository
-            again. The --keep-ref option can be used to prevent this.
+            again. The <option>--keep-ref</option> option can be used to prevent this.
         </para>
         <para>
             If all branches of the application/runtime are removed, this command
             also purges the data directory for the application.
         </para>
         <para>
-            Unless overridden with the --system, --user, or --installation
+            Unless overridden with the <option>--system</option>, <option>--user</option>, or <option>--installation</option>
             options, this command searches both the system-wide installation
             and the per-user one for <arg choice="plain">REF</arg> and errors
             out if it exists in more than one.
@@ -123,8 +123,8 @@
                     Uninstalls from a system-wide installation specified by
                     <arg choice="plain">NAME</arg> among those defined in
                     <filename>/etc/flatpak/installations.d/</filename>.  Using
-                    <arg choice="plain">--installation=default</arg> is
-                    equivalent to using <arg choice="plain">--system</arg>.
+                    <option>--installation=default</option> is
+                    equivalent to using <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 

@@ -107,7 +107,7 @@
                 <term><option>--runtime-repo=URL</option></term>
 
                 <listitem><para>
-                  The URL for a .flatpakrepo file that contains
+                  The URL for a <filename>.flatpakrepo</filename> file that contains
                   the information about the repository that supplies
                   the runtimes required by the app.
                 </para></listitem>
@@ -117,7 +117,7 @@
                 <term><option>--gpg-keys=FILE</option></term>
 
                 <listitem><para>
-                    Add the GPG key from FILE (use - for stdin).
+                    Add the GPG key from <arg choice="plain">FILE</arg> (use - for stdin).
                 </para></listitem>
             </varlistentry>
 

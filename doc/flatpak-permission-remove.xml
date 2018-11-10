@@ -41,8 +41,8 @@
         <title>Description</title>
 
         <para>
-          Removes an entry for the object with id ID to the permission
-          store table TABLE. The ID must be in a suitable format
+          Removes an entry for the object with id <arg choice="plain">ID</arg> to the permission
+          store table <arg choice="plain">TABLE</arg>. The <arg choice="plain">ID</arg> must be in a suitable format
           for the table.
         </para>
         <para>
@@ -95,7 +95,7 @@
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-permission-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-permission-show</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-permission-reset</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-permission-reset</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

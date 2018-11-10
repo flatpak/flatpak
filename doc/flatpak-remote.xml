@@ -41,7 +41,7 @@
 
        <para>
             Normally, it is not necessary to edit remote config files directly, the
-            flatpak remote-modify command should be used to change properties of remotes.
+            <command>flatpak remote-modify</command> command should be used to change properties of remotes.
        </para>
 
        <para>

@@ -29,26 +29,17 @@
     </refnamediv>
 
     <refsynopsisdiv>
-            <para>Install from a configured remote:</para>
             <cmdsynopsis>
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="opt">REMOTE</arg>
                 <arg choice="plain" rep="repeat">REF</arg>
             </cmdsynopsis>
-            <para>Install from a .flatpakref file:</para>
             <cmdsynopsis>
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="opt">--from</arg>
+                <arg choice="opt">--from|--bundle</arg>
                 <arg choice="plain">LOCATION</arg>
-            </cmdsynopsis>
-            <para>Install from a .flatpak bundle:</para>
-            <cmdsynopsis>
-                <command>flatpak install</command>
-                <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="opt">--bundle</arg>
-                <arg choice="plain">FILENAME</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -57,57 +48,59 @@
 
         <para>
           Installs an application or runtime. The primary way to
-          install is to specify a <arg>REMOTE</arg>
-          name as the source and one ore more <arg>REF</arg>s to specify the
-          application or runtime to install. If <arg>REMOTE</arg> is omitted,
-          the configured remotes are searched for the first <arg>REF</arg>
+          install is to specify a <arg choice="plain">REMOTE</arg>
+          name as the source and one ore more <arg choice="plain">REF</arg>s to specify the
+          application or runtime to install. If <arg choice="plain">REMOTE</arg> is omitted,
+          the configured remotes are searched for the first <arg choice="plain">REF</arg>
           and the user is asked to confirm the resulting choice.
         </para>
         <para>
-            Each <arg choice="plain">REF</arg> argument is a full or partial indentifier in the
-            flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH". All elements
-            except ID are optional and can be left out, including the slashes,
-            so most of the time you need only specify ID. Any part left out will be matched
-            against what is in the remote, and if there are multiple matches you will be
-            prompted to choose one of them. You will also be prompted with choices if
-            <arg choice="plain">REF</arg> doesn't match anything in the remote exactly but is
-            similar to one or more refs in the remote (e.g. "devhelp" is similar to
-            "org.gnome.Devhelp").
+          Each <arg choice="plain">REF</arg> argument is a full or partial indentifier in the
+          flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH".
+          All elements except ID are optional and can be left out, including the slashes,
+          so most of the time you need only specify ID. Any part left out will be matched
+          against what is in the remote, and if there are multiple matches you will be
+          prompted to choose one of them. You will also be prompted with choices if
+          <arg choice="plain">REF</arg> doesn't match anything in the remote exactly but is
+          similar to one or more refs in the remote (e.g. "devhelp" is similar to
+          "org.gnome.Devhelp").
         </para>
         <para>
-            By default this looks for both apps and runtimes with the given <arg choice="plain">REF</arg> in
-            the specified <arg choice="plain">REMOTE</arg>, but you can limit this by using the --app or
-            --runtime option, or by supplying the initial element in the REF.
+          By default this looks for both apps and runtimes with the given
+          <arg choice="plain">REF</arg> in the specified <arg choice="plain">REMOTE</arg>,
+          but you can limit this by using the <option>--app</option> or <option>--runtime</option>
+          option, or by supplying the initial element in the <arg choice="plain">REF</arg>.
         </para>
         <para>
-            If <arg choice="plain">REMOTE</arg> is a uri or a path (absolute or relative starting with ./)
-            to a local repository, then that repository will be used as the source, and a temporary remote
-            will be created for the lifetime of the <arg choice="plain">REF</arg>.
+          If <arg choice="plain">REMOTE</arg> is a uri or a path (absolute or relative starting
+          with ./) to a local repository, then that repository will be used as the source, and
+          a temporary remote will be created for the lifetime of the <arg choice="plain">REF</arg>.
         </para>
         <para>
-            If the specified <arg choice="plain">REMOTE</arg> has a collection ID configured on it,
-            flatpak will search mounted filesystems such as USB drives as well as Avahi services
-            advertised on the local network for the needed refs, in order to support
-            offline updates. See <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-            for more information.
+          If the specified <arg choice="plain">REMOTE</arg> has a collection ID configured on it,
+          flatpak will search mounted filesystems such as USB drives as well as Avahi services
+          advertised on the local network for the needed refs, in order to support
+          offline updates. See <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+          for more information.
         </para>
         <para>
-            The alternative form of the command (<arg>--from</arg> or
-            <arg>--bundle</arg> allows you to
-            install directly from a source such as a .flatpak
-            single-file bundle, a .flatpakref app description. The options are optional if the first
-            argument has the right extension.
+          The alternative form of the command (with <option>--from</option> or
+          <option>--bundle</option>) allows to install directly from a source such as a
+          <filename>.flatpak</filename> single-file bundle or a <filename>.flatpakref</filename>
+          application description. The options are optional if the first argument has the expected
+          filename extension.
         </para>
         <para>
-            Note that flatpak allows one to have multiple branches of an application and runtimes
-            installed and used at the same time. However, only one version of an application can be current,
-            meaning its exported files (for instance desktop files and icons) are
-            visible to the host. The last installed version is made current by
-            default, but you can manually change with make-current.
+          Note that flatpak allows to have multiple branches of an application and runtimes
+          installed and used at the same time. However, only one version of an application
+          can be current, meaning its exported files (for instance desktop files and icons)
+          are visible to the host. The last installed version is made current by default, but
+          this can manually changed with flatpak make-current.
         </para>
         <para>
-            Unless overridden with the --user or the --installation option, this command installs
-            the application or runtime in the default system-wide installation.
+          Unless overridden with the <option>--user</option> or the <option>--installation</option>
+          option, this command installs the application or runtime in the default system-wide
+          installation.
         </para>
 
     </refsect1>
@@ -131,8 +124,8 @@
                 <term><option>--bundle</option></term>
 
                 <listitem><para>
-                  Assume LOCATION is a .flatpak single-bundle file.
-                  This is optional if the arguments ends with .flatpak.
+                  Treat <arg choice="plain">LOCATION</arg> as a single-bundle file.
+                  This is assumed if the argument ends with <filename>.flatpak</filename>.
                 </para></listitem>
             </varlistentry>
 
@@ -140,8 +133,8 @@
                 <term><option>--from</option></term>
 
                 <listitem><para>
-                  Assume LOCATION is a .flatpakref file containing the details of the app to be installed.
-                  This is optional if the arguments ends with .flatpakref.
+                  Treat <arg choice="plain">LOCATION</arg> as an application description file.
+                  This is assumed if the argument ends with <filename>.flatpakref</filename>.
                 </para></listitem>
             </varlistentry>
 
@@ -176,8 +169,8 @@
                     Install the application or runtime in a system-wide installation
                     specified by <arg choice="plain">NAME</arg> among those defined in
                     <filename>/etc/flatpak/installations.d/</filename>. Using
-                    <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -193,8 +186,9 @@
                 <term><option>--subpath=PATH</option></term>
 
                 <listitem><para>
-                  Install only a subpath of the ref. This is mainly used to install a subset of locales.
-                  This can be added multiple times to install multiple subpaths.,
+                  Install only a subpath of <arg choice="plain">REF</arg>. This is mainly used to
+                  install a subset of locales. This can be added multiple times to install multiple
+                  subpaths.
                 </para></listitem>
             </varlistentry>
 
@@ -202,7 +196,7 @@
                 <term><option>--gpg-file=FILE</option></term>
 
                 <listitem><para>
-                  Check bundle signatures with GPG key from FILE (- for stdin).
+                  Check bundle signatures with GPG key from <arg choice="plain">FILE</arg> (- for stdin).
                 </para></listitem>
             </varlistentry>
 
@@ -306,7 +300,9 @@
             <citerefentry><refentrytitle>flatpak-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-flatpakref</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-flatpakref</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-make-current</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

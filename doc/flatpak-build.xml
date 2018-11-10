@@ -126,7 +126,7 @@
                 <listitem><para>
                     Share a subsystem with the host session. This overrides
                     the Context section from the application metadata.
-                    SUBSYSTEM must be one of: network, ipc.
+                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -137,7 +137,7 @@
                 <listitem><para>
                     Don't share a subsystem with the host session. This overrides
                     the Context section from the application metadata.
-                    SUBSYSTEM must be one of: network, ipc.
+                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -148,7 +148,7 @@
                 <listitem><para>
                     Expose a well-known socket to the application. This overrides to
                     the Context section from the application metadata.
-                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
+                    <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -159,7 +159,7 @@
                 <listitem><para>
                     Don't expose a well-known socket to the application. This overrides to
                     the Context section from the application metadata.
-                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
+                    <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -170,7 +170,7 @@
                 <listitem><para>
                     Expose a device to the application. This overrides to
                     the Context section from the application metadata.
-                    DEVICE must be one of: dri, kvm, all.
+                    <arg choice="plain">DEVICE</arg> must be one of: dri, kvm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -181,7 +181,7 @@
                 <listitem><para>
                     Don't expose a device to the application. This overrides to
                     the Context section from the application metadata.
-                    DEVICE must be one of: dri, kvm, all.
+                    <arg choice="plain">DEVICE</arg> must be one of: dri, kvm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -192,7 +192,7 @@
                 <listitem><para>
                     Allow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch, bluetooth, canbus.
+                    <arg choice="plain">FEATURE</arg> must be one of: devel, multiarch, bluetooth, canbus.
                     This option can be used multiple times.
                     </para><para>
                     See <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -206,7 +206,7 @@
                 <listitem><para>
                     Disallow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch, bluetooth, canbus.
+                    <arg choice="plain">FEATURE</arg> must be one of: devel, multiarch, bluetooth, canbus.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -217,7 +217,7 @@
                 <listitem><para>
                     Allow the application access to a subset of the filesystem.
                     This overrides to the Context section from the application metadata.
-                    FILESYSTEM can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    <arg choice="plain">FILESYSTEM</arg> can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
                     xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos, xdg-run,
                     xdg-config, xdg-cache, xdg-data, an absolute path, or a homedir-relative
                     path like ~/dir or paths relative to the xdg dirs, like xdg-download/subdir.
@@ -234,7 +234,7 @@
                     Remove access to the specified subset of the filesystem from
                     the application. This overrides to the Context section from the
                     application metadata.
-                    FILESYSTEM can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    <arg choice="plain">FILESYSTEM</arg> can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
                     xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
                     an absolute path, or a homedir-relative path like ~/dir.
                     This option can be used multiple times.
@@ -245,7 +245,7 @@
                 <term><option>--with-appdir</option></term>
 
                 <listitem><para>
-                  Expose and configure access to the per-app storage directory in $HOME/.var/app. This is
+                  Expose and configure access to the per-app storage directory in <filename>$HOME/.var/app</filename>. This is
                   not normally useful when building, but helps when testing built apps.
                 </para></listitem>
             </varlistentry>
@@ -328,7 +328,7 @@ key=v1;v2;
 
                 <listitem><para>
                     If the application doesn't have access to the real homedir, make the (homedir-relative) path
-                    FILENAME a bind mount to the corresponding path in the per-application directory,
+                    <arg choice="plain">FILENAME</arg> a bind mount to the corresponding path in the per-application directory,
                     allowing that location to be used for persistent data.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
@@ -340,9 +340,9 @@ key=v1;v2;
 
                 <listitem><para>
                   Normally if there is a <filename>usr</filename> directory in the build dir, this is used
-                  for the runtime files (this can be created by --writable-sdk or --type=runtime arguments
-                  to build-init). If you specify --sdk-dir this directoryname will be used instead.
-                  Use this if you passed --sdk-dir to build-init.
+                  for the runtime files (this can be created by <option>--writable-sdk</option> or <option>--type=runtime</option> arguments
+                  to build-init). If you specify <option>--sdk-dir</option>, this directory will be used instead.
+                  Use this if you passed <option>--sdk-dir</option> to build-init.
                 </para></listitem>
             </varlistentry>
 

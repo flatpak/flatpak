@@ -60,8 +60,8 @@
         </para>
         <para>
             By default this looks for both apps and runtimes with the given <arg choice="plain">REF</arg>,
-            but you can limit this by using the --app or --runtime option, or by supplying the initial
-            element in the REF.
+            but you can limit this by using the <option>--app</option> or <option>--runtime</option> option, or by supplying the initial
+            element in the <arg choice="plain">REF</arg>.
         </para>
         <para>
             Normally, this command updates the application to the tip
@@ -80,10 +80,10 @@
             a different branch, and runtime updates are expected to keep
             strict compatibility. If an application update does cause
             a problem, it is possible to go back to the previous
-            version, with the --commit option.
+            version, with the <option>--commit</option> option.
         </para>
         <para>
-            Unless overridden with the --user, --system or --installation option, this command updates
+            Unless overridden with the <option>--user</option>, <option>--system</option> or <option>--installation</option> option, this command updates
             any matching refs in the standard system-wide installation and the per-user one.
         </para>
 
@@ -126,8 +126,8 @@
                 <listitem><para>
                     Updates a system-wide installation specified by <arg choice="plain">NAME</arg>
                     among those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -263,7 +263,8 @@
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-install</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

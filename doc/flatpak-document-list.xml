@@ -41,7 +41,7 @@
 
         <para>
             Lists exported files, with their document id and the
-            full path to their origin. If an APPID is specified,
+            full path to their origin. If an <arg choice="plain">APPID</arg> is specified,
             only the files exported to this app are listed.
         </para>
 

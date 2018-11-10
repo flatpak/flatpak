@@ -41,7 +41,17 @@
         <title>Description</title>
 
         <para>
-            Show and modify current configuration
+            Show and modify the configuration of a flatpak installation.
+        </para>
+
+        <para>
+            For configuration of individual remotes, see
+            <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+        </para>
+
+        <para>
+            For configuration of individual applications, see
+            <citerefentry><refentrytitle>flatpak-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
         </para>
 
     </refsect1>
@@ -65,7 +75,7 @@
                 <term><option>--list</option></term>
 
                 <listitem><para>
-                    Print all keys and their values
+                    Print all keys and their values.
                 </para></listitem>
             </varlistentry>
 
@@ -73,7 +83,7 @@
                 <term><option>--set</option></term>
 
                 <listitem><para>
-                    Set key KEY to VALUE
+                    Set key <arg choice="plain">KEY</arg> to <arg choice="plain">VALUE</arg>.
                 </para></listitem>
             </varlistentry>
 
@@ -81,7 +91,7 @@
                 <term><option>--unset</option></term>
 
                 <listitem><para>
-                    Unset key KEY
+                    Unset key <arg choice="plain">KEY</arg>.
                 </para></listitem>
             </varlistentry>
 
@@ -89,7 +99,7 @@
                 <term><option>--get</option></term>
 
                 <listitem><para>
-                  Print value of KEY.
+                  Print value of <arg choice="plain">KEY</arg>.
                 </para></listitem>
             </varlistentry>
 
@@ -116,8 +126,8 @@
                     Configure the system-wide installation
                     specified by <arg choice="plain">NAME</arg> among those defined in
                     <filename>/etc/flatpak/installations.d/</filename>. Using
-                    <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -154,6 +164,8 @@
 
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

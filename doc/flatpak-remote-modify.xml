@@ -44,7 +44,7 @@
             <arg choice="plain">NAME</arg> is the name for the remote.
         </para>
         <para>
-            Unless overridden with the --system, --user, or --installation options,
+            Unless overridden with the <option>--system</option>, <option>--user</option>, or <option>--installation</option> options,
             this command uses either the default system-wide installation or the
             per-user one, depending on which has the specified
             <arg choice="plain">REMOTE</arg>.
@@ -89,8 +89,8 @@
                 <listitem><para>
                     Modify a system-wide installation specified by <arg choice="plain">NAME</arg>
                     among those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 

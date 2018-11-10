@@ -45,24 +45,14 @@
         </para>
         <para>
             By default, the output is formatted in a friendly format.
-            If you specify one of the options
-            --show-ref,
-            --show-origin,
-            --show-commit,
-            --show-size,
-            --show-metadata,
-            --show-permissions,
-            --file-access,
-            --show-location,
-            --show-runtime or
-            --show-sdk,
-            the output is instead formatted
-            in a machine-readable format.
+            If you specify any of the <option>--show-…</option> or
+            <option>--file-access</option> options, the output is instead
+            formatted in a machine-readable format.
         </para>
         <para>
-            By default, both per-user and system-wide installations
-            are queried. Use the --user, --system or --installation
-            options to change this.
+            By default, both per-user and system-wide installations are queried.
+            Use the <option>--user</option>, <option>--system</option>
+            or <option>--installation</option> options to change this.
         </para>
 
     </refsect1>
@@ -104,8 +94,8 @@
                 <listitem><para>
                     Query a system-wide installation by <arg choice="plain">NAME</arg> among
                     those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 

@@ -29,15 +29,6 @@
     </refnamediv>
 
     <refsynopsisdiv>
-            <para>Add from a .flatpakrepo file:</para>
-            <cmdsynopsis>
-                <command>flatpak remote-add</command>
-                <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="opt">--from</arg>
-                <arg choice="plain">NAME</arg>
-                <arg choice="plain">LOCATION</arg>
-            </cmdsynopsis>
-            <para>Manually specify repo uri and options:</para>
             <cmdsynopsis>
                 <command>flatpak remote-add</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
@@ -50,16 +41,16 @@
         <title>Description</title>
 
         <para>
-            Adds a remote repository to the flatpak repository
-            configuration.  <arg>NAME</arg> is the name for the new
-            remote, and <arg>LOCATION</arg> is a url or pathname.  The
-            <arg>LOCATION</arg> is either a flatpak repository, or a
-            .flatpakrepo file which describes a repository. In the
-            former case you may also have to specify extra options,
-            such as the gpg key for the repo.
+            Adds a remote repository to the flatpak repository configuration.
+            <arg choice="plain">NAME</arg> is the name for the new remote, and
+            <arg choice="plain">LOCATION</arg> is a url or pathname.
+            The <arg choice="plain">LOCATION</arg> is either a flatpak repository,
+            or a <filename>.flatpakrepo</filename> file which
+            describes a repository. In the former case you may also have to specify
+            extra options, such as the gpg key for the repo.
         </para>
         <para>
-            Unless overridden with the --user or --installation options, this command
+            Unless overridden with the <option>--user</option> or <option>--installation</option> options, this command
             changes the default system-wide installation.
         </para>
 
@@ -111,8 +102,8 @@
                 <listitem><para>
                     Modify a system-wide installation specified by <arg choice="plain">NAME</arg>
                     among those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -232,7 +223,7 @@
                 <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>flatpak-remote-delete</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry>
             </para>
     </refsect1>
 

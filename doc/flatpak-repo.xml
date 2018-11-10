@@ -44,8 +44,8 @@
         </para>
         <para>
             If you need to modify a local repository, see the
-            flatpak build-update-repo command, or use the
-            ostree tool.
+            <command>flatpak build-update-repo</command> command, or use the
+            <command>ostree</command> tool.
         </para>
 
     </refsect1>

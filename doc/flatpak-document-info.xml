@@ -45,7 +45,7 @@
             filesystem, and the per-application permissions.
         </para>
         <para>
-            FILE can either be a file in the fuse filesystem at /run/user/$UID/doc/,
+            <arg choice="plain">FILE</arg> can either be a file in the fuse filesystem at <filename>/run/user/$UID/doc/</filename>,
             or a file anywhere else.
         </para>
 

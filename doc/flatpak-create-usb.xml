@@ -62,7 +62,7 @@
         <para>
             By default this looks for both installed apps and runtimes
             with the given <arg choice="plain">REF</arg>, but you can
-            limit this by using the --app or --runtime option.
+            limit this by using the <option>--app</option> or <option>--runtime</option> option.
         </para>
         <para>
             All <arg choice="plain">REF</arg>s must be in the same installation (user, system, or other).
@@ -77,7 +77,7 @@
             consumers of libostree) for install/update operations.
         </para>
         <para>
-            Unless overridden with the --system, --user, or --installation
+            Unless overridden with the <option>--system</option>, <option>--user</option>, or <option>--installation</option>
             options, this command searches both the system-wide installation
             and the per-user one for <arg choice="plain">REF</arg> and errors
             out if it exists in more than one.
@@ -123,8 +123,8 @@
                     Copy refs from a system-wide installation specified by
                     <arg choice="plain">NAME</arg> among those defined in
                     <filename>/etc/flatpak/installations.d/</filename>.  Using
-                    <arg choice="plain">--installation=default</arg> is
-                    equivalent to using <arg choice="plain">--system</arg>.
+                    <option>--installation=default</option> is
+                    equivalent to using <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -147,7 +147,7 @@
                 <term><option>--destination-repo</option>=DEST</term>
 
                 <listitem><para>
-                  Create the repository in DEST under MOUNT-PATH, rather than
+                  Create the repository in <arg choice="plain">DEST</arg> under <arg choice="plain">MOUNT-PATH</arg>, rather than
                   the default location.
                 </para></listitem>
             </varlistentry>

@@ -43,7 +43,7 @@
         </para>
         <para>
           To see full details of a running instance, you can open the file
-          /run/user/$UID/.flatpak/$INSTANCE/info, where $INSTANCE is the instance
+          <filename>/run/user/$UID/.flatpak/$INSTANCE/info</filename>, where <replaceable>$INSTANCE</replaceable> is the instance
           ID reported by flatpak ps.
         </para>
 

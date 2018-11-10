@@ -43,14 +43,14 @@
             Shows runtimes and applications that are available in the
             remote repository with the name <arg choice="plain">REMOTE</arg>,
             or all remotes if one isn't specified. You can find all configured
-            remote repositories with <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+            remote repositories with <command>flatpak remotes</command>.
         </para>
         <para>
             <arg choice="plain">REMOTE</arg> can be a file:// URI pointing to a
             local repository instead of a remote name.
         </para>
         <para>
-            Unless overridden with the --system, --user, or --installation options,
+            Unless overridden with the <option>--system</option>, <option>--user</option>, or <option>--installation</option> options,
             this command uses either the default system-wide installation or the
             per-user one, depending on which has the specified
             <arg choice="plain">REMOTE</arg>.
@@ -95,8 +95,8 @@
                 <listitem><para>
                     Use a system-wide installation specified by <arg choice="plain">NAME</arg>
                     among those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -149,7 +149,7 @@
 
                 <listitem><para>
                     Show only those matching the specied architecture. By default, only
-                    supported architectures are shown. Use --arch=* to show all archtectures.
+                    supported architectures are shown. Use <option>--arch=*</option> to show all architectures.
                 </para></listitem>
             </varlistentry>
 
