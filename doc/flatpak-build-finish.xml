@@ -280,8 +280,8 @@ key=v1;v2;
                 <term><option>--own-name=NAME</option></term>
 
                 <listitem><para>
-                    Allow the application to own the well known name NAME on the session bus.
-                    If NAME ends with .*, it allows the application to own all matching names.
+                    Allow the application to own the well known name <arg choice="plain">NAME</arg> on the session bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to own all matching names.
 
                     This updates the [Session Bus Policy] group in the metadata.
                     This option can be used multiple times.
@@ -292,8 +292,8 @@ key=v1;v2;
                 <term><option>--talk-name=NAME</option></term>
 
                 <listitem><para>
-                    Allow the application to talk to the well known name NAME on the session bus.
-                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    Allow the application to talk to the well known name <arg choice="plain">NAME</arg> on the session bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to talk to all matching names.
                     This updates the [Session Bus Policy] group in the metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -303,8 +303,8 @@ key=v1;v2;
                 <term><option>--system-own-name=NAME</option></term>
 
                 <listitem><para>
-                    Allow the application to own the well known name NAME on the system bus.
-                    If NAME ends with .*, it allows the application to own all matching names.
+                    Allow the application to own the well known name <arg choice="plain">NAME</arg> on the system bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to own all matching names.
                     This updates the [System Bus Policy] group in the metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -314,8 +314,8 @@ key=v1;v2;
                 <term><option>--system-talk-name=NAME</option></term>
 
                 <listitem><para>
-                    Allow the application to talk to the well known name NAME on the system bus.
-                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    Allow the application to talk to the well known name <arg choice="plain">NAME</arg> on the system bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to talk to all matching names.
                     This updates the [System Bus Policy] group in the metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -326,7 +326,7 @@ key=v1;v2;
 
                 <listitem><para>
                     If the application doesn't have access to the real homedir, make the (homedir-relative) path
-                    FILENAME a bind mount to the corresponding path in the per-application directory,
+                    <arg choice="plain">FILENAME</arg> a bind mount to the corresponding path in the per-application directory,
                     allowing that location to be used for persistent data.
                     This updates the [Context] group in the metadata.
                     This option can be used multiple times.
@@ -391,7 +391,7 @@ key=v1;v2;
                 <listitem><para>
                     Adds information about extra data uris to the app. These will be downloaded
                     and verified by the client when the app is installed and placed in the
-                    /app/extra directory. You can also supply an /app/bin/apply_extra script
+                    <filename>/app/extra</filename> directory. You can also supply an <filename>/app/bin/apply_extra</filename> script
                     that will be run after the files are downloaded.
                 </para></listitem>
             </varlistentry>

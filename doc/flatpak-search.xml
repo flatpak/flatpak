@@ -41,7 +41,7 @@
         <para>
             Searches for applications and runtimes matching
             <arg choice="plain">TEXT</arg>. Note that this uses appstream data
-            that can be updated with <citerefentry><refentrytitle>flatpak-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+            that can be updated with the <command>flatpak update</command> command.
             The appstream data is updated automatically only if it's at least a day old.
         </para>
     </refsect1>
@@ -74,8 +74,8 @@
                 <listitem><para>
                     Show a system-wide installation by <arg choice="plain">NAME</arg> among
                     those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 

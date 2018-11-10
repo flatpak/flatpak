@@ -50,7 +50,7 @@
           the entries in all permission store tables. When called
           with one argument, lists all the entries in the named
           table. When called with two arguments, lists the entry
-          in the named table for the given object ID.
+          in the named table for the given object <arg choice="plain">ID</arg>.
         </para>
 
         <para>
@@ -103,7 +103,7 @@
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-permission-show</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-permission-remove</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-permission-reset</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-permission-reset</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

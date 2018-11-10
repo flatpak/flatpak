@@ -43,7 +43,7 @@
             Creates a document id for a local file that can be exposed to
             sandboxed applications, allowing them access to files that they
             would not otherwise see. The exported files are exposed in a
-            fuse filesystem at /run/user/$UID/doc/.
+            fuse filesystem at <filename>/run/user/$UID/doc/</filename>.
         </para>
 
         <para>
@@ -104,8 +104,8 @@
 
                 <listitem><para>
                   Grant read access to the specified application. The
-                  --allow and --forbid options can be used to grant
-                  or remove additional privileges.
+                  <option>--allow</option> and <option>--forbid</option> options
+                  can be used to grant or remove additional privileges.
                   This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -115,7 +115,7 @@
                 <term><option>--allow-read</option></term>
 
                 <listitem><para>
-                  Grant read access to the applications specified with --app.
+                  Grant read access to the applications specified with <option>--app</option>.
                   This defaults to TRUE.
                 </para></listitem>
             </varlistentry>
@@ -124,7 +124,7 @@
                 <term><option>--forbid-read</option></term>
 
                 <listitem><para>
-                  Revoke read access for the applications specified with --app.
+                  Revoke read access for the applications specified with <option>--app</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -133,7 +133,7 @@
                 <term><option>--allow-write</option></term>
 
                 <listitem><para>
-                  Grant write access to the applications specified with --app.
+                  Grant write access to the applications specified with <option>--app</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -141,7 +141,7 @@
                 <term><option>--forbid-write</option></term>
 
                 <listitem><para>
-                  Revoke write access for the applications specified with --app.
+                  Revoke write access for the applications specified with <option>--app</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -150,7 +150,7 @@
                 <term><option>--allow-delete</option></term>
 
                 <listitem><para>
-                  Grant the ability to remove the document from the document portal to the applications specified with --app.
+                  Grant the ability to remove the document from the document portal to the applications specified with <option>--app</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -158,7 +158,7 @@
                 <term><option>--forbid-delete</option></term>
 
                 <listitem><para>
-                  Revoke the ability to remove the document from the document portal from the applications specified with --app.
+                  Revoke the ability to remove the document from the document portal from the applications specified with <option>--app</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -167,7 +167,7 @@
                 <term><option>--allow-grant-permission</option></term>
 
                 <listitem><para>
-                  Grant the ability to grant further permissions to the applications specified with --app.
+                  Grant the ability to grant further permissions to the applications specified with <option>--app</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -175,7 +175,7 @@
                 <term><option>--forbid-grant-permission</option></term>
 
                 <listitem><para>
-                  Revoke the ability to grant further permissions for the applications specified with --app.
+                  Revoke the ability to grant further permissions for the applications specified with <option>--app</option>.
                 </para></listitem>
             </varlistentry>
 

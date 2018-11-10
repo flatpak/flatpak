@@ -44,7 +44,7 @@
         </para>
         <para>
             By default, both per-user and system-wide installations are shown. Use the
-            --user, --installation or --system options to change this.
+            <option>--user</option>, <option>--installation</option> or <option>--system</option> options to change this.
         </para>
         <para>
             The information for the history command is taken from the systemd journal,
@@ -90,8 +90,8 @@
                 <listitem><para>
                     Show changes to the installation specified by <arg choice="plain">NAME</arg>
                     among those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -139,14 +139,6 @@
 
                 <listitem><para>
                     Print OSTree debug information during command processing.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--show-columns</option></term>
-
-                <listitem><para>
-                    Show the available values for the <option>--columns</option> option.
                 </para></listitem>
             </varlistentry>
 

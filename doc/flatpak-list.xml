@@ -39,20 +39,21 @@
         <title>Description</title>
 
         <para>
-            Lists the names of the installed applications and/or runtimes.
+            Lists the names of the installed applications and runtimes.
         </para>
         <para>
-            By default, both per-user and system-wide installations
-            are shown. Use the --user, --installation or --system
-            options to change this.
+            By default, both apps and runtimes are shown, but you can
+            change this by using the <option>--app</option> or
+            <option>--runtime</option> options.
         </para>
         <para>
-            By default this lists both installed apps and runtimes, but you can
-            change this by using the --app or --runtime option.
+            By default, both per-user and system-wide installations are shown.
+            Use the <option>--user</option>, <option>--installation</option> or
+            <option>--system</option> options to change this.
         </para>
         <para>
             The list command can also be used to find installed apps that
-            use a certain runtime, with the --app-runtime option.
+            use a certain runtime, with the <option>--app-runtime</option> option.
         </para>
 
     </refsect1>
@@ -94,8 +95,8 @@
                 <listitem><para>
                     List a system-wide installation specified by <arg choice="plain">NAME</arg>
                     among those defined in <filename>/etc/flatpak/installations.d/</filename>.
-                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
-                    <arg choice="plain">--system</arg>.
+                    Using <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
                 </para></listitem>
             </varlistentry>
 

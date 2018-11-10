@@ -135,7 +135,7 @@
                 <term><option>--exclude=PATTERN</option></term>
 
                 <listitem><para>
-                    Exclude files matching PATTERN from the commit.
+                    Exclude files matching <arg choice="plain">PATTERN</arg> from the commit.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -144,7 +144,7 @@
                 <term><option>--include=PATTERN</option></term>
 
                 <listitem><para>
-                    Don't exclude files matching PATTERN from the commit, even if they match the --export patterns.
+                    Don't exclude files matching <arg choice="plain">PATTERN</arg> from the commit, even if they match the <option>--export</option> patterns.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -156,7 +156,7 @@
                   Use the specified filename as metadata in the exported app instead of
                   the default file (called <filename>metadata</filename>). This is useful
                   if you want to commit multiple things from a single build tree, typically
-                  used in combination with --files and --exclude.
+                  used in combination with <option>--files</option> and <option>--exclude</option>.
                 </para></listitem>
             </varlistentry>
 

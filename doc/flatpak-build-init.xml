@@ -121,7 +121,7 @@
                 <term><option>--sdk-extension=EXTENSION</option></term>
 
                 <listitem><para>
-                    When using --writable-sdk, in addition to the sdk, also install the specified extension.
+                    When using <option>--writable-sdk</option>, in addition to the sdk, also install the specified extension.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -138,7 +138,7 @@
                 <term><option>--sdk-dir</option></term>
 
                 <listitem><para>
-                    Specify a custom subdirectory to use instead of <filename>usr</filename> for --writable-sdk.
+                    Specify a custom subdirectory to use instead of <filename>usr</filename> for <option>--writable-sdk</option>.
                 </para></listitem>
             </varlistentry>
 
@@ -162,7 +162,7 @@
                 <term><option>--base-version=VERSION</option></term>
 
                 <listitem><para>
-                    Specify the version to use for --base. If not specified, will default to
+                    Specify the version to use for <option>--base</option>. If not specified, will default to
                     "master".
                 </para></listitem>
             </varlistentry>
@@ -170,7 +170,7 @@
                 <term><option>--base-extension=EXTENSION</option></term>
 
                 <listitem><para>
-                    When using --base, also install the specified extension from the app.
+                    When using <option>--base</option>, also install the specified extension from the app.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
