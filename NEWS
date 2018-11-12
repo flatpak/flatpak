@@ -1,3 +1,28 @@
+Changes in 1.0.5
+================
+
+There was a sandbox bug in the previous version where parts of the runtime
+/etc was not mounted read-only. In case the runtime was installed as the
+user (not the default) this means that the app could modify files on the
+runtime. Nothing in the host uses the runtime files, so this is not a direct
+sandbox escape, but it is possible that an app can confuse a different app
+that has higher permissions and so gain privileges.
+
+So, it is recommended that everyone shipping flatpak to update to
+1.0.5, or at least backport the change in commit
+6711d7ae99c50a9dca8e4e2e9e9989a8fa6c3f06.
+
+Changes in this version:
+
+ * Make the /etc -> /usr/etc bind-mounts read-only.
+ * Make various app-specific configuration files read-only.
+ * flatpak is more picky about remote names to avoid problems with storing weird
+   names in the ostree config.
+ * A segfault in libflatpak handling of bundles was fixed.
+ * Updated translations
+ * Fixed a regression in flatpak run that caused problems running user-installed
+   apps when the system installation was broken.
+
 Changes in 1.0.4
 ================
 
