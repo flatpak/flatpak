@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-10-12 11:25+0200\n"
+"POT-Creation-Date: 2018-11-12 15:49+0100\n"
 "PO-Revision-Date: 2018-10-01 13:07+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -3413,7 +3413,12 @@ msgstr ""
 msgid "Error signing commit: %d"
 msgstr "Galat saat migrasi: %s\n"
 
-#: common/flatpak-remote.c:804
+#: common/flatpak-remote.c:822
+#, fuzzy, c-format
+msgid "Bad remote name: %s"
+msgstr "Tidak ada remote %s"
+
+#: common/flatpak-remote.c:826
 #, fuzzy
 msgid "No url specified"
 msgstr "Tidak ada perintah yang ditentukan"
@@ -3529,17 +3534,17 @@ msgstr "%s sudah dipasang"
 msgid "%s is already installed from remote %s"
 msgstr "%s sudah dipasang dari remote %s"
 
-#: common/flatpak-transaction.c:1695
+#: common/flatpak-transaction.c:1699
 #, fuzzy, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "Argumen require-flatpak %s tidak valid\n"
 
-#: common/flatpak-transaction.c:1783
+#: common/flatpak-transaction.c:1787
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Galat memperbarui metadata remote untuk '%s': %s"
 
-#: common/flatpak-transaction.c:2021
+#: common/flatpak-transaction.c:2025
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -3548,26 +3553,26 @@ msgstr ""
 "Peringatan: Memperlakukan kesalahan pengambilan remote sebagai non-fatal "
 "sejak %s sudah dipasang: %s"
 
-#: common/flatpak-transaction.c:2031
+#: common/flatpak-transaction.c:2035
 #, c-format
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Peringatan: Tidak dapat menemukan metadata %s untuk dependensi: %s"
 
-#: common/flatpak-transaction.c:2339
+#: common/flatpak-transaction.c:2343
 #, fuzzy, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "Argumen require-flatpak %s tidak valid\n"
 
-#: common/flatpak-transaction.c:2648
+#: common/flatpak-transaction.c:2652
 msgid "Aborted by user"
 msgstr "Dibatalkan oleh pengguna"
 
-#: common/flatpak-transaction.c:2674
+#: common/flatpak-transaction.c:2678
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Melewatkan %s karena galat sebelumnya"
 
-#: common/flatpak-transaction.c:2853
+#: common/flatpak-transaction.c:2857
 msgid "Aborted due to failure"
 msgstr "Dibatalkan karena gagal"
 
@@ -3942,9 +3947,6 @@ msgstr "Perbarui appstream"
 
 #~ msgid "Remote default-branch not set"
 #~ msgstr "Cabang bawaaan remote tidak diatur"
-
-#~ msgid "No remote %s"
-#~ msgstr "Tidak ada remote %s"
 
 #~ msgid "Search only system-wide installations"
 #~ msgstr "Cari hanya pemasangan di seluruh sistem"

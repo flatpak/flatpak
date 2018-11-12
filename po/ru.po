@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-10-12 11:25+0200\n"
+"POT-Creation-Date: 2018-11-12 15:49+0100\n"
 "PO-Revision-Date: 2017-02-10 11:59+0300\n"
 "Last-Translator: Roman Kharin <romiq.kh@gmail.com>\n"
 "Language-Team: romiq.kh@gmail.com\n"
@@ -3505,7 +3505,12 @@ msgstr ""
 msgid "Error signing commit: %d"
 msgstr "Ошибка: Не удалось %s %s: %s\n"
 
-#: common/flatpak-remote.c:804
+#: common/flatpak-remote.c:822
+#, fuzzy, c-format
+msgid "Bad remote name: %s"
+msgstr "Нет удалённого репозитория %s"
+
+#: common/flatpak-remote.c:826
 #, fuzzy
 msgid "No url specified"
 msgstr "Команда не указана"
@@ -3622,43 +3627,43 @@ msgstr "%s ветка %s уже установлено"
 msgid "%s is already installed from remote %s"
 msgstr "%s ветка %s уже установлено"
 
-#: common/flatpak-transaction.c:1695
+#: common/flatpak-transaction.c:1699
 #, fuzzy, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "Неверный pid %s"
 
-#: common/flatpak-transaction.c:1783
+#: common/flatpak-transaction.c:1787
 #, fuzzy, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Ошибка при обновлении метаданных дополнительных данных для '%s': %s\n"
 
-#: common/flatpak-transaction.c:2021
+#: common/flatpak-transaction.c:2025
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
 "installed: %s"
 msgstr ""
 
-#: common/flatpak-transaction.c:2031
+#: common/flatpak-transaction.c:2035
 #, fuzzy, c-format
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Невозможно обновить метаданные дополнительных данных для %s"
 
-#: common/flatpak-transaction.c:2339
+#: common/flatpak-transaction.c:2343
 #, fuzzy, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "Неверный pid %s"
 
-#: common/flatpak-transaction.c:2648
+#: common/flatpak-transaction.c:2652
 msgid "Aborted by user"
 msgstr ""
 
-#: common/flatpak-transaction.c:2674
+#: common/flatpak-transaction.c:2678
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr ""
 
-#: common/flatpak-transaction.c:2853
+#: common/flatpak-transaction.c:2857
 msgid "Aborted due to failure"
 msgstr ""
 
@@ -4024,9 +4029,6 @@ msgstr "Обновить ветку appstream для удалённого реп
 
 #~ msgid "Remote default-branch not set"
 #~ msgstr "Ветка по умолчанию в удалённом репозитории не установлена"
-
-#~ msgid "No remote %s"
-#~ msgstr "Нет удалённого репозитория %s"
 
 #, fuzzy
 #~ msgid "Search only system-wide installations"

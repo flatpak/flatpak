@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-10-12 11:25+0200\n"
+"POT-Creation-Date: 2018-11-12 15:49+0100\n"
 "PO-Revision-Date: 2017-09-26 17:32+0200\n"
 "Last-Translator: Fran Dieguez <frandieguez@gnome.org>\n"
 "Language-Team: Galician <gnome-l10n-gl@gnome.org>\n"
@@ -3504,7 +3504,12 @@ msgstr ""
 msgid "Error signing commit: %d"
 msgstr "Produciuse un erro ao buscar o remoto %s: %s"
 
-#: common/flatpak-remote.c:804
+#: common/flatpak-remote.c:822
+#, fuzzy, c-format
+msgid "Bad remote name: %s"
+msgstr "Sen remoto %s"
+
+#: common/flatpak-remote.c:826
 #, fuzzy
 msgid "No url specified"
 msgstr "Non se especificou ningunha orde"
@@ -3622,45 +3627,45 @@ msgstr "%s remisión %s xa instalado"
 msgid "%s is already installed from remote %s"
 msgstr "%s remisión %s xa instalado"
 
-#: common/flatpak-transaction.c:1695
+#: common/flatpak-transaction.c:1699
 #, fuzzy, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "Referencia de remisión %s non válida: "
 
-#: common/flatpak-transaction.c:1783
+#: common/flatpak-transaction.c:1787
 #, fuzzy, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr ""
 "Produciuse un erro ao actualizar os metadatos adicionais para «%s»: %s\n"
 
-#: common/flatpak-transaction.c:2021
+#: common/flatpak-transaction.c:2025
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
 "installed: %s"
 msgstr ""
 
-#: common/flatpak-transaction.c:2031
+#: common/flatpak-transaction.c:2035
 #, fuzzy, c-format
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr ""
 "Aviso: Non se puideron actualizar os metadatos adicionais para «%s»: %s\n"
 
-#: common/flatpak-transaction.c:2339
+#: common/flatpak-transaction.c:2343
 #, fuzzy, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "PID %s non válido"
 
-#: common/flatpak-transaction.c:2648
+#: common/flatpak-transaction.c:2652
 msgid "Aborted by user"
 msgstr ""
 
-#: common/flatpak-transaction.c:2674
+#: common/flatpak-transaction.c:2678
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr ""
 
-#: common/flatpak-transaction.c:2853
+#: common/flatpak-transaction.c:2857
 msgid "Aborted due to failure"
 msgstr ""
 
@@ -4021,9 +4026,6 @@ msgstr "Actualizar appstream"
 
 #~ msgid "Remote default-branch not set"
 #~ msgstr "Rama por omisión do repositorio remoto non estabelecida"
-
-#~ msgid "No remote %s"
-#~ msgstr "Sen remoto %s"
 
 #, fuzzy
 #~ msgid "Search only system-wide installations"
