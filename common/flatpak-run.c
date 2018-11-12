@@ -2466,7 +2466,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
             }
           else
             {
-              flatpak_bwrap_add_args (bwrap, "--bind", src, dest, NULL);
+              flatpak_bwrap_add_args (bwrap, "--ro-bind", src, dest, NULL);
             }
         }
     }
@@ -2803,7 +2803,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
 
   if (!WIFEXITED (exit_status) || WEXITSTATUS (exit_status) != 0)
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, 
+      flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED,
                           _("ldconfig failed, exit status %d"), exit_status);
       return -1;
     }
