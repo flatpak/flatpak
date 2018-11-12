@@ -2464,7 +2464,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
             }
           else
             {
-              flatpak_bwrap_add_args (bwrap, "--bind", src, dest, NULL);
+              flatpak_bwrap_add_args (bwrap, "--ro-bind", src, dest, NULL);
             }
         }
     }
