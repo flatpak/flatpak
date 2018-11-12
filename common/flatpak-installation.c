@@ -241,7 +241,7 @@ out:
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Creates a new #FlatpakInstallation for the system-wide installation.
+ * Creates a new #FlatpakInstallation for the default system-wide installation.
  *
  * Returns: (transfer full): a new #FlatpakInstallation
  */
@@ -468,7 +468,7 @@ flatpak_installation_get_path (FlatpakInstallation *self)
  * flatpak_installation_get_id:
  * @self: a #FlatpakInstallation
  *
- * Returns the ID of the system installation for @self.
+ * Returns the ID of the installation for @self.
  *
  * Returns: (transfer none): a string with the installation's ID
  *
@@ -486,7 +486,7 @@ flatpak_installation_get_id (FlatpakInstallation *self)
  * flatpak_installation_get_display_name:
  * @self: a #FlatpakInstallation
  *
- * Returns the display name of the system installation for @self.
+ * Returns the display name of the installation for @self.
  *
  * Returns: (transfer none): a string with the installation's display name
  *
@@ -504,7 +504,7 @@ flatpak_installation_get_display_name (FlatpakInstallation *self)
  * flatpak_installation_get_priority:
  * @self: a #FlatpakInstallation
  *
- * Returns the numeric priority of the system installation for @self.
+ * Returns the numeric priority of the installation for @self.
  *
  * Returns: an integer with the configured priority value
  *
@@ -522,7 +522,7 @@ flatpak_installation_get_priority (FlatpakInstallation *self)
  * flatpak_installation_get_storage_type:
  * @self: a #FlatpakInstallation
  *
- * Returns the type of storage of the system installation for @self.
+ * Returns the type of storage of the installation for @self.
  *
  * Returns: a #FlatpakStorageType
  *
