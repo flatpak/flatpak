@@ -31,7 +31,7 @@ class CoreDumper():
             sys.exit(1)
 
         # We need access to the host from the sandbox to run.
-        flatpak_command = ["flatpak", "build" if self.build_directory else "run",
+        flatpak_command = ["flatpak", "build" if self.build_directory else "run", "--filesystem=home",
                            "--filesystem=%s" % tempfile.gettempdir()] + shlex.split(self.extra_flatpak_args)
         if not self.build_directory:
             flatpak_command.extend(["--command=gdb",
