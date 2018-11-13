@@ -45,6 +45,7 @@ static gboolean opt_app;
 static gboolean opt_all;
 static gboolean opt_yes;
 static gboolean opt_unused;
+static gboolean opt_delete_data;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to uninstall"), N_("ARCH") },
@@ -55,6 +56,7 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "all", 0, 0, G_OPTION_ARG_NONE, &opt_all, N_("Uninstall all"), NULL },
   { "unused", 0, 0, G_OPTION_ARG_NONE, &opt_unused, N_("Uninstall unused"), NULL },
+  { "delete-data", 0, 0, G_OPTION_ARG_NONE, &opt_delete_data, N_("Delete app data"), NULL },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { NULL }
 };
@@ -140,6 +142,30 @@ find_used_refs (FlatpakDir *dir, GHashTable *used_refs, const char *ref, const c
     }
 }
 
+static gboolean
+flatpak_delete_data (gboolean opt_yes,
+                     const char *app_id,
+                     GError **error)
+{
+  g_autofree char *path = g_build_filename (g_get_home_dir (), ".var", "app", app_id, NULL);
+  g_autoptr(GFile) file = g_file_new_for_path (path);
+
+  if (!opt_yes &&
+      !flatpak_yes_no_prompt (FALSE, _("Delete data for %s?"), app_id))
+    return TRUE;
+
+  if (g_file_query_exists (file, NULL))
+    {
+      if (!flatpak_rm_rf (file, NULL, error))
+        return FALSE;
+    }
+
+  if (!reset_permissions_for_app (app_id, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -160,8 +186,8 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
                                      &dirs, cancellable, error))
     return FALSE;
 
-  if (argc < 2 && !opt_all && !opt_unused)
-    return usage_error (context, _("Must specify at least one REF, --unused or --all"), error);
+  if (argc < 2 && !opt_all && !opt_unused && !opt_delete_data)
+    return usage_error (context, _("Must specify at least one REF, --unused,--all or --delete-data"), error);
 
   if (argc >= 2 && opt_all)
     return usage_error (context, _("Must not specify REFs when using --all"), error);
@@ -417,8 +443,56 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
     if (!flatpak_cli_transaction_run (transaction, cancellable, error))
       return FALSE;
+
+    if (opt_delete_data)
+      {
+        for (i = 0; i < udir->refs->len; i++)
+          {
+            const char *ref = (char *) g_ptr_array_index (udir->refs, i);
+            g_auto(GStrv) pref = flatpak_decompose_ref (ref, NULL);
+
+            if (!flatpak_delete_data (opt_yes, pref[1], error))
+              return FALSE;
+          }
+      }
   }
 
+  if (opt_delete_data && argc < 2)
+    {
+      g_autoptr(GFileEnumerator) enumerator = NULL;
+      g_autofree char *path = g_build_filename (g_get_home_dir (), ".var", "app", NULL);
+      g_autoptr(GFile) app_dir = g_file_new_for_path (path);
+
+      enumerator = g_file_enumerate_children (app_dir,
+                                              G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
+                                              G_FILE_QUERY_INFO_NONE,
+                                              cancellable, error);
+      if (!enumerator)
+        return FALSE;
+
+      while (TRUE)
+        {
+          GFileInfo *info;
+          GFile *file;
+          g_autofree char *ref = NULL;
+
+          if (!g_file_enumerator_iterate (enumerator, &info, &file, cancellable, error))
+            return FALSE;
+
+          if (info == NULL)
+            break;
+
+          if (g_file_info_get_file_type (info) != G_FILE_TYPE_DIRECTORY)
+            continue;
+
+          ref = flatpak_find_current_ref (g_file_info_get_name (info), cancellable, NULL);
+          if (ref)
+            continue;
+
+          if (!flatpak_delete_data (opt_yes, g_file_info_get_name (info), error))
+            return FALSE;
+        } 
+    }
 
   return TRUE;
 }
