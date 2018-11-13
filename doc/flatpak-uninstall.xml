@@ -64,10 +64,6 @@
             again. The <option>--keep-ref</option> option can be used to prevent this.
         </para>
         <para>
-            If all branches of the application/runtime are removed, this command
-            also purges the data directory for the application.
-        </para>
-        <para>
             Unless overridden with the <option>--system</option>, <option>--user</option>, or <option>--installation</option>
             options, this command searches both the system-wide installation
             and the per-user one for <arg choice="plain">REF</arg> and errors
