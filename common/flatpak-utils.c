@@ -4017,6 +4017,8 @@ flatpak_extension_matches_reason (const char *extension_id,
                                   gboolean    default_value)
 {
   const char *extension_basename;
+  g_auto(GStrv) reason_list = NULL;
+  size_t i;
 
   if (reason == NULL || *reason == 0)
     return default_value;
@@ -4026,29 +4028,54 @@ flatpak_extension_matches_reason (const char *extension_id,
     return FALSE;
   extension_basename += 1;
 
-  if (strcmp (reason, "active-gl-driver") == 0)
-    {
-      /* handled below */
-      const char **gl_drivers = flatpak_get_gl_drivers ();
-      int i;
+  reason_list = g_strsplit (reason, ";", -1);
 
-      for (i = 0; gl_drivers[i] != NULL; i++)
+  for (i = 0; reason_list[i]; ++i)
+    {
+      const char *reason = reason_list[i];
+
+      if (strcmp (reason, "active-gl-driver") == 0)
         {
-          if (strcmp (gl_drivers[i], extension_basename) == 0)
+          /* handled below */
+          const char **gl_drivers = flatpak_get_gl_drivers ();
+          size_t j;
+
+          for (j = 0; gl_drivers[j]; j++)
+            {
+              if (strcmp (gl_drivers[j], extension_basename) == 0)
+                return TRUE;
+            }
+        }
+      else if (strcmp (reason, "active-gtk-theme") == 0)
+        {
+          const char *gtk_theme = flatpak_get_gtk_theme ();
+          if (strcmp (gtk_theme, extension_basename) == 0)
             return TRUE;
         }
+      else if (strcmp (reason, "have-intel-gpu") == 0)
+        {
+          /* Used for Intel VAAPI driver extension */
+          if (flatpak_get_have_intel_gpu ())
+            return TRUE;
+        }
+      else if (g_str_has_prefix (reason, "on-xdg-desktop-"))
+        {
+          const char *desktop_name = reason + strlen ("on-xdg-desktop-");
+          const char *current_desktop_var = g_getenv ("XDG_CURRENT_DESKTOP");
+          g_auto(GStrv) current_desktop_names = NULL;
+          size_t j;
 
-      return FALSE;
-    }
-  else if (strcmp (reason, "active-gtk-theme") == 0)
-    {
-      const char *gtk_theme = flatpak_get_gtk_theme ();
-      return strcmp (gtk_theme, extension_basename) == 0;
-    }
-  else if (strcmp (reason, "have-intel-gpu") == 0)
-    {
-      /* Used for Intel VAAPI driver extension */
-      return flatpak_get_have_intel_gpu ();
+          if (!current_desktop_var)
+            continue;
+
+          current_desktop_names = g_strsplit (current_desktop_var, ":", -1);
+
+          for (j = 0; current_desktop_names[j]; ++j)
+            {
+              if (g_ascii_strcasecmp (desktop_name, current_desktop_names[j]) == 0)
+                return TRUE;
+            }
+        }
     }
 
   return FALSE;
