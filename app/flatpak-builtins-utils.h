@@ -89,6 +89,9 @@ gboolean update_appstream (GPtrArray    *dirs,
                            GError      **error);
 
 char ** get_permission_tables (XdpDbusPermissionStore *store);
+gboolean reset_permissions_for_app (const char *app_id,
+                                    GError **error);
+
 
 /* --columns handling */
 

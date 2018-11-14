@@ -94,29 +94,13 @@ remove_for_app (XdpDbusPermissionStore *store,
 }
 
 gboolean
-flatpak_builtin_permission_reset (int argc, char **argv,
-                                  GCancellable *cancellable,
-                                  GError **error)
+reset_permissions_for_app (const char *app_id,
+                           GError **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GDBusConnection) session_bus = NULL;
   XdpDbusPermissionStore *store = NULL;
-  const char *app_id;
   int i;
   g_auto(GStrv) tables = NULL;
-
-  context = g_option_context_new (_("APP_ID - Reset permissions for an app"));
-  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
-
-  if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_NO_DIR,
-                                     NULL, cancellable, error))
-    return FALSE;
-
-  if (argc != 2)
-    return usage_error (context, _("Wrong number of arguments"), error);
-
-  app_id = argv[1];
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
   if (session_bus == NULL)
@@ -137,6 +121,30 @@ flatpak_builtin_permission_reset (int argc, char **argv,
     }
 
   return TRUE;
+}
+
+gboolean
+flatpak_builtin_permission_reset (int argc, char **argv,
+                                  GCancellable *cancellable,
+                                  GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  const char *app_id;
+
+  context = g_option_context_new (_("APP_ID - Reset permissions for an app"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
+
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_NO_DIR,
+                                     NULL, cancellable, error))
+    return FALSE;
+
+  if (argc != 2)
+    return usage_error (context, _("Wrong number of arguments"), error);
+
+  app_id = argv[1];
+
+  return reset_permissions_for_app (app_id, error);
 }
 
 gboolean
