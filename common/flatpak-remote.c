@@ -818,7 +818,8 @@ flatpak_remote_commit (FlatpakRemote *self,
   g_autoptr(GKeyFile) config = NULL;
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", priv->name);
 
-  if (!g_key_file_is_group_name (group))
+  if (priv->name[0] == '\0' ||
+      !g_key_file_is_group_name (group))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Bad remote name: %s"), priv->name);
     
   url = flatpak_remote_get_url (self);

@@ -726,6 +726,18 @@ append_new_system_location (GPtrArray            *locations,
 }
 
 static gboolean
+is_good_installation_id (const char *id)
+{
+  if (strcmp (id, "") == 0 ||
+      strcmp (id, "user") == 0 ||
+      strcmp (id, "default") == 0 ||
+      strcmp (id, "system") == 0)
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
 append_locations_from_config_file (GPtrArray    *locations,
                                    const char   *file_path,
                                    GCancellable *cancellable,
@@ -742,7 +754,7 @@ append_locations_from_config_file (GPtrArray    *locations,
 
   if (!g_key_file_load_from_file (keyfile, file_path, G_KEY_FILE_NONE, &my_error))
     {
-      g_debug ("Could not get list of system installations: %s", my_error->message);
+      g_debug ("Could not get list of system installations from '%s': %s", file_path, my_error->message);
       g_propagate_error (error, g_steal_pointer (&my_error));
       goto out;
     }
@@ -765,7 +777,7 @@ append_locations_from_config_file (GPtrArray    *locations,
       id = g_strdup (&groups[i][14]);
       if (!g_str_has_suffix (id, "\""))
         {
-          g_warning ("Installation without closing quote (%s). Ignoring", groups[i]);
+          g_warning ("While reading '%s': Installation without closing quote (%s). Ignoring", file_path, groups[i]);
           continue;
         }
 
@@ -773,16 +785,22 @@ append_locations_from_config_file (GPtrArray    *locations,
       if (len > 0)
         id[len - 1] = '\0';
 
+      if (!is_good_installation_id (id))
+        {
+          g_warning ("While reading '%s': Bad installation ID '%s'. Ignoring", file_path, id);
+          continue;
+        }
+
       if (has_system_location (locations, id))
         {
-          g_warning ("Found duplicate flatpak installation (Id: %s). Ignoring", id);
+          g_warning ("While reading '%s': Duplicate installation ID '%s'. Ignoring", file_path, id);
           continue;
         }
 
       path = g_key_file_get_string (keyfile, groups[i], "Path", &my_error);
       if (path == NULL)
         {
-          g_debug ("Unable to get path for installation '%s': %s", id, my_error->message);
+          g_debug ("While reading '%s': Unable to get path for installation '%s': %s", file_path, id, my_error->message);
           g_propagate_error (error, g_steal_pointer (&my_error));
           goto out;
         }
