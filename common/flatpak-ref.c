@@ -341,7 +341,7 @@ flatpak_ref_format_ref (FlatpakRef *self)
 
 /**
  * flatpak_ref_parse:
- * @ref: A string ref name, such as "app/org.test.App/86_64/master"
+ * @ref: A string ref name, such as "app/org.test.App/x86_64/master"
  * @error: return location for a #GError
  *
  * Tries to parse a full ref name and return a #FlatpakRef (without a
