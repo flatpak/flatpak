@@ -188,7 +188,7 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
       x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", d);
 
       flatpak_bwrap_add_args (bwrap,
-                              "--bind", x11_socket, "/tmp/.X11-unix/X99",
+                              "--ro-bind", x11_socket, "/tmp/.X11-unix/X99",
                               NULL);
       flatpak_bwrap_set_env (bwrap, "DISPLAY", ":99.0", TRUE);
 
