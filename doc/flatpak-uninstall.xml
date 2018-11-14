@@ -64,6 +64,12 @@
             again. The <option>--keep-ref</option> option can be used to prevent this.
         </para>
         <para>
+            When <option>--delete-data</option> is specified while removing an app, its
+            data directory in <filename>~/.var/app</filename> and any permissions it might
+            have are removed. When <option>--delete-data</option> is used without a
+            <arg choice="plain">REF</arg>, all 'unowned' app data is removed.
+        </para>
+        <para>
             Unless overridden with the <option>--system</option>, <option>--user</option>, or <option>--installation</option>
             options, this command searches both the system-wide installation
             and the per-user one for <arg choice="plain">REF</arg> and errors
@@ -183,6 +189,14 @@
                 <term><option>--force-remove</option></term>
                 <listitem><para>
                     Remove files even if they're in use by a running application.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--delete-data</option></term>
+                <listitem><para>
+                    Remove app data in <filename>~/.var/app</filename> and in
+                    the permission store.
                 </para></listitem>
             </varlistentry>
 
