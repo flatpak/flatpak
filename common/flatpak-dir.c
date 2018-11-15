@@ -10822,7 +10822,8 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
 
   if (!g_key_file_has_group (keyfile, source_group))
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakref"));
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid %s: Missing group ‘%s’"),
+                          from_ref ? ".flatpakref" : ".flatpakrepo", source_group);
       return NULL;
     }
 
@@ -10830,7 +10831,8 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
                                FLATPAK_REPO_URL_KEY, NULL);
   if (uri == NULL)
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakref"));
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid %s: Missing key ‘%s’"),
+                          from_ref ? ".flatpakref" : ".flatpakrepo", FLATPAK_REPO_URL_KEY);
       return NULL;
     }
 
