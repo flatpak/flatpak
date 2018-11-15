@@ -2093,13 +2093,18 @@ out:
   return ret;
 }
 
-gboolean
-flatpak_zero_mtime (int           parent_dfd,
-                    const char   *rel_path,
-                    GCancellable *cancellable,
-                    GError      **error)
+static gboolean
+_flatpak_canonicalize_permissions (int           parent_dfd,
+                                   const char   *rel_path,
+                                   gboolean      toplevel,
+                                   GError      **error)
 {
   struct stat stbuf;
+  gboolean res = TRUE;
+
+  /* Note, in order to not leave non-canonical things around in case
+   * of error, this continues after errors, but returns the first
+   * error. */
 
   if (TEMP_FAILURE_RETRY (fstatat (parent_dfd, rel_path, &stbuf, AT_SYMLINK_NOFOLLOW)) != 0)
     {
@@ -2110,43 +2115,84 @@ flatpak_zero_mtime (int           parent_dfd,
   if (S_ISDIR (stbuf.st_mode))
     {
       g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
-      gboolean inited;
 
-      inited = glnx_dirfd_iterator_init_at (parent_dfd, rel_path, FALSE, &dfd_iter, NULL);
-
-      while (inited)
-        {
-          struct dirent *dent;
-
-          if (!glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, NULL, NULL) || dent == NULL)
-            break;
-
-          if (!flatpak_zero_mtime (dfd_iter.fd, dent->d_name,
-                                   cancellable, error))
-            return FALSE;
-        }
-
-      /* Update stbuf */
-      if (TEMP_FAILURE_RETRY (fstat (dfd_iter.fd, &stbuf)) != 0)
+      /* For the toplevel we set to 0700 so we can modify it, but not
+         expose any non-canonical files to any other user, then we set
+         it to 0755 afterwards. */
+      if (fchmodat (parent_dfd, rel_path, toplevel ? 0700 : 0755, 0) != 0)
         {
           glnx_set_error_from_errno (error);
-          return FALSE;
+          error = NULL;
+          res = FALSE;
         }
-    }
 
-  /* OSTree checks out to mtime 0, so we do the same */
-  if (stbuf.st_mtime != OSTREE_TIMESTAMP)
+      if (glnx_dirfd_iterator_init_at (parent_dfd, rel_path, FALSE, &dfd_iter, NULL))
+        {
+          while (TRUE)
+            {
+              struct dirent *dent;
+
+              if (!glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, NULL, NULL) || dent == NULL)
+                break;
+
+              if (!_flatpak_canonicalize_permissions (dfd_iter.fd, dent->d_name, FALSE, error))
+                {
+                  error = NULL;
+                  res = FALSE;
+                }
+            }
+        }
+
+      if (toplevel &&
+          fchmodat (parent_dfd, rel_path, 0755, 0) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          error = NULL;
+          res = FALSE;
+        }
+
+        return res;
+    }
+  else if (S_ISREG(stbuf.st_mode))
     {
-      const struct timespec times[2] = { { 0, UTIME_OMIT }, { OSTREE_TIMESTAMP, } };
+      mode_t mode;
 
-      if (TEMP_FAILURE_RETRY (utimensat (parent_dfd, rel_path, times, AT_SYMLINK_NOFOLLOW)) != 0)
+      /* If use can execute, make executable by all */
+      if (stbuf.st_mode & S_IXUSR)
+        mode = 0755;
+      else /* otherwise executable by none */
+        mode = 0644;
+
+      if (fchmodat (parent_dfd, rel_path, mode, 0) != 0)
         {
           glnx_set_error_from_errno (error);
-          return FALSE;
+          res = FALSE;
+        }
+    }
+  else if (S_ISLNK(stbuf.st_mode))
+    {
+      /* symlinks have no permissions */
+    }
+  else
+    {
+      /* some weird non-canonical type, lets delete it */
+      if (unlinkat(parent_dfd, rel_path, 0) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          res = FALSE;
         }
     }
 
-  return TRUE;
+  return res;
+}
+
+/* Canonicalizes files to the same permissions as bare-user-only checkouts */
+gboolean
+flatpak_canonicalize_permissions (int           parent_dfd,
+                                  const char   *rel_path,
+                                  GError      **error)
+{
+  return _flatpak_canonicalize_permissions (parent_dfd, rel_path, TRUE, error);
 }
 
 /* Make a directory, and its parent. Don't error if it already exists.
