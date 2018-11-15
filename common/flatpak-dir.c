@@ -10806,7 +10806,10 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
 
   if (!g_key_file_has_group (keyfile, source_group))
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakref"));
+      if (from_ref)
+        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakref"));
+      else
+        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakrepo"));
       return NULL;
     }
 
@@ -10814,7 +10817,10 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
                                FLATPAK_REPO_URL_KEY, NULL);
   if (uri == NULL)
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakref"));
+      if (from_ref)
+        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakref"));
+      else
+        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid .flatpakrepo"));
       return NULL;
     }
 
