@@ -187,7 +187,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     return FALSE;
 
   if (argc < 2 && !opt_all && !opt_unused && !opt_delete_data)
-    return usage_error (context, _("Must specify at least one REF, --unused,--all or --delete-data"), error);
+    return usage_error (context, _("Must specify at least one REF, --unused, --all or --delete-data"), error);
 
   if (argc >= 2 && opt_all)
     return usage_error (context, _("Must not specify REFs when using --all"), error);
