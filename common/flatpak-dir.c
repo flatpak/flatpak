@@ -10877,6 +10877,21 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
   return TRUE;
 }
 
+/* This tries to find a pre-configured remote for the specified uri
+ * and (optionally) collection id. This is a bit more complex than it
+ * sounds, because a local remote could be configured in different
+ * ways for a remote repo (i.e. it could be not using collection ids,
+ * even though the remote specifies it, or the flatpakrepo might lack
+ * the collection id details). So, we use these rules:
+ *
+ *  If the url is the same, it is a match even if one part lacks
+ *  collection ids. However, if both collection ids are specified and
+ *  differ there is no match.
+ *
+ *  If the collection id is the same (and specified), its going to be
+ *  the same remote, even if the url is different (because it could be
+ *  some other mirror of the same repo).
+ */
 char *
 flatpak_dir_find_remote_by_uri (FlatpakDir *self,
                                 const char *uri,
@@ -10906,8 +10921,18 @@ flatpak_dir_find_remote_by_uri (FlatpakDir *self,
           if (!repo_get_remote_collection_id (self->repo, remote, &remote_collection_id, NULL))
             continue;
 
+          /* Exact collection ids always match, independent of the uris used */
+          if (collection_id != NULL &&
+              remote_collection_id != NULL &&
+              strcmp (collection_id, remote_collection_id) == 0)
+            return g_strdup (remote);
+
+          /* Same repo if uris matches, unless both have collection-id
+             specified but different */
           if (strcmp (uri, remote_uri) == 0 &&
-              g_strcmp0 (collection_id, remote_collection_id) == 0)
+              !(collection_id != NULL &&
+                remote_collection_id != NULL &&
+                strcmp (collection_id, remote_collection_id) != 0))
             return g_strdup (remote);
         }
     }
