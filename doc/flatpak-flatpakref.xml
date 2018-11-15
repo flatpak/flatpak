@@ -122,7 +122,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>RuntimeRepo</option> (string)</term>
-                    <listitem><para>The url for a .flatpakref file for the runtime.</para></listitem>
+                    <listitem><para>The url for a .flatpakrepo file for the remote where the runtime can be found.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>SuggestRemoteName</option> (string)</term>
