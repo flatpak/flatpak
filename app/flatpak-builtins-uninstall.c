@@ -175,7 +175,6 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   int i, j, k, n_prefs;
   const char *default_branch = NULL;
   FlatpakKinds kinds;
-  FlatpakKinds kind;
   g_autoptr(GHashTable) uninstall_dirs = NULL;
 
   context = g_option_context_new (_("REF... - Uninstall an application"));
@@ -344,77 +343,84 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           g_autofree char *arch = NULL;
           g_autofree char *branch = NULL;
           g_autoptr(GError) local_error = NULL;
-          g_autoptr(GError) first_error = NULL;
-          g_autofree char *first_ref = NULL;
-          g_autoptr(GPtrArray) dirs_with_ref = NULL;
+          g_autoptr(GPtrArray) ref_dir_pairs = NULL;
           UninstallDir *udir = NULL;
+          gboolean found_exact_name_match = FALSE;
+          RefDirPair *chosen_pair = NULL;
 
           pref = prefs[j];
 
-          if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
-                                              &matched_kinds, &id, &arch, &branch, error))
-            return FALSE;
+          flatpak_split_partial_ref_arg_novalidate (pref, kinds, opt_arch, default_branch,
+                                                    &matched_kinds, &id, &arch, &branch);
 
-          dirs_with_ref = g_ptr_array_new ();
+          /* We used _novalidate so that the id can be partial, but we can still validate the branch */
+          if (branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), branch, local_error->message);
+
+          ref_dir_pairs = g_ptr_array_new_with_free_func ((GDestroyNotify) ref_dir_pair_free);
           for (k = 0; k < dirs->len; k++)
             {
               FlatpakDir *dir = g_ptr_array_index (dirs, k);
-              g_autofree char *ref = NULL;
+              g_auto(GStrv) refs = NULL;
+              char **iter;
 
-              ref = flatpak_dir_find_installed_ref (dir, id, branch, arch,
-                                                    kinds, &kind, &local_error);
-              if (ref == NULL)
+              refs = flatpak_dir_find_installed_refs (dir, id, branch, arch, kinds,
+                                                      FIND_MATCHING_REFS_FLAGS_FUZZY, error);
+              if (refs == NULL)
+                return FALSE;
+              else if (g_strv_length (refs) == 0)
+                continue;
+
+              for (iter = refs; iter && *iter; iter++)
                 {
-                  if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-                    {
-                      if (first_error == NULL)
-                        first_error = g_steal_pointer (&local_error);
-                      g_clear_error (&local_error);
-                    }
-                  else
-                    {
-                      g_propagate_error (error, g_steal_pointer (&local_error));
-                      return FALSE;
-                    }
-                }
-              else
-                {
-                  g_ptr_array_add (dirs_with_ref, dir);
-                  if (first_ref == NULL)
-                    first_ref = g_strdup (ref);
+                  const char *ref = *iter;
+                  g_auto(GStrv) parts = NULL;
+                  RefDirPair *pair;
+
+                  parts = flatpak_decompose_ref (ref, NULL);
+                  g_assert (parts != NULL);
+                  if (g_strcmp0 (id, parts[1]) == 0)
+                    found_exact_name_match = TRUE;
+
+                  pair = ref_dir_pair_new (ref, dir);
+                  g_ptr_array_add (ref_dir_pairs, pair);
                 }
             }
 
-          if (dirs_with_ref->len == 0)
+          if (ref_dir_pairs->len == 0)
             {
-              g_assert (first_error != NULL);
-              /* No match anywhere, return the first NOT_INSTALLED error */
-              g_propagate_error (error, g_steal_pointer (&first_error));
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                           _("%s/%s/%s not installed"),
+                           id ? id : "*unspecified*",
+                           arch ? arch : "*unspecified*",
+                           branch ? branch : "*unspecified*");
               return FALSE;
             }
 
-          if (dirs_with_ref->len > 1)
+          /* Don't show fuzzy matches if an exact match was found in any installation */
+          if (found_exact_name_match)
             {
-              g_autoptr(GString) dir_names = g_string_new ("");
-              for (k = 0; k < dirs_with_ref->len; k++)
+              /* Walk through the array backwards so we can safely remove */
+              for (guint i = ref_dir_pairs->len; i > 0; i--)
                 {
-                  FlatpakDir *dir = g_ptr_array_index (dirs_with_ref, k);
-                  g_autofree char *dir_name = flatpak_dir_get_name (dir);
-                  if (k > 0)
-                    g_string_append (dir_names, ", ");
-                  g_string_append (dir_names, dir_name);
-                }
+                  RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i - 1);
+                  g_auto(GStrv) parts = NULL;
 
-              return flatpak_fail (error,
-                                   _("Ref ‘%s’ found in multiple installations: %s. You must specify one."),
-                                   pref, dir_names->str);
+                  parts = flatpak_decompose_ref (pair->ref, NULL);
+                  if (g_strcmp0 (id, parts[1]) != 0)
+                    g_ptr_array_remove_index (ref_dir_pairs, i - 1);
+                }
             }
 
-          udir = uninstall_dir_ensure (uninstall_dirs, g_ptr_array_index (dirs_with_ref, 0));
+          if (!flatpak_resolve_matching_installed_refs (opt_yes, ref_dir_pairs, id, &chosen_pair, error))
+            return FALSE;
 
-          g_assert (first_ref);
+          g_assert (chosen_pair->ref);
+          g_assert (chosen_pair->dir);
 
-          uninstall_dir_add_ref (udir, first_ref);
+          udir = uninstall_dir_ensure (uninstall_dirs, chosen_pair->dir);
+
+          uninstall_dir_add_ref (udir, chosen_pair->ref);
         }
     }
 

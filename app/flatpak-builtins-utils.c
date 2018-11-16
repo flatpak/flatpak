@@ -48,6 +48,24 @@ remote_dir_pair_new (const char *remote_name, FlatpakDir *dir)
   return pair;
 }
 
+RefDirPair *
+ref_dir_pair_new (const char *ref, FlatpakDir *dir)
+{
+  RefDirPair *pair = g_new (RefDirPair, 1);
+
+  pair->ref = g_strdup (ref);
+  pair->dir = g_object_ref (dir);
+  return pair;
+}
+
+void
+ref_dir_pair_free (RefDirPair *pair)
+{
+  g_free (pair->ref);
+  g_object_unref (pair->dir);
+  g_free (pair);
+}
+
 gboolean
 looks_like_branch (const char *branch)
 {
@@ -453,6 +471,57 @@ flatpak_resolve_matching_refs (const char   *remote_name,
 
   if (out_ref)
     *out_ref = g_strdup (refs[chosen - 1]);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
+                                         GPtrArray   *ref_dir_pairs,
+                                         const char  *opt_search_ref,
+                                         RefDirPair **out_pair,
+                                         GError     **error)
+{
+  guint chosen = 0;
+  guint i;
+
+  g_assert (ref_dir_pairs->len > 0);
+
+  /* When there's only one match, we only choose it without user interaction if
+   * either the --assume-yes option was used or it's an exact match
+   */
+  if (ref_dir_pairs->len == 1)
+    {
+      if (disable_interaction)
+        chosen = 1;
+      else
+        {
+          RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, 0);
+          g_auto(GStrv) parts = NULL;
+          parts = flatpak_decompose_ref (pair->ref, NULL);
+          g_assert (parts != NULL);
+          if (opt_search_ref != NULL && strcmp (parts[1], opt_search_ref) == 0)
+            chosen = 1;
+        }
+    }
+
+  if (chosen == 0)
+    {
+      g_print (_("Similar installed refs found for ‘%s’:\n"),
+               opt_search_ref);
+      for (i = 0; i < ref_dir_pairs->len; i++)
+        {
+          RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i);
+          const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
+          g_print ("%d) %s (%s)\n", i + 1, pair->ref, dir_name);
+        }
+      chosen = flatpak_number_prompt (TRUE, 0, ref_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
+      if (chosen == 0)
+        return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
+    }
+
+  if (out_pair)
+    *out_pair = g_ptr_array_index (ref_dir_pairs, chosen - 1);
 
   return TRUE;
 }

@@ -207,7 +207,9 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
                                               (element > 1) ? id : NULL,
                                               (element > 3) ? branch : NULL,
                                               (element > 2) ? arch : only_arch,
-                                              matched_kinds, &error);
+                                              matched_kinds,
+                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                              &error);
     }
   if (refs == NULL)
     flatpak_completion_debug ("find refs error: %s", error->message);

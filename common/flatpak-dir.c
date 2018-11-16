@@ -10210,12 +10210,13 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
 }
 
 char **
-flatpak_dir_find_installed_refs (FlatpakDir  *self,
-                                 const char  *opt_name,
-                                 const char  *opt_branch,
-                                 const char  *opt_arch,
-                                 FlatpakKinds kinds,
-                                 GError     **error)
+flatpak_dir_find_installed_refs (FlatpakDir            *self,
+                                 const char            *opt_name,
+                                 const char            *opt_branch,
+                                 const char            *opt_arch,
+                                 FlatpakKinds           kinds,
+                                 FindMatchingRefsFlags  flags,
+                                 GError               **error)
 {
   g_autoptr(GHashTable) local_refs = NULL;
   GPtrArray *matched_refs;
@@ -10232,7 +10233,7 @@ flatpak_dir_find_installed_refs (FlatpakDir  *self,
                                      NULL, /* default arch */
                                      NULL,
                                      kinds,
-                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                     flags,
                                      error);
   if (matched_refs == NULL)
     return NULL;

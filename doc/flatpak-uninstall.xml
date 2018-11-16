@@ -48,8 +48,10 @@
             flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH". All elements
             except ID are optional and can be left out, including the slashes,
             so most of the time you need only specify ID. Any part left out will be matched
-            against what is installed, and if there are multiple matches an error message
-            will list the alternatives.
+            against what is installed, and if there are multiple matches you will be prompted
+            to choose between them. You will also be prompted if <arg choice="plain">REF</arg>
+            doesn't match any installed ref exactly but is similar (e.g. "gedit" is similar to
+            "org.gnome.gedit").
         </para>
         <para>
             By default this looks for both installed apps and runtimes with the given

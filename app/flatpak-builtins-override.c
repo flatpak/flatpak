@@ -152,7 +152,9 @@ flatpak_complete_override (FlatpakCompletion *completion)
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
           int j;
           g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, NULL,
-                                                                FLATPAK_KINDS_APP, &error);
+                                                                FLATPAK_KINDS_APP,
+                                                                FIND_MATCHING_REFS_FLAGS_NONE,
+                                                                &error);
           if (refs == NULL)
             flatpak_completion_debug ("find local refs error: %s", error->message);
           for (j = 0; refs != NULL && refs[j] != NULL; j++)
