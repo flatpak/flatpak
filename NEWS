@@ -1,3 +1,31 @@
+Changes in 1.0.6
+================
+
+This release fixes an issue that lets system-wide installed
+applications create setuid root files inside their app dir (somewhere
+in /var/lib/flatpak/app). Setuid support is disabled inside flatpaks,
+so such files are only a risk if the user runs them manually outside
+flatpak.
+
+Installing a flatpak system-wide is needs root access, so this isn't a
+privilege elevation for non-root users, and allowing root to install
+setuid files is something all traditional packaging systems
+allow. However flatpak tries to be better than that, in order to make
+it easier to trust third party repositories. Thus, it is recommended
+that all distros update to this version, or backport commit
+b98e09b20dfab896616b4a65e15c31f684a5f9f2.
+
+Changes in this version:
+ * The permissions of the files created by the apply_extra script is
+   canonicalized and the script itself is run without any capabilities.
+ * Better matching of existing remotes when the local and remote configuration
+   differs wrt collection ids.
+ * New flatpakrepo DeployCollectionID replaces CollectionID, doing the
+   same thing. It is recommended to use this instead because older versions
+   of flatpak has bugs in the support of collection ids, and this key
+   will only be respected in versions where it works.
+ * The X11 socket is now mounted read-only.
+
 Changes in 1.0.5
 ================
 
