@@ -248,7 +248,7 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
     {
       res = TRUE;
       flatpak_bwrap_add_args (bwrap,
-                              "--bind", wayland_socket, sandbox_wayland_socket,
+                              "--ro-bind", wayland_socket, sandbox_wayland_socket,
                               NULL);
     }
   return res;
@@ -275,7 +275,7 @@ flatpak_run_add_ssh_args (FlatpakBwrap *bwrap)
   sandbox_auth_socket = g_strdup_printf ("/run/user/%d/ssh-auth", getuid ());
 
   flatpak_bwrap_add_args (bwrap,
-                          "--bind", auth_socket, sandbox_auth_socket,
+                          "--ro-bind", auth_socket, sandbox_auth_socket,
                           NULL);
   flatpak_bwrap_set_env (bwrap, "SSH_AUTH_SOCK", sandbox_auth_socket, TRUE);
 }
@@ -419,7 +419,7 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
         return;
 
       flatpak_bwrap_add_args (bwrap,
-                              "--bind", pulseaudio_socket, sandbox_socket_path,
+                              "--ro-bind", pulseaudio_socket, sandbox_socket_path,
                               NULL);
 
       flatpak_bwrap_set_env (bwrap, "PULSE_SERVER", pulse_server, TRUE);
@@ -493,7 +493,7 @@ flatpak_run_add_system_dbus_args (FlatpakBwrap   *app_bwrap,
   if (dbus_system_socket != NULL && unrestricted)
     {
       flatpak_bwrap_add_args (app_bwrap,
-                              "--bind", dbus_system_socket, "/run/dbus/system_bus_socket",
+                              "--ro-bind", dbus_system_socket, "/run/dbus/system_bus_socket",
                               NULL);
       flatpak_bwrap_set_env (app_bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
@@ -520,7 +520,7 @@ flatpak_run_add_system_dbus_args (FlatpakBwrap   *app_bwrap,
         flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
 
       flatpak_bwrap_add_args (app_bwrap,
-                              "--bind", proxy_socket, "/run/dbus/system_bus_socket",
+                              "--ro-bind", proxy_socket, "/run/dbus/system_bus_socket",
                               NULL);
       flatpak_bwrap_set_env (app_bwrap, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
@@ -556,7 +556,7 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
   if (dbus_session_socket != NULL && unrestricted)
     {
       flatpak_bwrap_add_args (app_bwrap,
-                              "--bind", dbus_session_socket, sandbox_socket_path,
+                              "--ro-bind", dbus_session_socket, sandbox_socket_path,
                               NULL);
       flatpak_bwrap_set_env (app_bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
@@ -586,7 +586,7 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
         flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
 
       flatpak_bwrap_add_args (app_bwrap,
-                              "--bind", proxy_socket, sandbox_socket_path,
+                              "--ro-bind", proxy_socket, sandbox_socket_path,
                               NULL);
       flatpak_bwrap_set_env (app_bwrap, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
@@ -665,7 +665,7 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
     flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
 
   flatpak_bwrap_add_args (app_bwrap,
-                          "--bind", proxy_socket, sandbox_socket_path,
+                          "--ro-bind", proxy_socket, sandbox_socket_path,
                           NULL);
   flatpak_bwrap_set_env (app_bwrap, "AT_SPI_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
