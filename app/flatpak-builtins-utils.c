@@ -441,8 +441,9 @@ flatpak_resolve_matching_refs (const char   *remote_name,
 
   if (chosen == 0)
     {
+      const char *dir_name = flatpak_dir_get_name_cached (dir);
       g_print (_("Similar refs found for ‘%s’ in remote ‘%s’ (%s):\n"),
-               opt_search_ref, remote_name, flatpak_dir_get_name (dir));
+               opt_search_ref, remote_name, dir_name);
       for (i = 0; i < refs_len; i++)
         g_print ("%d) %s\n", i + 1, refs[i]);
       chosen = flatpak_number_prompt (TRUE, 0, refs_len, _("Which do you want to use (0 to abort)?"));
@@ -477,7 +478,8 @@ flatpak_resolve_matching_remotes (gboolean        disable_interaction,
       for (i = 0; i < remote_dir_pairs->len; i++)
         {
           RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, i);
-          g_print ("%d) %s (%s)\n", i + 1, pair->remote_name, flatpak_dir_get_name (pair->dir));
+          const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
+          g_print ("%d) %s (%s)\n", i + 1, pair->remote_name, dir_name);
         }
       chosen = flatpak_number_prompt (TRUE, 0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)

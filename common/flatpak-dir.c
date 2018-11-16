@@ -1596,7 +1596,7 @@ flatpak_dir_get_name (FlatpakDir *self)
   return g_strdup ("system");
 }
 
-static const char *
+const char *
 flatpak_dir_get_name_cached (FlatpakDir *self)
 {
   char *name;
