@@ -111,6 +111,7 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-ref.c \
 	common/flatpak-installed-ref.c \
 	common/flatpak-installed-ref-private.h \
+	common/flatpak-instance-private.h \
 	common/flatpak-remote-ref.c \
 	common/flatpak-remote-ref-private.h \
 	common/flatpak-bundle-ref.c \
