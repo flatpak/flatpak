@@ -361,7 +361,6 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           for (k = 0; k < dirs->len; k++)
             {
               FlatpakDir *dir = g_ptr_array_index (dirs, k);
-              g_autofree char *ref = NULL;
               g_auto(GStrv) refs = NULL;
               char **iter;
 
