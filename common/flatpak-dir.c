@@ -11030,7 +11030,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
 }
 
 /* This tries to find a pre-configured remote for the specified uri
- * and (optionally) collection id. This ia a bit more complex than it
+ * and (optionally) collection id. This is a bit more complex than it
  * sounds, because a local remote could be configured in different
  * ways for a remote repo (i.e. it could be not using collection ids,
  * even though the remote specifies it, or the flatpakrepo might lack
