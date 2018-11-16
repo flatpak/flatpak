@@ -136,7 +136,9 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
       flatpak_complete_options (completion, user_entries);
 
       refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
-                                              FLATPAK_KINDS_APP, &error);
+                                              FLATPAK_KINDS_APP,
+                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                              &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
       for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -149,7 +151,9 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
 
     case 2: /* Branch */
       refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
-                                              FLATPAK_KINDS_APP, &error);
+                                              FLATPAK_KINDS_APP,
+                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                              &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
       for (i = 0; refs != NULL && refs[i] != NULL; i++)

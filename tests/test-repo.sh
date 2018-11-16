@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..25"
+echo "1..26"
 
 #Regular repo
 setup_repo
@@ -313,6 +313,14 @@ assert_not_file_has_content list-log "^org.test.Hello"
 assert_not_file_has_content list-log "^org.test.Platform"
 
 echo "ok uninstall dependencies"
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+
+# Note: This typo is only auto-corrected without user interaction because we're using -y
+${FLATPAK} ${U} uninstall -y hello
+${FLATPAK} ${U} uninstall -y platform
+
+echo "ok typo correction works for uninstall"
 
 ${FLATPAK} ${U} install -y --no-deploy test-repo org.test.Hello
 

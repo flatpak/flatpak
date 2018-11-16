@@ -36,6 +36,16 @@ typedef struct RemoteDirPair
   FlatpakDir         *dir;
 } RemoteDirPair;
 
+typedef struct RefDirPair
+{
+  gchar      *ref;
+  FlatpakDir *dir;
+} RefDirPair;
+
+void         ref_dir_pair_free (RefDirPair *pair);
+RefDirPair * ref_dir_pair_new (const char *ref,
+                               FlatpakDir *dir);
+
 void            remote_dir_pair_free (RemoteDirPair *pair);
 RemoteDirPair * remote_dir_pair_new (const char *remote_name,
                                      FlatpakDir *dir);
@@ -73,6 +83,12 @@ gboolean flatpak_resolve_matching_refs (const char *remote_name,
                                         const char *opt_search_ref,
                                         char      **out_ref,
                                         GError    **error);
+
+gboolean flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
+                                                  GPtrArray   *ref_dir_pairs,
+                                                  const char  *opt_search_ref,
+                                                  RefDirPair **out_pair,
+                                                  GError     **error);
 
 gboolean flatpak_resolve_matching_remotes (gboolean        disable_interaction,
                                            GPtrArray      *remote_dir_pairs,

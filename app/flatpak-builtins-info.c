@@ -454,7 +454,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
           g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
-                                                                kinds, &error);
+                                                                kinds, FIND_MATCHING_REFS_FLAGS_NONE, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find local refs error: %s", error->message);
           for (j = 0; refs != NULL && refs[j] != NULL; j++)
@@ -471,7 +471,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
           g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
-                                                                kinds, &error);
+                                                                kinds, FIND_MATCHING_REFS_FLAGS_NONE, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find remote refs error: %s", error->message);
           for (j = 0; refs != NULL && refs[j] != NULL; j++)

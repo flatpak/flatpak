@@ -468,7 +468,9 @@ flatpak_complete_build_init (FlatpakCompletion *completion)
       {
         g_autoptr(GError) error = NULL;
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, opt_arch,
-                                                              FLATPAK_KINDS_RUNTIME, &error);
+                                                              FLATPAK_KINDS_RUNTIME,
+                                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                                              &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
         for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -483,7 +485,9 @@ flatpak_complete_build_init (FlatpakCompletion *completion)
       {
         g_autoptr(GError) error = NULL;
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, opt_arch,
-                                                              FLATPAK_KINDS_RUNTIME, &error);
+                                                              FLATPAK_KINDS_RUNTIME,
+                                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                                              &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
         for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -501,7 +505,9 @@ flatpak_complete_build_init (FlatpakCompletion *completion)
       {
         g_autoptr(GError) error = NULL;
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, completion->argv[3], NULL, opt_arch,
-                                                              FLATPAK_KINDS_RUNTIME, &error);
+                                                              FLATPAK_KINDS_RUNTIME,
+                                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                                              &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
         for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -516,7 +522,9 @@ flatpak_complete_build_init (FlatpakCompletion *completion)
       {
         g_autoptr(GError) error = NULL;
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, completion->argv[3], NULL, opt_arch,
-                                                              FLATPAK_KINDS_RUNTIME, &error);
+                                                              FLATPAK_KINDS_RUNTIME,
+                                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                                              &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
         for (i = 0; refs != NULL && refs[i] != NULL; i++)
