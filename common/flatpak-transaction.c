@@ -2275,7 +2275,9 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
   if (url == NULL)
     return TRUE;
 
-  collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP, FLATPAK_REF_COLLECTION_ID_KEY, NULL);
+  collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP, FLATPAK_REF_DEPLOY_COLLECTION_ID_KEY, NULL);
+  if (collection_id == NULL || *collection_id == '\0')
+    collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP, FLATPAK_REF_COLLECTION_ID_KEY, NULL);
 
   if (remote_is_already_configured (self, url, collection_id))
     return TRUE;

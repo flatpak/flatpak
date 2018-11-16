@@ -10697,7 +10697,10 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
     }
 
   collection_id = g_key_file_get_string (keyfile, source_group,
-                                         FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
+                                         FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY, NULL);
+  if (collection_id == NULL || *collection_id == '\0')
+    collection_id = g_key_file_get_string (keyfile, source_group,
+                                           FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
   if (collection_id != NULL)
     {
       if (gpg_key == NULL)
@@ -10793,7 +10796,14 @@ parse_ref_file (GKeyFile *keyfile,
     }
 
   collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
-                                         FLATPAK_REF_COLLECTION_ID_KEY, NULL);
+                                         FLATPAK_REF_DEPLOY_COLLECTION_ID_KEY, NULL);
+
+  if (collection_id == NULL || *collection_id == '\0')
+    {
+      collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                             FLATPAK_REF_COLLECTION_ID_KEY, NULL);
+    }
+
   if (collection_id != NULL && *collection_id == '\0')
     collection_id = NULL;
 

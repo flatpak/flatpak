@@ -104,7 +104,7 @@ Url=http://127.0.0.1:$(cat httpd-port-main)/test
 IsRuntime=False
 GPGKey=${FL_GPG_BASE64}
 #RuntimeRepo=http://127.0.0.1:$(cat httpd-port-main)/test
-CollectionID=org.test.Collection
+DeployCollectionID=org.test.Collection
 EOF
 
 ${FLATPAK} ${U} install -y --from ./org.test.App.flatpakref
