@@ -1,7 +1,8 @@
 Changes in 1.1
 ==============
 
-This is the first release in the new unstable 1.1.x series, leading up to 1.2.
+This is the first release in the new unstable 1.1.x series, leading up to 1.2
+which is expected around the end of the year.
 
 Changes in this version:
  * New command flatpak kill to kill running flatpak instances.
