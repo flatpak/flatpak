@@ -1,3 +1,119 @@
+Changes in 1.1
+==============
+
+This is the first release in the new unstable 1.1.x series, leading up to 1.2.
+
+Changes in this version:
+ * New command flatpak kill to kill running flatpak instances.
+ * The remote argument is now optional in the flatpak install in
+   interactive installs. Instead you are prompted for which
+   remote to install from.
+ * All commands printing tables now support --columns option to specify
+   exactly what to output.
+ * flatpak uninstall now supports --delete-data to delete the application
+   data directory in your homedirectory. If no application is specified
+   it will remove data from all uninstalled apps.
+ * flatpak list now supports filtering by runtime with:
+   --app-runtime=org.gnome.Platform//3.24
+ * flatpak remote-ls can now show the runtime used for each app.
+ * flatpak repo now supports --info to show information
+   about a repository, and it is the default operation
+   for the flatpak repo.
+ * flatpak repo now supports --commits to list commits in branch.
+ * flatpak now logs transactions to the systemd journal if built
+   against libsystemd.
+ * libflatpak now exposed FlatpakInstance for a running instance.
+ * Better error output if a flatpak command is misspelled
+ * Drop support for migration from xdg-app (previous name for flatpak).
+ * New library function flatpak_installation_get_min_free_space_bytes.
+ * In interactive mode "yes" is now the default in most prompts.
+ * Bumped ostree requirement to 2018.9
+ * Cleanups and improvements to the test suite.
+ * Improvements to documentation.
+ * buildsystem support for coverage generation.
+
+Changes in 1.0.6
+================
+
+This release fixes an issue that lets system-wide installed
+applications create setuid root files inside their app dir (somewhere
+in /var/lib/flatpak/app). Setuid support is disabled inside flatpaks,
+so such files are only a risk if the user runs them manually outside
+flatpak.
+
+Installing a flatpak system-wide is needs root access, so this isn't a
+privilege elevation for non-root users, and allowing root to install
+setuid files is something all traditional packaging systems
+allow. However flatpak tries to be better than that, in order to make
+it easier to trust third party repositories. Thus, it is recommended
+that all distros update to this version, or backport commit
+b98e09b20dfab896616b4a65e15c31f684a5f9f2.
+
+Changes in this version:
+ * The permissions of the files created by the apply_extra script is
+   canonicalized and the script itself is run without any capabilities.
+ * Better matching of existing remotes when the local and remote configuration
+   differs wrt collection ids.
+ * New flatpakrepo DeployCollectionID replaces CollectionID, doing the
+   same thing. It is recommended to use this instead because older versions
+   of flatpak has bugs in the support of collection ids, and this key
+   will only be respected in versions where it works.
+ * The X11 socket is now mounted read-only.
+
+Changes in 1.0.5
+================
+
+There was a sandbox bug in the previous version where parts of the runtime
+/etc was not mounted read-only. In case the runtime was installed as the
+user (not the default) this means that the app could modify files on the
+runtime. Nothing in the host uses the runtime files, so this is not a direct
+sandbox escape, but it is possible that an app can confuse a different app
+that has higher permissions and so gain privileges.
+
+So, it is recommended that everyone shipping flatpak to update to
+1.0.5, or at least backport the change in commit
+6711d7ae99c50a9dca8e4e2e9e9989a8fa6c3f06.
+
+Changes in this version:
+
+ * Make the /etc -> /usr/etc bind-mounts read-only.
+ * Make various app-specific configuration files read-only.
+ * flatpak is more picky about remote names to avoid problems with storing weird
+   names in the ostree config.
+ * A segfault in libflatpak handling of bundles was fixed.
+ * Updated translations
+ * Fixed a regression in flatpak run that caused problems running user-installed
+   apps when the system installation was broken.
+
+Changes in 1.0.4
+================
+
+ * Flatpak 0.99.1 removed the inheritance of permissions from the runtime due
+   to concerns with dynamic app permissions. Due to popular requests, this
+   version re-introduces such inheritance, but does it instead at build time.
+   This solved the issues with dynamic permissions while still allowing runtimes
+   to have default permissions. Apps can disable this by passing
+   --no-inherit-permissions to build-finish.
+ * The sandbox now always includes a /etc/timezone file, following the (old)
+   debian standard for this. This is needed, because the more modern way
+   of exposing the timezone name by having /etc/localtime be a symlink
+   into /usr/share/zoneinfo doesn't work when exposing the host timezone.
+ * All apps now have automatic permissions to own their own app id as a
+   subname of org.mpris.MediaPlayer2.
+ * We now properly re-load remote state in FlatpakTransaction if the
+   metadata was updated for the remote.
+ * The signature of the FlatpakTransaction::operation-done signal was wrong
+   in the header and has now been corrected to the signature that is actually
+   emitted.
+ * A crash was fixed when reading invalid .flatpakref files.
+ * A crash during updates when a local ref was unexpectedly missing was fixed.
+ * An error case on uninstalling was incorrectly returning success even
+   thought there was an error.
+ * flatpak_installation_modify_remote did not correctly save the nodeps state.
+ * flatpak_installation_load_app_overrides() was improperly returning freed
+   memory.
+ * The tarball now ships with an icon (flatpak.png).
+
 Changes in 1.0.3
 ================
 
