@@ -1493,6 +1493,9 @@ setup_repo (void)
   add_flatpakrepo ();
   configure_languages ();
 
+  /* another copy of the same repo, with different url */
+  symlink("test", "repos/copy-of-test");
+
   /* another repo, with only the app */
   make_test_app2 ();
   update_repo2 ();
@@ -2209,7 +2212,8 @@ test_transaction_install_flatpakref (void)
                    "Title=Test App\n"
                    "Name=org.test.Hello\n"
                    "Branch=master\n"
-                   "Url=http://127.0.0.1:", httpd_port, "/test\n"
+                   /* Uses a different url for the repo, so we can ensure it gets added */
+                   "Url=http://127.0.0.1:", httpd_port, "/copy-of-test\n"
                    "IsRuntime=False\n"
                    "SuggestRemoteName=my-little-repo\n"
                    "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test.flatpakrepo\n",
