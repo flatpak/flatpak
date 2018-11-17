@@ -678,13 +678,46 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>download-if</option> (string)</term>
-                    <listitem><para>
-                        A condition that must be true for the extension to be auto-downloaded.
-                        The only currently recognized value is active-gl-driver, which is true
-                        if the name of the active GL driver matches the extension point basename.
-                        Available since 0.9.1, and backported to the 0.8.x
-                        branch in 0.8.3.
-                    </para></listitem>
+                    <listitem>
+                        <para>
+                            A condition that must be true for the extension to be auto-downloaded.
+                            As of 1.1.1 this supports multiple conditions separated by semi-colons.
+                        </para>
+                        <para>
+                            These are the supported conditions:
+                        </para>
+                        <variablelist>
+                            <varlistentry>
+                                <term><option>active-gl-driver</option></term>
+                                <para>
+                                    Is true if the name of the active GL driver matches the
+                                    extension point basename. Available since 0.9.1, and backported to
+                                    the 0.8.x branch in 0.8.3.
+                                </para>
+                            </varlistentry>
+                            <varlistentry>
+                                <term><option>active-gtk-theme</option></term>
+                                <para>
+                                    Is true if the name of the current GTK theme
+                                    (via org.gnome.desktop.interface GSetting) matches the extension point
+                                    basename. Added 0.10.1.
+                                </para>
+                            </varlistentry>
+                            <varlistentry>
+                                <term><option>have-intel-gpu</option></term>
+                                <para>Is true if the i915 kernel module is loaded. Added 0.10.1.</para>
+                            </varlistentry>
+                            <varlistentry>
+                                <term><option>on-xdg-desktop-*</option></term>
+                                <para>
+                                    Is true if the suffix (case-insensitively) is in the
+                                    <literal>XDG_CURRENT_DESKTOP</literal> env var.
+                                    For example <literal>on-xdg-desktop-GNOME-classic</literal>.
+                                    Added 1.1.1.
+                                </para>
+                            </varlistentry>
+                        </variablelist>
+                    </listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>autoprune-unless</option> (string)</term>
@@ -700,10 +733,8 @@
                     <term><option>enable-if</option> (string)</term>
                     <listitem><para>
                         A condition that must be true for the extension to be enabled.
-                        The only currently recognized value is active-gl-driver, which is true
-                        if the name of the active GL driver matches the extension point basename.
-                        Available since 0.9.1, and backported to the 0.8.x
-                        branch in 0.8.3.
+                        As of 1.1.1 this supports multiple conditions separated by semi-colons.
+                        See <option>download-if</option> for available conditions.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
