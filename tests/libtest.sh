@@ -321,15 +321,35 @@ run_sh () {
     ${CMD_PREFIX} flatpak run --command=bash ${ARGS-} org.test.Hello -c "$*"
 }
 
+# true, false, or empty for indeterminate
+_flatpak_bwrap_works=
+
+if [ -z "${FLATPAK_BWRAP:-}" ]; then
+    # running installed-tests: assume we know what we're doing
+    _flatpak_bwrap_works=true
+elif ! "$FLATPAK_BWRAP" --unshare-ipc --unshare-net --unshare-pid \
+        --ro-bind / / /bin/true > bwrap-result 2>&1; then
+    _flatpak_bwrap_works=false
+else
+    _flatpak_bwrap_works=true
+fi
+
 skip_without_bwrap () {
-    if [ -z "${FLATPAK_BWRAP:-}" ]; then
-        # running installed-tests: assume we know what we're doing
-        :
-    elif ! "$FLATPAK_BWRAP" --unshare-ipc --unshare-net --unshare-pid \
-            --ro-bind / / /bin/true > bwrap-result 2>&1; then
+    if "${_flatpak_bwrap_works}"; then
+        return 0
+    else
         sed -e 's/^/# /' < bwrap-result
         echo "1..0 # SKIP Cannot run bwrap"
         exit 0
+    fi
+}
+
+skip_one_without_bwrap () {
+    if "${_flatpak_bwrap_works}"; then
+        return 1
+    else
+        echo "ok $* # SKIP Cannot run bwrap"
+        return 0
     fi
 }
 
