@@ -209,7 +209,7 @@ make_runtime () {
             if [ ! -d ${RUNTIME_REPO} ]; then
                 $(dirname $0)/make-test-runtime.sh ${RUNTIME_REPO} org.test.Platform "" > /dev/null
             fi
-        ) 200>${TEST_DATADIR}/runtime-repo-lock
+        ) 200>${TEST_DATA_DIR}/runtime-repo-lock
     fi
 
     if [ ! -d repos/${REPONAME} ]; then
