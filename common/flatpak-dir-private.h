@@ -684,6 +684,8 @@ char      *flatpak_dir_get_remote_title (FlatpakDir *self,
                                          const char *remote_name);
 char      *flatpak_dir_get_remote_collection_id (FlatpakDir *self,
                                                  const char *remote_name);
+char      *flatpak_dir_get_remote_main_ref (FlatpakDir *self,
+                                            const char *remote_name);
 gboolean   flatpak_dir_get_remote_oci (FlatpakDir *self,
                                        const char *remote_name);
 char      *flatpak_dir_get_remote_default_branch (FlatpakDir *self,

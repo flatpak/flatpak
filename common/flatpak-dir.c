@@ -10535,6 +10535,19 @@ flatpak_dir_get_remote_oci (FlatpakDir *self,
 }
 
 char *
+flatpak_dir_get_remote_main_ref (FlatpakDir *self,
+                                 const char *remote_name)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_string (config, group, "xa.main-ref", NULL);
+
+  return NULL;
+}
+
+char *
 flatpak_dir_get_remote_default_branch (FlatpakDir *self,
                                        const char *remote_name)
 {
