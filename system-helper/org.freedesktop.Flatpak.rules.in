@@ -8,4 +8,6 @@ polkit.addRule(function(action, subject) {
         subject.isInGroup("@privileged_group@")) {
             return polkit.Result.YES;
     }
+
+    return polkit.Result.NOT_HANDLED;
 });
