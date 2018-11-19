@@ -62,6 +62,7 @@ struct _FlatpakRemotePrivate
   char             *local_collection_id;
   char             *local_title;
   char             *local_default_branch;
+  char             *local_main_ref;
   gboolean          local_gpg_verify;
   gboolean          local_noenumerate;
   gboolean          local_nodeps;
@@ -73,6 +74,7 @@ struct _FlatpakRemotePrivate
   guint             local_collection_id_set  : 1;
   guint             local_title_set          : 1;
   guint             local_default_branch_set : 1;
+  guint             local_main_ref_set       : 1;
   guint             local_gpg_verify_set     : 1;
   guint             local_noenumerate_set    : 1;
   guint             local_nodeps_set         : 1;
@@ -107,6 +109,7 @@ flatpak_remote_finalize (GObject *object)
   g_free (priv->local_collection_id);
   g_free (priv->local_title);
   g_free (priv->local_default_branch);
+  g_free (priv->local_main_ref);
 
   G_OBJECT_CLASS (flatpak_remote_parent_class)->finalize (object);
 }
@@ -475,6 +478,56 @@ flatpak_remote_set_default_branch (FlatpakRemote *self,
   g_free (priv->local_default_branch);
   priv->local_default_branch = g_strdup (default_branch);
   priv->local_default_branch_set = TRUE;
+}
+
+/**
+ * flatpak_remote_get_main_ref:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the main ref of this remote, if set. The main ref is the ref that an
+ * origin remote is created for.
+ *
+ * Returns: (transfer full): the main ref, or %NULL
+ *
+ * Since: 1.1.1
+ */
+char *
+flatpak_remote_get_main_ref (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_main_ref_set)
+    return g_strdup (priv->local_main_ref);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_main_ref (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_main_ref:
+ * @self: a #FlatpakRemote
+ * @main_ref: The new main ref
+ *
+ * Sets the main ref of this remote. The main ref is the ref that an origin
+ * remote is created for.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Since: 1.1.1
+ */
+void
+flatpak_remote_set_main_ref (FlatpakRemote *self,
+                                   const char    *main_ref)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_main_ref);
+  priv->local_main_ref = g_strdup (main_ref);
+  priv->local_main_ref_set = TRUE;
 }
 
 /**
@@ -868,6 +921,9 @@ flatpak_remote_commit (FlatpakRemote *self,
 
   if (priv->local_default_branch_set)
     g_key_file_set_string (config, group, "xa.default-branch", priv->local_default_branch);
+
+  if (priv->local_main_ref_set)
+    g_key_file_set_string (config, group, "xa.main-ref", priv->local_main_ref);
 
   if (priv->local_gpg_verify_set)
     {
