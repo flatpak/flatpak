@@ -116,6 +116,23 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                                      &dirs, cancellable, error))
     return FALSE;
 
+  /* Move the user dir to the front so it "wins" in case an app is in more than
+   * one installation */
+  if (dirs->len > 1)
+    {
+      /* Walk through the array backwards so we can safely remove */
+      for (i = dirs->len; i > 0; i--)
+        {
+          FlatpakDir *dir = g_ptr_array_index (dirs, i - 1);
+          if (flatpak_dir_is_user (dir))
+            {
+              g_ptr_array_insert (dirs, 0, g_object_ref (dir));
+              g_ptr_array_remove_index (dirs, i);
+              break;
+            }
+        }
+    }
+
   if (rest_argc == 0)
     return usage_error (context, _("APP must be specified"), error);
 

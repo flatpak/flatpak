@@ -344,6 +344,8 @@ flatpak_option_context_parse (GOptionContext     *context,
               g_autoptr(GPtrArray) system_dirs = NULL;
 
               g_ptr_array_set_size (dirs, 0);
+              /* The first dir should be the default */
+              g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
               g_ptr_array_add (dirs, flatpak_dir_get_user ());
 
               system_dirs = flatpak_dir_get_system_list (cancellable, error);
@@ -353,7 +355,9 @@ flatpak_option_context_parse (GOptionContext     *context,
               for (i = 0; i < system_dirs->len; i++)
                 {
                   FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
-                  g_ptr_array_add (dirs, g_object_ref (dir));
+                  const char *id = flatpak_dir_get_id (dir);
+                  if (g_strcmp0 (id, "default") != 0)
+                    g_ptr_array_add (dirs, g_object_ref (dir));
                 }
             }
         }
