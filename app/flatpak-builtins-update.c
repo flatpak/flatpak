@@ -84,7 +84,7 @@ flatpak_builtin_update (int           argc,
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS,
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
                                      &dirs, cancellable, error))
     return FALSE;
 
@@ -108,9 +108,18 @@ flatpak_builtin_update (int           argc,
 
   transactions = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
-  for (k = 0; k < dirs->len; k++)
+  /* Walk through the array backwards so we can safely remove */
+  for (k = dirs->len; k > 0; k--)
     {
-      FlatpakTransaction *transaction = flatpak_cli_transaction_new (g_ptr_array_index (dirs, k), opt_yes, FALSE, error);
+      FlatpakDir *dir = g_ptr_array_index (dirs, k - 1);
+      OstreeRepo *repo = flatpak_dir_get_repo (dir);
+      if (repo == NULL)
+        {
+          g_ptr_array_remove_index (dirs, k - 1);
+          continue;
+        }
+
+      FlatpakTransaction *transaction = flatpak_cli_transaction_new (dir, opt_yes, FALSE, error);
       if (transaction == NULL)
         return FALSE;
 
@@ -120,7 +129,7 @@ flatpak_builtin_update (int           argc,
       flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
       flatpak_transaction_set_disable_related (transaction, opt_no_related);
 
-      g_ptr_array_add (transactions, transaction);
+      g_ptr_array_insert (transactions, 0, transaction);
     }
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
