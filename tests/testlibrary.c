@@ -293,17 +293,17 @@ test_ref (void)
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
-  ref = flatpak_ref_parse ("app//x86_64/master", &error);
+  ref = flatpak_ref_parse ("app//m68k/master", &error);
   g_assert_null (ref);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
-  ref = flatpak_ref_parse ("app/org.test.Hello/x86_64/", &error);
+  ref = flatpak_ref_parse ("app/org.test.Hello/m68k/", &error);
   g_assert_null (ref);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
-  ref = flatpak_ref_parse ("app/org.test.Hello/x86_64/a[b]c", &error);
+  ref = flatpak_ref_parse ("app/org.test.Hello/m68k/a[b]c", &error);
   g_assert_null (ref);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
@@ -318,28 +318,28 @@ test_ref (void)
 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-"/x86_64/master", &error);
+"/m68k/master", &error);
   g_assert_null (ref);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
-  ref = flatpak_ref_parse ("app/.abc/x86_64/master", &error);
+  ref = flatpak_ref_parse ("app/.abc/m68k/master", &error);
   g_assert_null (ref);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
-  ref = flatpak_ref_parse ("app/0abc/x86_64/master", &error);
+  ref = flatpak_ref_parse ("app/0abc/m68k/master", &error);
   g_assert_null (ref);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF);
   g_clear_error (&error);
 
-  valid = "app/org.flatpak.Hello/x86_64/master";
+  valid = "app/org.flatpak.Hello/m68k/master";
   ref = flatpak_ref_parse (valid, &error);
   g_assert_no_error (error);
   g_assert (FLATPAK_IS_REF (ref));
   g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_APP);
   g_assert_cmpstr (flatpak_ref_get_name (ref), ==, "org.flatpak.Hello");
-  g_assert_cmpstr (flatpak_ref_get_arch (ref), ==, "x86_64");
+  g_assert_cmpstr (flatpak_ref_get_arch (ref), ==, "m68k");
   g_assert_cmpstr (flatpak_ref_get_branch (ref), ==, "master");
   g_assert_null (flatpak_ref_get_collection_id (ref));
 
@@ -348,7 +348,7 @@ test_ref (void)
 
   g_clear_object (&ref);
 
-  valid = "runtime/org.gnome.Platform/x86_64/stable";
+  valid = "runtime/org.gnome.Platform/m68k/stable";
   ref = flatpak_ref_parse (valid, &error);
   g_assert_no_error (error);
   g_assert (FLATPAK_IS_REF (ref));
@@ -363,7 +363,7 @@ test_ref (void)
                 NULL);
   g_assert_cmpint (kind, ==, FLATPAK_REF_KIND_RUNTIME);
   g_assert_cmpstr (name, ==, "org.gnome.Platform");
-  g_assert_cmpstr (arch, ==, "x86_64");
+  g_assert_cmpstr (arch, ==, "m68k");
   g_assert_cmpstr (branch, ==, "stable");
   g_assert_null (commit);
   g_assert_null (collection_id);
@@ -376,7 +376,7 @@ test_ref (void)
   ref = g_object_new (FLATPAK_TYPE_REF,
                       "kind", FLATPAK_REF_KIND_RUNTIME,
                       "name", "org.gnome.Platform",
-                      "arch", "x86_64",
+                      "arch", "m68k",
                       "branch", "stable",
                       "commit", "0123456789",
                       "collection-id", "org.flathub.Stable",
