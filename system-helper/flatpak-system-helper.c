@@ -1319,13 +1319,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
            g_strcmp0 (method_name, "RunTriggers") == 0 ||
            g_strcmp0 (method_name, "UpdateSummary") == 0)
     {
-      const char *remote;
-
-      g_variant_get_child (parameters, 0, "&s", &remote);
-
       action = "org.freedesktop.Flatpak.modify-repo";
-
-      polkit_details_insert (details, "remote", remote);
     }
 
   if (action)
