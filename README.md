@@ -7,7 +7,7 @@ desktop applications on Linux.
 
 See https://flatpak.org/ for more information.
 
-Community discussion happens in [#flatpak on Freenode](ircs://chat.freenode.net/flatpak) and on [the mailing list](https://lists.freedesktop.org/mailman/listinfo/flatpak).
+Community discussion happens in [#flatpak on Freenode](ircs://chat.freenode.net/flatpak), on [the mailing list](https://lists.freedesktop.org/mailman/listinfo/flatpak), and on [Reddit](https://www.reddit.com/r/flatpak).
 
 Read documentation for the flatpak [commandline tools](http://docs.flatpak.org/en/latest/flatpak-command-reference.html) and for the libflatpak [library API](http://flatpak.github.io/flatpak/reference/html/index.html).
 
