@@ -1075,6 +1075,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
             "/dev/nvidiactl",
             "/dev/nvidia0",
             "/dev/nvidia-modeset",
+            "/dev/nvidia-uvm" /* OpenCL/CUDA */
           };
 
           for (i = 0; i < G_N_ELEMENTS (dri_devices); i++)
