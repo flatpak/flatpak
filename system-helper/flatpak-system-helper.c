@@ -1225,22 +1225,31 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       g_variant_get_child (parameters, 2, "&s", &ref);
       g_variant_get_child (parameters, 3, "&s", &origin);
 
-      is_update = (flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
-      is_app = g_str_has_prefix (ref, "app/");
-
-      if (is_update)
+      /* For metadata updates, redirect to the modify-repo action since they
+       * should basically always be allowed */
+      if (ref != NULL && g_strcmp0 (ref, OSTREE_REPO_METADATA_REF) == 0)
         {
-          if (is_app)
-            action = "org.freedesktop.Flatpak.app-update";
-          else
-            action = "org.freedesktop.Flatpak.runtime-update";
+          action = "org.freedesktop.Flatpak.modify-repo";
         }
       else
         {
-          if (is_app)
-            action = "org.freedesktop.Flatpak.app-install";
+          is_update = (flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
+          is_app = g_str_has_prefix (ref, "app/");
+
+          if (is_update)
+            {
+              if (is_app)
+                action = "org.freedesktop.Flatpak.app-update";
+              else
+                action = "org.freedesktop.Flatpak.runtime-update";
+            }
           else
-            action = "org.freedesktop.Flatpak.runtime-install";
+            {
+              if (is_app)
+                action = "org.freedesktop.Flatpak.app-install";
+              else
+                action = "org.freedesktop.Flatpak.runtime-install";
+            }
         }
 
       polkit_details_insert (details, "origin", origin);
