@@ -83,7 +83,7 @@ echo "ok 2 update repo config to deploy collection ID"
 # We have to manually add refs under the old collection ID so the client can pull
 # using its old collection ID.
 #UPDATE_REPO_ARGS="--collection-id=net.malicious.NewCollection --deploy-collection-id" update_repo
-#for ref in app/org.test.App/x86_64/master app/org.test.Hello/x86_64/master appstream/x86_64 ostree-metadata runtime/org.test.Platform/x86_64/master; do
+#for ref in app/org.test.App/$(flatpak --default-arch)/master app/org.test.Hello/$(flatpak --default-arch)/master appstream/$(flatpak --default-arch) ostree-metadata runtime/org.test.Platform/$(flatpak --default-arch)/master; do
 #  ostree --repo=repos/test refs --collections --create=org.test.Collection:$ref $ref
 #done
 ostree --repo=repos/test summary --update --add-metadata="ostree.deploy-collection-id='net.malicious.NewCollection'"

@@ -404,6 +404,6 @@ update_repo
 ${FLATPAK} ${U} install -y test-repo org.test.App
 ${FLATPAK} ${U} info -m org.test.App > out
 
-assert_file_has_content out ^sdk=org.test.Sdk/x86_64/master$
+assert_file_has_content out "^sdk=org.test.Sdk/$(flatpak --default-arch)/master$"
 
 echo "ok --sdk option"
