@@ -106,7 +106,7 @@
             in the wheel group to modify repos without authenticating.
      -->
     <description>Update system repository</description>
-    <message>Authentication is required to modify the remote $(remote)</message>
+    <message>Authentication is required to modify the system repository</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
