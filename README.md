@@ -44,9 +44,7 @@ APIs not defined in GLib yet, such as `glnx_autofd`.
 Contributing
 ------------
 
-Currently there is not a Bugzilla product - one may be created
-in the future.  You can submit PRs against the Github mirror:
+Development happens in GNOME Gitlab: https://gitlab.gnome.org/GNOME/libglnx
 
-https://github.com/GNOME/libglnx/pulls
-
-Or alternatively, email one of the maintainers directly.
+(If you're seeing this on the Github mirror, we used to do development
+ on Github but that was before GNOME deployed Gitlab.)
