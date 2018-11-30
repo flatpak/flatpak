@@ -645,6 +645,9 @@ sync_and_rename_tmpfile (GLnxTmpfile *tmpfile,
   if (fdatasync (tmpfile->fd) != 0)
     return glnx_throw_errno_prefix (error, "fdatasync");
 
+  if (fchmod (tmpfile->fd, 0644) != 0)
+    return glnx_throw_errno_prefix (error, "fchmod");
+
   if (!glnx_link_tmpfile_at (tmpfile,
                              GLNX_LINK_TMPFILE_REPLACE,
                              tmpfile->src_dfd, dest_name, error))
