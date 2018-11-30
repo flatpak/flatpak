@@ -154,7 +154,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak config --set language sv;en;fi</command>
+            <command>$ flatpak config --set languages "sv;en;fi"</command>
         </para>
 
     </refsect1>
