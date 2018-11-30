@@ -32,8 +32,19 @@
             <cmdsynopsis>
                 <command>flatpak config</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
+            </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak config</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">--set</arg>
                 <arg choice="plain">KEY</arg>
                 <arg choice="plain">VALUE</arg>
+            </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak config</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">--unset|--get</arg>
+                <arg choice="plain">KEY</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
