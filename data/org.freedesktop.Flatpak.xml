@@ -144,6 +144,11 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="GenerateOciSummary">
+      <arg type='s' name='origin' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
   </interface>
 
 </node>

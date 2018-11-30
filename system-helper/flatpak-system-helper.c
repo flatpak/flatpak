@@ -1190,6 +1190,56 @@ handle_update_summary (FlatpakSystemHelper   *object,
 }
 
 static gboolean
+handle_generate_oci_summary (FlatpakSystemHelper   *object,
+                             GDBusMethodInvocation *invocation,
+                             const gchar           *arg_origin,
+                             const gchar           *arg_installation)
+{
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *new_branch = NULL;
+  g_autofree char *old_branch = NULL;
+  gboolean is_oci;
+
+  g_debug ("GenerateOciSummary %s %s", arg_origin, arg_installation);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Can't open system repo %s", error->message);
+      return TRUE;
+    }
+
+  is_oci = flatpak_dir_get_remote_oci (system, arg_origin);
+  if (!is_oci)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "%s is not a OCI remote", arg_origin);
+      return TRUE;
+    }
+
+  if (!flatpak_dir_remote_make_oci_summary (system, arg_origin, NULL, NULL, &error))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Failed to update OCI summary: %s", error->message);
+      return TRUE;
+    }
+
+
+  flatpak_system_helper_complete_generate_oci_summary (object, invocation);
+
+  return TRUE;
+}
+
+
+static gboolean
 flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
                                   GDBusMethodInvocation  *invocation,
                                   gpointer                user_data)
@@ -1326,7 +1376,8 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
            g_strcmp0 (method_name, "PruneLocalRepo") == 0 ||
            g_strcmp0 (method_name, "EnsureRepo") == 0 ||
            g_strcmp0 (method_name, "RunTriggers") == 0 ||
-           g_strcmp0 (method_name, "UpdateSummary") == 0)
+           g_strcmp0 (method_name, "UpdateSummary") == 0 ||
+           g_strcmp0 (method_name, "GenerateOciSummary") == 0)
     {
       action = "org.freedesktop.Flatpak.modify-repo";
     }
@@ -1391,6 +1442,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-ensure-repo", G_CALLBACK (handle_ensure_repo), NULL);
   g_signal_connect (helper, "handle-run-triggers", G_CALLBACK (handle_run_triggers), NULL);
   g_signal_connect (helper, "handle-update-summary", G_CALLBACK (handle_update_summary), NULL);
+  g_signal_connect (helper, "handle-generate-oci-summary", G_CALLBACK (handle_generate_oci_summary), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),

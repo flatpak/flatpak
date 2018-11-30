@@ -1430,6 +1430,22 @@ flatpak_dir_system_helper_call_update_summary (FlatpakDir   *self,
   return ret != NULL;
 }
 
+static gboolean
+flatpak_dir_system_helper_call_generate_oci_summary (FlatpakDir   *self,
+                                                     const gchar  *arg_origin,
+                                                     const gchar  *arg_installation,
+                                                     GCancellable *cancellable,
+                                                     GError      **error)
+{
+  g_autoptr(GVariant) ret =
+    flatpak_dir_system_helper_call (self, "GenerateOciSummary",
+                                    g_variant_new ("(ss)",
+                                                   arg_origin,
+                                                   arg_installation),
+                                    cancellable, error);
+  return ret != NULL;
+}
+
 static OstreeRepo *
 system_ostree_repo_new (GFile *repodir)
 {
@@ -9238,7 +9254,7 @@ flatpak_dir_cache_summary (FlatpakDir *self,
   G_UNLOCK (cache);
 }
 
-static gboolean
+gboolean
 flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                      const char   *remote,
                                      GBytes      **out_summary,
@@ -9253,42 +9269,68 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GMappedFile) mfile = NULL;
   g_autoptr(GBytes) cache_bytes = NULL;
+  g_autoptr(GBytes) summary_bytes = NULL;
 
-  self_name = flatpak_dir_get_name (self);
-
-  index_cache = flatpak_dir_update_oci_index (self, remote, &index_uri, cancellable, error);
-  if (index_cache == NULL)
-    return FALSE;
-
-  summary_cache = flatpak_dir_get_oci_summary_location (self, remote, error);
-  if (summary_cache == NULL)
-    return FALSE;
-
-  if (check_destination_mtime (index_cache, summary_cache, cancellable))
+  if (flatpak_dir_use_system_helper (self, NULL))
     {
-      mfile = g_mapped_file_new (flatpak_file_get_path_cached (summary_cache), FALSE, NULL);
-      if (mfile)
+      const char *installation = flatpak_dir_get_id (self);
+
+      if (!flatpak_dir_system_helper_call_generate_oci_summary (self, remote,
+                                                                installation ? installation : "",
+                                                                cancellable, error))
+        return FALSE;
+
+      summary_cache = flatpak_dir_get_oci_summary_location (self, remote, error);
+      if (summary_cache == NULL)
+        return FALSE;
+    }
+  else
+    {
+      self_name = flatpak_dir_get_name (self);
+
+      index_cache = flatpak_dir_update_oci_index (self, remote, &index_uri, cancellable, error);
+      if (index_cache == NULL)
+        return FALSE;
+
+      summary_cache = flatpak_dir_get_oci_summary_location (self, remote, error);
+      if (summary_cache == NULL)
+        return FALSE;
+
+      if (!check_destination_mtime (index_cache, summary_cache, cancellable))
         {
-          cache_bytes = g_mapped_file_get_bytes (mfile);
-          *out_summary = g_steal_pointer (&cache_bytes);
+          summary = flatpak_oci_index_make_summary (index_cache, index_uri, cancellable, &local_error);
+          if (summary == NULL)
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+
+          summary_bytes = g_variant_get_data_as_bytes (summary);
+
+          if (!g_file_replace_contents (summary_cache,
+                                        g_bytes_get_data (summary_bytes, NULL),
+                                        g_bytes_get_size (summary_bytes),
+                                        NULL, FALSE, 0, NULL, cancellable, error))
+            {
+              g_prefix_error (error, _("Failed to write summary cache: "));
+              return FALSE;
+            }
+
+          if (out_summary)
+              *out_summary = g_steal_pointer (&summary_bytes);
           return TRUE;
         }
     }
 
-  summary = flatpak_oci_index_make_summary (index_cache, index_uri, cancellable, &local_error);
-  if (summary == NULL)
+  if (out_summary)
     {
-      g_propagate_error (error, g_steal_pointer (&local_error));
-      return FALSE;
+      mfile = g_mapped_file_new (flatpak_file_get_path_cached (summary_cache), FALSE, error);
+      if (mfile == NULL)
+        return FALSE;
+
+      cache_bytes = g_mapped_file_get_bytes (mfile);
+      *out_summary = g_steal_pointer (&cache_bytes);
     }
-
-  *out_summary = g_variant_get_data_as_bytes (summary);
-
-  if (!g_file_replace_contents (summary_cache,
-                                g_bytes_get_data (*out_summary, NULL),
-                                g_bytes_get_size (*out_summary),
-                                NULL, FALSE, 0, NULL, cancellable, NULL))
-    g_warning ("Failed to write summary cache");
 
   return TRUE;
 }
