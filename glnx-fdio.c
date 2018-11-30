@@ -1002,8 +1002,7 @@ glnx_file_copy_at (int                   src_dfd,
  * contents.  This and other behavior can be controlled via @flags.
  *
  * Note that no metadata from the existing file is preserved, such as
- * uid/gid or extended attributes.  The default mode will be `0666`,
- * modified by umask.
+ * uid/gid or extended attributes.  The default mode will be `0644`.
  */ 
 gboolean
 glnx_file_replace_contents_at (int                   dfd,
@@ -1025,7 +1024,7 @@ glnx_file_replace_contents_at (int                   dfd,
  * @subpath: Subpath
  * @buf: (array len=len) (element-type guint8): File contents
  * @len: Length (if `-1`, assume @buf is `NUL` terminated)
- * @mode: File mode; if `-1`, use `0666 - umask`
+ * @mode: File mode; if `-1`, use `0644`
  * @flags: Flags
  * @cancellable: Cancellable
  * @error: Error
