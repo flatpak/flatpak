@@ -30,6 +30,12 @@
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
 
+#ifdef USE_SYSTEM_HELPER
+#include <polkit/polkit.h>
+#define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE
+#include <polkitagent/polkitagent.h>
+#endif
+
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
@@ -599,6 +605,10 @@ main (int    argc,
   GError *error = NULL;
   g_autofree const char *old_env = NULL;
   int ret;
+#ifdef USE_SYSTEM_HELPER
+  PolkitAgentListener *listener = NULL;
+  gpointer agent = NULL;
+#endif
 
   setlocale (LC_ALL, "");
   bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
@@ -624,7 +634,48 @@ main (int    argc,
   if (argc >= 4 && strcmp (argv[1], "complete") == 0)
     return complete (argc, argv);
 
+#ifdef USE_SYSTEM_HELPER
+  /* Install a polkit agent as fallback, in case we're running on a console */
+  listener = polkit_agent_text_listener_new (NULL, &error);
+  if (listener == NULL)
+    {
+      g_debug ("Failed to create polkit agent listener: %s", error->message);
+      g_clear_error (&error);
+    }
+  else
+    {
+      g_autoptr(PolkitSubject) subject = NULL;
+      GVariantBuilder opt_builder;
+      g_autoptr(GVariant) options = NULL;
+
+      subject = polkit_unix_process_new_for_owner (getpid (), 0, -1);
+
+      g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
+      g_variant_builder_add (&opt_builder, "{sv}", "fallback", g_variant_new_boolean (TRUE));
+      options = g_variant_ref_sink (g_variant_builder_end (&opt_builder));
+
+      agent = polkit_agent_listener_register_with_options (listener,
+                                                           POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
+                                                           subject,
+                                                           NULL,
+                                                           options,
+                                                           NULL,
+                                                           &error);
+      if (agent == NULL)
+        {
+          g_debug ("Failed to register polkit agent listener: %s", error->message);
+          g_clear_error (&error);
+        }
+      g_object_unref (listener);
+    }
+#endif
+
   ret = flatpak_run (argc, argv, &error);
+
+#ifdef USE_SYSTEM_HELPER
+  if (agent)
+    polkit_agent_listener_unregister (agent);
+#endif
 
   if (error != NULL)
     {

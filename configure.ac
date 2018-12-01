@@ -230,7 +230,7 @@ AC_ARG_ENABLE([system-helper],
               [enable_system_helper=yes])
 if test "x$enable_system_helper" = "xyes"; then
   PKG_CHECK_MODULES(POLKIT, \
-  		    polkit-gobject-1 >= $POLKIT_GOBJECT_REQUIRED)
+		    polkit-agent-1 >= $POLKIT_GOBJECT_REQUIRED)
   AC_DEFINE([USE_SYSTEM_HELPER], [1], [Define if using system-helper])
 fi
 AM_CONDITIONAL(BUILD_SYSTEM_HELPER, test x$enable_system_helper = xyes)
