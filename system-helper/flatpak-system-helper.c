@@ -1197,8 +1197,6 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
-  g_autofree char *new_branch = NULL;
-  g_autofree char *old_branch = NULL;
   gboolean is_oci;
 
   g_debug ("GenerateOciSummary %s %s", arg_origin, arg_installation);
