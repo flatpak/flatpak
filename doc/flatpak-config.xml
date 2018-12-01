@@ -57,7 +57,7 @@
         </para>
         <variablelist>
             <varlistentry>
-                <term>languages</term>
+                <term><varname>languages</varname></term>
                 <listitem><para>
                    The languages that are included when installing Locale extensions.
                    The value is a semicolon-separated list of two-letter language codes,
@@ -69,8 +69,8 @@
 
         <para>
             For configuration of individual remotes, see
-            <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            for configuration of individual applications, see
+            <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+            For configuration of individual applications, see
             <citerefentry><refentrytitle>flatpak-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
         </para>
 
