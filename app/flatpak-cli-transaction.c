@@ -156,6 +156,18 @@ op_type_to_string (FlatpakTransactionOperationType operation_type)
 #define BAR_LENGTH 20
 #define BAR_CHARS " -=#"
 
+static void
+progress_done (FlatpakTransaction *transaction)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+
+  if (self->progress_initialized)
+    {
+      g_print ("\n");
+      self->progress_initialized = FALSE;
+    }
+}
+
 
 static void
 progress_changed_cb (FlatpakTransactionProgress *progress,
@@ -207,15 +219,9 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   padded_width = MAX (cli->progress_last_width, width);
   cli->progress_last_width = width;
   g_print ("%-*.*s", padded_width, padded_width, str->str);
-}
 
-static void
-progress_done (FlatpakTransaction *transaction)
-{
-  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
-
-  if (self->progress_initialized)
-    g_print ("\n");
+  if (percent == 100)
+    progress_done (FLATPAK_TRANSACTION (cli));
 }
 
 static void
