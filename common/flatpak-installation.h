@@ -103,9 +103,9 @@ typedef enum {
  * Since: 0.11.8
  */
 typedef enum {
-  FLATPAK_UNINSTALL_FLAGS_NONE        = 0,
-  FLATPAK_UNINSTALL_FLAGS_NO_PRUNE    = (1 << 0),
-  FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS = (1 << 1),
+  FLATPAK_UNINSTALL_FLAGS_NONE            = 0,
+  FLATPAK_UNINSTALL_FLAGS_NO_PRUNE        = (1 << 0),
+  FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS     = (1 << 1),
 } FlatpakUninstallFlags;
 
 /**
@@ -163,6 +163,9 @@ FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_for_path (GFile    
                                                                        gboolean      user,
                                                                        GCancellable *cancellable,
                                                                        GError      **error);
+FLATPAK_EXTERN void flatpak_installation_set_no_interaction (FlatpakInstallation *installation,
+                                                             gboolean             no_interaction);
+FLATPAK_EXTERN gboolean flatpak_installation_get_no_interaction (FlatpakInstallation *installation);
 
 /**
  * FlatpakProgressCallback:

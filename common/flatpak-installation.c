@@ -151,6 +151,36 @@ flatpak_installation_new_for_dir (FlatpakDir   *dir,
 }
 
 /**
+ * flatpak_installation_set_no_interaction:
+ * @self: a #FlatpakInstallation
+ * @no_interaction: Whether to disallow interactive authorization for operations
+ *
+ * This method can be used to prevent interactive authorization dialogs to appear
+ * for operations on @self. This is useful for background operations that are not
+ * directly triggered by a user action.
+ *
+ * By default, interaction is allowed.
+ *
+ * Since: 1.1.1
+ */
+void
+flatpak_installation_set_no_interaction (FlatpakInstallation *self,
+                                         gboolean no_interaction)
+{
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+
+  flatpak_dir_set_no_interaction (priv->dir_unlocked, no_interaction);
+}
+
+gboolean
+flatpak_installation_get_no_interaction (FlatpakInstallation *self)
+{
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+
+  return flatpak_dir_get_no_interaction (priv->dir_unlocked);
+}
+
+/**
  * flatpak_get_default_arch:
  *
  * Returns the canonical name for the arch of the current machine.
@@ -1762,7 +1792,6 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
                                   g_bytes_get_size (ref_file_data),
                                   0, error))
     return FALSE;
-
 
   if (!flatpak_dir_create_remote_for_ref_file (dir, keyfile, NULL, &remote, &collection_id, &ref, error))
     return NULL;
