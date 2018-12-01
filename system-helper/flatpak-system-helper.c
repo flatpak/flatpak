@@ -757,10 +757,10 @@ handle_install_bundle (FlatpakSystemHelper   *object,
 
   flatpak_dir_set_source_pid (system, get_sender_pid (invocation));
 
-  if (arg_flags != 0)
+  if ((arg_flags & ~FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_ALL) != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                             "Unsupported flags enabled: 0x%x", arg_flags);
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_ALL));
       return TRUE;
     }
 
@@ -1299,6 +1299,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   g_autoptr(AutoPolkitDetails) details = polkit_details_new ();
   const gchar *action = NULL;
   gboolean authorized = FALSE;
+  gboolean no_interaction = FALSE;
 
   /* Ensure we don't idle exit */
   schedule_idle_callback ();
@@ -1347,6 +1348,8 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
               else
                 action = "org.freedesktop.Flatpak.runtime-install";
             }
+
+          no_interaction = (flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION) != 0;
         }
 
       polkit_details_insert (details, "origin", origin);
@@ -1354,12 +1357,15 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
     }
   else if (g_strcmp0 (method_name, "DeployAppstream") == 0)
     {
+      guint32 flags;
       const char *arch, *origin;
 
+      g_variant_get_child (parameters, 1, "u", &flags);
       g_variant_get_child (parameters, 2, "&s", &origin);
       g_variant_get_child (parameters, 3, "&s", &arch);
 
       action = "org.freedesktop.Flatpak.appstream-update";
+      no_interaction = (flags & FLATPAK_HELPER_DEPLOY_APPSTREAM_FLAGS_NO_INTERACTION) != 0;
 
       polkit_details_insert (details, "origin", origin);
       polkit_details_insert (details, "arch", arch);
@@ -1367,10 +1373,13 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   else if (g_strcmp0 (method_name, "InstallBundle") == 0)
     {
       const char *path;
+      guint32 flags;
 
       g_variant_get_child (parameters, 0, "^&ay", &path);
+      g_variant_get_child (parameters, 1, "u", &flags);
 
       action = "org.freedesktop.Flatpak.install-bundle";
+      no_interaction = (flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION) != 0;
 
       polkit_details_insert (details, "path", path);
     }
@@ -1378,7 +1387,9 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
     {
       const char *ref;
       gboolean is_app;
+      guint32 flags;
 
+      g_variant_get_child (parameters, 0, "u", &flags);
       g_variant_get_child (parameters, 1, "&s", &ref);
 
       is_app = g_str_has_prefix (ref, "app/");
@@ -1386,36 +1397,46 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
         action = "org.freedesktop.Flatpak.app-uninstall";
       else
         action = "org.freedesktop.Flatpak.runtime-uninstall";
+      no_interaction = (flags & FLATPAK_HELPER_UNINSTALL_FLAGS_NO_INTERACTION) != 0;
 
       polkit_details_insert (details, "ref", ref);
     }
   else if (g_strcmp0 (method_name, "ConfigureRemote") == 0)
     {
       const char *remote;
+      guint32 flags;
 
+      g_variant_get_child (parameters, 0, "u", &flags);
       g_variant_get_child (parameters, 1, "&s", &remote);
 
       action = "org.freedesktop.Flatpak.configure-remote";
+      no_interaction = (flags & FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_NO_INTERACTION) != 0;
 
       polkit_details_insert (details, "remote", remote);
     }
   else if (g_strcmp0 (method_name, "Configure") == 0)
     {
       const char *key;
+      guint32 flags;
 
+      g_variant_get_child (parameters, 0, "u", &flags);
       g_variant_get_child (parameters, 1, "&s", &key);
 
       action = "org.freedesktop.Flatpak.configure";
+      no_interaction = (flags & FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION) != 0;
 
       polkit_details_insert (details, "key", key);
     }
   else if (g_strcmp0 (method_name, "UpdateRemote") == 0)
     {
       const char *remote;
+      guint32 flags;
 
+      g_variant_get_child (parameters, 0, "u", &flags);
       g_variant_get_child (parameters, 1, "&s", &remote);
 
       action = "org.freedesktop.Flatpak.update-remote";
+      no_interaction = (flags & FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION) != 0;
 
       polkit_details_insert (details, "remote", remote);
     }
@@ -1424,7 +1445,13 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
            g_strcmp0 (method_name, "EnsureRepo") == 0 ||
            g_strcmp0 (method_name, "RunTriggers") == 0)
     {
+      guint32 flags;
+
       action = "org.freedesktop.Flatpak.modify-repo";
+
+      /* all of these methods have flags as first argument, and 1 << 0 as 'no-interaction' */
+      g_variant_get_child (parameters, 0, "u", &flags);
+      no_interaction = (flags & (1 << 0)) != 0;
     }
   else if (g_strcmp0 (method_name, "UpdateSummary") == 0 ||
            g_strcmp0 (method_name, "GenerateOciSummary") == 0)
@@ -1436,10 +1463,16 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
     {
       g_autoptr(AutoPolkitAuthorizationResult) result = NULL;
       g_autoptr(GError) error = NULL;
+      PolkitCheckAuthorizationFlags auth_flags;
+
+      if (no_interaction)
+        auth_flags = POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE;
+      else
+        auth_flags = POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION;
 
       result = polkit_authority_check_authorization_sync (authority, subject,
                                                           action, details,
-                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
+                                                          auth_flags,
                                                           NULL, &error);
       if (result == NULL)
         {
