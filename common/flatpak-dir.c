@@ -159,6 +159,7 @@ struct FlatpakDir
   DirExtraData    *extra_data;
   OstreeRepo      *repo;
   gboolean         no_system_helper;
+  gboolean         no_interaction;
   pid_t            source_pid;
 
   GDBusConnection *system_helper_bus;
@@ -1157,7 +1158,6 @@ flatpak_dir_use_system_helper (FlatpakDir *self,
 #else
   return FALSE;
 #endif
-
 }
 
 static GVariant *
@@ -1215,6 +1215,9 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                        GCancellable       *cancellable,
                                        GError            **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "Deploy",
                                     g_variant_new ("(^ayuss^ass)",
@@ -1238,6 +1241,9 @@ flatpak_dir_system_helper_call_deploy_appstream (FlatpakDir   *self,
                                                  GCancellable *cancellable,
                                                  GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_DEPLOY_APPSTREAM_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "DeployAppstream",
                                     g_variant_new ("(^ayusss)",
@@ -1258,6 +1264,9 @@ flatpak_dir_system_helper_call_uninstall (FlatpakDir   *self,
                                           GCancellable *cancellable,
                                           GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "Uninstall",
                                     g_variant_new ("(uss)",
@@ -1278,6 +1287,9 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
                                                GCancellable *cancellable,
                                                GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "InstallBundle",
                                     g_variant_new ("(^ayuss)",
@@ -1303,6 +1315,9 @@ flatpak_dir_system_helper_call_configure_remote (FlatpakDir   *self,
                                                  GCancellable *cancellable,
                                                  GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "ConfigureRemote",
                                     g_variant_new ("(uss@ays)",
@@ -1325,6 +1340,9 @@ flatpak_dir_system_helper_call_configure (FlatpakDir   *self,
                                           GCancellable *cancellable,
                                           GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "Configure",
                                     g_variant_new ("(usss)",
@@ -1346,6 +1364,9 @@ flatpak_dir_system_helper_call_update_remote (FlatpakDir   *self,
                                               GCancellable *cancellable,
                                               GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "UpdateRemote",
                                     g_variant_new ("(uss^ay^ay)",
@@ -1367,6 +1388,9 @@ flatpak_dir_system_helper_call_remove_local_ref (FlatpakDir   *self,
                                                  GCancellable *cancellable,
                                                  GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_REMOVE_LOCAL_REF_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "RemoveLocalRef",
                                     g_variant_new ("(usss)",
@@ -1385,6 +1409,9 @@ flatpak_dir_system_helper_call_prune_local_repo (FlatpakDir   *self,
                                                  GCancellable *cancellable,
                                                  GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_PRUNE_LOCAL_REPO_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "PruneLocalRepo",
                                     g_variant_new ("(us)",
@@ -1401,6 +1428,9 @@ flatpak_dir_system_helper_call_run_triggers (FlatpakDir   *self,
                                              GCancellable *cancellable,
                                              GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_RUN_TRIGGERS_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "RunTriggers",
                                     g_variant_new ("(us)",
@@ -1417,6 +1447,9 @@ flatpak_dir_system_helper_call_ensure_repo (FlatpakDir   *self,
                                             GCancellable *cancellable,
                                             GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_ENSURE_REPO_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "EnsureRepo",
                                     g_variant_new ("(us)",
@@ -1433,6 +1466,9 @@ flatpak_dir_system_helper_call_update_summary (FlatpakDir   *self,
                                                GCancellable *cancellable,
                                                GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "UpdateSummary",
                                     g_variant_new ("(us)",
@@ -1450,6 +1486,9 @@ flatpak_dir_system_helper_call_generate_oci_summary (FlatpakDir   *self,
                                                      GCancellable *cancellable,
                                                      GError      **error)
 {
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NO_INTERACTION;
+
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "GenerateOciSummary",
                                     g_variant_new ("(uss)",
@@ -1588,6 +1627,19 @@ flatpak_dir_set_no_system_helper (FlatpakDir *self,
                                   gboolean    no_system_helper)
 {
   self->no_system_helper = no_system_helper;
+}
+
+void
+flatpak_dir_set_no_interaction (FlatpakDir *self,
+                                gboolean    no_interaction)
+{
+  self->no_interaction = no_interaction;
+}
+
+gboolean
+flatpak_dir_get_no_interaction (FlatpakDir *self)
+{
+  return self->no_interaction;
 }
 
 GFile *
@@ -10475,7 +10527,14 @@ flatpak_dir_new (GFile *path, gboolean user)
 FlatpakDir *
 flatpak_dir_clone (FlatpakDir *self)
 {
-  return flatpak_dir_new_full (self->basedir, self->user, self->extra_data);
+  FlatpakDir *clone;
+
+  clone = flatpak_dir_new_full (self->basedir, self->user, self->extra_data);
+
+  flatpak_dir_set_no_system_helper (clone, self->no_system_helper);
+  flatpak_dir_set_no_interaction (clone, self->no_interaction);
+
+  return clone;
 }
 
 FlatpakDir *
