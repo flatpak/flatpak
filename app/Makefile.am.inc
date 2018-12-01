@@ -83,9 +83,9 @@ app/parse-datetime.c: app/parse-datetime.y Makefile
 BUILT_SOURCES += $(flatpak_dbus_built_sources)
 CLEANFILES += app/parse-datetime.c $(flatpak_dbus_built_sources)
 
-flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) $(SYSTEMD_LIBS) \
+flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) $(SYSTEMD_LIBS) $(POLKIT_LIBS) \
 	libglnx.la libflatpak-common.la
-flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) $(SYSTEMD_CFLAGS) \
+flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) $(SYSTEMD_CFLAGS) $(POLKIT_CFLAGS) \
 	-DFLATPAK_COMPILATION \
         -I$(srcdir)/app \
         -I$(builddir)/app \
