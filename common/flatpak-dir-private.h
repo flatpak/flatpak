@@ -339,6 +339,9 @@ FlatpakDir  *flatpak_dir_get_system_by_id (const char   *id,
 gboolean    flatpak_dir_is_user (FlatpakDir *self);
 void        flatpak_dir_set_no_system_helper (FlatpakDir *self,
                                               gboolean    no_system_helper);
+void        flatpak_dir_set_no_interaction (FlatpakDir *self,
+                                            gboolean    no_interaction);
+gboolean    flatpak_dir_get_no_interaction (FlatpakDir *self);
 GFile *     flatpak_dir_get_path (FlatpakDir *self);
 GFile *     flatpak_dir_get_changed_path (FlatpakDir *self);
 const char *flatpak_dir_get_id (FlatpakDir *self);
