@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="flatpak-permission-list">
+<refentry id="flatpak-permissions">
 
     <refentryinfo>
-        <title>flatpak permission-list</title>
+        <title>flatpak permissions</title>
         <productname>flatpak</productname>
 
         <authorgroup>
@@ -19,18 +19,18 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>flatpak permission-list</refentrytitle>
+        <refentrytitle>flatpak permissions</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>flatpak-permission-list</refname>
+        <refname>flatpak-permissions</refname>
         <refpurpose>List permissions</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>flatpak permission-list</command>
+                <command>flatpak permissions</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="opt">TABLE</arg>
                 <arg choice="opt">ID</arg>

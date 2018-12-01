@@ -39,9 +39,9 @@ man1 = \
 	flatpak-document-export.1	\
 	flatpak-document-unexport.1	\
 	flatpak-document-info.1		\
-	flatpak-document-list.1		\
+	flatpak-documents.1		\
 	flatpak-permission-remove.1	\
-	flatpak-permission-list.1	\
+	flatpak-permissions.1		\
 	flatpak-permission-show.1	\
 	flatpak-permission-reset.1	\
 	flatpak-build-init.1		\

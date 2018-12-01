@@ -88,15 +88,17 @@ static FlatpakCommand commands[] = {
 
   /* translators: please keep the leading newline and space */
   { N_("\n Manage file access") },
+  { "documents", N_("List exported files"), flatpak_builtin_document_list, flatpak_complete_document_list },
   { "document-export", N_("Grant an application access to a specific file"), flatpak_builtin_document_export, flatpak_complete_document_export },
   { "document-unexport", N_("Revoke access to a specific file"), flatpak_builtin_document_unexport, flatpak_complete_document_unexport },
   { "document-info", N_("Show information about a specific file"), flatpak_builtin_document_info, flatpak_complete_document_info },
-  { "document-list", N_("List exported files"), flatpak_builtin_document_list, flatpak_complete_document_list },
+  { "document-list", NULL, flatpak_builtin_document_list, flatpak_complete_document_list, TRUE },
 
   /* translators: please keep the leading newline and space */
   { N_("\n Manage dynamic permissions") },
+  { "permissions", N_("List permissions"), flatpak_builtin_permission_list, flatpak_complete_permission_list },
   { "permission-remove", N_("Remove item from permission store"), flatpak_builtin_permission_remove, flatpak_complete_permission_remove },
-  { "permission-list", N_("List permissions"), flatpak_builtin_permission_list, flatpak_complete_permission_list },
+  { "permission-list", NULL, flatpak_builtin_permission_list, flatpak_complete_permission_list, TRUE },
   { "permission-show", N_("Show app permissions"), flatpak_builtin_permission_show, flatpak_complete_permission_show },
   { "permission-reset", N_("Reset app permissions"), flatpak_builtin_permission_reset, flatpak_complete_permission_reset },
 

@@ -37,7 +37,7 @@
       <xi:include href="@srcdir@/flatpak-create-usb.xml"/>
       <xi:include href="@srcdir@/flatpak-document-export.xml"/>
       <xi:include href="@srcdir@/flatpak-document-info.xml"/>
-      <xi:include href="@srcdir@/flatpak-document-list.xml"/>
+      <xi:include href="@srcdir@/flatpak-documents.xml"/>
       <xi:include href="@srcdir@/flatpak-document-unexport.xml"/>
       <xi:include href="@srcdir@/flatpak-enter.xml"/>
       <xi:include href="@srcdir@/flatpak-history.xml"/>
@@ -48,7 +48,7 @@
       <xi:include href="@srcdir@/flatpak-make-current.xml"/>
       <xi:include href="@srcdir@/flatpak-override.xml"/>
       <xi:include href="@srcdir@/flatpak-permission-remove.xml"/>
-      <xi:include href="@srcdir@/flatpak-permission-list.xml"/>
+      <xi:include href="@srcdir@/flatpak-permissions.xml"/>
       <xi:include href="@srcdir@/flatpak-permission-show.xml"/>
       <xi:include href="@srcdir@/flatpak-permission-reset.xml"/>
       <xi:include href="@srcdir@/flatpak-ps.xml"/>

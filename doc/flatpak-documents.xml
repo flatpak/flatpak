@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="flatpak-document-list">
+<refentry id="flatpak-documents">
 
     <refentryinfo>
-        <title>flatpak document-list</title>
+        <title>flatpak documents</title>
         <productname>flatpak</productname>
 
         <authorgroup>
@@ -19,18 +19,18 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>flatpak document-list</refentrytitle>
+        <refentrytitle>flatpak documents</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>flatpak-document-list</refname>
+        <refname>flatpak-documents</refname>
         <refpurpose>List exported files</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>flatpak document-list</command>
+                <command>flatpak documents</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="opt">APPID</arg>
             </cmdsynopsis>

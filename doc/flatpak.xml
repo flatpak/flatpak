@@ -299,7 +299,7 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>flatpak-document-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>flatpak-documents</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     List exported files.
@@ -318,7 +318,7 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>flatpak-permission-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>flatpak-permissions</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     List permissions.
