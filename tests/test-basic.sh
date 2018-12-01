@@ -56,8 +56,8 @@ echo "ok gl drivers"
 
 for cmd in install update uninstall list info config repair create-usb \
            search run override make-current enter ps document-export \
-           document-unexport document-info document-list permission-remove \
-           permission-list permission-show permission-reset remotes remote-add \
+           document-unexport document-info documents permission-remove \
+           permissions permission-show permission-reset remotes remote-add \
            remote-modify remote-delete remote-ls remote-info build-init \
            build build-finish build-export build-bundle build-import-bundle \
            build-sign build-update-repo build-commit-from repo kill history;
@@ -70,7 +70,7 @@ done
 
 echo "ok command help"
 
-for cmd in list ps remote-ls remotes document-list history;
+for cmd in list ps remote-ls remotes documents history;
 do
   ${FLATPAK} $cmd --columns=help > help_out
 
