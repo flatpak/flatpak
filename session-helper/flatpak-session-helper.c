@@ -235,6 +235,16 @@ handle_host_command (FlatpakDevelopment    *object,
       return TRUE;
     }
 
+  if (!g_variant_is_of_type (arg_fds, G_VARIANT_TYPE ("a{uh}")) ||
+      !g_variant_is_of_type (arg_envs, G_VARIANT_TYPE ("a{ss}")) ||
+      (flags & ~FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unexpected argument");
+      return TRUE;
+    }
+
   g_debug ("Running host command %s", arg_argv[0]);
 
   n_fds = 0;
