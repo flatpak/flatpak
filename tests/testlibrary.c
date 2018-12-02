@@ -2658,6 +2658,8 @@ test_overrides (void)
   gboolean res;
   g_autofree char *value = NULL;
   g_autoptr(FlatpakInstalledRef) ref = NULL;
+  g_auto(GStrv) list = NULL;
+  gsize len;
  
   if (!check_bwrap_support ())
     {
@@ -2723,13 +2725,18 @@ test_overrides (void)
   g_assert_cmpstr (value, ==, "bluetooth;!canbus;");
   g_clear_pointer (&value, g_free);
 
-  value = g_key_file_get_string (overrides, "Context", "filesystems", &error);
-  g_assert_cmpstr (value, ==, "xdg-download/subdir:create;xdg-music;~/foo:ro;");
-  g_clear_pointer (&value, g_free);
+  list = g_key_file_get_string_list (overrides, "Context", "filesystems", &len, &error);
+  g_assert_cmpint (len, ==, 3);
+  g_assert_true (g_strv_contains ((const char * const *)list, "xdg-download/subdir:create"));
+  g_assert_true (g_strv_contains ((const char * const *)list, "xdg-music"));
+  g_assert_true (g_strv_contains ((const char * const *)list, "~/foo:ro"));
+  g_clear_pointer (&list, g_strfreev);
 
-  value = g_key_file_get_string (overrides, "Context", "sockets", &error);
-  g_assert_cmpstr (value, ==, "wayland;!pulseaudio;");
-  g_clear_pointer (&value, g_free);
+  list = g_key_file_get_string_list (overrides, "Context", "sockets", &len, &error);
+  g_assert_cmpint (len, ==, 2);
+  g_assert_true (g_strv_contains ((const char * const *)list, "wayland"));
+  g_assert_true (g_strv_contains ((const char * const *)list, "!pulseaudio"));
+  g_clear_pointer (&list, g_strfreev);
 
   value = g_key_file_get_string (overrides, "Session Bus Policy", "hello.bla.bla.*", &error);
   g_assert_cmpstr (value, ==, "talk");
