@@ -1231,6 +1231,7 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
 static gboolean
 flatpak_dir_system_helper_call_deploy_appstream (FlatpakDir   *self,
                                                  const gchar  *arg_repo_path,
+                                                 guint         arg_flags,
                                                  const gchar  *arg_origin,
                                                  const gchar  *arg_arch,
                                                  const gchar  *arg_installation,
@@ -1239,8 +1240,9 @@ flatpak_dir_system_helper_call_deploy_appstream (FlatpakDir   *self,
 {
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "DeployAppstream",
-                                    g_variant_new ("(^aysss)",
+                                    g_variant_new ("(^ayusss)",
                                                    arg_repo_path,
+                                                   arg_flags,
                                                    arg_origin,
                                                    arg_arch,
                                                    arg_installation),
@@ -1358,6 +1360,7 @@ flatpak_dir_system_helper_call_update_remote (FlatpakDir   *self,
 
 static gboolean
 flatpak_dir_system_helper_call_remove_local_ref (FlatpakDir   *self,
+                                                 guint         arg_flags,
                                                  const gchar  *arg_remote,
                                                  const gchar  *arg_ref,
                                                  const gchar  *arg_installation,
@@ -1366,7 +1369,8 @@ flatpak_dir_system_helper_call_remove_local_ref (FlatpakDir   *self,
 {
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "RemoveLocalRef",
-                                    g_variant_new ("(sss)",
+                                    g_variant_new ("(usss)",
+                                                   arg_flags,
                                                    arg_remote,
                                                    arg_ref,
                                                    arg_installation),
@@ -1376,13 +1380,15 @@ flatpak_dir_system_helper_call_remove_local_ref (FlatpakDir   *self,
 
 static gboolean
 flatpak_dir_system_helper_call_prune_local_repo (FlatpakDir   *self,
+                                                 guint         arg_flags,
                                                  const gchar  *arg_installation,
                                                  GCancellable *cancellable,
                                                  GError      **error)
 {
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "PruneLocalRepo",
-                                    g_variant_new ("(s)",
+                                    g_variant_new ("(us)",
+                                                   arg_flags,
                                                    arg_installation),
                                     cancellable, error);
   return ret != NULL;
@@ -1390,13 +1396,15 @@ flatpak_dir_system_helper_call_prune_local_repo (FlatpakDir   *self,
 
 static gboolean
 flatpak_dir_system_helper_call_run_triggers (FlatpakDir   *self,
+                                             guint         arg_flags,
                                              const gchar  *arg_installation,
                                              GCancellable *cancellable,
                                              GError      **error)
 {
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "RunTriggers",
-                                    g_variant_new ("(s)",
+                                    g_variant_new ("(us)",
+                                                   arg_flags,
                                                    arg_installation),
                                     cancellable, error);
   return ret != NULL;
@@ -1404,13 +1412,15 @@ flatpak_dir_system_helper_call_run_triggers (FlatpakDir   *self,
 
 static gboolean
 flatpak_dir_system_helper_call_ensure_repo (FlatpakDir   *self,
+                                            guint         arg_flags,
                                             const gchar  *arg_installation,
                                             GCancellable *cancellable,
                                             GError      **error)
 {
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "EnsureRepo",
-                                    g_variant_new ("(s)",
+                                    g_variant_new ("(us)",
+                                                   arg_flags,
                                                    arg_installation),
                                     cancellable, error);
   return ret != NULL;
@@ -1418,13 +1428,15 @@ flatpak_dir_system_helper_call_ensure_repo (FlatpakDir   *self,
 
 static gboolean
 flatpak_dir_system_helper_call_update_summary (FlatpakDir   *self,
+                                               guint         arg_flags,
                                                const gchar  *arg_installation,
                                                GCancellable *cancellable,
                                                GError      **error)
 {
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "UpdateSummary",
-                                    g_variant_new ("(s)",
+                                    g_variant_new ("(us)",
+                                                   arg_flags,
                                                    arg_installation),
                                     cancellable, error);
   return ret != NULL;
@@ -1432,6 +1444,7 @@ flatpak_dir_system_helper_call_update_summary (FlatpakDir   *self,
 
 static gboolean
 flatpak_dir_system_helper_call_generate_oci_summary (FlatpakDir   *self,
+                                                     guint         arg_flags,
                                                      const gchar  *arg_origin,
                                                      const gchar  *arg_installation,
                                                      GCancellable *cancellable,
@@ -1439,7 +1452,8 @@ flatpak_dir_system_helper_call_generate_oci_summary (FlatpakDir   *self,
 {
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "GenerateOciSummary",
-                                    g_variant_new ("(ss)",
+                                    g_variant_new ("(uss)",
+                                                   arg_flags,
                                                    arg_origin,
                                                    arg_installation),
                                     cancellable, error);
@@ -2289,6 +2303,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
           const char *installation = flatpak_dir_get_id (self);
 
           if (!flatpak_dir_system_helper_call_ensure_repo (self,
+                                                           FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
                                                            installation ? installation : "",
                                                            NULL, &local_error))
             {
@@ -3478,6 +3493,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
       if (!flatpak_dir_system_helper_call_deploy_appstream (self,
                                                             child_repo_path ? child_repo_path : "",
+                                                            FLATPAK_HELPER_DEPLOY_APPSTREAM_FLAGS_NONE,
                                                             remote,
                                                             arch,
                                                             installation ? installation : "",
@@ -5414,6 +5430,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
       const char *installation = flatpak_dir_get_id (self);
 
       if (!flatpak_dir_system_helper_call_run_triggers (self,
+                                                        FLATPAK_HELPER_RUN_TRIGGERS_FLAGS_NONE,
                                                         installation ? installation : "",
                                                         cancellable,
                                                         error))
@@ -7140,7 +7157,8 @@ flatpak_dir_prune_origin_remote (FlatpakDir *self,
           gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
 
           flatpak_dir_system_helper_call_configure_remote (self,
-                                                           0, remote,
+                                                           FLATPAK_HELPER_CONFIGURE_FLAGS_NONE,
+                                                           remote,
                                                            "",
                                                            gpg_data_v,
                                                            installation ? installation : "",
@@ -8898,6 +8916,7 @@ flatpak_dir_remove_ref (FlatpakDir   *self,
       const char *installation = flatpak_dir_get_id (self);
 
       if (!flatpak_dir_system_helper_call_remove_local_ref (self,
+                                                            FLATPAK_HELPER_REMOVE_LOCAL_REF_FLAGS_NONE,
                                                             remote_name,
                                                             ref,
                                                             installation ? installation : "",
@@ -8994,6 +9013,7 @@ flatpak_dir_prune (FlatpakDir   *self,
       const char *installation = flatpak_dir_get_id (self);
 
       if (!flatpak_dir_system_helper_call_prune_local_repo (self,
+                                                            FLATPAK_HELPER_PRUNE_LOCAL_REPO_FLAGS_NONE,
                                                             installation ? installation : "",
                                                             cancellable,
                                                             error))
@@ -9058,6 +9078,7 @@ flatpak_dir_update_summary (FlatpakDir   *self,
       const char *installation = flatpak_dir_get_id (self);
 
       return flatpak_dir_system_helper_call_update_summary (self,
+                                                            FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NONE,
                                                             installation ? installation : "",
                                                             cancellable,
                                                             error);
@@ -9275,7 +9296,9 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
     {
       const char *installation = flatpak_dir_get_id (self);
 
-      if (!flatpak_dir_system_helper_call_generate_oci_summary (self, remote,
+      if (!flatpak_dir_system_helper_call_generate_oci_summary (self,
+                                                                FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NONE,
+                                                                remote,
                                                                 installation ? installation : "",
                                                                 cancellable, error))
         return FALSE;

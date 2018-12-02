@@ -78,6 +78,7 @@
 
     <method name="DeployAppstream">
       <arg type='ay' name='repo_path' direction='in'/>
+      <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='origin' direction='in'/>
       <arg type='s' name='arch' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
@@ -123,28 +124,34 @@
     </method>
 
     <method name="RemoveLocalRef">
+      <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='remote' direction='in'/>
       <arg type='s' name='ref' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
     </method>
 
     <method name="PruneLocalRepo">
+      <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
     </method>
 
     <method name="RunTriggers">
+      <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
     </method>
 
     <method name="EnsureRepo">
+      <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
     </method>
 
     <method name="UpdateSummary">
+      <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
     </method>
 
     <method name="GenerateOciSummary">
+      <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='origin' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
     </method>
