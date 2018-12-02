@@ -1016,6 +1016,7 @@ handle_update_remote (FlatpakSystemHelper   *object,
 static gboolean
 handle_remove_local_ref (FlatpakSystemHelper   *object,
                          GDBusMethodInvocation *invocation,
+                         guint                  arg_flags,
                          const gchar           *arg_remote,
                          const gchar           *arg_ref,
                          const gchar           *arg_installation)
@@ -1033,6 +1034,13 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
     }
 
   flatpak_dir_set_source_pid (system, get_sender_pid (invocation));
+
+  if ((arg_flags & ~FLATPAK_HELPER_REMOVE_LOCAL_REF_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_REMOVE_LOCAL_REF_FLAGS_ALL));
+      return TRUE;
+    }
 
   if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
     {
@@ -1061,6 +1069,7 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
 static gboolean
 handle_prune_local_repo (FlatpakSystemHelper   *object,
                          GDBusMethodInvocation *invocation,
+                         guint                  arg_flags,
                          const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
@@ -1072,6 +1081,13 @@ handle_prune_local_repo (FlatpakSystemHelper   *object,
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_PRUNE_LOCAL_REPO_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_PRUNE_LOCAL_REPO_FLAGS_ALL));
       return TRUE;
     }
 
@@ -1096,6 +1112,7 @@ handle_prune_local_repo (FlatpakSystemHelper   *object,
 static gboolean
 handle_ensure_repo (FlatpakSystemHelper   *object,
                     GDBusMethodInvocation *invocation,
+                    guint                  arg_flags,
                     const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
@@ -1107,6 +1124,13 @@ handle_ensure_repo (FlatpakSystemHelper   *object,
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_ENSURE_REPO_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_ENSURE_REPO_FLAGS_ALL));
       return TRUE;
     }
 
@@ -1124,6 +1148,7 @@ handle_ensure_repo (FlatpakSystemHelper   *object,
 static gboolean
 handle_run_triggers (FlatpakSystemHelper   *object,
                      GDBusMethodInvocation *invocation,
+                     guint                  arg_flags,
                      const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
@@ -1135,6 +1160,13 @@ handle_run_triggers (FlatpakSystemHelper   *object,
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_RUN_TRIGGERS_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_RUN_TRIGGERS_FLAGS_ALL));
       return TRUE;
     }
 
@@ -1158,6 +1190,7 @@ handle_run_triggers (FlatpakSystemHelper   *object,
 static gboolean
 handle_update_summary (FlatpakSystemHelper   *object,
                        GDBusMethodInvocation *invocation,
+                       guint                  arg_flags,
                        const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
@@ -1169,6 +1202,13 @@ handle_update_summary (FlatpakSystemHelper   *object,
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_ALL));
       return TRUE;
     }
 
@@ -1192,6 +1232,7 @@ handle_update_summary (FlatpakSystemHelper   *object,
 static gboolean
 handle_generate_oci_summary (FlatpakSystemHelper   *object,
                              GDBusMethodInvocation *invocation,
+                             guint                  arg_flags,
                              const gchar           *arg_origin,
                              const gchar           *arg_installation)
 {
@@ -1205,6 +1246,13 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ALL));
       return TRUE;
     }
 
