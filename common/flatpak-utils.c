@@ -592,6 +592,9 @@ flatpak_get_gtk_theme (void)
 gboolean
 flatpak_fancy_output (void)
 {
+  if (g_strcmp0 (g_getenv ("FLATPAK_FANCY_OUTPUT"), "0") == 0)
+    return FALSE;
+
   return isatty (STDOUT_FILENO);
 }
 

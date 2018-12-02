@@ -32,8 +32,7 @@
 
 #ifdef USE_SYSTEM_HELPER
 #include <polkit/polkit.h>
-#define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE
-#include <polkitagent/polkitagent.h>
+#include "flatpak-polkit-agent-text-listener.h"
 #endif
 
 #include "flatpak-builtins.h"
@@ -638,7 +637,7 @@ main (int    argc,
 
 #ifdef USE_SYSTEM_HELPER
   /* Install a polkit agent as fallback, in case we're running on a console */
-  listener = polkit_agent_text_listener_new (NULL, &error);
+  listener = flatpak_polkit_agent_text_listener_new (NULL, &error);
   if (listener == NULL)
     {
       g_debug ("Failed to create polkit agent listener: %s", error->message);
@@ -653,7 +652,8 @@ main (int    argc,
       subject = polkit_unix_process_new_for_owner (getpid (), 0, -1);
 
       g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
-      g_variant_builder_add (&opt_builder, "{sv}", "fallback", g_variant_new_boolean (TRUE));
+      if (g_strcmp0 (g_getenv ("FLATPAK_FORCE_TEXT_AUTH"), "1") != 0)
+        g_variant_builder_add (&opt_builder, "{sv}", "fallback", g_variant_new_boolean (TRUE));
       options = g_variant_ref_sink (g_variant_builder_end (&opt_builder));
 
       agent = polkit_agent_listener_register_with_options (listener,
