@@ -20,6 +20,8 @@ app/%-dbus-generated.h: app/%-dbus-generated.c
 
 flatpak_SOURCES = \
 	app/flatpak-main.c \
+	app/flatpak-polkit-agent-text-listener.h \
+	app/flatpak-polkit-agent-text-listener.c \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
 	app/flatpak-builtins-utils.c \
