@@ -347,7 +347,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                   g_auto(GStrv) refs = NULL;
                   g_autoptr(GError) local_error = NULL;
 
-                  if (flatpak_dir_get_remote_disabled (this_dir, this_remote))
+                  if (flatpak_dir_get_remote_disabled (this_dir, this_remote) ||
+                      flatpak_dir_get_remote_noenumerate (this_dir, this_remote))
                     continue;
 
                   this_default_branch = flatpak_dir_get_remote_default_branch (this_dir, this_remote);
