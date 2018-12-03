@@ -4257,7 +4257,7 @@ msgstr "Пустая строка не является числом"
 #: common/flatpak-utils.c:5736
 #, c-format
 msgid "“%s” is not an unsigned number"
-msgstr ""%s" не является положительным числом"
+msgstr "“%s” не является положительным числом"
 
 #: common/flatpak-utils.c:5746
 #, c-format
