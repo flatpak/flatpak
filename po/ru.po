@@ -1259,7 +1259,7 @@ msgstr "'%s' не является корректным именем прило�
 #: app/flatpak-builtins-enter.c:136
 #, c-format
 msgid "No such pid %s"
-msgstr "Не такого процесса %s"
+msgstr "Нет такого процесса %s"
 
 #: app/flatpak-builtins-enter.c:148
 msgid "Can't read cwd"
@@ -2794,7 +2794,7 @@ msgstr "Установка: %s\n"
 
 #: app/flatpak-cli-transaction.c:294
 msgid "No updates.\n"
-msgstr "Нет обновлений\n"
+msgstr "Нет обновлений.\n"
 
 #: app/flatpak-cli-transaction.c:296
 #, c-format
@@ -3402,7 +3402,6 @@ msgstr "Сохранять домашний каталог"
 #: common/flatpak-context.c:1215
 msgid "FILENAME"
 msgstr "ИМЯ_ФАЙЛА"
-
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
 #: common/flatpak-context.c:1217
 msgid "Don't require a running session (no cgroups creation)"
@@ -3466,7 +3465,7 @@ msgstr "%s не установлено"
 #: common/flatpak-dir.c:1814
 #, fuzzy, c-format
 msgid "%s (commit %s) not installed"
-msgstr "%s %s не установлено"
+msgstr "%s (коммит %s) не установлено"
 
 #: common/flatpak-dir.c:2355
 #, c-format
@@ -3989,7 +3988,7 @@ msgstr "Ошибка чтения из экспортированного фай
 #: common/flatpak-run.c:2357
 #, fuzzy, c-format
 msgid "Invalid group: %d"
-msgstr "Неверный pid %s"
+msgstr "Неверная группа %s"
 
 #: common/flatpak-run.c:2807
 #, fuzzy, c-format
@@ -4074,7 +4073,7 @@ msgstr ""
 
 #: common/flatpak-transaction.c:2682
 msgid "Aborted by user"
-msgstr ""
+msgstr "Прервано полльзователем"
 
 #: common/flatpak-transaction.c:2708
 #, c-format
@@ -4253,12 +4252,12 @@ msgstr "%s требует более новую версию flatpak (%s)"
 
 #: common/flatpak-utils.c:5710
 msgid "Empty string is not a number"
-msgstr ""
+msgstr "Пустая строка не является числом"
 
 #: common/flatpak-utils.c:5736
 #, c-format
 msgid "“%s” is not an unsigned number"
-msgstr ""
+msgstr ""%s" не является положительным числом"
 
 #: common/flatpak-utils.c:5746
 #, c-format
