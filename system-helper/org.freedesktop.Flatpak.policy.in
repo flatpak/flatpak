@@ -21,7 +21,7 @@
             in the wheel group to install without authenticating.
      -->
     <description>Install signed application</description>
-    <message>Authentication is required to install $(ref) from $(origin)</message>
+    <message>Authentication is required to install software</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -39,7 +39,7 @@
             in the wheel group to install without authenticating.
     -->
     <description>Install signed runtime</description>
-    <message>Authentication is required to install $(ref) from $(origin)</message>
+    <message>Authentication is required to install software</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -58,7 +58,7 @@
             updates.
      -->
     <description>Update signed application</description>
-    <message>Authentication is required to update $(ref) from $(origin)</message>
+    <message>Authentication is required to update software</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -77,7 +77,7 @@
             updates.
      -->
     <description>Update signed runtime</description>
-    <message>Authentication is required to update $(ref) from $(origin)</message>
+    <message>Authentication is required to update software</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -92,7 +92,7 @@
             from signed repositories.
      -->
     <description>Update remote metadata</description>
-    <message>Authentication is required to update the remote $(remote)</message>
+    <message>Authentication is required to update remote info</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -109,7 +109,7 @@
             in the wheel group to modify repos without authenticating.
      -->
     <description>Update system repository</description>
-    <message>Authentication is required to modify the system repository</message>
+    <message>Authentication is required to modify a system repository</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -142,7 +142,7 @@
             in the wheel group to uninstall without authenticating.
      -->
     <description>Uninstall runtime</description>
-    <message>Authentication is required to uninstall $(ref)</message>
+    <message>Authentication is required to uninstall software</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -175,7 +175,7 @@
             software repositories.
      -->
     <description>Configure Remote</description>
-    <message>Authentication is required to configure the remote $(remote)</message>
+    <message>Authentication is required to configure software repositories</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -208,7 +208,7 @@
             updates.
      -->
     <description>Update appstream</description>
-    <message>Authentication is required to update information from $(origin)</message>
+    <message>Authentication is required to update information about software</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
