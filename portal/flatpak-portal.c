@@ -218,7 +218,7 @@ child_setup_func (gpointer user_data)
   if (data->set_tty)
     {
       /* data->tty is our from fd which is closed at this point.
-       * so locate the destnation fd and use it for the ioctl.
+       * so locate the destination fd and use it for the ioctl.
        */
       for (i = 0; i < data->fd_map_len; i++)
         {
