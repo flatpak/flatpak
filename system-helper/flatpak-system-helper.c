@@ -1334,6 +1334,22 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
           is_update = (flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
           is_app = g_str_has_prefix (ref, "app/");
 
+          /* These flags allow clients to "upgrade" the permission,
+           * avoiding the need for multiple polkit dialogs when we first
+           * update a runtime, then install the app that needs it.
+           *
+           * Note that our policy has implications:
+           * app-install > app-update > runtime-install > runtime-update
+           * which means that these hints only ever select a stronger
+           * permission, and are safe in that sense.
+           */
+
+          if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT) != 0)
+            is_app = TRUE;
+
+          if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT) != 0)
+            is_update = FALSE;
+
           if (is_update)
             {
               if (is_app)

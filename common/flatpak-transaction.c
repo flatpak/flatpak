@@ -68,6 +68,13 @@
 /* This is an internal-only element of FlatpakTransactionOperationType */
 #define FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE FLATPAK_TRANSACTION_OPERATION_LAST_TYPE + 1
 
+enum {
+  RUNTIME_UPDATE,
+  RUNTIME_INSTALL,
+  APP_UPDATE,
+  APP_INSTALL
+};
+
 struct _FlatpakTransactionOperation
 {
   GObject                         parent;
@@ -133,6 +140,7 @@ struct _FlatpakTransactionPrivate
   gboolean                     force_uninstall;
   gboolean                     can_run;
   char                        *default_arch;
+  guint                        max_op;
 };
 
 enum {
@@ -2001,6 +2009,19 @@ resolve_ops (FlatpakTransaction *self,
 
       /* op->kind is INSTALL or UPDATE */
 
+      if (g_str_has_prefix (op->ref, "app/"))
+        {
+          if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
+            priv->max_op = APP_INSTALL;
+          else
+            priv->max_op = MAX (priv->max_op, APP_UPDATE);
+        }
+      else if (g_str_has_prefix (op->ref, "runtime/"))
+        {
+          if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
+            priv->max_op = MAX (priv->max_op, RUNTIME_INSTALL);
+        }
+           
       state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
       if (state == NULL)
         return FALSE;
@@ -2728,6 +2749,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                        priv->no_deploy,
                                        priv->disable_static_deltas,
                                        priv->reinstall,
+                                       priv->max_op >= APP_UPDATE,
                                        state, op->ref, op->resolved_commit,
                                        (const char **) op->subpaths,
                                        progress->ostree_progress,
@@ -2767,6 +2789,8 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                           priv->no_deploy,
                                           priv->disable_static_deltas,
                                           op->commit != NULL, /* Allow downgrade if we specify commit */
+                                          priv->max_op >= APP_UPDATE,
+                                          priv->max_op == APP_INSTALL || priv->max_op == RUNTIME_INSTALL,
                                           state, op->ref, op->resolved_commit,
                                           NULL,
                                           (const char **) op->subpaths,
