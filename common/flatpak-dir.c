@@ -71,11 +71,6 @@ static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (Flatpak
                                                                          GLnxLockFile *file_lock,
                                                                          GError      **error);
 
-static OstreeRepo * flatpak_dir_create_child_repo (FlatpakDir   *self,
-                                                   GFile        *cache_dir,
-                                                   GLnxLockFile *file_lock,
-                                                   const char   *optional_commit,
-                                                   GError      **error);
 static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
                                                           const char   *optional_commit,
@@ -7389,7 +7384,7 @@ flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
   return g_steal_pointer (&new_registry);
 }
 
-static OstreeRepo *
+OstreeRepo *
 flatpak_dir_create_child_repo (FlatpakDir   *self,
                                GFile        *cache_dir,
                                GLnxLockFile *file_lock,

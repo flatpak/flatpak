@@ -156,6 +156,29 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <!-- This methods provides a child repo to the client which can be pulled in
+         the system's repo. The child repo resides inside a cache directory,
+         which gets mounted with bindfs so that the client(unprivileged)
+         can write to it as long as the mount exists. We do this because
+         it  enables the client to do a child pull at a location (currently repo/tmp)
+         which can be hardlinked during Deploy and avoid the temporary requirement
+         of double disk-space usage.
+
+         The expected call sequence is either of the following:
+         * GetChildRepoForPull -> Deploy
+         * GetChildRepoForPull -> CancelPull (in case an ongoing pull has to be cancelled)
+
+         This method can recover old partial pulls which might be failed due to various reasons.
+         In that case, the call sequence probably is:
+         * GetChildRepoForPull -> <failure occured> -> GetChildRepoForPull (partial pull recovered)
+    -->
+    <method name="GetChildRepoForPull">
+      <arg type='s' name='ref' direction='in'/>
+      <arg type='s' name='commit' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+      <arg type='s' name='repo_path' direction='out'/>
+    </method>
+
   </interface>
 
 </node>

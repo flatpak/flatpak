@@ -413,6 +413,11 @@ char *    flatpak_dir_load_override (FlatpakDir *dir,
                                      gsize      *length,
                                      GError    **error);
 OstreeRepo *flatpak_dir_get_repo (FlatpakDir *self);
+OstreeRepo *flatpak_dir_create_child_repo (FlatpakDir   *self,
+                                           GFile        *cache_dir,
+                                           GLnxLockFile *file_lock,
+                                           const char   *optional_commit,
+                                           GError      **error);
 gboolean    flatpak_dir_ensure_path (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
