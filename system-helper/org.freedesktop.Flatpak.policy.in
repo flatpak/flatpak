@@ -28,6 +28,7 @@
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
+    <annotate key="org.freedesktop.policykit.imply">org.freedesktop.Flatpak.app-update org.freedesktop.Flatpak.runtime-install org.freedesktop.Flatpak.runtime-update</annotate>
   </action>
 
   <action id="org.freedesktop.Flatpak.runtime-install">
@@ -45,6 +46,7 @@
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
+    <annotate key="org.freedesktop.policykit.imply">org.freedesktop.Flatpak.runtime-update</annotate>
   </action>
 
   <action id="org.freedesktop.Flatpak.app-update">
@@ -63,6 +65,7 @@
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>yes</allow_active>
     </defaults>
+    <annotate key="org.freedesktop.policykit.imply">org.freedesktop.Flatpak.runtime-install org.freedesktop.Flatpak.runtime-update</annotate>
   </action>
 
   <action id="org.freedesktop.Flatpak.runtime-update">
@@ -128,6 +131,7 @@
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
+    <annotate key="org.freedesktop.policykit.imply">org.freedesktop.Flatpak.runtime-install org.freedesktop.Flatpak.runtime-update</annotate>
   </action>
 
   <action id="org.freedesktop.Flatpak.runtime-uninstall">
@@ -162,6 +166,7 @@
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
+    <annotate key="org.freedesktop.policykit.imply">org.freedesktop.Flatpak.runtime-uninstall</annotate>
   </action>
 
   <action id="org.freedesktop.Flatpak.configure-remote">
