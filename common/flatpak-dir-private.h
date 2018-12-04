@@ -151,13 +151,17 @@ typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL = 1 << 2,
   FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL = 1 << 3,
   FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION = 1 << 4,
+  FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT = 1 << 5,
+  FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT = 1 << 6,
 } FlatpakHelperDeployFlags;
 
 #define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE |\
                                          FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY |\
                                          FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL |\
                                          FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL |\
-                                         FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION)
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION |\
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT |\
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT)
 
 typedef enum {
   FLATPAK_HELPER_UNINSTALL_FLAGS_NONE = 0,
@@ -592,6 +596,7 @@ gboolean   flatpak_dir_install (FlatpakDir          *self,
                                 gboolean             no_deploy,
                                 gboolean             no_static_deltas,
                                 gboolean             reinstall,
+                                gboolean             app_hint,
                                 FlatpakRemoteState  *state,
                                 const char          *ref,
                                 const char          *opt_commit,
@@ -633,6 +638,8 @@ gboolean   flatpak_dir_update (FlatpakDir                           *self,
                                gboolean                              no_deploy,
                                gboolean                              no_static_deltas,
                                gboolean                              allow_downgrade,
+                               gboolean                              app_hint,
+                               gboolean                              install_hint,
                                FlatpakRemoteState                   *state,
                                const char                           *ref,
                                const char                           *checksum_or_latest,

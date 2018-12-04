@@ -7652,6 +7652,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_deploy,
                      gboolean             no_static_deltas,
                      gboolean             reinstall,
+                     gboolean             app_hint,
                      FlatpakRemoteState  *state,
                      const char          *ref,
                      const char          *opt_commit,
@@ -7768,6 +7769,11 @@ flatpak_dir_install (FlatpakDir          *self,
 
       if (reinstall)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL;
+
+      if (app_hint)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT;
+
+      helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
@@ -8220,6 +8226,8 @@ flatpak_dir_update (FlatpakDir                           *self,
                     gboolean                              no_deploy,
                     gboolean                              no_static_deltas,
                     gboolean                              allow_downgrade,
+                    gboolean                              app_hint,
+                    gboolean                              install_hint,
                     FlatpakRemoteState                   *state,
                     const char                           *ref,
                     const char                           *commit,
@@ -8359,6 +8367,12 @@ flatpak_dir_update (FlatpakDir                           *self,
 
       if (no_deploy)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY;
+
+      if (app_hint)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT;
+
+      if (install_hint)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
