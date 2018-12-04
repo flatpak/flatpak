@@ -1146,6 +1146,43 @@ handle_deploy (FlatpakSystemHelper   *object,
 }
 
 static gboolean
+handle_cancel_pull (FlatpakSystemHelper   *object,
+                    GDBusMethodInvocation *invocation,
+                    const gchar           *arg_installation,
+                    const gchar           *arg_repo_path)
+{
+  OngoingPull *ongoing_pull;
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(GError) error = NULL;
+
+  g_debug ("CancelPull %s at %s", arg_installation, arg_repo_path);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  ongoing_pull = take_ongoing_pull_by_dir (arg_repo_path);
+  if (ongoing_pull != NULL)
+    {
+      ongoing_pull->preserve = TRUE;
+      ongoing_pull_teardown (ongoing_pull);
+      ongoing_pull_unref (ongoing_pull);
+    }
+  else
+    {
+      /* Should not be reached */
+      g_warning ("Cannot find ongoing pull to cancel at: %s", arg_repo_path);
+    }
+
+  flatpak_system_helper_complete_cancel_pull (object, invocation);
+
+  return TRUE;
+}
+
+static gboolean
 handle_deploy_appstream (FlatpakSystemHelper   *object,
                          GDBusMethodInvocation *invocation,
                          const gchar           *arg_repo_path,
@@ -2060,7 +2097,8 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
            g_strcmp0 (method_name, "PruneLocalRepo") == 0 ||
            g_strcmp0 (method_name, "EnsureRepo") == 0 ||
            g_strcmp0 (method_name, "RunTriggers") == 0 ||
-           g_strcmp0 (method_name, "GetChildRepoForPull") == 0)
+           g_strcmp0 (method_name, "GetChildRepoForPull") == 0 ||
+           g_strcmp0 (method_name, "CancelPull") == 0)
     {
       action = "org.freedesktop.Flatpak.modify-repo";
     }
@@ -2132,6 +2170,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-update-summary", G_CALLBACK (handle_update_summary), NULL);
   g_signal_connect (helper, "handle-generate-oci-summary", G_CALLBACK (handle_generate_oci_summary), NULL);
   g_signal_connect (helper, "handle-get-child-repo-for-pull", G_CALLBACK (handle_get_child_repo_for_pull), NULL);
+  g_signal_connect (helper, "handle-cancel-pull", G_CALLBACK (handle_cancel_pull), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),

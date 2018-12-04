@@ -179,6 +179,13 @@
       <arg type='s' name='repo_path' direction='out'/>
     </method>
 
+    <!-- This method cancels an ongoing pull at repo_path. The cancellation triggered
+         by the client helps to cleanup the bindfs mount setup -->
+    <method name="CancelPull">
+      <arg type='s' name='installation' direction='in'/>
+      <arg type='s' name='repo_path' direction='in'/>
+    </method>
+
   </interface>
 
 </node>
