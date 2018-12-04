@@ -1325,7 +1325,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
        * should basically always be allowed */
       if (ref != NULL && g_strcmp0 (ref, OSTREE_REPO_METADATA_REF) == 0)
         {
-          action = "org.freedesktop.Flatpak.modify-repo";
+          action = "org.freedesktop.Flatpak.update-metadata";
         }
       else
         {
@@ -1421,11 +1421,14 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   else if (g_strcmp0 (method_name, "RemoveLocalRef") == 0 ||
            g_strcmp0 (method_name, "PruneLocalRepo") == 0 ||
            g_strcmp0 (method_name, "EnsureRepo") == 0 ||
-           g_strcmp0 (method_name, "RunTriggers") == 0 ||
-           g_strcmp0 (method_name, "UpdateSummary") == 0 ||
-           g_strcmp0 (method_name, "GenerateOciSummary") == 0)
+           g_strcmp0 (method_name, "RunTriggers") == 0)
     {
       action = "org.freedesktop.Flatpak.modify-repo";
+    }
+  else if (g_strcmp0 (method_name, "UpdateSummary") == 0 ||
+           g_strcmp0 (method_name, "GenerateOciSummary") == 0)
+    {
+      action = "org.freedesktop.Flatpak.update-metadata";
     }
 
   if (action)
