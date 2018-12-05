@@ -5,7 +5,7 @@
 <refentry id="flatpak-uninstall">
 
     <refentryinfo>
-        <title>dxg-app uninstall</title>
+        <title>flatpak uninstall</title>
         <productname>flatpak</productname>
 
         <authorgroup>
