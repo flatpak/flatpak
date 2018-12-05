@@ -699,6 +699,8 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   g_autoptr(FlatpakInstallation) installation = NULL;
   g_autoptr(FlatpakCliTransaction) self = NULL;
 
+  flatpak_dir_set_no_interaction (dir, disable_interaction);
+
   installation = flatpak_installation_new_for_dir (dir, NULL, error);
   if (installation == NULL)
     return NULL;
