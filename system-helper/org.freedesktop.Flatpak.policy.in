@@ -220,7 +220,7 @@
   <action id="org.freedesktop.Flatpak.metadata-update">
     <!-- SECURITY:
           - Normal users do not require admin authentication to update
-            appstream data as it will be signed, and the action is required
+            metadata as it will be signed, and the action is required
             to update the system when unattended.
           - Changing this to anything other than 'yes' will break unattended
             updates.
