@@ -511,6 +511,7 @@ static gboolean
 handle_deploy_appstream (FlatpakSystemHelper   *object,
                          GDBusMethodInvocation *invocation,
                          const gchar           *arg_repo_path,
+                         guint                  arg_flags,
                          const gchar           *arg_origin,
                          const gchar           *arg_arch,
                          const gchar           *arg_installation)
@@ -521,7 +522,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
   g_autofree char *old_branch = NULL;
   gboolean is_oci;
 
-  g_debug ("DeployAppstream %s %s %s %s", arg_repo_path, arg_origin, arg_arch, arg_installation);
+  g_debug ("DeployAppstream %s %u %s %s %s", arg_repo_path, arg_flags, arg_origin, arg_arch, arg_installation);
 
   system = dir_get_system (arg_installation, &error);
   if (system == NULL)
@@ -1024,7 +1025,7 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
 
-  g_debug ("RemoveLocalRef %s %s %s", arg_remote, arg_ref, arg_installation);
+  g_debug ("RemoveLocalRef %u %s %s %s", arg_flags, arg_remote, arg_ref, arg_installation);
 
   system = dir_get_system (arg_installation, &error);
   if (system == NULL)
@@ -1075,7 +1076,7 @@ handle_prune_local_repo (FlatpakSystemHelper   *object,
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
 
-  g_debug ("PruneLocalRepo %s", arg_installation);
+  g_debug ("PruneLocalRepo %u %s", arg_flags, arg_installation);
 
   system = dir_get_system (arg_installation, &error);
   if (system == NULL)
@@ -1118,7 +1119,7 @@ handle_ensure_repo (FlatpakSystemHelper   *object,
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
 
-  g_debug ("EnsureRepo %s", arg_installation);
+  g_debug ("EnsureRepo %u %s", arg_flags, arg_installation);
 
   system = dir_get_system (arg_installation, &error);
   if (system == NULL)
@@ -1154,7 +1155,7 @@ handle_run_triggers (FlatpakSystemHelper   *object,
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
 
-  g_debug ("RunTriggers %s", arg_installation);
+  g_debug ("RunTriggers %u %s", arg_flags, arg_installation);
 
   system = dir_get_system (arg_installation, &error);
   if (system == NULL)
@@ -1196,7 +1197,7 @@ handle_update_summary (FlatpakSystemHelper   *object,
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
 
-  g_debug ("UpdateSummary %s", arg_installation);
+  g_debug ("UpdateSummary %u %s", arg_flags, arg_installation);
 
   system = dir_get_system (arg_installation, &error);
   if (system == NULL)
@@ -1240,7 +1241,7 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
   g_autoptr(GError) error = NULL;
   gboolean is_oci;
 
-  g_debug ("GenerateOciSummary %s %s", arg_origin, arg_installation);
+  g_debug ("GenerateOciSummary %u %s %s", arg_flags, arg_origin, arg_installation);
 
   system = dir_get_system (arg_installation, &error);
   if (system == NULL)
@@ -1355,8 +1356,8 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
     {
       const char *arch, *origin;
 
-      g_variant_get_child (parameters, 1, "&s", &origin);
-      g_variant_get_child (parameters, 2, "&s", &arch);
+      g_variant_get_child (parameters, 2, "&s", &origin);
+      g_variant_get_child (parameters, 3, "&s", &arch);
 
       action = "org.freedesktop.Flatpak.appstream-update";
 
