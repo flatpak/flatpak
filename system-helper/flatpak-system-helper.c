@@ -205,7 +205,6 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
-  gboolean is_update;
   gboolean is_oci;
   gboolean no_deploy;
   gboolean local_pull;
@@ -236,43 +235,22 @@ handle_deploy (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  is_update = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
   no_deploy = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY) != 0;
   local_pull = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL) != 0;
   reinstall = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL) != 0;
 
   deploy_dir = flatpak_dir_get_if_deployed (system, arg_ref, NULL, NULL);
 
-  if (deploy_dir)
+  if (deploy_dir && !reinstall)
     {
       g_autofree char *real_origin = NULL;
-      if (!is_update)
+      real_origin = flatpak_dir_get_origin (system, arg_ref, NULL, NULL);
+      if (g_strcmp0 (real_origin, arg_origin) != 0)
         {
-          if (!reinstall)
-            {
-              /* Can't install already installed app */
-              g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                                                     "%s is already installed", arg_ref);
-              return TRUE;
-            }
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Wrong origin %s for update", arg_origin);
+          return TRUE;
         }
-      else
-        {
-          real_origin = flatpak_dir_get_origin (system, arg_ref, NULL, NULL);
-          if (g_strcmp0 (real_origin, arg_origin) != 0)
-            {
-              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                                     "Wrong origin %s for update", arg_origin);
-              return TRUE;
-            }
-        }
-    }
-  else if (!deploy_dir && is_update)
-    {
-      /* Can't update not installed app */
-      g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                                             "%s is not installed", arg_ref);
-      return TRUE;
     }
 
   if (!flatpak_dir_ensure_repo (system, NULL, &error))
@@ -472,9 +450,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   if (!no_deploy)
     {
-      flatpak_dir_set_source_pid (system, get_sender_pid (invocation));
-
-      if (is_update)
+      if (deploy_dir && !reinstall)
         {
           if (!flatpak_dir_deploy_update (system, arg_ref,
                                           NULL, (const char **) arg_subpaths, NULL, &error))
@@ -1285,6 +1261,16 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
   return TRUE;
 }
 
+static gboolean
+dir_ref_is_installed (FlatpakDir *dir,
+                      const char *ref)
+{
+  g_autoptr(GVariant) deploy_data = NULL;
+
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, NULL, NULL);
+
+  return deploy_data != NULL;
+}
 
 static gboolean
 flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
@@ -1315,10 +1301,11 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
     }
   else if (g_strcmp0 (method_name, "Deploy") == 0)
     {
+      const char *installation;
       const char *ref, *origin;
       guint32 flags;
-      gboolean is_update, is_app;
 
+      g_variant_get_child (parameters, 0, "&s", &installation);
       g_variant_get_child (parameters, 1, "u", &flags);
       g_variant_get_child (parameters, 2, "&s", &ref);
       g_variant_get_child (parameters, 3, "&s", &origin);
@@ -1331,8 +1318,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
         }
       else
         {
-          is_update = (flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
-          is_app = g_str_has_prefix (ref, "app/");
+          gboolean is_app, is_install;
 
           /* These flags allow clients to "upgrade" the permission,
            * avoiding the need for multiple polkit dialogs when we first
@@ -1346,23 +1332,32 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
           if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT) != 0)
             is_app = TRUE;
-
-          if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT) != 0)
-            is_update = FALSE;
-
-          if (is_update)
-            {
-              if (is_app)
-                action = "org.freedesktop.Flatpak.app-update";
-              else
-                action = "org.freedesktop.Flatpak.runtime-update";
-            }
           else
+            is_app = g_str_has_prefix (ref, "app/");
+
+          if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT) != 0 ||
+              (flags & FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL) != 0)
+            is_install = TRUE;
+          else
+            {
+              g_autoptr(FlatpakDir) system = dir_get_system (installation, NULL);
+
+              is_install = !dir_ref_is_installed (system, ref);
+            }
+
+          if (is_install)
             {
               if (is_app)
                 action = "org.freedesktop.Flatpak.app-install";
               else
                 action = "org.freedesktop.Flatpak.runtime-install";
+            }
+          else
+            {
+              if (is_app)
+                action = "org.freedesktop.Flatpak.app-update";
+              else
+                action = "org.freedesktop.Flatpak.runtime-update";
             }
 
           no_interaction = (flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION) != 0;
