@@ -1293,7 +1293,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       const char *ref, *origin;
       guint32 flags;
 
-      g_variant_get_child (parameters, 0, "&s", &installation);
+      g_variant_get_child (parameters, 0, "^&ay", &installation);
       g_variant_get_child (parameters, 1, "u", &flags);
       g_variant_get_child (parameters, 2, "&s", &ref);
       g_variant_get_child (parameters, 3, "&s", &origin);
