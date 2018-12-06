@@ -127,7 +127,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
           if (flatpak_dir_is_user (dir))
             {
               g_ptr_array_insert (dirs, 0, g_object_ref (dir));
-              g_ptr_array_remove_index (dirs, i - 1);
+              g_ptr_array_remove_index (dirs, i);
               break;
             }
         }
