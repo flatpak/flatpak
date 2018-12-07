@@ -6700,7 +6700,10 @@ apply_extra_data (FlatpakDir   *self,
                      error))
     return FALSE;
 
-  if (!flatpak_canonicalize_permissions (AT_FDCWD, flatpak_file_get_path_cached (extra_files), error))
+  if (!flatpak_canonicalize_permissions (AT_FDCWD, flatpak_file_get_path_cached (extra_files),
+                                         getuid() == 0 ? 0 : -1,
+                                         getuid() == 0 ? 0 : -1,
+                                         error))
     return FALSE;
 
   if (exit_status != 0)

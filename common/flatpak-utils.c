@@ -1993,6 +1993,8 @@ static gboolean
 _flatpak_canonicalize_permissions (int           parent_dfd,
                                    const char   *rel_path,
                                    gboolean      toplevel,
+                                   int           uid,
+                                   int           gid,
                                    GError      **error)
 {
   struct stat stbuf;
@@ -2006,6 +2008,22 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
     {
       glnx_set_error_from_errno (error);
       return FALSE;
+    }
+
+  if ((uid != -1 && uid != stbuf.st_uid) || (gid != -1 && gid != stbuf.st_gid))
+    {
+      if (TEMP_FAILURE_RETRY (fchownat (parent_dfd, rel_path, uid, gid, AT_SYMLINK_NOFOLLOW)) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+
+      /* Re-read st_mode for new owner */
+      if (TEMP_FAILURE_RETRY (fstatat (parent_dfd, rel_path, &stbuf, AT_SYMLINK_NOFOLLOW)) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
     }
 
   if (S_ISDIR (stbuf.st_mode))
@@ -2031,7 +2049,7 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
               if (!glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, NULL, NULL) || dent == NULL)
                 break;
 
-              if (!_flatpak_canonicalize_permissions (dfd_iter.fd, dent->d_name, FALSE, error))
+              if (!_flatpak_canonicalize_permissions (dfd_iter.fd, dent->d_name, FALSE, uid, gid, error))
                 {
                   error = NULL;
                   res = FALSE;
@@ -2086,9 +2104,11 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
 gboolean
 flatpak_canonicalize_permissions (int           parent_dfd,
                                   const char   *rel_path,
+                                  int           uid,
+                                  int           gid,
                                   GError      **error)
 {
-  return _flatpak_canonicalize_permissions (parent_dfd, rel_path, TRUE, error);
+  return _flatpak_canonicalize_permissions (parent_dfd, rel_path, TRUE, uid, gid, error);
 }
 
 /* Make a directory, and its parent. Don't error if it already exists.
