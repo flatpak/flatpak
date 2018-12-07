@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..26"
+echo "1..27"
 
 #Regular repo
 setup_repo
