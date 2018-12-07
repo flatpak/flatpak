@@ -24,7 +24,22 @@
 
 #include <glnx-shutil.h>
 #include <glnx-errors.h>
+#include <glnx-fdio.h>
 #include <glnx-local-alloc.h>
+
+static gboolean
+unlinkat_allow_noent (int dfd,
+                      const char *path,
+                      int flags,
+                      GError **error)
+{
+  if (unlinkat (dfd, path, flags) == -1)
+    {
+      if (errno != ENOENT)
+        return glnx_throw_errno_prefix (error, "unlinkat(%s)", path);
+    }
+  return TRUE;
+}
 
 static gboolean
 glnx_shutil_rm_rf_children (GLnxDirFdIterator    *dfd_iter,
@@ -51,16 +66,13 @@ glnx_shutil_rm_rf_children (GLnxDirFdIterator    *dfd_iter,
           if (!glnx_shutil_rm_rf_children (&child_dfd_iter, cancellable, error))
             return FALSE;
 
-          if (unlinkat (dfd_iter->fd, dent->d_name, AT_REMOVEDIR) == -1)
-            return glnx_throw_errno_prefix (error, "unlinkat");
+          if (!glnx_unlinkat (dfd_iter->fd, dent->d_name, AT_REMOVEDIR, error))
+            return FALSE;
         }
       else
         {
-          if (unlinkat (dfd_iter->fd, dent->d_name, 0) == -1)
-            {
-              if (errno != ENOENT)
-                return glnx_throw_errno_prefix (error, "unlinkat");
-            }
+          if (!unlinkat_allow_noent (dfd_iter->fd, dent->d_name, 0, error))
+            return FALSE;
         }
     }
 
@@ -86,7 +98,6 @@ glnx_shutil_rm_rf_at (int                   dfd,
 {
   dfd = glnx_dirfd_canonicalize (dfd);
 
-
   /* With O_NOFOLLOW first */
   glnx_autofd int target_dfd =
     openat (dfd, path, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
@@ -100,8 +111,8 @@ glnx_shutil_rm_rf_at (int                   dfd,
         }
       else if (errsv == ENOTDIR || errsv == ELOOP)
         {
-          if (unlinkat (dfd, path, 0) != 0)
-            return glnx_throw_errno_prefix (error, "unlinkat");
+          if (!glnx_unlinkat (dfd, path, 0, error))
+            return FALSE;
         }
       else
         return glnx_throw_errno_prefix (error, "open(%s)", path);
@@ -113,13 +124,10 @@ glnx_shutil_rm_rf_at (int                   dfd,
         return FALSE;
 
       if (!glnx_shutil_rm_rf_children (&dfd_iter, cancellable, error))
-        return FALSE;
+        return glnx_prefix_error (error, "Removing %s", path);
 
-      if (unlinkat (dfd, path, AT_REMOVEDIR) == -1)
-        {
-          if (errno != ENOENT)
-            return glnx_throw_errno_prefix (error, "unlinkat");
-        }
+      if (!unlinkat_allow_noent (dfd, path, AT_REMOVEDIR, error))
+        return FALSE;
     }
 
   return TRUE;
