@@ -18,10 +18,16 @@ app/flatpak-permission-dbus-generated.c: data/org.freedesktop.impl.portal.Permis
 app/%-dbus-generated.h: app/%-dbus-generated.c
 	@true # Built as a side-effect of the rules for the .c
 
-flatpak_SOURCES = \
-	app/flatpak-main.c \
+
+if BUILD_SYSTEM_HELPER
+polkit_sources = \
 	app/flatpak-polkit-agent-text-listener.h \
 	app/flatpak-polkit-agent-text-listener.c \
+	$(NULL)
+endif
+
+flatpak_SOURCES = \
+	app/flatpak-main.c \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
 	app/flatpak-builtins-utils.c \
@@ -72,6 +78,7 @@ flatpak_SOURCES = \
 	app/flatpak-cli-transaction.c \
 	app/flatpak-cli-transaction.h \
 	app/parse-datetime.h \
+	$(polkit_sources) \
 	$(NULL)
 
 nodist_flatpak_SOURCES = \
