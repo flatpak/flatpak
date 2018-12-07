@@ -1475,6 +1475,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
                                                           NULL, &error);
       if (result == NULL)
         {
+          g_dbus_error_strip_remote_error (error);
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                  "Authorization error: %s", error->message);
           return FALSE;
