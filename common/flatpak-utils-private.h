@@ -479,6 +479,8 @@ gboolean flatpak_rm_rf (GFile        *dir,
 
 gboolean flatpak_canonicalize_permissions (int           parent_dfd,
                                            const char   *rel_path,
+                                           int           uid,
+                                           int           gid,
                                            GError      **error);
 
 char * flatpak_readlink (const char *path,
