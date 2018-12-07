@@ -79,3 +79,18 @@ location it is likely that this will not be found by dbus and
 policykit. However, if the system installation is synchronized,
 you can often use the system installed helper instead - at least
 if the two versions are close in versions.
+
+Floor plan
+==========
+
+The flatpak project consists of multiple pieces, and it can be
+a bit challenging to find your way around at first. Here is a
+quick intro to the major components of the repo:
+* common: contains the library, libflatpak. It also contains various pieces of code that are shared between the library, the client and the services. Non-public code can be recognized by having a `-private.h` header file.
+* app: the commandline client. Each command has a `flatpak-builtins-` source file
+* data: D-Bus interface definition files
+* session-helper: The flatpak-session-helper service, which provides various helpers for the sandbox setup at runtime
+* system-helper: The flatpak-system-helper service, which runs as root on the system bus and allows non-root users to modify system installations
+* portal: The Flatpak portal service, which lets sandboxed apps request the creation of new sandboxes
+* doc: The sources for the documentation, both man pages and library documentation
+* tests: The testsuite
