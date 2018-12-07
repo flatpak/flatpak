@@ -1302,7 +1302,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
        * should basically always be allowed */
       if (ref != NULL && g_strcmp0 (ref, OSTREE_REPO_METADATA_REF) == 0)
         {
-          action = "org.freedesktop.Flatpak.update-metadata";
+          action = "org.freedesktop.Flatpak.metadata-update";
         }
       else
         {
@@ -1455,7 +1455,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   else if (g_strcmp0 (method_name, "UpdateSummary") == 0 ||
            g_strcmp0 (method_name, "GenerateOciSummary") == 0)
     {
-      action = "org.freedesktop.Flatpak.update-metadata";
+      action = "org.freedesktop.Flatpak.metadata-update";
     }
 
   if (action)
