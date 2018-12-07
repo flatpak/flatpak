@@ -322,6 +322,13 @@ ${FLATPAK} ${U} uninstall -y platform
 
 echo "ok typo correction works for uninstall"
 
+${FLATPAK} ${U} install -y test-repo org.test.Hello master
+
+${FLATPAK} ${U} uninstall -y org.test.Hello master
+${FLATPAK} ${U} uninstall -y org.test.Platform master
+
+echo "ok install and uninstall support 'NAME BRANCH' syntax"
+
 ${FLATPAK} ${U} install -y --no-deploy test-repo org.test.Hello
 
 ${FLATPAK} ${U} list -d > list-log
