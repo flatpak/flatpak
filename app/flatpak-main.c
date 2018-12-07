@@ -51,6 +51,10 @@ static char **opt_installations;
 
 static gboolean is_in_complete;
 
+/* Work with polkit before and after autoptr support was added */
+typedef PolkitSubject             AutoPolkitSubject;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
+
 typedef struct
 {
   const char *name;
@@ -649,7 +653,7 @@ main (int    argc,
     }
   else
     {
-      g_autoptr(PolkitSubject) subject = NULL;
+      g_autoptr(AutoPolkitSubject) subject = NULL;
       GVariantBuilder opt_builder;
       g_autoptr(GVariant) options = NULL;
 
