@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..26"
+echo "1..27"
 
 #Regular repo
 setup_repo
@@ -321,6 +321,13 @@ ${FLATPAK} ${U} uninstall -y hello
 ${FLATPAK} ${U} uninstall -y platform
 
 echo "ok typo correction works for uninstall"
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello master
+
+${FLATPAK} ${U} uninstall -y org.test.Hello master
+${FLATPAK} ${U} uninstall -y org.test.Platform master
+
+echo "ok install and uninstall support 'NAME BRANCH' syntax"
 
 ${FLATPAK} ${U} install -y --no-deploy test-repo org.test.Hello
 

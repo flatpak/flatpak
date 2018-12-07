@@ -406,7 +406,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     }
 
   /* Backwards compat for old "REMOTE NAME [BRANCH]" argument version */
-  if (argc == 4 && looks_like_branch (argv[3]))
+  if (argc == 4 && flatpak_is_valid_name (argv[2], NULL) && looks_like_branch (argv[3]))
     {
       target_branch = g_strdup (argv[3]);
       n_prefs = 1;
