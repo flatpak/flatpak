@@ -104,6 +104,9 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_REF "ref"
 #define FLATPAK_METADATA_KEY_TAG "tag"
 
+#define FLATPAK_METADATA_GROUP_DCONF "X-DConf"
+#define FLATPAK_METADATA_KEY_DCONF_PATHS "paths"
+
 gboolean  flatpak_run_add_extension_args (FlatpakBwrap *bwrap,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,
