@@ -194,29 +194,16 @@ compare_apps (MatchResult *a, AsApp *b)
   return !as_app_equal (a->app, b);
 }
 
-static const char *
-get_comment_localized (AsApp *app)
-{
-  const char * const * languages = g_get_language_names ();
-  gsize i;
-
-  for (i = 0; languages[i]; ++i)
-    {
-      const char *comment = as_app_get_comment (app, languages[i]);
-      if (comment != NULL)
-        return comment;
-    }
-  return NULL;
-}
-
 static void
 print_app (MatchResult *res, FlatpakTablePrinter *printer)
 {
-  AsRelease *release = as_app_get_release_default (res->app);
-  const char *version = release ? as_release_get_version (release) : NULL;
+  const char *version = as_app_get_version (res->app);
   const char *id = as_app_get_id_filename (res->app);
+  g_autofree char *description = NULL;
   guint i;
 
+  description = g_strconcat (as_app_get_localized_name (res->app), " - ", as_app_get_localized_comment (res->app), NULL);
+  flatpak_table_printer_add_column (printer, description);
   flatpak_table_printer_add_column (printer, id);
   flatpak_table_printer_add_column (printer, version);
 #if AS_CHECK_VERSION (0, 6, 1)
@@ -225,7 +212,6 @@ print_app (MatchResult *res, FlatpakTablePrinter *printer)
   flatpak_table_printer_add_column (printer, g_ptr_array_index (res->remotes, 0));
   for (i = 1; i < res->remotes->len; ++i)
     flatpak_table_printer_append_with_comma (printer, g_ptr_array_index (res->remotes, i));
-  flatpak_table_printer_add_column (printer, get_comment_localized (res->app));
   flatpak_table_printer_finish_row (printer);
 }
 
@@ -293,17 +279,20 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
   if (matches != NULL)
     {
       FlatpakTablePrinter *printer = flatpak_table_printer_new ();
+      int rows, cols;
       int col = 0;
 
-      flatpak_table_printer_set_column_title (printer, col++, _("Application ID"));
+      flatpak_table_printer_set_column_title (printer, col++, _("Description"));
+      flatpak_table_printer_set_column_title (printer, col++, _("ID"));
       flatpak_table_printer_set_column_title (printer, col++, _("Version"));
 #if AS_CHECK_VERSION (0, 6, 1)
       flatpak_table_printer_set_column_title (printer, col++, _("Branch"));
 #endif
       flatpak_table_printer_set_column_title (printer, col++, _("Remotes"));
-      flatpak_table_printer_set_column_title (printer, col++, _("Description"));
       g_slist_foreach (matches, (GFunc) print_app, printer);
-      flatpak_table_printer_print (printer);
+      flatpak_get_window_size (&rows, &cols);
+      flatpak_table_printer_set_column_ellipsize (printer, 0, TRUE);
+      flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
       flatpak_table_printer_free (printer);
 
       g_slist_free_full (matches, (GDestroyNotify) match_result_free);
