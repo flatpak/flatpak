@@ -79,22 +79,6 @@ maybe_print_space (gboolean *first)
     g_print (" ");
 }
 
-static gchar *
-format_timestamp (guint64 timestamp)
-{
-  GDateTime *dt;
-  gchar *str;
-
-  dt = g_date_time_new_from_unix_utc (timestamp);
-  if (dt == NULL)
-    return g_strdup ("?");
-
-  str = g_date_time_format (dt, "%Y-%m-%d %H:%M:%S +0000");
-  g_date_time_unref (dt);
-
-  return str;
-}
-
 gboolean
 flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError **error)
 {

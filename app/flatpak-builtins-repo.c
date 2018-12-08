@@ -205,27 +205,6 @@ print_metadata (GVariant   *meta,
     }
 }
 
-static gchar *
-format_timestamp (guint64  timestamp,
-                  GError **error)
-{
-  GDateTime *dt;
-  gchar *str;
-
-  dt = g_date_time_new_from_unix_utc (timestamp);
-  if (dt == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
-                   "Invalid timestamp: %" G_GUINT64_FORMAT, timestamp);
-      return NULL;
-    }
-
-  str = g_date_time_format (dt, "%Y-%m-%d %H:%M:%S +0000");
-  g_date_time_unref (dt);
-
-  return str;
-}
-
 static void
 dump_indented_lines (const gchar *data)
 {
@@ -308,9 +287,7 @@ dump_commit (const char *commit,
                  &subject, &body, &timestamp, NULL, NULL);
 
   timestamp = GUINT64_FROM_BE (timestamp);
-  str = format_timestamp (timestamp, error);
-  if (!str)
-    return FALSE;
+  str = format_timestamp (timestamp);
   g_print ("Commit:  %s\n", commit);
   g_print ("Date:  %s\n", str);
 
