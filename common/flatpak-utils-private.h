@@ -46,8 +46,16 @@ typedef enum {
 #define FLATPAK_ANSI_ALT_SCREEN_OFF "\x1B[?1049l"
 #define FLATPAK_ANSI_BOLD_ON "\x1b[1m"
 #define FLATPAK_ANSI_BOLD_OFF "\x1b[22m"
+#define FLATPAK_ANSI_FAINT_ON "\x1b[2m"
+#define FLATPAK_ANSI_FAINT_OFF "\x1b[22m"
 #define FLATPAK_ANSI_RED "\x1b[31m"
 #define FLATPAK_ANSI_COLOR_RESET "\x1b[0m"
+
+#define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
+#define FLATPAK_ANSI_CLEAR "\x1b[0J"
+
+void flatpak_get_window_size (int *rows, int *cols);
+gboolean flatpak_get_cursor_pos  (int *row, int *col);
 
 /* https://bugzilla.gnome.org/show_bug.cgi?id=766370 */
 #if !GLIB_CHECK_VERSION (2, 49, 3)
