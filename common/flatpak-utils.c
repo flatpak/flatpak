@@ -42,11 +42,13 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 
 #include <glib.h>
 #include "libglnx/libglnx.h"
 #include <gio/gunixoutputstream.h>
 #include <gio/gunixinputstream.h>
+
 
 /* This is also here so the common code can report these errors to the lib */
 static const GDBusErrorEntry flatpak_error_entries[] = {
@@ -5853,4 +5855,51 @@ flatpak_levenshtein_distance (const char *s, const char *t)
       d[i * (lt + 1) + j] = -1;
 
   return dist (s, ls, t, lt, 0, 0, d);
+}
+
+void
+flatpak_get_window_size (int *rows, int *cols)
+{
+  struct winsize w;
+
+  if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
+    {
+      *rows = w.ws_row;
+      *cols = w.ws_col;
+    }
+  else
+    {
+      *rows = 24;
+      *cols = 80;
+    }
+}
+
+gboolean
+flatpak_get_cursor_pos (int* row, int *col)
+{
+  fd_set readset;
+  struct timeval time;
+  struct termios term, initial_term;
+  int res = 0;
+
+  tcgetattr (STDIN_FILENO, &initial_term);
+  term = initial_term;
+  term.c_lflag &= ~ICANON;
+  term.c_lflag &= ~ECHO;
+  tcsetattr (STDIN_FILENO, TCSANOW, &term);
+
+  printf ("\033[6n");
+  fflush (stdout);
+
+  FD_ZERO (&readset);
+  FD_SET (STDIN_FILENO, &readset);
+  time.tv_sec = 0;
+  time.tv_usec = 100000;
+
+  if (select (STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1)
+    res = scanf ("\033[%d;%dR", row, col);
+
+  tcsetattr (STDIN_FILENO, TCSADRAIN, &initial_term);
+
+  return res == 2;
 }
