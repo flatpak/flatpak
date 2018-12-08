@@ -126,5 +126,6 @@ Column *handle_column_args (Column *all_columns,
                             GError **error);
 
 char *  format_timestamp (guint64 timestamp);
+char *  ellipsize_string (const char *text, int len);
 
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */

@@ -967,3 +967,25 @@ format_timestamp (guint64 timestamp)
 
   return str;
 }
+
+char *
+ellipsize_string (const char *text, int len)
+{
+  char *ret = g_strdup (text);
+  char *p;
+  int i;
+
+  if (g_utf8_strlen (ret, -1) > len)
+    {
+      p = ret;
+      for (i = 0; i < len - 3; i++)
+        p = g_utf8_next_char (p);
+
+      p[0] = '.';
+      p[1] = '.';
+      p[2] = '.';
+      p[3] = '\0';
+    }
+
+  return ret;
+}
