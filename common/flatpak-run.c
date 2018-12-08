@@ -32,6 +32,7 @@
 #include <grp.h>
 #include <unistd.h>
 #include <gio/gunixfdlist.h>
+#include <dconf/dconf.h>
 
 #ifdef ENABLE_SECCOMP
 #include <seccomp.h>
@@ -1708,6 +1709,177 @@ flatpak_run_allocate_id (int *lock_fd_out)
   return NULL;
 }
 
+static void
+add_dconf_key_to_keyfile (GKeyFile    *keyfile,
+                          DConfClient *client,
+                          const char  *key)
+{
+  g_autofree char *group = g_path_get_dirname (key);
+  g_autofree char *k = g_path_get_basename (key);
+  GVariant *value = dconf_client_read_full (client, key, DCONF_READ_DEFAULT_VALUE, NULL);
+
+  if (value)
+    {
+      g_autofree char *val = g_variant_print (value, TRUE);
+      g_key_file_set_value (keyfile, group + 1, k, val);
+    }
+}
+
+static void
+add_dconf_dir_to_keyfile (GKeyFile    *keyfile,
+                          DConfClient *client,
+                          const char  *dir)
+{
+  g_auto(GStrv) keys = NULL;
+  int i;
+
+  keys = dconf_client_list (client, dir, NULL);
+  for (i = 0; keys[i]; i++)
+    {
+      g_autofree char *k = g_strconcat (dir, keys[i], NULL);
+      if (dconf_is_dir (k, NULL))
+        add_dconf_dir_to_keyfile (keyfile, client, k);
+      else if (dconf_is_key (k, NULL))
+        add_dconf_key_to_keyfile (keyfile, client, k);
+    }
+}
+
+static void
+add_dconf_locks_to_list (GString     *s,
+                         DConfClient *client,
+                         const char  *dir)
+{
+  g_auto(GStrv) locks = NULL;
+  int i;
+
+  locks = dconf_client_list_locks (client, dir, NULL);
+  for (i = 0; locks[i]; i++)
+    {
+      g_string_append (s, locks[i]);
+      g_string_append_c (s, '\n');
+    }
+}
+
+static char *
+dconf_path_for_app_id (const char *app_id)
+{
+  GString *s;
+  const char *p;
+
+  s = g_string_new ("");
+
+  g_string_append_c (s, '/');
+  for (p = app_id; *p; p++)
+    {
+      if (*p == '.')
+        g_string_append_c (s, '/');
+      else
+        g_string_append_c (s, *p);
+    }
+  g_string_append_c (s, '/');
+
+  return g_string_free (s, FALSE);
+}
+
+static void
+get_dconf_data (const char  *app_id,
+                const char **settings,
+                char **defaults,
+                gsize *defaults_size,
+                char **locks,
+                gsize *locks_size)
+{
+  DConfClient *client = NULL;
+  g_autoptr(GKeyFile) defaults_data = NULL;
+  g_autoptr(GString) locks_data = NULL;
+  g_autofree char *prefix = NULL;
+
+  prefix = dconf_path_for_app_id (app_id);
+
+  client = dconf_client_new ();
+
+  defaults_data = g_key_file_new ();
+  locks_data = g_string_new ("");
+
+  g_debug ("Add defaults in dir %s", prefix);
+  add_dconf_dir_to_keyfile (defaults_data, client, prefix);
+
+  g_debug ("Add locks in dir %s", prefix);
+  add_dconf_locks_to_list (locks_data, client, prefix);
+
+  if (settings)
+    {
+      int i;
+      for (i = 0; settings[i]; i++)
+        {
+          if (dconf_is_dir (settings[i], NULL))
+            {
+              g_debug ("Add defaults in dir %s", settings[i]);
+              add_dconf_dir_to_keyfile (defaults_data, client, settings[i]);
+
+              g_debug ("Add locks in dir %s", settings[i]);
+              add_dconf_locks_to_list (locks_data, client, settings[i]);
+            }
+          else if (dconf_is_key (settings[i], NULL))
+            {
+              g_debug ("Add individual key %s", settings[i]);
+              add_dconf_key_to_keyfile (defaults_data, client, settings[i]);
+            }
+          else
+            {
+              g_warning ("Ignoring settings path '%s': neither dir nor key", settings[i]);
+            }
+        }
+    }
+
+  *defaults = g_key_file_to_data (defaults_data, defaults_size, NULL);
+  *locks_size = locks_data->len;
+  *locks = g_string_free (g_steal_pointer (&locks_data), FALSE);
+
+  g_object_unref (client);
+}
+
+static gboolean
+flatpak_run_add_dconf_args (FlatpakBwrap  *bwrap,
+                            const char    *app_id,
+                            GKeyFile      *metakey,
+                            GError       **error)
+{
+  g_auto(GStrv) settings = NULL;
+  g_autofree char *defaults = NULL;
+  g_autofree char *locks = NULL;
+  gsize defaults_size;
+  gsize locks_size;
+
+  if (metakey)
+    settings = g_key_file_get_string_list (metakey,
+                                           FLATPAK_METADATA_GROUP_DCONF,
+                                           FLATPAK_METADATA_KEY_DCONF_PATHS,
+                                           NULL, NULL);
+ 
+  get_dconf_data (app_id, (const char **)settings,
+                           &defaults, &defaults_size,
+                           &locks, &locks_size);
+
+  if (defaults_size != 0 &&
+      !flatpak_bwrap_add_args_data (bwrap,
+                                    "dconf-defaults",
+                                    defaults, defaults_size,
+                                    "/etc/glib-2.0/settings/defaults",
+                                    error))
+    return FALSE;
+
+  if (locks_size != 0 &&
+      !flatpak_bwrap_add_args_data (bwrap,
+                                    "dconf-locks",
+                                    locks, locks_size,
+                                    "/etc/glib-2.0/settings/locks",
+                                    error))
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                GFile          *app_files,
@@ -3108,6 +3280,9 @@ flatpak_run_app (const char     *app_ref,
                                       runtime_ref, app_id_dir, app_context, extra_context,
                                       sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
                                       &app_info_path, &instance_id_host_dir, error))
+    return FALSE;
+
+  if (!flatpak_run_add_dconf_args (bwrap, app_ref_parts[1], metakey, error))
     return FALSE;
 
   if (!sandboxed && !(flags & FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL))
