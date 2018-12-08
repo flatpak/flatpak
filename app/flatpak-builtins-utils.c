@@ -951,3 +951,19 @@ handle_column_args (Column *all_columns,
     
   return column_filter (all_columns, cols, error);
 }
+
+char *
+format_timestamp (guint64 timestamp)
+{
+  GDateTime *dt;
+  char *str;
+
+  dt = g_date_time_new_from_unix_utc (timestamp);
+  if (dt == NULL)
+    return g_strdup ("?");
+
+  str = g_date_time_format (dt, "%Y-%m-%d %H:%M:%S +0000");
+  g_date_time_unref (dt);
+
+  return str;
+}

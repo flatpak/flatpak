@@ -125,4 +125,6 @@ Column *handle_column_args (Column *all_columns,
                             const char **opt_cols,
                             GError **error);
 
+char *  format_timestamp (guint64 timestamp);
+
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */
