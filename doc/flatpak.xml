@@ -40,15 +40,15 @@
         <title>Description</title>
 
         <para>
-            flatpak is a tool for managing applications and the runtimes
-            they use. In the flatpak model, applications can be built and
+            Flatpak is a tool for managing applications and the runtimes
+            they use. In the Flatpak model, applications can be built and
             distributed independently from the host system they are used
             on, and they are isolated from the host system ('sandboxed')
             to some degree, at runtime.
         </para>
 
         <para>
-            flatpak can operate in system-wide or per-user mode. The system-wide
+            Flatpak can operate in system-wide or per-user mode. The system-wide
             data (runtimes, applications and configuration) is located in
             <filename>$prefix/var/lib/flatpak/</filename>, and the per-user
             data is in <filename>$HOME/.local/share/flatpak/</filename>.
@@ -75,10 +75,17 @@
         </para>
 
         <para>
-            flatpak uses OSTree to distribute and deploy data. The repositories
+            Flatpak uses OSTree to distribute and deploy data. The repositories
             it uses are OSTree repositories and can be manipulated with the
             <command>ostree</command> utility. Installed runtimes and
             applications are OSTree checkouts.
+        </para>
+
+        <para>
+            Basic commands for buiding flatpaks such as build-init, build and build-finish
+            are included in the flatpak utility. For higher-level build support, see
+            the separate 
+            <citerefentry><refentrytitle>flatpak-builder</refentrytitle><manvolnum>1</manvolnum></citerefentry> tool.
         </para>
     </refsect1>
 
@@ -550,6 +557,7 @@
                 <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>ostree.repo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>flatpak-remote</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+                <ulink url="https://www.flatpak.org">https://www.flatpak.org</ulink>
             </para>
 
     </refsect1>
