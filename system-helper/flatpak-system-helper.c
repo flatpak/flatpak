@@ -1293,10 +1293,10 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       const char *ref, *origin;
       guint32 flags;
 
-      g_variant_get_child (parameters, 0, "^&ay", &installation);
       g_variant_get_child (parameters, 1, "u", &flags);
       g_variant_get_child (parameters, 2, "&s", &ref);
       g_variant_get_child (parameters, 3, "&s", &origin);
+      g_variant_get_child (parameters, 5, "&s", &installation);
 
       /* For metadata updates, redirect to the modify-repo action since they
        * should basically always be allowed */
