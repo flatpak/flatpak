@@ -797,7 +797,7 @@ get_permission_tables (XdpDbusPermissionStore *store)
 
 /*** column handling ***/
 
-static int
+int
 find_column (Column *columns,
              const char *name,
              GError **error)
@@ -846,7 +846,7 @@ column_filter (Column *columns,
   for (i = 0; i < n_cols; i++)
     {
       int idx = find_column (columns, cols[i], error);
-      if (idx == -1)
+      if (idx < 0)
         return FALSE;
       result[i] = columns[idx];
     }
