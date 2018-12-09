@@ -187,10 +187,10 @@
 
         <variablelist>
             <varlistentry>
-                <term>ref</term>
+                <term>description</term>
 
                 <listitem><para>
-                    Show the ref
+                    Show the description
                 </para></listitem>
             </varlistentry>
 
@@ -219,10 +219,34 @@
             </varlistentry>
 
             <varlistentry>
+                <term>version</term>
+
+                <listitem><para>
+                    Show the version
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>ref</term>
+
+                <listitem><para>
+                    Show the ref
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>origin</term>
 
                 <listitem><para>
                     Show the origin remote
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>installation</term>
+
+                <listitem><para>
+                    Show the installation
                 </para></listitem>
             </varlistentry>
 
@@ -285,9 +309,10 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user list</command>
+            <command>$ flatpak --user --column=app list</command>
         </para>
 <programlisting>
+<command>Application</command>
 org.gnome.Builder
 org.freedesktop.glxgears
 org.gnome.MyApp
