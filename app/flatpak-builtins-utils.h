@@ -119,6 +119,9 @@ typedef struct {
   gboolean def;
 } Column;
 
+int find_column (Column *columns,
+                 const char *name,
+                 GError **error);
 char   *column_help        (Column *columns);
 Column *handle_column_args (Column *all_columns,
                             gboolean opt_show_all,
