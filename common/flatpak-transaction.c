@@ -61,6 +61,10 @@
  * They become visible to the system as they are completed. When an error occurs, already
  * completed operations are not rolled back.
  *
+ * For each operation that is executed during a transaction, you first get a
+ * #FlatpakTransaction::new-operation signal, followed by either a
+ * #FlatpakTransaction::operation-done or #FlatpakTransaction::operation-error.
+
  * The FlatpakTransaction API is threadsafe in the sense that it is safe to run two
  * transactions at the same time, in different threads (or processes).
  */
@@ -125,7 +129,7 @@ struct _FlatpakTransactionPrivate
   GList                       *ops;
   GPtrArray                   *added_origin_remotes;
 
-  GList                       *flatpakrefs; /* GKeyFiles */
+ GList                       *flatpakrefs; /* GKeyFiles */
   GList                       *bundles; /* BundleData */
 
   FlatpakTransactionOperation *current_op;
