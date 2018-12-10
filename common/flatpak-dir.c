@@ -2987,6 +2987,29 @@ flatpak_dir_resolve_data_free (FlatpakDirResolveData *data)
   g_free (data);
 }
 
+static void
+resolve_p2p_update_from_commit (FlatpakDirResolve *resolve,
+                                GVariant *commit_data)
+{
+  g_autoptr(GVariant) commit_metadata = NULL;
+  const char *xa_metadata = NULL;
+  guint64 download_size = 0;
+  guint64 installed_size = 0;
+
+  commit_metadata = g_variant_get_child_value (commit_data, 0);
+  g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+  if (xa_metadata == NULL)
+    g_message ("Warning: No xa.metadata in commit %s ref %s", resolve->resolved_commit, resolve->ref);
+  else
+    resolve->resolved_metadata = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
+
+  if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
+    resolve->download_size = GUINT64_FROM_BE (download_size);
+
+  if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
+    resolve->installed_size = GUINT64_FROM_BE (installed_size);
+}
+
 static gboolean
 flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
                                  FlatpakDirResolveData **datas,
@@ -3080,8 +3103,6 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
       if (g_strcmp0 (latest_rev, data->local_commit) == 0)
         {
           g_autoptr(GVariant) commit_data = NULL;
-          g_autoptr(GVariant) commit_metadata = NULL;
-          const char *xa_metadata = NULL;
 
           /* We already have the latest commit, so resolve it from
            * the local commit and remove from all results. This way we
@@ -3091,13 +3112,7 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
             return FALSE;
 
           resolve->resolved_commit = g_strdup (data->local_commit);
-          commit_metadata = g_variant_get_child_value (commit_data, 0);
-          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
-          if (xa_metadata == NULL)
-            g_message ("Warning: No xa.metadata in commit %s ref %s", resolve->resolved_commit, resolve->ref);
-          else
-            resolve->resolved_metadata = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
-
+          resolve_p2p_update_from_commit (resolve, commit_data);
           remove_ref_from_p2p_results (results, &data->collection_ref);
         }
     }
@@ -3129,9 +3144,7 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
       FlatpakDirResolveData *data = datas[i];
       FlatpakDirResolve *resolve = data->resolve;
       g_autoptr(GVariant) commit_data = NULL;
-      g_autoptr(GVariant) commit_metadata = NULL;
       g_autofree char *refspec = NULL;
-      const char *xa_metadata = NULL;
 
       if (resolve->resolved_commit != NULL)
         continue;
@@ -3143,12 +3156,7 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
       if (!ostree_repo_load_commit (child_repo, resolve->resolved_commit, &commit_data, NULL, error))
         return FALSE;
 
-      commit_metadata = g_variant_get_child_value (commit_data, 0);
-      g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
-      if (xa_metadata == NULL)
-        g_message ("Warning: No xa.metadata in commit %s ref %s", resolve->resolved_commit, resolve->ref);
-      else
-        resolve->resolved_metadata = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
+      resolve_p2p_update_from_commit (resolve, commit_data);
     }
 
   return TRUE;
