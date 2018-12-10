@@ -5417,9 +5417,9 @@ flatpak_get_current_locale_langs (void)
 
   for (i = 0; locales[i] != NULL; i++)
     {
-      char *lang = flatpak_get_lang_from_locale (locales[i]);
+      g_autofree char *lang = flatpak_get_lang_from_locale (locales[i]);
       if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
-        g_ptr_array_add (langs, lang);
+        g_ptr_array_add (langs, g_steal_pointer (&lang));
     }
 
   g_ptr_array_sort (langs, flatpak_strcmp0_ptr);
