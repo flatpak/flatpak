@@ -151,6 +151,10 @@ GFile *                         flatpak_transaction_operation_get_bundle_path (F
 FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_get_commit (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
+guint64                         flatpak_transaction_operation_get_download_size (FlatpakTransactionOperation *self);
+FLATPAK_EXTERN
+guint64                         flatpak_transaction_operation_get_installed_size (FlatpakTransactionOperation *self);
+FLATPAK_EXTERN
 GKeyFile *                      flatpak_transaction_operation_get_metadata (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
 GKeyFile *                      flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *self);

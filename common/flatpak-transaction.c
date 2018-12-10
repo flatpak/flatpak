@@ -101,6 +101,8 @@ struct _FlatpakTransactionOperation
   GKeyFile                       *resolved_metakey;
   GBytes                         *resolved_old_metadata;
   GKeyFile                       *resolved_old_metakey;
+  guint64                         download_size;
+  guint64                         installed_size;
   int                             run_after_count;
   int                             run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList                          *run_before_ops;
@@ -639,6 +641,54 @@ const char *
 flatpak_transaction_operation_get_commit (FlatpakTransactionOperation *self)
 {
   return self->resolved_commit;
+}
+
+/**
+ * flatpak_transaction_operation_get_download_size:
+ * @self: a #flatpakTransactionOperation
+ *
+ * Gets the maximum download size for the operation.
+ *
+ * Note that this does not include the size of dependencies, and
+ * the acutal download may be smaller, if some of the data is already
+ * available locally.
+ *
+ * For uninstall operations, this returns 0.
+ *
+ * This information is available when the transaction is resolved,
+ * i.e. when #FlatpakTransaction::ready is emitted.
+ *
+ * Returns: the download size
+ * Since: 1.1.2
+ */
+guint64
+flatpak_transaction_operation_get_download_size (FlatpakTransactionOperation *self)
+{
+  return self->download_size;
+}
+
+/**
+ * flatpak_transaction_operation_get_installed_size:
+ * @self: a #flatpakTransactionOperation
+ *
+ * Gets the installed size for the operation.
+ *
+ * Note that even for a new install, the extra space required on
+ * disk may be smaller than this numer, if some of the data is already
+ * available locally.
+ *
+ * For uninstall operations, this returns 0.
+ *
+ * This information is available when the transaction is resolved,
+ * i.e. when #FlatpakTransaction::ready is emitted.
+ *
+ * Returns: the installed size
+ * Since: 1.1.2
+ */
+guint64
+flatpak_transaction_operation_get_installed_size (FlatpakTransactionOperation *self)
+{
+  return self->installed_size;
 }
 
 /**
@@ -1961,6 +2011,9 @@ resolve_p2p_ops (FlatpakTransaction *self,
       FlatpakDirResolve *resolve = g_ptr_array_index (resolves, i);
       g_autoptr(GBytes) old_metadata_bytes = NULL;
 
+      op->download_size = resolve->download_size;
+      op->installed_size = resolve->installed_size;
+
       old_metadata_bytes = load_deployed_metadata (self, op->ref);
       mark_op_resolved (op, resolve->resolved_commit, resolve->resolved_metadata, old_metadata_bytes);
     }
@@ -1991,6 +2044,8 @@ resolve_ops (FlatpakTransaction *self,
       g_autoptr(GVariant) commit_metadata = NULL;
       g_autoptr(GBytes) metadata_bytes = NULL;
       g_autoptr(GBytes) old_metadata_bytes = NULL;
+      guint64 download_size = 0;
+      guint64 installed_size = 0;
 
       if (op->resolved)
         continue;
@@ -2045,6 +2100,11 @@ resolve_ops (FlatpakTransaction *self,
           else
             metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
 
+          if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
+            op->download_size = GUINT64_FROM_BE (download_size);
+          if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
+            op->installed_size = GUINT64_FROM_BE (installed_size);
+
           old_metadata_bytes = load_deployed_metadata (self, op->ref);
           mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
         }
@@ -2075,13 +2135,16 @@ resolve_ops (FlatpakTransaction *self,
 
           /* TODO: This only gets the metadata for the latest only, we need to handle the case
              where the user specified a commit, or p2p doesn't have the latest commit available */
-          if (!flatpak_remote_state_lookup_cache (state, op->ref, NULL, NULL, &metadata, &local_error))
+          if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, &local_error))
             {
               g_message (_("Warning: Can't find %s metadata for dependencies: %s"), op->ref, local_error->message);
               g_clear_error (&local_error);
             }
           else
             metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
+
+          op->installed_size = installed_size;
+          op->download_size = download_size;
 
           old_metadata_bytes = load_deployed_metadata (self, op->ref);
           mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
