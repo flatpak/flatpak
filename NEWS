@@ -1,3 +1,29 @@
+Changes in 1.1.1
+================
+
+ * New libflatpak function: flatpak_remote_get_main_ref()
+ * Various changes to the policykit rules in order to cause less, and
+   more understandable policykit authentication dialogs.
+ * Give DRI apps access to more nvidia device nodes required for CUDA/OpenCL support.
+ * search now doesn't search noenumerate remotes.
+ * Renamed operations permission-list to permissions and document-list to
+   documents. The old names are still supported as aliases.
+ * New property 'non-interactive' for installations that allow frontends
+   to do background updates without triggering policykit authentications.
+ * New flag in HostCommand to allow killing the child process when
+   the spawner exits the session bus.
+ * Flatpak now authenticates on the terminal in case there is no desktop-wide
+   policykit agent.
+ * update with no arguments now updates all installations (i.e. also custom
+   systemwide installations).
+ * Use system helper to generate summary files for OCI remotes.
+ * Better progress reporting for OCI downloads.
+ * New conditional extension download feature, 'on-xdg-desktop-FOO'  which downloads
+   when XDG_CURRENT_DESKTOP matches FOO.
+ * More sockets are now mounted read-only in the sandbox
+ * Updated docs, error messages and translations
+
+
 Changes in 1.1
 ==============
 
