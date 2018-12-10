@@ -280,7 +280,7 @@ flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
                            gboolean      one_arg,
                            GError      **error)
 {
-  gchar *data;
+  g_autofree gchar *data = NULL;
   gchar *ptr;
   gint i;
   gsize data_len = 0;
