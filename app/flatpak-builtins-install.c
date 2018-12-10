@@ -312,6 +312,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!auto_remote)
         {
           remote = g_strdup (argv[1]);
+          g_clear_object (&dir);
           dir = g_object_ref (dir_with_remote);
         }
       else
@@ -390,6 +391,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
               return FALSE;
 
             remote = g_strdup (chosen_pair->remote_name);
+            g_clear_object (&dir);
             dir = g_object_ref (chosen_pair->dir);
         }
     }
