@@ -591,9 +591,20 @@ flatpak_get_gtk_theme (void)
   return (const char *) gtk_theme;
 }
 
+static gboolean no_fancy_output;
+
+void
+flatpak_disable_fancy_output (void)
+{
+  no_fancy_output = TRUE;
+}
+
 gboolean
 flatpak_fancy_output (void)
 {
+  if (no_fancy_output)
+    return FALSE;
+
   if (g_strcmp0 (g_getenv ("FLATPAK_FANCY_OUTPUT"), "0") == 0)
     return FALSE;
 

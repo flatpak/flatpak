@@ -88,6 +88,7 @@ gboolean  flatpak_has_path_prefix (const char *str,
 const char * flatpak_path_match_prefix (const char *pattern,
                                         const char *path);
 
+void     flatpak_disable_fancy_output (void);
 gboolean flatpak_fancy_output (void);
 
 const char * flatpak_get_arch (void);
