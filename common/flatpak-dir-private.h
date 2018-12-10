@@ -869,6 +869,8 @@ typedef struct
   /* out */
   char   *resolved_commit;
   GBytes *resolved_metadata;
+  guint64 download_size;
+  guint64 installed_size;
 } FlatpakDirResolve;
 
 FlatpakDirResolve *flatpak_dir_resolve_new (const char *remote,
