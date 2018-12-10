@@ -305,6 +305,9 @@ flatpak_option_context_parse (GOptionContext     *context,
       exit (EXIT_SUCCESS);
     }
 
+  if (opt_verbose > 0 || opt_ostree_verbose)
+    flatpak_disable_fancy_output ();
+
   if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     {
       dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
