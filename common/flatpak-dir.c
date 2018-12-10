@@ -12782,7 +12782,7 @@ get_locale_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
 {
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_interface_name = "org.freedesktop.Accounts.User";
-  char **object_paths = NULL;
+  g_auto(GStrv) object_paths = NULL;
   int i;
   g_autoptr(GVariant) ret = NULL;
 
