@@ -473,11 +473,6 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
               gsize runtime_metadata_size;
               g_autoptr(GKeyFile) runtime_metakey = NULL;
 
-
-              runtime_deploy_dir = flatpak_find_deploy_dir_for_ref (runtime_ref, NULL, cancellable, error);
-              if (runtime_deploy_dir == NULL)
-                goto out;
-
               runtime_metadata_file = g_file_get_child (runtime_deploy_dir, "metadata");
               if (!g_file_load_contents (runtime_metadata_file, cancellable,
                                          &runtime_metadata_contents, &runtime_metadata_size, NULL, error))
