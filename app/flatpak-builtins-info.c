@@ -422,6 +422,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
               g_print ("%s%s%s %s\n", on, _("Subpaths:"), off, subpath_str);
             }
         }
+
+      g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
     }
 
   return TRUE;
