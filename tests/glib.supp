@@ -578,3 +578,14 @@
    fun:soup_add_completion_reffed
    fun:soup_session_real_kick_queue
 }
+{
+   polkit_agent_leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:g_malloc0
+   fun:thread_memory_from_self
+   fun:g_slice_alloc
+   fun:g_hash_table_new_full
+   fun:g_main_context_new
+}
