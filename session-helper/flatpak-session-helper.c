@@ -423,11 +423,14 @@ name_owner_changed (GDBusConnection *connection,
     {
       GHashTableIter iter;
       PidData *pid_data = NULL;
+      gpointer value = NULL;
       GList *list = NULL, *l;
 
       g_hash_table_iter_init (&iter, client_pid_data_hash);
-      while (g_hash_table_iter_next (&iter, NULL, (gpointer *)pid_data))
+      while (g_hash_table_iter_next (&iter, NULL, &value))
         {
+          pid_data = value;
+
           if (pid_data->watch_bus && g_str_equal (pid_data->client, name))
             list = g_list_prepend (list, pid_data);
         }
