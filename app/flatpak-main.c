@@ -657,7 +657,7 @@ main (int    argc,
       GVariantBuilder opt_builder;
       g_autoptr(GVariant) options = NULL;
 
-      subject = polkit_unix_process_new_for_owner (getpid (), 0, -1);
+      subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
 
       g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
       if (g_strcmp0 (g_getenv ("FLATPAK_FORCE_TEXT_AUTH"), "1") != 0)
