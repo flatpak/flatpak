@@ -47,6 +47,7 @@ static char **opt_gpg_key_ids;
 static gboolean opt_prune;
 static gboolean opt_generate_deltas;
 static gint opt_prune_depth = -1;
+static gint opt_static_delta_jobs;
 
 static GOptionEntry options[] = {
   { "redirect-url", 0, 0, G_OPTION_ARG_STRING, &opt_redirect_url, N_("Redirect this repo to a new URL"), N_("URL") },
@@ -58,6 +59,7 @@ static GOptionEntry options[] = {
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, N_("Generate delta files"), NULL },
+  { "static-delta-jobs", 0, 0, G_OPTION_ARG_INT, &opt_static_delta_jobs, N_("Max parallel jobs when creating deltas (default: NUMCPUs)"), N_("NUM-JOBS") },
   { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, N_("Prune unused objects"), NULL },
   { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, N_("Only traverse DEPTH parents for each commit (default: -1=infinite)"), N_("DEPTH") },
   { "generate-static-delta-from", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_from, NULL, NULL },
@@ -260,7 +262,7 @@ spawn_delete_generation (GMainContext *context,
 
   g_assert (i <= G_N_ELEMENTS (argv));
 
-  while (*n_spawned_delta_generate > g_get_num_processors ())
+  while (*n_spawned_delta_generate >= opt_static_delta_jobs)
     g_main_context_iteration (context, TRUE);
 
   subprocess = g_subprocess_launcher_spawnv (launcher, argv, error);
@@ -420,6 +422,9 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
   if (argc < 2)
     return usage_error (context, _("LOCATION must be specified"), error);
+
+  if (opt_static_delta_jobs <= 0)
+    opt_static_delta_jobs = g_get_num_processors ();
 
   location = argv[1];
 
