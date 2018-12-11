@@ -1298,7 +1298,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       g_variant_get_child (parameters, 3, "&s", &origin);
       g_variant_get_child (parameters, 5, "&s", &installation);
 
-      /* For metadata updates, redirect to the modify-repo action since they
+      /* For metadata updates, redirect to the metadata-update action which
        * should basically always be allowed */
       if (ref != NULL && g_strcmp0 (ref, OSTREE_REPO_METADATA_REF) == 0)
         {
