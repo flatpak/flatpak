@@ -675,11 +675,16 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
 gboolean flatpak_yes_no_prompt (gboolean default_yes,
                                 const char *prompt,
                                 ...) G_GNUC_PRINTF (2, 3);
+                            
 long flatpak_number_prompt (gboolean    default_yes,
                             int         min,
                             int         max,
                             const char *prompt,
                             ...) G_GNUC_PRINTF (4, 5);
+
+void flatpak_format_choices (const char **choices,
+                             const char *prompt,
+                             ...) G_GNUC_PRINTF (2, 3);
 
 typedef void (*FlatpakProgressCallback)(const char *status,
                                         guint       progress,
