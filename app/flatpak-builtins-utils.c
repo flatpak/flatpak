@@ -400,13 +400,14 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
     chosen = 1;
   else if (dirs_with_remote->len > 1)
     {
-      g_print (_("Remote ‘%s’ found in multiple installations:\n"), remote_name);
+      g_auto(GStrv) names = g_new0 (char *, dirs_with_remote->len + 1);
       for (i = 0; i < dirs_with_remote->len; i++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs_with_remote, i);
-          g_autofree char *dir_name = flatpak_dir_get_name (dir);
-          g_print ("%d) %s\n", i + 1, dir_name);
+          names[i] = flatpak_dir_get_name (dir);
         }
+      flatpak_format_choices ((const char **)names,
+                              _("Remote ‘%s’ found in multiple installations:"), remote_name);
       chosen = flatpak_number_prompt (TRUE, 0, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)
         return flatpak_fail (error, _("No remote chosen to resolve ‘%s’ which exists in multiple installations"), remote_name);
@@ -435,7 +436,6 @@ flatpak_resolve_matching_refs (const char   *remote_name,
 {
   guint chosen = 0;
   guint refs_len;
-  guint i;
 
   refs_len = g_strv_length (refs);
   g_assert (refs_len > 0);
@@ -471,10 +471,9 @@ flatpak_resolve_matching_refs (const char   *remote_name,
         }
       else
         {
-          g_print (_("Similar refs found for ‘%s’ in remote ‘%s’ (%s):\n"),
-                   opt_search_ref, remote_name, dir_name);
-          for (i = 0; i < refs_len; i++)
-            g_print ("%d) %s\n", i + 1, refs[i]);
+          flatpak_format_choices ((const char **)refs,
+                                  _("Similar refs found for ‘%s’ in remote ‘%s’ (%s):"),
+                                  opt_search_ref, remote_name, dir_name);
           chosen = flatpak_number_prompt (TRUE, 0, refs_len, _("Which do you want to use (0 to abort)?"));
           if (chosen == 0)
             return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
@@ -532,14 +531,13 @@ flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
         }
       else
         {
-          g_print (_("Similar installed refs found for ‘%s’:\n"),
-                   opt_search_ref);
+          g_auto(GStrv) names = g_new0 (char *, ref_dir_pairs->len + 1);
           for (i = 0; i < ref_dir_pairs->len; i++)
             {
               RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i);
-              const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
-              g_print ("%d) %s (%s)\n", i + 1, pair->ref, dir_name);
+              names[i] = flatpak_dir_get_name (pair->dir);
             }
+          flatpak_format_choices ((const char **)names, _("Similar installed refs found for ‘%s’:"), opt_search_ref);
           chosen = flatpak_number_prompt (TRUE, 0, ref_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
           if (chosen == 0)
             return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
@@ -582,13 +580,13 @@ flatpak_resolve_matching_remotes (gboolean        disable_interaction,
         }
       else
         {
-          g_print (_("Multiple remotes found with refs similar to ‘%s’:\n"), opt_search_ref);
+          g_auto(GStrv) names = g_new0 (char *, remote_dir_pairs->len + 1);
           for (i = 0; i < remote_dir_pairs->len; i++)
             {
               RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, i);
-              const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
-              g_print ("%d) %s (%s)\n", i + 1, pair->remote_name, dir_name);
+              names[i] = g_strdup_printf ("‘%s’ (%s)", pair->remote_name, flatpak_dir_get_name_cached (pair->dir));
             }
+          flatpak_format_choices ((const char **)names, _("Remotes found with refs similar to ‘%s’:"), opt_search_ref);
           chosen = flatpak_number_prompt (TRUE, 0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
           if (chosen == 0)
             return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);

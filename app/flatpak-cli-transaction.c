@@ -64,7 +64,6 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
   int n_remotes = g_strv_length ((char **) remotes);
   int chosen = -1;
   const char *pref;
-  int i;
 
   pref = strchr (for_ref, '/') + 1;
 
@@ -83,12 +82,9 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
     }
   else
     {
-      g_print (_("Required runtime for %s (%s) found in remotes: %s\n"),
-               pref, runtime_ref, remotes[0]);
-      for (i = 0; remotes[i] != NULL; i++)
-        {
-          g_print ("%d) %s\n", i + 1, remotes[i]);
-        }
+      flatpak_format_choices ((const char **)remotes,
+                              _("Required runtime for %s (%s) found in remotes: %s"),
+                              pref, runtime_ref, remotes[0]);
       chosen = flatpak_number_prompt (TRUE, 0, n_remotes, _("Which do you want to install (0 to abort)?"));
       chosen -= 1; /* convert from base-1 to base-0 (and -1 to abort) */
     }
