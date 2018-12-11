@@ -173,6 +173,7 @@ struct _FlatpakTransactionProgress
   char                *status;
   gboolean             estimating;
   int                  progress;
+  guint64              total_transferred;
 
   gboolean             done;
 };
@@ -273,6 +274,21 @@ flatpak_transaction_progress_get_progress (FlatpakTransactionProgress *self)
   return self->progress;
 }
 
+/**
+ * flatpak_transaction_progress_get_bytes_transferred:
+ * @self: a #FlatpakTransactionProgress
+ *
+ * Gets the number of bytes that have been transferred.
+ *
+ * Returns: the number of bytes transferred
+ * Since: 1.1.2
+ */
+guint64
+flatpak_transaction_progress_get_bytes_transferred (FlatpakTransactionProgress *self)
+{
+  return self->total_transferred;
+}
+
 static void
 flatpak_transaction_progress_finalize (GObject *object)
 {
@@ -314,11 +330,19 @@ got_progress_cb (const char *status,
                  gpointer    user_data)
 {
   FlatpakTransactionProgress *p = user_data;
+  guint64 bytes_transferred;
+  guint64 transferred_extra_data_bytes;
+
+  ostree_async_progress_get (p->ostree_progress,
+                             "bytes-transferred", "t", &bytes_transferred,
+                             "transferred-extra-data-bytes", "t", &transferred_extra_data_bytes,
+                             NULL);
 
   g_free (p->status);
   p->status = g_strdup (status);
   p->progress = progress;
   p->estimating = estimating;
+  p->total_transferred = bytes_transferred + transferred_extra_data_bytes;
 
   if (!p->done)
     g_signal_emit (p, progress_signals[CHANGED], 0);
