@@ -5344,6 +5344,25 @@ flatpak_number_prompt (gboolean default_yes, int min, int max, const char *promp
     }
 }
 
+void
+flatpak_format_choices (const char **choices,
+                        const char *prompt,
+                        ...)
+{
+  va_list var_args;
+  g_autofree char *s = NULL;
+  int i;
+
+  va_start (var_args, prompt);
+  s = g_strdup_vprintf (prompt, var_args);
+  va_end (var_args);
+
+  g_print ("%s\n\n", s);
+  for (i = 0; choices[i]; i++)
+    g_print ("  %d) %s\n", i+1, choices[i]);
+  g_print ("\n");
+}
+
 /* In this NULL means don't care about these paths, while
    an empty array means match anything */
 char **
