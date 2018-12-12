@@ -1539,8 +1539,6 @@ copy_gpg (void)
   g_free (dest);
 }
 
-GTestDBus *test_bus = NULL;
-
 static void
 global_setup (void)
 {
@@ -1548,7 +1546,6 @@ global_setup (void)
   g_autofree char *configdir = NULL;
   g_autofree char *datadir = NULL;
   g_autofree char *homedir = NULL;
-  g_autofree char *services_dir = NULL;
 
   testdir = g_strdup ("/tmp/flatpak-test-XXXXXX");
   g_mkdtemp (testdir);
@@ -1609,15 +1606,6 @@ global_setup (void)
   g_assert_cmpstr (g_get_user_data_dir (), ==, datadir);
   g_assert_cmpstr (g_get_user_runtime_dir (), ==, flatpak_runtimedir);
 
-  g_setenv ("FLATPAK_SYSTEM_HELPER_ON_SESSION", "1", TRUE);
-
-  test_bus = g_test_dbus_new (G_TEST_DBUS_NONE);
-
-  services_dir = g_test_build_filename (G_TEST_BUILT, "dbus-1", "services", NULL);
-  g_test_dbus_add_service_dir (test_bus, services_dir);
-
-  g_test_dbus_up (test_bus);
-
   copy_gpg ();
   setup_multiple_installations ();
   setup_repo ();
@@ -1631,8 +1619,6 @@ global_teardown (void)
 
   if (g_getenv ("SKIP_TEARDOWN"))
     return;
-
-  g_test_dbus_down (test_bus);
 
   argv[2] = gpg_homedir;
 
