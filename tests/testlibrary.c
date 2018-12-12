@@ -2464,26 +2464,36 @@ test_transaction_install_local (void)
   g_assert_nonnull (remote);
 }
 
+typedef struct
+{
+  GMainLoop *loop;
+  guint stop_waiting_id;
+  guint hello_dead_cb_id;
+  gboolean hello_dead;
+} TestInstanceContext;
+
 static gboolean
 stop_waiting (gpointer data)
 {
-  GMainLoop *loop = data;
+  TestInstanceContext *context = data;
 
-  g_main_loop_quit (loop);
+  g_main_loop_quit (context->loop);
+  context->stop_waiting_id = 0;
 
   return G_SOURCE_REMOVE;
 }
 
-static gboolean hello_dead;
-
-static void 
+static void
 hello_dead_cb (GPid pid,
                int status,
                gpointer data)
 {
-  hello_dead = TRUE;
+  TestInstanceContext *context = data;
 
-  stop_waiting (data);
+  context->hello_dead = TRUE;
+  context->hello_dead_cb_id = 0;
+
+  g_main_loop_quit (context->loop);
 }
 
 /* test the instance api: install an app, launch it, get the instance,
@@ -2504,9 +2514,9 @@ test_instance (void)
   GKeyFile *info;
   g_autofree char *value = NULL;
   int i;
-  g_autoptr(GMainLoop) loop = NULL;
   g_autofree char *app = NULL;
   g_autofree char *runtime = NULL;
+  TestInstanceContext context = { NULL, 0, 0, FALSE };
 
   app = g_strdup_printf ("app/org.test.Hello/%s/master",
                          flatpak_get_default_arch ());
@@ -2582,17 +2592,26 @@ test_instance (void)
     g_usleep (10000);
   g_assert_cmpint (flatpak_instance_get_child_pid (instance), >, 0);
 
-  loop = g_main_loop_new (NULL, FALSE);
+  context.loop = g_main_loop_new (NULL, FALSE);
 
-  hello_dead = FALSE;
-  g_child_watch_add (flatpak_instance_get_pid (instance), hello_dead_cb, loop);
-  g_timeout_add (5000, stop_waiting, loop);
+  context.hello_dead = FALSE;
+  context.hello_dead_cb_id = g_child_watch_add (flatpak_instance_get_pid (instance),
+                                                hello_dead_cb, &context);
+  context.stop_waiting_id = g_timeout_add (5000, stop_waiting, &context);
 
   kill (flatpak_instance_get_child_pid (instance), SIGKILL);
 
-  g_main_loop_run (loop);
+  g_main_loop_run (context.loop);
 
-  g_assert (hello_dead);
+  if (context.hello_dead_cb_id != 0)
+    g_source_remove (context.hello_dead_cb_id);
+
+  if (context.stop_waiting_id != 0)
+    g_source_remove (context.stop_waiting_id);
+
+  g_main_loop_unref (context.loop);
+
+  g_assert (context.hello_dead);
   g_assert_false (flatpak_instance_is_running (instance));
 
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
