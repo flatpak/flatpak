@@ -90,6 +90,15 @@
             <member>PERL5LIB</member>
             <member>XCURSOR_PATH</member>
         </simplelist>
+        <para>
+            Flatpak overrides the XDG environment variables to point sandboxed applications
+            at their writable filesystem locations below <filename>~/.var/app/$APPID/</filename>:
+        </para>
+        <simplelist>
+            <member>XDG_DATA_HOME</member>
+            <member>XDG_CONFIG_HOME</member>
+            <member>XDG_CACHE_HOME</member>
+        </simplelist>
     </refsect1>
 
     <refsect1>
