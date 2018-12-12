@@ -53,9 +53,11 @@ void                flatpak_table_printer_append_with_comma_printf (FlatpakTable
                                                                     ...);
 void                flatpak_table_printer_finish_row (FlatpakTablePrinter *printer);
 void                flatpak_table_printer_print (FlatpakTablePrinter *printer);
-int                 flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
+void                flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                                                       int skip,
-                                                      int columns);
+                                                      int columns,
+                                                      int *table_height,
+                                                      int *table_width);
 int                 flatpak_table_printer_get_current_row (FlatpakTablePrinter *printer);
 void                flatpak_table_printer_set_cell (FlatpakTablePrinter *printer,
                                                     int row,
@@ -65,5 +67,8 @@ void                flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter 
                                                             int row,
                                                             int col,
                                                             const char *cell);
+void               flatpak_table_printer_set_column_expand (FlatpakTablePrinter *printer,
+                                                            int col,
+                                                            gboolean expand);
 
 #endif /* __FLATPAK_TABLE_PRINTER_H__ */

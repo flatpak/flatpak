@@ -47,9 +47,24 @@ free_cell (gpointer data)
   g_free (cell);
 }
 
+typedef struct
+{
+  char *title;
+  gboolean expand;
+} TableColumn;
+
+static void
+free_column (gpointer data)
+{
+  TableColumn *column = data;
+
+  g_free (column->title);
+  g_free (column);
+}
+
 struct FlatpakTablePrinter
 {
-  GPtrArray *titles;
+  GPtrArray *columns;
   GPtrArray *rows;
   GPtrArray *current;
   int        n_columns;
@@ -60,7 +75,7 @@ flatpak_table_printer_new (void)
 {
   FlatpakTablePrinter *printer = g_new0 (FlatpakTablePrinter, 1);
 
-  printer->titles = g_ptr_array_new_with_free_func (g_free);
+  printer->columns = g_ptr_array_new_with_free_func (free_column);
   printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify) g_ptr_array_unref);
   printer->current = g_ptr_array_new_with_free_func (free_cell);
 
@@ -70,10 +85,28 @@ flatpak_table_printer_new (void)
 void
 flatpak_table_printer_free (FlatpakTablePrinter *printer)
 {
-  g_ptr_array_free (printer->titles, TRUE);
+  g_ptr_array_free (printer->columns, TRUE);
   g_ptr_array_free (printer->rows, TRUE);
   g_ptr_array_free (printer->current, TRUE);
   g_free (printer);
+}
+
+static TableColumn *
+get_table_column (FlatpakTablePrinter *printer,
+                  int                  column)
+{
+  TableColumn *col = NULL;
+
+  if (column < printer->columns->len)
+    col = g_ptr_array_index (printer->columns, column);
+
+  if (col == NULL)
+    {
+      col = g_new0 (TableColumn, 1);
+      g_ptr_array_insert (printer->columns, column, col);
+    }
+
+  return col;
 }
 
 void
@@ -81,7 +114,9 @@ flatpak_table_printer_set_column_title (FlatpakTablePrinter *printer,
                                         int                  column,
                                         const char          *text)
 {
-  g_ptr_array_insert (printer->titles, column, g_strdup (text));
+  TableColumn *col = get_table_column (printer, column);
+
+  col->title = g_strdup (text);
 }
 
 void
@@ -256,10 +291,12 @@ print_row (GString *row_s, gboolean bold, int *skip, int columns)
  * Note that unlike flatpak_table_printer_print(), this function does
  * not add a newline after the last table row.
  */
-int
+void
 flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                                   int skip,
-                                  int columns)
+                                  int columns,
+                                  int *table_height,
+                                  int *table_width)
 {
   g_autofree int *widths = NULL;
   g_autofree int *lwidths = NULL;
@@ -267,6 +304,10 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   g_autoptr(GString) row_s = g_string_new ("");
   int i, j;
   int rows = 0;
+  int width;
+  int expand_columns;
+  gboolean has_title;
+  int expand_by, expand_extra;
 
   if (printer->current->len != 0)
     flatpak_table_printer_finish_row (printer);
@@ -275,12 +316,16 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   lwidths = g_new0 (int, printer->n_columns);
   rwidths = g_new0 (int, printer->n_columns);
 
-  for (i = 0; i < printer->titles->len && i < printer->n_columns; i++)
+  has_title = FALSE;
+  for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
     {
-      char *title = g_ptr_array_index (printer->titles, i);
+      TableColumn *col = g_ptr_array_index (printer->columns, i);
 
-      if (title)
-        widths[i] = MAX (widths[i], strlen (title));
+      if (col->title)
+        {
+          widths[i] = MAX (widths[i], strlen (col->title));
+          has_title = TRUE;
+        }
     }
 
   for (i = 0; i < printer->rows->len; i++)
@@ -305,13 +350,46 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
         }
     }
 
-  if (flatpak_fancy_output () && printer->titles->len > 0)
-    {
-      for (i = 0; i < printer->titles->len && i < printer->n_columns; i++)
-        {
-          char *title = g_ptr_array_index (printer->titles, i);
+  width = printer->n_columns - 1;
+  for (i = 0; i < printer->n_columns; i++)
+    width += widths[i];
 
-          g_string_append_printf (row_s, "%s%-*s", (i == 0) ? "" : " ", widths[i], title);
+  expand_columns = 0;
+  for (i = 0; i < printer->columns->len; i++)
+    {
+      TableColumn *col = g_ptr_array_index (printer->columns, i);
+      if (col && col->expand)
+        expand_columns++;
+    }
+
+  if (expand_columns > 0)
+    {
+      int excess = MIN (columns - width, width / 2);
+      expand_by = excess / expand_columns;
+      expand_extra = excess % expand_columns;
+      width += excess;
+    }
+
+  if (flatpak_fancy_output () && has_title)
+    {
+      int extra = expand_extra;
+      for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
+        {
+          TableColumn *col = g_ptr_array_index (printer->columns, i);
+          const char *title = col && col->title ? col->title : "";
+          int len = widths[i];
+
+          if (col && col->expand)
+            {
+              len += expand_by;
+              if (extra > 0)
+                {
+                  len++;
+                  extra--;
+                }
+            }
+
+          g_string_append_printf (row_s, "%*s%-*s", i > 0, "", len, title);
         }
       rows += print_row (row_s, TRUE, &skip, columns);
     }
@@ -319,21 +397,35 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   for (i = 0; i < printer->rows->len; i++)
     {
       GPtrArray *row = g_ptr_array_index (printer->rows, i);
+      int extra = expand_extra;
 
       if (rows > 0)
         g_print ("\n");
 
       for (j = 0; j < row->len; j++)
         {
+          TableColumn *col = j < printer->columns->len ? g_ptr_array_index (printer->columns, j) : NULL;
           Cell *cell = g_ptr_array_index (row, j);
+          int len = widths[j];
+
+          if (col && col->expand)
+            {
+              len += expand_by;
+              if (extra > 0)
+                {
+                  len++;
+                  extra--;
+                }
+            }
+
           if (flatpak_fancy_output ())
             {
               if (cell->span)
-                g_string_append_printf (row_s, "%s%s", (j == 0) ? "" : " ", cell->text);
+                g_string_append_printf (row_s, "%*s%s", j > 0, "", cell->text);
               else if (cell->align < 0)
-                g_string_append_printf (row_s, "%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
+                g_string_append_printf (row_s, "%*s%-*s", j > 0, "", len, cell->text);
               else
-                g_string_append_printf (row_s, "%s%*s%-*s", (j == 0) ? "" : " ", lwidths[j] - cell->align, "", widths[j] - (lwidths[j] - cell->align), cell->text);
+                g_string_append_printf (row_s, "%*s%*s%-*s", j > 0, "", lwidths[j] - cell->align, "", widths[j] - (lwidths[j] - cell->align), cell->text);
             }
           else
             g_string_append_printf (row_s, "%s%s", cell->text, (j < row->len - 1) ? "\t" : "");
@@ -341,13 +433,17 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
       rows += print_row (row_s, FALSE, &skip, columns);
     }
 
-  return rows;
+  if (table_width)
+    *table_width = width;
+  if (table_height)
+    *table_height = rows;
 }
 
 void
 flatpak_table_printer_print (FlatpakTablePrinter *printer)
 {
-  flatpak_table_printer_print_full (printer, 0, 80);
+  int h, w;
+  flatpak_table_printer_print_full (printer, 0, 80, &h, &w);
   g_print ("\n");
 }
 
@@ -401,4 +497,14 @@ flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter *printer,
     align = decimal - text;
 
   set_cell (printer, r, c, text, align);
+}
+
+void
+flatpak_table_printer_set_column_expand (FlatpakTablePrinter *printer,
+                                         int column,
+                                         gboolean expand)
+{
+  TableColumn *col = get_table_column (printer, column);
+
+  col->expand = expand;
 }
