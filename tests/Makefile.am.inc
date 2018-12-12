@@ -1,9 +1,12 @@
-AM_TESTS_ENVIRONMENT = FLATPAK_TESTS_DEBUG=1 \
+AM_TESTS_ENVIRONMENT = \
+	DBUS_RUN_SESSION=$(DBUS_RUN_SESSION) \
+	FLATPAK_TESTS_DEBUG=1 \
 	FLATPAK_TRIGGERSDIR=$$(cd $(top_srcdir) && pwd)/triggers \
 	FLATPAK_DBUSPROXY=$$(cd $(top_builddir) && pwd)/flatpak-dbus-proxy \
 	GI_TYPELIB_PATH=$$(cd $(top_builddir) && pwd)$${GI_TYPELIB_PATH:+:$$GI_TYPELIB_PATH} \
 	LD_LIBRARY_PATH=$$(cd $(top_builddir)/.libs && pwd)$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH} \
 	PATH=$$(cd $(top_builddir) && pwd):$${PATH} \
+	XDG_DATA_HOME=$$(cd $(top_builddir) && pwd)/tests \
 	$(NULL)
 
 if WITH_SYSTEM_BWRAP

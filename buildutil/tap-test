@@ -21,4 +21,5 @@ cd ${tempdir}
 if [[ $bn == *.wrap ]]; then
     WRAPPER=${srcd}/test-wrapper.sh
 fi
-$WRAPPER ${srcd}/${bn} -k --tap
+export FLATPAK_SYSTEM_HELPER_ON_SESSION=1
+${DBUS_RUN_SESSION-dbus-run-session} -- $WRAPPER ${srcd}/${bn} -k --tap

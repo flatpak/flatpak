@@ -188,6 +188,7 @@ else
    AM_CONDITIONAL([WITH_SYSTEM_DBUS_PROXY], [false])
 fi
 
+AC_PATH_PROG([DBUS_RUN_SESSION], [dbus-run-session], [dbus-run-session])
 
 AC_CHECK_FUNCS(fdwalk)
 LIBGLNX_CONFIGURE
