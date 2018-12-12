@@ -1613,7 +1613,7 @@ global_setup (void)
 
   test_bus = g_test_dbus_new (G_TEST_DBUS_NONE);
 
-  services_dir = g_test_build_filename (G_TEST_BUILT, "services", NULL);
+  services_dir = g_test_build_filename (G_TEST_BUILT, "dbus-1", "services", NULL);
   g_test_dbus_add_service_dir (test_bus, services_dir);
 
   g_test_dbus_up (test_bus);

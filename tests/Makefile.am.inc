@@ -28,21 +28,21 @@ tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFL
 tests_httpcache_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
 	libglnx.la libflatpak-common.la
 
-tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
-	mkdir -p tests/services
+tests/dbus-1/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
+	mkdir -p tests/dbus-1/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
 
-tests/services/org.freedesktop.Flatpak.SystemHelper.service: system-helper/org.freedesktop.Flatpak.SystemHelper.service.in
-	mkdir -p tests/services
+tests/dbus-1/services/org.freedesktop.Flatpak.SystemHelper.service: system-helper/org.freedesktop.Flatpak.SystemHelper.service.in
+	mkdir -p tests/dbus-1/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $< > $@
 
-tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service
+tests/libtest.sh: tests/dbus-1/services/org.freedesktop.Flatpak.service tests/dbus-1/services/org.freedesktop.Flatpak.SystemHelper.service
 
 install-test-data-hook:
 if ENABLE_INSTALLED_TESTS
-	mkdir -p $(DESTDIR)$(installed_testdir)/services
-	ln -sf $(dbus_servicedir)/org.freedesktop.Flatpak.service $(DESTDIR)$(installed_testdir)/services/
-	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $(top_srcdir)/system-helper/org.freedesktop.Flatpak.SystemHelper.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.Flatpak.SystemHelper.service
+	mkdir -p $(DESTDIR)$(installed_testdir)/dbus-1/services
+	ln -sf $(dbus_servicedir)/org.freedesktop.Flatpak.service $(DESTDIR)$(installed_testdir)/dbus-1/services/
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $(top_srcdir)/system-helper/org.freedesktop.Flatpak.SystemHelper.service.in > $(DESTDIR)$(installed_testdir)/dbus-1/services/org.freedesktop.Flatpak.SystemHelper.service
 endif
 
 tests/package_version.txt: Makefile
@@ -131,7 +131,7 @@ test_extra_programs = tests/httpcache
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
 EXTRA_DIST += tests/flatpak.supp tests/glib.supp tests/Makefile-test-matrix.am.inc tests/expand-test-matrix.sh tests/test-wrapper.sh
 DISTCLEANFILES += \
-	tests/services/org.freedesktop.Flatpak.service \
-	tests/services/org.freedesktop.Flatpak.SystemHelper.service \
+	tests/dbus-1/services/org.freedesktop.Flatpak.service \
+	tests/dbus-1/services/org.freedesktop.Flatpak.SystemHelper.service \
 	tests/package_version.txt \
 	$(NULL)

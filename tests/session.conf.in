@@ -10,7 +10,7 @@
 
   <listen>unix:tmpdir=/tmp</listen>
 
-  <servicedir>@testdir@/services</servicedir>
+  <servicedir>@testdir@/dbus-1/services</servicedir>
 
   <!-- disabled for now; this causes gnome-keyring to be spawned, which can
        interfere with user's real keyrings, as well as causing long delays
