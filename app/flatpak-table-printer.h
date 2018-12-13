@@ -70,5 +70,8 @@ void                flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter 
 void               flatpak_table_printer_set_column_expand (FlatpakTablePrinter *printer,
                                                             int col,
                                                             gboolean expand);
+void               flatpak_table_printer_set_column_ellipsize (FlatpakTablePrinter *printer,
+                                                               int col,
+                                                               gboolean ellipsize);
 
 #endif /* __FLATPAK_TABLE_PRINTER_H__ */
