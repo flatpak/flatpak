@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2018-11-16 12:06+0100\n"
-"PO-Revision-Date: 2018-09-15 17:06+0200\n"
+"PO-Revision-Date: 2018-12-13 22:42+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.1.1\n"
+"X-Generator: Poedit 2.2\n"
 
 #: app/flatpak-builtins-build-bundle.c:56
 msgid "Export runtime instead of app"
@@ -239,7 +239,7 @@ msgstr ""
 
 #: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3187
 msgid "Unable to start app"
-msgstr "Není možné spustit aplikaci"
+msgstr "Nelze spustit aplikaci"
 
 #: app/flatpak-builtins-build-commit-from.c:51
 msgid "Source repo dir"
@@ -578,9 +578,8 @@ msgid "GROUP=KEY[=VALUE]"
 msgstr "SKUPINA=KLÍČ[=HODNOTA]"
 
 #: app/flatpak-builtins-build-finish.c:61
-#, fuzzy
 msgid "Don't inherit permissions from runtime"
-msgstr "Zrušit oprávnění aplikace k zápisu"
+msgstr "Nedědit oprávnění z prostředí"
 
 #: app/flatpak-builtins-build-finish.c:155
 #, c-format
@@ -976,6 +975,7 @@ msgstr "CÍL"
 #, c-format
 msgid "Warning: Omitting related ref ‘%s’ because it is not installed.\n"
 msgstr ""
+"Varování: Vynechávám související ref „%s“, protože není nainstalován.\n"
 
 #: app/flatpak-builtins-create-usb.c:163
 #, c-format
@@ -983,6 +983,8 @@ msgid ""
 "Warning: Omitting related ref ‘%s’ because its remote ‘%s’ does not have a "
 "collection ID set.\n"
 msgstr ""
+"Varování: Vynechávám související ref „%s“, protože jeho vzdálený repozitář "
+"„%s“ nemá nastaveno ID kolekce.\n"
 
 #: app/flatpak-builtins-create-usb.c:235 app/flatpak-builtins-create-usb.c:606
 #, c-format
@@ -990,6 +992,8 @@ msgid ""
 "Remote ‘%s’ does not have a collection ID set, which is required for P2P "
 "distribution of ‘%s’."
 msgstr ""
+"Vzdálený repozitář „%s“ nemá nastaveno ID kolekce, které je povinné pro P2P "
+"distribuci „%s“."
 
 #: app/flatpak-builtins-create-usb.c:450
 msgid ""
@@ -1134,7 +1138,7 @@ msgstr "SANDBOXEDPID a PŘÍKAZ musí být určeny"
 
 #: app/flatpak-builtins-enter.c:109
 msgid "Not running as root, may be unable to enter namespace"
-msgstr "Neběží jako root, možná nebude možno vstoupit do jmenného prostoru"
+msgstr "Neběží jako root, možná nebude možné vstoupit do jmenného prostoru"
 
 #: app/flatpak-builtins-enter.c:115
 #, c-format
@@ -1419,7 +1423,7 @@ msgstr "Název vzdáleného repozitáře musí být určen"
 
 #: app/flatpak-builtins-install.c:249
 msgid "LOCATION/REMOTE [REF...] - Install applications or runtimes"
-msgstr "UMÍSTĚNÍ/VZDÁLENÉ [REF...] - Instalovat aplikaci nebo prostředí"
+msgstr "UMÍSTĚNÍ/VZDÁLENÉ [REF...] - Instalovat aplikace nebo prostředí"
 
 #: app/flatpak-builtins-install.c:275 app/flatpak-builtins-remote-info.c:137
 msgid "REMOTE and REF must be specified"
@@ -1988,9 +1992,9 @@ msgid "Redirect URL: %s\n"
 msgstr "URL přesměrování: %s\n"
 
 #: app/flatpak-builtins-repo.c:65
-#, fuzzy, c-format
+#, c-format
 msgid "Deploy collection ID: %s\n"
-msgstr "ID kolekce: %s\n"
+msgstr "ID kolekce nasazení: %s\n"
 
 #: app/flatpak-builtins-repo.c:73
 #, c-format
@@ -2729,12 +2733,12 @@ msgstr "chyba:"
 #: common/flatpak-context.c:178
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
-msgstr ""
+msgstr "Neznámý typ sdílení %s, platné typy jsou: %s"
 
 #: common/flatpak-context.c:213
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
-msgstr ""
+msgstr "Neznámý typ zásad %s, platné typy jsou: %s"
 
 #: common/flatpak-context.c:251
 #, c-format
@@ -2744,17 +2748,17 @@ msgstr "Neplatný název dbus %s"
 #: common/flatpak-context.c:264
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
-msgstr ""
+msgstr "Neznámý typ soketu %s, platné typy jsou: %s"
 
 #: common/flatpak-context.c:293
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
-msgstr ""
+msgstr "Neznámý typ zařízení %s, platné typy jsou: %s"
 
 #: common/flatpak-context.c:321
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
-msgstr ""
+msgstr "Neznámý typ vlastnosti %s, platné typy jsou: %s"
 
 #: common/flatpak-context.c:762
 #, c-format
@@ -2898,14 +2902,14 @@ msgid "Don't require a running session (no cgroups creation)"
 msgstr "Nevyžadovat běžící sezení (bez vytvoření cgroups)"
 
 #: common/flatpak-dir.c:240
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to load summary from remote %s: %s"
-msgstr "Během stahování %s ze vzdáleného repozitáře %s: "
+msgstr "Nelze načíst shrnutí ze vzdáleného repozitáře %s: %s"
 
 #: common/flatpak-dir.c:260
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to load metadata from remote %s: %s"
-msgstr "Aktualizuji dodatečná metadata ze vzdáleného shrnutí pro %s\n"
+msgstr "Nelze načíst metadata ze vzdáleného repozitáře %s: %s"
 
 #: common/flatpak-dir.c:284
 #, c-format
@@ -2939,7 +2943,7 @@ msgstr "Nelze se připojit k systémové sběrnici"
 #: common/flatpak-dir.c:1602
 #, c-format
 msgid "No overrides found for %s"
-msgstr ""
+msgstr "Žádná přepsání nenalezena pro %s"
 
 #: common/flatpak-dir.c:1751 common/flatpak-dir.c:2106
 #: common/flatpak-dir.c:2129 common/flatpak-dir.c:2151
@@ -2961,25 +2965,26 @@ msgid "While opening repository %s: "
 msgstr "Během otevírání repozitáře %s: "
 
 #: common/flatpak-dir.c:2581
-#, fuzzy
 msgid "No appstream commit to deploy"
-msgstr "Commit pro deploy"
+msgstr "Žádný appstream commit pro deploy"
 
 #: common/flatpak-dir.c:2607 common/flatpak-dir.c:6681
 msgid "Can't create deploy directory"
 msgstr "Nemohu vytvořit adresář sestavení"
 
 #: common/flatpak-dir.c:2778 common/flatpak-dir.c:4450
-#, fuzzy, c-format
+#, c-format
 msgid "No such ref (%s, %s) in remote %s or elsewhere"
-msgstr "Nemohu nalézt ref (%s, %s) ve vzdáleném repozitáři %s"
+msgstr "Žádný ref (%s, %s) ve vzdáleném repozitáři %s nebo jinde"
 
 #: common/flatpak-dir.c:2795 common/flatpak-dir.c:4174
 #: common/flatpak-dir.c:4257 common/flatpak-dir.c:4457
 #: common/flatpak-dir.c:11839
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
-msgstr "Nemohu nalézt ref „%s“ ve vzdáleném repozitáři %s"
+msgstr ""
+"Nepodařilo se získat nejnovější kontrolní součet pro ref %s ve vzdáleném "
+"repozitáři %s"
 
 #: common/flatpak-dir.c:3386 common/flatpak-dir.c:4688
 #: common/flatpak-dir.c:7512 common/flatpak-dir.c:8105
@@ -2992,9 +2997,9 @@ msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr ""
 
 #: common/flatpak-dir.c:3959
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid checksum for extra data uri %s"
-msgstr "Neplatný kontrolní součet pro dodatečná data %s"
+msgstr "Neplatný kontrolní součet pro uri dodatečných dat %s"
 
 #: common/flatpak-dir.c:3964
 #, c-format
@@ -3050,9 +3055,8 @@ msgid "While pulling %s from remote %s: "
 msgstr "Během stahování %s ze vzdáleného repozitáře %s: "
 
 #: common/flatpak-dir.c:4697
-#, fuzzy
 msgid "No summary found"
-msgstr "Nenalezeny žádné shody"
+msgstr "Nenalezeno žádné shrnutí"
 
 #: common/flatpak-dir.c:4704
 #, c-format
@@ -3110,7 +3114,7 @@ msgstr "Neplatný mimetype xml soubor"
 #: common/flatpak-dir.c:5755
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
-msgstr ""
+msgstr "Soubor služby D-Bus „%s“ má neplatný název"
 
 #: common/flatpak-dir.c:6290
 msgid "While getting detached metadata: "
@@ -3246,12 +3250,12 @@ msgstr "větev %s je již nainstalována"
 
 #: common/flatpak-dir.c:8056
 msgid "Can't update to a specific commit without root permissions"
-msgstr ""
+msgstr "Nelze aktualizovat na specifický commit bez root oprávnění"
 
 #: common/flatpak-dir.c:8264
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
-msgstr ""
+msgstr "Nelze odstranit %s, je požadováno pro: %s"
 
 #: common/flatpak-dir.c:8307 common/flatpak-installation.c:1897
 #, c-format
@@ -3316,29 +3320,27 @@ msgid "Could not find installation %s"
 msgstr "Nemohu nalézt instalaci %s"
 
 #: common/flatpak-dir.c:10663 common/flatpak-dir.c:10671
-#, fuzzy
 msgid "Invalid .flatpakref"
-msgstr "Neplatný klíč gpg"
+msgstr "Neplatný .flatpakref"
 
 #: common/flatpak-dir.c:10724 common/flatpak-dir.c:10827
 msgid "Collection ID requires GPG key to be provided"
 msgstr ""
 
 #: common/flatpak-dir.c:10771
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid file format, no %s group"
-msgstr "Neplatný formát souboru"
+msgstr "Neplatný formát souboru, žádná skupina %s"
 
 #: common/flatpak-dir.c:10781 common/flatpak-dir.c:10786
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid file format, no %s specified"
-msgstr "Neplatný formát souboru"
+msgstr "Neplatný formát souboru, %s není určen"
 
 #. Check some minimal size so we don't get crap
 #: common/flatpak-dir.c:10809
-#, fuzzy
 msgid "Invalid file format, gpg key invalid"
-msgstr "Neplatný formát souboru"
+msgstr "Neplatný formát souboru, neplatný klíč gpg"
 
 #: common/flatpak-dir.c:10871
 #, c-format
@@ -3354,36 +3356,36 @@ msgstr "Aplikace %s, větev %s je již nainstalováno"
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
+"Nelze odstranit vzdálený repozitář „%s“ s nainstalovaným refem %s (minimálně)"
 
 #: common/flatpak-dir.c:11250
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid character '/' in remote name: %s"
-msgstr "Nemohu nalézt ref „%s“ ve vzdáleném repozitáři %s"
+msgstr "Neplatný znak „/“ v názvu vzdáleného repozitáře: %s"
 
 #: common/flatpak-dir.c:11255
 #, c-format
 msgid "No configuration for remote %s specified"
-msgstr ""
+msgstr "Neurčena žádná konfigurace pro vzdálený repozitář %s"
 
 #: common/flatpak-dir.c:11496
-#, fuzzy
 msgid "No metadata branch for OCI"
-msgstr "Vypsat metadata pro větev"
+msgstr ""
 
 #: common/flatpak-installation.c:751
-#, fuzzy, c-format
+#, c-format
 msgid "Ref %s not installed"
-msgstr "%s není nainstalováno"
+msgstr "Ref %s není nainstalován"
 
 #: common/flatpak-installation.c:793
-#, fuzzy, c-format
+#, c-format
 msgid "App %s not installed"
-msgstr "%s není nainstalováno"
+msgstr "Aplikace %s není nainstalována"
 
 #: common/flatpak-installation.c:1778
-#, fuzzy, c-format
+#, c-format
 msgid "As requested, %s was only pulled, but not installed"
-msgstr "Požadované rozšíření %s je nainstalováno pouze částečně"
+msgstr "Jak bylo požadováno, %s bylo pouze staženo, ale nebylo nainstalováno"
 
 #: common/flatpak-oci-registry.c:1679
 #, c-format
@@ -3396,19 +3398,18 @@ msgid "Unable to lookup key ID %s: %d)"
 msgstr ""
 
 #: common/flatpak-oci-registry.c:1694
-#, fuzzy, c-format
+#, c-format
 msgid "Error signing commit: %d"
-msgstr "Chyba během migrace: %s\n"
+msgstr "Chyba během podepisování commitu: %d"
 
 #: common/flatpak-remote.c:822
-#, fuzzy, c-format
+#, c-format
 msgid "Bad remote name: %s"
-msgstr "Žádný vzdálený repozitář %s"
+msgstr "Neplatný název vzdáleného repozitáře: %s"
 
 #: common/flatpak-remote.c:826
-#, fuzzy
 msgid "No url specified"
-msgstr "Nebyl určen žádný příkaz"
+msgstr "Žádný url není určen"
 
 #: common/flatpak-run.c:690
 msgid "Failed to open app info file"
@@ -3423,18 +3424,17 @@ msgid "Failed to sync with dbus proxy"
 msgstr "Selhala synchronizace s dbus proxy"
 
 #: common/flatpak-run.c:863
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to determine parts from ref: %s"
-msgstr "Selhalo otevření dočasného souboru: %s"
+msgstr "Selhalo zjištění částí z refu: %s"
 
 #: common/flatpak-run.c:1416
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 
 #: common/flatpak-run.c:1726
-#, fuzzy
 msgid "Unable to allocate instance id"
-msgstr "Selhalo vytvoření synchronizační roury"
+msgstr "Selhala alokace id instance"
 
 #: common/flatpak-run.c:1843 common/flatpak-run.c:1853
 #, c-format
@@ -3442,39 +3442,36 @@ msgid "Failed to open flatpak-info file: %s"
 msgstr "Selhalo otevření souboru flatpak-info: %s"
 
 #: common/flatpak-run.c:1873
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
-msgstr "Selhalo otevření souboru brwapinfo.json: %s"
+msgstr "Selhalo otevření souboru bwrapinfo.json: %s"
 
 #: common/flatpak-run.c:2187
-#, fuzzy
 msgid "Initialize seccomp failed"
-msgstr "Inicializovat adresář pro sestavení"
+msgstr "Selhala inicializace seccomp"
 
 #: common/flatpak-run.c:2226
-#, fuzzy
 msgid "Failed to add architecture to seccomp filter"
-msgstr "Selhal zápis dočasného souboru"
+msgstr "Selhalo přidání architektury do seccomp filtru"
 
 #: common/flatpak-run.c:2235
 msgid "Failed to add multiarch architecture to seccomp filter"
-msgstr ""
+msgstr "Selhalo přidání multiarch architektury do seccomp filtru"
 
 #. unknown syscall
 #: common/flatpak-run.c:2254 common/flatpak-run.c:2268
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to block syscall %d"
-msgstr "Selhalo %s %s: "
+msgstr "Selhalo blokování systémového volání %d"
 
 #: common/flatpak-run.c:2299
-#, fuzzy
 msgid "Failed to export bpf"
-msgstr "Selhalo čtení z exportovaného souboru"
+msgstr "Selhalo exportování bpf"
 
 #: common/flatpak-run.c:2355
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid group: %d"
-msgstr "Neplatný identifikátor pid %s"
+msgstr "Neplatná skupina: %d"
 
 #: common/flatpak-run.c:2824
 #, c-format
@@ -3482,14 +3479,13 @@ msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig selhal, návratová hodnota %d"
 
 #: common/flatpak-run.c:2831
-#, fuzzy
 msgid "Can't open generated ld.so.cache"
-msgstr "Nelze otevřít jmenný prostor %s: %s"
+msgstr "Nelze otevřít vygenerovaný ld.so.cache"
 
 #: common/flatpak-run.c:2943
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong number of components in runtime %s"
-msgstr "Špatný počet parametrů"
+msgstr "Špatný počet součástí v prostředí %s"
 
 #: common/flatpak-transaction.c:1347
 #, c-format
@@ -3497,14 +3493,14 @@ msgid "Warning: Problem looking for related refs: %s"
 msgstr "Varování: Problém při hledání souvisejících refů: %s"
 
 #: common/flatpak-transaction.c:1417
-#, fuzzy, c-format
+#, c-format
 msgid "The application %s requires the runtime %s which was not found"
-msgstr "Aplikace %s požaduje %s, které nebylo nalezeno"
+msgstr "Aplikace %s vyžaduje prostředí %s, které nebylo nalezeno"
 
 #: common/flatpak-transaction.c:1433
-#, fuzzy, c-format
+#, c-format
 msgid "The application %s requires the runtime %s which is not installed"
-msgstr "Aplikace %s požaduje %s, které není nainstalováno"
+msgstr "Aplikace %s vyžaduje prostředí %s, které není nainstalováno"
 
 #: common/flatpak-transaction.c:1571
 #, c-format
@@ -3522,9 +3518,9 @@ msgid "%s is already installed from remote %s"
 msgstr "%s je již nainstalováno ze vzdáleného repozitáře %s"
 
 #: common/flatpak-transaction.c:1699
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid .flatpakref: %s"
-msgstr "Neplatný identifikátor pid %s"
+msgstr "Neplatný .flatpakref: %s"
 
 #: common/flatpak-transaction.c:1787
 #, c-format
@@ -3544,9 +3540,9 @@ msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Varování: Nelze nalézt %s metadata pro závislosti: %s"
 
 #: common/flatpak-transaction.c:2345
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid .flatpakrepo: %s"
-msgstr "Neplatný identifikátor pid %s"
+msgstr "Neplatné .flatpakrepo: %s"
 
 #: common/flatpak-transaction.c:2654
 msgid "Aborted by user"
@@ -3573,86 +3569,86 @@ msgstr "Chyba během migrace: %s\n"
 
 #: common/flatpak-utils.c:753
 msgid "Name can't be empty"
-msgstr ""
+msgstr "Název nemůže být prázdný"
 
 #: common/flatpak-utils.c:760
 msgid "Name can't be longer than 255 characters"
-msgstr ""
+msgstr "Název nemůže být delší než 255 znaků"
 
 #: common/flatpak-utils.c:773
 msgid "Name can't start with a period"
-msgstr ""
+msgstr "Název nemůže začínat tečkou"
 
 #: common/flatpak-utils.c:779
 #, c-format
 msgid "Name can't start with %c"
-msgstr ""
+msgstr "Název nemůže začínat %c"
 
 #: common/flatpak-utils.c:795
 msgid "Name can't end with a period"
-msgstr ""
+msgstr "Název nemůže končit tečkou"
 
 #: common/flatpak-utils.c:802 common/flatpak-utils.c:814
 msgid "Only last name segment can contain -"
-msgstr ""
+msgstr "Pouze poslední část názvu může obsahovat -"
 
 #: common/flatpak-utils.c:805
 #, c-format
 msgid "Name segment can't start with %c"
-msgstr ""
+msgstr "Část názvu nemůže začínat %c"
 
 #: common/flatpak-utils.c:817
 #, c-format
 msgid "Name can't contain %c"
-msgstr ""
+msgstr "Název nemůže obsahovat %c"
 
 #: common/flatpak-utils.c:826
 msgid "Names must contain at least 2 periods"
-msgstr ""
+msgstr "Názvy musí obsahovat alespoň dvě tečky"
 
 #: common/flatpak-utils.c:1016
 msgid "Branch can't be empty"
-msgstr ""
+msgstr "Větev nemůže být prázdná"
 
 #: common/flatpak-utils.c:1026
 #, c-format
 msgid "Branch can't start with %c"
-msgstr ""
+msgstr "Větev nemůže začínat %c"
 
 #: common/flatpak-utils.c:1036
 #, c-format
 msgid "Branch can't contain %c"
-msgstr ""
+msgstr "Větev nemůže obsahovat %c"
 
 #: common/flatpak-utils.c:1087
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong number of components in %s"
-msgstr "Špatný počet parametrů"
+msgstr "Špatný počet součástí v %s"
 
 #: common/flatpak-utils.c:1093
-#, fuzzy, c-format
+#, c-format
 msgid "%s is not application or runtime"
-msgstr "Podepsat aplikaci nebo prostředí"
+msgstr "%s není aplikace nebo prostředí"
 
 #: common/flatpak-utils.c:1099
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid name %s: %s"
-msgstr "Neplatný název dbus %s"
+msgstr "Neplatný název %s: %s"
 
 #: common/flatpak-utils.c:1105
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid arch %s"
-msgstr "Neplatný identifikátor pid %s"
+msgstr "Neplatná architektura %s"
 
 #: common/flatpak-utils.c:1111 common/flatpak-utils.c:1216
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid branch %s: %s"
-msgstr "Výchozí větev: %s\n"
+msgstr "Neplatná větev %s: %s"
 
 #: common/flatpak-utils.c:1199
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid id %s: %s"
-msgstr "Neplatný identifikátor pid %s"
+msgstr "Neplatné id %s: %s"
 
 #: common/flatpak-utils.c:2738
 msgid "No extra data sources"
@@ -3684,9 +3680,8 @@ msgid "No appstream data for %s: %s\n"
 msgstr "Žádná appstream data pro %s: %s\n"
 
 #: common/flatpak-utils.c:4744
-#, fuzzy
 msgid "Invalid bundle, no ref in metadata"
-msgstr "Neplatný kontrolní součet pro dodatečná data"
+msgstr ""
 
 #: common/flatpak-utils.c:4836
 #, c-format
