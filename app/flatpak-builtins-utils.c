@@ -463,7 +463,7 @@ flatpak_resolve_matching_refs (const char   *remote_name,
       if (refs_len == 1)
         {
           if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
-                                     _("Found ref ‘%s’ in remote ‘%s’ (%s). Is this correct?"),
+                                     _("Found ref ‘%s’ in remote ‘%s’ (%s).\nUse this ref?"),
                                      refs[0], remote_name, dir_name))
             chosen = 1;
           else
@@ -574,11 +574,11 @@ flatpak_resolve_matching_remotes (gboolean        disable_interaction,
           RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, 0);
           const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
           if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
-                                     _("Found similar ref(s) in remote ‘%s’ (%s). Is this correct?"),
-                                     pair->remote_name, dir_name))
+                                     _("Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\nUse this remote?"),
+                                     opt_search_ref, pair->remote_name, dir_name))
             chosen = 1;
           else
-            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
+            return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
         }
       else
         {
