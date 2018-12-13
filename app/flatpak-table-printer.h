@@ -61,5 +61,9 @@ void                flatpak_table_printer_set_cell (FlatpakTablePrinter *printer
                                                     int row,
                                                     int col,
                                                     const char *cell);
+void                flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter *printer,
+                                                            int row,
+                                                            int col,
+                                                            const char *cell);
 
 #endif /* __FLATPAK_TABLE_PRINTER_H__ */
