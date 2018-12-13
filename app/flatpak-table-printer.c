@@ -357,16 +357,18 @@ flatpak_table_printer_get_current_row (FlatpakTablePrinter *printer)
   return printer->rows->len;
 }
 
-void
-flatpak_table_printer_set_cell (FlatpakTablePrinter *printer,
-                                int r,
-                                int c,
-                                const char *text)
+static void
+set_cell (FlatpakTablePrinter *printer,
+          int r,
+          int c,
+          const char *text,
+          int align)
 {
   GPtrArray *row;
   Cell *cell;
 
   row = (GPtrArray *)g_ptr_array_index (printer->rows, r);
+
   g_assert (row);
 
   cell = (Cell *)g_ptr_array_index (row, c);
@@ -374,4 +376,29 @@ flatpak_table_printer_set_cell (FlatpakTablePrinter *printer,
 
   g_free (cell->text);
   cell->text = g_strdup (text);
+  cell->align = align;
+}
+
+void
+flatpak_table_printer_set_cell (FlatpakTablePrinter *printer,
+                                int r,
+                                int c,
+                                const char *text)
+{
+  set_cell (printer, r, c, text, -1);
+}
+
+void
+flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter *printer,
+                                        int r,
+                                        int c,
+                                        const char *text)
+{
+  int align = -1;
+  const char *decimal = find_decimal_point (text);
+
+  if (decimal)
+    align = decimal - text;
+
+  set_cell (printer, r, c, text, align);
 }
