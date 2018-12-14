@@ -12997,7 +12997,11 @@ static void
   len = g_snprintf (message, sizeof (message), "%s: ", installation);
 
   va_start (args, format);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   g_vsnprintf (message + len, sizeof (message) - len, format, args);
+#pragma GCC diagnostic pop
+
   va_end (args);
 
   /* See systemd.journal-fields(7) for the meaning of the
