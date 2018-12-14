@@ -20,7 +20,13 @@
 
 libexec_PROGRAMS += revokefs-fuse
 
+noinst_PROGRAMS += revokefs-demo
+
 revokefs_fuse_SOURCES = revokefs/main.c revokefs/writer.c revokefs/writer.h
 
 revokefs_fuse_CFLAGS = $(BASE_CFLAGS) -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 $(FUSE_CFLAGS) -I$(srcdir)/libglnx
 revokefs_fuse_LDADD = libglnx.la $(BASE_LIBS) $(FUSE_LIBS)
+
+revokefs_demo_SOURCES = revokefs/demo.c
+revokefs_demo_CFLAGS = $(BASE_CFLAGS)
+revokefs_demo_LDADD = $(BASE_LIBS)
