@@ -97,6 +97,7 @@ include session-helper/Makefile.am.inc
 include portal/Makefile.am.inc
 include system-helper/Makefile.am.inc
 include icon-validator/Makefile.am.inc
+include revokefs/Makefile.am.inc
 include tests/Makefile.am.inc
 
 if !WITH_SYSTEM_DBUS_PROXY

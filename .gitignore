@@ -58,6 +58,7 @@ common/flatpak-enum-types.c
 common/flatpak-enum-types.h
 test-libflatpak
 httpcache
+revokefs-fuse
 Flatpak-1.0.*
 /app/parse-datetime.c
 /doc/reference/gtkdoc-check.log

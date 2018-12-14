@@ -248,6 +248,8 @@ if test "x$enable_system_helper" = "xyes"; then
 fi
 AM_CONDITIONAL(BUILD_SYSTEM_HELPER, test x$enable_system_helper = xyes)
 
+PKG_CHECK_MODULES(FUSE, fuse >= 2.9.2)
+
 AC_ARG_ENABLE([xauth],
               AC_HELP_STRING([--disable-xauth],
                              [Disable Xauth use]),
