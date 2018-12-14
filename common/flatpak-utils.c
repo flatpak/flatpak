@@ -5440,6 +5440,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   gboolean last_was_metadata = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "last-was-metadata"));
   FlatpakProgressCallback progress_cb = g_object_get_data (G_OBJECT (progress), "callback");
   guint last_progress = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "last_progress"));
+  guint last_total = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "last_total"));
   GString *buf;
   g_autofree char *status = NULL;
   guint outstanding_fetches;
@@ -5451,7 +5452,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint outstanding_extra_data;
   guint64 total_extra_data_bytes;
   guint64 transferred_extra_data_bytes;
-  guint64 total;
+  guint64 total = 0;
   guint metadata_fetched;
   guint64 start_time;
   guint64 elapsed_time;
@@ -5645,9 +5646,10 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
     }
 
 out:
-  if (new_progress < last_progress)
+  if (new_progress < last_progress && last_total == total)
     new_progress = last_progress;
   g_object_set_data (G_OBJECT (progress), "last_progress", GUINT_TO_POINTER (new_progress));
+  g_object_set_data (G_OBJECT (progress), "last_total", GUINT_TO_POINTER (total));
 
   progress_cb (buf->str, new_progress, estimating, user_data);
 
@@ -5664,6 +5666,7 @@ flatpak_progress_new (FlatpakProgressCallback progress,
 
   g_object_set_data (G_OBJECT (ostree_progress), "callback", progress);
   g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
+  g_object_set_data (G_OBJECT (ostree_progress), "last_total", GUINT_TO_POINTER (0));
 
   return ostree_progress;
 }
