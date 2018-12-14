@@ -174,6 +174,7 @@ struct _FlatpakTransactionProgress
   gboolean             estimating;
   int                  progress;
   guint64              total_transferred;
+  guint64              start_time;
 
   gboolean             done;
 };
@@ -289,6 +290,21 @@ flatpak_transaction_progress_get_bytes_transferred (FlatpakTransactionProgress *
   return self->total_transferred;
 }
 
+/**
+ * flatpak_transaction_progress_get_start_time:
+ * @self: a #FlatpakTransactionProgress
+ *
+ * Gets the time at which this operation has started, as monotonic time.
+ *
+ * Returns: the start time
+ * Since: 1.1.2
+ */
+guint64
+flatpak_transaction_progress_get_start_time (FlatpakTransactionProgress *self)
+{
+  return self->start_time;
+}
+
 static void
 flatpak_transaction_progress_finalize (GObject *object)
 {
@@ -332,10 +348,12 @@ got_progress_cb (const char *status,
   FlatpakTransactionProgress *p = user_data;
   guint64 bytes_transferred;
   guint64 transferred_extra_data_bytes;
+  guint64 start_time;
 
   ostree_async_progress_get (p->ostree_progress,
                              "bytes-transferred", "t", &bytes_transferred,
                              "transferred-extra-data-bytes", "t", &transferred_extra_data_bytes,
+                             "start-time", "t", &start_time,
                              NULL);
 
   g_free (p->status);
@@ -343,6 +361,7 @@ got_progress_cb (const char *status,
   p->progress = progress;
   p->estimating = estimating;
   p->total_transferred = bytes_transferred + transferred_extra_data_bytes;
+  p->start_time = start_time;
 
   if (!p->done)
     g_signal_emit (p, progress_signals[CHANGED], 0);
