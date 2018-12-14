@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015,2016 Colin Walters <walters@verbum.org>
+ * Copyright (C) 2018 Alexander Larsson <alexl@redhat.com>
  *
  * SPDX-License-Identifier: LGPL-2.0+
  *
@@ -24,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <sys/socket.h>
 #include <stdio.h>
 #include <err.h>
 #include <stdlib.h>
@@ -37,10 +39,16 @@
 
 #include <glib.h>
 
+#include "writer.h"
 #include "libglnx.h"
 
+/* fh >= REMOTE_FD_OFFSET means the fd is in the writer side, otherwise it is local */
+#define REMOTE_FD_OFFSET ((guint64)G_MAXUINT32)
+
 // Global to store our read-write path
+static char *base_path = NULL;
 static int basefd = -1;
+static int writer_socket = -1;
 
 static inline const char *
 ENSURE_RELPATH (const char *path)
@@ -138,38 +146,34 @@ static int
 callback_mkdir (const char *path, mode_t mode)
 {
   path = ENSURE_RELPATH (path);
-  if (mkdirat (basefd, path, mode) == -1)
-    return -errno;
-  return 0;
+  return request_mkdir (writer_socket, path, mode);
 }
 
 static int
 callback_unlink (const char *path)
 {
   path = ENSURE_RELPATH (path);
-  if (unlinkat (basefd, path, 0) == -1)
-    return -errno;
-  return 0;
+  return request_unlink (writer_socket, path);
 }
 
 static int
 callback_rmdir (const char *path)
 {
   path = ENSURE_RELPATH (path);
-  if (unlinkat (basefd, path, AT_REMOVEDIR) == -1)
-    return -errno;
-  return 0;
+  return request_rmdir (writer_socket, path);
 }
 
 static int
 callback_symlink (const char *from, const char *to)
 {
   struct stat stbuf;
+  int res;
 
   to = ENSURE_RELPATH (to);
 
-  if (symlinkat (from, basefd, to) == -1)
-    return -errno;
+  res = request_symlink (writer_socket, from, to);
+  if (res < 0)
+    return res;
 
   if (fstatat (basefd, to, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
     {
@@ -185,9 +189,8 @@ callback_rename (const char *from, const char *to)
 {
   from = ENSURE_RELPATH (from);
   to = ENSURE_RELPATH (to);
-  if (renameat (basefd, from, basefd, to) == -1)
-    return -errno;
-  return 0;
+
+  return request_rename (writer_socket, from, to);
 }
 
 static int
@@ -195,56 +198,37 @@ callback_link (const char *from, const char *to)
 {
   from = ENSURE_RELPATH (from);
   to = ENSURE_RELPATH (to);
-  if (linkat (basefd, from, basefd, to, 0) == -1)
-    return -errno;
-  return 0;
+
+  return request_link (writer_socket, from, to);
 }
 
 static int
 callback_chmod (const char *path, mode_t mode)
 {
-  /* Note we can't use AT_SYMLINK_NOFOLLOW yet;
-   * https://marc.info/?l=linux-kernel&m=148830147803162&w=2
-   * https://marc.info/?l=linux-fsdevel&m=149193779929561&w=2
-   */
-  if (fchmodat (basefd, path, mode, 0) != 0)
-    return -errno;
-  return 0;
+  path = ENSURE_RELPATH (path);
+  return request_chmod (writer_socket, path, mode);
 }
 
 static int
 callback_chown (const char *path, uid_t uid, gid_t gid)
 {
-  if (fchownat (basefd, path, uid, gid, AT_SYMLINK_NOFOLLOW) != 0)
-    return -errno;
-  return 0;
+  path = ENSURE_RELPATH (path);
+  return request_chown (writer_socket, path, uid, gid);
 }
 
 static int
 callback_truncate (const char *path, off_t size)
 {
-  glnx_autofd int fd = openat (basefd, path, O_NOFOLLOW|O_WRONLY);
-  if (fd == -1)
-    return -errno;
-
-  if (ftruncate (fd, size) == -1)
-    return -errno;
-
-  return 0;
+  path = ENSURE_RELPATH (path);
+  return request_truncate (writer_socket, path, size);
 }
 
 static int
 callback_utimens (const char *path, const struct timespec tv[2])
 {
-  /* This one isn't write-verified, we support changing times
-   * even for hardlinked files.
-   */
   path = ENSURE_RELPATH (path);
 
-  if (utimensat (basefd, path, tv, AT_SYMLINK_NOFOLLOW) == -1)
-    return -errno;
-
-  return 0;
+  return request_utimens (writer_socket, path, tv);
 }
 
 static int
@@ -260,27 +244,19 @@ do_open (const char *path, mode_t mode, struct fuse_file_info *finfo)
       fd = openat (basefd, path, finfo->flags, mode);
       if (fd == -1)
         return -errno;
+
+      finfo->fh = fd;
     }
   else
     {
       /* Write */
 
-      /* We need to specially handle O_TRUNC */
-      fd = openat (basefd, path, finfo->flags & ~O_TRUNC, mode);
-      if (fd == -1)
-        return -errno;
+      fd = request_open (writer_socket, path, mode, finfo->flags);
+      if (fd < 0)
+        return fd;
 
-      if (finfo->flags & O_TRUNC)
-        {
-          if (ftruncate (fd, 0) == -1)
-            {
-              (void) close (fd);
-              return -errno;
-            }
-        }
+      finfo->fh = fd + REMOTE_FD_OFFSET;
     }
-
-  finfo->fh = fd;
 
   return 0;
 }
@@ -298,47 +274,21 @@ callback_create(const char *path, mode_t mode, struct fuse_file_info *finfo)
 }
 
 static int
-callback_read_buf (const char *path, struct fuse_bufvec **bufp,
-                   size_t size, off_t offset, struct fuse_file_info *finfo)
-{
-  struct fuse_bufvec *src;
-
-  src = malloc (sizeof (struct fuse_bufvec));
-  if (src == NULL)
-    return -ENOMEM;
-
-  *src = FUSE_BUFVEC_INIT (size);
-
-  src->buf[0].flags = FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK;
-  src->buf[0].fd = finfo->fh;
-  src->buf[0].pos = offset;
-  *bufp = src;
-
-  return 0;
-}
-
-static int
 callback_read (const char *path, char *buf, size_t size, off_t offset,
                struct fuse_file_info *finfo)
 {
   int r;
-  r = pread (finfo->fh, buf, size, offset);
-  if (r == -1)
-    return -errno;
-  return r;
-}
-
-static int
-callback_write_buf (const char *path, struct fuse_bufvec *buf, off_t offset,
-                    struct fuse_file_info *finfo)
-{
-  struct fuse_bufvec dst = FUSE_BUFVEC_INIT (fuse_buf_size (buf));
-
-  dst.buf[0].flags = FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK;
-  dst.buf[0].fd = finfo->fh;
-  dst.buf[0].pos = offset;
-
-  return fuse_buf_copy (&dst, buf, FUSE_BUF_SPLICE_NONBLOCK);
+  if (finfo->fh >= REMOTE_FD_OFFSET)
+    {
+      return request_read (writer_socket, finfo->fh - REMOTE_FD_OFFSET, buf, size, offset);
+    }
+  else
+    {
+      r = pread (finfo->fh, buf, size, offset);
+      if (r == -1)
+        return -errno;
+      return r;
+    }
 }
 
 static int
@@ -346,10 +296,18 @@ callback_write (const char *path, const char *buf, size_t size, off_t offset,
                 struct fuse_file_info *finfo)
 {
   int r;
-  r = pwrite (finfo->fh, buf, size, offset);
-  if (r == -1)
-    return -errno;
-  return r;
+
+  if (finfo->fh >= REMOTE_FD_OFFSET)
+    {
+      return request_write (writer_socket, finfo->fh - REMOTE_FD_OFFSET, buf, size, offset);
+    }
+  else
+    {
+      r = pwrite (finfo->fh, buf, size, offset);
+      if (r == -1)
+        return -errno;
+      return r;
+    }
 }
 
 static int
@@ -363,16 +321,30 @@ callback_statfs (const char *path, struct statvfs *st_buf)
 static int
 callback_release (const char *path, struct fuse_file_info *finfo)
 {
-  (void) close (finfo->fh);
-  return 0;
+  if (finfo->fh >= REMOTE_FD_OFFSET)
+    {
+      return request_close (writer_socket, finfo->fh - REMOTE_FD_OFFSET);
+    }
+  else
+    {
+      (void) close (finfo->fh);
+      return 0;
+    }
 }
 
 static int
 callback_fsync (const char *path, int crap, struct fuse_file_info *finfo)
 {
-  if (fsync (finfo->fh) == -1)
-    return -errno;
-  return 0;
+  if (finfo->fh >= REMOTE_FD_OFFSET)
+    {
+      return request_fsync (writer_socket, finfo->fh - REMOTE_FD_OFFSET);
+    }
+  else
+    {
+      if (fsync (finfo->fh) == -1)
+        return -errno;
+      return 0;
+    }
 }
 
 static int
@@ -440,9 +412,7 @@ struct fuse_operations callback_oper = {
   .utimens = callback_utimens,
   .create = callback_create,
   .open = callback_open,
-  .read_buf = callback_read_buf,
   .read = callback_read,
-  .write_buf = callback_write_buf,
   .write = callback_write,
   .statfs = callback_statfs,
   .release = callback_release,
@@ -458,7 +428,6 @@ struct fuse_operations callback_oper = {
 
 enum {
   KEY_HELP,
-  KEY_VERSION,
 };
 
 static void
@@ -467,34 +436,34 @@ usage (const char *progname)
   fprintf (stdout,
            "usage: %s basepath mountpoint [options]\n"
            "\n"
-           "   Makes basepath visible at mountpoint such that files are read-only, directories are writable\n"
+           "   Makes basepath visible at mountpoint such that files are writeable only through\n"
+           "   fd passed in the --socket argument.\n"
            "\n"
            "general options:\n"
            "   -o opt,[opt...]     mount options\n"
            "   -h  --help          print help\n"
+           "   --socket=fd         Pass in the socket fd\n"
+           "   --backend           Run the backend instead of fuse\n"
            "\n", progname);
 }
 
 static int
-rofs_parse_opt (void *data, const char *arg, int key,
-                struct fuse_args *outargs)
+revokefs_opt_proc (void *data,
+                   const char *arg,
+                   int key,
+                   struct fuse_args *outargs)
 {
   (void) data;
 
   switch (key)
     {
     case FUSE_OPT_KEY_NONOPT:
-      if (basefd == -1)
+      if (base_path == NULL)
         {
-          basefd = openat (AT_FDCWD, arg, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY);
-          if (basefd == -1)
-            err (1, "opening rootfs %s", arg);
+          base_path = g_strdup (arg);
           return 0;
         }
-      else
-        {
-          return 1;
-        }
+      return 1;
     case FUSE_OPT_KEY_OPT:
       return 1;
     case KEY_HELP:
@@ -507,11 +476,19 @@ rofs_parse_opt (void *data, const char *arg, int key,
   return 1;
 }
 
-static struct fuse_opt rofs_opts[] = {
+struct revokefs_config {
+  int socket_fd;
+  int backend;
+};
+
+#define REVOKEFS_OPT(t, p, v) { t, offsetof(struct revokefs_config, p), v }
+
+static struct fuse_opt revokefs_opts[] = {
+  REVOKEFS_OPT ("--socket=%i", socket_fd, -1),
+  REVOKEFS_OPT ("--backend", backend, 1),
+
   FUSE_OPT_KEY ("-h", KEY_HELP),
   FUSE_OPT_KEY ("--help", KEY_HELP),
-  FUSE_OPT_KEY ("-V", KEY_VERSION),
-  FUSE_OPT_KEY ("--version", KEY_VERSION),
   FUSE_OPT_END
 };
 
@@ -520,19 +497,75 @@ main (int argc, char *argv[])
 {
   struct fuse_args args = FUSE_ARGS_INIT (argc, argv);
   int res;
+  struct revokefs_config conf = { -1 };
 
-  res = fuse_opt_parse (&args, &basefd, rofs_opts, rofs_parse_opt);
+  res = fuse_opt_parse (&args, &conf, revokefs_opts, revokefs_opt_proc);
   if (res != 0)
     {
       fprintf (stderr, "Invalid arguments\n");
       fprintf (stderr, "see `%s -h' for usage\n", argv[0]);
       exit (EXIT_FAILURE);
     }
-  if (basefd == -1)
+
+  if (base_path == NULL)
     {
       fprintf (stderr, "Missing basepath\n");
       fprintf (stderr, "see `%s -h' for usage\n", argv[0]);
       exit (EXIT_FAILURE);
+    }
+
+  basefd = openat (AT_FDCWD, base_path, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY);
+  if (basefd == -1)
+    {
+      perror ("opening basepath: ");
+      exit (EXIT_FAILURE);
+    }
+
+  if (conf.backend)
+    {
+      if (conf.socket_fd == -1)
+        {
+          fprintf (stderr, "No --socket passed, required for --backend\n");
+          exit (EXIT_FAILURE);
+        }
+
+      do_writer (basefd, conf.socket_fd);
+      exit (0);
+    }
+
+  if (conf.socket_fd != -1)
+    {
+      writer_socket = conf.socket_fd;
+    }
+  else
+    {
+      int sockets[2];
+      pid_t pid;
+
+      if (socketpair(AF_UNIX, SOCK_SEQPACKET, 0, sockets))
+        {
+          perror ("Failed to create socket pair");
+          exit (EXIT_FAILURE);
+        }
+
+      pid = fork ();
+      if (pid == -1)
+        {
+          perror ("Failed to fork writer");
+          exit (EXIT_FAILURE);
+        }
+
+      if (pid == 0)
+        {
+          /* writer process */
+          close (sockets[0]);
+          do_writer (basefd, sockets[1]);
+          exit (0);
+        }
+
+      /* Main process */
+      close (sockets[1]);
+      writer_socket = sockets[0];
     }
 
   fuse_main (args.argc, args.argv, &callback_oper, NULL);
