@@ -173,6 +173,7 @@ flatpak_invocation_lookup_app_info (GDBusMethodInvocation *invocation,
           if (strcmp (key, "ProcessID") == 0)
             {
               guint32 pid = g_variant_get_uint32 (value);
+              g_variant_unref (value);
               keyfile = parse_app_id_from_fileinfo (pid);
               break;
             }
