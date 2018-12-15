@@ -675,7 +675,6 @@ test_list_refs (void)
 static void
 create_multi_collection_id_repo (const char *repo_dir)
 {
-  g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
 
   /* Create a repository in which each app has a different collection-id */
@@ -2367,10 +2366,7 @@ test_transaction_deps (void)
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
   g_autoptr(GError) error = NULL;
-  g_autoptr(GPtrArray) refs = NULL;
   gboolean res;
-  g_autofree char *s = NULL;
-  g_autoptr(GBytes) data = NULL;
   g_autofree char *app = NULL;
 
   app = g_strdup_printf ("app/org.test.Hello/%s/master",
@@ -2505,10 +2501,7 @@ test_instance (void)
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
   g_autoptr(GError) error = NULL;
-  g_autoptr(GPtrArray) refs = NULL;
   gboolean res;
-  g_autofree char *s = NULL;
-  g_autoptr(GBytes) data = NULL;
   g_autoptr(GPtrArray) instances = NULL;
   FlatpakInstance *instance;
   GKeyFile *info;
