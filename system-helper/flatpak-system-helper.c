@@ -159,7 +159,7 @@ get_sender_pid (GDBusMethodInvocation *invocation)
   GVariant *body;
   g_autoptr(GVariantIter) iter = NULL;
   const char *key;
-  GVariant *value;
+  g_autoptr(GVariant) value = NULL;
 
   connection = g_dbus_method_invocation_get_connection (invocation);
   sender = g_dbus_method_invocation_get_sender (invocation);
@@ -190,6 +190,7 @@ get_sender_pid (GDBusMethodInvocation *invocation)
       if (strcmp (key, "ProcessID") == 0)
         return g_variant_get_uint32 (value);
     }
+  value = NULL; /* g_variant_iter_loop freed it */
 
   return 0;
 }
