@@ -80,6 +80,12 @@
                Spawn without network (equivalent of the unshare=network option of flatpak run).
              </para></listitem>
            </varlistentry>
+           <varlistentry>
+             <term>16</term>
+             <listitem><para>
+               Kill the sandbox when the caller disappears from the session bus.
+             </para></listitem>
+           </varlistentry>
          </variablelist>
 
          The following options are supported:
