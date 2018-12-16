@@ -37,8 +37,7 @@ polkit, libXau, ostree, json-glib, appstream, libseccomp
 Most configure arguments are documented in `./configure --help`. However,
 there are some options that are a bit more complicated.
 
-Flatpak relies on a project called
-[Bubblewrap](https://github.com/projectatomic/bubblewrap) for the
+Flatpak relies on a project called [Bubblewrap](https://github.com/projectatomic/bubblewrap) for the
 low-level sandboxing.  By default, an in-tree copy of this is built
 (distributed in the tarball or using git submodules in the git
 tree). This will build a helper called flatpak-bwrap. If your system
@@ -48,7 +47,9 @@ has a recent enough version of Bubblewrap already, you can use
 Bubblewrap can run in two modes, either using unprivileged user
 namespaces or setuid mode. This requires that the kernel supports this,
 which some distributions disable. For instance, Debian and Arch 
-([linux](https://www.archlinux.org/packages/?name=linux) kernel v4.14.5 or later), support user namespaces with the `kernel.unprivileged_userns_clone` sysctl enabled.
+([linux](https://www.archlinux.org/packages/?name=linux) kernel v4.14.5
+or later), support user namespaces with the `kernel.unprivileged_userns_clone`
+sysctl enabled.
 
 If unprivileged user namespaces are not available, then Bubblewrap must
 be built as setuid root. This is believed to be safe, as it is
@@ -68,17 +69,17 @@ in a .deb or .rpm.
 There are some complications when building Flatpak to a different
 prefix than the system-installed version. First of all, the newly
 built Flatpak will look for system-installed flatpaks in
-`$PREFIX/var/lib/flatpak`, which will not match existing installed
-flatpaks. You can use `--with-system-install-dir=/var/lib/flatpak`
-to make both installations use the same location.
+`$PREFIX/var/lib/flatpak`, which will not match existing installations.
+You can use `--with-system-install-dir=/var/lib/flatpak` to make both
+installations use the same location.
 
-Secondly, Flatpak ships with a root-privileged policykit helper for
-system-installation, called `flatpak-system-helper`. This is dbus
-activated (on the system-bus) and if you install in a non-standard
-location it is likely that this will not be found by dbus and
-policykit. However, if the system installation is synchronized,
-you can often use the system installed helper instead - at least
-if the two versions are close in versions.
+Secondly, Flatpak ships with a root-privileged PolicyKit helper for
+system-wide installation, called `flatpak-system-helper`. It is D-Bus
+activated (on the system bus) and if you install in a non-standard
+location it is likely that D-Bus will not find it and PolicyKit
+integration will not work. However, if the system installation is
+synchronized, you can often use the system installed helper instead
+- at least if the two versions are close in versions.
 
 Floor plan
 ==========
