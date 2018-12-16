@@ -468,6 +468,19 @@
                 </para></listitem>
             </varlistentry>
         </variablelist>
+
+        <para>Commands available inside the sandbox:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-spawn</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Run a command in another sandbox.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
     </refsect1>
 
     <refsect1>

@@ -64,6 +64,7 @@
       <xi:include href="@srcdir@/flatpak-search.xml"/>
       <xi:include href="@srcdir@/flatpak-uninstall.xml"/>
       <xi:include href="@srcdir@/flatpak-update.xml"/>
+      <xi:include href="@srcdir@/flatpak-spawn.xml"/>
     </chapter>
     <chapter>
       <title>File Formats</title>
