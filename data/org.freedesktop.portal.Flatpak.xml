@@ -96,6 +96,9 @@
                A list of filenames for files inside the sandbox that will be exposed
                to the new sandbox, for reading and writing. Note that absolute paths
                or subdirectories are not allowed.
+             </para><para>
+               The files must be in the <filename>sandbox</filename> subdirectory of
+               the instance directory (i.e. <filename>~/.var/app/$APP_ID/sandbox</filename>).
              </para></listitem>
            </varlistentry>
            <varlistentry>
@@ -104,6 +107,10 @@
                A list of filenames for files inside the sandbox that will be exposed
                to the new sandbox, readonly. Note that absolute paths or subdirectories
                are not allowed.
+             </para><para>
+               The files must be in the <filename>sandbox</filename> subdirectory of
+               the instance directory (i.e. <filename>~/.var/app/$APP_ID/sandbox</filename>).
+             </para></listitem>
              </para></listitem>
            </varlistentry>
          </variablelist>
