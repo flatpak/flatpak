@@ -329,9 +329,45 @@ handle_spawn (PortalFlatpak         *object,
                                   FLATPAK_METADATA_GROUP_APPLICATION,
                                   FLATPAK_METADATA_KEY_NAME, NULL);
   g_assert (app_id != NULL);
+
+  g_debug ("spawn() called from app: '%s'", app_id);
+  if (*app_id == 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_INVALID_ARGS,
+                                             "org.freedesktop.portal.Flatpak.Spawn only works in a flatpak");
+      return TRUE;
+    }
+
+
+  if (*arg_cwd_path == 0)
+    arg_cwd_path = NULL;
+
+  if (arg_argv == NULL || *arg_argv == NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_INVALID_ARGS,
+                                             "No command given");
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_SPAWN_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", arg_flags & ~FLATPAK_SPAWN_FLAGS_ALL);
+      return TRUE;
+    }
+
   runtime_ref = g_key_file_get_string (app_info,
                                        FLATPAK_METADATA_GROUP_APPLICATION,
                                        FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  if (runtime_ref == NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "No runtime found");
+      return TRUE;
+    }
+
   runtime_parts = g_strsplit (runtime_ref, "/", -1);
 
   branch = g_key_file_get_string (app_info,
@@ -354,27 +390,6 @@ handle_spawn (PortalFlatpak         *object,
                                           FLATPAK_METADATA_KEY_RUNTIME_COMMIT, NULL);
   shares = g_key_file_get_string_list (app_info, FLATPAK_METADATA_GROUP_CONTEXT,
                                        FLATPAK_METADATA_KEY_SHARED, NULL, NULL);
-
-  g_debug ("spawn() called from app: %s", app_id);
-
-  if (*app_id == 0)
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_INVALID_ARGS,
-                                             "org.freedesktop.portal.Flatpak.Spawn only works in a flatpak");
-      return TRUE;
-    }
-
-  if (*arg_cwd_path == 0)
-    arg_cwd_path = NULL;
-
-  if (arg_argv == NULL || *arg_argv == NULL)
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_INVALID_ARGS,
-                                             "No command given");
-      return TRUE;
-    }
 
   g_variant_lookup (arg_options, "sandbox-expose", "^as", &sandbox_expose);
   g_variant_lookup (arg_options, "sandbox-expose-ro", "^as", &sandbox_expose_ro);

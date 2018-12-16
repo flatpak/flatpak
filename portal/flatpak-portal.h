@@ -28,4 +28,9 @@ typedef enum {
   FLATPAK_SPAWN_FLAGS_NO_NETWORK = 1 << 3,
 } FlatpakSpawnFlags;
 
+#define FLATPAK_SPAWN_FLAGS_ALL (FLATPAK_SPAWN_FLAGS_CLEAR_ENV | \
+                                 FLATPAK_SPAWN_FLAGS_LATEST_VERSION | \
+                                 FLATPAK_SPAWN_FLAGS_SANDBOX | \
+                                 FLATPAK_SPAWN_FLAGS_NO_NETWORK)
+
 #endif /* __FLATPAK_PORTAL_H__ */
