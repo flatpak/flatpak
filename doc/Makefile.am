@@ -59,6 +59,7 @@ man1 = \
 	flatpak-repair.1 		\
 	flatpak-kill.1 			\
 	flatpak-history.1 		\
+	flatpak-spawn.1 		\
 	$(NULL)
 
 man5 = \
