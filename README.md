@@ -78,8 +78,8 @@ system-wide installation, called `flatpak-system-helper`. It is D-Bus
 activated (on the system bus) and if you install in a non-standard
 location it is likely that D-Bus will not find it and PolicyKit
 integration will not work. However, if the system installation is
-synchronized, you can often use the system installed helper instead
-- at least if the two versions are close in versions.
+synchronized, you can often use the system installed helper instead—
+at least if the two versions are close in versions.
 
 Floor plan
 ==========
