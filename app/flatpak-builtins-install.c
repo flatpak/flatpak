@@ -280,6 +280,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
+  g_print (_("Looking for matches...\n"));
+
   if (!auto_remote &&
       (g_path_is_absolute (argv[1]) ||
        g_str_has_prefix (argv[1], "./")))
