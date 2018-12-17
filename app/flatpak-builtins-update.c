@@ -79,6 +79,7 @@ flatpak_builtin_update (int           argc,
   const char *default_branch = NULL;
   FlatpakKinds kinds;
   g_autoptr(GPtrArray) transactions = NULL;
+  gboolean has_updates;
 
   context = g_option_context_new (_("[REF...] - Update applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -232,17 +233,27 @@ flatpak_builtin_update (int           argc,
         }
     }
 
+  has_updates = FALSE;
+
   for (k = 0; k < dirs->len; k++)
     {
       FlatpakTransaction *transaction = g_ptr_array_index (transactions, k);
 
-      if (!flatpak_transaction_is_empty (transaction) &&
-          !flatpak_cli_transaction_run (transaction, cancellable, error))
+      if (flatpak_transaction_is_empty (transaction))
+        continue;
+
+      if (!flatpak_cli_transaction_run (transaction, cancellable, error))
         return FALSE;
+
+      if (!flatpak_transaction_is_empty (transaction))
+        has_updates = TRUE;
 
       if (flatpak_cli_transaction_was_aborted (transaction))
         return TRUE;
     }
+
+  if (!has_updates)
+    g_print ("Nothing to do.\n");
 
   if (n_prefs == 0)
     {
