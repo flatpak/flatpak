@@ -99,6 +99,15 @@
             <member>XDG_CONFIG_HOME</member>
             <member>XDG_CACHE_HOME</member>
         </simplelist>
+        <para>
+            The host values of these variables are made available inside the sandbox via these
+            HOST_-prefixed variables:
+        </para>
+        <simplelist>
+            <member>HOST_XDG_DATA_HOME</member>
+            <member>HOST_XDG_CONFIG_HOME</member>
+            <member>HOST_XDG_CACHE_HOME</member>
+        </simplelist>
     </refsect1>
 
     <refsect1>
