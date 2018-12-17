@@ -786,8 +786,17 @@ gboolean
 flatpak_transaction_is_empty (FlatpakTransaction *self)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  GList *l;
 
-  return priv->ops == NULL;
+  for (l = priv->ops; l; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+
+      if (!op->skip)
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 static void
