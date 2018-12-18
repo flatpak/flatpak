@@ -196,10 +196,10 @@
 
         <variablelist>
             <varlistentry>
-                <term>ref</term>
+                <term>description</term>
 
                 <listitem><para>
-                    Show the ref
+                    Show the application description
                 </para></listitem>
             </varlistentry>
 
@@ -208,6 +208,38 @@
 
                 <listitem><para>
                     Show the application ID
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>arch</term>
+
+                <listitem><para>
+                    Show the arch
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>branch</term>
+
+                <listitem><para>
+                    Show the branch 
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>version</term>
+
+                <listitem><para>
+                    Show the version
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>ref</term>
+
+                <listitem><para>
+                    Show the ref
                 </para></listitem>
             </varlistentry>
 
