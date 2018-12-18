@@ -40,6 +40,7 @@
 static char *opt_arch;
 static char *opt_branch;
 static char *opt_command;
+static char *opt_cwd;
 static gboolean opt_devel;
 static gboolean opt_log_session_bus;
 static gboolean opt_log_system_bus;
@@ -57,6 +58,7 @@ static char *opt_runtime_commit;
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, N_("Command to run"), N_("COMMAND") },
+  { "cwd", 0, 0, G_OPTION_ARG_STRING, &opt_cwd, N_("Directory to run the command in"), N_("DIR") },
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, N_("Branch to use"), N_("BRANCH") },
   { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, N_("Use development runtime"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Runtime to use"), N_("RUNTIME") },
@@ -217,6 +219,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         (opt_file_forwarding ? FLATPAK_RUN_FLAG_FILE_FORWARDING : 0) |
                         (opt_no_a11y_bus ? FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY : 0) |
                         (opt_no_documents_portal ? FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL : 0),
+                        opt_cwd,
                         opt_command,
                         &argv[rest_argv_start + 1],
                         rest_argc - 1,
