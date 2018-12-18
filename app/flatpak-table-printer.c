@@ -304,6 +304,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   g_autoptr(GString) row_s = g_string_new ("");
   int i, j;
   int rows = 0;
+  int total_skip = skip;
   int width;
   int expand_columns;
   gboolean has_title;
@@ -401,7 +402,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
       GPtrArray *row = g_ptr_array_index (printer->rows, i);
       int extra = expand_extra;
 
-      if (rows > 0)
+      if (rows > total_skip)
         g_print ("\n");
 
       for (j = 0; j < row->len; j++)
