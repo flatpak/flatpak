@@ -56,9 +56,13 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
+  { "description",    N_("Description"),    N_("Show the description"),    1, 1 },
+  { "application",    N_("Application"),    N_("Show the application ID"), 0, 1 },
+  { "arch",           N_("Architecture"),   N_("Show the architecture"),   0, 0 },
+  { "branch",         N_("Branch"),         N_("Show the branch"),         0, 1 },
+  { "version",        N_("Version"),        N_("Show the version"),        1, 1 },
   { "ref",            N_("Ref"),            N_("Show the ref"),            1, 0 },
-  { "application",    N_("Application"),    N_("Show the application ID"), 0, 0 },
-  { "origin",         N_("Origin"),         N_("Show the origin remote"),  1, 0 },
+  { "origin",         N_("Origin"),         N_("Show the origin remote"),  1, 1 },
   { "commit",         N_("Commit"),         N_("Show the active commit"),  1, 0 },
   { "runtime",        N_("Runtime"),        N_("Show the runtime"),        1, 0 },
   { "installed-size", N_("Installed size"), N_("Show the installed size"), 1, 0 },
@@ -95,6 +99,7 @@ remote_state_dir_pair_new (FlatpakDir *dir, FlatpakRemoteState *state)
 static gboolean
 ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, Column *columns, GCancellable *cancellable, GError **error)
 {
+  FlatpakTablePrinter *printer;
   GHashTableIter refs_iter;
   GHashTableIter iter;
   gpointer refs_key;
@@ -110,9 +115,18 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
   g_autofree char *match_arch = NULL;
   g_autofree char *match_branch = NULL;
   gboolean need_cache_data = FALSE;
+  gboolean need_appstream_data = FALSE;
+  int rows, cols;
 
-  FlatpakTablePrinter *printer = flatpak_table_printer_new ();
+  printer = flatpak_table_printer_new ();
+
   flatpak_table_printer_set_column_titles (printer, columns);
+
+  for (i = 0; columns[i].name; i++)
+    flatpak_table_printer_set_column_expand (printer, i, TRUE);
+  flatpak_table_printer_set_column_ellipsize (printer,
+                                              find_column (columns, "description", NULL),
+                                              TRUE);
 
   if (app_runtime)
     {
@@ -122,12 +136,15 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
         return FALSE;
     }
 
-  for (j = 0; columns[j].name && !need_cache_data; j++)
+  for (j = 0; columns[j].name; j++)
     {
       if (strcmp (columns[j].name, "download-size") == 0 ||
           strcmp (columns[j].name, "installed-size") == 0 ||
           strcmp (columns[j].name, "runtime") == 0)
         need_cache_data = TRUE;
+      if (strcmp (columns[j].name, "description") == 0 ||
+          strcmp (columns[j].name, "version") == 0)
+        need_appstream_data = TRUE;
     }
 
   g_hash_table_iter_init (&refs_iter, refs_hash);
@@ -138,6 +155,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       FlatpakDir *dir = remote_state_dir_pair->dir;
       FlatpakRemoteState *state = remote_state_dir_pair->state;
       const char *remote = state->remote_name;
+      g_autoptr(AsStore) store = NULL;
 
       g_autoptr(GHashTable) names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
@@ -225,6 +243,18 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
           if (g_hash_table_lookup (names, ref) == NULL)
             g_hash_table_insert (names, g_strdup (ref), g_strdup (checksum));
         }
+
+      if (need_appstream_data)
+        {
+          store = as_store_new ();
+
+#if AS_CHECK_VERSION (0, 6, 1)
+          as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
+#endif
+
+          flatpak_dir_load_appstream_store (dir, remote, NULL, store, NULL, NULL);
+        }
+
       keys = (const char **) g_hash_table_get_keys_as_array (names, &n_keys);
       g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
 
@@ -234,6 +264,10 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
           guint64 installed_size;
           guint64 download_size;
           g_autofree char *runtime = NULL;
+          AsApp *app = NULL;
+          g_auto(GStrv) parts = NULL;
+
+          parts = flatpak_decompose_ref (ref, NULL);
 
           if (need_cache_data)
             {
@@ -250,6 +284,9 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
                  runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
             }
 
+          if (need_appstream_data)
+            app = as_store_find_app (store, ref);
+
           if (app_runtime && runtime)
             {
               g_auto(GStrv) pref = g_strsplit (runtime, "/", 3);
@@ -261,13 +298,29 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
           for (j = 0; columns[j].name; j++)
             {
-              if (strcmp (columns[j].name, "ref") == 0)
+              if (strcmp (columns[j].name, "description") == 0)
+                {
+                  if (app)
+                    {
+                      g_autofree char *description = NULL;
+                      const char *name = as_app_get_localized_name (app);
+                      const char *comment = as_app_get_localized_comment (app);
+                      description = g_strconcat (name, " - ", comment, NULL);
+                      flatpak_table_printer_add_column (printer, description);
+                    }
+                  else
+                    flatpak_table_printer_add_column (printer, parts[1]);
+                }
+              else if (strcmp (columns[j].name, "version") == 0)
+                flatpak_table_printer_add_column (printer, app ? as_app_get_version (app) : "");
+              else if (strcmp (columns[j].name, "ref") == 0)
                 flatpak_table_printer_add_column (printer, ref);
               else if (strcmp (columns[j].name, "application") == 0)
-                {
-                  g_auto(GStrv) parts = flatpak_decompose_ref (ref, NULL);
-                  flatpak_table_printer_add_column (printer, parts[1]);
-                }
+                flatpak_table_printer_add_column (printer, parts[1]);
+              else if (strcmp (columns[j].name, "arch") == 0)
+                flatpak_table_printer_add_column (printer, parts[2]);
+              else if (strcmp (columns[j].name, "branch") == 0)
+                flatpak_table_printer_add_column (printer, parts[3]);
               else if (strcmp (columns[j].name, "origin") == 0)
                 flatpak_table_printer_add_column (printer, remote);
               else if (strcmp (columns[j].name, "commit") == 0)
@@ -319,7 +372,10 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
         }
     }
 
-  flatpak_table_printer_print (printer);
+  flatpak_get_window_size (&rows, &cols);
+  flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
+  g_print ("\n");
+
   flatpak_table_printer_free (printer);
 
   return TRUE;
@@ -432,9 +488,10 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
         }
     }
 
-  all_columns[0].def = opt_show_details;
-  all_columns[1].def = !opt_show_details;
-  all_columns[2].def = !has_remote;
+  /* tweak some defaults, for compatibility */
+  all_columns[1].def = !opt_show_details; /* application */
+  all_columns[5].def = opt_show_details; /* ref */
+  all_columns[6].def = !has_remote; /* origin */
 
   columns = handle_column_args (all_columns, opt_show_details, opt_cols, error);
   if (columns == NULL)
