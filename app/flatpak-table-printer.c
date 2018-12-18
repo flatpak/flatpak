@@ -362,6 +362,8 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
         expand_columns++;
     }
 
+  expand_by = 0;
+  expand_extra = 0;
   if (expand_columns > 0)
     {
       int excess = MIN (columns - width, width / 2);
