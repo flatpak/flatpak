@@ -187,6 +187,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--cwd=DIR</option></term>
+
+                <listitem><para>
+                    The directory to run the command in. Note that this must be a directory
+                    inside the sandbox.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--branch=BRANCH</option></term>
 
                 <listitem><para>
