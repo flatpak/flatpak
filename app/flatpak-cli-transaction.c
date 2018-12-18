@@ -41,7 +41,6 @@ struct _FlatpakCliTransaction
 
   int                rows;
   int                cols;
-  int                end_row;
   int                table_width;
   int                table_height;
 
@@ -163,32 +162,41 @@ op_type_to_string (FlatpakTransactionOperationType operation_type)
     }
 }
 
-static void
+static gboolean
 redraw (FlatpakCliTransaction *self)
 {
   int top;
   int row;
-  int col;
+  int current_row;
+  int current_col;
   int skip;
 
-  top = self->end_row - self->table_height;
-  if (top > 0)
+  /* We may have resized and thus reposisioned the cursor since last redraw */
+  flatpak_get_window_size (&self->rows, &self->cols);
+  if (flatpak_get_cursor_pos (&current_row, &current_col))
     {
-      row = top;
-      skip = 0;
-    }
-  else
-    {
-      row = 1;
-      skip = 1 - top;
-    }
+      /* We're currently displaying the last row of the table, extept the
+         very first time where the user pressed return for the prompt causing us
+         to scroll down one extra row */
+      top = current_row - self->table_height + 1;
+      if (top > 0)
+        {
+          row = top;
+          skip = 0;
+        }
+      else
+        {
+          row = 1;
+          skip = 1 - top;
+        }
 
-  g_print (FLATPAK_ANSI_ROW_N FLATPAK_ANSI_CLEAR, row);
-  // we update table_height and end_row here, since we might have added to the table
-  flatpak_table_printer_print_full (self->printer, skip, self->cols,
-                                    &self->table_height, &self->table_width);
-  flatpak_get_cursor_pos (&self->end_row, &col);
-  self->end_row += 1;
+      g_print (FLATPAK_ANSI_ROW_N FLATPAK_ANSI_CLEAR, row);
+      // we update table_height and end_row here, since we might have added to the table
+      flatpak_table_printer_print_full (self->printer, skip, self->cols,
+                                        &self->table_height, &self->table_width);
+      return TRUE;
+    }
+  return FALSE;
 }
 
 static void
@@ -313,7 +321,8 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
           row = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (op), "row"));
           flatpak_table_printer_set_decimal_cell (cli->printer, row, cli->download_col, text);
         }
-      redraw (cli);
+      if (!redraw (cli))
+        g_print ("\r%s", str->str); /* redraw failed, just update the progress */
     }
   else
     g_print ("\r%s", str->str);
@@ -756,7 +765,6 @@ transaction_ready (FlatpakTransaction *transaction)
   int i;
   FlatpakTablePrinter *printer;
   const char *op_shorthand[] = { "i", "u", "i", "r" };
-  int col;
 
   if (ops == NULL)
     return TRUE;
@@ -934,9 +942,7 @@ transaction_ready (FlatpakTransaction *transaction)
   self->progress_row = flatpak_table_printer_get_current_row (printer);
   flatpak_table_printer_finish_row (printer);
 
-  self->table_height += 2;
-
-  flatpak_get_cursor_pos (&self->end_row, &col);
+  self->table_height += 3; /* 2 for the added lines and one for the newline from the user after the prompt */
 
   if (flatpak_fancy_output ())
     redraw (self);
