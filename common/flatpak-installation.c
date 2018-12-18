@@ -2842,3 +2842,162 @@ flatpak_installation_run_triggers (FlatpakInstallation *self,
 
   return flatpak_dir_run_triggers (dir, cancellable, error);
 }
+
+
+static void
+find_used_refs (FlatpakDir *dir,
+                GHashTable *used_refs,
+                const char *ref,
+                const char *origin)
+{
+  g_autoptr(GPtrArray) related = NULL;
+  int i;
+
+  g_hash_table_add (used_refs, g_strdup (ref));
+
+  related = flatpak_dir_find_local_related (dir, ref, origin, TRUE, NULL, NULL);
+  if (related == NULL)
+    return;
+
+  for (i = 0; i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+
+      if (!rel->auto_prune && !g_hash_table_contains (used_refs, rel->ref))
+        {
+          g_autofree char *related_origin = NULL;
+
+          g_hash_table_add (used_refs, g_strdup (rel->ref));
+
+          related_origin = flatpak_dir_get_origin (dir, rel->ref, NULL, NULL);
+          if (related_origin != NULL)
+            find_used_refs (dir, used_refs, rel->ref, related_origin);
+        }
+    }
+}
+
+/**
+ * flatpak_installation_list_unused_refs:
+ * @self: a #FlatpakInstallation
+ * @arch: (nullable): if non-%NULL, the architecture of refs to collect
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the installed references that are not 'used'.
+ *
+ * A reference is used if it is either an application, or an sdk,
+ * or the runtime of a used ref, or an extension of a used ref.
+ *
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
+ *   #FlatpakInstalledRef instances
+ *
+ * Since: 1.1.2
+ */
+GPtrArray *
+flatpak_installation_list_unused_refs (FlatpakInstallation  *self,
+                                       const char           *arch,
+                                       GCancellable         *cancellable,
+                                       GError              **error)
+{
+  FlatpakDir *dir;
+  g_autoptr(GHashTable) refs_hash = NULL;
+  g_autoptr(GPtrArray) refs =  NULL;
+  g_auto(GStrv) app_refs = NULL;
+  g_auto(GStrv) runtime_refs = NULL;
+  g_autoptr(GHashTable) used_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_autoptr(GHashTable) used_runtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  int i;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  if (!flatpak_dir_list_refs (dir, "app", &app_refs, cancellable, error))
+    return NULL;
+
+  if (!flatpak_dir_list_refs (dir, "runtime", &runtime_refs, cancellable, error))
+    return NULL;
+
+  refs_hash = g_hash_table_new (g_str_hash, g_str_equal);
+  refs = g_ptr_array_new_with_free_func (g_object_unref);
+
+  for (i = 0; app_refs[i] != NULL; i++)
+    {
+      const char *ref = app_refs[i];
+      g_autoptr(FlatpakDeploy) deploy = NULL;
+      g_autofree char *origin = NULL;
+      g_autofree char *runtime = NULL;
+      g_autofree char *sdk = NULL;
+      g_autoptr(GKeyFile) metakey = NULL;
+      g_auto(GStrv) parts = g_strsplit (ref, "/", -1);
+
+      if (arch != NULL && strcmp (parts[2], arch) != 0)
+        continue;
+
+      deploy = flatpak_dir_load_deployed (dir, ref, NULL, NULL, NULL);
+      if (deploy == NULL)
+        continue;
+
+      origin = flatpak_dir_get_origin (dir, ref, NULL, NULL);
+      if (origin == NULL)
+        continue;
+
+      find_used_refs (dir, used_refs, ref, origin);
+
+      metakey = flatpak_deploy_get_metadata (deploy);
+      runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+      if (runtime)
+        g_hash_table_add (used_runtimes, g_steal_pointer (&runtime));
+
+      sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
+      if (sdk)
+        g_hash_table_add (used_runtimes, g_steal_pointer (&sdk));
+    }
+
+  GLNX_HASH_TABLE_FOREACH (used_runtimes, const char *, runtime)
+    {
+      g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
+
+      g_autoptr(FlatpakDeploy) deploy = NULL;
+      g_autofree char *origin = NULL;
+      g_autofree char *sdk = NULL;
+      g_autoptr(GKeyFile) metakey = NULL;
+
+      deploy = flatpak_dir_load_deployed (dir, runtime_ref, NULL, NULL, NULL);
+      if (deploy == NULL)
+        continue;
+
+      origin = flatpak_dir_get_origin (dir, runtime_ref, NULL, NULL);
+      if (origin == NULL)
+        continue;
+
+      find_used_refs (dir, used_refs, runtime_ref, origin);
+
+      metakey = flatpak_deploy_get_metadata (deploy);
+      sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
+      if (sdk)
+        {
+          g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
+          g_autofree char *sdk_origin = flatpak_dir_get_origin (dir, sdk_ref, NULL, NULL);
+          if (sdk_origin)
+            find_used_refs (dir, used_refs, sdk_ref, sdk_origin);
+        }
+    }
+
+  for (i = 0; runtime_refs[i] != NULL; i++)
+    {
+      const char *ref = runtime_refs[i];
+      g_auto(GStrv) parts = g_strsplit (ref, "/", -1);
+
+      if (arch != NULL && strcmp (parts[2], arch) != 0)
+        continue;
+
+      if (!g_hash_table_contains (used_refs, ref))
+        {
+          if (g_hash_table_add (refs_hash, (gpointer)ref))
+            g_ptr_array_add (refs, get_ref (dir, ref, NULL, NULL));
+        }
+    }
+
+   return g_steal_pointer (&refs);
+}
