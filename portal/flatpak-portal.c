@@ -559,6 +559,8 @@ handle_spawn (PortalFlatpak         *object,
         g_ptr_array_add (flatpak_argv, g_strdup_printf ("--runtime-commit=%s", runtime_commit));
     }
 
+  if (arg_cwd_path != NULL)
+    g_ptr_array_add (flatpak_argv, g_strdup_printf ("--cwd=%s", arg_cwd_path));
 
   if (arg_argv[0][0] != 0)
     g_ptr_array_add (flatpak_argv, g_strdup_printf ("--command=%s", arg_argv[0]));
@@ -583,7 +585,7 @@ handle_spawn (PortalFlatpak         *object,
       g_debug ("Starting: %s\n", cmd->str);
     }
 
-  if (!g_spawn_async_with_pipes (arg_cwd_path,
+  if (!g_spawn_async_with_pipes (NULL,
                                  (char **) flatpak_argv->pdata,
                                  env,
                                  G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
