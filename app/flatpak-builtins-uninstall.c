@@ -34,6 +34,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-cli-transaction.h"
 #include <flatpak-dir-private.h>
+#include <flatpak-installation-private.h>
 #include "flatpak-error.h"
 
 static char *opt_arch;
@@ -111,35 +112,6 @@ uninstall_dir_ensure (GHashTable *uninstall_dirs,
     }
 
   return udir;
-}
-
-static void
-find_used_refs (FlatpakDir *dir, GHashTable *used_refs, const char *ref, const char *origin)
-{
-  g_autoptr(GPtrArray) related = NULL;
-  int i;
-
-  g_hash_table_add (used_refs, g_strdup (ref));
-
-  related = flatpak_dir_find_local_related (dir, ref, origin, TRUE, NULL, NULL);
-  if (related == NULL)
-    return;
-
-  for (i = 0; i < related->len; i++)
-    {
-      FlatpakRelated *rel = g_ptr_array_index (related, i);
-
-      if (!rel->auto_prune && !g_hash_table_contains (used_refs, rel->ref))
-        {
-          g_autofree char *related_origin = NULL;
-
-          g_hash_table_add (used_refs, g_strdup (rel->ref));
-
-          related_origin = flatpak_dir_get_origin (dir, rel->ref, NULL, NULL);
-          if (related_origin != NULL)
-            find_used_refs (dir, used_refs, rel->ref, related_origin);
-        }
-    }
 }
 
 static gboolean
@@ -236,91 +208,21 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       for (j = 0; j < dirs->len; j++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
+          g_autoptr(FlatpakInstallation) installation = flatpak_installation_new_for_dir (dir, NULL, NULL);
           UninstallDir *udir = uninstall_dir_ensure (uninstall_dirs, dir);
-          g_auto(GStrv) app_refs = NULL;
-          g_auto(GStrv) runtime_refs = NULL;
-          g_autoptr(GHashTable) used_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-          g_autoptr(GHashTable) used_runtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+          g_autoptr(GPtrArray) unused = NULL;
 
-          if (!flatpak_dir_list_refs (dir, "app", &app_refs, NULL, NULL))
-            continue;
+          unused = flatpak_installation_list_unused_refs (installation, opt_arch, cancellable, error);
+          if (unused == NULL)
+            return FALSE;
 
-          if (!flatpak_dir_list_refs (dir, "runtime", &runtime_refs, NULL, NULL))
-            continue;
-
-          for (i = 0; app_refs[i] != NULL; i++)
+          for (i = 0; i < unused->len; i++)
             {
-              const char *ref = app_refs[i];
-              g_autoptr(FlatpakDeploy) deploy = NULL;
-              g_autofree char *origin = NULL;
-              g_autofree char *runtime = NULL;
-              g_autofree char *sdk = NULL;
-              g_autoptr(GKeyFile) metakey = NULL;
-              g_auto(GStrv) parts = g_strsplit (ref, "/", -1);
+              FlatpakInstalledRef *rref = g_ptr_array_index (unused, i);
+              g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (rref));
 
-              if (opt_arch != NULL && strcmp (parts[2], opt_arch) != 0)
-                continue;
-
-              deploy = flatpak_dir_load_deployed (dir, ref, NULL, NULL, NULL);
-              if (deploy == NULL)
-                continue;
-
-              origin = flatpak_dir_get_origin (dir, ref, NULL, NULL);
-              if (origin == NULL)
-                continue;
-
-              find_used_refs (dir, used_refs, ref, origin);
-
-              metakey = flatpak_deploy_get_metadata (deploy);
-              runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
-              if (runtime)
-                g_hash_table_add (used_runtimes, g_steal_pointer (&runtime));
-
-              sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
-              if (sdk)
-                g_hash_table_add (used_runtimes, g_steal_pointer (&sdk));
-            }
-
-          GLNX_HASH_TABLE_FOREACH (used_runtimes, const char *, runtime)
-          {
-            g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
-
-            g_autoptr(FlatpakDeploy) deploy = NULL;
-            g_autofree char *origin = NULL;
-            g_autofree char *sdk = NULL;
-            g_autoptr(GKeyFile) metakey = NULL;
-
-            deploy = flatpak_dir_load_deployed (dir, runtime_ref, NULL, NULL, NULL);
-            if (deploy == NULL)
-              continue;
-
-            origin = flatpak_dir_get_origin (dir, runtime_ref, NULL, NULL);
-            if (origin == NULL)
-              continue;
-
-            find_used_refs (dir, used_refs, runtime_ref, origin);
-
-            metakey = flatpak_deploy_get_metadata (deploy);
-            sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
-            if (sdk)
-              {
-                g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
-                g_autofree char *sdk_origin = flatpak_dir_get_origin (dir, sdk_ref, NULL, NULL);
-                if (sdk_origin)
-                  find_used_refs (dir, used_refs, sdk_ref, sdk_origin);
-              }
-          }
-
-          for (i = 0; runtime_refs[i] != NULL; i++)
-            {
-              const char *ref = runtime_refs[i];
-              g_auto(GStrv) parts = g_strsplit (ref, "/", -1);
-
-              if (opt_arch != NULL && strcmp (parts[2], opt_arch) != 0)
-                continue;
-
-              if (!g_hash_table_contains (used_refs, ref))
-                uninstall_dir_add_ref (udir, ref);
+              uninstall_dir_add_ref (udir, ref);
+              found_something_to_uninstall = TRUE;
             }
 
           if (udir->refs->len > 0)
