@@ -2852,6 +2852,7 @@ flatpak_run_app (const char     *app_ref,
                  const char     *custom_runtime_version,
                  const char     *custom_runtime_commit,
                  FlatpakRunFlags flags,
+                 const char     *cwd,
                  const char     *custom_command,
                  char           *args[],
                  int             n_args,
@@ -3110,6 +3111,9 @@ flatpak_run_app (const char     *app_ref,
                           "--symlink", "/app/lib/debug/source", "/run/build",
                           "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
                           NULL);
+
+  if (cwd)
+    flatpak_bwrap_add_args (bwrap, "--chdir", cwd, NULL);
 
   if (custom_command)
     {
