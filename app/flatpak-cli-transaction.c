@@ -209,7 +209,7 @@ static void
 spin_op_progress (FlatpakCliTransaction *self,
                   FlatpakTransactionOperation *op)
 {
-  const char p[] = "/-\\|/-\\|";
+  const char p[] = "/-\\|";
 
   set_op_progress (self, op, p[self->op_progress++ % strlen (p)]);
 }
