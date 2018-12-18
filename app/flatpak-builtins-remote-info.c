@@ -106,6 +106,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   guint64 timestamp;
   g_autofree char *formatted_timestamp = NULL;
 
+
   context = g_option_context_new (_(" REMOTE REF - Show information about an application or runtime in a remote"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
@@ -154,6 +155,27 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
   if (friendly)
     {
+      int len;
+      int rows, cols;
+      int width;
+      g_autoptr(AsStore) store = as_store_new ();
+      AsApp *app = NULL;
+      const char *version = NULL;
+
+#if AS_CHECK_VERSION (0, 6, 1)
+      as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
+#endif
+
+      flatpak_dir_load_appstream_store (preferred_dir, remote, parts[2], store, NULL, NULL);
+      app = as_store_find_app (store, ref);
+      if (app)
+        {
+          const char *name = as_app_get_localized_name (app);
+          const char *comment = as_app_get_localized_comment (app);
+          g_print ("\n%s - %s\n\n", name, comment);
+          version = as_app_get_version (app);
+        }
+
       g_variant_get (commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
                      &subject, &body, NULL, NULL, NULL);
 
@@ -183,33 +205,72 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       formatted_download_size = g_format_size (download_size);
       formatted_timestamp = format_timestamp (timestamp);
 
-      g_print ("%s%s%s %s\n", on, _("Ref:"), off, ref);
-      g_print ("%s%s%s %s\n", on, _("ID:"), off, parts[1]);
-      g_print ("%s%s%s %s\n", on, _("Arch:"), off, parts[2]);
-      g_print ("%s%s%s %s\n", on, _("Branch:"), off, parts[3]);
+      len = 0;
+      len = MAX (len, strlen (_("ID:")));
+      len = MAX (len, strlen (_("Ref:")));
+      len = MAX (len, strlen (_("Arch:")));
+      len = MAX (len, strlen (_("Branch:")));
+      if (version != NULL)
+        len = MAX (len, strlen (_("Version:")));
       if (collection_id != NULL)
-        g_print ("%s%s%s %s\n", on, _("Collection ID:"), off, collection_id);
-      g_print ("%s%s%s %s\n", on, _("Date:"), off, formatted_timestamp);
-      g_print ("%s%s%s %s\n", on, _("Subject:"), off, subject);
-      g_print ("%s%s%s %s\n", on, _("Commit:"), off, commit);
-      g_print ("%s%s%s %s\n", on, _("Parent:"), off, parent ? parent : "-");
-      g_print ("%s%s%s %s\n", on, _("Download size:"), off, formatted_download_size);
-      g_print ("%s%s%s %s\n", on, _("Installed size:"), off, formatted_installed_size);
+        len = MAX (len, strlen (_("Collection:")));
+      len = MAX (len, strlen (_("Download:")));
+      len = MAX (len, strlen (_("Installed:")));
+      if (strcmp (parts[0], "app") == 0 && metakey != NULL)
+        len = MAX (len, strlen (_("Runtime:")));
+      len = MAX (len, strlen (_("Date:")));
+      len = MAX (len, strlen (_("Subject:")));
+      len = MAX (len, strlen (_("Commit:")));
+      if (parent)
+        len = MAX (len, strlen (_("Parent:")));
+      if (strcmp (parts[0], "app") == 0 && metakey != NULL)
+        len = MAX (len, strlen (_("Sdk:")));
+      if (opt_log)
+        len = MAX (len, strlen (_("History:")));
+
+      flatpak_get_window_size (&rows, &cols);
+      width = cols - (len + 1);
+
+      g_print ("%s%*s%s %s\n", on, len, _("ID:"), off, parts[1]);
+      g_print ("%s%*s%s %s\n", on, len, _("Ref:"), off, ref);
+      g_print ("%s%*s%s %s\n", on, len, _("Arch:"), off, parts[2]);
+      g_print ("%s%*s%s %s\n", on, len, _("Branch:"), off, parts[3]);
+      if (version != NULL)
+        g_print ("%s%*s%s %s\n", on, len, _("Version:"), off, version);
+      if (collection_id != NULL)
+        g_print ("%s%*s%s %s\n", on, len, _("Collection:"), off, collection_id);
+      g_print ("%s%*s%s %s\n", on, len, _("Download:"), off, formatted_download_size);
+      g_print ("%s%*s%s %s\n", on, len, _("Installed:"), off, formatted_installed_size);
       if (strcmp (parts[0], "app") == 0 && metakey != NULL)
         {
           g_autofree char *runtime = NULL;
-          g_autofree char *sdk = NULL;
           runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
-          g_print ("%s%s%s %s\n", on, _("Runtime:"), off, runtime ? runtime : "-");
-          sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
-          g_print ("%s%s%s %s\n", on, _("Sdk:"), off, sdk ? sdk : "-");
+          g_print ("%s%*s%s %s\n", on, len, _("Runtime:"), off, runtime ? runtime : "-");
         }
+      g_print ("\n");
+      if (strcmp (parts[0], "app") == 0 && metakey != NULL)
+        {
+          g_autofree char *sdk = NULL;
+          sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
+          g_print ("%s%*s%s %s\n", on, len, _("Sdk:"), off, sdk ? sdk : "-");
+        }
+      {
+        g_autofree char *formatted_commit = ellipsize_string (commit, width);
+        g_print ("%s%*s%s %s\n", on, len, _("Commit:"), off, formatted_commit);
+      }
+      if (parent)
+        {
+          g_autofree char *formatted_commit = ellipsize_string (parent, width);
+          g_print ("%s%*s%s %s\n", on, len, _("Parent:"), off, formatted_commit);
+        }
+      g_print ("%s%*s%s %s\n", on, len, _("Subject:"), off, subject);
+      g_print ("%s%*s%s %s\n", on, len, _("Date:"), off, formatted_timestamp);
 
       if (opt_log)
         {
           g_autofree char *p = g_strdup (parent);
 
-          g_print ("%s%s%s", on, _("History:\n"), off);
+          g_print ("\n%s%*s%s\n\n", on, len, _("History:"), off);
 
           while (p)
             {
@@ -230,9 +291,9 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               g_variant_get (p_commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
                              &p_subject, NULL, NULL, NULL, NULL);
 
-              g_print ("%s%s%s %s\n", on, _(" Subject:"), off, p_subject);
-              g_print ("%s%s%s %s\n", on, _(" Date:"), off, p_formatted_timestamp);
-              g_print ("%s%s%s %s\n", on, _(" Commit:"), off, p);
+              g_print ("%s%*s%s %s\n", on, len, _(" Commit:"), off, p);
+              g_print ("%s%*s%s %s\n", on, len, _(" Subject:"), off, p_subject);
+              g_print ("%s%*s%s %s\n", on, len, _(" Date:"), off, p_formatted_timestamp);
 
               g_free (p);
               p = g_steal_pointer (&p_parent);
