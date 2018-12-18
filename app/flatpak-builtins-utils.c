@@ -26,8 +26,10 @@
 #include <gio/gunixinputstream.h>
 #include "flatpak-chain-input-stream-private.h"
 
+#include "flatpak-ref.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-run-private.h"
 
 
 void
@@ -988,4 +990,114 @@ ellipsize_string (const char *text, int len)
     }
 
   return ret;
+}
+
+const char *
+as_app_get_localized_name (AsApp *app)
+{
+  const char * const * languages = g_get_language_names ();
+  gsize i;
+
+  for (i = 0; languages[i]; ++i)
+    {
+      const char *name = as_app_get_name (app, languages[i]);
+      if (name != NULL)
+        return name;
+    }
+
+  return NULL;
+}
+
+const char *
+as_app_get_localized_comment (AsApp *app)
+{
+  const char * const * languages = g_get_language_names ();
+  gsize i;
+
+  for (i = 0; languages[i]; ++i)
+    {
+      const char *comment = as_app_get_comment (app, languages[i]);
+      if (comment != NULL)
+        return comment;
+    }
+  return NULL;
+}
+
+const char *
+as_app_get_version (AsApp *app)
+{
+  AsRelease *release = as_app_get_release_default (app);
+
+  if (release)
+    return as_release_get_version (release);
+
+  return NULL;
+}
+
+AsApp *
+as_app_load_for_deploy (FlatpakDeploy *deploy)
+{
+  g_autoptr(GFile) files = NULL;
+  g_autofree char *metainfo = NULL;
+  g_autoptr(GKeyFile) metadata = NULL;
+  const char *id;
+  g_autofree char *relpath = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(AsStore) store = NULL;
+  GPtrArray *apps;
+
+  store = as_store_new ();
+
+  files = flatpak_deploy_get_files (deploy);
+  metadata = flatpak_deploy_get_metadata (deploy);
+
+  if (g_key_file_has_group (metadata, FLATPAK_METADATA_GROUP_APPLICATION))
+    id = g_key_file_get_string (metadata, FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_NAME, NULL);
+  else
+    id = g_key_file_get_string (metadata, FLATPAK_METADATA_GROUP_RUNTIME, FLATPAK_METADATA_KEY_NAME, NULL);
+
+  relpath = g_strconcat ("share/app-info/xmls/", id, ".xml.gz", NULL);
+  file = g_file_resolve_relative_path (files, relpath);
+
+  g_debug ("Loading AsStore from '%s'", flatpak_file_get_path_cached (file));
+  if (!as_store_from_file (store, file, NULL, NULL, &error))
+    g_debug ("Failed to load '%s': %s", flatpak_file_get_path_cached (file), error->message);
+
+  apps = as_store_get_apps (store);
+  if (apps->len > 0)
+    return g_object_ref (g_ptr_array_index (apps, 0));
+  return NULL;
+}
+
+AsApp *
+as_store_find_app (AsStore *store,
+                   const char *ref)
+{
+  g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
+  const char *appid = flatpak_ref_get_name (rref);
+  g_autofree char *desktopid = g_strconcat (appid, ".desktop", NULL);
+  int j;
+
+  g_debug ("Looking for AsApp for '%s'", ref);
+
+  for (j = 0; j < 2; j++)
+    {
+      const char *id = j == 0 ? appid : desktopid;
+      g_autoptr(GPtrArray) apps = as_store_get_apps_by_id (store, id);
+      int i;
+
+      g_debug ("sifting through %d apps for %s", apps->len, id);
+      for (i = 0; i < apps->len; i++)
+        {
+          AsApp *app = g_ptr_array_index (apps, i);
+          AsBundle *bundle = as_app_get_bundle_default (app);
+          if (bundle &&
+              as_bundle_get_kind (bundle) == AS_BUNDLE_KIND_FLATPAK &&
+              g_str_equal (as_bundle_get_id (bundle), ref))
+            return app;
+        }
+    }
+
+  return NULL;
 }
