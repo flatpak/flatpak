@@ -212,6 +212,7 @@ flatpak_complete_document_list (FlatpakCompletion *completion)
     case 1: /* APPID */
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
+      flatpak_complete_columns (completion, all_columns);
 
       user_dir = flatpak_dir_get_user ();
       {

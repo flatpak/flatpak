@@ -184,6 +184,7 @@ flatpak_complete_ps (FlatpakCompletion *completion)
     case 1:
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
+      flatpak_complete_columns (completion, all_columns);
       break;
 
     default:

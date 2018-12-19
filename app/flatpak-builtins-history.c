@@ -488,5 +488,6 @@ flatpak_complete_history (FlatpakCompletion *completion)
   flatpak_complete_options (completion, global_entries);
   flatpak_complete_options (completion, user_entries);
   flatpak_complete_options (completion, options);
+  flatpak_complete_columns (completion, all_columns);
   return TRUE;
 }

@@ -526,6 +526,7 @@ flatpak_complete_remote_ls (FlatpakCompletion *completion)
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
       flatpak_complete_options (completion, user_entries);
+      flatpak_complete_columns (completion, all_columns);
 
       for (i = 0; i < dirs->len; i++)
         {
