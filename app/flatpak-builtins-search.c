@@ -262,7 +262,7 @@ print_matches (Column *columns, GSList *matches)
   ellip = find_column (columns, "description", NULL);
   flatpak_table_printer_set_column_ellipsize (printer, ellip, TRUE);
   ellip = find_column (columns, "application", NULL);
-  flatpak_table_printer_set_column_ellipsize (printer, ellip, TRUE);
+  flatpak_table_printer_set_column_ellipsize_middle (printer, ellip, TRUE, TRUE);
   flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
   g_print ("\n");
 
