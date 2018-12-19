@@ -104,7 +104,7 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
                   deploy = flatpak_find_deploy_dir_for_ref (ext->ref, &src_dir, cancellable, error);
                   if (deploy == NULL)
                     return FALSE;
-                  deploy_data = flatpak_dir_get_deploy_data (src_dir, ext->ref, cancellable, error);
+                  deploy_data = flatpak_dir_get_deploy_data (src_dir, ext->ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
                   if (deploy_data == NULL)
                     return FALSE;
 

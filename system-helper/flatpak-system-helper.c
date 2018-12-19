@@ -1256,7 +1256,7 @@ dir_ref_is_installed (FlatpakDir *dir,
 {
   g_autoptr(GVariant) deploy_data = NULL;
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, NULL, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
   return deploy_data != NULL;
 }

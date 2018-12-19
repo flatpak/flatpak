@@ -222,7 +222,7 @@ print_table_for_refs (gboolean print_apps,
             continue;
 
           deploy = flatpak_dir_load_deployed (dir, ref, NULL, cancellable, NULL);
-          deploy_data = flatpak_deploy_get_deploy_data (deploy, cancellable, NULL);
+          deploy_data = flatpak_deploy_get_deploy_data (deploy, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, NULL);
           if (deploy_data == NULL)
             continue;
 

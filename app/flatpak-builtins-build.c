@@ -304,7 +304,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       if (runtime_deploy == NULL)
         return FALSE;
 
-      runtime_deploy_data = flatpak_deploy_get_deploy_data (runtime_deploy, cancellable, error);
+      runtime_deploy_data = flatpak_deploy_get_deploy_data (runtime_deploy, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
       if (runtime_deploy_data == NULL)
         return FALSE;
 

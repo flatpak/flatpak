@@ -246,7 +246,7 @@ transaction_add_local_ref (FlatpakDir         *dir,
   const char *origin;
   const char **subpaths;
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, NULL, &local_error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, &local_error);
   if (deploy_data == NULL)
     {
       if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))

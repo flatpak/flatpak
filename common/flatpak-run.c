@@ -2922,7 +2922,7 @@ flatpak_run_app (const char     *app_ref,
     {
       const gchar *key;
 
-      app_deploy_data = flatpak_deploy_get_deploy_data (app_deploy, cancellable, error);
+      app_deploy_data = flatpak_deploy_get_deploy_data (app_deploy, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
       if (app_deploy_data == NULL)
         return FALSE;
 
@@ -2978,7 +2978,7 @@ flatpak_run_app (const char     *app_ref,
   if (runtime_deploy == NULL)
     return FALSE;
 
-  runtime_deploy_data = flatpak_deploy_get_deploy_data (runtime_deploy, cancellable, error);
+  runtime_deploy_data = flatpak_deploy_get_deploy_data (runtime_deploy, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (runtime_deploy_data == NULL)
     return FALSE;
 
