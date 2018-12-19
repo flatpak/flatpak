@@ -973,23 +973,23 @@ format_timestamp (guint64 timestamp)
 char *
 ellipsize_string (const char *text, int len)
 {
-  char *ret = g_strdup (text);
-  char *p;
-  int i;
+  g_autofree char *ret = g_strdup (text);
 
   if (g_utf8_strlen (ret, -1) > len)
     {
+      char *p;
+      int i;
+
       p = ret;
-      for (i = 0; i < len - 3; i++)
+      for (i = 0; i < len - 1; i++)
         p = g_utf8_next_char (p);
 
-      p[0] = '.';
-      p[1] = '.';
-      p[2] = '.';
-      p[3] = '\0';
+      p[0] = '\0';
+
+      return g_strconcat (ret, "…", NULL);
     }
 
-  return ret;
+  return g_steal_pointer (&ret);
 }
 
 const char *
