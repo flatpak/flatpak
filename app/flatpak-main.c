@@ -33,6 +33,10 @@
 #ifdef USE_SYSTEM_HELPER
 #include <polkit/polkit.h>
 #include "flatpak-polkit-agent-text-listener.h"
+
+/* Work with polkit before and after autoptr support was added */
+typedef PolkitSubject             AutoPolkitSubject;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
 #endif
 
 #include "flatpak-builtins.h"
@@ -50,10 +54,6 @@ static gboolean opt_system;
 static char **opt_installations;
 
 static gboolean is_in_complete;
-
-/* Work with polkit before and after autoptr support was added */
-typedef PolkitSubject             AutoPolkitSubject;
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
 
 typedef struct
 {
