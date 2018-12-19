@@ -108,6 +108,10 @@
             <member>HOST_XDG_CONFIG_HOME</member>
             <member>HOST_XDG_CACHE_HOME</member>
         </simplelist>
+        <para>
+            Flatpak sets the environment variable <envar>FLATPAK_ID</envar> to the application
+            ID of the running app.
+        </para>
     </refsect1>
 
     <refsect1>
