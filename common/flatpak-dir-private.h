@@ -319,6 +319,7 @@ gboolean       flatpak_remove_override_keyfile (const char  *app_id,
                                                 gboolean     user,
                                                 GError     **error);
 
+int                 flatpak_deploy_data_get_version (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_origin (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_commit (GVariant *deploy_data);
 const char **       flatpak_deploy_data_get_subpaths (GVariant *deploy_data);
@@ -327,6 +328,9 @@ const char *        flatpak_deploy_data_get_alt_id (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol_rebase (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_runtime (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_name (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_summary (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_version (GVariant *deploy_data);
 
 GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
 GVariant *     flatpak_load_deploy_data (GFile        *deploy_dir,
