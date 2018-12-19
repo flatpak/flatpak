@@ -49,6 +49,9 @@ struct _FlatpakInstalledRefPrivate
   guint64  installed_size;
   char    *eol;
   char    *eol_rebase;
+  char    *appdata_name;
+  char    *appdata_summary;
+  char    *appdata_version;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstalledRef, flatpak_installed_ref, FLATPAK_TYPE_REF)
@@ -64,6 +67,9 @@ enum {
   PROP_SUBPATHS,
   PROP_EOL,
   PROP_EOL_REBASE,
+  PROP_APPDATA_NAME,
+  PROP_APPDATA_SUMMARY,
+  PROP_APPDATA_VERSION,
 };
 
 static void
@@ -131,6 +137,21 @@ flatpak_installed_ref_set_property (GObject      *object,
       priv->eol_rebase = g_value_dup_string (value);
       break;
 
+    case PROP_APPDATA_NAME:
+      g_clear_pointer (&priv->appdata_name, g_free);
+      priv->appdata_name = g_value_dup_string (value);
+      break;
+
+    case PROP_APPDATA_SUMMARY:
+      g_clear_pointer (&priv->appdata_summary, g_free);
+      priv->appdata_summary = g_value_dup_string (value);
+      break;
+
+    case PROP_APPDATA_VERSION:
+      g_clear_pointer (&priv->appdata_version, g_free);
+      priv->appdata_version = g_value_dup_string (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -178,6 +199,18 @@ flatpak_installed_ref_get_property (GObject    *object,
 
     case PROP_EOL_REBASE:
       g_value_set_string (value, priv->eol_rebase);
+      break;
+
+    case PROP_APPDATA_NAME:
+      g_value_set_string (value, priv->appdata_name);
+      break;
+
+    case PROP_APPDATA_SUMMARY:
+      g_value_set_string (value, priv->appdata_summary);
+      break;
+
+    case PROP_APPDATA_VERSION:
+      g_value_set_string (value, priv->appdata_version);
       break;
 
     default:
@@ -249,6 +282,27 @@ flatpak_installed_ref_class_init (FlatpakInstalledRefClass *klass)
                                    g_param_spec_string ("end-of-life-rebase",
                                                         "End of life rebase",
                                                         "The new ref for the end-of-lifed ref",
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_APPDATA_NAME,
+                                   g_param_spec_string ("appdata-name",
+                                                        "Appdata Name",
+                                                        "The localized name field from the appdata",
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_APPDATA_SUMMARY,
+                                   g_param_spec_string ("appdata-summary",
+                                                        "Appdata Summary",
+                                                        "The localized summary field from the appdata",
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_APPDATA_VERSION,
+                                   g_param_spec_string ("appdata-version",
+                                                        "Appdata Version",
+                                                        "The default version field from the appdata",
                                                         NULL,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
@@ -390,6 +444,46 @@ flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
 }
 
 /**
+ * flatpak_installed_ref_load_appdata:
+ * @self: a #FlatpakInstalledRef
+ * @cancellable: (nullable): a #GCancellable
+ * @error: a return location for a #GError
+ *
+ * Loads the compressed xml appdata for this ref (if it exists).
+ *
+ * Returns: (transfer full): a #GBytes containing the compressed appdata file,
+ *     or %NULL if an error occurred
+ *
+ * Since: 1.1.2
+ */
+GBytes *
+flatpak_installed_ref_load_appdata (FlatpakInstalledRef *self,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+  char *data;
+  gsize length;
+  g_autofree char *path = NULL;
+  g_autofree char *appdata_name = NULL;
+
+  if (priv->deploy_dir == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Unknown deploy directory");
+      return NULL;
+    }
+
+  appdata_name = g_strconcat (flatpak_ref_get_name (FLATPAK_REF (self)), ".xml.gz", NULL);
+  path = g_build_filename (priv->deploy_dir, "files/share/app-info/xmls", appdata_name, NULL);
+
+  if (!g_file_get_contents (path, &data, &length, error))
+    return NULL;
+
+  return g_bytes_new_take (data, length);
+}
+
+/**
  * flatpak_installed_ref_get_eol:
  * @self: a #FlatpakInstalledRef
  *
@@ -423,6 +517,64 @@ flatpak_installed_ref_get_eol_rebase (FlatpakInstalledRef *self)
   return priv->eol_rebase;
 }
 
+/**
+ * flatpak_installed_ref_get_appdata_name:
+ * @self: a #FlatpakInstalledRef
+ *
+ * Returns the name field from the appdata.
+ *
+ * The returned string is localized.
+ *
+ * Returns: (transfer none): the name or %NULL
+ *
+ * Since: 1.1.2
+ */
+const char *
+flatpak_installed_ref_get_appdata_name (FlatpakInstalledRef *self)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+
+  return priv->appdata_name;
+}
+
+/**
+ * flatpak_installed_ref_get_appdata_summary:
+ * @self: a #FlatpakInstalledRef
+ *
+ * Returns the summary field from the appdata.
+ *
+ * The returned string is localized.
+ *
+ * Returns: (transfer none): the name or %NULL
+ *
+ * Since: 1.1.2
+ */
+const char *
+flatpak_installed_ref_get_appdata_summary (FlatpakInstalledRef *self)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+
+  return priv->appdata_summary;
+}
+
+/**
+ * flatpak_installed_ref_get_appdata_version:
+ * @self: a #FlatpakInstalledRef
+ *
+ * Returns the default version field from the appdata.
+ *
+ * Returns: (transfer none): the name or %NULL
+ *
+ * Since: 1.1.2
+ */
+const char *
+flatpak_installed_ref_get_appdata_version (FlatpakInstalledRef *self)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+
+  return priv->appdata_version;
+}
+
 FlatpakInstalledRef *
 flatpak_installed_ref_new (const char  *full_ref,
                            const char  *commit,
@@ -433,7 +585,10 @@ flatpak_installed_ref_new (const char  *full_ref,
                            guint64      installed_size,
                            gboolean     is_current,
                            const char  *eol,
-                           const char  *eol_rebase)
+                           const char  *eol_rebase,
+                           const char  *appdata_name,
+                           const char  *appdata_summary,
+                           const char  *appdata_version)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakInstalledRef *ref;
@@ -463,6 +618,9 @@ flatpak_installed_ref_new (const char  *full_ref,
                       "deploy-dir", deploy_dir,
                       "end-of-life", eol,
                       "end-of-life-rebase", eol_rebase,
+                      "appdata-name", appdata_name,
+                      "appdata-summary", appdata_summary,
+                      "appdata-version", appdata_version,
                       NULL);
 
   return ref;
