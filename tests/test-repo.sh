@@ -247,7 +247,7 @@ ${FLATPAK} repo --branches repos/test > branches-log
 assert_file_has_content branches-log "^app/org.test.Hello/.*eol=Reason2"
 
 ${FLATPAK} ${U} remote-ls -d test-repo > remote-ls-log
-assert_file_has_content remote-ls-log "^app/org.test.Hello/.*eol=Reason2"
+assert_file_has_content remote-ls-log "app/org.test.Hello/.*eol=Reason2"
 
 ${FLATPAK} ${U} update -y org.test.Hello > update-log
 assert_file_has_content update-log "org.test.Hello.*Reason2"
