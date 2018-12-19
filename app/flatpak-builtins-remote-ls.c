@@ -194,7 +194,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
           if (opt_only_updates)
             {
-              g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, NULL);
+              g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
 
               if (deploy_data == NULL)
                 continue;

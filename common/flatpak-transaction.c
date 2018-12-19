@@ -504,7 +504,7 @@ dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out, GVari
 {
   g_autoptr(GVariant) deploy_data = NULL;
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, NULL, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
   if (deploy_data == NULL)
     return FALSE;
 
@@ -1951,7 +1951,7 @@ emit_op_done (FlatpakTransaction          *self,
     commit = flatpak_dir_read_latest (priv->dir, op->remote, op->ref, NULL, NULL, NULL);
   else
     {
-      g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, NULL, NULL);
+      g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
       if (deploy_data)
         commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }
@@ -2992,7 +2992,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
       if (res)
         {
           g_autoptr(GVariant) deploy_data = NULL;
-          deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, NULL, NULL);
+          deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
           if (deploy_data)
             {

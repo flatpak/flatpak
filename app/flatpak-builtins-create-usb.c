@@ -116,7 +116,7 @@ add_related (GHashTable   *all_refs,
   arch = parts[2];
   branch = parts[3];
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
 
@@ -146,7 +146,7 @@ add_related (GHashTable   *all_refs,
 
       g_assert (ext->ref);
 
-      ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, NULL);
+      ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
       if (ext_deploy_data == NULL)
         {
           g_printerr (_("Warning: Omitting related ref ‘%s’ because it is not installed.\n"),
@@ -207,7 +207,7 @@ add_runtime (GHashTable   *all_refs,
 
   g_debug ("Finding the runtime for ‘%s’", ref);
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
 
@@ -223,7 +223,7 @@ add_runtime (GHashTable   *all_refs,
   if (!runtime)
     return FALSE;
   runtime_ref = g_strdup_printf ("runtime/%s", runtime);
-  runtime_deploy_data = flatpak_dir_get_deploy_data (dir, runtime_ref, cancellable, error);
+  runtime_deploy_data = flatpak_dir_get_deploy_data (dir, runtime_ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (runtime_deploy_data == NULL)
     return FALSE;
   runtime_remote = flatpak_dir_get_origin (dir, runtime_ref, cancellable, error);
@@ -630,7 +630,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         const char *commit;
         CommitAndSubpaths *c_s;
 
-        deploy_data = flatpak_dir_get_deploy_data (dir, installed_ref, cancellable, error);
+        deploy_data = flatpak_dir_get_deploy_data (dir, installed_ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
         if (deploy_data == NULL)
           return FALSE;
         commit = flatpak_deploy_data_get_commit (deploy_data);

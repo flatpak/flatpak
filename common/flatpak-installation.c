@@ -720,7 +720,7 @@ get_ref (FlatpakDir   *dir,
 
   parts = g_strsplit (full_ref, "/", -1);
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, full_ref, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, full_ref, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
   if (deploy_data == NULL)
     return NULL;
   origin = flatpak_deploy_data_get_origin (deploy_data);

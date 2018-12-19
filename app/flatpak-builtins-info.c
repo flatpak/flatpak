@@ -135,7 +135,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (dir == NULL)
     return FALSE;
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
 
@@ -449,7 +449,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
             }
           else
             {
-              ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, error);
+              ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
               if (ext_deploy_data == NULL)
                 return FALSE;
 

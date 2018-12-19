@@ -178,6 +178,7 @@ struct FlatpakDeploy
 {
   GObject         parent;
 
+  char           *ref;
   GFile          *dir;
   GKeyFile       *metadata;
   FlatpakContext *system_overrides;
@@ -536,6 +537,7 @@ flatpak_deploy_finalize (GObject *object)
 {
   FlatpakDeploy *self = FLATPAK_DEPLOY (object);
 
+  g_clear_pointer (&self->ref, g_free);
   g_clear_object (&self->dir);
   g_clear_pointer (&self->metadata, g_key_file_unref);
   g_clear_pointer (&self->system_overrides, flatpak_context_free);
@@ -568,6 +570,8 @@ flatpak_deploy_get_dir (FlatpakDeploy *deploy)
 
 GVariant *
 flatpak_load_deploy_data (GFile        *deploy_dir,
+                          const char   *ref,
+                          int           required_version,
                           GCancellable *cancellable,
                           GError      **error)
 {
@@ -597,10 +601,13 @@ flatpak_load_deploy_data (GFile        *deploy_dir,
 
 GVariant *
 flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
+                                int            required_version,
                                 GCancellable  *cancellable,
                                 GError       **error)
 {
   return flatpak_load_deploy_data (deploy->dir,
+                                   deploy->ref,
+                                   required_version,
                                    cancellable,
                                    error);
 }
@@ -638,11 +645,12 @@ flatpak_deploy_get_metadata (FlatpakDeploy *deploy)
 }
 
 static FlatpakDeploy *
-flatpak_deploy_new (GFile *dir, GKeyFile *metadata)
+flatpak_deploy_new (GFile *dir, const char *ref, GKeyFile *metadata)
 {
   FlatpakDeploy *deploy;
 
   deploy = g_object_new (FLATPAK_TYPE_DEPLOY, NULL);
+  deploy->ref = g_strdup (ref);
   deploy->dir = g_object_ref (dir);
   deploy->metadata = g_key_file_ref (metadata);
 
@@ -1905,7 +1913,7 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     return NULL;
 
-  deploy = flatpak_deploy_new (deploy_dir, metakey);
+  deploy = flatpak_deploy_new (deploy_dir, ref, metakey);
 
   ref_parts = g_strsplit (ref, "/", -1);
   g_assert (g_strv_length (ref_parts) == 4);
@@ -2236,6 +2244,7 @@ flatpak_create_deploy_data_from_old (GFile        *deploy_dir,
 GVariant *
 flatpak_dir_get_deploy_data (FlatpakDir   *self,
                              const char   *ref,
+                             int           required_version,
                              GCancellable *cancellable,
                              GError      **error)
 {
@@ -2250,6 +2259,8 @@ flatpak_dir_get_deploy_data (FlatpakDir   *self,
     }
 
   return flatpak_load_deploy_data (deploy_dir,
+                                   ref,
+                                   required_version,
                                    cancellable,
                                    error);
 }
@@ -2263,7 +2274,7 @@ flatpak_dir_get_origin (FlatpakDir   *self,
 {
   g_autoptr(GVariant) deploy_data = NULL;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, ref,
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
                                              cancellable, error);
   if (deploy_data == NULL)
     {
@@ -7266,7 +7277,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
           g_autoptr(GVariant) old_deploy = NULL;
           const char *old_origin;
 
-          old_deploy = flatpak_load_deploy_data (old_deploy_dir, cancellable, error);
+          old_deploy = flatpak_load_deploy_data (old_deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
           if (old_deploy == NULL)
             goto out;
 
@@ -7365,7 +7376,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                          cancellable, error))
     return FALSE;
 
-  old_deploy_data = flatpak_dir_get_deploy_data (self, ref,
+  old_deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
                                                  cancellable, error);
   if (old_deploy_data == NULL)
     return FALSE;
@@ -7866,7 +7877,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
   if (parts == NULL)
     return NULL;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, ref, cancellable, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
   if (deploy_data != NULL)
     {
       remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
@@ -8027,7 +8038,7 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
   if (parts == NULL)
     return FALSE;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, ref, cancellable, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
   if (deploy_data != NULL)
     {
       if (strcmp (flatpak_deploy_data_get_commit (deploy_data), to_checksum) == 0)
@@ -8153,7 +8164,7 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
   if (*url == 0)
     return FALSE;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, ref, NULL, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
   if (deploy_data != NULL)
     old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
   else
@@ -8265,7 +8276,7 @@ flatpak_dir_update (FlatpakDir                           *self,
   if (no_static_deltas)
     flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, ref,
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
                                              cancellable, NULL);
 
   if (deploy_data != NULL)
@@ -8464,7 +8475,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
                          cancellable, error))
     return FALSE;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, ref,
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
                                              cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
@@ -8485,7 +8496,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
       flatpak_dir_list_refs (self, "app", &app_refs, NULL, NULL);
       for (i = 0; app_refs != NULL && app_refs[i] != NULL; i++)
         {
-          g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], NULL, NULL);
+          g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
           if (deploy_data)
             {
@@ -10460,7 +10471,7 @@ filter_out_deployed_refs (FlatpakDir *self,
       if (!ostree_parse_refspec (refspec, NULL, &ref, error))
         return FALSE;
 
-      deploy_data = flatpak_dir_get_deploy_data (self, ref, NULL, NULL);
+      deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
       if (!deploy_data)
         g_ptr_array_add (undeployed_refs, g_strdup (refspec));
@@ -12256,7 +12267,7 @@ add_related (FlatpakDir *self,
   g_auto(GStrv) ref_parts = g_strsplit (extension_ref, "/", -1);
   g_autoptr(GFile) unmaintained_path = NULL;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, extension_ref, NULL, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (self, extension_ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
   if (deploy_data)
     old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
