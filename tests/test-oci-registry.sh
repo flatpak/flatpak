@@ -45,17 +45,17 @@ $client add hello latest $(pwd)/oci/app-image
 
 # Add an OCI remote
 
-flatpak remote-add ${U} oci-registry "oci+http://127.0.0.1:${port}"
+${FLATPAK} remote-add ${U} oci-registry "oci+http://127.0.0.1:${port}"
 
 # Check that the images we expect are listed
 
-images=$(flatpak remote-ls ${U} oci-registry | sort | tr '\n' ' ' | sed 's/ $//')
+images=$(${FLATPAK} remote-ls ${U} --columns=app oci-registry | sort | tr '\n' ' ' | sed 's/ $//')
 assert_streq "$images" "org.test.Hello org.test.Platform"
 echo "ok list remote"
 
 # Pull appstream data
 
-flatpak update ${U} --appstream oci-registry
+${FLATPAK} update ${U} --appstream oci-registry
 
 # Check that the appstream and icons exist
 
@@ -74,7 +74,7 @@ assert_has_file $icondir/64x64/org.test.Hello.png
 echo "ok appstream"
 
 # Test that 'flatpak search' works
-flatpak search org.test.Hello > search-results
+${FLATPAK} search org.test.Hello > search-results
 assert_file_has_content search-results "Print a greeting"
 
 echo "ok search"
@@ -85,7 +85,7 @@ old_icon_hash=(md5sum $icondir/64x64/org.test.Hello.png)
 rm $icondir/64x64/org.test.Hello.png
 $client delete hello latest
 $client  add --detach-icons hello latest $(pwd)/oci/app-image
-flatpak update ${U} --appstream oci-registry
+${FLATPAK} update ${U} --appstream oci-registry
 assert_has_file $icondir/64x64/org.test.Hello.png
 new_icon_hash=(md5sum $icondir/64x64/org.test.Hello.png)
 assert_streq $old_icon_hash $new_icon_hash
@@ -101,10 +101,10 @@ echo "ok install"
 
 $client delete hello latest
 
-images=$(flatpak remote-ls ${U} oci-registry | sort | tr '\n' ' ' | sed 's/ $//')
+images=$(${FLATPAK} remote-ls ${U} --columns=app oci-registry | sort | tr '\n' ' ' | sed 's/ $//')
 assert_streq "$images" "org.test.Platform"
 
-flatpak update ${U} --appstream oci-registry
+${FLATPAK} update ${U} --appstream oci-registry
 
 assert_not_file_has_content $appstream '<id>org.test.Hello.desktop</id>'
 assert_not_has_file $icondir/64x64/org.test.Hello.png
@@ -123,7 +123,7 @@ fi
 assert_has_file $base/oci/oci-registry.index.gz
 assert_has_file $base/oci/oci-registry.summary
 assert_has_dir $base/appstream/oci-registry
-flatpak remote-modify ${U} --url=http://127.0.0.1:${port} oci-registry
+${FLATPAK} remote-modify ${U} --url=http://127.0.0.1:${port} oci-registry
 assert_not_has_file $base/oci/oci-registry.index.gz
 assert_not_has_file $base/oci/oci-registry.summary
 assert_not_has_dir $base/appstream/oci-registry
@@ -132,16 +132,16 @@ echo "ok change remote to non-OCI"
 
 # Change it back and refetch
 
-flatpak remote-modify ${U} --url=oci+http://127.0.0.1:${port} oci-registry
-flatpak update ${U} --appstream oci-registry
+${FLATPAK} remote-modify ${U} --url=oci+http://127.0.0.1:${port} oci-registry
+${FLATPAK} update ${U} --appstream oci-registry
 
 # Delete the remote, check that everything was removed
 
 assert_has_file $base/oci/oci-registry.index.gz
 assert_has_file $base/oci/oci-registry.summary
 assert_has_dir $base/appstream/oci-registry
-flatpak ${U} -y uninstall org.test.Platform
-flatpak ${U} remote-delete oci-registry
+${FLATPAK} ${U} -y uninstall org.test.Platform
+${FLATPAK} ${U} remote-delete oci-registry
 assert_not_has_file $base/oci/oci-registry.index.gz
 assert_not_has_file $base/oci/oci-registry.summary
 assert_not_has_dir $base/appstream/oci-registry
@@ -161,7 +161,7 @@ EOF
 
 ${FLATPAK} ${U} install -y --from ./org.test.Platform.flatpakref
 
-flatpak remotes > remotes-list
+${FLATPAK} remotes > remotes-list
 assert_file_has_content remotes-list '^org.test.Platform-origin'
 
 assert_has_file $base/oci/org.test.Platform-origin.index.gz
@@ -171,9 +171,9 @@ echo "ok install via flatpakref"
 # Uninstall, check that the origin remote was pruned, and files were
 # cleaned up properly
 
-flatpak ${U} -y uninstall org.test.Platform
+${FLATPAK} ${U} -y uninstall org.test.Platform
 
-flatpak remotes > remotes-list
+${FLATPAK} remotes > remotes-list
 assert_not_file_has_content remotes '^org.test.Platform-origin'
 
 assert_not_has_file $base/oci/org.test.Platform-origin.index.gz
@@ -186,7 +186,7 @@ ${FLATPAK} build-bundle --runtime --repo-url "oci+http://127.0.0.1:${port}" $FL_
 
 ${FLATPAK} ${U} install -y --bundle org.test.Platform.flatpak
 
-flatpak remotes -d > remotes-list
+${FLATPAK} remotes -d > remotes-list
 assert_file_has_content remotes-list "^org.test.Platform-origin.*[ 	]oci+http://127.0.0.1:${port}"
 
 assert_has_file $base/oci/org.test.Platform-origin.index.gz
@@ -199,7 +199,7 @@ ${FLATPAK} build-bundle --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS re
 
 ${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak
 
-flatpak remotes -d > remotes-list
+${FLATPAK} remotes -d > remotes-list
 assert_file_has_content remotes-list "^org.test.Hello-origin.*[ 	]oci+http://127.0.0.1:${port}"
 
 assert_has_file $base/oci/org.test.Hello-origin.index.gz
@@ -213,7 +213,7 @@ ${FLATPAK} build-bundle --repo-url "http://127.0.0.1:${port}" $FL_GPGARGS repos/
 
 ${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak
 
-flatpak remotes -d > remotes-list
+${FLATPAK} remotes -d > remotes-list
 assert_file_has_content remotes-list "^org.test.Hello-origin.*[ 	]http://127.0.0.1:${port}"
 
 assert_not_has_file $base/oci/org.test.Hello-origin.index.gz
