@@ -488,10 +488,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
         }
     }
 
-  /* tweak some defaults, for compatibility */
-  all_columns[1].def = !opt_show_details; /* application */
-  all_columns[5].def = opt_show_details; /* ref */
-  all_columns[6].def = !has_remote; /* origin */
+  all_columns[6].def = !has_remote;
 
   columns = handle_column_args (all_columns, opt_show_details, opt_cols, error);
   if (columns == NULL)
