@@ -208,10 +208,12 @@ print_table_for_refs (gboolean print_apps,
           const char *alt_id;
           const char *eol;
           const char *eol_rebase;
+          const char *appdata_name;
+          const char *appdata_summary;
+          const char *appdata_version;
           g_autofree char *latest = NULL;
           g_autofree const char **subpaths = NULL;
           int k;
-          g_autoptr(AsApp) app = NULL;
 
           ref = dir_refs[j];
 
@@ -260,6 +262,9 @@ print_table_for_refs (gboolean print_apps,
           alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
           eol = flatpak_deploy_data_get_eol (deploy_data);
           eol_rebase = flatpak_deploy_data_get_eol_rebase (deploy_data);
+          appdata_name = flatpak_deploy_data_get_appdata_name (deploy_data);
+          appdata_summary = flatpak_deploy_data_get_appdata_summary (deploy_data);
+          appdata_version = flatpak_deploy_data_get_appdata_version (deploy_data);
 
           latest = flatpak_dir_read_latest (dir, repo, ref, NULL, NULL, NULL);
           if (latest)
@@ -279,30 +284,21 @@ print_table_for_refs (gboolean print_apps,
               latest = g_strdup ("?");
             }
 
-	  for (k = 0; columns[k].name; k++)
+          for (k = 0; columns[k].name; k++)
             {
-              if (strcmp (columns[k].name, "description") == 0 ||
-                  strcmp (columns[k].name, "version") == 0)
-                {
-                  if (!app)
-                    app = as_app_load_for_deploy (deploy);
-                }
-
               if (strcmp (columns[k].name, "description") == 0)
                 {
-                  if (app)
-                    {
-                      g_autofree char *description = NULL;
-                      const char *name = as_app_get_localized_name (app);
-                      const char *comment = as_app_get_localized_comment (app);
-                      description = g_strconcat (name, " - ", comment, NULL);
-                      flatpak_table_printer_add_column (printer, description);
-                    }
+                  g_autofree char *description = NULL;
+                  const char *name = appdata_name ? appdata_name : strrchr (parts[1], '.') + 1;
+
+                  if (appdata_summary)
+                    description =  g_strconcat (name, " - ", appdata_summary, NULL);
                   else
-                    flatpak_table_printer_add_column (printer, parts[1]);
+                    description =  g_strdup (name);
+                  flatpak_table_printer_add_column (printer, description);
                 }
               else if (strcmp (columns[k].name, "version") == 0)
-                flatpak_table_printer_add_column (printer, app ? as_app_get_version (app) : "");
+                flatpak_table_printer_add_column (printer, appdata_version ? appdata_version : "");
               else if (strcmp (columns[k].name, "installation") == 0)
                 flatpak_table_printer_add_column (printer, flatpak_dir_get_name_cached (dir));
               else if (strcmp (columns[k].name, "ref") == 0)
