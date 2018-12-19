@@ -23,6 +23,7 @@
 
 #include <ostree.h>
 #include "flatpak-dir-private.h"
+#include "flatpak-builtins-utils.h"
 
 struct FlatpakCompletion
 {
@@ -58,6 +59,8 @@ void               flatpak_complete_file (FlatpakCompletion *completion,
 void               flatpak_complete_dir (FlatpakCompletion *completion);
 void               flatpak_complete_options (FlatpakCompletion *completion,
                                              GOptionEntry      *entries);
+void               flatpak_complete_columns (FlatpakCompletion *completion,
+                                             Column            *columns);
 void               flatpak_completion_free (FlatpakCompletion *completion);
 void               flatpak_complete_context (FlatpakCompletion *completion);
 
