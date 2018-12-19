@@ -275,14 +275,14 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
           g_print ("%s%*s%s %s\n", on, len, _("Runtime:"), off, runtime ? runtime : "-");
         }
-      g_print ("\n");
-
       if (strcmp (parts[0], "app") == 0)
         {
           g_autofree char *sdk = NULL;
           sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
           g_print ("%s%*s%s %s\n", on, len, _("Sdk:"), off, sdk ? sdk : "-");
         }
+      g_print ("\n");
+
       if (strcmp (commit, latest) != 0)
         {
           g_autofree char *formatted_commit = ellipsize_string (commit, width);
