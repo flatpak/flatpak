@@ -130,6 +130,7 @@ Column *handle_column_args (Column *all_columns,
 
 char *  format_timestamp (guint64 timestamp);
 char *  ellipsize_string (const char *text, int len);
+char *  ellipsize_string_pos (const char *text, int len, gboolean middle);
 
 AsApp *as_store_find_app (AsStore *store,
                           const char *ref);

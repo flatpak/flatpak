@@ -973,20 +973,39 @@ format_timestamp (guint64 timestamp)
 char *
 ellipsize_string (const char *text, int len)
 {
+  return ellipsize_string_pos (text, len, FALSE);
+}
+
+char *
+ellipsize_string_pos (const char *text, int len, gboolean middle)
+{
   g_autofree char *ret = g_strdup (text);
 
   if (g_utf8_strlen (ret, -1) > len)
     {
       char *p;
+      char *q;
       int i;
+      int l1, l2;
+
+      if (middle)
+        l1 = len / 2;
+      else
+        l1 = len - 1;
+
+      l2 = len - 1 - l1;
 
       p = ret;
-      for (i = 0; i < len - 1; i++)
-        p = g_utf8_next_char (p);
+      q = ret + strlen (ret);
 
+      for (i = 0; i < l1; i++)
+        p = g_utf8_next_char (p);
       p[0] = '\0';
 
-      return g_strconcat (ret, "…", NULL);
+      for (i = 0; i < l2; i++)
+        q = g_utf8_prev_char (q);
+
+      return g_strconcat (ret, "…", q, NULL);
     }
 
   return g_steal_pointer (&ret);
