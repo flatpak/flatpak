@@ -1038,7 +1038,6 @@ AsApp *
 as_app_load_for_deploy (FlatpakDeploy *deploy)
 {
   g_autoptr(GFile) files = NULL;
-  g_autofree char *metainfo = NULL;
   g_autoptr(GKeyFile) metadata = NULL;
   const char *id;
   g_autofree char *relpath = NULL;
