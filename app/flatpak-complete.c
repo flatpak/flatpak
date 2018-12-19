@@ -36,7 +36,10 @@ flatpak_completion_debug (const gchar *format, ...)
   static FILE *f = NULL;
 
   va_start (var_args, format);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   s = g_strdup_vprintf (format, var_args);
+#pragma GCC diagnostic pop
   if (f == NULL)
     f = fopen ("/tmp/flatpak-completion-debug.txt", "a+");
   fprintf (f, "%s\n", s);
@@ -398,6 +401,69 @@ flatpak_complete_options (FlatpakCompletion *completion,
         }
       e++;
     }
+}
+
+static void
+flatpak_complete_column (FlatpakCompletion *completion,
+                         char **used,
+                         const char *column)
+{
+  g_autoptr(GString) s = NULL;
+
+  s = g_string_new ("");
+
+  if (used[0] != NULL)
+    {
+      int i;
+
+      if (g_strv_contains ((const char * const *)used, column))
+        return;
+
+      const char *last = NULL;
+      last = used[g_strv_length (used) - 1];
+      if (!g_str_has_prefix (column, last))
+        return;
+
+      for (i = 0; used[i + 1]; i++)
+        {
+          g_string_append (s, used[i]);
+          g_string_append_c (s, ',');
+        }
+    }
+
+  g_string_append (s, column);
+  flatpak_completion_debug ("completing column: %s", s->str);
+
+  g_print ("%s\n", s->str);
+}
+
+void
+flatpak_complete_columns (FlatpakCompletion *completion,
+                          Column            *columns)
+{
+  int i;
+  const char *list = NULL;
+  g_auto(GStrv) used = NULL;
+
+  if (!g_str_has_prefix (completion->cur, "--columns="))
+    return;
+
+  list = completion->cur + strlen ("--columns=");
+  if (strcmp (list, "all") == 0 ||
+      strcmp (list, "help") == 0)
+    return;
+
+  used = g_strsplit (list, ",", 0);
+  flatpak_completion_debug ("complete columns, used: '%s'", list);
+
+  if (g_strv_length (used) <= 1)
+    {
+      flatpak_complete_column (completion, used, "all");
+      flatpak_complete_column (completion, used, "help");
+    }
+
+  for (i = 0; columns[i].name; i++)
+    flatpak_complete_column (completion, used, columns[i].name);
 }
 
 void
