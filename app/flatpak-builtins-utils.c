@@ -1035,41 +1035,6 @@ as_app_get_version (AsApp *app)
 }
 
 AsApp *
-as_app_load_for_deploy (FlatpakDeploy *deploy)
-{
-  g_autoptr(GFile) files = NULL;
-  g_autoptr(GKeyFile) metadata = NULL;
-  const char *id;
-  g_autofree char *relpath = NULL;
-  g_autoptr(GFile) file = NULL;
-  g_autoptr(GError) error = NULL;
-  g_autoptr(AsStore) store = NULL;
-  GPtrArray *apps;
-
-  store = as_store_new ();
-
-  files = flatpak_deploy_get_files (deploy);
-  metadata = flatpak_deploy_get_metadata (deploy);
-
-  if (g_key_file_has_group (metadata, FLATPAK_METADATA_GROUP_APPLICATION))
-    id = g_key_file_get_string (metadata, FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_NAME, NULL);
-  else
-    id = g_key_file_get_string (metadata, FLATPAK_METADATA_GROUP_RUNTIME, FLATPAK_METADATA_KEY_NAME, NULL);
-
-  relpath = g_strconcat ("share/app-info/xmls/", id, ".xml.gz", NULL);
-  file = g_file_resolve_relative_path (files, relpath);
-
-  g_debug ("Loading AsStore from '%s'", flatpak_file_get_path_cached (file));
-  if (!as_store_from_file (store, file, NULL, NULL, &error))
-    g_debug ("Failed to load '%s': %s", flatpak_file_get_path_cached (file), error->message);
-
-  apps = as_store_get_apps (store);
-  if (apps->len > 0)
-    return g_object_ref (g_ptr_array_index (apps, 0));
-  return NULL;
-}
-
-AsApp *
 as_store_find_app (AsStore *store,
                    const char *ref)
 {
