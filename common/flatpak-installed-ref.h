@@ -55,10 +55,16 @@ FLATPAK_EXTERN const char * const *flatpak_installed_ref_get_subpaths (FlatpakIn
 FLATPAK_EXTERN guint64      flatpak_installed_ref_get_installed_size (FlatpakInstalledRef *self);
 FLATPAK_EXTERN const char  *flatpak_installed_ref_get_deploy_dir (FlatpakInstalledRef *self);
 FLATPAK_EXTERN const char  *flatpak_installed_ref_get_latest_commit (FlatpakInstalledRef *self);
+FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_name (FlatpakInstalledRef *self);
+FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_summary (FlatpakInstalledRef *self);
+FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_version (FlatpakInstalledRef *self);
 FLATPAK_EXTERN gboolean     flatpak_installed_ref_get_is_current (FlatpakInstalledRef *self);
 FLATPAK_EXTERN GBytes      *flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
                                                                  GCancellable        *cancellable,
                                                                  GError             **error);
+FLATPAK_EXTERN GBytes      *flatpak_installed_ref_load_appdata (FlatpakInstalledRef *self,
+                                                                GCancellable        *cancellable,
+                                                                GError             **error);
 FLATPAK_EXTERN const char * flatpak_installed_ref_get_eol (FlatpakInstalledRef *self);
 FLATPAK_EXTERN const char * flatpak_installed_ref_get_eol_rebase (FlatpakInstalledRef *self);
 

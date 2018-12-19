@@ -752,7 +752,10 @@ get_ref (FlatpakDir   *dir,
                                     installed_size,
                                     is_current,
                                     flatpak_deploy_data_get_eol (deploy_data),
-                                    flatpak_deploy_data_get_eol_rebase (deploy_data));
+                                    flatpak_deploy_data_get_eol_rebase (deploy_data),
+                                    flatpak_deploy_data_get_appdata_name (deploy_data),
+                                    flatpak_deploy_data_get_appdata_summary (deploy_data),
+                                    flatpak_deploy_data_get_appdata_version (deploy_data));
 }
 
 /**
