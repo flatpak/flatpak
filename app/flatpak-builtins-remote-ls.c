@@ -58,7 +58,7 @@ static GOptionEntry options[] = {
 static Column all_columns[] = {
   { "description",    N_("Description"),    N_("Show the description"),    1, 1 },
   { "application",    N_("Application"),    N_("Show the application ID"), 0, 1 },
-  { "arch",           N_("Architecture"),   N_("Show the architecture"),   0, 0 },
+  { "arch",           N_("Arch"),           N_("Show the architecture"),   0, 0 },
   { "branch",         N_("Branch"),         N_("Show the branch"),         0, 1 },
   { "version",        N_("Version"),        N_("Show the version"),        1, 1 },
   { "ref",            N_("Ref"),            N_("Show the ref"),            1, 0 },

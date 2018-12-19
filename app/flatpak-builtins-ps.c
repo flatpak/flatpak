@@ -48,7 +48,7 @@ static Column all_columns[] = {
   { "pid",            N_("PID"),            N_("Show the PID of the wrapper process"), 1, 1 },
   { "child-pid",      N_("Child-PID"),      N_("Show the PID of the sandbox process"), 1, 0 },
   { "application",    N_("Application"),    N_("Show the application ID"),             1, 1 },
-  { "arch",           N_("Architecture"),   N_("Show the architecture"),               1, 0 },
+  { "arch",           N_("Arch"),           N_("Show the architecture"),               1, 0 },
   { "branch",         N_("Branch"),         N_("Show the application branch"),         1, 0 },
   { "commit",         N_("Commit"),         N_("Show the application commit"),         1, 0 },
   { "runtime",        N_("Runtime"),        N_("Show the runtime ID"),                 1, 1 },

@@ -58,7 +58,7 @@ static Column all_columns[] = {
   { "change",       N_("Change"),         N_("Show the kind of change"),            1, 1 },
   { "ref",          N_("Ref"),            N_("Show the ref"),                       0, 0 },
   { "application",  N_("Application"),    N_("Show the application/runtime ID"),    1, 1 },
-  { "arch",         N_("Architecture"),   N_("Show the architecture"),              1, 0 },
+  { "arch",         N_("Arch"),           N_("Show the architecture"),              1, 0 },
   { "branch",       N_("Branch"),         N_("Show the branch"),                    1, 1 },
   { "installation", N_("Installation"),   N_("Show the affected installation"),     1, 1 },
   { "remote",       N_("Remote"),         N_("Show the remote"),                    1, 1 },
