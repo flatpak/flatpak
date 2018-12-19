@@ -302,6 +302,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   g_autofree int *widths = NULL;
   g_autofree int *lwidths = NULL;
   g_autofree int *rwidths = NULL;
+  g_autofree int *shrinks = NULL;
   g_autoptr(GString) row_s = g_string_new ("");
   int i, j;
   int rows = 0;
@@ -311,7 +312,6 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   int shrink_columns;
   gboolean has_title;
   int expand_by, expand_extra;
-  int ellipsize_by, ellipsize_extra;
 
   if (printer->current->len != 0)
     flatpak_table_printer_finish_row (printer);
@@ -319,6 +319,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   widths = g_new0 (int, printer->n_columns);
   lwidths = g_new0 (int, printer->n_columns);
   rwidths = g_new0 (int, printer->n_columns);
+  shrinks = g_new0 (int, printer->n_columns);
 
   has_title = FALSE;
   for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
@@ -379,19 +380,70 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
       width += excess;
     }
 
-  ellipsize_by = 0;
-  ellipsize_extra = 0;
   if (shrink_columns > 0)
     {
       int shortfall = MAX (width - columns, 0);
-      ellipsize_by = shortfall / shrink_columns;
-      ellipsize_extra = shortfall % shrink_columns;
+      if (shortfall > 0)
+        {
+          int shrinkable = 0;
+          int leftover = shortfall;
+
+          /* We're distributing the shortfall so that wider columns
+           * shrink proportionally more than narrower ones, while
+           * avoiding to ellipsize the titles.
+           */
+          for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
+            {
+              TableColumn *col = g_ptr_array_index (printer->columns, i);
+              gboolean ellipsize = col ? col->ellipsize : FALSE;
+
+              if (!ellipsize)
+                continue;
+
+              shrinkable += widths[i];
+              if (col && col->title)
+                shrinkable -= strlen (col->title);
+              else
+                shrinkable -= 5;
+            }
+
+          for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
+            {
+              TableColumn *col = g_ptr_array_index (printer->columns, i);
+              gboolean ellipsize = col ? col->ellipsize : FALSE;
+
+              if (ellipsize)
+                {
+                  int sh = widths[i];
+                  if (col && col->title)
+                    sh -= strlen (col->title);
+                  else
+                    sh -= 5;
+                  shrinks[i] = shortfall * (sh / (double)shrinkable);
+                  leftover -= shrinks[i];
+                }
+            }
+          while (leftover > 0)
+            {
+              for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
+                {
+                  TableColumn *col = g_ptr_array_index (printer->columns, i);
+                  gboolean ellipsize = col ? col->ellipsize : FALSE;
+                  if (ellipsize)
+                    {
+                       shrinks[i]++;
+                       leftover--;
+                    }
+                  if (leftover == 0)
+                    break;
+                }
+           }
+        }
     }
 
   if (flatpak_fancy_output () && has_title)
     {
       int grow = expand_extra;
-      int shrink = ellipsize_extra;
       for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
         {
           TableColumn *col = g_ptr_array_index (printer->columns, i);
@@ -411,15 +463,9 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 }
             }
 
-          if (ellipsize_by > 0 && ellipsize)
+          if (shrinks[i] > 0 && ellipsize)
             {
-              len -= ellipsize_by;
-              if (shrink > 0)
-                {
-                  len--;
-                  shrink--;
-                }
-              len = MAX (len, 5);
+              len -= shrinks[i];
               freeme = title = ellipsize_string (title, len);
             }
 
@@ -432,7 +478,6 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
     {
       GPtrArray *row = g_ptr_array_index (printer->rows, i);
       int grow = expand_extra;
-      int shrink = ellipsize_extra;
 
       if (rows > total_skip)
         g_print ("\n");
@@ -457,15 +502,9 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 }
             }
 
-          if (ellipsize_by > 0 && ellipsize)
+          if (shrinks[j] > 0 && ellipsize)
             {
-              len -= ellipsize_by;
-              if (shrink > 0)
-                {
-                  len--;
-                  shrink--;
-                }
-              len = MAX (len, 5);
+              len -= shrinks[j];
               freeme = text = ellipsize_string (text, len);
             }
 
