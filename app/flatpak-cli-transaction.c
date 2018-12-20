@@ -252,9 +252,20 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
 
   g_autoptr(GString) str = g_string_new ("");
   int i;
-  int n_full, remainder, partial;
+  int n_full, partial;
   g_autofree char *speed = NULL;
   int bar_length;
+  const char *partial_blocks[] = {
+                                   " ",
+                                   "▏",
+                                   "▎",
+                                   "▍",
+                                   "▌",
+                                   "▋",
+                                   "▊",
+                                   "▉",
+  };
+  const char *full_block = "█";
 
   guint percent = flatpak_transaction_progress_get_progress (progress);
   guint64 start_time = flatpak_transaction_progress_get_start_time (progress);
@@ -280,18 +291,20 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   bar_length = cli->table_width - (strlen (cli->progress_msg) + 4 + 4 + cli->speed_len);
 
   n_full = (bar_length * percent) / 100;
-  remainder = percent - (n_full * 100 / bar_length);
-  partial = MIN ((remainder * strlen (BAR_CHARS) * bar_length) / 100, strlen (BAR_CHARS) - 1);
+  partial = (((bar_length * percent) % 100) * G_N_ELEMENTS(partial_blocks) ) / 100;
+  /* The above should guarantee this: */
+  g_assert (partial >= 0);
+  g_assert (partial < G_N_ELEMENTS(partial_blocks));
 
   g_string_append (str, cli->progress_msg);
   g_string_append (str, " [");
 
   for (i = 0; i < n_full; i++)
-    g_string_append_c (str, BAR_CHARS[strlen (BAR_CHARS) - 1]);
+    g_string_append (str, full_block);
 
   if (i < bar_length)
     {
-      g_string_append_c (str, BAR_CHARS[partial]);
+      g_string_append (str, partial_blocks[partial]);
       i++;
     }
 
