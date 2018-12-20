@@ -288,7 +288,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
 
   spin_op_progress (cli, op);
 
-  bar_length = cli->table_width - (strlen (cli->progress_msg) + 4 + 4 + cli->speed_len);
+  bar_length = MIN (20, cli->table_width - (strlen (cli->progress_msg) + 4 + 4 + cli->speed_len));
 
   n_full = (bar_length * percent) / 100;
   partial = (((bar_length * percent) % 100) * G_N_ELEMENTS(partial_blocks) ) / 100;
