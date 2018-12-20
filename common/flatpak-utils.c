@@ -1049,6 +1049,62 @@ flatpak_id_has_subref_suffix (const char *id)
     g_str_has_suffix (id, ".Sources");
 }
 
+
+static const char *
+skip_segment (const char *s)
+{
+  const char *slash;
+
+  slash = strchr (s, '/');
+  if (slash)
+    return slash + 1;
+  return s + strlen (s);
+}
+
+static int
+compare_segment (const char *s1, const char *s2)
+{
+  gint c1, c2;
+
+  while (*s1 && *s1 != '/' &&
+         *s2 && *s2 != '/')
+    {
+      c1 = *s1;
+      c2 = *s2;
+      if (c1 != c2)
+        return (c1 - c2);
+      s1++; s2++;
+    }
+
+  c1 = *s1;
+  if (c1 == '/')
+    c1 = 0;
+  c2 = *s2;
+  if (c2 == '/')
+    c2 = 0;
+
+  return c1 - c2;
+}
+
+int
+flatpak_compare_ref (const char *ref1, const char *ref2)
+{
+  int res;
+  int i;
+
+  /* Skip first element and do per-segment compares for rest */
+  for (i = 0; i < 3; i++)
+    {
+      ref1 = skip_segment (ref1);
+      ref2 = skip_segment (ref2);
+
+      res = compare_segment (ref1, ref2);
+      if (res != 0)
+        return res;
+    }
+  return 0;
+}
+
 char **
 flatpak_decompose_ref (const char *full_ref,
                        GError    **error)
