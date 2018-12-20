@@ -129,8 +129,17 @@ Column *handle_column_args (Column *all_columns,
                             GError **error);
 
 char *  format_timestamp (guint64 timestamp);
+
+
+typedef enum {
+              FLATPAK_ELLIPSIZE_MODE_NONE,
+              FLATPAK_ELLIPSIZE_MODE_START,
+              FLATPAK_ELLIPSIZE_MODE_MIDDLE,
+              FLATPAK_ELLIPSIZE_MODE_END,
+} FlatpakEllipsizeMode;
+
 char *  ellipsize_string (const char *text, int len);
-char *  ellipsize_string_pos (const char *text, int len, gboolean middle);
+char *  ellipsize_string_full (const char *text, int len, FlatpakEllipsizeMode mode);
 
 AsApp *as_store_find_app (AsStore *store,
                           const char *ref);

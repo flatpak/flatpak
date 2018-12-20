@@ -126,7 +126,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
     flatpak_table_printer_set_column_expand (printer, i, TRUE);
   flatpak_table_printer_set_column_ellipsize (printer,
                                               find_column (columns, "description", NULL),
-                                              TRUE);
+                                              FLATPAK_ELLIPSIZE_MODE_END);
 
   if (app_runtime)
     {

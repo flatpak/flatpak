@@ -973,22 +973,24 @@ format_timestamp (guint64 timestamp)
 char *
 ellipsize_string (const char *text, int len)
 {
-  return ellipsize_string_pos (text, len, FALSE);
+  return ellipsize_string_full (text, len, FLATPAK_ELLIPSIZE_MODE_END);
 }
 
 char *
-ellipsize_string_pos (const char *text, int len, gboolean middle)
+ellipsize_string_full (const char *text, int len, FlatpakEllipsizeMode mode)
 {
   g_autofree char *ret = g_strdup (text);
 
-  if (g_utf8_strlen (ret, -1) > len)
+  if (mode != FLATPAK_ELLIPSIZE_MODE_NONE && g_utf8_strlen (ret, -1) > len)
     {
       char *p;
       char *q;
       int i;
       int l1, l2;
 
-      if (middle)
+      if (mode == FLATPAK_ELLIPSIZE_MODE_START)
+        l1 = 0;
+      else if (mode == FLATPAK_ELLIPSIZE_MODE_MIDDLE)
         l1 = len / 2;
       else
         l1 = len - 1;
