@@ -2446,7 +2446,7 @@ test_transaction_install_local (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  remote = flatpak_installation_get_remote_by_name (inst, "org.test.Hello-origin", NULL, &error);
+  remote = flatpak_installation_get_remote_by_name (inst, "hello-origin", NULL, &error);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND);
   g_assert_null (remote);
   g_clear_error (&error);
@@ -2455,7 +2455,7 @@ test_transaction_install_local (void)
   g_assert_no_error (error);
   g_assert_true (res);
   
-  remote = flatpak_installation_get_remote_by_name (inst, "org.test.Hello-origin", NULL, &error);
+  remote = flatpak_installation_get_remote_by_name (inst, "hello-origin", NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (remote);
 }
