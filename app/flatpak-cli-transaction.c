@@ -202,13 +202,12 @@ redraw (FlatpakCliTransaction *self)
 static void
 set_op_progress (FlatpakCliTransaction *self,
                  FlatpakTransactionOperation *op,
-                 char progress)
+                 const char *progress)
 {
   if (flatpak_fancy_output ())
     {
       int row = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (op), "row"));
-      char cell[] = "[ ]";
-      cell[1] = progress;
+      g_autofree char *cell = g_strdup_printf ("[%s]", progress);
       flatpak_table_printer_set_cell (self->printer, row, 1, cell);
     }
 }
@@ -217,12 +216,15 @@ static void
 spin_op_progress (FlatpakCliTransaction *self,
                   FlatpakTransactionOperation *op)
 {
-  const char p[] = "/-\\|";
+  const char *p[] = {
+                     "|",
+                     "/",
+                     "—",
+                     "\\",
+  };
 
-  set_op_progress (self, op, p[self->op_progress++ % strlen (p)]);
+  set_op_progress (self, op, p[self->op_progress++ % G_N_ELEMENTS(p)]);
 }
-
-#define BAR_CHARS " -=#"
 
 static char *
 format_duration (guint64 duration)
@@ -402,9 +404,9 @@ operation_done (FlatpakTransaction          *transaction,
   FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
 
   if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-    set_op_progress (self, op, '-');
+    set_op_progress (self, op, "-");
   else
-    set_op_progress (self, op, '+');
+    set_op_progress (self, op, "✓");
 
   if (flatpak_fancy_output ())
     redraw (self);
@@ -426,7 +428,7 @@ operation_error (FlatpakTransaction            *transaction,
 
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED))
     {
-      set_op_progress (self, op, 'o');
+      set_op_progress (self, op, "⍻");
       msg = g_strdup_printf (_("Info: %s was skipped"), flatpak_ref_get_name (rref));
       if (flatpak_fancy_output ())
         {
@@ -442,7 +444,7 @@ operation_error (FlatpakTransaction            *transaction,
       return TRUE;
     }
 
-  set_op_progress (self, op, 'x');
+  set_op_progress (self, op, "✗");
 
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
     msg = g_strdup_printf (_("%s already installed"), flatpak_ref_get_name (rref));
@@ -931,7 +933,7 @@ transaction_ready (FlatpakTransaction *transaction)
   for (l = ops; l; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
-      set_op_progress (self, op, ' ');
+      set_op_progress (self, op, " ");
     }
 
   g_list_free_full (ops, g_object_unref);
