@@ -363,10 +363,13 @@ print_table_for_refs (gboolean print_apps,
                     flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol_rebase);
                 }
             }
- 
+
+          flatpak_table_printer_set_key (printer, ref);
           flatpak_table_printer_finish_row (printer);
         }
     }
+
+  flatpak_table_printer_sort (printer, (GCompareFunc)flatpak_compare_ref);
 
   flatpak_get_window_size (&rows, &cols);
   flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
