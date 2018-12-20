@@ -253,10 +253,12 @@ print_row (GString *row_s, gboolean bold, int *skip, int columns)
 {
   int rows;
   char *p, *end;
+  int n_chars;
 
   g_strchomp (row_s->str);
-  if (strlen (row_s->str) > 0)
-    rows = (strlen (row_s->str) + columns - 1) / columns;
+  n_chars = g_utf8_strlen (row_s->str, -1);
+  if (n_chars > 0)
+    rows = (n_chars + columns - 1) / columns;
   else
     rows = 1;
 
@@ -265,7 +267,7 @@ print_row (GString *row_s, gboolean bold, int *skip, int columns)
   while (*skip > 0 && p <= end)
     {
       (*skip)--;
-      p += columns;
+      p = g_utf8_offset_to_pointer  (p, columns);
     }
 
   if (p < end || p == row_s->str)
@@ -327,7 +329,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
 
       if (col->title)
         {
-          widths[i] = MAX (widths[i], strlen (col->title));
+          widths[i] = MAX (widths[i], g_utf8_strlen (col->title, -1));
           has_title = TRUE;
         }
     }
@@ -344,7 +346,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
           if (cell->span)
             width = 0;
           else
-            width = strlen (cell->text);
+            width = g_utf8_strlen (cell->text, -1);
           widths[j] = MAX (widths[j], width);
           if (cell->align >= 0)
             {
