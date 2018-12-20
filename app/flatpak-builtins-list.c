@@ -439,6 +439,13 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
       opt_runtime = TRUE;
     }
 
+  /* Default to showing installation if we're listing multiple installations */
+  if (dirs->len > 1)
+    {
+      int c = find_column (all_columns, "installation", NULL);
+      all_columns[c].def = 1;
+    }
+
   columns = handle_column_args (all_columns, opt_show_details, opt_cols, error);
   if (columns == NULL)
     return FALSE;
