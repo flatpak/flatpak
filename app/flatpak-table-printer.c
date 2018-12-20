@@ -67,8 +67,7 @@ typedef struct
 {
   char *title;
   gboolean expand;
-  gboolean ellipsize;
-  gboolean ellipsize_middle;
+  FlatpakEllipsizeMode ellipsize;
 } TableColumn;
 
 static void
@@ -564,7 +563,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
           if (shrinks[j] > 0 && ellipsize)
             {
               len -= shrinks[j];
-              freeme = text = ellipsize_string_pos (text, len, col->ellipsize_middle);
+              freeme = text = ellipsize_string_full (text, len, col->ellipsize);
             }
 
           if (flatpak_fancy_output ())
@@ -660,22 +659,9 @@ flatpak_table_printer_set_column_expand (FlatpakTablePrinter *printer,
 void
 flatpak_table_printer_set_column_ellipsize (FlatpakTablePrinter *printer,
                                             int column,
-                                            gboolean ellipsize)
+                                            FlatpakEllipsizeMode mode)
 {
   TableColumn *col = get_table_column (printer, column);
 
-  col->ellipsize = ellipsize;
-  col->ellipsize_middle = FALSE;
-}
-
-void
-flatpak_table_printer_set_column_ellipsize_middle (FlatpakTablePrinter *printer,
-                                                   int column,
-                                                   gboolean ellipsize,
-                                                   gboolean middle)
-{
-  TableColumn *col = get_table_column (printer, column);
-
-  col->ellipsize = ellipsize;
-  col->ellipsize_middle = middle;
+  col->ellipsize = mode;
 }

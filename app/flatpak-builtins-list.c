@@ -169,16 +169,16 @@ print_table_for_refs (gboolean print_apps,
     flatpak_table_printer_set_column_expand (printer, i, TRUE);
   flatpak_table_printer_set_column_ellipsize (printer,
                                               find_column (columns, "description", NULL),
-                                              TRUE);
-  flatpak_table_printer_set_column_ellipsize_middle (printer,
+                                              FLATPAK_ELLIPSIZE_MODE_END);
+  flatpak_table_printer_set_column_ellipsize (printer,
                                               find_column (columns, "application", NULL),
-                                              TRUE, TRUE);
+                                              FLATPAK_ELLIPSIZE_MODE_START);
 
   if (app_runtime)
     {
       if (!flatpak_split_partial_ref_arg (app_runtime, FLATPAK_KINDS_RUNTIME, NULL, NULL,
                                           &match_kinds, &match_id, &match_arch, &match_branch, error))
-        return FALSE;                                
+        return FALSE;
     }
 
   for (i = 0; i < refs_array->len; i++)
