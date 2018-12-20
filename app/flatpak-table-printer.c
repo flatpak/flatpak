@@ -607,14 +607,14 @@ set_cell (FlatpakTablePrinter *printer,
           const char *text,
           int align)
 {
-  GPtrArray *row;
+  Row *row;
   Cell *cell;
 
-  row = (GPtrArray *)g_ptr_array_index (printer->rows, r);
+  row = (Row *)g_ptr_array_index (printer->rows, r);
 
   g_assert (row);
 
-  cell = (Cell *)g_ptr_array_index (row, c);
+  cell = (Cell *)g_ptr_array_index (row->cells, c);
   g_assert (cell);
 
   g_free (cell->text);
