@@ -51,7 +51,9 @@ void                flatpak_table_printer_append_with_comma (FlatpakTablePrinter
 void                flatpak_table_printer_append_with_comma_printf (FlatpakTablePrinter *printer,
                                                                     const char          *format,
                                                                     ...);
+void                flatpak_table_printer_set_key (FlatpakTablePrinter *printer, const char *key);
 void                flatpak_table_printer_finish_row (FlatpakTablePrinter *printer);
+void                flatpak_table_printer_sort (FlatpakTablePrinter *printer, GCompareFunc cmp);
 void                flatpak_table_printer_print (FlatpakTablePrinter *printer);
 void                flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                                                       int skip,
