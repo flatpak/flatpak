@@ -192,6 +192,8 @@ gboolean flatpak_split_partial_ref_arg_novalidate (const char   *partial_ref,
                                                    char        **out_arch,
                                                    char        **out_branch);
 
+int flatpak_compare_ref (const char *ref1, const char *ref2);
+
 char * flatpak_compose_ref (gboolean    app,
                             const char *name,
                             const char *branch,
