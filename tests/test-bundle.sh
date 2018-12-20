@@ -42,8 +42,8 @@ ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak
 # This should have installed the runtime dependency too
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/runtime/org.test.Platform/$ARCH/master
 
-assert_has_file $FL_DIR/repo/refs/remotes/org.test.Hello-origin/app/org.test.Hello/$ARCH/master
-APP_COMMIT=`cat $FL_DIR/repo/refs/remotes/org.test.Hello-origin/app/org.test.Hello/$ARCH/master`
+assert_has_file $FL_DIR/repo/refs/remotes/hello-origin/app/org.test.Hello/$ARCH/master
+APP_COMMIT=`cat $FL_DIR/repo/refs/remotes/hello-origin/app/org.test.Hello/$ARCH/master`
 assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commit
 assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commitmeta
 
@@ -70,28 +70,28 @@ assert_has_file $FL_DIR/exports/share/icons/hicolor/icon-theme.cache
 assert_has_file $FL_DIR/exports/share/icons/hicolor/index.theme
 
 $FLATPAK list ${U} | grep org.test.Hello > /dev/null
-$FLATPAK list ${U} -d | grep org.test.Hello | grep org.test.Hello-origin > /dev/null
+$FLATPAK list ${U} -d | grep org.test.Hello | grep hello-origin > /dev/null
 $FLATPAK list ${U} -d | grep org.test.Hello | grep current > /dev/null
 $FLATPAK list ${U} -d | grep org.test.Hello | grep ${ID:0:12} > /dev/null
 
 $FLATPAK info ${U} org.test.Hello > /dev/null
-$FLATPAK info ${U} org.test.Hello | grep org.test.Hello-origin > /dev/null
+$FLATPAK info ${U} org.test.Hello | grep hello-origin > /dev/null
 $FLATPAK info ${U} org.test.Hello | grep $ID > /dev/null
 
-$FLATPAK remote-list ${U} -d | grep org.test.Hello-origin > /dev/null
-$FLATPAK remote-list ${U} -d | grep org.test.Hello-origin | grep no-enumerate > /dev/null
-assert_has_file $FL_DIR/repo/org.test.Hello-origin.trustedkeys.gpg
+$FLATPAK remote-list ${U} -d | grep hello-origin > /dev/null
+$FLATPAK remote-list ${U} -d | grep hello-origin | grep no-enumerate > /dev/null
+assert_has_file $FL_DIR/repo/hello-origin.trustedkeys.gpg
 
 echo "ok install app bundle"
 
 ${FLATPAK} uninstall -y --force-remove ${U} org.test.Platform
 
-assert_not_has_file $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master
+assert_not_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master
 
 ${FLATPAK} install -y ${U} --bundle bundles/platform.flatpak
 
-assert_has_file $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master
-RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master`
+assert_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master
+RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master`
 assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commit
 assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commitmeta
 
@@ -104,16 +104,16 @@ assert_has_file $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/metadata
 assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
 
 $FLATPAK list ${U} --runtime | grep org.test.Platform > /dev/null
-$FLATPAK list ${U} -d --runtime | grep org.test.Platform | grep org.test.Platform-origin > /dev/null
+$FLATPAK list ${U} -d --runtime | grep org.test.Platform | grep platform-origin > /dev/null
 $FLATPAK list ${U} -d --runtime | grep org.test.Platform | grep ${ID:0:12} > /dev/null
 
 $FLATPAK info ${U} org.test.Platform > /dev/null
-$FLATPAK info ${U} org.test.Platform | grep org.test.Platform-origin > /dev/null
+$FLATPAK info ${U} org.test.Platform | grep platform-origin > /dev/null
 $FLATPAK info ${U} org.test.Platform | grep $ID > /dev/null
 
-$FLATPAK remote-list ${U} -d | grep org.test.Platform-origin > /dev/null
-$FLATPAK remote-list ${U} -d | grep org.test.Platform-origin | grep no-enumerate > /dev/null
-assert_has_file $FL_DIR/repo/org.test.Platform-origin.trustedkeys.gpg
+$FLATPAK remote-list ${U} -d | grep platform-origin > /dev/null
+$FLATPAK remote-list ${U} -d | grep platform-origin | grep no-enumerate > /dev/null
+assert_has_file $FL_DIR/repo/platform-origin.trustedkeys.gpg
 
 echo "ok install runtime bundle"
 

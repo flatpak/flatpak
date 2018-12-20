@@ -162,9 +162,9 @@ EOF
 ${FLATPAK} ${U} install -y --from ./org.test.Platform.flatpakref
 
 ${FLATPAK} remotes > remotes-list
-assert_file_has_content remotes-list '^org.test.Platform-origin'
+assert_file_has_content remotes-list '^platform-origin'
 
-assert_has_file $base/oci/org.test.Platform-origin.index.gz
+assert_has_file $base/oci/platform-origin.index.gz
 
 echo "ok install via flatpakref"
 
@@ -174,9 +174,9 @@ echo "ok install via flatpakref"
 ${FLATPAK} ${U} -y uninstall org.test.Platform
 
 ${FLATPAK} remotes > remotes-list
-assert_not_file_has_content remotes '^org.test.Platform-origin'
+assert_not_file_has_content remotes '^platform-origin'
 
-assert_not_has_file $base/oci/org.test.Platform-origin.index.gz
+assert_not_has_file $base/oci/platform-origin.index.gz
 
 echo "ok prune origin remote"
 
@@ -187,9 +187,9 @@ ${FLATPAK} build-bundle --runtime --repo-url "oci+http://127.0.0.1:${port}" $FL_
 ${FLATPAK} ${U} install -y --bundle org.test.Platform.flatpak
 
 ${FLATPAK} remotes -d > remotes-list
-assert_file_has_content remotes-list "^org.test.Platform-origin.*[ 	]oci+http://127.0.0.1:${port}"
+assert_file_has_content remotes-list "^platform-origin.*[ 	]oci+http://127.0.0.1:${port}"
 
-assert_has_file $base/oci/org.test.Platform-origin.index.gz
+assert_has_file $base/oci/platform-origin.index.gz
 
 echo "ok install via bundle"
 
@@ -200,9 +200,9 @@ ${FLATPAK} build-bundle --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS re
 ${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak
 
 ${FLATPAK} remotes -d > remotes-list
-assert_file_has_content remotes-list "^org.test.Hello-origin.*[ 	]oci+http://127.0.0.1:${port}"
+assert_file_has_content remotes-list "^hello-origin.*[ 	]oci+http://127.0.0.1:${port}"
 
-assert_has_file $base/oci/org.test.Hello-origin.index.gz
+assert_has_file $base/oci/hello-origin.index.gz
 
 echo "ok app install via bundle"
 
@@ -214,8 +214,8 @@ ${FLATPAK} build-bundle --repo-url "http://127.0.0.1:${port}" $FL_GPGARGS repos/
 ${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak
 
 ${FLATPAK} remotes -d > remotes-list
-assert_file_has_content remotes-list "^org.test.Hello-origin.*[ 	]http://127.0.0.1:${port}"
+assert_file_has_content remotes-list "^hello-origin.*[ 	]http://127.0.0.1:${port}"
 
-assert_not_has_file $base/oci/org.test.Hello-origin.index.gz
+assert_not_has_file $base/oci/hello-origin.index.gz
 
 echo "ok change remote origin via bundle"
