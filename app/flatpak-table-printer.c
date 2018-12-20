@@ -49,6 +49,22 @@ free_cell (gpointer data)
 
 typedef struct
 {
+  GPtrArray *cells;
+  char *key;
+} Row;
+
+static void
+free_row (gpointer data)
+{
+  Row *row = data;
+
+  g_ptr_array_free (row->cells, TRUE);
+  g_free (row->key);
+  g_free (row);
+}
+
+typedef struct
+{
   char *title;
   gboolean expand;
   gboolean ellipsize;
@@ -67,6 +83,7 @@ struct FlatpakTablePrinter
 {
   GPtrArray *columns;
   GPtrArray *rows;
+  char *key;
   GPtrArray *current;
   int        n_columns;
 };
@@ -77,7 +94,7 @@ flatpak_table_printer_new (void)
   FlatpakTablePrinter *printer = g_new0 (FlatpakTablePrinter, 1);
 
   printer->columns = g_ptr_array_new_with_free_func (free_column);
-  printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify) g_ptr_array_unref);
+  printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify) free_row);
   printer->current = g_ptr_array_new_with_free_func (free_cell);
 
   return printer;
@@ -89,6 +106,7 @@ flatpak_table_printer_free (FlatpakTablePrinter *printer)
   g_ptr_array_free (printer->columns, TRUE);
   g_ptr_array_free (printer->rows, TRUE);
   g_ptr_array_free (printer->current, TRUE);
+  g_free (printer->key);
   g_free (printer);
 }
 
@@ -234,13 +252,51 @@ flatpak_table_printer_append_with_comma_printf (FlatpakTablePrinter *printer,
 }
 
 void
+flatpak_table_printer_set_key (FlatpakTablePrinter *printer, const char *key)
+{
+  printer->key = g_strdup (key);
+}
+
+static gint
+cmp_row (gconstpointer  _row_a,
+         gconstpointer  _row_b,
+         gpointer       user_data)
+{
+  const Row *row_a = *(const Row **)_row_a;
+  const Row *row_b = *(const Row **)_row_b;
+  GCompareFunc cmp = user_data;
+
+  g_print ("cmp %s %s\n", row_a->key, row_b->key);
+
+  if (row_a == row_b || (row_a->key == NULL && row_b->key == NULL))
+    return 0;
+  if (row_a->key == NULL)
+    return -1;
+  if (row_b->key == NULL)
+    return 1;
+
+  return cmp (row_a->key, row_b->key);
+}
+
+void
+flatpak_table_printer_sort (FlatpakTablePrinter *printer, GCompareFunc cmp)
+{
+  g_ptr_array_sort_with_data (printer->rows, cmp_row, cmp);
+}
+
+void
 flatpak_table_printer_finish_row (FlatpakTablePrinter *printer)
 {
+  Row *row;
+
   if (printer->current->len == 0)
     return; /* Ignore empty rows */
 
   printer->n_columns = MAX (printer->n_columns, printer->current->len);
-  g_ptr_array_add (printer->rows, printer->current);
+  row = g_new0 (Row, 1);
+  row->cells = g_steal_pointer (&printer->current);
+  row->key = g_steal_pointer (&printer->key);
+  g_ptr_array_add (printer->rows, row);
   printer->current = g_ptr_array_new_with_free_func (free_cell);
 }
 
@@ -336,11 +392,11 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
 
   for (i = 0; i < printer->rows->len; i++)
     {
-      GPtrArray *row = g_ptr_array_index (printer->rows, i);
+      Row *row = g_ptr_array_index (printer->rows, i);
 
-      for (j = 0; j < row->len; j++)
+      for (j = 0; j < row->cells->len; j++)
         {
-          Cell *cell = g_ptr_array_index (row, j);
+          Cell *cell = g_ptr_array_index (row->cells, j);
           int width;
 
           if (cell->span)
@@ -432,19 +488,19 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
 
   for (i = 0; i < printer->rows->len; i++)
     {
-      GPtrArray *row = g_ptr_array_index (printer->rows, i);
+      Row *row = g_ptr_array_index (printer->rows, i);
       int grow = expand_extra;
       int shrink = ellipsize_extra;
 
       if (rows > total_skip)
         g_print ("\n");
 
-      for (j = 0; j < row->len; j++)
+      for (j = 0; j < row->cells->len; j++)
         {
           TableColumn *col = j < printer->columns->len ? g_ptr_array_index (printer->columns, j) : NULL;
           gboolean expand = col ? col->expand : FALSE;
           gboolean ellipsize = col ? col->ellipsize : FALSE;
-          Cell *cell = g_ptr_array_index (row, j);
+          Cell *cell = g_ptr_array_index (row->cells, j);
           char *text = cell->text;
           int len = widths[j];
           g_autofree char *freeme = NULL;
@@ -481,7 +537,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 g_string_append_printf (row_s, "%*s%*s%-*s", j > 0, "", lwidths[j] - cell->align, "", widths[j] - (lwidths[j] - cell->align), cell->text);
             }
           else
-            g_string_append_printf (row_s, "%s%s", cell->text, (j < row->len - 1) ? "\t" : "");
+            g_string_append_printf (row_s, "%s%s", cell->text, (j < row->cells->len - 1) ? "\t" : "");
         }
       rows += print_row (row_s, FALSE, &skip, columns);
     }
