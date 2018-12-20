@@ -10982,20 +10982,24 @@ create_origin_remote_config (OstreeRepo *repo,
                              GKeyFile  **new_config)
 {
   g_autofree char *remote = NULL;
-
   g_auto(GStrv) remotes = NULL;
   int version = 0;
   g_autofree char *group = NULL;
+  g_autofree char *prefix = NULL;
+  const char *last_dot;
 
   remotes = ostree_repo_remote_list (repo, NULL);
+
+  last_dot = strrchr (id, '.');
+  prefix = g_ascii_strdown (last_dot ? last_dot + 1 : id, -1);
 
   do
     {
       g_autofree char *name = NULL;
       if (version == 0)
-        name = g_strdup_printf ("%s-origin", id);
+        name = g_strdup_printf ("%s-origin", prefix);
       else
-        name = g_strdup_printf ("%s-%d-origin", id, version);
+        name = g_strdup_printf ("%s%d-origin", prefix, version);
       version++;
 
       if (origin_remote_matches (repo, name, url, main_ref, gpg_verify, collection_id))
