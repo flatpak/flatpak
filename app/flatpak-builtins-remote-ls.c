@@ -130,7 +130,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       if (strcmp (columns[i].name, "application") == 0)
         flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_START);
       if (strcmp (columns[i].name, "options") == 0)
-        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_START);
+        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_END);
     }
 
   if (app_runtime)
