@@ -960,7 +960,10 @@ transaction_ready (FlatpakTransaction *transaction)
   self->table_height += 3; /* 2 for the added lines and one for the newline from the user after the prompt */
 
   if (flatpak_fancy_output ())
-    redraw (self);
+    {
+      g_print (FLATPAK_ANSI_HIDE_CURSOR);
+      redraw (self);
+    }
 
   return TRUE;
 }
@@ -1065,6 +1068,9 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
   gboolean res;
 
   res = flatpak_transaction_run (transaction, cancellable, &local_error);
+
+  if (flatpak_fancy_output ())
+    g_print (FLATPAK_ANSI_SHOW_CURSOR);
 
   if (res && self->n_ops > 0)
     {
