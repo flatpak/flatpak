@@ -367,23 +367,23 @@ new_operation (FlatpakTransaction          *transaction,
     case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
     case FLATPAK_TRANSACTION_OPERATION_INSTALL:
       if (self->n_ops == 1)
-        text = g_strdup (_("Installing..."));
+        text = g_strdup (_("Installing…"));
       else
-        text = g_strdup_printf (("Installing %d/%d..."), self->op, self->n_ops);
+        text = g_strdup_printf (("Installing %d/%d…"), self->op, self->n_ops);
       break;
 
     case FLATPAK_TRANSACTION_OPERATION_UPDATE:
       if (self->n_ops == 1)
-        text = g_strdup (_("Updating..."));
+        text = g_strdup (_("Updating…"));
       else
-        text = g_strdup_printf (_("Updating %d/%d..."), self->op, self->n_ops);
+        text = g_strdup_printf (_("Updating %d/%d…"), self->op, self->n_ops);
       break;
 
     case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
       if (self->n_ops == 1)
-        text = g_strdup (_("Uninstalling..."));
+        text = g_strdup (_("Uninstalling…"));
       else
-        text = g_strdup_printf (_("Uninstalling %d/%d..."), self->op, self->n_ops);
+        text = g_strdup_printf (_("Uninstalling %d/%d…"), self->op, self->n_ops);
       break;
 
     default:

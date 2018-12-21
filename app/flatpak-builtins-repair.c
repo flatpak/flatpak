@@ -340,13 +340,13 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
         /* If so, is it deployed, and from this remote? */
         if (remote == NULL || g_strcmp0 (origin, remote) != 0)
           {
-            g_print (_("Removing non-deployed ref %s...\n"), refspec);
+            g_print (_("Removing non-deployed ref %s…\n"), refspec);
             (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
             continue;
           }
       }
 
-    g_print (_("Verifying %s...\n"), refspec);
+    g_print (_("Verifying %s…\n"), refspec);
 
     status = fsck_commit (repo, checksum, object_status_cache);
     if (status != FSCK_STATUS_OK)

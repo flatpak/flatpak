@@ -94,7 +94,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
 
-  context = g_option_context_new (_("APP [args...] - Run an app"));
+  context = g_option_context_new (_("APP [ARGUMENT…] - Run an app"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   rest_argc = 0;
