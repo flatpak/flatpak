@@ -11854,6 +11854,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
                                                  GCancellable       *cancellable,
                                                  GError            **error)
 {
+  g_autoptr(OstreeAsyncProgress) progress = ostree_async_progress_new ();
   FlatpakPullFlags flatpak_flags;
   gboolean gpg_verify;
   g_autofree char *checksum_from_summary = NULL;
@@ -11954,7 +11955,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
-                                 NULL, cancellable, error))
+                                 progress, cancellable, error))
             return FALSE;
 
           if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
@@ -11982,7 +11983,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
 
   if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL,
                          flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
-                         NULL, cancellable, error))
+                         progress, cancellable, error))
     return FALSE;
 
   return TRUE;
