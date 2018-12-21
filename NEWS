@@ -1,3 +1,20 @@
+Changes in 1.1.2
+================
+
+ * Refreshed the CLI output layout, in particular the install/update progress
+   and application list/info commands.
+ * The host XDG_{DATA,CONFIG,CACHE}_HOME env vars are now available as
+   with the HOST_ prefix in the sandbox.
+ * FLATPAK_ID is set to the app id in the sandbox (this previously
+   only happened in flatpak build).
+ * The spawn portal command now has a kill with parent option.
+ * Flatpak shells now have custom prompts
+ * New library APIs: Access to deployed appstream data, list unused refs.
+ * Flatpak run now has --cwd option.
+ * New option --static-delta-jobs to limit number of parallel delta
+   generation jobs in build-update-repo.
+ * Fixed critical warning with newer policykit versions.
+
 Changes in 1.1.1
 ================
 
