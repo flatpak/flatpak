@@ -46,12 +46,12 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
-  { "name",       N_("Name"),          N_("Show the name"),          1, 1 },
-  { "title",      N_("Title"),         N_("Show the title"),         1, 0 },
-  { "url",        N_("URL"),           N_("Show the URL"),           1, 0 },
-  { "collection", N_("Collection ID"), N_("Show the collection ID"), 1, 0 },
-  { "priority",   N_("Priority"),      N_("Show the priority"),      1, 0 },
-  { "options",    N_("Options"),       N_("Show options"),           1, 1 },
+  { "name",       N_("Name"),          N_("Show the name"),          0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "title",      N_("Title"),         N_("Show the title"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "url",        N_("URL"),           N_("Show the URL"),           0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "collection", N_("Collection ID"), N_("Show the collection ID"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "priority",   N_("Priority"),      N_("Show the priority"),      0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "options",    N_("Options"),       N_("Show options"),           0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { NULL }
 };
 
@@ -65,7 +65,7 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
     return TRUE;
 
   printer = flatpak_table_printer_new ();
-  flatpak_table_printer_set_column_titles (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns);
 
   for (j = 0; j < dirs->len; j++)
     {

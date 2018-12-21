@@ -111,10 +111,19 @@ gboolean reset_permissions_for_app (const char *app_id,
 
 /* --columns handling */
 
+typedef enum {
+              FLATPAK_ELLIPSIZE_MODE_NONE,
+              FLATPAK_ELLIPSIZE_MODE_START,
+              FLATPAK_ELLIPSIZE_MODE_MIDDLE,
+              FLATPAK_ELLIPSIZE_MODE_END,
+} FlatpakEllipsizeMode;
+
 typedef struct {
   const char *name;
   const char *title; /* use N_() */
   const char *desc;  /* use N_() */
+  gboolean expand;
+  FlatpakEllipsizeMode ellipsize;
   gboolean all;
   gboolean def;
 } Column;
@@ -130,13 +139,6 @@ Column *handle_column_args (Column *all_columns,
 
 char *  format_timestamp (guint64 timestamp);
 
-
-typedef enum {
-              FLATPAK_ELLIPSIZE_MODE_NONE,
-              FLATPAK_ELLIPSIZE_MODE_START,
-              FLATPAK_ELLIPSIZE_MODE_MIDDLE,
-              FLATPAK_ELLIPSIZE_MODE_END,
-} FlatpakEllipsizeMode;
 
 char *  ellipsize_string (const char *text, int len);
 char *  ellipsize_string_full (const char *text, int len, FlatpakEllipsizeMode mode);

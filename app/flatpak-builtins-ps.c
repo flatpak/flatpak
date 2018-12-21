@@ -44,16 +44,16 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
-  { "instance",       N_("Instance"),       N_("Show the instance ID"),                1, 1 },
-  { "pid",            N_("PID"),            N_("Show the PID of the wrapper process"), 1, 1 },
-  { "child-pid",      N_("Child-PID"),      N_("Show the PID of the sandbox process"), 1, 0 },
-  { "application",    N_("Application"),    N_("Show the application ID"),             1, 1 },
-  { "arch",           N_("Arch"),           N_("Show the architecture"),               1, 0 },
-  { "branch",         N_("Branch"),         N_("Show the application branch"),         1, 0 },
-  { "commit",         N_("Commit"),         N_("Show the application commit"),         1, 0 },
-  { "runtime",        N_("Runtime"),        N_("Show the runtime ID"),                 1, 1 },
-  { "runtime-branch", N_("R.-Branch"),      N_("Show the runtime branch"),             1, 0 },
-  { "runtime-commit", N_("R.-Commit"),      N_("Show the runtime commit"),             1, 0 },
+  { "instance",       N_("Instance"),    N_("Show the instance ID"),                0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "pid",            N_("PID"),         N_("Show the PID of the wrapper process"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "child-pid",      N_("Child-PID"),   N_("Show the PID of the sandbox process"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "application",    N_("Application"), N_("Show the application ID"),             0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "arch",           N_("Arch"),        N_("Show the architecture"),               0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "branch",         N_("Branch"),      N_("Show the application branch"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "commit",         N_("Commit"),      N_("Show the application commit"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "runtime",        N_("Runtime"),     N_("Show the runtime ID"),                 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "runtime-branch", N_("R.-Branch"),   N_("Show the runtime branch"),             0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "runtime-commit", N_("R.-Commit"),   N_("Show the runtime commit"),             0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { NULL }
 };
 
@@ -68,7 +68,7 @@ enumerate_instances (Column *columns, GError **error)
     return TRUE;
 
   printer = flatpak_table_printer_new ();
-  flatpak_table_printer_set_column_titles (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns);
  
   instances = flatpak_instance_get_all ();
   if (instances->len == 0)

@@ -139,12 +139,16 @@ flatpak_table_printer_set_column_title (FlatpakTablePrinter *printer,
 }
 
 void
-flatpak_table_printer_set_column_titles (FlatpakTablePrinter *printer,
-                                         Column              *columns)
+flatpak_table_printer_set_columns (FlatpakTablePrinter *printer,
+                                   Column              *columns)
 {
   int i;
   for (i = 0; columns[i].name; i++)
-    flatpak_table_printer_set_column_title (printer, i, _(columns[i].title));
+    {
+      flatpak_table_printer_set_column_title (printer, i, _(columns[i].title));
+      flatpak_table_printer_set_column_expand (printer, i, columns[i].expand);
+      flatpak_table_printer_set_column_ellipsize (printer, i, columns[i].ellipsize);
+    }
 }
 
 void
