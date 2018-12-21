@@ -866,10 +866,12 @@ list_has (const char *list,
     {
       p = strstr (p, term);
       len = strlen (term);
-      if (p &&
-          (p == list || p[-1] == ',') &&
+      if (!p)
+        break;
+      if ((p == list || p[-1] == ',') &&
           (p[len] == '\0' || p[len] == ','))
         return TRUE;
+      p++;
     }
 
   return FALSE;
