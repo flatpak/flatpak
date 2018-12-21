@@ -123,16 +123,15 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
   flatpak_table_printer_set_column_titles (printer, columns);
 
   for (i = 0; columns[i].name; i++)
-    flatpak_table_printer_set_column_expand (printer, i, TRUE);
-  flatpak_table_printer_set_column_ellipsize (printer,
-                                              find_column (columns, "description", NULL),
-                                              FLATPAK_ELLIPSIZE_MODE_END);
-  flatpak_table_printer_set_column_ellipsize (printer,
-                                              find_column (columns, "application", NULL),
-                                              FLATPAK_ELLIPSIZE_MODE_END);
-  flatpak_table_printer_set_column_ellipsize (printer,
-                                              find_column (columns, "options", NULL),
-                                              FLATPAK_ELLIPSIZE_MODE_END);
+    {
+      flatpak_table_printer_set_column_expand (printer, i, TRUE);
+      if (strcmp (columns[i].name, "description") == 0)
+        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_END);
+      if (strcmp (columns[i].name, "application") == 0)
+        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_START);
+      if (strcmp (columns[i].name, "options") == 0)
+        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_START);
+    }
 
   if (app_runtime)
     {
