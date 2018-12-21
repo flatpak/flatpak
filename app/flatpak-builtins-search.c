@@ -39,13 +39,13 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
-  { "description",    N_("Description"),    N_("Show the description"),         1, 1 },
-  { "application",    N_("Application"),    N_("Show the application ID"),      1, 1 },
-  { "version",        N_("Version"),        N_("Show the version"),             1, 1 },
+  { "description", N_("Description"), N_("Show the description"),        1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
+  { "application", N_("Application"), N_("Show the application ID"),     1, FLATPAK_ELLIPSIZE_MODE_START, 1, 1 },
+  { "version",     N_("Version"),     N_("Show the version"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
 #if AS_CHECK_VERSION (0, 6, 1)
-  { "branch",         N_("Branch"),         N_("Show the application branch"),  1, 1 },
+  { "branch",      N_("Branch"),      N_("Show the application branch"), 1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
 #endif
-  { "remotes",        N_("Remotes"),        N_("Show the remotes"),             1, 1 },
+  { "remotes",     N_("Remotes"),     N_("Show the remotes"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { NULL }
 };
 
@@ -246,20 +246,10 @@ print_matches (Column *columns, GSList *matches)
   FlatpakTablePrinter *printer = NULL;
   int rows, cols;
   GSList *s;
-  int i;
 
   printer = flatpak_table_printer_new ();
 
-  flatpak_table_printer_set_column_titles (printer, columns);
-
-  for (i = 0; columns[i].name; i++)
-    {
-      flatpak_table_printer_set_column_expand (printer, i, TRUE);
-      if (strcmp (columns[i].name, "description") == 0)
-        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_END);
-      if (strcmp (columns[i].name, "application") == 0)
-        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_START);
-    }
+  flatpak_table_printer_set_columns (printer, columns);
 
   for (s = matches; s; s = s->next)
     {

@@ -44,11 +44,11 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
-  { "id",          N_("ID"),          N_("Show the document ID"),              1, 1 },
-  { "path",        N_("Path"),        N_("Show the document path"),            1, 0 },
-  { "origin",      N_("Origin"),      N_("Show the document path"),            1, 1 },
-  { "application", N_("Application"), N_("Show applications with permission"), 1, 0 },
-  { "permissions", N_("Permissions"), N_("Show permissions for applications"), 1, 0 },
+  { "id",          N_("ID"),          N_("Show the document ID"),              0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "path",        N_("Path"),        N_("Show the document path"),            0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "origin",      N_("Origin"),      N_("Show the document path"),            0, FLATPAK_ELLIPSIZE_MODE_NONE, 1 },
+  { "application", N_("Application"), N_("Show applications with permission"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "permissions", N_("Permissions"), N_("Show permissions for applications"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { NULL }
 };
 
@@ -91,7 +91,7 @@ print_documents (const char *app_id,
     return FALSE;
 
   printer = flatpak_table_printer_new ();
-  flatpak_table_printer_set_column_titles (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns);
   for (i = 0; columns[i].name; i++)
     {
       if (strcmp (columns[i].name, "permissions") == 0 ||

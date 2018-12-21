@@ -54,20 +54,20 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
-  { "time",         N_("Time"),           N_("Show when the change happend"),       1, 1 },
-  { "change",       N_("Change"),         N_("Show the kind of change"),            1, 1 },
-  { "ref",          N_("Ref"),            N_("Show the ref"),                       0, 0 },
-  { "application",  N_("Application"),    N_("Show the application/runtime ID"),    1, 1 },
-  { "arch",         N_("Arch"),           N_("Show the architecture"),              1, 0 },
-  { "branch",       N_("Branch"),         N_("Show the branch"),                    1, 1 },
-  { "installation", N_("Installation"),   N_("Show the affected installation"),     1, 1 },
-  { "remote",       N_("Remote"),         N_("Show the remote"),                    1, 1 },
-  { "commit",       N_("Commit"),         N_("Show the current commit"),            1, 0 },
-  { "old-commit",   N_("Old Commit"),     N_("Show the previous commit"),           1, 0 },
-  { "url",          N_("URL"),            N_("Show the remote URL"),                1, 0 },
-  { "user",         N_("User"),           N_("Show the user doing the change"),     1, 0 },
-  { "tool",         N_("Tool"),           N_("Show the tool that was used"),        1, 0 },
-  { "version",      N_("Version"),        N_("Show the Flatpak version"),           1, 0 },
+  { "time",         N_("Time"),         N_("Show when the change happend"),    0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "change",       N_("Change"),       N_("Show the kind of change"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "ref",          N_("Ref"),          N_("Show the ref"),                    0, FLATPAK_ELLIPSIZE_MODE_NONE, 0, 0 },
+  { "application",  N_("Application"),  N_("Show the application/runtime ID"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "arch",         N_("Arch"),         N_("Show the architecture"),           0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "branch",       N_("Branch"),       N_("Show the branch"),                 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "installation", N_("Installation"), N_("Show the affected installation"),  0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "remote",       N_("Remote"),       N_("Show the remote"),                 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "commit",       N_("Commit"),       N_("Show the current commit"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "old-commit",   N_("Old Commit"),   N_("Show the previous commit"),        0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "url",          N_("URL"),          N_("Show the remote URL"),             0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "user",         N_("User"),         N_("Show the user doing the change"),  0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "tool",         N_("Tool"),         N_("Show the tool that was used"),     0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "version",      N_("Version"),      N_("Show the Flatpak version"),        0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { NULL }
 };
 
@@ -135,8 +135,8 @@ print_history (GPtrArray *dirs,
     return TRUE;
 
   printer = flatpak_table_printer_new ();
-  for (i = 0; columns[i].name; i++)
-    flatpak_table_printer_set_column_title (printer, i, _(columns[i].title));
+
+  flatpak_table_printer_set_columns (printer, columns);
 
   if ((r = sd_journal_open (&j, 0)) < 0)
     {
