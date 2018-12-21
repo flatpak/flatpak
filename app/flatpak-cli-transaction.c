@@ -288,7 +288,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
 
   spin_op_progress (cli, op);
 
-  bar_length = MIN (20, cli->table_width - (strlen (cli->progress_msg) + 4 + 4 + cli->speed_len));
+  bar_length = MIN (20, cli->table_width - (strlen (cli->progress_msg) + 6 + cli->speed_len));
 
   n_full = (bar_length * percent) / 100;
   partial = (((bar_length * percent) % 100) * G_N_ELEMENTS(partial_blocks) ) / 100;
@@ -297,7 +297,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   g_assert (partial < G_N_ELEMENTS(partial_blocks));
 
   g_string_append (str, cli->progress_msg);
-  g_string_append (str, " [");
+  g_string_append (str, " ");
 
   for (i = 0; i < n_full; i++)
     g_string_append (str, full_block);
@@ -311,7 +311,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   for (; i < bar_length; i++)
     g_string_append (str, " ");
 
-  g_string_append (str, "] ");
+  g_string_append (str, " ");
   g_string_append_printf (str, "%3d%%", percent);
 
   if (speed)
