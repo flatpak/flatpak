@@ -493,7 +493,17 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
     }
 
   if (opt_require_version)
-    g_key_file_set_string (keyfile, group, "required-flatpak", opt_require_version);
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      g_key_file_set_string (keyfile, group, "required-flatpak", opt_require_version);
+      if (!flatpak_check_required_version ("test", keyfile, &local_error) &&
+          g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_DATA))
+        {
+          flatpak_fail (error, _("Invalid --require-version argument: %s"), opt_require_version);
+          goto out;
+        }
+    }
 
   app_context = flatpak_context_new ();
   if (inherited_context)
