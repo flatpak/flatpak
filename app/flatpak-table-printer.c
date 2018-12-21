@@ -266,8 +266,6 @@ cmp_row (gconstpointer  _row_a,
   const Row *row_b = *(const Row **)_row_b;
   GCompareFunc cmp = user_data;
 
-  g_print ("cmp %s %s\n", row_a->key, row_b->key);
-
   if (row_a == row_b || (row_a->key == NULL && row_b->key == NULL))
     return 0;
   if (row_a->key == NULL)
