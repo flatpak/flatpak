@@ -42,8 +42,10 @@ typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_WATCH_BUS = 1 << 1,
 } FlatpakHostCommandFlags;
 
-#define FLATPAK_ANSI_ALT_SCREEN_ON "\x1B[?1049h"
-#define FLATPAK_ANSI_ALT_SCREEN_OFF "\x1B[?1049l"
+#define FLATPAK_ANSI_ALT_SCREEN_ON "\x1b[?1049h"
+#define FLATPAK_ANSI_ALT_SCREEN_OFF "\x1b[?1049l"
+#define FLATPAK_ANSI_HIDE_CURSOR "\x1b[?25l"
+#define FLATPAK_ANSI_SHOW_CURSOR "\x1b[?25h"
 #define FLATPAK_ANSI_BOLD_ON "\x1b[1m"
 #define FLATPAK_ANSI_BOLD_OFF "\x1b[22m"
 #define FLATPAK_ANSI_FAINT_ON "\x1b[2m"
