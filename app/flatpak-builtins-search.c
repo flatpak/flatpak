@@ -246,11 +246,20 @@ print_matches (Column *columns, GSList *matches)
   FlatpakTablePrinter *printer = NULL;
   int rows, cols;
   GSList *s;
-  int ellip;
+  int i;
 
   printer = flatpak_table_printer_new ();
 
   flatpak_table_printer_set_column_titles (printer, columns);
+
+  for (i = 0; columns[i].name; i++)
+    {
+      flatpak_table_printer_set_column_expand (printer, i, TRUE);
+      if (strcmp (columns[i].name, "description") == 0)
+        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_END);
+      if (strcmp (columns[i].name, "application") == 0)
+        flatpak_table_printer_set_column_ellipsize (printer, i, FLATPAK_ELLIPSIZE_MODE_START);
+    }
 
   for (s = matches; s; s = s->next)
     {
@@ -259,10 +268,6 @@ print_matches (Column *columns, GSList *matches)
     }
 
   flatpak_get_window_size (&rows, &cols);
-  ellip = find_column (columns, "description", NULL);
-  flatpak_table_printer_set_column_ellipsize (printer, ellip, FLATPAK_ELLIPSIZE_MODE_END);
-  ellip = find_column (columns, "application", NULL);
-  flatpak_table_printer_set_column_ellipsize (printer, ellip, FLATPAK_ELLIPSIZE_MODE_START);
   flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
   g_print ("\n");
 
