@@ -447,7 +447,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
   FlatpakKinds kinds;
   OstreeRepo *src_repo;
 
-  context = g_option_context_new (_("MOUNT-PATH REF [REF...] - Copy apps and/or runtimes onto removable media"));
+  context = g_option_context_new (_("MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,

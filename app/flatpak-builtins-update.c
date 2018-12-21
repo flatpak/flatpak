@@ -81,7 +81,7 @@ flatpak_builtin_update (int           argc,
   g_autoptr(GPtrArray) transactions = NULL;
   gboolean has_updates;
 
-  context = g_option_context_new (_("[REF...] - Update applications or runtimes"));
+  context = g_option_context_new (_("[REF…] - Update applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
@@ -135,7 +135,7 @@ flatpak_builtin_update (int           argc,
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  g_print (_("Looking for updates...\n"));
+  g_print (_("Looking for updates…\n"));
 
   for (j = 0; j == 0 || j < n_prefs; j++)
     {
