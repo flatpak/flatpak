@@ -497,7 +497,8 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
         }
     }
 
-  all_columns[6].def = !has_remote;
+  /* show origin by default if listing multiple remotes */
+  all_columns[5].def = !has_remote;
 
   columns = handle_column_args (all_columns, opt_show_details, opt_cols, error);
   if (columns == NULL)
