@@ -173,7 +173,7 @@
                 <term><option>--timestamp=DATE</option></term>
 
                 <listitem><para>
-                    Use the specified ISO 8601 formatted date in the commit metadata and, if <option>--update-appstream</option> is used, the appstream data.
+                    Use the specified ISO 8601 formatted date or NOW, for the current time, in the commit metadata and, if <option>--update-appstream</option> is used, the appstream data.
                 </para></listitem>
             </varlistentry>
 
