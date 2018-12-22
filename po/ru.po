@@ -71,9 +71,8 @@ msgid "Export oci image instead of flatpak bundle"
 msgstr "Экспортировать образ oci вместо пакета flatpak"
 
 #: app/flatpak-builtins-build-bundle.c:62
-#, fuzzy
 msgid "GPG Key ID to sign the OCI image with"
-msgstr "ID Ключа GPG для подписи сводной информации"
+msgstr "ID Ключа GPG для подписи образа OCI"
 
 #: app/flatpak-builtins-build-bundle.c:62
 #: app/flatpak-builtins-build-commit-from.c:59
@@ -104,7 +103,7 @@ msgstr "ДОМАШНИЙ_КАТАЛОГ"
 
 #: app/flatpak-builtins-build-bundle.c:64
 msgid "OSTree commit to create a delta bundle from"
-msgstr ""
+msgstr "Коммит OSTree для создания дельта-пакета из"
 
 #: app/flatpak-builtins-build-bundle.c:64 app/flatpak-builtins-remote-info.c:51
 #: app/flatpak-builtins-update.c:54
@@ -152,7 +151,7 @@ msgid "'%s' is not a valid repository"
 msgstr "'%s' не является корректным репозиторием"
 
 #: app/flatpak-builtins-build-bundle.c:578
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid repository: "
 msgstr "'%s' не является корректным репозиторием"
 
@@ -172,9 +171,9 @@ msgstr "'%s' не является корректным именем ветки:
 #: app/flatpak-builtins-build-bundle.c:601
 #: app/flatpak-builtins-build-import-bundle.c:196
 #: app/flatpak-builtins-build-init.c:251
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid filename"
-msgstr "'%s' не является корректным именем: %s"
+msgstr "'%s' не является корректным именем файла: %s"
 
 #: app/flatpak-builtins-build.c:49
 msgid "Use Platform runtime rather than Sdk"
@@ -182,7 +181,7 @@ msgstr "Использовать обычную среду исполнения 
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
-msgstr ""
+msgstr "Сделать доступной только для чтения"
 
 #: app/flatpak-builtins-build.c:51
 msgid "Add bind mount"
@@ -211,11 +210,11 @@ msgstr "Использовать другой файл метаданных"
 
 #: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:75
 msgid "Kill processes when the parent process dies"
-msgstr ""
+msgstr "Убить процессы, когда родительский процесс умирает "
 
 #: app/flatpak-builtins-build.c:56
 msgid "Export application homedir directory to build"
-msgstr ""
+msgstr "Экспортировать домашний каталог приложения для сборки"
 
 #: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:66
 msgid "Log session bus calls"
@@ -226,7 +225,6 @@ msgid "Log system bus calls"
 msgstr "Журналировать вызовы системной шины"
 
 #: app/flatpak-builtins-build.c:206
-#, fuzzy
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "КАТАЛОГ [КОМАНДА [параметры...]] - Сборка в каталоге"
 
@@ -293,7 +291,7 @@ msgstr "Полное описание"
 #: app/flatpak-builtins-build-commit-from.c:56
 #: app/flatpak-builtins-build-export.c:55
 msgid "BODY"
-msgstr "ТЕЛО"
+msgstr "СОДЕРЖИМОЕ"
 
 #: app/flatpak-builtins-build-commit-from.c:57
 #: app/flatpak-builtins-build-export.c:58
@@ -317,28 +315,27 @@ msgstr "ID ключа GPG для подписи изменения"
 #: app/flatpak-builtins-build-commit-from.c:61
 #: app/flatpak-builtins-build-export.c:66
 msgid "Mark build as end-of-life"
-msgstr ""
+msgstr "Пометить сборку как завершившую жизненный цикл"
 
 #: app/flatpak-builtins-build-commit-from.c:61
 #: app/flatpak-builtins-build-export.c:66
 msgid "REASON"
-msgstr ""
+msgstr "ПРИЧИНА"
 
 #: app/flatpak-builtins-build-commit-from.c:62
 msgid "Override the timestamp of the commit (NOW for current time)"
-msgstr ""
+msgstr "Переназначить отметку времени коммита (NOW для текущего времени)"
 
 #: app/flatpak-builtins-build-commit-from.c:62
 #: app/flatpak-builtins-build-export.c:67
 msgid "TIMESTAMP"
-msgstr ""
+msgstr "Отметка времени"
 
 #: app/flatpak-builtins-build-commit-from.c:239
-#, fuzzy
 msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
 msgstr ""
-"НАЗН-РЕПО [НАЗН-ССЫЛКА]... - Зафиксировать изменение на основе существующего "
-"изменения (или изменений)"
+"НАЗН-РЕПО [НАЗН-ССЫЛКА]... - Зафиксировать коммит на основе существующеих "
+"коммитов"
 
 #: app/flatpak-builtins-build-commit-from.c:246
 msgid "DST-REPO must be specified"
@@ -364,7 +361,7 @@ msgstr "Должны быть задана --src-repo либо --src-ref."
 #: app/flatpak-builtins-build-export.c:906
 #, c-format
 msgid "Could not parse '%s'"
-msgstr ""
+msgstr "Невозможно распознать '%s'"
 
 #: app/flatpak-builtins-build-commit-from.c:425
 msgid "Can't commit from partial source commit."
@@ -373,7 +370,7 @@ msgstr "Невозможно зафиксировать частичное из�
 #: app/flatpak-builtins-build-commit-from.c:430
 #, c-format
 msgid "%s: no change\n"
-msgstr ""
+msgstr "%s: не изменено\n"
 
 #: app/flatpak-builtins-build-export.c:56
 msgid "Architecture to export for (must be host compatible)"
@@ -406,50 +403,50 @@ msgstr "Исключенные файлы для добавления"
 
 #: app/flatpak-builtins-build-export.c:67
 msgid "Override the timestamp of the commit"
-msgstr ""
+msgstr "Переназначить отметку времени коммита"
 
 #: app/flatpak-builtins-build-export.c:68
 #: app/flatpak-builtins-build-update-repo.c:56
 #: app/flatpak-builtins-remote-add.c:66 app/flatpak-builtins-remote-list.c:52
 #: app/flatpak-builtins-remote-modify.c:70
 msgid "Collection ID"
-msgstr ""
+msgstr "ID коллекции"
 
 #: app/flatpak-builtins-build-export.c:345
 #, c-format
 msgid "WARNING: Error running desktop-file-validate: %s\n"
-msgstr ""
+msgstr "ПРЕДУПРЕЖДЕНИЕ: Ошибка выполнения desktop-file-validate: %s\n"
 
 #: app/flatpak-builtins-build-export.c:353
 #, c-format
 msgid "WARNING: Error reading from desktop-file-validate: %s\n"
-msgstr ""
+msgstr "ПРЕДУПРЕЖДЕНИЕ: Ошибка чтения desktop-file-validate: %s\n"
 
 #: app/flatpak-builtins-build-export.c:359
-#, fuzzy, c-format
+#, c-format
 msgid "WARNING: Failed to validate desktop file %s: %s\n"
-msgstr "Ошибка при открытии временного файла: %s"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: Ошибка при открытии временного файла: %s"
 
 #: app/flatpak-builtins-build-export.c:374
 #, c-format
 msgid "WARNING: Can't find Exec key in %s: %s\n"
-msgstr ""
+msgstr "ПРЕДУПРЕЖДЕНИЕ: не найден ключ Exec в %s: %s\n"
 
 #: app/flatpak-builtins-build-export.c:382
 #: app/flatpak-builtins-build-export.c:480
 #, c-format
 msgid "WARNING: Binary not found for Exec line in %s: %s\n"
-msgstr ""
+msgstr "ПРЕДУПРЕЖДЕНИЕ: программа %s, указанная в строке Exec, не найдена: %s\n"
 
 #: app/flatpak-builtins-build-export.c:389
 #, c-format
 msgid "WARNING: Icon not matching app id in %s: %s\n"
-msgstr ""
+msgstr "ПРЕДУПРЕЖДЕНИЕ: иконка %s не совпадает с ID приложения: %s\n"
 
 #: app/flatpak-builtins-build-export.c:417
 #, c-format
 msgid "WARNING: Icon referenced in desktop file but not exported: %s\n"
-msgstr ""
+msgstr "ПРЕДУПРЕЖДЕНИЕ: иконка прописана в файле desktop, но не экспортирована: %s\n"
 
 #: app/flatpak-builtins-build-export.c:557
 #, c-format
@@ -459,7 +456,7 @@ msgstr "Некорректный тип uri %s, поддерживается т�
 #: app/flatpak-builtins-build-export.c:575
 #, c-format
 msgid "Unable to find basename in %s, specify a name explicitly"
-msgstr "Не возможно найти базовое имя в %s, укажите имя явно"
+msgstr "Невозможно найти базовое имя в %s, укажите имя явно"
 
 #: app/flatpak-builtins-build-export.c:584
 msgid "No slashes allowed in extra data name"
@@ -486,9 +483,9 @@ msgstr "Должны быть указаны ПУТЬ и КАТАЛОГ"
 
 #: app/flatpak-builtins-build-export.c:697
 #: app/flatpak-builtins-remote-add.c:315
-#, fuzzy, c-format
+#, c-format
 msgid "‘%s’ is not a valid collection ID: %s"
-msgstr "'%s' не является корректным именем приложения: %s"
+msgstr "'%s' не является корректным ID коллекции: %s"
 
 #: app/flatpak-builtins-build-export.c:742
 #: app/flatpak-builtins-build-finish.c:660
@@ -498,17 +495,17 @@ msgstr "Не указано имя в метаданных"
 #: app/flatpak-builtins-build-export.c:972
 #, c-format
 msgid "Commit: %s\n"
-msgstr ""
+msgstr "Коммит: %s\n"
 
 #: app/flatpak-builtins-build-export.c:973
-#, fuzzy, c-format
+#, c-format
 msgid "Metadata Total: %u\n"
-msgstr "Показать подробности про удалённый репозиторий"
+msgstr "Все метаданные: %d\n"
 
 #: app/flatpak-builtins-build-export.c:974
-#, fuzzy, c-format
+#, c-format
 msgid "Metadata Written: %u\n"
-msgstr "Показать подробности про удалённый репозиторий"
+msgstr "Записанные метаданные: %d\n"
 
 #: app/flatpak-builtins-build-export.c:975
 #, c-format
@@ -539,7 +536,7 @@ msgstr "Требовать версию flatpak"
 
 #: app/flatpak-builtins-build-finish.c:52
 msgid "MAJOR.MINOR.MICRO"
-msgstr ""
+msgstr "ЗНАЧИТЕЛЬНАЯ,МИНОРНАЯ,МИКРО"
 
 #: app/flatpak-builtins-build-finish.c:53
 msgid "Don't process exports"
@@ -558,22 +555,20 @@ msgid "NAME=VARIABLE[=VALUE]"
 msgstr "ИМЯ=ПЕРЕМЕННАЯ[=ЗНАЧЕНИЕ]"
 
 #: app/flatpak-builtins-build-finish.c:56
-#, fuzzy
 msgid "Remove extension point info"
-msgstr "Добавить информацию о точке расширения"
+msgstr "Удалить информацию о точке расширения"
 
 #: app/flatpak-builtins-build-finish.c:56 app/flatpak-main.c:169
-#, fuzzy
 msgid "NAME"
-msgstr "ИМЯ_ФАЙЛА"
+msgstr "ИМЯ"
 
 #: app/flatpak-builtins-build-finish.c:57
 msgid "Set extension priority (only for extensions)"
-msgstr ""
+msgstr "Установить приоритет расширения (только для расширений)"
 
 #: app/flatpak-builtins-build-finish.c:57
 msgid "0"
-msgstr ""
+msgstr "0"
 
 #: app/flatpak-builtins-build-finish.c:58
 msgid "Change the sdk used for the app"
@@ -594,46 +589,44 @@ msgid "RUNTIME"
 msgstr "СРЕДА_ИСПОЛНЕНИЯ"
 
 #: app/flatpak-builtins-build-finish.c:60
-#, fuzzy
 msgid "Set generic metadata option"
-msgstr "Удалить параметр обобщенной политики"
+msgstr "Установить параметр обобщенной политики"
 
 #: app/flatpak-builtins-build-finish.c:60
 msgid "GROUP=KEY[=VALUE]"
 msgstr ""
 
 #: app/flatpak-builtins-build-finish.c:61
-#, fuzzy
 msgid "Don't inherit permissions from runtime"
-msgstr "Отозвать у приложения право на запись"
+msgstr "Не отзывать у приложения право из среды выполнения"
 
 #: app/flatpak-builtins-build-finish.c:155
 #, c-format
 msgid "Not exporting %s, wrong extension\n"
-msgstr ""
+msgstr "Не экспортирован %s, некорректное расширение"
 
 #: app/flatpak-builtins-build-finish.c:163
 #, c-format
 msgid "Not exporting %s, non-allowed export filename\n"
-msgstr ""
+msgstr "Не экспортирован %s, не разрешенное имя файла"
 
 #: app/flatpak-builtins-build-finish.c:167
-#, fuzzy, c-format
+#, c-format
 msgid "Exporting %s\n"
-msgstr "Обновление сводной информации\n"
+msgstr "Экспортирую %s\n"
 
 #: app/flatpak-builtins-build-finish.c:432
 msgid "More than one executable found\n"
-msgstr ""
+msgstr "Найдено больше одного исполняемого файла\n"
 
 #: app/flatpak-builtins-build-finish.c:443
 #, c-format
 msgid "Using %s as command\n"
-msgstr ""
+msgstr "Использовать %s как команду\n"
 
 #: app/flatpak-builtins-build-finish.c:448
 msgid "No executable found\n"
-msgstr ""
+msgstr "Не найдено исполняемых файлов"
 
 #: app/flatpak-builtins-build-finish.c:525
 #, c-format
@@ -690,19 +683,19 @@ msgid "Import oci image instead of flatpak bundle"
 msgstr "Импортировать образ oci вместо пакета flatpak"
 
 #: app/flatpak-builtins-build-import-bundle.c:83
-#, fuzzy, c-format
+#, c-format
 msgid "Ref '%s' not found in registry"
-msgstr "'%s' не является корректным репозиторием"
+msgstr "Ссылка '%s' не найдена в реестре"
 
 #: app/flatpak-builtins-build-import-bundle.c:92
 msgid "Multiple images in registry, specify a ref with --ref"
-msgstr ""
+msgstr "Множество изображений в реестре, укажите ссылку с помощью --ref"
 
 #: app/flatpak-builtins-build-import-bundle.c:124
 #: app/flatpak-builtins-build-import-bundle.c:152
-#, fuzzy, c-format
+#, c-format
 msgid "Importing %s (%s)\n"
-msgstr "Обновление: %s из %s\n"
+msgstr "Импорт: %s (%s)\n"
 
 #: app/flatpak-builtins-build-import-bundle.c:173
 msgid "LOCATION FILENAME - Import a file bundle into a local repository"
@@ -719,7 +712,7 @@ msgstr "Использовать архитектуру"
 
 #: app/flatpak-builtins-build-init.c:53
 msgid "Initialize var from named runtime"
-msgstr "Инициализировать окружение из названной среды исполнения"
+msgstr "Инициализировать переменую из названной среды исполнения"
 
 #: app/flatpak-builtins-build-init.c:54
 msgid "Initialize apps from named app"
@@ -747,12 +740,11 @@ msgstr "РАСШИРЕНИЕ"
 
 #: app/flatpak-builtins-build-init.c:57
 msgid "Extension tag to use if building extension"
-msgstr ""
+msgstr "Метка расширения для использования в случае сборки расширения"
 
 #: app/flatpak-builtins-build-init.c:57
-#, fuzzy
 msgid "EXTENSION_TAG"
-msgstr "РАСШИРЕНИЕ"
+msgstr "МЕТКА_РАСШИРЕНИЯ"
 
 #: app/flatpak-builtins-build-init.c:58
 msgid "Initialize /usr with a writable copy of the sdk"
@@ -851,7 +843,7 @@ msgstr "Ключ/кличи GPG не указаны"
 
 #: app/flatpak-builtins-build-update-repo.c:53
 msgid "Redirect this repo to a new URL"
-msgstr ""
+msgstr "Перенаправить этот репозиторий на новый адрес"
 
 #: app/flatpak-builtins-build-update-repo.c:54
 msgid "A nice name to use for this repository"
@@ -876,15 +868,15 @@ msgstr "ВЕТКА"
 #: app/flatpak-builtins-build-update-repo.c:56
 #: app/flatpak-builtins-remote-add.c:66 app/flatpak-builtins-remote-modify.c:70
 msgid "COLLECTION-ID"
-msgstr ""
+msgstr "ID-КОЛЛЕКЦИИ"
 
 #: app/flatpak-builtins-build-update-repo.c:57
 msgid "Permanently deploy collection ID to client remote configurations"
-msgstr ""
+msgstr "Постоянно загружать ID коллекции в клиентские удаленные конфигурации"
 
 #: app/flatpak-builtins-build-update-repo.c:58
 msgid "Import new default GPG public key from FILE"
-msgstr ""
+msgstr "Импортировать новый используемый по умолчанию публичный ключ GPG из ФАЙЛА"
 
 #: app/flatpak-builtins-build-update-repo.c:59
 msgid "GPG Key ID to sign the summary with"
@@ -896,7 +888,7 @@ msgstr "Создать дельта файлы"
 
 #: app/flatpak-builtins-build-update-repo.c:62
 msgid "Max parallel jobs when creating deltas (default: NUMCPUs)"
-msgstr ""
+msgstr "Максимальное число параллельных задач при создании дельт (по умолчанию: число ЦПУ)"
 
 #: app/flatpak-builtins-build-update-repo.c:62
 msgid "NUM-JOBS"
@@ -927,12 +919,12 @@ msgid "Generating delta: %s (%.10s-%.10s)\n"
 msgstr "Создание дельты: %s (%.10s-%.10s)\n"
 
 #: app/flatpak-builtins-build-update-repo.c:203
-#, fuzzy, c-format
+#. c-format
 msgid "Failed to generate delta %s (%.10s): "
 msgstr "Ошибка при создании дельты %s (%.10s): %s\n"
 
 #: app/flatpak-builtins-build-update-repo.c:206
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to generate delta %s (%.10s-%.10s): "
 msgstr "Ошибка при создании дельты %s (%.10s-%.10s): %s\n"
 
@@ -964,19 +956,19 @@ msgstr "Удалено %u объектов, %s освобождено\n"
 
 #: app/flatpak-builtins-config.c:41
 msgid "List configuration keys and values"
-msgstr ""
+msgstr "Список конфигурационных ключей и значений"
 
 #: app/flatpak-builtins-config.c:42
 msgid "Get configuration for KEY"
-msgstr ""
+msgstr "Получить конфигурацию для КЛЮЧА"
 
 #: app/flatpak-builtins-config.c:43
 msgid "Set configuration for KEY to VALUE"
-msgstr ""
+msgstr "Установить конфигурацию для КЛЮЧА в ЗНАЧЕНИЕ"
 
 #: app/flatpak-builtins-config.c:44
 msgid "Unset configuration for KEY"
-msgstr ""
+msgstr "Удалить конфигурацию для КЛЮЧА"
 
 #: app/flatpak-builtins-config.c:81
 #, c-format
@@ -984,34 +976,29 @@ msgid "'%s' does not look like a language code"
 msgstr ""
 
 #: app/flatpak-builtins-config.c:128
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown configure key '%s'"
-msgstr "Неизвестная команда '%s'"
+msgstr "Неизвестный конфигурационный ключ '%s'"
 
 #: app/flatpak-builtins-config.c:150
-#, fuzzy
 msgid "Too many arguments for --list"
-msgstr "Слишком много аргументов"
+msgstr "Слишком много аргументов для --list"
 
 #: app/flatpak-builtins-config.c:180 app/flatpak-builtins-config.c:228
-#, fuzzy
 msgid "You must specify KEY"
-msgstr "Должно быть указано ПРИЛОЖЕНИЕ"
+msgstr "Должен быть указан КЛЮЧ"
 
 #: app/flatpak-builtins-config.c:182 app/flatpak-builtins-config.c:206
-#, fuzzy
 msgid "Too many arguments for --get"
-msgstr "Слишком много аргументов"
+msgstr "Слишком много аргументов для --get"
 
 #: app/flatpak-builtins-config.c:204
-#, fuzzy
 msgid "You must specify KEY and VALUE"
-msgstr "Должно быть указано ПРИЛОЖЕНИЕ"
+msgstr "Должны быть указаны КЛЮЧ И ЗНАЧЕНИЕ"
 
 #: app/flatpak-builtins-config.c:230
-#, fuzzy
 msgid "Too many arguments for --unset"
-msgstr "Слишком много аргументов"
+msgstr "Слишком много аргументов для --unset"
 
 #: app/flatpak-builtins-config.c:249
 msgid "[KEY [VALUE]] - Manage configuration"
