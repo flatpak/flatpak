@@ -351,7 +351,19 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
     status = fsck_commit (repo, checksum, object_status_cache);
     if (status != FSCK_STATUS_OK)
       {
-        g_printerr (_("Deleting ref %s due to missing objects\n"), refspec);
+        switch (status)
+          {
+          case FSCK_STATUS_HAS_MISSING_OBJECTS:
+            g_printerr (_("Deleting ref %s due to missing objects\n"), refspec);
+            break;
+          case FSCK_STATUS_HAS_INVALID_OBJECTS:
+            g_printerr (_("Deleting ref %s due to invalid objects\n"), refspec);
+            break;
+          default:
+            g_printerr (_("Deleting ref %s due to %d\n"), refspec, status);
+            break;
+          }
+
         (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
       }
   }
