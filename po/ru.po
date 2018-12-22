@@ -4125,7 +4125,7 @@ msgstr ""
 
 #: common/flatpak-transaction.c:2822
 msgid "Aborted by user"
-msgstr "Прервано полльзователем"
+msgstr "Прервано пользователем"
 
 #: common/flatpak-transaction.c:2848
 #, c-format
@@ -4138,11 +4138,11 @@ msgstr ""
 
 #: common/flatpak-utils.c:728
 msgid "Name can't be empty"
-msgstr ""
+msgstr "Имя не может быть пустым"
 
 #: common/flatpak-utils.c:735
 msgid "Name can't be longer than 255 characters"
-msgstr ""
+msgstr "Имя не может быть больше 255 символов"
 
 #: common/flatpak-utils.c:748
 msgid "Name can't start with a period"
@@ -4177,7 +4177,7 @@ msgstr ""
 
 #: common/flatpak-utils.c:991
 msgid "Branch can't be empty"
-msgstr ""
+msgstr "Ветка не может быть пустой"
 
 #: common/flatpak-utils.c:1001
 #, c-format
@@ -4329,7 +4329,7 @@ msgstr "Показать установленные приложения"
 #: system-helper/org.freedesktop.Flatpak.policy.in:24
 #: system-helper/org.freedesktop.Flatpak.policy.in:42
 msgid "Authentication is required to install software"
-msgstr ""
+msgstr "Требуется авторизация для установки программ"
 
 #. SECURITY:
 #. - Normal users need admin authentication to install software
@@ -4355,7 +4355,7 @@ msgstr "Показать установленные приложения"
 #: system-helper/org.freedesktop.Flatpak.policy.in:61
 #: system-helper/org.freedesktop.Flatpak.policy.in:80
 msgid "Authentication is required to update software"
-msgstr ""
+msgstr "Требуется авторизация для обновления программ"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update a
@@ -4378,7 +4378,7 @@ msgstr "ПУТЬ - Обновить метаданные репозитория"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:95
 msgid "Authentication is required to update remote info"
-msgstr ""
+msgstr "Требуется авторизация для обновления удаленной информации"
 
 #. SECURITY:
 #. - Normal users do not need authentication to modify the
@@ -4386,25 +4386,23 @@ msgstr ""
 #. - Note that we install polkit rules that allow local users
 #. in the wheel group to modify repos without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:111
-#, fuzzy
 msgid "Update system repository"
-msgstr "Обновить файл со сводной информацией в репозитории"
+msgstr "Обновить системный репозиторий"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:112
 msgid "Authentication is required to modify a system repository"
-msgstr ""
+msgstr "Требуется авторизация для изменения системного репозитория"
 
 #. SECURITY:
 #. - Normal users need admin authentication to install software
 #. system-wide.
 #: system-helper/org.freedesktop.Flatpak.policy.in:126
-#, fuzzy
 msgid "Install bundle"
-msgstr "установить пакет"
+msgstr "Установить пакет"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:127
 msgid "Authentication is required to install software from $(path)"
-msgstr ""
+msgstr "Требуется авторизация для установки программ из $(path)"
 
 #. SECURITY:
 #. - Normal users need admin authentication to uninstall software
@@ -4412,13 +4410,12 @@ msgstr ""
 #. - Note that we install polkit rules that allow local users
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:144
-#, fuzzy
 msgid "Uninstall runtime"
-msgstr "Показать установленные среды исполнения"
+msgstr "Удалить среду исполнения"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:145
 msgid "Authentication is required to uninstall software"
-msgstr ""
+msgstr "Требуется авторизация для удаления программ"
 
 #. SECURITY:
 #. - Normal users need admin authentication to uninstall software
@@ -4426,37 +4423,34 @@ msgstr ""
 #. - Note that we install polkit rules that allow local users
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:161
-#, fuzzy
 msgid "Uninstall app"
-msgstr "установить"
+msgstr "Удалить программу"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:162
 msgid "Authentication is required to uninstall $(ref)"
-msgstr ""
+msgstr "Требуется авторизация для удаления ${ref}"
 
 #. SECURITY:
 #. - Normal users need admin authentication to configure system-wide
 #. software repositories.
 #: system-helper/org.freedesktop.Flatpak.policy.in:177
-#, fuzzy
 msgid "Configure Remote"
-msgstr "Удалить настроенный удалённый репозиторий"
+msgstr "Настроить удалённый репозиторий"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:178
 msgid "Authentication is required to configure software repositories"
-msgstr ""
+msgstr "Требуется авторизация для настройки репозиториев программ"
 
 #. SECURITY:
 #. - Normal users need admin authentication to configure the system-wide
 #. Flatpak installation.
 #: system-helper/org.freedesktop.Flatpak.policy.in:192
-#, fuzzy
 msgid "Configure"
-msgstr "Удалить настроенный удалённый репозиторий"
+msgstr "Настроить"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:193
 msgid "Authentication is required to configure software installation"
-msgstr ""
+msgstr "Требуется авторизация для настройки установки программ"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update
@@ -4465,13 +4459,12 @@ msgstr ""
 #. - Changing this to anything other than 'yes' will break unattended
 #. updates.
 #: system-helper/org.freedesktop.Flatpak.policy.in:210
-#, fuzzy
 msgid "Update appstream"
-msgstr "Обновить ветку appstream для удалённого репозитория"
+msgstr "Обновить ветку appstream"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:211
 msgid "Authentication is required to update information about software"
-msgstr ""
+msgstr "Требуется авторизация для обновления информации о программах"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update
@@ -4480,13 +4473,12 @@ msgstr ""
 #. - Changing this to anything other than 'yes' will break unattended
 #. updates.
 #: system-helper/org.freedesktop.Flatpak.policy.in:228
-#, fuzzy
 msgid "Update metadata"
-msgstr "ПУТЬ - Обновить метаданные репозитория"
+msgstr "Обновить метаданные репозитория"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:229
 msgid "Authentication is required to update metadata"
-msgstr ""
+msgstr "Требуется авторизация для обновления метаданных"
 
 #, fuzzy
 #~ msgid "Architecture"
