@@ -13,15 +13,39 @@ else
 AM_TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 
-testlibrary_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) -DFLATPAK_COMPILATION
+testlibrary_CFLAGS = \
+	$(AM_CFLAGS) \
+	$(BASE_CFLAGS) \
+	$(OSTREE_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+	$(NULL)
 testlibrary_LDADD = \
+	$(AM_LDADD) \
+	$(BASE_LIBS) \
+	$(OSTREE_LIBS) \
+	libglnx.la \
+	libflatpak.la \
+	$(NULL)
+testlibrary_SOURCES = tests/testlibrary.c
+
+testcommon_CFLAGS = \
+	$(AM_CFLAGS) \
+	$(BASE_CFLAGS) \
+	$(OSTREE_CFLAGS) \
+	$(SOUP_CFLAGS) \
+	$(JSON_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+	$(NULL)
+testcommon_LDADD = \
              $(AM_LDADD) \
              $(BASE_LIBS) \
              $(OSTREE_LIBS) \
+	     $(SOUP_LIBS) \
+	     $(JSON_LIBS) \
              libglnx.la \
-             libflatpak.la \
+             libflatpak-common.la \
              $(NULL)
-testlibrary_SOURCES = tests/testlibrary.c
+testcommon_SOURCES = tests/testcommon.c
 
 tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
 	-DFLATPAK_COMPILATION \
@@ -127,7 +151,7 @@ test_scripts = ${TEST_MATRIX}
 dist_test_scripts = ${TEST_MATRIX_DIST}
 dist_installed_test_extra_scripts += ${TEST_MATRIX_EXTRA_DIST}
 
-test_programs = testlibrary
+test_programs = testlibrary testcommon
 test_extra_programs = tests/httpcache
 
 @VALGRIND_CHECK_RULES@
