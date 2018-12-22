@@ -567,22 +567,25 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       g_autoptr(GError) first_error = NULL;
       g_autoptr(GError) second_error = NULL;
       g_autoptr(GMainContextPopDefault) main_context = NULL;
+      g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
 
       /* Work around ostree-pull spinning the default main context for the sync calls */
       main_context = flatpak_main_context_new_default ();
+
+      ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
       if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
                                              arg_origin,
                                              new_branch,
                                              NULL,
-                                             NULL,
+                                             ostree_progress,
                                              NULL, &first_error))
         {
           if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
                                                  arg_origin,
                                                  old_branch,
                                                  NULL,
-                                                 NULL,
+                                                 ostree_progress,
                                                  NULL, &second_error))
             {
               g_prefix_error (&first_error, "Error updating appstream2: ");
