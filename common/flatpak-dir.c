@@ -28,7 +28,6 @@
 #include <sys/file.h>
 #include <sys/types.h>
 #include <utime.h>
-#include <glnx-console.h>
 
 #include <glib/gi18n-lib.h>
 #include <glib/gstdio.h>
@@ -3756,38 +3755,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                        error);
 }
 
-static void
-default_progress_changed (OstreeAsyncProgress *progress,
-                          gpointer             user_data)
-{
-  guint outstanding_extra_data;
-  guint64 transferred_extra_data_bytes;
-  guint64 total_extra_data_bytes;
-
-  outstanding_extra_data = ostree_async_progress_get_uint (progress, "outstanding-extra-data");
-  total_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "total-extra-data-bytes");
-  transferred_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "transferred-extra-data-bytes");
-
-  if (outstanding_extra_data > 0)
-    {
-      g_autofree char *transferred = g_format_size (transferred_extra_data_bytes);
-      g_autofree char *total = g_format_size (total_extra_data_bytes);
-      g_autofree char *line = g_strdup_printf ("Downloading extra data %s/%s", transferred, total);
-      glnx_console_text (line);
-    }
-  else
-    {
-      g_autoptr(GVariant) outstanding_fetches = NULL;
-      /* We get some extra calls before we've really started due to the initialization of the
-         extra data, so ignore those */
-      outstanding_fetches = ostree_async_progress_get_variant (progress, "outstanding-fetches");
-      if (outstanding_fetches == NULL)
-        return;
-
-      ostree_repo_pull_default_console_progress_changed (progress, user_data);
-    }
-}
-
 /* Get the configured collection-id for @remote_name, squashing empty strings into
  * %NULL. Return %TRUE if the ID was fetched successfully, or if it was unset or
  * empty. */
@@ -4451,8 +4418,6 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   g_autofree char *registry_uri = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *latest_rev = NULL;
-  g_auto(GLnxConsoleRef) console = { 0, };
-  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *oci_repository = NULL;
@@ -4488,16 +4453,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   if (registry == NULL)
     return FALSE;
 
-  if (progress == NULL)
-    {
-      glnx_console_lock (&console);
-      if (console.is_tty)
-        {
-          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
-          progress = console_progress;
-        }
-    }
-
+  g_assert (progress != NULL);
   oci_pull_init_progress (progress);
 
   g_debug ("Mirroring OCI image %s", oci_digest);
@@ -4532,8 +4488,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *oci_repository = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *checksum = NULL;
-  g_auto(GLnxConsoleRef) console = { 0, };
-  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GVariant) summary_element = NULL;
   g_autofree char *latest_alt_commit = NULL;
   g_autoptr(GVariant) metadata = NULL;
@@ -4582,16 +4536,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (repo == NULL)
     repo = self->repo;
 
-  if (progress == NULL)
-    {
-      glnx_console_lock (&console);
-      if (console.is_tty)
-        {
-          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
-          progress = console_progress;
-        }
-    }
-
+  g_assert (progress != NULL);
   oci_pull_init_progress (progress);
 
   g_debug ("Pulling OCI image %s", oci_digest);
@@ -4640,8 +4585,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
   g_autofree char *rev = NULL;
   g_autofree char *url = NULL;
 
-  g_auto(GLnxConsoleRef) console = { 0, };
-  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
   const OstreeRepoFinderResult * const *results;
@@ -4678,16 +4621,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
   if (*url == 0)
     return TRUE; /* Empty url, silently disables updates */
 
-  /* Set up progress reporting. */
-  if (progress == NULL)
-    {
-      glnx_console_lock (&console);
-      if (console.is_tty)
-        {
-          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
-          progress = console_progress;
-        }
-    }
+  g_assert (progress != NULL);
 
   /* We get the rev ahead of time so that we know it for looking up e.g. extra-data
      and to make sure we're atomically using a single rev if we happen to do multiple
@@ -4872,8 +4806,6 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   GVariantBuilder builder;
   g_autoptr(GVariant) options = NULL;
   g_auto(GVariantBuilder) refs_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
-  g_auto(GLnxConsoleRef) console = { 0, };
-  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   gboolean res;
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
   const char *refs[2] = { NULL, NULL };
@@ -4885,15 +4817,7 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   if (error == NULL)
     error = &dummy_error;
 
-  if (progress == NULL)
-    {
-      glnx_console_lock (&console);
-      if (console.is_tty)
-        {
-          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
-          progress = console_progress;
-        }
-    }
+  g_assert (progress != NULL);
 
   if (!repo_get_remote_collection_id (repo, remote_name, &collection_id, error))
     return FALSE;
