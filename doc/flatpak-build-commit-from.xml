@@ -184,6 +184,32 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--end-of-life=REASON</option></term>
+
+                <listitem><para>
+                    Mark build as end-of-life
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--timestamp=TIMESTAMP</option></term>
+
+                <listitem><para>
+                    Override the timestamp of the commit. Use an ISO 8601 formatted
+                    date, or NOW for the current time
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--disable-fsync</option></term>
+
+                <listitem><para>
+                    Don't fsync when writing to the repository. This can result in data loss in exceptional situations, but can improve performance when
+                    working with temporary or test repositories.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
