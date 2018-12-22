@@ -9,6 +9,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-table-printer.h"
+#include "parse-datetime.h"
 
 static void
 test_has_path_prefix (void)
@@ -651,6 +652,32 @@ test_table_shrink (void)
   g_print_buffer = NULL;
 }
 
+static void
+test_parse_datetime (void)
+{
+  struct timespec ts;
+  struct timespec now;
+  gboolean ret;
+  g_autoptr(GDateTime) dt = NULL;
+  GTimeVal tv;
+
+  clock_gettime (CLOCK_REALTIME, &now);
+  ret = parse_datetime (&ts, "NOW", NULL);
+  g_assert (ret);
+
+  g_assert_true (ts.tv_sec == now.tv_sec); // close enough
+
+  ret = parse_datetime (&ts, "2018-10-29 00:19:07 +0000", NULL);
+  dt = g_date_time_new_utc (2018, 10, 29, 0, 19, 7);
+  g_date_time_to_timeval (dt, &tv);
+
+  g_assert_true (tv.tv_sec == ts.tv_sec &&
+                 tv.tv_usec == ts.tv_nsec / 1000);
+
+  ret = parse_datetime (&ts, "nonsense", NULL);
+  g_assert_false (ret);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -677,6 +704,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/app/table", test_table);
   g_test_add_func ("/app/table-expand", test_table_expand);
   g_test_add_func ("/app/table-shrink", test_table_shrink);
+  g_test_add_func ("/app/parse-datetime", test_parse_datetime);
 
   res = g_test_run ();
 

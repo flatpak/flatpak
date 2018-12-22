@@ -33,6 +33,11 @@ libflatpak_app_la_SOURCES = \
 	app/flatpak-builtins-utils.c \
 	app/flatpak-table-printer.c \
 	app/flatpak-table-printer.h \
+	app/parse-datetime.h \
+	$(NULL)
+
+nodist_libflatpak_app_la_SOURCES = \
+	app/parse-datetime.c \
 	$(NULL)
 
 libflatpak_app_la_LIBADD = \
@@ -118,7 +123,6 @@ flatpak_SOURCES = \
 
 nodist_flatpak_SOURCES = \
 	$(flatpak_dbus_built_sources) \
-	app/parse-datetime.c \
 	$(NULL)
 
 app/parse-datetime.c: app/parse-datetime.y Makefile
