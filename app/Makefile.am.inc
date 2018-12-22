@@ -26,11 +26,46 @@ polkit_sources = \
 	$(NULL)
 endif
 
+noinst_LTLIBRARIES += libflatpak-app.la
+
+libflatpak_app_la_SOURCES = \
+	app/flatpak-builtins-utils.h \
+	app/flatpak-builtins-utils.c \
+	app/flatpak-table-printer.c \
+	app/flatpak-table-printer.h \
+	$(NULL)
+
+libflatpak_app_la_LIBADD = \
+	$(AM_LDADD) \
+	$(BASE_LIBS) \
+	$(OSTREE_LIBS) \
+	$(SOUP_LIBS) \
+	$(JSON_LIBS) \
+	$(APPSTREAM_GLIB_LIBS) \
+	$(SYSTEMD_LIBS) \
+	$(POLKIT_LIBS) \
+	libglnx.la \
+	libflatpak-common.la \
+	$(NULL)
+
+libflatpak_app_la_CFLAGS = \
+	$(AM_CFLAGS) \
+	$(BASE_CFLAGS) \
+	$(OSTREE_CFLAGS) \
+	$(SOUP_CFLAGS) \
+	$(JSON_CFLAGS) \
+	$(APPSTREAM_GLIB_CFLAGS) \
+	 $(SYSTEMD_CFLAGS) \
+	$(POLKIT_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+        -I$(srcdir)/app \
+        -I$(builddir)/app \
+        -DLOCALEDIR=\"$(localedir)\" \
+	$(NULL)
+
 flatpak_SOURCES = \
 	app/flatpak-main.c \
 	app/flatpak-builtins.h \
-	app/flatpak-builtins-utils.h \
-	app/flatpak-builtins-utils.c \
 	app/flatpak-builtins-remote-add.c \
 	app/flatpak-builtins-remote-modify.c \
 	app/flatpak-builtins-remote-delete.c \
@@ -71,8 +106,6 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-create-usb.c \
 	app/flatpak-builtins-kill.c \
 	app/flatpak-builtins-history.c \
-	app/flatpak-table-printer.c \
-	app/flatpak-table-printer.h \
 	app/flatpak-complete.c \
 	app/flatpak-complete.h \
 	app/flatpak-cli-transaction.c \
@@ -94,10 +127,31 @@ app/parse-datetime.c: app/parse-datetime.y Makefile
 BUILT_SOURCES += $(flatpak_dbus_built_sources)
 CLEANFILES += app/parse-datetime.c $(flatpak_dbus_built_sources)
 
-flatpak_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) $(SYSTEMD_LIBS) $(POLKIT_LIBS) \
-	libglnx.la libflatpak-common.la
-flatpak_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) $(SYSTEMD_CFLAGS) $(POLKIT_CFLAGS) \
+flatpak_LDADD = \
+	$(AM_LDADD) \
+	$(BASE_LIBS) \
+	$(OSTREE_LIBS) \
+	$(SOUP_LIBS) \
+	$(JSON_LIBS) \
+	$(APPSTREAM_GLIB_LIBS) \
+	$(SYSTEMD_LIBS) \
+	$(POLKIT_LIBS) \
+	libglnx.la \
+	libflatpak-app.la \
+	libflatpak-common.la \
+	$(NULL)
+
+flatpak_CFLAGS = \
+	$(AM_CFLAGS) \
+	$(BASE_CFLAGS) \
+	$(OSTREE_CFLAGS) \
+	$(SOUP_CFLAGS) \
+	$(JSON_CFLAGS) \
+	$(APPSTREAM_GLIB_CFLAGS) \
+	$(SYSTEMD_CFLAGS) \
+	$(POLKIT_CFLAGS) \
 	-DFLATPAK_COMPILATION \
         -I$(srcdir)/app \
         -I$(builddir)/app \
-        -DLOCALEDIR=\"$(localedir)\"
+        -DLOCALEDIR=\"$(localedir)\" \
+	$(NULL)
