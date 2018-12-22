@@ -74,6 +74,9 @@ gzip -c > ${DIR}/files/share/app-info/xmls/${APP_ID}.xml.gz <<EOF
       <category>Utility</category>
     </categories>
     <icon height="64" width="64" type="cached">64x64/org.gnome.gedit.png</icon>
+    <releases>
+      <release timestamp="1525132800" version="0.0.1"/>
+    </releases>
   </component>
 </components>
 EOF
