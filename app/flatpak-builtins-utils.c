@@ -862,18 +862,18 @@ column_filter (Column *columns,
 {
   g_auto(GStrv) cols = g_strsplit (col_arg, ",", 0);
   int n_cols = g_strv_length (cols);
-  Column *result = g_new0 (Column, n_cols + 1);
+  g_autofree Column *result = g_new0 (Column, n_cols + 1);
   int i;
 
   for (i = 0; i < n_cols; i++)
     {
       int idx = find_column (columns, cols[i], error);
       if (idx < 0)
-        return FALSE;
+        return NULL;
       result[i] = columns[idx];
     }
 
-  return result;
+  return g_steal_pointer (&result);
 }
 
 static gboolean
