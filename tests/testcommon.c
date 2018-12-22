@@ -7,6 +7,8 @@
 #include <glib.h>
 #include "flatpak.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-builtins-utils.h"
+#include "flatpak-table-printer.h"
 
 static void
 test_has_path_prefix (void)
@@ -30,7 +32,11 @@ test_path_match_prefix (void)
 static void
 test_fancy_output (void)
 {
-  g_assert_false (flatpak_fancy_output ()); /* always false in tests */
+  g_assert_false (flatpak_fancy_output ()); // no tty
+  flatpak_enable_fancy_output ();
+  g_assert_true (flatpak_fancy_output ());
+  flatpak_disable_fancy_output ();
+  g_assert_false (flatpak_fancy_output ());
 }
 
 static void
@@ -350,6 +356,301 @@ test_lang_from_locale (void)
   g_assert_cmpstr (lang, ==, "sv");
 }
 
+static void
+test_looks_like_branch (void)
+{
+  g_assert_false (looks_like_branch ("abc/d"));
+  g_assert_false (looks_like_branch ("ab.c.d"));
+  g_assert_true (looks_like_branch ("master"));
+  g_assert_true (looks_like_branch ("stable"));
+  g_assert_true (looks_like_branch ("3.30"));
+}
+
+static void
+test_columns (void)
+{
+  Column columns[] = {
+    { "column1", "col1", "col1",       1, 1 },
+    { "install", "install", "install", 0, 1 },
+    { "helper", "helper", "helper",    1, 0 },
+    { "column2", "col2", "col2",       0, 0 },
+    { NULL, }
+  };
+  Column *cols;
+  g_autofree char *help = NULL;
+  g_autoptr(GError) error = NULL;
+  const char *args[3];
+
+  help = column_help (columns);
+  g_assert_cmpstr (help, ==,
+                   "Available columns:\n"
+                   "  column1     col1\n"
+                   "  install     install\n"
+                   "  helper      helper\n"
+                   "  column2     col2\n"
+                   "  all         Show all columns\n"
+                   "  help        Show available columns\n");
+
+  cols = handle_column_args (columns, FALSE, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (cols[0].name, ==, "column1");
+  g_assert_cmpstr (cols[1].name, ==, "install");
+  g_assert_null (cols[2].name);
+  g_free (cols);
+
+  cols = handle_column_args (columns, TRUE, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (cols[0].name, ==, "column1");
+  g_assert_cmpstr (cols[1].name, ==, "install");
+  g_assert_cmpstr (cols[2].name, ==, "helper");
+  g_assert_null (cols[3].name);
+  g_free (cols);
+
+  args[0] = "all";
+  args[1] = NULL;
+  cols = handle_column_args (columns, FALSE, args, &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (cols[0].name, ==, "column1");
+  g_assert_cmpstr (cols[1].name, ==, "install");
+  g_assert_cmpstr (cols[2].name, ==, "helper");
+  g_assert_null (cols[3].name);
+  g_free (cols);
+
+  args[0] = "column1,column2";
+  args[1] = "helper";
+  args[2] = NULL;
+  cols = handle_column_args (columns, FALSE, args, &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (cols[0].name, ==, "column1");
+  g_assert_cmpstr (cols[1].name, ==, "column2");
+  g_assert_cmpstr (cols[2].name, ==, "helper");
+  g_assert_null (cols[3].name);
+  g_free (cols);
+
+  args[0] = "column";
+  args[1] = NULL;
+  cols = handle_column_args (columns, FALSE, args, &error);
+  g_assert_null (cols);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+  g_clear_error (&error);
+
+  args[0] = "app";
+  args[1] = NULL;
+  cols = handle_column_args (columns, FALSE, args, &error);
+  g_assert_null (cols);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_FAILED);
+  g_clear_error (&error);
+}
+
+typedef struct {
+  const char *in;
+  int len;
+  FlatpakEllipsizeMode mode;
+  const char *out;
+} EllipsizeData;
+
+static EllipsizeData ellipsize[] = {
+  { "abcdefghijklmnopqrstuvwxyz", 10, FLATPAK_ELLIPSIZE_MODE_NONE,   "abcdefghijklmnopqrstuvwxyz" },
+  { "abcdefghijklmnopqrstuvwxyz", 10, FLATPAK_ELLIPSIZE_MODE_END,    "abcdefghi…" },
+  { "abcdefghijklmnopqrstuvwxyz", 10, FLATPAK_ELLIPSIZE_MODE_MIDDLE, "abcde…wxyz" },
+  { "abcdefghijklmnopqrstuvwxyz", 10, FLATPAK_ELLIPSIZE_MODE_START,  "…rstuvwxyz" },
+  { "ģ☢ab", 3, FLATPAK_ELLIPSIZE_MODE_START,  "…ab" },
+  { "ģ☢ab", 3, FLATPAK_ELLIPSIZE_MODE_MIDDLE, "ģ…b" },
+  { "ģ☢ab", 3, FLATPAK_ELLIPSIZE_MODE_END,    "ģ☢…" }
+};
+
+static void
+test_string_ellipsize (void)
+{
+  gsize idx;
+
+  for (idx = 0; idx < G_N_ELEMENTS (ellipsize); idx++)
+    {
+      EllipsizeData *data = &ellipsize[idx];
+      g_autofree char *ret = NULL;
+
+      ret = ellipsize_string_full (data->in, data->len, data->mode);
+      g_assert_cmpstr (ret, ==, data->out);
+    }
+}
+
+static void
+test_table (void)
+{
+  GPrintFunc print_func;
+  FlatpakTablePrinter *printer;
+
+  g_assert_null (g_print_buffer);
+  g_print_buffer = g_string_new ("");
+  print_func = g_set_print_handler (my_print_func);
+  flatpak_enable_fancy_output ();
+
+  printer = flatpak_table_printer_new ();
+
+  flatpak_table_printer_set_column_title (printer, 0, "Column1");
+  flatpak_table_printer_set_column_title (printer, 1, "Column2");
+
+  flatpak_table_printer_add_column (printer, "text1");
+  flatpak_table_printer_add_column (printer, "text2");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_add_column (printer, "text3");
+  flatpak_table_printer_add_column (printer, "text4");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_print (printer);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Column1 Column2" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "text1   text2\n"
+                   "text3   text4\n");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_set_cell (printer, 0, 0, "newtext1");
+  flatpak_table_printer_set_decimal_cell (printer, 0, 1, "0.123");
+  flatpak_table_printer_set_decimal_cell (printer, 1, 1, "123.0");
+  flatpak_table_printer_print (printer);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Column1  Column2" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "newtext1   0.123\n"
+                   "text3    123.0\n");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_free (printer);
+
+  flatpak_disable_fancy_output ();
+  g_set_print_handler (print_func);
+  g_string_free (g_print_buffer, TRUE);
+  g_print_buffer = NULL;
+}
+
+static void
+test_table_expand (void)
+{
+  GPrintFunc print_func;
+  FlatpakTablePrinter *printer;
+  int rows, cols;
+
+  g_assert_null (g_print_buffer);
+  g_print_buffer = g_string_new ("");
+  print_func = g_set_print_handler (my_print_func);
+  flatpak_enable_fancy_output ();
+
+  printer = flatpak_table_printer_new ();
+
+  flatpak_table_printer_set_column_title (printer, 0, "Column1");
+  flatpak_table_printer_set_column_title (printer, 1, "Column2");
+  flatpak_table_printer_set_column_title (printer, 2, "Column3");
+
+  flatpak_table_printer_add_column (printer, "text1");
+  flatpak_table_printer_add_column (printer, "text2");
+  flatpak_table_printer_add_column (printer, "text3");
+  flatpak_table_printer_finish_row (printer);
+  flatpak_table_printer_add_span (printer, "012345678901234567890234567890123456789");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_set_column_expand (printer, 0, TRUE);
+
+  flatpak_table_printer_print_full (printer, 0, 40, &rows, &cols);
+
+  g_assert_cmpint (rows, ==, 3);
+  g_assert_cmpint (cols, ==, 34);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Column1            Column2 Column3" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "text1              text2   text3" "\n"
+                   "012345678901234567890234567890123456789");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_set_column_expand (printer, 2, TRUE);
+
+  flatpak_table_printer_print_full (printer, 0, 40, &rows, &cols);
+
+  g_assert_cmpint (rows, ==, 3);
+  g_assert_cmpint (cols, ==, 34);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Column1       Column2 Column3" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "text1         text2   text3" "\n"
+                   "012345678901234567890234567890123456789");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_free (printer);
+
+  flatpak_disable_fancy_output ();
+  g_set_print_handler (print_func);
+  g_string_free (g_print_buffer, TRUE);
+  g_print_buffer = NULL;
+}
+
+static void
+test_table_shrink (void)
+{
+  GPrintFunc print_func;
+  FlatpakTablePrinter *printer;
+  int rows, cols;
+
+  g_assert_null (g_print_buffer);
+  g_print_buffer = g_string_new ("");
+  print_func = g_set_print_handler (my_print_func);
+  flatpak_enable_fancy_output ();
+
+  printer = flatpak_table_printer_new ();
+
+  flatpak_table_printer_set_column_title (printer, 0, "Column1");
+  flatpak_table_printer_set_column_title (printer, 1, "Column2");
+  flatpak_table_printer_set_column_title (printer, 2, "Column3");
+
+  flatpak_table_printer_add_column (printer, "a very long text");
+  flatpak_table_printer_add_column (printer, "text2");
+  flatpak_table_printer_add_column (printer, "long text too");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_add_column (printer, "short");
+  flatpak_table_printer_add_column (printer, "short");
+  flatpak_table_printer_add_column (printer, "short");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_add_span (printer, "0123456789012345678902345");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_set_column_ellipsize (printer, 0, FLATPAK_ELLIPSIZE_MODE_END);
+
+  flatpak_table_printer_print_full (printer, 0, 25, &rows, &cols);
+
+  g_assert_cmpint (rows, ==, 4);
+  g_assert_cmpint (cols, ==, 25);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Co… Column2 Column3" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "a … text2   long text too" "\n"
+                   "sh… short   short" "\n"
+                   "0123456789012345678902345");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_set_column_ellipsize (printer, 2, FLATPAK_ELLIPSIZE_MODE_MIDDLE);
+
+  flatpak_table_printer_print_full (printer, 0, 25, &rows, &cols);
+
+  g_assert_cmpint (rows, ==, 4);
+  g_assert_cmpint (cols, ==, 25);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Column1  Column2 Column3" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "a very … text2   long…too" "\n"
+                   "short    short   short" "\n"
+                   "0123456789012345678902345");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_free (printer);
+
+  flatpak_disable_fancy_output ();
+  g_set_print_handler (print_func);
+  g_string_free (g_print_buffer, TRUE);
+  g_print_buffer = NULL;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -370,6 +671,12 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/number-prompt", test_number_prompt);
   g_test_add_func ("/common/subpaths-merge", test_subpaths_merge);
   g_test_add_func ("/common/lang-from-locale", test_lang_from_locale);
+  g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
+  g_test_add_func ("/app/columns", test_columns);
+  g_test_add_func ("/app/string-ellipsize", test_string_ellipsize);
+  g_test_add_func ("/app/table", test_table);
+  g_test_add_func ("/app/table-expand", test_table_expand);
+  g_test_add_func ("/app/table-shrink", test_table_shrink);
 
   res = g_test_run ();
 

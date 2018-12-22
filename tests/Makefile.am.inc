@@ -34,17 +34,21 @@ testcommon_CFLAGS = \
 	$(OSTREE_CFLAGS) \
 	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
+	$(APPSTREAM_GLIB_CFLAGS) \
 	-DFLATPAK_COMPILATION \
+	-I$(srcdir)/app \
 	$(NULL)
 testcommon_LDADD = \
-             $(AM_LDADD) \
-             $(BASE_LIBS) \
-             $(OSTREE_LIBS) \
-	     $(SOUP_LIBS) \
-	     $(JSON_LIBS) \
-             libglnx.la \
-             libflatpak-common.la \
-             $(NULL)
+	$(AM_LDADD) \
+	$(BASE_LIBS) \
+	$(OSTREE_LIBS) \
+	$(SOUP_LIBS) \
+	$(JSON_LIBS) \
+	$(APPSTREAM_GLIB_LIBS) \     
+	libglnx.la \
+	libflatpak-common.la \
+	libflatpak-app.la \
+	$(NULL)
 testcommon_SOURCES = tests/testcommon.c
 
 tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
