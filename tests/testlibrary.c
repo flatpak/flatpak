@@ -200,6 +200,7 @@ test_installation_config (void)
   g_autoptr(GError) error = NULL;
   g_autofree char *value;
   gboolean res;
+  guint64 bytes;
 
   path = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
   file = g_file_new_for_path (path);
@@ -231,6 +232,10 @@ test_installation_config (void)
   g_assert_cmpstr (value, ==, "hello");
   g_assert_no_error (error);
   g_clear_pointer (&value, g_free);
+
+  res = flatpak_installation_get_min_free_space_bytes (inst, &bytes, &error);
+  g_assert_true (res);
+  g_assert_no_error (error);
 }
 
 static void
@@ -2004,6 +2009,9 @@ test_transaction_install_uninstall (void)
   g_assert_nonnull (flatpak_installed_ref_get_deploy_dir (ref));
   g_assert_null (flatpak_installed_ref_get_eol (ref));
   g_assert_null (flatpak_installed_ref_get_eol_rebase (ref));
+  g_assert_cmpstr (flatpak_installed_ref_get_appdata_name (ref), ==, "Hello world test app: org.test.Hello");
+  g_assert_cmpstr (flatpak_installed_ref_get_appdata_summary (ref), ==, "Print a greeting");
+  g_assert_cmpstr (flatpak_installed_ref_get_appdata_version (ref), ==, "0.0.1");
   g_object_get (ref,
                 "is-current", &is_current,
                 "origin", &origin,
@@ -3106,6 +3114,44 @@ test_transaction_no_runtime (void)
     }
 }
 
+static void
+test_installation_no_interaction (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  
+  g_assert_false (flatpak_installation_get_no_interaction (inst));
+  flatpak_installation_set_no_interaction (inst, TRUE);
+  g_assert_true (flatpak_installation_get_no_interaction (inst));
+}
+
+static void
+test_installation_unused_refs (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  FlatpakInstalledRef *iref;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  
+  empty_installation (inst);
+
+  iref = flatpak_installation_install (inst, repo_name, FLATPAK_REF_KIND_APP, "org.test.Hello", NULL, "master", NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (iref);
+  g_clear_object (&iref);
+
+  refs = flatpak_installation_list_unused_refs (inst, NULL, NULL, &error);
+  g_assert_nonnull (refs);
+  g_assert_no_error (error);
+  g_assert_cmpint (refs->len, ==, 0);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -3146,6 +3192,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/no-deploy", test_no_deploy);
   g_test_add_func ("/library/bad-remote-name", test_bad_remote_name);
   g_test_add_func ("/library/transaction-no-runtime", test_transaction_no_runtime);
+  g_test_add_func ("/library/installation-no-interaction", test_installation_no_interaction);
+  g_test_add_func ("/library/installation-unused-refs", test_installation_unused_refs);
 
   global_setup ();
 
