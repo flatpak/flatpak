@@ -246,7 +246,7 @@ msgstr ""
 #: app/flatpak-builtins-build.c:386
 #, c-format
 msgid "No extension point matching %s in %s"
-msgstr "Не найдена точка расширения подходящая для %s в %s"
+msgstr "Не найдена точка расширения, подходящая для %s в %s"
 
 #: app/flatpak-builtins-build.c:552
 #, c-format
@@ -425,7 +425,7 @@ msgstr "ПРЕДУПРЕЖДЕНИЕ: Ошибка чтения desktop-file-val
 #: app/flatpak-builtins-build-export.c:359
 #, c-format
 msgid "WARNING: Failed to validate desktop file %s: %s\n"
-msgstr "ПРЕДУПРЕЖДЕНИЕ: Ошибка при валидации файла desktop %s: %s\n"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: Ошибка при проверке файла desktop %s: %s\n"
 
 #: app/flatpak-builtins-build-export.c:374
 #, c-format
@@ -1169,9 +1169,8 @@ msgstr "Не экспортирован\n"
 #: app/flatpak-builtins-list.c:52 app/flatpak-builtins-ps.c:42
 #: app/flatpak-builtins-remote-list.c:44 app/flatpak-builtins-remote-ls.c:54
 #: app/flatpak-builtins-search.c:37
-#, fuzzy
 msgid "What information to show"
-msgstr "ФАЙЛ - Получить информацию об экспортированном файле"
+msgstr "Какую информацию показывать"
 
 #: app/flatpak-builtins-document-list.c:42 app/flatpak-builtins-history.c:52
 #: app/flatpak-builtins-list.c:52 app/flatpak-builtins-ps.c:42
@@ -1209,21 +1208,19 @@ msgid "Application"
 msgstr "Приложение"
 
 #: app/flatpak-builtins-document-list.c:50
-#, fuzzy
 msgid "Show applications with permission"
-msgstr "Показать параметры справки"
+msgstr "Показать приложения с разрешением"
 
 #: app/flatpak-builtins-document-list.c:51
 #: app/flatpak-builtins-permission-list.c:177
 #: app/flatpak-builtins-permission-show.c:142
 #, fuzzy
 msgid "Permissions"
-msgstr "Показать параметры справки"
+msgstr "Разрешения"
 
 #: app/flatpak-builtins-document-list.c:51
-#, fuzzy
 msgid "Show permissions for applications"
-msgstr "Переопределить разрешения для приложения"
+msgstr "Показать разрешения для приложения"
 
 #: app/flatpak-builtins-document-list.c:171
 msgid "[APPID] - List exported files"
@@ -1243,7 +1240,7 @@ msgstr ""
 #: app/flatpak-builtins-enter.c:106
 #, fuzzy
 msgid "INSTANCE and COMMAND must be specified"
-msgstr "Должны быть указаны ID_ИЗОЛ_ПРОЦ и КОМАНДА"
+msgstr "Должны быть указаны  и КОМАНДА"
 
 #: app/flatpak-builtins-enter.c:112
 msgid "Not running as root, may be unable to enter namespace"
@@ -1325,15 +1322,15 @@ msgstr "Время"
 
 #: app/flatpak-builtins-history.c:57
 msgid "Show when the change happend"
-msgstr ""
+msgstr "Показать, когда произошло изменение"
 
 #: app/flatpak-builtins-history.c:58 app/flatpak-cli-transaction.c:844
 msgid "Change"
-msgstr ""
+msgstr "изменение"
 
 #: app/flatpak-builtins-history.c:58
 msgid "Show the kind of change"
-msgstr ""
+msgstr "Показать вид изменений"
 
 #: app/flatpak-builtins-history.c:59 app/flatpak-builtins-list.c:64
 #: app/flatpak-builtins-remote-ls.c:65 app/flatpak-builtins-repo.c:143
@@ -1346,20 +1343,19 @@ msgid "Show the ref"
 msgstr "Показать ссылки"
 
 #: app/flatpak-builtins-history.c:60
-#, fuzzy
 msgid "Show the application/runtime ID"
-msgstr "Запустить приложение"
+msgstr "Показать ID приложения/среды исполнения"
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:61
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:63
 #: app/flatpak-cli-transaction.c:837
 msgid "Arch"
-msgstr ""
+msgstr "Архитектура"
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:61
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:63
 msgid "Show the architecture"
-msgstr ""
+msgstr "Показать архитектуру"
 
 #: app/flatpak-builtins-history.c:62 app/flatpak-builtins-list.c:60
 #: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-remote-ls.c:62
@@ -1369,9 +1365,8 @@ msgstr "Ветка"
 
 #: app/flatpak-builtins-history.c:62 app/flatpak-builtins-list.c:60
 #: app/flatpak-builtins-remote-ls.c:62
-#, fuzzy
 msgid "Show the branch"
-msgstr "Показать только среды исполнения"
+msgstr "Показать ветку"
 
 #: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:63y
 msgid "Installation"
@@ -1383,14 +1378,12 @@ msgid "Show the affected installation"
 msgstr "Показать установленное только для пользователя"
 
 #: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:855
-#, fuzzy
 msgid "Remote"
-msgstr "Нет удалённого репозитория %s"
+msgstr "Удалённый репозиторий"
 
 #: app/flatpak-builtins-history.c:64
-#, fuzzy
 msgid "Show the remote"
-msgstr "Показать отключённые удалённые репозитории"
+msgstr "Показать удалённый репозиторий"
 
 #: app/flatpak-builtins-history.c:65 app/flatpak-builtins-ps.c:53
 #: app/flatpak-builtins-remote-ls.c:66
@@ -1398,79 +1391,72 @@ msgid "Commit"
 msgstr "Коммит"
 
 #: app/flatpak-builtins-history.c:65
-#, fuzzy
 msgid "Show the current commit"
-msgstr "Показать только среды исполнения"
+msgstr "Показать текущий коммит"
 
 #: app/flatpak-builtins-history.c:66
-#, fuzzy
 msgid "Old Commit"
-msgstr "Показать зафиксированные изменения"
+msgstr "Устаревший коммит"
 
 #: app/flatpak-builtins-history.c:66
-#, fuzzy
 msgid "Show the previous commit"
-msgstr "Показать только среды исполнения"
+msgstr "Показать предыдущий коммит"
 
 #: app/flatpak-builtins-history.c:67
-#, fuzzy
 msgid "Show the remote URL"
-msgstr "Показать только среды исполнения"
+msgstr "Показать URL удалённого репозитория"
 
 #: app/flatpak-builtins-history.c:68
 msgid "User"
-msgstr ""
+msgstr "Пользователь"
 
 #: app/flatpak-builtins-history.c:68
-#, fuzzy
 msgid "Show the user doing the change"
-msgstr "Показать только среды исполнения"
+msgstr "Показать пользователя, вносящего изменения"
 
 #: app/flatpak-builtins-history.c:69
 msgid "Tool"
-msgstr ""
+msgstr "Инструментарий"
 
 #: app/flatpak-builtins-history.c:69
 msgid "Show the tool that was used"
-msgstr ""
+msgstr "Показать используемый инструментарий"
 
 #: app/flatpak-builtins-history.c:70 app/flatpak-builtins-list.c:59
 #: app/flatpak-builtins-remote-ls.c:61 app/flatpak-builtins-search.c:44
 msgid "Version"
-msgstr ""
+msgstr "Версия"
 
 #: app/flatpak-builtins-history.c:70
-#, fuzzy
 msgid "Show the Flatpak version"
-msgstr "Запустить приложение"
+msgstr "Показать версию Flatpak"
 
 #: app/flatpak-builtins-history.c:89
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get journal data (%s): %s"
-msgstr "Ошибка чтения зафиксированного изменения %s: "
+msgstr "Ошибка получения данных журнала (%s): %s"
 
 #: app/flatpak-builtins-history.c:144
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open journal: %s"
-msgstr "Ошибка при открытии временного файла flatpak-info: %s"
+msgstr "Ошибка открытия журнала: %s"
 
 #: app/flatpak-builtins-history.c:151
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add match to journal: %s"
-msgstr "Ошибка чтения зафиксированного изменения %s: "
+msgstr "Ошибка добавления совпадения в журнал: %s"
 
 #: app/flatpak-builtins-history.c:441
 msgid " - Show history"
-msgstr ""
+msgstr " - Показать историю"
 
 #: app/flatpak-builtins-history.c:460
-#, fuzzy 
 msgid "Failed to parse the --since option"
-msgstr "Невозможно создать канал синхронизации"
+msgstr "Ошибка разбора параметра --since"
 
 #: app/flatpak-builtins-history.c:471
 msgid "Failed to parse the --until option"
-msgstr ""
+msgstr "Ошибка разбора параметра --until"
 
 #: app/flatpak-builtins-info.c:55
 msgid "Show user installations"
@@ -1490,7 +1476,7 @@ msgstr "Показать ссылки"
 
 #: app/flatpak-builtins-info.c:59 app/flatpak-builtins-remote-info.c:56
 msgid "Show commit"
-msgstr "Показать зафиксированные изменения"
+msgstr "Показать коммит"
 
 #: app/flatpak-builtins-info.c:60
 msgid "Show origin"
@@ -1526,9 +1512,8 @@ msgid "PATH"
 msgstr "ПУТЬ"
 
 #: app/flatpak-builtins-info.c:67
-#, fuzzy
 msgid "Show extensions"
-msgstr "Показать параметры справки"
+msgstr "Показать расширения"
 
 #: app/flatpak-builtins-info.c:68
 #, fuzzy
@@ -1553,101 +1538,95 @@ msgstr ""
 
 #: app/flatpak-builtins-info.c:216 app/flatpak-builtins-remote-info.c:188
 msgid "Warning: Commit has no flatpak metadata\n"
-msgstr ""
+msgstr "Предупреждение: коммиит не содержит метаданных Flatpak\n"
 
 #: app/flatpak-builtins-info.c:222 app/flatpak-builtins-info.c:261
 #: app/flatpak-builtins-info.c:470 app/flatpak-builtins-remote-info.c:209
 #: app/flatpak-builtins-remote-info.c:234
 msgid "ID:"
-msgstr ""
+msgstr "ID:"
 
 #: app/flatpak-builtins-info.c:223 app/flatpak-builtins-info.c:262
 #: app/flatpak-builtins-remote-info.c:210
 #: app/flatpak-builtins-remote-info.c:235
 msgid "Ref:"
-msgstr ""
+msgstr "Ссылка:"
 
 #: app/flatpak-builtins-info.c:224 app/flatpak-builtins-info.c:263
 #: app/flatpak-builtins-remote-info.c:211
 #: app/flatpak-builtins-remote-info.c:236
 msgid "Arch:"
-msgstr ""
+msgstr "Архитектура:"
 
 #: app/flatpak-builtins-info.c:225 app/flatpak-builtins-info.c:264
 #: app/flatpak-builtins-remote-info.c:212
 #: app/flatpak-builtins-remote-info.c:237
-#, fuzzy
 msgid "Branch:"
-msgstr "Используемая ветка"
+msgstr "Ветка:"
 
 #: app/flatpak-builtins-info.c:226 app/flatpak-builtins-info.c:266
 #: app/flatpak-builtins-remote-info.c:214
 #: app/flatpak-builtins-remote-info.c:239
-#, fuzzy
 msgid "Version:"
-msgstr "Показать параметры справки"
+msgstr "Версия:"
 
 #: app/flatpak-builtins-info.c:228 app/flatpak-builtins-info.c:269
 #: app/flatpak-builtins-remote-info.c:216
 #: app/flatpak-builtins-remote-info.c:241
-#, fuzzy
 msgid "Collection:"
-msgstr "Запустить приложение"
+msgstr "Коллекция:"
 
 #: app/flatpak-builtins-info.c:229 app/flatpak-builtins-info.c:270
-#, fuzzy
 msgid "Installation:"
-msgstr "Установка: %s\n"
+msgstr "Установка:"
 
 #: app/flatpak-builtins-info.c:230 app/flatpak-builtins-info.c:271
 #: app/flatpak-builtins-remote-info.c:218
 #: app/flatpak-builtins-remote-info.c:243
-#, fuzzy
 msgid "Installed:"
-msgstr "установить"
+msgstr "Установлен:"
 
 #: app/flatpak-builtins-info.c:232 app/flatpak-builtins-info.c:276
 #: app/flatpak-builtins-remote-info.c:220
 #: app/flatpak-builtins-remote-info.c:248
-#, fuzzy
 msgid "Runtime:"
-msgstr "Используемая среда исполнения"
+msgstr "Среда исполнения:"
 
 #: app/flatpak-builtins-info.c:234 app/flatpak-builtins-info.c:307
 #: app/flatpak-builtins-remote-info.c:221
 #: app/flatpak-builtins-remote-info.c:267
 msgid "Date:"
-msgstr ""
+msgstr "Дата"
 
 #: app/flatpak-builtins-info.c:236 app/flatpak-builtins-info.c:305
 #: app/flatpak-builtins-remote-info.c:222
 #: app/flatpak-builtins-remote-info.c:266
 msgid "Subject:"
-msgstr ""
+msgstr "Заголовок:"
 
 #: app/flatpak-builtins-info.c:239 app/flatpak-builtins-info.c:289
 msgid "Active commit:"
-msgstr ""
+msgstr "Активный коммит"
 
 #: app/flatpak-builtins-info.c:240 app/flatpak-builtins-info.c:292
 msgid "Latest commit:"
-msgstr ""
+msgstr "Последний коммит:"
 
 #: app/flatpak-builtins-info.c:243 app/flatpak-builtins-info.c:297
 #: app/flatpak-builtins-info.c:472 app/flatpak-builtins-remote-info.c:223
 #: app/flatpak-builtins-remote-info.c:259
 msgid "Commit:"
-msgstr ""
+msgstr "Коммит:"
 
 #: app/flatpak-builtins-info.c:245 app/flatpak-builtins-info.c:248
 #: app/flatpak-builtins-info.c:302 app/flatpak-builtins-remote-info.c:225
 #: app/flatpak-builtins-remote-info.c:264
 msgid "Parent:"
-msgstr ""
+msgstr "Родитель:"
 
 #: app/flatpak-builtins-info.c:247 app/flatpak-builtins-info.c:318
 msgid "alt-id:"
-msgstr ""
+msgstr "alt-id:"
 
 #: app/flatpak-builtins-info.c:250 app/flatpak-builtins-info.c:320
 msgid "end-of-life:"
@@ -1661,25 +1640,23 @@ msgstr ""
 #: app/flatpak-builtins-remote-info.c:227
 #: app/flatpak-builtins-remote-info.c:255
 msgid "Sdk:"
-msgstr ""
+msgstr "Sdk:"
 
 #: app/flatpak-builtins-info.c:256 app/flatpak-builtins-info.c:311
 msgid "Subdirectories:"
-msgstr ""
+msgstr "Поддиректории:"
 
 #: app/flatpak-builtins-info.c:267 app/flatpak-builtins-info.c:471
 msgid "Origin:"
-msgstr ""
+msgstr "Источник:"
 
 #: app/flatpak-builtins-info.c:469
-#, fuzzy
 msgid "Extension:"
-msgstr "Показать параметры справки"
+msgstr "Расширение:"
 
 #: app/flatpak-builtins-info.c:473
-#, fuzzy
 msgid "Installed size:"
-msgstr "Установка: %s\n"
+msgstr "Размер при установке:"
 
 #: app/flatpak-builtins-info.c:480
 msgid "Subpaths:"
