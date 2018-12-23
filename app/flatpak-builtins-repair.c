@@ -36,7 +36,10 @@
 #include "flatpak-error.h"
 #include "flatpak-quiet-transaction.h"
 
+static gboolean opt_dry_run;
+
 static GOptionEntry options[] = {
+  { "dry-run", 0, 0, G_OPTION_ARG_NONE, &opt_dry_run, N_("Don't make any changes"), NULL },
   { NULL }
 };
 
@@ -66,8 +69,16 @@ fsck_one_object (OstreeRepo      *repo,
         }
       else
         {
-          g_printerr (_("%s, deleting object\n"), local_error->message);
-          (void) ostree_repo_delete_object (repo, objtype, checksum, NULL, NULL);
+          if (opt_dry_run)
+            {
+              g_printerr (_("Object invalid: %s.%s\n"), checksum,
+                          ostree_object_type_to_string (objtype));
+            }
+          else
+            {
+              g_printerr (_("%s, deleting object\n"), local_error->message);
+              (void)ostree_repo_delete_object (repo, objtype, checksum, NULL, NULL);
+            }
           return FSCK_STATUS_HAS_INVALID_OBJECTS;
         }
     }
@@ -292,7 +303,6 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
                                      FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, cancellable, error))
     return FALSE;
 
-
   dir = g_ptr_array_index (dirs, 0);
 
   if (!flatpak_dir_ensure_repo (dir, cancellable, error))
@@ -340,8 +350,14 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
         /* If so, is it deployed, and from this remote? */
         if (remote == NULL || g_strcmp0 (origin, remote) != 0)
           {
-            g_print (_("Removing non-deployed ref %s…\n"), refspec);
-            (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+            if (!opt_dry_run)
+              {
+                g_print (_("Removing non-deployed ref %s…\n"), refspec);
+                (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+              }
+            else
+              g_print (_("Skipping non-deployed ref %s…\n"), refspec);
+
             continue;
           }
       }
@@ -349,7 +365,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
     g_print (_("Verifying %s…\n"), refspec);
 
     status = fsck_commit (repo, checksum, object_status_cache);
-    if (status != FSCK_STATUS_OK)
+    if (status != FSCK_STATUS_OK && !opt_dry_run)
       {
         switch (status)
           {
@@ -363,10 +379,12 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
             g_printerr (_("Deleting ref %s due to %d\n"), refspec, status);
             break;
           }
-
         (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
       }
   }
+
+  if (opt_dry_run)
+    return TRUE;
 
   g_print (_("Pruning objects\n"));
 
