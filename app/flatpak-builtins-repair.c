@@ -450,6 +450,40 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
         return FALSE;
     }
 
+  if (opt_reinstall_all)
+    {
+      g_print ("Reinstalling appstream\n");
+
+      GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, refspec, const char *, checksum)
+      {
+        g_autofree char *remote = NULL;
+        g_autofree char *ref_name = NULL;
+
+        if (!ostree_parse_refspec (refspec, &remote, &ref_name, error))
+          return FALSE;
+
+        /* Does this look like an appstream ref? */
+        if (g_str_has_prefix (ref_name, "appstream"))
+          {
+            g_auto(GStrv) parts = g_strsplit (ref_name, "/", 0);
+            gboolean changed;
+
+            if (!flatpak_dir_remove_appstream (dir, remote, cancellable, error))
+              {
+                g_prefix_error (error, _("While removing appstream for %s: "), remote);
+                return FALSE;
+              }
+          
+            if (!flatpak_dir_deploy_appstream (dir, remote, parts[1], &changed,
+                 cancellable, error))
+              {
+                g_prefix_error (error, _("While deploying appstream for %s: "), remote);
+                return FALSE;
+              }
+          }
+      }
+    }
+
   return TRUE;
 }
 
