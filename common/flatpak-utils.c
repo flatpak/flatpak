@@ -5415,7 +5415,7 @@ flatpak_format_choices (const char **choices,
 
   g_print ("%s\n\n", s);
   for (i = 0; choices[i]; i++)
-    g_print ("  %d) %s\n", i+1, choices[i]);
+    g_print ("  %2d) %s\n", i+1, choices[i]);
   g_print ("\n");
 }
 
