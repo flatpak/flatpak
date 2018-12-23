@@ -396,6 +396,20 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
       }
   }
 
+  GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, refspec, const char *, checksum)
+  {
+    g_autofree char *remote = NULL;
+    g_autofree char *ref_name = NULL;
+
+    if (!ostree_parse_refspec (refspec, &remote, &ref_name, error))
+      return FALSE;
+
+    if (!flatpak_dir_has_remote (dir, remote, NULL))
+      g_print (_("Remote %s for ref %s is missing\n"), remote, ref_name);
+    else if (flatpak_dir_get_remote_disabled (dir, remote))
+      g_print (_("Remote %s for ref %s is disabled\n"), remote, ref_name);
+  }
+
   if (opt_dry_run)
     return TRUE;
 
