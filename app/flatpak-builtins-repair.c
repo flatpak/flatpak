@@ -310,6 +310,10 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
   repo = flatpak_dir_get_repo (dir);
 
+  g_print ("Working on the %s installation at %s\n",
+           flatpak_dir_get_name_cached (dir),
+           flatpak_file_get_path_cached (flatpak_dir_get_path (dir)));
+
   /*
    * Try to repair a flatpak directory:
    *  + Scan all locally available refs
@@ -329,8 +333,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   invalid_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   /* Validate that the commit for each ref is available */
-  if (!ostree_repo_list_refs (repo, NULL, &all_refs,
-                              cancellable, error))
+  if (!ostree_repo_list_refs (repo, NULL, &all_refs, cancellable, error))
     return FALSE;
 
   GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, refspec, const char *, checksum)
