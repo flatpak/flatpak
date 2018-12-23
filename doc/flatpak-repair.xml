@@ -59,6 +59,10 @@
             </para></listitem>
         </itemizedlist>
         <para>
+          Note that <command>flatpak repair</command> has to be run with root privileges to
+          operate on the system installation.
+        </para>
+        <para>
           An alternative command for repairing OSTree repositories is ostree fsck.
         </para>
 
@@ -104,6 +108,14 @@
                     <filename>/etc/flatpak/installations.d/</filename>. Using
                     <arg choice="plain">--installation=default</arg> is equivalent to using
                     <arg choice="plain">--system</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--dry-run</option></term>
+
+                <listitem><para>
+                    Only report inconsistencies, don't make any changes
                 </para></listitem>
             </varlistentry>
 
