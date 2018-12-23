@@ -314,6 +314,12 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
            flatpak_dir_get_name_cached (dir),
            flatpak_file_get_path_cached (flatpak_dir_get_path (dir)));
 
+  if (!opt_dry_run && !flatpak_dir_is_user (dir) && geteuid () != 0)
+    {
+      g_print ("Privileges are required to make changes; assuming --dry-run\n");
+      opt_dry_run = TRUE;
+    }
+
   /*
    * Try to repair a flatpak directory:
    *  + Scan all locally available refs
