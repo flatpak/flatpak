@@ -1097,7 +1097,7 @@ msgstr "Обновление ветки appstream для удалённого р
 #: app/flatpak-builtins-document-export.c:54
 msgid "Create a unique document reference"
 msgstr "Создать уникальную ссылку на документ"
-# # 
+
 #: app/flatpak-builtins-document-export.c:55
 msgid "Make the document transient for the current session"
 msgstr "Сделать документ временным для текущей сессии"
@@ -1240,7 +1240,7 @@ msgstr ""
 #: app/flatpak-builtins-enter.c:106
 #, fuzzy
 msgid "INSTANCE and COMMAND must be specified"
-msgstr "Должны быть указаны  и КОМАНДА"
+msgstr "Должны быть указаны INSTANCE и КОМАНДА"
 
 #: app/flatpak-builtins-enter.c:112
 msgid "Not running as root, may be unable to enter namespace"
@@ -1326,7 +1326,7 @@ msgstr "Показать, когда произошло изменение"
 
 #: app/flatpak-builtins-history.c:58 app/flatpak-cli-transaction.c:844
 msgid "Change"
-msgstr "изменение"
+msgstr "Изменение"
 
 #: app/flatpak-builtins-history.c:58
 msgid "Show the kind of change"
@@ -3236,7 +3236,7 @@ msgstr "'%s' не является корректным именем прило�
 #: app/flatpak-main.c:530
 #, c-format
 msgid "'%s' is not a flatpak command"
-msgstr ""
+msgstr "'%s' не является командой flatpak"
 
 #: app/flatpak-main.c:539
 msgid "No command specified"
