@@ -771,6 +771,29 @@ print_permissions (FlatpakCliTransaction *self,
 
 }
 
+static void
+message_handler (const gchar   *log_domain,
+                 GLogLevelFlags log_level,
+                 const gchar   *message,
+                 gpointer       user_data)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (user_data);
+  g_autofree char *text = NULL;
+
+  text = g_strconcat (_("Warning: "), message, NULL);
+
+  if (flatpak_fancy_output ())
+    {
+      flatpak_table_printer_set_cell (self->printer, self->progress_row, 0, text);
+      self->progress_row++;
+      flatpak_table_printer_add_span (self->printer, "");
+      flatpak_table_printer_finish_row (self->printer);
+      redraw (self);
+    }
+  else
+    g_print ("\r%-*s\n", self->table_width, text);
+}
+
 static gboolean
 transaction_ready (FlatpakTransaction *transaction)
 {
@@ -965,6 +988,8 @@ transaction_ready (FlatpakTransaction *transaction)
       redraw (self);
     }
 
+  g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING, message_handler, transaction);
+
   return TRUE;
 }
 
@@ -1055,7 +1080,6 @@ flatpak_cli_transaction_add_install (FlatpakTransaction *transaction,
 
   return TRUE;
 }
-
 
 gboolean
 flatpak_cli_transaction_run (FlatpakTransaction *transaction,
