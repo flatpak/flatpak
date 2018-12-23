@@ -299,6 +299,9 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   g_string_append (str, cli->progress_msg);
   g_string_append (str, " ");
 
+  if (flatpak_fancy_output ())
+    g_string_append (str, FLATPAK_ANSI_FAINT_ON);
+
   for (i = 0; i < n_full; i++)
     g_string_append (str, full_block);
 
@@ -307,6 +310,9 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
       g_string_append (str, partial_blocks[partial]);
       i++;
     }
+
+  if (flatpak_fancy_output ())
+    g_string_append (str, FLATPAK_ANSI_FAINT_OFF);
 
   for (; i < bar_length; i++)
     g_string_append (str, " ");
