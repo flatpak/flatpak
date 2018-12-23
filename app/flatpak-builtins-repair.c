@@ -37,9 +37,11 @@
 #include "flatpak-quiet-transaction.h"
 
 static gboolean opt_dry_run;
+static gboolean opt_reinstall_all;
 
 static GOptionEntry options[] = {
   { "dry-run", 0, 0, G_OPTION_ARG_NONE, &opt_dry_run, N_("Don't make any changes"), NULL },
+  { "reinstall-all", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall_all, N_("Reinstall all refs"), NULL },
   { NULL }
 };
 
@@ -270,7 +272,7 @@ transaction_add_local_ref (FlatpakDir         *dir,
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
 
   repo_checksum = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
-  if (repo_checksum == NULL)
+  if (repo_checksum == NULL || opt_reinstall_all)
     {
       if (!flatpak_transaction_add_install (transaction, origin, ref, subpaths, &local_error))
         {
@@ -440,7 +442,10 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
   if (!flatpak_transaction_is_empty (transaction))
     {
-      g_print (_("Reinstalling removed refs\n"));
+      if (opt_reinstall_all)
+        g_print (_("Reinstalling refs\n"));
+      else
+        g_print (_("Reinstalling removed refs\n"));
       if (!flatpak_transaction_run (transaction, cancellable, error))
         return FALSE;
     }
