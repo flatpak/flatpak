@@ -294,6 +294,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   g_auto(GStrv) runtime_refs = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
   OstreeRepo *repo;
+  g_autoptr(GFile) file = NULL;
   int i;
 
   context = g_option_context_new (_("- Repair a flatpak installation"));
@@ -329,6 +330,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
    *  +  Note any missing objects
    *  + Any refs that had invalid object, or non-partial refs that had missing objects are removed
    *  + prune (depth=0) all object not references by a ref, which gets rid of any possibly invalid non-scanned objects
+   *  * Remove leftover .removed contents
    *  + Enumerate all deployed refs:
    *  +   if they are not in the repo (or is partial for a non-subdir deploy), re-install them (pull + deploy)
    */
@@ -399,6 +401,14 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
   if (!flatpak_dir_prune (dir, cancellable, error))
     return FALSE;
+
+  file = flatpak_dir_get_removed_dir (dir);
+  if (g_file_query_exists (file, cancellable))
+    {
+      g_print (_("Erasing .removed\n"));
+      if (!flatpak_rm_rf (file, cancellable, error))
+        return FALSE;
+    }
 
   if (!flatpak_dir_list_refs (dir, "app", &app_refs, cancellable, NULL))
     return FALSE;
