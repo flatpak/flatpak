@@ -120,6 +120,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--reinstall-all</option></term>
+
+                <listitem><para>
+                    Reinstall all refs, regardless of whether they were removed from
+                    the repo or not
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
