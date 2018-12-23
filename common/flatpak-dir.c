@@ -3862,6 +3862,22 @@ get_common_pull_options (GVariantBuilder     *builder,
 }
 
 static gboolean
+translate_ostree_repo_pull_errors (GError **error)
+{
+  if (*error)
+    {
+      if (strstr ((*error)->message, "min-free-space-size") ||
+          strstr ((*error)->message, "min-free-space-percent"))
+        {
+          (*error)->domain = FLATPAK_ERROR;
+          (*error)->code = FLATPAK_ERROR_OUT_OF_SPACE;
+        }
+    }
+
+  return FALSE;
+}
+
+static gboolean
 repo_pull (OstreeRepo                           *self,
            const char                           *remote_name,
            const char                          **dirs_to_pull,
@@ -4020,7 +4036,7 @@ repo_pull (OstreeRepo                           *self,
 
       if (!ostree_repo_pull_with_options (self, remote_name, options,
                                           progress, cancellable, error))
-        return FALSE;
+        return translate_ostree_repo_pull_errors (error);
     }
 
   if (old_commit &&
@@ -4925,6 +4941,8 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   options = g_variant_ref_sink (g_variant_builder_end (&builder));
   res = ostree_repo_pull_with_options (repo, url, options,
                                        progress, cancellable, error);
+  if (!res)
+    translate_ostree_repo_pull_errors (error);
 
   if (progress)
     ostree_async_progress_finish (progress);

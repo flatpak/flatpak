@@ -472,6 +472,8 @@ operation_error (FlatpakTransaction            *transaction,
     msg = g_strdup_printf (_("%s not installed"), flatpak_ref_get_name (rref));
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NEED_NEW_FLATPAK))
     msg = g_strdup_printf (_("%s needs a later flatpak version"), flatpak_ref_get_name (rref));
+  else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_OUT_OF_SPACE))
+    msg = g_strdup (_("Not enough disk space to complete this operation"));
   else
     msg = g_strdup (error->message);
 
