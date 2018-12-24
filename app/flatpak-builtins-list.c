@@ -158,6 +158,7 @@ print_table_for_refs (GPtrArray * refs_array,
   g_autofree char *match_branch = NULL;
   const char *runtime_filter = NULL;
   const char *kind_filter = NULL;
+  const char *origin_filter = NULL;
   const char *arch_filter = NULL;
   int rows, cols;
 
@@ -170,6 +171,8 @@ print_table_for_refs (GPtrArray * refs_array,
         runtime_filter = filters[i] + strlen ("runtime=");
       else if (g_str_has_prefix (filters[i], "kind="))
         kind_filter = filters[i] + strlen ("kind=");
+      else if (g_str_has_prefix (filters[i], "origin="))
+        origin_filter = filters[i] + strlen ("origin=");
       else if (g_str_has_prefix (filters[i], "arch="))
         arch_filter = filters[i] + strlen ("arch=");
       else
@@ -283,7 +286,14 @@ print_table_for_refs (GPtrArray * refs_array,
                 continue;
             }
 
+
           repo = flatpak_deploy_data_get_origin (deploy_data);
+
+          if (origin_filter)
+            {
+              if (strcmp (origin_filter, repo) != 0)
+                continue;
+            }
 
           active = flatpak_deploy_data_get_commit (deploy_data);
           alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
