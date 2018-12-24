@@ -35,6 +35,7 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-cli-transaction.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-installation-private.h"
 #include "flatpak-error.h"
 #include "flatpak-chain-input-stream-private.h"
 
@@ -52,6 +53,7 @@ static gboolean opt_bundle;
 static gboolean opt_from;
 static gboolean opt_yes;
 static gboolean opt_reinstall;
+static gboolean opt_quiet;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -68,6 +70,7 @@ static GOptionEntry options[] = {
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { "reinstall", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall, N_("Uninstall first if already installed"), NULL },
+  { "quiet", 0, 0, G_OPTION_ARG_NONE, &opt_quiet, N_("Produce minimal output"), NULL },
   { NULL }
 };
 
@@ -113,6 +116,68 @@ read_gpg_data (GCancellable *cancellable,
   return flatpak_read_stream (source_stream, FALSE, error);
 }
 
+static int
+choose_remote_for_ref (FlatpakTransaction *transaction,
+                       const char         *for_ref,
+                       const char         *runtime_ref,
+                       const char * const *remotes)
+{
+  return 0;
+}
+
+static gboolean
+add_new_remote (FlatpakTransaction            *transaction,
+                FlatpakTransactionRemoteReason reason,
+                const char                    *from_id,
+                const char                    *remote_name,
+                const char                    *url)
+{
+  return TRUE;
+}
+
+static void
+new_operation (FlatpakTransaction          *self,
+               FlatpakTransactionOperation *op,
+               FlatpakTransactionProgress  *progress)
+{
+  g_print ("Installing %s\n", flatpak_transaction_operation_get_ref (op));
+}
+
+static FlatpakTransaction *
+create_transaction (FlatpakDir *dir,
+                    gboolean opt_quiet,
+                    gboolean opt_yes,
+                    GError **error)
+{
+  FlatpakTransaction *transaction;
+
+  if (opt_quiet)
+    {
+      g_autoptr(FlatpakInstallation) inst = flatpak_installation_new_for_dir (dir, NULL, error);
+      flatpak_installation_set_no_interaction (inst, opt_yes);
+      transaction = flatpak_transaction_new_for_installation (inst, NULL, error);
+      flatpak_transaction_add_default_dependency_sources (transaction);
+      g_signal_connect (transaction, "choose-remote-for-ref", G_CALLBACK (choose_remote_for_ref), NULL);
+      g_signal_connect (transaction, "add-new-remote", G_CALLBACK (add_new_remote), NULL);
+      g_signal_connect (transaction, "new-operation", G_CALLBACK (new_operation), NULL);
+    }
+  else
+    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+
+  return transaction;
+}
+
+static gboolean
+run_transaction (FlatpakTransaction *transaction,
+                 GCancellable *cancellable,
+                 GError **error)
+{
+  if (FLATPAK_IS_CLI_TRANSACTION (transaction))
+    return flatpak_cli_transaction_run (transaction, cancellable, error);
+  else 
+    return flatpak_transaction_run (transaction, cancellable, error);
+}
+
 static gboolean
 install_bundle (FlatpakDir *dir,
                 GOptionContext *context,
@@ -146,7 +211,7 @@ install_bundle (FlatpakDir *dir,
         return FALSE;
     }
 
-  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+  transaction = create_transaction (dir, opt_quiet, opt_yes, error);
   if (transaction == NULL)
     return FALSE;
 
@@ -209,7 +274,7 @@ install_from (FlatpakDir *dir,
       file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
     }
 
-  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+  transaction = create_transaction (dir, opt_quiet, opt_yes, error);
   if (transaction == NULL)
     return FALSE;
 
@@ -224,7 +289,7 @@ install_from (FlatpakDir *dir,
   if (!flatpak_transaction_add_install_flatpakref (transaction, file_data, error))
     return FALSE;
 
-  if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+  if (!run_transaction (transaction, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -280,7 +345,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  g_print (_("Looking for matches…\n"));
+  if (!opt_quiet)
+    g_print (_("Looking for matches…\n"));
 
   if (!auto_remote &&
       (g_path_is_absolute (argv[1]) ||
@@ -418,7 +484,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
 
-  transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+  transaction = create_transaction (dir, opt_quiet, opt_yes, error);
   if (transaction == NULL)
     return FALSE;
 
@@ -478,7 +544,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
         return FALSE;
     }
 
-  if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+  if (!run_transaction (transaction, cancellable, error))
     return FALSE;
 
   return TRUE;
