@@ -41,6 +41,7 @@ static gboolean opt_all;
 static char *opt_arch;
 static char *opt_app_runtime;
 static const char **opt_cols;
+static const char **opt_filter;
 
 static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show extra information"), NULL },
@@ -145,7 +146,7 @@ static gboolean
 print_table_for_refs (gboolean print_apps,
                       GPtrArray * refs_array,
                       const char *arch,
-                      const char *app_runtime,
+                      const char **filters,
                       Column *columns,
                       GCancellable *cancellable,
                       GError **error)
@@ -156,10 +157,17 @@ print_table_for_refs (gboolean print_apps,
   g_autofree char *match_id = NULL;
   g_autofree char *match_arch = NULL;
   g_autofree char *match_branch = NULL;
+  const char *app_runtime = NULL;
   int rows, cols;
 
   if (columns[0].name == NULL)
     return TRUE;
+
+  for (i = 0; filters && filters[i]; i++)
+    {
+      if (g_str_has_prefix (filters[i], "runtime="))
+        app_runtime = filters[i] + strlen ("runtime=");
+    }
 
   printer = flatpak_table_printer_new ();
 
@@ -388,7 +396,7 @@ print_installed_refs (gboolean app,
                       gboolean runtime,
                       GPtrArray *dirs,
                       const char *arch,
-                      const char *app_runtime,
+                      const char **filters,
                       Column *cols,
                       GCancellable *cancellable,
                       GError **error)
@@ -409,7 +417,7 @@ print_installed_refs (gboolean app,
       g_ptr_array_add (refs_array, refs_data_new (dir, apps, runtimes));
     }
 
-  if (!print_table_for_refs (app, refs_array, arch, app_runtime, cols, cancellable, error))
+  if (!print_table_for_refs (app, refs_array, arch, filters, cols, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -422,6 +430,7 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GPtrArray) dirs = NULL;
   g_autofree char *col_help = NULL;
   g_autofree Column *columns = NULL;
+  g_auto(GStrv) filters = NULL;
 
   context = g_option_context_new (_(" - List installed apps and/or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -453,10 +462,16 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (columns == NULL)
     return FALSE;
 
+  if (opt_app_runtime)
+    {
+      filters = g_new0 (char *, 2);
+      filters[0] = g_strconcat ("runtime=", opt_app_runtime, NULL);
+    }
+
   return print_installed_refs (opt_app, opt_runtime,
                                dirs,
                                opt_arch,
-                               opt_app_runtime,
+                               (const char **)filters,
                                columns,
                                cancellable, error);
 }
