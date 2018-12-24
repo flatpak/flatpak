@@ -33,6 +33,7 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
+#include "flatpak-run-private.h"
 
 static gboolean opt_show_details;
 static gboolean opt_runtime;
@@ -160,6 +161,7 @@ print_table_for_refs (GPtrArray * refs_array,
   const char *kind_filter = NULL;
   const char *origin_filter = NULL;
   const char *arch_filter = NULL;
+  const char *permissions_filter = NULL;
   int rows, cols;
 
   if (columns[0].name == NULL)
@@ -175,6 +177,8 @@ print_table_for_refs (GPtrArray * refs_array,
         origin_filter = filters[i] + strlen ("origin=");
       else if (g_str_has_prefix (filters[i], "arch="))
         arch_filter = filters[i] + strlen ("arch=");
+      else if (g_str_has_prefix (filters[i], "permissions="))
+        permissions_filter = filters[i] + strlen ("permissions=");
       else
         return flatpak_fail (error, _("Unknown filter: %s"), filters[i]);
     }
@@ -292,6 +296,19 @@ print_table_for_refs (GPtrArray * refs_array,
           if (origin_filter)
             {
               if (strcmp (origin_filter, repo) != 0)
+                continue;
+            }
+
+          if (permissions_filter)
+            {
+              g_autoptr(GKeyFile) metadata = NULL;
+              g_auto(GStrv) shares = NULL;
+
+              metadata = flatpak_deploy_get_metadata (deploy);
+              shares = g_key_file_get_string_list (metadata, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                   FLATPAK_METADATA_KEY_SHARED, NULL, NULL);
+              if (shares == NULL ||
+                  !g_strv_contains ((const char *const *)shares, permissions_filter))
                 continue;
             }
 
