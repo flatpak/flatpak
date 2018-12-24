@@ -41,7 +41,7 @@ static gboolean opt_all;
 static char *opt_arch;
 static char *opt_app_runtime;
 static const char **opt_cols;
-static const char **opt_filter;
+static const char **opt_filters;
 
 static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show extra information"), NULL },
@@ -50,6 +50,7 @@ static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to show"), N_("ARCH") },
   { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
   { "app-runtime", 'a', 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
+  { "match", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_filters, N_("List refs matching FILTER"), N_("FILTER") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…")  },
   { NULL }
 };
@@ -75,18 +76,16 @@ static Column all_columns[] = {
 typedef struct
 {
   FlatpakDir *dir;
-  GStrv       app_refs;
-  GStrv       runtime_refs;
+  GStrv       refs;
 } RefsData;
 
 static RefsData *
-refs_data_new (FlatpakDir *dir, const GStrv app_refs, const GStrv runtime_refs)
+refs_data_new (FlatpakDir *dir, const GStrv refs)
 {
   RefsData *refs_data = g_new0 (RefsData, 1);
 
   refs_data->dir = g_object_ref (dir);
-  refs_data->app_refs = g_strdupv ((char **) app_refs);
-  refs_data->runtime_refs = g_strdupv ((char **) runtime_refs);
+  refs_data->refs = g_strdupv ((char **) refs);
   return refs_data;
 }
 
@@ -94,8 +93,7 @@ static void
 refs_data_free (RefsData *refs_data)
 {
   g_object_unref (refs_data->dir);
-  g_strfreev (refs_data->app_refs);
-  g_strfreev (refs_data->runtime_refs);
+  g_strfreev (refs_data->refs);
   g_free (refs_data);
 }
 
@@ -126,26 +124,27 @@ join_strv (char **a, char **b)
 
 static gboolean
 find_refs_for_dir (FlatpakDir *dir,
-                   GStrv *apps,
-                   GStrv *runtimes,
+                   GStrv *refs,
                    GCancellable *cancellable,
                    GError **error)
 {
   if (flatpak_dir_ensure_repo (dir, cancellable, NULL))
     {
-      if (apps != NULL && !flatpak_dir_list_refs (dir, "app", apps, cancellable, error))
+      g_auto(GStrv) apps = NULL;
+      g_auto(GStrv) runtimes = NULL;
+
+      if (!flatpak_dir_list_refs (dir, "app", &apps, cancellable, error))
         return FALSE;
-      if (runtimes != NULL && !flatpak_dir_list_refs (dir, "runtime", runtimes, cancellable, error))
+      if (!flatpak_dir_list_refs (dir, "runtime", &runtimes, cancellable, error))
         return FALSE;
+      *refs = join_strv (apps, runtimes);
     }
 
   return TRUE;
 }
 
 static gboolean
-print_table_for_refs (gboolean print_apps,
-                      GPtrArray * refs_array,
-                      const char *arch,
+print_table_for_refs (GPtrArray * refs_array,
                       const char **filters,
                       Column *columns,
                       GCancellable *cancellable,
@@ -157,7 +156,9 @@ print_table_for_refs (gboolean print_apps,
   g_autofree char *match_id = NULL;
   g_autofree char *match_arch = NULL;
   g_autofree char *match_branch = NULL;
-  const char *app_runtime = NULL;
+  const char *runtime_filter = NULL;
+  const char *kind_filter = NULL;
+  const char *arch_filter = NULL;
   int rows, cols;
 
   if (columns[0].name == NULL)
@@ -166,7 +167,13 @@ print_table_for_refs (gboolean print_apps,
   for (i = 0; filters && filters[i]; i++)
     {
       if (g_str_has_prefix (filters[i], "runtime="))
-        app_runtime = filters[i] + strlen ("runtime=");
+        runtime_filter = filters[i] + strlen ("runtime=");
+      else if (g_str_has_prefix (filters[i], "kind="))
+        kind_filter = filters[i] + strlen ("kind=");
+      else if (g_str_has_prefix (filters[i], "arch="))
+        arch_filter = filters[i] + strlen ("arch=");
+      else
+        return flatpak_fail (error, _("Unknown filter: %s"), filters[i]);
     }
 
   printer = flatpak_table_printer_new ();
@@ -182,9 +189,9 @@ print_table_for_refs (gboolean print_apps,
                                               find_column (columns, "application", NULL),
                                               FLATPAK_ELLIPSIZE_MODE_START);
 
-  if (app_runtime)
+  if (runtime_filter)
     {
-      if (!flatpak_split_partial_ref_arg (app_runtime, FLATPAK_KINDS_RUNTIME, NULL, NULL,
+      if (!flatpak_split_partial_ref_arg (runtime_filter, FLATPAK_KINDS_RUNTIME, NULL, NULL,
                                           &match_kinds, &match_id, &match_arch, &match_branch, error))
         return FALSE;
     }
@@ -193,13 +200,13 @@ print_table_for_refs (gboolean print_apps,
     {
       RefsData *refs_data = NULL;
       FlatpakDir *dir = NULL;
-      g_auto(GStrv) dir_refs = NULL;
+      char **dir_refs = NULL;
       g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
       int j;
 
       refs_data = (RefsData *) g_ptr_array_index (refs_array, i);
       dir = refs_data->dir;
-      dir_refs = join_strv (refs_data->app_refs, refs_data->runtime_refs);
+      dir_refs = refs_data->refs;
 
       for (j = 0; dir_refs[j] != NULL; j++)
         {
@@ -231,15 +238,18 @@ print_table_for_refs (gboolean print_apps,
           parts = g_strsplit (ref, "/", -1);
           partial_ref = strchr (ref, '/') + 1;
 
-          if (arch != NULL && strcmp (arch, parts[1]) != 0)
-            continue;
+          if (arch_filter)
+            {
+              if (strcmp (arch_filter, parts[2]) != 0)
+                continue;
+            }
 
           deploy = flatpak_dir_load_deployed (dir, ref, NULL, cancellable, NULL);
           deploy_data = flatpak_deploy_get_deploy_data (deploy, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, NULL);
           if (deploy_data == NULL)
             continue;
 
-          if (app_runtime)
+          if (runtime_filter)
             {
               const char *runtime = flatpak_deploy_data_get_runtime (deploy_data);
               if (runtime)
@@ -252,7 +262,14 @@ print_table_for_refs (gboolean print_apps,
                 }
             }
 
-          if (!opt_all && strcmp (parts[0], "runtime") == 0 &&
+          if (kind_filter)
+            {
+              if (strcmp (kind_filter, "all") != 0 &&
+                  strcmp (kind_filter, parts[0]) != 0)
+                continue;
+            }
+
+          if (g_strcmp0 (kind_filter, "all") != 0 && strcmp (parts[0], "runtime") == 0 &&
               flatpak_id_has_subref_suffix (parts[1]))
             {
               g_autofree char *prefix_partial_ref = NULL;
@@ -265,7 +282,6 @@ print_table_for_refs (gboolean print_apps,
               if (g_hash_table_lookup (pref_hash, prefix_partial_ref))
                 continue;
             }
-
 
           repo = flatpak_deploy_data_get_origin (deploy_data);
 
@@ -356,8 +372,7 @@ print_table_for_refs (gboolean print_apps,
                     }
                   else
                     {
-                      if (print_apps)
-                        flatpak_table_printer_append_with_comma (printer, "runtime");
+                      flatpak_table_printer_append_with_comma (printer, "runtime");
                     }
 
                   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
@@ -392,10 +407,7 @@ print_table_for_refs (gboolean print_apps,
 }
 
 static gboolean
-print_installed_refs (gboolean app,
-                      gboolean runtime,
-                      GPtrArray *dirs,
-                      const char *arch,
+print_installed_refs (GPtrArray *dirs,
                       const char **filters,
                       Column *cols,
                       GCancellable *cancellable,
@@ -409,15 +421,14 @@ print_installed_refs (gboolean app,
   for (i = 0; i < dirs->len; i++)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
-      g_auto(GStrv) apps = NULL;
-      g_auto(GStrv) runtimes = NULL;
+      g_auto(GStrv) refs = NULL;
 
-      if (!find_refs_for_dir (dir, app ? &apps : NULL, runtime ? &runtimes : NULL, cancellable, error))
+      if (!find_refs_for_dir (dir, &refs, cancellable, error))
         return FALSE;
-      g_ptr_array_add (refs_array, refs_data_new (dir, apps, runtimes));
+      g_ptr_array_add (refs_array, refs_data_new (dir, refs));
     }
 
-  if (!print_table_for_refs (app, refs_array, arch, filters, cols, cancellable, error))
+  if (!print_table_for_refs (refs_array, filters, cols, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -430,7 +441,8 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GPtrArray) dirs = NULL;
   g_autofree char *col_help = NULL;
   g_autofree Column *columns = NULL;
-  g_auto(GStrv) filters = NULL;
+  g_autoptr(GPtrArray) filters = NULL;
+  int i;
 
   context = g_option_context_new (_(" - List installed apps and/or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -445,12 +457,6 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (argc > 1)
     return usage_error (context, _("Too many arguments"), error);
 
-  if (!opt_app && !opt_runtime)
-    {
-      opt_app = TRUE;
-      opt_runtime = TRUE;
-    }
-
   /* Default to showing installation if we're listing multiple installations */
   if (dirs->len > 1)
     {
@@ -462,16 +468,31 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (columns == NULL)
     return FALSE;
 
+  filters = g_ptr_array_new_with_free_func (g_free);
   if (opt_app_runtime)
+    g_ptr_array_add (filters, g_strconcat ("runtime=", opt_app_runtime, NULL));
+  if (opt_arch)
+    g_ptr_array_add (filters, g_strconcat ("arch=", opt_arch, NULL));
+
+  if (opt_all)
+    g_ptr_array_add (filters, g_strdup ("kind=all"));
+  else if (opt_app)
+    g_ptr_array_add (filters, g_strdup ("kind=app"));
+  else if (opt_runtime)
+    g_ptr_array_add (filters, g_strdup ("kind=runtime"));
+
+  for (i = 0; opt_filters && opt_filters[i]; i++)
     {
-      filters = g_new0 (char *, 2);
-      filters[0] = g_strconcat ("runtime=", opt_app_runtime, NULL);
+      g_auto(GStrv) strv = g_strsplit (opt_filters[i], ",", 0);
+      int j;
+      for (j = 0; strv[j]; j++)
+        g_ptr_array_add (filters, g_strdup (strv[j]));
     }
 
-  return print_installed_refs (opt_app, opt_runtime,
-                               dirs,
-                               opt_arch,
-                               (const char **)filters,
+  g_ptr_array_add (filters, NULL);
+
+  return print_installed_refs (dirs,
+                               (const char **)filters->pdata,
                                columns,
                                cancellable, error);
 }
