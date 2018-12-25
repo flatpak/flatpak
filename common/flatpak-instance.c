@@ -128,6 +128,8 @@ flatpak_instance_get_id (FlatpakInstance *self)
  *
  * Gets the application ID of the application running in the instance.
  *
+ * Note that this may return %NULL for sandboxes that don't have an application.
+ *
  * Returns: the application ID
  *
  * Since: 1.1
@@ -392,10 +394,18 @@ flatpak_instance_new (const char *dir)
 
   if (priv->info)
     {
-      priv->app = g_key_file_get_string (priv->info,
-          FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_NAME, NULL);
-      priv->runtime = g_key_file_get_string (priv->info,
-          FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_RUNTIME, NULL);
+      if (g_key_file_has_group (priv->info, FLATPAK_METADATA_GROUP_APPLICATION))
+        {
+          priv->app = g_key_file_get_string (priv->info,
+              FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_NAME, NULL);
+          priv->runtime = g_key_file_get_string (priv->info,
+              FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_RUNTIME, NULL);
+        }
+      else
+        {
+          priv->runtime = g_key_file_get_string (priv->info,
+              FLATPAK_METADATA_GROUP_RUNTIME, FLATPAK_METADATA_KEY_RUNTIME, NULL);
+        }
 
       priv->arch = g_key_file_get_string (priv->info,
           FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_ARCH, NULL);
