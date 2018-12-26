@@ -46,13 +46,13 @@ static const char **opt_filters;
 
 static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show extra information"), NULL },
-  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
-  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to show"), N_("ARCH") },
-  { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
-  { "app-runtime", 'a', 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
-  { "match", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_filters, N_("List refs matching FILTER"), N_("FILTER") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…")  },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
+  { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to show"), N_("ARCH") },
+  { "app-runtime", 'a', 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
+  { "match", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_filters, N_("List refs matching FILTER"), N_("FILTER,…") },
   { NULL }
 };
 
@@ -71,6 +71,104 @@ static Column all_columns[] = {
   { "options",      N_("Options"),        N_("Show options"),            1, 0 },
   { NULL }
 };
+
+static gboolean
+valid_filter (const char *filter, GError **error)
+{
+  if (g_str_has_prefix (filter, "runtime="))
+    {
+      if (!flatpak_split_partial_ref_arg (filter + strlen ("runtime="),
+                                          FLATPAK_KINDS_RUNTIME, NULL, NULL,
+                                          NULL, NULL, NULL, NULL,
+                                          error))
+        return FALSE;
+      return TRUE;
+    }
+  else if (g_str_has_prefix (filter, "kind="))
+    {
+      const char *kinds[] = { "app", "runtime", "all", NULL };
+      if (!g_strv_contains (kinds, filter + strlen ("kind=")))
+        return flatpak_fail (error, _("kind must be 'app', 'runtime' or 'all'"));
+      return TRUE;
+    }
+  else if (g_str_has_prefix (filter, "origin="))
+    return TRUE;
+  else if (g_str_has_prefix (filter, "arch="))
+    {
+      const char **arches = flatpak_get_arches ();
+      if (!g_strv_contains (arches, filter + strlen ("arch=")))
+        return flatpak_fail (error, _("Not an arch: %s"), filter + strlen ("arch="));
+      return TRUE;
+    }
+  else if (g_str_has_prefix (filter, "permissions="))
+    {
+      if (!g_str_equal (filter + strlen ("permissions="), "network"))
+        flatpak_fail (error, _("Not a permission: %s"), filter + strlen ("permissions="));
+      return TRUE;
+    }
+
+  return flatpak_fail (error, _("Unknown filter: %s"), filter);
+}
+
+static char *
+filter_help (void)
+{
+  GString *s = g_string_new ("");
+
+  g_string_append (s, _("Available filters:\n"));
+  g_string_append_printf (s, "  runtime=RUNTIME           %s\n", _("Show apps with this runtime"));
+  g_string_append_printf (s, "  kind=[app|runtime|all]    %s\n", _("Show refs of this kind"));
+  g_string_append_printf (s, "  origin=REMOTE             %s\n", _("Show refs from this remote"));
+  g_string_append_printf (s, "  arch=ARCH                 %s\n", _("Show refs with the given arch"));
+  g_string_append_printf (s, "  permissions=PERMISSION    %s\n", _("Show apps with the given permission, e.g. network"));
+  g_string_append_printf (s, "  help                      %s\n", _("Show available filters"));
+
+  return g_string_free (s, FALSE);
+}
+
+static char **
+handle_filters (const char **opt_filters, GError **error)
+{
+  g_autoptr(GPtrArray) filters = NULL;
+  int i;
+
+  filters = g_ptr_array_new_with_free_func (g_free);
+  if (opt_app_runtime)
+    g_ptr_array_add (filters, g_strconcat ("runtime=", opt_app_runtime, NULL));
+  if (opt_arch)
+    g_ptr_array_add (filters, g_strconcat ("arch=", opt_arch, NULL));
+
+  if (opt_all)
+    g_ptr_array_add (filters, g_strdup ("kind=all"));
+  else if (opt_app)
+    g_ptr_array_add (filters, g_strdup ("kind=app"));
+  else if (opt_runtime)
+    g_ptr_array_add (filters, g_strdup ("kind=runtime"));
+
+  for (i = 0; opt_filters && opt_filters[i]; i++)
+    {
+      g_auto(GStrv) strv = g_strsplit (opt_filters[i], ",", 0);
+      int j;
+      for (j = 0; strv[j]; j++)
+        {
+	  if (g_str_equal (strv[j], "help"))
+            {
+              g_autofree char *help = filter_help ();
+              g_print ("%s", help);
+              return NULL;
+            }
+
+	  if (!valid_filter (strv[j], error))
+            return NULL;
+
+          g_ptr_array_add (filters, g_strdup (strv[j]));
+        }
+    }
+
+  g_ptr_array_add (filters, NULL);
+
+  return g_strdupv ((char **)filters->pdata);
+}
 
 /* Associates a flatpak installation's directory with
  * the list of references for apps and runtimes */
@@ -467,14 +565,17 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   g_autofree char *col_help = NULL;
+  g_autofree char *fil_help = NULL;
+  g_autofree char *combined_help = NULL;
   g_autofree Column *columns = NULL;
-  g_autoptr(GPtrArray) filters = NULL;
-  int i;
+  g_auto(GStrv) filters = NULL;
 
   context = g_option_context_new (_(" - List installed apps and/or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
   col_help = column_help (all_columns);
-  g_option_context_set_description (context, col_help);
+  fil_help = filter_help ();
+  combined_help = g_strconcat (col_help, "\n\n", fil_help, NULL);
+  g_option_context_set_description (context, combined_help);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
                                      FLATPAK_BUILTIN_FLAG_ALL_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
@@ -495,33 +596,11 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (columns == NULL)
     return FALSE;
 
-  filters = g_ptr_array_new_with_free_func (g_free);
-  if (opt_app_runtime)
-    g_ptr_array_add (filters, g_strconcat ("runtime=", opt_app_runtime, NULL));
-  if (opt_arch)
-    g_ptr_array_add (filters, g_strconcat ("arch=", opt_arch, NULL));
+  filters = handle_filters (opt_filters, error);
+  if (filters == NULL)
+    return !*error;
 
-  if (opt_all)
-    g_ptr_array_add (filters, g_strdup ("kind=all"));
-  else if (opt_app)
-    g_ptr_array_add (filters, g_strdup ("kind=app"));
-  else if (opt_runtime)
-    g_ptr_array_add (filters, g_strdup ("kind=runtime"));
-
-  for (i = 0; opt_filters && opt_filters[i]; i++)
-    {
-      g_auto(GStrv) strv = g_strsplit (opt_filters[i], ",", 0);
-      int j;
-      for (j = 0; strv[j]; j++)
-        g_ptr_array_add (filters, g_strdup (strv[j]));
-    }
-
-  g_ptr_array_add (filters, NULL);
-
-  return print_installed_refs (dirs,
-                               (const char **)filters->pdata,
-                               columns,
-                               cancellable, error);
+  return print_installed_refs (dirs, (const char **)filters, columns, cancellable, error);
 }
 
 gboolean
