@@ -2669,8 +2669,17 @@ flatpak_dir_get_config (FlatpakDir *self,
                         const char *key,
                         GError    **error)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
-  g_autofree char *ostree_key = g_strconcat ("xa.", key, NULL);
+  GKeyFile *config;
+  g_autofree char *ostree_key = NULL;
+
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
+    return NULL;
+
+  if (self->repo == NULL)
+    return NULL;
+
+  config = ostree_repo_get_config (self->repo);
+  ostree_key = g_strconcat ("xa.", key, NULL);
 
   return g_key_file_get_string (config, "core", ostree_key, error);
 }
@@ -2681,8 +2690,14 @@ flatpak_dir_set_config (FlatpakDir *self,
                         const char *value,
                         GError    **error)
 {
-  g_autoptr(GKeyFile) config = ostree_repo_copy_config (self->repo);
-  g_autofree char *ostree_key = g_strconcat ("xa.", key, NULL);
+  g_autoptr(GKeyFile) config = NULL;
+  g_autofree char *ostree_key = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, NULL, error))
+    return FALSE;
+
+  config = ostree_repo_copy_config (self->repo);
+  ostree_key = g_strconcat ("xa.", key, NULL);
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -10114,7 +10129,11 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
 {
   char *collection_id = NULL;
 
+  if (!flatpak_dir_ensure_repo (self, NULL, NULL))
+    return NULL;
+
   repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL);
+
   return collection_id;
 }
 
@@ -10717,11 +10736,20 @@ get_group (const char *remote_name)
   return g_strdup_printf ("remote \"%s\"", remote_name);
 }
 
+static GKeyFile *
+flatpak_dir_get_repo_config (FlatpakDir *self)
+{
+  if (!flatpak_dir_ensure_repo (self, NULL, NULL))
+    return NULL;
+
+  return ostree_repo_get_config (self->repo);
+}
+
 char *
 flatpak_dir_get_remote_title (FlatpakDir *self,
                               const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
 
   if (config)
@@ -10736,10 +10764,10 @@ flatpak_dir_get_remote_oci (FlatpakDir *self,
 {
   g_autofree char *url = NULL;
 
-  if (!ostree_repo_remote_get_url (self->repo,
-                                   remote_name,
-                                   &url,
-                                   NULL))
+  if (!flatpak_dir_ensure_repo (self, NULL, NULL))
+    return FALSE;
+
+  if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, NULL))
     return FALSE;
 
   return url && g_str_has_prefix (url, "oci+");
@@ -10749,7 +10777,7 @@ char *
 flatpak_dir_get_remote_main_ref (FlatpakDir *self,
                                  const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
 
   if (config)
@@ -10762,7 +10790,7 @@ char *
 flatpak_dir_get_remote_default_branch (FlatpakDir *self,
                                        const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
 
   if (config)
@@ -10775,7 +10803,7 @@ int
 flatpak_dir_get_remote_prio (FlatpakDir *self,
                              const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
 
   if (config && g_key_file_has_key (config, group, "xa.prio", NULL))
@@ -10788,7 +10816,7 @@ gboolean
 flatpak_dir_get_remote_noenumerate (FlatpakDir *self,
                                     const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
 
   if (config)
@@ -10801,7 +10829,7 @@ gboolean
 flatpak_dir_get_remote_nodeps (FlatpakDir *self,
                                const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
 
   if (config)
@@ -10814,7 +10842,7 @@ gboolean
 flatpak_dir_get_remote_disabled (FlatpakDir *self,
                                  const char *remote_name)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
   g_autofree char *url = NULL;
 
@@ -10822,7 +10850,8 @@ flatpak_dir_get_remote_disabled (FlatpakDir *self,
       g_key_file_get_boolean (config, group, "xa.disable", NULL))
     return TRUE;
 
-  if (ostree_repo_remote_get_url (self->repo, remote_name, &url, NULL) && *url == 0)
+  if (self->repo &&
+      ostree_repo_remote_get_url (self->repo, remote_name, &url, NULL) && *url == 0)
     return TRUE; /* Empty URL => disabled */
 
   return FALSE;
@@ -12956,7 +12985,7 @@ flatpak_dir_get_default_locale_languages (FlatpakDir *self)
 char **
 flatpak_dir_get_locale_languages (FlatpakDir *self)
 {
-  GKeyFile *config = ostree_repo_get_config (self->repo);
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
 
   if (config)
     {
