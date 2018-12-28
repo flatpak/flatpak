@@ -253,7 +253,7 @@ ${FLATPAK} ${U} update -y org.test.Hello > update-log
 assert_file_has_content update-log "org.test.Hello.*Reason2"
 
 ${FLATPAK} ${U} info org.test.Hello > info-log
-assert_file_has_content info-log "end-of-life: Reason2"
+assert_file_has_content info-log "End-of-life: Reason2"
 
 ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "org.test.Hello/.*eol=Reason2"
