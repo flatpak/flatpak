@@ -106,6 +106,8 @@ valid_filter (const char *filter, GError **error)
         flatpak_fail (error, _("Not a permission: %s"), filter + strlen ("permissions="));
       return TRUE;
     }
+  else if (g_str_has_prefix (filter, "search="))
+    return TRUE;
 
   return flatpak_fail (error, _("Unknown filter: %s"), filter);
 }
@@ -121,6 +123,7 @@ filter_help (void)
   g_string_append_printf (s, "  origin=REMOTE             %s\n", _("Show refs from this remote"));
   g_string_append_printf (s, "  arch=ARCH                 %s\n", _("Show refs with the given arch"));
   g_string_append_printf (s, "  permissions=PERMISSION    %s\n", _("Show apps with the given permission, e.g. network"));
+  g_string_append_printf (s, "  search=TEXT               %s\n", _("Show refs matching TEXT"));
   g_string_append_printf (s, "  help                      %s\n", _("Show available filters"));
 
   return g_string_free (s, FALSE);
@@ -260,6 +263,7 @@ print_table_for_refs (GPtrArray * refs_array,
   const char *origin_filter = NULL;
   const char *arch_filter = NULL;
   const char *permissions_filter = NULL;
+  const char *search_filter = NULL;
   int rows, cols;
 
   if (columns[0].name == NULL)
@@ -277,6 +281,8 @@ print_table_for_refs (GPtrArray * refs_array,
         arch_filter = filters[i] + strlen ("arch=");
       else if (g_str_has_prefix (filters[i], "permissions="))
         permissions_filter = filters[i] + strlen ("permissions=");
+      else if (g_str_has_prefix (filters[i], "search="))
+        search_filter = filters[i] + strlen ("search=");
       else
         return flatpak_fail (error, _("Unknown filter: %s"), filters[i]);
     }
@@ -417,6 +423,15 @@ print_table_for_refs (GPtrArray * refs_array,
           appdata_name = flatpak_deploy_data_get_appdata_name (deploy_data);
           appdata_summary = flatpak_deploy_data_get_appdata_summary (deploy_data);
           appdata_version = flatpak_deploy_data_get_appdata_version (deploy_data);
+
+          if (search_filter)
+            {
+              /* FIXME: this is a bit crude, compared to as_app_search_matches */
+              if ((!appdata_name || !g_str_match_string (search_filter, appdata_name, TRUE)) &&
+                  (!appdata_summary || !g_str_match_string (search_filter, appdata_summary, TRUE)) &&
+                  !g_str_match_string (search_filter, parts[1], TRUE))
+                 continue;
+            }
 
           latest = flatpak_dir_read_latest (dir, repo, ref, NULL, NULL, NULL);
           if (latest)
