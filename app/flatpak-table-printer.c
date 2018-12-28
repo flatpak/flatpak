@@ -503,8 +503,11 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                   if (leftover == 0)
                     break;
                 }
-           }
+            }
         }
+
+      for (i = 0; i < printer->n_columns; i++)
+        width -= shrinks[i];
     }
 
   if (flatpak_fancy_output () && has_title)
