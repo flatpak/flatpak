@@ -464,11 +464,10 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
               if (!ellipsize)
                 continue;
 
-              shrinkable += widths[i];
               if (col && col->title)
-                shrinkable -= strlen (col->title);
+                shrinkable += MAX (0, widths[i] - strlen (col->title));
               else
-                shrinkable -= 5;
+                shrinkable += MAX (0, widths[i] - 5);
             }
 
           for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
@@ -478,15 +477,16 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
 
               if (ellipsize)
                 {
-                  int sh = widths[i];
+                  int sh;
                   if (col && col->title)
-                    sh = MAX (0, sh - strlen (col->title));
+                    sh = MAX (0, widths[i] - strlen (col->title));
                   else
-                    sh = MAX (0, sh - 5);
-                  shrinks[i] = shortfall * (sh / (double)shrinkable);
+                    sh = MAX (0, widths[i] - 5);
+                  shrinks[i] = MIN (shortfall * (sh / (double)shrinkable), widths[i]);
                   leftover -= shrinks[i];
                 }
             }
+
           last = leftover + 1;
           while (leftover > 0 && leftover < last)
             {
