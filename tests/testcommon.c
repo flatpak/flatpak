@@ -653,6 +653,48 @@ test_table_shrink (void)
 }
 
 static void
+test_table_shrink_more (void)
+{
+  GPrintFunc print_func;
+  FlatpakTablePrinter *printer;
+  int rows, cols;
+
+  g_assert_null (g_print_buffer);
+  g_print_buffer = g_string_new ("");
+  print_func = g_set_print_handler (my_print_func);
+  flatpak_enable_fancy_output ();
+
+  printer = flatpak_table_printer_new ();
+
+  flatpak_table_printer_set_column_title (printer, 0, "Column1");
+  flatpak_table_printer_set_column_title (printer, 1, "Column2");
+  flatpak_table_printer_set_column_title (printer, 2, "Column3");
+
+  flatpak_table_printer_add_column (printer, "a very long text");
+  flatpak_table_printer_add_column (printer, "midsize text");
+  flatpak_table_printer_add_column (printer, "another very long text");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_set_column_ellipsize (printer, 1, FLATPAK_ELLIPSIZE_MODE_END);
+
+  flatpak_table_printer_print_full (printer, 0, 25, &rows, &cols);
+
+  g_assert_cmpint (rows, ==, 4);
+  g_assert_cmpint (cols, ==, 40);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Column1          … Column3" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "a very long text … another very long text");
+
+  flatpak_table_printer_free (printer);
+
+  flatpak_disable_fancy_output ();
+  g_set_print_handler (print_func);
+  g_string_free (g_print_buffer, TRUE);
+  g_print_buffer = NULL;
+}
+
+static void
 test_parse_datetime (void)
 {
   struct timespec ts;
@@ -704,6 +746,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/app/table", test_table);
   g_test_add_func ("/app/table-expand", test_table_expand);
   g_test_add_func ("/app/table-shrink", test_table_shrink);
+  g_test_add_func ("/app/table-shrink-more", test_table_shrink_more);
   g_test_add_func ("/app/parse-datetime", test_parse_datetime);
 
   res = g_test_run ();
