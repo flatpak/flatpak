@@ -446,6 +446,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   if (shrink_columns > 0)
     {
       int shortfall = MAX (width - columns, 0);
+      int last;
       if (shortfall > 0)
         {
           int shrinkable = 0;
@@ -479,20 +480,22 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 {
                   int sh = widths[i];
                   if (col && col->title)
-                    sh -= strlen (col->title);
+                    sh = MAX (0, sh - strlen (col->title));
                   else
-                    sh -= 5;
+                    sh = MAX (0, sh - 5);
                   shrinks[i] = shortfall * (sh / (double)shrinkable);
                   leftover -= shrinks[i];
                 }
             }
-          while (leftover > 0)
+          last = leftover + 1;
+          while (leftover > 0 && leftover < last)
             {
+              last = leftover;
               for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
                 {
                   TableColumn *col = g_ptr_array_index (printer->columns, i);
                   gboolean ellipsize = col ? col->ellipsize : FALSE;
-                  if (ellipsize)
+                  if (ellipsize && shrinks[i] < widths[i])
                     {
                        shrinks[i]++;
                        leftover--;
