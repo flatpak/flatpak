@@ -173,6 +173,9 @@ print_table_for_refs (gboolean print_apps,
   flatpak_table_printer_set_column_ellipsize (printer,
                                               find_column (columns, "application", NULL),
                                               FLATPAK_ELLIPSIZE_MODE_START);
+  flatpak_table_printer_set_column_ellipsize (printer,
+                                              find_column (columns, "options", NULL),
+                                              FLATPAK_ELLIPSIZE_MODE_START);
 
   if (app_runtime)
     {
