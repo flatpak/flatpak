@@ -9945,7 +9945,8 @@ out:
 
 /* Guarantees to return refs which are decomposable. */
 static GPtrArray *
-find_matching_refs (GHashTable           *refs,
+find_matching_refs (FlatpakDir           *dir,
+                    GHashTable           *refs,
                     const char           *opt_name,
                     const char           *opt_branch,
                     const char           *opt_default_branch,
@@ -10032,6 +10033,13 @@ find_matching_refs (GHashTable           *refs,
       if (opt_collection_id != NULL && strcmp (opt_collection_id, coll_ref->collection_id))
         continue;
 
+      if (dir && (flags & FIND_MATCHING_REFS_FLAGS_SKIP_INSTALLED))
+        {
+          g_autoptr(GFile) deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
+          if (deploy_dir)
+            continue;
+        }
+
       if (opt_name != NULL && strcmp (opt_name, parts[1]) == 0)
         found_exact_name_match = TRUE;
 
@@ -10099,7 +10107,8 @@ find_matching_ref (GHashTable  *refs,
       g_autoptr(GPtrArray) matched_refs = NULL;
       int j;
 
-      matched_refs = find_matching_refs (refs,
+      matched_refs = find_matching_refs (NULL,
+                                         refs,
                                          name,
                                          opt_branch,
                                          opt_default_branch,
@@ -10182,7 +10191,8 @@ flatpak_dir_find_remote_refs (FlatpakDir            *self,
     return NULL;
 
   collection_id = flatpak_dir_get_remote_collection_id (self, remote);
-  matched_refs = find_matching_refs (remote_refs,
+  matched_refs = find_matching_refs (self,
+                                     remote_refs,
                                      name,
                                      opt_branch,
                                      opt_default_branch,
@@ -10365,7 +10375,8 @@ flatpak_dir_find_local_refs (FlatpakDir           *self,
                                               &local_refs, cancellable, error))
     return NULL;
 
-  matched_refs = find_matching_refs (local_refs,
+  matched_refs = find_matching_refs (self,
+                                     local_refs,
                                      name,
                                      opt_branch,
                                      opt_default_branch,
@@ -10466,7 +10477,8 @@ flatpak_dir_find_installed_refs (FlatpakDir            *self,
   if (local_refs == NULL)
     return NULL;
 
-  matched_refs = find_matching_refs (local_refs,
+  matched_refs = find_matching_refs (self,
+                                     local_refs,
                                      opt_name,
                                      opt_branch,
                                      NULL, /* default branch */
@@ -10598,7 +10610,8 @@ flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
                                               cancellable, error))
     return FALSE;
 
-  local_flatpak_refspecs = find_matching_refs (local_refspecs,
+  local_flatpak_refspecs = find_matching_refs (self,
+                                               local_refspecs,
                                                NULL, NULL, NULL, NULL, NULL, NULL,
                                                FLATPAK_KINDS_APP |
                                                FLATPAK_KINDS_RUNTIME,
