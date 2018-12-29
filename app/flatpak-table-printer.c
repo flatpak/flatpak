@@ -538,7 +538,10 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
               freeme = title = ellipsize_string (title, len);
             }
 
-          g_string_append_printf (row_s, "%*s%-*s", i > 0, "", len, title);
+          if (i > 0)
+            g_string_append_c (row_s, ' ');
+          g_string_append (row_s, title);
+          string_add_spaces (row_s, len - g_utf8_strlen (title, -1));
         }
       rows += print_row (row_s, TRUE, &skip, columns);
     }
