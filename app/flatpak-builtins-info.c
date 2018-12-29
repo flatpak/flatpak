@@ -272,13 +272,19 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (strcmp (parts[0], "app") == 0)
         {
           g_autofree char *runtime = NULL;
-          runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
+          runtime = g_key_file_get_string (metakey,
+                                           FLATPAK_METADATA_GROUP_APPLICATION,
+                                           FLATPAK_METADATA_KEY_RUNTIME,
+                                           error);
           print_aligned (len, _("Runtime:"), runtime ? runtime : "-");
         }
       if (strcmp (parts[0], "app") == 0)
         {
           g_autofree char *sdk = NULL;
-          sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
+          sdk = g_key_file_get_string (metakey,
+                                       FLATPAK_METADATA_GROUP_APPLICATION,
+                                       FLATPAK_METADATA_KEY_SDK,
+                                       error);
           print_aligned (len, _("Sdk:"), sdk ? sdk : "-");
         }
       g_print ("\n");
@@ -356,9 +362,15 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           maybe_print_space (&first);
 
           if (strcmp (parts[0], "app") == 0)
-            runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+            runtime = g_key_file_get_string (metakey,
+                                             FLATPAK_METADATA_GROUP_APPLICATION,
+                                             FLATPAK_METADATA_KEY_RUNTIME,
+                                             NULL);
           else
-            runtime = g_key_file_get_string (metakey, "Runtime", "runtime", NULL);
+            runtime = g_key_file_get_string (metakey,
+                                             FLATPAK_METADATA_GROUP_RUNTIME,
+                                             FLATPAK_METADATA_KEY_RUNTIME,
+                                             NULL);
           g_print ("%s", runtime ? runtime : "-");
         }
 
@@ -368,9 +380,15 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           maybe_print_space (&first);
 
           if (strcmp (parts[0], "app") == 0)
-            sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
+            sdk = g_key_file_get_string (metakey,
+                                         FLATPAK_METADATA_GROUP_APPLICATION,
+                                         FLATPAK_METADATA_KEY_SDK,
+                                         NULL);
           else
-            sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
+            sdk = g_key_file_get_string (metakey,
+                                         FLATPAK_METADATA_GROUP_RUNTIME,
+                                         FLATPAK_METADATA_KEY_SDK,
+                                         NULL);
           g_print ("%s", sdk ? sdk : "-");
         }
 
