@@ -141,6 +141,8 @@ typedef enum {
 char *  ellipsize_string (const char *text, int len);
 char *  ellipsize_string_full (const char *text, int len, FlatpakEllipsizeMode mode);
 
+void print_aligned (int len, const char *title, const char *value);
+
 AsApp *as_store_find_app (AsStore *store,
                           const char *ref);
 const char *as_app_get_localized_name (AsApp *app);

@@ -1088,3 +1088,18 @@ as_store_find_app (AsStore *store,
 
   return NULL;
 }
+
+void
+print_aligned (int len, const char *title, const char *value)
+{
+  const char *on = "";
+  const char *off = "";
+
+  if (flatpak_fancy_output ())
+    {
+      on = FLATPAK_ANSI_BOLD_ON;
+      off = FLATPAK_ANSI_BOLD_OFF;
+    }
+
+  g_print ("%s%*s%s%s %s\n", on, len - (int)g_utf8_strlen (title, -1), "", title, off, value);
+}
