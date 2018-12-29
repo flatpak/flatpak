@@ -465,7 +465,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 continue;
 
               if (col && col->title)
-                shrinkable += MAX (0, widths[i] - strlen (col->title));
+                shrinkable += MAX (0, widths[i] - g_utf8_strlen (col->title, -1));
               else
                 shrinkable += MAX (0, widths[i] - 5);
             }
@@ -479,7 +479,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 {
                   int sh;
                   if (col && col->title)
-                    sh = MAX (0, widths[i] - strlen (col->title));
+                    sh = MAX (0, widths[i] - g_utf8_strlen (col->title, -1));
                   else
                     sh = MAX (0, widths[i] - 5);
                   shrinks[i] = MIN (shortfall * (sh / (double)shrinkable), widths[i]);
