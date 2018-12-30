@@ -1724,6 +1724,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                FlatpakContext *cmdline_context,
                                gboolean        sandbox,
                                gboolean        build,
+                               gboolean        devel,
                                char          **app_info_path_out,
                                char          **instance_id_host_dir_out,
                                GError        **error)
@@ -1827,6 +1828,9 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   if (build)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                             FLATPAK_METADATA_KEY_BUILD, TRUE);
+  if (devel)
+    g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                            FLATPAK_METADATA_KEY_DEVEL, TRUE);
 
   if (cmdline_context)
     {
@@ -2823,7 +2827,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
 
   if (!WIFEXITED (exit_status) || WEXITSTATUS (exit_status) != 0)
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, 
+      flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED,
                           _("ldconfig failed, exit status %d"), exit_status);
       return -1;
     }
@@ -3102,7 +3106,7 @@ flatpak_run_app (const char     *app_ref,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_ref_parts[1], app_ref_parts[3],
                                       runtime_ref, app_id_dir, app_context, extra_context,
-                                      sandboxed, FALSE,
+                                      sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
                                       &app_info_path, &instance_id_host_dir, error))
     return FALSE;
 
