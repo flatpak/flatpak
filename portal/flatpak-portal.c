@@ -322,6 +322,7 @@ handle_spawn (PortalFlatpak         *object,
   g_auto(GStrv) sandbox_expose = NULL;
   g_auto(GStrv) sandbox_expose_ro = NULL;
   gboolean sandboxed;
+  gboolean devel;
 
   app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
   g_assert (app_info != NULL);
@@ -391,6 +392,9 @@ handle_spawn (PortalFlatpak         *object,
                                           FLATPAK_METADATA_KEY_RUNTIME_COMMIT, NULL);
   shares = g_key_file_get_string_list (app_info, FLATPAK_METADATA_GROUP_CONTEXT,
                                        FLATPAK_METADATA_KEY_SHARED, NULL, NULL);
+
+  devel = g_key_file_get_boolean (app_info, FLATPAK_METADATA_GROUP_INSTANCE,
+                                  FLATPAK_METADATA_KEY_DEVEL, NULL);
 
   g_variant_lookup (arg_options, "sandbox-expose", "^as", &sandbox_expose);
   g_variant_lookup (arg_options, "sandbox-expose-ro", "^as", &sandbox_expose_ro);
@@ -523,6 +527,9 @@ handle_spawn (PortalFlatpak         *object,
       for (i = 0; extra_args != NULL && extra_args[i] != NULL; i++)
         g_ptr_array_add (flatpak_argv, g_strdup (extra_args[i]));
     }
+
+  if (devel)
+    g_ptr_array_add (flatpak_argv, g_strdup ("--devel"));
 
   /* Inherit launcher network access from launcher, unless
      NO_NETWORK set. */
