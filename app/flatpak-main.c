@@ -375,15 +375,19 @@ flatpak_option_context_parse (GOptionContext     *context,
         {
           FlatpakDir *dir;
 
+          if ((opt_system && opt_user) ||
+              (opt_system && opt_installations != NULL) ||
+              (opt_user && opt_installations != NULL) ||
+              (opt_installations != NULL && opt_installations[1] != NULL))
+            return usage_error (context, _("Multiple installations specified for a command "
+                                           "that works on one installation"), error);
+
           if (opt_system || (!opt_user && opt_installations == NULL))
             dir = flatpak_dir_get_system_default ();
           else if (opt_user)
             dir = flatpak_dir_get_user ();
           else if (opt_installations != NULL)
             {
-              if (g_strv_length (opt_installations) > 1)
-                return usage_error (context, _("The --installation option was used multiple times "
-                                               "for a command that works on one installation"), error);
               dir = flatpak_dir_get_system_by_id (opt_installations[0], cancellable, error);
               if (dir == NULL)
                 return FALSE;
