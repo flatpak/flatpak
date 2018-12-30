@@ -231,26 +231,11 @@ flatpak_option_context_parse (GOptionContext     *context,
 {
   g_autoptr(GPtrArray) dirs = NULL;
 
-  if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR) &&
-      !(flags & FLATPAK_BUILTIN_FLAG_ONE_DIR) &&
-      !(flags & FLATPAK_BUILTIN_FLAG_STANDARD_DIRS) &&
-      !(flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS))
-    g_assert_not_reached ();
-
-  if (flags & FLATPAK_BUILTIN_FLAG_NO_DIR &&
-      (flags & FLATPAK_BUILTIN_FLAG_ONE_DIR ||
-       flags & FLATPAK_BUILTIN_FLAG_STANDARD_DIRS ||
-       flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS))
-    g_assert_not_reached ();
-
-  if (flags & FLATPAK_BUILTIN_FLAG_ONE_DIR &&
-      (flags & FLATPAK_BUILTIN_FLAG_STANDARD_DIRS ||
-       flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS))
-    g_assert_not_reached ();
-
-  if (flags & FLATPAK_BUILTIN_FLAG_STANDARD_DIRS &&
-      flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS)
-    g_assert_not_reached ();
+  if (__builtin_popcount (flags & (FLATPAK_BUILTIN_FLAG_NO_DIR |
+                                   FLATPAK_BUILTIN_FLAG_ONE_DIR |
+                                   FLATPAK_BUILTIN_FLAG_STANDARD_DIRS |
+                                   FLATPAK_BUILTIN_FLAG_ALL_DIRS)) != 1)
+     g_assert_not_reached ();
 
   if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     g_option_context_add_main_entries (context, user_entries, NULL);
