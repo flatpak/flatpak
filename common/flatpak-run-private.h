@@ -67,6 +67,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_EXTRA_ARGS "extra-args"
 #define FLATPAK_METADATA_KEY_SANDBOX "sandbox"
 #define FLATPAK_METADATA_KEY_BUILD "build"
+#define FLATPAK_METADATA_KEY_DEVEL "devel"
 
 #define FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
 #define FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
@@ -156,6 +157,7 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                         FlatpakContext *cmdline_context,
                                         gboolean        sandbox,
                                         gboolean        build,
+                                        gboolean        devel,
                                         char          **app_info_path_out,
                                         char          **host_instance_id_host_dir_out,
                                         GError        **error);
