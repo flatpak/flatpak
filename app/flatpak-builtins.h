@@ -30,6 +30,25 @@
 
 G_BEGIN_DECLS
 
+/**
+ * FlatpakBuiltinFlags:
+ * @FLATPAK_BUILTIN_FLAG_NO_DIR: Don't allow --user/--system/--installation and
+ *    don't return any dir
+ * @FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO: Don't fail if we can't create an entire installation
+ *    directory structure
+ * @FLATPAK_BUILTIN_FLAG_ONE_DIR: Allow a single --user/--system/--installation option
+ *    and return a single dir. If no option is specified, default to --system
+ * @FLATPAK_BUILTIN_FLAG_STANDARD_DIRS: Allow repeated use of --user/--system/--installation
+ *    and return multiple dirs. If no option is specified return system(default)+user
+ * @FLATPAK_BUILTIN_FLAG_ALL_DIRS: Allow repeated use of --user/--system/--installation
+ *    and return multiple dirs. If no option is specified, return all installations,
+ *    starting with system(default)+user
+ * 
+ * Flags affecting the behavior of flatpak_option_context_parse().
+ *
+ * If the default system installation is among the returned diretories,
+ * it will be returned first.
+ */
 typedef enum {
   FLATPAK_BUILTIN_FLAG_NO_DIR = 1 << 0,
   FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO = 1 << 1,
