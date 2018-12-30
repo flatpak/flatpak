@@ -738,6 +738,13 @@ is_good_installation_id (const char *id)
       strcmp (id, "system") == 0)
     return FALSE;
 
+  if (!g_str_is_ascii (id) ||
+      strpbrk (id, " /\n"))
+    return FALSE;
+
+  if (strlen (id) > 80)
+    return FALSE;
+
   return TRUE;
 }
 
