@@ -92,7 +92,10 @@
     <refsect1>
         <title>Options</title>
 
-        <para>The following options are understood:</para>
+        <para>
+            The following global options are understood. Individual commands have their
+            own options.
+        </para>
 
         <variablelist>
             <varlistentry>
@@ -570,6 +573,7 @@
                 <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>ostree.repo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>flatpak-remote</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-installation</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
                 <ulink url="https://www.flatpak.org">https://www.flatpak.org</ulink>
             </para>
 
