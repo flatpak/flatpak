@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "flatpak-complete.h"
+#include "flatpak-installation.h"
 #include "flatpak-utils-private.h"
 
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
@@ -342,6 +343,16 @@ flatpak_complete_options (FlatpakCompletion *completion,
               else if (strcmp (e->arg_description, "FILE") == 0)
                 {
                   flatpak_complete_file (completion, "__FLATPAK_FILE");
+                }
+              else if (strcmp (e->long_name, "installation") == 0)
+                {
+                  g_autoptr(GPtrArray) installations = NULL;
+                  installations = flatpak_get_system_installations (NULL, NULL);
+                  for (i = 0; i < installations->len; i++)
+                    {
+                      FlatpakInstallation *inst = g_ptr_array_index (installations, i);
+                      flatpak_complete_word (completion, "%s%s ", prefix, flatpak_installation_get_id (inst));
+                    }
                 }
               else
                 flatpak_complete_word (completion, "%s", prefix);
