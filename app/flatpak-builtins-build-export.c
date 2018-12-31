@@ -294,6 +294,139 @@ find_file_in_tree (GFile *base, const char *filename)
   return FALSE;
 }
 
+typedef gboolean (* VisitFileFunc) (GFile *file, GError **error);
+
+static gboolean
+visit_files_in_tree (GFile *base,
+                     VisitFileFunc visit_file,
+                     gpointer data)
+{
+  g_autoptr(GFileEnumerator) enumerator = NULL;
+  GError **error = data;
+
+  enumerator = g_file_enumerate_children (base,
+                                          G_FILE_ATTRIBUTE_STANDARD_TYPE ","
+                                          G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                          G_FILE_QUERY_INFO_NONE,
+                                          NULL,
+                                          NULL);
+  if (!enumerator)
+    return FALSE;
+
+  do
+    {
+      GFileInfo *info;
+      GFile *child;
+      GFileType type;
+
+      if (!g_file_enumerator_iterate (enumerator, &info, &child, NULL, error))
+        return FALSE;
+
+      if (!info)
+        return TRUE;
+
+      type = g_file_info_get_file_type (info);
+
+      if (type == G_FILE_TYPE_REGULAR)
+        {
+          if (!visit_file (child, data))
+            return FALSE;
+        }
+      else if (type == G_FILE_TYPE_DIRECTORY)
+        {
+          if (!visit_files_in_tree (child, visit_file, data))
+            return FALSE;
+        }
+    }
+  while (1);
+
+  return TRUE;
+}
+
+G_GNUC_NULL_TERMINATED
+static void
+add_args (GPtrArray *argv_array, ...)
+{
+  va_list args;
+  const char *arg;
+
+  va_start (args, argv_array);
+  while ((arg = va_arg (args, const gchar *)))
+    g_ptr_array_add (argv_array, g_strdup (arg));
+  va_end (args);
+}
+
+static gboolean
+validate_icon_file (GFile *file, GError **error)
+{
+  g_autoptr(GPtrArray) args = NULL;
+  const char *name;
+  int status;
+  g_autofree char *err = NULL;
+  const char *validate_icon;
+
+  name = flatpak_file_get_path_cached (file);
+
+  args = g_ptr_array_new_with_free_func (g_free);
+
+#ifndef DISABLE_SANDBOXED_TRIGGERS
+  add_args (args,
+            flatpak_get_bwrap (),
+            "--unshare-ipc",
+            "--unshare-net",
+            "--unshare-pid",
+            "--ro-bind", "/", "/",
+            "--tmpfs", "/tmp",
+            "--proc", "/proc",
+            "--dev", "/dev",
+            "--chdir", "/",
+            "--setenv", "GIO_USE_VFS", "local",
+            "--unsetenv", "TMPDIR",
+            "--die-with-parent",
+            "--ro-bind", name, name,
+            NULL);
+  if (g_getenv ("G_MESSAGES_DEBUG"))
+    add_args (args, "--setenv", "G_MESSAGES_DEBUG", g_getenv ("G_MESSAGES_DEBUG"), NULL);
+  if (g_getenv ("G_MESSAGES_PREFIXED"))
+    add_args (args, "--setenv", "G_MESSAGES_PREFIXED", g_getenv ("G_MESSAGES_PREFIXED"), NULL);
+#endif
+
+  if (g_getenv ("FLATPAK_VALIDATE_ICON"))
+    validate_icon = g_getenv ("FLATPAK_VALIDATE_ICON");
+  else
+    validate_icon = LIBEXECDIR "/flatpak-validate-icon";
+
+  add_args (args, validate_icon, "512", "512", name, NULL);
+  g_ptr_array_add (args, NULL);
+
+  if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
+    {
+      g_debug ("Icon validation: %s", (*error)->message);
+      return FALSE;
+    }
+
+  if (!g_spawn_check_exit_status (status, NULL))
+    {
+      g_debug ("Icon validation: %s", err);
+      return flatpak_fail (error, "%s is not a valid icon: %s", name, err);
+    }
+
+  return TRUE;
+}
+
+static gboolean
+validate_exported_icons (GFile      *export,
+                         const char *app_id,
+                         GError    **error)
+{
+  g_autoptr(GFile) icondir = NULL;
+
+  icondir = g_file_resolve_relative_path (export, "share/icons/hicolor");
+  visit_files_in_tree (icondir, validate_icon_file, error);
+
+  return !*error;
+}
+
 static GFile *
 convert_app_absolute_path (const char *path, GFile *files)
 {
@@ -500,6 +633,9 @@ validate_exports (GFile *export, GFile *files, const char *app_id, GError **erro
     return FALSE;
 
   if (!validate_icon (icon, export, app_id, error))
+    return FALSE;
+
+  if (!validate_exported_icons (export, app_id, error))
     return FALSE;
 
   service_path = g_strconcat ("share/dbus-1/services/", app_id, ".service", NULL);
