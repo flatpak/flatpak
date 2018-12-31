@@ -149,8 +149,8 @@ opt_verbose_cb (const gchar *option_name,
 
 
 GOptionEntry global_entries[] = {
-  { "verbose", 'v', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, &opt_verbose_cb, N_("Print debug information during command processing, -vv for more detail"), NULL },
-  { "ostree-verbose", 0, 0, G_OPTION_ARG_NONE, &opt_ostree_verbose, N_("Print OSTree debug information during command processing"), NULL },
+  { "verbose", 'v', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, &opt_verbose_cb, N_("Show debug information, -vv for more detail"), NULL },
+  { "ostree-verbose", 0, 0, G_OPTION_ARG_NONE, &opt_ostree_verbose, N_("Show OSTree debug information"), NULL },
   { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, N_("Show help options"), NULL, NULL },
   { NULL }
 };
