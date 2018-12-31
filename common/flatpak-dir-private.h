@@ -32,7 +32,7 @@
 /* Version history:
  * The version field was added in flatpak 1.2, anything before is 0.
  *
- * Version 1 added appdata-name/summary/version
+ * Version 1 added appdata-name/summary/version/license
  */
 #define FLATPAK_DEPLOY_VERSION_CURRENT 1
 #define FLATPAK_DEPLOY_VERSION_ANY 0
@@ -331,6 +331,7 @@ const char *        flatpak_deploy_data_get_runtime (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_name (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_summary (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_version (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_license (GVariant *deploy_data);
 
 GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
 GVariant *     flatpak_load_deploy_data (GFile        *deploy_dir,
