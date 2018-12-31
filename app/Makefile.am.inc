@@ -157,5 +157,6 @@ flatpak_CFLAGS = \
 	-DFLATPAK_COMPILATION \
         -I$(srcdir)/app \
         -I$(builddir)/app \
+        -DLIBEXECDIR=\"$(libexecdir)\" \
         -DLOCALEDIR=\"$(localedir)\" \
 	$(NULL)
