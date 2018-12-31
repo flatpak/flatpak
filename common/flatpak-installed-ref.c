@@ -545,7 +545,7 @@ flatpak_installed_ref_get_appdata_name (FlatpakInstalledRef *self)
  *
  * The returned string is localized.
  *
- * Returns: (transfer none): the name or %NULL
+ * Returns: (transfer none): the summary or %NULL
  *
  * Since: 1.1.2
  */
@@ -563,7 +563,7 @@ flatpak_installed_ref_get_appdata_summary (FlatpakInstalledRef *self)
  *
  * Returns the default version field from the appdata.
  *
- * Returns: (transfer none): the name or %NULL
+ * Returns: (transfer none): the version or %NULL
  *
  * Since: 1.1.2
  */
