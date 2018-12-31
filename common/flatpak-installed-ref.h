@@ -58,6 +58,7 @@ FLATPAK_EXTERN const char  *flatpak_installed_ref_get_latest_commit (FlatpakInst
 FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_name (FlatpakInstalledRef *self);
 FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_summary (FlatpakInstalledRef *self);
 FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_version (FlatpakInstalledRef *self);
+FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_license (FlatpakInstalledRef *self);
 FLATPAK_EXTERN gboolean     flatpak_installed_ref_get_is_current (FlatpakInstalledRef *self);
 FLATPAK_EXTERN GBytes      *flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
                                                                  GCancellable        *cancellable,

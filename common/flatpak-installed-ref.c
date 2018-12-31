@@ -52,6 +52,7 @@ struct _FlatpakInstalledRefPrivate
   char    *appdata_name;
   char    *appdata_summary;
   char    *appdata_version;
+  char    *appdata_license;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstalledRef, flatpak_installed_ref, FLATPAK_TYPE_REF)
@@ -70,6 +71,7 @@ enum {
   PROP_APPDATA_NAME,
   PROP_APPDATA_SUMMARY,
   PROP_APPDATA_VERSION,
+  PROP_APPDATA_LICENSE,
 };
 
 static void
@@ -152,6 +154,11 @@ flatpak_installed_ref_set_property (GObject      *object,
       priv->appdata_version = g_value_dup_string (value);
       break;
 
+    case PROP_APPDATA_LICENSE:
+      g_clear_pointer (&priv->appdata_license, g_free);
+      priv->appdata_license = g_value_dup_string (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -211,6 +218,10 @@ flatpak_installed_ref_get_property (GObject    *object,
 
     case PROP_APPDATA_VERSION:
       g_value_set_string (value, priv->appdata_version);
+      break;
+
+    case PROP_APPDATA_LICENSE:
+      g_value_set_string (value, priv->appdata_license);
       break;
 
     default:
@@ -303,6 +314,13 @@ flatpak_installed_ref_class_init (FlatpakInstalledRefClass *klass)
                                    g_param_spec_string ("appdata-version",
                                                         "Appdata Version",
                                                         "The default version field from the appdata",
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_APPDATA_LICENSE,
+                                   g_param_spec_string ("appdata-license",
+                                                        "Appdata License",
+                                                        "The license from the appdata",
                                                         NULL,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
@@ -575,6 +593,24 @@ flatpak_installed_ref_get_appdata_version (FlatpakInstalledRef *self)
   return priv->appdata_version;
 }
 
+/**
+ * flatpak_installed_ref_get_appdata_license:
+ * @self: a #FlatpakInstalledRef
+ *
+ * Returns the license field from the appdata.
+ *
+ * Returns: (transfer none): the license or %NULL
+ *
+ * Since: 1.1.2
+ */
+const char *
+flatpak_installed_ref_get_appdata_license (FlatpakInstalledRef *self)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+
+  return priv->appdata_license;
+}
+
 FlatpakInstalledRef *
 flatpak_installed_ref_new (const char  *full_ref,
                            const char  *commit,
@@ -588,7 +624,8 @@ flatpak_installed_ref_new (const char  *full_ref,
                            const char  *eol_rebase,
                            const char  *appdata_name,
                            const char  *appdata_summary,
-                           const char  *appdata_version)
+                           const char  *appdata_version,
+                           const char  *appdata_license)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakInstalledRef *ref;
@@ -621,6 +658,7 @@ flatpak_installed_ref_new (const char  *full_ref,
                       "appdata-name", appdata_name,
                       "appdata-summary", appdata_summary,
                       "appdata-version", appdata_version,
+                      "appdata-license", appdata_license,
                       NULL);
 
   return ref;

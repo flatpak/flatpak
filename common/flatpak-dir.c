@@ -2169,6 +2169,12 @@ flatpak_deploy_data_get_appdata_version (GVariant *deploy_data)
     return flatpak_deploy_data_get_string (deploy_data, "appdata-version");
 }
 
+const char *
+flatpak_deploy_data_get_appdata_license (GVariant *deploy_data)
+{
+    return flatpak_deploy_data_get_string (deploy_data, "appdata-license");
+}
+
 /*<private>
  * flatpak_deploy_data_get_subpaths:
  *
@@ -2262,12 +2268,16 @@ add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
     {
       AsApp *app = g_ptr_array_index (apps, 0);
       AsRelease *release = as_app_get_release_default (app);
+      const char *license = as_app_get_project_license (app);
 
       add_locale_metadata_string (metadata_builder, "appdata-name", as_app_get_names (app));
       add_locale_metadata_string (metadata_builder, "appdata-summary", as_app_get_comments (app));
       if (release)
         g_variant_builder_add (metadata_builder, "{s@v}", "appdata-version",
                                g_variant_new_variant (g_variant_new_string (as_release_get_version (release))));
+      if (license)
+        g_variant_builder_add (metadata_builder, "{s@v}", "appdata-license",
+                               g_variant_new_variant (g_variant_new_string (license)));
     }
 }
 
