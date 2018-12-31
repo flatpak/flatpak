@@ -201,8 +201,11 @@ flatpak_option_context_new_with_commands (FlatpakCommand *commands)
           if (commands->fn != NULL)
             {
               g_string_append_printf (summary, "\n  %s", commands->name);
+              /* Note: the 23 is there to align command descriptions with
+               * the option descriptions produced by GOptionContext.
+               */
               if (commands->description)
-                g_string_append_printf (summary, "%*s%s", (int) (20 - strlen (commands->name)), "", _(commands->description));
+                g_string_append_printf (summary, "%*s%s", (int) (23 - strlen (commands->name)), "", _(commands->description));
             }
           else
             {
