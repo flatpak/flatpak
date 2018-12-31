@@ -1,4 +1,4 @@
-# @sysconfdir@/profile.d/flatpak.sh - set XDG_DATA_DIRS
+# set XDG_DATA_DIRS to include Flatpak installations
 
 new_dirs=
 while read -r install_path

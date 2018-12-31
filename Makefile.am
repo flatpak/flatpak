@@ -140,15 +140,7 @@ zshcompletion_DATA = completion/_flatpak
 EXTRA_DIST += $(zshcompletion_DATA)
 
 profiledir = $(PROFILE_DIR)
-profile_DATA = flatpak.sh
-EXTRA_DIST += \
-	profile/flatpak.sh.in \
-	$(NULL)
-DISTCLEANFILES += flatpak.sh
-
-flatpak.sh: profile/flatpak.sh.in
-	$(AM_V_GEN) $(SED) -e "s|\@localstatedir\@|$(localstatedir)|" \
-		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
+profile_DATA = profile/flatpak.sh
 
 envdir = $(datadir)/gdm/env.d
 env_DATA = flatpak.env
