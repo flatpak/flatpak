@@ -156,6 +156,14 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--installations</option></term>
+
+                <listitem><para>
+                    Print paths of system installations and exit.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 
