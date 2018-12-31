@@ -272,6 +272,8 @@ PKG_CHECK_MODULES(JSON, [json-glib-1.0])
 
 PKG_CHECK_MODULES(APPSTREAM_GLIB, [appstream-glib >= 0.5.10])
 
+PKG_CHECK_MODULES(GDK_PIXBUF, [gdk-pixbuf-2.0])
+
 AC_ARG_ENABLE([seccomp],
               AC_HELP_STRING([--disable-seccomp],
                              [Disable seccomp]),
