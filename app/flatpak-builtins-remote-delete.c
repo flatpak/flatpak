@@ -31,6 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
+#include "flatpak-quiet-transaction.h"
 
 static gboolean opt_force;
 
@@ -67,6 +68,59 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
 
   if (!flatpak_resolve_duplicate_remotes (dirs, remote_name, &preferred_dir, cancellable, error))
     return FALSE;
+
+  if (!opt_force)
+    {
+      g_auto(GStrv) refs = NULL;
+      g_autoptr(GPtrArray) refs_to_remove = NULL;
+      int i;
+
+      refs = flatpak_dir_find_installed_refs (preferred_dir, NULL, NULL, NULL, FLATPAK_KINDS_APP|FLATPAK_KINDS_RUNTIME, 0, error);
+      if (refs == NULL)
+        return FALSE;
+
+      refs_to_remove = g_ptr_array_new_with_free_func (g_free);
+
+      for (i = 0; refs[i]; i++)
+        {
+          g_autofree char *origin = flatpak_dir_get_origin (preferred_dir, refs[i], NULL, NULL);
+          if (g_strcmp0 (origin, remote_name) == 0)
+            g_ptr_array_add (refs_to_remove, g_strdup (refs[i]));
+        }
+
+      if (refs_to_remove->len > 0)
+        {
+          g_autoptr(FlatpakTransaction) transaction = NULL;
+
+          g_ptr_array_add (refs_to_remove, NULL);
+
+          flatpak_format_choices ((const char **)refs_to_remove->pdata,
+                                  _("The following refs are installed from remote '%s':"), remote_name);
+          if (!flatpak_yes_no_prompt (FALSE, _("Remove them?")))
+            return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_USED,
+                                       _("Can't remove remote '%s' with installed refs"), remote_name);
+
+          transaction = flatpak_quiet_transaction_new (preferred_dir, error);
+          if (transaction == NULL)
+            return FALSE;
+
+          for (i = 0; refs[i]; i++)
+            {
+              if (!flatpak_transaction_add_uninstall (transaction, refs[i], error))
+                return FALSE;
+            }
+
+          if (!flatpak_transaction_run (transaction, cancellable, error))
+            {
+              if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+                {
+                  g_clear_error (error);
+                  return TRUE;
+                }
+              return FALSE;
+            }
+        }
+    }
 
   if (!flatpak_dir_remove_remote (preferred_dir, opt_force, remote_name,
                                   cancellable, error))
