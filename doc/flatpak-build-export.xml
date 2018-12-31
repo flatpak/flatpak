@@ -178,6 +178,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--end-of-life=REASON</option></term>
+
+                <listitem><para>
+                    Mark the build as end-of-life. REASON is a message that may be shown to users
+                    installing this build.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--disable-fsync</option></term>
 
                 <listitem><para>
