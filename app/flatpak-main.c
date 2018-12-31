@@ -69,7 +69,7 @@ typedef struct
 
 static FlatpakCommand commands[] = {
   /* translators: please keep the leading space */
-  { N_(" Manage installed apps and runtimes") },
+  { N_(" Manage installed applications and runtimes") },
   { "install", N_("Install an application or runtime"), flatpak_builtin_install, flatpak_complete_install },
   { "update", N_("Update an installed application or runtime"), flatpak_builtin_update, flatpak_complete_update },
   { "uninstall", N_("Uninstall an installed application or runtime"), flatpak_builtin_uninstall, flatpak_complete_uninstall },
@@ -80,7 +80,7 @@ static FlatpakCommand commands[] = {
   { "history", N_("Show history"), flatpak_builtin_history, flatpak_complete_history },
   { "config", N_("Configure flatpak"), flatpak_builtin_config, flatpak_complete_config },
   { "repair", N_("Repair flatpak installation"), flatpak_builtin_repair, flatpak_complete_repair },
-  { "create-usb", N_("Put apps and/or runtimes onto removable media"), flatpak_builtin_create_usb, flatpak_complete_create_usb },
+  { "create-usb", N_("Put applications or runtimes onto removable media"), flatpak_builtin_create_usb, flatpak_complete_create_usb },
 
   /* translators: please keep the leading newline and space */
   { N_("\n Finding applications and runtimes") },
@@ -132,7 +132,7 @@ static FlatpakCommand commands[] = {
   { "build-sign", N_("Sign an application or runtime"), flatpak_builtin_build_sign, flatpak_complete_build_sign },
   { "build-update-repo", N_("Update the summary file in a repository"), flatpak_builtin_build_update_repo, flatpak_complete_build_update_repo },
   { "build-commit-from", N_("Create new commit based on existing ref"), flatpak_builtin_build_commit_from, flatpak_complete_build_commit_from },
-  { "repo", N_("Print information about a repo"), flatpak_builtin_repo, flatpak_complete_repo },
+  { "repo", N_("Show information about a repo"), flatpak_builtin_repo, flatpak_complete_repo },
 
   { NULL }
 };
