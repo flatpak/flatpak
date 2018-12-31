@@ -93,9 +93,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   const char *alt_id = NULL;
   const char *eol;
   const char *eol_rebase;
-  const char *appdata_name;
-  const char *appdata_summary;
-  const char *appdata_version;
+  const char *name;
+  const char *summary;
+  const char *version;
+  const char *license;
   const char *pref = NULL;
   const char *default_branch = NULL;
   const char *origin = NULL;
@@ -164,9 +165,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
   eol = flatpak_deploy_data_get_eol (deploy_data);
   eol_rebase = flatpak_deploy_data_get_eol_rebase (deploy_data);
-  appdata_name = flatpak_deploy_data_get_appdata_name (deploy_data);
-  appdata_summary = flatpak_deploy_data_get_appdata_summary (deploy_data);
-  appdata_version = flatpak_deploy_data_get_appdata_version (deploy_data);
+  name = flatpak_deploy_data_get_appdata_name (deploy_data);
+  summary = flatpak_deploy_data_get_appdata_summary (deploy_data);
+  version = flatpak_deploy_data_get_appdata_version (deploy_data);
+  license = flatpak_deploy_data_get_appdata_license (deploy_data);
 
   metakey = flatpak_deploy_get_metadata (deploy);
 
@@ -190,12 +192,12 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       int rows, cols;
       int width;
 
-      if (appdata_name)
+      if (name)
         {
-          if (appdata_summary)
-            g_print ("\n%s - %s\n\n", appdata_name, appdata_summary);
+          if (summary)
+            g_print ("\n%s - %s\n\n", name, summary);
           else
-            g_print ("\n%s\n\n", appdata_name);
+            g_print ("\n%s\n\n", name);
         }
 
       latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
@@ -224,6 +226,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       len = MAX (len, strlen (_("Arch:")));
       len = MAX (len, strlen (_("Branch:")));
       len = MAX (len, strlen (_("Version:")));
+      if (license)
+        len = MAX (len, strlen (_("License:")));
       if (collection_id != NULL)
         len = MAX (len, strlen (_("Collection:")));
       len = MAX (len, strlen (_("Installation:")));
@@ -262,8 +266,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       g_print ("%s%*s%s %s\n", on, len, _("Ref:"), off, ref);
       g_print ("%s%*s%s %s\n", on, len, _("Arch:"), off, parts[2]);
       g_print ("%s%*s%s %s\n", on, len, _("Branch:"), off, parts[3]);
-      if (appdata_version)
-        g_print ("%s%*s%s %s\n", on, len, _("Version:"), off, appdata_version);
+      if (version)
+        g_print ("%s%*s%s %s\n", on, len, _("Version:"), off, version);
+      if (license)
+        g_print ("%s%*s%s %s\n", on, len, _("License:"), off, license);
       g_print ("%s%*s%s %s\n", on, len, _("Origin:"), off, origin ? origin : "-");
       if (collection_id)
         g_print ("%s%*s%s %s\n", on, len, _("Collection:"), off, collection_id);
