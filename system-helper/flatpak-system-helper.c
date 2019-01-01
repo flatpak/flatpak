@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gio/gio.h>
+#include <glib/gprintf.h>
 #include <polkit/polkit.h>
 
 #include "flatpak-dbus-generated.h"
@@ -195,6 +196,27 @@ get_sender_pid (GDBusMethodInvocation *invocation)
   return 0;
 }
 
+static void
+flatpak_invocation_return_error (GDBusMethodInvocation *invocation,
+                                 GError                *error,
+                                 const char            *fmt,
+                                 ...)
+{
+  if (error->domain == FLATPAK_ERROR)
+    g_dbus_method_invocation_return_gerror (invocation, error);
+  else
+    {
+      va_list args;
+      g_autofree char *prefix = NULL;
+      va_start (args, fmt);
+      g_vasprintf (&prefix, fmt, args);
+      va_end (args);
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "%s: %s", prefix, error->message);
+    }
+}
+
 static gboolean
 handle_deploy (FlatpakSystemHelper   *object,
                GDBusMethodInvocation *invocation,
@@ -234,7 +256,8 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   if (!g_file_query_exists (repo_file, NULL))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Path does not exist");
       return TRUE;
     }
 
@@ -258,8 +281,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_ensure_repo (system, NULL, &error))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                             "Can't open system repo %s", error->message);
+      flatpak_invocation_return_error (invocation, error, "Can't open system repo %s", arg_installation);
       return TRUE;
     }
 
@@ -387,12 +409,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                              ostree_progress,
                                              NULL, &error))
         {
-          if (error->domain == FLATPAK_ERROR)
-            g_dbus_method_invocation_return_gerror (invocation, error);
-          else
-            g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                   "Error pulling from repo: %s", error->message);
-
+          flatpak_invocation_return_error (invocation, error, "Error pulling from repo");
           return TRUE;
         }
 
@@ -409,8 +426,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                        &url,
                                        &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error getting remote url: %s", error->message);
+          flatpak_invocation_return_error (invocation, error, "Error getting remote url");
           return TRUE;
         }
 
@@ -424,8 +440,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       state = flatpak_dir_get_remote_state_optional (system, arg_origin, NULL, &error);
       if (state == NULL)
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error pulling from repo: %s", error->message);
+          flatpak_invocation_return_error (invocation, error, "Error getting remote state");
           return TRUE;
         }
 
@@ -438,12 +453,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &error))
         {
-          if (error->domain == FLATPAK_ERROR)
-            g_dbus_method_invocation_return_gerror (invocation, error);
-          else
-            g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                   "Error pulling from repo: %s", error->message);
-
+          flatpak_invocation_return_error (invocation, error, "Error pulling from repo");
           return TRUE;
         }
 
@@ -458,12 +468,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           if (!flatpak_dir_deploy_update (system, arg_ref,
                                           NULL, (const char **) arg_subpaths, NULL, &error))
             {
-              if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-                g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                                                       "%s", error->message);
-              else
-                g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                       "Error deploying: %s", error->message);
+              flatpak_invocation_return_error (invocation, error, "Error deploying");
               return TRUE;
             }
         }
@@ -474,8 +479,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                            reinstall,
                                            NULL, &error))
             {
-              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                     "Error deploying: %s", error->message);
+              flatpak_invocation_return_error (invocation, error, "Error deploying");
               return TRUE;
             }
         }
@@ -515,7 +519,8 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       g_autoptr(GFile) repo_file = g_file_new_for_path (arg_repo_path);
       if (!g_file_query_exists (repo_file, NULL))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Path does not exist");
           return TRUE;
         }
     }
@@ -549,9 +554,8 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                          NULL,
                                          NULL,
                                          &error))
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error updating appstream: %s", error->message);
+        { 
+          flatpak_invocation_return_error (invocation, error, "Error updating appstream");
           return TRUE;
         }
 
@@ -603,8 +607,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                        &url,
                                        &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error getting remote url: %s", error->message);
+          flatpak_invocation_return_error (invocation, error, "Error getting remote url");
           return TRUE;
         }
 
@@ -618,8 +621,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       state = flatpak_dir_get_remote_state_optional (system, arg_origin, NULL, &error);
       if (state == NULL)
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error pulling from repo: %s", error->message);
+          flatpak_invocation_return_error (invocation, error, "Error getting remote state");
           return TRUE;
         }
 
@@ -655,8 +657,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                      NULL,
                                      &error))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                             "Error deploying appstream: %s", error->message);
+      flatpak_invocation_return_error (invocation, error, "Error deploying appstream");
       return TRUE;
     }
 
@@ -699,7 +700,7 @@ handle_uninstall (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_uninstall (system, arg_ref, arg_flags, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error uninstalling");
       return TRUE;
     }
 
@@ -746,7 +747,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_install_bundle (system, bundle_file, arg_remote, &ref, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error installing bundle");
       return TRUE;
     }
 
@@ -816,23 +817,17 @@ handle_configure_remote (FlatpakSystemHelper   *object,
 
   if (g_key_file_has_group (config, group))
     {
-      /* Add/Modify */
-      if (!flatpak_dir_modify_remote (system, arg_remote, config,
-                                      gpg_data, NULL, &error))
+      if (!flatpak_dir_modify_remote (system, arg_remote, config, gpg_data, NULL, &error))
         {
-          g_dbus_method_invocation_return_gerror (invocation, error);
+          flatpak_invocation_return_error (invocation, error, "Error modifying remote");
           return TRUE;
         }
     }
   else
     {
-      /* Remove */
-      if (!flatpak_dir_remove_remote (system,
-                                      force_remove,
-                                      arg_remote,
-                                      NULL, &error))
+      if (!flatpak_dir_remove_remote (system, force_remove, arg_remote, NULL, &error))
         {
-          g_dbus_method_invocation_return_gerror (invocation, error);
+          flatpak_invocation_return_error (invocation, error, "Error removing remote");
           return TRUE;
         }
     }
@@ -888,7 +883,7 @@ handle_configure (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_set_config (system, arg_key, arg_value, &error))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error setting config");
       return TRUE;
     }
 
@@ -959,7 +954,7 @@ handle_update_remote (FlatpakSystemHelper   *object,
   state = flatpak_dir_get_remote_state_for_summary (system, arg_remote, summary_bytes, summary_sig_bytes, NULL, &error);
   if (state == NULL)
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error getting remote state");
       return TRUE;
     }
 
@@ -972,7 +967,7 @@ handle_update_remote (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_update_remote_configuration_for_state (system, state, FALSE, NULL, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error updating remote config");
       return TRUE;
     }
 
@@ -1023,7 +1018,7 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_remove_ref (system, arg_remote, arg_ref, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error removing ref");
       return TRUE;
     }
 
@@ -1065,7 +1060,7 @@ handle_prune_local_repo (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_prune (system, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error pruning repo");
       return TRUE;
     }
 
@@ -1144,7 +1139,7 @@ handle_run_triggers (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_run_triggers (system, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error running triggers");
       return TRUE;
     }
 
@@ -1186,7 +1181,7 @@ handle_update_summary (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_update_summary (system, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      flatpak_invocation_return_error (invocation, error, "Error updating summary");
       return TRUE;
     }
 
@@ -1239,8 +1234,7 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_remote_make_oci_summary (system, arg_origin, NULL, NULL, &error))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                             "Failed to update OCI summary: %s", error->message);
+      flatpak_invocation_return_error (invocation, error, "Failed to update OCI summary");
       return TRUE;
     }
 
