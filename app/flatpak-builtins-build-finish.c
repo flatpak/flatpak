@@ -54,7 +54,7 @@ static GOptionEntry options[] = {
   { "extra-data", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data, N_("Extra data info") },
   { "extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extensions, N_("Add extension point info"),  N_("NAME=VARIABLE[=VALUE]") },
   { "remove-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_remove_extensions, N_("Remove extension point info"),  N_("NAME") },
-  { "extension-priority", 0, 0, G_OPTION_ARG_INT, &opt_extension_prio, N_("Set extension priority (only for extensions)"), N_("0") },
+  { "extension-priority", 0, 0, G_OPTION_ARG_INT, &opt_extension_prio, N_("Set extension priority (only for extensions)"), N_("VALUE") },
   { "sdk", 0, 0, G_OPTION_ARG_STRING, &opt_sdk, N_("Change the sdk used for the app"),  N_("SDK") },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_metadata, N_("Set generic metadata option"),  N_("GROUP=KEY[=VALUE]") },
