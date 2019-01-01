@@ -1505,6 +1505,8 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_debug ("Bus acquired, creating skeleton");
 
+  g_dbus_connection_set_exit_on_close (connection, FALSE);
+
   helper = flatpak_system_helper_skeleton_new ();
 
   flatpak_system_helper_set_version (FLATPAK_SYSTEM_HELPER (helper), 2);

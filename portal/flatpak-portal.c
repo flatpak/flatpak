@@ -749,6 +749,8 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_debug ("Bus acquired, creating skeleton");
 
+  g_dbus_connection_set_exit_on_close (connection, FALSE);
+
   portal = portal_flatpak_skeleton_new ();
 
   g_dbus_connection_signal_subscribe (connection,
