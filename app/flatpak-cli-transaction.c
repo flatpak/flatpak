@@ -661,7 +661,7 @@ print_perm_line (int idx,
   g_print ("%s\n", res->str);
 }
 
-static void
+static gboolean
 print_permissions (FlatpakCliTransaction *self,
                    const char *ref,
                    GKeyFile *metadata,
@@ -683,11 +683,11 @@ print_permissions (FlatpakCliTransaction *self,
   int table_rows, table_cols;
 
   if (metadata == NULL)
-    return;
+    return FALSE;
 
   /* Only apps have permissions */
   if (flatpak_ref_get_kind (rref) != FLATPAK_REF_KIND_APP)
-    return;
+    return FALSE;
 
   append_permissions (permissions, metadata, old_metadata, FLATPAK_METADATA_KEY_SHARED);
   append_permissions (permissions, metadata, old_metadata, FLATPAK_METADATA_KEY_SOCKETS);
@@ -716,7 +716,7 @@ print_permissions (FlatpakCliTransaction *self,
 
   /* Early exit if no (or no new) permissions */
   if (permissions->len == 0)
-    return;
+    return FALSE;
 
   g_print ("\n");
 
@@ -776,6 +776,7 @@ print_permissions (FlatpakCliTransaction *self,
   if (tags->len > 0)
     print_perm_line (j++, tags, cols);
 
+  return TRUE;
 }
 
 static void
@@ -805,16 +806,21 @@ static gboolean
 transaction_ready (FlatpakTransaction *transaction)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  FlatpakInstallation *installation = flatpak_transaction_get_installation (transaction);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_clone_dir_noensure (installation);
   GList *ops = flatpak_transaction_get_operations (transaction);
   GList *l;
   int i;
   FlatpakTablePrinter *printer;
   const char *op_shorthand[] = { "i", "u", "i", "r" };
+  gboolean need_newline;
 
   if (ops == NULL)
     return TRUE;
 
   self->n_ops = g_list_length (ops);
+
+  flatpak_get_window_size (&self->rows, &self->cols);
 
   for (l = ops; l != NULL; l = l->next)
     {
@@ -838,6 +844,7 @@ transaction_ready (FlatpakTransaction *transaction)
     }
 
   /* first, show permissions */
+  need_newline = FALSE;
   for (l = ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
@@ -851,11 +858,60 @@ transaction_ready (FlatpakTransaction *transaction)
           GKeyFile *metadata = flatpak_transaction_operation_get_metadata (op);
           GKeyFile *old_metadata = flatpak_transaction_operation_get_old_metadata (op);
 
-          print_permissions (self, ref, metadata, old_metadata);
+          if (print_permissions (self, ref, metadata, old_metadata))
+            need_newline = TRUE;
         }
     }
 
-  g_print ("\n");
+  if (need_newline)
+    g_print ("\n");
+
+  /* show eol warnings */
+  need_newline = FALSE;
+  for (l = ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
+
+      if (type == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
+          type == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE ||
+          type == FLATPAK_TRANSACTION_OPERATION_UPDATE)
+        {
+          const char *ref = flatpak_transaction_operation_get_ref (op);
+          const char *remote = flatpak_transaction_operation_get_remote (op);
+          g_autoptr(FlatpakRemoteState) state = flatpak_dir_get_remote_state (dir, remote, NULL, NULL);
+          g_autoptr(GVariant) sparse = NULL;
+
+          if (state == NULL)
+            continue;
+
+          sparse = flatpak_remote_state_lookup_sparse_cache (state, ref, NULL);
+
+          if (sparse)
+            {
+              const char *eol;
+
+              if (g_variant_lookup (sparse, "eol", "&s", &eol))
+                {
+                  g_autofree char *msg = NULL;
+                  const char *on = "";
+                  const char *off = "";
+                  if (flatpak_fancy_output ())
+                    {
+                      on = FLATPAK_ANSI_RED FLATPAK_ANSI_BOLD_ON;
+                      off = FLATPAK_ANSI_BOLD_OFF FLATPAK_ANSI_COLOR_RESET;
+                    }
+                  msg = g_strdup_printf (_("%s has been marked as end-of-life."), ref);
+                  print_wrapped (MIN (self->cols, 80),
+                                 "%s%s%s %s %s", on, _("Warning:"), off, msg, eol);
+                  need_newline = TRUE;
+                }
+            }
+        }
+    }
+
+  if (need_newline)
+    g_print ("\n");
 
   printer = self->printer = flatpak_table_printer_new ();
   i = 0;
@@ -937,10 +993,6 @@ transaction_ready (FlatpakTransaction *transaction)
       g_object_set_data (G_OBJECT (op), "row", GINT_TO_POINTER (flatpak_table_printer_get_current_row (printer)));
       flatpak_table_printer_finish_row (printer);
     }
-
-  flatpak_get_window_size (&self->rows, &self->cols);
-
-  g_print ("\n");
 
   flatpak_table_printer_print_full (printer, 0, self->cols,
                                     &self->table_height, &self->table_width);
