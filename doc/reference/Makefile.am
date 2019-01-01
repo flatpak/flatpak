@@ -1,5 +1,5 @@
 DOC_MODULE = flatpak
-DOC_MAIN_SGML_FILE = flatpak-docs.xml
+DOC_MAIN_SGML_FILE = libflatpak-docs.xml
 DOC_SOURCE_DIR = $(top_srcdir)/common $(top_builddir)/common
 
 SCAN_OPTIONS = --rebuild-types \
