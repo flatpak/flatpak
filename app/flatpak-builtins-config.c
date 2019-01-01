@@ -203,7 +203,7 @@ set_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCa
   if (argc < 3)
     return usage_error (context, _("You must specify KEY and VALUE"), error);
   else if (argc > 3)
-    return usage_error (context, _("Too many arguments for --get"), error);
+    return usage_error (context, _("Too many arguments for --set"), error);
 
   key = get_config_key (argv[1], error);
   if (key == NULL)
