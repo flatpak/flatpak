@@ -56,3 +56,7 @@ TESTS_ENVIRONMENT = \
 	SRCDIR=$(abs_srcdir) BUILDDIR=$(abs_builddir)
 TESTS = $(GTKDOC_CHECK)
 endif
+
+libflatpak-docs.html: libflatpak-docs.xml docs
+	$(AM_V_GEN) $(XMLTO) $(XMLTO_FLAGS) --skip-validation xhtml-nochunks -m $(srcdir)/../xmlto-config.xsl $<
+
