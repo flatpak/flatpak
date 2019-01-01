@@ -130,6 +130,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--from-commit=COMMIT</option></term>
+
+                <listitem><para>
+                    The OSTree commit to create a delta bundle from.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--oci</option></term>
 
                 <listitem><para>
