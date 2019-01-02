@@ -18,6 +18,7 @@ TEST_MATRIX= \
 TEST_MATRIX_DIST= \
 	tests/test-basic.sh \
 	tests/test-completion.sh \
+	tests/test-config.sh \
 	tests/test-build-update-repo.sh \
 	tests/test-http-utils.sh \
 	tests/test-extensions.sh \
