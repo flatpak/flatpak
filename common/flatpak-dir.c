@@ -61,6 +61,7 @@
 
 #define SYSCONF_INSTALLATIONS_DIR "installations.d"
 #define SYSCONF_INSTALLATIONS_FILE_EXT ".conf"
+#define SYSCONF_REMOTES_DIR "remotes.d"
 
 #define SYSTEM_DIR_DEFAULT_ID "default"
 #define SYSTEM_DIR_DEFAULT_DISPLAY_NAME "Default system directory"
@@ -1516,11 +1517,14 @@ system_ostree_repo_new (GFile *repodir)
 
   config_dir = g_strdup_printf ("%s/%s",
                                 get_config_dir_location (),
-                                "/remotes.d");
+                                SYSCONF_REMOTES_DIR);
 
-  return g_object_new (OSTREE_TYPE_REPO, "path", repodir,
-                       "remotes-config-dir",
-                       config_dir,
+  if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
+    g_clear_pointer (&config_dir, g_free);
+
+  return g_object_new (OSTREE_TYPE_REPO,
+                       "path", repodir,
+                       "remotes-config-dir", config_dir,
                        NULL);
 }
 
