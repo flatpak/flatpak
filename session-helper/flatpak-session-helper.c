@@ -67,17 +67,6 @@ pid_data_free (PidData *data)
 }
 
 static gboolean
-handle_request_monitor (FlatpakSessionHelper  *object,
-                        GDBusMethodInvocation *invocation,
-                        gpointer               user_data)
-{
-  flatpak_session_helper_complete_request_monitor (object, invocation,
-                                                   monitor_dir);
-
-  return TRUE;
-}
-
-static gboolean
 handle_request_session (FlatpakSessionHelper  *object,
                         GDBusMethodInvocation *invocation,
                         gpointer               user_data)
@@ -472,7 +461,6 @@ on_bus_acquired (GDBusConnection *connection,
 
   flatpak_session_helper_set_version (FLATPAK_SESSION_HELPER (helper), 1);
 
-  g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
   g_signal_connect (helper, "handle-request-session", G_CALLBACK (handle_request_session), NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
