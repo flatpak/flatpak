@@ -702,7 +702,7 @@ print_permissions (FlatpakCliTransaction *self,
     g_ptr_array_add (permissions, g_strdup_printf ("bus ownership [%d]", j++));
   if (system_bus_talk->len > 0)
     g_ptr_array_add (permissions, g_strdup_printf ("system dbus access [%d]", j++));
-  if (session_bus_own->len > 0)
+  if (system_bus_own->len > 0)
     g_ptr_array_add (permissions, g_strdup_printf ("system bus ownership [%d]", j++));
   if (tags->len > 0)
     g_ptr_array_add (permissions, g_strdup_printf ("tags [%d]", j++));
