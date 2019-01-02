@@ -107,7 +107,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   const char *off = "";
   g_auto(GStrv) parts = NULL;
   const char *path;
-  g_autofree char *formatted = NULL;
+  g_autofree char *formatted_size = NULL;
   gboolean friendly = TRUE;
   g_autofree const char **subpaths = NULL;
 
@@ -158,7 +158,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
   origin = flatpak_deploy_data_get_origin (deploy_data);
   size = flatpak_deploy_data_get_installed_size (deploy_data);
-  formatted = g_format_size (size);
+  formatted_size = g_format_size (size);
   deploy_dir = flatpak_deploy_get_dir (deploy);
   path = flatpak_file_get_path_cached (deploy_dir);
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
@@ -268,7 +268,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (collection_id)
         g_print ("%s%*s%s %s\n", on, len, _("Collection:"), off, collection_id);
       g_print ("%s%*s%s %s\n", on, len, _("Installation:"), off, flatpak_dir_get_name_cached (dir));
-      g_print ("%s%*s%s %s\n", on, len, _("Installed:"), off, formatted);
+      g_print ("%s%*s%s %s\n", on, len, _("Installed:"), off, formatted_size);
       if (strcmp (parts[0], "app") == 0)
         {
           g_autofree char *runtime = NULL;
@@ -344,7 +344,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (opt_show_size)
         {
           maybe_print_space (&first);
-          g_print ("%s", formatted);
+          g_print ("%s", formatted_size);
         }
 
       if (opt_show_location)
