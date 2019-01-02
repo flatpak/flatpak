@@ -90,6 +90,7 @@ endif
 # Run make update-test-matrix after changing this
 TEST_MATRIX_SOURCE = \
 	tests/test-basic.sh \
+	tests/test-completion.sh \
 	tests/test-build-update-repo.sh \
 	tests/test-http-utils.sh \
 	tests/test-run.sh{{user+system},{nodeltas+deltas}} \
