@@ -184,4 +184,3 @@ lcov-clean:
 genlcov:
 	$(AM_V_GEN) $(LCOV) --directory $(top_builddir) --capture --output-file coverage.info
 	$(AM_V_GEN) $(GENHTML) --prefix $(top_builddir) --output-directory coverage coverage.info
-	$(AM_V_GEN)
