@@ -344,7 +344,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (opt_show_size)
         {
           maybe_print_space (&first);
-          g_print ("%s", formatted_size);
+          g_print ("%" G_GUINT64_FORMAT, size);
         }
 
       if (opt_show_location)
