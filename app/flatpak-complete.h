@@ -24,6 +24,8 @@
 #include <ostree.h>
 #include "flatpak-dir-private.h"
 
+typedef struct FlatpakCompletion FlatpakCompletion;
+
 struct FlatpakCompletion
 {
   char  *shell_cur;
@@ -60,5 +62,7 @@ void               flatpak_complete_options (FlatpakCompletion *completion,
                                              GOptionEntry      *entries);
 void               flatpak_completion_free (FlatpakCompletion *completion);
 void               flatpak_complete_context (FlatpakCompletion *completion);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakCompletion, flatpak_completion_free)
 
 #endif /* __FLATPAK_COMPLETE_H__ */

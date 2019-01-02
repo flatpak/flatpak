@@ -581,8 +581,8 @@ static int
 complete (int    argc,
           char **argv)
 {
+  g_autoptr(FlatpakCompletion) completion = NULL;
   FlatpakCommand *command;
-  FlatpakCompletion *completion;
   const char *command_name = NULL;
 
   is_in_complete = TRUE;

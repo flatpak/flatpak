@@ -52,6 +52,5 @@ typedef struct FlatpakDir          FlatpakDir;
 typedef struct FlatpakDeploy       FlatpakDeploy;
 typedef struct FlatpakOciRegistry  FlatpakOciRegistry;
 typedef struct _FlatpakOciManifest FlatpakOciManifest;
-typedef struct FlatpakCompletion   FlatpakCompletion;
 
 #endif /* __FLATPAK_COMMON_TYPES_H__ */
