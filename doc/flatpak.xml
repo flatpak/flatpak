@@ -112,7 +112,7 @@
                 <term><option>--verbose</option></term>
 
                 <listitem><para>
-                    Print debug information during command processing. Use -vv for more detail.
+                    Show debug information during command processing. Use -vv for more detail.
                 </para></listitem>
             </varlistentry>
 
@@ -120,7 +120,7 @@
                 <term><option>--ostree-verbose</option></term>
 
                 <listitem><para>
-                    Print OSTree debug information during command processing.
+                    Show OSTree debug information during command processing.
                 </para></listitem>
             </varlistentry>
 
