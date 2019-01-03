@@ -133,7 +133,7 @@
                 <term><option>--from-commit=COMMIT</option></term>
 
                 <listitem><para>
-                    The OSTree commit to create the a delta bundle from.
+                    The OSTree commit to create a delta bundle from.
                 </para></listitem>
             </varlistentry>
 
