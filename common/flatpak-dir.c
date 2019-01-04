@@ -5479,7 +5479,7 @@ flatpak_dir_read_latest_commit (FlatpakDir   *self,
   g_autoptr(GVariant) commit_data = NULL;
 
   /* There may be several remotes with the same branch (if we for
-   * instance changed the origin, so prepend the current origin to
+   * instance changed the origin) so prepend the current origin to
    * make sure we get the right one */
 
   if (remote)
@@ -5513,7 +5513,7 @@ flatpak_dir_read_latest (FlatpakDir   *self,
   g_autofree char *res = NULL;
 
   /* There may be several remotes with the same branch (if we for
-   * instance changed the origin, so prepend the current origin to
+   * instance changed the origin) so prepend the current origin to
    * make sure we get the right one */
 
   if (remote)
