@@ -19,7 +19,7 @@ Flatpak welcomes contributions from anyone! Here are some ways you can help:
 * Update flatpak's documentation, hosted at http://docs.flatpak.org and developed over in [flatpak-docs](https://github.com/flatpak/flatpak-docs)
 * Find a bug and [submit a detailed report](https://github.com/flatpak/flatpak/issues/new) including your OS, flatpak version, and the steps to reproduce
 * Add your favorite application to [Flathub](https://flathub.org) by writing a flatpak-builder manifest and [submitting it](https://github.com/flathub/flathub/wiki/App-Submission)
-* Improve the Flatpak support in your favorite Linux distribution
+* Improve the [Flatpak support](https://github.com/flatpak/flatpak/wiki/Distribution) in your favorite Linux distribution
 
 # Hacking
 Flatpak uses a traditional autoconf-style build mechanism. To build just do
