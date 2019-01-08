@@ -86,6 +86,10 @@ flatpak_installed_ref_finalize (GObject *object)
   g_strfreev (priv->subpaths);
   g_free (priv->eol);
   g_free (priv->eol_rebase);
+  g_free (priv->appdata_name);
+  g_free (priv->appdata_summary);
+  g_free (priv->appdata_version);
+  g_free (priv->appdata_license);
 
   G_OBJECT_CLASS (flatpak_installed_ref_parent_class)->finalize (object);
 }
