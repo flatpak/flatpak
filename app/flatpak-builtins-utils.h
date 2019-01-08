@@ -149,4 +149,6 @@ const char *as_app_get_localized_name (AsApp *app);
 const char *as_app_get_localized_comment (AsApp *app);
 const char *as_app_get_version (AsApp *app);
 
+void print_wrapped (int columns, const char *text, ...) G_GNUC_PRINTF (2, 3);
+
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */

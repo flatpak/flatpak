@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <glib/gi18n.h>
-
+#include <glib/gprintf.h>
 
 #include <gio/gunixinputstream.h>
 #include "flatpak-chain-input-stream-private.h"
@@ -1102,4 +1102,51 @@ print_aligned (int len, const char *title, const char *value)
     }
 
   g_print ("%s%*s%s%s %s\n", on, len - (int)g_utf8_strlen (title, -1), "", title, off, value);
+}
+
+static void
+print_line_wrapped (int cols, const char *line)
+{
+  g_auto(GStrv) words = g_strsplit (line, " ", 0);
+  int i;
+  int col = 0;
+
+  for (i = 0; words[i]; i++)
+    {
+       int len = g_utf8_strlen (words[i], -1);
+       int space = col > 0;
+
+       if (col + space + len >= cols)
+         {
+           g_print ("\n%s", words[i]);
+           col = len;
+         }
+       else
+         {
+           g_print ("%*s%s", space, "", words[i]);
+           col = col + space + len;
+         }
+    }
+}
+
+void
+print_wrapped (int cols,
+               const char *text,
+               ...)
+{
+  va_list args;
+  g_autofree char *msg = NULL;
+  g_auto(GStrv) lines = NULL;
+  int i;
+
+  va_start (args, text);
+  g_vasprintf (&msg, text, args);
+  va_end (args);
+
+  lines = g_strsplit (msg, "\n", 0);
+  for (i = 0; lines[i]; i++)
+    {
+      print_line_wrapped (cols, lines[i]);
+      g_print ("\n");
+    }
 }
