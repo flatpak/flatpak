@@ -97,7 +97,7 @@ quick intro to the major components of the flatpak repo:
 * `portal`: The Flatpak portal service, which lets sandboxed apps request the creation of new sandboxes
 * `doc`: The sources for the documentation, both man pages and library documentation
 * `tests`: The testsuite
-* `bubblewrap`: Flatpak's unpriveleged sandboxing tool which is developed separately and exists here as a submodule
+* `bubblewrap`: Flatpak's unprivileged sandboxing tool which is developed separately and exists here as a submodule
 * `libglnx`: a small utility library for projects that use GLib on Linux, as a submodule
 * `dbus-proxy`: a filtering proxy for D-Bus connections, as a submodule
 
