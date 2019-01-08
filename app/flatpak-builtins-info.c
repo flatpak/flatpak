@@ -225,7 +225,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       len = MAX (len, strlen (_("Ref:")));
       len = MAX (len, strlen (_("Arch:")));
       len = MAX (len, strlen (_("Branch:")));
-      len = MAX (len, strlen (_("Version:")));
+      if (version)
+        len = MAX (len, strlen (_("Version:")));
       if (license)
         len = MAX (len, strlen (_("License:")));
       if (collection_id != NULL)
