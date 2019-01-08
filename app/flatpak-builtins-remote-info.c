@@ -161,6 +161,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       g_autoptr(AsStore) store = as_store_new ();
       AsApp *app = NULL;
       const char *version = NULL;
+      const char *license = NULL;
 
 #if AS_CHECK_VERSION (0, 6, 1)
       as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
@@ -174,6 +175,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           const char *comment = as_app_get_localized_comment (app);
           g_print ("\n%s - %s\n\n", name, comment);
           version = as_app_get_version (app);
+          license = as_app_get_project_license (app);
         }
 
       g_variant_get (commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
@@ -212,6 +214,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       len = MAX (len, strlen (_("Branch:")));
       if (version != NULL)
         len = MAX (len, strlen (_("Version:")));
+      if (license != NULL)
+        len = MAX (len, strlen (_("License:")));
       if (collection_id != NULL)
         len = MAX (len, strlen (_("Collection:")));
       len = MAX (len, strlen (_("Download:")));
@@ -237,6 +241,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       g_print ("%s%*s%s %s\n", on, len, _("Branch:"), off, parts[3]);
       if (version != NULL)
         g_print ("%s%*s%s %s\n", on, len, _("Version:"), off, version);
+      if (license != NULL)
+        g_print ("%s%*s%s %s\n", on, len, _("License:"), off, license);
       if (collection_id != NULL)
         g_print ("%s%*s%s %s\n", on, len, _("Collection:"), off, collection_id);
       g_print ("%s%*s%s %s\n", on, len, _("Download:"), off, formatted_download_size);
