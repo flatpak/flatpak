@@ -274,7 +274,7 @@ flatpak_complete_update (FlatpakCompletion *completion)
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS, &dirs, NULL, NULL))
     return FALSE;
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
