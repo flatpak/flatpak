@@ -248,7 +248,7 @@ flatpak_complete_run (FlatpakCompletion *completion)
   g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS, NULL, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
@@ -256,6 +256,7 @@ flatpak_complete_run (FlatpakCompletion *completion)
     case 0:
     case 1: /* NAME */
       flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, user_entries);
       flatpak_complete_options (completion, options);
       flatpak_complete_context (completion);
 
