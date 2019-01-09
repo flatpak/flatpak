@@ -408,7 +408,7 @@ flatpak_complete_repair (FlatpakCompletion *completion)
   context = g_option_context_new ("");
 
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, &dirs, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
