@@ -16,7 +16,7 @@ Read documentation for the flatpak [commandline tools](http://docs.flatpak.org/e
 Flatpak welcomes contributions from anyone! Here are some ways you can help:
 * Fix [one of the issues](https://github.com/flatpak/flatpak/issues/) and submit a PR
 * Update flatpak's translations and submit a PR
-* Update flatpak's documentation, hosted at http://docs.flatpak.org and developed over in [flatpak-docs](https://github.com/flatpak/flatpak-docs)
+* Improve flatpak's documentation, hosted at http://docs.flatpak.org and developed over in [flatpak-docs](https://github.com/flatpak/flatpak-docs)
 * Find a bug and [submit a detailed report](https://github.com/flatpak/flatpak/issues/new) including your OS, flatpak version, and the steps to reproduce
 * Add your favorite application to [Flathub](https://flathub.org) by writing a flatpak-builder manifest and [submitting it](https://github.com/flathub/flathub/wiki/App-Submission)
 * Improve the [Flatpak support](https://github.com/flatpak/flatpak/wiki/Distribution) in your favorite Linux distribution
