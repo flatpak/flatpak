@@ -24,15 +24,18 @@ Flatpak welcomes contributions from anyone! Here are some ways you can help:
 # Hacking
 Flatpak uses a traditional autoconf-style build mechanism. To build just do
 ```
+ ./autogen.sh
  ./configure [args]
  make
  make install
 ```
 
-Dependencies you will need include: autoconf, automake, libtool, bison, gettext,
-gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libsoup, gpgme,
-polkit, libXau, ostree, json-glib, appstream, libseccomp
-(or their devel packages).
+To automatically install dependencies on apt-based distributions you can try
+running `apt build-dep flatpak` and on dnf ones try `dnf builddep flatpak`.
+Dependencies you will need include: autoconf, automake, libtool, bison,
+gettext, gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libsoup,
+gpgme, polkit, libXau, ostree, json-glib, appstream, libseccomp (or their devel
+packages).
 
 Most configure arguments are documented in `./configure --help`. However,
 there are some options that are a bit more complicated.
@@ -94,5 +97,7 @@ quick intro to the major components of the flatpak repo:
 * `portal`: The Flatpak portal service, which lets sandboxed apps request the creation of new sandboxes
 * `doc`: The sources for the documentation, both man pages and library documentation
 * `tests`: The testsuite
-
+* `bubblewrap`: Flatpak's unprivileged sandboxing tool which is developed separately and exists here as a submodule
+* `libglnx`: a small utility library for projects that use GLib on Linux, as a submodule
+* `dbus-proxy`: a filtering proxy for D-Bus connections, as a submodule
 
