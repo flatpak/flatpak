@@ -1126,6 +1126,62 @@ print_aligned (int len, const char *title, const char *value)
   g_print ("%s%*s%s%s %s\n", on, len - (int)g_utf8_strlen (title, -1), "", title, off, value);
 }
 
+static const char *
+skip_escape_sequence (const char *p)
+{
+  if (g_str_has_prefix (p, FLATPAK_ANSI_ALT_SCREEN_ON))
+    p += strlen (FLATPAK_ANSI_ALT_SCREEN_ON);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_ALT_SCREEN_OFF))
+    p += strlen (FLATPAK_ANSI_ALT_SCREEN_OFF);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_HIDE_CURSOR))
+    p += strlen (FLATPAK_ANSI_HIDE_CURSOR);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_SHOW_CURSOR))
+    p += strlen (FLATPAK_ANSI_SHOW_CURSOR);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_BOLD_ON))
+    p += strlen (FLATPAK_ANSI_BOLD_ON);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_BOLD_OFF))
+    p += strlen (FLATPAK_ANSI_BOLD_OFF);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_FAINT_ON))
+    p += strlen (FLATPAK_ANSI_FAINT_ON);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_FAINT_OFF))
+    p += strlen (FLATPAK_ANSI_FAINT_OFF);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_RED))
+    p += strlen (FLATPAK_ANSI_RED);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_COLOR_RESET))
+    p += strlen (FLATPAK_ANSI_COLOR_RESET);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_ROW_N))
+    p += strlen (FLATPAK_ANSI_ROW_N);
+  else if (g_str_has_prefix (p, FLATPAK_ANSI_CLEAR))
+    p += strlen (FLATPAK_ANSI_CLEAR);
+  else if (g_str_has_prefix (p, "\x1b"))
+    {
+      g_warning ("Unknown Escape sequence");
+      p++; /* avoid looping forever */
+    }
+  return p;
+}
+
+/* a variant of g_utf8_strlen that skips Escape sequences */
+static int
+cell_width (const char *text)
+{
+  const char *p = text;
+  int width = 0;
+
+  while (*p)
+    {
+      while (*p && *p == '\x1b')
+        p = skip_escape_sequence (p);
+
+      if (!*p) break;
+
+      width += 1;
+      p = g_utf8_next_char (p);
+    }
+
+  return width;
+}
+
 static void
 print_line_wrapped (int cols, const char *line)
 {
@@ -1135,7 +1191,7 @@ print_line_wrapped (int cols, const char *line)
 
   for (i = 0; words[i]; i++)
     {
-       int len = g_utf8_strlen (words[i], -1);
+       int len = cell_width (words[i]);
        int space = col > 0;
 
        if (col + space + len >= cols)
