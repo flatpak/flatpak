@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..9"
+echo "1..10"
 
 ${FLATPAK} --version > version_out
 
@@ -101,3 +101,16 @@ assert_file_has_content out "^error: NAME must be specified$"
 assert_file_has_content out "flatpak info --help"
 
 echo "ok info missing NAME"
+
+for cmd in config install make-current override remote-add repair; do
+  ${FLATPAK} $cmd --system --user >out 2>&1 || true
+  assert_file_has_content out "^error: Multiple installations specified"
+  ${FLATPAK} $cmd --system --installation=foo >out 2>&1 || true
+  assert_file_has_content out "^error: Multiple installations specified"
+  ${FLATPAK} $cmd --user --installation=foo >out 2>&1 || true
+  assert_file_has_content out "^error: Multiple installations specified"
+  ${FLATPAK} $cmd --installation=foo --installation=bar >out 2>&1 || true
+  assert_file_has_content out "^error: Multiple installations specified"
+done
+
+echo "ok ONE_DIR commands"
