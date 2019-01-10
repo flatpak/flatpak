@@ -474,8 +474,14 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, &ref, error))
         return FALSE;
 
-      if (!flatpak_cli_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, error))
-        return FALSE;
+      if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
+        {
+          if (!g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+            return FALSE;
+
+          g_printerr (_("Skipping: %s\n"), (*error)->message);
+          g_clear_error (error);
+        }
     }
 
   if (!flatpak_cli_transaction_run (transaction, cancellable, error))

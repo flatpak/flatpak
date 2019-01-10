@@ -1065,30 +1065,6 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
 }
 
 gboolean
-flatpak_cli_transaction_add_install (FlatpakTransaction *transaction,
-                                     const char         *remote,
-                                     const char         *ref,
-                                     const char        **subpaths,
-                                     GError            **error)
-{
-  g_autoptr(GError) local_error = NULL;
-
-  if (!flatpak_transaction_add_install (transaction, remote, ref, subpaths, &local_error))
-    {
-      if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-        {
-          g_printerr (_("Skipping: %s\n"), local_error->message);
-          return TRUE;
-        }
-
-      g_propagate_error (error, g_steal_pointer (&local_error));
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
-gboolean
 flatpak_cli_transaction_run (FlatpakTransaction *transaction,
                              GCancellable       *cancellable,
                              GError            **error)
