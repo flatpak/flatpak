@@ -34,7 +34,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
 #include "flatpak-error.h"
-#include "flatpak-cli-transaction.h"
+#include "flatpak-quiet-transaction.h"
 
 static GOptionEntry options[] = {
   { NULL }
@@ -367,7 +367,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   if (!flatpak_dir_list_refs (dir, "runtime", &runtime_refs, cancellable, NULL))
     return FALSE;
 
-  transaction = flatpak_cli_transaction_new (dir, TRUE, FALSE, error);
+  transaction = flatpak_quiet_transaction_new (dir, error);
   if (transaction == NULL)
     return FALSE;
 
