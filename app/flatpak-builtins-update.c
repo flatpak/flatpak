@@ -32,6 +32,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-cli-transaction.h"
+#include "flatpak-quiet-transaction.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 
@@ -48,6 +49,7 @@ static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_appstream;
 static gboolean opt_yes;
+static gboolean opt_noninteractive;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to update for"), N_("ARCH") },
@@ -63,6 +65,7 @@ static GOptionEntry options[] = {
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, N_("Update appstream for remote"), NULL },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only update this subpath"), N_("PATH") },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
+  { "noninteractive", 0, 0, G_OPTION_ARG_NONE, &opt_noninteractive, N_("Produce minimal output and don't ask questions"), NULL },
   { NULL }
 };
 
@@ -112,6 +115,8 @@ flatpak_builtin_update (int           argc,
   /* Walk through the array backwards so we can safely remove */
   for (k = dirs->len; k > 0; k--)
     {
+      FlatpakTransaction *transaction;
+
       FlatpakDir *dir = g_ptr_array_index (dirs, k - 1);
       OstreeRepo *repo = flatpak_dir_get_repo (dir);
       if (repo == NULL)
@@ -120,7 +125,10 @@ flatpak_builtin_update (int           argc,
           continue;
         }
 
-      FlatpakTransaction *transaction = flatpak_cli_transaction_new (dir, opt_yes, FALSE, error);
+      if (opt_noninteractive)
+        transaction = flatpak_quiet_transaction_new (dir, error);
+      else
+        transaction = flatpak_cli_transaction_new (dir, opt_yes, FALSE, error);
       if (transaction == NULL)
         return FALSE;
 
@@ -135,7 +143,8 @@ flatpak_builtin_update (int           argc,
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  g_print (_("Looking for updates…\n"));
+  if (!opt_noninteractive)
+    g_print (_("Looking for updates…\n"));
 
   for (j = 0; j == 0 || j < n_prefs; j++)
     {
@@ -248,7 +257,8 @@ flatpak_builtin_update (int           argc,
       if (!flatpak_transaction_is_empty (transaction))
         has_updates = TRUE;
 
-      if (flatpak_cli_transaction_was_aborted (transaction))
+      if (FLATPAK_IS_CLI_TRANSACTION (transaction) &&
+          flatpak_cli_transaction_was_aborted (transaction))
         return TRUE;
     }
 

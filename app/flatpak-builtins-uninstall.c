@@ -33,6 +33,7 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-cli-transaction.h"
+#include "flatpak-quiet-transaction.h"
 #include <flatpak-dir-private.h>
 #include <flatpak-installation-private.h>
 #include "flatpak-error.h"
@@ -47,6 +48,7 @@ static gboolean opt_all;
 static gboolean opt_yes;
 static gboolean opt_unused;
 static gboolean opt_delete_data;
+static gboolean opt_noninteractive;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to uninstall"), N_("ARCH") },
@@ -59,6 +61,7 @@ static GOptionEntry options[] = {
   { "unused", 0, 0, G_OPTION_ARG_NONE, &opt_unused, N_("Uninstall unused"), NULL },
   { "delete-data", 0, 0, G_OPTION_ARG_NONE, &opt_delete_data, N_("Delete app data"), NULL },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
+  { "noninteractive", 0, 0, G_OPTION_ARG_NONE, &opt_noninteractive, N_("Produce minimal output and don't ask questions"), NULL },
   { NULL }
 };
 
@@ -330,7 +333,10 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   {
     g_autoptr(FlatpakTransaction) transaction = NULL;
 
-    transaction = flatpak_cli_transaction_new (udir->dir, opt_yes, TRUE, error);
+    if (opt_noninteractive)
+      transaction = flatpak_quiet_transaction_new (udir->dir, error);
+    else
+      transaction = flatpak_cli_transaction_new (udir->dir, opt_yes, TRUE, error);
     if (transaction == NULL)
       return FALSE;
 
