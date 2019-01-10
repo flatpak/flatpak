@@ -32,11 +32,6 @@ FlatpakTransaction * flatpak_cli_transaction_new (FlatpakDir * dir,
                                                   gboolean stop_on_first_error,
                                                   GError * *error);
 
-gboolean flatpak_cli_transaction_add_install (FlatpakTransaction *self,
-                                              const char         *remote,
-                                              const char         *ref,
-                                              const char        **subpaths,
-                                              GError            **error);
 gboolean flatpak_cli_transaction_was_aborted (FlatpakTransaction *transaction);
 
 gboolean flatpak_cli_transaction_run (FlatpakTransaction *transaction,
