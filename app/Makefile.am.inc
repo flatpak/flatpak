@@ -77,6 +77,8 @@ flatpak_SOURCES = \
 	app/flatpak-complete.h \
 	app/flatpak-cli-transaction.c \
 	app/flatpak-cli-transaction.h \
+	app/flatpak-quiet-transaction.c \
+	app/flatpak-quiet-transaction.h \
 	app/parse-datetime.h \
 	$(polkit_sources) \
 	$(NULL)
