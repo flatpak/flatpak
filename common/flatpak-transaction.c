@@ -897,6 +897,10 @@ flatpak_transaction_add_new_remote (FlatpakTransaction            *transaction,
   return FALSE;
 }
 
+static gboolean flatpak_transaction_real_run (FlatpakTransaction  *transaction,
+                                              GCancellable        *cancellable,
+                                              GError             **error);
+
 static void
 flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 {
@@ -904,6 +908,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 
   klass->ready = flatpak_transaction_ready;
   klass->add_new_remote = flatpak_transaction_add_new_remote;
+  klass->run = flatpak_transaction_real_run;
   object_class->finalize = flatpak_transaction_finalize;
   object_class->get_property = flatpak_transaction_get_property;
   object_class->set_property = flatpak_transaction_set_property;
@@ -2723,6 +2728,14 @@ gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          GCancellable       *cancellable,
                          GError            **error)
+{
+  return FLATPAK_TRANSACTION_GET_CLASS (self)->run (self, cancellable, error);
+}
+
+static gboolean
+flatpak_transaction_real_run (FlatpakTransaction *self,
+                              GCancellable       *cancellable,
+                              GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   GList *l, *next;
