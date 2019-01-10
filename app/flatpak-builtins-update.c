@@ -242,7 +242,7 @@ flatpak_builtin_update (int           argc,
       if (flatpak_transaction_is_empty (transaction))
         continue;
 
-      if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+      if (!flatpak_transaction_run (transaction, cancellable, error))
         return FALSE;
 
       if (!flatpak_transaction_is_empty (transaction))

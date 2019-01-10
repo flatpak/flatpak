@@ -349,7 +349,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           return FALSE;
       }
 
-    if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+    if (!flatpak_transaction_run (transaction, cancellable, error))
       return FALSE;
 
     if (opt_delete_data)

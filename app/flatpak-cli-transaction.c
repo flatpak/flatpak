@@ -1018,6 +1018,10 @@ flatpak_cli_transaction_init (FlatpakCliTransaction *self)
 {
 }
 
+static gboolean flatpak_cli_transaction_run (FlatpakTransaction *transaction,
+                                             GCancellable       *cancellable,
+                                             GError            **error);
+
 static void
 flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
 {
@@ -1032,6 +1036,7 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   transaction_class->operation_error = operation_error;
   transaction_class->choose_remote_for_ref = choose_remote_for_ref;
   transaction_class->end_of_lifed = end_of_lifed;
+  transaction_class->run = flatpak_cli_transaction_run;
 }
 
 FlatpakTransaction *
@@ -1064,7 +1069,7 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   return (FlatpakTransaction *) g_steal_pointer (&self);
 }
 
-gboolean
+static gboolean
 flatpak_cli_transaction_run (FlatpakTransaction *transaction,
                              GCancellable       *cancellable,
                              GError            **error)
@@ -1074,7 +1079,7 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
   g_autoptr(GError) local_error = NULL;
   gboolean res;
 
-  res = flatpak_transaction_run (transaction, cancellable, &local_error);
+  res = FLATPAK_TRANSACTION_CLASS (flatpak_cli_transaction_parent_class)->run (transaction, cancellable, &local_error);
 
   if (flatpak_fancy_output ())
     g_print (FLATPAK_ANSI_SHOW_CURSOR);
