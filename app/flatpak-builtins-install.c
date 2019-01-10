@@ -160,7 +160,7 @@ install_bundle (FlatpakDir *dir,
   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
     return FALSE;
 
-  if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+  if (!flatpak_transaction_run (transaction, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -224,7 +224,7 @@ install_from (FlatpakDir *dir,
   if (!flatpak_transaction_add_install_flatpakref (transaction, file_data, error))
     return FALSE;
 
-  if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+  if (!flatpak_transaction_run (transaction, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -484,7 +484,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
         }
     }
 
-  if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+  if (!flatpak_transaction_run (transaction, cancellable, error))
     return FALSE;
 
   return TRUE;

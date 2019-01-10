@@ -34,8 +34,4 @@ FlatpakTransaction * flatpak_cli_transaction_new (FlatpakDir * dir,
 
 gboolean flatpak_cli_transaction_was_aborted (FlatpakTransaction *transaction);
 
-gboolean flatpak_cli_transaction_run (FlatpakTransaction *transaction,
-                                      GCancellable       *cancellable,
-                                      GError            **error);
-
 #endif /* __FLATPAK_CLI_TRANSACTION_H__ */

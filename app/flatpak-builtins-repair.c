@@ -392,7 +392,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   if (!flatpak_transaction_is_empty (transaction))
     {
       g_print (_("Reinstalling removed refs\n"));
-      if (!flatpak_cli_transaction_run (transaction, cancellable, error))
+      if (!flatpak_transaction_run (transaction, cancellable, error))
         return FALSE;
     }
 
