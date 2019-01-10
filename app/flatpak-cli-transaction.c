@@ -62,7 +62,7 @@ struct _FlatpakCliTransaction
 
 struct _FlatpakCliTransactionClass
 {
-  FlatpakCliTransactionClass parent_class;
+  FlatpakTransactionClass parent_class;
 };
 
 G_DEFINE_TYPE (FlatpakCliTransaction, flatpak_cli_transaction, FLATPAK_TYPE_TRANSACTION);
