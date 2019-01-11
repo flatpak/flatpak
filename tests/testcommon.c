@@ -215,6 +215,11 @@ test_format_choices (void)
 {
   GPrintFunc print_func;
   const char *choices[] = { "one", "two", "three", NULL };
+  const char *many_choices[] = {
+    "one", "two", "three", "four", "five", "six",
+    "seven", "eight", "nine", "ten", "eleven",
+    NULL
+  };
 
   g_assert_null (g_print_buffer);
   g_print_buffer = g_string_new ("");
@@ -224,11 +229,32 @@ test_format_choices (void)
 
   g_assert_cmpstr (g_print_buffer->str, ==,
                    "A prompt for 3 choices:\n\n"
-                   "  1) one\n"
-                   "  2) two\n"
-                   "  3) three\n"
+                   "   1) one\n"
+                   "   2) two\n"
+                   "   3) three\n"
                    "\n");
 
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_format_choices (many_choices, "A prompt for %d choices:", 11);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   "A prompt for 11 choices:\n\n"
+                   "   1) one\n"
+                   "   2) two\n"
+                   "   3) three\n"
+                   "   4) four\n"
+                   "   5) five\n"
+                   "   6) six\n"
+                   "   7) seven\n"
+                   "   8) eight\n"
+                   "   9) nine\n"
+                   "  10) ten\n"
+                   "  11) eleven\n"
+                   "\n");
+
+  g_string_truncate (g_print_buffer, 0);
+
+  g_set_print_handler (print_func);
   g_set_print_handler (print_func);
   g_string_free (g_print_buffer, TRUE);
   g_print_buffer = NULL;
@@ -284,7 +310,7 @@ test_number_prompt (void)
   g_print_buffer = NULL;
 }
 
-#if !GLIB_CHECK_VERSION(2, 60, 0)
+#if !GLIB_CHECK_VERSION(2, 59, 0)
 static gboolean
 g_strv_equal (char **strv1,
               char **strv2)
@@ -305,6 +331,9 @@ g_strv_equal (char **strv1,
 }
 #endif
 
+#define assert_strv_equal(s1,s2) \
+  g_assert_true (g_strv_equal ((const char * const *)s1, (const char * const *)s2))
+
 static void
 test_subpaths_merge (void)
 {
@@ -316,31 +345,31 @@ test_subpaths_merge (void)
   g_auto(GStrv) res = NULL;
 
   res = flatpak_subpaths_merge (NULL, bla);
-  g_assert_true (g_strv_equal (res, bla));
+  assert_strv_equal (res, bla);
   g_clear_pointer (&res, g_strfreev);
   
   res = flatpak_subpaths_merge (bla, NULL);
-  g_assert_true (g_strv_equal (res, bla));
+  assert_strv_equal (res, bla);
   g_clear_pointer (&res, g_strfreev);
   
   res = flatpak_subpaths_merge (empty, bla);
-  g_assert_true (g_strv_equal (res, empty));
+  assert_strv_equal (res, empty);
   g_clear_pointer (&res, g_strfreev);
   
   res = flatpak_subpaths_merge (bla, empty);
-  g_assert_true (g_strv_equal (res, empty));
+  assert_strv_equal (res, empty);
   g_clear_pointer (&res, g_strfreev);
   
   res = flatpak_subpaths_merge (buba, bla);
-  g_assert_true (g_strv_equal (res, bubabla));
+  assert_strv_equal (res, bubabla);
   g_clear_pointer (&res, g_strfreev);
   
   res = flatpak_subpaths_merge (bla, buba);
-  g_assert_true (g_strv_equal (res, bubabla));
+  assert_strv_equal (res, bubabla);
   g_clear_pointer (&res, g_strfreev);
 
   res = flatpak_subpaths_merge (bla, bla);
-  g_assert_true (g_strv_equal (res, bla_sorted));
+  assert_strv_equal (res, bla_sorted);
   g_clear_pointer (&res, g_strfreev);
 }
 
