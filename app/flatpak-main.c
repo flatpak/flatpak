@@ -693,6 +693,13 @@ complete (int    argc,
   return 0;
 }
 
+static void
+handle_sigterm (int signum)
+{
+   flatpak_show_cursor ();
+  _exit (1);
+}
+
 int
 main (int    argc,
       char **argv)
@@ -704,6 +711,13 @@ main (int    argc,
   PolkitAgentListener *listener = NULL;
   gpointer agent = NULL;
 #endif
+  struct sigaction action;
+
+  memset (&action, 0, sizeof (struct sigaction));
+  action.sa_handler = handle_sigterm;
+  sigaction (SIGTERM, &action, NULL);
+  sigaction (SIGHUP, &action, NULL);
+  sigaction (SIGINT, &action, NULL);
 
   setlocale (LC_ALL, "");
   bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
