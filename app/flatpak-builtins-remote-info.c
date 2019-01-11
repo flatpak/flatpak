@@ -95,8 +95,6 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   g_autoptr(GVariant) sparse = NULL;
   const char *eol = NULL;
   const char *eol_rebase = NULL;
-  const char *on = "";
-  const char *off = "";
   gboolean friendly = TRUE;
   const char *xa_metadata = NULL;
   const char *collection_id = NULL;
@@ -154,12 +152,6 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
     {
       g_variant_lookup (sparse, "eol", "&s", &eol);
       g_variant_lookup (sparse, "eolr", "&s", &eol_rebase);
-    }
-
-  if (flatpak_fancy_output ())
-    {
-      on = FLATPAK_ANSI_BOLD_ON;
-      off = FLATPAK_ANSI_BOLD_OFF; /* bold off */
     }
 
   if (opt_show_ref || opt_show_commit || opt_show_parent || opt_show_metadata || opt_show_runtime || opt_show_sdk)
