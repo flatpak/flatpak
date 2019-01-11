@@ -871,7 +871,8 @@ transaction_ready (FlatpakTransaction *transaction)
   if (self->installing + self->updating + self->uninstalling > 1)
     {
       flatpak_table_printer_set_column_expand (printer, i, TRUE);
-      flatpak_table_printer_set_column_title (printer, i++, _("Change"));
+      /* translators: This is short for operation, the title of a one-char column */
+      flatpak_table_printer_set_column_title (printer, i++, _("Op"));
     }
 
   if (self->installing || self->updating)
