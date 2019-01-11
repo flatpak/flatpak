@@ -320,9 +320,15 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (alt_id)
         print_aligned (len, _("Alt-id:"), alt_id);
       if (eol)
-        print_aligned (len, _("End-of-life:"), eol);
+        {
+          g_autofree char *formatted_eol = ellipsize_string (eol, width);
+          print_aligned (len, _("End-of-life:"), formatted_eol);
+        }
       if (eol_rebase)
-        print_aligned (len, _("End-of-life-rebase:"), eol_rebase);
+        {
+          g_autofree char *formatted_eol = ellipsize_string (eol_rebase, width);
+          print_aligned (len, _("End-of-life-rebase:"), formatted_eol);
+        }
     }
   else
     {
