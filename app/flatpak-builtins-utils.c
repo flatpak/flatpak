@@ -492,7 +492,7 @@ gboolean
 flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
                                          GPtrArray   *ref_dir_pairs,
                                          const char  *opt_search_ref,
-                                         RefDirPair **out_pair,
+                                         GPtrArray   *out_pairs,
                                          GError     **error)
 {
   guint chosen = 0;
@@ -533,21 +533,28 @@ flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
         }
       else
         {
-          g_auto(GStrv) names = g_new0 (char *, ref_dir_pairs->len + 1);
+          int len = ref_dir_pairs->len + 1;
+          g_auto(GStrv) names = g_new0 (char *, len + 1);
           for (i = 0; i < ref_dir_pairs->len; i++)
             {
               RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i);
               names[i] = g_strdup_printf ("%s (%s)", pair->ref, flatpak_dir_get_name_cached (pair->dir));
             }
+          names[i] = g_strdup_printf (_("All of the above"));
           flatpak_format_choices ((const char **)names, _("Similar installed refs found for ‘%s’:"), opt_search_ref);
-          chosen = flatpak_number_prompt (TRUE, 0, ref_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
+          chosen = flatpak_number_prompt (TRUE, 0, len, _("Which do you want to use (0 to abort)?"));
           if (chosen == 0)
             return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
         }
     }
 
-  if (out_pair)
-    *out_pair = g_ptr_array_index (ref_dir_pairs, chosen - 1);
+  if (chosen == ref_dir_pairs->len + 1)
+    {
+      for (i = 0; i < ref_dir_pairs->len; i++)
+        g_ptr_array_add (out_pairs, g_ptr_array_index (ref_dir_pairs, i));
+    }
+  else
+    g_ptr_array_add (out_pairs, g_ptr_array_index (ref_dir_pairs, chosen - 1));
 
   return TRUE;
 }

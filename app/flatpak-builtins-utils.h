@@ -87,7 +87,7 @@ gboolean flatpak_resolve_matching_refs (const char *remote_name,
 gboolean flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
                                                   GPtrArray   *ref_dir_pairs,
                                                   const char  *opt_search_ref,
-                                                  RefDirPair **out_pair,
+                                                  GPtrArray   *out_pairs,
                                                   GError     **error);
 
 gboolean flatpak_resolve_matching_remotes (gboolean        disable_interaction,

@@ -251,7 +251,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           g_autoptr(GPtrArray) ref_dir_pairs = NULL;
           UninstallDir *udir = NULL;
           gboolean found_exact_name_match = FALSE;
-          RefDirPair *chosen_pair = NULL;
+          g_autoptr(GPtrArray) chosen_pairs = NULL;
 
           pref = prefs[j];
 
@@ -317,15 +317,17 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
                 }
             }
 
-          if (!flatpak_resolve_matching_installed_refs (opt_yes, ref_dir_pairs, id, &chosen_pair, error))
+          chosen_pairs = g_ptr_array_new ();
+
+          if (!flatpak_resolve_matching_installed_refs (opt_yes, ref_dir_pairs, id, chosen_pairs, error))
             return FALSE;
 
-          g_assert (chosen_pair->ref);
-          g_assert (chosen_pair->dir);
-
-          udir = uninstall_dir_ensure (uninstall_dirs, chosen_pair->dir);
-
-          uninstall_dir_add_ref (udir, chosen_pair->ref);
+          for (i = 0; i < chosen_pairs->len; i++)
+            {
+              RefDirPair *pair = g_ptr_array_index (chosen_pairs, i);
+              udir = uninstall_dir_ensure (uninstall_dirs, pair->dir);
+              uninstall_dir_add_ref (udir, pair->ref);
+            }
         }
     }
 
