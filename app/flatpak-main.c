@@ -220,6 +220,71 @@ flatpak_option_context_new_with_commands (FlatpakCommand *commands)
   return context;
 }
 
+static void
+check_environment (void)
+{
+  const char * const *dirs;
+  gboolean has_system = FALSE;
+  gboolean has_user = FALSE;
+  g_autofree char *system_exports = NULL;
+  g_autofree char *user_exports = NULL;
+  int i;
+  int rows, cols;
+
+  /* Don't recommend restarting the session when we're not in one */
+  if (!g_getenv ("DBUS_SESSION_BUS_ADDRESS"))
+    return;
+
+  /* Avoid interfering with tests */
+  if (g_getenv ("FLATPAK_SYSTEM_DIR") || g_getenv ("FLATPAK_USER_DIR"))
+    return;
+
+  system_exports = g_build_filename (FLATPAK_SYSTEMDIR, "exports/share", NULL);
+  user_exports = g_build_filename (g_get_user_data_dir (), "flatpak/exports/share", NULL);
+
+  dirs = g_get_system_data_dirs ();
+  for (i = 0; dirs[i]; i++)
+    {
+       if (g_str_has_prefix (dirs[i], system_exports))
+         has_system = TRUE;
+       if (g_str_has_prefix (dirs[i], user_exports))
+         has_user = TRUE;
+    }
+
+  flatpak_get_window_size (&rows, &cols);
+  if (cols > 80)
+    cols = 80;
+
+  if (!has_system && !has_user)
+    {
+      g_autofree char *missing = NULL;
+      missing = g_strdup_printf ("\n\n '%s'\n '%s'\n\n", system_exports, user_exports);
+      g_print ("\n");
+      /* Translators: this text is automatically wrapped, don't insert line breaks */
+      print_wrapped (cols,
+                     _("Note that the directories %s are not in the search path "
+                       "set by the XDG_DATA_DIRS environment variable, so applications "
+                       "installed by Flatpak may not appear on your desktop until the "
+                       "session is restarted."),
+                       missing);
+      g_print ("\n");
+    }
+  else if (!has_system || !has_user)
+    {
+      g_autofree char *missing = NULL;
+      missing = g_strdup_printf ("\n\n '%s'\n\n", !has_system ? system_exports : user_exports);
+      g_print ("\n");
+      /* Translators: this text is automatically wrapped, don't insert line breaks */
+      print_wrapped (cols,
+                     _("Note that the directory %s is not in the search path "
+                       "set by the XDG_DATA_DIRS environment variable, so applications "
+                       "installed by Flatpak may not appear on your desktop until the "
+                       "session is restarted."),
+                       missing);
+      g_print ("\n");
+    }
+}
+
 gboolean
 flatpak_option_context_parse (GOptionContext     *context,
                               const GOptionEntry *main_entries,
@@ -561,6 +626,8 @@ flatpak_run (int      argc,
 
   prgname = g_strdup_printf ("%s %s", g_get_prgname (), command_name);
   g_set_prgname (prgname);
+
+  check_environment ();
 
   if (!command->fn (argc, argv, cancellable, &error))
     goto out;
