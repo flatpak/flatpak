@@ -738,6 +738,48 @@ test_parse_datetime (void)
   g_assert_false (ret);
 }
 
+static void
+test_print_wrapped (void)
+{
+  GPrintFunc print_func;
+
+  g_assert_null (g_print_buffer);
+  g_print_buffer = g_string_new ("");
+  print_func = g_set_print_handler (my_print_func);
+
+  print_wrapped (20, "Here is some text that I would like to see wrapped, please. "
+                     "How many lines will this print? %d", 4);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   "Here is some text\n"
+                   "that I would like to\n"
+                   "see wrapped, please.\n"
+                   "How many lines will\n"
+                   "this print? 4\n");
+
+  g_string_truncate (g_print_buffer, 0);
+
+  print_wrapped (10, "Alongwordtest, andanotherone, and short");
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   "Alongwordtest,\n"
+                   "andanotherone,\n"
+                   "and short\n");
+
+  g_string_truncate (g_print_buffer, 0);
+
+  print_wrapped (10, "one\ntwo three");
+  g_assert_cmpstr (g_print_buffer->str, ==, "one\ntwo three\n");
+
+  g_string_truncate (g_print_buffer, 0);
+  print_wrapped (10, FLATPAK_ANSI_RED "one" FLATPAK_ANSI_COLOR_RESET " two three");
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_RED "one" FLATPAK_ANSI_COLOR_RESET " two\n"
+                   "three\n");
+
+  g_set_print_handler (print_func);
+  g_string_free (g_print_buffer, TRUE);
+  g_print_buffer = NULL;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -766,6 +808,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/app/table-shrink", test_table_shrink);
   g_test_add_func ("/app/table-shrink-more", test_table_shrink_more);
   g_test_add_func ("/app/parse-datetime", test_parse_datetime);
+  g_test_add_func ("/app/print-aligned", test_print_wrapped);
 
   res = g_test_run ();
 
