@@ -231,6 +231,10 @@ check_environment (void)
   int i;
   int rows, cols;
 
+  /* Don't recommend restarting the session when we're not in one */
+  if (!g_getenv ("DBUS_SESSION_BUS_ADDRESS"))
+    return;
+
   /* Avoid interfering with tests */
   if (g_getenv ("FLATPAK_SYSTEM_DIR") || g_getenv ("FLATPAK_USER_DIR"))
     return;
