@@ -35,6 +35,8 @@
 
 #include "flatpak-utils-private.h"
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 struct _FlatpakPolkitAgentTextListener
 {
   PolkitAgentListener parent_instance;
