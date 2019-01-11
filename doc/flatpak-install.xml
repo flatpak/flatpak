@@ -256,6 +256,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--noninteractive</option></term>
+                <listitem><para>
+                    Produce minimal output and avoid most questions. This is suitable for use in
+                    non-interactive situations, e.g. in a build script.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

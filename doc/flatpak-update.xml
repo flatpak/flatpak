@@ -223,6 +223,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--noninteractive</option></term>
+                <listitem><para>
+                    Produce minimal output and avoid most questions. This is suitable for use in
+                    non-interactive situations, e.g. in a build script.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--force-remove</option></term>
                 <listitem><para>
                     Remove old files even if they're in use by a running application.
