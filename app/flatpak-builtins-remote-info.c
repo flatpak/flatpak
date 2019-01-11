@@ -91,6 +91,10 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   g_autofree char *ref = NULL;
   g_autofree char *commit = NULL;
   g_autofree char *parent = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
+  g_autoptr(GVariant) sparse = NULL;
+  const char *eol = NULL;
+  const char *eol_rebase = NULL;
   const char *on = "";
   const char *off = "";
   gboolean friendly = TRUE;
@@ -140,6 +144,17 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   commit_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, opt_commit, &commit, cancellable, error);
   if (commit_v == NULL)
     return FALSE;
+
+  state = flatpak_dir_get_remote_state (preferred_dir, remote, cancellable, error);
+  if (state == NULL)
+    return FALSE;
+
+  sparse = flatpak_remote_state_lookup_sparse_cache (state, ref, NULL);
+  if (sparse)
+    {
+      g_variant_lookup (sparse, "eol", "&s", &eol);
+      g_variant_lookup (sparse, "eolr", "&s", &eol_rebase);
+    }
 
   if (flatpak_fancy_output ())
     {
@@ -229,6 +244,10 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       len = MAX (len, g_utf8_strlen (_("Commit:"), -1));
       if (parent)
         len = MAX (len, g_utf8_strlen (_("Parent:"), -1));
+      if (eol)
+        len = MAX (len, strlen (_("End-of-life:")));
+      if (eol_rebase)
+        len = MAX (len, strlen (_("End-of-life-rebase:")));
       if (opt_log)
         len = MAX (len, g_utf8_strlen (_("History:"), -1));
 
@@ -267,6 +286,17 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           g_autofree char *formatted_commit = ellipsize_string (parent, width);
         print_aligned (len, _("Parent:"), formatted_commit);
         }
+      if (eol)
+        {
+          g_autofree char *formatted_eol = ellipsize_string (eol, width);
+          print_aligned (len, _("End-of-life:"), formatted_eol);
+        }
+      if (eol_rebase)
+        {
+          g_autofree char *formatted_eol = ellipsize_string (eol_rebase, width);
+          print_aligned (len, _("End-of-life-rebase:"), formatted_eol);
+        }
+
       print_aligned (len, _("Subject:"), subject);
       print_aligned (len, _("Date:"), formatted_timestamp);
 
