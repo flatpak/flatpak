@@ -312,8 +312,8 @@ test_number_prompt (void)
 
 #if !GLIB_CHECK_VERSION(2, 59, 0)
 static gboolean
-g_strv_equal (char **strv1,
-              char **strv2)
+g_strv_equal (const char * const *strv1,
+              const char * cosnt *strv2)
 {
   g_return_val_if_fail (strv1 != NULL, FALSE);
   g_return_val_if_fail (strv2 != NULL, FALSE);
