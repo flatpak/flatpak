@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..13"
+echo "1..27"
 
 setup_repo
 install_repo
@@ -407,3 +407,76 @@ ${FLATPAK} ${U} info -m org.test.App > out
 assert_file_has_content out "^sdk=org.test.Sdk/$(flatpak --default-arch)/master$"
 
 echo "ok --sdk option"
+
+${FLATPAK} run --env=FOO=bar --command=sh org.test.Hello -c "echo \$FOO" > out
+assert_file_has_content out "^bar"
+
+echo "ok --env plain text"
+
+${FLATPAK} run --env=FOO=\$BAR --command=sh org.test.Hello -c "echo \$FOO" > out
+assert_file_has_content out "^$"
+
+echo "ok --env unexpanded variable"
+
+${FLATPAK} run --env=FOO=\$FLATPAK_ID --command=sh org.test.Hello -c "echo \$FOO" > out
+assert_file_has_content out "^org.test.Hello"
+
+echo "ok --env expanded FLATPAK_ID"
+
+${FLATPAK} run --env=FOO=\${FLATPAK_ID}Again --command=sh org.test.Hello -c "echo \$FOO" > out
+assert_file_has_content out "^org.test.HelloAgain"
+
+echo "ok --env expanded with \${}"
+
+${FLATPAK} run --env=FOO=\$FLATPAK_ID\$FLATPAK_ID --command=sh org.test.Hello -c "echo \$FOO" > out
+assert_file_has_content out "^org.test.Helloorg.test.Hello"
+
+echo "ok --env touching variables" 
+
+G_DEBUG= ${FLATPAK} run --env=HOME=\${A --command=/bin/sh org.test.Hello -c "echo \$HOME" >out 2>&1
+assert_file_has_content out "^\${A"
+assert_file_has_content out "Can't parse variable reference \${A"
+
+echo "ok --env invalid variable reference"
+
+${FLATPAK} run --env=HOME=\${} --command=/bin/sh org.test.Hello -c "echo \$HOME" >out
+assert_file_has_content out "^\${}"
+
+echo "ok --env empty variable reference"
+
+${FLATPAK} run --env=HOME=my\ castle --env=FOO=\$HOME --command=sh org.test.Hello -c "echo \$FOO" > out
+assert_file_has_content out "^my castle"
+
+echo "ok --env recursive expansion from context" 
+
+HOME=home ${FLATPAK} run --env=FOO=\$HOME --command=sh org.test.Hello -c "echo \$FOO" > out
+assert_file_has_content out "^home"
+
+echo "ok --env recursive expansion from env" 
+
+HOME=home ${FLATPAK} run --env=HOME=my\ castle --env=FOO=\$HOME --command=sh org.test.Hello -c "echo \$FOO" > out
+assert_file_has_content out "^my castle"
+
+echo "ok --env context overrides env" 
+
+${FLATPAK} run --env=HOME=\${FOO}castle --env=FOO=bin --command=/bin/sh org.test.Hello -c "echo \$HOME" >out
+assert_file_has_content out "^castle"
+
+echo "ok --env order"
+
+${FLATPAK} override ${U} --env=FOO=\$FOO:foo2
+FOO=foo1 ${FLATPAK} run --env=FOO=\$FOO:foo3 --command=/bin/sh org.test.Hello -c "echo \$FOO" >out
+assert_file_has_content out "^foo1:foo2:foo3"
+${FLATPAK} override ${U} --reset
+
+echo "ok --env appending"
+
+${FLATPAK} run --env=FOO=1 --env=FOO=\${FOO:-word}2\${BAR:-word} --command=/bin/sh org.test.Hello -c "echo \$FOO" >out
+assert_file_has_content out "^12word"
+
+echo "ok --env \${parameter:-word}"
+
+${FLATPAK} run --env=OR=or --env=FOO=1 --env=FOO=\${FOO:+w\${OR}d}2\${BAR:+w\${OR}d} --command=/bin/sh org.test.Hello -c "echo \$FOO" >out
+assert_file_has_content out "^word2"
+
+echo "ok --env \${parameter:+-word}"
