@@ -389,10 +389,10 @@ static void
 test_columns (void)
 {
   Column columns[] = {
-    { "column1", "col1", "col1",       1, 1 },
-    { "install", "install", "install", 0, 1 },
-    { "helper", "helper", "helper",    1, 0 },
-    { "column2", "col2", "col2",       0, 0 },
+    { "column1", "col1", "col1",       0, 0, 1, 1 },
+    { "install", "install", "install", 0, 0, 0, 1 },
+    { "helper", "helper", "helper",    0, 0, 1, 0 },
+    { "column2", "col2", "col2",       0, 0, 0, 0 },
     { NULL, }
   };
   Column *cols;
