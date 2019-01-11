@@ -6846,6 +6846,22 @@ apply_extra_data (FlatpakDir   *self,
   return TRUE;
 }
 
+/* We create a deploy ref for the currently deployed version of all refs to avoid
+   deployed commits being pruned when e.g. we pull --no-deploy. */
+static gboolean
+flatpak_dir_update_deploy_ref (FlatpakDir          *self,
+                               const char          *ref,
+                               const char          *checksum,
+                               GError             **error)
+{
+  g_autofree char *deploy_ref = g_strconcat ("deploy/", ref, NULL);
+
+  if (!ostree_repo_set_ref_immediate (self->repo, NULL, deploy_ref, checksum, NULL, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_deploy (FlatpakDir          *self,
                     const char          *origin,
@@ -7278,6 +7294,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
     return FALSE;
 
   if (!flatpak_dir_set_active (self, ref, checkout_basename, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_update_deploy_ref (self, ref, checksum, error))
     return FALSE;
 
   return TRUE;
@@ -8599,6 +8618,9 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
             return FALSE;
         }
     }
+
+  if (!flatpak_dir_update_deploy_ref (self, ref, NULL, error))
+    return FALSE;
 
   if (!flatpak_dir_undeploy_all (self, ref, force_remove, &was_deployed, cancellable, error))
     return FALSE;
