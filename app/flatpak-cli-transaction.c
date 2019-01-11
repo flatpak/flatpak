@@ -502,36 +502,6 @@ operation_error (FlatpakTransaction            *transaction,
   return TRUE; /* Continue */
 }
 
-static void
-end_of_lifed (FlatpakTransaction *transaction,
-              const char         *ref,
-              const char         *reason,
-              const char         *rebase)
-{
-  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
-  g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
-  g_autofree char *msg = NULL;
-
-  if (rebase)
-    msg = g_strdup_printf (_("Info: %s is end-of-life, in preference of %s"),
-                           flatpak_ref_get_name (rref), rebase);
-  else if (reason)
-    msg = g_strdup_printf (_("Info: %s is end-of-life, with reason: %s\n"),
-                           flatpak_ref_get_name (rref), reason);
-
-  if (flatpak_fancy_output ())
-    {
-      flatpak_table_printer_set_cell (self->printer, self->progress_row, 0, msg);
-      self->progress_row++;
-      flatpak_table_printer_add_span (self->printer, "");
-      flatpak_table_printer_finish_row (self->printer);
-      redraw (self);
-    }
-  else
-    g_print ("\r%-*s\n", self->table_width, msg);
-}
-
-
 static int
 cmpstringp (const void *p1, const void *p2)
 {
@@ -1089,7 +1059,6 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   transaction_class->operation_done = operation_done;
   transaction_class->operation_error = operation_error;
   transaction_class->choose_remote_for_ref = choose_remote_for_ref;
-  transaction_class->end_of_lifed = end_of_lifed;
   transaction_class->run = flatpak_cli_transaction_run;
 }
 
