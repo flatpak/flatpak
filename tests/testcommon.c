@@ -310,29 +310,18 @@ test_number_prompt (void)
   g_print_buffer = NULL;
 }
 
-#if !GLIB_CHECK_VERSION(2, 59, 0)
-static gboolean
-g_strv_equal (const char * const *strv1,
-              const char * cosnt *strv2)
+static void
+assert_strv_equal (char **strv1,
+                   char **strv2)
 {
-  g_return_val_if_fail (strv1 != NULL, FALSE);
-  g_return_val_if_fail (strv2 != NULL, FALSE);
-
   if (strv1 == strv2)
-    return TRUE;
+    return;
 
   for (; *strv1 != NULL && *strv2 != NULL; strv1++, strv2++)
-    {
-      if (!g_str_equal (*strv1, *strv2))
-        return FALSE;
-    }
+    g_assert_true (g_str_equal (*strv1, *strv2));
 
-  return (*strv1 == NULL && *strv2 == NULL);
+  g_assert_true (*strv1 == NULL && *strv2 == NULL);
 }
-#endif
-
-#define assert_strv_equal(s1,s2) \
-  g_assert_true (g_strv_equal ((const char * const *)s1, (const char * const *)s2))
 
 static void
 test_subpaths_merge (void)
