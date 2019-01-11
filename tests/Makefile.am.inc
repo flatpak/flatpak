@@ -37,6 +37,7 @@ testcommon_CFLAGS = \
 	$(APPSTREAM_GLIB_CFLAGS) \
 	-DFLATPAK_COMPILATION \
 	-I$(srcdir)/app \
+	-I$(builddir)/app \
 	$(NULL)
 testcommon_LDADD = \
 	$(AM_LDADD) \
