@@ -2705,7 +2705,7 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
 
 /**
  * flatpak_transaction_run:
- * @self: a #FlatpakTransaction
+ * @transaction: a #FlatpakTransaction
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for an error
  *
@@ -2725,11 +2725,11 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
  * Returns: %TRUE on success, %FALSE if an error occurred
  */
 gboolean
-flatpak_transaction_run (FlatpakTransaction *self,
+flatpak_transaction_run (FlatpakTransaction *transaction,
                          GCancellable       *cancellable,
                          GError            **error)
 {
-  return FLATPAK_TRANSACTION_GET_CLASS (self)->run (self, cancellable, error);
+  return FLATPAK_TRANSACTION_GET_CLASS (transaction)->run (transaction, cancellable, error);
 }
 
 static gboolean
