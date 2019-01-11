@@ -58,6 +58,8 @@ typedef enum {
 
 void flatpak_get_window_size (int *rows, int *cols);
 gboolean flatpak_get_cursor_pos  (int *row, int *col);
+void flatpak_hide_cursor (void);
+void flatpak_show_cursor (void);
 
 /* https://bugzilla.gnome.org/show_bug.cgi?id=766370 */
 #if !GLIB_CHECK_VERSION (2, 49, 3)
