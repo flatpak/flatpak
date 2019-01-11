@@ -112,6 +112,16 @@
             Flatpak sets the environment variable <envar>FLATPAK_ID</envar> to the application
             ID of the running app.
         </para>
+        <para>
+            Flatpak expands variable references in environment variables that are set via
+            <option>--env</option>, via overrides, or via the Context section of application
+            metadata. Typical shell syntax for parameter expansion such as ${PARAMETER},
+            ${PARAMETER:-WORD} and ${PARAMETER:+WORD} is supported.
+        </para>
+        <para>
+            Note that variable expansion happens in the order in which the variables are defined,
+            first in application metadata, then in overrides, and last in the run commandline.
+        </para>
     </refsect1>
 
     <refsect1>
