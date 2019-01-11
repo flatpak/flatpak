@@ -54,6 +54,8 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_RUNTIME_USED: Runtime can't be uninstalled. (Since: 1.0.3)
  * @FLATPAK_ERROR_INVALID_NAME: Application, runtime or remote name is invalid. (Since: 1.0.3)
  * @FLATPAK_ERROR_OUT_OF_SPACE: More disk space needed. (Since: 1.2.0)
+ * @FLATPAK_ERROR_WRONG_USER: An operation is being attempted by the wrong user (such as
+ *                            root operating on a user installation). (Since: 1.2.0)
  *
  * Error codes for library functions.
  */
@@ -77,6 +79,7 @@ typedef enum {
   FLATPAK_ERROR_RUNTIME_USED,
   FLATPAK_ERROR_INVALID_NAME,
   FLATPAK_ERROR_OUT_OF_SPACE,
+  FLATPAK_ERROR_WRONG_USER,
 } FlatpakError;
 
 /**

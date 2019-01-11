@@ -2754,6 +2754,19 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   
   priv->current_op = NULL;
 
+  if (flatpak_dir_is_user (priv->dir) && getuid () == 0)
+    {
+      struct stat st_buf;
+      g_autofree char *dir_path = NULL;
+
+      /* Check that it's not root's own user installation */
+      dir_path = g_file_get_path (flatpak_dir_get_path (priv->dir));
+      if (stat (dir_path, &st_buf) == 0 && st_buf.st_uid != 0)
+        return flatpak_fail_error (error, FLATPAK_ERROR_WRONG_USER,
+                                   _("Refusing to operate on a user installation as root! "
+                                     "This can lead to incorrect file ownership and permission errors."));
+    }
+
   if (!priv->no_pull &&
       !flatpak_transaction_update_metadata (self, cancellable, error))
     return FALSE;
