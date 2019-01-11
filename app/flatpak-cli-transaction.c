@@ -36,7 +36,6 @@ struct _FlatpakCliTransaction
 
   gboolean           disable_interaction;
   gboolean           stop_on_first_error;
-  gboolean           aborted;
   GError            *first_operation_error;
 
   int                rows;
@@ -1075,11 +1074,9 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
                              GError            **error)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
-
-  g_autoptr(GError) local_error = NULL;
   gboolean res;
 
-  res = FLATPAK_TRANSACTION_CLASS (flatpak_cli_transaction_parent_class)->run (transaction, cancellable, &local_error);
+  res = FLATPAK_TRANSACTION_CLASS (flatpak_cli_transaction_parent_class)->run (transaction, cancellable, error);
 
   if (flatpak_fancy_output ())
     g_print (FLATPAK_ANSI_SHOW_CURSOR);
@@ -1108,23 +1105,10 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
       g_print ("\n");
     }
 
-  /* If we got some weird error (i.e. not ABORTED because we chose to abort
-     on an error, report that */
-  if (!res)
-    {
-      if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
-        {
-          self->aborted = TRUE;
-        }
-      else
-        {
-          g_propagate_error (error, g_steal_pointer (&local_error));
-          return FALSE;
-        }
-    }
-
   if (self->first_operation_error)
     {
+      g_clear_error (error);
+
       /* We always want to return an error if there was some kind of operation error,
          as that causes the main CLI to return an error status. */
 
@@ -1145,13 +1129,8 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
         }
     }
 
+  if (!res)
+    return FALSE;
+
   return TRUE;
-}
-
-gboolean
-flatpak_cli_transaction_was_aborted (FlatpakTransaction *transaction)
-{
-  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
-
-  return self->aborted;
 }
