@@ -252,14 +252,18 @@ flatpak_builtin_update (int           argc,
         continue;
 
       if (!flatpak_transaction_run (transaction, cancellable, error))
-        return FALSE;
+        {
+          if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+            {
+              g_clear_error (error);
+              return TRUE;
+            }
+
+          return FALSE;
+        }
 
       if (!flatpak_transaction_is_empty (transaction))
         has_updates = TRUE;
-
-      if (FLATPAK_IS_CLI_TRANSACTION (transaction) &&
-          flatpak_cli_transaction_was_aborted (transaction))
-        return TRUE;
     }
 
   if (!has_updates)

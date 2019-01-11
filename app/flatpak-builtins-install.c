@@ -167,7 +167,15 @@ install_bundle (FlatpakDir *dir,
     return FALSE;
 
   if (!flatpak_transaction_run (transaction, cancellable, error))
-    return FALSE;
+    {
+      if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        {
+          g_clear_error (error);
+          return TRUE;
+        }
+
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -234,7 +242,15 @@ install_from (FlatpakDir *dir,
     return FALSE;
 
   if (!flatpak_transaction_run (transaction, cancellable, error))
-    return FALSE;
+    {
+      if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        {
+          g_clear_error (error);
+          return TRUE;
+        }
+
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -498,7 +514,15 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     }
 
   if (!flatpak_transaction_run (transaction, cancellable, error))
-    return FALSE;
+    {
+      if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        {
+          g_clear_error (error);
+          return TRUE;
+        }
+
+      return FALSE;
+    }
 
   return TRUE;
 }
