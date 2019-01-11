@@ -1192,18 +1192,19 @@ print_line_wrapped (int cols, const char *line)
   for (i = 0; words[i]; i++)
     {
        int len = cell_width (words[i]);
-       int space = col > 0;
 
-       if (col + space + len >= cols)
+       if (col > 0 && col + 1 + len > cols)
          {
-           g_print ("\n%s", words[i]);
-           col = len;
+           g_print ("\n");
+           col = 0;
          }
-       else
+       else if (col > 0)
          {
-           g_print ("%*s%s", space, "", words[i]);
-           col = col + space + len;
+           g_print (" ");
+           col += 1;
          }
+       g_print ("%s", words[i]);
+       col += len;
     }
 }
 
