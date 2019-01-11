@@ -231,7 +231,7 @@ check_environment (void)
   int i;
   int rows, cols;
 
-  /* Avoid intering with tests */
+  /* Avoid interfering with tests */
   if (g_getenv ("FLATPAK_SYSTEM_DIR") || g_getenv ("FLATPAK_USER_DIR"))
     return;
 
@@ -260,7 +260,7 @@ check_environment (void)
       print_wrapped (cols,
                      _("Note that the directories %s are not in the search path "
                        "set by the XDG_DATA_DIRS environment variable, so applications "
-                       "installed by flatpak may not appear in your desktop until the "
+                       "installed by Flatpak may not appear on your desktop until the "
                        "session is restarted."),
                        missing);
       g_print ("\n");
@@ -274,7 +274,7 @@ check_environment (void)
       print_wrapped (cols,
                      _("Note that the directory %s is not in the search path "
                        "set by the XDG_DATA_DIRS environment variable, so applications "
-                       "installed by flatpak may not appear in your desktop until the "
+                       "installed by Flatpak may not appear on your desktop until the "
                        "session is restarted."),
                        missing);
       g_print ("\n");
