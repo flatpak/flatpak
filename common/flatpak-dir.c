@@ -2652,7 +2652,10 @@ flatpak_dir_get_config (FlatpakDir *self,
   GKeyFile *config;
   g_autofree char *ostree_key = NULL;
 
-  if (!flatpak_dir_ensure_repo (self, NULL, error))
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
+    return NULL;
+
+  if (self->repo == NULL)
     return NULL;
 
   config = ostree_repo_get_config (self->repo);
