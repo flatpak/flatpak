@@ -5400,6 +5400,128 @@ flatpak_number_prompt (gboolean default_yes, int min, int max, const char *promp
     }
 }
 
+static gboolean
+parse_range (const char *s, int *a, int *b)
+{
+  char *p;
+
+  p = strchr (s, '-');
+  if (!p)
+    return FALSE;
+
+  *p = '\0';
+  p++;
+
+  if (is_number (s) && is_number (p))
+    {
+      *a = (int) strtol (s, NULL, 10);
+      *b = (int) strtol (p, NULL, 10);
+
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
+static void
+add_number (GArray *numbers,
+            int     num)
+{
+  int i;
+
+  for (i = 0; i < numbers->len; i++)
+    {
+      if (g_array_index (numbers, int, i) == num)
+        return;
+    }
+
+  g_array_append_val (numbers, num);
+}
+
+static int *
+parse_numbers (const char *buf, int min, int max)
+{
+  g_autoptr(GArray) numbers = g_array_new (FALSE, FALSE, sizeof (int));
+  g_auto(GStrv) parts = g_strsplit_set (buf, " ,", 0);
+  int i, j;
+
+  for (i = 0; parts[i]; i++)
+    {
+      int a, b;
+
+      g_strstrip (parts[i]);
+
+      if (parse_range (parts[i], &a, &b) &&
+          min <= a && a <= max &&
+          min <= b && b <= max)
+        {
+          for (j = a; j <= b; j++)
+            add_number (numbers, j);
+        }
+      else if (is_number (parts[i]))
+        {
+          int res = (int)strtol (parts[i], NULL, 10);
+          if (min <= res && res <= max)
+            add_number (numbers, res);
+          else
+            return NULL;
+        }
+      else
+        return NULL;
+    }
+
+  j = 0;
+  g_array_append_val (numbers, j);
+
+  return (int *) g_array_free (g_steal_pointer (&numbers), FALSE);
+}
+
+/* Returns a 0-terminated array of ints. Free with g_free */
+int *
+flatpak_numbers_prompt (gboolean default_yes, int min, int max, const char *prompt, ...)
+{
+  char buf[512];
+  va_list var_args;
+  g_autofree char *s = NULL;
+  g_autofree int *choice = g_new0 (int, 2);
+  int *numbers;
+
+  va_start (var_args, prompt);
+  s = g_strdup_vprintf (prompt, var_args);
+  va_end (var_args);
+
+  while (TRUE)
+    {
+      g_print ("%s [%d-%d]: ", s, min, max);
+
+      if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
+        {
+          g_print ("0\n");
+          choice[0] = 0;
+          return g_steal_pointer (&choice);
+        }
+
+      if (fgets (buf, sizeof (buf), stdin) == NULL)
+        {
+          choice[0] = 0;
+          return g_steal_pointer (&choice);
+        }
+
+      g_strstrip (buf);
+
+      if (default_yes && strlen (buf) == 0 &&
+          max - min == 1 && min == 0)
+        {
+          choice[0] = 0;
+          return g_steal_pointer (&choice);
+        }
+
+      numbers = parse_numbers (buf, min, max);
+      if (numbers)
+        return numbers;
+    }
+}
+
 void
 flatpak_format_choices (const char **choices,
                         const char *prompt,
