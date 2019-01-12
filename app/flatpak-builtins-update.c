@@ -197,8 +197,18 @@ flatpak_builtin_update (int           argc,
                     continue;
 
                   found = TRUE;
-                  if (!flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
-                    return FALSE;
+                  if (flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
+                    continue;
+
+                  if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
+                    {
+                      g_printerr (_("Unable to update %s: %s\n"), refs[i], (*error)->message);
+                      g_clear_error (error);
+                    }
+                  else
+                    {
+                      return FALSE;
+                    }
                 }
             }
 
@@ -228,8 +238,18 @@ flatpak_builtin_update (int           argc,
                     continue;
 
                   found = TRUE;
-                  if (!flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
-                    return FALSE;
+                  if (flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
+                    continue;
+
+                  if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
+                    {
+                      g_printerr (_("Unable to update %s: %s\n"), refs[i], (*error)->message);
+                      g_clear_error (error);
+                    }
+                  else
+                    {
+                      return FALSE;
+                    }
                 }
             }
         }
