@@ -63,7 +63,7 @@
 #define SYSCONF_REMOTES_DIR "remotes.d"
 
 #define SYSTEM_DIR_DEFAULT_ID "default"
-#define SYSTEM_DIR_DEFAULT_DISPLAY_NAME "Default system directory"
+#define SYSTEM_DIR_DEFAULT_DISPLAY_NAME _("Default system installation")
 #define SYSTEM_DIR_DEFAULT_STORAGE_TYPE FLATPAK_DIR_STORAGE_TYPE_DEFAULT
 #define SYSTEM_DIR_DEFAULT_PRIORITY 0
 
