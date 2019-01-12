@@ -45,6 +45,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-run-private.h"
+#include "flatpak-appdata-private.h"
 
 #include "errno.h"
 
@@ -2263,27 +2264,23 @@ add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
                             GFile      *deploy_dir,
                             const char *id)
 {
-  g_autoptr(AsStore) store = as_store_new ();
   g_autofree char *appdata_xml = NULL;
-  GPtrArray *apps;
+  g_autoptr(GHashTable) names = NULL;
+  g_autoptr(GHashTable) comments = NULL;
+  g_autofree char *version = NULL;
+  g_autofree char *license = NULL;
 
   appdata_xml = read_appdata_xml_from_deploy_dir (deploy_dir, id);
   if (appdata_xml == NULL)
     return;
 
-  as_store_from_xml (store, appdata_xml, NULL, NULL);
-  apps = as_store_get_apps (store);
-  if (apps->len > 0)
+  if (flatpak_parse_appdata (appdata_xml, id, &names, &comments, &version, &license))
     {
-      AsApp *app = g_ptr_array_index (apps, 0);
-      AsRelease *release = as_app_get_release_default (app);
-      const char *license = as_app_get_project_license (app);
-
-      add_locale_metadata_string (metadata_builder, "appdata-name", as_app_get_names (app));
-      add_locale_metadata_string (metadata_builder, "appdata-summary", as_app_get_comments (app));
-      if (release)
+      add_locale_metadata_string (metadata_builder, "appdata-name", names);
+      add_locale_metadata_string (metadata_builder, "appdata-summary", comments);
+      if (version)
         g_variant_builder_add (metadata_builder, "{s@v}", "appdata-version",
-                               g_variant_new_variant (g_variant_new_string (as_release_get_version (release))));
+                               g_variant_new_variant (g_variant_new_string (version)));
       if (license)
         g_variant_builder_add (metadata_builder, "{s@v}", "appdata-license",
                                g_variant_new_variant (g_variant_new_string (license)));

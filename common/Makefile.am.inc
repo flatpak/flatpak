@@ -81,6 +81,8 @@ CLEANFILES += $(nodist_libflatpak_common_la_SOURCES)
 libflatpak_common_la_SOURCES = \
 	$(flatpakinclude_HEADERS) \
 	common/flatpak-common-types-private.h \
+	common/flatpak-appdata.c \
+	common/flatpak-appdata-private.h \
 	common/flatpak-bwrap.c \
 	common/flatpak-bwrap-private.h \
 	common/flatpak-dir.c \
