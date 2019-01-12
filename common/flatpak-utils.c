@@ -5415,17 +5415,18 @@ parse_range (const char *s, int *a, int *b)
   if (!p)
     return FALSE;
 
-  *p = '\0';
   p++;
+  p[-1] = '\0';
 
   if (is_number (s) && is_number (p))
     {
       *a = (int) strtol (s, NULL, 10);
       *b = (int) strtol (p, NULL, 10);
-
+      p[-1] = '-';
       return TRUE;
     }
 
+  p[-1] = '-';
   return FALSE;
 }
 
