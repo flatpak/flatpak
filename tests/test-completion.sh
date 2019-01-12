@@ -25,7 +25,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..13"
+echo "1..17"
 
 setup_repo
 install_repo
@@ -171,3 +171,53 @@ for cmd in history info list run update \
 done
 
 echo "ok complete non-NO_DIR commands"
+
+${FLATPAK} complete "flatpak list --columns=" 24 "--columns=" | sort > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+active
+all
+application
+arch
+branch
+description
+help
+installation
+latest
+options
+origin
+ref
+size
+version
+EOF
+
+echo "ok complete list --columns="
+
+${FLATPAK} complete "flatpak list --columns=all" 27 "--columns=all" | sort > complete_out
+assert_file_empty complete-out
+
+echo "ok complete list --columns=all"
+
+${FLATPAK} complete "flatpak list --columns=hel" 27 "--columns=hel" | sort > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+help
+EOF
+
+echo "ok complete list --columns=hel"
+
+${FLATPAK} complete "flatpak list --columns=arch," 29 "--columns=arch," | sort > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+arch,active
+arch,application
+arch,branch
+arch,description
+arch,installation
+arch,latest
+arch,options
+arch,origin
+arch,ref
+arch,size
+arch,version
+EOF
+
+echo "ok complete list --columns=arch,"
+
