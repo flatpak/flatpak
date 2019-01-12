@@ -2676,7 +2676,11 @@ flatpak_dir_get_config (FlatpakDir *self,
     return NULL;
 
   if (self->repo == NULL)
-    return NULL;
+    {
+      g_set_error (error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND,
+                   _("The config key %s is not set"), key);
+      return NULL;
+    }
 
   config = ostree_repo_get_config (self->repo);
   ostree_key = g_strconcat ("xa.", key, NULL);
