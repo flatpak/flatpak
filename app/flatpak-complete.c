@@ -27,7 +27,7 @@
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
  * to not have it interfere with stdout/stderr)
  */
-#if 0
+#if 1
 void
 flatpak_completion_debug (const gchar *format, ...)
 {
@@ -356,6 +356,10 @@ flatpak_complete_options (FlatpakCompletion *completion,
                       FlatpakInstallation *inst = g_ptr_array_index (installations, i);
                       flatpak_complete_word (completion, "%s%s ", prefix, flatpak_installation_get_id (inst));
                     }
+                }
+              else if (strcmp (e->long_name, "columns") == 0)
+                {
+                   /* columns are treated separately */
                 }
               else
                 flatpak_complete_word (completion, "%s", prefix);
