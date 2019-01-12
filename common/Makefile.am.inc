@@ -131,7 +131,6 @@ libflatpak_common_la_SOURCES = \
 libflatpak_common_la_CFLAGS = \
 	-DFLATPAK_COMPILATION \
 	$(AM_CFLAGS) \
-	$(APPSTREAM_GLIB_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
 	$(OSTREE_CFLAGS) \
@@ -143,7 +142,7 @@ libflatpak_common_la_CFLAGS = \
 	$(SYSTEMD_CFLAGS) \
 	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libflatpak_common_la_LIBADD = $(AM_LIBADD) libglnx.la $(APPSTREAM_GLIB_LIBS) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS) $(SYSTEMD_LIBS)
+libflatpak_common_la_LIBADD = $(AM_LIBADD) libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS) $(SYSTEMD_LIBS)
 
 
 libflatpak_la_SOURCES = \
