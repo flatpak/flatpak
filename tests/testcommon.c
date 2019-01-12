@@ -311,6 +311,66 @@ test_number_prompt (void)
 }
 
 static void
+assert_numbers (int *num, ...)
+{
+  va_list args;
+  int n;
+  int i;
+
+  g_assert_nonnull (num);
+
+  va_start (args, num);
+  for (i = 0; num[i]; i++)
+    {
+      n = va_arg (args, int);
+      g_assert_true (n == num[i]);
+    }
+
+  n = va_arg (args, int);
+  g_assert_true (n == 0);
+  va_end (args);
+}
+
+static void
+test_parse_numbers (void)
+{
+  g_autofree int *numbers = NULL;
+
+  numbers = flatpak_parse_numbers ("", 0, 10);
+  assert_numbers (numbers, 0);
+  g_clear_pointer (&numbers, g_free);
+
+  numbers = flatpak_parse_numbers ("1", 0, 10);
+  assert_numbers (numbers, 1, 0);
+  g_clear_pointer (&numbers, g_free);
+  
+  numbers = flatpak_parse_numbers ("1 3 2", 0, 10);
+  assert_numbers (numbers, 1, 3, 2, 0);
+  g_clear_pointer (&numbers, g_free);
+  
+  numbers = flatpak_parse_numbers ("1-3", 0, 10);
+  assert_numbers (numbers, 1, 2, 3, 0);
+  g_clear_pointer (&numbers, g_free);
+  
+  numbers = flatpak_parse_numbers ("1", 2, 4);
+  g_assert_null (numbers);
+  
+  numbers = flatpak_parse_numbers ("2-6", 2, 4);
+  g_assert_null (numbers);
+
+  numbers = flatpak_parse_numbers ("1,2 2", 1, 4);
+  assert_numbers (numbers, 1, 2, 0);
+  g_clear_pointer (&numbers, g_free);
+
+  numbers = flatpak_parse_numbers ("1-3,2-4", 1, 4);
+  assert_numbers (numbers, 1, 2, 3, 4, 0);
+  g_clear_pointer (&numbers, g_free);
+
+  numbers = flatpak_parse_numbers ("-1", 1, 4);
+  g_assert_null (numbers);
+}
+
+static void
 assert_strv_equal (char **strv1,
                    char **strv2)
 {
@@ -756,6 +816,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/format-choices", test_format_choices);
   g_test_add_func ("/common/yes-no-prompt", test_yes_no_prompt);
   g_test_add_func ("/common/number-prompt", test_number_prompt);
+  g_test_add_func ("/common/parse-numbers", test_parse_numbers);
   g_test_add_func ("/common/subpaths-merge", test_subpaths_merge);
   g_test_add_func ("/common/lang-from-locale", test_lang_from_locale);
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
