@@ -63,7 +63,7 @@
  * To get a list of all configured installations, use flatpak_get_system_installations(),
  * together with flatpak_installation_new_user().
  *
- * The FlatpakInstallatio nAPI is threadsafe in the sense that it is safe to run two
+ * The FlatpakInstallation API is threadsafe in the sense that it is safe to run two
  * operations at the same time, in different threads (or processes).
  */
 
@@ -500,6 +500,9 @@ flatpak_installation_get_path (FlatpakInstallation *self)
  *
  * Returns the ID of the installation for @self.
  *
+ * The ID for the default system installation is "default".
+ * The ID for the user installation is "user".
+ *
  * Returns: (transfer none): a string with the installation's ID
  *
  * Since: 0.8
@@ -517,6 +520,9 @@ flatpak_installation_get_id (FlatpakInstallation *self)
  * @self: a #FlatpakInstallation
  *
  * Returns the display name of the installation for @self.
+ *
+ * Note that this function may return %NULL if the installation
+ * does not have a display name.
  *
  * Returns: (transfer none): a string with the installation's display name
  *
