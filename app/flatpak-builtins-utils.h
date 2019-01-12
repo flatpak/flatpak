@@ -22,6 +22,7 @@
 #define __FLATPAK_BUILTINS_UTILS_H__
 
 #include <glib.h>
+#include <appstream-glib.h>
 #include "libglnx/libglnx.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
@@ -150,6 +151,13 @@ AsApp *as_store_find_app (AsStore *store,
 const char *as_app_get_localized_name (AsApp *app);
 const char *as_app_get_localized_comment (AsApp *app);
 const char *as_app_get_version (AsApp *app);
+
+gboolean    flatpak_dir_load_appstream_store (FlatpakDir    *self,
+                                              const gchar   *remote_name,
+                                              const gchar   *arch,
+                                              AsStore       *store,
+                                              GCancellable  *cancellable,
+                                              GError       **error);
 
 void print_wrapped (int columns, const char *text, ...) G_GNUC_PRINTF (2, 3);
 
