@@ -691,6 +691,9 @@ int *flatpak_numbers_prompt (gboolean    default_yes,
                              int         max,
                              const char *prompt,
                              ...) G_GNUC_PRINTF (4, 5);
+int *flatpak_parse_numbers (const char *buf,
+                            int         min,
+                            int         max);
 
 void flatpak_format_choices (const char **choices,
                              const char *prompt,
