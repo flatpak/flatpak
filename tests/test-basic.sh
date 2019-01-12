@@ -102,7 +102,7 @@ assert_file_has_content out "flatpak info --help"
 
 echo "ok info missing NAME"
 
-for cmd in config install make-current override remote-add repair; do
+for cmd in config make-current override remote-add repair; do
   ${FLATPAK} $cmd --system --user >out 2>&1 || true
   assert_file_has_content out "^error: Multiple installations specified"
   ${FLATPAK} $cmd --system --installation=foo >out 2>&1 || true
