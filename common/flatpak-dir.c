@@ -1670,6 +1670,9 @@ flatpak_dir_get_changed_path (FlatpakDir *self)
 const char *
 flatpak_dir_get_id (FlatpakDir *self)
 {
+  if (self->user)
+    return "user";
+
   if (self->extra_data != NULL)
     return self->extra_data->id;
 
@@ -1709,6 +1712,9 @@ flatpak_dir_get_name_cached (FlatpakDir *self)
 const char *
 flatpak_dir_get_display_name (FlatpakDir *self)
 {
+  if (self->user)
+    return _("User installation");
+
   if (self->extra_data != NULL)
     return self->extra_data->display_name;
 
