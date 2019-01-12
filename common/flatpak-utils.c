@@ -5444,8 +5444,10 @@ add_number (GArray *numbers,
   g_array_append_val (numbers, num);
 }
 
-static int *
-parse_numbers (const char *buf, int min, int max)
+int *
+flatpak_parse_numbers (const char *buf,
+                       int         min,
+                       int         max)
 {
   g_autoptr(GArray) numbers = g_array_new (FALSE, FALSE, sizeof (int));
   g_auto(GStrv) parts = g_strsplit_set (buf, " ,", 0);
@@ -5522,7 +5524,7 @@ flatpak_numbers_prompt (gboolean default_yes, int min, int max, const char *prom
           return g_steal_pointer (&choice);
         }
 
-      numbers = parse_numbers (buf, min, max);
+      numbers = flatpak_parse_numbers (buf, min, max);
       if (numbers)
         return numbers;
     }
