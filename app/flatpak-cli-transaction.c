@@ -170,7 +170,7 @@ redraw (FlatpakCliTransaction *self)
   int current_col;
   int skip;
 
-  /* We may have resized and thus reposisioned the cursor since last redraw */
+  /* We may have resized and thus repositioned the cursor since last redraw */
   flatpak_get_window_size (&self->rows, &self->cols);
   if (flatpak_get_cursor_pos (&current_row, &current_col))
     {
