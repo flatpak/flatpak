@@ -281,7 +281,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
   g_option_context_set_description (context, col_help);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
                                      &dirs, cancellable, error))
     return FALSE;
 
@@ -357,7 +357,8 @@ flatpak_complete_search (FlatpakCompletion *completion)
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_STANDARD_DIRS, NULL, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     NULL, NULL, NULL))
     return FALSE;
 
   flatpak_complete_options (completion, global_entries);
