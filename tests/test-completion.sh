@@ -162,7 +162,7 @@ echo "ok complete NO_DIR commands"
 for cmd in history info list run update \
            config install make-current override remote-add repair \
            create-usb remote-delete remote-info remote-list remote-ls \
-           remote-modify search uninsall update; do
+           remote-modify search uninstall update; do
   len=$(awk '{ print length($0) }' <<< "flatpak $cmd --")
   ${FLATPAK} complete "flatpak $cmd --" $len "--"  > complete_out
   assert_file_has_content complete_out "^--system "
