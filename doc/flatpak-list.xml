@@ -309,7 +309,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user --column=app list</command>
+            <command>$ flatpak --user --columns=app list</command>
         </para>
 <programlisting>
 <command>Application</command>
