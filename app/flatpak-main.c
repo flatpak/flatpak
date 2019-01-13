@@ -53,6 +53,7 @@ static gboolean opt_list_installations;
 static gboolean opt_user;
 static gboolean opt_system;
 static char **opt_installations;
+static gboolean opt_help;
 
 static gboolean is_in_complete;
 
@@ -152,7 +153,7 @@ opt_verbose_cb (const gchar *option_name,
 GOptionEntry global_entries[] = {
   { "verbose", 'v', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, &opt_verbose_cb, N_("Show debug information, -vv for more detail"), NULL },
   { "ostree-verbose", 0, 0, G_OPTION_ARG_NONE, &opt_ostree_verbose, N_("Show OSTree debug information"), NULL },
-  { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, N_("Show help options"), NULL, NULL },
+  { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &opt_help, NULL, NULL },
   { NULL }
 };
 
@@ -310,6 +311,10 @@ flatpak_option_context_parse (GOptionContext     *context,
     g_option_context_add_main_entries (context, main_entries, NULL);
 
   g_option_context_add_main_entries (context, global_entries, NULL);
+
+  /* We never want help output to interrupt completion */
+  if (is_in_complete)
+    g_option_context_set_help_enabled (context, FALSE);
 
   if (!g_option_context_parse (context, argc, argv, error))
     return FALSE;
