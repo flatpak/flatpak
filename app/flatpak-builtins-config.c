@@ -250,7 +250,7 @@ flatpak_builtin_config (int argc, char **argv, GCancellable *cancellable, GError
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
                                      &dirs, cancellable, error))
     return FALSE;
 
@@ -283,7 +283,8 @@ flatpak_complete_config (FlatpakCompletion *completion)
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, NULL, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     NULL, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
