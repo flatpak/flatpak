@@ -400,7 +400,8 @@ flatpak_complete_remote_add (FlatpakCompletion *completion)
   context = g_option_context_new ("");
   g_option_context_add_main_entries (context, common_options, NULL);
   if (!flatpak_option_context_parse (context, add_options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, NULL, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     NULL, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
