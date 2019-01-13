@@ -136,7 +136,8 @@ flatpak_complete_override (FlatpakCompletion *completion)
   g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR, &dirs, NULL, NULL))
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     &dirs, NULL, NULL))
     return FALSE;
 
   switch (completion->argc)
