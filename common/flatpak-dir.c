@@ -7841,8 +7841,6 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
-          /* Don’t resolve a rev or OstreeRepoFinderResult set early; the pull
-           * code will do this. */
           if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, subpaths,
                                  child_repo,
                                  flatpak_flags,
@@ -7884,8 +7882,6 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      /* Don’t resolve a rev or OstreeRepoFinderResult set early; the pull
-       * code will do this. */
       if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, opt_subpaths, NULL,
                              flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
