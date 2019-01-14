@@ -141,6 +141,7 @@ EXTRA_DIST += $(zshcompletion_DATA)
 
 profiledir = $(PROFILE_DIR)
 profile_DATA = profile/flatpak.sh
+EXTRA_DIST += $(profile_DATA)
 
 envdir = $(datadir)/gdm/env.d
 env_DATA = flatpak.env
