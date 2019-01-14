@@ -6937,7 +6937,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GFile) metadata_file = NULL;
   g_autofree char *metadata_contents = NULL;
-  g_autofree char *deploy_ref = NULL;
   g_auto(GStrv) ref_parts = NULL;
   gboolean is_app;
 
