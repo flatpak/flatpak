@@ -67,7 +67,6 @@ test_extension_matches (void)
   g_assert_true (flatpak_extension_matches_reason ("org.foo.bar", "", TRUE));
   g_assert_false (flatpak_extension_matches_reason ("org.foo.nosuchdriver", "active-gl-driver", TRUE));
   g_assert_false (flatpak_extension_matches_reason ("org.foo.nosuchtheme", "active-gtk-theme", TRUE));
-  g_assert_false (flatpak_extension_matches_reason ("org.foo.nosuchtheme", "have-intel-gpu", TRUE));
   g_assert_false (flatpak_extension_matches_reason ("org.foo.nonono", "on-xdg-desktop-nosuchdesktop", TRUE));
   g_assert_false (flatpak_extension_matches_reason ("org.foo.nonono", "active-gl-driver;active-gtk-theme", TRUE));
 }
