@@ -501,7 +501,7 @@ flatpak_installation_get_path (FlatpakInstallation *self)
  * Returns the ID of the installation for @self.
  *
  * The ID for the default system installation is "default".
- * The ID for the user installation is 'user'.
+ * The ID for the user installation is "user".
  *
  * Returns: (transfer none): a string with the installation's ID
  *
