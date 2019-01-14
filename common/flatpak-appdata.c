@@ -123,7 +123,7 @@ start_element (GMarkupParseContext *context,
           if (lang)
             data->lang = g_strdup (lang);
           else
-            data->lang = g_strdup ("en");
+            data->lang = g_strdup ("C");
           data->in_text = TRUE;
         }
     }
