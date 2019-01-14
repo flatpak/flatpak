@@ -7,6 +7,7 @@
 #include <glib.h>
 #include "flatpak.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-appdata-private.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-table-printer.h"
 #include "parse-datetime.h"
@@ -436,6 +437,91 @@ test_lang_from_locale (void)
 }
 
 static void
+test_parse_appdata (void)
+{
+  const char appdata1[] =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    "<components version=\"0.8\">\n"
+    "  <component type=\"desktop\">\n"
+    "    <id>org.test.Hello.desktop</id>\n"
+    "    <name>Hello world test app: org.test.Hello</name>\n"
+    "    <summary>Print a greeting</summary>\n"
+    "    <description><p>This is a test app.</p></description>\n"
+    "    <categories>\n"
+    "      <category>Utility</category>\n"
+    "    </categories>\n"
+    "    <icon height=\"64\" width=\"64\" type=\"cached\">64x64/org.gnome.gedit.png</icon>\n"
+    "    <releases>\n"
+    "      <release timestamp=\"1525132800\" version=\"0.0.1\"/>\n"
+    "    </releases>\n"
+    "  </component>\n"
+    "</components>";
+  const char appdata2[] =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    "<components version=\"0.8\">\n"
+    "  <component type=\"desktop\">\n"
+    "    <id>org.test.Hello.desktop</id>\n"
+    "    <name>Hello world test app: org.test.Hello</name>\n"
+    "    <name xml:lang=\"de\">Hallo Welt test app: org.test.Hello</name>\n"
+    "    <summary>Print a greeting</summary>\n"
+    "    <summary xml:lang=\"de\">Schreib mal was</summary>\n"
+    "    <description><p>This is a test app.</p></description>\n"
+    "    <categories>\n"
+    "      <category>Utility</category>\n"
+    "    </categories>\n"
+    "    <icon height=\"64\" width=\"64\" type=\"cached\">64x64/org.gnome.gedit.png</icon>\n"
+    "    <releases>\n"
+    "      <release timestamp=\"1525132800\" version=\"0.0.2\"/>\n"
+    "      <release timestamp=\"1000000000\" version=\"0.0.1\"/>\n"
+    "    </releases>\n"
+    "    <project_license>anything goes</project_license>\n"
+    "  </component>\n"
+    "</components>";
+  g_autoptr(GHashTable) names = NULL;
+  g_autoptr(GHashTable) comments = NULL;
+  g_autofree char *version = NULL;
+  g_autofree char *license = NULL;
+  gboolean res;
+  char *name;
+  char *comment;
+ 
+  res = flatpak_parse_appdata (appdata1, "org.test.Hello", &names, &comments, &version, &license);
+  g_assert_true (res);
+  g_assert_cmpstr (version, ==, "0.0.1");
+  g_assert_null (license);
+  g_assert_nonnull (names);
+  g_assert_nonnull (comments);
+  g_assert_cmpint (g_hash_table_size (names), ==, 1);
+  g_assert_cmpint (g_hash_table_size (comments), ==, 1);
+  name = g_hash_table_lookup (names, "C");
+  g_assert_cmpstr (name, ==, "Hello world test app: org.test.Hello");
+  comment = g_hash_table_lookup (comments, "C");
+  g_assert_cmpstr (comment, ==, "Print a greeting");
+
+  g_clear_pointer (&names, g_hash_table_unref);
+  g_clear_pointer (&comments, g_hash_table_unref);
+  g_clear_pointer (&version, g_free);
+  g_clear_pointer (&license, g_free);
+
+  res = flatpak_parse_appdata (appdata2, "org.test.Hello", &names, &comments, &version, &license);
+  g_assert_true (res);
+  g_assert_cmpstr (version, ==, "0.0.2");
+  g_assert_cmpstr (license, ==, "anything goes");
+  g_assert_nonnull (names);
+  g_assert_nonnull (comments);
+  g_assert_cmpint (g_hash_table_size (names), ==, 2);
+  g_assert_cmpint (g_hash_table_size (comments), ==, 2);
+  name = g_hash_table_lookup (names, "C");
+  g_assert_cmpstr (name, ==, "Hello world test app: org.test.Hello");
+  name = g_hash_table_lookup (names, "de");
+  g_assert_cmpstr (name, ==, "Hallo Welt test app: org.test.Hello");
+  comment = g_hash_table_lookup (comments, "C");
+  g_assert_cmpstr (comment, ==, "Print a greeting");
+  comment = g_hash_table_lookup (comments, "de");
+  g_assert_cmpstr (comment, ==, "Schreib mal was");
+}
+
+static void
 test_looks_like_branch (void)
 {
   g_assert_false (looks_like_branch ("abc/d"));
@@ -819,6 +905,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/parse-numbers", test_parse_numbers);
   g_test_add_func ("/common/subpaths-merge", test_subpaths_merge);
   g_test_add_func ("/common/lang-from-locale", test_lang_from_locale);
+  g_test_add_func ("/common/appdata", test_parse_appdata);
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);
   g_test_add_func ("/app/string-ellipsize", test_string_ellipsize);
