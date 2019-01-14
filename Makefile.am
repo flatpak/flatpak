@@ -144,7 +144,7 @@ profile_DATA = profile/flatpak.sh
 
 envdir = $(datadir)/gdm/env.d
 env_DATA = flatpak.env
-EXTRA_DIST += env.d/flatpak.env.in
+EXTRA_DIST += env.d/flatpak.env.in env.d/60-flatpak
 DISTCLEANFILES += flatpak.env
 
 flatpak.env: env.d/flatpak.env.in
