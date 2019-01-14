@@ -1,3 +1,26 @@
+Changes in 1.1.3
+================
+
+ * Various fixes to the CLI output changes
+ * New flatpak --installations option to list all installations
+ * Extract license info from appdata among with the other fields.
+   This is shown in e.g. info and remote-info, and has library API.
+ * install/update/uninstall now has --noninteractive option with less output
+   that is useful when called from scripts, etc.
+ * --devel is now properly forwarded to sub-sandboxes using the flatpak portal.
+ * Drop dependency on libappstream-glib from libflatpak.
+ * Initial support for exposing the system dconf defaults to the sandbox.
+ * We now create deploy refs for the deployed commits to avoid a prune removing
+   objects that are in use.
+ * Ask about removing all refs when deleting a remote.
+ * New environment generator that handles custom installations,
+   replacing the old dbus service config file.
+ * Documentation updates
+ * More robust completion
+ * Try to report out-of-space errors better.
+ * Add more tests.
+ * Various improvements to the repair command.
+
 Changes in 1.1.2
 ================
 
