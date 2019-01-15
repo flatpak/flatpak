@@ -521,6 +521,48 @@ test_parse_appdata (void)
 }
 
 static void
+test_env (const char *in,
+          const char *expected,
+          ...)
+{
+  va_list args;
+  char *arg;
+  g_autofree char *out = NULL;
+  g_autoptr(GPtrArray) env = g_ptr_array_new_with_free_func (g_free);
+
+  va_start (args, expected);
+  while ((arg = va_arg (args, char *)) != NULL)
+    g_ptr_array_add (env, g_strdup (arg));
+  va_end (args);
+  g_ptr_array_add (env, NULL);
+
+  out = flatpak_expand_env_vars (in, (char **)env->pdata);
+  g_assert_cmpstr (out, ==, expected);  
+}
+static void
+test_expand_env (void)
+{
+  g_autofree char *expected = NULL;
+
+  test_env ("$FOO", "foo", "FOO=foo", NULL);
+  test_env ("${FOO}", "foo", "FOO=foo", NULL);
+  test_env ("$FOO$BAR", "foobar", "FOO=foo", "BAR=bar", NULL);
+  test_env ("$FOO", "", "BAR=foo", NULL);
+  test_env ("\\$FOO", "$FOO", "FOO=foo", NULL);
+  test_env ("\\\\$FOO", "\\foo", "FOO=foo", NULL);
+  test_env ("$FOO_1_a_B2", "x", "FOO_1_a_B2=x", NULL);
+  test_env ("$1", "$1", "FOO=x", NULL);
+
+  expected = g_strconcat (g_getenv ("PATH"), ":moo", NULL);
+  test_env ("$PATH:moo", expected, "FOO=x", NULL);
+
+  test_env ("${FOO:-word}", "foo", "FOO=foo", NULL);
+  test_env ("${BAR:-w${FOO}d}", "wfood", "FOO=foo", NULL);
+  test_env ("${FOO:+w${FOO}d}", "wfood", "FOO=foo", NULL);
+  test_env ("${BAR:+word}", "", "FOO=foo", NULL);
+}
+
+static void
 test_looks_like_branch (void)
 {
   g_assert_false (looks_like_branch ("abc/d"));
@@ -905,6 +947,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/subpaths-merge", test_subpaths_merge);
   g_test_add_func ("/common/lang-from-locale", test_lang_from_locale);
   g_test_add_func ("/common/appdata", test_parse_appdata);
+  g_test_add_func ("/common/expand-env", test_expand_env);
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);
   g_test_add_func ("/app/string-ellipsize", test_string_ellipsize);
