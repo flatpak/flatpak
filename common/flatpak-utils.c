@@ -6127,3 +6127,120 @@ flatpak_show_cursor (void)
 {
   write (STDOUT_FILENO, FLATPAK_ANSI_SHOW_CURSOR, strlen (FLATPAK_ANSI_SHOW_CURSOR));
 }
+
+/* Expand variable references in @unexpanded, replacing with variables
+ * from @vars or the environment. We understand $VAR, ${VAR}, ${VAR:-WORD}
+ * and ${VAR:+WORD} as well as \$, \\
+ * Variable names must start with an alphabetic char and contain alphanumerics
+ * and '_'
+ */
+char *
+flatpak_expand_env_vars (const char  *unexpanded,
+                         char       **env)
+{
+  g_autoptr(GString) s = g_string_sized_new (256);
+  const char *p = unexpanded;
+
+  while (*p)
+    {
+      if (p[0] == '\\')
+        {
+          p++;
+          if (p[0] != '\\' && p[0] != '$')
+            g_string_append_c (s, '\\');
+          g_string_append_c (s, p[0]);
+          p++;
+          continue;
+        }
+
+      if (p[0] == '$' && (g_ascii_isalpha (p[1]) || (p[1] == '{' && g_ascii_isalpha (p[2]))))
+        {
+          g_autofree char *parameter = NULL;
+          g_autofree char *word = NULL;
+          const char *p0;
+          const char *q;
+          const char *value;
+
+          p++;
+          p0 = q = p;
+          if (*p0 == '{')
+            p0++;
+          p = p0;
+          while (*p == '_' || g_ascii_isalnum (*p))
+            p++;
+          parameter = g_strndup (p0, p - p0);
+          if (*q == '{')
+            {
+              if (p[0] == ':' && (p[1] == '-' || p[1] == '+'))
+                {
+                  g_autoptr(GString) w = g_string_new ("");
+                  int bal = 1;
+
+                  g_string_append_c (w, p[1]);
+                  p += 2;
+                  while (*p != '\0')
+                    {
+                      if (p[0] == '\\')
+                        {
+                          p++;
+                          if (p[0] != '\\' && p[0] != '}')
+                            g_string_append_c (w, '\\');
+                          g_string_append_c (w, p[0]);
+                          p++;
+                          continue;
+                        }
+                      if (p[0] == '$' && p[1] == '{') bal++;
+                      if (p[0] == '}') bal--;
+                      if (bal == 0) break;
+                      g_string_append_c (w, p[0]);
+                      p++;
+                    }
+                  word = g_string_free (g_steal_pointer (&w), FALSE);
+                }
+              else if (p[0] != '}')
+                {
+                  g_autofree char *ref = g_strndup (p0, p - p0);
+                  g_warning ("Can't parse variable reference ${%s", ref);
+                  g_string_append (s, "${");
+                  g_string_append (s, ref);
+                  continue;
+                }
+            }
+
+          value = g_environ_getenv (env, parameter);
+          if (value == NULL)
+            value = g_getenv (parameter);
+
+          if (word && word[0] == '-')
+            {
+              if (value)
+                g_string_append (s, value);
+              else
+                {
+                  g_autofree char *ev = flatpak_expand_env_vars (word + 1, env);
+                  g_string_append (s, ev);
+                }
+            }
+          else if (word && word[0] == '+')
+            {
+              if (value)
+                {
+                  g_autofree char *ev = flatpak_expand_env_vars (word + 1, env);
+                  g_string_append (s, ev);
+                }
+            }
+          else if (value)
+            g_string_append (s, value);
+
+          if (*q == '{')
+            p++; /* skip the } */
+        }
+      else
+        {
+          g_string_append_c (s, *p);
+          p++;
+        }
+    }
+
+  return g_string_free (g_steal_pointer (&s), FALSE);
+}

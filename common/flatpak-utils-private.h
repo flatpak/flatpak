@@ -701,6 +701,9 @@ void flatpak_format_choices (const char **choices,
                              const char *prompt,
                              ...) G_GNUC_PRINTF (2, 3);
 
+char *flatpak_expand_env_vars (const char  *unexpanded,
+                               char       **env);
+
 typedef void (*FlatpakProgressCallback)(const char *status,
                                         guint       progress,
                                         gboolean    estimating,
