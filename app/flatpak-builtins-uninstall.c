@@ -187,9 +187,15 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       for (j = 0; j < dirs->len; j++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
-          UninstallDir *udir = uninstall_dir_ensure (uninstall_dirs, dir);
+          UninstallDir *udir;
           g_auto(GStrv) app_refs = NULL;
           g_auto(GStrv) runtime_refs = NULL;
+
+          flatpak_dir_maybe_ensure_repo (dir, NULL, NULL);
+          if (flatpak_dir_get_repo (dir) == NULL)
+            continue;
+
+          udir = uninstall_dir_ensure (uninstall_dirs, dir);
 
           if (flatpak_dir_list_refs (dir, "app", &app_refs, NULL, NULL))
             {
@@ -211,10 +217,17 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       for (j = 0; j < dirs->len; j++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
-          g_autoptr(FlatpakInstallation) installation = flatpak_installation_new_for_dir (dir, NULL, NULL);
-          UninstallDir *udir = uninstall_dir_ensure (uninstall_dirs, dir);
+          g_autoptr(FlatpakInstallation) installation = NULL;
+          UninstallDir *udir;
           g_autoptr(GPtrArray) unused = NULL;
 
+          flatpak_dir_maybe_ensure_repo (dir, NULL, NULL);
+          if (flatpak_dir_get_repo (dir) == NULL)
+            continue;
+
+          udir = uninstall_dir_ensure (uninstall_dirs, dir);
+
+          installation = flatpak_installation_new_for_dir (dir, NULL, NULL);
           unused = flatpak_installation_list_unused_refs (installation, opt_arch, cancellable, error);
           if (unused == NULL)
             return FALSE;
