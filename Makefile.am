@@ -153,7 +153,7 @@ flatpak.env: env.d/flatpak.env.in
 		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
 
 envgendir = $(systemduserenvgendir)
-envgen_DATA = env.d/60-flatpak
+envgen_SCRIPTS = env.d/60-flatpak
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = flatpak.pc
