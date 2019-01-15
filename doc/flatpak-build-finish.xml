@@ -89,6 +89,11 @@
                     The command to use. If this option is not specified,
                     the first executable found in <filename>files/bin</filename>
                     is used.
+                </para><para>
+                    Note that the command is used when the application is run
+                    via <command>flatpak run</command>, and does not affect what
+                    gets executed when the application is run in other ways,
+                    e.g. via the desktop file or D-Bus activation.
                 </para></listitem>
             </varlistentry>
 
