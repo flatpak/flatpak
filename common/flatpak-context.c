@@ -84,7 +84,7 @@ flatpak_context_new (void)
   FlatpakContext *context;
 
   context = g_slice_new0 (FlatpakContext);
-  context->env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  context->env_vars = g_ptr_array_new_with_free_func (g_free);
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->session_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -98,7 +98,7 @@ flatpak_context_new (void)
 void
 flatpak_context_free (FlatpakContext *context)
 {
-  g_hash_table_destroy (context->env_vars);
+  g_ptr_array_unref (context->env_vars);
   g_hash_table_destroy (context->persistent);
   g_hash_table_destroy (context->filesystems);
   g_hash_table_destroy (context->session_bus_policy);
@@ -407,7 +407,7 @@ flatpak_context_set_env_var (FlatpakContext *context,
                              const char     *name,
                              const char     *value)
 {
-  g_hash_table_insert (context->env_vars, g_strdup (name), g_strdup (value));
+  g_ptr_array_add (context->env_vars, g_strconcat (name, "=", value, NULL));
 }
 
 void
@@ -802,9 +802,8 @@ flatpak_context_merge (FlatpakContext *context,
   context->features |= other->features;
   context->features_valid |= other->features_valid;
 
-  g_hash_table_iter_init (&iter, other->env_vars);
-  while (g_hash_table_iter_next (&iter, &key, &value))
-    g_hash_table_insert (context->env_vars, g_strdup (key), g_strdup (value));
+  for (int i = 0; i < other->env_vars->len; i++)
+    g_ptr_array_add (context->env_vars, g_strdup (g_ptr_array_index (other->env_vars, i)));
 
   g_hash_table_iter_init (&iter, other->persistent);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -1669,14 +1668,11 @@ flatpak_context_save_metadata (FlatpakContext *context,
     }
 
   g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, NULL);
-  g_hash_table_iter_init (&iter, context->env_vars);
-  while (g_hash_table_iter_next (&iter, &key, &value))
+  for (int i = 0; i < context->env_vars->len; i++)
     {
-      g_key_file_set_string (metakey,
-                             FLATPAK_METADATA_GROUP_ENVIRONMENT,
-                             (char *) key, (char *) value);
+      g_auto(GStrv) split = g_strsplit (g_ptr_array_index (context->env_vars, i), "=", 2);
+      g_key_file_set_string (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, split[0], split[1]);
     }
-
 
   groups = g_key_file_get_groups (metakey, NULL);
   for (i = 0; groups[i] != NULL; i++)
@@ -1751,9 +1747,11 @@ flatpak_context_to_args (FlatpakContext *context,
   flatpak_context_devices_to_args (context->devices, context->devices_valid, args);
   flatpak_context_features_to_args (context->features, context->features_valid, args);
 
-  g_hash_table_iter_init (&iter, context->env_vars);
-  while (g_hash_table_iter_next (&iter, &key, &value))
-    g_ptr_array_add (args, g_strdup_printf ("--env=%s=%s", (char *) key, (char *) value));
+  for (int i = 0; i < context->env_vars->len; i++)
+    {
+      const char *ev = g_ptr_array_index (context->env_vars, i);
+      g_ptr_array_add (args, g_strdup_printf ("--env=%s", ev));
+    }
 
   g_hash_table_iter_init (&iter, context->persistent);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -1829,7 +1827,7 @@ flatpak_context_add_bus_filters (FlatpakContext *context,
 void
 flatpak_context_reset_non_permissions (FlatpakContext *context)
 {
-  g_hash_table_remove_all (context->env_vars);
+  g_ptr_array_set_size (context->env_vars, 0);
 }
 
 void

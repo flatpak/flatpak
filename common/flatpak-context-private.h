@@ -66,7 +66,7 @@ struct FlatpakContext
   FlatpakContextDevices  devices_valid;
   FlatpakContextFeatures features;
   FlatpakContextFeatures features_valid;
-  GHashTable            *env_vars;
+  GPtrArray             *env_vars;
   GHashTable            *persistent;
   GHashTable            *filesystems;
   GHashTable            *session_bus_policy;
