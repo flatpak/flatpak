@@ -11954,11 +11954,6 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
                                                    GCancellable       *cancellable,
                                                    GError            **error)
 {
-/* FIXME: Remove this check when we depend on ostree 2018.9 */
-#ifndef OSTREE_META_KEY_DEPLOY_COLLECTION_ID
-#define OSTREE_META_KEY_DEPLOY_COLLECTION_ID "ostree.deploy-collection-id"
-#endif
-
   /* We only support those configuration parameters that can
      be set in the server when building the repo (see the
      flatpak_repo_set_* () family of functions) */

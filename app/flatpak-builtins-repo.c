@@ -94,11 +94,6 @@ print_info (OstreeRepo *repo,
   if (g_variant_lookup (meta, "xa.redirect-url", "&s", &redirect_url))
     g_print (_("Redirect URL: %s\n"), redirect_url);
 
-/* FIXME: Remove this check when we depend on ostree 2018.9 */
-#ifndef OSTREE_META_KEY_DEPLOY_COLLECTION_ID
-#define OSTREE_META_KEY_DEPLOY_COLLECTION_ID "ostree.deploy-collection-id"
-#endif
-
   if (g_variant_lookup (meta, OSTREE_META_KEY_DEPLOY_COLLECTION_ID, "&s", &deploy_collection_id))
     g_print (_("Deploy collection ID: %s\n"), deploy_collection_id);
 

@@ -3065,11 +3065,6 @@ flatpak_repo_update (OstreeRepo   *repo,
     g_variant_builder_add (&builder, "{sv}", "xa.default-branch",
                            g_variant_new_string (default_branch));
 
-/* FIXME: Remove this check when we depend on ostree 2018.9 */
-#ifndef OSTREE_META_KEY_DEPLOY_COLLECTION_ID
-#define OSTREE_META_KEY_DEPLOY_COLLECTION_ID "ostree.deploy-collection-id"
-#endif
-
   if (deploy_collection_id && collection_id != NULL)
     g_variant_builder_add (&builder, "{sv}", OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
                            g_variant_new_string (collection_id));
