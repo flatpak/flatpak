@@ -130,7 +130,8 @@ void     flatpak_run_apply_env_default (FlatpakBwrap *bwrap,
 void     flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
                                       GFile        *app_dir);
 void      flatpak_run_apply_env_vars (FlatpakBwrap   *bwrap,
-                                      FlatpakContext *context);
+                                      FlatpakContext *context,
+                                      const char     *app_id);
 FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                                  GKeyFile *runtime_metadata,
                                                  GError  **error);

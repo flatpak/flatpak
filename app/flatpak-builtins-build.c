@@ -506,7 +506,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                           "--bind", flatpak_file_get_path_cached (var_tmp), "/var/tmp",
                           NULL);
 
-  flatpak_run_apply_env_vars (bwrap, app_context);
+  flatpak_run_apply_env_vars (bwrap, app_context, id);
 
   if (is_app)
     {

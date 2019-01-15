@@ -1305,16 +1305,6 @@ flatpak_run_apply_env_default (FlatpakBwrap *bwrap, gboolean use_ld_so_cache)
     bwrap->envp = apply_exports (bwrap->envp, no_ld_so_cache_exports, G_N_ELEMENTS (no_ld_so_cache_exports));
 }
 
-static void
-flatpak_run_apply_env_prompt (FlatpakBwrap *bwrap, const char *app_id)
-{
-  /* A custom shell prompt. FLATPAK_ID is always set.
-   * PS1 can be overwritten by runtime metadata or by --env overrides
-   */
-  flatpak_bwrap_set_env (bwrap, "FLATPAK_ID", app_id, TRUE);
-  flatpak_bwrap_set_env (bwrap, "PS1", "[📦 $FLATPAK_ID \\W]\\$ ", FALSE);
-}
-
 void
 flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
                              GFile        *app_dir)
@@ -1339,19 +1329,24 @@ flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
 }
 
 void
-flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context)
+flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context, const char *app_id)
 {
-  GHashTableIter iter;
-  gpointer key, value;
+  int i;
 
-  g_hash_table_iter_init (&iter, context->env_vars);
-  while (g_hash_table_iter_next (&iter, &key, &value))
+  flatpak_bwrap_set_env (bwrap, "FLATPAK_ID", app_id, TRUE);
+  flatpak_bwrap_set_env (bwrap, "PS1", "[📦 $FLATPAK_ID \\W]\\$ ", TRUE);
+
+  for (i = 0; i < context->env_vars->len; i++)
     {
-      const char *var = key;
-      const char *val = value;
+      g_auto(GStrv) split = g_strsplit (g_ptr_array_index (context->env_vars, i), "=", 2);
+      char *var = split[0];
+      char *value = split[1];
 
-      if (val && val[0] != 0)
-        flatpak_bwrap_set_env (bwrap, var, val, TRUE);
+      if (value && value[0])
+        {
+          g_autofree char *expanded = flatpak_expand_env_vars (value, bwrap->envp);
+          flatpak_bwrap_set_env (bwrap, var, expanded, TRUE);
+        }
       else
         flatpak_bwrap_unset_env (bwrap, var);
     }
@@ -3201,8 +3196,7 @@ flatpak_run_app (const char     *app_ref,
     }
 
   flatpak_run_apply_env_default (bwrap, use_ld_so_cache);
-  flatpak_run_apply_env_vars (bwrap, app_context);
-  flatpak_run_apply_env_prompt (bwrap, app_ref_parts[1]);
+  flatpak_run_apply_env_vars (bwrap, app_context, app_ref_parts[1]);
 
   if (real_app_id_dir)
     {
