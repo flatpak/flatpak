@@ -228,9 +228,15 @@ load_options (const char *filename,
   if (str != NULL)
     opt_url = str;
 
-  str = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
-  if (str != NULL)
+  str = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY, NULL);
+  if (str != NULL && *str != '\0')
     opt_collection_id = str;
+  else
+    {
+      str = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
+      if (str != NULL && *str != '\0')
+        opt_collection_id = str;
+    }
 
   str = g_key_file_get_locale_string (keyfile, FLATPAK_REPO_GROUP,
                                       FLATPAK_REPO_TITLE_KEY, NULL, NULL);
