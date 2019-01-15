@@ -497,7 +497,7 @@ pick_word_at (const char *s,
       return g_strdup ("");
     }
 
-  while (!is_word_separator (s[cursor - 1]) && cursor > 0)
+  while (cursor > 0 && !is_word_separator (s[cursor - 1]))
     cursor--;
   begin = cursor;
 
