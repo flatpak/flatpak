@@ -544,6 +544,9 @@ flatpak_completion_new (const char *arg_line,
   if (endp == arg_point || *endp != '\0')
     return NULL;
 
+  /* Ensure we're not going oob if we got weird arguments. */
+  _point = MIN (_point, strlen (arg_line));
+
   completion = g_new0 (FlatpakCompletion, 1);
   completion->line = g_strdup (arg_line);
   completion->shell_cur = g_strdup (arg_cur);
