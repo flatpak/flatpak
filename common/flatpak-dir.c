@@ -11624,6 +11624,91 @@ flatpak_dir_cleanup_remote_for_url_change (FlatpakDir   *self,
   return TRUE;
 }
 
+static GBytes *
+load_keyring_for_remote (FlatpakDir    *self,
+                         const char    *remote_name,
+                         GCancellable  *cancellable,
+                         GError       **error)
+{
+  g_autofree char *keyring_name = NULL;
+  g_autoptr(GFile) keyring_file = NULL;
+  gchar *contents;
+  gsize len;
+
+  keyring_name = g_strdup_printf ("%s.trustedkeys.gpg", remote_name);
+  keyring_file = g_file_get_child (ostree_repo_get_path (self->repo), keyring_name);
+
+  /* This might fail if the remote is using a global keyrings directory which
+   * should be handled gracefully */
+  if (g_file_load_contents (keyring_file, cancellable, &contents, &len, NULL, error))
+    return g_bytes_new_take (g_steal_pointer (&contents), len);
+
+  return NULL;
+}
+
+static gboolean
+check_for_collection_collisions (FlatpakDir    *self,
+                                 const char    *remote_name,
+                                 const char    *collection_id,
+                                 GBytes        *gpg_data,
+                                 GCancellable  *cancellable,
+                                 GError       **error)
+{
+  g_autoptr(GBytes) keyring_bytes = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (gpg_data != NULL)
+    keyring_bytes = g_bytes_ref (gpg_data);
+  else
+    keyring_bytes = load_keyring_for_remote (self, remote_name, cancellable, &local_error);
+
+  /* Treat errors loading the keyring as non-fatal in case the remote uses
+   * a global keyrings directory */
+  if (keyring_bytes == NULL)
+    {
+      g_debug ("%s: Failed to load keyring for remote %s: %s",
+               G_STRFUNC, remote_name, local_error->message);
+    }
+  else
+    {
+      g_auto(GStrv) remotes = NULL;
+      int i;
+
+      remotes = flatpak_dir_list_remotes (self, cancellable, error);
+      if (remotes == NULL)
+        return FALSE;
+
+      for (i = 0; remotes[i] != NULL; i++)
+        {
+          g_autofree char *other_remote_collection_id = NULL;
+          g_autoptr(GBytes) other_keyring_bytes = NULL;
+
+          if (g_strcmp0 (remote_name, remotes[i]) == 0)
+            continue;
+
+          other_remote_collection_id = flatpak_dir_get_remote_collection_id (self, remotes[i]);
+          if (g_strcmp0 (collection_id, other_remote_collection_id) != 0)
+            continue;
+
+          other_keyring_bytes = load_keyring_for_remote (self, remotes[i], cancellable, &local_error);
+          if (other_keyring_bytes == NULL)
+            {
+              g_debug ("%s: Failed to load keyring for remote %s: %s",
+                       G_STRFUNC, remotes[i], local_error->message);
+              g_clear_error (&local_error);
+              continue;
+            }
+
+          if (!g_bytes_equal (keyring_bytes, other_keyring_bytes))
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                       _("Modification of remote %s would result in collection ID clash with remote %s"),
+                                       remote_name, remotes[i]);
+        }
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_modify_remote (FlatpakDir   *self,
                            const char   *remote_name,
@@ -11635,7 +11720,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
   g_autofree char *url = NULL;
   g_autofree char *metalink = NULL;
-
+  g_autofree char *collection_id = NULL;
   g_autoptr(GKeyFile) new_config = NULL;
   g_auto(GStrv) keys = NULL;
   int i;
@@ -11675,6 +11760,16 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
 
       return TRUE;
     }
+
+  /* Ensure we don't end up with two remotes that have the same collection ID
+   * but different GPG keys. Among other problems that could mean a flatpak
+   * would receive updates from a completely different source than where it was
+   * installed from. */
+  collection_id = g_key_file_get_string (config, group, "collection-id", NULL);
+  if (collection_id != NULL &&
+      !check_for_collection_collisions (self, remote_name, collection_id,
+                                        gpg_data, cancellable, error))
+    return FALSE;
 
   metalink = g_key_file_get_string (config, group, "metalink", NULL);
   if (metalink != NULL && *metalink != 0)
