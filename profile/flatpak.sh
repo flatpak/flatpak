@@ -1,6 +1,7 @@
 # set XDG_DATA_DIRS to include Flatpak installations
 
 new_dirs=
+(echo "${XDG_DATA_HOME:-"$HOME/.local/share"}/flatpak" && flatpak --installations) |
 while read -r install_path
 do
     share_path=$install_path/exports/share
@@ -9,7 +10,7 @@ do
         *":$share_path/:"*) :;;
         *) new_dirs=${new_dirs:+${new_dirs}:}$share_path;;
     esac
-done < <(echo "${XDG_DATA_HOME:-"$HOME/.local/share"}/flatpak"; flatpak --installations)
+done
 
 export XDG_DATA_DIRS
 XDG_DATA_DIRS="${new_dirs:+${new_dirs}:}${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
