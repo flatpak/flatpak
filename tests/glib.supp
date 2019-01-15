@@ -176,12 +176,18 @@
    fun:g_cancellable_push_current
 }
 {
-   _g_io_module_get_default
+   g-io-module-default-singleton-malloc
    Memcheck:Leak
    ...
-   fun:g_io_module_new
-   fun:g_io_modules_scan_all_in_directory_with_scope
-   fun:_g_io_modules_ensure_loaded
+   fun:g_type_create_instance
+   ...
+   fun:_g_io_module_get_default
+}
+{
+   g-io-module-default-singleton-malloc2
+   Memcheck:Leak
+   fun:malloc
+   ...
    fun:_g_io_module_get_default
 }
 {
@@ -399,6 +405,20 @@
    fun:g_get_language_names
 }
 {
+   g-get-language-names-malloc
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:g_get_language_names_with_category
+}
+{
+   g-get-language-names-malloc2
+   Memcheck:Leak
+   fun:calloc
+   ...
+   fun:g_get_language_names_with_category
+}
+{
    g_get_filename_charsets
    Memcheck:Leak
    match-leak-kinds: definite
@@ -579,13 +599,66 @@
    fun:soup_session_real_kick_queue
 }
 {
+   gio_namespace_cache_leak_ns_info
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:g_malloc0
+   fun:_lookup_namespace
+}
+{
+   gio_namespace_cache_leak_ns_name
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:g_malloc
+   fun:g_strdup
+   fun:_lookup_namespace
+}
+{
+   gio_extension_points_global
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:g_malloc0
+   fun:g_io_extension_point_register
+}
+{
+   glib_dbus_thread_private
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:g_malloc0
+   fun:g_private_set_alloc0
+   ...
+   fun:gdbus_shared_thread_func
+}
+{
+   dbus_shared_socket
+   Memcheck:Leak
+   match-leak-kinds: definite
+   ...
+   fun:g_socket_create_source
+   ...
+   fun:gdbus_shared_thread_func
+}
+{
    polkit_agent_leak
    Memcheck:Leak
    match-leak-kinds: definite
    fun:calloc
    fun:g_malloc0
-   fun:thread_memory_from_self
-   fun:g_slice_alloc
-   fun:g_hash_table_new_full
-   fun:g_main_context_new
+   fun:g_dbus_connection_register_object
+   ...
+   fun:g_thread_proxy
+}
+{
+   polkit_agent_leak2
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:g_malloc0
+   fun:g_private_set_alloc0
+   ...
+   fun:g_thread_proxy
 }

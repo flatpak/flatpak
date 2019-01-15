@@ -183,3 +183,49 @@
    fun:_ostree_repo_import_object
    fun:async_import_in_thread
 }
+{
+   ostree_mutable_tree_write_tree_leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   ...
+   fun:ostree_repo_write_dfd_to_mtree
+}
+{
+   polkit_agent_leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:g_malloc0
+   fun:thread_memory_from_self
+   fun:g_slice_alloc
+   fun:g_hash_table_new_full
+   fun:g_main_context_new
+}
+{
+   polkit_agent_leak2
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:g_malloc
+   ...
+   fun:polkit_agent_listener_register_with_options
+   fun:main
+}
+{
+   polkit_agent_leak3
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:realloc
+   ...
+   fun:polkit_agent_listener_register_with_options
+}
+# Ostree transaction repo locks seem to leak if the repo is not finalized on same thread
+{
+   ostree_repo_lock_leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:g_malloc0
+   fun:push_repo_lock
+}
