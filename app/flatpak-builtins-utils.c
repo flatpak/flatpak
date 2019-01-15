@@ -353,7 +353,7 @@ flatpak_load_gpg_keys (char        **gpg_import,
   gssize n_bytes_written;
 
   if (!open_source_stream (gpg_import, &input_stream, cancellable, error))
-    return FALSE;
+    return NULL;
 
   output_stream = g_memory_output_stream_new_resizable ();
 
