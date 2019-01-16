@@ -48,7 +48,7 @@ test_arches (void)
 
 #if defined(__i386__)
   g_assert_cmpstr (flatpak_get_arch (), ==, "i386");
-  g_assert_true (g_strv_contains (arches, "x86_64"));
+  g_assert_false (g_strv_contains (arches, "x86_64"));
   g_assert_true (g_strv_contains (arches, "i386"));
 #elif defined(__x86_64__)
   g_assert_cmpstr (flatpak_get_arch (), ==, "x86_64");
