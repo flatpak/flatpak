@@ -12,6 +12,7 @@ pkg_install sudo which attr fuse bison \
     dconf-devel \
     /usr/bin/{update-mime-database,update-desktop-database,gtk-update-icon-cache}
 pkg_install_testing ostree-devel ostree
+pkg_install gdk-pixbuf2-modules # needed to make icon validation work
 pkg_install_builddeps flatpak
 
 build --enable-gtk-doc ${CONFIGOPTS:-}
