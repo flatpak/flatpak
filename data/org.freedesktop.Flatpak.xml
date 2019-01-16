@@ -152,6 +152,13 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="GetRevokefsFd">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+      <arg type='h' name='fd_index' direction='out'/>
+      <arg type='s' name='src_dir' direction='out'/>
+    </method>
   </interface>
 
 </node>

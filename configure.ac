@@ -312,6 +312,13 @@ AC_ARG_WITH(system-install-dir,
 SYSTEM_INSTALL_DIR=$with_system_install_dir
 AC_SUBST(SYSTEM_INSTALL_DIR)
 
+AC_ARG_WITH(system-helper-user,
+           [AS_HELP_STRING([--with-system-helper-user=USERNAME],
+                           [Name of the system helper user])],
+           with_system_helper_user="$withval", with_system_helper_user=flatpak)
+SYSTEM_HELPER_USER=$with_system_helper_user
+AC_SUBST(SYSTEM_HELPER_USER)
+
 AC_ARG_ENABLE(documentation,
               AC_HELP_STRING([--enable-documentation], [Build documentation]),,
               enable_documentation=yes)
