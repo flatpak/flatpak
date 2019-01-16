@@ -6957,7 +6957,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   real_checkoutdir = g_file_get_child (deploy_base, checkout_basename);
   if (g_file_query_exists (real_checkoutdir, cancellable))
     return flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
-                               _("%s branch %s already installed"), ref, checksum);
+                               _("%s commit %s already installed"), ref, checksum);
 
   g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checkout_basename);
   tmp_dir_template = g_file_get_child (deploy_base, template);
@@ -8246,7 +8246,7 @@ flatpak_dir_check_for_update (FlatpakDir               *self,
       if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, FALSE, &latest_rev, NULL))
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                       _("%s branch already installed"), ref);
+                       _("%s already installed"), ref);
           return NULL; /* No update, because nothing to update to */
         }
     }
@@ -8266,7 +8266,7 @@ flatpak_dir_check_for_update (FlatpakDir               *self,
     return g_strdup (target_rev);
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-               _("%s branch %s already installed"), ref, target_rev);
+               _("%s commit %s already installed"), ref, target_rev);
   return NULL;
 }
 
@@ -8836,7 +8836,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   if (!g_file_query_exists (checkoutdir, cancellable))
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s branch %s not installed"), ref, active_id);
+                   _("%s commit %s not installed"), ref, active_id);
       return FALSE;
     }
 
