@@ -267,8 +267,7 @@
                             </term><listitem><para>
                                 Directories defined by the
                                 <ulink url="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html"
-                                  >freedesktop.org Base Directory
-                                  Specification</ulink>.
+                                  >freedesktop.org Base Directory Specification</ulink>.
                                 Available since 0.6.14.
                             </para></listitem></varlistentry>
 
@@ -286,13 +285,10 @@
                                 <option>xdg-run/<replaceable>path</replaceable></option>
                             </term><listitem><para>
                                 Subdirectories of the
-                                <envar>XDG_RUNTIME_DIR</envar> defined by
-                                the
-                                <ulink url="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html"
-                                  >freedesktop.org Base Directory
-                                  Specification</ulink>. Note that
-                                <option>xdg-run</option> on its own is not
-                                supported. Available since 0.4.13.
+                                <envar>XDG_RUNTIME_DIR</envar> defined by the
+                                freedesktop.org Base Directory Specification.
+                                Note that <option>xdg-run</option> on its own
+                                is not supported. Available since 0.4.13.
                             </para></listitem></varlistentry>
 
                             <varlistentry><term>
