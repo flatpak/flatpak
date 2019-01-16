@@ -111,7 +111,6 @@
                The files must be in the <filename>sandbox</filename> subdirectory of
                the instance directory (i.e. <filename>~/.var/app/$APP_ID/sandbox</filename>).
              </para></listitem>
-             </para></listitem>
            </varlistentry>
          </variablelist>
 
