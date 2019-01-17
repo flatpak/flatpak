@@ -1450,8 +1450,11 @@ flatpak_context_load_metadata (FlatpakContext *context,
       for (i = 0; i < keys_count; i++)
         {
           const char *key = keys[i];
+          char *p;
           g_autofree char *value = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, key, NULL);
 
+          p = strchr (key, '@');
+          if (p) p[0] = '\0';
           flatpak_context_set_env_var (context, key, value);
         }
     }
@@ -1484,6 +1487,26 @@ flatpak_context_load_metadata (FlatpakContext *context,
     }
 
   return TRUE;
+}
+
+static char *
+ensure_unique_key (GKeyFile *metakey,
+                   const char *group,
+                   const char *key)
+{
+  g_autofree char *unique = g_strdup (key);
+  int i;
+
+  for (i = 0; i < 100; i++)
+    {
+      if (!g_key_file_has_key (metakey, group, unique, NULL))
+        break;
+
+      g_free (unique);
+      unique = g_strdup_printf ("%s@%d", key, i);
+    }
+
+  return g_steal_pointer (&unique);
 }
 
 /*
@@ -1667,11 +1690,22 @@ flatpak_context_save_metadata (FlatpakContext *context,
                                (char *) key, flatpak_policy_to_string (policy));
     }
 
+  /* Note: We rely on GKeyFile keeping added keys in order as long as they
+   * don't exist yet.
+   */
   g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, NULL);
   for (int i = 0; i < context->env_vars->len; i++)
     {
       g_auto(GStrv) split = g_strsplit (g_ptr_array_index (context->env_vars, i), "=", 2);
-      g_key_file_set_string (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, split[0], split[1]);
+      const char *key = split[0];
+      const char *value = split[1];
+      g_autofree char *unique = NULL;
+
+      unique = ensure_unique_key (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, key);
+      g_key_file_set_string (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, unique, value);
+      if (i == 0)
+        g_key_file_set_comment (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, unique,
+                                "Variables renamed for uniqueness", NULL);
     }
 
   groups = g_key_file_get_groups (metakey, NULL);
