@@ -3177,7 +3177,6 @@ flatpak_run_app (const char     *app_ref,
     }
 
   flatpak_run_apply_env_default (bwrap, use_ld_so_cache);
-  flatpak_run_apply_env_vars (bwrap, app_context, app_ref_parts[1]);
 
   if (real_app_id_dir)
     {
@@ -3266,6 +3265,8 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
                                          app_ref_parts[1], app_context, app_id_dir, &exports, cancellable, error))
     return FALSE;
+
+  flatpak_run_apply_env_vars (bwrap, app_context, app_ref_parts[1]);
 
   flatpak_run_add_journal_args (bwrap);
   add_font_path_args (bwrap);
