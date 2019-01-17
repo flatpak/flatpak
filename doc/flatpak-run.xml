@@ -511,6 +511,9 @@ key=v1;v2;
         <para>
             <command>$ flatpak run --command=bash org.gnome.Sdk</command>
         </para>
+        <para>
+            <command>$ flatpak run --env=PATH=\$PATH:${XDG_DATA_HOME}/bin --command=bash org.gnome.Sdk</command>
+        </para>
 
     </refsect1>
 
