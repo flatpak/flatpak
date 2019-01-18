@@ -2723,7 +2723,7 @@ forward_file (XdpDbusDocuments *documents,
 
   fd = open (file, O_PATH | O_CLOEXEC);
   if (fd == -1)
-    return flatpak_fail (error, "Failed to open '%s'", file);
+    return flatpak_fail (error, _("Failed to open ‘%s’"), file);
 
   fd_list = g_unix_fd_list_new ();
   fd_id = g_unix_fd_list_append (fd_list, fd, error);
