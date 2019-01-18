@@ -521,6 +521,64 @@ test_parse_appdata (void)
 }
 
 static void
+test_name_matching (void)
+{
+  gboolean res;
+
+  /* examples from 8f428fd7683765dd706da06e9f376d3732ce5c0c */
+
+  res = flatpak_name_matches_one_wildcard_prefix ("org.sparkleshare.SparkleShare.Invites",
+                                                  (const char *[]){"org.sparkleshare.SparkleShare.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("org.sparkleshare.SparkleShare-symbolic",
+                                                  (const char *[]){"org.sparkleshare.SparkleShare.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("org.libreoffice.LibreOffice",
+                                                  (const char *[]){"org.libreoffice.LibreOffice.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("org.libreoffice.LibreOffice-impress",
+                                                  (const char *[]){"org.libreoffice.LibreOffice.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("org.libreoffice.LibreOffice-writer",
+                                                  (const char *[]){"org.libreoffice.LibreOffice.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("org.libreoffice.LibreOffice-calc",
+                                                  (const char *[]){"org.libreoffice.LibreOffice.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("com.github.bajoja.indicator-kdeconnect",
+                                                  (const char *[]){"com.github.bajoja.indicator-kdeconnect.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("com.github.bajoja.indicator-kdeconnect.settings",
+                                                  (const char *[]){"com.github.bajoja.indicator-kdeconnect.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("com.github.bajoja.indicator-kdeconnect.tablettrusted",
+                                                  (const char *[]){"com.github.bajoja.indicator-kdeconnect.*", NULL},
+                                                   FALSE);
+  g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("org.gnome.Characters.BackgroundService",
+                                                  (const char *[]){"org.gnome.Characters.*", NULL},
+                                                   TRUE);
+  g_assert_true (res);
+}
+
+static void
 test_looks_like_branch (void)
 {
   g_assert_false (looks_like_branch ("abc/d"));
@@ -905,6 +963,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/subpaths-merge", test_subpaths_merge);
   g_test_add_func ("/common/lang-from-locale", test_lang_from_locale);
   g_test_add_func ("/common/appdata", test_parse_appdata);
+  g_test_add_func ("/common/name-matching", test_name_matching);
+
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);
   g_test_add_func ("/app/string-ellipsize", test_string_ellipsize);
