@@ -76,14 +76,14 @@ main (int argc, char *argv[])
     }
 
   width = g_ascii_strtoll (argv[1], NULL, 10);
-  if (width <= 16 || width > 4096)
+  if (width < 16 || width > 4096)
     {
       g_printerr ("Bad width limit: %s\n", argv[1]);
       return 1;
     }
 
   height = g_ascii_strtoll (argv[2], NULL, 10);
-  if (height <= 16 || height > 4096)
+  if (height < 16 || height > 4096)
     {
       g_printerr ("Bad height limit: %s\n", argv[2]);
       return 1;
