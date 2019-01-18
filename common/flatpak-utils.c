@@ -849,7 +849,9 @@ flatpak_name_matches_one_wildcard_prefix (const char         *name,
         {
           end_of_match += 2;
           while (*end_of_match != 0 &&
-                 is_valid_name_character (*end_of_match, TRUE))
+                 (is_valid_name_character (*end_of_match, TRUE) ||
+                  (end_of_match[0] == '.' &&
+                   is_valid_initial_name_character (end_of_match[1], TRUE))))
             end_of_match++;
         }
 
