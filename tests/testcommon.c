@@ -576,6 +576,11 @@ test_name_matching (void)
                                                   (const char *[]){"org.gnome.Characters.*", NULL},
                                                    TRUE);
   g_assert_true (res);
+
+  res = flatpak_name_matches_one_wildcard_prefix ("org.example.Example.Tracker1.Miner.Applications",
+                                                  (const char *[]){"org.example.Example.*", NULL},
+                                                   TRUE);
+  g_assert_true (res);
 }
 
 static void
