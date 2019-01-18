@@ -404,6 +404,13 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
     if (!ostree_parse_refspec (refspec, &remote, &ref_name, error))
       return FALSE;
 
+    if (remote == NULL)
+      continue;
+
+    /* Does this look like a regular ref? */
+    if (!g_str_has_prefix (ref_name, "app/") && !g_str_has_prefix (ref_name, "runtime/"))
+      continue;
+
     if (!flatpak_dir_has_remote (dir, remote, NULL))
       g_print (_("Remote %s for ref %s is missing\n"), remote, ref_name);
     else if (flatpak_dir_get_remote_disabled (dir, remote))
