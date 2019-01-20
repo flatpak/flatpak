@@ -20,6 +20,7 @@
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <glib/gstdio.h>
+#include <unistd.h>
 
 static int
 validate_icon (const char *arg_width,
@@ -131,12 +132,9 @@ rerun_in_sandbox (const char *arg_width,
   g_autofree char *err = NULL;
   int status;
   g_autoptr(GError) error = NULL;
-  const char *validate_icon;
+  char validate_icon[256];
 
-  if (g_getenv ("FLATPAK_VALIDATE_ICON"))
-    validate_icon = g_getenv ("FLATPAK_VALIDATE_ICON");
-  else
-    validate_icon = LIBEXECDIR "/flatpak-validate-icon";
+  readlink ("/proc/self/exe", validate_icon, 256);
 
   add_args (args,
             flatpak_get_bwrap (),
@@ -145,6 +143,7 @@ rerun_in_sandbox (const char *arg_width,
             "--unshare-pid",
             "--ro-bind", "/usr", "/usr",
             "--ro-bind", "/etc/ld.so.cache", "/etc/ld.so.cache",
+            "--ro-bind", validate_icon, validate_icon,
             NULL);
 
  /* These directories might be symlinks into /usr/... */
@@ -223,7 +222,6 @@ main (int argc, char *argv[])
   GOptionContext *context;
   GError *error = NULL;
 
-  g_print ("%s\n", g_strjoinv (" ", argv));
   context = g_option_context_new ("WIDTH HEIGHT PATH");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error))
