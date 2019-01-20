@@ -21,16 +21,31 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 static int
-validate_icon (int max_width,
-               int max_height,
+validate_icon (const char *arg_width,
+               const char *arg_height,
                const char *filename)
 {
   GdkPixbufFormat *format;
+  int max_width, max_height;
   int width, height;
   const char *name;
   const char *allowed_formats[] = { "png", "jpeg", "svg", NULL };
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GError) error = NULL;
+
+  max_width = g_ascii_strtoll (arg_width, NULL, 10);
+  if (max_width < 16 || max_width > 4096)
+    {
+      g_printerr ("Bad width limit: %s\n", arg_width);
+      return 1;
+    }
+
+  max_height = g_ascii_strtoll (arg_height, NULL, 10);
+  if (max_height < 16 || max_height > 4096)
+    {
+      g_printerr ("Bad height limit: %s\n", arg_height);
+      return 1;
+    }
 
   format = gdk_pixbuf_get_file_info (filename, &width, &height);
   if (format == NULL) 
@@ -62,34 +77,117 @@ validate_icon (int max_width,
   return 0;
 }
 
+static void
+add_args (GPtrArray *argv_array, ...)
+{
+  va_list args;
+  const char *arg;
+
+  va_start (args, argv_array);
+  while ((arg = va_arg (args, const gchar *)))
+    g_ptr_array_add (argv_array, g_strdup (arg));
+  va_end (args);
+}
+
+const char *
+flatpak_get_bwrap (void)
+{
+  const char *e = g_getenv ("FLATPAK_BWRAP");
+
+  if (e != NULL)
+    return e;
+  return HELPER;
+}
+
+static int
+rerun_in_sandbox (const char *arg_width,
+                  const char *arg_height,
+                  const char *filename)
+{
+  g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
+  g_autofree char *err = NULL;
+  int status;
+  g_autoptr(GError) error = NULL;
+  const char *validate_icon;
+
+  if (g_getenv ("FLATPAK_VALIDATE_ICON"))
+    validate_icon = g_getenv ("FLATPAK_VALIDATE_ICON");
+  else
+    validate_icon = LIBEXECDIR "/flatpak-validate-icon";
+
+  add_args (args,
+            flatpak_get_bwrap (),
+            "--unshare-ipc",
+            "--unshare-net",
+            "--unshare-pid",
+            "--ro-bind", "/", "/",
+            "--tmpfs", "/tmp",
+            "--proc", "/proc",
+            "--dev", "/dev",
+            "--chdir", "/",
+            "--setenv", "GIO_USE_VFS", "local",
+            "--unsetenv", "TMPDIR",
+            "--die-with-parent",
+            "--ro-bind", filename, filename,
+            NULL);
+  if (g_getenv ("G_MESSAGES_DEBUG"))
+    add_args (args, "--setenv", "G_MESSAGES_DEBUG", g_getenv ("G_MESSAGES_DEBUG"), NULL);
+  if (g_getenv ("G_MESSAGES_PREFIXED"))
+    add_args (args, "--setenv", "G_MESSAGES_PREFIXED", g_getenv ("G_MESSAGES_PREFIXED"), NULL);
+
+  add_args (args, validate_icon, arg_width, arg_height, filename, NULL);
+  g_ptr_array_add (args, NULL);
+
+  {
+    g_autofree char *cmdline = g_strjoinv (" ", (char **)args->pdata);
+    g_debug ("Icon validation: Spawning %s", cmdline);
+  }
+
+  if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, &error))
+    {
+      g_debug ("Icon validation: %s", error->message);
+      return 1;
+    }
+
+  if (!g_spawn_check_exit_status (status, NULL))
+    {
+      g_debug ("Icon validation: %s", err);
+      return 1;
+    }
+
+  return 0;
+}
+
+static gboolean opt_sandbox;
+
+static GOptionEntry entries[] = {
+  { "sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_sandbox, "Run in a sandbox", NULL },
+  { NULL }
+};
+
 int
 main (int argc, char *argv[])
 {
-  int width;
-  int height;
-  const char *path;
+  GOptionContext *context;
+  GError *error = NULL;
+
+  g_print ("%s\n", g_strjoinv (" ", argv));
+  context = g_option_context_new ("WIDTH HEIGHT PATH");
+  g_option_context_add_main_entries (context, entries, NULL);
+  if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+      g_printerr ("Error: %s\n", error->message);
+      return 1;
+    }
 
   if (argc != 4)
     {
-      g_printerr ("Usage: %s WIDTH HEIGHT PATH\n", argv[0]);
+      g_printerr ("Usage: %s [OPTION…] WIDTH HEIGHT PATH\n", argv[0]);
       return 1;
     }
 
-  width = g_ascii_strtoll (argv[1], NULL, 10);
-  if (width < 16 || width > 4096)
-    {
-      g_printerr ("Bad width limit: %s\n", argv[1]);
-      return 1;
-    }
-
-  height = g_ascii_strtoll (argv[2], NULL, 10);
-  if (height < 16 || height > 4096)
-    {
-      g_printerr ("Bad height limit: %s\n", argv[2]);
-      return 1;
-    }
-
-  path = argv[3];
-
-  return validate_icon (width, height, path);
+  if (opt_sandbox)
+    return rerun_in_sandbox (argv[1], argv[2], argv[3]);
+  else
+    return validate_icon (argv[1], argv[2], argv[3]);
 }
