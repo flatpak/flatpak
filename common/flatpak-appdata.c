@@ -22,6 +22,7 @@
 
 #include "flatpak-appdata-private.h"
 #include <gio/gio.h>
+#include <stdio.h>
 
 typedef struct {
   const char *id;
@@ -134,6 +135,7 @@ start_element (GMarkupParseContext *context,
   else if (g_str_equal (element_name, "release"))
     {
       const char *timestamp;
+      const char *date;
       const char *version;
       Component *component = NULL;
 
@@ -145,11 +147,32 @@ start_element (GMarkupParseContext *context,
                                        attribute_names,
                                        attribute_values,
                                        error,
-                                       G_MARKUP_COLLECT_STRING, "timestamp", &timestamp,
+                                       G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "timestamp", &timestamp,
+                                       G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "date", &date,
                                        G_MARKUP_COLLECT_STRING, "version", &version,
                                        G_MARKUP_COLLECT_INVALID))
         {
-          guint64 ts = g_ascii_strtoull (timestamp, NULL, 10);
+          guint64 ts = 0;
+
+          if (timestamp)
+            ts = g_ascii_strtoull (timestamp, NULL, 10);
+          else if (date)
+            {
+              g_autoptr(GTimeZone) tz = g_time_zone_new_utc ();
+              g_autoptr(GDateTime) dt = g_date_time_new_from_iso8601 (date, tz);
+              if (!dt)
+                {
+                  int d, m, y;
+
+                  if (sscanf (date, "%u-%u-%u", &d, &m, &y) == 3)
+                    dt = g_date_time_new_utc (d, m, y, 0, 0, 0);
+                }
+              if (dt)
+                ts = g_date_time_to_unix (dt);
+            }
+          else
+            g_warning ("Ignoring release element without timestamp or date");
+
           if (ts > data->timestamp)
             {
               data->timestamp = ts;
