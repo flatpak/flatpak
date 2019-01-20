@@ -169,6 +169,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       const char *version = NULL;
       const char *license = NULL;
 
+      flatpak_get_window_size (&rows, &cols);
+
 #if AS_CHECK_VERSION (0, 6, 1)
       as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
 #endif
@@ -179,7 +181,9 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
         {
           const char *name = as_app_get_localized_name (app);
           const char *comment = as_app_get_localized_comment (app);
-          g_print ("\n%s - %s\n\n", name, comment);
+
+          print_wrapped (MIN (cols, 80), "\n%s - %s\n", name, comment);
+
           version = as_app_get_version (app);
           license = as_app_get_project_license (app);
         }
@@ -243,7 +247,6 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       if (opt_log)
         len = MAX (len, g_utf8_strlen (_("History:"), -1));
 
-      flatpak_get_window_size (&rows, &cols);
       width = cols - (len + 1);
 
       print_aligned (len, _("ID:"), parts[1]);

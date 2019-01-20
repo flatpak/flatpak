@@ -184,12 +184,14 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       const char *xa_metadata = NULL;
       const char *collection_id = NULL;
 
+      flatpak_get_window_size (&rows, &cols);
+
       if (name)
         {
           if (summary)
-            g_print ("\n%s - %s\n\n", name, summary);
+            print_wrapped (MIN (cols, 80), "\n%s - %s\n", name, summary);
           else
-            g_print ("\n%s\n\n", name);
+            print_wrapped (MIN (cols, 80), "\n%s\n", name);
         }
 
       latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
@@ -253,7 +255,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         len = MAX (len, g_utf8_strlen (_("Subdirectories:"), -1));
       len = MAX (len, g_utf8_strlen (_("Extension:"), -1));
 
-      flatpak_get_window_size (&rows, &cols);
       width = cols - (len + 1);
 
       print_aligned (len, _("ID:"), parts[1]);
