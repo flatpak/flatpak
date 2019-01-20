@@ -819,6 +819,25 @@ get_permission_tables (XdpDbusPermissionStore *store)
 
 /*** column handling ***/
 
+static gboolean
+parse_ellipsize_suffix (const char *p,
+                        FlatpakEllipsizeMode *mode,
+                        GError **error)
+{
+  if (g_str_has_prefix (":full", p))
+    *mode = FLATPAK_ELLIPSIZE_MODE_NONE;
+  else if (g_str_has_prefix (":start", p))
+    *mode = FLATPAK_ELLIPSIZE_MODE_START;
+  else if (g_str_has_prefix (":middle", p))
+    *mode = FLATPAK_ELLIPSIZE_MODE_MIDDLE;
+  else if (g_str_has_prefix (":end", p))
+    *mode = FLATPAK_ELLIPSIZE_MODE_END;
+  else
+    return flatpak_fail (error, "'%s' does not specify an ellipsization", p);
+
+  return TRUE;
+}
+
 int
 find_column (Column *columns,
              const char *name,
@@ -826,13 +845,16 @@ find_column (Column *columns,
 {
   int i;
   int candidate;
+  char *p = strchr (name, ':');
 
   candidate = -1;
   for (i = 0; columns[i].name; i++)
     {
-      if (g_str_equal (columns[i].name, name))
+      if (g_str_equal (columns[i].name, name) ||
+          (p != 0 && strncmp (columns[i].name, name, p - name) == 0))
         {
-          return i;
+          candidate = i;
+          break;
         }
       else if (g_str_has_prefix (columns[i].name, name))
         {
@@ -849,7 +871,11 @@ find_column (Column *columns,
     }
 
   if (candidate >= 0)
-    return candidate;
+    {
+      if (p && !parse_ellipsize_suffix (p, &columns[candidate].ellipsize, error))
+        return -1;
+      return candidate;
+    }
 
   flatpak_fail (error, _("Unknown column: %s"), name);
   return -1;
