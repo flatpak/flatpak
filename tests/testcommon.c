@@ -451,7 +451,7 @@ test_parse_appdata (void)
     "    </categories>\n"
     "    <icon height=\"64\" width=\"64\" type=\"cached\">64x64/org.gnome.gedit.png</icon>\n"
     "    <releases>\n"
-    "      <release timestamp=\"1525132800\" version=\"0.0.1\"/>\n"
+    "      <release timestamp=\"1525132800\" version=\"0.0.1\"/>\n" /* 01-05-2018 */
     "    </releases>\n"
     "  </component>\n"
     "</components>";
@@ -470,7 +470,9 @@ test_parse_appdata (void)
     "    </categories>\n"
     "    <icon height=\"64\" width=\"64\" type=\"cached\">64x64/org.gnome.gedit.png</icon>\n"
     "    <releases>\n"
-    "      <release timestamp=\"1525132800\" version=\"0.0.2\"/>\n"
+    "      <release timestamp=\"1525132800\" version=\"0.1.0\"/>\n"
+    "      <release timestamp=\"1525000800\" date=\"2018-05-02\" version=\"0.0.2\"/>\n"
+    "      <release date=\"2017-05-02\" version=\"0.0.3\"/>\n"
     "      <release timestamp=\"1000000000\" version=\"0.0.1\"/>\n"
     "    </releases>\n"
     "    <project_license>anything goes</project_license>\n"
@@ -504,7 +506,7 @@ test_parse_appdata (void)
 
   res = flatpak_parse_appdata (appdata2, "org.test.Hello", &names, &comments, &version, &license);
   g_assert_true (res);
-  g_assert_cmpstr (version, ==, "0.0.2");
+  g_assert_cmpstr (version, ==, "0.1.0");
   g_assert_cmpstr (license, ==, "anything goes");
   g_assert_nonnull (names);
   g_assert_nonnull (comments);
