@@ -363,40 +363,20 @@ validate_icon_file (GFile *file, GError **error)
   const char *name;
   int status;
   g_autofree char *err = NULL;
-  const char *validate_icon;
+  const char *validate_icon = LIBEXECDIR "/flatpak-validate-icon";
 
   name = flatpak_file_get_path_cached (file);
+
+  if (g_getenv ("FLATPAK_VALIDATE_ICON"))
+    validate_icon = g_getenv ("FLATPAK_VALIDATE_ICON");
 
   args = g_ptr_array_new_with_free_func (g_free);
 
 #ifndef DISABLE_SANDBOXED_TRIGGERS
-  add_args (args,
-            flatpak_get_bwrap (),
-            "--unshare-ipc",
-            "--unshare-net",
-            "--unshare-pid",
-            "--ro-bind", "/", "/",
-            "--tmpfs", "/tmp",
-            "--proc", "/proc",
-            "--dev", "/dev",
-            "--chdir", "/",
-            "--setenv", "GIO_USE_VFS", "local",
-            "--unsetenv", "TMPDIR",
-            "--die-with-parent",
-            "--ro-bind", name, name,
-            NULL);
-  if (g_getenv ("G_MESSAGES_DEBUG"))
-    add_args (args, "--setenv", "G_MESSAGES_DEBUG", g_getenv ("G_MESSAGES_DEBUG"), NULL);
-  if (g_getenv ("G_MESSAGES_PREFIXED"))
-    add_args (args, "--setenv", "G_MESSAGES_PREFIXED", g_getenv ("G_MESSAGES_PREFIXED"), NULL);
-#endif
-
-  if (g_getenv ("FLATPAK_VALIDATE_ICON"))
-    validate_icon = g_getenv ("FLATPAK_VALIDATE_ICON");
-  else
-    validate_icon = LIBEXECDIR "/flatpak-validate-icon";
-
+  add_args (args, validate_icon, "--sandbox", "512", "512", name, NULL);
+#else
   add_args (args, validate_icon, "512", "512", name, NULL);
+#endif
   g_ptr_array_add (args, NULL);
 
   if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
