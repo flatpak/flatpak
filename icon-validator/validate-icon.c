@@ -19,6 +19,7 @@
  */
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <glib/gstdio.h>
 
 static int
 validate_icon (const char *arg_width,
@@ -99,11 +100,33 @@ flatpak_get_bwrap (void)
   return HELPER;
 }
 
+
+static gboolean
+path_is_usrmerged (const char *dir)
+{
+  /* does /dir point to /usr/dir? */
+  g_autofree char *target = NULL;
+  GStatBuf stat_buf_src, stat_buf_target;
+
+  if (g_stat (dir, &stat_buf_src) < 0)
+    return FALSE;
+
+  target = g_strdup_printf ("/usr/%s", dir);
+
+  if (g_stat (target, &stat_buf_target) < 0)
+    return FALSE;
+
+  return (stat_buf_src.st_dev == stat_buf_target.st_dev) &&
+         (stat_buf_src.st_ino == stat_buf_target.st_ino);
+}
+
 static int
 rerun_in_sandbox (const char *arg_width,
                   const char *arg_height,
                   const char *filename)
 {
+  const char * const usrmerged_dirs[] = { "bin", "lib64", "lib", "sbin" };
+  int i;
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
   g_autofree char *err = NULL;
   int status;
@@ -120,7 +143,35 @@ rerun_in_sandbox (const char *arg_width,
             "--unshare-ipc",
             "--unshare-net",
             "--unshare-pid",
-            "--ro-bind", "/", "/",
+            "--ro-bind", "/usr", "/usr",
+            "--ro-bind", "/etc/ld.so.cache", "/etc/ld.so.cache",
+            NULL);
+
+ /* These directories might be symlinks into /usr/... */
+  for (i = 0; i < G_N_ELEMENTS (usrmerged_dirs); i++)
+    {
+      g_autofree char *absolute_dir = g_strdup_printf ("/%s", usrmerged_dirs[i]);
+
+      if (!g_file_test (absolute_dir, G_FILE_TEST_EXISTS))
+        continue;
+
+      if (path_is_usrmerged (absolute_dir))
+        {
+          g_autofree char *symlink_target = g_strdup_printf ("/usr/%s", absolute_dir);
+
+          add_args (args,
+                    "--symlink", symlink_target, absolute_dir,
+                    NULL);
+        }
+      else
+        {
+          add_args (args,
+                    "--ro-bind", absolute_dir, absolute_dir,
+                    NULL);
+        }
+    }
+
+  add_args (args,
             "--tmpfs", "/tmp",
             "--proc", "/proc",
             "--dev", "/dev",
@@ -130,6 +181,7 @@ rerun_in_sandbox (const char *arg_width,
             "--die-with-parent",
             "--ro-bind", filename, filename,
             NULL);
+
   if (g_getenv ("G_MESSAGES_DEBUG"))
     add_args (args, "--setenv", "G_MESSAGES_DEBUG", g_getenv ("G_MESSAGES_DEBUG"), NULL);
   if (g_getenv ("G_MESSAGES_PREFIXED"))
