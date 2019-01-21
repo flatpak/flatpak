@@ -104,9 +104,10 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
           if (transaction == NULL)
             return FALSE;
 
-          for (i = 0; refs[i]; i++)
+          for (i = 0; i < refs_to_remove->len - 1; i++)
             {
-              if (!flatpak_transaction_add_uninstall (transaction, refs[i], error))
+              const char *ref = g_ptr_array_index (refs_to_remove, i);
+              if (!flatpak_transaction_add_uninstall (transaction, ref, error))
                 return FALSE;
             }
 
