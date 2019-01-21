@@ -148,6 +148,9 @@
                 <listitem><para>
                     Specify what information to show about each ref. You can
                     list multiple fields, or use this option multiple times.
+                </para><para>
+                    Append :s[tart], :m[iddle], :e[nd] or :f[ull] to column
+                    names to change ellipsization.
                 </para></listitem>
             </varlistentry>
 
