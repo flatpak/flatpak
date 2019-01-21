@@ -948,6 +948,8 @@ column_help (Column *columns)
   g_string_append_printf (s, "  %-*s %s\n", len, "all", _("Show all columns"));
   g_string_append_printf (s, "  %-*s %s\n", len, "help", _("Show available columns"));
 
+  g_string_append_printf  (s, "\n%s\n",
+                    _("Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"));
   return g_string_free (s, FALSE);
 }
 
