@@ -27,7 +27,7 @@
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
  * to not have it interfere with stdout/stderr)
  */
-#if 1
+#if 0
 void
 flatpak_completion_debug (const gchar *format, ...)
 {
