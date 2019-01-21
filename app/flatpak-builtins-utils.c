@@ -824,7 +824,14 @@ parse_ellipsize_suffix (const char *p,
                         FlatpakEllipsizeMode *mode,
                         GError **error)
 {
-  if (g_str_has_prefix (":full", p))
+  if (g_str_equal (":", p))
+    {
+      g_autofree char *msg1 = g_strdup_printf (_("Ambiguous suffix: '%s'."), p);
+      /* Translators: don't translate the values */
+      const char *msg2 = _("Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]");
+      return flatpak_fail (error, "%s %s", msg1, msg2);
+    }
+  else if (g_str_has_prefix (":full", p))
     *mode = FLATPAK_ELLIPSIZE_MODE_NONE;
   else if (g_str_has_prefix (":start", p))
     *mode = FLATPAK_ELLIPSIZE_MODE_START;
@@ -833,7 +840,12 @@ parse_ellipsize_suffix (const char *p,
   else if (g_str_has_prefix (":end", p))
     *mode = FLATPAK_ELLIPSIZE_MODE_END;
   else
-    return flatpak_fail (error, "'%s' does not specify an ellipsization", p);
+    {
+      g_autofree char *msg1 = g_strdup_printf (_("Invalid suffix: '%s'."), p);
+      /* Translators: don't translate the values */
+      const char *msg2 = _("Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]");
+      return flatpak_fail (error, "%s %s", msg1, msg2);
+    }
 
   return TRUE;
 }
