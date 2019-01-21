@@ -618,7 +618,9 @@ test_columns (void)
                    "  helper      helper\n"
                    "  column2     col2\n"
                    "  all         Show all columns\n"
-                   "  help        Show available columns\n");
+                   "  help        Show available columns\n"
+                   "\n"
+                   "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization\n");
 
   cols = handle_column_args (columns, FALSE, NULL, &error);
   g_assert_no_error (error);
