@@ -103,6 +103,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--extra-collection-id=COLLECTION-ID</option></term>
+
+                <listitem><para>
+                    Add an extra collection-ref binding for this collection, in addition to whatever
+                    would normally be added due to the destination repository collection id.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--untrusted</option></term>
 
                 <listitem><para>

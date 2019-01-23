@@ -46,12 +46,14 @@ static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
 static char *opt_endoflife;
 static char *opt_timestamp;
+static char **opt_extra_collection_ids;
 
 static GOptionEntry options[] = {
   { "src-repo", 0, 0, G_OPTION_ARG_STRING, &opt_src_repo, N_("Source repo dir"), N_("SRC-REPO") },
   { "src-ref", 0, 0, G_OPTION_ARG_STRING, &opt_src_ref, N_("Source repo ref"), N_("SRC-REF") },
   { "untrusted", 0, 0, G_OPTION_ARG_NONE, &opt_untrusted, "Do not trust SRC-REPO", NULL },
   { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force, "Always commit, even if same content", NULL },
+  { "extra-collection-id", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_collection_ids, "Add an extra collection id ref and binding", "COLLECTION-ID" },
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, N_("One line subject"), N_("SUBJECT") },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, N_("Full description"), N_("BODY") },
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
@@ -407,6 +409,8 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       GVariantBuilder metadata_builder;
       gint j;
       const char *dst_collection_id = NULL;
+      const char *main_collection_id = NULL;
+      g_autoptr(GPtrArray) collection_ids = NULL;
 
       if (!ostree_repo_resolve_rev (dst_repo, dst_ref, TRUE, &dst_parent, error))
         return FALSE;
@@ -450,12 +454,44 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
 
       dst_collection_id = ostree_repo_get_collection_id (dst_repo);
 
+      collection_ids = g_ptr_array_new_with_free_func (g_free);
+      if (dst_collection_id)
+        {
+          main_collection_id = dst_collection_id;
+          g_ptr_array_add (collection_ids, g_strdup (dst_collection_id));
+        }
+
+      if (opt_extra_collection_ids != NULL)
+        {
+          for (j = 0; opt_extra_collection_ids[j] != NULL; j++)
+            {
+              const char *cid = opt_extra_collection_ids[j];
+              if (main_collection_id == NULL)
+                main_collection_id = cid; /* Fall back to first arg */
+
+              if (g_strcmp0 (cid, dst_collection_id) != 0)
+                g_ptr_array_add (collection_ids, g_strdup (cid));
+            }
+        }
+
+      g_ptr_array_sort (collection_ids, (GCompareFunc)flatpak_strcmp0_ptr);
+
       /* Copy old metadata */
       g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
 
       /* Bindings. xa.ref is deprecated but added anyway for backwards compatibility. */
       g_variant_builder_add (&metadata_builder, "{sv}", "ostree.collection-binding",
-                             g_variant_new_string (dst_collection_id ? dst_collection_id : ""));
+                             g_variant_new_string (main_collection_id ? main_collection_id : ""));
+      if (collection_ids->len > 0)
+        {
+          g_autoptr(GVariantBuilder) cr_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ss)"));
+
+          for (j = 0; j < collection_ids->len; j++)
+            g_variant_builder_add (cr_builder, "(ss)", g_ptr_array_index (collection_ids, j), dst_ref);
+
+          g_variant_builder_add (&metadata_builder, "{sv}", "ostree.collection-refs-binding",
+                                 g_variant_new_variant (g_variant_builder_end (cr_builder)));
+        }
       g_variant_builder_add (&metadata_builder, "{sv}", "ostree.ref-binding",
                              g_variant_new_strv (&dst_ref, 1));
       g_variant_builder_add (&metadata_builder, "{sv}", "xa.ref", g_variant_new_string (dst_ref));
@@ -475,6 +511,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
           if (strcmp (key, "xa.ref") == 0 ||
               strcmp (key, "xa.from_commit") == 0 ||
               strcmp (key, "ostree.collection-binding") == 0 ||
+              strcmp (key, "ostree.collections-binding") == 0 ||
               strcmp (key, "ostree.ref-binding") == 0)
             continue;
 
@@ -540,6 +577,15 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       else
         {
           ostree_repo_transaction_set_ref (dst_repo, NULL, dst_ref, commit_checksum);
+        }
+
+      if (opt_extra_collection_ids)
+        {
+          for (j = 0; opt_extra_collection_ids[j] != NULL; j++)
+            {
+              OstreeCollectionRef ref = { (char *) opt_extra_collection_ids[j], (char *) dst_ref };
+              ostree_repo_transaction_set_collection_ref (dst_repo, &ref, commit_checksum);
+            }
         }
 
       /* Copy + Rewrite any deltas */
