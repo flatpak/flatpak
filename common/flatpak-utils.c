@@ -6129,3 +6129,27 @@ flatpak_show_cursor (void)
 {
   write (STDOUT_FILENO, FLATPAK_ANSI_SHOW_CURSOR, strlen (FLATPAK_ANSI_SHOW_CURSOR));
 }
+
+void
+flatpak_enable_raw_mode (void)
+{
+  struct termios raw;
+
+  tcgetattr (STDIN_FILENO, &raw);
+
+  raw.c_lflag &= ~(ECHO | ICANON);
+
+  tcsetattr (STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+void
+flatpak_disable_raw_mode (void)
+{
+  struct termios raw;
+
+  tcgetattr (STDIN_FILENO, &raw);
+
+  raw.c_lflag |= (ECHO | ICANON);
+
+  tcsetattr (STDIN_FILENO, TCSAFLUSH, &raw);
+}

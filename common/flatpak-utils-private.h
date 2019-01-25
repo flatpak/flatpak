@@ -61,6 +61,9 @@ gboolean flatpak_get_cursor_pos  (int *row, int *col);
 void flatpak_hide_cursor (void);
 void flatpak_show_cursor (void);
 
+void flatpak_enable_raw_mode (void);
+void flatpak_disable_raw_mode (void);
+
 /* https://bugzilla.gnome.org/show_bug.cgi?id=766370 */
 #if !GLIB_CHECK_VERSION (2, 49, 3)
 #define FLATPAK_VARIANT_BUILDER_INITIALIZER {{0, }}
