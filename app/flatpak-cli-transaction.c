@@ -994,6 +994,7 @@ transaction_ready (FlatpakTransaction *transaction)
   if (flatpak_fancy_output ())
     {
       flatpak_hide_cursor ();
+      flatpak_enable_raw_mode ();
       redraw (self);
     }
 
@@ -1082,7 +1083,10 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
   res = FLATPAK_TRANSACTION_CLASS (flatpak_cli_transaction_parent_class)->run (transaction, cancellable, error);
 
   if (flatpak_fancy_output ())
-    flatpak_show_cursor ();
+    {
+      flatpak_disable_raw_mode ();
+      flatpak_show_cursor ();
+    }
 
   if (res && self->n_ops > 0)
     {
