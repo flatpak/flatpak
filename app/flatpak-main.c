@@ -696,7 +696,8 @@ complete (int    argc,
 static void
 handle_sigterm (int signum)
 {
-   flatpak_show_cursor ();
+  flatpak_disable_raw_mode ();
+  flatpak_show_cursor ();
   _exit (1);
 }
 
