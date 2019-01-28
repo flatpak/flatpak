@@ -511,7 +511,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
           if (strcmp (key, "xa.ref") == 0 ||
               strcmp (key, "xa.from_commit") == 0 ||
               strcmp (key, "ostree.collection-binding") == 0 ||
-              strcmp (key, "ostree.collections-binding") == 0 ||
+              strcmp (key, "ostree.collection-refs-binding") == 0 ||
               strcmp (key, "ostree.ref-binding") == 0)
             continue;
 
