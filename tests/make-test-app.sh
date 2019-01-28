@@ -96,7 +96,7 @@ ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/fr/share/fr
 
 flatpak build-finish --command=hello.sh ${DIR}
 mkdir -p repos
-flatpak build-export ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR}
+flatpak build-export --disable-sandbox ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR}
 rm -rf ${DIR}
 
 # build a locale extension
