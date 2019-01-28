@@ -1,3 +1,23 @@
+Changes in 1.2
+==============
+
+ * Ensure DeployCollectionID works in flatpakrepo files in all cases.
+ * Don't error out with empty installations in uninstall.
+ * Add helper that validates icon files during export.
+ * Don't allow root to modify the (non-root) per-user flatpak installation,
+   as this risks causing problems later.
+ * Remove some incorrect warnings from flatpak repair.
+ * Allow multiple name segments after prefix when exporting files.
+ * Allow specification of ellipsization in --colums options.
+ * Handle dates as well as timestamps in appdata
+ * Fixed a bug where flatpak remote-delete removed too many refs.
+ * Now we use raw terminal mode during a transaction to a avoid problems with input
+   during the operation causing problems with escape sequences.
+ * Generate a fontconfig directory remapping snippet as will be needed
+   for newer versions of fontconfig.
+ * Support --extra-collection-id in build-commit-from to bind the commit
+   to multiple collection ids. This is work in progress in ostree.
+
 Changes in 1.1.3
 ================
 
