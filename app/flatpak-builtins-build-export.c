@@ -40,6 +40,7 @@ static gboolean opt_runtime;
 static gboolean opt_update_appstream;
 static gboolean opt_no_update_summary;
 static gboolean opt_disable_fsync;
+static gboolean opt_disable_sandbox = FALSE;
 static char **opt_gpg_key_ids;
 static char **opt_exclude;
 static char **opt_include;
@@ -67,6 +68,7 @@ static GOptionEntry options[] = {
   { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit"), N_("TIMESTAMP") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), "COLLECTION-ID" },
   { "disable-fsync", 0, 0, G_OPTION_ARG_NONE, &opt_disable_fsync, "Do not invoke fsync()", NULL },
+  { "disable-sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_disable_sandbox, "Do not sandbox icon validator", NULL },
 
   { NULL }
 };
@@ -373,10 +375,12 @@ validate_icon_file (GFile *file, GError **error)
   args = g_ptr_array_new_with_free_func (g_free);
 
 #ifndef DISABLE_SANDBOXED_TRIGGERS
-  add_args (args, validate_icon, "--sandbox", "512", "512", name, NULL);
-#else
-  add_args (args, validate_icon, "512", "512", name, NULL);
+  if (!opt_disable_sandbox)
+    add_args (args, validate_icon, "--sandbox", "512", "512", name, NULL);
+  else
 #endif
+    add_args (args, validate_icon, "512", "512", name, NULL);
+
   g_ptr_array_add (args, NULL);
 
   if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
