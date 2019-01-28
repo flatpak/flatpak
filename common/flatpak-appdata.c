@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "flatpak-appdata-private.h"
+#include "flatpak-utils-private.h"
 #include <gio/gio.h>
 #include <stdio.h>
 
