@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-01-21 15:24+0000\n"
+"POT-Creation-Date: 2019-01-28 12:36+0100\n"
 "PO-Revision-Date: 2019-01-21 17:48+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
@@ -70,7 +70,7 @@ msgid "GPG Key ID to sign the OCI image with"
 msgstr "ID klíče GPG pro podepsání OCI obrazu"
 
 #: app/flatpak-builtins-build-bundle.c:61
-#: app/flatpak-builtins-build-commit-from.c:59
+#: app/flatpak-builtins-build-commit-from.c:61
 #: app/flatpak-builtins-build-export.c:62
 #: app/flatpak-builtins-build-import-bundle.c:46
 #: app/flatpak-builtins-build-sign.c:43
@@ -79,7 +79,7 @@ msgid "KEY-ID"
 msgstr "KLÍČ-ID"
 
 #: app/flatpak-builtins-build-bundle.c:62
-#: app/flatpak-builtins-build-commit-from.c:60
+#: app/flatpak-builtins-build-commit-from.c:62
 #: app/flatpak-builtins-build-export.c:65
 #: app/flatpak-builtins-build-import-bundle.c:47
 #: app/flatpak-builtins-build-sign.c:44
@@ -88,7 +88,7 @@ msgid "GPG Homedir to use when looking for keyrings"
 msgstr "Domovský adresář pro použití při hledání klíčenek"
 
 #: app/flatpak-builtins-build-bundle.c:62
-#: app/flatpak-builtins-build-commit-from.c:60
+#: app/flatpak-builtins-build-commit-from.c:62
 #: app/flatpak-builtins-build-export.c:65
 #: app/flatpak-builtins-build-import-bundle.c:47
 #: app/flatpak-builtins-build-sign.c:44
@@ -142,8 +142,8 @@ msgid "Too many arguments"
 msgstr "Příliš mnoho parametrů"
 
 #: app/flatpak-builtins-build-bundle.c:574
-#: app/flatpak-builtins-build-commit-from.c:270
-#: app/flatpak-builtins-build-commit-from.c:283
+#: app/flatpak-builtins-build-commit-from.c:272
+#: app/flatpak-builtins-build-commit-from.c:285
 #: app/flatpak-builtins-build-import-bundle.c:192
 #, c-format
 msgid "'%s' is not a valid repository"
@@ -250,117 +250,117 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3380
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3402
 msgid "Unable to start app"
 msgstr "Nelze spustit aplikaci"
 
-#: app/flatpak-builtins-build-commit-from.c:51
+#: app/flatpak-builtins-build-commit-from.c:52
 msgid "Source repo dir"
 msgstr "Adresář pro zdrojový repozitář"
 
-#: app/flatpak-builtins-build-commit-from.c:51
+#: app/flatpak-builtins-build-commit-from.c:52
 msgid "SRC-REPO"
 msgstr "ZDROJ-REPOZITÁŘ"
 
-#: app/flatpak-builtins-build-commit-from.c:52
+#: app/flatpak-builtins-build-commit-from.c:53
 msgid "Source repo ref"
 msgstr "Ref pro zdrojový repozitář"
 
-#: app/flatpak-builtins-build-commit-from.c:52
+#: app/flatpak-builtins-build-commit-from.c:53
 msgid "SRC-REF"
 msgstr "ZDROJ-REF"
 
-#: app/flatpak-builtins-build-commit-from.c:55
+#: app/flatpak-builtins-build-commit-from.c:57
 #: app/flatpak-builtins-build-export.c:54
 msgid "One line subject"
 msgstr "Předmět na jeden řádek"
 
-#: app/flatpak-builtins-build-commit-from.c:55
+#: app/flatpak-builtins-build-commit-from.c:57
 #: app/flatpak-builtins-build-export.c:54
 msgid "SUBJECT"
 msgstr "PŘEDMĚT"
 
-#: app/flatpak-builtins-build-commit-from.c:56
+#: app/flatpak-builtins-build-commit-from.c:58
 #: app/flatpak-builtins-build-export.c:55
 msgid "Full description"
 msgstr "Úplný popis"
 
-#: app/flatpak-builtins-build-commit-from.c:56
+#: app/flatpak-builtins-build-commit-from.c:58
 #: app/flatpak-builtins-build-export.c:55
 msgid "BODY"
 msgstr "TĚLO"
 
-#: app/flatpak-builtins-build-commit-from.c:57
+#: app/flatpak-builtins-build-commit-from.c:59
 #: app/flatpak-builtins-build-export.c:58
 #: app/flatpak-builtins-build-import-bundle.c:48
 msgid "Update the appstream branch"
 msgstr "Aktualizovat appstream větev"
 
-#: app/flatpak-builtins-build-commit-from.c:58
+#: app/flatpak-builtins-build-commit-from.c:60
 #: app/flatpak-builtins-build-export.c:59
 #: app/flatpak-builtins-build-import-bundle.c:49
 msgid "Don't update the summary"
 msgstr "Neaktualizovat shrnutí"
 
-#: app/flatpak-builtins-build-commit-from.c:59
+#: app/flatpak-builtins-build-commit-from.c:61
 #: app/flatpak-builtins-build-export.c:62
 #: app/flatpak-builtins-build-import-bundle.c:46
 #: app/flatpak-builtins-build-sign.c:43
 msgid "GPG Key ID to sign the commit with"
 msgstr "ID klíče GPG pro podepsání commitu"
 
-#: app/flatpak-builtins-build-commit-from.c:61
+#: app/flatpak-builtins-build-commit-from.c:63
 #: app/flatpak-builtins-build-export.c:66
 msgid "Mark build as end-of-life"
 msgstr "Označit sestavení jako end-of-life"
 
-#: app/flatpak-builtins-build-commit-from.c:61
+#: app/flatpak-builtins-build-commit-from.c:63
 #: app/flatpak-builtins-build-export.c:66
 msgid "REASON"
 msgstr "DŮVOD"
 
-#: app/flatpak-builtins-build-commit-from.c:62
+#: app/flatpak-builtins-build-commit-from.c:64
 msgid "Override the timestamp of the commit (NOW for current time)"
 msgstr "Přepsat časovou značku commitu (NOW pro aktuální čas)"
 
-#: app/flatpak-builtins-build-commit-from.c:62
+#: app/flatpak-builtins-build-commit-from.c:64
 #: app/flatpak-builtins-build-export.c:67
 msgid "TIMESTAMP"
 msgstr "TIMESTAMP"
 
-#: app/flatpak-builtins-build-commit-from.c:239
+#: app/flatpak-builtins-build-commit-from.c:241
 msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
 msgstr "CÍL-REPO [CÍL-REF…] - Vytvořit nový commit z existujících commitů"
 
-#: app/flatpak-builtins-build-commit-from.c:246
+#: app/flatpak-builtins-build-commit-from.c:248
 msgid "DST-REPO must be specified"
 msgstr "CÍL-REPO musí být určeno"
 
-#: app/flatpak-builtins-build-commit-from.c:254
+#: app/flatpak-builtins-build-commit-from.c:256
 msgid ""
 "If --src-repo is not specified, exactly one destination ref must be specified"
 msgstr "Pokud není --src-repo určeno, musí být určen přesně jeden cílový ref"
 
-#: app/flatpak-builtins-build-commit-from.c:257
+#: app/flatpak-builtins-build-commit-from.c:259
 msgid ""
 "If --src-ref is specified, exactly one destination ref must be specified"
 msgstr "Pokud je --src-ref určeno, musí být určen přesně jeden cílový ref"
 
-#: app/flatpak-builtins-build-commit-from.c:260
+#: app/flatpak-builtins-build-commit-from.c:262
 msgid "Either --src-repo or --src-ref must be specified."
 msgstr "Buď --src-repo nebo --src-ref musí být určeno."
 
-#: app/flatpak-builtins-build-commit-from.c:265
+#: app/flatpak-builtins-build-commit-from.c:267
 #: app/flatpak-builtins-build-export.c:1022
 #, c-format
 msgid "Could not parse '%s'"
 msgstr "Nelze zpracovat „%s“"
 
-#: app/flatpak-builtins-build-commit-from.c:425
+#: app/flatpak-builtins-build-commit-from.c:429
 msgid "Can't commit from partial source commit."
 msgstr ""
 
-#: app/flatpak-builtins-build-commit-from.c:430
+#: app/flatpak-builtins-build-commit-from.c:434
 #, c-format
 msgid "%s: no change\n"
 msgstr "%s: žádná změna\n"
@@ -2759,27 +2759,46 @@ msgstr "Chyba během aktualizace"
 msgid "Remote \"%s\" not found"
 msgstr "Vzdálený repozitář „%s“ nebyl nalezen"
 
-#: app/flatpak-builtins-utils.c:867
+#: app/flatpak-builtins-utils.c:829
+#, fuzzy, c-format
+msgid "Ambiguous suffix: '%s'."
+msgstr "Nejednoznačný sloupec: %s"
+
+#. Translators: don't translate the values
+#: app/flatpak-builtins-utils.c:831 app/flatpak-builtins-utils.c:846
+msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
+msgstr ""
+
+#: app/flatpak-builtins-utils.c:844
+#, fuzzy, c-format
+msgid "Invalid suffix: '%s'."
+msgstr "Neplatný identifikátor pid %s"
+
+#: app/flatpak-builtins-utils.c:879
 #, c-format
 msgid "Ambiguous column: %s"
 msgstr "Nejednoznačný sloupec: %s"
 
-#: app/flatpak-builtins-utils.c:880
+#: app/flatpak-builtins-utils.c:892
 #, c-format
 msgid "Unknown column: %s"
 msgstr "Neznámý sloupec: %s"
 
-#: app/flatpak-builtins-utils.c:938
+#: app/flatpak-builtins-utils.c:950
 msgid "Available columns:\n"
 msgstr "Dostupné sloupce:\n"
 
-#: app/flatpak-builtins-utils.c:948
+#: app/flatpak-builtins-utils.c:960
 msgid "Show all columns"
 msgstr "Zobrazit všechny sloupce"
 
-#: app/flatpak-builtins-utils.c:949
+#: app/flatpak-builtins-utils.c:961
 msgid "Show available columns"
 msgstr "Zobrazit dostupné sloupce"
+
+#: app/flatpak-builtins-utils.c:964
+msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
+msgstr ""
 
 #: app/flatpak-cli-transaction.c:84 app/flatpak-cli-transaction.c:90
 #, c-format
@@ -2958,25 +2977,25 @@ msgstr "Pokračovat s těmito změnami do uživatelské instalace?"
 msgid "Proceed with these changes to the system installation?"
 msgstr "Pokračovat s těmito změnami do systémové instalace?"
 
-#: app/flatpak-cli-transaction.c:1092
+#: app/flatpak-cli-transaction.c:1096
 msgid "Changes complete."
 msgstr "Změny dokončeny."
 
-#: app/flatpak-cli-transaction.c:1094
+#: app/flatpak-cli-transaction.c:1098
 msgid "Uninstall complete."
 msgstr "Odinstalace dokončena."
 
-#: app/flatpak-cli-transaction.c:1096
+#: app/flatpak-cli-transaction.c:1100
 msgid "Installation complete."
 msgstr "Instalace dokončena."
 
-#: app/flatpak-cli-transaction.c:1098
+#: app/flatpak-cli-transaction.c:1102
 msgid "Updates complete."
 msgstr "Aktualizace dokončeny."
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:1131
+#: app/flatpak-cli-transaction.c:1135
 msgid "There were one or more errors"
 msgstr "Vyskytla se jedna či více chyb"
 
@@ -3283,7 +3302,7 @@ msgstr "„%s“ není příkaz flatpaku"
 msgid "No command specified"
 msgstr "Nebyl určen žádný příkaz"
 
-#: app/flatpak-main.c:800
+#: app/flatpak-main.c:801
 msgid "error:"
 msgstr "chyba:"
 
@@ -4015,62 +4034,62 @@ msgstr "Selhalo zjištění částí z refu: %s"
 msgid "No systemd user session available, cgroups not available"
 msgstr "Uživatelské sezení systemd není dostupné, cgroups nejsou dostupné"
 
-#: common/flatpak-run.c:1921
+#: common/flatpak-run.c:1943
 msgid "Unable to allocate instance id"
 msgstr "Selhala alokace id instance"
 
-#: common/flatpak-run.c:2041 common/flatpak-run.c:2051
+#: common/flatpak-run.c:2063 common/flatpak-run.c:2073
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Selhalo otevření souboru flatpak-info: %s"
 
-#: common/flatpak-run.c:2071
+#: common/flatpak-run.c:2093
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Selhalo otevření souboru bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2385
+#: common/flatpak-run.c:2407
 msgid "Initialize seccomp failed"
 msgstr "Selhala inicializace seccomp"
 
-#: common/flatpak-run.c:2424
+#: common/flatpak-run.c:2446
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Selhalo přidání architektury do seccomp filtru"
 
-#: common/flatpak-run.c:2433
+#: common/flatpak-run.c:2455
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Selhalo přidání multiarch architektury do seccomp filtru"
 
 #. unknown syscall
-#: common/flatpak-run.c:2452 common/flatpak-run.c:2466
+#: common/flatpak-run.c:2474 common/flatpak-run.c:2488
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Selhalo blokování systémového volání %d"
 
-#: common/flatpak-run.c:2497
+#: common/flatpak-run.c:2519
 msgid "Failed to export bpf"
 msgstr "Selhalo exportování bpf"
 
-#: common/flatpak-run.c:2553
+#: common/flatpak-run.c:2575
 #, c-format
 msgid "Invalid group: %d"
 msgstr "Neplatná skupina: %d"
 
-#: common/flatpak-run.c:2726
+#: common/flatpak-run.c:2748
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Selhalo otevření „%s“"
 
-#: common/flatpak-run.c:3003
+#: common/flatpak-run.c:3025
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig selhal, návratová hodnota %d"
 
-#: common/flatpak-run.c:3010
+#: common/flatpak-run.c:3032
 msgid "Can't open generated ld.so.cache"
 msgstr "Nelze otevřít vygenerovaný ld.so.cache"
 
-#: common/flatpak-run.c:3124
+#: common/flatpak-run.c:3146
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Špatný počet součástí v prostředí %s"
@@ -4628,9 +4647,6 @@ msgstr "K aktualizaci metadat je vyžadováno ověření"
 #, fuzzy
 #~ msgid "Authentication is required to configure the remote $(remote)"
 #~ msgstr "K nastavení repozitářů softwaru je vyžadováno ověření"
-
-#~ msgid "Invalid pid %s"
-#~ msgstr "Neplatný identifikátor pid %s"
 
 #~ msgid "Runtime Branch"
 #~ msgstr "Větev prostředí"
