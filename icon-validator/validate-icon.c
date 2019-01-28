@@ -202,7 +202,7 @@ rerun_in_sandbox (const char *arg_width,
     g_debug ("Icon validation: Spawning %s", cmdline);
   }
 
-  if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, &error))
+  if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &err, &status, &error))
     {
       g_debug ("Icon validation: %s", error->message);
       return 1;
