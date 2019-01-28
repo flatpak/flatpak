@@ -212,7 +212,10 @@ POLKIT_GOBJECT_REQUIRED=0.98
 
 PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0 libarchive >= 2.8.0 libxml-2.0 >= 2.4 ])
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
-PKG_CHECK_MODULES(DCONF, [dconf])
+PKG_CHECK_MODULES(DCONF, [dconf >= 0.26], [have_dconf=yes], [have_dconf=no])
+if test $have_dconf = yes; then
+  AC_DEFINE(HAVE_DCONF, 1, [Define if dconf is available])
+fi
 PKG_CHECK_MODULES(SYSTEMD, [libsystemd], [have_libsystemd=yes], [have_libsystemd=no])
 if test $have_libsystemd = yes; then
   AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if libsystemd is available])
@@ -500,5 +503,6 @@ echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
 echo "          Use seccomp:            $enable_seccomp"
 echo "          Privileged group:       $PRIVILEGED_GROUP"
 echo "          Privilege mode:         $with_priv_mode"
+echo "          Use dconf:              $have_dconf"
 echo "          Use libsystemd:         $have_libsystemd"
 echo ""

@@ -32,7 +32,9 @@
 #include <grp.h>
 #include <unistd.h>
 #include <gio/gunixfdlist.h>
+#ifdef HAVE_DCONF
 #include <dconf/dconf.h>
+#endif
 
 #ifdef ENABLE_SECCOMP
 #include <seccomp.h>
@@ -1731,6 +1733,8 @@ flatpak_run_allocate_id (int *lock_fd_out)
   return NULL;
 }
 
+#ifdef HAVE_DCONF
+
 static void
 add_dconf_key_to_keyfile (GKeyFile    *keyfile,
                           DConfClient *client,
@@ -1803,6 +1807,8 @@ dconf_path_for_app_id (const char *app_id)
   return g_string_free (s, FALSE);
 }
 
+#endif /* HAVE_DCONF */
+
 static void
 get_dconf_data (const char  *app_id,
                 const char **settings,
@@ -1811,17 +1817,21 @@ get_dconf_data (const char  *app_id,
                 char **locks,
                 gsize *locks_size)
 {
+#ifdef HAVE_DCONF
   DConfClient *client = NULL;
+  g_autofree char *prefix = NULL;
+#endif
   g_autoptr(GKeyFile) defaults_data = NULL;
   g_autoptr(GString) locks_data = NULL;
-  g_autofree char *prefix = NULL;
+
+  defaults_data = g_key_file_new ();
+  locks_data = g_string_new ("");
+
+#ifdef HAVE_DCONF
 
   prefix = dconf_path_for_app_id (app_id);
 
   client = dconf_client_new ();
-
-  defaults_data = g_key_file_new ();
-  locks_data = g_string_new ("");
 
   g_debug ("Add defaults in dir %s", prefix);
   add_dconf_dir_to_keyfile (defaults_data, client, prefix);
@@ -1853,12 +1863,15 @@ get_dconf_data (const char  *app_id,
             }
         }
     }
+#endif
 
   *defaults = g_key_file_to_data (defaults_data, defaults_size, NULL);
   *locks_size = locks_data->len;
   *locks = g_string_free (g_steal_pointer (&locks_data), FALSE);
 
+#ifdef HAVE_DCONF
   g_object_unref (client);
+#endif
 }
 
 static gboolean
