@@ -85,5 +85,5 @@ else
 fi
 
 mkdir -p repos
-flatpak build-export ${collection_args} --runtime ${GPGARGS-} ${REPO} ${DIR}
+flatpak build-export ${collection_args} --disable-sandbox --runtime ${GPGARGS-} ${REPO} ${DIR}
 rm -rf ${DIR}
