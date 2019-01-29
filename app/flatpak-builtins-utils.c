@@ -1142,7 +1142,9 @@ as_store_find_app (AsStore *store,
           AsApp *app = g_ptr_array_index (apps, i);
           AsBundle *bundle = as_app_get_bundle_default (app);
           if (bundle &&
+#if AS_CHECK_VERSION(0,5,15)
               as_bundle_get_kind (bundle) == AS_BUNDLE_KIND_FLATPAK &&
+#endif
               g_str_equal (as_bundle_get_id (bundle), ref))
             return app;
         }
