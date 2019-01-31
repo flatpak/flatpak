@@ -66,6 +66,7 @@ typedef struct
   FlatpakSystemHelper *object;
   GDBusMethodInvocation *invocation;
   GCancellable *cancellable;
+  gboolean preserve_pull;     /* Whether to preserve partially pulled repo on pull failure */
 
   guint watch_id;
   uid_t uid;                  /* uid of the client initiating the pull */
@@ -117,7 +118,8 @@ ongoing_pull_free (OngoingPull *pull)
   if (pull->revokefs_backend)
     terminate_revokefs_backend (pull);
 
-  if (!flatpak_rm_rf (src_dir_file, NULL, &local_error))
+  if (!pull->preserve_pull &&
+      !flatpak_rm_rf (src_dir_file, NULL, &local_error))
     {
       g_warning ("Unable to remove ongoing pull's src dir at %s: %s",
                  pull->src_dir, local_error->message);
@@ -676,6 +678,60 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   flatpak_system_helper_complete_deploy (object, invocation);
 
+  return TRUE;
+}
+
+static gboolean
+handle_cancel_pull (FlatpakSystemHelper   *object,
+                    GDBusMethodInvocation *invocation,
+                    guint                  arg_flags,
+                    const gchar           *arg_installation,
+                    const gchar           *arg_src_dir)
+{
+  OngoingPull *ongoing_pull;
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(GError) error = NULL;
+  uid_t uid;
+
+  g_debug ("CancelPull %s %u %s", arg_installation, arg_flags, arg_src_dir);
+
+  system = dir_get_system (arg_installation, get_sender_pid (invocation), &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  ongoing_pull = take_ongoing_pull_by_dir (arg_src_dir);
+  if (ongoing_pull == NULL)
+    {
+      g_set_error (&error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                   "Cannot find ongoing pull to cancel at %s", arg_src_dir);
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  /* Ensure that pull's uid is same as the caller's uid */
+  if (!get_connection_uid (invocation, &uid, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+  else
+    {
+      if (ongoing_pull->uid != uid)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Ongoing pull's uid(%d) does not match with peer uid(%d)",
+                                                 ongoing_pull->uid, uid);
+          return TRUE;
+        }
+    }
+
+  ongoing_pull->preserve_pull = (arg_flags & FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL) != 0;
+  ongoing_pull_free (ongoing_pull);
+
+  flatpak_system_helper_complete_cancel_pull (object, invocation);
   return TRUE;
 }
 
@@ -1449,6 +1505,7 @@ ongoing_pull_new (FlatpakSystemHelper   *object,
   pull->src_dir = g_strdup (src);
   pull->cancellable = g_cancellable_new ();
   pull->uid = uid;
+  pull->preserve_pull = FALSE;
   pull->unique_name = g_strdup (g_dbus_connection_get_unique_name (connection));
 
   pull->watch_id = g_bus_watch_name_on_connection (connection,
@@ -1939,7 +1996,8 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
            g_strcmp0 (method_name, "PruneLocalRepo") == 0 ||
            g_strcmp0 (method_name, "EnsureRepo") == 0 ||
            g_strcmp0 (method_name, "RunTriggers") == 0 ||
-           g_strcmp0 (method_name, "GetRevokefsFd") == 0)
+           g_strcmp0 (method_name, "GetRevokefsFd") == 0 ||
+           g_strcmp0 (method_name, "CancelPull") == 0)
     {
       guint32 flags;
 
@@ -2026,6 +2084,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-update-summary", G_CALLBACK (handle_update_summary), NULL);
   g_signal_connect (helper, "handle-generate-oci-summary", G_CALLBACK (handle_generate_oci_summary), NULL);
   g_signal_connect (helper, "handle-get-revokefs-fd", G_CALLBACK (handle_get_revokefs_fd), NULL);
+  g_signal_connect (helper, "handle-cancel-pull", G_CALLBACK (handle_cancel_pull), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),

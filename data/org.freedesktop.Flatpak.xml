@@ -152,6 +152,12 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="CancelPull">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+      <arg type='s' name='src_dir' direction='in'/>
+    </method>
+
     <method name="GetRevokefsFd">
       <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='u' name='flags' direction='in'/>
