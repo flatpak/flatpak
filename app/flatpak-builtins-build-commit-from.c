@@ -490,7 +490,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
             g_variant_builder_add (cr_builder, "(ss)", g_ptr_array_index (collection_ids, j), dst_ref);
 
           g_variant_builder_add (&metadata_builder, "{sv}", "ostree.collection-refs-binding",
-                                 g_variant_new_variant (g_variant_builder_end (cr_builder)));
+                                 g_variant_builder_end (cr_builder));
         }
       g_variant_builder_add (&metadata_builder, "{sv}", "ostree.ref-binding",
                              g_variant_new_strv (&dst_ref, 1));
