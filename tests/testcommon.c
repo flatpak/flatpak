@@ -473,7 +473,7 @@ test_parse_appdata (void)
     "      <release timestamp=\"1525132800\" version=\"0.1.0\"/>\n"
     "      <release timestamp=\"1525000800\" date=\"2018-05-02\" version=\"0.0.2\"/>\n"
     "      <release date=\"2017-05-02\" version=\"0.0.3\"/>\n"
-    "      <release timestamp=\"1000000000\" version=\"0.0.1\"/>\n"
+    "      <release timestamp=\"1000000000\" version=\"0.0.1\" type=\"stable\" urgency=\"low\"/>\n"
     "    </releases>\n"
     "    <project_license>anything goes</project_license>\n"
     "  </component>\n"

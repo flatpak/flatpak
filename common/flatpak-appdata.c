@@ -148,9 +148,12 @@ start_element (GMarkupParseContext *context,
                                        attribute_names,
                                        attribute_values,
                                        error,
+                                       G_MARKUP_COLLECT_STRING, "version", &version,
                                        G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "timestamp", &timestamp,
                                        G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "date", &date,
-                                       G_MARKUP_COLLECT_STRING, "version", &version,
+                                       G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "date_eol", NULL,
+                                       G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "urgency", NULL,
+                                       G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "type", NULL,
                                        G_MARKUP_COLLECT_INVALID))
         {
           guint64 ts = 0;
