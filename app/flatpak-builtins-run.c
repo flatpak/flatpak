@@ -35,6 +35,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 #include "flatpak-dbus-generated.h"
+#include "flatpak-permission-dbus-generated.h"
 #include "flatpak-run-private.h"
 
 static char *opt_arch;
@@ -54,6 +55,7 @@ static char *opt_runtime;
 static char *opt_runtime_version;
 static char *opt_commit;
 static char *opt_runtime_commit;
+static char *opt_background;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -73,8 +75,57 @@ static GOptionEntry options[] = {
   { "runtime-commit", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_commit, N_("Use specified runtime commit"), NULL },
   { "sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_sandbox, N_("Run completely sandboxed"), NULL },
   { "die-with-parent", 'p', 0, G_OPTION_ARG_NONE, &opt_die_with_parent, N_("Kill processes when the parent process dies"), NULL },
+  { "background", 0, 0, G_OPTION_ARG_NONE, &opt_background, N_("Run app in background if it is allowed to"), NULL },
   { NULL }
 };
+
+static gboolean
+app_may_run_in_background (const char  *app_id,
+                           GError     **error)
+{
+  XdpDbusPermissionStore *store = NULL;
+  g_autoptr(GVariant) out_perms = NULL;
+  g_autoptr(GVariant) out_data = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  store = xdp_dbus_permission_store_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION, 0,
+                                                            "org.freedesktop.impl.portal.PermissionStore",
+                                                            "/org/freedesktop/impl/portal/PermissionStore",
+                                                            NULL, error);
+  if (store == NULL)
+    return FALSE;
+
+  if (!xdp_dbus_permission_store_call_lookup_sync (store,
+                                                   "background",
+                                                   "background",
+                                                   &out_perms,
+                                                   &out_data,
+                                                   NULL,
+                                                   &local_error))
+    {
+      g_dbus_error_strip_remote_error (local_error);
+
+      g_debug ("No background permissions found: %s", local_error->message);
+
+      g_clear_error (&local_error);
+    }
+
+  if (out_perms != NULL)
+    {
+      const char **perms;
+      if (g_variant_lookup (out_perms, app_id, "^a&s", &perms))
+        {
+          g_autofree char *a = g_strjoinv (" ", (char **)perms);
+
+          g_debug ("Background permissions for %s: %s", app_id, a);
+
+          if (g_strv_contains (perms, "yes"))
+            return TRUE;
+        }
+    }
+
+  return flatpak_fail (error, _("%s is not allowed to run in the background"), app_id);
+}
 
 gboolean
 flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
@@ -259,6 +310,9 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       /* Clear app-kind error */
       g_clear_error (&local_error);
     }
+
+  if (opt_background && !app_may_run_in_background (id, error))
+    return FALSE;
 
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,
