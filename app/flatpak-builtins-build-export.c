@@ -499,17 +499,21 @@ check_refs:
   if (!g_file_query_exists (bin_file, NULL))
     g_print (_("WARNING: Binary not found for Exec line in %s: %s\n"), path, command);
 
-  *icon = g_key_file_get_string (key_file,
-                                 G_KEY_FILE_DESKTOP_GROUP,
-                                 G_KEY_FILE_DESKTOP_KEY_ICON,
-                                 NULL);
-  if (*icon && !g_str_has_prefix (*icon, app_id))
-    g_print (_("WARNING: Icon not matching app id in %s: %s\n"), path, *icon);
+  if (icon)
+    {
+      *icon = g_key_file_get_string (key_file,
+                                     G_KEY_FILE_DESKTOP_GROUP,
+                                     G_KEY_FILE_DESKTOP_KEY_ICON,
+                                     NULL);
+      if (*icon && !g_str_has_prefix (*icon, app_id))
+        g_print (_("WARNING: Icon not matching app id in %s: %s\n"), path, *icon);
+    }
 
-  *activatable = g_key_file_get_boolean (key_file,
-                                         G_KEY_FILE_DESKTOP_GROUP,
-                                         G_KEY_FILE_DESKTOP_KEY_DBUS_ACTIVATABLE,
-                                         NULL);
+  if (activatable)
+    *activatable = g_key_file_get_boolean (key_file,
+                                           G_KEY_FILE_DESKTOP_GROUP,
+                                           G_KEY_FILE_DESKTOP_KEY_DBUS_ACTIVATABLE,
+                                           NULL);
 
   return TRUE;
 }
@@ -604,6 +608,8 @@ validate_exports (GFile *export, GFile *files, const char *app_id, GError **erro
 {
   g_autofree char *desktop_path = NULL;
   g_autoptr(GFile) desktop_file = NULL;
+  g_autofree char *autostart_path = NULL;
+  g_autoptr(GFile) autostart_file = NULL;
   g_autofree char *service_path = NULL;
   g_autoptr(GFile) service_file = NULL;
   g_autofree char *icon = NULL;
@@ -625,6 +631,12 @@ validate_exports (GFile *export, GFile *files, const char *app_id, GError **erro
   service_file = g_file_resolve_relative_path (export, service_path);
 
   if (!validate_service_file (service_file, activatable, files, app_id, error))
+    return FALSE;
+
+  autostart_path = g_strconcat ("share/gnome/autostart/", app_id, ".desktop", NULL);
+  autostart_file = g_file_resolve_relative_path (export, autostart_path);
+
+  if (!validate_desktop_file (autostart_file, export, files, app_id, NULL, NULL, error))
     return FALSE;
 
   return TRUE;
