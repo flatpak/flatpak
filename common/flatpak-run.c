@@ -1745,13 +1745,14 @@ flatpak_run_allocate_id (int *lock_fd_out)
 #ifdef HAVE_DCONF
 
 static void
-add_dconf_key_to_keyfile (GKeyFile    *keyfile,
-                          DConfClient *client,
-                          const char  *key)
+add_dconf_key_to_keyfile (GKeyFile       *keyfile,
+                          DConfClient    *client,
+                          const char     *key,
+                          DConfReadFlags  flags)
 {
   g_autofree char *group = g_path_get_dirname (key);
   g_autofree char *k = g_path_get_basename (key);
-  GVariant *value = dconf_client_read_full (client, key, DCONF_READ_DEFAULT_VALUE, NULL);
+  GVariant *value = dconf_client_read_full (client, key, flags, NULL);
 
   if (value)
     {
@@ -1761,9 +1762,10 @@ add_dconf_key_to_keyfile (GKeyFile    *keyfile,
 }
 
 static void
-add_dconf_dir_to_keyfile (GKeyFile    *keyfile,
-                          DConfClient *client,
-                          const char  *dir)
+add_dconf_dir_to_keyfile (GKeyFile       *keyfile,
+                          DConfClient    *client,
+                          const char     *dir,
+                          DConfReadFlags  flags)
 {
   g_auto(GStrv) keys = NULL;
   int i;
@@ -1773,9 +1775,9 @@ add_dconf_dir_to_keyfile (GKeyFile    *keyfile,
     {
       g_autofree char *k = g_strconcat (dir, keys[i], NULL);
       if (dconf_is_dir (k, NULL))
-        add_dconf_dir_to_keyfile (keyfile, client, k);
+        add_dconf_dir_to_keyfile (keyfile, client, k, flags);
       else if (dconf_is_key (k, NULL))
-        add_dconf_key_to_keyfile (keyfile, client, k);
+        add_dconf_key_to_keyfile (keyfile, client, k, flags);
     }
 }
 
@@ -1843,7 +1845,7 @@ get_dconf_data (const char  *app_id,
   client = dconf_client_new ();
 
   g_debug ("Add defaults in dir %s", prefix);
-  add_dconf_dir_to_keyfile (defaults_data, client, prefix);
+  add_dconf_dir_to_keyfile (defaults_data, client, prefix, DCONF_READ_DEFAULT_VALUE);
 
   g_debug ("Add locks in dir %s", prefix);
   add_dconf_locks_to_list (locks_data, client, prefix);
@@ -1856,7 +1858,7 @@ get_dconf_data (const char  *app_id,
           if (dconf_is_dir (settings[i], NULL))
             {
               g_debug ("Add defaults in dir %s", settings[i]);
-              add_dconf_dir_to_keyfile (defaults_data, client, settings[i]);
+              add_dconf_dir_to_keyfile (defaults_data, client, settings[i], DCONF_READ_DEFAULT_VALUE);
 
               g_debug ("Add locks in dir %s", settings[i]);
               add_dconf_locks_to_list (locks_data, client, settings[i]);
@@ -1864,7 +1866,7 @@ get_dconf_data (const char  *app_id,
           else if (dconf_is_key (settings[i], NULL))
             {
               g_debug ("Add individual key %s", settings[i]);
-              add_dconf_key_to_keyfile (defaults_data, client, settings[i]);
+              add_dconf_key_to_keyfile (defaults_data, client, settings[i], DCONF_READ_DEFAULT_VALUE);
             }
           else
             {
