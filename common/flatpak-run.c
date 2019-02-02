@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -1822,31 +1823,75 @@ dconf_path_for_app_id (const char *app_id)
   return g_string_free (s, FALSE);
 }
 
+/* Check if two dconf paths are 'similar enough', which
+ * for now is defined as equal except case differences
+ * and -/_
+ */
+static gboolean
+path_is_similar (const char *path1, const char *path2)
+{
+  int i;
+
+  for (i = 0; path1[i]; i++)
+    {
+      if (path2[i] == '\0')
+        return FALSE;
+
+      if (tolower (path1[i]) == tolower (path2[i]))
+        continue;
+
+      if ((path1[i] == '-' || path1[i] == '_') &&
+          (path2[i] == '-' || path2[i] == '_'))
+        continue;
+
+      return FALSE;
+    }
+
+  if (path2[0] != '\0')
+    return FALSE;
+
+  return TRUE;
+}
+
 #endif /* HAVE_DCONF */
 
 static void
 get_dconf_data (const char  *app_id,
-                const char **settings,
-                char **defaults,
-                gsize *defaults_size,
-                char **locks,
-                gsize *locks_size)
+                const char **paths,
+                const char  *migrate_path,
+                char       **defaults,
+                gsize       *defaults_size,
+                char       **values,
+                gsize       *values_size,
+                char       **locks,
+                gsize       *locks_size)
 {
 #ifdef HAVE_DCONF
   DConfClient *client = NULL;
   g_autofree char *prefix = NULL;
 #endif
   g_autoptr(GKeyFile) defaults_data = NULL;
+  g_autoptr(GKeyFile) values_data = NULL;
   g_autoptr(GString) locks_data = NULL;
 
   defaults_data = g_key_file_new ();
+  values_data = g_key_file_new ();
   locks_data = g_string_new ("");
 
 #ifdef HAVE_DCONF
 
+  client = dconf_client_new ();
+
   prefix = dconf_path_for_app_id (app_id);
 
-  client = dconf_client_new ();
+  if (migrate_path)
+    {
+      g_debug ("Add values in dir %s", migrate_path);
+      if (path_is_similar (migrate_path, prefix))
+        add_dconf_dir_to_keyfile (values_data, client, migrate_path, DCONF_READ_USER_VALUE);
+      else
+        g_warning ("Ignoring D-Conf migrate-path setting %s", migrate_path);
+    }
 
   g_debug ("Add defaults in dir %s", prefix);
   add_dconf_dir_to_keyfile (defaults_data, client, prefix, DCONF_READ_DEFAULT_VALUE);
@@ -1854,33 +1899,36 @@ get_dconf_data (const char  *app_id,
   g_debug ("Add locks in dir %s", prefix);
   add_dconf_locks_to_list (locks_data, client, prefix);
 
-  if (settings)
+  /* We allow extra paths for defaults and locks, but not for user values */
+  if (paths)
     {
       int i;
-      for (i = 0; settings[i]; i++)
+      for (i = 0; paths[i]; i++)
         {
-          if (dconf_is_dir (settings[i], NULL))
+          if (dconf_is_dir (paths[i], NULL))
             {
-              g_debug ("Add defaults in dir %s", settings[i]);
-              add_dconf_dir_to_keyfile (defaults_data, client, settings[i], DCONF_READ_DEFAULT_VALUE);
+              g_debug ("Add defaults in dir %s", paths[i]);
+              add_dconf_dir_to_keyfile (defaults_data, client, paths[i], DCONF_READ_DEFAULT_VALUE);
 
-              g_debug ("Add locks in dir %s", settings[i]);
-              add_dconf_locks_to_list (locks_data, client, settings[i]);
+              g_debug ("Add locks in dir %s", paths[i]);
+              add_dconf_locks_to_list (locks_data, client, paths[i]);
             }
-          else if (dconf_is_key (settings[i], NULL))
+          else if (dconf_is_key (paths[i], NULL))
             {
-              g_debug ("Add individual key %s", settings[i]);
-              add_dconf_key_to_keyfile (defaults_data, client, settings[i], DCONF_READ_DEFAULT_VALUE);
+              g_debug ("Add individual key %s", paths[i]);
+              add_dconf_key_to_keyfile (defaults_data, client, paths[i], DCONF_READ_DEFAULT_VALUE);
+              add_dconf_key_to_keyfile (values_data, client, paths[i], DCONF_READ_USER_VALUE);
             }
           else
             {
-              g_warning ("Ignoring settings path '%s': neither dir nor key", settings[i]);
+              g_warning ("Ignoring settings path '%s': neither dir nor key", paths[i]);
             }
         }
     }
 #endif
 
   *defaults = g_key_file_to_data (defaults_data, defaults_size, NULL);
+  *values = g_key_file_to_data (values_data, values_size, NULL);
   *locks_size = locks_data->len;
   *locks = g_string_free (g_steal_pointer (&locks_data), FALSE);
 
@@ -1895,21 +1943,33 @@ flatpak_run_add_dconf_args (FlatpakBwrap  *bwrap,
                             GKeyFile      *metakey,
                             GError       **error)
 {
-  g_auto(GStrv) settings = NULL;
+  g_auto(GStrv) paths = NULL;
+  g_autofree char *migrate_path = NULL;
   g_autofree char *defaults = NULL;
+  g_autofree char *values = NULL;
   g_autofree char *locks = NULL;
   gsize defaults_size;
+  gsize values_size;
   gsize locks_size;
 
   if (metakey)
-    settings = g_key_file_get_string_list (metakey,
-                                           FLATPAK_METADATA_GROUP_DCONF,
-                                           FLATPAK_METADATA_KEY_DCONF_PATHS,
-                                           NULL, NULL);
- 
-  get_dconf_data (app_id, (const char **)settings,
-                           &defaults, &defaults_size,
-                           &locks, &locks_size);
+    {
+      paths = g_key_file_get_string_list (metakey,
+                                          FLATPAK_METADATA_GROUP_DCONF,
+                                          FLATPAK_METADATA_KEY_DCONF_PATHS,
+                                          NULL, NULL);
+      migrate_path = g_key_file_get_string (metakey,
+                                            FLATPAK_METADATA_GROUP_DCONF,
+                                            FLATPAK_METADATA_KEY_DCONF_MIGRATE_PATH,
+                                            NULL);
+    }
+
+  get_dconf_data (app_id,
+                  (const char **)paths,
+                  migrate_path,
+                  &defaults, &defaults_size,
+                  &values, &values_size,
+                  &locks, &locks_size);
 
   if (defaults_size != 0 &&
       !flatpak_bwrap_add_args_data (bwrap,
@@ -1926,6 +1986,30 @@ flatpak_run_add_dconf_args (FlatpakBwrap  *bwrap,
                                     "/etc/glib-2.0/settings/locks",
                                     error))
     return FALSE;
+
+  /* We do a one-time conversion of existing dconf settings to a keyfile.
+   * Only do that once the app stops requesting dconf access.
+   */
+  if (migrate_path)
+    {
+      g_autofree char *filename = NULL;
+
+      filename = g_build_filename (g_get_home_dir (),
+                                   ".var/app", app_id,
+                                   "config/glib-2.0/settings/keyfile",
+                                   NULL);
+
+      if (values_size != 0 && !g_file_test (filename, G_FILE_TEST_EXISTS))
+        { 
+          g_autofree char *dir = g_path_get_dirname (filename);
+
+          if (g_mkdir_with_parents (dir, 0700) == -1)
+            return FALSE;
+
+          if (!g_file_set_contents (filename, values, values_size, error))
+            return FALSE;
+        }
+    }
 
   return TRUE;
 }
