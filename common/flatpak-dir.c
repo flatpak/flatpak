@@ -5985,6 +5985,7 @@ export_desktop_file (const char   *app,
                      const char   *branch,
                      const char   *arch,
                      GKeyFile     *metadata,
+                     const char   *extra_run_args,
                      int           parent_fd,
                      const char   *name,
                      struct stat  *stat_buf,
@@ -6066,6 +6067,14 @@ export_desktop_file (const char   *app,
       g_key_file_remove_key (keyfile, groups[i], "X-Flatpak-RunOptions", NULL);
       g_key_file_remove_key (keyfile, groups[i], "TryExec", NULL);
 
+      /* Remove this so gnome-session does not interfere if we refuse to start */
+      g_key_file_remove_key (keyfile, groups[i], "X-GNOME-AutoRestart", NULL);
+
+      /* Remove this so gnome-session does not use D-Bus activation. That would
+       * defeat our Exec line rewriting to add the background check.
+       */
+      g_key_file_remove_key (keyfile, groups[i], "X-GNOME-DBus-Name", NULL);
+
       /* Remove this to make sure nothing tries to execute it outside the sandbox*/
       g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
 
@@ -6077,6 +6086,9 @@ export_desktop_file (const char   *app,
 
       if (flatpak_run_args != NULL)
         g_string_append_printf (new_exec, "%s", flatpak_run_args);
+
+      if (extra_run_args)
+        g_string_append_printf (new_exec, " %s", extra_run_args);
 
       old_exec = g_key_file_get_string (keyfile, groups[i], "Exec", NULL);
       if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
@@ -6251,7 +6263,12 @@ rewrite_export_dir (const char     *app,
           if (g_str_has_suffix (dent->d_name, ".desktop") ||
               g_str_has_suffix (dent->d_name, ".service"))
             {
-              if (!export_desktop_file (app, branch, arch, metadata,
+              const char *extra_run_args = NULL;
+
+              if (strstr (source_path, "autostart") != NULL)
+                extra_run_args = "--background";
+
+              if (!export_desktop_file (app, branch, arch, metadata, extra_run_args,
                                         source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
                 goto out;
             }
@@ -6451,6 +6468,7 @@ flatpak_export_dir (GFile        *source,
     "share/dbus-1/services",               "../../..",
     "share/gnome-shell/search-providers",  "../../..",
     "share/mime/packages",                 "../../..",
+    "share/gnome/autostart",               "../../..",
     "bin",                                 "..",
   };
   int i;
