@@ -898,6 +898,10 @@ flatpak_get_allowed_exports (const char     *source_path,
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".desktop"));
     }
+  else if (strcmp (source_path, "share/gnome/autostart") == 0)
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".desktop"));
+    }
   else if (flatpak_has_path_prefix (source_path, "share/icons"))
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".svgz"));
