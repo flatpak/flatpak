@@ -35,6 +35,8 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-table-printer.h"
 #include "flatpak-instance.h"
+#include "gnome-shell-introspect-dbus-generated.h"
+
 
 static const char **opt_cols;
 
@@ -48,6 +50,7 @@ static Column all_columns[] = {
   { "pid",            N_("PID"),         N_("Show the PID of the wrapper process"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "child-pid",      N_("Child-PID"),   N_("Show the PID of the sandbox process"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "application",    N_("Application"), N_("Show the application ID"),             0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "state",          N_("State"),       N_("Show the application state"),          0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "arch",           N_("Arch"),        N_("Show the architecture"),               0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "branch",         N_("Branch"),      N_("Show the application branch"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "commit",         N_("Commit"),      N_("Show the application commit"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
@@ -57,9 +60,65 @@ static Column all_columns[] = {
   { NULL }
 };
 
+typedef enum { UNKNOWN, BACKGROUND, RUNNING, ACTIVE } AppState;
+
+static GHashTable *
+get_app_states (void)
+{
+  GnomeShellIntrospect *shell = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GVariant) windows = NULL;
+  g_autoptr(GHashTable) app_states = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  shell = gnome_shell_introspect_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+                                                         G_DBUS_PROXY_FLAGS_NONE,
+                                                         "org.gnome.Shell",
+                                                         "/org/gnome/Shell/Introspect",
+                                                         NULL, NULL);
+  if (shell == NULL)
+    return g_steal_pointer (&app_states);
+
+  if (!gnome_shell_introspect_call_get_windows_sync (shell, &windows, NULL, &error))
+    g_debug ("Could not get window list: %s", error->message);
+
+  if (windows)
+    {
+      g_autoptr(GVariantIter) iter = g_variant_iter_new (windows);
+      GVariant *dict;
+      while (g_variant_iter_loop (iter, "{t@a{sv}}", NULL, &dict))
+        {
+          const char *app_id = NULL;
+          gboolean hidden = FALSE;
+          gboolean focus = FALSE;
+          AppState state = BACKGROUND;
+
+          g_variant_lookup (dict, "app-id", "&s", &app_id);
+          g_variant_lookup (dict, "is-hidden", "b", &hidden);
+          g_variant_lookup (dict, "has-focus", "b", &focus);
+
+          if (app_id == NULL)
+            continue;
+
+          state = GPOINTER_TO_INT (g_hash_table_lookup (app_states, app_id));
+
+          if (!hidden)
+            state = MAX (state, RUNNING);
+          if (focus)
+            state = MAX (state, ACTIVE);
+
+          g_hash_table_insert (app_states, g_strdup (app_id), GINT_TO_POINTER (state));
+        }
+    }
+
+  g_object_unref (shell);
+
+  return g_steal_pointer (&app_states);
+}
+
 static gboolean
 enumerate_instances (Column *columns, GError **error)
 {
+  g_autoptr(GHashTable) app_states = NULL;
   g_autoptr(GPtrArray) instances = NULL;
   FlatpakTablePrinter *printer;
   int i, j;
@@ -76,6 +135,9 @@ enumerate_instances (Column *columns, GError **error)
       /* nothing to show */
       return TRUE;
     }
+
+  if (find_column (columns, "state", NULL) != -1)
+    app_states = get_app_states ();
 
   for (j = 0; j < instances->len; j++)
     {
@@ -127,6 +189,12 @@ enumerate_instances (Column *columns, GError **error)
             flatpak_table_printer_add_column_len (printer,
                                                   flatpak_instance_get_runtime_commit (instance),
                                                   12);
+          else if (strcmp (columns[i].name, "state") == 0)
+            {
+              AppState state = GPOINTER_TO_INT (g_hash_table_lookup (app_states, flatpak_instance_get_app (instance)));
+              const char *names[] = { N_("Unknown"), N_("Background"), N_("Running"), N_("Active") };
+              flatpak_table_printer_add_column (printer, names[state]);
+            }
         }
 
       flatpak_table_printer_finish_row (printer);
