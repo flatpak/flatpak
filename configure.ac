@@ -220,6 +220,7 @@ PKG_CHECK_MODULES(SYSTEMD, [libsystemd], [have_libsystemd=yes], [have_libsystemd
 if test $have_libsystemd = yes; then
   AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if libsystemd is available])
 fi
+PKG_CHECK_MODULES(NOTIFY, [libnotify])
 
 save_LIBS=$LIBS
 LIBS=$BASE_LIBS

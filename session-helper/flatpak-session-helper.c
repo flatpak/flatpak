@@ -29,6 +29,7 @@
 #include <gio/gunixfdlist.h>
 #include "flatpak-dbus-generated.h"
 #include "flatpak-utils-private.h"
+#include "background-monitor.h"
 
 static char *monitor_dir;
 static char *p11_kit_server_socket_path;
@@ -868,6 +869,8 @@ main (int    argc,
                              on_name_lost,
                              NULL,
                              NULL);
+
+  start_background_monitor (session_bus);
 
   loop = g_main_loop_new (NULL, FALSE);
   g_main_loop_run (loop);
