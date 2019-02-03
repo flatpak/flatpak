@@ -4,7 +4,12 @@ bin_PROGRAMS += \
 
 EXTRA_DIST += app/parse-datetime.y
 
-flatpak_dbus_built_sources = app/flatpak-permission-dbus-generated.c app/flatpak-permission-dbus-generated.h
+flatpak_dbus_built_sources = \
+	app/flatpak-permission-dbus-generated.c \
+	app/flatpak-permission-dbus-generated.h \
+	app/gnome-shell-introspect-dbus-generated.c \
+	app/gnome-shell-introspect-dbus-generated.h \
+	$(NULL)
 
 app/flatpak-permission-dbus-generated.c: data/org.freedesktop.impl.portal.PermissionStore.xml Makefile
 	mkdir -p $(builddir)/common
@@ -15,9 +20,17 @@ app/flatpak-permission-dbus-generated.c: data/org.freedesktop.impl.portal.Permis
 		$(srcdir)/data/org.freedesktop.impl.portal.PermissionStore.xml  \
 		$(NULL)
 
+app/gnome-shell-introspect-dbus-generated.c: data/org.gnome.Shell.Introspect.xml Makefile
+	mkdir -p $(builddir)/common
+	$(AM_V_GEN) $(GDBUS_CODEGEN)                            \
+		--interface-prefix org.gnome.Shell  		\
+		--c-namespace GnomeShell 			\
+		--generate-c-code $(builddir)/app/gnome-shell-introspect-dbus-generated  \
+		$(srcdir)/data/org.gnome.Shell.Introspect.xml  \
+		$(NULL)
+
 app/%-dbus-generated.h: app/%-dbus-generated.c
 	@true # Built as a side-effect of the rules for the .c
-
 
 if BUILD_SYSTEM_HELPER
 polkit_sources = \

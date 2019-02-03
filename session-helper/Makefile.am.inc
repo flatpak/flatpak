@@ -14,6 +14,8 @@ flatpak_session_helper_SOURCES = \
 	session-helper/background-monitor.h \
 	app/flatpak-permission-dbus-generated.c \
 	app/flatpak-permission-dbus-generated.h \
+	app/gnome-shell-introspect-dbus-generated.c \
+	app/gnome-shell-introspect-dbus-generated.h \
 	$(NULL)
 
 flatpak_session_helper_LDADD = $(AM_LDADD) $(BASE_LIBS) $(NOTIFY_LIBS) libflatpak-common.la

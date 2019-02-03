@@ -28,11 +28,85 @@
 #include <libnotify/notify.h>
 #include "background-monitor.h"
 #include "app/flatpak-permission-dbus-generated.h"
+#include "app/gnome-shell-introspect-dbus-generated.h"
 
 #define PERMISSION_TABLE "background"
 #define PERMISSION_ID "background"
 
 typedef enum { UNSET, NO, YES, ASK } Permission;
+
+static GnomeShellIntrospect *shell = NULL;
+
+static void
+init_gnome_shell (GDBusConnection *connection)
+{
+  g_autoptr(GError) error = NULL;
+
+  shell = gnome_shell_introspect_proxy_new_sync (connection,
+                                                 G_DBUS_PROXY_FLAGS_NONE,
+                                                 "org.gnome.Shell",
+                                                 "/org/gnome/Shell/Introspect",
+                                                 NULL, &error);
+  if (shell == NULL)
+    g_debug ("No gnome-shell introspection: %s", error->message);
+}
+
+static GnomeShellIntrospect *
+get_gnome_shell (void)
+{
+  return shell;
+}
+
+typedef enum { BACKGROUND, RUNNING, ACTIVE } AppState;
+
+static GHashTable *
+get_app_states (void)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GVariant) windows = NULL;
+  g_autoptr(GHashTable) app_states = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  if (!gnome_shell_introspect_call_get_windows_sync (get_gnome_shell (), &windows, NULL, &error))
+    g_debug ("Could not get window list: %s", error->message);
+
+  if (windows)
+    {
+      g_autoptr(GVariantIter) iter = g_variant_iter_new (windows);
+      GVariant *dict;
+      while (g_variant_iter_loop (iter, "{t@a{sv}}", NULL, &dict))
+        {
+          const char *app_id = NULL;
+          gboolean hidden = FALSE;
+          gboolean focus = FALSE;
+          AppState state = BACKGROUND;
+
+          g_variant_lookup (dict, "app-id", "&s", &app_id);
+          g_variant_lookup (dict, "is-hidden", "b", &hidden);
+          g_variant_lookup (dict, "has-focus", "b", &focus);
+
+          if (app_id == NULL)
+            continue;
+
+          state = GPOINTER_TO_INT (g_hash_table_lookup (app_states, app_id));
+
+          if (!hidden)
+            state = MAX (state, RUNNING);
+          if (focus) 
+            state = MAX (state, ACTIVE);
+
+          g_hash_table_insert (app_states, g_strdup (app_id), GINT_TO_POINTER (state));
+        } 
+    }
+
+  return g_steal_pointer (&app_states);
+}
+
+static AppState
+get_app_state (const char *app_id,
+               GHashTable *app_states)
+{
+  return (AppState)GPOINTER_TO_INT (g_hash_table_lookup (app_states, app_id));
+}
 
 static XdpDbusPermissionStore *permission_store = NULL;
 
@@ -146,13 +220,6 @@ set_permission (const char *app_id,
       g_dbus_error_strip_remote_error (error);
       g_warning ("Error updating permission store: %s", error->message);
     }
-}
-
-static gboolean
-flatpak_instance_has_window (FlatpakInstance *instance)
-{
-  /* TODO: implement */
-  return FALSE;
 }
 
 static char *
@@ -364,12 +431,14 @@ thread_func (GTask *task,
              GCancellable *cancellable)
 {
   g_autoptr(GVariant) perms = NULL;
+  g_autoptr(GHashTable) app_states = NULL;
   g_autoptr(GPtrArray) apps = NULL;
   int i;
 
   g_debug ("Checking background permissions");
 
   perms = get_permissions ();
+  app_states = get_app_states ();
 
   apps = flatpak_instance_get_all ();
 
@@ -384,7 +453,7 @@ thread_func (GTask *task,
       if (!flatpak_instance_is_running (instance))
         continue;
 
-      if (flatpak_instance_has_window (instance))
+      if (get_app_state (app_id, app_states) != BACKGROUND)
         continue;
 
       g_debug ("App %s is running in the background", app_id);
@@ -420,7 +489,9 @@ start_background_monitor (GDBusConnection *bus)
   init_notifications ();
   notify_init ("flatpak");
   init_permission_store (bus);
+  init_gnome_shell (bus);
 
   g_debug ("Starting background app monitor");
   g_timeout_add_seconds (300, enforce_background_permissions, NULL);
+  enforce_background_permissions (NULL);
 }
