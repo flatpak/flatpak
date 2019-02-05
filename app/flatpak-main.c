@@ -571,11 +571,11 @@ install_polkit_agent (void)
 }
 
 static void
-uninstall_polkit_agent (gpointer agent)
+uninstall_polkit_agent (gpointer *agent)
 {
 #ifdef USE_SYSTEM_HELPER
-  if (agent)
-    polkit_agent_listener_unregister (agent);
+  if (*agent)
+    polkit_agent_listener_unregister (*agent);
 #endif
 }
 
