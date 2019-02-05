@@ -950,7 +950,7 @@ transaction_ready (FlatpakTransaction *transaction)
   if (!self->disable_interaction)
     {
       FlatpakInstallation *installation = flatpak_transaction_get_installation (transaction);
-      g_autofree char *name = NULL;
+      const char *name;
       const char *id;
       gboolean ret;
 
