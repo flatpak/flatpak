@@ -1,3 +1,19 @@
+Changes in 1.2.1
+================
+
+ * Ensure flatpak builds with older versions of glib and appstream-glib.
+ * build-commit-from: Fix the new --extra-id option.
+ * build-export: Allow disabling the sandboxing of the icon validator and
+   do so during the tests.
+ * profile: Don't break if debug logging is enabled.
+ * Better handling of the appdata release attribute.
+ * Don't install polkit agent when not needed, avoiding some unnecessary
+   log lines in some cases.
+ * Fix the output of the sandboxed icon validator not being visible.
+ * builld-init: Allow specifying a full ref for the sdk, which is used to
+   select the branch name when checking sdk extensions.
+ * Make the ok checks in the output green
+
 Changes in 1.2
 ==============
 
