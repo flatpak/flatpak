@@ -950,7 +950,7 @@ transaction_ready (FlatpakTransaction *transaction)
   if (!self->disable_interaction)
     {
       FlatpakInstallation *installation = flatpak_transaction_get_installation (transaction);
-      const char *name;
+      g_autofree char *name = NULL;
       const char *id;
       gboolean ret;
 
@@ -964,8 +964,7 @@ transaction_ready (FlatpakTransaction *transaction)
       else if (g_strcmp0 (id, "default") == 0)
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the system installation?"));
       else
-        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s installation?"),
-                                           name ? name : id);
+        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s?"), name);
 
       if (!ret)
         {
