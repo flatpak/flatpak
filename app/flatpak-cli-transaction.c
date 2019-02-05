@@ -964,8 +964,7 @@ transaction_ready (FlatpakTransaction *transaction)
       else if (g_strcmp0 (id, "default") == 0)
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the system installation?"));
       else
-        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s installation?"),
-                                           name ? name : id);
+        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s?"), name);
 
       if (!ret)
         {

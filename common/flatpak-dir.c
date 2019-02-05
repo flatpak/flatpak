@@ -1710,16 +1710,21 @@ flatpak_dir_get_name_cached (FlatpakDir *self)
   return (const char *)name;
 }
 
-const char *
+char *
 flatpak_dir_get_display_name (FlatpakDir *self)
 {
   if (self->user)
-    return _("User installation");
+    return g_strdup (_("User installation"));
 
   if (self->extra_data != NULL)
-    return self->extra_data->display_name;
+    {
+      if (self->extra_data->display_name)
+        return g_strdup (self->extra_data->display_name);
 
-  return NULL;
+      return g_strdup_printf (_("System (%s) installation"), self->extra_data->id);
+    }
+
+  return g_strdup (SYSTEM_DIR_DEFAULT_DISPLAY_NAME);
 }
 
 gint

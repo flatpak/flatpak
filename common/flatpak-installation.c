@@ -78,6 +78,7 @@ struct _FlatpakInstallationPrivate
      flatpak_installation_drop_caches(), so every user needs to keep its own reference alive until
      done. */
   FlatpakDir *dir_unlocked;
+  char *display_name;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstallation, flatpak_installation, G_TYPE_OBJECT)
@@ -98,6 +99,7 @@ flatpak_installation_finalize (GObject *object)
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_object_unref (priv->dir_unlocked);
+  g_free (priv->display_name);
 
   G_OBJECT_CLASS (flatpak_installation_parent_class)->finalize (object);
 }
@@ -531,9 +533,13 @@ flatpak_installation_get_id (FlatpakInstallation *self)
 const char *
 flatpak_installation_get_display_name (FlatpakInstallation *self)
 {
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
-  return flatpak_dir_get_display_name (dir);
+  if (priv->display_name == NULL)
+    priv->display_name = flatpak_dir_get_display_name (dir);
+
+  return (const char *)priv->display_name;
 }
 
 /**

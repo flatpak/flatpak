@@ -130,7 +130,7 @@ test_multiple_system_installations (void)
   static InstallationExtraData expected_installations[] = {
     { "extra-installation-2", "Extra system installation 2", 25, FLATPAK_STORAGE_TYPE_SDCARD},
     { "extra-installation-1", "Extra system installation 1", 10, FLATPAK_STORAGE_TYPE_MMC},
-    { "extra-installation-3", NULL, 0, FLATPAK_STORAGE_TYPE_DEFAULT},
+    { "extra-installation-3", "System (extra-installation-3) installation", 0, FLATPAK_STORAGE_TYPE_DEFAULT},
     { "default", "Default system installation", 0, FLATPAK_STORAGE_TYPE_DEFAULT},
   };
 
