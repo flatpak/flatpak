@@ -6078,6 +6078,11 @@ flatpak_get_window_size (int *rows, int *cols)
 
   if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
     {
+      /* For whatever reason, in buildbot this returns 0, 0 so add a fallback */
+      if (w.ws_row == 0)
+        w.ws_row = 24;
+      if (w.ws_col == 0)
+        w.ws_col = 80;
       *rows = w.ws_row;
       *cols = w.ws_col;
     }
