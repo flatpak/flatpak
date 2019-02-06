@@ -422,9 +422,9 @@ operation_done (FlatpakTransaction          *transaction,
   FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
 
   if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-    set_op_progress (self, op, FLATPAK_ANSI_GREEN "-" FLATPAK_ANSI_COLOR_RESET);
+    set_op_progress (self, op, "-");
   else
-    set_op_progress (self, op, FLATPAK_ANSI_GREEN "✓" FLATPAK_ANSI_COLOR_RESET);
+    set_op_progress (self, op, "✓");
 
   if (flatpak_fancy_output ())
     redraw (self);
