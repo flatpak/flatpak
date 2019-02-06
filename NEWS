@@ -1,3 +1,10 @@
+Changes in 1.2.2
+================
+
+ * Reverted green checkbox as they caused table alignment issues
+ * Fix a division by zero if the terminal reports a zero terminal
+   width (which happens in the flathub build environment).
+
 Changes in 1.2.1
 ================
 
