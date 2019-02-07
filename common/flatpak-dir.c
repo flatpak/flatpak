@@ -4218,8 +4218,6 @@ repo_pull (OstreeRepo                           *self,
 
   if (collection_id != NULL)
     {
-      GVariantBuilder find_builder, pull_builder;
-      g_autoptr(GVariant) find_options = NULL, pull_options = NULL;
       g_autoptr(GAsyncResult) find_result = NULL, pull_result = NULL;
       g_auto(OstreeRepoFinderResultv) results = NULL;
       OstreeCollectionRef collection_ref;
@@ -4227,47 +4225,44 @@ repo_pull (OstreeRepo                           *self,
       guint32 update_freq = 0;
       g_autoptr(GMainContextPopDefault) context = NULL;
 
-      /* Find options */
-      g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
-
-      if (force_disable_deltas)
-        {
-          g_variant_builder_add (&find_builder, "{s@v}", "disable-static-deltas",
-                                 g_variant_new_variant (g_variant_new_boolean (TRUE)));
-        }
-
-      collection_ref.collection_id = collection_id;
-      collection_ref.ref_name = (char *) ref_to_fetch;
-
-      collection_refs_to_fetch[0] = &collection_ref;
-      collection_refs_to_fetch[1] = NULL;
-
-      if (progress != NULL)
-        update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
-      if (update_freq == 0)
-        update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
-
-      g_variant_builder_add (&find_builder, "{s@v}", "update-frequency",
-                             g_variant_new_variant (g_variant_new_uint32 (update_freq)));
-
-      if (rev_to_fetch != NULL)
-        {
-          g_variant_builder_add (&find_builder, "{s@v}", "override-commit-ids",
-                                 g_variant_new_variant (g_variant_new_strv (&rev_to_fetch, 1)));
-        }
-
-      find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
-
-      /* Pull options */
-      g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
-      get_common_pull_options (&pull_builder, ref_to_fetch, dirs_to_pull, current_checksum,
-                               force_disable_deltas, flags, progress);
-      pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
-
       context = flatpak_main_context_new_default ();
 
       if (results_to_fetch == NULL)
         {
+          GVariantBuilder find_builder;
+          g_autoptr(GVariant) find_options = NULL;
+
+          /* Find options */
+          g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
+
+          if (force_disable_deltas)
+            {
+              g_variant_builder_add (&find_builder, "{s@v}", "disable-static-deltas",
+                                     g_variant_new_variant (g_variant_new_boolean (TRUE)));
+            }
+
+          collection_ref.collection_id = collection_id;
+          collection_ref.ref_name = (char *) ref_to_fetch;
+
+          collection_refs_to_fetch[0] = &collection_ref;
+          collection_refs_to_fetch[1] = NULL;
+
+          if (progress != NULL)
+            update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
+          if (update_freq == 0)
+            update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+
+          g_variant_builder_add (&find_builder, "{s@v}", "update-frequency",
+                                 g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+
+          if (rev_to_fetch != NULL)
+            {
+              g_variant_builder_add (&find_builder, "{s@v}", "override-commit-ids",
+                                     g_variant_new_variant (g_variant_new_strv (&rev_to_fetch, 1)));
+            }
+
+          find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
+
           ostree_repo_find_remotes_async (self, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
                                           find_options,
                                           NULL /* default finders */, progress, cancellable,
@@ -4282,6 +4277,15 @@ repo_pull (OstreeRepo                           *self,
 
       if (results_to_fetch != NULL)
         {
+          GVariantBuilder pull_builder;
+          g_autoptr(GVariant) pull_options = NULL;
+
+          /* Pull options */
+          g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
+          get_common_pull_options (&pull_builder, ref_to_fetch, dirs_to_pull, current_checksum,
+                                   force_disable_deltas, flags, progress);
+          pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
+
           ostree_repo_pull_from_remotes_async (self, results_to_fetch,
                                                pull_options, progress,
                                                cancellable, async_result_cb,
