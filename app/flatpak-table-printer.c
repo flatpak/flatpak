@@ -310,11 +310,11 @@ static int
 print_row (GString *row_s, gboolean bold, int *skip, int columns)
 {
   int rows;
-  char *p, *end;
+  const char *p, *end;
   int n_chars;
 
   g_strchomp (row_s->str);
-  n_chars = g_utf8_strlen (row_s->str, -1);
+  n_chars = cell_width (row_s->str);
   if (n_chars > 0)
     rows = (n_chars + columns - 1) / columns;
   else
@@ -325,7 +325,7 @@ print_row (GString *row_s, gboolean bold, int *skip, int columns)
   while (*skip > 0 && p <= end)
     {
       (*skip)--;
-      p = g_utf8_offset_to_pointer  (p, columns);
+      p = cell_advance (p, columns);
     }
 
   if (p < end || p == row_s->str)
@@ -395,7 +395,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
 
       if (col->title)
         {
-          widths[i] = MAX (widths[i], g_utf8_strlen (col->title, -1));
+          widths[i] = MAX (widths[i], cell_width (col->title));
           has_title = TRUE;
         }
     }
@@ -412,7 +412,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
           if (cell->span)
             width = 0;
           else
-            width = g_utf8_strlen (cell->text, -1);
+            width = cell_width (cell->text);
           widths[j] = MAX (widths[j], width);
           if (cell->align >= 0)
             {
@@ -469,7 +469,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 continue;
 
               if (col && col->title)
-                shrinkable += MAX (0, widths[i] - g_utf8_strlen (col->title, -1));
+                shrinkable += MAX (0, widths[i] - cell_width (col->title));
               else
                 shrinkable += MAX (0, widths[i] - 5);
             }
@@ -483,7 +483,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 {
                   int sh;
                   if (col && col->title)
-                    sh = MAX (0, widths[i] - g_utf8_strlen (col->title, -1));
+                    sh = MAX (0, widths[i] - cell_width (col->title));
                   else
                     sh = MAX (0, widths[i] - 5);
                   shrinks[i] = MIN (shortfall * (sh / (double)shrinkable), widths[i]);
@@ -545,7 +545,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
           if (i > 0)
             g_string_append_c (row_s, ' ');
           g_string_append (row_s, title);
-          string_add_spaces (row_s, len - g_utf8_strlen (title, -1));
+          string_add_spaces (row_s, len - cell_width (title));
         }
       rows += print_row (row_s, TRUE, &skip, columns);
     }
@@ -593,13 +593,13 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
               else if (cell->align < 0)
                 {
                   g_string_append (row_s, text);
-                  string_add_spaces (row_s, len - g_utf8_strlen (text, -1));
+                  string_add_spaces (row_s, len - cell_width (text));
                 }
               else
                 {
                   string_add_spaces (row_s, lwidths[j] - cell->align);
                   g_string_append (row_s, text);
-                  string_add_spaces (row_s, widths[j] - (lwidths[j] - cell->align)  - g_utf8_strlen (text, -1));
+                  string_add_spaces (row_s, widths[j] - (lwidths[j] - cell->align)  - cell_width (text));
                 }
             }
           else
