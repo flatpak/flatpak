@@ -159,6 +159,9 @@ gboolean    flatpak_dir_load_appstream_store (FlatpakDir    *self,
                                               GCancellable  *cancellable,
                                               GError       **error);
 
+int         cell_width   (const char *text);
+const char *cell_advance (const char *text, int num);
+
 void print_wrapped (int columns, const char *text, ...) G_GNUC_PRINTF (2, 3);
 
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */
