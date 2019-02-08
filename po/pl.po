@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2019-02-06 11:28+0100\n"
-"PO-Revision-Date: 2019-02-01 14:45+0100\n"
+"PO-Revision-Date: 2019-02-08 20:00+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -3032,9 +3032,9 @@ msgid "Proceed with these changes to the system installation?"
 msgstr "Kontynuować te zmiany w instalacji systemowej?"
 
 #: app/flatpak-cli-transaction.c:967
-#, fuzzy, c-format
+#, c-format
 msgid "Proceed with these changes to the %s?"
-msgstr "Kontynuować te zmiany w instalacji %s?"
+msgstr "Kontynuować te zmiany w: %s?"
 
 #: app/flatpak-cli-transaction.c:1096
 msgid "Changes complete."
@@ -3621,9 +3621,9 @@ msgid "User installation"
 msgstr "Instalacja użytkownika"
 
 #: common/flatpak-dir.c:1724
-#, fuzzy, c-format
+#, c-format
 msgid "System (%s) installation"
-msgstr "Instalacja użytkownika"
+msgstr "Instalacja systemowa (%s)"
 
 #: common/flatpak-dir.c:1769
 #, c-format
