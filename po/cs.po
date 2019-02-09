@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2019-02-06 11:28+0100\n"
-"PO-Revision-Date: 2019-01-31 16:52+0100\n"
+"PO-Revision-Date: 2019-02-09 14:16+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -2977,9 +2977,9 @@ msgid "Proceed with these changes to the system installation?"
 msgstr "Pokračovat s těmito změnami do systémové instalace?"
 
 #: app/flatpak-cli-transaction.c:967
-#, fuzzy, c-format
+#, c-format
 msgid "Proceed with these changes to the %s?"
-msgstr "Pokračovat s těmito změnami do %s instalace?"
+msgstr "Pokračovat s těmito změnami do %s?"
 
 #: app/flatpak-cli-transaction.c:1096
 msgid "Changes complete."
@@ -3551,9 +3551,9 @@ msgid "User installation"
 msgstr "Uživatelská instalace"
 
 #: common/flatpak-dir.c:1724
-#, fuzzy, c-format
+#, c-format
 msgid "System (%s) installation"
-msgstr "Uživatelská instalace"
+msgstr "Systémová (%s) instalace"
 
 #: common/flatpak-dir.c:1769
 #, c-format
