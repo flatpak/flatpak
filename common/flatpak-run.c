@@ -1076,7 +1076,6 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
             "/dev/umplock",
             /* nvidia */
             "/dev/nvidiactl",
-            "/dev/nvidia0",
             "/dev/nvidia-modeset",
             /* nvidia OpenCL/CUDA */
             "/dev/nvidia-uvm",
@@ -1087,6 +1086,16 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
             {
               if (g_file_test (dri_devices[i], G_FILE_TEST_EXISTS))
                 flatpak_bwrap_add_args (bwrap, "--dev-bind", dri_devices[i], dri_devices[i], NULL);
+            }
+
+          /* Each Nvidia card gets its own device.
+             This is a fairly arbitrary limit but ASUS sells mining boards supporting 20 in theory. */
+          char nvidia_dev[14]; /* /dev/nvidia plus up to 2 digits */
+          for (i = 0; i < 20; i++)
+            {
+              g_snprintf (nvidia_dev, sizeof (nvidia_dev), "/dev/nvidia%d", i);
+              if (g_file_test (nvidia_dev, G_FILE_TEST_EXISTS))
+                flatpak_bwrap_add_args (bwrap, "--dev-bind", nvidia_dev, nvidia_dev, NULL);
             }
         }
 
