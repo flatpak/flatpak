@@ -376,10 +376,10 @@ validate_icon_file (GFile *file, GError **error)
 
 #ifndef DISABLE_SANDBOXED_TRIGGERS
   if (!opt_disable_sandbox)
-    add_args (args, validate_icon, "--sandbox", "512", "512", name, NULL);
+    add_args (args, validate_icon, "--sandbox", "1024", "1024", name, NULL);
   else
 #endif
-    add_args (args, validate_icon, "512", "512", name, NULL);
+    add_args (args, validate_icon, "1024", "1024", name, NULL);
 
   g_ptr_array_add (args, NULL);
 
