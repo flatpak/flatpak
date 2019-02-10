@@ -2606,9 +2606,13 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
     "# Disable user pkcs11 config, because the host modules don't work in the runtime\n"
     "user-config: none\n";
 
+  if ((flags & FLATPAK_RUN_FLAG_NO_PROC) == 0)
+    flatpak_bwrap_add_args (bwrap,
+                            "--proc", "/proc",
+                            NULL);
+
   flatpak_bwrap_add_args (bwrap,
                           "--unshare-pid",
-                          "--proc", "/proc",
                           "--dir", "/tmp",
                           "--dir", "/var/tmp",
                           "--dir", "/run/host",
