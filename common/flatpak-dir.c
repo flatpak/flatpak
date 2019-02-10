@@ -6786,7 +6786,7 @@ apply_extra_data (FlatpakDir   *self,
                           NULL);
 
   if (!flatpak_run_setup_base_argv (bwrap, runtime_files, NULL, runtime_ref_parts[2],
-                                    FLATPAK_RUN_FLAG_NO_SESSION_HELPER,
+                                    FLATPAK_RUN_FLAG_NO_SESSION_HELPER | FLATPAK_RUN_FLAG_NO_PROC,
                                     error))
     return FALSE;
 
