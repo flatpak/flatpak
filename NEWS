@@ -1,3 +1,14 @@
+Changes in 1.0.7
+================
+
+The CVE-2019-5736 runc vulnerability is about using /proc/self/exe
+to modify the host side binary from the sandbox. This mostly does not
+affect flatpak since the flatpak sandbox is not run with root permissions.
+However, there is one case (running the apply_extra script for system
+installs) where this happens, so this release contains a fix for that.
+
+ * Don't expose /proc in apply_extra script sandbox.
+
 Changes in 1.0.6
 ================
 
