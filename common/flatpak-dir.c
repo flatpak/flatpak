@@ -1173,11 +1173,12 @@ flatpak_dir_use_system_helper (FlatpakDir *self,
 }
 
 static GVariant *
-flatpak_dir_system_helper_call (FlatpakDir   *self,
-                                const gchar  *method_name,
-                                GVariant     *parameters,
-                                GCancellable *cancellable,
-                                GError      **error)
+flatpak_dir_system_helper_call (FlatpakDir         *self,
+                                const gchar        *method_name,
+                                GVariant           *parameters,
+                                const GVariantType *reply_type,
+                                GCancellable       *cancellable,
+                                GError            **error)
 {
   GVariant *res;
 
@@ -1207,7 +1208,8 @@ flatpak_dir_system_helper_call (FlatpakDir   *self,
                                      "org.freedesktop.Flatpak.SystemHelper",
                                      method_name,
                                      parameters,
-                                     NULL, G_DBUS_CALL_FLAGS_NONE, G_MAXINT,
+                                     reply_type,
+                                     G_DBUS_CALL_FLAGS_NONE, G_MAXINT,
                                      cancellable,
                                      error);
   if (res == NULL && error)
@@ -1239,6 +1241,7 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                                    arg_origin,
                                                    arg_subpaths,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1264,6 +1267,7 @@ flatpak_dir_system_helper_call_deploy_appstream (FlatpakDir   *self,
                                                    arg_origin,
                                                    arg_arch,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1285,6 +1289,7 @@ flatpak_dir_system_helper_call_uninstall (FlatpakDir   *self,
                                                    arg_flags,
                                                    arg_ref,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1309,6 +1314,7 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
                                                    arg_flags,
                                                    arg_remote,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("(s)"),
                                     cancellable, error);
   if (ret == NULL)
     return FALSE;
@@ -1338,6 +1344,7 @@ flatpak_dir_system_helper_call_configure_remote (FlatpakDir   *self,
                                                    arg_config,
                                                    arg_gpg_key,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable,
                                     error);
   return ret != NULL;
@@ -1362,6 +1369,7 @@ flatpak_dir_system_helper_call_configure (FlatpakDir   *self,
                                                    arg_key,
                                                    arg_value,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1387,6 +1395,7 @@ flatpak_dir_system_helper_call_update_remote (FlatpakDir   *self,
                                                    arg_installation,
                                                    arg_summary_path,
                                                    arg_summary_sig_path),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1410,6 +1419,7 @@ flatpak_dir_system_helper_call_remove_local_ref (FlatpakDir   *self,
                                                    arg_remote,
                                                    arg_ref,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1429,6 +1439,7 @@ flatpak_dir_system_helper_call_prune_local_repo (FlatpakDir   *self,
                                     g_variant_new ("(us)",
                                                    arg_flags,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1448,6 +1459,7 @@ flatpak_dir_system_helper_call_run_triggers (FlatpakDir   *self,
                                     g_variant_new ("(us)",
                                                    arg_flags,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1467,6 +1479,7 @@ flatpak_dir_system_helper_call_ensure_repo (FlatpakDir   *self,
                                     g_variant_new ("(us)",
                                                    arg_flags,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1486,6 +1499,7 @@ flatpak_dir_system_helper_call_update_summary (FlatpakDir   *self,
                                     g_variant_new ("(us)",
                                                    arg_flags,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
@@ -1507,6 +1521,7 @@ flatpak_dir_system_helper_call_generate_oci_summary (FlatpakDir   *self,
                                                    arg_flags,
                                                    arg_origin,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"),
                                     cancellable, error);
   return ret != NULL;
 }
