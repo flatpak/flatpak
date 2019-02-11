@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-02-06 11:28+0100\n"
+"POT-Creation-Date: 2019-02-11 14:38+0100\n"
 "PO-Revision-Date: 2017-05-20 08:19+0300\n"
 "Last-Translator: Muhammet Kara <muhammetk@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
@@ -251,7 +251,7 @@ msgstr "%s'e uyan eklenti noktası %s'te yok"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Bağlama noktası seçeneği '%s'te eksik '='"
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3415
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3419
 msgid "Unable to start app"
 msgstr "Uygulama başlatılamadı"
 
@@ -4239,22 +4239,22 @@ msgstr "Dışa aktarılmış dosyadan okunamadı"
 msgid "Invalid group: %d"
 msgstr "Geçersiz pid %s"
 
-#: common/flatpak-run.c:2761
+#: common/flatpak-run.c:2765
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Flatpak-info geçici dosyası açılamadı: %s"
 
-#: common/flatpak-run.c:3038
+#: common/flatpak-run.c:3042
 #, fuzzy, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "apply_extra betiği başarısız oldu"
 
-#: common/flatpak-run.c:3045
+#: common/flatpak-run.c:3049
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "%s ad alanı açılamadı: %s"
 
-#: common/flatpak-run.c:3159
+#: common/flatpak-run.c:3163
 #, fuzzy, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Çok fazla argüman"

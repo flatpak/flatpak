@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-02-06 11:28+0100\n"
+"POT-Creation-Date: 2019-02-11 14:38+0100\n"
 "PO-Revision-Date: 2018-10-29 13:10+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -254,7 +254,7 @@ msgstr "Немає точки розширення, яка відповідає 
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3415
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3419
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -4204,21 +4204,21 @@ msgstr "Не вдалося експортувати bpf"
 msgid "Invalid group: %d"
 msgstr "Некоректна група: %d"
 
-#: common/flatpak-run.c:2761
+#: common/flatpak-run.c:2765
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Не вдалося відкрити журнал: %s"
 
-#: common/flatpak-run.c:3038
+#: common/flatpak-run.c:3042
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "Помилка ldconfig, стан виходу %d"
 
-#: common/flatpak-run.c:3045
+#: common/flatpak-run.c:3049
 msgid "Can't open generated ld.so.cache"
 msgstr "Не вдалося відкрити створений ld.so.cache"
 
-#: common/flatpak-run.c:3159
+#: common/flatpak-run.c:3163
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Помилкова кількість компонентів у середовищі виконання %s"

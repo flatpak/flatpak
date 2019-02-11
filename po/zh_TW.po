@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-02-06 11:28+0100\n"
+"POT-Creation-Date: 2019-02-11 14:38+0100\n"
 "PO-Revision-Date: 2018-10-25 21:51+0800\n"
 "Last-Translator: Cheng-Chia Tseng <pswo10680@gmail.com>\n"
 "Language-Team: Chinese <zh-l10n@linux.org.tw>\n"
@@ -250,7 +250,7 @@ msgstr "%2$s 中沒有符合 %1$s 的擴充點"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "綁定用掛載選項「%s」中遺失「=」"
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3415
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3419
 msgid "Unable to start app"
 msgstr "無法啟動程式"
 
@@ -4108,21 +4108,21 @@ msgstr "匯出 bpf 失敗"
 msgid "Invalid group: %d"
 msgstr "無效的群組：%d"
 
-#: common/flatpak-run.c:2761
+#: common/flatpak-run.c:2765
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "日誌開啟失敗：%s"
 
-#: common/flatpak-run.c:3038
+#: common/flatpak-run.c:3042
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig 失敗，離開狀態為 %d"
 
-#: common/flatpak-run.c:3045
+#: common/flatpak-run.c:3049
 msgid "Can't open generated ld.so.cache"
 msgstr "無法開啟生成的 ld.so.cache"
 
-#: common/flatpak-run.c:3159
+#: common/flatpak-run.c:3163
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "%s 執行時環境中的組件數量錯誤"

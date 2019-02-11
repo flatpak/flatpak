@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-02-06 11:28+0100\n"
+"POT-Creation-Date: 2019-02-11 14:38+0100\n"
 "PO-Revision-Date: 2017-02-10 11:59+0300\n"
 "Last-Translator: Roman Kharin <romiq.kh@gmail.com>\n"
 "Language-Team: romiq.kh@gmail.com\n"
@@ -253,7 +253,7 @@ msgstr "Не найдена точка расширения, подходяща�
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Отсутствует '=' в параметре связанного монтирования '%s'"
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3415
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3419
 msgid "Unable to start app"
 msgstr "Невозможно запустить приложение"
 
@@ -4221,22 +4221,22 @@ msgstr "Ошибка чтения из экспортированного фай
 msgid "Invalid group: %d"
 msgstr "Неверная группа %s"
 
-#: common/flatpak-run.c:2761
+#: common/flatpak-run.c:2765
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Ошибка открытия журнала: %s"
 
-#: common/flatpak-run.c:3038
+#: common/flatpak-run.c:3042
 #, fuzzy, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "скрипт apply_extra закончился с ошибкой"
 
-#: common/flatpak-run.c:3045
+#: common/flatpak-run.c:3049
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "Невозможно открыть пространство имён %s: %s"
 
-#: common/flatpak-run.c:3159
+#: common/flatpak-run.c:3163
 #, fuzzy, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Слишком много аргументов"
