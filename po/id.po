@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-11-16 12:06+0100\n"
+"POT-Creation-Date: 2019-02-11 13:42+0100\n"
 "PO-Revision-Date: 2018-10-01 13:07+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -236,7 +236,7 @@ msgstr "Tidak ada titik ekstensi %s yang cocok pada %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Kehilangan '=' pada opsi kait bind '%s'"
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3187
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3191
 msgid "Unable to start app"
 msgstr "Tidak dapat memulai aplikasi"
 
@@ -3489,17 +3489,17 @@ msgstr "Gagal membaca dari berkas yang diekspor"
 msgid "Invalid group: %d"
 msgstr "Pid %s tidak valid"
 
-#: common/flatpak-run.c:2824
+#: common/flatpak-run.c:2828
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig gagal, status keluar %d"
 
-#: common/flatpak-run.c:2831
+#: common/flatpak-run.c:2835
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "Tidak dapat membuka namespace %s: %s"
 
-#: common/flatpak-run.c:2943
+#: common/flatpak-run.c:2947
 #, fuzzy, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Jumlah argumen salah"

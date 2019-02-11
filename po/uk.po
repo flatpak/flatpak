@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-11-16 12:06+0100\n"
+"POT-Creation-Date: 2019-02-11 13:42+0100\n"
 "PO-Revision-Date: 2018-07-01 15:32+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
@@ -240,7 +240,7 @@ msgstr "Немає точки розширення, яка відповідає 
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3187
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3191
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -3522,17 +3522,17 @@ msgstr "Не вдалося виконати читання з експорто�
 msgid "Invalid group: %d"
 msgstr "Некоректний pid %s"
 
-#: common/flatpak-run.c:2824
+#: common/flatpak-run.c:2828
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "Помилка ldconfig, стан виходу %d"
 
-#: common/flatpak-run.c:2831
+#: common/flatpak-run.c:2835
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "не вдалося відкрити простір назв %s: %s"
 
-#: common/flatpak-run.c:2943
+#: common/flatpak-run.c:2947
 #, fuzzy, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Помилкова кількість параметрів"

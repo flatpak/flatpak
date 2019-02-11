@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2018-11-16 12:06+0100\n"
+"POT-Creation-Date: 2019-02-11 13:42+0100\n"
 "PO-Revision-Date: 2017-11-03 20:24+0100\n"
 "Last-Translator: Christian Kirbach <christian.kirbach@gmail.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
@@ -240,7 +240,7 @@ msgstr "Kein Erweiterungspunkt entspricht %s in %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Fehlendes »=« in Bind-Mount-Option »%s«"
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3187
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3191
 msgid "Unable to start app"
 msgstr "Anwendung kann nicht gestartet werden"
 
@@ -3597,17 +3597,17 @@ msgstr "Lesen aus der exportierten Datei fehlgeschlagen"
 msgid "Invalid group: %d"
 msgstr "Ungültige Prozesskennung %s"
 
-#: common/flatpak-run.c:2824
+#: common/flatpak-run.c:2828
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig ist fehlgeschlagen, Exit-Status %d"
 
-#: common/flatpak-run.c:2831
+#: common/flatpak-run.c:2835
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "Namensraum %s konnte nicht geöffnet werden: %s"
 
-#: common/flatpak-run.c:2943
+#: common/flatpak-run.c:2947
 #, fuzzy, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Zu viele Argumente"
