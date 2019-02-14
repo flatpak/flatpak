@@ -5831,7 +5831,6 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
           if (downloading_extra_data)
             {
               g_autofree gchar *formatted_bytes_total = g_format_size_full (total, 0);
-              ;
               g_string_append_printf (buf, _("Downloading extra data: %s/%s"),
                                       formatted_bytes_total_transferred,
                                       formatted_bytes_total);

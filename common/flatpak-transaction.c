@@ -2037,7 +2037,6 @@ resolve_p2p_ops (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   g_autoptr(GPtrArray) resolves = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_dir_resolve_free);
-  ;
   GList *l;
   int i;
 
