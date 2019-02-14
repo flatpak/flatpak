@@ -140,6 +140,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-unsigned-summaries.sh \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \
+	tests/test-p2p-security.sh{user,collections+system,collections} \
 	$(NULL)
 
 update-test-matrix:
