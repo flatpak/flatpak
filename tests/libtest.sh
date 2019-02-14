@@ -398,6 +398,27 @@ skip_revokefs_without_fuse () {
     fi
 }
 
+skip_without_p2p () {
+    if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
+        return 0
+    else
+        skip "No P2P support enabled"
+    fi
+}
+
+# Usage: skip_without_ostree_version 2019 2
+skip_without_ostree_version () {
+    OSTREE_YEAR_VERSION=$(ostree --version | sed -n "s/^ Version: '\([0-9]\+\)\.[0-9]\+'$/\1/p")
+    OSTREE_RELEASE_VERSION=$(ostree --version | sed -n "s/^ Version: '[0-9]\+\.\([0-9]\+\)'$/\1/p")
+    if [ "$OSTREE_YEAR_VERSION" -gt "$1" ]; then
+        return 0
+    elif [ "$OSTREE_YEAR_VERSION" -eq "$1" ] && [ "$OSTREE_RELEASE_VERSION" -ge "$2" ]; then
+        return 0
+    else
+        skip "OSTree version requirement $1.$2 not met"
+    fi
+}
+
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf
 dbus-daemon --fork --config-file=session.conf --print-address=3 --print-pid=4 \
     3> dbus-session-bus-address 4> dbus-session-bus-pid
