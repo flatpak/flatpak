@@ -1316,9 +1316,8 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
   const guint NUM_FLATPAK_REMOTE_TYPES = 3;
   gboolean types_filter[NUM_FLATPAK_REMOTE_TYPES];
   gsize i;
-#if OSTREE_CHECK_VERSION (2018, 9)
   const char * const *default_repo_finders = NULL;
-#endif
+  OstreeRepo *repo;
 
   remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
   if (remote_names == NULL)
@@ -1330,11 +1329,9 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
   if (!flatpak_dir_maybe_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
-#if OSTREE_CHECK_VERSION (2018, 9)
-  OstreeRepo *repo = flatpak_dir_get_repo (dir_clone);
+  repo = flatpak_dir_get_repo (dir_clone);
   if (repo != NULL)
     default_repo_finders = ostree_repo_get_default_repo_finders (repo);
-#endif
 
   /* If NULL or an empty array of types is passed then we use the default set
    * provided by ostree, or fall back to using all */
@@ -1342,16 +1339,10 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
     {
       if (num_types != 0)
         types_filter[i] = FALSE;
-#if OSTREE_CHECK_VERSION (2018, 9)
       else if (default_repo_finders == NULL)
         types_filter[i] = TRUE;
-#else
-      else
-        types_filter[i] = TRUE;
-#endif
     }
 
-#if OSTREE_CHECK_VERSION (2018, 9)
   if (default_repo_finders != NULL && num_types == 0)
     {
       g_autofree char *default_repo_finders_str = g_strjoinv (" ", (gchar **)default_repo_finders);
@@ -1373,7 +1364,6 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
                      default_repo_finder);
         }
     }
-#endif
 
   for (i = 0; i < num_types; ++i)
     {
