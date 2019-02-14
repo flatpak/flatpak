@@ -3500,7 +3500,7 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GVariant) find_options = NULL;
   g_auto(GVariantBuilder) find_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
-  GVariantBuilder pull_builder;
+  GVariantBuilder pull_builder, ref_keyring_map_builder;
   g_autoptr(GVariant) pull_options = NULL;
   g_autoptr(GAsyncResult) pull_result = NULL;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
@@ -3607,6 +3607,24 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
                          g_variant_new_variant (g_variant_new_int32 (flags)));
   g_variant_builder_add (&pull_builder, "{s@v}", "inherit-transaction",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
+  /* Ensure the results are signed with the GPG keys associated with the correct remote */
+  g_variant_builder_init (&ref_keyring_map_builder, G_VARIANT_TYPE ("a(sss)"));
+  for (i = 0; datas[i] != NULL; i++)
+    {
+      FlatpakDirResolveData *data = datas[i];
+      FlatpakDirResolve *resolve = data->resolve;
+
+      /* It's okay if some of the refs added here were removed above; the map
+       * can be a superset of the refs being pulled */
+      g_variant_builder_add (&ref_keyring_map_builder, "(sss)",
+                             data->collection_ref.collection_id,
+                             data->collection_ref.ref_name,
+                             resolve->remote);
+    }
+  g_variant_builder_add (&pull_builder, "{s@v}", "ref-keyring-map",
+                         g_variant_new_variant (g_variant_builder_end (&ref_keyring_map_builder)));
+
   pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
   transaction = flatpak_repo_transaction_start (child_repo, cancellable, error);
@@ -4283,13 +4301,20 @@ repo_pull (OstreeRepo                           *self,
 
       if (results_to_fetch != NULL)
         {
-          GVariantBuilder pull_builder;
+          GVariantBuilder pull_builder, ref_keyring_map_builder;
           g_autoptr(GVariant) pull_options = NULL;
 
           /* Pull options */
           g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
           get_common_pull_options (&pull_builder, ref_to_fetch, dirs_to_pull, current_checksum,
                                    force_disable_deltas, flags, progress);
+
+          /* Ensure the results are signed with the GPG keys associated with the correct remote */
+          g_variant_builder_init (&ref_keyring_map_builder, G_VARIANT_TYPE ("a(sss)"));
+          g_variant_builder_add (&ref_keyring_map_builder, "(sss)", collection_id, ref_to_fetch, remote_name);
+          g_variant_builder_add (&pull_builder, "{s@v}", "ref-keyring-map",
+                                 g_variant_new_variant (g_variant_builder_end (&ref_keyring_map_builder)));
+
           pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
           ostree_repo_pull_from_remotes_async (self, results_to_fetch,
