@@ -68,6 +68,7 @@ Flatpak-1.0.*
 /doc/flatpak-docs.xml
 /doc/*.1
 /doc/*.5
+/tags
 /test-libglnx-errors
 /test-libglnx-errors.log
 /test-libglnx-errors.trs
