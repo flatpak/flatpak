@@ -251,10 +251,14 @@ kill_instance (FlatpakInstance *instance)
 static GPtrArray *notifications;
 G_LOCK_DEFINE_STATIC (notifications);
 
+static GHashTable *applications;
+G_LOCK_DEFINE_STATIC (applications);
+
 static void
 init_notifications (void)
 {
   notifications = g_ptr_array_new_with_free_func (g_object_unref);
+  applications = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 }
 
 static void
@@ -339,6 +343,49 @@ remove_outdated_notifications (GPtrArray *apps)
         }
     }
   G_UNLOCK (notifications);
+}
+
+static void
+remove_outdated_applications (GPtrArray *apps)
+{
+  int j;
+  GHashTableIter iter;
+  char *app_id;
+
+  G_LOCK (applications);
+  g_hash_table_iter_init (&iter, applications);
+  while (g_hash_table_iter_next (&iter, (gpointer *)&app_id, NULL))
+    {
+      gboolean found = FALSE;
+      for (j = 0; j < apps->len && !found; j++)
+        {
+          FlatpakInstance *app = g_ptr_array_index (apps, j);
+          found = g_strcmp0 (app_id, flatpak_instance_get_app (app));
+        }
+      if (!found)
+        g_hash_table_iter_remove (&iter);
+    }
+  G_UNLOCK (applications);
+}
+
+static gboolean
+add_background_app (const char *app_id)
+{
+  gboolean res;
+
+  G_LOCK (applications);
+  res = g_hash_table_add (applications, g_strdup (app_id));
+  G_UNLOCK (applications);
+
+  return res;
+}
+
+static void
+remove_background_app (const char *app_id)
+{
+  G_LOCK (applications);
+  g_hash_table_remove (applications, app_id);
+  G_UNLOCK (applications);
 }
 
 static void
@@ -443,6 +490,7 @@ thread_func (GTask *task,
   apps = flatpak_instance_get_all ();
 
   remove_outdated_notifications (apps);
+  remove_outdated_applications (apps);
 
   for (i = 0; i < apps->len; i++)
     {
@@ -454,6 +502,12 @@ thread_func (GTask *task,
         continue;
 
       if (get_app_state (app_id, app_states) != BACKGROUND)
+        {
+          remove_background_app (app_id);
+          continue;
+        }
+
+      if (add_background_app (app_id))
         continue;
 
       g_debug ("App %s is running in the background", app_id);
