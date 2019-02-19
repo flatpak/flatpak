@@ -223,6 +223,14 @@ flatpak_strcmp0_ptr (gconstpointer a,
   return g_strcmp0 (*(char * const *) a, *(char * const *) b);
 }
 
+/* Sometimes this is /var/run which is a symlink, causing weird issues when we pass
+ * it as a path into the sandbox */
+char *
+flatpak_get_real_xdg_runtime_dir (void)
+{
+  return realpath (g_get_user_runtime_dir (), NULL);
+}
+
 /* Compares if str has a specific path prefix. This differs
    from a regular prefix in two ways. First of all there may
    be multiple slashes separating the path elements, and
