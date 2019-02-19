@@ -90,6 +90,10 @@ void flatpak_debug2 (const char *format,
 gint flatpak_strcmp0_ptr (gconstpointer a,
                           gconstpointer b);
 
+/* Sometimes this is /var/run which is a symlink, causing weird issues when we pass
+ * it as a path into the sandbox */
+char * flatpak_get_real_xdg_runtime_dir (void);
+
 gboolean  flatpak_has_path_prefix (const char *str,
                                    const char *prefix);
 

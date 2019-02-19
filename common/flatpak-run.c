@@ -234,6 +234,7 @@ static gboolean
 flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
 {
   const char *wayland_display;
+  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
   g_autofree char *wayland_socket = NULL;
   g_autofree char *sandbox_wayland_socket = NULL;
   gboolean res = FALSE;
@@ -243,7 +244,7 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
   if (!wayland_display)
     wayland_display = "wayland-0";
 
-  wayland_socket = g_build_filename (g_get_user_runtime_dir (), wayland_display, NULL);
+  wayland_socket = g_build_filename (user_runtime_dir, wayland_display, NULL);
   sandbox_wayland_socket = g_strdup_printf ("/run/user/%d/%s", getuid (), wayland_display);
 
   if (stat (wayland_socket, &statbuf) == 0 &&
@@ -400,12 +401,13 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
 {
   g_autofree char *pulseaudio_server = flatpak_run_get_pulseaudio_server ();
   g_autofree char *pulseaudio_socket = NULL;
+  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
 
   if (pulseaudio_server)
     pulseaudio_socket = flatpak_run_parse_pulse_server (pulseaudio_server);
 
   if (!pulseaudio_socket)
-    pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
+    pulseaudio_socket = g_build_filename (user_runtime_dir, "pulse/native", NULL);
 
   flatpak_bwrap_unset_env (bwrap, "PULSE_SERVER");
 
@@ -455,7 +457,8 @@ flatpak_run_add_journal_args (FlatpakBwrap *bwrap)
 static char *
 create_proxy_socket (char *template)
 {
-  g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy", NULL);
+  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
+  g_autofree char *proxy_socket_dir = g_build_filename (user_runtime_dir, ".dbus-proxy", NULL);
   g_autofree char *proxy_socket = g_build_filename (proxy_socket_dir, template, NULL);
   int fd;
 
@@ -687,7 +690,7 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
 
   g_auto(GLnxDirFdIterator) dir_iter = { 0 };
   struct dirent *dent;
-  g_autofree char *user_runtime_dir = realpath (g_get_user_runtime_dir (), NULL);
+  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
   g_autofree char *proxy_socket_dir = g_build_filename (user_runtime_dir, ".dbus-proxy/", NULL);
 
   app_info_fd = open (app_info_path, O_RDONLY | O_CLOEXEC);
@@ -1694,7 +1697,8 @@ flatpak_run_gc_ids (void)
 static char *
 flatpak_run_allocate_id (int *lock_fd_out)
 {
-  g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
+  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
+  g_autofree char *base_dir = g_build_filename (user_runtime_dir, ".flatpak", NULL);
   int count;
 
   g_mkdir_with_parents (base_dir, 0755);
@@ -1959,12 +1963,13 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   g_autofree char *instance_id_host_dir = NULL;
   g_autofree char *instance_id_sandbox_dir = NULL;
   g_autofree char *instance_id_lock_file = NULL;
+  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
 
   instance_id = flatpak_run_allocate_id (&lock_fd);
   if (instance_id == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Unable to allocate instance id"));
 
-  instance_id_host_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", instance_id, NULL);
+  instance_id_host_dir = g_build_filename (user_runtime_dir, ".flatpak", instance_id, NULL);
   instance_id_sandbox_dir = g_strdup_printf ("/run/user/%d/.flatpak/%s", getuid (), instance_id);
   instance_id_lock_file = g_build_filename (instance_id_sandbox_dir, ".ref", NULL);
 

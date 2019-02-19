@@ -653,7 +653,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = NULL;
       if (dir)
-        *dir = g_get_user_runtime_dir ();
+        *dir = flatpak_get_real_xdg_runtime_dir ();
       return TRUE;
     }
 
@@ -2087,8 +2087,9 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
 
   if (app_id_dir != NULL)
     {
+      g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
       g_autofree char *run_user_app_dst = g_strdup_printf ("/run/user/%d/app/%s", getuid (), app_id);
-      g_autofree char *run_user_app_src = g_build_filename (g_get_user_runtime_dir (), "app", app_id, NULL);
+      g_autofree char *run_user_app_src = g_build_filename (user_runtime_dir, "app", app_id, NULL);
 
       if (glnx_shutil_mkdir_p_at (AT_FDCWD,
                                   run_user_app_src,
