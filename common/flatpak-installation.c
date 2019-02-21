@@ -1004,6 +1004,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GAsyncResult) result = NULL;
   g_autoptr(GPtrArray) collection_refs = NULL; /* (element-type OstreeCollectionRef) */
+  g_autoptr(GString) refs_str = NULL;
 
   remote_commits = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
@@ -1078,6 +1079,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 
   collection_refs = g_ptr_array_new ();
 
+  refs_str = g_string_new ("");
   for (i = 0; i < installed->len; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
@@ -1090,6 +1092,10 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
           g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
           OstreeCollectionRef *c_r = ostree_collection_ref_new (collection_id, ref);
           g_ptr_array_add (collection_refs, c_r);
+
+          if (i != 0)
+            g_string_append (refs_str, ", ");
+          g_string_append_printf (refs_str, "(%s, %s)", collection_id, ref);
         }
     }
 
@@ -1121,6 +1127,12 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 
       if (results == NULL)
         return NULL;
+
+      if (results[0] == NULL)
+        {
+          flatpak_fail (error, _("No remotes found which provide these refs: [%s]"), refs_str->str);
+          return NULL;
+        }
     }
 
   for (i = 0; i < installed->len; i++)
@@ -1277,7 +1289,10 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
   if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
     ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
 
-  for (i = 0; results != NULL && results[i] != NULL; i++)
+  if (results == NULL)
+    return FALSE;
+
+  for (i = 0; results[i] != NULL; i++)
     {
       g_ptr_array_add (remotes,
                        flatpak_remote_new_from_ostree (results[i]->remote,

@@ -3509,6 +3509,7 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
   g_auto(GLnxLockFile) child_repo_lock = { 0, };
   g_autoptr(GFile) user_cache_dir = NULL;
   g_autoptr(FlatpakTempDir) child_repo_tmp_dir = NULL;
+  g_autoptr(GString) refs_str = NULL;
   int i;
 
   main_context = flatpak_main_context_new_default ();
@@ -3516,10 +3517,17 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
   if (with_commit_ids)
     commit_ids_to_fetch = g_ptr_array_new ();
 
+  refs_str = g_string_new ("");
   for (i = 0; datas[i] != NULL; i++)
     {
       FlatpakDirResolveData *data = datas[i];
       FlatpakDirResolve *resolve = data->resolve;
+
+      if (i != 0)
+        g_string_append (refs_str, ", ");
+      g_string_append_printf (refs_str, "(%s, %s)",
+                              data->collection_ref.collection_id,
+                              data->collection_ref.ref_name);
 
       g_ptr_array_add (collection_refs_to_fetch, &data->collection_ref);
       if (commit_ids_to_fetch)
@@ -3530,6 +3538,8 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
     }
 
   g_ptr_array_add (collection_refs_to_fetch, NULL);
+
+  g_debug ("Resolving these collection-refs: [%s]", refs_str->str);
 
   g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
   if (commit_ids_to_fetch)
@@ -3565,6 +3575,9 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
   results = ostree_repo_find_remotes_finish (child_repo, find_result, error);
   if (results == NULL)
     return FALSE;
+
+  if (results[0] == NULL)
+    return flatpak_fail (error, _("No remotes found which provide these refs: [%s]"), refs_str->str);
 
   /* Drop from the results all ops that are no-op updates */
   for (i = 0; datas[i] != NULL; i++)
@@ -4300,7 +4313,13 @@ repo_pull (OstreeRepo                           *self,
           results_to_fetch = (const OstreeRepoFinderResult * const *) results;
         }
 
-      if (results_to_fetch != NULL)
+      if (results_to_fetch != NULL && results_to_fetch[0] == NULL)
+        {
+          flatpak_fail (error, _("No remotes found which provide the ref (%s, %s)"),
+                        collection_ref.collection_id, collection_ref.ref_name);
+          res = FALSE;
+        }
+      else if (results_to_fetch != NULL)
         {
           GVariantBuilder pull_builder, ref_keyring_map_builder;
           g_autoptr(GVariant) pull_options = NULL;
@@ -5080,24 +5099,25 @@ flatpak_dir_pull (FlatpakDir                           *self,
            * below won't need to fetch the metadata. For an explanation of the
            * attack we're protecting against see
            * https://github.com/flatpak/flatpak/issues/1447#issuecomment-445347590 */
-          {
-            OstreeRepoPullFlags metadata_pull_flags = flags | OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY;
-            /*TODO: Use OSTREE_REPO_PULL_FLAGS_MIRROR for all collection-ref pulls */
-            metadata_pull_flags |= OSTREE_REPO_PULL_FLAGS_MIRROR;
-            if (!repo_pull (repo, state->remote_name,
-                            NULL, ref, NULL, results,
-                            flatpak_flags, metadata_pull_flags,
-                            progress, cancellable, error))
-              {
-                g_prefix_error (error, _("While pulling %s from remote %s: "), ref, state->remote_name);
-                goto out;
-              }
+          if (results[0] != NULL)
+            {
+              OstreeRepoPullFlags metadata_pull_flags = flags | OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY;
+              /*TODO: Use OSTREE_REPO_PULL_FLAGS_MIRROR for all collection-ref pulls */
+              metadata_pull_flags |= OSTREE_REPO_PULL_FLAGS_MIRROR;
+              if (!repo_pull (repo, state->remote_name,
+                              NULL, ref, NULL, results,
+                              flatpak_flags, metadata_pull_flags,
+                              progress, cancellable, error))
+                {
+                  g_prefix_error (error, _("While pulling %s from remote %s: "), ref, state->remote_name);
+                  goto out;
+                }
 
-            if (!flatpak_repo_resolve_rev (repo, collection_ref.collection_id,
-                                           state->remote_name, ref, TRUE, &rev,
-                                           cancellable, error))
-              goto out;
-          }
+              if (!flatpak_repo_resolve_rev (repo, collection_ref.collection_id,
+                                             state->remote_name, ref, TRUE, &rev,
+                                             cancellable, error))
+                goto out;
+            }
 #else
           gsize i;
           for (i = 0, rev = NULL; results[i] != NULL && rev == NULL; i++)
