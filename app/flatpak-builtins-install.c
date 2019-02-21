@@ -388,12 +388,16 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                   if (opt_no_pull)
                     refs = flatpak_dir_find_local_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
                                                         flatpak_get_default_arch (),
-                                                        matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                                        matched_kinds,
+                                                        FIND_MATCHING_REFS_FLAGS_FUZZY |
+                                                        FIND_MATCHING_REFS_FLAGS_SKIP_INSTALLED,
                                                         cancellable, &local_error);
                   else
                     refs = flatpak_dir_find_remote_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
                                                          flatpak_get_default_arch (),
-                                                         matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                                         matched_kinds,
+                                                         FIND_MATCHING_REFS_FLAGS_FUZZY |
+                                                         FIND_MATCHING_REFS_FLAGS_SKIP_INSTALLED,
                                                          cancellable, &local_error);
 
                   if (refs == NULL)
@@ -479,13 +483,17 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
       if (opt_no_pull)
         refs = flatpak_dir_find_local_refs (dir, remote, id, branch, default_branch, arch,
-                                           flatpak_get_default_arch (),
-                                           matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
-                                           cancellable, error);
+                                            flatpak_get_default_arch (),
+                                            matched_kinds,
+                                            FIND_MATCHING_REFS_FLAGS_FUZZY |
+                                            FIND_MATCHING_REFS_FLAGS_SKIP_INSTALLED,
+                                            cancellable, error);
       else
         refs = flatpak_dir_find_remote_refs (dir, remote, id, branch, default_branch, arch,
                                              flatpak_get_default_arch (),
-                                             matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                             matched_kinds,
+                                             FIND_MATCHING_REFS_FLAGS_FUZZY |
+                                             FIND_MATCHING_REFS_FLAGS_SKIP_INSTALLED,
                                              cancellable, error);
       if (refs == NULL)
         return FALSE;
