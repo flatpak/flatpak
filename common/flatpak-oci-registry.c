@@ -1934,6 +1934,7 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
                                  GError      **error)
 {
   g_autofree char *index_path = g_file_get_path (index);
+
   g_autoptr(SoupURI) base_uri = NULL;
   g_autoptr(SoupURI) query_uri = NULL;
   g_autofree char *query_uri_s = NULL;
@@ -2150,7 +2151,7 @@ flatpak_oci_index_make_summary (GFile        *index,
 
       g_variant_builder_add_value (refs_builder,
                                    g_variant_new ("(s(t@ay@a{sv}))", ref,
-                                                  (guint64)0,
+                                                  (guint64) 0,
                                                   ostree_checksum_to_bytes_v (fake_commit),
                                                   g_variant_builder_end (ref_metadata_builder)));
       g_variant_builder_add (ref_data_builder, "{s(tts)}",

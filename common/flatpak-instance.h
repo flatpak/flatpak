@@ -50,19 +50,19 @@ typedef struct
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakInstance, g_object_unref)
 #endif
 
-FLATPAK_EXTERN GPtrArray *  flatpak_instance_get_all            (void);
+FLATPAK_EXTERN GPtrArray *  flatpak_instance_get_all (void);
 
-FLATPAK_EXTERN const char * flatpak_instance_get_id             (FlatpakInstance *self);
-FLATPAK_EXTERN const char * flatpak_instance_get_app            (FlatpakInstance *self);
-FLATPAK_EXTERN const char * flatpak_instance_get_arch           (FlatpakInstance *self);
-FLATPAK_EXTERN const char * flatpak_instance_get_branch         (FlatpakInstance *self);
-FLATPAK_EXTERN const char * flatpak_instance_get_commit         (FlatpakInstance *self);
-FLATPAK_EXTERN const char * flatpak_instance_get_runtime        (FlatpakInstance *self);
+FLATPAK_EXTERN const char * flatpak_instance_get_id (FlatpakInstance *self);
+FLATPAK_EXTERN const char * flatpak_instance_get_app (FlatpakInstance *self);
+FLATPAK_EXTERN const char * flatpak_instance_get_arch (FlatpakInstance *self);
+FLATPAK_EXTERN const char * flatpak_instance_get_branch (FlatpakInstance *self);
+FLATPAK_EXTERN const char * flatpak_instance_get_commit (FlatpakInstance *self);
+FLATPAK_EXTERN const char * flatpak_instance_get_runtime (FlatpakInstance *self);
 FLATPAK_EXTERN const char * flatpak_instance_get_runtime_commit (FlatpakInstance *self);
-FLATPAK_EXTERN int          flatpak_instance_get_pid            (FlatpakInstance *self);
-FLATPAK_EXTERN int          flatpak_instance_get_child_pid      (FlatpakInstance *self);
-FLATPAK_EXTERN GKeyFile *   flatpak_instance_get_info           (FlatpakInstance *self);
+FLATPAK_EXTERN int          flatpak_instance_get_pid (FlatpakInstance *self);
+FLATPAK_EXTERN int          flatpak_instance_get_child_pid (FlatpakInstance *self);
+FLATPAK_EXTERN GKeyFile *   flatpak_instance_get_info (FlatpakInstance *self);
 
-FLATPAK_EXTERN gboolean     flatpak_instance_is_running         (FlatpakInstance *self);
+FLATPAK_EXTERN gboolean     flatpak_instance_is_running (FlatpakInstance *self);
 
 #endif /* __FLATPAK_INSTANCE_H__ */

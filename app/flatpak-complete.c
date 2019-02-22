@@ -359,7 +359,7 @@ flatpak_complete_options (FlatpakCompletion *completion,
                 }
               else if (strcmp (e->long_name, "columns") == 0)
                 {
-                   /* columns are treated separately */
+                  /* columns are treated separately */
                 }
               else
                 flatpak_complete_word (completion, "%s", prefix);
@@ -409,8 +409,8 @@ flatpak_complete_options (FlatpakCompletion *completion,
 
 static void
 flatpak_complete_column (FlatpakCompletion *completion,
-                         char **used,
-                         const char *column)
+                         char             **used,
+                         const char        *column)
 {
   g_autoptr(GString) s = NULL;
 
@@ -420,7 +420,7 @@ flatpak_complete_column (FlatpakCompletion *completion,
     {
       int i;
 
-      if (g_strv_contains ((const char * const *)used, column))
+      if (g_strv_contains ((const char * const *) used, column))
         return;
 
       const char *last = NULL;
@@ -447,6 +447,7 @@ flatpak_complete_columns (FlatpakCompletion *completion,
 {
   int i;
   const char *list = NULL;
+
   g_auto(GStrv) used = NULL;
 
   if (!g_str_has_prefix (completion->cur, "--columns="))

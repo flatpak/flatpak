@@ -109,6 +109,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
   guint n_keys;
   g_autofree const char **keys = NULL;
   int i, j;
+
   g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   FlatpakKinds match_kinds;
   g_autofree char *match_id = NULL;
@@ -273,9 +274,9 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
                                                       error))
                 return FALSE;
 
-               metakey = g_key_file_new ();
-               if (g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
-                 runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+              metakey = g_key_file_new ();
+              if (g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
+                runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
             }
 
           if (need_appstream_data)

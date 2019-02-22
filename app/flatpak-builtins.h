@@ -43,7 +43,7 @@ G_BEGIN_DECLS
  * @FLATPAK_BUILTIN_FLAG_ALL_DIRS: Allow repeated use of --user/--system/--installation
  *    and return multiple dirs. If no option is specified, return all installations,
  *    starting with system(default)+user
- * 
+ *
  * Flags affecting the behavior of flatpak_option_context_parse().
  *
  * If the default system installation is among the returned diretories,
@@ -74,7 +74,7 @@ gboolean usage_error (GOptionContext *context,
                       GError        **error);
 
 #define BUILTINPROTO(name) \
-  gboolean flatpak_builtin_ ## name (int argc, char **argv, GCancellable * cancellable, GError * *error); \
+  gboolean flatpak_builtin_ ## name (int argc, char **argv, GCancellable * cancellable, GError **error); \
   gboolean flatpak_complete_ ## name (FlatpakCompletion * completion);
 
 

@@ -35,7 +35,7 @@
 #include "flatpak-polkit-agent-text-listener.h"
 
 /* Work with polkit before and after autoptr support was added */
-typedef PolkitSubject             AutoPolkitSubject;
+typedef PolkitSubject AutoPolkitSubject;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
 #endif
 
@@ -246,10 +246,10 @@ check_environment (void)
   dirs = g_get_system_data_dirs ();
   for (i = 0; dirs[i]; i++)
     {
-       if (g_str_has_prefix (dirs[i], system_exports))
-         has_system = TRUE;
-       if (g_str_has_prefix (dirs[i], user_exports))
-         has_user = TRUE;
+      if (g_str_has_prefix (dirs[i], system_exports))
+        has_system = TRUE;
+      if (g_str_has_prefix (dirs[i], user_exports))
+        has_user = TRUE;
     }
 
   flatpak_get_window_size (&rows, &cols);
@@ -267,7 +267,7 @@ check_environment (void)
                        "set by the XDG_DATA_DIRS environment variable, so applications "
                        "installed by Flatpak may not appear on your desktop until the "
                        "session is restarted."),
-                       missing);
+                     missing);
       g_print ("\n");
     }
   else if (!has_system || !has_user)
@@ -281,7 +281,7 @@ check_environment (void)
                        "set by the XDG_DATA_DIRS environment variable, so applications "
                        "installed by Flatpak may not appear on your desktop until the "
                        "session is restarted."),
-                       missing);
+                     missing);
       g_print ("\n");
     }
 }
@@ -302,7 +302,7 @@ flatpak_option_context_parse (GOptionContext     *context,
                                    FLATPAK_BUILTIN_FLAG_ONE_DIR |
                                    FLATPAK_BUILTIN_FLAG_STANDARD_DIRS |
                                    FLATPAK_BUILTIN_FLAG_ALL_DIRS)) != 1)
-     g_assert_not_reached ();
+    g_assert_not_reached ();
 
   if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     g_option_context_add_main_entries (context, user_entries, NULL);
@@ -590,6 +590,7 @@ flatpak_run (int      argc,
   g_autofree char *prgname = NULL;
   gboolean success = FALSE;
   const char *command_name = NULL;
+
   __attribute__((cleanup (uninstall_polkit_agent))) gpointer polkit_agent = NULL;
 
   command = extract_command (&argc, argv, &command_name);

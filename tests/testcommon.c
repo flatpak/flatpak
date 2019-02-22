@@ -96,30 +96,30 @@ test_valid_name (void)
 typedef struct
 {
   const gchar *str;
-  guint base;
-  gint min;
-  gint max;
-  gint expected;
-  gboolean should_fail;
+  guint        base;
+  gint         min;
+  gint         max;
+  gint         expected;
+  gboolean     should_fail;
 } TestData;
 
 const TestData test_data[] = {
   /* typical cases for unsigned */
-  { "-1",10, 0, 2, 0, TRUE  },
+  { "-1", 10, 0, 2, 0, TRUE  },
   { "1", 10, 0, 2, 1, FALSE },
-  { "+1",10, 0, 2, 0, TRUE  },
+  { "+1", 10, 0, 2, 0, TRUE  },
   { "0", 10, 0, 2, 0, FALSE },
-  { "+0",10, 0, 2, 0, TRUE  },
-  { "-0",10, 0, 2, 0, TRUE  },
+  { "+0", 10, 0, 2, 0, TRUE  },
+  { "-0", 10, 0, 2, 0, TRUE  },
   { "2", 10, 0, 2, 2, FALSE },
-  { "+2",10, 0, 2, 0, TRUE  },
+  { "+2", 10, 0, 2, 0, TRUE  },
   { "3", 10, 0, 2, 0, TRUE  },
-  { "+3",10, 0, 2, 0, TRUE  },
+  { "+3", 10, 0, 2, 0, TRUE  },
 
   /* min == max cases for unsigned */
-  { "2",10, 2, 2, 2, FALSE  },
-  { "3",10, 2, 2, 0, TRUE   },
-  { "1",10, 2, 2, 0, TRUE   },
+  { "2", 10, 2, 2, 2, FALSE  },
+  { "3", 10, 2, 2, 0, TRUE   },
+  { "1", 10, 2, 2, 0, TRUE   },
 
   /* invalid inputs */
   { "",   10,  0,  2,  0, TRUE },
@@ -127,16 +127,16 @@ const TestData test_data[] = {
   { "1a", 10,  0,  2,  0, TRUE },
 
   /* leading/trailing whitespace */
-  { " 1",10,  0,  2,  0, TRUE },
-  { "1 ",10,  0,  2,  0, TRUE },
+  { " 1", 10,  0,  2,  0, TRUE },
+  { "1 ", 10,  0,  2,  0, TRUE },
 
   /* hexadecimal numbers */
   { "a",    16,   0, 15, 10, FALSE },
   { "0xa",  16,   0, 15,  0, TRUE  },
   { "-0xa", 16,   0, 15,  0, TRUE  },
   { "+0xa", 16,   0, 15,  0, TRUE  },
-  { "- 0xa",16,   0, 15,  0, TRUE  },
-  { "+ 0xa",16,   0, 15,  0, TRUE  },
+  { "- 0xa", 16,   0, 15,  0, TRUE  },
+  { "+ 0xa", 16,   0, 15,  0, TRUE  },
 };
 
 static void
@@ -175,10 +175,11 @@ test_string_to_unsigned (void)
     }
 }
 
-typedef struct {
+typedef struct
+{
   const char *a;
   const char *b;
-  int distance;
+  int         distance;
 } Levenshtein;
 
 static Levenshtein levenshtein_tests[] = {
@@ -343,18 +344,18 @@ test_parse_numbers (void)
   numbers = flatpak_parse_numbers ("1", 0, 10);
   assert_numbers (numbers, 1, 0);
   g_clear_pointer (&numbers, g_free);
-  
+
   numbers = flatpak_parse_numbers ("1 3 2", 0, 10);
   assert_numbers (numbers, 1, 3, 2, 0);
   g_clear_pointer (&numbers, g_free);
-  
+
   numbers = flatpak_parse_numbers ("1-3", 0, 10);
   assert_numbers (numbers, 1, 2, 3, 0);
   g_clear_pointer (&numbers, g_free);
-  
+
   numbers = flatpak_parse_numbers ("1", 2, 4);
   g_assert_null (numbers);
-  
+
   numbers = flatpak_parse_numbers ("2-6", 2, 4);
   g_assert_null (numbers);
 
@@ -391,28 +392,29 @@ test_subpaths_merge (void)
   char *bla[] = { "bla", "ba", NULL };
   char *bla_sorted[] = { "ba", "bla", NULL };
   char *bubabla[] = { "ba", "bla", "bu", NULL };
+
   g_auto(GStrv) res = NULL;
 
   res = flatpak_subpaths_merge (NULL, bla);
   assert_strv_equal (res, bla);
   g_clear_pointer (&res, g_strfreev);
-  
+
   res = flatpak_subpaths_merge (bla, NULL);
   assert_strv_equal (res, bla);
   g_clear_pointer (&res, g_strfreev);
-  
+
   res = flatpak_subpaths_merge (empty, bla);
   assert_strv_equal (res, empty);
   g_clear_pointer (&res, g_strfreev);
-  
+
   res = flatpak_subpaths_merge (bla, empty);
   assert_strv_equal (res, empty);
   g_clear_pointer (&res, g_strfreev);
-  
+
   res = flatpak_subpaths_merge (buba, bla);
   assert_strv_equal (res, bubabla);
   g_clear_pointer (&res, g_strfreev);
-  
+
   res = flatpak_subpaths_merge (bla, buba);
   assert_strv_equal (res, bubabla);
   g_clear_pointer (&res, g_strfreev);
@@ -478,6 +480,7 @@ test_parse_appdata (void)
     "    <project_license>anything goes</project_license>\n"
     "  </component>\n"
     "</components>";
+
   g_autoptr(GHashTable) names = NULL;
   g_autoptr(GHashTable) comments = NULL;
   g_autofree char *version = NULL;
@@ -485,7 +488,7 @@ test_parse_appdata (void)
   gboolean res;
   char *name;
   char *comment;
- 
+
   res = flatpak_parse_appdata (appdata1, "org.test.Hello", &names, &comments, &version, &license);
   g_assert_true (res);
   g_assert_cmpstr (version, ==, "0.0.1");
@@ -531,57 +534,57 @@ test_name_matching (void)
 
   res = flatpak_name_matches_one_wildcard_prefix ("org.sparkleshare.SparkleShare.Invites",
                                                   (const char *[]){"org.sparkleshare.SparkleShare.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("org.sparkleshare.SparkleShare-symbolic",
                                                   (const char *[]){"org.sparkleshare.SparkleShare.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("org.libreoffice.LibreOffice",
                                                   (const char *[]){"org.libreoffice.LibreOffice.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("org.libreoffice.LibreOffice-impress",
                                                   (const char *[]){"org.libreoffice.LibreOffice.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("org.libreoffice.LibreOffice-writer",
                                                   (const char *[]){"org.libreoffice.LibreOffice.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("org.libreoffice.LibreOffice-calc",
                                                   (const char *[]){"org.libreoffice.LibreOffice.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("com.github.bajoja.indicator-kdeconnect",
                                                   (const char *[]){"com.github.bajoja.indicator-kdeconnect.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("com.github.bajoja.indicator-kdeconnect.settings",
                                                   (const char *[]){"com.github.bajoja.indicator-kdeconnect.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("com.github.bajoja.indicator-kdeconnect.tablettrusted",
                                                   (const char *[]){"com.github.bajoja.indicator-kdeconnect.*", NULL},
-                                                   FALSE);
+                                                  FALSE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("org.gnome.Characters.BackgroundService",
                                                   (const char *[]){"org.gnome.Characters.*", NULL},
-                                                   TRUE);
+                                                  TRUE);
   g_assert_true (res);
 
   res = flatpak_name_matches_one_wildcard_prefix ("org.example.Example.Tracker1.Miner.Applications",
                                                   (const char *[]){"org.example.Example.*", NULL},
-                                                   TRUE);
+                                                  TRUE);
   g_assert_true (res);
 }
 
@@ -607,6 +610,7 @@ test_columns (void)
   };
   Column *cols;
   g_autofree char *help = NULL;
+
   g_autoptr(GError) error = NULL;
   const char *args[3];
 
@@ -673,11 +677,12 @@ test_columns (void)
   g_clear_error (&error);
 }
 
-typedef struct {
-  const char *in;
-  int len;
+typedef struct
+{
+  const char          *in;
+  int                  len;
   FlatpakEllipsizeMode mode;
-  const char *out;
+  const char          *out;
 } EllipsizeData;
 
 static EllipsizeData ellipsize[] = {
@@ -871,7 +876,7 @@ test_table_shrink (void)
                    "Column1  Column2 Column3" FLATPAK_ANSI_BOLD_OFF "\n"
                    "a very … text2   long…too" "\n"
                    "short    short   short" "\n"
-                   "0123456789012345678902345");
+                                                                                                                         "0123456789012345678902345");
   g_string_truncate (g_print_buffer, 0);
 
   flatpak_table_printer_free (printer);
@@ -930,6 +935,7 @@ test_parse_datetime (void)
   struct timespec ts;
   struct timespec now;
   gboolean ret;
+
   g_autoptr(GDateTime) dt = NULL;
   GTimeVal tv;
 

@@ -57,8 +57,10 @@ typedef enum {
 #define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
 #define FLATPAK_ANSI_CLEAR "\x1b[0J"
 
-void flatpak_get_window_size (int *rows, int *cols);
-gboolean flatpak_get_cursor_pos  (int *row, int *col);
+void flatpak_get_window_size (int *rows,
+                              int *cols);
+gboolean flatpak_get_cursor_pos (int *row,
+                                 int *col);
 void flatpak_hide_cursor (void);
 void flatpak_show_cursor (void);
 
@@ -80,9 +82,10 @@ void flatpak_disable_raw_mode (void);
  */
 #define flatpak_fail glnx_throw
 
-gboolean flatpak_fail_error (GError **error,
+gboolean flatpak_fail_error (GError     **error,
                              FlatpakError code,
-                             const char *fmt, ...) G_GNUC_PRINTF (3,4);
+                             const char  *fmt,
+                             ...) G_GNUC_PRINTF (3, 4);
 
 void flatpak_debug2 (const char *format,
                      ...) G_GNUC_PRINTF (1, 2);
@@ -132,16 +135,16 @@ gboolean flatpak_write_update_checksum (GOutputStream *out,
                                         GError       **error);
 
 
-gboolean flatpak_splice_update_checksum (GOutputStream         *out,
+gboolean flatpak_splice_update_checksum (GOutputStream         * out,
                                          GInputStream          *in,
                                          GChecksum             *checksum,
                                          FlatpakLoadUriProgress progress,
-                                         gpointer               progress_data,
+                                         gpointer progress_data,
                                          GCancellable          *cancellable,
                                          GError               **error);
 
-GBytes * flatpak_read_stream (GInputStream *in,
-                              gboolean      null_terminate,
+GBytes * flatpak_read_stream (GInputStream * in,
+                              gboolean null_terminate,
                               GError      **error);
 
 gboolean flatpak_variant_save (GFile        *dest,
@@ -205,7 +208,8 @@ gboolean flatpak_split_partial_ref_arg_novalidate (const char   *partial_ref,
                                                    char        **out_arch,
                                                    char        **out_branch);
 
-int flatpak_compare_ref (const char *ref1, const char *ref2);
+int flatpak_compare_ref (const char *ref1,
+                         const char *ref2);
 
 char * flatpak_compose_ref (gboolean    app,
                             const char *name,
@@ -261,12 +265,12 @@ gboolean flatpak_remove_dangling_symlinks (GFile        *dir,
                                            GCancellable *cancellable,
                                            GError      **error);
 
-gboolean flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
-                                                 guint         base,
-                                                 guint64       min,
-                                                 guint64       max,
-                                                 guint64      *out_num,
-                                                 GError      **error);
+gboolean flatpak_utils_ascii_string_to_unsigned (const gchar *str,
+                                                 guint        base,
+                                                 guint64      min,
+                                                 guint64      max,
+                                                 guint64     *out_num,
+                                                 GError     **error);
 
 
 #if !GLIB_CHECK_VERSION (2, 40, 0)
@@ -304,7 +308,8 @@ g_key_file_load_from_bytes (GKeyFile     *key_file,
 
 
 #if !GLIB_CHECK_VERSION (2, 56, 0)
-GDateTime *flatpak_g_date_time_new_from_iso8601 (const gchar *text, GTimeZone *default_tz);
+GDateTime *flatpak_g_date_time_new_from_iso8601 (const gchar *text,
+                                                 GTimeZone   *default_tz);
 
 static inline GDateTime *
 g_date_time_new_from_iso8601 (const gchar *text, GTimeZone *default_tz)
@@ -512,11 +517,11 @@ gboolean flatpak_rm_rf (GFile        *dir,
                         GCancellable *cancellable,
                         GError      **error);
 
-gboolean flatpak_canonicalize_permissions (int           parent_dfd,
-                                           const char   *rel_path,
-                                           int           uid,
-                                           int           gid,
-                                           GError      **error);
+gboolean flatpak_canonicalize_permissions (int         parent_dfd,
+                                           const char *rel_path,
+                                           int         uid,
+                                           int         gid,
+                                           GError    **error);
 
 char * flatpak_readlink (const char *path,
                          GError    **error);
@@ -656,8 +661,8 @@ FlatpakXml *flatpak_xml_new_text (const gchar *text);
 void       flatpak_xml_add (FlatpakXml *parent,
                             FlatpakXml *node);
 void       flatpak_xml_free (FlatpakXml *node);
-FlatpakXml *flatpak_xml_parse (GInputStream *in,
-                               gboolean      compressed,
+FlatpakXml *flatpak_xml_parse (GInputStream * in,
+                               gboolean compressed,
                                GCancellable *cancellable,
                                GError      **error);
 void       flatpak_xml_to_string (FlatpakXml *node,
@@ -698,10 +703,10 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   GError      **error);
 
 
-gboolean flatpak_yes_no_prompt (gboolean default_yes,
+gboolean flatpak_yes_no_prompt (gboolean    default_yes,
                                 const char *prompt,
                                 ...) G_GNUC_PRINTF (2, 3);
-                            
+
 long flatpak_number_prompt (gboolean    default_yes,
                             int         min,
                             int         max,
@@ -717,7 +722,7 @@ int *flatpak_parse_numbers (const char *buf,
                             int         max);
 
 void flatpak_format_choices (const char **choices,
-                             const char *prompt,
+                             const char  *prompt,
                              ...) G_GNUC_PRINTF (2, 3);
 
 typedef void (*FlatpakProgressCallback)(const char *status,
@@ -734,8 +739,9 @@ gboolean flatpak_check_required_version (const char *ref,
                                          GKeyFile   *metakey,
                                          GError    **error);
 
-int flatpak_levenshtein_distance (const char *s, const char *t);
+int flatpak_levenshtein_distance (const char *s,
+                                  const char *t);
 
-#define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485" 
+#define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */

@@ -474,7 +474,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
             }
         }
 
-      g_ptr_array_sort (collection_ids, (GCompareFunc)flatpak_strcmp0_ptr);
+      g_ptr_array_sort (collection_ids, (GCompareFunc) flatpak_strcmp0_ptr);
 
       /* Copy old metadata */
       g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));

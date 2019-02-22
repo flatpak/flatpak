@@ -32,6 +32,7 @@ validate_icon (const char *arg_width,
   int width, height;
   const char *name;
   const char *allowed_formats[] = { "png", "jpeg", "svg", NULL };
+
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GError) error = NULL;
 
@@ -50,7 +51,7 @@ validate_icon (const char *arg_width,
     }
 
   format = gdk_pixbuf_get_file_info (filename, &width, &height);
-  if (format == NULL) 
+  if (format == NULL)
     {
       g_printerr ("Format not recognized\n");
       return 1;
@@ -128,6 +129,7 @@ rerun_in_sandbox (const char *arg_width,
 {
   const char * const usrmerged_dirs[] = { "bin", "lib64", "lib", "sbin" };
   int i;
+
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
   g_autofree char *err = NULL;
   int status;
@@ -154,7 +156,7 @@ rerun_in_sandbox (const char *arg_width,
             "--ro-bind", validate_icon, validate_icon,
             NULL);
 
- /* These directories might be symlinks into /usr/... */
+  /* These directories might be symlinks into /usr/... */
   for (i = 0; i < G_N_ELEMENTS (usrmerged_dirs); i++)
     {
       g_autofree char *absolute_dir = g_strdup_printf ("/%s", usrmerged_dirs[i]);
@@ -198,7 +200,7 @@ rerun_in_sandbox (const char *arg_width,
   g_ptr_array_add (args, NULL);
 
   {
-    g_autofree char *cmdline = g_strjoinv (" ", (char **)args->pdata);
+    g_autofree char *cmdline = g_strjoinv (" ", (char **) args->pdata);
     g_debug ("Icon validation: Spawning %s", cmdline);
   }
 

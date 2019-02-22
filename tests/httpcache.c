@@ -24,16 +24,16 @@ main (int argc, char *argv[])
     }
   else
     {
-      g_printerr("Usage httpcache [--compressed] URL DEST\n");
+      g_printerr ("Usage httpcache [--compressed] URL DEST\n");
       return 1;
     }
 
 
   if (!flatpak_cache_http_uri (session,
-			       url,
-			       flags,
-			       AT_FDCWD, dest,
-			       NULL, NULL, NULL, &error))
+                               url,
+                               flags,
+                               AT_FDCWD, dest,
+                               NULL, NULL, NULL, &error))
     {
       g_print ("%s\n", error->message);
       return 1;

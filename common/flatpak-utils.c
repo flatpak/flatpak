@@ -673,7 +673,7 @@ flatpak_get_timezone (void)
 
   /* Final fall-back is UTC */
   return g_strdup ("UTC");
- }
+}
 
 static gboolean
 is_valid_initial_name_character (gint c, gboolean allow_dash)
@@ -1003,7 +1003,7 @@ flatpak_is_valid_branch (const char *string,
   len = strlen (string);
   if (G_UNLIKELY (len == 0))
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
                           _("Branch can't be empty"));
       goto out;
     }
@@ -1013,7 +1013,7 @@ flatpak_is_valid_branch (const char *string,
   s = string;
   if (G_UNLIKELY (!is_valid_initial_branch_character (*s)))
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
                           _("Branch can't start with %c"), *s);
       goto out;
     }
@@ -1023,7 +1023,7 @@ flatpak_is_valid_branch (const char *string,
     {
       if (G_UNLIKELY (!is_valid_branch_character (*s)))
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
                               _("Branch can't contain %c"), *s);
           goto out;
         }
@@ -1088,8 +1088,9 @@ compare_segment (const char *s1, const char *s2)
       c1 = *s1;
       c2 = *s2;
       if (c1 != c2)
-        return (c1 - c2);
-      s1++; s2++;
+        return c1 - c2;
+      s1++;
+      s2++;
     }
 
   c1 = *s1;
@@ -1633,12 +1634,13 @@ flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
 {
   FlatpakDeploy *deploy = NULL;
   int i;
+
   g_autoptr(GError) my_error = NULL;
 
   for (i = 0; deploy == NULL && i < dirs->len; i++)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
- 
+
       flatpak_log_dir_access (dir);
       g_clear_error (&my_error);
       deploy = flatpak_dir_load_deployed (dir, ref, commit, cancellable, &my_error);
@@ -2075,12 +2077,12 @@ out:
 }
 
 static gboolean
-_flatpak_canonicalize_permissions (int           parent_dfd,
-                                   const char   *rel_path,
-                                   gboolean      toplevel,
-                                   int           uid,
-                                   int           gid,
-                                   GError      **error)
+_flatpak_canonicalize_permissions (int         parent_dfd,
+                                   const char *rel_path,
+                                   gboolean    toplevel,
+                                   int         uid,
+                                   int         gid,
+                                   GError    **error)
 {
   struct stat stbuf;
   gboolean res = TRUE;
@@ -2150,9 +2152,9 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
           res = FALSE;
         }
 
-        return res;
+      return res;
     }
-  else if (S_ISREG(stbuf.st_mode))
+  else if (S_ISREG (stbuf.st_mode))
     {
       mode_t mode;
 
@@ -2168,14 +2170,14 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
           res = FALSE;
         }
     }
-  else if (S_ISLNK(stbuf.st_mode))
+  else if (S_ISLNK (stbuf.st_mode))
     {
       /* symlinks have no permissions */
     }
   else
     {
       /* some weird non-canonical type, lets delete it */
-      if (unlinkat(parent_dfd, rel_path, 0) != 0)
+      if (unlinkat (parent_dfd, rel_path, 0) != 0)
         {
           glnx_set_error_from_errno (error);
           res = FALSE;
@@ -2187,11 +2189,11 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
 
 /* Canonicalizes files to the same permissions as bare-user-only checkouts */
 gboolean
-flatpak_canonicalize_permissions (int           parent_dfd,
-                                  const char   *rel_path,
-                                  int           uid,
-                                  int           gid,
-                                  GError      **error)
+flatpak_canonicalize_permissions (int         parent_dfd,
+                                  const char *rel_path,
+                                  int         uid,
+                                  int         gid,
+                                  GError    **error)
 {
   return _flatpak_canonicalize_permissions (parent_dfd, rel_path, TRUE, uid, gid, error);
 }
@@ -4120,6 +4122,7 @@ flatpak_extension_matches_reason (const char *extension_id,
                                   gboolean    default_value)
 {
   const char *extension_basename;
+
   g_auto(GStrv) reason_list = NULL;
   size_t i;
 
@@ -4831,7 +4834,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   if (remote_collection_id != NULL && collection_id != NULL &&
       strcmp (remote_collection_id, collection_id) != 0)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"),
-                         collection_id, remote_collection_id);
+                               collection_id, remote_collection_id);
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return FALSE;
@@ -5474,7 +5477,7 @@ flatpak_parse_numbers (const char *buf,
         }
       else if (is_number (parts[i]))
         {
-          int res = (int)strtol (parts[i], NULL, 10);
+          int res = (int) strtol (parts[i], NULL, 10);
           if (min <= res && res <= max)
             add_number (numbers, res);
           else
@@ -5538,7 +5541,7 @@ flatpak_numbers_prompt (gboolean default_yes, int min, int max, const char *prom
 
 void
 flatpak_format_choices (const char **choices,
-                        const char *prompt,
+                        const char  *prompt,
                         ...)
 {
   va_list var_args;
@@ -5551,7 +5554,7 @@ flatpak_format_choices (const char **choices,
 
   g_print ("%s\n\n", s);
   for (i = 0; choices[i]; i++)
-    g_print ("  %2d) %s\n", i+1, choices[i]);
+    g_print ("  %2d) %s\n", i + 1, choices[i]);
   g_print ("\n");
 }
 
@@ -5693,6 +5696,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint requested;
   guint64 total_transferred;
   g_autofree gchar *formatted_bytes_total_transferred = NULL;
+
   g_autoptr(GVariant) outstanding_fetchesv = NULL;
 
   /* We get some extra calls before we've really started due to the initialization of the
@@ -5963,12 +5967,12 @@ str_has_hex_prefix (const gchar *str)
  * make sure to remove str_has_hex_prefix and str_has_sign helpers too.
  */
 gboolean
-flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
-                                        guint         base,
-                                        guint64       min,
-                                        guint64       max,
-                                        guint64      *out_num,
-                                        GError      **error)
+flatpak_utils_ascii_string_to_unsigned (const gchar *str,
+                                        guint        base,
+                                        guint64      min,
+                                        guint64      max,
+                                        guint64     *out_num,
+                                        GError     **error)
 {
   guint64 number;
   const gchar *end_ptr = NULL;
@@ -5988,24 +5992,24 @@ flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
     }
 
   errno = 0;
-  number = g_ascii_strtoull (str, (gchar **)&end_ptr, base);
+  number = g_ascii_strtoull (str, (gchar **) &end_ptr, base);
   saved_errno = errno;
 
   if (/* We do not allow leading whitespace, but g_ascii_strtoull
        * accepts it and just skips it, so we need to check for it
        * ourselves.
        */
-      g_ascii_isspace (str[0]) ||
-      /* Unsigned number should have no sign.
-       */
-      str_has_sign (str) ||
-      /* We don't support hexadecimal numbers prefixed with 0x or
-       * 0X.
-       */
-      (base == 16 && str_has_hex_prefix (str)) ||
-      (saved_errno != 0 && saved_errno != ERANGE) ||
-      end_ptr == NULL ||
-      *end_ptr != '\0')
+    g_ascii_isspace (str[0]) ||
+    /* Unsigned number should have no sign.
+     */
+    str_has_sign (str) ||
+    /* We don't support hexadecimal numbers prefixed with 0x or
+     * 0X.
+     */
+    (base == 16 && str_has_hex_prefix (str)) ||
+    (saved_errno != 0 && saved_errno != ERANGE) ||
+    end_ptr == NULL ||
+    *end_ptr != '\0')
     {
       g_set_error (error,
                    G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
@@ -6043,7 +6047,7 @@ dist (const char *s, int ls, const char *t, int lt, int i, int j, int *d)
   else if (j == lt)
     x = ls - i;
   else if (s[i] == t[j])
-    x = dist(s, ls, t, lt, i + 1, j + 1, d);
+    x = dist (s, ls, t, lt, i + 1, j + 1, d);
   else
     {
       x = dist (s, ls, t, lt, i + 1, j + 1, d);
@@ -6101,7 +6105,7 @@ flatpak_get_window_size (int *rows, int *cols)
 }
 
 gboolean
-flatpak_get_cursor_pos (int* row, int *col)
+flatpak_get_cursor_pos (int * row, int *col)
 {
   fd_set readset;
   struct timeval time;
@@ -6419,7 +6423,7 @@ parse_iso8601_timezone (const gchar *text, gsize length, gssize *tz_offset)
   tz_length = length - i;
 
   /* +hh:mm or -hh:mm */
-  if (tz_length == 6 && text[i+3] == ':')
+  if (tz_length == 6 && text[i + 3] == ':')
     {
       if (!get_iso8601_int (text + i + 1, 2, &offset_hours) ||
           !get_iso8601_int (text + i + 4, 2, &offset_minutes))
@@ -6512,8 +6516,8 @@ flatpak_g_date_time_new_from_iso8601 (const gchar *text, GTimeZone *default_tz)
   datetime = parse_iso8601_date (text, date_length, hour, minute, seconds, tz ? tz : default_tz);
 
 out:
-    if (tz != NULL)
-      g_time_zone_unref (tz);
-    return datetime;
+  if (tz != NULL)
+    g_time_zone_unref (tz);
+  return datetime;
 }
 #endif

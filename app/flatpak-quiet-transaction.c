@@ -106,8 +106,8 @@ flatpak_quiet_transaction_class_init (FlatpakQuietTransactionClass *class)
 }
 
 FlatpakTransaction *
-flatpak_quiet_transaction_new (FlatpakDir  *dir,
-                               GError     **error)
+flatpak_quiet_transaction_new (FlatpakDir *dir,
+                               GError    **error)
 {
   g_autoptr(FlatpakQuietTransaction) self = NULL;
   g_autoptr(FlatpakInstallation) installation = NULL;

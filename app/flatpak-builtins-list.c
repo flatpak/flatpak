@@ -124,11 +124,11 @@ join_strv (char **a, char **b)
 }
 
 static gboolean
-find_refs_for_dir (FlatpakDir *dir,
-                   GStrv *apps,
-                   GStrv *runtimes,
+find_refs_for_dir (FlatpakDir   *dir,
+                   GStrv        *apps,
+                   GStrv        *runtimes,
                    GCancellable *cancellable,
-                   GError **error)
+                   GError      **error)
 {
   if (flatpak_dir_ensure_repo (dir, cancellable, NULL))
     {
@@ -142,13 +142,13 @@ find_refs_for_dir (FlatpakDir *dir,
 }
 
 static gboolean
-print_table_for_refs (gboolean print_apps,
-                      GPtrArray * refs_array,
-                      const char *arch,
-                      const char *app_runtime,
-                      Column *columns,
+print_table_for_refs (gboolean      print_apps,
+                      GPtrArray   * refs_array,
+                      const char   *arch,
+                      const char   *app_runtime,
+                      Column       *columns,
                       GCancellable *cancellable,
-                      GError **error)
+                      GError      **error)
 {
   FlatpakTablePrinter *printer;
   int i;
@@ -346,7 +346,7 @@ print_table_for_refs (gboolean print_apps,
                   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
                   if (subpaths[0] != NULL)
                     {
-                      g_autofree char *paths = g_strjoinv (" ", (char **)subpaths);
+                      g_autofree char *paths = g_strjoinv (" ", (char **) subpaths);
                       g_autofree char *value = g_strconcat ("partial (", paths, ")", NULL);
                       flatpak_table_printer_append_with_comma (printer, value);
                     }
@@ -363,7 +363,7 @@ print_table_for_refs (gboolean print_apps,
         }
     }
 
-  flatpak_table_printer_sort (printer, (GCompareFunc)flatpak_compare_ref);
+  flatpak_table_printer_sort (printer, (GCompareFunc) flatpak_compare_ref);
 
   if (flatpak_table_printer_get_current_row (printer) > 0)
     {
@@ -378,14 +378,14 @@ print_table_for_refs (gboolean print_apps,
 }
 
 static gboolean
-print_installed_refs (gboolean app,
-                      gboolean runtime,
-                      GPtrArray *dirs,
-                      const char *arch,
-                      const char *app_runtime,
-                      Column *cols,
+print_installed_refs (gboolean      app,
+                      gboolean      runtime,
+                      GPtrArray    *dirs,
+                      const char   *arch,
+                      const char   *app_runtime,
+                      Column       *cols,
                       GCancellable *cancellable,
-                      GError **error)
+                      GError      **error)
 {
   g_autoptr(GPtrArray) refs_array = NULL;
   int i;

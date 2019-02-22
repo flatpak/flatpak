@@ -86,7 +86,7 @@ get_flatpak_subpaths_from_deploy_subpaths (const char * const *subpaths)
     g_ptr_array_add (resolved_subpaths, g_build_filename ("/files", subpaths[i], NULL));
   g_ptr_array_add (resolved_subpaths, NULL);
 
-  return (char **)g_ptr_array_free (g_steal_pointer (&resolved_subpaths), FALSE);
+  return (char **) g_ptr_array_free (g_steal_pointer (&resolved_subpaths), FALSE);
 }
 
 /* Add related refs specified in the metadata of @ref to @all_refs, also
@@ -168,7 +168,7 @@ add_related (GHashTable   *all_refs,
       ext_commit = flatpak_deploy_data_get_commit (ext_deploy_data);
       ext_subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
       resolved_ext_subpaths = get_flatpak_subpaths_from_deploy_subpaths (ext_subpaths);
-      c_s = commit_and_subpaths_new (ext_commit, (const char * const *)resolved_ext_subpaths);
+      c_s = commit_and_subpaths_new (ext_commit, (const char * const *) resolved_ext_subpaths);
 
       g_hash_table_insert (all_collection_ids, g_strdup (ext_collection_id), g_strdup (ext_remote));
       ext_collection_ref = ostree_collection_ref_new (ext_collection_id, ext->ref);
@@ -238,7 +238,7 @@ add_runtime (GHashTable   *all_refs,
   runtime_commit = flatpak_deploy_data_get_commit (runtime_deploy_data);
   runtime_subpaths = flatpak_deploy_data_get_subpaths (runtime_deploy_data);
   resolved_runtime_subpaths = get_flatpak_subpaths_from_deploy_subpaths (runtime_subpaths);
-  c_s = commit_and_subpaths_new (runtime_commit, (const char * const *)resolved_runtime_subpaths);
+  c_s = commit_and_subpaths_new (runtime_commit, (const char * const *) resolved_runtime_subpaths);
 
   g_hash_table_insert (all_collection_ids, g_strdup (runtime_collection_id), g_strdup (runtime_remote));
   runtime_collection_ref = ostree_collection_ref_new (runtime_collection_id, runtime_ref);

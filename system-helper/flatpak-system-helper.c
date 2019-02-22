@@ -122,7 +122,7 @@ schedule_idle_callback (void)
 static FlatpakDir *
 dir_get_system (const char *installation,
                 pid_t       source_pid,
-                GError **error)
+                GError    **error)
 {
   FlatpakDir *system = NULL;
 
@@ -554,7 +554,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                          NULL,
                                          NULL,
                                          &error))
-        { 
+        {
           flatpak_invocation_return_error (invocation, error, "Error updating appstream");
           return TRUE;
         }

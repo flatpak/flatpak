@@ -42,7 +42,7 @@ static GOptionEntry options[] = {
 
 static gboolean
 kill_instance (const char *id,
-               GError **error)
+               GError    **error)
 {
   g_autoptr(GPtrArray) instances = NULL;
   int j;
@@ -52,7 +52,7 @@ kill_instance (const char *id,
 
   for (j = 0; j < instances->len; j++)
     {
-      FlatpakInstance *instance = (FlatpakInstance *)g_ptr_array_index (instances, j);
+      FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, j);
       if (strcmp (id, flatpak_instance_get_app (instance)) == 0 ||
           strcmp (id, flatpak_instance_get_id (instance)) == 0)
         {
@@ -61,7 +61,7 @@ kill_instance (const char *id,
           killed++;
         }
     }
- 
+
   g_debug ("Killed %d instances", killed);
 
   if (killed == 0)
@@ -71,10 +71,10 @@ kill_instance (const char *id,
 }
 
 gboolean
-flatpak_builtin_kill (int            argc,
-                      char         **argv,
-                      GCancellable  *cancellable,
-                      GError       **error)
+flatpak_builtin_kill (int           argc,
+                      char        **argv,
+                      GCancellable *cancellable,
+                      GError      **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   const char *instance;
@@ -123,7 +123,7 @@ flatpak_complete_kill (FlatpakCompletion *completion)
       instances = flatpak_instance_get_all ();
       for (i = 0; i < instances->len; i++)
         {
-          FlatpakInstance *instance = (FlatpakInstance *)g_ptr_array_index (instances, i);
+          FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, i);
           flatpak_complete_word (completion, "%s ", flatpak_instance_get_app (instance));
           flatpak_complete_word (completion, "%s ", flatpak_instance_get_id (instance));
         }
