@@ -1031,7 +1031,6 @@ flatpak_oci_layer_writer_class_init (FlatpakOciLayerWriterClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = flatpak_oci_layer_writer_finalize;
-
 }
 
 static void

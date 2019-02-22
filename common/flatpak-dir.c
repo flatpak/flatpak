@@ -555,7 +555,6 @@ flatpak_deploy_class_init (FlatpakDeployClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = flatpak_deploy_finalize;
-
 }
 
 static void
@@ -4088,7 +4087,6 @@ extra_data_progress_report (guint64  downloaded_bytes,
   if (extra_progress->progress)
     ostree_async_progress_set_uint64 (extra_progress->progress, "transferred-extra-data-bytes",
                                       extra_progress->previous_dl + downloaded_bytes);
-
 }
 
 static gboolean
@@ -5022,7 +5020,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                        &checksum, NULL))
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref '%s' in remote %s"),
                                    ref, remote_name);
-
     }
   else
     {
@@ -7277,7 +7274,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
       while (G_UNLIKELY (r == -1 && errno == EINTR));
       if (r == -1)
         return glnx_throw_errno_prefix (error, "fchmodat");
-
     }
 
   deploy_data = flatpak_dir_new_deploy_data (self,
@@ -7421,7 +7417,6 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
 
   if (g_str_has_prefix (ref, "app/"))
     {
-
       if (!flatpak_dir_make_current_ref (self, ref, cancellable, error))
         goto out;
 
@@ -8790,7 +8785,6 @@ out:
     }
 
   return ret;
-
 }
 
 static gboolean
@@ -9193,7 +9187,6 @@ out:
     g_print (_("Pruning repo failed: %s"), local_error->message);
 
   return ret;
-
 }
 
 gboolean
@@ -10441,7 +10434,6 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
 
   g_ptr_array_add (matched_refs, NULL);
   return (char **) g_ptr_array_free (matched_refs, FALSE);
-
 }
 
 char *

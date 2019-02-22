@@ -302,7 +302,6 @@ flatpak_complete_run (FlatpakCompletion *completion)
         }
 
       break;
-
     }
 
   return TRUE;

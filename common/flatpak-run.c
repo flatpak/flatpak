@@ -228,7 +228,6 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
     {
       flatpak_bwrap_unset_env (bwrap, "DISPLAY");
     }
-
 }
 
 static gboolean

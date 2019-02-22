@@ -835,7 +835,6 @@ flatpak_context_merge (FlatpakContext *context,
       for (i = 0; policy_values[i] != NULL; i++)
         flatpak_context_apply_generic_policy (context, (char *) key, policy_values[i]);
     }
-
 }
 
 static gboolean

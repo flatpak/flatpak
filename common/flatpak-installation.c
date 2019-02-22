@@ -2500,7 +2500,6 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
   return flatpak_installation_update_appstream_full_sync (self, remote_name, arch,
                                                           NULL, NULL, out_changed,
                                                           cancellable, error);
-
 }
 
 /**

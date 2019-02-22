@@ -409,7 +409,6 @@ main (int argc, char *argv[])
                       g_print ("Download size: %"G_GUINT64_FORMAT " Installed size: %"G_GUINT64_FORMAT "\n",
                                download_size, installed_size);
                     }
-
                 }
             }
         }

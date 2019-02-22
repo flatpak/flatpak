@@ -647,7 +647,6 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         return FALSE;
       if (!add_related (all_refs, all_collection_ids, installed_ref, dir, cancellable, error))
         return FALSE;
-
     }
 
   g_assert (dir);

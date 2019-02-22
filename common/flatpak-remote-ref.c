@@ -45,7 +45,6 @@ struct _FlatpakRemoteRefPrivate
   GBytes *metadata;
   char   *eol;
   char   *eol_rebase;
-
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRemoteRef, flatpak_remote_ref, FLATPAK_TYPE_REF)

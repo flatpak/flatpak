@@ -226,7 +226,6 @@ demarshal (JsonNode            *parent_node,
                     break;
                   }
               }
-
           }
 
         /* NULL terminate */
