@@ -122,7 +122,6 @@ flatpak_debug2 (const char *format, ...)
           format, var_args);
   va_end (var_args);
 #pragma GCC diagnostic pop
-
 }
 
 gboolean
@@ -3475,7 +3474,6 @@ validate_component (FlatpakXml *component,
       text = flatpak_xml_new (NULL);
       text->text = g_strjoinv (",", tags);
       flatpak_xml_add (value, text);
-
     }
 
   return TRUE;
@@ -4529,7 +4527,6 @@ flatpak_xml_to_string (FlatpakXml *node, GString *res)
           if (node->first_child != NULL)
             g_string_append_printf (res, "</%s>", node->element_name);
         }
-
     }
   else if (node->text)
     {

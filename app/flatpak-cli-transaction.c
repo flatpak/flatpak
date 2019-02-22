@@ -778,7 +778,6 @@ print_permissions (FlatpakCliTransaction *self,
     print_perm_line (j++, system_bus_own, cols);
   if (tags->len > 0)
     print_perm_line (j++, tags, cols);
-
 }
 
 static void

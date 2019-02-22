@@ -206,7 +206,6 @@ generate_one_delta (OstreeRepo   *repo,
         g_prefix_error (error, _("Failed to generate delta %s (%.10s-%.10s): "),
                         ref, from, to);
       return FALSE;
-
     }
 
   return TRUE;
