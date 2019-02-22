@@ -296,12 +296,13 @@ find_file_in_tree (GFile *base, const char *filename)
   return FALSE;
 }
 
-typedef gboolean (* VisitFileFunc) (GFile *file, GError **error);
+typedef gboolean (* VisitFileFunc) (GFile   *file,
+                                    GError **error);
 
 static gboolean
-visit_files_in_tree (GFile *base,
+visit_files_in_tree (GFile        *base,
                      VisitFileFunc visit_file,
-                     gpointer data)
+                     gpointer      data)
 {
   g_autoptr(GFileEnumerator) enumerator = NULL;
   GError **error = data;
@@ -383,7 +384,7 @@ validate_icon_file (GFile *file, GError **error)
 
   g_ptr_array_add (args, NULL);
 
-  if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
+  if (!g_spawn_sync (NULL, (char **) args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
     {
       g_debug ("Icon validation: %s", (*error)->message);
       return FALSE;

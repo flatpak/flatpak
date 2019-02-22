@@ -78,7 +78,7 @@ struct _FlatpakInstallationPrivate
      flatpak_installation_drop_caches(), so every user needs to keep its own reference alive until
      done. */
   FlatpakDir *dir_unlocked;
-  char *display_name;
+  char       *display_name;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstallation, flatpak_installation, G_TYPE_OBJECT)
@@ -167,7 +167,7 @@ flatpak_installation_new_for_dir (FlatpakDir   *dir,
  */
 void
 flatpak_installation_set_no_interaction (FlatpakInstallation *self,
-                                         gboolean no_interaction)
+                                         gboolean             no_interaction)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
@@ -534,12 +534,13 @@ const char *
 flatpak_installation_get_display_name (FlatpakInstallation *self)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   if (priv->display_name == NULL)
     priv->display_name = flatpak_dir_get_display_name (dir);
 
-  return (const char *)priv->display_name;
+  return (const char *) priv->display_name;
 }
 
 /**
@@ -1345,7 +1346,7 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
 
   if (default_repo_finders != NULL && num_types == 0)
     {
-      g_autofree char *default_repo_finders_str = g_strjoinv (" ", (gchar **)default_repo_finders);
+      g_autofree char *default_repo_finders_str = g_strjoinv (" ", (gchar **) default_repo_finders);
       g_debug ("Using default repo finder list: %s", default_repo_finders_str);
 
       for (const char * const *iter = default_repo_finders; iter && *iter; iter++)
@@ -2897,12 +2898,13 @@ find_used_refs (FlatpakDir *dir,
  * Since: 1.1.2
  */
 GPtrArray *
-flatpak_installation_list_unused_refs (FlatpakInstallation  *self,
-                                       const char           *arch,
-                                       GCancellable         *cancellable,
-                                       GError              **error)
+flatpak_installation_list_unused_refs (FlatpakInstallation *self,
+                                       const char          *arch,
+                                       GCancellable        *cancellable,
+                                       GError             **error)
 {
   FlatpakDir *dir;
+
   g_autoptr(GHashTable) refs_hash = NULL;
   g_autoptr(GPtrArray) refs =  NULL;
   g_auto(GStrv) app_refs = NULL;
@@ -2958,34 +2960,34 @@ flatpak_installation_list_unused_refs (FlatpakInstallation  *self,
     }
 
   GLNX_HASH_TABLE_FOREACH (used_runtimes, const char *, runtime)
-    {
-      g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
+  {
+    g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
 
-      g_autoptr(FlatpakDeploy) deploy = NULL;
-      g_autofree char *origin = NULL;
-      g_autofree char *sdk = NULL;
-      g_autoptr(GKeyFile) metakey = NULL;
+    g_autoptr(FlatpakDeploy) deploy = NULL;
+    g_autofree char *origin = NULL;
+    g_autofree char *sdk = NULL;
+    g_autoptr(GKeyFile) metakey = NULL;
 
-      deploy = flatpak_dir_load_deployed (dir, runtime_ref, NULL, NULL, NULL);
-      if (deploy == NULL)
-        continue;
+    deploy = flatpak_dir_load_deployed (dir, runtime_ref, NULL, NULL, NULL);
+    if (deploy == NULL)
+      continue;
 
-      origin = flatpak_dir_get_origin (dir, runtime_ref, NULL, NULL);
-      if (origin == NULL)
-        continue;
+    origin = flatpak_dir_get_origin (dir, runtime_ref, NULL, NULL);
+    if (origin == NULL)
+      continue;
 
-      find_used_refs (dir, used_refs, runtime_ref, origin);
+    find_used_refs (dir, used_refs, runtime_ref, origin);
 
-      metakey = flatpak_deploy_get_metadata (deploy);
-      sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
-      if (sdk)
-        {
-          g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
-          g_autofree char *sdk_origin = flatpak_dir_get_origin (dir, sdk_ref, NULL, NULL);
-          if (sdk_origin)
-            find_used_refs (dir, used_refs, sdk_ref, sdk_origin);
-        }
-    }
+    metakey = flatpak_deploy_get_metadata (deploy);
+    sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
+    if (sdk)
+      {
+        g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
+        g_autofree char *sdk_origin = flatpak_dir_get_origin (dir, sdk_ref, NULL, NULL);
+        if (sdk_origin)
+          find_used_refs (dir, used_refs, sdk_ref, sdk_origin);
+      }
+  }
 
   for (i = 0; runtime_refs[i] != NULL; i++)
     {
@@ -2997,10 +2999,10 @@ flatpak_installation_list_unused_refs (FlatpakInstallation  *self,
 
       if (!g_hash_table_contains (used_refs, ref))
         {
-          if (g_hash_table_add (refs_hash, (gpointer)ref))
+          if (g_hash_table_add (refs_hash, (gpointer) ref))
             g_ptr_array_add (refs, get_ref (dir, ref, NULL, NULL));
         }
     }
 
-   return g_steal_pointer (&refs);
+  return g_steal_pointer (&refs);
 }

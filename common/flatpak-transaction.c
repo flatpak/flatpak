@@ -131,7 +131,7 @@ struct _FlatpakTransactionPrivate
   GList                       *ops;
   GPtrArray                   *added_origin_remotes;
 
- GList                       *flatpakrefs; /* GKeyFiles */
+  GList                       *flatpakrefs; /* GKeyFiles */
   GList                       *bundles; /* BundleData */
 
   FlatpakTransactionOperation *current_op;
@@ -238,8 +238,8 @@ flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *s
  * @self: a #FlatpakTransactionProgress
  *
  * Gets the current status string
- * 
- * Returns: (transfer none): the current status 
+ *
+ * Returns: (transfer none): the current status
  */
 char *
 flatpak_transaction_progress_get_status (FlatpakTransactionProgress *self)
@@ -266,7 +266,7 @@ flatpak_transaction_progress_get_is_estimating (FlatpakTransactionProgress *self
  * @self: a #FlatpakTransactionProgress
  *
  * Gets the current progress.
- * 
+ *
  * Returns: the current progress, as an integer between 0 and 100
  */
 int
@@ -612,7 +612,7 @@ flatpak_transaction_operation_get_operation_type (FlatpakTransactionOperation *s
  * Gets the ref that the operation applies to.
  *
  * Returns: (transfer none): the ref
- */ 
+ */
 const char *
 flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
 {
@@ -626,7 +626,7 @@ flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
  * Gets the remote that the operation applies to.
  *
  * Returns: (transfer none): the remote
- */ 
+ */
 const char *
 flatpak_transaction_operation_get_remote (FlatpakTransactionOperation *self)
 {
@@ -897,9 +897,9 @@ flatpak_transaction_add_new_remote (FlatpakTransaction            *transaction,
   return FALSE;
 }
 
-static gboolean flatpak_transaction_real_run (FlatpakTransaction  *transaction,
-                                              GCancellable        *cancellable,
-                                              GError             **error);
+static gboolean flatpak_transaction_real_run (FlatpakTransaction *transaction,
+                                              GCancellable       *cancellable,
+                                              GError            **error);
 
 static void
 flatpak_transaction_class_init (FlatpakTransactionClass *klass)
@@ -1277,7 +1277,7 @@ flatpak_transaction_set_force_uninstall (FlatpakTransaction *self,
  * @arch: the arch to make default
  *
  * Sets the architecture to default to where it is unspecified.
- */ 
+ */
 void
 flatpak_transaction_set_default_arch (FlatpakTransaction *self,
                                       const char         *arch)
@@ -1452,6 +1452,7 @@ add_related (FlatpakTransaction          *self,
              GError                     **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GPtrArray) related = NULL;
   g_autoptr(GError) local_error = NULL;
@@ -1667,6 +1668,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *origin = NULL;
+
   g_auto(GStrv) parts = NULL;
   const char *pref;
   g_autofree char *origin_remote = NULL;
@@ -2136,7 +2138,7 @@ resolve_ops (FlatpakTransaction *self,
           if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
             priv->max_op = MAX (priv->max_op, RUNTIME_INSTALL);
         }
-           
+
       state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
       if (state == NULL)
         return FALSE;
@@ -2750,7 +2752,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
     return flatpak_fail (error, _("Transaction already executed"));
 
   priv->can_run = FALSE;
-  
+
   priv->current_op = NULL;
 
   if (flatpak_dir_is_user (priv->dir) && getuid () == 0)

@@ -314,7 +314,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         print_aligned (len, _("Date:"), formatted_timestamp);
       if (subpaths[0] != NULL)
         {
-          g_autofree char *s = g_strjoinv (",", (char **)subpaths);
+          g_autofree char *s = g_strjoinv (",", (char **) subpaths);
           print_aligned (len, _("Subdirectories:"), s);
         }
 

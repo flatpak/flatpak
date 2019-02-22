@@ -1750,10 +1750,10 @@ flatpak_run_allocate_id (int *lock_fd_out)
 #ifdef HAVE_DCONF
 
 static void
-add_dconf_key_to_keyfile (GKeyFile       *keyfile,
-                          DConfClient    *client,
-                          const char     *key,
-                          DConfReadFlags  flags)
+add_dconf_key_to_keyfile (GKeyFile      *keyfile,
+                          DConfClient   *client,
+                          const char    *key,
+                          DConfReadFlags flags)
 {
   g_autofree char *group = g_path_get_dirname (key);
   g_autofree char *k = g_path_get_basename (key);
@@ -1767,10 +1767,10 @@ add_dconf_key_to_keyfile (GKeyFile       *keyfile,
 }
 
 static void
-add_dconf_dir_to_keyfile (GKeyFile       *keyfile,
-                          DConfClient    *client,
-                          const char     *dir,
-                          DConfReadFlags  flags)
+add_dconf_dir_to_keyfile (GKeyFile      *keyfile,
+                          DConfClient   *client,
+                          const char    *dir,
+                          DConfReadFlags flags)
 {
   g_auto(GStrv) keys = NULL;
   int i;
@@ -1938,10 +1938,10 @@ get_dconf_data (const char  *app_id,
 }
 
 static gboolean
-flatpak_run_add_dconf_args (FlatpakBwrap  *bwrap,
-                            const char    *app_id,
-                            GKeyFile      *metakey,
-                            GError       **error)
+flatpak_run_add_dconf_args (FlatpakBwrap *bwrap,
+                            const char   *app_id,
+                            GKeyFile     *metakey,
+                            GError      **error)
 {
   g_auto(GStrv) paths = NULL;
   g_autofree char *migrate_path = NULL;
@@ -1965,7 +1965,7 @@ flatpak_run_add_dconf_args (FlatpakBwrap  *bwrap,
     }
 
   get_dconf_data (app_id,
-                  (const char **)paths,
+                  (const char **) paths,
                   migrate_path,
                   &defaults, &defaults_size,
                   &values, &values_size,
@@ -2000,7 +2000,7 @@ flatpak_run_add_dconf_args (FlatpakBwrap  *bwrap,
                                    NULL);
 
       if (values_size != 0 && !g_file_test (filename, G_FILE_TEST_EXISTS))
-        { 
+        {
           g_autofree char *dir = g_path_get_dirname (filename);
 
           if (g_mkdir_with_parents (dir, 0700) == -1)
@@ -2209,7 +2209,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 
   flatpak_bwrap_add_args_data_fd (bwrap, "--info-fd", fd3, NULL);
 
- if (app_info_path_out != NULL)
+  if (app_info_path_out != NULL)
     *app_info_path_out = g_strdup_printf ("/proc/self/fd/%d", fd);
 
   if (instance_id_host_dir_out != NULL)

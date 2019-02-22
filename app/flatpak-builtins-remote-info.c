@@ -279,7 +279,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       if (parent)
         {
           g_autofree char *formatted_commit = ellipsize_string (parent, width);
-        print_aligned (len, _("Parent:"), formatted_commit);
+          print_aligned (len, _("Parent:"), formatted_commit);
         }
       if (eol)
         {

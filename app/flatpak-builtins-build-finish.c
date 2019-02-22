@@ -59,7 +59,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_metadata, N_("Set generic metadata option"),  N_("GROUP=KEY[=VALUE]") },
   { "no-inherit-permissions", 0, 0, G_OPTION_ARG_NONE, &opt_no_inherit_permissions, N_("Don't inherit permissions from runtime"), NULL },
- { NULL }
+  { NULL }
 };
 
 static gboolean

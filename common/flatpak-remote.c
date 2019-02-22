@@ -521,7 +521,7 @@ flatpak_remote_get_main_ref (FlatpakRemote *self)
  */
 void
 flatpak_remote_set_main_ref (FlatpakRemote *self,
-                                   const char    *main_ref)
+                             const char    *main_ref)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
@@ -874,7 +874,7 @@ flatpak_remote_commit (FlatpakRemote *self,
   if (priv->name[0] == '\0' ||
       !g_key_file_is_group_name (group))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Bad remote name: %s"), priv->name);
-    
+
   url = flatpak_remote_get_url (self);
   if (url == NULL || *url == 0)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No url specified"));

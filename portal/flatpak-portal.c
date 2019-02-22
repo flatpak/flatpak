@@ -114,9 +114,9 @@ schedule_idle_callback (void)
 
 typedef struct
 {
-  GPid  pid;
-  char *client;
-  guint child_watch;
+  GPid     pid;
+  char    *client;
+  guint    child_watch;
   gboolean watch_bus;
 } PidData;
 
@@ -236,7 +236,7 @@ child_setup_func (gpointer user_data)
 
 static gboolean
 is_valid_expose (const char *expose,
-                 GError **error)
+                 GError    **error)
 {
   /* No subdirs or absolute paths */
   if (expose[0] == '/')

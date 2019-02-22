@@ -69,7 +69,7 @@ enumerate_instances (Column *columns, GError **error)
 
   printer = flatpak_table_printer_new ();
   flatpak_table_printer_set_columns (printer, columns);
- 
+
   instances = flatpak_instance_get_all ();
   if (instances->len == 0)
     {
@@ -79,7 +79,7 @@ enumerate_instances (Column *columns, GError **error)
 
   for (j = 0; j < instances->len; j++)
     {
-      FlatpakInstance *instance = (FlatpakInstance *)g_ptr_array_index (instances, j);
+      FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, j);
 
       flatpak_table_printer_add_column (printer, flatpak_instance_get_id (instance));
 
@@ -139,10 +139,10 @@ enumerate_instances (Column *columns, GError **error)
 }
 
 gboolean
-flatpak_builtin_ps (int            argc,
-                    char         **argv,
-                    GCancellable  *cancellable,
-                    GError       **error)
+flatpak_builtin_ps (int           argc,
+                    char        **argv,
+                    GCancellable *cancellable,
+                    GError      **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autofree char *col_help = NULL;

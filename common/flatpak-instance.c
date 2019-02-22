@@ -262,7 +262,7 @@ static int get_child_pid (const char *dir);
  * Gets the PID of the application process in the sandbox.
  *
  * See flatpak_instance_get_pid().
- * 
+ *
  * Note that this function may return 0 immediately after launching
  * a sandbox, for a short amount of time.
  *
@@ -308,6 +308,7 @@ static GKeyFile *
 get_instance_info (const char *dir)
 {
   g_autofree char *file = NULL;
+
   g_autoptr(GKeyFile) key_file = NULL;
   g_autoptr(GError) error = NULL;
 
@@ -329,6 +330,7 @@ get_child_pid (const char *dir)
   g_autofree char *file = NULL;
   g_autofree char *contents = NULL;
   gsize length;
+
   g_autoptr(GError) error = NULL;
   g_autoptr(JsonParser) parser = NULL;
   JsonNode *node;
@@ -366,6 +368,7 @@ get_pid (const char *dir)
 {
   g_autofree char *file = NULL;
   g_autofree char *contents = NULL;
+
   g_autoptr(GError) error = NULL;
 
   file = g_build_filename (dir, "pid", NULL);
@@ -397,24 +400,24 @@ flatpak_instance_new (const char *dir)
       if (g_key_file_has_group (priv->info, FLATPAK_METADATA_GROUP_APPLICATION))
         {
           priv->app = g_key_file_get_string (priv->info,
-              FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_NAME, NULL);
+                                             FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_NAME, NULL);
           priv->runtime = g_key_file_get_string (priv->info,
-              FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_RUNTIME, NULL);
+                                                 FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_RUNTIME, NULL);
         }
       else
         {
           priv->runtime = g_key_file_get_string (priv->info,
-              FLATPAK_METADATA_GROUP_RUNTIME, FLATPAK_METADATA_KEY_RUNTIME, NULL);
+                                                 FLATPAK_METADATA_GROUP_RUNTIME, FLATPAK_METADATA_KEY_RUNTIME, NULL);
         }
 
       priv->arch = g_key_file_get_string (priv->info,
-          FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_ARCH, NULL);
+                                          FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_ARCH, NULL);
       priv->branch = g_key_file_get_string (priv->info,
-          FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_BRANCH, NULL);
+                                            FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_BRANCH, NULL);
       priv->commit = g_key_file_get_string (priv->info,
-          FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_APP_COMMIT, NULL);
+                                            FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_APP_COMMIT, NULL);
       priv->runtime_commit = g_key_file_get_string (priv->info,
-          FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_RUNTIME_COMMIT, NULL);
+                                                    FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_RUNTIME_COMMIT, NULL);
     }
 
   return self;
@@ -510,4 +513,3 @@ flatpak_instance_is_running (FlatpakInstance *self)
 
   return FALSE;
 }
-

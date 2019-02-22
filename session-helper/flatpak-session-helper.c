@@ -53,9 +53,9 @@ handle_sigterm (int signum)
 
 typedef struct
 {
-  GPid  pid;
-  char *client;
-  guint child_watch;
+  GPid     pid;
+  char    *client;
+  guint    child_watch;
   gboolean watch_bus;
 } PidData;
 
@@ -227,7 +227,7 @@ handle_host_command (FlatpakDevelopment    *object,
 
   if (!g_variant_is_of_type (arg_fds, G_VARIANT_TYPE ("a{uh}")) ||
       !g_variant_is_of_type (arg_envs, G_VARIANT_TYPE ("a{ss}")) ||
-      (flags & ~(FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV|
+      (flags & ~(FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV |
                  FLATPAK_HOST_COMMAND_FLAGS_WATCH_BUS)) != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,

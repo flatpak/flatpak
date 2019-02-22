@@ -408,7 +408,7 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
           FlatpakDir *dir = g_ptr_array_index (dirs_with_remote, i);
           names[i] = flatpak_dir_get_name (dir);
         }
-      flatpak_format_choices ((const char **)names,
+      flatpak_format_choices ((const char **) names,
                               _("Remote ‘%s’ found in multiple installations:"), remote_name);
       chosen = flatpak_number_prompt (TRUE, 0, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)
@@ -428,13 +428,13 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
 }
 
 gboolean
-flatpak_resolve_matching_refs (const char   *remote_name,
-                               FlatpakDir   *dir,
-                               gboolean      disable_interaction,
-                               char        **refs,
-                               const char   *opt_search_ref,
-                               char        **out_ref,
-                               GError      **error)
+flatpak_resolve_matching_refs (const char *remote_name,
+                               FlatpakDir *dir,
+                               gboolean    disable_interaction,
+                               char      **refs,
+                               const char *opt_search_ref,
+                               char      **out_ref,
+                               GError    **error)
 {
   guint chosen = 0;
   guint refs_len;
@@ -473,7 +473,7 @@ flatpak_resolve_matching_refs (const char   *remote_name,
         }
       else
         {
-          flatpak_format_choices ((const char **)refs,
+          flatpak_format_choices ((const char **) refs,
                                   _("Similar refs found for ‘%s’ in remote ‘%s’ (%s):"),
                                   opt_search_ref, remote_name, dir_name);
           chosen = flatpak_number_prompt (TRUE, 0, refs_len, _("Which do you want to use (0 to abort)?"));
@@ -489,11 +489,11 @@ flatpak_resolve_matching_refs (const char   *remote_name,
 }
 
 gboolean
-flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
-                                         GPtrArray   *ref_dir_pairs,
-                                         const char  *opt_search_ref,
-                                         GPtrArray   *out_pairs,
-                                         GError     **error)
+flatpak_resolve_matching_installed_refs (gboolean    disable_interaction,
+                                         GPtrArray  *ref_dir_pairs,
+                                         const char *opt_search_ref,
+                                         GPtrArray  *out_pairs,
+                                         GError    **error)
 {
   guint chosen = 0;
   g_autofree int *choices = NULL;
@@ -547,7 +547,7 @@ flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
               names[i] = g_strdup_printf ("%s (%s)", pair->ref, flatpak_dir_get_name_cached (pair->dir));
             }
           names[i] = g_strdup_printf (_("All of the above"));
-          flatpak_format_choices ((const char **)names, _("Similar installed refs found for ‘%s’:"), opt_search_ref);
+          flatpak_format_choices ((const char **) names, _("Similar installed refs found for ‘%s’:"), opt_search_ref);
           choices = flatpak_numbers_prompt (TRUE, 0, len, _("Which do you want to use (0 to abort)?"));
           if (choices[0] == 0)
             return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
@@ -566,7 +566,7 @@ flatpak_resolve_matching_installed_refs (gboolean     disable_interaction,
             }
           else
             g_ptr_array_add (out_pairs, g_ptr_array_index (ref_dir_pairs, chosen - 1));
-       }
+        }
     }
   else
     g_ptr_array_add (out_pairs, g_ptr_array_index (ref_dir_pairs, chosen - 1));
@@ -610,7 +610,7 @@ flatpak_resolve_matching_remotes (gboolean        disable_interaction,
               RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, i);
               names[i] = g_strdup_printf ("‘%s’ (%s)", pair->remote_name, flatpak_dir_get_name_cached (pair->dir));
             }
-          flatpak_format_choices ((const char **)names, _("Remotes found with refs similar to ‘%s’:"), opt_search_ref);
+          flatpak_format_choices ((const char **) names, _("Remotes found with refs similar to ‘%s’:"), opt_search_ref);
           chosen = flatpak_number_prompt (TRUE, 0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
           if (chosen == 0)
             return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
@@ -820,9 +820,9 @@ get_permission_tables (XdpDbusPermissionStore *store)
 /*** column handling ***/
 
 static gboolean
-parse_ellipsize_suffix (const char *p,
+parse_ellipsize_suffix (const char           *p,
                         FlatpakEllipsizeMode *mode,
-                        GError **error)
+                        GError              **error)
 {
   if (g_str_equal (":", p))
     {
@@ -851,9 +851,9 @@ parse_ellipsize_suffix (const char *p,
 }
 
 int
-find_column (Column *columns,
+find_column (Column     *columns,
              const char *name,
-             GError **error)
+             GError    **error)
 {
   int i;
   int candidate;
@@ -894,9 +894,9 @@ find_column (Column *columns,
 }
 
 static Column *
-column_filter (Column *columns,
+column_filter (Column     *columns,
                const char *col_arg,
-               GError **error)
+               GError    **error)
 {
   g_auto(GStrv) cols = g_strsplit (col_arg, ",", 0);
   int n_cols = g_strv_length (cols);
@@ -960,8 +960,8 @@ column_help (Column *columns)
   g_string_append_printf (s, "  %-*s %s\n", len, "all", _("Show all columns"));
   g_string_append_printf (s, "  %-*s %s\n", len, "help", _("Show available columns"));
 
-  g_string_append_printf  (s, "\n%s\n",
-                    _("Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"));
+  g_string_append_printf (s, "\n%s\n",
+                          _("Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"));
   return g_string_free (s, FALSE);
 }
 
@@ -970,10 +970,10 @@ column_help (Column *columns)
  * opt_cols should correspond to --columns
  */
 Column *
-handle_column_args (Column *all_columns,
-                    gboolean opt_show_all,
+handle_column_args (Column      *all_columns,
+                    gboolean     opt_show_all,
                     const char **opt_cols,
-                    GError **error)
+                    GError     **error)
 {
   g_autofree char *cols = NULL;
   gboolean show_help = FALSE;
@@ -996,11 +996,11 @@ handle_column_args (Column *all_columns,
     {
       g_autofree char *col_help = column_help (all_columns);
       g_print ("%s", col_help);
-      return g_new0 (Column, 1); 
+      return g_new0 (Column, 1);
     }
 
   if (opt_cols && !show_all)
-    cols = g_strjoinv (",", (char**)opt_cols);
+    cols = g_strjoinv (",", (char **) opt_cols);
   else
     {
       GString *s;
@@ -1014,7 +1014,7 @@ handle_column_args (Column *all_columns,
         }
       cols = g_string_free (s, FALSE);
     }
-    
+
   return column_filter (all_columns, cols, error);
 }
 
@@ -1120,7 +1120,7 @@ as_app_get_version (AsApp *app)
 }
 
 AsApp *
-as_store_find_app (AsStore *store,
+as_store_find_app (AsStore    *store,
                    const char *ref)
 {
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
@@ -1142,7 +1142,7 @@ as_store_find_app (AsStore *store,
           AsApp *app = g_ptr_array_index (apps, i);
           AsBundle *bundle = as_app_get_bundle_default (app);
           if (bundle &&
-#if AS_CHECK_VERSION(0,5,15)
+#if AS_CHECK_VERSION (0, 5, 15)
               as_bundle_get_kind (bundle) == AS_BUNDLE_KIND_FLATPAK &&
 #endif
               g_str_equal (as_bundle_get_id (bundle), ref))
@@ -1172,14 +1172,15 @@ as_store_find_app (AsStore *store,
  *    otherwise
  */
 gboolean
-flatpak_dir_load_appstream_store (FlatpakDir    *self,
-                                  const gchar   *remote_name,
-                                  const gchar   *arch,
-                                  AsStore       *store,
-                                  GCancellable  *cancellable,
-                                  GError       **error)
+flatpak_dir_load_appstream_store (FlatpakDir   *self,
+                                  const gchar  *remote_name,
+                                  const gchar  *arch,
+                                  AsStore      *store,
+                                  GCancellable *cancellable,
+                                  GError      **error)
 {
   const char *install_path = flatpak_file_get_path_cached (flatpak_dir_get_path (self));
+
   g_autoptr(GFile) appstream_file = NULL;
   g_autofree char *appstream_path = NULL;
   g_autoptr(GError) local_error = NULL;
@@ -1226,7 +1227,7 @@ print_aligned (int len, const char *title, const char *value)
       off = FLATPAK_ANSI_BOLD_OFF;
     }
 
-  g_print ("%s%*s%s%s %s\n", on, len - (int)g_utf8_strlen (title, -1), "", title, off, value);
+  g_print ("%s%*s%s%s %s\n", on, len - (int) g_utf8_strlen (title, -1), "", title, off, value);
 }
 
 
@@ -1279,7 +1280,8 @@ cell_width (const char *text)
       while (*p && *p == '\x1b')
         p = skip_escape_sequence (p);
 
-      if (!*p) break;
+      if (!*p)
+        break;
 
       width += 1;
       p = g_utf8_next_char (p);
@@ -1301,7 +1303,8 @@ cell_advance (const char *text,
       while (*p && *p == '\x1b')
         p = skip_escape_sequence (p);
 
-      if (!*p) break;
+      if (!*p)
+        break;
 
       width += 1;
       p = g_utf8_next_char (p);
@@ -1319,29 +1322,30 @@ print_line_wrapped (int cols, const char *line)
 
   for (i = 0; words[i]; i++)
     {
-       int len = g_utf8_strlen (words[i], -1);
-       int space = col > 0;
+      int len = g_utf8_strlen (words[i], -1);
+      int space = col > 0;
 
-       if (col + space + len >= cols)
-         {
-           g_print ("\n%s", words[i]);
-           col = len;
-         }
-       else
-         {
-           g_print ("%*s%s", space, "", words[i]);
-           col = col + space + len;
-         }
+      if (col + space + len >= cols)
+        {
+          g_print ("\n%s", words[i]);
+          col = len;
+        }
+      else
+        {
+          g_print ("%*s%s", space, "", words[i]);
+          col = col + space + len;
+        }
     }
 }
 
 void
-print_wrapped (int cols,
+print_wrapped (int         cols,
                const char *text,
                ...)
 {
   va_list args;
   g_autofree char *msg = NULL;
+
   g_auto(GStrv) lines = NULL;
   int i;
 

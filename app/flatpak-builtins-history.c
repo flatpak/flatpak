@@ -76,13 +76,13 @@ static Column all_columns[] = {
 static char *
 get_field (sd_journal *j,
            const char *name,
-           GError **error)
+           GError    **error)
 {
   const char *data;
   gsize len;
   int r;
 
-  if ((r = sd_journal_get_data (j, name, (const void **)&data, &len)) < 0)
+  if ((r = sd_journal_get_data (j, name, (const void **) &data, &len)) < 0)
     {
       if (r != -ENOENT)
         g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -97,7 +97,7 @@ get_field (sd_journal *j,
 
 static GDateTime *
 get_time (sd_journal *j,
-          GError **error)
+          GError    **error)
 {
   g_autofree char *value = NULL;
   GError *local_error = NULL;
@@ -116,13 +116,13 @@ get_time (sd_journal *j,
 }
 
 static gboolean
-print_history (GPtrArray *dirs,
-               Column *columns,
-               GDateTime *since,
-               GDateTime *until,
-               gboolean reverse,
+print_history (GPtrArray    *dirs,
+               Column       *columns,
+               GDateTime    *since,
+               GDateTime    *until,
+               gboolean      reverse,
                GCancellable *cancellable,
-               GError **error)
+               GError      **error)
 {
   FlatpakTablePrinter *printer;
   sd_journal *j;
@@ -159,179 +159,179 @@ print_history (GPtrArray *dirs,
   if (ret == 0)
     while ((reverse && sd_journal_previous (j) > 0) ||
            (!reverse && sd_journal_next (j) > 0))
-    {
-      /* determine whether to skip this entry */
+      {
+        /* determine whether to skip this entry */
 
-      if (dirs)
-        {
-          gboolean include = FALSE;
-          g_autofree char *installation = get_field (j, "INSTALLATION", NULL);
+        if (dirs)
+          {
+            gboolean include = FALSE;
+            g_autofree char *installation = get_field (j, "INSTALLATION", NULL);
 
-          if (installation && installation[0] == '/')
-            include = TRUE; /* pull to a temp repo */
+            if (installation && installation[0] == '/')
+              include = TRUE; /* pull to a temp repo */
 
-          for (i = 0; i < dirs->len && !include; i++)
-            {
-              g_autofree char *name = flatpak_dir_get_name (dirs->pdata[i]);
-              if (g_strcmp0 (name, installation) == 0)
-                include = TRUE;
-            }
-          if (!include)
-            continue;
-        }
+            for (i = 0; i < dirs->len && !include; i++)
+              {
+                g_autofree char *name = flatpak_dir_get_name (dirs->pdata[i]);
+                if (g_strcmp0 (name, installation) == 0)
+                  include = TRUE;
+              }
+            if (!include)
+              continue;
+          }
 
-      if (since || until)
-        {
-          g_autoptr(GDateTime) time = get_time (j, NULL);
+        if (since || until)
+          {
+            g_autoptr(GDateTime) time = get_time (j, NULL);
 
-          if (since && time && g_date_time_difference (since, time) >= 0)
-            continue;
+            if (since && time && g_date_time_difference (since, time) >= 0)
+              continue;
 
-          if (until && time && g_date_time_difference (until, time) <= 0)
-            continue;
-        }
+            if (until && time && g_date_time_difference (until, time) <= 0)
+              continue;
+          }
 
-      for (k = 0; columns[k].name; k++)
-        {
-          if (strcmp (columns[k].name, "time") == 0)
-            {
-              g_autoptr(GDateTime) time = NULL;
-              g_autofree char *s = NULL;
+        for (k = 0; columns[k].name; k++)
+          {
+            if (strcmp (columns[k].name, "time") == 0)
+              {
+                g_autoptr(GDateTime) time = NULL;
+                g_autofree char *s = NULL;
 
-              time = get_time (j, error);
-              if (*error)
-                return FALSE;
+                time = get_time (j, error);
+                if (*error)
+                  return FALSE;
 
-              s = g_date_time_format (time, "%b %e %T");
-              flatpak_table_printer_add_column (printer, s);
-            }
-          else if (strcmp (columns[k].name, "change") == 0)
-            {
-              g_autofree char *op = get_field (j, "OPERATION", error);
-              if (*error)
-                return FALSE;
-              flatpak_table_printer_add_column (printer, op);
-            }
-          else if (strcmp (columns[k].name, "ref") == 0 ||
-                   strcmp (columns[k].name, "application") == 0 ||
-                   strcmp (columns[k].name, "arch") == 0 ||
-                   strcmp (columns[k].name, "branch") == 0)
-            {
-              g_autofree char *ref = get_field (j, "REF", error);
-              if (*error)
-                return FALSE;
-              if (strcmp (columns[k].name, "ref") == 0)
-                flatpak_table_printer_add_column (printer, ref);
-              else
-                {
-                  g_auto(GStrv) pref = flatpak_decompose_ref (ref, NULL);
-                  if (strcmp (columns[k].name, "application") == 0)
-                    flatpak_table_printer_add_column (printer, pref ? pref[1] : "");
-                  else if (strcmp (columns[k].name, "arch") == 0)
-                    flatpak_table_printer_add_column (printer, pref ? pref[2] : "");
-                  else
-                    flatpak_table_printer_add_column (printer, pref ? pref[3] : "");
-                }
-            }
-          else if (strcmp (columns[k].name, "installation") == 0)
-            {
-              g_autofree char *installation = get_field (j, "INSTALLATION", error);
-              if (*error)
-                return FALSE;
-              flatpak_table_printer_add_column (printer, installation);
-            }
-          else if (strcmp (columns[k].name, "remote") == 0)
-            {
-              g_autofree char *remote = get_field (j, "REMOTE", error);
-              if (*error)
-                return FALSE;
-              flatpak_table_printer_add_column (printer, remote);
-            }
-          else if (strcmp (columns[k].name, "commit") == 0)
-            {
-              g_autofree char *commit = get_field (j, "COMMIT", error);
-              if (*error)
-                return FALSE;
-              flatpak_table_printer_add_column_len (printer, commit, 12);
-            }
-          else if (strcmp (columns[k].name, "old-commit") == 0)
-            {
-              g_autofree char *old_commit = get_field (j, "OLD_COMMIT", error);
-              if (*error)
-                return FALSE;
-              flatpak_table_printer_add_column_len (printer, old_commit, 12);
-            }
-          else if (strcmp (columns[k].name, "url") == 0)
-            {
-              g_autofree char *url = get_field (j, "URL", error);
-              if (*error)
-                return FALSE;
-              flatpak_table_printer_add_column (printer, url);
-            }
-          else if (strcmp (columns[k].name, "user") == 0)
-            {
-              g_autofree char *id = get_field (j, "_UID", error);
-              g_autofree char *oid = NULL;
-              int uid;
-              struct passwd *pwd;
+                s = g_date_time_format (time, "%b %e %T");
+                flatpak_table_printer_add_column (printer, s);
+              }
+            else if (strcmp (columns[k].name, "change") == 0)
+              {
+                g_autofree char *op = get_field (j, "OPERATION", error);
+                if (*error)
+                  return FALSE;
+                flatpak_table_printer_add_column (printer, op);
+              }
+            else if (strcmp (columns[k].name, "ref") == 0 ||
+                     strcmp (columns[k].name, "application") == 0 ||
+                     strcmp (columns[k].name, "arch") == 0 ||
+                     strcmp (columns[k].name, "branch") == 0)
+              {
+                g_autofree char *ref = get_field (j, "REF", error);
+                if (*error)
+                  return FALSE;
+                if (strcmp (columns[k].name, "ref") == 0)
+                  flatpak_table_printer_add_column (printer, ref);
+                else
+                  {
+                    g_auto(GStrv) pref = flatpak_decompose_ref (ref, NULL);
+                    if (strcmp (columns[k].name, "application") == 0)
+                      flatpak_table_printer_add_column (printer, pref ? pref[1] : "");
+                    else if (strcmp (columns[k].name, "arch") == 0)
+                      flatpak_table_printer_add_column (printer, pref ? pref[2] : "");
+                    else
+                      flatpak_table_printer_add_column (printer, pref ? pref[3] : "");
+                  }
+              }
+            else if (strcmp (columns[k].name, "installation") == 0)
+              {
+                g_autofree char *installation = get_field (j, "INSTALLATION", error);
+                if (*error)
+                  return FALSE;
+                flatpak_table_printer_add_column (printer, installation);
+              }
+            else if (strcmp (columns[k].name, "remote") == 0)
+              {
+                g_autofree char *remote = get_field (j, "REMOTE", error);
+                if (*error)
+                  return FALSE;
+                flatpak_table_printer_add_column (printer, remote);
+              }
+            else if (strcmp (columns[k].name, "commit") == 0)
+              {
+                g_autofree char *commit = get_field (j, "COMMIT", error);
+                if (*error)
+                  return FALSE;
+                flatpak_table_printer_add_column_len (printer, commit, 12);
+              }
+            else if (strcmp (columns[k].name, "old-commit") == 0)
+              {
+                g_autofree char *old_commit = get_field (j, "OLD_COMMIT", error);
+                if (*error)
+                  return FALSE;
+                flatpak_table_printer_add_column_len (printer, old_commit, 12);
+              }
+            else if (strcmp (columns[k].name, "url") == 0)
+              {
+                g_autofree char *url = get_field (j, "URL", error);
+                if (*error)
+                  return FALSE;
+                flatpak_table_printer_add_column (printer, url);
+              }
+            else if (strcmp (columns[k].name, "user") == 0)
+              {
+                g_autofree char *id = get_field (j, "_UID", error);
+                g_autofree char *oid = NULL;
+                int uid;
+                struct passwd *pwd;
 
-              if (*error)
-                return FALSE;
+                if (*error)
+                  return FALSE;
 
-              uid = g_ascii_strtoll (id, NULL, 10);
-              pwd = getpwuid (uid);
-              if (pwd)
-                {
-                  g_free (id);
-                  id = g_strdup (pwd->pw_name);
-                }
+                uid = g_ascii_strtoll (id, NULL, 10);
+                pwd = getpwuid (uid);
+                if (pwd)
+                  {
+                    g_free (id);
+                    id = g_strdup (pwd->pw_name);
+                  }
 
-              oid = get_field (j, "OBJECT_UID", NULL);
-              if (oid)
-                {
-                  /* flatpak-system-helper acting on behalf of sb else */
-                  g_autofree char *str = NULL;
-                  uid = g_ascii_strtoll (oid, NULL, 10);
-                  pwd = getpwuid (uid);
-                  str = g_strdup_printf ("%s (%s)", id, pwd ? pwd->pw_name : oid);
-                  flatpak_table_printer_add_column (printer, str);
-                }
-              else
-                flatpak_table_printer_add_column (printer, id);
-            }
-          else if (strcmp (columns[k].name, "tool") == 0)
-            {
-              g_autofree char *exe = get_field (j, "_EXE", error);
-              g_autofree char *oexe = NULL;
-              g_autofree char *tool = NULL;
-              if (*error)
-                return FALSE;
-              tool = g_path_get_basename (exe);
-              oexe = get_field (j, "OBJECT_EXE", NULL);
-              if (oexe)
-                {
-                  /* flatpak-system-helper acting on behalf of sb else */
-                  g_autofree char *otool = NULL;
-                  g_autofree char *str = NULL;
+                oid = get_field (j, "OBJECT_UID", NULL);
+                if (oid)
+                  {
+                    /* flatpak-system-helper acting on behalf of sb else */
+                    g_autofree char *str = NULL;
+                    uid = g_ascii_strtoll (oid, NULL, 10);
+                    pwd = getpwuid (uid);
+                    str = g_strdup_printf ("%s (%s)", id, pwd ? pwd->pw_name : oid);
+                    flatpak_table_printer_add_column (printer, str);
+                  }
+                else
+                  flatpak_table_printer_add_column (printer, id);
+              }
+            else if (strcmp (columns[k].name, "tool") == 0)
+              {
+                g_autofree char *exe = get_field (j, "_EXE", error);
+                g_autofree char *oexe = NULL;
+                g_autofree char *tool = NULL;
+                if (*error)
+                  return FALSE;
+                tool = g_path_get_basename (exe);
+                oexe = get_field (j, "OBJECT_EXE", NULL);
+                if (oexe)
+                  {
+                    /* flatpak-system-helper acting on behalf of sb else */
+                    g_autofree char *otool = NULL;
+                    g_autofree char *str = NULL;
 
-                  otool = g_path_get_basename (oexe);
-                  str = g_strdup_printf ("%s (%s)", tool, otool);
-                  flatpak_table_printer_add_column (printer, str);
-                }
-              else
-                flatpak_table_printer_add_column (printer, tool);
-            }
-          else if (strcmp (columns[k].name, "version") == 0)
-            {
-              g_autofree char *version = get_field (j, "FLATPAK_VERSION", error);
-              if (*error)
-                return FALSE;
-              flatpak_table_printer_add_column (printer, version);
-            }
-        }
+                    otool = g_path_get_basename (oexe);
+                    str = g_strdup_printf ("%s (%s)", tool, otool);
+                    flatpak_table_printer_add_column (printer, str);
+                  }
+                else
+                  flatpak_table_printer_add_column (printer, tool);
+              }
+            else if (strcmp (columns[k].name, "version") == 0)
+              {
+                g_autofree char *version = get_field (j, "FLATPAK_VERSION", error);
+                if (*error)
+                  return FALSE;
+                flatpak_table_printer_add_column (printer, version);
+              }
+          }
 
-      flatpak_table_printer_finish_row (printer);
-    }
+        flatpak_table_printer_finish_row (printer);
+      }
 
   flatpak_table_printer_print (printer);
   flatpak_table_printer_free (printer);
@@ -344,13 +344,13 @@ print_history (GPtrArray *dirs,
 #else
 
 static gboolean
-print_history (GPtrArray *dirs,
-               Column *columns,
-               GDateTime *since,
-               GDateTime *until,
-               gboolean reverse,
+print_history (GPtrArray    *dirs,
+               Column       *columns,
+               GDateTime    *since,
+               GDateTime    *until,
+               gboolean      reverse,
                GCancellable *cancellable,
-               GError **error)
+               GError      **error)
 {
   if (columns[0].name == NULL)
     return TRUE;
@@ -364,7 +364,7 @@ print_history (GPtrArray *dirs,
 static GDateTime *
 parse_time (const char *opt_since)
 {
-  g_autoptr (GDateTime) now = NULL;
+  g_autoptr(GDateTime) now = NULL;
   g_auto(GStrv) parts = NULL;
   int i;
   int days = 0;
@@ -380,7 +380,7 @@ parse_time (const char *opt_since)
 
   now = g_date_time_new_now_local ();
 
-  for (i = 0; i < G_N_ELEMENTS(fmts); i++)
+  for (i = 0; i < G_N_ELEMENTS (fmts); i++)
     {
       const char *rest;
       struct tm tm;
@@ -394,7 +394,7 @@ parse_time (const char *opt_since)
 
       rest = strptime (opt_since, fmts[i], &tm);
       if (rest && *rest == '\0')
-         return g_date_time_new_local (tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+        return g_date_time_new_local (tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
     }
 
   parts = g_strsplit (opt_since, " ", -1);

@@ -122,10 +122,10 @@ struct _FlatpakTransactionClass
                               const char                    *remote_name,
                               const char                    *url);
 
-  gboolean (*run)            (FlatpakTransaction  *transaction,
-                              GCancellable        *cancellable,
-                              GError             **error);
-                   
+  gboolean (*run)            (FlatpakTransaction *transaction,
+                              GCancellable       *cancellable,
+                              GError            **error);
+
   gpointer padding[9];
 };
 

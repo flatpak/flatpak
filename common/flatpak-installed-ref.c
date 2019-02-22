@@ -480,8 +480,8 @@ flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
  */
 GBytes *
 flatpak_installed_ref_load_appdata (FlatpakInstalledRef *self,
-                                     GCancellable        *cancellable,
-                                     GError             **error)
+                                    GCancellable        *cancellable,
+                                    GError             **error)
 {
   FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
   char *data;

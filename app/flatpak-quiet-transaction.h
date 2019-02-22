@@ -27,7 +27,7 @@
 #define FLATPAK_TYPE_QUIET_TRANSACTION flatpak_quiet_transaction_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakQuietTransaction, flatpak_quiet_transaction, FLATPAK, QUIET_TRANSACTION, FlatpakTransaction)
 
-FlatpakTransaction * flatpak_quiet_transaction_new (FlatpakDir  *dir,
+FlatpakTransaction * flatpak_quiet_transaction_new (FlatpakDir  * dir,
                                                     GError     **error);
 
 #endif /* __FLATPAK_QUIET_TRANSACTION_H__ */

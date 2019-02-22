@@ -75,7 +75,7 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
       g_autoptr(GPtrArray) refs_to_remove = NULL;
       int i;
 
-      refs = flatpak_dir_find_installed_refs (preferred_dir, NULL, NULL, NULL, FLATPAK_KINDS_APP|FLATPAK_KINDS_RUNTIME, 0, error);
+      refs = flatpak_dir_find_installed_refs (preferred_dir, NULL, NULL, NULL, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME, 0, error);
       if (refs == NULL)
         return FALSE;
 
@@ -94,7 +94,7 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
 
           g_ptr_array_add (refs_to_remove, NULL);
 
-          flatpak_format_choices ((const char **)refs_to_remove->pdata,
+          flatpak_format_choices ((const char **) refs_to_remove->pdata,
                                   _("The following refs are installed from remote '%s':"), remote_name);
           if (!flatpak_yes_no_prompt (FALSE, _("Remove them?")))
             return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_USED,
