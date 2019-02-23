@@ -687,7 +687,6 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
                    GError      **error)
 {
   glnx_autofd int app_info_fd = -1;
-
   g_auto(GLnxDirFdIterator) dir_iter = { 0 };
   struct dirent *dent;
   g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
@@ -772,7 +771,6 @@ start_dbus_proxy (FlatpakBwrap *app_bwrap,
   char x = 'x';
   const char *proxy;
   g_autofree char *commandline = NULL;
-
   g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
   int sync_fds[2] = {-1, -1};
   int proxy_start_index;
@@ -1652,7 +1650,6 @@ static void
 flatpak_run_gc_ids (void)
 {
   g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
-
   g_auto(GLnxDirFdIterator) iter = { 0 };
   struct dirent *dent;
 
@@ -2037,7 +2034,6 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   g_autofree char *info_path = NULL;
   g_autofree char *bwrapinfo_path = NULL;
   int fd, fd2, fd3;
-
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime_path = NULL;
   g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
@@ -2679,7 +2675,6 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   struct group *g;
   gulong pers;
   gid_t gid = getgid ();
-
   g_autoptr(GFile) etc = NULL;
 
   g = getgrgid (gid);
@@ -2855,7 +2850,6 @@ forward_file (XdpDbusDocuments *documents,
 {
   int fd, fd_id;
   g_autofree char *doc_id = NULL;
-
   g_autoptr(GUnixFDList) fd_list = NULL;
   const char *perms[] = { "read", "write", NULL };
 

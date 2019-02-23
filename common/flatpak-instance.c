@@ -308,7 +308,6 @@ static GKeyFile *
 get_instance_info (const char *dir)
 {
   g_autofree char *file = NULL;
-
   g_autoptr(GKeyFile) key_file = NULL;
   g_autoptr(GError) error = NULL;
 
@@ -330,7 +329,6 @@ get_child_pid (const char *dir)
   g_autofree char *file = NULL;
   g_autofree char *contents = NULL;
   gsize length;
-
   g_autoptr(GError) error = NULL;
   g_autoptr(JsonParser) parser = NULL;
   JsonNode *node;
@@ -368,7 +366,6 @@ get_pid (const char *dir)
 {
   g_autofree char *file = NULL;
   g_autofree char *contents = NULL;
-
   g_autoptr(GError) error = NULL;
 
   file = g_build_filename (dir, "pid", NULL);

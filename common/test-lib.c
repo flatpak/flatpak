@@ -32,7 +32,6 @@ main (int argc, char *argv[])
   FlatpakInstalledRef *app1;
   FlatpakInstalledRef *app2;
   FlatpakRemoteRef *remote_ref;
-
   g_autoptr(GPtrArray) remotes = NULL;
   GError *error = NULL;
   int i, j, k;

@@ -94,7 +94,6 @@ child_watch_died (GPid     pid,
                   gpointer user_data)
 {
   PidData *pid_data = user_data;
-
   g_autoptr(GVariant) signal_variant = NULL;
 
   g_debug ("Client Pid %d died", pid_data->pid);
@@ -690,7 +689,6 @@ start_p11_kit_server (const char *flatpak_dir)
   g_autofree char *socket_path = g_build_filename (flatpak_dir, socket_basename, NULL);
   g_autofree char *p11_kit_stdout = NULL;
   gint exit_status;
-
   g_autoptr(GError) local_error = NULL;
   g_auto(GStrv) stdout_lines = NULL;
   int i;
@@ -767,7 +765,6 @@ main (int    argc,
   GOptionContext *context;
   GBusNameOwnerFlags flags;
   g_autofree char *flatpak_dir = NULL;
-
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },

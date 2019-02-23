@@ -371,7 +371,6 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
   g_autofree int *lwidths = NULL;
   g_autofree int *rwidths = NULL;
   g_autofree int *shrinks = NULL;
-
   g_autoptr(GString) row_s = g_string_new ("");
   int i, j;
   int rows = 0;

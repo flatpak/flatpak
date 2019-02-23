@@ -867,7 +867,6 @@ flatpak_remote_commit (FlatpakRemote *self,
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
   OstreeRepo *repo;
   g_autofree char *url = NULL;
-
   g_autoptr(GKeyFile) config = NULL;
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", priv->name);
 

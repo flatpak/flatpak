@@ -75,7 +75,6 @@ export_dir (int           source_parent_fd,
             GError      **error)
 {
   int res;
-
   g_auto(GLnxDirFdIterator) source_iter = {0};
   glnx_autofd int destination_dfd = -1;
   struct dirent *dent;
@@ -293,7 +292,6 @@ static gboolean
 update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;

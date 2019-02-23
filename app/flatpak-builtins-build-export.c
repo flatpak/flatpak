@@ -77,7 +77,6 @@ static gboolean
 metadata_get_arch (GFile *file, char **out_arch, GError **error)
 {
   g_autofree char *path = NULL;
-
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime = NULL;
   g_auto(GStrv) parts = NULL;
@@ -440,7 +439,6 @@ validate_desktop_file (GFile      *desktop_file,
                        GError    **error)
 {
   g_autofree char *path = g_file_get_path (desktop_file);
-
   g_autoptr(GSubprocess) subprocess = NULL;
   g_autofree char *stdout_buf = NULL;
   g_autofree char *stderr_buf = NULL;
@@ -545,7 +543,6 @@ validate_service_file (GFile      *service_file,
                        GError    **error)
 {
   g_autofree char *path = g_file_get_path (service_file);
-
   g_autoptr(GKeyFile) key_file = NULL;
   g_autofree char *name = NULL;
   g_autofree char *command = NULL;
@@ -604,7 +601,6 @@ static gboolean
 validate_exports (GFile *export, GFile *files, const char *app_id, GError **error)
 {
   g_autofree char *desktop_path = NULL;
-
   g_autoptr(GFile) desktop_file = NULL;
   g_autofree char *service_path = NULL;
   g_autoptr(GFile) service_file = NULL;
@@ -747,7 +743,6 @@ gboolean
 flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files = NULL;

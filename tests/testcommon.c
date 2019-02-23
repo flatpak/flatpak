@@ -392,7 +392,6 @@ test_subpaths_merge (void)
   char *bla[] = { "bla", "ba", NULL };
   char *bla_sorted[] = { "ba", "bla", NULL };
   char *bubabla[] = { "ba", "bla", "bu", NULL };
-
   g_auto(GStrv) res = NULL;
 
   res = flatpak_subpaths_merge (NULL, bla);
@@ -480,7 +479,6 @@ test_parse_appdata (void)
     "    <project_license>anything goes</project_license>\n"
     "  </component>\n"
     "</components>";
-
   g_autoptr(GHashTable) names = NULL;
   g_autoptr(GHashTable) comments = NULL;
   g_autofree char *version = NULL;
@@ -610,7 +608,6 @@ test_columns (void)
   };
   Column *cols;
   g_autofree char *help = NULL;
-
   g_autoptr(GError) error = NULL;
   const char *args[3];
 
@@ -935,7 +932,6 @@ test_parse_datetime (void)
   struct timespec ts;
   struct timespec now;
   gboolean ret;
-
   g_autoptr(GDateTime) dt = NULL;
   GTimeVal tv;
 

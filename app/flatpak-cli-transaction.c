@@ -248,7 +248,6 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   FlatpakCliTransaction *cli = data;
   FlatpakTransaction *self = FLATPAK_TRANSACTION (cli);
   FlatpakTransactionOperation *op = flatpak_transaction_get_current_operation (self);
-
   g_autoptr(GString) str = g_string_new ("");
   int i;
   int n_full, partial;
@@ -439,7 +438,6 @@ operation_error (FlatpakTransaction            *transaction,
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
   const char *ref = flatpak_transaction_operation_get_ref (op);
-
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
   g_autofree char *msg = NULL;
   gboolean non_fatal = (detail & FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL) != 0;
@@ -510,7 +508,6 @@ end_of_lifed (FlatpakTransaction *transaction,
               const char         *rebase)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
-
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
   g_autofree char *msg = NULL;
 
@@ -618,7 +615,6 @@ append_tags (GPtrArray *tags_array,
              GKeyFile  *old_metadata)
 {
   gsize i, size = 0;
-
   g_auto(GStrv) tags = g_key_file_get_string_list (metadata, FLATPAK_METADATA_GROUP_APPLICATION, "tags",
                                                    &size, NULL);
   g_auto(GStrv) old_tags = NULL;

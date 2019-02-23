@@ -133,7 +133,6 @@ test_multiple_system_installations (void)
     { "extra-installation-3", "System (extra-installation-3) installation", 0, FLATPAK_STORAGE_TYPE_DEFAULT},
     { "default", "Default system installation", 0, FLATPAK_STORAGE_TYPE_DEFAULT},
   };
-
   g_autoptr(GPtrArray) system_dirs = NULL;
   g_autoptr(GError) error = NULL;
 
@@ -693,7 +692,6 @@ test_list_refs_in_remotes (void)
 {
   const char *repo_name = "multi-refs-repo";
   g_autofree char *repo_url = NULL;
-
   g_autoptr(GPtrArray) refs1 = NULL;
   g_autoptr(GPtrArray) refs2 = NULL;
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -1223,7 +1221,6 @@ run_test_subprocess (char                 **argv,
                      RunTestSubprocessFlags flags)
 {
   int status;
-
   g_autoptr(GError) error = NULL;
   g_autofree char *argv_str = g_strjoinv (" ", argv);
   g_autofree char *output = NULL;
@@ -1343,7 +1340,6 @@ static void
 update_repo (void)
 {
   char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test", NULL };
-
   g_auto(GStrv) gpgargs = NULL;
 
   gpgargs = g_strsplit (gpg_args, " ", 0);
@@ -1356,7 +1352,6 @@ static void
 update_repo2 (void)
 {
   char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test-without-runtime", NULL };
-
   g_auto(GStrv) gpgargs = NULL;
 
   gpgargs = g_strsplit (gpg_args, " ", 0);
@@ -1417,7 +1412,6 @@ static void
 add_flatpakrepo (void)
 {
   g_autofree char *data = NULL;
-
   g_autoptr(GError) error = NULL;
 
   data = g_strconcat ("[Flatpak Repo]\n"
@@ -1439,7 +1433,6 @@ add_extra_installation (const char *id,
   g_autofree char *conffile_path = NULL;
   g_autofree char *contents_string = NULL;
   g_autofree char *path = NULL;
-
   g_autoptr(GPtrArray) contents_array = NULL;
   g_autoptr(GError) error = NULL;
 
@@ -1514,7 +1507,6 @@ copy_file (const char *src, const char *dest)
 {
   gchar *buffer = NULL;
   gsize length;
-
   g_autoptr(GError) error = NULL;
 
   g_test_message ("copying %s to %s", src, dest);
@@ -1809,7 +1801,6 @@ new_op (FlatpakTransaction          *transaction,
         FlatpakTransactionProgress  *progress)
 {
   g_autofree char *status = NULL;
-
   g_autoptr(FlatpakTransactionOperation) current = NULL;
   g_auto(GStrv) refs = NULL;
 

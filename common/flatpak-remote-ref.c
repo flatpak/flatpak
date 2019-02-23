@@ -326,7 +326,6 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   guint64 download_size = 0, installed_size = 0;
   const char *metadata = NULL;
-
   g_autoptr(GBytes) metadata_bytes = NULL;
   g_auto(GStrv) parts = NULL;
   FlatpakRemoteRef *ref;

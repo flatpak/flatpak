@@ -419,7 +419,6 @@ handle_deploy (FlatpakSystemHelper   *object,
   else if (local_pull)
     {
       g_autoptr(GMainContextPopDefault) main_context = NULL;
-
       g_autoptr(FlatpakRemoteState) state = NULL;
       if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
                                        arg_origin,
@@ -1266,7 +1265,6 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   const gchar *method_name = g_dbus_method_invocation_get_method_name (invocation);
   const gchar *sender = g_dbus_method_invocation_get_sender (invocation);
   GVariant *parameters = g_dbus_method_invocation_get_parameters (invocation);
-
   g_autoptr(AutoPolkitSubject) subject = polkit_system_bus_name_new (sender);
   g_autoptr(AutoPolkitDetails) details = polkit_details_new ();
   const gchar *action = NULL;
@@ -1600,7 +1598,6 @@ main (int    argc,
   gboolean show_version;
   GBusNameOwnerFlags flags;
   GOptionContext *context;
-
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },

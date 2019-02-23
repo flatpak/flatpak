@@ -1221,7 +1221,6 @@ _flatpak_split_partial_ref_arg (const char   *partial_ref,
   const char *branch_start = NULL;
   const char *branch_end = NULL;
   g_autofree char *branch = NULL;
-
   g_autoptr(GError) local_error = NULL;
   FlatpakKinds kinds = 0;
 
@@ -1395,7 +1394,6 @@ flatpak_list_deployed_refs (const char   *type,
                             GError      **error)
 {
   gchar **ret = NULL;
-
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
@@ -1448,7 +1446,6 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
                                 GError      **error)
 {
   gchar **ret = NULL;
-
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
@@ -1595,7 +1592,6 @@ flatpak_find_current_ref (const char   *app_id,
                           GError      **error)
 {
   g_autofree char *current_ref = NULL;
-
   g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
   int i;
 
@@ -1633,7 +1629,6 @@ flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
 {
   FlatpakDeploy *deploy = NULL;
   int i;
-
   g_autoptr(GError) my_error = NULL;
 
   for (i = 0; deploy == NULL && i < dirs->len; i++)
@@ -1676,7 +1671,6 @@ remove_dangling_symlinks (int           parent_fd,
 {
   gboolean ret = FALSE;
   struct dirent *dent;
-
   g_auto(GLnxDirFdIterator) iter = { 0 };
 
   if (!glnx_dirfd_iterator_init_at (parent_fd, name, FALSE, &iter, error))
@@ -1961,7 +1955,6 @@ flatpak_cp_a (GFile         *src,
   gboolean merge = (flags & FLATPAK_CP_FLAGS_MERGE) != 0;
   gboolean no_chown = (flags & FLATPAK_CP_FLAGS_NO_CHOWN) != 0;
   gboolean move = (flags & FLATPAK_CP_FLAGS_MOVE) != 0;
-
   g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
   int r;
@@ -2905,7 +2898,6 @@ flatpak_repo_load_summary (OstreeRepo *repo,
                            GError    **error)
 {
   glnx_autofd int fd = -1;
-
   g_autoptr(GMappedFile) mfile = NULL;
   g_autoptr(GBytes) bytes = NULL;
 
@@ -3035,7 +3027,6 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *redirect_url = NULL;
   g_autofree char *default_branch = NULL;
   g_autofree char *gpg_keys = NULL;
-
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
@@ -3491,7 +3482,6 @@ flatpak_appstream_xml_migrate (FlatpakXml *source,
   FlatpakXml *component;
   FlatpakXml *prev_component;
   gboolean migrated = FALSE;
-
   g_auto(GStrv) tags = NULL;
   g_autofree const char *runtime = NULL;
   g_autofree const char *sdk = NULL;
@@ -3547,7 +3537,6 @@ copy_icon (const char *id,
            GError    **error)
 {
   g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
-
   g_autoptr(GFile) icons_dir =
     g_file_resolve_relative_path (root,
                                   "files/share/app-info/icons/flatpak");
@@ -3815,7 +3804,6 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
   GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
   {
     g_autofree char *tmpdir = g_strdup ("/tmp/flatpak-appstream-XXXXXX");
-
     g_autoptr(FlatpakTempDir) tmpdir_file = NULL;
     g_autoptr(GFile) appstream_file = NULL;
     g_autoptr(GFile) appstream_gz_file = NULL;
@@ -4077,7 +4065,6 @@ flatpak_extension_new (const char *id,
                        gboolean    is_unmaintained)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
-
   g_autoptr(GVariant) deploy_data = NULL;
 
   ext->id = g_strdup (id);
@@ -4120,7 +4107,6 @@ flatpak_extension_matches_reason (const char *extension_id,
                                   gboolean    default_value)
 {
   const char *extension_basename;
-
   g_auto(GStrv) reason_list = NULL;
   size_t i;
 
@@ -4200,7 +4186,6 @@ add_extension (GKeyFile   *metakey,
   g_autofree char *add_ld_path = g_key_file_get_string (metakey, group,
                                                         FLATPAK_METADATA_KEY_ADD_LD_PATH,
                                                         NULL);
-
   g_auto(GStrv) merge_dirs = g_key_file_get_string_list (metakey, group,
                                                          FLATPAK_METADATA_KEY_MERGE_DIRS,
                                                          NULL, NULL);
@@ -4650,7 +4635,6 @@ static guint64
 flatpak_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
 {
   guint64 total_usize = 0;
-
   g_autoptr(GVariant) meta_entries = NULL;
   guint i, n_parts;
 
@@ -4809,7 +4793,6 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
 {
   g_autofree char *metadata_contents = NULL;
   g_autofree char *to_checksum = NULL;
-
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GInputStream) in = NULL;
@@ -4948,7 +4931,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                GError               **error)
 {
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
-
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   FlatpakOciManifest *manifest = NULL;
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
@@ -5193,7 +5175,6 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
   gboolean reusing_dir = FALSE;
   g_autofree char *tmpdir_name = NULL;
   glnx_autofd int tmpdir_fd = -1;
-
   g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
 
   /* Look for existing tmpdir (with same prefix) to reuse */
@@ -5693,7 +5674,6 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint requested;
   guint64 total_transferred;
   g_autofree gchar *formatted_bytes_total_transferred = NULL;
-
   g_autoptr(GVariant) outstanding_fetchesv = NULL;
 
   /* We get some extra calls before we've really started due to the initialization of the

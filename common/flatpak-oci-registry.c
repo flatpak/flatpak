@@ -355,7 +355,6 @@ static gboolean
 verify_oci_version (GBytes *oci_layout_bytes, gboolean *not_json, GCancellable *cancellable, GError **error)
 {
   const char *version;
-
   g_autoptr(JsonNode) node = NULL;
   JsonObject *oci_layout;
 
@@ -776,7 +775,6 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 {
   g_autofree char *src_subpath = NULL;
   g_autofree char *dst_subpath = NULL;
-
   g_auto(GLnxTmpfile) tmpf = { 0 };
   g_autoptr(GOutputStream) out_stream = NULL;
   struct stat stbuf;
@@ -876,7 +874,6 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
                                 GError            **error)
 {
   g_autofree char *subpath = NULL;
-
   g_autoptr(GBytes) bytes = NULL;
   g_autofree char *json_checksum = NULL;
 
@@ -1057,7 +1054,6 @@ flatpak_oci_layer_writer_compress (FlatpakOciLayerWriter *self,
   GConverterResult res;
   gsize total_bytes_read, bytes_read, bytes_written, to_write_len;
   guchar *to_write;
-
   g_autoptr(GError) local_error = NULL;
   GConverterFlags flags = 0;
   bytes_read = 0;
@@ -1612,7 +1608,6 @@ flatpak_gpgme_new_ctx (const char *homedir,
                        GError    **error)
 {
   gpgme_error_t err;
-
   g_auto(gpgme_ctx_t) context = NULL;
 
   if ((err = gpgme_new (&context)) != GPG_ERR_NO_ERROR)
@@ -1776,7 +1771,6 @@ flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t   gpgme_ctx,
 {
   g_autofree char *tmp_home_dir_pattern = NULL;
   gpgme_error_t gpg_error;
-
   g_autoptr(GFile) keyring_file = NULL;
   g_autofree char *keyring_name = NULL;
 
@@ -1826,7 +1820,6 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
 {
   gpgme_ctx_t context;
   gpgme_error_t gpg_error;
-
   g_auto(gpgme_data_t) signed_data_buffer = NULL;
   g_auto(gpgme_data_t) plain_buffer = NULL;
   gpgme_verify_result_t vresult;
@@ -1933,7 +1926,6 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
                                  GError      **error)
 {
   g_autofree char *index_path = g_file_get_path (index);
-
   g_autoptr(SoupURI) base_uri = NULL;
   g_autoptr(SoupURI) query_uri = NULL;
   g_autofree char *query_uri_s = NULL;

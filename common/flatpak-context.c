@@ -423,7 +423,6 @@ flatpak_context_get_session_bus_policy_allowed_own_names (FlatpakContext *contex
 {
   GHashTableIter iter;
   gpointer key, value;
-
   g_autoptr(GPtrArray) names = g_ptr_array_new_with_free_func (g_free);
 
   g_hash_table_iter_init (&iter, context->session_bus_policy);
@@ -1024,7 +1023,6 @@ option_env_cb (const gchar *option_name,
                GError     **error)
 {
   FlatpakContext *context = data;
-
   g_auto(GStrv) split = g_strsplit (value, "=", 2);
 
   if (split == NULL || split[0] == NULL || split[0][0] == 0 || split[1] == NULL)
@@ -1270,7 +1268,6 @@ flatpak_context_load_metadata (FlatpakContext *context,
                                GError        **error)
 {
   gboolean remove;
-
   g_auto(GStrv) groups = NULL;
   int i;
 

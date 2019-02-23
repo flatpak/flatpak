@@ -280,7 +280,6 @@ ostree_create_usb (GOptionContext *context,
   OstreeRepoMode mode = OSTREE_REPO_MODE_ARCHIVE;
 
   g_debug ("%s: Creating repository in mode %u", G_STRFUNC, mode);
-
   g_autoptr(OstreeRepo) dest_repo = ostree_repo_create_at (mount_root_dfd, dest_repo_path,
                                                            mode, NULL, cancellable, error);
 
@@ -307,7 +306,6 @@ ostree_create_usb (GOptionContext *context,
   GLNX_HASH_TABLE_FOREACH_KV (all_refs, OstreeCollectionRef *, c_r, CommitAndSubpaths *, c_s)
   {
     GVariantBuilder builder;
-
     g_autoptr(GVariant) opts = NULL;
     OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_MIRROR;
     GVariantBuilder refs_builder;

@@ -359,7 +359,6 @@ print_commits (OstreeRepo *repo,
                GError    **error)
 {
   g_autofree char *checksum = NULL;
-
   g_autoptr(GPtrArray) deltas = NULL;
 
   if (!ostree_repo_list_static_delta_names (repo, &deltas, NULL, error))

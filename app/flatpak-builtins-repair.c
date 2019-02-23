@@ -122,7 +122,6 @@ fsck_dirtree (OstreeRepo *repo,
               GHashTable *object_status_cache)
 {
   OstreeRepoCommitIterResult iterres;
-
   g_autoptr(GError) local_error = NULL;
   FsckStatus status = 0;
   g_autoptr(GVariant) key = NULL;

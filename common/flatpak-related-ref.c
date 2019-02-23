@@ -277,7 +277,6 @@ flatpak_related_ref_new (const char *collection_id,
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakRelatedRef *ref;
-
   g_auto(GStrv) parts = NULL;
 
   parts = g_strsplit (full_ref, "/", -1);
