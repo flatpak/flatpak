@@ -225,7 +225,6 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
 {
   guint n_keys;
   g_autofree const char **keys = (const char **) g_hash_table_get_keys_as_array (exports->hash, &n_keys);
-
   g_autoptr(GList) eps = NULL;
   GList *l;
 
@@ -300,7 +299,6 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
   g_autofree const char **keys = (const char **) g_hash_table_get_keys_as_array (exports->hash, &n_keys);
   g_autofree char *canonical = NULL;
   gboolean is_readonly = FALSE;
-
   g_auto(GStrv) parts = NULL;
   int i;
   g_autoptr(GString) path_builder = g_string_new ("");

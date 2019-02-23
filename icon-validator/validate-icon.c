@@ -32,7 +32,6 @@ validate_icon (const char *arg_width,
   int width, height;
   const char *name;
   const char *allowed_formats[] = { "png", "jpeg", "svg", NULL };
-
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GError) error = NULL;
 
@@ -129,7 +128,6 @@ rerun_in_sandbox (const char *arg_width,
 {
   const char * const usrmerged_dirs[] = { "bin", "lib64", "lib", "sbin" };
   int i;
-
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
   g_autofree char *err = NULL;
   int status;

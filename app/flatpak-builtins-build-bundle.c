@@ -219,7 +219,6 @@ build_bundle (OstreeRepo *repo, GFile *file,
 {
   GVariantBuilder metadata_builder;
   GVariantBuilder param_builder;
-
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autoptr(GBytes) xml_data = NULL;
   g_autoptr(GFile) metadata_file = NULL;

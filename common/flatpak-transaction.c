@@ -447,7 +447,6 @@ void
 flatpak_transaction_add_default_dependency_sources (FlatpakTransaction *self)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GPtrArray) system_dirs = NULL;
   GFile *path = flatpak_dir_get_path (priv->dir);
   int i;
@@ -478,7 +477,6 @@ ref_is_installed (FlatpakTransaction *self,
                   GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GFile) deploy_dir = NULL;
   FlatpakDir *dir = priv->dir;
   int i;
@@ -1088,7 +1086,6 @@ initable_init (GInitable    *initable,
 {
   FlatpakTransaction *self = FLATPAK_TRANSACTION (initable);
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(FlatpakDir) dir = NULL;
 
   if (priv->installation == NULL)
@@ -1452,7 +1449,6 @@ add_related (FlatpakTransaction          *self,
              GError                     **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GPtrArray) related = NULL;
   g_autoptr(GError) local_error = NULL;
@@ -1532,7 +1528,6 @@ find_runtime_remote (FlatpakTransaction             *self,
                      GError                        **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_auto(GStrv) remotes = NULL;
   const char *app_pref;
   const char *runtime_pref;
@@ -1668,7 +1663,6 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *origin = NULL;
-
   g_auto(GStrv) parts = NULL;
   const char *pref;
   g_autofree char *origin_remote = NULL;
@@ -1828,7 +1822,6 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
                                             GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autoptr(GError) local_error = NULL;
 
@@ -1901,7 +1894,6 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
                                      GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_auto(GStrv) remotes = NULL;
   int i;
   GList *l;
@@ -1970,7 +1962,6 @@ static GBytes *
 load_deployed_metadata (FlatpakTransaction *self, const char *ref)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autofree char *metadata_contents = NULL;
@@ -2037,7 +2028,6 @@ resolve_p2p_ops (FlatpakTransaction *self,
                  GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GPtrArray) resolves = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_dir_resolve_free);
   GList *l;
   int i;
@@ -2089,7 +2079,6 @@ resolve_ops (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   GList *l;
-
   g_autoptr(GList) collection_id_ops = NULL;
 
 
@@ -2426,7 +2415,6 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
   g_autofree char *name = NULL;
   g_autofree char *url = NULL;
   g_autofree char *collection_id = NULL;
-
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_key = NULL;
   gboolean res;
@@ -2480,7 +2468,6 @@ static gboolean
 handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *dep_url, GError **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GBytes) dep_data = NULL;
   g_autofree char *runtime_url = NULL;
   g_autofree char *new_remote = NULL;
@@ -2636,7 +2623,6 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *dep_url = NULL;
   g_autofree char *ref = NULL;
-
   g_auto(GStrv) ref_parts = NULL;
   g_autoptr(GVariant) metadata = NULL;
 
@@ -2743,7 +2729,6 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
   gboolean needs_triggers = FALSE;
-
   g_autoptr(GMainContextPopDefault) main_context = NULL;
   gboolean ready_res = FALSE;
   int i;

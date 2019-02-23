@@ -75,7 +75,6 @@ parse_app_id_from_fileinfo (int pid)
   glnx_autofd int root_fd = -1;
   glnx_autofd int info_fd = -1;
   struct stat stat_buf;
-
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GMappedFile) mapped = NULL;
   g_autoptr(GKeyFile) metadata = NULL;
@@ -136,7 +135,6 @@ flatpak_invocation_lookup_app_info (GDBusMethodInvocation *invocation,
 {
   GDBusConnection *connection = g_dbus_method_invocation_get_connection (invocation);
   const gchar *sender = g_dbus_method_invocation_get_sender (invocation);
-
   g_autoptr(GDBusMessage) msg = NULL;
   g_autoptr(GDBusMessage) reply = NULL;
   g_autoptr(GVariantIter) iter = NULL;

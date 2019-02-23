@@ -123,7 +123,6 @@ flatpak_delete_data (gboolean    opt_yes,
                      GError    **error)
 {
   g_autofree char *path = g_build_filename (g_get_home_dir (), ".var", "app", app_id, NULL);
-
   g_autoptr(GFile) file = g_file_new_for_path (path);
 
   if (!opt_yes &&

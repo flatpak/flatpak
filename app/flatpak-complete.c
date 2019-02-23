@@ -175,7 +175,6 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
-
   g_auto(GStrv) refs = NULL;
   int element;
   const char *cur_parts[4] = { NULL };
@@ -447,7 +446,6 @@ flatpak_complete_columns (FlatpakCompletion *completion,
 {
   int i;
   const char *list = NULL;
-
   g_auto(GStrv) used = NULL;
 
   if (!g_str_has_prefix (completion->cur, "--columns="))

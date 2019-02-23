@@ -109,7 +109,6 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
   guint n_keys;
   g_autofree const char **keys = NULL;
   int i, j;
-
   g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   FlatpakKinds match_kinds;
   g_autofree char *match_id = NULL;
@@ -151,7 +150,6 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       FlatpakRemoteState *state = remote_state_dir_pair->state;
       const char *remote = state->remote_name;
       g_autoptr(AsStore) store = NULL;
-
       g_autoptr(GHashTable) names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
       g_hash_table_iter_init (&iter, refs);

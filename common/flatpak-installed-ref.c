@@ -633,7 +633,6 @@ flatpak_installed_ref_new (const char  *full_ref,
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakInstalledRef *ref;
-
   g_auto(GStrv) parts = NULL;
 
   parts = g_strsplit (full_ref, "/", -1);

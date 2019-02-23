@@ -534,7 +534,6 @@ const char *
 flatpak_installation_get_display_name (FlatpakInstallation *self)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   if (priv->display_name == NULL)
@@ -1204,7 +1203,6 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
   const OstreeCollectionRef *refs[3] = { NULL, };
   g_autofree gchar *appstream_ref = NULL;
   g_autofree gchar *appstream2_ref = NULL;
-
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GAsyncResult) result = NULL;
   g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
@@ -2903,7 +2901,6 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
                                        GError             **error)
 {
   FlatpakDir *dir;
-
   g_autoptr(GHashTable) refs_hash = NULL;
   g_autoptr(GPtrArray) refs =  NULL;
   g_auto(GStrv) app_refs = NULL;
@@ -2961,7 +2958,6 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
   GLNX_HASH_TABLE_FOREACH (used_runtimes, const char *, runtime)
   {
     g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
-
     g_autoptr(FlatpakDeploy) deploy = NULL;
     g_autofree char *origin = NULL;
     g_autofree char *sdk = NULL;

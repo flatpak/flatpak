@@ -126,7 +126,6 @@ download_uri (const char *url,
               GError    **error)
 {
   SoupSession *session;
-
   g_autoptr(SoupRequest) req = NULL;
   g_autoptr(GInputStream) input = NULL;
   g_autoptr(GOutputStream) out = NULL;
@@ -160,7 +159,6 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
-
   g_autoptr(GError) lookup_error = NULL;
   FlatpakDir *dir = NULL;
   g_autofree char *ref = NULL;
@@ -629,7 +627,6 @@ get_file_age (GFile *file)
 {
   guint64 now;
   guint64 mtime;
-
   g_autoptr(GFileInfo) info = NULL;
 
   info = g_file_query_info (file,
@@ -1180,7 +1177,6 @@ flatpak_dir_load_appstream_store (FlatpakDir   *self,
                                   GError      **error)
 {
   const char *install_path = flatpak_file_get_path_cached (flatpak_dir_get_path (self));
-
   g_autoptr(GFile) appstream_file = NULL;
   g_autofree char *appstream_path = NULL;
   g_autoptr(GError) local_error = NULL;
@@ -1345,7 +1341,6 @@ print_wrapped (int         cols,
 {
   va_list args;
   g_autofree char *msg = NULL;
-
   g_auto(GStrv) lines = NULL;
   int i;
 
