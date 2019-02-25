@@ -60,6 +60,7 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   int i;
   char **iter;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_free);
+  const char *collection_id;
 
   context = g_option_context_new (_("LOCATION [ID [BRANCH]] - Sign an application or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -97,6 +98,8 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
+  collection_id = ostree_repo_get_collection_id (repo);
+
   if (id)
     {
       g_autofree char *ref = NULL;
@@ -132,7 +135,8 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
     {
       const char *ref = g_ptr_array_index (refs, i);
 
-      if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
+      if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, ref, FALSE,
+                                     &commit_checksum, cancellable, error))
         return FALSE;
 
       for (iter = opt_gpg_key_ids; iter && *iter; iter++)

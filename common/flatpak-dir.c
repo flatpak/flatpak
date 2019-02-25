@@ -3026,7 +3026,6 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   g_autoptr(GFile) timestamp_file = NULL;
   g_autofree char *arch_path = NULL;
   gboolean checkout_exists;
-  g_autofree char *remote_and_branch = NULL;
   const char *old_dir = NULL;
   g_autofree char *new_checksum = NULL;
   g_autoptr(GFile) active_link = NULL;
@@ -3046,6 +3045,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   g_autofree char *filter_checksum = NULL;
   g_autoptr(GRegex) allow_refs = NULL;
   g_autoptr(GRegex) deny_refs = NULL;
+  g_autofree char *collection_id = NULL;
 
   /* Keep a shared repo lock to avoid prunes removing objects we're relying on
    * while we do the checkout. This could happen if the ref changes after we
@@ -3079,19 +3079,19 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   if (file_info != NULL)
     old_dir =  g_file_info_get_symlink_target (file_info);
 
+  collection_id = flatpak_dir_get_remote_collection_id (self, remote);
   branch = g_strdup_printf ("appstream2/%s", arch);
-  remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
-  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
+  if (!flatpak_repo_resolve_rev (self->repo, collection_id, remote, branch, TRUE,
+                                 &new_checksum, cancellable, error))
     return FALSE;
 
   if (new_checksum == NULL)
     {
       /* Fall back to old branch */
       g_clear_pointer (&branch, g_free);
-      g_clear_pointer (&remote_and_branch, g_free);
       branch = g_strdup_printf ("appstream/%s", arch);
-      remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
-      if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
+      if (!flatpak_repo_resolve_rev (self->repo, collection_id, remote, branch, TRUE,
+                                     &new_checksum, cancellable, error))
         return FALSE;
       do_compress = FALSE;
       do_uncompress = TRUE;
@@ -3927,7 +3927,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   g_autofree char *new_branch = NULL;
   g_autofree char *old_branch = NULL;
   const char *used_branch = NULL;
-  g_autofree char *remote_and_branch = NULL;
   g_autofree char *new_checksum = NULL;
   g_autoptr(GError) first_error = NULL;
   g_autoptr(GError) second_error = NULL;
@@ -4025,9 +4024,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
           if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             return FALSE;
 
-          remote_and_branch = g_strdup_printf ("%s:%s", remote, used_branch);
-
-          if (!ostree_repo_resolve_rev (child_repo, remote_and_branch, TRUE, &new_checksum, error))
+          if (!flatpak_repo_resolve_rev (child_repo, state->collection_id, remote, used_branch, TRUE,
+                                         &new_checksum, cancellable, error))
             return FALSE;
 
           child_repo_file = g_object_ref (ostree_repo_get_path (child_repo));
@@ -4080,9 +4078,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
         }
     }
 
-  remote_and_branch = g_strdup_printf ("%s:%s", remote, used_branch);
-
-  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
+  if (!flatpak_repo_resolve_rev (self->repo, state->collection_id, remote, used_branch, TRUE,
+                                 &new_checksum, cancellable, error))
     return FALSE;
 
   return flatpak_dir_deploy_appstream (self,
@@ -4196,7 +4193,6 @@ repo_pull (OstreeRepo                           *self,
            GError                              **error)
 {
   gboolean force_disable_deltas = (flatpak_flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
-  g_autofree char *remote_and_branch = NULL;
   g_autofree char *current_checksum = NULL;
   g_autoptr(GVariant) old_commit = NULL;
   g_autoptr(GVariant) new_commit = NULL;
@@ -4215,16 +4211,16 @@ repo_pull (OstreeRepo                           *self,
   /* We always want this on for every type of pull */
   flags |= OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
 
-  remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref_to_fetch);
-  if (!ostree_repo_resolve_rev (self, remote_and_branch, TRUE, &current_checksum, error))
+  if (!repo_get_remote_collection_id (self, remote_name, &collection_id, NULL))
+    g_clear_pointer (&collection_id, g_free);
+
+  if (!flatpak_repo_resolve_rev (self, collection_id, remote_name, ref_to_fetch, TRUE,
+                                 &current_checksum, cancellable, error))
     return FALSE;
 
   if (current_checksum != NULL &&
       !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
     return FALSE;
-
-  if (!repo_get_remote_collection_id (self, remote_name, &collection_id, NULL))
-    g_clear_pointer (&collection_id, g_free);
 
   if (collection_id != NULL)
     {
@@ -4926,7 +4922,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
   const OstreeRepoFinderResult * const *results;
   g_auto(GLnxLockFile) lock = { 0, };
   g_autofree char *name = NULL;
-  g_autofree char *remote_and_branch = NULL;
   g_autofree char *current_checksum = NULL;
 
   /* If @opt_results is set, @opt_rev must be. */
@@ -5075,8 +5070,8 @@ flatpak_dir_pull (FlatpakDir                           *self,
                                      error))
     goto out;
 
-  remote_and_branch = g_strdup_printf ("%s:%s", state->remote_name, ref);
-  ostree_repo_resolve_rev (repo, remote_and_branch, TRUE, &current_checksum, NULL);
+  flatpak_repo_resolve_rev (repo, state->collection_id, state->remote_name, ref, TRUE,
+                            &current_checksum, NULL, NULL);
 
   if (!repo_pull (repo, state->remote_name,
                   subdirs_arg ? (const char **) subdirs_arg->pdata : NULL,
@@ -5231,7 +5226,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autofree char *collection_id = NULL;
   char *summary_data = NULL;
   char *summary_sig_data = NULL;
-  g_autofree char *remote_and_branch = NULL;
   gsize summary_data_size, summary_sig_data_size;
   g_autoptr(GBytes) summary_bytes = NULL;
   g_autoptr(GBytes) summary_sig_bytes = NULL;
@@ -5304,8 +5298,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   g_clear_object (&gpg_result);
 
-  remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref);
-  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &current_checksum, error))
+  if (!flatpak_repo_resolve_rev (self->repo, collection_id, remote_name, ref, TRUE,
+                                 &current_checksum, NULL, error))
     return FALSE;
 
   if (current_checksum != NULL &&
@@ -5328,7 +5322,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
     }
   else
     {
-      if (!ostree_repo_resolve_rev (src_repo, remote_and_branch, FALSE, &checksum, error))
+      if (!flatpak_repo_resolve_rev (src_repo, collection_id, remote_name, ref, FALSE,
+                                     &checksum, NULL, error))
         return FALSE;
     }
 
@@ -5762,20 +5757,13 @@ flatpak_dir_read_latest_commit (FlatpakDir   *self,
                                 GCancellable *cancellable,
                                 GError      **error)
 {
-  g_autofree char *remote_and_ref = NULL;
   g_autofree char *res = NULL;
   g_autoptr(GVariant) commit_data = NULL;
+  g_autofree char *collection_id = NULL;
 
-  /* There may be several remotes with the same branch (if we for
-   * instance changed the origin) so prepend the current origin to
-   * make sure we get the right one */
-
-  if (remote)
-    remote_and_ref = g_strdup_printf ("%s:%s", remote, ref);
-  else
-    remote_and_ref = g_strdup (ref);
-
-  if (!ostree_repo_resolve_rev (self->repo, remote_and_ref, FALSE, &res, error))
+  collection_id = flatpak_dir_get_remote_collection_id (self, remote);
+  if (!flatpak_repo_resolve_rev (self->repo, collection_id, remote, ref, FALSE,
+                                 &res, cancellable, error))
     return NULL;
 
   if (!ostree_repo_load_commit (self->repo, res, &commit_data, NULL, error))
@@ -5796,20 +5784,13 @@ flatpak_dir_read_latest (FlatpakDir   *self,
                          GCancellable *cancellable,
                          GError      **error)
 {
-  g_autofree char *remote_and_ref = NULL;
   g_autofree char *alt_id = NULL;
   g_autofree char *res = NULL;
+  g_autofree char *collection_id = NULL;
 
-  /* There may be several remotes with the same branch (if we for
-   * instance changed the origin) so prepend the current origin to
-   * make sure we get the right one */
-
-  if (remote)
-    remote_and_ref = g_strdup_printf ("%s:%s", remote, ref);
-  else
-    remote_and_ref = g_strdup (ref);
-
-  if (!ostree_repo_resolve_rev (self->repo, remote_and_ref, FALSE, &res, error))
+  collection_id = flatpak_dir_get_remote_collection_id (self, remote);
+  if (!flatpak_repo_resolve_rev (self->repo, collection_id, remote, ref, FALSE,
+                                 &res, cancellable, error))
     return NULL;
 
   if (out_alt_id)
@@ -8818,14 +8799,13 @@ flatpak_dir_check_for_update (FlatpakDir               *self,
                               GCancellable             *cancellable,
                               GError                  **error)
 {
-  g_autofree const char *remote_and_branch = NULL;
   g_autofree char *latest_rev = NULL;
   const char *target_rev = NULL;
 
   if (no_pull)
     {
-      remote_and_branch = g_strdup_printf ("%s:%s", state->remote_name, ref);
-      if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, FALSE, &latest_rev, NULL))
+      if (!flatpak_repo_resolve_rev (self->repo, state->collection_id, state->remote_name,
+                                     ref, FALSE, &latest_rev, NULL, NULL))
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                        _("%s already installed"), ref);
@@ -12748,7 +12728,6 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
   gboolean gpg_verify;
   g_autofree char *checksum_from_summary = NULL;
   g_autofree char *checksum_from_repo = NULL;
-  g_autofree char *refspec = NULL;
 
   g_assert (state->collection_id != NULL);
 
@@ -12768,8 +12747,9 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
                                 OSTREE_REPO_METADATA_REF,
                                 &checksum_from_summary, NULL);
 
-  refspec = g_strdup_printf ("%s:%s", state->remote_name, OSTREE_REPO_METADATA_REF);
-  if (!ostree_repo_resolve_rev (self->repo, refspec, TRUE, &checksum_from_repo, error))
+  if (!flatpak_repo_resolve_rev (self->repo, state->collection_id, state->remote_name,
+                                 OSTREE_REPO_METADATA_REF, TRUE, &checksum_from_repo,
+                                 cancellable, error))
     return FALSE;
 
   g_debug ("%s: Comparing %s from summary and %s from repo",
@@ -13566,7 +13546,6 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                                            FLATPAK_METADATA_KEY_LOCALE_SUBSET, NULL);
           const char *branch;
           g_autofree char *extension_ref = NULL;
-          g_autofree char *prefixed_extension_ref = NULL;
           g_autofree char *checksum = NULL;
           g_autofree char *extension_collection_id = NULL;
 
@@ -13597,12 +13576,14 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
           extension_collection_id = g_strdup (collection_id);
 
           extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
-          prefixed_extension_ref = g_strdup_printf ("%s:%s", remote_name, extension_ref);
-          if (ostree_repo_resolve_rev (self->repo,
-                                       prefixed_extension_ref,
-                                       FALSE,
-                                       &checksum,
-                                       NULL))
+          if (flatpak_repo_resolve_rev (self->repo,
+                                        collection_id,
+                                        remote_name,
+                                        extension_ref,
+                                        FALSE,
+                                        &checksum,
+                                        NULL,
+                                        NULL))
             {
               add_related (self, related, extension, extension_collection_id, extension_ref,
                            checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
@@ -13614,16 +13595,16 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
               for (j = 0; j < matches->len; j++)
                 {
                   const char *match = g_ptr_array_index (matches, j);
-                  g_autofree char *prefixed_match = NULL;
                   g_autofree char *match_checksum = NULL;
 
-                  prefixed_match = g_strdup_printf ("%s:%s", remote_name, match);
-
-                  if (ostree_repo_resolve_rev (self->repo,
-                                               prefixed_match,
-                                               FALSE,
-                                               &match_checksum,
-                                               NULL))
+                  if (flatpak_repo_resolve_rev (self->repo,
+                                                collection_id,
+                                                remote_name,
+                                                match,
+                                                FALSE,
+                                                &match_checksum,
+                                                NULL,
+                                                NULL))
                     {
                       add_related (self, related, extension,
                                    extension_collection_id, match, match_checksum,

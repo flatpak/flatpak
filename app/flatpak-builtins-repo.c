@@ -370,9 +370,11 @@ out:
 }
 
 static gboolean
-print_commits (OstreeRepo *repo,
-               const char *ref,
-               GError    **error)
+print_commits (OstreeRepo   *repo,
+               const char   *collection_id,
+               const char   *ref,
+               GCancellable *cancellable,
+               GError      **error)
 {
   g_autofree char *checksum = NULL;
   g_autoptr(GPtrArray) deltas = NULL;
@@ -380,7 +382,8 @@ print_commits (OstreeRepo *repo,
   if (!ostree_repo_list_static_delta_names (repo, &deltas, NULL, error))
     return FALSE;
 
-  if (!ostree_repo_resolve_rev (repo, ref, FALSE, &checksum, error))
+  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, ref, FALSE, &checksum,
+                                 cancellable, error))
     return FALSE;
 
   if (!log_commit (repo, checksum, FALSE, deltas, error))
@@ -412,6 +415,7 @@ flatpak_builtin_repo (int argc, char **argv,
   g_autoptr(OstreeRepo) repo = NULL;
   const char *ostree_metadata_ref = NULL;
   g_autofree char *ostree_metadata_checksum = NULL;
+  const char *collection_id;
 
   context = g_option_context_new (_("LOCATION - Repository maintenance"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -427,11 +431,13 @@ flatpak_builtin_repo (int argc, char **argv,
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
+  collection_id = ostree_repo_get_collection_id (repo);
+
   /* Try loading the metadata from the ostree-metadata branch first. If that
    * fails, fall back to the summary file. */
   ostree_metadata_ref = OSTREE_REPO_METADATA_REF;
-  if (!ostree_repo_resolve_rev_ext (repo, ostree_metadata_ref,
-                                    TRUE, 0, &ostree_metadata_checksum, error))
+  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, ostree_metadata_ref,
+                                 TRUE, &ostree_metadata_checksum, cancellable, error))
     return FALSE;
 
   if (ostree_metadata_checksum != NULL)
@@ -476,7 +482,7 @@ flatpak_builtin_repo (int argc, char **argv,
 
   if (opt_commits_branch)
     {
-      if (!print_commits (repo, opt_commits_branch, error))
+      if (!print_commits (repo, collection_id, opt_commits_branch, cancellable, error))
         return FALSE;
     }
 

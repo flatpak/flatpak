@@ -212,7 +212,7 @@ add_icon_to_metadata (const char *icon_size_name,
 }
 
 static gboolean
-build_bundle (OstreeRepo *repo, GFile *file,
+build_bundle (OstreeRepo *repo, const char *collection_id, GFile *file,
               const char *name, const char *full_branch,
               const char *from_commit,
               GCancellable *cancellable, GError **error)
@@ -228,9 +228,9 @@ build_bundle (OstreeRepo *repo, GFile *file,
   g_autoptr(GBytes) gpg_data = NULL;
   g_autoptr(GVariant) params = NULL;
   g_autoptr(GVariant) metadata = NULL;
-  const char *collection_id;
 
-  if (!ostree_repo_resolve_rev (repo, full_branch, FALSE, &commit_checksum, error))
+  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, full_branch, FALSE,
+                                 &commit_checksum, cancellable, error))
     return FALSE;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
@@ -294,7 +294,6 @@ build_bundle (OstreeRepo *repo, GFile *file,
   if (opt_runtime_repo)
     g_variant_builder_add (&metadata_builder, "{sv}", "runtime-repo", g_variant_new_string (opt_runtime_repo));
 
-  collection_id = ostree_repo_get_collection_id (repo);
   g_variant_builder_add (&metadata_builder, "{sv}", "collection-id",
                          g_variant_new_string (collection_id ? collection_id : ""));
 
@@ -382,7 +381,7 @@ add_icon_to_annotations (const char *icon_size_name,
 }
 
 static gboolean
-build_oci (OstreeRepo *repo, GFile *dir,
+build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
            const char *name, const char *ref,
            GCancellable *cancellable, GError **error)
 {
@@ -411,7 +410,8 @@ build_oci (OstreeRepo *repo, GFile *dir,
   g_autofree char *metadata_contents = NULL;
   g_auto(GStrv) ref_parts = NULL;
 
-  if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
+  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, ref, FALSE,
+                                 &commit_checksum, cancellable, error))
     return FALSE;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
@@ -544,6 +544,7 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   const char *name;
   const char *branch;
   g_autofree char *full_branch = NULL;
+  const char *collection_id;
 
   context = g_option_context_new (_("LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -578,7 +579,9 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
       return FALSE;
     }
 
-  if (ostree_repo_resolve_rev (repo, name, FALSE, NULL, NULL))
+  collection_id = ostree_repo_get_collection_id (repo);
+
+  if (flatpak_repo_resolve_rev (repo, collection_id, NULL, name, FALSE, NULL, NULL, NULL))
     full_branch = g_strdup (name);
   else
     {
@@ -601,12 +604,12 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_oci)
     {
-      if (!build_oci (repo, file, name, full_branch, cancellable, error))
+      if (!build_oci (repo, collection_id, file, name, full_branch, cancellable, error))
         return FALSE;
     }
   else
     {
-      if (!build_bundle (repo, file, name, full_branch, opt_from_commit, cancellable, error))
+      if (!build_bundle (repo, collection_id, file, name, full_branch, opt_from_commit, cancellable, error))
         return FALSE;
     }
 

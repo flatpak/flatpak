@@ -240,6 +240,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
   struct timespec ts;
   guint64 timestamp;
   int i;
+  const char *src_collection_id;
 
   context = g_option_context_new (_("DST-REPO [DST-REF…] - Make a new commit from existing commits"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -362,13 +363,15 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
         }
     }
 
+  src_collection_id = ostree_repo_get_collection_id (src_repo);
   resolved_src_refs = g_ptr_array_new_with_free_func (g_free);
   for (i = 0; i < src_refs->len; i++)
     {
       const char *src_ref = g_ptr_array_index (src_refs, i);
       char *resolved_ref;
 
-      if (!ostree_repo_resolve_rev (src_repo, src_ref, FALSE, &resolved_ref, error))
+      if (!flatpak_repo_resolve_rev (src_repo, src_collection_id, NULL, src_ref, FALSE,
+                                     &resolved_ref, cancellable, error))
         return FALSE;
 
       g_ptr_array_add (resolved_src_refs, resolved_ref);
@@ -444,7 +447,10 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       const char *main_collection_id = NULL;
       g_autoptr(GPtrArray) collection_ids = NULL;
 
-      if (!ostree_repo_resolve_rev (dst_repo, dst_ref, TRUE, &dst_parent, error))
+      dst_collection_id = ostree_repo_get_collection_id (dst_repo);
+
+      if (!flatpak_repo_resolve_rev (dst_repo, dst_collection_id, NULL, dst_ref, TRUE,
+                                     &dst_parent, cancellable, error))
         return FALSE;
 
       if (dst_parent != NULL &&
@@ -483,8 +489,6 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       g_variant_get_child (src_commitv, 4, "&s", &body);
       if (opt_body)
         body = (const char *) opt_body;
-
-      dst_collection_id = ostree_repo_get_collection_id (dst_repo);
 
       collection_ids = g_ptr_array_new_with_free_func (g_free);
       if (dst_collection_id)

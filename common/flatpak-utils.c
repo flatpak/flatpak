@@ -3438,8 +3438,8 @@ flatpak_repo_update (OstreeRepo   *repo,
 
   old_summary = flatpak_repo_load_summary (repo, NULL);
 
-  if (!ostree_repo_resolve_rev (repo, OSTREE_REPO_METADATA_REF,
-                                TRUE, &old_ostree_metadata_checksum, error))
+  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, OSTREE_REPO_METADATA_REF,
+                                 TRUE, &old_ostree_metadata_checksum, cancellable, error))
     return FALSE;
 
   if (old_summary != NULL &&
@@ -4345,7 +4345,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
         g_autofree char *commit_checksum = NULL;
 
         branch = g_strdup_printf ("%s/%s", branch_prefix, arch);
-        if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
+        if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, branch, TRUE,
+                                       &parent, cancellable, error))
           return FALSE;
 
         if (i == 0)

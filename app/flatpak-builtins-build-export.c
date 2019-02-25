@@ -905,14 +905,18 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (g_file_query_exists (repofile, cancellable) &&
       !is_empty_directory (repofile, cancellable))
     {
+      const char *repo_collection_id;
+
       if (!ostree_repo_open (repo, cancellable, error))
         goto out;
 
-      if (!ostree_repo_resolve_rev (repo, full_branch, TRUE, &parent, error))
+      repo_collection_id = ostree_repo_get_collection_id (repo);
+      if (!flatpak_repo_resolve_rev (repo, repo_collection_id, NULL, full_branch, TRUE,
+                                     &parent, cancellable, error))
         goto out;
 
       if (opt_collection_id != NULL &&
-          g_strcmp0 (ostree_repo_get_collection_id (repo), opt_collection_id) != 0)
+          g_strcmp0 (repo_collection_id, opt_collection_id) != 0)
         {
           flatpak_fail (error, "Specified collection ID ‘%s’ doesn’t match collection ID in repository configuration ‘%s’.",
                         opt_collection_id, ostree_repo_get_collection_id (repo));
