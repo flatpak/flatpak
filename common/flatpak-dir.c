@@ -3771,9 +3771,17 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
         }
     }
 
+  OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY;
+  /* Do a version check to ensure we have these:
+   * https://github.com/ostreedev/ostree/pull/1821
+   * https://github.com/ostreedev/ostree/pull/1825 */
+#if OSTREE_CHECK_VERSION (2019, 2)
+  flags |= OSTREE_REPO_PULL_FLAGS_MIRROR;
+#endif
+
   g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&pull_builder, "{s@v}", "flags",
-                         g_variant_new_variant (g_variant_new_int32 (OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY)));
+                         g_variant_new_variant (g_variant_new_int32 (flags)));
   g_variant_builder_add (&pull_builder, "{s@v}", "inherit-transaction",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
   pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
@@ -3798,13 +3806,13 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
       FlatpakDirResolveData *data = datas[i];
       FlatpakDirResolve *resolve = data->resolve;
       g_autoptr(GVariant) commit_data = NULL;
-      g_autofree char *refspec = NULL;
 
       if (resolve->resolved_commit != NULL)
         continue;
 
-      refspec = g_strdup_printf ("%s:%s", resolve->remote, resolve->ref);
-      if (!ostree_repo_resolve_rev (child_repo, refspec, FALSE, &resolve->resolved_commit, error))
+      if (!flatpak_repo_resolve_rev (child_repo, data->collection_ref.collection_id, resolve->remote,
+                                     resolve->ref, FALSE, &resolve->resolved_commit,
+                                     cancellable, error))
         return FALSE;
 
       if (!ostree_repo_load_commit (child_repo, resolve->resolved_commit, &commit_data, NULL, error))
@@ -3830,7 +3838,6 @@ flatpak_dir_resolve_p2p_refs (FlatpakDir         *self,
     {
       FlatpakDirResolve *resolve = resolves[i];
       FlatpakDirResolveData *data = g_new0 (FlatpakDirResolveData, 1);
-      g_autofree char *refspec = g_strdup_printf ("%s:%s", resolve->remote, resolve->ref);
 
       g_assert (resolve->ref != NULL);
       g_assert (resolve->remote != NULL);
@@ -3842,7 +3849,10 @@ flatpak_dir_resolve_p2p_refs (FlatpakDir         *self,
       g_assert (data->collection_ref.collection_id != NULL);
 
       if (resolve->opt_commit == NULL)
-        ostree_repo_resolve_rev (self->repo, refspec, TRUE, &data->local_commit, NULL);
+        {
+          flatpak_repo_resolve_rev (self->repo, data->collection_ref.collection_id, resolve->remote,
+                                    resolve->ref, TRUE, &data->local_commit, cancellable, NULL);
+        }
 
       /* The ostree p2p api doesn't let you mix pulls with specific commit IDs
        * and HEAD (https://github.com/ostreedev/ostree/issues/1622) so we need
