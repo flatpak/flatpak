@@ -374,7 +374,7 @@ new_operation (FlatpakTransaction          *transaction,
       if (self->n_ops == 1)
         text = g_strdup (_("Installing…"));
       else
-        text = g_strdup_printf (("Installing %d/%d…"), self->op, self->n_ops);
+        text = g_strdup_printf (_("Installing %d/%d…"), self->op, self->n_ops);
       break;
 
     case FLATPAK_TRANSACTION_OPERATION_UPDATE:
