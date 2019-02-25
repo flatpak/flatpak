@@ -6578,6 +6578,54 @@ flatpak_disable_raw_mode (void)
   tcsetattr (STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
+/* Wrapper that uses ostree_repo_resolve_collection_ref() and on failure falls
+ * back to using ostree_repo_resolve_rev() for backwards compatibility. This
+ * means we support refs/heads/, refs/remotes/, and refs/mirrors/. */
+gboolean
+flatpak_repo_resolve_rev (OstreeRepo    *repo,
+                          const char    *collection_id, /* nullable */
+                          const char    *remote_name, /* nullable */
+                          const char    *ref_name,
+                          gboolean       allow_noent,
+                          char         **out_rev,
+                          GCancellable  *cancellable,
+                          GError       **error)
+{
+  if (collection_id != NULL)
+    {
+      /* Do a version check to ensure we have these:
+       * https://github.com/ostreedev/ostree/pull/1821
+       * https://github.com/ostreedev/ostree/pull/1825 */
+#if OSTREE_CHECK_VERSION (2019, 2)
+      const OstreeCollectionRef c_r =
+        {
+          .collection_id = (char *) collection_id,
+          .ref_name = (char *) ref_name,
+        };
+      OstreeRepoResolveRevExtFlags flags = remote_name == NULL ?
+                                           OSTREE_REPO_RESOLVE_REV_EXT_LOCAL_ONLY :
+                                           OSTREE_REPO_RESOLVE_REV_EXT_NONE;
+      if (ostree_repo_resolve_collection_ref (repo, &c_r,
+                                              allow_noent,
+                                              flags,
+                                              out_rev,
+                                              cancellable, NULL))
+        return TRUE;
+#endif
+    }
+
+  /* There may be several remotes with the same branch (if we for
+   * instance changed the origin) so prepend the current origin to
+   * make sure we get the right one */
+  if (remote_name != NULL)
+    {
+      g_autofree char *refspec = g_strdup_printf ("%s:%s", remote_name, ref_name);
+      return ostree_repo_resolve_rev (repo, refspec, allow_noent, out_rev, error);
+    }
+  else
+    return ostree_repo_resolve_rev_ext (repo, ref_name, allow_noent,
+                                        OSTREE_REPO_LIST_REFS_EXT_NONE, out_rev, error);
+}
 
 
 #if !GLIB_CHECK_VERSION (2, 56, 0)

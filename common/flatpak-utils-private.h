@@ -828,6 +828,14 @@ char *   flatpak_dconf_path_for_app_id (const char *app_id);
 gboolean flatpak_dconf_path_is_similar (const char *path1,
                                         const char *path2);
 
+gboolean flatpak_repo_resolve_rev (OstreeRepo    *repo,
+                                   const char    *collection_id, /* nullable */
+                                   const char    *remote_name, /* nullable */
+                                   const char    *ref_name,
+                                   gboolean       allow_noent,
+                                   char         **out_rev,
+                                   GCancellable  *cancellable,
+                                   GError       **error);
 
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
