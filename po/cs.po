@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-02-11 14:38+0100\n"
-"PO-Revision-Date: 2019-02-09 14:16+0100\n"
+"POT-Creation-Date: 2019-02-26 03:24+0000\n"
+"PO-Revision-Date: 2019-02-26 12:26+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -250,7 +250,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3419
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3428
 msgid "Unable to start app"
 msgstr "Nelze spustit aplikaci"
 
@@ -2873,6 +2873,12 @@ msgstr "odinstalace"
 msgid "Installing…"
 msgstr "Instalace…"
 
+#: app/flatpak-cli-transaction.c:377
+#, c-format
+#| msgid "Uninstalling %d/%d…"
+msgid "Installing %d/%d…"
+msgstr "Instalace %d/%d…"
+
 #: app/flatpak-cli-transaction.c:382
 msgid "Updating…"
 msgstr "Aktualizace…"
@@ -4039,66 +4045,66 @@ msgstr "Selhala synchronizace s dbus proxy"
 msgid "Failed to determine parts from ref: %s"
 msgstr "Selhalo zjištění částí z refu: %s"
 
-#: common/flatpak-run.c:1441
+#: common/flatpak-run.c:1450
 msgid "No systemd user session available, cgroups not available"
 msgstr "Uživatelské sezení systemd není dostupné, cgroups nejsou dostupné"
 
-#: common/flatpak-run.c:1956
+#: common/flatpak-run.c:1965
 msgid "Unable to allocate instance id"
 msgstr "Selhala alokace id instance"
 
-#: common/flatpak-run.c:2076 common/flatpak-run.c:2086
+#: common/flatpak-run.c:2085 common/flatpak-run.c:2095
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Selhalo otevření souboru flatpak-info: %s"
 
-#: common/flatpak-run.c:2106
+#: common/flatpak-run.c:2115
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Selhalo otevření souboru bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2420
+#: common/flatpak-run.c:2429
 msgid "Initialize seccomp failed"
 msgstr "Selhala inicializace seccomp"
 
-#: common/flatpak-run.c:2459
+#: common/flatpak-run.c:2468
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Selhalo přidání architektury do seccomp filtru"
 
-#: common/flatpak-run.c:2468
+#: common/flatpak-run.c:2477
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Selhalo přidání multiarch architektury do seccomp filtru"
 
 #. unknown syscall
-#: common/flatpak-run.c:2487 common/flatpak-run.c:2501
+#: common/flatpak-run.c:2496 common/flatpak-run.c:2510
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Selhalo blokování systémového volání %d"
 
-#: common/flatpak-run.c:2532
+#: common/flatpak-run.c:2541
 msgid "Failed to export bpf"
 msgstr "Selhalo exportování bpf"
 
-#: common/flatpak-run.c:2588
+#: common/flatpak-run.c:2597
 #, c-format
 msgid "Invalid group: %d"
 msgstr "Neplatná skupina: %d"
 
-#: common/flatpak-run.c:2765
+#: common/flatpak-run.c:2774
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Selhalo otevření „%s“"
 
-#: common/flatpak-run.c:3042
+#: common/flatpak-run.c:3051
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig selhal, návratová hodnota %d"
 
-#: common/flatpak-run.c:3049
+#: common/flatpak-run.c:3058
 msgid "Can't open generated ld.so.cache"
 msgstr "Nelze otevřít vygenerovaný ld.so.cache"
 
-#: common/flatpak-run.c:3163
+#: common/flatpak-run.c:3172
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Špatný počet součástí v prostředí %s"
