@@ -488,7 +488,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
         return FALSE;
     }
 
-  if (!no_update_appstream)
+  if (!opt_no_update_appstream)
     {
       g_print (_("Updating appstream branch\n"));
       if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
@@ -512,7 +512,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
         }
     }
 
-  if (!no_update_summary)
+  if (!opt_no_update_summary)
     {
       g_print (_("Updating summary\n"));
       if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
