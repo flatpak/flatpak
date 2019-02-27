@@ -46,6 +46,8 @@ static char *opt_gpg_homedir;
 static char **opt_gpg_key_ids;
 static gboolean opt_prune;
 static gboolean opt_generate_deltas;
+static gboolean opt_no_update_appstream;
+static gboolean opt_no_update_summary;
 static gint opt_prune_depth = -1;
 static gint opt_static_delta_jobs;
 
@@ -59,6 +61,8 @@ static GOptionEntry options[] = {
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, N_("Generate delta files"), NULL },
+  { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
+  { "no-update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_appstream, N_("Don't update the appstream branch"), NULL },
   { "static-delta-jobs", 0, 0, G_OPTION_ARG_INT, &opt_static_delta_jobs, N_("Max parallel jobs when creating deltas (default: NUMCPUs)"), N_("NUM-JOBS") },
   { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, N_("Prune unused objects"), NULL },
   { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, N_("Only traverse DEPTH parents for each commit (default: -1=infinite)"), N_("DEPTH") },
@@ -484,9 +488,12 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
         return FALSE;
     }
 
-  g_print (_("Updating appstream branch\n"));
-  if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
-    return FALSE;
+  if (!opt_no_update_appstream)
+    {
+      g_print (_("Updating appstream branch\n"));
+      if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
+        return FALSE;
+    }
 
   if (opt_generate_deltas &&
       !generate_all_deltas (repo, &unwanted_deltas, cancellable, error))
@@ -505,9 +512,12 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
         }
     }
 
-  g_print (_("Updating summary\n"));
-  if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
-    return FALSE;
+  if (!opt_no_update_summary)
+    {
+      g_print (_("Updating summary\n"));
+      if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+        return FALSE;
+    }
 
   if (opt_prune)
     {
