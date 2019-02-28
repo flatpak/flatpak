@@ -313,7 +313,9 @@ flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
       else if (self->collection_id == NULL && self->summary_fetch_error != NULL)
         error_msg = g_strdup_printf ("summary fetch error: %s", self->summary_fetch_error->message);
 
-      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unable to load metadata from remote %s: %s"), self->remote_name,
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                 _("Unable to load metadata from remote %s: %s"),
+                                 self->remote_name,
                                  error_msg != NULL ? error_msg : "unknown error");
     }
 
@@ -351,10 +353,13 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
       if (!flatpak_summary_lookup_ref (self->summary, self->collection_id, ref, out_checksum, out_variant))
         {
           if (self->collection_id != NULL)
-            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref (%s, %s) in remote %s"), self->collection_id, ref, self->remote_name);
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                       _("No such ref (%s, %s) in remote %s"),
+                                       self->collection_id, ref, self->remote_name);
           else
-            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref '%s' in remote %s"), ref, self->remote_name);
-          return FALSE;
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                       _("No such ref '%s' in remote %s"),
+                                       ref, self->remote_name);
         }
     }
   else
@@ -3540,9 +3545,10 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 
       if (latest_rev == NULL)
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No such ref (%s, %s) in remote %s or elsewhere"),
-                              collection_ref.collection_id, collection_ref.ref_name, state->remote_name);
-          return FALSE;
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("No such ref (%s, %s) in remote %s or elsewhere"),
+                                     collection_ref.collection_id, collection_ref.ref_name,
+                                     state->remote_name);
         }
 
       if (out_results != NULL)
@@ -3553,14 +3559,12 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
     }
   else
     {
-      flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, error);
+      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, error))
+        return FALSE;
       if (latest_rev == NULL)
-        {
-          if (error != NULL && *error == NULL)
-            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
-                                ref, state->remote_name);
-          return FALSE;
-        }
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   _("Couldn't find latest checksum for ref %s in remote %s"),
+                                   ref, state->remote_name);
 
       if (out_rev != NULL)
         *out_rev = g_steal_pointer (&latest_rev);
@@ -4991,20 +4995,18 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   gboolean res;
 
   /* We use the summary so that we can reuse any cached json */
-  flatpak_remote_state_lookup_ref (state, ref, &latest_rev, &summary_element, error);
+  if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, &summary_element, error))
+    return FALSE;
   if (latest_rev == NULL)
-    {
-      if (error != NULL && *error == NULL)
-        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
-                            ref, state->remote_name);
-      return FALSE;
-    }
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                               _("Couldn't find latest checksum for ref %s in remote %s"),
+                               ref, state->remote_name);
 
   if (skip_if_current_is != NULL && strcmp (latest_rev, skip_if_current_is) == 0)
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED, _("%s commit %s already installed"),
-                          ref, latest_rev);
-      return FALSE;
+      return flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
+                                 _("%s commit %s already installed"),
+                                 ref, latest_rev);
     }
 
   metadata = g_variant_get_child_value (summary_element, 2);
@@ -5064,14 +5066,12 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *name = NULL;
 
   /* We use the summary so that we can reuse any cached json */
-  flatpak_remote_state_lookup_ref (state, ref, &latest_rev, &summary_element, error);
+  if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, &summary_element, error))
+    return FALSE;
   if (latest_rev == NULL)
-    {
-      if (error != NULL && *error == NULL)
-        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
-                            ref, state->remote_name);
-      return FALSE;
-    }
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                               _("Couldn't find latest checksum for ref %s in remote %s"),
+                               ref, state->remote_name);
 
   metadata = g_variant_get_child_value (summary_element, 2);
   g_variant_lookup (metadata, "xa.oci-repository", "s", &oci_repository);
@@ -5310,13 +5310,13 @@ flatpak_dir_pull (FlatpakDir                           *self,
         }
       else
         {
-          flatpak_remote_state_lookup_ref (state, ref, &rev, NULL, error);
+          if (!flatpak_remote_state_lookup_ref (state, ref, &rev, NULL, error))
+            goto out;
           if (rev == NULL)
             {
-              if (error != NULL && *error == NULL)
-                flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
-                                    _("Couldn't find latest checksum for ref %s in remote %s"),
-                                    ref, state->remote_name);
+              flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                  _("Couldn't find latest checksum for ref %s in remote %s"),
+                                  ref, state->remote_name);
               goto out;
             }
 
@@ -6597,8 +6597,8 @@ export_desktop_file (const char         *app,
 
       if (dbus_name == NULL || strcmp (dbus_name, expected_dbus_name) != 0)
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_EXPORT_FAILED, _("D-Bus service file '%s' has wrong name"), name);
-          return FALSE;
+          return flatpak_fail_error (error, FLATPAK_ERROR_EXPORT_FAILED,
+                                     _("D-Bus service file '%s' has wrong name"), name);
         }
     }
 
@@ -7280,7 +7280,9 @@ extract_extra_data (FlatpakDir   *self,
         }
 
       if (!found)
-        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Extra data %s missing in detached metadata"), extra_data_source_name);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   _("Extra data %s missing in detached metadata"),
+                                   extra_data_source_name);
     }
 
   *created_extra_data = TRUE;
@@ -13321,12 +13323,13 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
       if (state == NULL)
         return NULL;
 
-      flatpak_remote_state_lookup_ref (state, ref, &latest_commit, NULL, error);
+      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_commit, NULL, error))
+        return NULL;
       if (latest_commit == NULL)
         {
-          if (error != NULL && *error == NULL)
-            flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
-                                ref, state->remote_name);
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                              _("Couldn't find latest checksum for ref %s in remote %s"),
+                              ref, state->remote_name);
           return NULL;
         }
 
