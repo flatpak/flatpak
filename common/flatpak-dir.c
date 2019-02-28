@@ -574,13 +574,12 @@ flatpak_load_deploy_data (GFile        *deploy_dir,
                           GError      **error)
 {
   g_autoptr(GFile) data_file = NULL;
-  g_autoptr(GError) my_error = NULL;
   char *data = NULL;
   gsize data_size;
   g_autoptr(GVariant) deploy_data = NULL;
 
   data_file = g_file_get_child (deploy_dir, "deploy");
-  if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, &my_error))
+  if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, error))
     return NULL;
 
   deploy_data = g_variant_ref_sink (g_variant_new_from_data (FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT,
