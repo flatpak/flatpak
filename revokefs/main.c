@@ -444,6 +444,7 @@ usage (const char *progname)
            "   -h  --help          print help\n"
            "   --socket=fd         Pass in the socket fd\n"
            "   --backend           Run the backend instead of fuse\n"
+           "   --exit-with-fd=fd   With --backend, exit when the given file descriptor is closed\n"
            "\n", progname);
 }
 
@@ -478,6 +479,7 @@ revokefs_opt_proc (void *data,
 
 struct revokefs_config {
   int socket_fd;
+  int exit_with_fd;
   int backend;
 };
 
@@ -485,6 +487,7 @@ struct revokefs_config {
 
 static struct fuse_opt revokefs_opts[] = {
   REVOKEFS_OPT ("--socket=%i", socket_fd, -1),
+  REVOKEFS_OPT ("--exit-with-fd=%i", exit_with_fd, -1),
   REVOKEFS_OPT ("--backend", backend, 1),
 
   FUSE_OPT_KEY ("-h", KEY_HELP),
@@ -497,7 +500,7 @@ main (int argc, char *argv[])
 {
   struct fuse_args args = FUSE_ARGS_INIT (argc, argv);
   int res;
-  struct revokefs_config conf = { -1 };
+  struct revokefs_config conf = { -1, -1 };
 
   res = fuse_opt_parse (&args, &conf, revokefs_opts, revokefs_opt_proc);
   if (res != 0)
@@ -529,7 +532,7 @@ main (int argc, char *argv[])
           exit (EXIT_FAILURE);
         }
 
-      do_writer (basefd, conf.socket_fd);
+      do_writer (basefd, conf.socket_fd, conf.exit_with_fd);
       exit (0);
     }
 
@@ -559,7 +562,7 @@ main (int argc, char *argv[])
         {
           /* writer process */
           close (sockets[0]);
-          do_writer (basefd, sockets[1]);
+          do_writer (basefd, sockets[1], -1);
           exit (0);
         }
 

@@ -32,6 +32,7 @@
 #include <sys/xattr.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <poll.h>
 #include <fuse.h>
 
 #include <glib.h>
@@ -759,7 +760,8 @@ request_access (int writer_socket, const char *path, int mode)
 
 void
 do_writer (int basefd_arg,
-           int fuse_socket)
+           int fuse_socket,
+           int exit_with_fd)
 {
   guchar request_buffer[MAX_REQUEST_SIZE];
   RevokefsRequest *request = (RevokefsRequest *)&request_buffer;
@@ -773,6 +775,27 @@ do_writer (int basefd_arg,
     {
       ssize_t data_size, size;
       ssize_t response_data_size, response_size, written_size;
+      int res;
+      struct pollfd pollfds[2] =  {
+         {fuse_socket, POLLIN, 0 },
+         {exit_with_fd, POLLIN, 0 },
+      };
+
+      res = poll(pollfds, exit_with_fd >= 0 ? 2 : 1, -1);
+      if (res < 0)
+        {
+          perror ("Got error polling sockets: ");
+          exit (1);
+        }
+
+      if (exit_with_fd >= 0 && (pollfds[1].revents & (POLLERR|POLLHUP)) != 0)
+        {
+          g_printerr ("Received EOF on exit-with-fd argument");
+          exit (1);
+        }
+
+      if (pollfds[0].revents & POLLIN == 0)
+        continue;
 
       size = TEMP_FAILURE_RETRY (read (fuse_socket, request_buffer, sizeof (request_buffer)));
       if (size == -1)
