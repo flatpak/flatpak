@@ -72,6 +72,8 @@ typedef struct
   uid_t uid;                  /* uid of the client initiating the pull */
 
   gint client_socket;         /* fd that is send back to the client for spawning revoke-fuse */
+  gint backend_exit_socket;   /* write end of a pipe which helps terminating revokefs backend if
+                                 system helper exits abruptly */
 
   gchar *src_dir;             /* source directory containing the actual child repo */
   gchar *unique_name;
@@ -131,6 +133,7 @@ ongoing_pull_free (OngoingPull *pull)
   g_clear_pointer (&pull->src_dir, g_free);
   g_clear_pointer (&pull->unique_name, g_free);
   close (pull->client_socket);
+  close (pull->backend_exit_socket);
 
   g_slice_free (OngoingPull, pull);
 }
@@ -1497,7 +1500,7 @@ ongoing_pull_new (FlatpakSystemHelper   *object,
   GDBusConnection *connection = g_dbus_method_invocation_get_connection (invocation);
   g_autoptr(OngoingPull) pull = NULL;
   g_autoptr(GSubprocessLauncher) launcher = NULL;
-  int sockets[2];
+  int sockets[2], exit_sockets[2];
 
   pull = g_slice_new0 (OngoingPull);
   pull->object = object;
@@ -1521,17 +1524,30 @@ ongoing_pull_new (FlatpakSystemHelper   *object,
       return NULL;
     }
 
+  if (pipe2 (exit_sockets, O_CLOEXEC) == -1)
+    {
+      glnx_throw_errno_prefix (error, "Failed to create a pipe");
+      close (sockets[0]);
+      close (sockets[1]);
+      return NULL;
+    }
+
   launcher = g_subprocess_launcher_new (G_SUBPROCESS_FLAGS_NONE);
   g_subprocess_launcher_set_child_setup (launcher, revokefs_fuse_backend_child_setup, passwd, NULL);
   g_subprocess_launcher_take_fd (launcher, sockets[0], 3);
   fcntl (sockets[1], F_SETFD, FD_CLOEXEC);
   pull->client_socket = sockets[1];
 
+  g_subprocess_launcher_take_fd (launcher, exit_sockets[0], 4);
+  pull->backend_exit_socket = exit_sockets[1];
+
   pull->revokefs_backend = g_subprocess_launcher_spawn (launcher,
                                                         error,
                                                         "revokefs-fuse",
                                                         "--backend",
-                                                        "--socket=3", src, NULL);
+                                                        "--socket=3",
+                                                        "--exit-with-fd=4",
+                                                        src, NULL);
   if (pull->revokefs_backend == NULL)
     return NULL;
 

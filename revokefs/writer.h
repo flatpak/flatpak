@@ -39,7 +39,7 @@ int request_fsync (int writer_socket, int fd);
 int request_close (int writer_socket, int fd);
 int request_access (int writer_socket, const char *path, int mode);
 
-void  do_writer (int basefd, int socket);
+void  do_writer (int basefd, int socket, int exit_with_fd);
 
 
 typedef enum {
