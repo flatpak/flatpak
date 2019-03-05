@@ -4059,9 +4059,6 @@ ensure_soup_session (FlatpakDir *self)
 
       soup_session = flatpak_create_soup_session (PACKAGE_STRING);
 
-      if (g_getenv ("OSTREE_DEBUG_HTTP"))
-        soup_session_add_feature (soup_session, (SoupSessionFeature *) soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
-
       g_once_init_leave (&self->soup_session, soup_session);
     }
 }

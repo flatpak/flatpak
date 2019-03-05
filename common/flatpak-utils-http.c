@@ -504,6 +504,9 @@ flatpak_create_soup_session (const char *user_agent)
         g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
     }
 
+  if (g_getenv ("OSTREE_DEBUG_HTTP"))
+    soup_session_add_feature (soup_session, (SoupSessionFeature *) soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
+
   return soup_session;
 }
 
