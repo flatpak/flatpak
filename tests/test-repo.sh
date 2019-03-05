@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..27"
+echo "1..28"
 
 #Regular repo
 setup_repo
@@ -168,6 +168,14 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
 fi
 
 echo "ok missing remote name auto-corrects for install"
+
+port=$(cat httpd-port-main)
+if ${FLATPAK} ${U} install -y http://127.0.0.1:${port}/nonexistent.flatpakref 2> install-error-log; then
+    assert_not_reached "Should not be able to install a nonexistent flatpakref"
+fi
+assert_file_has_content install-error-log "Server returned status 404: Not Found"
+
+echo "ok install fails gracefully for 404 URLs"
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 

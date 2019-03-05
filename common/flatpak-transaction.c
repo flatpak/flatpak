@@ -2351,37 +2351,6 @@ flatpak_transaction_get_installation (FlatpakTransaction *self)
   return g_object_ref (priv->installation);
 }
 
-
-static GBytes *
-download_uri (const char *url,
-              GError    **error)
-{
-  g_autoptr(SoupSession) session = NULL;
-  g_autoptr(SoupRequest) req = NULL;
-  g_autoptr(GInputStream) input = NULL;
-  g_autoptr(GOutputStream) out = NULL;
-
-  session = flatpak_create_soup_session (PACKAGE_STRING);
-
-  req = soup_session_request (session, url, error);
-  if (req == NULL)
-    return NULL;
-
-  input = soup_request_send (req, NULL, error);
-  if (input == NULL)
-    return NULL;
-
-  out = g_memory_output_stream_new_resizable ();
-  if (!g_output_stream_splice (out,
-                               input,
-                               G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
-                               NULL,
-                               error))
-    return NULL;
-
-  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
-}
-
 static gboolean
 remote_is_already_configured (FlatpakTransaction *self,
                               const char         *url,
@@ -2465,7 +2434,11 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
 }
 
 static gboolean
-handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *dep_url, GError **error)
+handle_runtime_repo_deps (FlatpakTransaction *self,
+                          const char         *id,
+                          const char         *dep_url,
+                          GCancellable       *cancellable,
+                          GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GBytes) dep_data = NULL;
@@ -2480,6 +2453,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
   g_autofree char *group = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autofree char *runtime_collection_id = NULL;
+  g_autoptr(SoupSession) soup_session = NULL;
   char *t;
   int i;
   gboolean res;
@@ -2487,7 +2461,11 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
   if (priv->disable_deps)
     return TRUE;
 
-  dep_data = download_uri (dep_url, error);
+  if (!g_str_has_prefix (dep_url, "http:") && !g_str_has_prefix (dep_url, "https:"))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not HTTP or HTTPS"), dep_url);
+
+  soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+  dep_data = flatpak_load_http_uri (soup_session, dep_url, 0, NULL, NULL, cancellable, error);
   if (dep_data == NULL)
     {
       g_prefix_error (error, "Can't load dependent file %s", dep_url);
@@ -2556,7 +2534,10 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
 }
 
 static gboolean
-handle_runtime_repo_deps_from_keyfile (FlatpakTransaction *self, GKeyFile *keyfile, GError **error)
+handle_runtime_repo_deps_from_keyfile (FlatpakTransaction *self,
+                                       GKeyFile           *keyfile,
+                                       GCancellable       *cancellable,
+                                       GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *dep_url = NULL;
@@ -2574,7 +2555,7 @@ handle_runtime_repo_deps_from_keyfile (FlatpakTransaction *self, GKeyFile *keyfi
   if (name == NULL)
     return TRUE;
 
-  return handle_runtime_repo_deps (self, name, dep_url, error);
+  return handle_runtime_repo_deps (self, name, dep_url, cancellable, error);
 }
 
 static gboolean
@@ -2595,7 +2576,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
       if (!handle_suggested_remote_name (self, flatpakref, error))
         return FALSE;
 
-      if (!handle_runtime_repo_deps_from_keyfile (self, flatpakref, error))
+      if (!handle_runtime_repo_deps_from_keyfile (self, flatpakref, cancellable, error))
         return FALSE;
 
       if (!flatpak_dir_create_remote_for_ref_file (priv->dir, flatpakref, priv->default_arch,
@@ -2618,6 +2599,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
 static gboolean
 handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
                                       GFile              *file,
+                                      GCancellable       *cancellable,
                                       GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -2645,7 +2627,7 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
 
   ref_parts = g_strsplit (ref, "/", -1);
 
-  return handle_runtime_repo_deps (self, ref_parts[1], dep_url, error);
+  return handle_runtime_repo_deps (self, ref_parts[1], dep_url, cancellable, error);
 }
 
 static gboolean
@@ -2665,7 +2647,7 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
       g_autofree char *metadata = NULL;
       gboolean created_remote;
 
-      if (!handle_runtime_repo_deps_from_bundle (self, data->file, error))
+      if (!handle_runtime_repo_deps_from_bundle (self, data->file, cancellable, error))
         return FALSE;
 
       if (!flatpak_dir_ensure_repo (priv->dir, cancellable, error))

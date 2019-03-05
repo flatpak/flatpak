@@ -206,7 +206,9 @@ install_from (FlatpakDir *dir,
   if (g_str_has_prefix (filename, "http:") ||
       g_str_has_prefix (filename, "https:"))
     {
-      file_data = download_uri (filename, error);
+      g_autoptr(SoupSession) soup_session = NULL;
+      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+      file_data = flatpak_load_http_uri (soup_session, filename, 0, NULL, NULL, cancellable, error);
       if (file_data == NULL)
         {
           g_prefix_error (error, "Can't load uri %s: ", filename);

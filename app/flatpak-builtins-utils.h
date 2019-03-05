@@ -52,8 +52,6 @@ RemoteDirPair * remote_dir_pair_new (const char *remote_name,
                                      FlatpakDir *dir);
 
 gboolean    looks_like_branch (const char *branch);
-GBytes *    download_uri (const char *url,
-                          GError    **error);
 
 GBytes * flatpak_load_gpg_keys (char        **gpg_import,
                                 GCancellable *cancellable,
