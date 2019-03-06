@@ -286,16 +286,22 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak install gnome org.gnome.gedit2</command>
+            <command>$ flatpak install gedit</command>
         </para>
         <para>
-            <command>$ flatpak --installation=default install gnome org.gnome.gedit2</command>
+            <command>$ flatpak install flathub org.gnome.gedit</command>
         </para>
         <para>
-            <command>$ flatpak --user install gnome org.gnome.gedit//3.22</command>
+            <command>$ flatpak --installation=default install flathub org.gnome.gedit</command>
         </para>
         <para>
-            <command>$ flatpak --user install https://sdk.gnome.org/gedit.flatpakref</command>
+            <command>$ flatpak --user install flathub org.gnome.gedit//3.30</command>
+        </para>
+        <para>
+            <command>$ flatpak --user install https://flathub.org/repo/appstream/org.gnome.gedit.flatpakref</command>
+        </para>
+        <para>
+            <command>$ flatpak --system install org.gnome.gedit.flatpakref</command>
         </para>
 
     </refsect1>
