@@ -3,7 +3,7 @@
 int
 main (int argc, char *argv[])
 {
-  SoupSession *session = flatpak_create_soup_session (PACKAGE_STRING);
+  g_autoptr(SoupSession) session = flatpak_create_soup_session (PACKAGE_STRING);
   GError *error = NULL;
   const char *url, *dest;
   int flags = 0;
