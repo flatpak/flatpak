@@ -35,20 +35,6 @@ validate_icon (const char *arg_width,
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GError) error = NULL;
 
-  max_width = g_ascii_strtoll (arg_width, NULL, 10);
-  if (max_width < 16 || max_width > 4096)
-    {
-      g_printerr ("Bad width limit: %s\n", arg_width);
-      return 1;
-    }
-
-  max_height = g_ascii_strtoll (arg_height, NULL, 10);
-  if (max_height < 16 || max_height > 4096)
-    {
-      g_printerr ("Bad height limit: %s\n", arg_height);
-      return 1;
-    }
-
   format = gdk_pixbuf_get_file_info (filename, &width, &height);
   if (format == NULL)
     {
@@ -60,6 +46,20 @@ validate_icon (const char *arg_width,
   if (!g_strv_contains (allowed_formats, name))
     {
       g_printerr ("Format %s not accepted\n", name);
+      return 1;
+    }
+
+  max_width = g_ascii_strtoll (arg_width, NULL, 10);
+  if (max_width < 16 || max_width > 4096)
+    {
+      g_printerr ("Bad width limit: %s\n", arg_width);
+      return 1;
+    }
+
+  max_height = g_ascii_strtoll (arg_height, NULL, 10);
+  if (max_height < 16 || max_height > 4096)
+    {
+      g_printerr ("Bad height limit: %s\n", arg_height);
       return 1;
     }
 
