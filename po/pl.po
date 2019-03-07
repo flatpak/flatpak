@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-02-11 14:38+0100\n"
-"PO-Revision-Date: 2019-02-08 20:00+0100\n"
+"POT-Creation-Date: 2019-02-26 03:24+0000\n"
+"PO-Revision-Date: 2019-03-07 11:45+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -257,7 +257,7 @@ msgstr "Brak punktu rozszerzeń pasującego do %s w %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Brak „=” w opcji montowania dowiązania „%s”"
 
-#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3419
+#: app/flatpak-builtins-build.c:588 common/flatpak-run.c:3428
 msgid "Unable to start app"
 msgstr "Nie można uruchomić programu"
 
@@ -2928,6 +2928,11 @@ msgstr "dezinstalacja"
 msgid "Installing…"
 msgstr "Instalowanie…"
 
+#: app/flatpak-cli-transaction.c:377
+#, c-format
+msgid "Installing %d/%d…"
+msgstr "Instalowanie %d/%d…"
+
 #: app/flatpak-cli-transaction.c:382
 msgid "Updating…"
 msgstr "Aktualizowanie…"
@@ -4131,67 +4136,67 @@ msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 msgid "Failed to determine parts from ref: %s"
 msgstr "Ustalenia części z odniesienia się nie powiodło: %s"
 
-#: common/flatpak-run.c:1441
+#: common/flatpak-run.c:1450
 msgid "No systemd user session available, cgroups not available"
 msgstr "Brak dostępnej sesji użytkownika systemd, cgroups nie są dostępne"
 
-#: common/flatpak-run.c:1956
+#: common/flatpak-run.c:1965
 msgid "Unable to allocate instance id"
 msgstr "Nie można przydzielić identyfikatora wystąpienia"
 
-#: common/flatpak-run.c:2076 common/flatpak-run.c:2086
+#: common/flatpak-run.c:2085 common/flatpak-run.c:2095
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Otwarcie pliku „flatpak-info” się nie powiodło: %s"
 
-#: common/flatpak-run.c:2106
+#: common/flatpak-run.c:2115
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Otwarcie pliku „bwrapinfo.json” się nie powiodło: %s"
 
-#: common/flatpak-run.c:2420
+#: common/flatpak-run.c:2429
 msgid "Initialize seccomp failed"
 msgstr "Inicjacja seccomp się nie powiodła"
 
-#: common/flatpak-run.c:2459
+#: common/flatpak-run.c:2468
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Dodanie architektury do filtru seccomp się nie powiodło"
 
-#: common/flatpak-run.c:2468
+#: common/flatpak-run.c:2477
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr ""
 "Dodanie wieloarchitekturowej architektury do filtru seccomp się nie powiodło"
 
 #. unknown syscall
-#: common/flatpak-run.c:2487 common/flatpak-run.c:2501
+#: common/flatpak-run.c:2496 common/flatpak-run.c:2510
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Zablokowanie wywołania systemowego %d się nie powiodło"
 
-#: common/flatpak-run.c:2532
+#: common/flatpak-run.c:2541
 msgid "Failed to export bpf"
 msgstr "Wyeksportowanie bpf się nie powiodło"
 
-#: common/flatpak-run.c:2588
+#: common/flatpak-run.c:2597
 #, c-format
 msgid "Invalid group: %d"
 msgstr "Nieprawidłowa grupa: %d"
 
-#: common/flatpak-run.c:2765
+#: common/flatpak-run.c:2774
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Otwarcie „%s” się nie powiodło"
 
-#: common/flatpak-run.c:3042
+#: common/flatpak-run.c:3051
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig się nie powiodło, stan wyjścia %d"
 
-#: common/flatpak-run.c:3049
+#: common/flatpak-run.c:3058
 msgid "Can't open generated ld.so.cache"
 msgstr "Nie można otworzyć utworzonego ld.so.cache"
 
-#: common/flatpak-run.c:3163
+#: common/flatpak-run.c:3172
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Błędna liczba składników w środowisku wykonawczym %s"
