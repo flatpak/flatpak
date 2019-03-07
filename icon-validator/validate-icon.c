@@ -49,18 +49,26 @@ validate_icon (const char *arg_width,
       return 1;
     }
 
-  max_width = g_ascii_strtoll (arg_width, NULL, 10);
-  if (max_width < 16 || max_width > 4096)
+  if (!g_str_equal (name, "svg"))
     {
-      g_printerr ("Bad width limit: %s\n", arg_width);
-      return 1;
-    }
+      max_width = g_ascii_strtoll (arg_width, NULL, 10);
+      if (max_width < 16 || max_width > 4096)
+        {
+          g_printerr ("Bad width limit: %s\n", arg_width);
+          return 1;
+        }
 
-  max_height = g_ascii_strtoll (arg_height, NULL, 10);
-  if (max_height < 16 || max_height > 4096)
+      max_height = g_ascii_strtoll (arg_height, NULL, 10);
+      if (max_height < 16 || max_height > 4096)
+        {
+          g_printerr ("Bad height limit: %s\n", arg_height);
+          return 1;
+        }
+    }
+  else
     {
-      g_printerr ("Bad height limit: %s\n", arg_height);
-      return 1;
+      /* Sanity check for vector files */
+      max_height = max_width = 4096;
     }
 
   if (width > max_width || height > max_height)
