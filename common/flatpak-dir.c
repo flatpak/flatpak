@@ -6102,6 +6102,12 @@ export_desktop_file (const char   *app,
         }
 
       g_key_file_set_string (keyfile, groups[i], G_KEY_FILE_DESKTOP_KEY_EXEC, new_exec->str);
+
+      if (old_exec && strcmp (groups[i], G_KEY_FILE_DESKTOP_GROUP) == 0)
+        {
+          /* Save old exec under new key to avoid regression on app search, issue #2749 */
+          g_key_file_set_string (keyfile, groups[i], "X-Flatpak-Old-Exec", old_exec);
+        }
     }
 
   new_data = g_key_file_to_data (keyfile, &new_data_len, error);
