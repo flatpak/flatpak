@@ -114,9 +114,9 @@ schedule_idle_callback (void)
 
 typedef struct
 {
-  GPid  pid;
-  char *client;
-  guint child_watch;
+  GPid     pid;
+  char    *client;
+  guint    child_watch;
   gboolean watch_bus;
 } PidData;
 
@@ -133,7 +133,6 @@ child_watch_died (GPid     pid,
                   gpointer user_data)
 {
   PidData *pid_data = user_data;
-
   g_autoptr(GVariant) signal_variant = NULL;
 
   g_debug ("Client Pid %d died", pid_data->pid);
@@ -236,7 +235,7 @@ child_setup_func (gpointer user_data)
 
 static gboolean
 is_valid_expose (const char *expose,
-                 GError **error)
+                 GError    **error)
 {
   /* No subdirs or absolute paths */
   if (expose[0] == '/')
@@ -850,7 +849,6 @@ main (int    argc,
   gboolean show_version;
   GOptionContext *context;
   GBusNameOwnerFlags flags;
-
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },

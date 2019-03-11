@@ -168,7 +168,6 @@ flatpak_complete_override (FlatpakCompletion *completion)
         }
 
       break;
-
     }
 
   return TRUE;

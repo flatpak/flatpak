@@ -206,7 +206,9 @@ install_from (FlatpakDir *dir,
   if (g_str_has_prefix (filename, "http:") ||
       g_str_has_prefix (filename, "https:"))
     {
-      file_data = download_uri (filename, error);
+      g_autoptr(SoupSession) soup_session = NULL;
+      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+      file_data = flatpak_load_http_uri (soup_session, filename, 0, NULL, NULL, cancellable, error);
       if (file_data == NULL)
         {
           g_prefix_error (error, "Can't load uri %s: ", filename);
@@ -412,15 +414,15 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                 }
             }
 
-            if (remote_dir_pairs->len == 0)
-              return flatpak_fail (error, _("No remote refs found similar to ‘%s’"), argv[1]);
+          if (remote_dir_pairs->len == 0)
+            return flatpak_fail (error, _("No remote refs found similar to ‘%s’"), argv[1]);
 
-            if (!flatpak_resolve_matching_remotes (opt_yes, remote_dir_pairs, argv[1], &chosen_pair, error))
-              return FALSE;
+          if (!flatpak_resolve_matching_remotes (opt_yes, remote_dir_pairs, argv[1], &chosen_pair, error))
+            return FALSE;
 
-            remote = g_strdup (chosen_pair->remote_name);
-            g_clear_object (&dir);
-            dir = g_object_ref (chosen_pair->dir);
+          remote = g_strdup (chosen_pair->remote_name);
+          g_clear_object (&dir);
+          dir = g_object_ref (chosen_pair->dir);
         }
     }
 
@@ -479,9 +481,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
       if (opt_no_pull)
         refs = flatpak_dir_find_local_refs (dir, remote, id, branch, default_branch, arch,
-                                           flatpak_get_default_arch (),
-                                           matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
-                                           cancellable, error);
+                                            flatpak_get_default_arch (),
+                                            matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                            cancellable, error);
       else
         refs = flatpak_dir_find_remote_refs (dir, remote, id, branch, default_branch, arch,
                                              flatpak_get_default_arch (),
@@ -503,7 +505,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, &ref, error))
         return FALSE;
 
-      if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
+      if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, error))
         {
           if (!g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
             return FALSE;

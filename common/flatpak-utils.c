@@ -122,7 +122,6 @@ flatpak_debug2 (const char *format, ...)
           format, var_args);
   va_end (var_args);
 #pragma GCC diagnostic pop
-
 }
 
 gboolean
@@ -221,6 +220,14 @@ flatpak_strcmp0_ptr (gconstpointer a,
                      gconstpointer b)
 {
   return g_strcmp0 (*(char * const *) a, *(char * const *) b);
+}
+
+/* Sometimes this is /var/run which is a symlink, causing weird issues when we pass
+ * it as a path into the sandbox */
+char *
+flatpak_get_real_xdg_runtime_dir (void)
+{
+  return realpath (g_get_user_runtime_dir (), NULL);
 }
 
 /* Compares if str has a specific path prefix. This differs
@@ -665,7 +672,7 @@ flatpak_get_timezone (void)
 
   /* Final fall-back is UTC */
   return g_strdup ("UTC");
- }
+}
 
 static gboolean
 is_valid_initial_name_character (gint c, gboolean allow_dash)
@@ -995,7 +1002,7 @@ flatpak_is_valid_branch (const char *string,
   len = strlen (string);
   if (G_UNLIKELY (len == 0))
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
                           _("Branch can't be empty"));
       goto out;
     }
@@ -1005,7 +1012,7 @@ flatpak_is_valid_branch (const char *string,
   s = string;
   if (G_UNLIKELY (!is_valid_initial_branch_character (*s)))
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
                           _("Branch can't start with %c"), *s);
       goto out;
     }
@@ -1015,7 +1022,7 @@ flatpak_is_valid_branch (const char *string,
     {
       if (G_UNLIKELY (!is_valid_branch_character (*s)))
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME, 
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
                               _("Branch can't contain %c"), *s);
           goto out;
         }
@@ -1080,8 +1087,9 @@ compare_segment (const char *s1, const char *s2)
       c1 = *s1;
       c2 = *s2;
       if (c1 != c2)
-        return (c1 - c2);
-      s1++; s2++;
+        return c1 - c2;
+      s1++;
+      s2++;
     }
 
   c1 = *s1;
@@ -1213,7 +1221,6 @@ _flatpak_split_partial_ref_arg (const char   *partial_ref,
   const char *branch_start = NULL;
   const char *branch_end = NULL;
   g_autofree char *branch = NULL;
-
   g_autoptr(GError) local_error = NULL;
   FlatpakKinds kinds = 0;
 
@@ -1387,7 +1394,6 @@ flatpak_list_deployed_refs (const char   *type,
                             GError      **error)
 {
   gchar **ret = NULL;
-
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
@@ -1440,7 +1446,6 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
                                 GError      **error)
 {
   gchar **ret = NULL;
-
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
@@ -1587,7 +1592,6 @@ flatpak_find_current_ref (const char   *app_id,
                           GError      **error)
 {
   g_autofree char *current_ref = NULL;
-
   g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
   int i;
 
@@ -1630,7 +1634,7 @@ flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
   for (i = 0; deploy == NULL && i < dirs->len; i++)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
- 
+
       flatpak_log_dir_access (dir);
       g_clear_error (&my_error);
       deploy = flatpak_dir_load_deployed (dir, ref, commit, cancellable, &my_error);
@@ -1667,7 +1671,6 @@ remove_dangling_symlinks (int           parent_fd,
 {
   gboolean ret = FALSE;
   struct dirent *dent;
-
   g_auto(GLnxDirFdIterator) iter = { 0 };
 
   if (!glnx_dirfd_iterator_init_at (parent_fd, name, FALSE, &iter, error))
@@ -1952,7 +1955,6 @@ flatpak_cp_a (GFile         *src,
   gboolean merge = (flags & FLATPAK_CP_FLAGS_MERGE) != 0;
   gboolean no_chown = (flags & FLATPAK_CP_FLAGS_NO_CHOWN) != 0;
   gboolean move = (flags & FLATPAK_CP_FLAGS_MOVE) != 0;
-
   g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
   int r;
@@ -2067,12 +2069,12 @@ out:
 }
 
 static gboolean
-_flatpak_canonicalize_permissions (int           parent_dfd,
-                                   const char   *rel_path,
-                                   gboolean      toplevel,
-                                   int           uid,
-                                   int           gid,
-                                   GError      **error)
+_flatpak_canonicalize_permissions (int         parent_dfd,
+                                   const char *rel_path,
+                                   gboolean    toplevel,
+                                   int         uid,
+                                   int         gid,
+                                   GError    **error)
 {
   struct stat stbuf;
   gboolean res = TRUE;
@@ -2142,9 +2144,9 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
           res = FALSE;
         }
 
-        return res;
+      return res;
     }
-  else if (S_ISREG(stbuf.st_mode))
+  else if (S_ISREG (stbuf.st_mode))
     {
       mode_t mode;
 
@@ -2160,14 +2162,14 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
           res = FALSE;
         }
     }
-  else if (S_ISLNK(stbuf.st_mode))
+  else if (S_ISLNK (stbuf.st_mode))
     {
       /* symlinks have no permissions */
     }
   else
     {
       /* some weird non-canonical type, lets delete it */
-      if (unlinkat(parent_dfd, rel_path, 0) != 0)
+      if (unlinkat (parent_dfd, rel_path, 0) != 0)
         {
           glnx_set_error_from_errno (error);
           res = FALSE;
@@ -2179,11 +2181,11 @@ _flatpak_canonicalize_permissions (int           parent_dfd,
 
 /* Canonicalizes files to the same permissions as bare-user-only checkouts */
 gboolean
-flatpak_canonicalize_permissions (int           parent_dfd,
-                                  const char   *rel_path,
-                                  int           uid,
-                                  int           gid,
-                                  GError      **error)
+flatpak_canonicalize_permissions (int         parent_dfd,
+                                  const char *rel_path,
+                                  int         uid,
+                                  int         gid,
+                                  GError    **error)
 {
   return _flatpak_canonicalize_permissions (parent_dfd, rel_path, TRUE, uid, gid, error);
 }
@@ -2896,7 +2898,6 @@ flatpak_repo_load_summary (OstreeRepo *repo,
                            GError    **error)
 {
   glnx_autofd int fd = -1;
-
   g_autoptr(GMappedFile) mfile = NULL;
   g_autoptr(GBytes) bytes = NULL;
 
@@ -3026,7 +3027,6 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *redirect_url = NULL;
   g_autofree char *default_branch = NULL;
   g_autofree char *gpg_keys = NULL;
-
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
@@ -3465,7 +3465,6 @@ validate_component (FlatpakXml *component,
       text = flatpak_xml_new (NULL);
       text->text = g_strjoinv (",", tags);
       flatpak_xml_add (value, text);
-
     }
 
   return TRUE;
@@ -3483,7 +3482,6 @@ flatpak_appstream_xml_migrate (FlatpakXml *source,
   FlatpakXml *component;
   FlatpakXml *prev_component;
   gboolean migrated = FALSE;
-
   g_auto(GStrv) tags = NULL;
   g_autofree const char *runtime = NULL;
   g_autofree const char *sdk = NULL;
@@ -3539,7 +3537,6 @@ copy_icon (const char *id,
            GError    **error)
 {
   g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
-
   g_autoptr(GFile) icons_dir =
     g_file_resolve_relative_path (root,
                                   "files/share/app-info/icons/flatpak");
@@ -3807,7 +3804,6 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
   GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
   {
     g_autofree char *tmpdir = g_strdup ("/tmp/flatpak-appstream-XXXXXX");
-
     g_autoptr(FlatpakTempDir) tmpdir_file = NULL;
     g_autoptr(GFile) appstream_file = NULL;
     g_autoptr(GFile) appstream_gz_file = NULL;
@@ -4069,7 +4065,6 @@ flatpak_extension_new (const char *id,
                        gboolean    is_unmaintained)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
-
   g_autoptr(GVariant) deploy_data = NULL;
 
   ext->id = g_strdup (id);
@@ -4191,7 +4186,6 @@ add_extension (GKeyFile   *metakey,
   g_autofree char *add_ld_path = g_key_file_get_string (metakey, group,
                                                         FLATPAK_METADATA_KEY_ADD_LD_PATH,
                                                         NULL);
-
   g_auto(GStrv) merge_dirs = g_key_file_get_string_list (metakey, group,
                                                          FLATPAK_METADATA_KEY_MERGE_DIRS,
                                                          NULL, NULL);
@@ -4518,7 +4512,6 @@ flatpak_xml_to_string (FlatpakXml *node, GString *res)
           if (node->first_child != NULL)
             g_string_append_printf (res, "</%s>", node->element_name);
         }
-
     }
   else if (node->text)
     {
@@ -4642,7 +4635,6 @@ static guint64
 flatpak_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
 {
   guint64 total_usize = 0;
-
   g_autoptr(GVariant) meta_entries = NULL;
   guint i, n_parts;
 
@@ -4801,7 +4793,6 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
 {
   g_autofree char *metadata_contents = NULL;
   g_autofree char *to_checksum = NULL;
-
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GInputStream) in = NULL;
@@ -4823,7 +4814,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   if (remote_collection_id != NULL && collection_id != NULL &&
       strcmp (remote_collection_id, collection_id) != 0)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"),
-                         collection_id, remote_collection_id);
+                               collection_id, remote_collection_id);
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return FALSE;
@@ -4940,7 +4931,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                GError               **error)
 {
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
-
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   FlatpakOciManifest *manifest = NULL;
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
@@ -5185,7 +5175,6 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
   gboolean reusing_dir = FALSE;
   g_autofree char *tmpdir_name = NULL;
   glnx_autofd int tmpdir_fd = -1;
-
   g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
 
   /* Look for existing tmpdir (with same prefix) to reuse */
@@ -5466,7 +5455,7 @@ flatpak_parse_numbers (const char *buf,
         }
       else if (is_number (parts[i]))
         {
-          int res = (int)strtol (parts[i], NULL, 10);
+          int res = (int) strtol (parts[i], NULL, 10);
           if (min <= res && res <= max)
             add_number (numbers, res);
           else
@@ -5530,7 +5519,7 @@ flatpak_numbers_prompt (gboolean default_yes, int min, int max, const char *prom
 
 void
 flatpak_format_choices (const char **choices,
-                        const char *prompt,
+                        const char  *prompt,
                         ...)
 {
   va_list var_args;
@@ -5543,7 +5532,7 @@ flatpak_format_choices (const char **choices,
 
   g_print ("%s\n\n", s);
   for (i = 0; choices[i]; i++)
-    g_print ("  %2d) %s\n", i+1, choices[i]);
+    g_print ("  %2d) %s\n", i + 1, choices[i]);
   g_print ("\n");
 }
 
@@ -5831,7 +5820,6 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
           if (downloading_extra_data)
             {
               g_autofree gchar *formatted_bytes_total = g_format_size_full (total, 0);
-              ;
               g_string_append_printf (buf, _("Downloading extra data: %s/%s"),
                                       formatted_bytes_total_transferred,
                                       formatted_bytes_total);
@@ -5956,12 +5944,12 @@ str_has_hex_prefix (const gchar *str)
  * make sure to remove str_has_hex_prefix and str_has_sign helpers too.
  */
 gboolean
-flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
-                                        guint         base,
-                                        guint64       min,
-                                        guint64       max,
-                                        guint64      *out_num,
-                                        GError      **error)
+flatpak_utils_ascii_string_to_unsigned (const gchar *str,
+                                        guint        base,
+                                        guint64      min,
+                                        guint64      max,
+                                        guint64     *out_num,
+                                        GError     **error)
 {
   guint64 number;
   const gchar *end_ptr = NULL;
@@ -5981,24 +5969,24 @@ flatpak_utils_ascii_string_to_unsigned (const gchar  *str,
     }
 
   errno = 0;
-  number = g_ascii_strtoull (str, (gchar **)&end_ptr, base);
+  number = g_ascii_strtoull (str, (gchar **) &end_ptr, base);
   saved_errno = errno;
 
   if (/* We do not allow leading whitespace, but g_ascii_strtoull
        * accepts it and just skips it, so we need to check for it
        * ourselves.
        */
-      g_ascii_isspace (str[0]) ||
-      /* Unsigned number should have no sign.
-       */
-      str_has_sign (str) ||
-      /* We don't support hexadecimal numbers prefixed with 0x or
-       * 0X.
-       */
-      (base == 16 && str_has_hex_prefix (str)) ||
-      (saved_errno != 0 && saved_errno != ERANGE) ||
-      end_ptr == NULL ||
-      *end_ptr != '\0')
+    g_ascii_isspace (str[0]) ||
+    /* Unsigned number should have no sign.
+     */
+    str_has_sign (str) ||
+    /* We don't support hexadecimal numbers prefixed with 0x or
+     * 0X.
+     */
+    (base == 16 && str_has_hex_prefix (str)) ||
+    (saved_errno != 0 && saved_errno != ERANGE) ||
+    end_ptr == NULL ||
+    *end_ptr != '\0')
     {
       g_set_error (error,
                    G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
@@ -6036,7 +6024,7 @@ dist (const char *s, int ls, const char *t, int lt, int i, int j, int *d)
   else if (j == lt)
     x = ls - i;
   else if (s[i] == t[j])
-    x = dist(s, ls, t, lt, i + 1, j + 1, d);
+    x = dist (s, ls, t, lt, i + 1, j + 1, d);
   else
     {
       x = dist (s, ls, t, lt, i + 1, j + 1, d);
@@ -6078,6 +6066,11 @@ flatpak_get_window_size (int *rows, int *cols)
 
   if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
     {
+      /* For whatever reason, in buildbot this returns 0, 0 so add a fallback */
+      if (w.ws_row == 0)
+        w.ws_row = 24;
+      if (w.ws_col == 0)
+        w.ws_col = 80;
       *rows = w.ws_row;
       *cols = w.ws_col;
     }
@@ -6089,7 +6082,7 @@ flatpak_get_window_size (int *rows, int *cols)
 }
 
 gboolean
-flatpak_get_cursor_pos (int* row, int *col)
+flatpak_get_cursor_pos (int * row, int *col)
 {
   fd_set readset;
   struct timeval time;
@@ -6129,3 +6122,379 @@ flatpak_show_cursor (void)
 {
   write (STDOUT_FILENO, FLATPAK_ANSI_SHOW_CURSOR, strlen (FLATPAK_ANSI_SHOW_CURSOR));
 }
+
+void
+flatpak_enable_raw_mode (void)
+{
+  struct termios raw;
+
+  tcgetattr (STDIN_FILENO, &raw);
+
+  raw.c_lflag &= ~(ECHO | ICANON);
+
+  tcsetattr (STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+void
+flatpak_disable_raw_mode (void)
+{
+  struct termios raw;
+
+  tcgetattr (STDIN_FILENO, &raw);
+
+  raw.c_lflag |= (ECHO | ICANON);
+
+  tcsetattr (STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+
+
+#if !GLIB_CHECK_VERSION (2, 56, 0)
+/* All this code is backported directly from glib */
+
+static void
+g_date_time_get_week_number (GDateTime *datetime,
+                             gint      *week_number,
+                             gint      *day_of_week,
+                             gint      *day_of_year)
+{
+  gint a, b, c, d, e, f, g, n, s, month, day, year;
+
+  g_date_time_get_ymd (datetime, &year, &month, &day);
+
+  if (month <= 2)
+    {
+      a = g_date_time_get_year (datetime) - 1;
+      b = (a / 4) - (a / 100) + (a / 400);
+      c = ((a - 1) / 4) - ((a - 1) / 100) + ((a - 1) / 400);
+      s = b - c;
+      e = 0;
+      f = day - 1 + (31 * (month - 1));
+    }
+  else
+    {
+      a = year;
+      b = (a / 4) - (a / 100) + (a / 400);
+      c = ((a - 1) / 4) - ((a - 1) / 100) + ((a - 1) / 400);
+      s = b - c;
+      e = s + 1;
+      f = day + (((153 * (month - 3)) + 2) / 5) + 58 + s;
+    }
+
+  g = (a + b) % 7;
+  d = (f + g - e) % 7;
+  n = f + 3 - d;
+
+  if (week_number)
+    {
+      if (n < 0)
+        *week_number = 53 - ((g - s) / 5);
+      else if (n > 364 + s)
+        *week_number = 1;
+      else
+        *week_number = (n / 7) + 1;
+    }
+
+  if (day_of_week)
+    *day_of_week = d + 1;
+
+  if (day_of_year)
+    *day_of_year = f + 1;
+}
+
+#define GREGORIAN_LEAP(y)    ((((y) % 4) == 0) && (!((((y) % 100) == 0) && (((y) % 400) != 0))))
+
+/* Parse integers in the form d (week days), dd (hours etc), ddd (ordinal days) or dddd (years) */
+static gboolean
+get_iso8601_int (const gchar *text, gsize length, gint *value)
+{
+  gint i, v = 0;
+
+  if (length < 1 || length > 4)
+    return FALSE;
+
+  for (i = 0; i < length; i++)
+    {
+      const gchar c = text[i];
+      if (c < '0' || c > '9')
+        return FALSE;
+      v = v * 10 + (c - '0');
+    }
+
+  *value = v;
+  return TRUE;
+}
+
+/* Parse seconds in the form ss or ss.sss (variable length decimal) */
+static gboolean
+get_iso8601_seconds (const gchar *text, gsize length, gdouble *value)
+{
+  gint i;
+  gdouble divisor = 1, v = 0;
+
+  if (length < 2)
+    return FALSE;
+
+  for (i = 0; i < 2; i++)
+    {
+      const gchar c = text[i];
+      if (c < '0' || c > '9')
+        return FALSE;
+      v = v * 10 + (c - '0');
+    }
+
+  if (length > 2 && !(text[i] == '.' || text[i] == ','))
+    return FALSE;
+  i++;
+  if (i == length)
+    return FALSE;
+
+  for (; i < length; i++)
+    {
+      const gchar c = text[i];
+      if (c < '0' || c > '9')
+        return FALSE;
+      v = v * 10 + (c - '0');
+      divisor *= 10;
+    }
+
+  *value = v / divisor;
+  return TRUE;
+}
+
+static GDateTime *
+g_date_time_new_ordinal (GTimeZone *tz, gint year, gint ordinal_day, gint hour, gint minute, gdouble seconds)
+{
+  GDateTime *dt, *dt2;
+
+  if (ordinal_day < 1 || ordinal_day > (GREGORIAN_LEAP (year) ? 366 : 365))
+    return NULL;
+
+  dt = g_date_time_new (tz, year, 1, 1, hour, minute, seconds);
+  dt2 = g_date_time_add_days (dt, ordinal_day - 1);
+  g_date_time_unref (dt);
+
+  return dt2;
+}
+
+static GDateTime *
+g_date_time_new_week (GTimeZone *tz, gint year, gint week, gint week_day, gint hour, gint minute, gdouble seconds)
+{
+  gint64 p;
+  gint max_week, jan4_week_day, ordinal_day;
+  GDateTime *dt;
+
+  p = (year * 365 + (year / 4) - (year / 100) + (year / 400)) % 7;
+  max_week = p == 4 ? 53 : 52;
+
+  if (week < 1 || week > max_week || week_day < 1 || week_day > 7)
+    return NULL;
+
+  dt = g_date_time_new (tz, year, 1, 4, 0, 0, 0);
+  g_date_time_get_week_number (dt, NULL, &jan4_week_day, NULL);
+  g_date_time_unref (dt);
+
+  ordinal_day = (week * 7) + week_day - (jan4_week_day + 3);
+  if (ordinal_day < 0)
+    {
+      year--;
+      ordinal_day += GREGORIAN_LEAP (year) ? 366 : 365;
+    }
+  else if (ordinal_day > (GREGORIAN_LEAP (year) ? 366 : 365))
+    {
+      ordinal_day -= (GREGORIAN_LEAP (year) ? 366 : 365);
+      year++;
+    }
+
+  return g_date_time_new_ordinal (tz, year, ordinal_day, hour, minute, seconds);
+}
+
+static GDateTime *
+parse_iso8601_date (const gchar *text, gsize length,
+                    gint hour, gint minute, gdouble seconds, GTimeZone *tz)
+{
+  /* YYYY-MM-DD */
+  if (length == 10 && text[4] == '-' && text[7] == '-')
+    {
+      int year, month, day;
+      if (!get_iso8601_int (text, 4, &year) ||
+          !get_iso8601_int (text + 5, 2, &month) ||
+          !get_iso8601_int (text + 8, 2, &day))
+        return NULL;
+      return g_date_time_new (tz, year, month, day, hour, minute, seconds);
+    }
+  /* YYYY-DDD */
+  else if (length == 8 && text[4] == '-')
+    {
+      gint year, ordinal_day;
+      if (!get_iso8601_int (text, 4, &year) ||
+          !get_iso8601_int (text + 5, 3, &ordinal_day))
+        return NULL;
+      return g_date_time_new_ordinal (tz, year, ordinal_day, hour, minute, seconds);
+    }
+  /* YYYY-Www-D */
+  else if (length == 10 && text[4] == '-' && text[5] == 'W' && text[8] == '-')
+    {
+      gint year, week, week_day;
+      if (!get_iso8601_int (text, 4, &year) ||
+          !get_iso8601_int (text + 6, 2, &week) ||
+          !get_iso8601_int (text + 9, 1, &week_day))
+        return NULL;
+      return g_date_time_new_week (tz, year, week, week_day, hour, minute, seconds);
+    }
+  /* YYYYWwwD */
+  else if (length == 8 && text[4] == 'W')
+    {
+      gint year, week, week_day;
+      if (!get_iso8601_int (text, 4, &year) ||
+          !get_iso8601_int (text + 5, 2, &week) ||
+          !get_iso8601_int (text + 7, 1, &week_day))
+        return NULL;
+      return g_date_time_new_week (tz, year, week, week_day, hour, minute, seconds);
+    }
+  /* YYYYMMDD */
+  else if (length == 8)
+    {
+      int year, month, day;
+      if (!get_iso8601_int (text, 4, &year) ||
+          !get_iso8601_int (text + 4, 2, &month) ||
+          !get_iso8601_int (text + 6, 2, &day))
+        return NULL;
+      return g_date_time_new (tz, year, month, day, hour, minute, seconds);
+    }
+  /* YYYYDDD */
+  else if (length == 7)
+    {
+      gint year, ordinal_day;
+      if (!get_iso8601_int (text, 4, &year) ||
+          !get_iso8601_int (text + 4, 3, &ordinal_day))
+        return NULL;
+      return g_date_time_new_ordinal (tz, year, ordinal_day, hour, minute, seconds);
+    }
+  else
+    return FALSE;
+}
+
+static GTimeZone *
+parse_iso8601_timezone (const gchar *text, gsize length, gssize *tz_offset)
+{
+  gint i, tz_length, offset_sign = 1, offset_hours, offset_minutes;
+  GTimeZone *tz;
+
+  /* UTC uses Z suffix  */
+  if (length > 0 && text[length - 1] == 'Z')
+    {
+      *tz_offset = length - 1;
+      return g_time_zone_new_utc ();
+    }
+
+  /* Look for '+' or '-' of offset */
+  for (i = length - 1; i >= 0; i--)
+    if (text[i] == '+' || text[i] == '-')
+      {
+        offset_sign = text[i] == '-' ? -1 : 1;
+        break;
+      }
+  if (i < 0)
+    return NULL;
+  tz_length = length - i;
+
+  /* +hh:mm or -hh:mm */
+  if (tz_length == 6 && text[i + 3] == ':')
+    {
+      if (!get_iso8601_int (text + i + 1, 2, &offset_hours) ||
+          !get_iso8601_int (text + i + 4, 2, &offset_minutes))
+        return NULL;
+    }
+  /* +hhmm or -hhmm */
+  else if (tz_length == 5)
+    {
+      if (!get_iso8601_int (text + i + 1, 2, &offset_hours) ||
+          !get_iso8601_int (text + i + 3, 2, &offset_minutes))
+        return NULL;
+    }
+  /* +hh or -hh */
+  else if (tz_length == 3)
+    {
+      if (!get_iso8601_int (text + i + 1, 2, &offset_hours))
+        return NULL;
+      offset_minutes = 0;
+    }
+  else
+    return NULL;
+
+  *tz_offset = i;
+  tz = g_time_zone_new (text + i);
+
+  /* Double-check that the GTimeZone matches our interpretation of the timezone.
+   * Failure would indicate a bug either here of in the GTimeZone code. */
+  g_assert (g_time_zone_get_offset (tz, 0) == offset_sign * (offset_hours * 3600 + offset_minutes * 60));
+
+  return tz;
+}
+
+static gboolean
+parse_iso8601_time (const gchar *text, gsize length,
+                    gint *hour, gint *minute, gdouble *seconds, GTimeZone **tz)
+{
+  gssize tz_offset = -1;
+
+  /* Check for timezone suffix */
+  *tz = parse_iso8601_timezone (text, length, &tz_offset);
+  if (tz_offset >= 0)
+    length = tz_offset;
+
+  /* hh:mm:ss(.sss) */
+  if (length >= 8 && text[2] == ':' && text[5] == ':')
+    {
+      return get_iso8601_int (text, 2, hour) &&
+             get_iso8601_int (text + 3, 2, minute) &&
+             get_iso8601_seconds (text + 6, length - 6, seconds);
+    }
+  /* hhmmss(.sss) */
+  else if (length >= 6)
+    {
+      return get_iso8601_int (text, 2, hour) &&
+             get_iso8601_int (text + 2, 2, minute) &&
+             get_iso8601_seconds (text + 4, length - 4, seconds);
+    }
+  else
+    return FALSE;
+}
+
+
+GDateTime *
+flatpak_g_date_time_new_from_iso8601 (const gchar *text, GTimeZone *default_tz)
+{
+  gint length, date_length = -1;
+  gint hour = 0, minute = 0;
+  gdouble seconds = 0.0;
+  GTimeZone *tz = NULL;
+  GDateTime *datetime = NULL;
+
+  g_return_val_if_fail (text != NULL, NULL);
+
+  /* Count length of string and find date / time separator ('T', 't', or ' ') */
+  for (length = 0; text[length] != '\0'; length++)
+    {
+      if (date_length < 0 && (text[length] == 'T' || text[length] == 't' || text[length] == ' '))
+        date_length = length;
+    }
+
+  if (date_length < 0)
+    return NULL;
+
+  if (!parse_iso8601_time (text + date_length + 1, length - (date_length + 1),
+                           &hour, &minute, &seconds, &tz))
+    goto out;
+  if (tz == NULL && default_tz == NULL)
+    return NULL;
+
+  datetime = parse_iso8601_date (text, date_length, hour, minute, seconds, tz ? tz : default_tz);
+
+out:
+  if (tz != NULL)
+    g_time_zone_unref (tz);
+  return datetime;
+}
+#endif

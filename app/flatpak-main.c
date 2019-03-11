@@ -35,7 +35,7 @@
 #include "flatpak-polkit-agent-text-listener.h"
 
 /* Work with polkit before and after autoptr support was added */
-typedef PolkitSubject             AutoPolkitSubject;
+typedef PolkitSubject AutoPolkitSubject;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
 #endif
 
@@ -246,10 +246,10 @@ check_environment (void)
   dirs = g_get_system_data_dirs ();
   for (i = 0; dirs[i]; i++)
     {
-       if (g_str_has_prefix (dirs[i], system_exports))
-         has_system = TRUE;
-       if (g_str_has_prefix (dirs[i], user_exports))
-         has_user = TRUE;
+      if (g_str_has_prefix (dirs[i], system_exports))
+        has_system = TRUE;
+      if (g_str_has_prefix (dirs[i], user_exports))
+        has_user = TRUE;
     }
 
   flatpak_get_window_size (&rows, &cols);
@@ -267,7 +267,7 @@ check_environment (void)
                        "set by the XDG_DATA_DIRS environment variable, so applications "
                        "installed by Flatpak may not appear on your desktop until the "
                        "session is restarted."),
-                       missing);
+                     missing);
       g_print ("\n");
     }
   else if (!has_system || !has_user)
@@ -281,7 +281,7 @@ check_environment (void)
                        "set by the XDG_DATA_DIRS environment variable, so applications "
                        "installed by Flatpak may not appear on your desktop until the "
                        "session is restarted."),
-                       missing);
+                     missing);
       g_print ("\n");
     }
 }
@@ -302,7 +302,7 @@ flatpak_option_context_parse (GOptionContext     *context,
                                    FLATPAK_BUILTIN_FLAG_ONE_DIR |
                                    FLATPAK_BUILTIN_FLAG_STANDARD_DIRS |
                                    FLATPAK_BUILTIN_FLAG_ALL_DIRS)) != 1)
-     g_assert_not_reached ();
+    g_assert_not_reached ();
 
   if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     g_option_context_add_main_entries (context, user_entries, NULL);
@@ -524,6 +524,61 @@ find_similar_command (const char *word)
   return commands[best].name;
 }
 
+static gpointer
+install_polkit_agent (void)
+{
+  gpointer agent = NULL;
+
+#ifdef USE_SYSTEM_HELPER
+  PolkitAgentListener *listener = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  /* Install a polkit agent as fallback, in case we're running on a console */
+  listener = flatpak_polkit_agent_text_listener_new (NULL, &local_error);
+  if (listener == NULL)
+    {
+      g_debug ("Failed to create polkit agent listener: %s", local_error->message);
+    }
+  else
+    {
+      g_autoptr(AutoPolkitSubject) subject = NULL;
+      GVariantBuilder opt_builder;
+      g_autoptr(GVariant) options = NULL;
+
+      subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+
+      g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
+      if (g_strcmp0 (g_getenv ("FLATPAK_FORCE_TEXT_AUTH"), "1") != 0)
+        g_variant_builder_add (&opt_builder, "{sv}", "fallback", g_variant_new_boolean (TRUE));
+      options = g_variant_ref_sink (g_variant_builder_end (&opt_builder));
+
+      agent = polkit_agent_listener_register_with_options (listener,
+                                                           POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
+                                                           subject,
+                                                           NULL,
+                                                           options,
+                                                           NULL,
+                                                           &local_error);
+      if (agent == NULL)
+        {
+          g_debug ("Failed to register polkit agent listener: %s", local_error->message);
+        }
+      g_object_unref (listener);
+    }
+#endif
+
+  return agent;
+}
+
+static void
+uninstall_polkit_agent (gpointer *agent)
+{
+#ifdef USE_SYSTEM_HELPER
+  if (*agent)
+    polkit_agent_listener_unregister (*agent);
+#endif
+}
+
 static int
 flatpak_run (int      argc,
              char   **argv,
@@ -535,6 +590,8 @@ flatpak_run (int      argc,
   g_autofree char *prgname = NULL;
   gboolean success = FALSE;
   const char *command_name = NULL;
+
+  __attribute__((cleanup (uninstall_polkit_agent))) gpointer polkit_agent = NULL;
 
   command = extract_command (&argc, argv, &command_name);
 
@@ -634,6 +691,8 @@ flatpak_run (int      argc,
 
   check_environment ();
 
+  polkit_agent = install_polkit_agent ();
+
   if (!command->fn (argc, argv, cancellable, &error))
     goto out;
 
@@ -696,7 +755,8 @@ complete (int    argc,
 static void
 handle_sigterm (int signum)
 {
-   flatpak_show_cursor ();
+  flatpak_disable_raw_mode ();
+  flatpak_show_cursor ();
   _exit (1);
 }
 
@@ -707,10 +767,6 @@ main (int    argc,
   GError *error = NULL;
   g_autofree const char *old_env = NULL;
   int ret;
-#ifdef USE_SYSTEM_HELPER
-  PolkitAgentListener *listener = NULL;
-  gpointer agent = NULL;
-#endif
   struct sigaction action;
 
   memset (&action, 0, sizeof (struct sigaction));
@@ -743,49 +799,7 @@ main (int    argc,
   if (argc >= 4 && strcmp (argv[1], "complete") == 0)
     return complete (argc, argv);
 
-#ifdef USE_SYSTEM_HELPER
-  /* Install a polkit agent as fallback, in case we're running on a console */
-  listener = flatpak_polkit_agent_text_listener_new (NULL, &error);
-  if (listener == NULL)
-    {
-      g_debug ("Failed to create polkit agent listener: %s", error->message);
-      g_clear_error (&error);
-    }
-  else
-    {
-      g_autoptr(AutoPolkitSubject) subject = NULL;
-      GVariantBuilder opt_builder;
-      g_autoptr(GVariant) options = NULL;
-
-      subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
-
-      g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
-      if (g_strcmp0 (g_getenv ("FLATPAK_FORCE_TEXT_AUTH"), "1") != 0)
-        g_variant_builder_add (&opt_builder, "{sv}", "fallback", g_variant_new_boolean (TRUE));
-      options = g_variant_ref_sink (g_variant_builder_end (&opt_builder));
-
-      agent = polkit_agent_listener_register_with_options (listener,
-                                                           POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
-                                                           subject,
-                                                           NULL,
-                                                           options,
-                                                           NULL,
-                                                           &error);
-      if (agent == NULL)
-        {
-          g_debug ("Failed to register polkit agent listener: %s", error->message);
-          g_clear_error (&error);
-        }
-      g_object_unref (listener);
-    }
-#endif
-
   ret = flatpak_run (argc, argv, &error);
-
-#ifdef USE_SYSTEM_HELPER
-  if (agent)
-    polkit_agent_listener_unregister (agent);
-#endif
 
   if (error != NULL)
     {

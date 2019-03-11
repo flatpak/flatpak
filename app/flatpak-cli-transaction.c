@@ -32,24 +32,24 @@
 
 struct _FlatpakCliTransaction
 {
-  FlatpakTransaction parent;
+  FlatpakTransaction   parent;
 
-  gboolean           disable_interaction;
-  gboolean           stop_on_first_error;
-  GError            *first_operation_error;
+  gboolean             disable_interaction;
+  gboolean             stop_on_first_error;
+  GError              *first_operation_error;
 
-  int                rows;
-  int                cols;
-  int                table_width;
-  int                table_height;
+  int                  rows;
+  int                  cols;
+  int                  table_width;
+  int                  table_height;
 
-  int                n_ops;
-  int                op;
-  int                op_progress;
+  int                  n_ops;
+  int                  op;
+  int                  op_progress;
 
-  gboolean           installing;
-  gboolean           updating;
-  gboolean           uninstalling;
+  gboolean             installing;
+  gboolean             updating;
+  gboolean             uninstalling;
 
   int                  download_col;
 
@@ -94,7 +94,7 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
     }
   else
     {
-      flatpak_format_choices ((const char **)remotes,
+      flatpak_format_choices ((const char **) remotes,
                               _("Required runtime for %s (%s) found in remotes: %s"),
                               pref, runtime_ref, remotes[0]);
       chosen = flatpak_number_prompt (TRUE, 0, n_remotes, _("Which do you want to install (0 to abort)?"));
@@ -199,9 +199,9 @@ redraw (FlatpakCliTransaction *self)
 }
 
 static void
-set_op_progress (FlatpakCliTransaction *self,
+set_op_progress (FlatpakCliTransaction       *self,
                  FlatpakTransactionOperation *op,
-                 const char *progress)
+                 const char                  *progress)
 {
   if (flatpak_fancy_output ())
     {
@@ -212,17 +212,17 @@ set_op_progress (FlatpakCliTransaction *self,
 }
 
 static void
-spin_op_progress (FlatpakCliTransaction *self,
+spin_op_progress (FlatpakCliTransaction       *self,
                   FlatpakTransactionOperation *op)
 {
   const char *p[] = {
-                     "|",
-                     "/",
-                     "—",
-                     "\\",
+    "|",
+    "/",
+    "—",
+    "\\",
   };
 
-  set_op_progress (self, op, p[self->op_progress++ % G_N_ELEMENTS(p)]);
+  set_op_progress (self, op, p[self->op_progress++ % G_N_ELEMENTS (p)]);
 }
 
 static char *
@@ -248,21 +248,20 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   FlatpakCliTransaction *cli = data;
   FlatpakTransaction *self = FLATPAK_TRANSACTION (cli);
   FlatpakTransactionOperation *op = flatpak_transaction_get_current_operation (self);
-
   g_autoptr(GString) str = g_string_new ("");
   int i;
   int n_full, partial;
   g_autofree char *speed = NULL;
   int bar_length;
   const char *partial_blocks[] = {
-                                   " ",
-                                   "▏",
-                                   "▎",
-                                   "▍",
-                                   "▌",
-                                   "▋",
-                                   "▊",
-                                   "▉",
+    " ",
+    "▏",
+    "▎",
+    "▍",
+    "▌",
+    "▋",
+    "▊",
+    "▉",
   };
   const char *full_block = "█";
 
@@ -278,7 +277,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
       g_autofree char *remaining = NULL;
       if (elapsed_time > 3 && percent > 0)
         {
-          guint64 total_time = elapsed_time * 100 / (double)percent;
+          guint64 total_time = elapsed_time * 100 / (double) percent;
           remaining = format_duration (total_time - elapsed_time);
         }
       speed = g_strdup_printf ("%s/s%s%s", formatted_bytes_sec, remaining ? "  " : "", remaining ? remaining : "");
@@ -290,10 +289,10 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   bar_length = MIN (20, cli->table_width - (strlen (cli->progress_msg) + 6 + cli->speed_len));
 
   n_full = (bar_length * percent) / 100;
-  partial = (((bar_length * percent) % 100) * G_N_ELEMENTS(partial_blocks) ) / 100;
+  partial = (((bar_length * percent) % 100) * G_N_ELEMENTS (partial_blocks)) / 100;
   /* The above should guarantee this: */
   g_assert (partial >= 0);
-  g_assert (partial < G_N_ELEMENTS(partial_blocks));
+  g_assert (partial < G_N_ELEMENTS (partial_blocks));
 
   g_string_append (str, cli->progress_msg);
   g_string_append (str, " ");
@@ -350,7 +349,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
 
 static void
 set_progress (FlatpakCliTransaction *self,
-              const char *text)
+              const char            *text)
 {
   flatpak_table_printer_set_cell (self->printer, self->progress_row, 0, text);
 }
@@ -374,7 +373,7 @@ new_operation (FlatpakTransaction          *transaction,
       if (self->n_ops == 1)
         text = g_strdup (_("Installing…"));
       else
-        text = g_strdup_printf (("Installing %d/%d…"), self->op, self->n_ops);
+        text = g_strdup_printf (_("Installing %d/%d…"), self->op, self->n_ops);
       break;
 
     case FLATPAK_TRANSACTION_OPERATION_UPDATE:
@@ -422,9 +421,9 @@ operation_done (FlatpakTransaction          *transaction,
   FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
 
   if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-    set_op_progress (self, op, "-");
+    set_op_progress (self, op, FLATPAK_ANSI_GREEN "-" FLATPAK_ANSI_COLOR_RESET);
   else
-    set_op_progress (self, op, "✓");
+    set_op_progress (self, op, FLATPAK_ANSI_GREEN "✓" FLATPAK_ANSI_COLOR_RESET);
 
   if (flatpak_fancy_output ())
     redraw (self);
@@ -477,11 +476,11 @@ operation_error (FlatpakTransaction            *transaction,
   else
     msg = g_strdup (error->message);
 
-   if (!non_fatal && self->first_operation_error == NULL)
-     g_propagate_prefixed_error (&self->first_operation_error,
-                                 g_error_copy (error),
-                                 _("Failed to %s %s: "),
-                                 op_type_to_string (op_type), flatpak_ref_get_name (rref));
+  if (!non_fatal && self->first_operation_error == NULL)
+    g_propagate_prefixed_error (&self->first_operation_error,
+                                g_error_copy (error),
+                                _("Failed to %s %s: "),
+                                op_type_to_string (op_type), flatpak_ref_get_name (rref));
 
   text = g_strconcat (non_fatal ? _("Warning:") : _("Error:"), " ", msg, NULL);
 
@@ -627,20 +626,20 @@ append_tags (GPtrArray *tags_array,
   for (i = 0; i < size; i++)
     {
       const char *tag = tags[i];
-      if (old_tags == NULL || !g_strv_contains ((const char * const *)old_tags, tag))
+      if (old_tags == NULL || !g_strv_contains ((const char * const *) old_tags, tag))
         g_ptr_array_add (tags_array, g_strdup (tag));
     }
 }
 
 static void
-print_perm_line (int idx,
+print_perm_line (int        idx,
                  GPtrArray *items,
-                 int cols)
+                 int        cols)
 {
   g_autoptr(GString) res = g_string_new (NULL);
   int i;
 
-  g_string_append_printf (res, "    [%d] %s", idx, (char *)items->pdata[0]);
+  g_string_append_printf (res, "    [%d] %s", idx, (char *) items->pdata[0]);
 
   for (i = 1; i < items->len; i++)
     {
@@ -652,10 +651,10 @@ print_perm_line (int idx,
         p = res->str;
 
       len = (res->str + strlen (res->str)) - p;
-      if (len + strlen ((char *)items->pdata[i]) + 2 >= cols)
-        g_string_append_printf (res, ",\n        %s", (char *)items->pdata[i]);     
+      if (len + strlen ((char *) items->pdata[i]) + 2 >= cols)
+        g_string_append_printf (res, ",\n        %s", (char *) items->pdata[i]);
       else
-        g_string_append_printf (res, ", %s", (char *)items->pdata[i]);
+        g_string_append_printf (res, ", %s", (char *) items->pdata[i]);
     }
 
   g_print ("%s\n", res->str);
@@ -663,9 +662,9 @@ print_perm_line (int idx,
 
 static void
 print_permissions (FlatpakCliTransaction *self,
-                   const char *ref,
-                   GKeyFile *metadata,
-                   GKeyFile *old_metadata)
+                   const char            *ref,
+                   GKeyFile              *metadata,
+                   GKeyFile              *old_metadata)
 {
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
   g_autoptr(GPtrArray) permissions = g_ptr_array_new_with_free_func (g_free);
@@ -775,7 +774,6 @@ print_permissions (FlatpakCliTransaction *self,
     print_perm_line (j++, system_bus_own, cols);
   if (tags->len > 0)
     print_perm_line (j++, tags, cols);
-
 }
 
 static void
@@ -826,13 +824,16 @@ transaction_ready (FlatpakTransaction *transaction)
         case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
           self->uninstalling = TRUE;
           break;
+
         case FLATPAK_TRANSACTION_OPERATION_INSTALL:
         case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
           self->installing = TRUE;
           break;
+
         case FLATPAK_TRANSACTION_OPERATION_UPDATE:
           self->updating = TRUE;
           break;
+
         default:;
         }
     }
@@ -951,20 +952,20 @@ transaction_ready (FlatpakTransaction *transaction)
     {
       FlatpakInstallation *installation = flatpak_transaction_get_installation (transaction);
       const char *name;
+      const char *id;
       gboolean ret;
 
       g_print ("\n");
 
       name = flatpak_installation_get_display_name (installation);
-      if (name == NULL)
-        name = flatpak_installation_get_id (installation);
+      id = flatpak_installation_get_id (installation);
 
-      if (name != NULL)
-        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s installation?"), name);
-      else if (flatpak_installation_get_is_user (installation))
+      if (flatpak_installation_get_is_user (installation))
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the user installation?"));
-      else
+      else if (g_strcmp0 (id, "default") == 0)
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the system installation?"));
+      else
+        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s?"), name);
 
       if (!ret)
         {
@@ -994,6 +995,7 @@ transaction_ready (FlatpakTransaction *transaction)
   if (flatpak_fancy_output ())
     {
       flatpak_hide_cursor ();
+      flatpak_enable_raw_mode ();
       redraw (self);
     }
 
@@ -1082,7 +1084,10 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
   res = FLATPAK_TRANSACTION_CLASS (flatpak_cli_transaction_parent_class)->run (transaction, cancellable, error);
 
   if (flatpak_fancy_output ())
-    flatpak_show_cursor ();
+    {
+      flatpak_disable_raw_mode ();
+      flatpak_show_cursor ();
+    }
 
   if (res && self->n_ops > 0)
     {

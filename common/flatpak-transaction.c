@@ -131,7 +131,7 @@ struct _FlatpakTransactionPrivate
   GList                       *ops;
   GPtrArray                   *added_origin_remotes;
 
- GList                       *flatpakrefs; /* GKeyFiles */
+  GList                       *flatpakrefs; /* GKeyFiles */
   GList                       *bundles; /* BundleData */
 
   FlatpakTransactionOperation *current_op;
@@ -238,8 +238,8 @@ flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *s
  * @self: a #FlatpakTransactionProgress
  *
  * Gets the current status string
- * 
- * Returns: (transfer none): the current status 
+ *
+ * Returns: (transfer none): the current status
  */
 char *
 flatpak_transaction_progress_get_status (FlatpakTransactionProgress *self)
@@ -266,7 +266,7 @@ flatpak_transaction_progress_get_is_estimating (FlatpakTransactionProgress *self
  * @self: a #FlatpakTransactionProgress
  *
  * Gets the current progress.
- * 
+ *
  * Returns: the current progress, as an integer between 0 and 100
  */
 int
@@ -447,7 +447,6 @@ void
 flatpak_transaction_add_default_dependency_sources (FlatpakTransaction *self)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GPtrArray) system_dirs = NULL;
   GFile *path = flatpak_dir_get_path (priv->dir);
   int i;
@@ -478,7 +477,6 @@ ref_is_installed (FlatpakTransaction *self,
                   GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GFile) deploy_dir = NULL;
   FlatpakDir *dir = priv->dir;
   int i;
@@ -612,7 +610,7 @@ flatpak_transaction_operation_get_operation_type (FlatpakTransactionOperation *s
  * Gets the ref that the operation applies to.
  *
  * Returns: (transfer none): the ref
- */ 
+ */
 const char *
 flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
 {
@@ -626,7 +624,7 @@ flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
  * Gets the remote that the operation applies to.
  *
  * Returns: (transfer none): the remote
- */ 
+ */
 const char *
 flatpak_transaction_operation_get_remote (FlatpakTransactionOperation *self)
 {
@@ -897,9 +895,9 @@ flatpak_transaction_add_new_remote (FlatpakTransaction            *transaction,
   return FALSE;
 }
 
-static gboolean flatpak_transaction_real_run (FlatpakTransaction  *transaction,
-                                              GCancellable        *cancellable,
-                                              GError             **error);
+static gboolean flatpak_transaction_real_run (FlatpakTransaction *transaction,
+                                              GCancellable       *cancellable,
+                                              GError            **error);
 
 static void
 flatpak_transaction_class_init (FlatpakTransactionClass *klass)
@@ -1088,7 +1086,6 @@ initable_init (GInitable    *initable,
 {
   FlatpakTransaction *self = FLATPAK_TRANSACTION (initable);
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(FlatpakDir) dir = NULL;
 
   if (priv->installation == NULL)
@@ -1277,7 +1274,7 @@ flatpak_transaction_set_force_uninstall (FlatpakTransaction *self,
  * @arch: the arch to make default
  *
  * Sets the architecture to default to where it is unspecified.
- */ 
+ */
 void
 flatpak_transaction_set_default_arch (FlatpakTransaction *self,
                                       const char         *arch)
@@ -1531,7 +1528,6 @@ find_runtime_remote (FlatpakTransaction             *self,
                      GError                        **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_auto(GStrv) remotes = NULL;
   const char *app_pref;
   const char *runtime_pref;
@@ -1826,7 +1822,6 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
                                             GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autoptr(GError) local_error = NULL;
 
@@ -1899,7 +1894,6 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
                                      GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_auto(GStrv) remotes = NULL;
   int i;
   GList *l;
@@ -1968,7 +1962,6 @@ static GBytes *
 load_deployed_metadata (FlatpakTransaction *self, const char *ref)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autofree char *metadata_contents = NULL;
@@ -2035,9 +2028,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
                  GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GPtrArray) resolves = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_dir_resolve_free);
-  ;
   GList *l;
   int i;
 
@@ -2088,7 +2079,6 @@ resolve_ops (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   GList *l;
-
   g_autoptr(GList) collection_id_ops = NULL;
 
 
@@ -2137,7 +2127,7 @@ resolve_ops (FlatpakTransaction *self,
           if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
             priv->max_op = MAX (priv->max_op, RUNTIME_INSTALL);
         }
-           
+
       state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
       if (state == NULL)
         return FALSE;
@@ -2361,37 +2351,6 @@ flatpak_transaction_get_installation (FlatpakTransaction *self)
   return g_object_ref (priv->installation);
 }
 
-
-static GBytes *
-download_uri (const char *url,
-              GError    **error)
-{
-  g_autoptr(SoupSession) session = NULL;
-  g_autoptr(SoupRequest) req = NULL;
-  g_autoptr(GInputStream) input = NULL;
-  g_autoptr(GOutputStream) out = NULL;
-
-  session = flatpak_create_soup_session (PACKAGE_STRING);
-
-  req = soup_session_request (session, url, error);
-  if (req == NULL)
-    return NULL;
-
-  input = soup_request_send (req, NULL, error);
-  if (input == NULL)
-    return NULL;
-
-  out = g_memory_output_stream_new_resizable ();
-  if (!g_output_stream_splice (out,
-                               input,
-                               G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
-                               NULL,
-                               error))
-    return NULL;
-
-  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
-}
-
 static gboolean
 remote_is_already_configured (FlatpakTransaction *self,
                               const char         *url,
@@ -2425,7 +2384,6 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
   g_autofree char *name = NULL;
   g_autofree char *url = NULL;
   g_autofree char *collection_id = NULL;
-
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_key = NULL;
   gboolean res;
@@ -2476,10 +2434,13 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
 }
 
 static gboolean
-handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *dep_url, GError **error)
+handle_runtime_repo_deps (FlatpakTransaction *self,
+                          const char         *id,
+                          const char         *dep_url,
+                          GCancellable       *cancellable,
+                          GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-
   g_autoptr(GBytes) dep_data = NULL;
   g_autofree char *runtime_url = NULL;
   g_autofree char *new_remote = NULL;
@@ -2492,6 +2453,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
   g_autofree char *group = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autofree char *runtime_collection_id = NULL;
+  g_autoptr(SoupSession) soup_session = NULL;
   char *t;
   int i;
   gboolean res;
@@ -2499,7 +2461,11 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
   if (priv->disable_deps)
     return TRUE;
 
-  dep_data = download_uri (dep_url, error);
+  if (!g_str_has_prefix (dep_url, "http:") && !g_str_has_prefix (dep_url, "https:"))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not HTTP or HTTPS"), dep_url);
+
+  soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+  dep_data = flatpak_load_http_uri (soup_session, dep_url, 0, NULL, NULL, cancellable, error);
   if (dep_data == NULL)
     {
       g_prefix_error (error, "Can't load dependent file %s", dep_url);
@@ -2568,7 +2534,10 @@ handle_runtime_repo_deps (FlatpakTransaction *self, const char *id, const char *
 }
 
 static gboolean
-handle_runtime_repo_deps_from_keyfile (FlatpakTransaction *self, GKeyFile *keyfile, GError **error)
+handle_runtime_repo_deps_from_keyfile (FlatpakTransaction *self,
+                                       GKeyFile           *keyfile,
+                                       GCancellable       *cancellable,
+                                       GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *dep_url = NULL;
@@ -2586,7 +2555,7 @@ handle_runtime_repo_deps_from_keyfile (FlatpakTransaction *self, GKeyFile *keyfi
   if (name == NULL)
     return TRUE;
 
-  return handle_runtime_repo_deps (self, name, dep_url, error);
+  return handle_runtime_repo_deps (self, name, dep_url, cancellable, error);
 }
 
 static gboolean
@@ -2607,7 +2576,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
       if (!handle_suggested_remote_name (self, flatpakref, error))
         return FALSE;
 
-      if (!handle_runtime_repo_deps_from_keyfile (self, flatpakref, error))
+      if (!handle_runtime_repo_deps_from_keyfile (self, flatpakref, cancellable, error))
         return FALSE;
 
       if (!flatpak_dir_create_remote_for_ref_file (priv->dir, flatpakref, priv->default_arch,
@@ -2630,12 +2599,12 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
 static gboolean
 handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
                                       GFile              *file,
+                                      GCancellable       *cancellable,
                                       GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *dep_url = NULL;
   g_autofree char *ref = NULL;
-
   g_auto(GStrv) ref_parts = NULL;
   g_autoptr(GVariant) metadata = NULL;
 
@@ -2658,7 +2627,7 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
 
   ref_parts = g_strsplit (ref, "/", -1);
 
-  return handle_runtime_repo_deps (self, ref_parts[1], dep_url, error);
+  return handle_runtime_repo_deps (self, ref_parts[1], dep_url, cancellable, error);
 }
 
 static gboolean
@@ -2678,7 +2647,7 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
       g_autofree char *metadata = NULL;
       gboolean created_remote;
 
-      if (!handle_runtime_repo_deps_from_bundle (self, data->file, error))
+      if (!handle_runtime_repo_deps_from_bundle (self, data->file, cancellable, error))
         return FALSE;
 
       if (!flatpak_dir_ensure_repo (priv->dir, cancellable, error))
@@ -2742,7 +2711,6 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
   gboolean needs_triggers = FALSE;
-
   g_autoptr(GMainContextPopDefault) main_context = NULL;
   gboolean ready_res = FALSE;
   int i;
@@ -2751,7 +2719,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
     return flatpak_fail (error, _("Transaction already executed"));
 
   priv->can_run = FALSE;
-  
+
   priv->current_op = NULL;
 
   if (flatpak_dir_is_user (priv->dir) && getuid () == 0)

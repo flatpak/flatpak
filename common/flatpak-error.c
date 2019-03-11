@@ -28,7 +28,7 @@
 /**
  * SECTION:flatpak-error
  * @Title: Error codes
- * 
+ *
  * The FlatpakError and FlatpakPortalError enumerations contain error codes
  * for some common errors.
  */

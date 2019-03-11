@@ -2,6 +2,7 @@
 
 new_dirs=$(
     (
+        unset G_MESSAGES_DEBUG
         echo "${XDG_DATA_HOME:-"$HOME/.local/share"}/flatpak"
         flatpak --installations
     ) | (

@@ -126,7 +126,6 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
               g_str_has_prefix (key, "runtime/"))
             g_ptr_array_add (refs, g_strdup (key));
         }
-
     }
 
   for (i = 0; i < refs->len; i++)

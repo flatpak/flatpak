@@ -34,6 +34,7 @@ flatpak
 flatpak-*.tar.xz
 flatpak-session-helper
 flatpak-portal
+flatpak-validate-icon
 *~
 profile/flatpak.sh
 *-dbus-generated.[ch]
@@ -67,6 +68,7 @@ Flatpak-1.0.*
 /doc/flatpak-docs.xml
 /doc/*.1
 /doc/*.5
+/tags
 /test-libglnx-errors
 /test-libglnx-errors.log
 /test-libglnx-errors.trs
@@ -85,6 +87,9 @@ Flatpak-1.0.*
 /testlibrary
 /testlibrary.log
 /testlibrary.trs
+/testcommon
+/testcommon.log
+/testcommon.trs
 /tests/test-keyring/.gpg-v21-migrated
 /tests/test-keyring/private-keys-v1.d/
 /tests/test-keyring/trustdb.gpg
@@ -94,6 +99,7 @@ Flatpak-1.0.*
 /tests/hello*.flatpak
 /tests/platform*.flatpak
 /tests/repo
+/tests/runtime-repo
 /tests/package_version.txt
 *.test
 /tests/*.sh.log

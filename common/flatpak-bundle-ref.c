@@ -287,7 +287,6 @@ flatpak_bundle_ref_new (GFile   *file,
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakBundleRefPrivate *priv;
-
   g_auto(GStrv) parts = NULL;
   FlatpakBundleRef *ref;
   g_autoptr(GVariant) metadata = NULL;

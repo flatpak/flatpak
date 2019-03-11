@@ -79,7 +79,7 @@ fsck_one_object (OstreeRepo      *repo,
           else
             {
               g_printerr (_("%s, deleting object\n"), local_error->message);
-              (void)ostree_repo_delete_object (repo, objtype, checksum, NULL, NULL);
+              (void) ostree_repo_delete_object (repo, objtype, checksum, NULL, NULL);
             }
           return FSCK_STATUS_HAS_INVALID_OBJECTS;
         }
@@ -122,7 +122,6 @@ fsck_dirtree (OstreeRepo *repo,
               GHashTable *object_status_cache)
 {
   OstreeRepoCommitIterResult iterres;
-
   g_autoptr(GError) local_error = NULL;
   FsckStatus status = 0;
   g_autoptr(GVariant) key = NULL;
@@ -385,9 +384,11 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
           case FSCK_STATUS_HAS_MISSING_OBJECTS:
             g_printerr (_("Deleting ref %s due to missing objects\n"), refspec);
             break;
+
           case FSCK_STATUS_HAS_INVALID_OBJECTS:
             g_printerr (_("Deleting ref %s due to invalid objects\n"), refspec);
             break;
+
           default:
             g_printerr (_("Deleting ref %s due to %d\n"), refspec, status);
             break;
@@ -494,9 +495,9 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
                 g_prefix_error (error, _("While removing appstream for %s: "), remote);
                 return FALSE;
               }
-          
+
             if (!flatpak_dir_deploy_appstream (dir, remote, parts[1], &changed,
-                 cancellable, error))
+                                               cancellable, error))
               {
                 g_prefix_error (error, _("While deploying appstream for %s: "), remote);
                 return FALSE;

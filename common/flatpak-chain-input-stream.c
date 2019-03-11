@@ -80,7 +80,6 @@ flatpak_chain_input_stream_class_init (FlatpakChainInputStreamClass *klass)
                                                          G_PARAM_READWRITE |
                                                          G_PARAM_CONSTRUCT_ONLY |
                                                          G_PARAM_STATIC_STRINGS));
-
 }
 
 static void
@@ -144,7 +143,6 @@ flatpak_chain_input_stream_init (FlatpakChainInputStream *self)
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
                                             FLATPAK_TYPE_CHAIN_INPUT_STREAM,
                                             FlatpakChainInputStreamPrivate);
-
 }
 
 FlatpakChainInputStream *

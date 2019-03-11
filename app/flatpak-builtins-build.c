@@ -99,7 +99,6 @@ find_matching_extension_group_in_metakey (GKeyFile   *metakey,
     {
       const char *group_name = *iter;
       const char *extension_name = NULL;
-      ;
       g_autofree char *extension_tag = NULL;
 
       if (!g_str_has_prefix (group_name, extension_prefix))

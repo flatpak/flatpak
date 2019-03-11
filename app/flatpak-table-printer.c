@@ -50,7 +50,7 @@ free_cell (gpointer data)
 typedef struct
 {
   GPtrArray *cells;
-  char *key;
+  char      *key;
 } Row;
 
 static void
@@ -65,8 +65,8 @@ free_row (gpointer data)
 
 typedef struct
 {
-  char *title;
-  gboolean expand;
+  char                *title;
+  gboolean             expand;
   FlatpakEllipsizeMode ellipsize;
 } TableColumn;
 
@@ -83,7 +83,7 @@ struct FlatpakTablePrinter
 {
   GPtrArray *columns;
   GPtrArray *rows;
-  char *key;
+  char      *key;
   GPtrArray *current;
   int        n_columns;
 };
@@ -143,6 +143,7 @@ flatpak_table_printer_set_columns (FlatpakTablePrinter *printer,
                                    Column              *columns)
 {
   int i;
+
   for (i = 0; columns[i].name; i++)
     {
       flatpak_table_printer_set_column_title (printer, i, _(columns[i].title));
@@ -262,12 +263,12 @@ flatpak_table_printer_set_key (FlatpakTablePrinter *printer, const char *key)
 }
 
 static gint
-cmp_row (gconstpointer  _row_a,
-         gconstpointer  _row_b,
-         gpointer       user_data)
+cmp_row (gconstpointer _row_a,
+         gconstpointer _row_b,
+         gpointer      user_data)
 {
-  const Row *row_a = *(const Row **)_row_a;
-  const Row *row_b = *(const Row **)_row_b;
+  const Row *row_a = *(const Row **) _row_a;
+  const Row *row_b = *(const Row **) _row_b;
   GCompareFunc cmp = user_data;
 
   if (row_a == row_b || (row_a->key == NULL && row_b->key == NULL))
@@ -310,11 +311,11 @@ static int
 print_row (GString *row_s, gboolean bold, int *skip, int columns)
 {
   int rows;
-  char *p, *end;
+  const char *p, *end;
   int n_chars;
 
   g_strchomp (row_s->str);
-  n_chars = g_utf8_strlen (row_s->str, -1);
+  n_chars = cell_width (row_s->str);
   if (n_chars > 0)
     rows = (n_chars + columns - 1) / columns;
   else
@@ -325,13 +326,13 @@ print_row (GString *row_s, gboolean bold, int *skip, int columns)
   while (*skip > 0 && p <= end)
     {
       (*skip)--;
-      p = g_utf8_offset_to_pointer  (p, columns);
+      p = cell_advance (p, columns);
     }
 
   if (p < end || p == row_s->str)
     {
       if (bold)
-        g_print (FLATPAK_ANSI_BOLD_ON"%s"FLATPAK_ANSI_BOLD_OFF, p);
+        g_print (FLATPAK_ANSI_BOLD_ON "%s" FLATPAK_ANSI_BOLD_OFF, p);
       else
         g_print ("%s", p);
     }
@@ -361,10 +362,10 @@ string_add_spaces (GString *str, int count)
  */
 void
 flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
-                                  int skip,
-                                  int columns,
-                                  int *table_height,
-                                  int *table_width)
+                                  int                  skip,
+                                  int                  columns,
+                                  int                 *table_height,
+                                  int                 *table_width)
 {
   g_autofree int *widths = NULL;
   g_autofree int *lwidths = NULL;
@@ -395,7 +396,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
 
       if (col->title)
         {
-          widths[i] = MAX (widths[i], g_utf8_strlen (col->title, -1));
+          widths[i] = MAX (widths[i], cell_width (col->title));
           has_title = TRUE;
         }
     }
@@ -412,7 +413,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
           if (cell->span)
             width = 0;
           else
-            width = g_utf8_strlen (cell->text, -1);
+            width = cell_width (cell->text);
           widths[j] = MAX (widths[j], width);
           if (cell->align >= 0)
             {
@@ -469,7 +470,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 continue;
 
               if (col && col->title)
-                shrinkable += MAX (0, widths[i] - g_utf8_strlen (col->title, -1));
+                shrinkable += MAX (0, widths[i] - cell_width (col->title));
               else
                 shrinkable += MAX (0, widths[i] - 5);
             }
@@ -483,10 +484,10 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 {
                   int sh;
                   if (col && col->title)
-                    sh = MAX (0, widths[i] - g_utf8_strlen (col->title, -1));
+                    sh = MAX (0, widths[i] - cell_width (col->title));
                   else
                     sh = MAX (0, widths[i] - 5);
-                  shrinks[i] = MIN (shortfall * (sh / (double)shrinkable), widths[i]);
+                  shrinks[i] = MIN (shortfall * (sh / (double) shrinkable), widths[i]);
                   leftover -= shrinks[i];
                 }
             }
@@ -501,8 +502,8 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                   gboolean ellipsize = col ? col->ellipsize : FALSE;
                   if (ellipsize && shrinks[i] < widths[i])
                     {
-                       shrinks[i]++;
-                       leftover--;
+                      shrinks[i]++;
+                      leftover--;
                     }
                   if (leftover == 0)
                     break;
@@ -545,7 +546,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
           if (i > 0)
             g_string_append_c (row_s, ' ');
           g_string_append (row_s, title);
-          string_add_spaces (row_s, len - g_utf8_strlen (title, -1));
+          string_add_spaces (row_s, len - cell_width (title));
         }
       rows += print_row (row_s, TRUE, &skip, columns);
     }
@@ -593,13 +594,13 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
               else if (cell->align < 0)
                 {
                   g_string_append (row_s, text);
-                  string_add_spaces (row_s, len - g_utf8_strlen (text, -1));
+                  string_add_spaces (row_s, len - cell_width (text));
                 }
               else
                 {
                   string_add_spaces (row_s, lwidths[j] - cell->align);
                   g_string_append (row_s, text);
-                  string_add_spaces (row_s, widths[j] - (lwidths[j] - cell->align)  - g_utf8_strlen (text, -1));
+                  string_add_spaces (row_s, widths[j] - (lwidths[j] - cell->align)  - cell_width (text));
                 }
             }
           else
@@ -629,19 +630,19 @@ flatpak_table_printer_get_current_row (FlatpakTablePrinter *printer)
 
 static void
 set_cell (FlatpakTablePrinter *printer,
-          int r,
-          int c,
-          const char *text,
-          int align)
+          int                  r,
+          int                  c,
+          const char          *text,
+          int                  align)
 {
   Row *row;
   Cell *cell;
 
-  row = (Row *)g_ptr_array_index (printer->rows, r);
+  row = (Row *) g_ptr_array_index (printer->rows, r);
 
   g_assert (row);
 
-  cell = (Cell *)g_ptr_array_index (row->cells, c);
+  cell = (Cell *) g_ptr_array_index (row->cells, c);
   g_assert (cell);
 
   g_free (cell->text);
@@ -651,18 +652,18 @@ set_cell (FlatpakTablePrinter *printer,
 
 void
 flatpak_table_printer_set_cell (FlatpakTablePrinter *printer,
-                                int r,
-                                int c,
-                                const char *text)
+                                int                  r,
+                                int                  c,
+                                const char          *text)
 {
   set_cell (printer, r, c, text, -1);
 }
 
 void
 flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter *printer,
-                                        int r,
-                                        int c,
-                                        const char *text)
+                                        int                  r,
+                                        int                  c,
+                                        const char          *text)
 {
   int align = -1;
   const char *decimal = find_decimal_point (text);
@@ -675,8 +676,8 @@ flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter *printer,
 
 void
 flatpak_table_printer_set_column_expand (FlatpakTablePrinter *printer,
-                                         int column,
-                                         gboolean expand)
+                                         int                  column,
+                                         gboolean             expand)
 {
   TableColumn *col = get_table_column (printer, column);
 
@@ -685,7 +686,7 @@ flatpak_table_printer_set_column_expand (FlatpakTablePrinter *printer,
 
 void
 flatpak_table_printer_set_column_ellipsize (FlatpakTablePrinter *printer,
-                                            int column,
+                                            int                  column,
                                             FlatpakEllipsizeMode mode)
 {
   TableColumn *col = get_table_column (printer, column);

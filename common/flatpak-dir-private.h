@@ -102,7 +102,7 @@ typedef struct
   GError   *summary_fetch_error;
   GVariant *metadata;
   GError   *metadata_fetch_error;
-  int      refcount;
+  int       refcount;
 } FlatpakRemoteState;
 
 FlatpakRemoteState *flatpak_remote_state_ref (FlatpakRemoteState *remote_state);
@@ -163,12 +163,12 @@ typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT = 1 << 6,
 } FlatpakHelperDeployFlags;
 
-#define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE |\
-                                         FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY |\
-                                         FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL |\
-                                         FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL |\
-                                         FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION |\
-                                         FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT |\
+#define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE | \
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY | \
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL | \
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL | \
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION | \
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT | \
                                          FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT)
 
 typedef enum {
@@ -178,8 +178,8 @@ typedef enum {
   FLATPAK_HELPER_UNINSTALL_FLAGS_NO_INTERACTION = 1 << 2,
 } FlatpakHelperUninstallFlags;
 
-#define FLATPAK_HELPER_UNINSTALL_FLAGS_ALL (FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF |\
-                                            FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE |\
+#define FLATPAK_HELPER_UNINSTALL_FLAGS_ALL (FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF | \
+                                            FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE | \
                                             FLATPAK_HELPER_UNINSTALL_FLAGS_NO_INTERACTION)
 
 typedef enum {
@@ -188,7 +188,7 @@ typedef enum {
   FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_NO_INTERACTION = 1 << 1,
 } FlatpakHelperConfigureRemoteFlags;
 
-#define FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_ALL (FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_FORCE_REMOVE |\
+#define FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_ALL (FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_FORCE_REMOVE | \
                                                    FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_NO_INTERACTION)
 
 typedef enum {
@@ -197,7 +197,7 @@ typedef enum {
   FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION = 1 << 1,
 } FlatpakHelperConfigureFlags;
 
-#define FLATPAK_HELPER_CONFIGURE_FLAGS_ALL (FLATPAK_HELPER_CONFIGURE_FLAGS_UNSET |\
+#define FLATPAK_HELPER_CONFIGURE_FLAGS_ALL (FLATPAK_HELPER_CONFIGURE_FLAGS_UNSET | \
                                             FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION)
 
 typedef enum {
@@ -314,9 +314,9 @@ gboolean       flatpak_save_override_keyfile (GKeyFile   *metakey,
                                               const char *app_id,
                                               gboolean    user,
                                               GError    **error);
-gboolean       flatpak_remove_override_keyfile (const char  *app_id,
-                                                gboolean     user,
-                                                GError     **error);
+gboolean       flatpak_remove_override_keyfile (const char *app_id,
+                                                gboolean    user,
+                                                GError    **error);
 
 int                 flatpak_deploy_data_get_version (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_origin (GVariant *deploy_data);
@@ -365,7 +365,7 @@ gboolean    flatpak_dir_get_no_interaction (FlatpakDir *self);
 GFile *     flatpak_dir_get_path (FlatpakDir *self);
 GFile *     flatpak_dir_get_changed_path (FlatpakDir *self);
 const char *flatpak_dir_get_id (FlatpakDir *self);
-const char *flatpak_dir_get_display_name (FlatpakDir *self);
+char       *flatpak_dir_get_display_name (FlatpakDir *self);
 char *      flatpak_dir_get_name (FlatpakDir *self);
 const char *flatpak_dir_get_name_cached (FlatpakDir *self);
 gint        flatpak_dir_get_priority (FlatpakDir *self);
@@ -418,17 +418,17 @@ char *      flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                          FlatpakKinds *out_kind,
                                          GCancellable *cancellable,
                                          GError      **error);
-char **     flatpak_dir_find_remote_refs (FlatpakDir            *self,
-                                          const char            *remote,
-                                          const char            *name,
-                                          const char            *opt_branch,
-                                          const char            *opt_default_branch,
-                                          const char            *opt_arch,
-                                          const char            *opt_default_arch,
-                                          FlatpakKinds           kinds,
-                                          FindMatchingRefsFlags  flags,
-                                          GCancellable          *cancellable,
-                                          GError               **error);
+char **     flatpak_dir_find_remote_refs (FlatpakDir           *self,
+                                          const char           *remote,
+                                          const char           *name,
+                                          const char           *opt_branch,
+                                          const char           *opt_default_branch,
+                                          const char           *opt_arch,
+                                          const char           *opt_default_arch,
+                                          FlatpakKinds          kinds,
+                                          FindMatchingRefsFlags flags,
+                                          GCancellable         *cancellable,
+                                          GError              **error);
 char **     flatpak_dir_find_local_refs (FlatpakDir           *self,
                                          const char           *remote,
                                          const char           *name,
@@ -438,8 +438,8 @@ char **     flatpak_dir_find_local_refs (FlatpakDir           *self,
                                          const char           *opt_default_arch,
                                          FlatpakKinds          kinds,
                                          FindMatchingRefsFlags flags,
-                                         GCancellable          *cancellable,
-                                         GError               **error);
+                                         GCancellable         *cancellable,
+                                         GError              **error);
 char *      flatpak_dir_find_installed_ref (FlatpakDir   *self,
                                             const char   *opt_name,
                                             const char   *opt_branch,
@@ -447,13 +447,13 @@ char *      flatpak_dir_find_installed_ref (FlatpakDir   *self,
                                             FlatpakKinds  kinds,
                                             FlatpakKinds *out_kind,
                                             GError      **error);
-char **     flatpak_dir_find_installed_refs (FlatpakDir            *self,
-                                             const char            *opt_name,
-                                             const char            *opt_branch,
-                                             const char            *opt_arch,
-                                             FlatpakKinds           kinds,
-                                             FindMatchingRefsFlags  flags,
-                                             GError               **error);
+char **     flatpak_dir_find_installed_refs (FlatpakDir           *self,
+                                             const char           *opt_name,
+                                             const char           *opt_branch,
+                                             const char           *opt_arch,
+                                             FlatpakKinds          kinds,
+                                             FindMatchingRefsFlags flags,
+                                             GError              **error);
 FlatpakDeploy *flatpak_dir_load_deployed (FlatpakDir   *self,
                                           const char   *ref,
                                           const char   *checksum,
@@ -752,7 +752,7 @@ char      *flatpak_dir_find_remote_by_uri (FlatpakDir *self,
                                            const char *collection_id);
 gboolean   flatpak_dir_has_remote (FlatpakDir *self,
                                    const char *remote_name,
-                                   GError **error);
+                                   GError    **error);
 char     **flatpak_dir_list_remotes (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
@@ -899,7 +899,7 @@ char ** flatpak_dir_get_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locale_subpaths (FlatpakDir *self);
 
 void flatpak_dir_set_source_pid (FlatpakDir *self,
-                                  pid_t      pid);
+                                 pid_t       pid);
 pid_t flatpak_dir_get_source_pid (FlatpakDir *self);
 
 #endif /* __FLATPAK_DIR_H__ */

@@ -58,7 +58,6 @@ import_oci (OstreeRepo *repo, GFile *file,
   g_autofree char *dir_uri = NULL;
   g_autofree char *target_ref = NULL;
   const char *oci_digest;
-
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   FlatpakOciManifest *manifest = NULL;

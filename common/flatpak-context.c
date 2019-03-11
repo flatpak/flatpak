@@ -423,7 +423,6 @@ flatpak_context_get_session_bus_policy_allowed_own_names (FlatpakContext *contex
 {
   GHashTableIter iter;
   gpointer key, value;
-
   g_autoptr(GPtrArray) names = g_ptr_array_new_with_free_func (g_free);
 
   g_hash_table_iter_init (&iter, context->session_bus_policy);
@@ -653,7 +652,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = NULL;
       if (dir)
-        *dir = g_get_user_runtime_dir ();
+        *dir = flatpak_get_real_xdg_runtime_dir ();
       return TRUE;
     }
 
@@ -835,7 +834,6 @@ flatpak_context_merge (FlatpakContext *context,
       for (i = 0; policy_values[i] != NULL; i++)
         flatpak_context_apply_generic_policy (context, (char *) key, policy_values[i]);
     }
-
 }
 
 static gboolean
@@ -1025,7 +1023,6 @@ option_env_cb (const gchar *option_name,
                GError     **error)
 {
   FlatpakContext *context = data;
-
   g_auto(GStrv) split = g_strsplit (value, "=", 2);
 
   if (split == NULL || split[0] == NULL || split[0][0] == 0 || split[1] == NULL)
@@ -1271,7 +1268,6 @@ flatpak_context_load_metadata (FlatpakContext *context,
                                GError        **error)
 {
   gboolean remove;
-
   g_auto(GStrv) groups = NULL;
   int i;
 
@@ -2087,8 +2083,9 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
 
   if (app_id_dir != NULL)
     {
+      g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
       g_autofree char *run_user_app_dst = g_strdup_printf ("/run/user/%d/app/%s", getuid (), app_id);
-      g_autofree char *run_user_app_src = g_build_filename (g_get_user_runtime_dir (), "app", app_id, NULL);
+      g_autofree char *run_user_app_src = g_build_filename (user_runtime_dir, "app", app_id, NULL);
 
       if (glnx_shutil_mkdir_p_at (AT_FDCWD,
                                   run_user_app_src,

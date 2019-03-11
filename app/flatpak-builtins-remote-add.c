@@ -183,8 +183,10 @@ load_options (const char *filename,
     {
       const char *options_data;
       gsize options_size;
+      g_autoptr(SoupSession) soup_session = NULL;
 
-      bytes = download_uri (filename, &error);
+      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+      bytes = flatpak_load_http_uri (soup_session, filename, 0, NULL, NULL, NULL, &error);
 
       if (bytes == NULL)
         {

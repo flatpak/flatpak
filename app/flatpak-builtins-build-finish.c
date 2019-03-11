@@ -59,7 +59,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_metadata, N_("Set generic metadata option"),  N_("GROUP=KEY[=VALUE]") },
   { "no-inherit-permissions", 0, 0, G_OPTION_ARG_NONE, &opt_no_inherit_permissions, N_("Don't inherit permissions from runtime"), NULL },
- { NULL }
+  { NULL }
 };
 
 static gboolean
@@ -75,7 +75,6 @@ export_dir (int           source_parent_fd,
             GError      **error)
 {
   int res;
-
   g_auto(GLnxDirFdIterator) source_iter = {0};
   glnx_autofd int destination_dfd = -1;
   struct dirent *dent;
@@ -293,7 +292,6 @@ static gboolean
 update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;

@@ -181,7 +181,7 @@ flatpak_builtin_remote_list (int argc, char **argv, GCancellable *cancellable, G
   columns = handle_column_args (all_columns, opt_show_details, opt_cols, error);
   if (columns == NULL)
     return FALSE;
-  
+
   return list_remotes (dirs, columns, cancellable, error);
 }
 

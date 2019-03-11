@@ -32,6 +32,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-ref.h"
 #include "flatpak-run-private.h"
 
 static char *opt_arch;
@@ -179,10 +180,12 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   const char *sdk_pref;
   const char *runtime_pref;
   const char *default_branch = NULL;
+  const char *sdk_branch = NULL;
   g_autofree char *base_ref = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autofree char *var_ref = NULL;
   g_autofree char *sdk_ref = NULL;
+  g_auto(GStrv) sdk_ref_parts = NULL;
   FlatpakKinds kinds;
   int i;
   g_autoptr(FlatpakDir) sdk_dir = NULL;
@@ -292,8 +295,13 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
         return FALSE;
     }
 
+  sdk_ref_parts = flatpak_decompose_ref (sdk_ref, error);
+  if (sdk_ref_parts == NULL)
+    return FALSE;
+  sdk_branch = sdk_ref_parts[3];
+
   if (opt_sdk_extensions &&
-      !ensure_extensions (sdk_deploy, default_branch,
+      !ensure_extensions (sdk_deploy, sdk_branch,
                           opt_sdk_extensions, usr_dir, cancellable, error))
     return FALSE;
 

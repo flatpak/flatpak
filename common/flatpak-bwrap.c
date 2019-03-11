@@ -285,7 +285,6 @@ flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
   gint i;
   gsize data_len = 0;
   int fd;
-
   g_auto(GLnxTmpfile) args_tmpf  = { 0, };
 
   if (end == -1)

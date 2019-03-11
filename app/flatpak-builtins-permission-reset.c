@@ -95,7 +95,7 @@ remove_for_app (XdpDbusPermissionStore *store,
 
 gboolean
 reset_permissions_for_app (const char *app_id,
-                           GError **error)
+                           GError    **error)
 {
   g_autoptr(GDBusConnection) session_bus = NULL;
   XdpDbusPermissionStore *store = NULL;

@@ -50,7 +50,7 @@ validate_icon (const char *arg_width,
     }
 
   format = gdk_pixbuf_get_file_info (filename, &width, &height);
-  if (format == NULL) 
+  if (format == NULL)
     {
       g_printerr ("Format not recognized\n");
       return 1;
@@ -154,7 +154,7 @@ rerun_in_sandbox (const char *arg_width,
             "--ro-bind", validate_icon, validate_icon,
             NULL);
 
- /* These directories might be symlinks into /usr/... */
+  /* These directories might be symlinks into /usr/... */
   for (i = 0; i < G_N_ELEMENTS (usrmerged_dirs); i++)
     {
       g_autofree char *absolute_dir = g_strdup_printf ("/%s", usrmerged_dirs[i]);
@@ -198,11 +198,11 @@ rerun_in_sandbox (const char *arg_width,
   g_ptr_array_add (args, NULL);
 
   {
-    g_autofree char *cmdline = g_strjoinv (" ", (char **)args->pdata);
+    g_autofree char *cmdline = g_strjoinv (" ", (char **) args->pdata);
     g_debug ("Icon validation: Spawning %s", cmdline);
   }
 
-  if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, &error))
+  if (execvpe (flatpak_get_bwrap (), (char **) args->pdata, NULL) == -1)
     {
       g_debug ("Icon validation: %s", error->message);
       return 1;

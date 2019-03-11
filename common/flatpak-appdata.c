@@ -21,24 +21,27 @@
 #include "config.h"
 
 #include "flatpak-appdata-private.h"
+#include "flatpak-utils-private.h"
 #include <gio/gio.h>
 #include <stdio.h>
 
-typedef struct {
+typedef struct
+{
   const char *id;
   GHashTable *names;
   GHashTable *comments;
-  char *version;
-  char *license;
+  char       *version;
+  char       *license;
 } Component;
 
-typedef struct {
+typedef struct
+{
   GPtrArray *components;
-  GString *text;
-  gboolean in_text;
-  gboolean in_component;
-  char *lang;
-  guint64 timestamp;
+  GString   *text;
+  gboolean   in_text;
+  gboolean   in_component;
+  char      *lang;
+  guint64    timestamp;
 } ParserData;
 
 static void
@@ -72,10 +75,10 @@ parser_data_free (ParserData *data)
   g_string_free (data->text, TRUE);
   g_free (data->lang);
 
-  g_free (data);	
+  g_free (data);
 }
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(ParserData, parser_data_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (ParserData, parser_data_free)
 
 static ParserData *
 parser_data_new (void)
@@ -90,11 +93,11 @@ parser_data_new (void)
 
 static void
 start_element (GMarkupParseContext *context,
-               const char *element_name,
-               const char **attribute_names,
-               const char **attribute_values,
-               gpointer user_data,
-               GError **error)
+               const char          *element_name,
+               const char         **attribute_names,
+               const char         **attribute_values,
+               gpointer             user_data,
+               GError             **error)
 {
   ParserData *data = user_data;
 
@@ -147,9 +150,12 @@ start_element (GMarkupParseContext *context,
                                        attribute_names,
                                        attribute_values,
                                        error,
+                                       G_MARKUP_COLLECT_STRING, "version", &version,
                                        G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "timestamp", &timestamp,
                                        G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "date", &date,
-                                       G_MARKUP_COLLECT_STRING, "version", &version,
+                                       G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "date_eol", NULL,
+                                       G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "urgency", NULL,
+                                       G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "type", NULL,
                                        G_MARKUP_COLLECT_INVALID))
         {
           guint64 ts = 0;
@@ -185,9 +191,9 @@ start_element (GMarkupParseContext *context,
 
 static void
 end_element (GMarkupParseContext *context,
-             const char *element_name,
-             gpointer user_data,
-             GError **error)
+             const char          *element_name,
+             gpointer             user_data,
+             GError             **error)
 {
   ParserData *data = user_data;
   g_autofree char *text = NULL;
@@ -197,7 +203,7 @@ end_element (GMarkupParseContext *context,
 
   elements = g_markup_parse_context_get_element_stack (context);
   if (elements->next)
-    parent = (const char *)elements->next->data;
+    parent = (const char *) elements->next->data;
 
   g_assert (data->components->len > 0);
 
@@ -232,10 +238,10 @@ end_element (GMarkupParseContext *context,
 
 static void
 text (GMarkupParseContext *context,
-      const char *text,
-      gsize text_len,
-      gpointer user_data,
-      GError **error)
+      const char          *text,
+      gsize                text_len,
+      gpointer             user_data,
+      GError             **error)
 {
   ParserData *data = user_data;
 

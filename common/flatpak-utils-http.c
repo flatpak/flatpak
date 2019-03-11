@@ -130,7 +130,6 @@ load_cache_http_data (int           dfd,
                       GError      **error)
 {
   g_autoptr(CacheHttpData) data = NULL;
-
   g_autoptr(GBytes) cache_bytes = glnx_lgetxattrat (dfd, name,
                                                     CACHE_HTTP_XATTR,
                                                     error);
@@ -329,7 +328,6 @@ stream_closed (GObject *source, GAsyncResult *res, gpointer user_data)
 {
   LoadUriData *data = user_data;
   GInputStream *stream = G_INPUT_STREAM (source);
-
   g_autoptr(GError) error = NULL;
 
   if (!g_input_stream_close_finish (stream, res, &error))
@@ -408,7 +406,6 @@ load_uri_callback (GObject      *source_object,
                    gpointer      user_data)
 {
   SoupRequestHTTP *request = SOUP_REQUEST_HTTP (source_object);
-
   g_autoptr(GInputStream) in = NULL;
   LoadUriData *data = user_data;
 
@@ -507,6 +504,9 @@ flatpak_create_soup_session (const char *user_agent)
         g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
     }
 
+  if (g_getenv ("OSTREE_DEBUG_HTTP"))
+    soup_session_add_feature (soup_session, (SoupSessionFeature *) soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
+
   return soup_session;
 }
 
@@ -520,7 +520,6 @@ flatpak_load_http_uri (SoupSession           *soup_session,
                        GError               **error)
 {
   GBytes *bytes = NULL;
-
   g_autoptr(GMainContext) context = NULL;
   g_autoptr(SoupRequestHTTP) request = NULL;
   g_autoptr(GMainLoop) loop = NULL;

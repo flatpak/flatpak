@@ -40,6 +40,7 @@ static gboolean opt_runtime;
 static gboolean opt_update_appstream;
 static gboolean opt_no_update_summary;
 static gboolean opt_disable_fsync;
+static gboolean opt_disable_sandbox = FALSE;
 static char **opt_gpg_key_ids;
 static char **opt_exclude;
 static char **opt_include;
@@ -67,6 +68,7 @@ static GOptionEntry options[] = {
   { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit"), N_("TIMESTAMP") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), "COLLECTION-ID" },
   { "disable-fsync", 0, 0, G_OPTION_ARG_NONE, &opt_disable_fsync, "Do not invoke fsync()", NULL },
+  { "disable-sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_disable_sandbox, "Do not sandbox icon validator", NULL },
 
   { NULL }
 };
@@ -75,7 +77,6 @@ static gboolean
 metadata_get_arch (GFile *file, char **out_arch, GError **error)
 {
   g_autofree char *path = NULL;
-
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime = NULL;
   g_auto(GStrv) parts = NULL;
@@ -294,12 +295,13 @@ find_file_in_tree (GFile *base, const char *filename)
   return FALSE;
 }
 
-typedef gboolean (* VisitFileFunc) (GFile *file, GError **error);
+typedef gboolean (* VisitFileFunc) (GFile   *file,
+                                    GError **error);
 
 static gboolean
-visit_files_in_tree (GFile *base,
+visit_files_in_tree (GFile        *base,
                      VisitFileFunc visit_file,
-                     gpointer data)
+                     gpointer      data)
 {
   g_autoptr(GFileEnumerator) enumerator = NULL;
   GError **error = data;
@@ -373,13 +375,15 @@ validate_icon_file (GFile *file, GError **error)
   args = g_ptr_array_new_with_free_func (g_free);
 
 #ifndef DISABLE_SANDBOXED_TRIGGERS
-  add_args (args, validate_icon, "--sandbox", "512", "512", name, NULL);
-#else
-  add_args (args, validate_icon, "512", "512", name, NULL);
+  if (!opt_disable_sandbox)
+    add_args (args, validate_icon, "--sandbox", "512", "512", name, NULL);
+  else
 #endif
+    add_args (args, validate_icon, "512", "512", name, NULL);
+
   g_ptr_array_add (args, NULL);
 
-  if (!g_spawn_sync (NULL, (char **)args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
+  if (!g_spawn_sync (NULL, (char **) args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
     {
       g_debug ("Icon validation: %s", (*error)->message);
       return FALSE;
@@ -435,7 +439,6 @@ validate_desktop_file (GFile      *desktop_file,
                        GError    **error)
 {
   g_autofree char *path = g_file_get_path (desktop_file);
-
   g_autoptr(GSubprocess) subprocess = NULL;
   g_autofree char *stdout_buf = NULL;
   g_autofree char *stderr_buf = NULL;
@@ -540,7 +543,6 @@ validate_service_file (GFile      *service_file,
                        GError    **error)
 {
   g_autofree char *path = g_file_get_path (service_file);
-
   g_autoptr(GKeyFile) key_file = NULL;
   g_autofree char *name = NULL;
   g_autofree char *command = NULL;
@@ -599,7 +601,6 @@ static gboolean
 validate_exports (GFile *export, GFile *files, const char *app_id, GError **error)
 {
   g_autofree char *desktop_path = NULL;
-
   g_autoptr(GFile) desktop_file = NULL;
   g_autofree char *service_path = NULL;
   g_autoptr(GFile) service_file = NULL;
@@ -742,7 +743,6 @@ gboolean
 flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files = NULL;

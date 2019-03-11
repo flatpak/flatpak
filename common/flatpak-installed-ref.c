@@ -480,8 +480,8 @@ flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
  */
 GBytes *
 flatpak_installed_ref_load_appdata (FlatpakInstalledRef *self,
-                                     GCancellable        *cancellable,
-                                     GError             **error)
+                                    GCancellable        *cancellable,
+                                    GError             **error)
 {
   FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
   char *data;
@@ -633,7 +633,6 @@ flatpak_installed_ref_new (const char  *full_ref,
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakInstalledRef *ref;
-
   g_auto(GStrv) parts = NULL;
 
   parts = g_strsplit (full_ref, "/", -1);
