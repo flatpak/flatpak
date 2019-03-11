@@ -3407,29 +3407,6 @@ flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
   return TRUE;
 }
 
-static OstreeRepoCommitFilterResult
-commit_filter (OstreeRepo *repo,
-               const char *path,
-               GFileInfo  *file_info,
-               gpointer    user_data)
-{
-  const char *ignore_filename = user_data;
-  guint current_mode;
-
-  if (g_strcmp0 (ignore_filename, g_file_info_get_name (file_info)) == 0)
-    return OSTREE_REPO_COMMIT_FILTER_SKIP;
-
-  /* No user info */
-  g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
-  g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
-
-  /* No setuid */
-  current_mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
-  g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
-
-  return OSTREE_REPO_COMMIT_FILTER_ALLOW;
-}
-
 static gboolean
 validate_component (FlatpakXml *component,
                     const char *ref,
@@ -3589,52 +3566,26 @@ flatpak_appstream_xml_migrate (FlatpakXml *source,
 }
 
 static gboolean
-copy_icon (const char *id,
-           GFile      *root,
-           GFile      *dest,
-           const char *size,
-           GError    **error)
+copy_icon (const char        *id,
+           GFile             *icons_dir,
+           OstreeRepo        *repo,
+           OstreeMutableTree *size_mtree,
+           const char        *size,
+           GError           **error)
 {
   g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
-  g_autoptr(GFile) icons_dir =
-    g_file_resolve_relative_path (root,
-                                  "files/share/app-info/icons/flatpak");
   g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, size);
   g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
-  g_autoptr(GFile) dest_dir = g_file_get_child (dest, "icons");
-  g_autoptr(GFile) dest_size_dir = g_file_get_child (dest_dir, size);
-  g_autoptr(GFile) dest_file = g_file_get_child (dest_size_dir, icon_name);
-  g_autoptr(GInputStream) in = NULL;
-  g_autoptr(GOutputStream) out = NULL;
-  g_autoptr(GError) my_error = NULL;
-  gssize n_bytes_written;
+  const char *checksum;
 
-  in = (GInputStream *) g_file_read (icon_file, NULL, &my_error);
-  if (!in)
+  if (!ostree_repo_file_ensure_resolved (OSTREE_REPO_FILE(icon_file), NULL))
     {
-      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        {
-          g_debug ("No icon at size %s", size);
-          return TRUE;
-        }
-
-      g_propagate_error (error, g_steal_pointer (&my_error));
-      return FALSE;
+      g_debug ("No icon at size %s for %s", size, id);
+      return TRUE;
     }
 
-  if (!flatpak_mkdir_p (dest_size_dir, NULL, error))
-    return FALSE;
-
-  out = (GOutputStream *) g_file_replace (dest_file, NULL, FALSE,
-                                          G_FILE_CREATE_REPLACE_DESTINATION,
-                                          NULL, error);
-  if (!out)
-    return FALSE;
-
-  n_bytes_written = g_output_stream_splice (out, in,
-                                            G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
-                                            NULL, error);
-  if (n_bytes_written < 0)
+  checksum = ostree_repo_file_get_checksum (OSTREE_REPO_FILE(icon_file));
+  if (!ostree_mutable_tree_replace_file (size_mtree, icon_name, checksum, error))
     return FALSE;
 
   return TRUE;
@@ -3645,12 +3596,15 @@ extract_appstream (OstreeRepo   *repo,
                    FlatpakXml   *appstream_root,
                    const char   *ref,
                    const char   *id,
-                   GFile        *dest,
+                   OstreeMutableTree *size1_mtree,
+                   OstreeMutableTree *size2_mtree,
                    GCancellable *cancellable,
                    GError      **error)
 {
   g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) app_info_dir = NULL;
   g_autoptr(GFile) xmls_dir = NULL;
+  g_autoptr(GFile) icons_dir = NULL;
   g_autoptr(GFile) appstream_file = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *appstream_basename = NULL;
@@ -3675,7 +3629,11 @@ extract_appstream (OstreeRepo   *repo,
         return FALSE;
     }
 
-  xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
+  app_info_dir = g_file_resolve_relative_path (root, "files/share/app-info");
+
+  xmls_dir = g_file_resolve_relative_path (app_info_dir, "xmls");
+  icons_dir = g_file_resolve_relative_path (app_info_dir, "icons/flatpak");
+
   appstream_basename = g_strconcat (id, ".xml.gz", NULL);
   appstream_file = g_file_get_child (xmls_dir, appstream_basename);
 
@@ -3727,18 +3685,18 @@ extract_appstream (OstreeRepo   *repo,
           if (g_str_has_suffix (component_id_suffix, ".desktop"))
             component_id_suffix[strlen (component_id_suffix) - strlen (".desktop")] = 0;
 
-          g_print (_("Extracting icons for component %s\n"), component_id_text);
+          if (!copy_icon (component_id_text, icons_dir, repo, size1_mtree, "64x64", &my_error))
+            {
+              g_print (_("Error copying 64x64 icon for component %s: %s\n"), component_id_text, my_error->message);
+              g_clear_error (&my_error);
+            }
 
-          if (!copy_icon (component_id_text, root, dest, "64x64", &my_error))
-            {
-              g_print (_("Error copying 64x64 icon: %s\n"), my_error->message);
-              g_clear_error (&my_error);
-            }
-          if (!copy_icon (component_id_text, root, dest, "128x128", &my_error))
-            {
-              g_print (_("Error copying 128x128 icon: %s\n"), my_error->message);
-              g_clear_error (&my_error);
-            }
+          if (!copy_icon (component_id_text, icons_dir, repo, size2_mtree, "128x128", &my_error))
+             {
+               g_print (_("Error copying 128x128 icon for component %s: %s\n"), component_id_text, my_error->message);
+               g_clear_error (&my_error);
+             }
+
 
           /* We might match other prefixes, so keep on going */
           component = component->next_sibling;
@@ -3862,30 +3820,30 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
   GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
   {
-    g_autofree char *tmpdir = g_strdup ("/tmp/flatpak-appstream-XXXXXX");
-    g_autoptr(FlatpakTempDir) tmpdir_file = NULL;
-    g_autoptr(GFile) appstream_file = NULL;
-    g_autoptr(GFile) appstream_gz_file = NULL;
     OstreeRepoTransactionStats stats;
     g_autoptr(FlatpakXml) appstream_root = NULL;
     g_autoptr(GBytes) xml_data = NULL;
     g_autoptr(GBytes) xml_gz_data = NULL;
+    g_autoptr(OstreeMutableTree) mtree = ostree_mutable_tree_new ();
+    g_autoptr(OstreeMutableTree) icons_mtree = NULL;
+    g_autoptr(OstreeMutableTree) size1_mtree = NULL;
+    g_autoptr(OstreeMutableTree) size2_mtree = NULL;
     const char *compat_arch;
     g_autoptr(FlatpakRepoTransaction) transaction = NULL;
     compat_arch = flatpak_get_compat_arch (arch);
-    struct
-    {
-      const char *ignore_filename;
-      const char *branch_prefix;
-    } branch_data[] = {
-      { "appstream.xml", "appstream" },
-      { "appstream.xml.gz", "appstream2" },
-    };
+    const char *branch_names[] = { "appstream", "appstream2" };
 
-    if (g_mkdtemp_full (tmpdir, 0755) == NULL)
-      return flatpak_fail (error, "Can't create temporary directory");
+    if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
+      return FALSE;
 
-    tmpdir_file = g_file_new_for_path (tmpdir);
+    if (!flatpak_mtree_create_dir (repo, mtree, "icons", &icons_mtree, error))
+      return FALSE;
+
+    if (!flatpak_mtree_create_dir (repo, icons_mtree, "64x64", &size1_mtree, error))
+      return FALSE;
+
+    if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
+      return FALSE;
 
     appstream_root = flatpak_appstream_xml_new ();
 
@@ -3936,7 +3894,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
           }
 
         if (!extract_appstream (repo, appstream_root,
-                                ref, split[1], tmpdir_file,
+                                ref, split[1], size1_mtree, size2_mtree,
                                 cancellable, &my_error))
           {
             if (g_str_has_prefix (ref, "app/"))
@@ -3948,57 +3906,36 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     if (!flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, &xml_gz_data, error))
       return FALSE;
 
-    appstream_file = g_file_get_child (tmpdir_file, "appstream.xml");
-    if (!g_file_replace_contents (appstream_file,
-                                  g_bytes_get_data (xml_data, NULL),
-                                  g_bytes_get_size (xml_data),
-                                  NULL,
-                                  FALSE,
-                                  G_FILE_CREATE_NONE,
-                                  NULL,
-                                  cancellable,
-                                  error))
-      return FALSE;
-
-    appstream_gz_file = g_file_get_child (tmpdir_file, "appstream.xml.gz");
-    if (!g_file_replace_contents (appstream_gz_file,
-                                  g_bytes_get_data (xml_gz_data, NULL),
-                                  g_bytes_get_size (xml_gz_data),
-                                  NULL,
-                                  FALSE,
-                                  G_FILE_CREATE_NONE,
-                                  NULL,
-                                  cancellable,
-                                  error))
-      return FALSE;
-
     transaction = flatpak_repo_transaction_start (repo, cancellable, error);
     if (transaction == NULL)
       return FALSE;
 
-    for (i = 0; i < G_N_ELEMENTS (branch_data); i++)
+    for (i = 0; i < G_N_ELEMENTS (branch_names); i++)
       {
         gboolean skip_commit = FALSE;
-        const char *ignore_filename = branch_data[i].ignore_filename;
-        const char *branch_prefix = branch_data[i].branch_prefix;
-        g_autoptr(OstreeMutableTree) mtree = NULL;
+        const char *branch_prefix = branch_names[i];
         g_autoptr(GFile) root = NULL;
         g_autofree char *branch = NULL;
         g_autofree char *parent = NULL;
-        g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
         g_autofree char *commit_checksum = NULL;
 
         branch = g_strdup_printf ("%s/%s", branch_prefix, arch);
         if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
           return FALSE;
 
-        mtree = ostree_mutable_tree_new ();
-        modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
-                                                    OSTREE_REPO_COMMIT_MODIFIER_FLAGS_CANONICAL_PERMISSIONS,
-                                                    (OstreeRepoCommitFilter) commit_filter, (gpointer) ignore_filename, NULL);
+        if (i == 0)
+          {
+            if (!flatpak_mtree_add_file_from_bytes (repo, xml_gz_data, mtree, "appstream.xml.gz", cancellable, error))
+              return FALSE;
+          }
+        else
+          {
+            if (!ostree_mutable_tree_remove (mtree, "appstream.xml.gz", TRUE, error))
+              return FALSE;
 
-        if (!ostree_repo_write_directory_to_mtree (repo, G_FILE (tmpdir_file), mtree, modifier, cancellable, error))
-          return FALSE;
+            if (!flatpak_mtree_add_file_from_bytes (repo, xml_data, mtree, "appstream.xml", cancellable, error))
+              return FALSE;
+          }
 
         if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
           return FALSE;
