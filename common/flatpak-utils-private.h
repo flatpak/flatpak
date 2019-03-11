@@ -401,10 +401,22 @@ void flatpak_repo_parse_extra_data_sources (GVariant      *extra_data_sources,
                                             guint64       *installed_size,
                                             const guchar **sha256,
                                             const char   **uri);
-gboolean flatpak_mtree_create_root (OstreeRepo        *repo,
-                                    OstreeMutableTree *mtree,
-                                    GCancellable      *cancellable,
-                                    GError           **error);
+gboolean flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
+                                            OstreeMutableTree *mtree,
+                                            GCancellable      *cancellable,
+                                            GError           **error);
+gboolean flatpak_mtree_add_file_from_bytes (OstreeRepo *repo,
+                                            GBytes *bytes,
+                                            OstreeMutableTree *parent,
+                                            const char *filename,
+                                            GCancellable *cancellable,
+                                            GError      **error);
+gboolean flatpak_mtree_create_dir (OstreeRepo         *repo,
+                                   OstreeMutableTree  *parent,
+                                   const char         *name,
+                                   OstreeMutableTree **dir_out,
+                                   GError            **error);
+
 
 GVariant * flatpak_bundle_load (GFile   *file,
                                 char   **commit,

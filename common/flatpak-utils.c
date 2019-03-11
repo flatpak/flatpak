@@ -3262,7 +3262,7 @@ flatpak_repo_update (OstreeRepo   *repo,
 
       /* Set up an empty mtree. */
       mtree = ostree_mutable_tree_new ();
-      if (!flatpak_mtree_create_root (repo, mtree, cancellable, error))
+      if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
         goto out;
       if (!ostree_repo_write_mtree (repo, mtree, (GFile **) &repo_file, NULL, error))
         goto out;
@@ -3321,10 +3321,69 @@ out:
 }
 
 gboolean
-flatpak_mtree_create_root (OstreeRepo        *repo,
-                           OstreeMutableTree *mtree,
-                           GCancellable      *cancellable,
-                           GError           **error)
+flatpak_mtree_create_dir (OstreeRepo         *repo,
+                          OstreeMutableTree  *parent,
+                          const char         *name,
+                          OstreeMutableTree **dir_out,
+                          GError            **error)
+{
+  g_autoptr(OstreeMutableTree) dir = NULL;
+
+  if (!ostree_mutable_tree_ensure_dir (parent, name, &dir, error))
+    return FALSE;
+
+  if (!flatpak_mtree_ensure_dir_metadata (repo, dir, NULL, error))
+    return FALSE;
+
+  *dir_out = g_steal_pointer (&dir);
+  return TRUE;
+}
+
+gboolean
+flatpak_mtree_add_file_from_bytes (OstreeRepo *repo,
+                                   GBytes *bytes,
+                                   OstreeMutableTree *parent,
+                                   const char *filename,
+                                   GCancellable *cancellable,
+                                   GError      **error)
+{
+  g_autoptr(GFileInfo) info = g_file_info_new ();
+  g_autoptr(GInputStream) memstream = NULL;
+  g_autoptr(GInputStream) content_stream = NULL;
+  g_autofree guchar *raw_checksum = NULL;
+  g_autofree char *checksum = NULL;
+  guint64 length;
+
+  g_file_info_set_attribute_uint32 (info, "standard::type", G_FILE_TYPE_REGULAR);
+  g_file_info_set_attribute_uint64 (info, "standard::size", g_bytes_get_size (bytes));
+  g_file_info_set_attribute_uint32 (info, "unix::uid", 0);
+  g_file_info_set_attribute_uint32 (info, "unix::gid", 0);
+  g_file_info_set_attribute_uint32 (info, "unix::mode", S_IFREG | 0644);
+
+  memstream = g_memory_input_stream_new_from_bytes (bytes);
+
+  if (!ostree_raw_file_to_content_stream (memstream, info, NULL,
+                                          &content_stream, &length,
+                                          cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_write_content (repo, NULL, content_stream, length,
+                                  &raw_checksum, cancellable, error))
+    return FALSE;
+
+  checksum = ostree_checksum_from_bytes (raw_checksum);
+
+  if (!ostree_mutable_tree_replace_file (parent, filename, checksum, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
+                                   OstreeMutableTree *mtree,
+                                   GCancellable      *cancellable,
+                                   GError           **error)
 {
   g_autoptr(GVariant) dirmeta = NULL;
   g_autoptr(GFileInfo) file_info = g_file_info_new ();
