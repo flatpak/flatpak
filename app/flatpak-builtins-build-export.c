@@ -945,7 +945,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   mtree = ostree_mutable_tree_new ();
 
-  if (!flatpak_mtree_create_root (repo, mtree, cancellable, error))
+  if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
     goto out;
 
   if (!ostree_mutable_tree_ensure_dir (mtree, "files", &files_mtree, error))
