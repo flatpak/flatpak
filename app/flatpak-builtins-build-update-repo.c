@@ -50,6 +50,7 @@ static gboolean opt_no_update_appstream;
 static gboolean opt_no_update_summary;
 static gint opt_prune_depth = -1;
 static gint opt_static_delta_jobs;
+static char **opt_static_delta_ignore_refs;
 
 static GOptionEntry options[] = {
   { "redirect-url", 0, 0, G_OPTION_ARG_STRING, &opt_redirect_url, N_("Redirect this repo to a new URL"), N_("URL") },
@@ -64,6 +65,7 @@ static GOptionEntry options[] = {
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "no-update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_appstream, N_("Don't update the appstream branch"), NULL },
   { "static-delta-jobs", 0, 0, G_OPTION_ARG_INT, &opt_static_delta_jobs, N_("Max parallel jobs when creating deltas (default: NUMCPUs)"), N_("NUM-JOBS") },
+  { "static-delta-ignore-ref", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_static_delta_ignore_refs, N_("Don't create deltas matching refs"), N_("PATTERN") },
   { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, N_("Prune unused objects"), NULL },
   { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, N_("Only traverse DEPTH parents for each commit (default: -1=infinite)"), N_("DEPTH") },
   { "generate-static-delta-from", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_from, NULL, NULL },
@@ -296,6 +298,7 @@ generate_all_deltas (OstreeRepo   *repo,
   g_autoptr(GVariant) params = NULL;
   int n_spawned_delta_generate = 0;
   g_autoptr(GMainContextPopDefault) context = NULL;
+  g_autoptr(GPtrArray) ignore_patterns = g_ptr_array_new_with_free_func ((GDestroyNotify)g_pattern_spec_free);
 
   g_print ("Generating static deltas\n");
 
@@ -323,6 +326,13 @@ generate_all_deltas (OstreeRepo   *repo,
 
   context = flatpak_main_context_new_default ();
 
+  if (opt_static_delta_ignore_refs != NULL)
+    {
+      for (i = 0; opt_static_delta_ignore_refs[i] != NULL; i++)
+        g_ptr_array_add (ignore_patterns,
+                         g_pattern_spec_new (opt_static_delta_ignore_refs[i]));
+    }
+
   g_hash_table_iter_init (&iter, all_refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
@@ -332,6 +342,44 @@ generate_all_deltas (OstreeRepo   *repo,
       g_autoptr(GVariant) parent_variant = NULL;
       g_autofree char *parent_commit = NULL;
       g_autofree char *grandparent_commit = NULL;
+      gboolean ignore_ref = FALSE;
+
+      if (g_str_has_prefix (ref, "app/") || g_str_has_prefix (ref, "runtime/"))
+        {
+          g_auto(GStrv) parts = g_strsplit (ref, "/", 4);
+
+          for (i = 0; i < ignore_patterns->len; i++)
+            {
+              GPatternSpec *pattern = g_ptr_array_index(ignore_patterns, i);
+              if (g_pattern_match_string (pattern, parts[1]))
+                {
+                  ignore_ref = TRUE;
+                  break;
+                }
+            }
+
+        }
+      else if (g_str_has_prefix (ref, "appstream/"))
+        {
+          /* Old appstream branch deltas poorly, and most users handle the new format */
+          ignore_ref = TRUE;
+        }
+      else if (g_str_has_prefix (ref, "appstream2/"))
+        {
+          /* Always delta this */
+          ignore_ref = FALSE;
+        }
+      else
+        {
+          /* Ignore unknown ref types */
+          ignore_ref = FALSE;
+        }
+
+      if (ignore_ref)
+        {
+          g_debug ("Ignoring deltas for ref %s", ref);
+          continue;
+        }
 
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
                                      &variant, NULL))

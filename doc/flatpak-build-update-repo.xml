@@ -163,6 +163,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--static-delta-ignore-ref=PATTERN</option></term>
+
+                <listitem><para>
+                  Don't generate deltas for runtime or application id matching this pattern. For instance,
+                  --static-delta-ignore-ref=*.Sources means there will not be any deltas for source refs.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--prune</option></term>
 
                 <listitem><para>
