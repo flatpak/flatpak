@@ -3566,12 +3566,12 @@ flatpak_appstream_xml_migrate (FlatpakXml *source,
 }
 
 static gboolean
-copy_icon (const char *id,
-           GFile      *icons_dir,
+copy_icon (const char        *id,
+           GFile             *icons_dir,
            OstreeRepo        *repo,
            OstreeMutableTree *size_mtree,
            const char        *size,
-           GError    **error)
+           GError           **error)
 {
   g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
   g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, size);
@@ -3693,7 +3693,7 @@ extract_appstream (OstreeRepo   *repo,
 
           if (!copy_icon (component_id_text, icons_dir, repo, size2_mtree, "128x128", &my_error))
              {
-              g_print (_("Error copying 128x128 icon for component %s: %s\n"), component_id_text, my_error->message);
+               g_print (_("Error copying 128x128 icon for component %s: %s\n"), component_id_text, my_error->message);
                g_clear_error (&my_error);
              }
 
