@@ -12,10 +12,9 @@ Major changes:
  * Initial support for sandboxed dconf support.
  * build-update-repo: New options --no-update-[summary,appstream] and
    --static-delta-ignore-ref=PATTERN.
- * Generating the appstream branch is now much faster for large
+ * Regenerating the appstream branch is now much faster for large
    repositories.
-
-
+ * We no longer limit the size of svgs in the icon validator.
 
 Changes in 1.2.3
 ================
