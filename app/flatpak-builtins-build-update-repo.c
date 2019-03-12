@@ -227,14 +227,14 @@ delta_generation_done (GObject      *source_object,
 }
 
 static gboolean
-spawn_delete_generation (GMainContext *context,
-                         int          *n_spawned_delta_generate,
-                         OstreeRepo   *repo,
-                         GVariant     *params,
-                         const char   *ref,
-                         const char   *from,
-                         const char   *to,
-                         GError      **error)
+spawn_delta_generation (GMainContext *context,
+                        int          *n_spawned_delta_generate,
+                        OstreeRepo   *repo,
+                        GVariant     *params,
+                        const char   *ref,
+                        const char   *from,
+                        const char   *to,
+                        GError      **error)
 {
   g_autoptr(GSubprocessLauncher) launcher = g_subprocess_launcher_new (0);
   g_autoptr(GSubprocess) subprocess = NULL;
@@ -343,9 +343,9 @@ generate_all_deltas (OstreeRepo   *repo,
       /* From empty */
       if (!g_hash_table_contains (all_deltas_hash, commit))
         {
-          if (!spawn_delete_generation (context, &n_spawned_delta_generate, repo, params,
-                                        ref, NULL, commit,
-                                        error))
+          if (!spawn_delta_generation (context, &n_spawned_delta_generate, repo, params,
+                                       ref, NULL, commit,
+                                       error))
             return FALSE;
         }
 
@@ -369,9 +369,9 @@ generate_all_deltas (OstreeRepo   *repo,
 
           if (!g_hash_table_contains (all_deltas_hash, from_parent))
             {
-              if (!spawn_delete_generation (context, &n_spawned_delta_generate, repo, params,
-                                            ref, parent_commit, commit,
-                                            error))
+              if (!spawn_delta_generation (context, &n_spawned_delta_generate, repo, params,
+                                           ref, parent_commit, commit,
+                                           error))
                 return FALSE;
             }
 
