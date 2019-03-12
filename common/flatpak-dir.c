@@ -5637,38 +5637,40 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
              at that exact path. */
           g_autofree char *basedir_orig = g_file_get_path (self->basedir);
           g_autofree char *basedir = realpath (basedir_orig, NULL);
+          g_autoptr(FlatpakBwrap) bwrap = NULL;
+          g_autofree char *commandline = NULL;
 
           g_debug ("running trigger %s", name);
 
+          bwrap = flatpak_bwrap_new (NULL);
+
           argv_array = g_ptr_array_new_with_free_func (g_free);
-#ifdef DISABLE_SANDBOXED_TRIGGERS
-          g_ptr_array_add (argv_array, g_file_get_path (child));
-          g_ptr_array_add (argv_array, g_strdup (basedir));
-#else
-          g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
-          g_ptr_array_add (argv_array, g_strdup ("--unshare-ipc"));
-          g_ptr_array_add (argv_array, g_strdup ("--unshare-net"));
-          g_ptr_array_add (argv_array, g_strdup ("--unshare-pid"));
-          g_ptr_array_add (argv_array, g_strdup ("--ro-bind"));
-          g_ptr_array_add (argv_array, g_strdup ("/"));
-          g_ptr_array_add (argv_array, g_strdup ("/"));
-          g_ptr_array_add (argv_array, g_strdup ("--proc"));
-          g_ptr_array_add (argv_array, g_strdup ("/proc"));
-          g_ptr_array_add (argv_array, g_strdup ("--dev"));
-          g_ptr_array_add (argv_array, g_strdup ("/dev"));
-          g_ptr_array_add (argv_array, g_strdup ("--bind"));
-          g_ptr_array_add (argv_array, g_strdup (basedir));
-          g_ptr_array_add (argv_array, g_strdup (basedir));
+#ifndef DISABLE_SANDBOXED_TRIGGERS
+          flatpak_bwrap_add_arg (bwrap, flatpak_get_bwrap ());
+          flatpak_bwrap_add_args (bwrap,
+                                  "--unshare-ipc",
+                                  "--unshare-net",
+                                  "--unshare-pid",
+                                  "--ro-bind", "/", "/",
+                                  "--proc", "/proc",
+                                  "--dev", "/dev",
+                                  "--bind", basedir, basedir,
+                                  NULL);
 #endif
-          g_ptr_array_add (argv_array, g_file_get_path (child));
-          g_ptr_array_add (argv_array, g_strdup (basedir));
-          g_ptr_array_add (argv_array, NULL);
+          flatpak_bwrap_add_args (bwrap,
+                                  flatpak_file_get_path_cached (child),
+                                  basedir,
+                                  NULL);
+          flatpak_bwrap_finish (bwrap);
+
+          commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
+          g_debug ("Running '%s'", commandline);
 
           if (!g_spawn_sync ("/",
-                             (char **) argv_array->pdata,
+                             (char **) bwrap->argv->pdata,
                              NULL,
                              G_SPAWN_SEARCH_PATH,
-                             NULL, NULL,
+                             flatpak_bwrap_child_setup_cb, bwrap->fds,
                              NULL, NULL,
                              NULL, &trigger_error))
             {
