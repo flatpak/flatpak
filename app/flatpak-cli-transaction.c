@@ -95,8 +95,8 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
   else
     {
       flatpak_format_choices ((const char **) remotes,
-                              _("Required runtime for %s (%s) found in remotes: %s"),
-                              pref, runtime_ref, remotes[0]);
+                              _("Required runtime for %s (%s) found in remotes:"),
+                              pref, runtime_ref);
       chosen = flatpak_number_prompt (TRUE, 0, n_remotes, _("Which do you want to install (0 to abort)?"));
       chosen -= 1; /* convert from base-1 to base-0 (and -1 to abort) */
     }
