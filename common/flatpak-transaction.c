@@ -419,7 +419,7 @@ remote_name_is_file (const char *remote_name)
  *
  * Adds an extra installation as a source for application dependencies.
  * This means that applications can be installed in this transaction relying
- * on runtimes from this additional installation (wheres it would normally
+ * on runtimes from this additional installation (whereas it would normally
  * install required runtimes that are not installed in the installation
  * the transaction works on).
  *
@@ -1593,7 +1593,7 @@ add_deps (FlatpakTransaction          *self,
   if (op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
       /* If the runtime this app uses is already to be uninstalled, then this uninstall must happen before
-         the runtime is installed */
+         the runtime is uninstalled */
       if (runtime_op && op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         run_operation_before (op, runtime_op, 1);
 
@@ -2680,7 +2680,7 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
  *
  * Executes the transaction.
  *
- * During the cause of the execution, various signal will get emitted.
+ * During the cause of the execution, various signals will get emitted.
  * The FlatpakTransaction::choose-remote-for-ref  and
  * #FlatpakTransaction::add-new-remote signals may get emitted while
  * resolving operations. #FlatpakTransaction::ready is emitted when
