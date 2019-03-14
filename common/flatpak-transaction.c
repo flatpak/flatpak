@@ -2358,20 +2358,12 @@ remote_is_already_configured (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *old_remote = NULL;
-  int i;
 
   old_remote = flatpak_dir_find_remote_by_uri (priv->dir, url, collection_id);
-  if (old_remote == NULL)
-    {
-      for (i = 0; i < priv->extra_dependency_dirs->len; i++)
-        {
-          FlatpakDir *dependency_dir = g_ptr_array_index (priv->extra_dependency_dirs, i);
 
-          old_remote = flatpak_dir_find_remote_by_uri (dependency_dir, url, collection_id);
-          if (old_remote != NULL)
-            break;
-        }
-    }
+  /* Note: we don't check priv->extra_dependency_dirs because the transaction
+   * can only operate on one installation so any install/update ops need to
+   * have a remote there. */
 
   return old_remote != NULL;
 }
