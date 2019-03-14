@@ -1143,7 +1143,7 @@ test_install_launch_uninstall (void)
 }
 
 static void update_test_app (void);
-static void update_repo (void);
+static void update_repo (const char *update_repo_name);
 
 static void
 test_list_updates (void)
@@ -1180,7 +1180,7 @@ test_list_updates (void)
 
   /* Update the test app and list the update */
   update_test_app ();
-  update_repo ();
+  update_repo ("test");
 
   /* Drop all in-memory summary caches so we can find the new update */
   flatpak_installation_drop_caches (inst, NULL, &error);
@@ -1284,41 +1284,35 @@ make_bundle (void)
 }
 
 static void
-make_test_runtime (void)
+make_test_runtime (const char *runtime_repo_name)
 {
   g_autofree char *arg0 = NULL;
+  g_autofree char *arg1 = NULL;
   char *argv[] = {
-    NULL, "repos/test", "org.test.Platform", "", NULL
+    NULL, NULL, "org.test.Platform", "", NULL
   };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
+  arg1 = g_strdup_printf ("repos/%s", runtime_repo_name);
   argv[0] = arg0;
+  argv[1] = arg1;
   argv[3] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
-make_test_app (void)
+make_test_app (const char *app_repo_name)
 {
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "repos/test", "", "", NULL };
+  g_autofree char *arg1 = NULL;
+  char *argv[] = { NULL, NULL, "", "", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
+  arg1 = g_strdup_printf ("repos/%s", app_repo_name);
   argv[0] = arg0;
+  argv[1] = arg1;
   argv[3] = repo_collection_id;
-
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
-}
-
-static void
-make_test_app2 (void)
-{
-  g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "repos/test-without-runtime", "", "", NULL };
-
-  arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
-  argv[0] = arg0;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -1337,51 +1331,33 @@ update_test_app (void)
 }
 
 static void
-update_repo (void)
+update_repo (const char *update_repo_name)
 {
-  char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test", NULL };
+  g_autofree char *arg4 = NULL;
+  char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", NULL, NULL };
   g_auto(GStrv) gpgargs = NULL;
 
   gpgargs = g_strsplit (gpg_args, " ", 0);
+  arg4 = g_strdup_printf ("repos/%s", update_repo_name);
   argv[2] = gpgargs[0];
   argv[3] = gpgargs[1];
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
-}
+  argv[4] = arg4;
 
-static void
-update_repo2 (void)
-{
-  char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test-without-runtime", NULL };
-  g_auto(GStrv) gpgargs = NULL;
-
-  gpgargs = g_strsplit (gpg_args, " ", 0);
-  argv[2] = gpgargs[0];
-  argv[3] = gpgargs[1];
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
 launch_httpd (void)
 {
+  g_autoptr(GError) error = NULL;
+  g_autofree char *port = NULL;
+  g_autofree char *pid = NULL;
   g_autofree char *path = g_test_build_filename (G_TEST_DIST, "test-webserver.sh", NULL);
   char *argv[] = {path, "repos", NULL };
 
   /* The web server puts itself in the background, so we can't wait
    * for EOF on its stdout, stderr */
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_NO_CAPTURE);
-}
-
-static void
-add_remote (void)
-{
-  g_autoptr(GError) error = NULL;
-  char *argv[] = { "flatpak", "remote-add", "--user", "--gpg-import=", "--collection-id=", "name", "url", NULL };
-  g_autofree char *gpgimport = NULL;
-  g_autofree char *port = NULL;
-  g_autofree char *pid = NULL;
-  g_autofree char *collection_id_arg = NULL;
-
-  launch_httpd ();
 
   g_file_get_contents ("httpd-pid", &pid, NULL, &error);
   g_assert_no_error (error);
@@ -1396,31 +1372,85 @@ add_remote (void)
     port[strlen (port) - 1] = '\0';
 
   httpd_port = g_strdup (port);
+}
+
+static void
+_add_remote (const char *remote_repo_name,
+             gboolean    system)
+{
+  g_autoptr(GError) error = NULL;
+  char *argv[] = { "flatpak", "remote-add", NULL, "--gpg-import=", "--collection-id=", "name", "url", NULL };
+  g_autofree char *gpgimport = NULL;
+  g_autofree char *collection_id_arg = NULL;
+  g_autofree char *remote_name = NULL;
 
   gpgimport = g_strdup_printf ("--gpg-import=%s/pubring.gpg", gpg_homedir);
-  repo_url = g_strdup_printf ("http://127.0.0.1:%s/test", port);
+  repo_url = g_strdup_printf ("http://127.0.0.1:%s/%s", httpd_port, remote_repo_name);
   collection_id_arg = g_strdup_printf ("--collection-id=%s", repo_collection_id);
+  remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
 
+  argv[2] = system ? "--system" : "--user";
   argv[3] = gpgimport;
   argv[4] = collection_id_arg;
-  argv[5] = (char *) repo_name;
+  argv[5] = remote_name;
   argv[6] = repo_url;
+
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
-add_flatpakrepo (void)
+add_remote_system (const char *remote_repo_name)
+{
+  _add_remote (remote_repo_name, TRUE);
+}
+
+static void
+add_remote_user (const char *remote_repo_name)
+{
+  _add_remote (remote_repo_name, FALSE);
+}
+
+static void
+_remove_remote (const char *remote_repo_name,
+                gboolean    system)
+{
+  char *argv[] = { "flatpak", "remote-delete", NULL, "name", NULL };
+  g_autofree char *remote_name = NULL;
+
+  remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
+  argv[2] = system ? "--system" : "--user";
+  argv[3] = remote_name;
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
+remove_remote_system (const char *remote_repo_name)
+{
+  _remove_remote (remote_repo_name, TRUE);
+}
+
+static void
+remove_remote_user (const char *remote_repo_name)
+{
+  _remove_remote (remote_repo_name, FALSE);
+}
+
+static void
+add_flatpakrepo (const char *flatpakrepo_repo_name)
 {
   g_autofree char *data = NULL;
   g_autoptr(GError) error = NULL;
+  g_autofree char *file_path = NULL;
 
   data = g_strconcat ("[Flatpak Repo]\n"
                       "Version=1\n"
-                      "Url=http://127.0.0.1:", httpd_port, "/test\n"
+                      "Url=http://127.0.0.1:", httpd_port, "/", flatpakrepo_repo_name, "\n"
                       "DefaultBranch=master\n"
                       "Title=Test repo\n", NULL);
 
-  g_file_set_contents ("repos/test/test.flatpakrepo", data, -1, &error);
+  file_path = g_strdup_printf ("repos/%s/%s-repo.flatpakrepo", flatpakrepo_repo_name, flatpakrepo_repo_name);
+  g_file_set_contents (file_path, data, -1, &error);
   g_assert_no_error (error);
 }
 
@@ -1487,19 +1517,25 @@ setup_repo (void)
 {
   repo_collection_id = "com.example.Test";
 
-  make_test_runtime ();
-  make_test_app ();
-  update_repo ();
-  add_remote ();
-  add_flatpakrepo ();
+  make_test_runtime ("test");
+  make_test_app ("test");
+  update_repo ("test");
+  launch_httpd ();
+  add_remote_user ("test");
+  add_flatpakrepo ("test");
   configure_languages ();
 
   /* another copy of the same repo, with different url */
   symlink ("test", "repos/copy-of-test");
 
   /* another repo, with only the app */
-  make_test_app2 ();
-  update_repo2 ();
+  make_test_app ("test-without-runtime");
+  update_repo ("test-without-runtime");
+
+  /* another repo, with only the runtime */
+  make_test_runtime ("test-runtime-only");
+  update_repo ("test-runtime-only");
+  add_flatpakrepo ("test-runtime-only");
 }
 
 static void
@@ -2265,7 +2301,7 @@ test_transaction_install_flatpakref (void)
                    "Url=http://127.0.0.1:", httpd_port, "/copy-of-test\n"
                    "IsRuntime=False\n"
                    "SuggestRemoteName=my-little-repo\n"
-                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test.flatpakrepo\n",
+                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test-repo.flatpakrepo\n",
                    NULL);
 
   data = g_bytes_new (s, strlen (s));
@@ -2303,6 +2339,121 @@ test_transaction_install_flatpakref (void)
   res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
+}
+
+static gboolean
+_is_remote_in_installation (FlatpakInstallation *installation,
+                            const char          *remote_repo_name)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) remotes = NULL;
+  g_autofree char *remote_name = NULL;
+
+  remotes = flatpak_installation_list_remotes (installation, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remotes);
+
+  remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
+  for (guint i = 0; i < remotes->len; ++i)
+    {
+      FlatpakRemote *remote = g_ptr_array_index (remotes, i);
+      if (g_strcmp0 (remote_name, flatpak_remote_get_name (remote)) == 0)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static void
+assert_remote_in_installation (FlatpakInstallation *installation,
+                               const char          *remote_repo_name)
+{
+  g_assert (_is_remote_in_installation (installation, remote_repo_name));
+}
+
+static void
+assert_remote_not_in_installation (FlatpakInstallation *installation,
+                                   const char          *remote_repo_name)
+{
+  g_assert (!_is_remote_in_installation (installation, remote_repo_name));
+}
+
+static gboolean
+add_new_remote3 (FlatpakTransaction *transaction,
+                 const char         *reason,
+                 const char         *from_id,
+                 const char         *suggested_name,
+                 const char         *url)
+{
+  return TRUE;
+}
+
+/* Test that installing a flatpakref causes both the origin remote and the
+ * runtime remote to be created, even if they already exist in another
+ * installation */
+static void
+test_transaction_flatpakref_remote_creation (void)
+{
+  g_autoptr(FlatpakInstallation) user_inst = NULL;
+  g_autoptr(FlatpakInstallation) system_inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakRemoteRef) ref = NULL;
+  g_autofree char *s = NULL;
+  g_autoptr(GBytes) data = NULL;
+  gboolean res;
+
+  system_inst = flatpak_installation_new_system (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (system_inst);
+
+  empty_installation (system_inst);
+
+  add_remote_system ("test-without-runtime");
+  add_remote_system ("test-runtime-only");
+
+  user_inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (user_inst);
+
+  empty_installation (user_inst);
+
+  assert_remote_not_in_installation (user_inst, "test-without-runtime");
+  assert_remote_not_in_installation (user_inst, "test-runtime-only");
+
+  transaction = flatpak_transaction_new_for_installation (user_inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  s = g_strconcat ("[Flatpak Ref]\n"
+                   "Title=Test App\n"
+                   "Name=org.test.Hello\n"
+                   "Branch=master\n"
+                   "Url=http://127.0.0.1:", httpd_port, "/test-without-runtime\n"
+                   "IsRuntime=False\n"
+                   "SuggestRemoteName=test-without-runtime-repo\n"
+                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test-runtime-only/test-runtime-only-repo.flatpakrepo\n",
+                   NULL);
+
+  data = g_bytes_new (s, strlen (s));
+  res = flatpak_transaction_add_install_flatpakref (transaction, data, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_signal_connect (transaction, "add-new-remote", G_CALLBACK (add_new_remote3), NULL);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  assert_remote_in_installation (user_inst, "test-without-runtime");
+  assert_remote_in_installation (user_inst, "test-runtime-only");
+
+  empty_installation (user_inst);
+  remove_remote_user ("test-without-runtime");
+  remove_remote_user ("test-runtime-only");
+  remove_remote_system ("test-without-runtime");
+  remove_remote_system ("test-runtime-only");
 }
 
 static gboolean
@@ -2520,7 +2671,7 @@ test_instance (void)
                              flatpak_get_default_arch ());
 
   update_test_app ();
-  update_repo ();
+  update_repo ("test");
 
   if (!check_bwrap_support ())
     {
@@ -2897,7 +3048,7 @@ test_install_flatpakref (void)
                    "Url=http://127.0.0.1:", httpd_port, "/test\n"
                    "IsRuntime=False\n"
                    "SuggestRemoteName=test-repo\n"
-                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test.flatpakrepo\n",
+                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test-repo.flatpakrepo\n",
                    NULL);
   data = g_bytes_new (s, strlen (s));
 
@@ -3086,7 +3237,7 @@ test_transaction_no_runtime (void)
                    "Url=http://127.0.0.1:", httpd_port, "/test-without-runtime\n"
                    "IsRuntime=False\n"
                    "SuggestRemoteName=my-little-repo\n"
-                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test.flatpakrepo\n",
+                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test-repo.flatpakrepo\n",
                    NULL);
 
   data = g_bytes_new (s, strlen (s));
@@ -3175,6 +3326,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction", test_misc_transaction);
   g_test_add_func ("/library/transaction-install-uninstall", test_transaction_install_uninstall);
   g_test_add_func ("/library/transaction-install-flatpakref", test_transaction_install_flatpakref);
+  g_test_add_func ("/library/transaction-flatpakref-remote-creation", test_transaction_flatpakref_remote_creation);
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
   g_test_add_func ("/library/transaction-install-local", test_transaction_install_local);
   g_test_add_func ("/library/instance", test_instance);
