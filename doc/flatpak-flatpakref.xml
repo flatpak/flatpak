@@ -77,7 +77,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>Name</option> (string)</term>
-                    <listitem><para>The fully qualified name of the runtime that is used by the application. This key is mandatory.</para></listitem>
+                    <listitem><para>The fully qualified name of the runtime or application. This key is mandatory.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>Url</option> (string)</term>
