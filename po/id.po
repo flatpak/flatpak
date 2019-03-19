@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-03-12 15:29+0100\n"
-"PO-Revision-Date: 2019-02-28 12:25+0700\n"
+"POT-Creation-Date: 2019-03-19 03:24+0000\n"
+"PO-Revision-Date: 2019-03-19 21:36+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -900,9 +900,8 @@ msgid "NUM-JOBS"
 msgstr "NOMOR-TUGAS"
 
 #: app/flatpak-builtins-build-update-repo.c:68
-#, fuzzy
 msgid "Don't create deltas matching refs"
-msgstr "Jangan pemutakhiran ref terkait"
+msgstr "Jangan membuat delta yang sesuai dengan ref"
 
 #: app/flatpak-builtins-build-update-repo.c:69
 msgid "Prune unused objects"
@@ -2439,7 +2438,7 @@ msgstr "Saat menghapus appstream untuk %s: "
 #: app/flatpak-builtins-repair.c:502
 #, c-format
 msgid "While deploying appstream for %s: "
-msgstr "Saat mendeploy appstream untuk %s:"
+msgstr "Saat mendeploy appstream untuk %s: "
 
 #: app/flatpak-builtins-repo.c:87
 #, c-format
@@ -4216,7 +4215,7 @@ msgstr "Peringatan: Tidak dapat menemukan metadata %s untuk dependensi: %s"
 #: common/flatpak-transaction.c:2465
 #, c-format
 msgid "Flatpakrepo URL %s not HTTP or HTTPS"
-msgstr ""
+msgstr "URL flatpakrepo %s bukan HTTP atau HTTPS"
 
 #: common/flatpak-transaction.c:2479
 #, c-format
@@ -4331,14 +4330,14 @@ msgid "No extra data sources"
 msgstr "Tidak ada sumber data tambahan"
 
 #: common/flatpak-utils.c:3690
-#, fuzzy, c-format
+#, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
-msgstr "Galat menyalin ikon 64x64: %s\n"
+msgstr "Galat menyalin ikon 64x64 untuk komponen %s: %s\n"
 
 #: common/flatpak-utils.c:3696
-#, fuzzy, c-format
+#, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
-msgstr "Galat menyalin ikon 128x128: %s\n"
+msgstr "Galat menyalin ikon 128x128 untuk komponen %s: %s\n"
 
 #: common/flatpak-utils.c:3892
 #, c-format
