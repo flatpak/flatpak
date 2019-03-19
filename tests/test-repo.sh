@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..28"
+echo "1..29"
 
 #Regular repo
 setup_repo
@@ -289,6 +289,12 @@ ${FLATPAK} ${U} install -y test-repo org.test.Hello
 assert_file_has_content $FL_DIR/app/org.test.Hello/$ARCH/master/active/files/bin/hello.sh UPDATED
 
 echo "ok redirect url and gpg key"
+
+${FLATPAK} ${U} list --arch=$ARCH --columns=ref > list-log
+assert_file_has_content list-log "org.test.Hello"
+assert_file_has_content list-log "org.test.Platform"
+
+echo "ok flatpak list --arch --columns works"
 
 if ${FLATPAK} ${INVERT_U} uninstall -y org.test.Platform org.test.Hello; then
     assert_not_reached "Should not be able to uninstall ${INVERT_U} when installed ${U}"
