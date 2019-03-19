@@ -214,7 +214,7 @@ print_table_for_refs (gboolean print_apps,
           parts = g_strsplit (ref, "/", -1);
           partial_ref = strchr (ref, '/') + 1;
 
-          if (arch != NULL && strcmp (arch, parts[1]) != 0)
+          if (arch != NULL && strcmp (arch, parts[2]) != 0)
             continue;
 
           deploy = flatpak_dir_load_deployed (dir, ref, NULL, cancellable, NULL);
