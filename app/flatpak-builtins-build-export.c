@@ -49,6 +49,7 @@ static char *opt_files;
 static char *opt_metadata;
 static char *opt_timestamp = NULL;
 static char *opt_endoflife;
+static char *opt_endoflife_rebase;
 static char *opt_collection_id = NULL;
 
 static GOptionEntry options[] = {
@@ -65,6 +66,7 @@ static GOptionEntry options[] = {
   { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, N_("Excluded files to include"), N_("PATTERN") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { "end-of-life", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife, N_("Mark build as end-of-life"), N_("REASON") },
+  { "end-of-life-rebase", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife_rebase, N_("Mark build as end-of-life, to be replaced with the given ID"), N_("ID") },
   { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit"), N_("TIMESTAMP") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), "COLLECTION-ID" },
   { "disable-fsync", 0, 0, G_OPTION_ARG_NONE, &opt_disable_fsync, "Do not invoke fsync()", NULL },
@@ -1012,6 +1014,18 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (opt_endoflife && *opt_endoflife)
     g_variant_dict_insert_value (&metadata_dict, OSTREE_COMMIT_META_KEY_ENDOFLIFE,
                                  g_variant_new_string (opt_endoflife));
+
+  if (opt_endoflife_rebase && *opt_endoflife_rebase)
+    {
+      g_auto(GStrv) full_ref_parts = g_strsplit (full_branch, "/", 0);
+      g_autofree char *rebased_ref = g_build_filename (full_ref_parts[0], opt_endoflife_rebase, full_ref_parts[2], full_ref_parts[3], NULL);
+
+      if (!flatpak_is_valid_name (opt_endoflife_rebase, error))
+        return glnx_prefix_error (error, "Invalid name in --end-of-life-rebase");
+
+      g_variant_dict_insert_value (&metadata_dict, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE,
+                                   g_variant_new_string (rebased_ref));
+    }
 
   metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
 
