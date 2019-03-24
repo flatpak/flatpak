@@ -49,6 +49,7 @@
 #include <gio/gunixoutputstream.h>
 #include <gio/gunixinputstream.h>
 
+#define APPSTREAM_ORIGIN_NAME "flatpak"
 
 /* This is also here so the common code can report these errors to the lib */
 static const GDBusErrorEntry flatpak_error_entries[] = {
@@ -3722,7 +3723,7 @@ flatpak_appstream_xml_new (void)
   appstream_components->attribute_names[0] = g_strdup ("version");
   appstream_components->attribute_values[0] = g_strdup ("0.8");
   appstream_components->attribute_names[1] = g_strdup ("origin");
-  appstream_components->attribute_values[1] = g_strdup ("flatpak");
+  appstream_components->attribute_values[1] = g_strdup (APPSTREAM_ORIGIN_NAME);
 
   return appstream_root;
 }
@@ -3826,6 +3827,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     g_autoptr(GBytes) xml_gz_data = NULL;
     g_autoptr(OstreeMutableTree) mtree = ostree_mutable_tree_new ();
     g_autoptr(OstreeMutableTree) icons_mtree = NULL;
+    g_autoptr(OstreeMutableTree) origin_mtree = NULL;
     g_autoptr(OstreeMutableTree) size1_mtree = NULL;
     g_autoptr(OstreeMutableTree) size2_mtree = NULL;
     const char *compat_arch;
@@ -3839,10 +3841,13 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     if (!flatpak_mtree_create_dir (repo, mtree, "icons", &icons_mtree, error))
       return FALSE;
 
-    if (!flatpak_mtree_create_dir (repo, icons_mtree, "64x64", &size1_mtree, error))
+    if (!flatpak_mtree_create_dir (repo, icons_mtree, APPSTREAM_ORIGIN_NAME, &origin_mtree, error))
       return FALSE;
 
-    if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
+    if (!flatpak_mtree_create_dir (repo, origin_mtree, "64x64", &size1_mtree, error))
+      return FALSE;
+
+    if (!flatpak_mtree_create_dir (repo, origin_mtree, "128x128", &size2_mtree, error))
       return FALSE;
 
     appstream_root = flatpak_appstream_xml_new ();
