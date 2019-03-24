@@ -284,6 +284,34 @@ flatpak_run_add_ssh_args (FlatpakBwrap *bwrap)
   flatpak_bwrap_set_env (bwrap, "SSH_AUTH_SOCK", sandbox_auth_socket, TRUE);
 }
 
+static void
+flatpak_run_add_pcsc_args (FlatpakBwrap *bwrap)
+{
+  const char * pcsc_socket;
+  const char * sandbox_pcsc_socket = "/run/pcscd/pcscd.comm";
+
+  pcsc_socket = g_getenv ("PCSCLITE_CSOCK_NAME");
+  if (pcsc_socket)
+    {
+      if (!g_file_test (pcsc_socket, G_FILE_TEST_EXISTS))
+        {
+          flatpak_bwrap_unset_env (bwrap, "PCSCLITE_CSOCK_NAME");
+          return;
+        }
+    }
+  else
+    {
+      pcsc_socket = "/run/pcscd/pcscd.comm";
+      if (!g_file_test (pcsc_socket, G_FILE_TEST_EXISTS))
+        return;
+    }
+
+  flatpak_bwrap_add_args (bwrap,
+                          "--ro-bind", pcsc_socket, sandbox_pcsc_socket,
+                          NULL);
+  flatpak_bwrap_set_env (bwrap, "PCSCLITE_CSOCK_NAME", sandbox_pcsc_socket, TRUE);
+}
+
 /* Try to find a default server from a pulseaudio confguration file */
 static char *
 flatpak_run_get_pulseaudio_server_user_config (const char *path)
@@ -1132,6 +1160,11 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
     {
       g_debug ("Allowing pulseaudio access");
       flatpak_run_add_pulseaudio_args (bwrap);
+    }
+
+  if (context->sockets & FLATPAK_CONTEXT_SOCKET_PCSC)
+    {
+      flatpak_run_add_pcsc_args (bwrap);
     }
 
   flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
