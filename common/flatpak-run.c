@@ -2147,7 +2147,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (clone), &SCMP_A0 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
 
     /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
-    {SCMP_SYS (ioctl), &SCMP_A1 (SCMP_CMP_EQ, (int) TIOCSTI)},
+    {SCMP_SYS (ioctl), &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCSTI)},
   };
 
   struct
