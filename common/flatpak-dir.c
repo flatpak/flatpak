@@ -8905,13 +8905,10 @@ flatpak_dir_undeploy (FlatpakDir   *self,
 
   if (force_remove || !dir_is_locked (removed_subdir))
     {
-      GError *tmp_error = NULL;
+      g_autoptr(GError) tmp_error = NULL;
 
       if (!flatpak_rm_rf (removed_subdir, cancellable, &tmp_error))
-        {
-          g_warning ("Unable to remove old checkout: %s", tmp_error->message);
-          g_error_free (tmp_error);
-        }
+        g_warning ("Unable to remove old checkout: %s", tmp_error->message);
     }
 
   return TRUE;
@@ -9063,12 +9060,9 @@ flatpak_dir_cleanup_removed (FlatpakDir   *self,
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
           !dir_is_locked (child))
         {
-          GError *tmp_error = NULL;
+          g_autoptr(GError) tmp_error = NULL;
           if (!flatpak_rm_rf (child, cancellable, &tmp_error))
-            {
-              g_warning ("Unable to remove old checkout: %s", tmp_error->message);
-              g_error_free (tmp_error);
-            }
+            g_warning ("Unable to remove old checkout: %s", tmp_error->message);
         }
 
       g_clear_object (&child_info);
