@@ -493,7 +493,7 @@ key=v1;v2;
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak run org.gnome.GEdit</command>
+            <command>$ flatpak run org.gnome.gedit</command>
         </para>
         <para>
             <command>$ flatpak run --devel --command=bash org.gnome.Builder</command>

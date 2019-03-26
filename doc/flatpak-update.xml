@@ -260,7 +260,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user update org.gnome.GEdit</command>
+            <command>$ flatpak --user update org.gnome.gedit</command>
         </para>
 
     </refsect1>

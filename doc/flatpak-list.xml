@@ -319,7 +319,7 @@
 org.gnome.Builder
 org.freedesktop.glxgears
 org.gnome.MyApp
-org.gnome.GEdit
+org.gnome.gedit
 </programlisting>
 
     </refsect1>

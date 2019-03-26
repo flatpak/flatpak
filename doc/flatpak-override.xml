@@ -352,7 +352,7 @@ key=v1;v2;
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak override --nosocket=wayland org.gnome.GEdit</command>
+            <command>$ flatpak override --nosocket=wayland org.gnome.gedit</command>
         </para>
         <para>
             <command>$ flatpak override --filesystem=home org.mozilla.Firefox</command>

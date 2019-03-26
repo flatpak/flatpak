@@ -146,7 +146,7 @@
         <title>Example</title>
 <programlisting>
 [Flatpak Ref]
-Title=GEdit
+Title=gedit
 Name=org.gnome.gedit
 Branch=stable
 Url=http://sdk.gnome.org/repo-apps/
