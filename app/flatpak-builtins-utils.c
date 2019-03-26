@@ -369,7 +369,7 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
 gboolean
 flatpak_resolve_matching_refs (const char *remote_name,
                                FlatpakDir *dir,
-                               gboolean    disable_interaction,
+                               gboolean    assume_yes,
                                char      **refs,
                                const char *opt_search_ref,
                                char      **out_ref,
@@ -386,7 +386,7 @@ flatpak_resolve_matching_refs (const char *remote_name,
    */
   if (refs_len == 1)
     {
-      if (disable_interaction)
+      if (assume_yes)
         chosen = 1;
       else
         {
@@ -428,7 +428,7 @@ flatpak_resolve_matching_refs (const char *remote_name,
 }
 
 gboolean
-flatpak_resolve_matching_installed_refs (gboolean    disable_interaction,
+flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
                                          GPtrArray  *ref_dir_pairs,
                                          const char *opt_search_ref,
                                          GPtrArray  *out_pairs,
@@ -445,7 +445,7 @@ flatpak_resolve_matching_installed_refs (gboolean    disable_interaction,
    */
   if (ref_dir_pairs->len == 1)
     {
-      if (disable_interaction)
+      if (assume_yes)
         chosen = 1;
       else
         {
@@ -514,7 +514,7 @@ flatpak_resolve_matching_installed_refs (gboolean    disable_interaction,
 }
 
 gboolean
-flatpak_resolve_matching_remotes (gboolean        disable_interaction,
+flatpak_resolve_matching_remotes (gboolean        assume_yes,
                                   GPtrArray      *remote_dir_pairs,
                                   const char     *opt_search_ref,
                                   RemoteDirPair **out_pair,
@@ -525,7 +525,7 @@ flatpak_resolve_matching_remotes (gboolean        disable_interaction,
 
   g_assert (remote_dir_pairs->len > 0);
 
-  if (disable_interaction && remote_dir_pairs->len == 1)
+  if (assume_yes && remote_dir_pairs->len == 1)
     chosen = 1;
 
   if (chosen == 0)

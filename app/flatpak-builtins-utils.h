@@ -77,19 +77,19 @@ gboolean flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
 
 gboolean flatpak_resolve_matching_refs (const char *remote_name,
                                         FlatpakDir *dir,
-                                        gboolean    disable_interaction,
+                                        gboolean    assume_yes,
                                         char      **refs,
                                         const char *opt_search_ref,
                                         char      **out_ref,
                                         GError    **error);
 
-gboolean flatpak_resolve_matching_installed_refs (gboolean    disable_interaction,
+gboolean flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
                                                   GPtrArray  *ref_dir_pairs,
                                                   const char *opt_search_ref,
                                                   GPtrArray  *out_pairs,
                                                   GError    **error);
 
-gboolean flatpak_resolve_matching_remotes (gboolean        disable_interaction,
+gboolean flatpak_resolve_matching_remotes (gboolean        assume_yes,
                                            GPtrArray      *remote_dir_pairs,
                                            const char     *opt_search_ref,
                                            RemoteDirPair **out_pair,
