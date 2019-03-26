@@ -764,7 +764,7 @@ int
 main (int    argc,
       char **argv)
 {
-  GError *error = NULL;
+  g_autoptr(GError) error = NULL;
   g_autofree const char *old_env = NULL;
   int ret;
   struct sigaction action;
@@ -812,7 +812,6 @@ main (int    argc,
         }
       g_dbus_error_strip_remote_error (error);
       g_printerr ("%s%s %s%s\n", prefix, _("error:"), suffix, error->message);
-      g_error_free (error);
     }
 
   return ret;
