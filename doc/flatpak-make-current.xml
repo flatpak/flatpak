@@ -129,7 +129,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user make-current org.gnome.GEdit 3.14</command>
+            <command>$ flatpak --user make-current org.gnome.gedit 3.14</command>
         </para>
 
     </refsect1>

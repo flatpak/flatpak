@@ -202,7 +202,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak document-export --app=org.gnome.GEdit ~/test.txt</command>
+            <command>$ flatpak document-export --app=org.gnome.gedit ~/test.txt</command>
         </para>
 <programlisting>
 /run/user/1000/doc/e52f9c6a/test.txt

@@ -233,7 +233,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user uninstall org.gnome.GEdit</command>
+            <command>$ flatpak --user uninstall org.gnome.gedit</command>
         </para>
 
     </refsect1>
