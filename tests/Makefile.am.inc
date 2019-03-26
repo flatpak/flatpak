@@ -89,7 +89,6 @@ dist_installed_test_extra_scripts += \
 	tests/make-multi-collection-id-repo.sh \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \
-	tests/make-test-bundles.sh \
 	tests/test-webserver.sh \
 	tests/test-wrapper.sh \
 	$(NULL)
