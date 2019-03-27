@@ -3865,6 +3865,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     g_autoptr(GBytes) xml_gz_data = NULL;
     g_autoptr(OstreeMutableTree) mtree = ostree_mutable_tree_new ();
     g_autoptr(OstreeMutableTree) icons_mtree = NULL;
+    g_autoptr(OstreeMutableTree) icons_flatpak_mtree = NULL;
     g_autoptr(OstreeMutableTree) size1_mtree = NULL;
     g_autoptr(OstreeMutableTree) size2_mtree = NULL;
     const char *compat_arch;
@@ -3882,6 +3883,19 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
       return FALSE;
 
     if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
+      return FALSE;
+
+    /* For compatibility with libappstream we create a $origin ("flatpak") subdirectory with symlinks
+     * to the size directories thus matching the standard merged appstream layout if we assume the
+     * appstream has origin=flatpak, which flatpak-builder creates.
+     *
+     * See https://github.com/ximion/appstream/pull/224 for details.
+     */
+    if (!flatpak_mtree_create_dir (repo, icons_mtree, "flatpak", &icons_flatpak_mtree, error))
+      return FALSE;
+    if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "64x64", "../64x64", error))
+      return FALSE;
+    if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "128x128", "../128x128", error))
       return FALSE;
 
     appstream_root = flatpak_appstream_xml_new ();
