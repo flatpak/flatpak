@@ -427,8 +427,24 @@ flatpak_resolve_matching_refs (const char *remote_name,
   return TRUE;
 }
 
+/**
+ * flatpak_resolve_matching_installed_refs:
+ * @assume_yes: If set and @ref_dir_pairs contains only one match it will be
+ *  chosen without user interaction even if it's not an exact match
+ * @only_one: If set, only allow the user to choose one option (e.g. not a
+ *  range or all of the above)
+ * @ref_dir_pairs: (element-type #RefDirPair): the ref-dir pairs to choose from
+ * @out_pairs: (element-type #RefDirPair): an array to which the user's choices
+ *  will be added
+ *
+ * Prompts the user to choose between @ref_dir_pairs and add the chosen ones to @out_pairs.
+ *
+ * Returns: %TRUE if a choice was made, either by the user or automatically,
+ *   and %FALSE otherwise with @error set
+ */
 gboolean
 flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
+                                         gboolean    only_one,
                                          GPtrArray  *ref_dir_pairs,
                                          const char *opt_search_ref,
                                          GPtrArray  *out_pairs,
@@ -478,17 +494,23 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
         }
       else
         {
-          int len = ref_dir_pairs->len + 1;
+          int len = ref_dir_pairs->len + (only_one ? 0 : 1);
           g_auto(GStrv) names = g_new0 (char *, len + 1);
           for (i = 0; i < ref_dir_pairs->len; i++)
             {
               RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i);
               names[i] = g_strdup_printf ("%s (%s)", pair->ref, flatpak_dir_get_name_cached (pair->dir));
             }
-          names[i] = g_strdup_printf (_("All of the above"));
+          if (!only_one)
+            names[i] = g_strdup_printf (_("All of the above"));
           flatpak_format_choices ((const char **) names, _("Similar installed refs found for ‘%s’:"), opt_search_ref);
-          choices = flatpak_numbers_prompt (TRUE, 0, len, _("Which do you want to use (0 to abort)?"));
-          if (choices[0] == 0)
+
+          if (only_one)
+            chosen = flatpak_number_prompt (TRUE, 0, len, _("Which do you want to use (0 to abort)?"));
+          else
+            choices = flatpak_numbers_prompt (TRUE, 0, len, _("Which do you want to use (0 to abort)?"));
+
+          if ((only_one && chosen == 0) || (!only_one && choices[0] == 0))
             return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
         }
     }

@@ -325,7 +325,9 @@ run () {
 }
 
 run_sh () {
-    ${CMD_PREFIX} flatpak run --command=bash ${ARGS-} org.test.Hello -c "$*"
+    ID=${1:-org.test.Hello}
+    shift
+    ${CMD_PREFIX} flatpak run --command=bash ${ARGS-} ${ID} -c "$*"
 }
 
 # true, false, or empty for indeterminate
