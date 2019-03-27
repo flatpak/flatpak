@@ -84,6 +84,7 @@ gboolean flatpak_resolve_matching_refs (const char *remote_name,
                                         GError    **error);
 
 gboolean flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
+                                                  gboolean    only_one,
                                                   GPtrArray  *ref_dir_pairs,
                                                   const char *opt_search_ref,
                                                   GPtrArray  *out_pairs,

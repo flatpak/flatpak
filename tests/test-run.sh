@@ -23,8 +23,10 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..13"
+echo "1..15"
 
+# Use stable rather than master as the branch so we can test that the run
+# command automatically finds the branch correctly
 setup_repo "" "" stable
 install_repo "" stable
 
@@ -69,18 +71,41 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 echo "ok hello"
 
-run_sh cat /run/user/`id -u`/flatpak-info > fpi
+run_sh org.test.Platform cat /.flatpak-info >runtime-fpi
+assert_file_has_content runtime-fpi "[Runtime]"
+assert_file_has_content runtime-fpi "^runtime=runtime/org.test.Platform/$ARCH/stable$"
+
+echo "ok run a runtime"
+
+if run org.test.Nonexistent 2> run-error-log; then
+    assert_not_reached "Unexpectedly able to run non-existent runtime"
+fi
+assert_file_has_content run-error-log "error: app/org.test.Nonexistent/$ARCH/master not installed"
+
+if ${FLATPAK} run --commit=abc runtime/org.test.Platform 2> run-error-log; then
+    assert_not_reached "Unexpectedly able to run non-existent commit"
+fi
+assert_file_has_content run-error-log "error: runtime/org.test.Platform/$ARCH/stable (commit abc) not installed"
+
+if run runtime/org.test.Nonexistent 2> run-error-log; then
+    assert_not_reached "Unexpectedly able to run non-existent runtime"
+fi
+assert_file_has_content run-error-log "error: runtime/org.test.Nonexistent/\*unspecified\*/\*unspecified\* not installed"
+
+echo "ok error handling for invalid refs"
+
+run_sh org.test.Hello cat /run/user/`id -u`/flatpak-info > fpi
 assert_file_has_content fpi '^name=org.test.Hello$'
 
 echo "ok flatpak-info"
 
-run_sh readlink /proc/self/ns/net > unshared_net_ns
-ARGS="--share=network" run_sh readlink /proc/self/ns/net > shared_net_ns
+run_sh org.test.Hello readlink /proc/self/ns/net > unshared_net_ns
+ARGS="--share=network" run_sh org.test.Hello readlink /proc/self/ns/net > shared_net_ns
 assert_not_streq `cat unshared_net_ns` `readlink /proc/self/ns/net`
 assert_streq `cat shared_net_ns` `readlink /proc/self/ns/net`
 
-run_sh readlink /proc/self/ns/ipc > unshared_ipc_ns
-ARGS="--share=ipc" run_sh readlink /proc/self/ns/ipc > shared_ipc_ns
+run_sh org.test.Hello readlink /proc/self/ns/ipc > unshared_ipc_ns
+ARGS="--share=ipc" run_sh org.test.Hello readlink /proc/self/ns/ipc > shared_ipc_ns
 assert_not_streq `cat unshared_ipc_ns` `readlink /proc/self/ns/ipc`
 assert_streq `cat shared_ipc_ns` `readlink /proc/self/ns/ipc`
 
@@ -95,13 +120,13 @@ assert_streq `cat shared_ipc_ns` `readlink /proc/self/ns/ipc`
 test_filesystem_binding () {
     local dir="$1"
 
-    if run_sh cat "$dir/package_version.txt" &> /dev/null; then
+    if run_sh org.test.Hello cat "$dir/package_version.txt" &> /dev/null; then
         assert_not_reached "Unexpectedly allowed to access file"
     fi
 
     case "$dir" in
         (/home/*|/opt/*|/var/tmp/*)
-            if ! ARGS="--filesystem=$dir" run_sh cat "$dir/package_version.txt" > /dev/null; then
+            if ! ARGS="--filesystem=$dir" run_sh org.test.Hello cat "$dir/package_version.txt" > /dev/null; then
                 assert_not_reached "Failed to share --filesystem=$dir"
             fi
             ;;
@@ -112,7 +137,7 @@ test_filesystem_binding () {
 
     case "$dir" in
         (/home/*|/opt/*)
-            if ! ARGS="--filesystem=host" run_sh cat "$dir/package_version.txt" > /dev/null; then
+            if ! ARGS="--filesystem=host" run_sh org.test.Hello cat "$dir/package_version.txt" > /dev/null; then
                 assert_not_reached "Failed to share $dir as part of host filesystem"
             fi
             ;;
@@ -142,7 +167,7 @@ echo "ok namespaces"
 test_overrides () {
     local dir="$1"
 
-    if run_sh cat "$dir/package_version.txt" &> /dev/null; then
+    if run_sh org.test.Hello cat "$dir/package_version.txt" &> /dev/null; then
         assert_not_reached "Unexpectedly allowed to access file"
     fi
 
@@ -150,7 +175,7 @@ test_overrides () {
 
     case "$dir" in
         (/home/*|/opt/*)
-            if ! run_sh cat "$dir/package_version.txt" > /dev/null; then
+            if ! run_sh org.test.Hello cat "$dir/package_version.txt" > /dev/null; then
                 assert_not_reached "Failed to share $dir as part of host filesystem"
             fi
             ;;
@@ -159,13 +184,13 @@ test_overrides () {
             ;;
     esac
 
-    if ARGS="--nofilesystem=host" run_sh cat "${dir}/package_version.txt" &> /dev/null; then
+    if ARGS="--nofilesystem=host" run_sh org.test.Hello cat "${dir}/package_version.txt" &> /dev/null; then
         assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
     fi
 
     $FLATPAK override ${U} --nofilesystem=host org.test.Hello
 
-    if run_sh cat "${dir}/package_version.txt" &> /dev/null; then
+    if run_sh org.test.Hello cat "${dir}/package_version.txt" &> /dev/null; then
         assert_not_reached "Unexpectedly allowed to access file"
     fi
 }
