@@ -274,7 +274,7 @@ ${FLATPAK} ${U} install -y test-repo org.test.Platform
 
 port=$(cat httpd-port-main)
 UPDATE_REPO_ARGS="--redirect-url=http://127.0.0.1:${port}/test-gpg3 --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg" update_repo
-GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo_no_add test-gpg3 org.test.Collection.test
+GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo_no_add test-gpg3 org.test.Collection.test master
 
 ${FLATPAK} ${U} update -y org.test.Platform
 # Ensure we have the new uri
@@ -282,7 +282,7 @@ ${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
 assert_file_has_content repo-info "/test-gpg3"
 
 # Make sure we also get new installs from the new repo
-GPGARGS="${FL_GPGARGS2}" make_updated_app test-gpg3 org.test.Collection.test
+GPGARGS="${FL_GPGARGS2}" make_updated_app test-gpg3 org.test.Collection.test master
 update_repo test-gpg3 org.test.Collection.test
 
 ${FLATPAK} ${U} install -y test-repo org.test.Hello

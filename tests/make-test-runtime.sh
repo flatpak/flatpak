@@ -11,6 +11,8 @@ REPO=$1
 shift
 ID=$1
 shift
+BRANCH=$1
+shift
 COLLECTION_ID=$1
 shift
 
@@ -85,5 +87,5 @@ else
 fi
 
 mkdir -p repos
-flatpak build-export ${collection_args} --disable-sandbox --runtime ${GPGARGS-} ${REPO} ${DIR}
+flatpak build-export ${collection_args} --disable-sandbox --runtime ${GPGARGS-} ${REPO} ${DIR} ${BRANCH}
 rm -rf ${DIR}
