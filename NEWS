@@ -1,5 +1,24 @@
+Changes in 1.2.4
+================
+
+This release fixes CVE-2019-10063.
+
+It has been discovered that the previous fix for CVE-2017-5226, which uses
+seccomp to prevent sandboxed apps from using the (dangerous) TIOCSTI ioctl
+was only incomplete on 64bit arches. This is now fixed.
+
+ * seccomp: Only compare the low 32bit of the TIOCSTI ioctl args.
+ * Support multiple nvidia cards on the machine
+ * Fix support for systems where XDG_RUNTIME_DIR is /var/run which is a symlink
+   like gentoo.
+ * Fix potential crash when updating apps.
+ * flatpak list --arch now works correctly again.
+ * Update translations
+
 Changes in 1.2.3
 ================
+
+This release fixes CVE-2019-8308.
 
 The CVE-2019-5736 runc vulnerability is about using /proc/self/exe
 to modify the host side binary from the sandbox. This mostly does not
