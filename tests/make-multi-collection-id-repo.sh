@@ -40,7 +40,7 @@ for i in {1..3}; do
     APP_ID=org.test.Hello${i}
     COLLECTION_ID=${COLLECTION_ID_PREFIX}${i}
 
-    $(dirname $0)/make-test-app.sh repos/${APP_REPO} ${APP_ID} ${COLLECTION_ID}
+    $(dirname $0)/make-test-app.sh repos/${APP_REPO} ${APP_ID} master ${COLLECTION_ID}
     ref=$(ostree --repo=${APP_REPO_DIR} refs | grep ${APP_ID})
 
     ostree --repo=${REPO_DIR} remote add --no-gpg-verify --collection-id=${COLLECTION_ID} ${APP_REPO} file://${APP_REPO_DIR}

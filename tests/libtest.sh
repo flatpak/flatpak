@@ -198,16 +198,18 @@ export FL_GPG_BASE642="mQENBFkSyx4BCACq/8XFcF+NTpJKfoo8F6YyR8RQXww6kCV47zN78Dt7a
 make_runtime () {
     REPONAME="$1"
     COLLECTION_ID="$2"
-    GPGARGS="$3"
+    BRANCH="$3"
+    GPGARGS="$4"
 
-    if [ -d ${test_builddir}/runtime-repo ]; then
+    RUNTIME_REF="runtime/org.test.Platform/$(flatpak --default-arch)/${BRANCH}"
+    if [ -f ${test_builddir}/runtime-repo/${RUNTIME_REF} ]; then
         RUNTIME_REPO=${test_builddir}/runtime-repo
     else
         RUNTIME_REPO=${TEST_DATA_DIR}/runtime-repo
         (
             flock -s 200
             if [ ! -d ${RUNTIME_REPO} ]; then
-                $(dirname $0)/make-test-runtime.sh ${RUNTIME_REPO} org.test.Platform "" > /dev/null
+                $(dirname $0)/make-test-runtime.sh ${RUNTIME_REPO} org.test.Platform ${BRANCH} "" > /dev/null
             fi
         ) 200>${TEST_DATA_DIR}/runtime-repo-lock
     fi
@@ -222,7 +224,7 @@ make_runtime () {
         ostree --repo=repos/${REPONAME} init --mode=archive-z2 ${collection_args}
     fi
 
-    flatpak build-commit-from --disable-fsync --src-repo=${RUNTIME_REPO} --force ${GPGARGS} repos/${REPONAME}  runtime/org.test.Platform/$(flatpak --default-arch)/master
+    flatpak build-commit-from --disable-fsync --src-repo=${RUNTIME_REPO} --force ${GPGARGS} repos/${REPONAME}  ${RUNTIME_REF}
 }
 
 setup_repo_no_add () {
@@ -232,9 +234,10 @@ setup_repo_no_add () {
     else
         COLLECTION_ID=
     fi
+    BRANCH=${3:-master}
 
-    make_runtime "${REPONAME}" "${COLLECTION_ID}" "${GPGARGS:-${FL_GPGARGS}}"
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${COLLECTION_ID}" > /dev/null
+    make_runtime "${REPONAME}" "${COLLECTION_ID}" "${BRANCH}" "${GPGARGS:-${FL_GPGARGS}}"
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
         $(dirname $0)/test-webserver.sh repos
@@ -284,8 +287,9 @@ make_updated_app () {
     else
         COLLECTION_ID=""
     fi
+    BRANCH=${3:-master}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${COLLECTION_ID}" ${3:-UPDATED} > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" ${4:-UPDATED} > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -296,20 +300,23 @@ setup_sdk_repo () {
     else
         COLLECTION_ID=""
     fi
+    BRANCH=${3:-master}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Sdk "${COLLECTION_ID}" make mkdir cp touch > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Sdk "${BRANCH}" "${COLLECTION_ID}" make mkdir cp touch > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
 install_repo () {
     REPONAME=${1:-test}
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Platform master
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Hello master
+    BRANCH=${2:-master}
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Platform ${BRANCH}
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Hello ${BRANCH}
 }
 
 install_sdk_repo () {
     REPONAME=${1:-test}
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Sdk master
+    BRANCH=${2:-master}
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Sdk ${BRANCH}
 }
 
 run () {

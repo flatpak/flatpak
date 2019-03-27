@@ -25,24 +25,24 @@ skip_without_bwrap
 
 echo "1..13"
 
-setup_repo
-install_repo
+setup_repo "" "" stable
+install_repo "" stable
 
 # Verify that app is correctly installed
 
 assert_has_dir $FL_DIR/app/org.test.Hello
 assert_has_symlink $FL_DIR/app/org.test.Hello/current
-assert_symlink_has_content $FL_DIR/app/org.test.Hello/current ^$ARCH/master$
-assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/master
-assert_has_symlink $FL_DIR/app/org.test.Hello/$ARCH/master/active
-ID=`readlink $FL_DIR/app/org.test.Hello/$ARCH/master/active`
-assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/deploy
-assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
-assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/master/active/files
-assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/master/active/export
+assert_symlink_has_content $FL_DIR/app/org.test.Hello/current ^$ARCH/stable$
+assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/stable
+assert_has_symlink $FL_DIR/app/org.test.Hello/$ARCH/stable/active
+ID=`readlink $FL_DIR/app/org.test.Hello/$ARCH/stable/active`
+assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/stable/active/deploy
+assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/stable/active/metadata
+assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/stable/active/files
+assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/stable/active/export
 assert_has_file $FL_DIR/exports/share/applications/org.test.Hello.desktop
 # Ensure Exec key is rewritten
-assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/flatpak run --branch=master --arch=$ARCH --command=hello.sh org.test.Hello$"
+assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/flatpak run --branch=stable --arch=$ARCH --command=hello.sh org.test.Hello$"
 assert_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
 assert_not_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/dont-export.png
 assert_has_file $FL_DIR/exports/share/icons/HighContrast/64x64/apps/org.test.Hello.png
@@ -185,14 +185,14 @@ OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 # TODO: For weird reasons this breaks in the system case. Needs debugging
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
-    ${FLATPAK} ${U} update -y -v org.test.Hello master
+    ${FLATPAK} ${U} update -y -v org.test.Hello stable
     ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
     assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
 fi
 
 echo "ok null update"
 
-make_updated_app
+make_updated_app "" "" stable
 
 ${FLATPAK} ${U} update -y org.test.Hello
 
@@ -205,7 +205,7 @@ assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 echo "ok update"
 
-ostree --repo=repos/test reset app/org.test.Hello/$ARCH/master "$OLD_COMMIT"
+ostree --repo=repos/test reset app/org.test.Hello/$ARCH/stable "$OLD_COMMIT"
 update_repo
 
 if ${FLATPAK} ${U} update -y org.test.Hello; then
@@ -219,7 +219,7 @@ assert_streq "$NEW_COMMIT" "$NEW_NEW_COMMIT"
 echo "ok backwards update"
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.Split org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.Split org.test.Platform org.test.Platform stable
 
 mkdir -p ${DIR}/files/a
 echo "a" > ${DIR}/files/a/data
@@ -232,10 +232,10 @@ echo "d" > ${DIR}/files/d/data
 echo "nope" > ${DIR}/files/nope
 
 ${FLATPAK} build-finish --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 update_repo
 
-${FLATPAK} ${U} install -y test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir master
+${FLATPAK} ${U} install -y test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir stable
 
 COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
@@ -243,12 +243,12 @@ if [ x${USE_SYSTEMDIR-} != xyes ] ; then
     assert_has_file $FL_DIR/repo/state/${COMMIT}.commitpartial
 fi
 
-assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data
-assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/b/data
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/c
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/d
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nosuchdir
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/a/data
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/b/data
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/c
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/d
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/nope
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/nosuchdir
 
 echo "aa" > ${DIR}/files/a/data2
 rm  ${DIR}/files/a/data
@@ -258,7 +258,7 @@ mkdir -p ${DIR}/files/f
 echo "f" > ${DIR}/files/f/data
 rm -rf  ${DIR}/files/b
 
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 update_repo
 
 ${FLATPAK} ${U} update -y --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split
@@ -269,16 +269,16 @@ if [ x${USE_SYSTEMDIR-} != xyes ] ; then
     assert_has_file $FL_DIR/repo/state/${COMMIT}.commitpartial
 fi
 
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data
-assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data2
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/b
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/c
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/d
-assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/e/data
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/f
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/a/data
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/a/data2
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/b
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/c
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/d
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/e/data
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/f
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/nope
 
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 update_repo
 
 # Test reusing the old subpath list
@@ -290,49 +290,49 @@ if [ x${USE_SYSTEMDIR-} != xyes ] ; then
     assert_has_file $FL_DIR/repo/state/${COMMIT}.commitpartial
 fi
 
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data
-assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data2
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/b
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/c
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/d
-assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/e/data
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/f
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/a/data
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/a/data2
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/b
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/c
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/d
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/e/data
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/f
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/nope
 
 echo "ok subpaths"
 
 VERSION=`cat "$test_builddir/package_version.txt"`
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform stable
 ${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable
 ${FLATPAK} build-finish --require-version=0.6.10 --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.NewVersion org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.NewVersion org.test.Platform org.test.Platform stable
 ${FLATPAK} build-finish --require-version=1${VERSION} --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 
 update_repo
 
-${FLATPAK} ${U} install -y test-repo org.test.OldVersion master
-${FLATPAK} ${U} install -y test-repo org.test.CurrentVersion master
-(! ${FLATPAK} ${U} install -y test-repo org.test.NewVersion master)
+${FLATPAK} ${U} install -y test-repo org.test.OldVersion stable
+${FLATPAK} ${U} install -y test-repo org.test.CurrentVersion stable
+(! ${FLATPAK} ${U} install -y test-repo org.test.NewVersion stable)
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable
 ${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 
 (! ${FLATPAK} ${U} update -y org.test.OldVersion)
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable
 ${FLATPAK} build-finish --require-version=0.1.1 --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 
 ${FLATPAK} ${U} update -y org.test.OldVersion
 
@@ -341,49 +341,49 @@ ${FLATPAK} ${U} update -y org.test.OldVersion
 # and should not block a successful install of OldVersion later
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform stable
 touch ${DIR}/files/updated
 ${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable
 touch ${DIR}/files/updated
 ${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR} stable
 
 if ${FLATPAK} ${U} update -y &> err_version.txt; then
     assert_not_reached "Should not have been able to update due to version"
 fi
 assert_file_has_content err_version.txt "needs a later flatpak version"
 
-assert_not_has_file $FL_DIR/app/org.test.CurrentVersion/$ARCH/master/active/files/updated
-assert_has_file $FL_DIR/app/org.test.OldVersion/$ARCH/master/active/files/updated
+assert_not_has_file $FL_DIR/app/org.test.CurrentVersion/$ARCH/stable/active/files/updated
+assert_has_file $FL_DIR/app/org.test.OldVersion/$ARCH/stable/active/files/updated
 
 echo "ok version checks"
 
 rm -rf app
-flatpak build-init app org.test.Writable org.test.Platform org.test.Platform
+flatpak build-init app org.test.Writable org.test.Platform org.test.Platform stable
 mkdir -p app/files/a-dir
 chmod a+rwx app/files/a-dir
 flatpak build-finish --command=hello.sh app
 # Note: not --canonical-permissions
-ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/master app
+ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/stable app
 update_repo
 
 ${FLATPAK} ${U} install -y test-repo org.test.Writable
 
-assert_file_has_mode $FL_DIR/app/org.test.Writable/$ARCH/master/active/files/a-dir 775
+assert_file_has_mode $FL_DIR/app/org.test.Writable/$ARCH/stable/active/files/a-dir 775
 
 echo "ok no world writable dir"
 
 rm -rf app
-flatpak build-init app org.test.Setuid org.test.Platform org.test.Platform
+flatpak build-init app org.test.Setuid org.test.Platform org.test.Platform stable
 mkdir -p app/files/
 touch app/files/exe
 chmod u+s app/files/exe
 flatpak build-finish --command=hello.sh app
 # Note: not --canonical-permissions
-ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/master app
+ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/stable app
 update_repo
 
 if ${FLATPAK} ${U} install -y test-repo org.test.Setuid &> err2.txt; then
@@ -394,16 +394,16 @@ assert_file_has_content err2.txt [Ii]nvalid
 echo "ok no setuid"
 
 rm -rf app
-flatpak build-init app org.test.App org.test.Platform org.test.Platform
+flatpak build-init app org.test.App org.test.Platform org.test.Platform stable
 mkdir -p app/files/
 touch app/files/exe
 flatpak build-finish --command=hello.sh --sdk=org.test.Sdk app
-${FLATPAK} build-export ${FL_GPGARGS} repos/test app
+${FLATPAK} build-export ${FL_GPGARGS} repos/test app stable
 update_repo
 
 ${FLATPAK} ${U} install -y test-repo org.test.App
 ${FLATPAK} ${U} info -m org.test.App > out
 
-assert_file_has_content out "^sdk=org.test.Sdk/$(flatpak --default-arch)/master$"
+assert_file_has_content out "^sdk=org.test.Sdk/$(flatpak --default-arch)/stable$"
 
 echo "ok --sdk option"

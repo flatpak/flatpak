@@ -1289,14 +1289,14 @@ make_test_runtime (const char *runtime_repo_name)
   g_autofree char *arg0 = NULL;
   g_autofree char *arg1 = NULL;
   char *argv[] = {
-    NULL, NULL, "org.test.Platform", "", NULL
+    NULL, NULL, "org.test.Platform", "master", "", NULL
   };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
   arg1 = g_strdup_printf ("repos/%s", runtime_repo_name);
   argv[0] = arg0;
   argv[1] = arg1;
-  argv[3] = repo_collection_id;
+  argv[4] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -1306,13 +1306,13 @@ make_test_app (const char *app_repo_name)
 {
   g_autofree char *arg0 = NULL;
   g_autofree char *arg1 = NULL;
-  char *argv[] = { NULL, NULL, "", "", NULL };
+  char *argv[] = { NULL, NULL, "", "master", "", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   arg1 = g_strdup_printf ("repos/%s", app_repo_name);
   argv[0] = arg0;
   argv[1] = arg1;
-  argv[3] = repo_collection_id;
+  argv[4] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -1321,11 +1321,11 @@ static void
 update_test_app (void)
 {
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "repos/test", "", "", "SPIN", NULL };
+  char *argv[] = { NULL, "repos/test", "", "master", "", "SPIN", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
-  argv[3] = repo_collection_id;
+  argv[4] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
