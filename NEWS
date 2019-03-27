@@ -1,5 +1,18 @@
+Changes in 1.0.8
+================
+
+This release fixes CVE-2019-10063.
+
+It has been discovered that the previous fix for CVE-2017-5226, which uses
+seccomp to prevent sandboxed apps from using the (dangerous) TIOCSTI ioctl
+was only incomplete on 64bit arches. This is now fixed.
+
+ * seccomp: Only compare the low 32bit of the TIOCSTI ioctl args.
+
 Changes in 1.0.7
 ================
+
+This release fixes CVE-2019-8308.
 
 The CVE-2019-5736 runc vulnerability is about using /proc/self/exe
 to modify the host side binary from the sandbox. This mostly does not
