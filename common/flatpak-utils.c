@@ -3340,6 +3340,45 @@ flatpak_mtree_create_dir (OstreeRepo         *repo,
 }
 
 gboolean
+flatpak_mtree_create_symlink (OstreeRepo         *repo,
+                              OstreeMutableTree  *parent,
+                              const char         *filename,
+                              const char         *target,
+                              GError            **error)
+{
+  g_autoptr(GFileInfo) file_info = g_file_info_new ();
+  g_autoptr(GInputStream) content_stream = NULL;
+  g_autofree guchar *raw_checksum = NULL;
+  g_autofree char *checksum = NULL;
+  guint64 length;
+
+  g_file_info_set_name (file_info, filename);
+  g_file_info_set_file_type (file_info, G_FILE_TYPE_SYMBOLIC_LINK);
+  g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
+  g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", S_IFLNK | 0755);
+
+  g_file_info_set_attribute_boolean (file_info, "standard::is-symlink", TRUE);
+  g_file_info_set_attribute_byte_string (file_info, "standard::symlink-target", target);
+
+  if (!ostree_raw_file_to_content_stream (NULL, file_info, NULL,
+                                          &content_stream, &length,
+                                          NULL, error))
+    return FALSE;
+
+  if (!ostree_repo_write_content (repo, NULL, content_stream, length,
+                                  &raw_checksum, NULL, error))
+    return FALSE;
+
+  checksum = ostree_checksum_from_bytes (raw_checksum);
+
+  if (!ostree_mutable_tree_replace_file (parent, filename, checksum, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 flatpak_mtree_add_file_from_bytes (OstreeRepo *repo,
                                    GBytes *bytes,
                                    OstreeMutableTree *parent,

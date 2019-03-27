@@ -405,6 +405,11 @@ gboolean flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
                                             OstreeMutableTree *mtree,
                                             GCancellable      *cancellable,
                                             GError           **error);
+gboolean flatpak_mtree_create_symlink (OstreeRepo         *repo,
+                                       OstreeMutableTree  *parent,
+                                       const char         *name,
+                                       const char         *target,
+                                       GError            **error);
 gboolean flatpak_mtree_add_file_from_bytes (OstreeRepo *repo,
                                             GBytes *bytes,
                                             OstreeMutableTree *parent,
