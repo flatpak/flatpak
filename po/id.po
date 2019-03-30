@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-03-27 10:41+0100\n"
-"PO-Revision-Date: 2019-03-19 21:36+0700\n"
+"POT-Creation-Date: 2019-03-30 03:24+0000\n"
+"PO-Revision-Date: 2019-03-30 14:28+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -2837,9 +2837,9 @@ msgid "Do you want to install it?"
 msgstr "Apakah Anda ingin memasangnya?"
 
 #: app/flatpak-cli-transaction.c:98
-#, fuzzy, c-format
+#, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
-msgstr "Diperlukan runtime untuk %s (%s) ditemukan di remote: %s"
+msgstr "Diperlukan runtime untuk %s (%s) yang ditemukan pada remote:"
 
 #: app/flatpak-cli-transaction.c:100
 msgid "Which do you want to install (0 to abort)?"
