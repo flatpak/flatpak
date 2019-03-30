@@ -1290,21 +1290,28 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                        const gchar        *arg_ref,
                                        const gchar        *arg_origin,
                                        const gchar *const *arg_subpaths,
+                                       const gchar *const *arg_previous_ids,
                                        const gchar        *arg_installation,
                                        GCancellable       *cancellable,
                                        GError            **error)
 {
+  const char *empty[] = { NULL };
+
+  if (arg_previous_ids == NULL)
+    arg_previous_ids = empty;
+
   if (flatpak_dir_get_no_interaction (self))
     arg_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION;
 
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "Deploy",
-                                    g_variant_new ("(^ayuss^ass)",
+                                    g_variant_new ("(^ayuss^as^ass)",
                                                    arg_repo_path,
                                                    arg_flags,
                                                    arg_ref,
                                                    arg_origin,
                                                    arg_subpaths,
+                                                   arg_previous_ids,
                                                    arg_installation),
                                     G_VARIANT_TYPE ("()"), NULL,
                                     cancellable, error);
@@ -3289,6 +3296,8 @@ flatpak_dir_resolve_free (FlatpakDirResolve *resolve)
       g_free (resolve->opt_commit);
       g_free (resolve->resolved_commit);
       g_bytes_unref (resolve->resolved_metadata);
+      g_free (resolve->eol);
+      g_free (resolve->eol_rebase);
       g_free (resolve);
     }
 }
@@ -3342,6 +3351,7 @@ resolve_p2p_update_from_commit (FlatpakDirResolve *resolve,
   guint64 installed_size = 0;
 
   commit_metadata = g_variant_get_child_value (commit_data, 0);
+
   g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
   if (xa_metadata == NULL)
     g_message ("Warning: No xa.metadata in commit %s ref %s", resolve->resolved_commit, resolve->ref);
@@ -3353,6 +3363,9 @@ resolve_p2p_update_from_commit (FlatpakDirResolve *resolve,
 
   if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
     resolve->installed_size = GUINT64_FROM_BE (installed_size);
+
+  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &resolve->eol);
+  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &resolve->eol_rebase);
 }
 
 static gboolean
@@ -7092,7 +7105,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                     const char          *ref,
                     const char          *checksum_or_latest,
                     const char * const * subpaths,
-                    GVariant            *old_deploy_data,
+                    const char * const * previous_ids,
                     GCancellable        *cancellable,
                     GError             **error)
 {
@@ -7127,7 +7140,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *metadata_contents = NULL;
   g_auto(GStrv) ref_parts = NULL;
   gboolean is_app;
-  g_autofree const char **previous_ids = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -7401,9 +7413,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                 G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
     return TRUE;
 
-  if (old_deploy_data)
-    previous_ids = flatpak_deploy_data_get_previous_ids (old_deploy_data, NULL);
-
   export = g_file_get_child (checkoutdir, "export");
 
   /* Never export any binaries bundled with the app */
@@ -7563,6 +7572,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
                             const char   *ref,
                             const char   *origin,
                             const char  **subpaths,
+                            const char  **previous_ids,
                             gboolean      reinstall,
                             GCancellable *cancellable,
                             GError      **error)
@@ -7628,7 +7638,8 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   /* After we create the deploy base we must goto out on errors */
   created_deploy_base = TRUE;
 
-  if (!flatpak_dir_deploy (self, origin, ref, NULL, (const char * const *) subpaths, NULL, cancellable, error))
+  if (!flatpak_dir_deploy (self, origin, ref, NULL, (const char * const *) subpaths,
+                           previous_ids, cancellable, error))
     goto out;
 
   if (g_str_has_prefix (ref, "app/"))
@@ -7676,6 +7687,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            const char   *ref,
                            const char   *checksum_or_latest,
                            const char  **opt_subpaths,
+                           const char  **opt_previous_ids,
                            GCancellable *cancellable,
                            GError      **error)
 {
@@ -7685,6 +7697,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   g_autofree char *old_active = NULL;
   const char *old_origin;
   g_autofree char *commit = NULL;
+  g_auto(GStrv) previous_ids = NULL;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -7699,12 +7712,20 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
 
   old_origin = flatpak_deploy_data_get_origin (old_deploy_data);
   old_subpaths = flatpak_deploy_data_get_subpaths (old_deploy_data);
+
+  previous_ids = g_strdupv ((char **) flatpak_deploy_data_get_previous_ids (old_deploy_data, NULL));
+  if (opt_previous_ids)
+    {
+      g_auto(GStrv) old_previous_ids = previous_ids;
+      previous_ids = flatpak_strv_merge (old_previous_ids, (char **) opt_previous_ids);
+    }
+
   if (!flatpak_dir_deploy (self,
                            old_origin,
                            ref,
                            checksum_or_latest,
                            opt_subpaths ? opt_subpaths : old_subpaths,
-                           old_deploy_data,
+                           (const char * const *) previous_ids,
                            cancellable, error))
     return FALSE;
 
@@ -8037,6 +8058,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      const char          *ref,
                      const char          *opt_commit,
                      const char         **opt_subpaths,
+                     const char         **opt_previous_ids,
                      OstreeAsyncProgress *progress,
                      GCancellable        *cancellable,
                      GError             **error)
@@ -8258,6 +8280,7 @@ flatpak_dir_install (FlatpakDir          *self,
                                                   child_repo_path ? child_repo_path : "",
                                                   helper_flags, ref, state->remote_name,
                                                   (const char * const *) subpaths,
+                                                  (const char * const *) opt_previous_ids,
                                                   installation ? installation : "",
                                                   cancellable,
                                                   error))
@@ -8280,7 +8303,7 @@ flatpak_dir_install (FlatpakDir          *self,
   if (!no_deploy)
     {
       if (!flatpak_dir_deploy_install (self, ref, state->remote_name, opt_subpaths,
-                                       reinstall, cancellable, error))
+                                       opt_previous_ids, reinstall, cancellable, error))
         return FALSE;
     }
 
@@ -8556,12 +8579,12 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
 
   if (deploy_data)
     {
-      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, cancellable, error))
+      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, NULL, cancellable, error))
         return FALSE;
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, FALSE, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, cancellable, error))
         return FALSE;
     }
 
@@ -8708,6 +8731,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     const char                           *commit,
                     const OstreeRepoFinderResult * const *results,
                     const char                          **opt_subpaths,
+                    const char                          **opt_previous_ids,
                     OstreeAsyncProgress                  *progress,
                     GCancellable                         *cancellable,
                     GError                              **error)
@@ -8936,7 +8960,7 @@ flatpak_dir_update (FlatpakDir                           *self,
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
                                                   helper_flags, ref, state->remote_name,
-                                                  subpaths,
+                                                  subpaths, opt_previous_ids,
                                                   installation ? installation : "",
                                                   cancellable,
                                                   error))
@@ -8962,7 +8986,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                                       /* We don't know the local commit id in the OCI case, and
                                          we only support one version anyway */
                                       is_oci ? NULL : commit,
-                                      subpaths,
+                                      subpaths, opt_previous_ids,
                                       cancellable, error))
         return FALSE;
     }
@@ -12395,6 +12419,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
       g_auto(GLnxLockFile) child_repo_lock = { 0, };
       const char *installation = flatpak_dir_get_id (self);
       const char *subpaths[] = {NULL};
+      const char * const *previous_ids = {NULL};
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
       g_autofree char *url = NULL;
@@ -12464,7 +12489,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
                                                   helper_flags, OSTREE_REPO_METADATA_REF, state->remote_name,
-                                                  (const char * const *) subpaths,
+                                                  (const char * const *) subpaths, previous_ids,
                                                   installation ? installation : "",
                                                   cancellable,
                                                   error))

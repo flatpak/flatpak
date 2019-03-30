@@ -69,6 +69,7 @@
       <arg type='s' name='ref' direction='in'/>
       <arg type='s' name='origin' direction='in'/>
       <arg type='as' name='subpaths' direction='in'/>
+      <arg type='as' name='previous_ids' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
     </method>
 
