@@ -377,6 +377,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                const gchar           *arg_ref,
                const gchar           *arg_origin,
                const gchar *const    *arg_subpaths,
+               const gchar *const    *arg_previous_ids,
                const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
@@ -661,8 +662,10 @@ handle_deploy (FlatpakSystemHelper   *object,
     {
       if (deploy_dir && !reinstall)
         {
-          if (!flatpak_dir_deploy_update (system, arg_ref,
-                                          NULL, (const char **) arg_subpaths, NULL, &error))
+          if (!flatpak_dir_deploy_update (system, arg_ref, NULL,
+                                          (const char **) arg_subpaths,
+                                          (const char **) arg_previous_ids,
+                                          NULL, &error))
             {
               flatpak_invocation_return_error (invocation, error, "Error deploying");
               return TRUE;
@@ -672,8 +675,8 @@ handle_deploy (FlatpakSystemHelper   *object,
         {
           if (!flatpak_dir_deploy_install (system, arg_ref, arg_origin,
                                            (const char **) arg_subpaths,
-                                           reinstall,
-                                           NULL, &error))
+                                           (const char **) arg_previous_ids,
+                                           reinstall, NULL, &error))
             {
               flatpak_invocation_return_error (invocation, error, "Error deploying");
               return TRUE;

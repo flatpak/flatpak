@@ -95,9 +95,9 @@ struct _FlatpakTransactionClass
 {
   GObjectClass parent_class;
 
-  void         (*new_operation)        (FlatpakTransaction          *transaction,
-                                        FlatpakTransactionOperation *operation,
-                                        FlatpakTransactionProgress  *progress);
+  void (*new_operation)        (FlatpakTransaction          *transaction,
+                                FlatpakTransactionOperation *operation,
+                                FlatpakTransactionProgress  *progress);
   void (*operation_done)       (FlatpakTransaction          *transaction,
                                 FlatpakTransactionOperation *operation,
                                 const char                  *commit,
@@ -114,6 +114,12 @@ struct _FlatpakTransactionClass
                                 const char         *ref,
                                 const char         *reason,
                                 const char         *rebase);
+  gboolean (*end_of_lifed_with_rebase) (FlatpakTransaction *transaction,
+                                        const char         *remote,
+                                        const char         *ref,
+                                        const char         *reason,
+                                        const char         *rebased_to_ref,
+                                        const char        **previous_ids);
   gboolean (*ready)            (FlatpakTransaction *transaction);
 
   gboolean (*add_new_remote) (FlatpakTransaction            *transaction,
@@ -219,6 +225,13 @@ gboolean            flatpak_transaction_add_install (FlatpakTransaction *self,
                                                      const char         *ref,
                                                      const char        **subpaths,
                                                      GError            **error);
+FLATPAK_EXTERN
+gboolean            flatpak_transaction_add_rebase (FlatpakTransaction *self,
+                                                    const char         *remote,
+                                                    const char         *ref,
+                                                    const char        **subpaths,
+                                                    const char        **previous_ids,
+                                                    GError            **error);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
                                                             GFile              *file,

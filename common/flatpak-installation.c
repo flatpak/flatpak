@@ -1897,7 +1897,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
                             FALSE, FALSE, state,
-                            ref, NULL, (const char **) subpaths,
+                            ref, NULL, (const char **) subpaths, NULL,
                             ostree_progress, cancellable, error))
     goto out;
 
@@ -2070,7 +2070,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            FALSE, FALSE, FALSE, state,
                            ref, target_commit,
                            (const OstreeRepoFinderResult * const *) check_results,
-                           (const char **) subpaths,
+                           (const char **) subpaths, NULL,
                            ostree_progress, cancellable, error))
     goto out;
 

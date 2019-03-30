@@ -165,6 +165,7 @@ typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION = 1 << 4,
   FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT = 1 << 5,
   FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT = 1 << 6,
+  FLATPAK_HELPER_DEPLOY_FLAGS,
 } FlatpakHelperDeployFlags;
 
 #define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE | \
@@ -609,19 +610,21 @@ gboolean    flatpak_dir_deploy (FlatpakDir          *self,
                                 const char          *ref,
                                 const char          *checksum_or_latest,
                                 const char * const * subpaths,
-                                GVariant            *old_deploy_data,
+                                const char * const * previous_ids,
                                 GCancellable        *cancellable,
                                 GError             **error);
 gboolean    flatpak_dir_deploy_update (FlatpakDir   *self,
                                        const char   *ref,
                                        const char   *checksum,
                                        const char  **opt_subpaths,
+                                       const char  **opt_previous_ids,
                                        GCancellable *cancellable,
                                        GError      **error);
 gboolean   flatpak_dir_deploy_install (FlatpakDir   *self,
                                        const char   *ref,
                                        const char   *origin,
                                        const char  **subpaths,
+                                       const char  **previous_ids,
                                        gboolean      reinstall,
                                        GCancellable *cancellable,
                                        GError      **error);
@@ -635,6 +638,7 @@ gboolean   flatpak_dir_install (FlatpakDir          *self,
                                 const char          *ref,
                                 const char          *opt_commit,
                                 const char         **subpaths,
+                                const char         **previous_ids,
                                 OstreeAsyncProgress *progress,
                                 GCancellable        *cancellable,
                                 GError             **error);
@@ -679,6 +683,7 @@ gboolean   flatpak_dir_update (FlatpakDir                           *self,
                                const char                           *checksum_or_latest,
                                const OstreeRepoFinderResult * const *results,
                                const char                          **opt_subpaths,
+                               const char                          **opt_previous_ids,
                                OstreeAsyncProgress                  *progress,
                                GCancellable                         *cancellable,
                                GError                              **error);
@@ -913,6 +918,8 @@ typedef struct
   GBytes *resolved_metadata;
   guint64 download_size;
   guint64 installed_size;
+  char   *eol;
+  char   *eol_rebase;
 } FlatpakDirResolve;
 
 FlatpakDirResolve *flatpak_dir_resolve_new (const char *remote,
