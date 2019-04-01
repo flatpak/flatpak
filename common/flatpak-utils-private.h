@@ -120,6 +120,8 @@ const char * flatpak_get_bwrap (void);
 
 char *flatpak_get_timezone (void);
 
+char **flatpak_strv_merge (char   **strv1,
+                           char   **strv2);
 char **flatpak_subpaths_merge (char **subpaths1,
                                char **subpaths2);
 
