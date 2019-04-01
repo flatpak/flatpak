@@ -395,11 +395,11 @@ test_subpaths_merge (void)
   g_auto(GStrv) res = NULL;
 
   res = flatpak_subpaths_merge (NULL, bla);
-  assert_strv_equal (res, bla);
+  assert_strv_equal (res, bla_sorted);
   g_clear_pointer (&res, g_strfreev);
 
   res = flatpak_subpaths_merge (bla, NULL);
-  assert_strv_equal (res, bla);
+  assert_strv_equal (res, bla_sorted);
   g_clear_pointer (&res, g_strfreev);
 
   res = flatpak_subpaths_merge (empty, bla);
