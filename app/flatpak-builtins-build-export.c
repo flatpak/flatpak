@@ -392,7 +392,7 @@ validate_icon_file (GFile *file, GError **error)
   if (!g_spawn_check_exit_status (status, NULL))
     {
       g_debug ("Icon validation: %s", err);
-      return flatpak_fail (error, "%s is not a valid icon: %s", name, err);
+      return flatpak_fail (error, "%s is not a valid 512x512 icon: %s", name, err);
     }
 
   return TRUE;
