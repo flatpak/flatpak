@@ -1640,7 +1640,7 @@ handle_get_revokefs_fd (FlatpakSystemHelper   *object,
   g_autofree gchar *flatpak_dir = NULL;
   g_autofree gchar *repo_tmp = NULL;
   g_autofree gchar *passwd_buf = NULL;
-  struct passwd passwd;
+  struct passwd passwd = { NULL };
   OngoingPull *new_pull;
   uid_t uid;
   int fd_index = -1;
@@ -1661,7 +1661,12 @@ handle_get_revokefs_fd (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (!check_for_system_helper_user (&passwd, &passwd_buf, &error))
+  if (on_session_bus)
+    {
+      passwd.pw_uid = getuid();
+      passwd.pw_gid = getgid();
+    }
+  else if (!check_for_system_helper_user (&passwd, &passwd_buf, &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
