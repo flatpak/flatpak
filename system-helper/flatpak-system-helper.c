@@ -1501,6 +1501,7 @@ ongoing_pull_new (FlatpakSystemHelper   *object,
   g_autoptr(OngoingPull) pull = NULL;
   g_autoptr(GSubprocessLauncher) launcher = NULL;
   int sockets[2], exit_sockets[2];
+  const char *revokefs_fuse_bin = LIBEXECDIR "/revokefs-fuse";
 
   pull = g_slice_new0 (OngoingPull);
   pull->object = object;
@@ -1541,9 +1542,12 @@ ongoing_pull_new (FlatpakSystemHelper   *object,
   g_subprocess_launcher_take_fd (launcher, exit_sockets[0], 4);
   pull->backend_exit_socket = exit_sockets[1];
 
+  if (g_getenv ("FLATPAK_REVOKEFS_FUSE"))
+    revokefs_fuse_bin = g_getenv ("FLATPAK_REVOKEFS_FUSE");
+
   pull->revokefs_backend = g_subprocess_launcher_spawn (launcher,
                                                         error,
-                                                        "revokefs-fuse",
+                                                        revokefs_fuse_bin,
                                                         "--backend",
                                                         "--socket=3",
                                                         "--exit-with-fd=4",
