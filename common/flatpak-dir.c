@@ -7842,6 +7842,10 @@ flatpak_dir_setup_revokefs_fuse_mount (FlatpakDir    *self,
   g_autofree gchar *mnt_dir_tmp = NULL;
   gint socket = -1;
   gboolean res = FALSE;
+  const char *revokefs_fuse_bin = LIBEXECDIR "/revokefs-fuse";
+
+  if (g_getenv ("FLATPAK_REVOKEFS_FUSE"))
+    revokefs_fuse_bin = g_getenv ("FLATPAK_REVOKEFS_FUSE");
 
   if (!flatpak_dir_system_helper_call_get_revokefs_fd (self,
                                                        FLATPAK_HELPER_GET_REVOKEFS_FD_FLAGS_NONE,
@@ -7877,7 +7881,7 @@ flatpak_dir_setup_revokefs_fuse_mount (FlatpakDir    *self,
       g_subprocess_launcher_take_fd (launcher, socket, 3);
       revokefs_fuse = g_subprocess_launcher_spawn (launcher,
                                                    &local_error,
-                                                   "revokefs-fuse", "-o", client_uid, "--socket=3",
+                                                   revokefs_fuse_bin, "-o", client_uid, "--socket=3",
                                                    src_dir_tmp, mnt_dir_tmp, NULL);
       if (revokefs_fuse == NULL ||
           !g_subprocess_wait_check (revokefs_fuse, NULL, &local_error))
