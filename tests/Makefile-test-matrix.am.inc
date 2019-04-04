@@ -4,14 +4,18 @@ TEST_MATRIX= \
 	tests/test-run@user,deltas.wrap \
 	tests/test-run@system,nodeltas.wrap \
 	tests/test-run@system,deltas.wrap \
+	tests/test-run@system-norevokefs,nodeltas.wrap \
+	tests/test-run@system-norevokefs,deltas.wrap \
 	tests/test-info@user.wrap \
 	tests/test-info@system.wrap \
 	tests/test-repo@user.wrap \
 	tests/test-repo@system.wrap \
+	tests/test-repo@system-norevokefs.wrap \
 	tests/test-repo@collections.wrap \
 	tests/test-repo@collections-server-only.wrap \
 	tests/test-bundle@user.wrap \
 	tests/test-bundle@system.wrap \
+	tests/test-bundle@system-norevokefs.wrap \
 	tests/test-oci-registry@user.wrap \
 	tests/test-oci-registry@system.wrap \
 	$(NULL)

@@ -124,11 +124,11 @@ TEST_MATRIX_SOURCE = \
 	tests/test-config.sh \
 	tests/test-build-update-repo.sh \
 	tests/test-http-utils.sh \
-	tests/test-run.sh{{user+system},{nodeltas+deltas}} \
+	tests/test-run.sh{{user+system+system-norevokefs},{nodeltas+deltas}} \
 	tests/test-info.sh{user+system} \
-	tests/test-repo.sh{user+system+collections+collections-server-only} \
+	tests/test-repo.sh{user+system+system-norevokefs+collections+collections-server-only} \
 	tests/test-extensions.sh \
-	tests/test-bundle.sh{user+system} \
+	tests/test-bundle.sh{user+system+system-norevokefs} \
 	tests/test-oci.sh \
 	tests/test-oci-registry.sh{user+system} \
 	tests/test-unsigned-summaries.sh \

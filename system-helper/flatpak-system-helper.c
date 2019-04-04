@@ -47,6 +47,7 @@ G_LOCK_DEFINE (cache_dirs_in_use);
 static GHashTable *cache_dirs_in_use = NULL;
 
 static gboolean on_session_bus = FALSE;
+static gboolean disable_revokefs = FALSE;
 static gboolean no_idle_exit = FALSE;
 
 #define IDLE_TIMEOUT_SECS 10 * 60
@@ -1647,6 +1648,12 @@ handle_get_revokefs_fd (FlatpakSystemHelper   *object,
 
   g_debug ("GetRevokefsFd %u %s", arg_flags, arg_installation);
 
+  if (disable_revokefs)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, "RevokeFS disabled");
+      return TRUE;
+    }
+
   system = dir_get_system (arg_installation, get_sender_pid (invocation), &error);
   if (system == NULL)
     {
@@ -2197,6 +2204,9 @@ main (int    argc,
   setlocale (LC_ALL, "");
 
   g_setenv ("GIO_USE_VFS", "local", TRUE);
+
+  if (g_getenv ("FLATPAK_DISABLE_REVOKEFS"))
+    disable_revokefs = TRUE;
 
   g_set_prgname (argv[0]);
 

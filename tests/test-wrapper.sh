@@ -5,6 +5,10 @@ for feature in $(echo $1 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
         system)
             export USE_SYSTEMDIR=yes
             ;;
+        system-norevokefs)
+            export USE_SYSTEMDIR=yes
+            export FLATPAK_DISABLE_REVOKEFS=yes
+            ;;
         user)
             export USE_SYSTEMDIR=no
             ;;
