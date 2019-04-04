@@ -395,9 +395,12 @@ flatpak build-finish --command=hello.sh app
 ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/stable app
 update_repo
 
-${FLATPAK} ${U} install -y test-repo org.test.Writable
-
-assert_file_has_mode $FL_DIR/app/org.test.Writable/$ARCH/stable/active/files/a-dir 775
+# In the system-helper case this fails to install due to the permission canonicalization happening in the
+# child-repo making objects get the wrong checksum, whereas in the user case we successfully import it, but
+# it will have canonicalized permissions.
+if ${FLATPAK} ${U} install -y test-repo org.test.Writable; then
+    assert_file_has_mode $FL_DIR/app/org.test.Writable/$ARCH/stable/active/files/a-dir 775
+fi
 
 echo "ok no world writable dir"
 
