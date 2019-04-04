@@ -68,7 +68,7 @@ else
 fi
 
 gunzip -c $appstream > appstream-uncompressed
-assert_file_has_content appstream-uncompressed '<id>org.test.Hello.desktop</id>'
+assert_file_has_content appstream-uncompressed '<id>org\.test\.Hello\.desktop</id>'
 assert_has_file $icondir/64x64/org.test.Hello.png
 
 echo "ok appstream"
@@ -106,7 +106,7 @@ assert_streq "$images" "org.test.Platform"
 
 ${FLATPAK} update ${U} --appstream oci-registry
 
-assert_not_file_has_content $appstream '<id>org.test.Hello.desktop</id>'
+assert_not_file_has_content $appstream '<id>org\.test\.Hello\.desktop</id>'
 assert_not_has_file $icondir/64x64/org.test.Hello.png
 assert_not_has_file $icondir/64x64
 
@@ -187,7 +187,7 @@ ${FLATPAK} build-bundle --runtime --repo-url "oci+http://127.0.0.1:${port}" $FL_
 ${FLATPAK} ${U} install -y --bundle org.test.Platform.flatpak
 
 ${FLATPAK} remotes -d > remotes-list
-assert_file_has_content remotes-list "^platform-origin.*[ 	]oci+http://127.0.0.1:${port}"
+assert_file_has_content remotes-list "^platform-origin.*[ 	]oci+http://127\.0\.0\.1:${port}"
 
 assert_has_file $base/oci/platform-origin.index.gz
 
@@ -200,7 +200,7 @@ ${FLATPAK} build-bundle --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS re
 ${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak
 
 ${FLATPAK} remotes -d > remotes-list
-assert_file_has_content remotes-list "^hello-origin.*[ 	]oci+http://127.0.0.1:${port}"
+assert_file_has_content remotes-list "^hello-origin.*[ 	]oci+http://127\.0\.0\.1:${port}"
 
 assert_has_file $base/oci/hello-origin.index.gz
 
@@ -214,7 +214,7 @@ ${FLATPAK} build-bundle --repo-url "http://127.0.0.1:${port}" $FL_GPGARGS repos/
 ${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak
 
 ${FLATPAK} remotes -d > remotes-list
-assert_file_has_content remotes-list "^hello-origin.*[ 	]http://127.0.0.1:${port}"
+assert_file_has_content remotes-list "^hello-origin.*[ 	]http://127\.0\.0\.1:${port}"
 
 assert_not_has_file $base/oci/hello-origin.index.gz
 

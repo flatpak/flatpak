@@ -74,7 +74,7 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
-assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org.test.Collection$'
+assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
 echo "ok 2 update repo config to deploy collection ID"
 
@@ -89,7 +89,7 @@ echo "ok 2 update repo config to deploy collection ID"
 ostree --repo=repos/test summary --update --add-metadata="ostree.deploy-collection-id='net.malicious.NewCollection'"
 ${FLATPAK} ${U} update org.test.App master
 
-assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org.test.Collection$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=net.malicious.NewCollection$'
+assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=net\.malicious\.NewCollection$'
 
 echo "ok 3 update repo config with different collection ID"

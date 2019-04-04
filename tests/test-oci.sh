@@ -43,8 +43,8 @@ digest=$(grep sha256: oci/image/index.json | sed s'@.*sha256:\([a-fA-F0-9]\+\).*
 manifest=oci/image/blobs/sha256/$digest
 
 assert_has_file $manifest
-assert_file_has_content $manifest "org.freedesktop.appstream.appdata.*<summary>Print a greeting</summary>"
-assert_file_has_content $manifest "org.freedesktop.appstream.icon-64"
+assert_file_has_content $manifest "org\.freedesktop\.appstream\.appdata.*<summary>Print a greeting</summary>"
+assert_file_has_content $manifest "org\.freedesktop\.appstream\.icon-64"
 
 echo "ok export oci"
 

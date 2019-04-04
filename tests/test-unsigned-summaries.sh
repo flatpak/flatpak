@@ -38,7 +38,7 @@ ${FLATPAK} remote-modify ${U} test-repo --collection-id org.test.Collection
 
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
-assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org.test.Collection$'
+assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
 
@@ -55,23 +55,23 @@ ${FLATPAK} build-export ${FL_GPGARGS} --update-appstream repos/test --collection
 update_repo
 
 ostree --repo=repos/test refs > refs
-assert_file_has_content refs "^app/org.test.App/$ARCH/master$"
+assert_file_has_content refs "^app/org\.test\.App/$ARCH/master$"
 assert_file_has_content refs '^ostree-metadata$'
 assert_file_has_content refs "^appstream/${ARCH}$"
 assert_file_has_content refs "^appstream2/${ARCH}$"
 ostree --repo=repos/test refs --collections > refs-collections
-assert_file_has_content refs-collections "^(org.test.Collection, app/org.test.App/$ARCH/master)$"
-assert_file_has_content refs-collections '^(org.test.Collection, ostree-metadata)$'
-assert_file_has_content refs-collections "^(org.test.Collection, appstream/${ARCH})$"
-assert_file_has_content refs-collections "^(org.test.Collection, appstream2/${ARCH})$"
+assert_file_has_content refs-collections "^(org\.test\.Collection, app/org\.test\.App/$ARCH/master)$"
+assert_file_has_content refs-collections '^(org\.test\.Collection, ostree-metadata)$'
+assert_file_has_content refs-collections "^(org\.test\.Collection, appstream/${ARCH})$"
+assert_file_has_content refs-collections "^(org\.test\.Collection, appstream2/${ARCH})$"
 assert_has_file repos/test/summary.sig
 ostree --repo=repos/test summary --view > summary
-assert_file_has_content summary '^Collection ID (ostree.summary.collection-id): org.test.Collection$'
-assert_file_has_content summary '^xa.cache: '
+assert_file_has_content summary '^Collection ID (ostree\.summary\.collection-id): org\.test\.Collection$'
+assert_file_has_content summary '^xa\.cache: '
 ostree --repo=repos/test show --raw ostree-metadata > metadata
-assert_file_has_content metadata "'xa.cache': "
-assert_file_has_content metadata "'ostree.collection-binding': <'org.test.Collection'>"
-assert_file_has_content metadata "'ostree.ref-binding': <\['ostree-metadata'\]>"
+assert_file_has_content metadata "'xa\.cache': "
+assert_file_has_content metadata "'ostree\.collection-binding': <'org\.test\.Collection'>"
+assert_file_has_content metadata "'ostree\.ref-binding': <\['ostree-metadata'\]>"
 
 echo "ok 2 create app with collections"
 
@@ -85,8 +85,8 @@ echo "ok 3 install app with collections"
 ostree --repo=repos/test summary --update
 assert_not_has_file repos/test/summary.sig
 ostree --repo=repos/test summary --view > summary
-assert_file_has_content summary '^Collection ID (ostree.summary.collection-id): org.test.Collection$'
-assert_not_file_has_content summary '^xa.cache: '
+assert_file_has_content summary '^Collection ID (ostree\.summary\.collection-id): org\.test\.Collection$'
+assert_not_file_has_content summary '^xa\.cache: '
 
 ${FLATPAK} ${U} install -y test-repo org.test.App master
 ${FLATPAK} ${U} uninstall -y org.test.App
@@ -118,18 +118,18 @@ ${FLATPAK} build-update-repo ${FL_GPGARGS} --title "New title" repos/test
 
 assert_has_file repos/test/summary.sig
 ostree --repo=repos/test summary --view > summary
-assert_file_has_content summary '^Collection ID (ostree.summary.collection-id): org.test.Collection$'
-assert_file_has_content summary '^xa.title: '
+assert_file_has_content summary '^Collection ID (ostree\.summary\.collection-id): org\.test\.Collection$'
+assert_file_has_content summary '^xa\.title: '
 ostree --repo=repos/test show --raw ostree-metadata > metadata
-assert_file_has_content metadata "'xa.title': "
-assert_file_has_content metadata "'ostree.collection-binding': <'org.test.Collection'>"
-assert_file_has_content metadata "'ostree.ref-binding': <\['ostree-metadata'\]>"
+assert_file_has_content metadata "'xa\.title': "
+assert_file_has_content metadata "'ostree\.collection-binding': <'org\.test\.Collection'>"
+assert_file_has_content metadata "'ostree\.ref-binding': <\['ostree-metadata'\]>"
 
 echo "ok 6 update repo metadata"
 
 # Try to install the app again, which should pull the updated repository
 # metadata as a side effect.
 ${FLATPAK} ${U} install -y test-repo org.test.App master
-assert_file_has_content ${FL_DIR}/repo/config '^xa.title=New title$'
+assert_file_has_content ${FL_DIR}/repo/config '^xa\.title=New title$'
 
 echo "ok 7 pull updated repo metadata"

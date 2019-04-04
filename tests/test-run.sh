@@ -44,7 +44,7 @@ assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/stable/active/files
 assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/stable/active/export
 assert_has_file $FL_DIR/exports/share/applications/org.test.Hello.desktop
 # Ensure Exec key is rewritten
-assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/flatpak run --branch=stable --arch=$ARCH --command=hello.sh org.test.Hello$"
+assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/flatpak run --branch=stable --arch=$ARCH --command=hello\.sh org\.test\.Hello$"
 assert_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
 assert_not_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/dont-export.png
 assert_has_file $FL_DIR/exports/share/icons/HighContrast/64x64/apps/org.test.Hello.png
@@ -73,29 +73,29 @@ echo "ok hello"
 
 run_sh org.test.Platform cat /.flatpak-info >runtime-fpi
 assert_file_has_content runtime-fpi "[Runtime]"
-assert_file_has_content runtime-fpi "^runtime=runtime/org.test.Platform/$ARCH/stable$"
+assert_file_has_content runtime-fpi "^runtime=runtime/org\.test\.Platform/$ARCH/stable$"
 
 echo "ok run a runtime"
 
 if run org.test.Nonexistent 2> run-error-log; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"
 fi
-assert_file_has_content run-error-log "error: app/org.test.Nonexistent/$ARCH/master not installed"
+assert_file_has_content run-error-log "error: app/org\.test\.Nonexistent/$ARCH/master not installed"
 
 if ${FLATPAK} run --commit=abc runtime/org.test.Platform 2> run-error-log; then
     assert_not_reached "Unexpectedly able to run non-existent commit"
 fi
-assert_file_has_content run-error-log "error: runtime/org.test.Platform/$ARCH/stable (commit abc) not installed"
+assert_file_has_content run-error-log "error: runtime/org\.test\.Platform/$ARCH/stable (commit abc) not installed"
 
 if run runtime/org.test.Nonexistent 2> run-error-log; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"
 fi
-assert_file_has_content run-error-log "error: runtime/org.test.Nonexistent/\*unspecified\*/\*unspecified\* not installed"
+assert_file_has_content run-error-log "error: runtime/org\.test\.Nonexistent/\*unspecified\*/\*unspecified\* not installed"
 
 echo "ok error handling for invalid refs"
 
 run_sh org.test.Hello cat /run/user/`id -u`/flatpak-info > fpi
-assert_file_has_content fpi '^name=org.test.Hello$'
+assert_file_has_content fpi '^name=org\.test\.Hello$'
 
 echo "ok flatpak-info"
 
@@ -429,6 +429,6 @@ update_repo
 ${FLATPAK} ${U} install -y test-repo org.test.App
 ${FLATPAK} ${U} info -m org.test.App > out
 
-assert_file_has_content out "^sdk=org.test.Sdk/$(flatpak --default-arch)/stable$"
+assert_file_has_content out "^sdk=org\.test\.Sdk/$(flatpak --default-arch)/stable$"
 
 echo "ok --sdk option"
