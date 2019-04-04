@@ -8665,6 +8665,7 @@ flatpak_dir_update (FlatpakDir                           *self,
       g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+      gboolean is_revokefs_pull = FALSE;
 
       if (allow_downgrade)
         return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE,
@@ -8726,25 +8727,108 @@ flatpak_dir_update (FlatpakDir                           *self,
         }
       else
         {
-          /* We're pulling from a remote source, we do the network mirroring pull as a
-             user and hand back the resulting data to the system-helper, that trusts us
-             due to the GPG signatures in the repo */
+          /* First try to update using revokefs-fuse codepath. If it fails, try to update using a
+           * temporary child-repo. Read flatpak_dir_install for more details on using revokefs-fuse */
+          g_autofree gchar *src_dir = NULL;
+          g_autofree gchar *mnt_dir = NULL;
+          g_autoptr(GError) local_error = NULL;
 
-          child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, commit, error);
-          if (child_repo == NULL)
-            return FALSE;
+          if (!flatpak_dir_setup_revokefs_fuse_mount (self,
+                                                      ref,
+                                                      installation,
+                                                      &src_dir, &mnt_dir,
+                                                      cancellable))
+            {
+              flatpak_dir_unmount_and_cancel_pull (self, FLATPAK_HELPER_CANCEL_PULL_FLAGS_NONE,
+                                                   cancellable,
+                                                   &child_repo, &child_repo_lock,
+                                                   mnt_dir, src_dir);
+            }
+          else
+            {
+              g_autofree gchar *repo_basename = NULL;
+              g_autoptr(GFile) mnt_dir_file = NULL;
+
+              mnt_dir_file = g_file_new_for_path (mnt_dir);
+              child_repo = flatpak_dir_create_child_repo (self, mnt_dir_file, &child_repo_lock, commit, &local_error);
+              if (child_repo == NULL)
+                {
+                  g_warning ("Cannot create repo on revokefs mountpoint %s: %s", mnt_dir, local_error->message);
+                  flatpak_dir_unmount_and_cancel_pull (self,
+                                                       FLATPAK_HELPER_CANCEL_PULL_FLAGS_NONE,
+                                                       cancellable,
+                                                       &child_repo, &child_repo_lock,
+                                                       mnt_dir, src_dir);
+                  g_clear_error (&local_error);
+                }
+              else
+                {
+                  repo_basename = g_file_get_basename (ostree_repo_get_path (child_repo));
+                  child_repo_path = g_build_filename (src_dir, repo_basename, NULL);
+                  is_revokefs_pull = TRUE;
+                }
+            }
+
+          /* Fallback if revokefs-fuse setup does not succeed. This makes the pull
+           * temporarily use double disk-space. */
+          if (!is_revokefs_pull)
+            {
+              /* We're pulling from a remote source, we do the network mirroring pull as a
+                 user and hand back the resulting data to the system-helper, that trusts us
+                 due to the GPG signatures in the repo */
+
+              child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, commit, error);
+              if (child_repo == NULL)
+                return FALSE;
+              else
+                child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
+            }
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
           if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
-            return FALSE;
+            {
+              if (is_revokefs_pull)
+                {
+                  flatpak_dir_unmount_and_cancel_pull (self,
+                                                       FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
+                                                       cancellable,
+                                                       &child_repo, &child_repo_lock,
+                                                       mnt_dir, src_dir);
+                }
+
+              return FALSE;
+            }
 
           if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
-            return FALSE;
+            {
+              if (is_revokefs_pull)
+                {
+                  flatpak_dir_unmount_and_cancel_pull (self,
+                                                       FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
+                                                       cancellable,
+                                                       &child_repo, &child_repo_lock,
+                                                       mnt_dir, src_dir);
+                }
 
-          child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
+              return FALSE;
+            }
+
+          g_assert (child_repo_path != NULL);
+
+          if (is_revokefs_pull &&
+              !flatpak_dir_revokefs_fuse_unmount (&child_repo, &child_repo_lock, mnt_dir, &local_error))
+            {
+              g_warning ("Could not unmount revokefs-fuse filesystem at %s: %s", mnt_dir, local_error->message);
+              flatpak_dir_unmount_and_cancel_pull (self,
+                                                   FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
+                                                   cancellable,
+                                                   &child_repo, &child_repo_lock,
+                                                   mnt_dir, src_dir);
+              return FALSE;
+            }
         }
 
       if (no_deploy)
@@ -8765,7 +8849,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                                                   error))
         return FALSE;
 
-      if (child_repo_path)
+      if (child_repo_path && !is_revokefs_pull)
         (void) glnx_shutil_rm_rf_at (AT_FDCWD, child_repo_path, NULL, NULL);
 
       return TRUE;
