@@ -35,7 +35,7 @@ install_repo
 
 ${FLATPAK} build-update-repo --collection-id=org.test.Collection repos/test
 
-assert_file_has_content repos/test/config '^collection-id=org.test.Collection$'
+assert_file_has_content repos/test/config '^collection-id=org\.test\.Collection$'
 
 echo "ok 1 update repo to add collection ID"
 
@@ -44,8 +44,8 @@ if ${FLATPAK} build-update-repo --collection-id=org.test.Collection2 repos/test 
     assert_not_reached "flatpak build-update-repo should not set a collection ID when one is already set"
 fi
 
-assert_file_has_content repos/test/config '^collection-id=org.test.Collection$'
-assert_not_file_has_content repos/test/config '^collection-id=org.test.Collection2$'
+assert_file_has_content repos/test/config '^collection-id=org\.test\.Collection$'
+assert_not_file_has_content repos/test/config '^collection-id=org\.test\.Collection2$'
 
 echo "ok 2 collection ID cannot be changed"
 
@@ -57,7 +57,7 @@ echo "ok can update repo title"
 
 ${FLATPAK} build-update-repo --redirect-url=http://no.where/ repos/test
 
-assert_file_has_content repos/test/config '^redirect-url=http://no.where/$'
+assert_file_has_content repos/test/config '^redirect-url=http://no\.where/$'
 
 echo "ok can update redirect url"
 
