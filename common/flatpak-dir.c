@@ -7967,6 +7967,7 @@ flatpak_dir_install (FlatpakDir          *self,
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
       gboolean is_oci;
+      gboolean is_revokefs_pull = FALSE;
 
       if (opt_subpaths)
         subpaths = opt_subpaths;
@@ -8048,7 +8049,6 @@ flatpak_dir_install (FlatpakDir          *self,
              In case we fail to apply pull approach 1), the pull automatically fallbacks to use 2). */
           g_autofree gchar *src_dir = NULL;
           g_autofree gchar *mnt_dir = NULL;
-          gboolean is_revokefs_pull = FALSE;
           g_autoptr(GError) local_error = NULL;
 
           if (!flatpak_dir_setup_revokefs_fuse_mount (self,
@@ -8170,7 +8170,7 @@ flatpak_dir_install (FlatpakDir          *self,
                                                   error))
         return FALSE;
 
-      if (child_repo_path)
+      if (child_repo_path && !is_revokefs_pull)
         (void) glnx_shutil_rm_rf_at (AT_FDCWD, child_repo_path, NULL, NULL);
 
       return TRUE;
