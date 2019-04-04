@@ -94,8 +94,8 @@ ${FLATPAK} override --user --talk-name=org.foo.Talk org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Session Bus Policy\]$"
-assert_file_has_content override "^org\.foo\.Own=own$
-assert_file_has_content override "^org\.foo\.Talk=talk$
+assert_file_has_content override "^org\.foo\.Own=own$"
+assert_file_has_content override "^org\.foo\.Talk=talk$"
 
 echo "ok override session bus names"
 
@@ -106,8 +106,8 @@ ${FLATPAK} override --user --system-talk-name=org.foo.Talk.System org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[System Bus Policy\]$"
-assert_file_has_content override "^org\.foo\.Own\.System=own$
-assert_file_has_content override "^org\.foo\.Talk\.System=talk$
+assert_file_has_content override "^org\.foo\.Own\.System=own$"
+assert_file_has_content override "^org\.foo\.Talk\.System=talk$"
 
 echo "ok override system bus names"
 
