@@ -236,6 +236,17 @@ AS_IF([ test x$have_gpgme = xno ], [
    AC_MSG_ERROR([Need GPGME_PTHREAD version $LIBGPGME_DEPENDENCY or later])
 ])
 
+AC_ARG_ENABLE(selinux-module,
+        [AS_HELP_STRING([--enable-selinux-module],[Enable selinux module for system-helper])],
+        enable_selinux_module=$enableval, enable_selinux_module=auto)
+if test x$enable_selinux_module = xauto ; then
+   AC_CHECK_FILE([/usr/share/selinux/devel/Makefile], [enable_selinux_module=yes],  [enable_selinux_module=no])
+fi
+if test x$enable_selinux_module = xyes ; then
+   AC_CHECK_FILE([/usr/share/selinux/devel/Makefile], [],  [AC_MSG_ERROR([selinux-policy-devel needed to build selinux module])])
+fi
+AM_CONDITIONAL(BUILD_SELINUX_MODULE, test x$enable_selinux_module = xyes)
+
 AC_ARG_ENABLE([system-helper],
               AC_HELP_STRING([--disable-system-helper],
                              [Disable system helper]),
@@ -506,6 +517,7 @@ echo "          Flatpak $FLATPAK_VERSION"
 echo "          ============="
 echo ""
 echo "          Build system helper:    $enable_system_helper"
+echo "          Build selinux module:   $enable_selinux_module"
 echo "          Build bubblewrap:       $build_bwrap"
 echo "          Build dbus-proxy:       $build_dbus_proxy"
 echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
