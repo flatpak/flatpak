@@ -80,7 +80,7 @@ looks_like_branch (const char *branch)
     return FALSE;
 
   /* Dots are allowed in branches, but not really used much, while
-     app ids require at least two, so thats a good check to
+     app ids require at least two, so that's a good check to
      distinguish the two */
   dot = strchr (branch, '.');
   if (dot != NULL)

@@ -370,7 +370,7 @@ function setup_result_obj(line)
   sub("^(not )?ok[ \t]*", "", line)
 
   # If the result has an explicit number, get it and strip it; otherwise,
-  # automatically assing the next progressive number to it.
+  # automatically assign the next progressive number to it.
   if (line ~ /^[0-9]+$/ || line ~ /^[0-9]+[^a-zA-Z0-9_]/)
     {
       match(line, "^[0-9]+")

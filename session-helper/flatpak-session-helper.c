@@ -158,7 +158,7 @@ child_setup_func (gpointer user_data)
         }
     }
 
-  /* Second pass in case we needed an inbetween fd value to avoid conflicts */
+  /* Second pass in case we needed an in-between fd value to avoid conflicts */
   for (i = 0; i < data->fd_map_len; i++)
     {
       if (fd_map[i].to != fd_map[i].final)

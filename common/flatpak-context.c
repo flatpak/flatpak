@@ -2108,7 +2108,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
   flatpak_exports_append_bwrap_args (exports, bwrap);
 
   /* Special case subdirectories of the cache, config and data xdg
-   * dirs.  If these are accessible explicilty, then we bind-mount
+   * dirs.  If these are accessible explicitly, then we bind-mount
    * these in the app-id dir. This allows applications to explicitly
    * opt out of keeping some config/cache/data in the app-specific
    * directory.

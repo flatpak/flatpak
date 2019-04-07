@@ -122,7 +122,7 @@ add_new_remote (FlatpakTransaction            *transaction,
   if (reason == FLATPAK_TRANSACTION_REMOTE_GENERIC_REPO)
     {
       if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
-                                 _("The remote '%s', refered to by '%s' at location %s contains additional applications.\n"
+                                 _("The remote '%s', referred to by '%s' at location %s contains additional applications.\n"
                                    "Should the remote be kept for future installations?"),
                                  remote_name, from_id, url))
         return TRUE;

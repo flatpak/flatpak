@@ -34,7 +34,7 @@ G_BEGIN_DECLS
  * FlatpakPortalError:
  * @FLATPAK_PORTAL_ERROR_FAILED: General portal failure
  * @FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT: An argument was invalid
- * @FLATPAK_PORTAL_ERROR_NOT_FOUND: The object was not fount
+ * @FLATPAK_PORTAL_ERROR_NOT_FOUND: The object was not found
  * @FLATPAK_PORTAL_ERROR_EXISTS: The object already exists
  * @FLATPAK_PORTAL_ERROR_NOT_ALLOWED: The call was not allowed
  * @FLATPAK_PORTAL_ERROR_CANCELLED: The call was cancelled by the user

@@ -46,7 +46,7 @@ G_BEGIN_DECLS
  *
  * Flags affecting the behavior of flatpak_option_context_parse().
  *
- * If the default system installation is among the returned diretories,
+ * If the default system installation is among the returned directories,
  * it will be returned first.
  */
 typedef enum {

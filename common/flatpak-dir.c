@@ -943,7 +943,7 @@ get_system_locations (GCancellable *cancellable,
    */
   locations = system_locations_from_configuration (cancellable, error);
 
-  /* Only fill the details of the default directory if not overriden. */
+  /* Only fill the details of the default directory if not overridden. */
   if (!has_system_location (locations, SYSTEM_DIR_DEFAULT_ID))
     {
       append_new_system_location (locations,
@@ -2597,7 +2597,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
         }
     }
 
-  /* Earlier flatpak used to reset min-free-space-percent to 0 everytime, but now we
+  /* Earlier flatpak used to reset min-free-space-percent to 0 every time, but now we
    * favor min-free-space-size instead of it (See below).
    */
   if (!flatpak_dir_use_system_helper (self, NULL))
@@ -7290,7 +7290,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   return TRUE;
 }
 
-/* -origin remotes are deleted when the last ref refering to it is undeployed */
+/* -origin remotes are deleted when the last ref referring to it is undeployed */
 void
 flatpak_dir_prune_origin_remote (FlatpakDir *self,
                                  const char *remote)
@@ -10491,7 +10491,7 @@ filter_out_deployed_refs (FlatpakDir *self,
  * you should consider using flatpak_dir_prune() to do that.
  *
  * Since: 0.10.0
- * Returns: %TRUE if cleaning up the refs suceeded, %FALSE otherwise
+ * Returns: %TRUE if cleaning up the refs succeeded, %FALSE otherwise
  */
 gboolean
 flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,

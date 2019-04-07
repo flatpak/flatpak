@@ -5747,7 +5747,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
    *   Fetches:
    *    - fetched: sum of content + metadata fetches
    *    - requested: sum of requested content and metadata fetches
-   *    - bytes_transferred: every and all tranferred data (in bytes)
+   *    - bytes_transferred: every and all transferred data (in bytes)
    *    - metadata_fetched: the number of fetched metadata objects
    *    - outstanding_fetches: missing fetches (metadata + content + deltas)
    *    - outstanding_delta_fetches: missing delta-only fetches

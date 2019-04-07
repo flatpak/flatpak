@@ -938,7 +938,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     goto out;
 
   /* This is useful only if the target is a "bare" rep, but this happens
-     in flatpak-builder when commiting to the cache repo. For other repos
+     in flatpak-builder when committing to the cache repo. For other repos
      this is a no-op */
   if (!ostree_repo_scan_hardlinks (repo, cancellable, error))
     goto out;

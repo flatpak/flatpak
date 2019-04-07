@@ -329,7 +329,7 @@ Changes in 1.0.1
 ================
 
 This fixes various build and test failures that were detected when
-packaging 1.0, as well as translations and doc udpates. It also
+packaging 1.0, as well as translations and doc updates. It also
 has some minor features, including a new subcommand "flatpak ps"
 to list the running flatpak instances for your user.
 
@@ -554,7 +554,7 @@ Major changes in 0.11.8
    install/update operation.
  * We now respect multiple extension versions matches when auto-downloading extensions.
  * New http header Flatpak-Upgrade-From sent when upgrading.
- * Commands like "flatpak info/list/remotes/seach" now work properly if /var/lib/flatpak doesn't exist.
+ * Commands like "flatpak info/list/remotes/search" now work properly if /var/lib/flatpak doesn't exist.
  * The bubblewrap version required for system-bwrap is now 0.2.1.
 
 Major changes in 0.11.7
@@ -702,11 +702,11 @@ Major changes in 0.10.1
 
  * New command "flatpak remote-info" shows information about applications
    in a remote. In particular the --log operation shows the history and
-   can be used in combination with flatpak upate --commit=XYZ to roll
+   can be used in combination with flatpak update --commit=XYZ to roll
    back to a previous version.
  * New command "flatpak search" which allows you to search the appstream
    data from the commandline.
- * flatpak update now upates appstream data for all confured remotes, which
+ * flatpak update now updates appstream data for all confured remotes, which
    is important for search to work.
  * Allow automatic installation of gtk themes matching the active theme.
  * Handle the case when /etc/resolv.conf is a symlink
@@ -808,8 +808,8 @@ Major changes in 0.9.11
  * You can now show all outstanding updates with: flatpak remote-ls --updates
  * The dbus filter "org.name.*" now means all subnames of org.name, not just
    the first level. This matches how dbus arg0namespace works, and how the
-   comming dbus container support will work.
- * Fixed segfauld on update
+   coming dbus container support will work.
+ * Fixed segfault on update
  * Better commandline tab completion
  * Flatpak now exposes host icons readonly as /run/host/share/icons to the sandbox.
 
@@ -920,7 +920,7 @@ Major changes in 0.9.5
  * document-portal: The app-specific directory is always accessible
    to the app, take this into consideration for AddFull.
  * builder: Don't warn for unknown keys if they start with x-
- * Fix a race condition whe restarting the document portal
+ * Fix a race condition when restarting the document portal
  * build-update-repo: Don't list removed deltas in the summary
  * list: Don't show .Locale/.Debug/.Sources by default. Show with -a.
  * remote-ls: Don't show .Locale/.Debug/.Sources, or non-primary
@@ -942,7 +942,7 @@ Major changes in 0.9.4
  * Now requires ostree 2017.6 and bubblewrap 0.1.8
  * Better progress reporting in CLI and UI
  * Improved output from commands info, list, remotes,
-   remote-ls: More detail, colors, nicer table formating.
+   remote-ls: More detail, colors, nicer table formatting.
  * New command flatpak repo that lets you show information
    about local repositories.
  * When launching exported desktop files, the paths
@@ -1072,7 +1072,7 @@ Major changes in 0.9.2
  * OCI support now works with the system-helper for unprivileged systemwide
    installation.
  * Experimental support for the new ostree bare-user-only repo mode that
-   allows flatpak to run on filesytems without xattrs. Set
+   allows flatpak to run on filesystems without xattrs. Set
    FLATPAK_OSTREE_REPO_MODE=user-only in the environment to use this.
  * builder: New property disable-fsckobjects for git sources
  * builder: New property commit for git sources. This lets you specify
@@ -1101,7 +1101,7 @@ Major changes in 0.9.2
    this is optional in later versions of ostree. Instead we use
    they python SimpleHTTPServer.
  * The minimum glib version has been corrected to 2.44.
- * The minumum automake version has been increased to 1.13.4
+ * The minimum automake version has been increased to 1.13.4
    because some older version didn't work.
 
 Major changes in 0.9.1
@@ -1447,7 +1447,7 @@ Major changes in 0.6.12
    can now only have dashes in the last element. This allows
    apps to export files such as org.my.App-extra.desktop which
    was used by the libreoffice builds.
- * By default the kernel keyring is not accessable, as it is
+ * By default the kernel keyring is not accessible, as it is
    not containable.
  * Some robustness fixes for build-commit-from
  * Better error messages
@@ -1547,7 +1547,7 @@ Major changes in 0.6.8
  * Requires OSTree 2016.7, allowing us to enable use of static delta
    for system downloads again.
  * Support --no-desktop which allows you to run a flatpak app outside
-   a desktop, with some loss of functionallity (for example, there
+   a desktop, with some loss of functionality (for example, there
    will be no systemd --user scope created for the app)..
  * More documentation.
  * Memory leak fixes.
