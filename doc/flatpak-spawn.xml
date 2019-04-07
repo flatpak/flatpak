@@ -140,7 +140,7 @@
                   the instance directory (i.e. <filename>~/.var/app/$APP_ID/sandbox</filename>).
                 <para></para>
                   This option is useful in combination with <option>--sandbox</option> (otherwise the
-                  instance diretory is accessible anyway).
+                  instance directory is accessible anyway).
                 </para></listitem>
             </varlistentry>
 
@@ -155,7 +155,7 @@
                   the instance directory (i.e. <filename>~/.var/app/$APP_ID/sandbox</filename>).
                 <para></para>
                   This option is useful in combination with <option>--sandbox</option> (otherwise the
-                  instance diretory is accessible anyway).
+                  instance directory is accessible anyway).
                 </para></listitem>
             </varlistentry>
 

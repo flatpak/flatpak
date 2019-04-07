@@ -82,7 +82,7 @@
         </para>
 
         <para>
-            Basic commands for buiding flatpaks such as build-init, build and build-finish
+            Basic commands for building flatpaks such as build-init, build and build-finish
             are included in the flatpak utility. For higher-level build support, see
             the separate 
             <citerefentry><refentrytitle>flatpak-builder</refentrytitle><manvolnum>1</manvolnum></citerefentry> tool.

@@ -691,7 +691,7 @@ flatpak_transaction_operation_get_commit (FlatpakTransactionOperation *self)
  * Gets the maximum download size for the operation.
  *
  * Note that this does not include the size of dependencies, and
- * the acutal download may be smaller, if some of the data is already
+ * the actual download may be smaller, if some of the data is already
  * available locally.
  *
  * For uninstall operations, this returns 0.
@@ -715,7 +715,7 @@ flatpak_transaction_operation_get_download_size (FlatpakTransactionOperation *se
  * Gets the installed size for the operation.
  *
  * Note that even for a new install, the extra space required on
- * disk may be smaller than this numer, if some of the data is already
+ * disk may be smaller than this number, if some of the data is already
  * available locally.
  *
  * For uninstall operations, this returns 0.
@@ -2099,7 +2099,7 @@ resolve_ops (FlatpakTransaction *self,
 
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         {
-          /* We resolve to the deployed metadata, becasue we need it to uninstall related ops */
+          /* We resolve to the deployed metadata, because we need it to uninstall related ops */
 
           metadata_bytes = load_deployed_metadata (self, op->ref);
           mark_op_resolved (op, NULL, metadata_bytes, NULL);
@@ -2266,7 +2266,7 @@ sort_ops (FlatpakTransaction *self)
       sorted = g_list_concat (run, sorted); /* prepends, so reverse at the end */
 
       /* Then greedily run ops that become runnable, in run_after_prio order, so that
-         related ops are run before depdendencies */
+         related ops are run before dependencies */
       run_op->run_before_ops = g_list_sort (run_op->run_before_ops, (GCompareFunc) compare_op_prio);
       for (l = run_op->run_before_ops; l != NULL; l = l->next)
         {

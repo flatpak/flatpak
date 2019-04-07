@@ -45,14 +45,14 @@
             media mounted at <arg choice="plain">MOUNT-PATH</arg>, along with all the dependencies and
             metadata needed for installing them. This is one way of transferring flatpaks
             between computers that doesn't require an Internet connection. After using
-            this comand, the USB drive can be connected to another computer and
+            this command, the USB drive can be connected to another computer and
             <command>flatpak install</command> will prefer to install from it rather than
             the Internet if the refs are the newest available. For this process to work a
             collection ID must be configured on the relevant remotes on both the source
             and destination computers, and on the remote server.
         </para>
         <para>
-            Each <arg choice="plain">REF</arg> argument is a full or partial indentifier in the
+            Each <arg choice="plain">REF</arg> argument is a full or partial identifier in the
             flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH". All elements
             except ID are optional and can be left out, including the slashes,
             so most of the time you need only specify ID. Any part left out will be matched

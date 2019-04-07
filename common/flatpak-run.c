@@ -1729,7 +1729,7 @@ flatpak_run_allocate_id (int *lock_fd_out)
            * file and take a write lock on .ref to ensure its not in
            * use. */
           lock_fd = open (lock_file, O_RDWR | O_CREAT | O_CLOEXEC, 0644);
-          /* There is a tiny race here between the open creating the file and the lock suceeding.
+          /* There is a tiny race here between the open creating the file and the lock succeeding.
              We work around that by only gc:ing "old" .ref files */
           if (lock_fd != -1 && fcntl (lock_fd, F_SETLK, &l) == 0)
             {

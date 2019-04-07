@@ -55,7 +55,7 @@
           and the user is asked to confirm the resulting choice.
         </para>
         <para>
-          Each <arg choice="plain">REF</arg> argument is a full or partial indentifier in the
+          Each <arg choice="plain">REF</arg> argument is a full or partial identifier in the
           flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH".
           All elements except ID are optional and can be left out, including the slashes,
           so most of the time you need only specify ID. Any part left out will be matched

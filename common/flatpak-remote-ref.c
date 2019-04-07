@@ -270,7 +270,7 @@ flatpak_remote_ref_get_download_size (FlatpakRemoteRef *self)
  * flatpak_remote_ref_get_metadata:
  * @self: a #FlatpakRemoteRef
  *
- * Returns the app metadata from the metadata cach of the ref.
+ * Returns the app metadata from the metadata cache of the ref.
  *
  * Returns: (transfer none) (nullable): a #GBytes with the metadata file
  * contents or %NULL

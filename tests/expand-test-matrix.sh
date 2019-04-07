@@ -23,12 +23,12 @@
 # or:
 #  "a,b,{c,d+e,f}" == "a,b,c,d+a,b,e,f"
 #
-# This can happen multple times in an optionset which will fully expand all
+# This can happen multiple times in an optionset which will fully expand all
 # instances:
 # "a,{b+c},{d+e}" == "a,{b+c},d+a,{b+c},e" == "a,b,d+a,c,d+a,{b+c},e" == "a,b,d+a,c,d+a,b,e+a,c,e"
 #
 #
-# The common way to use this is to eiter list all the options to instance the test for each case:
+# The common way to use this is to either list all the options to instance the test for each case:
 #  foo+bar+gazonk
 # Or to create all combination of features:
 #  {foo+nofoo},{bar+nobar}

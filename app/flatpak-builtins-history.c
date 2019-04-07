@@ -54,7 +54,7 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
-  { "time",         N_("Time"),         N_("Show when the change happend"),    0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "time",         N_("Time"),         N_("Show when the change happened"),   0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "change",       N_("Change"),       N_("Show the kind of change"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "ref",          N_("Ref"),          N_("Show the ref"),                    0, FLATPAK_ELLIPSIZE_MODE_NONE, 0, 0 },
   { "application",  N_("Application"),  N_("Show the application/runtime ID"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
