@@ -196,6 +196,38 @@
             </varlistentry>
 
             <varlistentry>
+                <term>comment</term>
+
+                <listitem><para>
+                    Show comment
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>description</term>
+
+                <listitem><para>
+                    Show description
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>homepage</term>
+
+                <listitem><para>
+                    Show homepage
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>icon</term>
+
+                <listitem><para>
+                    Show icon
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>all</term>
 
                 <listitem><para>

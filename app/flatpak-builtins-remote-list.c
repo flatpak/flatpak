@@ -52,6 +52,10 @@ static Column all_columns[] = {
   { "collection", N_("Collection ID"), N_("Show the collection ID"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "priority",   N_("Priority"),      N_("Show the priority"),      0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "options",    N_("Options"),       N_("Show options"),           0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
+  { "comment",    N_("Comment"),       N_("Show comment"),           0, FLATPAK_ELLIPSIZE_MODE_END,  1, 0 },
+  { "description", N_("Description"),  N_("Show description"),       0, FLATPAK_ELLIPSIZE_MODE_END,  1, 0 },
+  { "homepage",   N_("Homepage"),      N_("Show homepage"),          0, FLATPAK_ELLIPSIZE_MODE_NONE,  1, 0 },
+  { "icon",       N_("Icon"),          N_("Show icon"),              0, FLATPAK_ELLIPSIZE_MODE_NONE,  1, 0 },
   { NULL }
 };
 
@@ -94,6 +98,38 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                   g_autofree char *title = flatpak_dir_get_remote_title (dir, remote_name);
                   if (title)
                     flatpak_table_printer_add_column (printer, title);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
+              else if (strcmp (columns[k].name, "comment") == 0)
+                {
+                  g_autofree char *comment = flatpak_dir_get_remote_comment (dir, remote_name);
+                  if (comment)
+                    flatpak_table_printer_add_column (printer, comment);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
+              else if (strcmp (columns[k].name, "description") == 0)
+                {
+                  g_autofree char *description = flatpak_dir_get_remote_description (dir, remote_name);
+                  if (description)
+                    flatpak_table_printer_add_column (printer, description);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
+              else if (strcmp (columns[k].name, "homepage") == 0)
+                {
+                  g_autofree char *homepage = flatpak_dir_get_remote_homepage (dir, remote_name);
+                  if (homepage)
+                    flatpak_table_printer_add_column (printer, homepage);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
+              else if (strcmp (columns[k].name, "icon") == 0)
+                {
+                  g_autofree char *icon = flatpak_dir_get_remote_icon (dir, remote_name);
+                  if (icon)
+                    flatpak_table_printer_add_column (printer, icon);
                   else
                     flatpak_table_printer_add_column (printer, "-");
                 }
