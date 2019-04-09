@@ -11119,6 +11119,58 @@ flatpak_dir_get_remote_title (FlatpakDir *self,
   return NULL;
 }
 
+char *
+flatpak_dir_get_remote_comment (FlatpakDir *self,
+                                const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_string (config, group, "xa.comment", NULL);
+
+  return NULL;
+}
+
+char *
+flatpak_dir_get_remote_description (FlatpakDir *self,
+                                    const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_string (config, group, "xa.description", NULL);
+
+  return NULL;
+}
+
+char *
+flatpak_dir_get_remote_homepage (FlatpakDir *self,
+                                 const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_string (config, group, "xa.homepage", NULL);
+
+  return NULL;
+}
+
+char *
+flatpak_dir_get_remote_icon (FlatpakDir *self,
+                             const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_string (config, group, "xa.icon", NULL);
+
+  return NULL;
+}
+
 gboolean
 flatpak_dir_get_remote_oci (FlatpakDir *self,
                             const char *remote_name)
