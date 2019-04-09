@@ -68,6 +68,10 @@ struct _FlatpakRemotePrivate
   gboolean          local_nodeps;
   gboolean          local_disabled;
   int               local_prio;
+  char             *local_comment;
+  char             *local_description;
+  char             *local_homepage;
+  char             *local_icon;
   FlatpakRemoteType type;
 
   guint             local_url_set            : 1;
@@ -80,6 +84,10 @@ struct _FlatpakRemotePrivate
   guint             local_nodeps_set         : 1;
   guint             local_disabled_set       : 1;
   guint             local_prio_set           : 1;
+  guint             local_icon_set           : 1;
+  guint             local_comment_set        : 1;
+  guint             local_description_set    : 1;
+  guint             local_homepage_set       : 1;
 
   GBytes           *local_gpg_key;
 };
@@ -430,6 +438,198 @@ flatpak_remote_set_title (FlatpakRemote *self,
   g_free (priv->local_title);
   priv->local_title = g_strdup (title);
   priv->local_title_set = TRUE;
+}
+
+/**
+ * flatpak_remote_get_comment:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the comment of the remote.
+ *
+ * Returns: (transfer full): the comment
+ *
+ * Since: 1.4
+ */
+char *
+flatpak_remote_get_comment (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_comment_set)
+    return g_strdup (priv->local_comment);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_comment (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_comment:
+ * @self: a #FlatpakRemote
+ * @comment: The new comment 
+ *
+ * Sets the comment of this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Since: 1.4
+ */
+void
+flatpak_remote_set_comment (FlatpakRemote *self,
+                            const char    *comment)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_comment);
+  priv->local_comment = g_strdup (comment);
+  priv->local_comment_set = TRUE;
+}
+
+/**
+ * flatpak_remote_get_description:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the description of the remote.
+ *
+ * Returns: (transfer full): the description 
+ *
+ * Since: 1.4
+ */
+char *
+flatpak_remote_get_description (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_description_set)
+    return g_strdup (priv->local_description);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_description (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_description:
+ * @self: a #FlatpakRemote
+ * @description: The new description
+ *
+ * Sets the description of this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Since: 1.4
+ */
+void
+flatpak_remote_set_description (FlatpakRemote *self,
+                                const char    *description)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_description);
+  priv->local_description = g_strdup (description);
+  priv->local_description_set = TRUE;
+}
+
+/**
+ * flatpak_remote_get_homepage:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the homepage url of the remote.
+ *
+ * Returns: (transfer full): the homepage url
+ *
+ * Since: 1.4
+ */
+char *
+flatpak_remote_get_homepage (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_homepage_set)
+    return g_strdup (priv->local_homepage);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_homepage (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_homepage:
+ * @self: a #FlatpakRemote
+ * @homepage: The new homepage
+ *
+ * Sets the homepage of this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Since: 1.4
+ */
+void
+flatpak_remote_set_homepage (FlatpakRemote *self,
+                             const char    *homepage)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_homepage);
+  priv->local_homepage = g_strdup (homepage);
+  priv->local_homepage_set = TRUE;
+}
+
+/**
+ * flatpak_remote_get_icon:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the icon url of the remote.
+ *
+ * Returns: (transfer full): the icon url
+ *
+ * Since: 1.4
+ */
+char *
+flatpak_remote_get_icon (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_icon_set)
+    return g_strdup (priv->local_icon);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_icon (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_icon:
+ * @self: a #FlatpakRemote
+ * @icon: The new homepage
+ *
+ * Sets the homepage of this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Since: 1.4
+ */
+void
+flatpak_remote_set_icon (FlatpakRemote *self,
+                         const char    *icon)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_icon);
+  priv->local_icon = g_strdup (icon);
+  priv->local_icon_set = TRUE;
 }
 
 /**
@@ -917,6 +1117,18 @@ flatpak_remote_commit (FlatpakRemote *self,
 
   if (priv->local_title_set)
     g_key_file_set_string (config, group, "xa.title", priv->local_title);
+
+  if (priv->local_comment_set)
+    g_key_file_set_string (config, group, "xa.comment", priv->local_comment);
+
+  if (priv->local_description_set)
+    g_key_file_set_string (config, group, "xa.description", priv->local_description);
+
+  if (priv->local_homepage_set)
+    g_key_file_set_string (config, group, "xa.homepage", priv->local_homepage);
+
+  if (priv->local_icon_set)
+    g_key_file_set_string (config, group, "xa.icon", priv->local_icon);
 
   if (priv->local_default_branch_set)
     g_key_file_set_string (config, group, "xa.default-branch", priv->local_default_branch);
