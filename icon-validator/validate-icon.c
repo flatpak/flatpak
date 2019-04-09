@@ -73,7 +73,7 @@ validate_icon (const char *arg_width,
 
   if (width > max_width || height > max_height)
     {
-      g_printerr ("Image too large (%dx%d)\n", width, height);
+      g_printerr ("Image too large (%dx%d). Max. size %dx%d\n", width, height, max_width, max_height);
       return 1;
     }
 
