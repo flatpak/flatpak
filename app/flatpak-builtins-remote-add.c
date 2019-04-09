@@ -49,6 +49,11 @@ static char *opt_collection_id = NULL;
 static gboolean opt_from;
 static char **opt_gpg_import;
 
+static char *comment = NULL;
+static char *description = NULL;
+static char *icon = NULL;
+static char *homepage = NULL;
+
 
 static GOptionEntry add_options[] = {
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, N_("Do nothing if the provided remote exists"), NULL },
@@ -161,6 +166,30 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
     {
       g_autofree char *prio_as_string = g_strdup_printf ("%d", opt_prio);
       g_key_file_set_string (config, group, "xa.prio", prio_as_string);
+      *changed = TRUE;
+    }
+
+  if (comment)
+    {
+      g_key_file_set_string (config, group, "xa.comment", comment);
+      *changed = TRUE;
+    }
+
+  if (description)
+    {
+      g_key_file_set_string (config, group, "xa.description", description);
+      *changed = TRUE;
+    }
+
+  if (icon)
+    {
+      g_key_file_set_string (config, group, "xa.icon", icon);
+      *changed = TRUE;
+    }
+
+  if (homepage)
+    {
+      g_key_file_set_string (config, group, "xa.homepage", homepage);
       *changed = TRUE;
     }
 
@@ -277,6 +306,18 @@ load_options (const char *filename,
       if (!opt_no_gpg_verify)
         opt_do_gpg_verify = TRUE;
     }
+
+  comment = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_COMMENT_KEY, NULL);
+
+  description = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                       FLATPAK_REPO_DESCRIPTION_KEY, NULL);
+
+  icon = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                FLATPAK_REPO_ICON_KEY, NULL);
+
+  homepage  = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                     FLATPAK_REPO_HOMEPAGE_KEY, NULL);
 }
 
 gboolean
