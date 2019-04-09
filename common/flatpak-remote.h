@@ -80,6 +80,18 @@ FLATPAK_EXTERN void          flatpak_remote_set_collection_id (FlatpakRemote *se
 FLATPAK_EXTERN char *        flatpak_remote_get_title (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_title (FlatpakRemote *self,
                                                        const char    *title);
+FLATPAK_EXTERN char *        flatpak_remote_get_comment (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_comment (FlatpakRemote *self,
+                                                         const char    *comment);
+FLATPAK_EXTERN char *        flatpak_remote_get_description (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_description (FlatpakRemote *self,
+                                                             const char    *description);
+FLATPAK_EXTERN char *        flatpak_remote_get_homepage (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_homepage (FlatpakRemote *self,
+                                                          const char    *homepage);
+FLATPAK_EXTERN char *        flatpak_remote_get_icon (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_icon (FlatpakRemote *self,
+                                                      const char    *icon);
 FLATPAK_EXTERN char *        flatpak_remote_get_default_branch (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_default_branch (FlatpakRemote *self,
                                                                 const char    *default_branch);
