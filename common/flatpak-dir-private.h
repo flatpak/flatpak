@@ -67,6 +67,10 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
 #define FLATPAK_REPO_NODEPS_KEY "NoDeps"
+#define FLATPAK_REPO_COMMENT_KEY "Comment"
+#define FLATPAK_REPO_DESCRIPTION_KEY "Description"
+#define FLATPAK_REPO_HOMEPAGE_KEY "Homepage"
+#define FLATPAK_REPO_ICON_KEY "Icon"
 
 #define FLATPAK_REPO_COLLECTION_ID_KEY "CollectionID"
 #define FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY "DeployCollectionID"
@@ -788,6 +792,14 @@ gboolean   flatpak_dir_remove_remote (FlatpakDir   *self,
                                       GError      **error);
 char      *flatpak_dir_get_remote_title (FlatpakDir *self,
                                          const char *remote_name);
+char      *flatpak_dir_get_remote_comment (FlatpakDir *self,
+                                           const char *remote_name);
+char      *flatpak_dir_get_remote_description (FlatpakDir *self,
+                                               const char *remote_name);
+char      *flatpak_dir_get_remote_homepage (FlatpakDir *self,
+                                            const char *remote_name);
+char      *flatpak_dir_get_remote_icon (FlatpakDir *self,
+                                        const char *remote_name);
 char      *flatpak_dir_get_remote_collection_id (FlatpakDir *self,
                                                  const char *remote_name);
 char      *flatpak_dir_get_remote_main_ref (FlatpakDir *self,
