@@ -172,24 +172,28 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
   if (comment)
     {
       g_key_file_set_string (config, group, "xa.comment", comment);
+      g_key_file_set_boolean (config, group, "xa.comment-is-set", TRUE);
       *changed = TRUE;
     }
 
   if (description)
     {
       g_key_file_set_string (config, group, "xa.description", description);
+      g_key_file_set_boolean (config, group, "xa.description-is-set", TRUE);
       *changed = TRUE;
     }
 
   if (icon)
     {
       g_key_file_set_string (config, group, "xa.icon", icon);
+      g_key_file_set_boolean (config, group, "xa.icon-is-set", TRUE);
       *changed = TRUE;
     }
 
   if (homepage)
     {
       g_key_file_set_string (config, group, "xa.homepage", homepage);
+      g_key_file_set_boolean (config, group, "xa.homepage-is-set", TRUE);
       *changed = TRUE;
     }
 
