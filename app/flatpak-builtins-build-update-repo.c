@@ -34,6 +34,10 @@
 #include "flatpak-builtins-utils.h"
 
 static char *opt_title;
+static char *opt_comment;
+static char *opt_description;
+static char *opt_homepage;
+static char *opt_icon;
 static char *opt_redirect_url;
 static char *opt_default_branch;
 static char *opt_collection_id = NULL;
@@ -55,6 +59,10 @@ static char **opt_static_delta_ignore_refs;
 static GOptionEntry options[] = {
   { "redirect-url", 0, 0, G_OPTION_ARG_STRING, &opt_redirect_url, N_("Redirect this repo to a new URL"), N_("URL") },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this repository"), N_("TITLE") },
+  { "comment", 0, 0, G_OPTION_ARG_STRING, &opt_comment, N_("A one-line comment for this repository"), N_("COMMENT") },
+  { "description", 0, 0, G_OPTION_ARG_STRING, &opt_description, N_("A full-paragraph description for this repository"), N_("DESCRIPTION") },
+  { "homepage", 0, 0, G_OPTION_ARG_STRING, &opt_homepage, N_("URL for a website for this repository"), N_("URL") },
+  { "icon", 0, 0, G_OPTION_ARG_STRING, &opt_icon, N_("URL for an icon for this repository"), N_("URL") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
   { "deploy-collection-id", 0, 0, G_OPTION_ARG_NONE, &opt_deploy_collection_id, N_("Permanently deploy collection ID to client remote configurations"), NULL },
@@ -494,6 +502,22 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
   if (opt_title &&
       !flatpak_repo_set_title (repo, opt_title[0] ? opt_title : NULL, error))
+    return FALSE;
+
+  if (opt_comment &&
+      !flatpak_repo_set_comment (repo, opt_comment[0] ? opt_comment : NULL, error))
+    return FALSE;
+
+  if (opt_description &&
+      !flatpak_repo_set_description (repo, opt_description[0] ? opt_description : NULL, error))
+    return FALSE;
+
+  if (opt_homepage &&
+      !flatpak_repo_set_homepage (repo, opt_homepage[0] ? opt_homepage : NULL, error))
+    return FALSE;
+
+  if (opt_icon &&
+      !flatpak_repo_set_icon (repo, opt_icon[0] ? opt_icon : NULL, error))
     return FALSE;
 
   if (opt_redirect_url &&

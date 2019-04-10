@@ -2601,6 +2601,87 @@ flatpak_repo_set_title (OstreeRepo *repo,
 }
 
 gboolean
+flatpak_repo_set_comment (OstreeRepo *repo,
+                          const char *comment,
+                          GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (comment)
+    g_key_file_set_string (config, "flatpak", "comment", comment);
+  else
+    g_key_file_remove_key (config, "flatpak", "comment", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_repo_set_description (OstreeRepo *repo,
+                              const char *description,
+                              GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (description)
+    g_key_file_set_string (config, "flatpak", "description", description);
+  else
+    g_key_file_remove_key (config, "flatpak", "description", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+
+gboolean
+flatpak_repo_set_icon (OstreeRepo *repo,
+                       const char *icon,
+                       GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (icon)
+    g_key_file_set_string (config, "flatpak", "icon", icon);
+  else
+    g_key_file_remove_key (config, "flatpak", "icon", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_repo_set_homepage (OstreeRepo *repo,
+                           const char *homepage,
+                           GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (homepage)
+    g_key_file_set_string (config, "flatpak", "homepage", homepage);
+  else
+    g_key_file_remove_key (config, "flatpak", "homepage", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 flatpak_repo_set_redirect_url (OstreeRepo *repo,
                                const char *redirect_url,
                                GError    **error)
