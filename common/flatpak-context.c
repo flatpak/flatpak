@@ -1067,6 +1067,21 @@ option_talk_name_cb (const gchar *option_name,
 }
 
 static gboolean
+option_no_talk_name_cb (const gchar *option_name,
+                        const gchar *value,
+                        gpointer     data,
+                        GError     **error)
+{
+  FlatpakContext *context = data;
+
+  if (!flatpak_verify_dbus_name (value, error))
+    return FALSE;
+
+  flatpak_context_set_session_bus_policy (context, value, FLATPAK_POLICY_NONE);
+  return TRUE;
+}
+
+static gboolean
 option_system_own_name_cb (const gchar *option_name,
                            const gchar *value,
                            gpointer     data,
@@ -1093,6 +1108,21 @@ option_system_talk_name_cb (const gchar *option_name,
     return FALSE;
 
   flatpak_context_set_system_bus_policy (context, value, FLATPAK_POLICY_TALK);
+  return TRUE;
+}
+
+static gboolean
+option_system_no_talk_name_cb (const gchar *option_name,
+                               const gchar *value,
+                               gpointer     data,
+                               GError     **error)
+{
+  FlatpakContext *context = data;
+
+  if (!flatpak_verify_dbus_name (value, error))
+    return FALSE;
+
+  flatpak_context_set_system_bus_policy (context, value, FLATPAK_POLICY_NONE);
   return TRUE;
 }
 
@@ -1205,8 +1235,10 @@ static GOptionEntry context_options[] = {
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, N_("Set environment variable"), N_("VAR=VALUE") },
   { "own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_own_name_cb, N_("Allow app to own name on the session bus"), N_("DBUS_NAME") },
   { "talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_talk_name_cb, N_("Allow app to talk to name on the session bus"), N_("DBUS_NAME") },
+  { "no-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_no_talk_name_cb, N_("Don't allow app to talk to name on the session bus"), N_("DBUS_NAME") },
   { "system-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_own_name_cb, N_("Allow app to own name on the system bus"), N_("DBUS_NAME") },
   { "system-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_talk_name_cb, N_("Allow app to talk to name on the system bus"), N_("DBUS_NAME") },
+  { "system-no-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_no_talk_name_cb, N_("Don't allow app to talk to name on the system bus"), N_("DBUS_NAME") },
   { "add-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_add_generic_policy_cb, N_("Add generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "remove-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_remove_generic_policy_cb, N_("Remove generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory"), N_("FILENAME") },

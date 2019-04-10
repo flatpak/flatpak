@@ -414,6 +414,17 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-talk-name=NAME</option></term>
+
+                <listitem><para>
+                    Don't allow the application to talk to the well known name <arg choice="plain">NAME</arg> on the session bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--system-own-name=NAME</option></term>
 
                 <listitem><para>
@@ -429,6 +440,17 @@ key=v1;v2;
 
                 <listitem><para>
                     Allow the application to talk to the well known name <arg choice="plain">NAME</arg> on the system bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system-no-talk-name=NAME</option></term>
+
+                <listitem><para>
+                    Don't allow the application to talk to the well known name <arg choice="plain">NAME</arg> on the system bus.
                     If <arg choice="plain">NAME</arg> ends with .*, it allows the application to talk to all matching names.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
