@@ -74,6 +74,10 @@ print_info (OstreeRepo *repo,
 {
   g_autoptr(GVariant) cache = NULL;
   const char *title;
+  const char *comment;
+  const char *description;
+  const char *homepage;
+  const char *icon;
   const char *collection_id;
   const char *default_branch;
   const char *redirect_url;
@@ -88,6 +92,18 @@ print_info (OstreeRepo *repo,
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
     g_print (_("Title: %s\n"), title);
+
+  if (g_variant_lookup (meta, "xa.comment", "&s", &comment))
+    g_print (_("Comment: %s\n"), comment);
+
+  if (g_variant_lookup (meta, "xa.description", "&s", &description))
+    g_print (_("Description: %s\n"), description);
+
+  if (g_variant_lookup (meta, "xa.homepage", "&s", &homepage))
+    g_print (_("Homepage: %s\n"), homepage);
+
+  if (g_variant_lookup (meta, "xa.icon", "&s", &icon))
+    g_print (_("Icon: %s\n"), icon);
 
   if (g_variant_lookup (meta, "collection-id", "&s", &collection_id))
     g_print (_("Collection ID: %s\n"), collection_id);
