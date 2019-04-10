@@ -186,6 +186,7 @@ latest
 options
 origin
 ref
+runtime
 size
 version
 EOF
@@ -215,6 +216,7 @@ arch,latest
 arch,options
 arch,origin
 arch,ref
+arch,runtime
 arch,size
 arch,version
 EOF
