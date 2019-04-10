@@ -379,6 +379,18 @@ gboolean flatpak_switch_symlink_and_remove (const char *symlink_path,
 gboolean flatpak_repo_set_title (OstreeRepo *repo,
                                  const char *title,
                                  GError    **error);
+gboolean flatpak_repo_set_comment (OstreeRepo *repo,
+                                   const char *comment,
+                                   GError    **error);
+gboolean flatpak_repo_set_description (OstreeRepo *repo,
+                                       const char *description,
+                                       GError    **error);
+gboolean flatpak_repo_set_icon (OstreeRepo *repo,
+                                const char *icon,
+                                GError    **error);
+gboolean flatpak_repo_set_homepage (OstreeRepo *repo,
+                                    const char *homepage,
+                                    GError    **error);
 gboolean flatpak_repo_set_redirect_url (OstreeRepo *repo,
                                         const char *redirect_url,
                                         GError    **error);
