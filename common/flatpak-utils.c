@@ -3105,6 +3105,10 @@ flatpak_repo_update (OstreeRepo   *repo,
   GVariantBuilder ref_sparse_data_builder;
   GKeyFile *config;
   g_autofree char *title = NULL;
+  g_autofree char *comment = NULL;
+  g_autofree char *description = NULL;
+  g_autofree char *homepage = NULL;
+  g_autofree char *icon = NULL;
   g_autofree char *redirect_url = NULL;
   g_autofree char *default_branch = NULL;
   g_autofree char *gpg_keys = NULL;
@@ -3128,6 +3132,10 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (config)
     {
       title = g_key_file_get_string (config, "flatpak", "title", NULL);
+      comment = g_key_file_get_string (config, "flatpak", "comment", NULL);
+      description = g_key_file_get_string (config, "flatpak", "description", NULL);
+      homepage = g_key_file_get_string (config, "flatpak", "homepage", NULL);
+      icon = g_key_file_get_string (config, "flatpak", "icon", NULL);
       default_branch = g_key_file_get_string (config, "flatpak", "default-branch", NULL);
       gpg_keys = g_key_file_get_string (config, "flatpak", "gpg-keys", NULL);
       redirect_url = g_key_file_get_string (config, "flatpak", "redirect-url", NULL);
@@ -3139,6 +3147,22 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (title)
     g_variant_builder_add (&builder, "{sv}", "xa.title",
                            g_variant_new_string (title));
+
+  if (comment)
+    g_variant_builder_add (&builder, "{sv}", "xa.comment",
+                           g_variant_new_string (comment));
+
+  if (description)
+    g_variant_builder_add (&builder, "{sv}", "xa.description",
+                           g_variant_new_string (description));
+
+  if (homepage)
+    g_variant_builder_add (&builder, "{sv}", "xa.homepage",
+                           g_variant_new_string (homepage));
+
+  if (icon)
+    g_variant_builder_add (&builder, "{sv}", "xa.icon",
+                           g_variant_new_string (icon));
 
   if (redirect_url)
     g_variant_builder_add (&builder, "{sv}", "xa.redirect-url",
