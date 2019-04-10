@@ -12404,6 +12404,10 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
      flatpak_repo_set_* () family of functions) */
   static const char *const supported_params[] = {
     "xa.title",
+    "xa.comment",
+    "xa.description",
+    "xa.homepage",
+    "xa.icon",
     "xa.default-branch",
     "xa.gpg-keys",
     "xa.redirect-url",
