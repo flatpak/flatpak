@@ -222,6 +222,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term>runtime</term>
+
+                <listitem><para>
+                    Show the used runtime
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>version</term>
 
                 <listitem><para>
