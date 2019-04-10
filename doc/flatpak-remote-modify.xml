@@ -182,6 +182,38 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--comment=COMMENT</option></term>
+
+                <listitem><para>
+                    A single-line comment for the remote, e.g. for display in a UI.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--description=DESCRIPTION</option></term>
+
+                <listitem><para>
+                    A full-paragraph description for the remote, e.g. for display in a UI.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--homepage=URL</option></term>
+
+                <listitem><para>
+                    URL for a website for the remote, e.g. for display in a UI.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--icon=URL</option></term>
+
+                <listitem><para>
+                    URL for an icon for the remote, e.g. for display in a UI.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--default-branch=BRANCH</option></term>
 
                 <listitem><para>
