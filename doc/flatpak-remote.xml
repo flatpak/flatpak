@@ -122,6 +122,38 @@
                     <listitem><para>This key is set to true if <option>xa.title</option> has been explicitly set.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>xa.comment</option> (string)</term>
+                    <listitem><para>An optional single-line comment to use when presenting this remote in a UI.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.comment-is-set</option> (boolean)</term>
+                    <listitem><para>This key is set to true if <option>xa.comment</option> has been explicitly set.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.description</option> (string)</term>
+                    <listitem><para>An optional full-paragraph of text to use when presenting this remote in a UI.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.description-is-set</option> (boolean)</term>
+                    <listitem><para>This key is set to true if <option>xa.description</option> has been explicitly set.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.homepage</option> (string)</term>
+                    <listitem><para>An optional URL that points to a website for this repository to use when presenting this remote in a UI.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.homepage-is-set</option> (boolean)</term>
+                    <listitem><para>This key is set to true if <option>xa.homepage</option> has been explicitly set.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.icon</option> (string)</term>
+                    <listitem><para>An optional URL that points to an icon for this repository to use when presenting this remote in a UI.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.icon-is-set</option> (boolean)</term>
+                    <listitem><para>This key is set to true if <option>xa.icon</option> has been explicitly set.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>xa.default-branch</option> (string)</term>
                     <listitem><para>The default branch to use when installing from this remote.</para></listitem>
                 </varlistentry>
