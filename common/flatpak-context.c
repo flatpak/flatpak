@@ -1679,10 +1679,13 @@ flatpak_context_save_metadata (FlatpakContext *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       FlatpakPolicy policy = GPOINTER_TO_INT (value);
-      if (policy > 0)
-        g_key_file_set_string (metakey,
-                               FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
-                               (char *) key, flatpak_policy_to_string (policy));
+
+      if (flatten && (policy == 0))
+        continue;
+
+      g_key_file_set_string (metakey,
+                             FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
+                             (char *) key, flatpak_policy_to_string (policy));
     }
 
   g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY, NULL);
@@ -1690,10 +1693,13 @@ flatpak_context_save_metadata (FlatpakContext *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       FlatpakPolicy policy = GPOINTER_TO_INT (value);
-      if (policy > 0)
-        g_key_file_set_string (metakey,
-                               FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY,
-                               (char *) key, flatpak_policy_to_string (policy));
+
+      if (flatten && (policy == 0))
+        continue;
+
+      g_key_file_set_string (metakey,
+                             FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY,
+                             (char *) key, flatpak_policy_to_string (policy));
     }
 
   g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, NULL);
