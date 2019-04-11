@@ -822,6 +822,22 @@ out:
 }
 
 gboolean
+flatpak_has_name_prefix (const char *string,
+                         const char *name)
+{
+  const char *rest;
+
+  if (!g_str_has_prefix (string, name))
+    return FALSE;
+
+  rest = string + strlen (name);
+  return
+    *rest == 0 ||
+    *rest == '.' ||
+    !is_valid_name_character (*rest, FALSE);
+}
+
+gboolean
 flatpak_name_matches_one_wildcard_prefix (const char         *name,
                                           const char * const *wildcarded_prefixes,
                                           gboolean            require_exact_match)
