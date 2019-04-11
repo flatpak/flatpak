@@ -28,7 +28,7 @@ name=$APP_ID
 runtime=org.test.Platform/$ARCH/$BRANCH
 sdk=org.test.Platform/$ARCH/$BRANCH
 
-[Extension org.test.Hello.Locale]
+[Extension $APP_ID.Locale]
 directory=share/runtime/locale
 autodelete=true
 locale-subset=true
