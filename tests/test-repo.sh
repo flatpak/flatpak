@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..29"
+echo "1..30"
 
 #Regular repo
 setup_repo
@@ -266,9 +266,55 @@ assert_file_has_content info-log "End-of-life: Reason2"
 ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "org\.test\.Hello/.*eol=Reason2"
 
-${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform
+${FLATPAK} ${U} uninstall -y org.test.Hello
 
 echo "ok eol build-export"
+
+if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+    REBASE_COLLECTION_ID=org.test.Collection.rebase
+    rebase_collection_args=--collection-id=${REBASE_COLLECTION_ID}
+else
+    REBASE_COLLECTION_ID=
+    rebase_collection_args=
+fi
+
+ostree init --repo=repos/test-rebase --mode=archive-z2 ${rebase_collection_args}
+${FLATPAK} build-commit-from --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
+update_repo test-rebase ${REBASE_COLLECTION_ID}
+
+flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-rebase "http://127.0.0.1:${port}/test-rebase"
+
+${FLATPAK} ${U} install -y test-rebase org.test.Hello
+
+assert_not_has_dir $HOME/.var/app/org.test.Hello
+${CMD_PREFIX} flatpak run --command=bash org.test.Hello -c 'echo foo > $XDG_DATA_HOME/a-file'
+assert_has_dir $HOME/.var/app/org.test.Hello
+assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
+
+${FLATPAK} build-commit-from --end-of-life-rebase=org.test.Hello=org.test.NewHello --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
+GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
+
+${FLATPAK} ${U} update -y org.test.Hello
+
+# Make sure we got the new version installed
+assert_has_dir $FL_DIR/app/org.test.NewHello/$ARCH/master/active/files
+assert_not_has_file $FL_DIR/app/org.test.NewHello/$ARCH/master/active/files
+
+${CMD_PREFIX} flatpak run --command=bash org.test.NewHello -c 'echo foo > $XDG_DATA_HOME/another-file'
+
+# Ensure we migrated the app data
+assert_has_dir $HOME/.var/app/org.test.NewHello
+assert_has_file $HOME/.var/app/org.test.NewHello/data/a-file
+assert_has_file $HOME/.var/app/org.test.NewHello/data/another-file
+
+# And that the old is symlinked
+assert_has_symlink $HOME/.var/app/org.test.Hello
+assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
+assert_has_file $HOME/.var/app/org.test.Hello/data/another-file
+
+${FLATPAK} ${U} uninstall -y org.test.NewHello org.test.Platform
+
+echo "ok eol-rebase"
 
 ${FLATPAK} ${U} install -y test-repo org.test.Platform
 
