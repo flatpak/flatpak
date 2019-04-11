@@ -147,6 +147,8 @@ struct _FlatpakTransactionPrivate
   gboolean                     can_run;
   char                        *default_arch;
   guint                        max_op;
+
+  gboolean                     needs_resolve;
 };
 
 enum {
@@ -1428,6 +1430,8 @@ flatpak_transaction_add_op (FlatpakTransaction             *self,
 
   priv->ops = g_list_prepend (priv->ops, op);
 
+  priv->needs_resolve = TRUE;
+
   return op;
 }
 
@@ -2211,6 +2215,23 @@ resolve_ops (FlatpakTransaction *self,
   return TRUE;
 }
 
+static gboolean
+resolve_all_ops (FlatpakTransaction *self,
+                 GCancellable       *cancellable,
+                 GError            **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  while (priv->needs_resolve)
+    {
+      priv->needs_resolve = FALSE;
+      if (!resolve_ops (self, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 static int
 compare_op_ref (FlatpakTransactionOperation *a, FlatpakTransactionOperation *b)
 {
@@ -2741,7 +2762,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
     return FALSE;
 
   /* Resolve initial ops */
-  if (!resolve_ops (self, cancellable, error))
+  if (!resolve_all_ops (self, cancellable, error))
     return FALSE;
 
   /* Add all app -> runtime dependencies */
@@ -2754,7 +2775,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
     }
 
   /* Resolve new ops */
-  if (!resolve_ops (self, cancellable, error))
+  if (!resolve_all_ops (self, cancellable, error))
     return FALSE;
 
   /* Add all related extensions */
@@ -2767,7 +2788,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
     }
 
   /* Resolve new ops */
-  if (!resolve_ops (self, cancellable, error))
+  if (!resolve_all_ops (self, cancellable, error))
     return FALSE;
 
   sort_ops (self);
