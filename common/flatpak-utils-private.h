@@ -182,6 +182,8 @@ gboolean flatpak_is_valid_name (const char *string,
                                 GError    **error);
 gboolean flatpak_is_valid_branch (const char *string,
                                   GError    **error);
+gboolean flatpak_has_name_prefix (const char *string,
+                                  const char *name);
 
 char * flatpak_make_valid_id_prefix (const char *orig_id);
 gboolean flatpak_id_has_subref_suffix (const char *id);
