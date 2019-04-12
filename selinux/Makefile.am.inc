@@ -22,3 +22,5 @@ EXTRA_DIST += \
 	selinux/flatpak.fc \
 	selinux/flatpak.if \
 	$(NULL)
+
+DISTCLEANFILES += flatpak.pp.bz2
