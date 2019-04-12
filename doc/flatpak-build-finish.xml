@@ -133,7 +133,8 @@
                 <listitem><para>
                     Expose a well-known socket to the application. This updates
                     the [Context] group in the metadata.
-                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
+                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
+                    ssh-auth, pcsc.
                     This option can be used multiple times.
                 </para><para>
                     The fallback-x11 option makes the X11 socket available only if
@@ -149,7 +150,8 @@
                 <listitem><para>
                     Don't expose a well known socket to the application. This updates
                     the [Context] group in the metadata.
-                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus, ssh-auth.
+                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
+                    ssh-auth, pcsc.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
