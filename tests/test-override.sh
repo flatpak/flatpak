@@ -4,6 +4,8 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
+skip_revokefs_without_fuse
+
 reset_overrides () {
     ${FLATPAK} override --user --reset org.test.Hello
     ${FLATPAK} override --user --show org.test.Hello > info

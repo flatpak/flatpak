@@ -343,12 +343,18 @@ else
     _flatpak_bwrap_works=true
 fi
 
+# Use to skip all of these tests
+skip() {
+    echo "1..0 # SKIP" "$@"
+    exit 0
+}
+
 skip_without_bwrap () {
     if "${_flatpak_bwrap_works}"; then
         return 0
     else
         sed -e 's/^/# /' < bwrap-result
-        echo "1..0 # SKIP Cannot run bwrap"
+        skip "Cannot run bwrap"
         exit 0
     fi
 }
@@ -359,6 +365,22 @@ skip_one_without_bwrap () {
     else
         echo "ok $* # SKIP Cannot run bwrap"
         return 0
+    fi
+}
+
+skip_without_fuse () {
+    fusermount --version >/dev/null 2>&1 || skip "no fusermount"
+
+    capsh --print | grep -q 'Bounding set.*[^a-z]cap_sys_admin' || \
+        skip "No cap_sys_admin in bounding set, can't use FUSE"
+
+    [ -w /dev/fuse ] || skip "no write access to /dev/fuse"
+    [ -e /etc/mtab ] || skip "no /etc/mtab"
+}
+
+skip_revokefs_without_fuse () {
+    if [ "x${USE_SYSTEMDIR-}" = xyes ] && [ "x${FLATPAK_DISABLE_REVOKEFS-}" != xyes ]; then
+        skip_without_fuse
     fi
 }
 
