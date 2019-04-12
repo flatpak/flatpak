@@ -326,7 +326,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     {
       app_files = g_object_ref (res_files);
       if (opt_with_appdir)
-        app_id_dir = flatpak_ensure_data_dir (id, cancellable, NULL);
+        {
+          app_id_dir = flatpak_get_data_dir (id);
+          if (!flatpak_ensure_data_dir (app_id_dir, cancellable, NULL))
+            g_clear_object (&app_id_dir);
+        }
     }
   else if (is_extension)
     {

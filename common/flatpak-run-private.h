@@ -136,9 +136,9 @@ FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                                  GKeyFile *runtime_metadata,
                                                  GError  **error);
 GFile *flatpak_get_data_dir (const char *app_id);
-GFile *flatpak_ensure_data_dir (const char   *app_id,
-                                GCancellable *cancellable,
-                                GError      **error);
+gboolean flatpak_ensure_data_dir (GFile        *app_id_dir,
+                                  GCancellable *cancellable,
+                                  GError      **error);
 
 gboolean flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                                       GFile          *runtime_files,
