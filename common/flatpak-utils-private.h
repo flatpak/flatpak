@@ -322,6 +322,26 @@ g_date_time_new_from_iso8601 (const gchar *text, GTimeZone *default_tz)
 }
 #endif
 
+
+#if !GLIB_CHECK_VERSION (2, 56, 0)
+typedef void (* GClearHandleFunc) (guint handle_id);
+
+static inline void
+g_clear_handle_id (guint            *tag_ptr,
+                   GClearHandleFunc  clear_func)
+{
+  guint _handle_id;
+
+  _handle_id = *tag_ptr;
+  if (_handle_id > 0)
+    {
+      *tag_ptr = 0;
+      clear_func (_handle_id);
+    }
+}
+#endif
+
+
 #if !GLIB_CHECK_VERSION (2, 58, 0)
 static inline gboolean
 g_hash_table_steal_extended (GHashTable    *hash_table,
