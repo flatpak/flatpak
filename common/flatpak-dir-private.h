@@ -351,6 +351,9 @@ const char *        flatpak_deploy_data_get_appdata_name (GVariant *deploy_data)
 const char *        flatpak_deploy_data_get_appdata_summary (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_version (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_license (GVariant *deploy_data);
+const char **       flatpak_deploy_data_get_previous_ids (GVariant *deploy_data,
+                                                          gsize    *length);
+
 
 GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
 GVariant *     flatpak_load_deploy_data (GFile        *deploy_dir,
