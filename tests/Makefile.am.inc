@@ -2,11 +2,16 @@ AM_TESTS_ENVIRONMENT = FLATPAK_TESTS_DEBUG=1 \
 	FLATPAK_CONFIG_DIR=/dev/null \
 	FLATPAK_TRIGGERSDIR=$$(cd $(top_srcdir) && pwd)/triggers \
 	FLATPAK_VALIDATE_ICON=$$(cd $(top_builddir) && pwd)/flatpak-validate-icon \
-	FLATPAK_DBUSPROXY=$$(cd $(top_builddir) && pwd)/flatpak-dbus-proxy \
 	GI_TYPELIB_PATH=$$(cd $(top_builddir) && pwd)$${GI_TYPELIB_PATH:+:$$GI_TYPELIB_PATH} \
 	LD_LIBRARY_PATH=$$(cd $(top_builddir)/.libs && pwd)$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH} \
 	PATH=$$(cd $(top_builddir) && pwd):$${PATH} \
 	$(NULL)
+
+if WITH_SYSTEM_DBUS_PROXY
+AM_TESTS_ENVIRONMENT += FLATPAK_DBUSPROXY=$(DBUS_PROXY)
+else
+AM_TESTS_ENVIRONMENT += FLATPAK_DBUSPROXY=$$(cd $(top_builddir) && pwd)/flatpak-dbus-proxy
+endif
 
 if WITH_SYSTEM_BWRAP
 AM_TESTS_ENVIRONMENT += FLATPAK_BWRAP=$(BWRAP)
