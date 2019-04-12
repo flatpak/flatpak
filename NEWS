@@ -1,3 +1,48 @@
+Changes in 1.3.2
+================
+
+This release contains a major change in how flatpak does system-wide
+installation as a user. We used to pull into a temporary user-owned
+directory and then ask the flatpak system-helper to import from this
+directory. Unfortunately, since we can't trust the user directory
+it had to copy these files as they were being imported, which caused
+unnecessary i/o, as well as temporarily using more diskspace.
+
+The new setup uses a new custom fuse filesystem which the user writes
+to, and then when this is done we can safely revoke any access to this
+from the user, meaning the files can be directly imported into the
+system repository without needing to make a copy.
+
+However, this makes packaging flatpak a bit more complex, as we now
+require flatpak to have a user. By default flatpak will look for a user
+called "flatpak", and for the new feature to work you need to create
+it in your package. If you want to use a different name you can specify
+that in configure as --with-system-helper-user=USERNAME.
+
+Additionally, the new code passed a unix socket over the system bus, which
+is prohibited by the default selinux policy. To work around this flatpak
+now ships with a custom selinux module (enable with --enable-selinux-module).
+For the new feature to work you need to install this module and ensure
+the flatpak-system-helper binary gets the proper selinux context.
+
+Other changes:
+
+ * We now support specifying a rebasing version of end-of-life, where
+   the clients will be asked if they want to use the new version. At
+   runtime any old per-user application data will be migrated to the
+   new name. Note: This works for the CLI app, but needs some changes
+   for installers to take advantage of the automatic rebasing.
+ * New permission --socket=pcsc for access to smart cards.
+ * We now store the description, comment, icon and homepage fields from
+   the flatpakrepo files in the remote confiuration and have new library
+   APIs to read these back.
+ * The fields above are now also settable in a repo and changes to these
+   can propagate to clients.
+ * run now tries the determine what branch to use when you run a runtime.
+ * Print maximum icon size when icon-validator fails.
+ * flatpak override can now disallow access to a dbus name.
+ * flatpak list now has a new runtime column
+
 Changes in 1.3.1
 ================
 
