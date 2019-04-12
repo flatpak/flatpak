@@ -229,3 +229,11 @@
    fun:g_malloc0
    fun:push_repo_lock
 }
+# Some gnutls conditional failure
+{
+   gnutls_import_fail
+   Memcheck:Cond
+   ...
+   fun:gnutls_x509_ext_import_subject_alt_names
+   fun:gnutls_x509_crt_import
+}
