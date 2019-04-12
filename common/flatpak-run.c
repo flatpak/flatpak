@@ -1411,34 +1411,33 @@ flatpak_get_data_dir (const char *app_id)
   return g_file_get_child (var_app, app_id);
 }
 
-GFile *
-flatpak_ensure_data_dir (const char   *app_id,
+gboolean
+flatpak_ensure_data_dir (GFile        *app_id_dir,
                          GCancellable *cancellable,
                          GError      **error)
 {
-  g_autoptr(GFile) dir = flatpak_get_data_dir (app_id);
-  g_autoptr(GFile) data_dir = g_file_get_child (dir, "data");
-  g_autoptr(GFile) cache_dir = g_file_get_child (dir, "cache");
+  g_autoptr(GFile) data_dir = g_file_get_child (app_id_dir, "data");
+  g_autoptr(GFile) cache_dir = g_file_get_child (app_id_dir, "cache");
   g_autoptr(GFile) fontconfig_cache_dir = g_file_get_child (cache_dir, "fontconfig");
   g_autoptr(GFile) tmp_dir = g_file_get_child (cache_dir, "tmp");
-  g_autoptr(GFile) config_dir = g_file_get_child (dir, "config");
+  g_autoptr(GFile) config_dir = g_file_get_child (app_id_dir, "config");
 
   if (!flatpak_mkdir_p (data_dir, cancellable, error))
-    return NULL;
+    return FALSE;
 
   if (!flatpak_mkdir_p (cache_dir, cancellable, error))
-    return NULL;
+    return FALSE;
 
   if (!flatpak_mkdir_p (fontconfig_cache_dir, cancellable, error))
-    return NULL;
+    return FALSE;
 
   if (!flatpak_mkdir_p (tmp_dir, cancellable, error))
-    return NULL;
+    return FALSE;
 
   if (!flatpak_mkdir_p (config_dir, cancellable, error))
-    return NULL;
+    return FALSE;
 
-  return g_object_ref (dir);
+  return TRUE;
 }
 
 struct JobData
@@ -3355,10 +3354,10 @@ flatpak_run_app (const char     *app_ref,
 
   if (app_deploy != NULL)
     {
+      real_app_id_dir = flatpak_get_data_dir (app_ref_parts[1]);
       app_files = flatpak_deploy_get_files (app_deploy);
 
-      real_app_id_dir = flatpak_ensure_data_dir (app_ref_parts[1], cancellable, error);
-      if (real_app_id_dir == NULL)
+      if (!flatpak_ensure_data_dir (real_app_id_dir, cancellable, error))
         return FALSE;
 
       if (!sandboxed)
