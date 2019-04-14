@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-04-12 13:03+0200\n"
-"PO-Revision-Date: 2019-03-30 14:28+0700\n"
+"POT-Creation-Date: 2019-04-14 03:24+0000\n"
+"PO-Revision-Date: 2019-04-14 19:53+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -329,10 +329,12 @@ msgid ""
 "Mark refs matching the OLDID prefix as end-of-life, to be replaced with the "
 "given NEWID"
 msgstr ""
+"Tandai referensi yang cocok dengan awalan IDLAMA sebagai akhir masa "
+"pakainya, untuk diganti dengan IDBARU yang diberikan"
 
 #: app/flatpak-builtins-build-commit-from.c:66
 msgid "OLDID=NEWID"
-msgstr ""
+msgstr "IDLAMA=IDBARU"
 
 #: app/flatpak-builtins-build-commit-from.c:67
 msgid "Override the timestamp of the commit (NOW for current time)"
@@ -370,12 +372,13 @@ msgstr "Entah --src-repo atau --src-ref harus ditentukan."
 #: app/flatpak-builtins-build-commit-from.c:281
 msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
 msgstr ""
+"Format argumen penggunaan tidak valid  --end-of-life-rebase=IDLAMA=IDBARU"
 
 #: app/flatpak-builtins-build-commit-from.c:287
 #: app/flatpak-builtins-build-commit-from.c:290
 #, c-format
 msgid "Invalid name %s in --end-of-life-rebase"
-msgstr ""
+msgstr "Nama %s tidak valid dalam --end-of-life-rebase"
 
 #: app/flatpak-builtins-build-commit-from.c:299
 #: app/flatpak-builtins-build-export.c:1036
@@ -425,6 +428,8 @@ msgstr "Sertakan berkas yang dikecualikan"
 #: app/flatpak-builtins-build-export.c:69
 msgid "Mark build as end-of-life, to be replaced with the given ID"
 msgstr ""
+"Tandai bangun sebagai akhir-masa-pakai, harus diganti dengan ID yang "
+"diberikan"
 
 #: app/flatpak-builtins-build-export.c:69
 #: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:879
@@ -890,35 +895,30 @@ msgid "TITLE"
 msgstr "JUDUL"
 
 #: app/flatpak-builtins-build-update-repo.c:62
-#, fuzzy
 msgid "A one-line comment for this repository"
-msgstr "Nama yang bagus untuk digunakan pada repositori ini"
+msgstr "Komentar satu baris untuk repositori ini"
 
 #: app/flatpak-builtins-build-update-repo.c:62
 #: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:73
-#, fuzzy
 msgid "COMMENT"
-msgstr "KOMIT"
+msgstr "KOMENTAR"
 
 #: app/flatpak-builtins-build-update-repo.c:63
-#, fuzzy
 msgid "A full-paragraph description for this repository"
-msgstr "Cabang bawaan yang akan digunakan untuk repositori ini"
+msgstr "Deskripsi paragraf lengkap untuk repositori ini"
 
 #: app/flatpak-builtins-build-update-repo.c:63
 #: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:74
 msgid "DESCRIPTION"
-msgstr ""
+msgstr "DESKRIPSI"
 
 #: app/flatpak-builtins-build-update-repo.c:64
-#, fuzzy
 msgid "URL for a website for this repository"
-msgstr "Nama yang bagus untuk digunakan pada repositori ini"
+msgstr "URL untuk situs web untuk repositori ini"
 
 #: app/flatpak-builtins-build-update-repo.c:65
-#, fuzzy
 msgid "URL for an icon for this repository"
-msgstr "Nama yang bagus untuk digunakan pada repositori ini"
+msgstr "URL untuk ikon untuk repositori ini"
 
 #: app/flatpak-builtins-build-update-repo.c:66
 msgid "Default branch to use for this repository"
@@ -1398,9 +1398,8 @@ msgid "Time"
 msgstr "Waktu"
 
 #: app/flatpak-builtins-history.c:57
-#, fuzzy
 msgid "Show when the change happened"
-msgstr "Tampilkan kapan perubahan itu terjadi"
+msgstr "Tampilkan saat perubahan itu terjadi"
 
 #: app/flatpak-builtins-history.c:58
 msgid "Change"
@@ -1925,9 +1924,8 @@ msgid "Runtime"
 msgstr "Runtime"
 
 #: app/flatpak-builtins-list.c:62
-#, fuzzy
 msgid "Show the used runtime"
-msgstr "Tampilkan runtime"
+msgstr "Tampilkan runtime yang digunakan"
 
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-remote-ls.c:64
 msgid "Show the origin remote"
@@ -2142,24 +2140,20 @@ msgid "A nice name to use for this remote"
 msgstr "Sebuah nama yang bagus untuk digunakan bagi remote ini"
 
 #: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:73
-#, fuzzy
 msgid "A one-line comment for this remote"
-msgstr "Sebuah nama yang bagus untuk digunakan bagi remote ini"
+msgstr "Komentar satu baris untuk remote ini"
 
 #: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:74
-#, fuzzy
 msgid "A full-paragraph description for this remote"
-msgstr "Cabang bawaan yang digunakan untuk remote ini"
+msgstr "Deskripsi paragraf lengkap untuk remote ini"
 
 #: app/flatpak-builtins-remote-add.c:76 app/flatpak-builtins-remote-modify.c:75
-#, fuzzy
 msgid "URL for a website for this remote"
-msgstr "Sebuah nama yang bagus untuk digunakan bagi remote ini"
+msgstr "URL untuk situs web untuk remote ini"
 
 #: app/flatpak-builtins-remote-add.c:77 app/flatpak-builtins-remote-modify.c:76
-#, fuzzy
 msgid "URL for an icon for this remote"
-msgstr "Cabang bawaan yang digunakan untuk remote ini"
+msgstr "URL untuk ikon untuk remote ini"
 
 #: app/flatpak-builtins-remote-add.c:78 app/flatpak-builtins-remote-modify.c:77
 msgid "Default branch to use for this remote"
@@ -2332,37 +2326,32 @@ msgid "Show the priority"
 msgstr "Tampilkan prioritas"
 
 #: app/flatpak-builtins-remote-list.c:55
-#, fuzzy
 msgid "Comment"
-msgstr "Komit"
+msgstr "Komentar"
 
 #: app/flatpak-builtins-remote-list.c:55
-#, fuzzy
 msgid "Show comment"
-msgstr "Tampilkan komit"
+msgstr "Tampilkan komentar"
 
 #: app/flatpak-builtins-remote-list.c:56
-#, fuzzy
 msgid "Show description"
 msgstr "Tampilkan deskripsi"
 
 #: app/flatpak-builtins-remote-list.c:57
 msgid "Homepage"
-msgstr ""
+msgstr "Halaman Web"
 
 #: app/flatpak-builtins-remote-list.c:57
-#, fuzzy
 msgid "Show homepage"
-msgstr "Tampilkan nama"
+msgstr "Tampilkan halaman web"
 
 #: app/flatpak-builtins-remote-list.c:58
 msgid "Icon"
-msgstr ""
+msgstr "Ikon"
 
 #: app/flatpak-builtins-remote-list.c:58
-#, fuzzy
 msgid "Show icon"
-msgstr "Tampilkan opsi"
+msgstr "Tampilkan ikon"
 
 #: app/flatpak-builtins-remote-list.c:205
 msgid " - List remote repositories"
@@ -2572,24 +2561,24 @@ msgid "Title: %s\n"
 msgstr "Judul: %s\n"
 
 #: app/flatpak-builtins-repo.c:97
-#, fuzzy, c-format
+#, c-format
 msgid "Comment: %s\n"
-msgstr "Komit: %s\n"
+msgstr "Komentar: %s\n"
 
 #: app/flatpak-builtins-repo.c:100
-#, fuzzy, c-format
+#, c-format
 msgid "Description: %s\n"
-msgstr "Deskripsi"
+msgstr "Deskripsi: %s\n"
 
 #: app/flatpak-builtins-repo.c:103
 #, c-format
 msgid "Homepage: %s\n"
-msgstr ""
+msgstr "Halaman Web: %s\n"
 
 #: app/flatpak-builtins-repo.c:106
-#, fuzzy, c-format
+#, c-format
 msgid "Icon: %s\n"
-msgstr "Komit: %s\n"
+msgstr "Ikon: %s\n"
 
 #: app/flatpak-builtins-repo.c:109
 #, c-format
@@ -2706,9 +2695,9 @@ msgid "APP [ARGUMENT…] - Run an app"
 msgstr "APP ARGUMEN...] - Jalankan aplikasi"
 
 #: app/flatpak-builtins-run.c:250
-#, fuzzy, c-format
+#, c-format
 msgid "runtime/%s/%s/%s not installed"
-msgstr "%s/%s/%s tidak terpasang"
+msgstr "runtime/%s/%s/%s tidak terpasang"
 
 #: app/flatpak-builtins-search.c:36
 msgid "Arch to search for"
@@ -2999,7 +2988,7 @@ msgstr "Mengonfigurasi %s sebagai remote baru '%s'"
 
 #. default to yes on Enter
 #: app/flatpak-cli-transaction.c:125
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The remote '%s', referred to by '%s' at location %s contains additional "
 "applications.\n"
@@ -3106,9 +3095,9 @@ msgid "Error:"
 msgstr "Galat:"
 
 #: app/flatpak-cli-transaction.c:516
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s is end-of-life, in preference of %s\n"
-msgstr "Info: %s adalah akhir-masa-pakai, dalam preferensi %s"
+msgstr "Info: %s adalah akhir-masa-pakai, dalam preferensi %s\n"
 
 #: app/flatpak-cli-transaction.c:518
 #, c-format
@@ -3118,17 +3107,16 @@ msgstr "Info: %s adalah akhir-masa-pakai, dengan alasan: %s\n"
 #: app/flatpak-cli-transaction.c:523
 #, c-format
 msgid "Replace it with %s?"
-msgstr ""
+msgstr "Ganti dengan %s?"
 
 #: app/flatpak-cli-transaction.c:528
-#, fuzzy
 msgid "Updating to rebased version\n"
-msgstr "Memutakhirkan cabang appstream\n"
+msgstr "Memutakhirkan ke versi yang di-rebase\n"
 
 #: app/flatpak-cli-transaction.c:535
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to rebase %s to %s: "
-msgstr "Gagal untuk %s %s: "
+msgstr "Gagal rebase %s ke %s: "
 
 #: app/flatpak-cli-transaction.c:736
 #, c-format
@@ -3668,9 +3656,8 @@ msgid "Allow app to talk to name on the session bus"
 msgstr "Izinkan aplikasi berbicara dengan nama di bus sesi"
 
 #: common/flatpak-context.c:1239
-#, fuzzy
 msgid "Don't allow app to talk to name on the session bus"
-msgstr "Izinkan aplikasi berbicara dengan nama di bus sesi"
+msgstr "Jangan izinkan aplikasi berbicara dengan nama di bus sesi"
 
 #: common/flatpak-context.c:1240
 msgid "Allow app to own name on the system bus"
@@ -3681,9 +3668,8 @@ msgid "Allow app to talk to name on the system bus"
 msgstr "Izinkan aplikasi berbicara dengan nama di bus sistem"
 
 #: common/flatpak-context.c:1242
-#, fuzzy
 msgid "Don't allow app to talk to name on the system bus"
-msgstr "Izinkan aplikasi berbicara dengan nama di bus sistem"
+msgstr "Jangan izinkan aplikasi berbicara dengan nama di bus sistem"
 
 #: common/flatpak-context.c:1243
 msgid "Add generic policy option"
@@ -4327,19 +4313,19 @@ msgid "Wrong number of components in runtime %s"
 msgstr "Salah jumlah komponen dalam runtime %s"
 
 #: common/flatpak-run.c:3404
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to migrate from %s: %s"
-msgstr "Gagal membaca komit %s: "
+msgstr "Gagal bermigrasi dari %s: %s"
 
 #: common/flatpak-run.c:3419
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
-msgstr ""
+msgstr "Gagal memigrasi direktori data aplikasi lama %s ke nama baru %s: %s"
 
 #: common/flatpak-run.c:3428
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to create symlink while migrating %s: %s"
-msgstr "Gagal membaca komit %s: "
+msgstr "Gagal membuat symlink saat memigrasi %s: %s"
 
 #: common/flatpak-transaction.c:1535
 #, c-format
