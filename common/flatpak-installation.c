@@ -2477,7 +2477,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
  * flatpak_installation_update_appstream_sync:
  * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
- * @arch: Architecture to update, or %NULL for the local machine arch
+ * @arch: (nullable): Architecture to update, or %NULL for the local machine arch
  * @out_changed: (nullable): Set to %TRUE if the contents of the appstream changed, %FALSE if nothing changed
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
@@ -2504,7 +2504,7 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
  * flatpak_installation_update_appstream_full_sync:
  * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
- * @arch: Architecture to update, or %NULL for the local machine arch
+ * @arch: (nullable): Architecture to update, or %NULL for the local machine arch
  * @progress: (scope call) (nullable): progress callback
  * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @out_changed: (nullable): Set to %TRUE if the contents of the appstream changed, %FALSE if nothing changed
