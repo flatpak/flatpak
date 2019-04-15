@@ -1885,7 +1885,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       g_variant_get_child (parameters, 1, "u", &flags);
       g_variant_get_child (parameters, 2, "&s", &ref);
       g_variant_get_child (parameters, 3, "&s", &origin);
-      g_variant_get_child (parameters, 5, "&s", &installation);
+      g_variant_get_child (parameters, 6, "&s", &installation);
 
       /* For metadata updates, redirect to the metadata-update action which
        * should basically always be allowed */
