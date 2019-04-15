@@ -34,6 +34,11 @@
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">APP_ID</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak permission-reset</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">--all</arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -59,6 +64,14 @@
         <para>The following options are understood:</para>
 
         <variablelist>
+            <varlistentry>
+                <term><option>--all</option></term>
+
+                <listitem><para>
+                    Remove permissions for all applications.
+                </para></listitem>
+            </varlistentry>
+
             <varlistentry>
                 <term><option>-h</option></term>
                 <term><option>--help</option></term>
