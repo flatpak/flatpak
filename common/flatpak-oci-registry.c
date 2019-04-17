@@ -2465,6 +2465,9 @@ flatpak_oci_index_make_appstream (SoupSession  *soup_session,
         }
     }
 
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return NULL;
+
   if (!flatpak_appstream_xml_root_to_data (appstream_root,
                                            &bytes, NULL, error))
     return NULL;
