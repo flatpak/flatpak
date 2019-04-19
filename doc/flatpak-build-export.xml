@@ -246,7 +246,7 @@
                 <term><option>--runtime</option></term>
 
                 <listitem><para>
-                    Export a runtime instead for an app (this uses the usr subdir as files).
+                    Export a runtime instead of an app (this uses the usr subdir as files).
                 </para></listitem>
             </varlistentry>
 
