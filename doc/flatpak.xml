@@ -563,6 +563,18 @@
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><envar>FLATPAK_SYSTEM_CACHE_DIR</envar></term>
+
+                    <listitem><para>
+                      The location where temporary child repositories will be created during pulls
+                      into the system-wide installation.  If this is not set, a directory in
+                      <filename>/var/tmp/</filename> is used. This is useful because it is more
+                      likely to be on the same filesystem as the system repository (thus increasing
+                      the chances for e.g. reflink copying), and we can avoid filling the user's
+                      home directory with temporary data.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><envar>FLATPAK_CONFIG_DIR</envar></term>
 
                     <listitem><para>
