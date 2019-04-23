@@ -185,6 +185,7 @@ description
 help
 installation
 latest
+name
 options
 origin
 ref
@@ -215,6 +216,7 @@ arch,branch
 arch,description
 arch,installation
 arch,latest
+arch,name
 arch,options
 arch,origin
 arch,ref

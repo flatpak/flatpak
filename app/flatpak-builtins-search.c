@@ -39,8 +39,9 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
+  { "name",        N_("Name"),        N_("Show the name"),               1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
   { "description", N_("Description"), N_("Show the description"),        1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
-  { "application", N_("Application"), N_("Show the application ID"),     1, FLATPAK_ELLIPSIZE_MODE_START, 1, 1 },
+  { "application", N_("Application ID"), N_("Show the application ID"),     1, FLATPAK_ELLIPSIZE_MODE_START, 1, 1 },
   { "version",     N_("Version"),     N_("Show the version"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
 #if AS_CHECK_VERSION (0, 6, 1)
   { "branch",      N_("Branch"),      N_("Show the application branch"), 1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
@@ -214,13 +215,14 @@ print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
   const char *id = as_app_get_id_filename (res->app);
   const char *name = as_app_get_localized_name (res->app);
   const char *comment = as_app_get_localized_comment (res->app);
-  g_autofree char *description = g_strconcat (name, " - ", comment, NULL);
   guint i;
 
   for (i = 0; columns[i].name; i++)
     {
+      if (strcmp (columns[i].name, "name") == 0)
+        flatpak_table_printer_add_column (printer, name);
       if (strcmp (columns[i].name, "description") == 0)
-        flatpak_table_printer_add_column (printer, description);
+        flatpak_table_printer_add_column (printer, comment);
       else if (strcmp (columns[i].name, "application") == 0)
         flatpak_table_printer_add_column (printer, id);
       else if (strcmp (columns[i].name, "version") == 0)
