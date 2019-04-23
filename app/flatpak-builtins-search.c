@@ -215,7 +215,6 @@ print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
   const char *id = as_app_get_id_filename (res->app);
   const char *name = as_app_get_localized_name (res->app);
   const char *comment = as_app_get_localized_comment (res->app);
-  g_autofree char *description = g_strconcat (name, " - ", comment, NULL);
   guint i;
 
   for (i = 0; columns[i].name; i++)
