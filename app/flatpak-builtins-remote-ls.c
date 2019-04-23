@@ -56,8 +56,9 @@ static GOptionEntry options[] = {
 };
 
 static Column all_columns[] = {
-  { "description",    N_("Description"),    N_("Show the description"),    1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
-  { "application",    N_("Application"),    N_("Show the application ID"), 1, FLATPAK_ELLIPSIZE_MODE_START, 0, 1 },
+  { "name",           N_("Name"),           N_("Show the name"),           1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
+  { "description",    N_("Description"),    N_("Show the description"),    1, FLATPAK_ELLIPSIZE_MODE_END, 1, 0 },
+  { "application",    N_("Application ID"),    N_("Show the application ID"), 1, FLATPAK_ELLIPSIZE_MODE_START, 0, 1 },
   { "version",        N_("Version"),        N_("Show the version"),        1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "branch",         N_("Branch"),         N_("Show the branch"),         1, FLATPAK_ELLIPSIZE_MODE_NONE, 0, 1 },
   { "arch",           N_("Arch"),           N_("Show the architecture"),   1, FLATPAK_ELLIPSIZE_MODE_NONE, 0, 0 },
@@ -137,7 +138,8 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
           strcmp (columns[j].name, "installed-size") == 0 ||
           strcmp (columns[j].name, "runtime") == 0)
         need_cache_data = TRUE;
-      if (strcmp (columns[j].name, "description") == 0 ||
+      if (strcmp (columns[j].name, "name") == 0 ||
+          strcmp (columns[j].name, "description") == 0 ||
           strcmp (columns[j].name, "version") == 0)
         need_appstream_data = TRUE;
     }
@@ -292,18 +294,22 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
           for (j = 0; columns[j].name; j++)
             {
-              if (strcmp (columns[j].name, "description") == 0)
+              if (strcmp (columns[j].name, "name") == 0)
                 {
+                  const char *name = NULL;
+
                   if (app)
-                    {
-                      g_autofree char *description = NULL;
-                      const char *name = as_app_get_localized_name (app);
-                      const char *comment = as_app_get_localized_comment (app);
-                      description = g_strconcat (name, " - ", comment, NULL);
-                      flatpak_table_printer_add_column (printer, description);
-                    }
-                  else
-                    flatpak_table_printer_add_column (printer, parts[1]);
+                    name = as_app_get_localized_name (app);
+
+                  flatpak_table_printer_add_column (printer, name ? name : strrchr (parts[1], '.') + 1);
+                }
+              else if (strcmp (columns[j].name, "description") == 0)
+                {
+                  const char *comment = NULL;
+                  if (app)
+                      comment = as_app_get_localized_comment (app);
+
+                  flatpak_table_printer_add_column (printer, comment);
                 }
               else if (strcmp (columns[j].name, "version") == 0)
                 flatpak_table_printer_add_column (printer, app ? as_app_get_version (app) : "");
