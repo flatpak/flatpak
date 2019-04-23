@@ -260,6 +260,17 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
           g_autofree char *runtime = NULL;
           AsApp *app = NULL;
           g_auto(GStrv) parts = NULL;
+          g_autoptr(GVariant) sparse = NULL;
+
+          sparse = flatpak_remote_state_lookup_sparse_cache (state, ref, NULL);
+
+          /* The sparse cache is optional */
+          if (sparse)
+            {
+              const char *eol;
+              if (!opt_all && (g_variant_lookup (sparse, "eol", "&s", &eol) || g_variant_lookup (sparse, "eolr", "&s", &eol)))
+                continue;
+            }
 
           parts = flatpak_decompose_ref (ref, NULL);
 
@@ -325,39 +336,31 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
                   value[MIN (strlen (value), 12)] = 0;
                   flatpak_table_printer_add_column (printer, value);
                 }
-              else
+              else if (strcmp (columns[j].name, "installed-size") == 0)
                 {
-                  g_autoptr(GVariant) sparse = NULL;
+                  g_autofree char *installed = g_format_size (installed_size);
+                  flatpak_table_printer_add_decimal_column (printer, installed);
+                }
+              else if (strcmp (columns[j].name, "download-size") == 0)
+                {
+                  g_autofree char *download = g_format_size (download_size);
+                  flatpak_table_printer_add_decimal_column (printer, download);
+                }
+              else if (strcmp (columns[j].name, "runtime") == 0)
+                {
+                  flatpak_table_printer_add_column (printer, runtime);
+                }
+              else if (strcmp (columns[j].name, "options") == 0)
+                {
+                  flatpak_table_printer_add_column (printer, ""); /* Extra */
+                  if (sparse)
+                    {
+                      const char *eol;
 
-                  /* The sparse cache is optional */
-                  sparse = flatpak_remote_state_lookup_sparse_cache (state, ref, NULL);
-
-                  if (strcmp (columns[j].name, "installed-size") == 0)
-                    {
-                      g_autofree char *installed = g_format_size (installed_size);
-                      flatpak_table_printer_add_decimal_column (printer, installed);
-                    }
-                  else if (strcmp (columns[j].name, "download-size") == 0)
-                    {
-                      g_autofree char *download = g_format_size (download_size);
-                      flatpak_table_printer_add_decimal_column (printer, download);
-                    }
-                  else if (strcmp (columns[j].name, "runtime") == 0)
-                    {
-                      flatpak_table_printer_add_column (printer, runtime);
-                    }
-                  else if (strcmp (columns[j].name, "options") == 0)
-                    {
-                      flatpak_table_printer_add_column (printer, ""); /* Extra */
-                      if (sparse)
-                        {
-                          const char *eol;
-
-                          if (g_variant_lookup (sparse, "eol", "&s", &eol))
-                            flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
-                          if (g_variant_lookup (sparse, "eolr", "&s", &eol))
-                            flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
-                        }
+                      if (g_variant_lookup (sparse, "eol", "&s", &eol))
+                        flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
+                      if (g_variant_lookup (sparse, "eolr", "&s", &eol))
+                        flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
                     }
                 }
             }
