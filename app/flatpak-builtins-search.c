@@ -249,7 +249,7 @@ print_matches (Column *columns, GSList *matches)
 
   printer = flatpak_table_printer_new ();
 
-  flatpak_table_printer_set_columns (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns, opt_cols != NULL);
 
   for (s = matches; s; s = s->next)
     {

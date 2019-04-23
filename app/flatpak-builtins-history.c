@@ -136,7 +136,7 @@ print_history (GPtrArray    *dirs,
 
   printer = flatpak_table_printer_new ();
 
-  flatpak_table_printer_set_columns (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns, opt_cols == NULL);
 
   if ((r = sd_journal_open (&j, 0)) < 0)
     {

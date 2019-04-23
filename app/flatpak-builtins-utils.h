@@ -127,6 +127,7 @@ typedef struct
   FlatpakEllipsizeMode ellipsize;
   gboolean             all;
   gboolean             def;
+  gboolean             skip_unique_if_default;
 } Column;
 
 int find_column (Column     *columns,

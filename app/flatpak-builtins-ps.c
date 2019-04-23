@@ -68,7 +68,7 @@ enumerate_instances (Column *columns, GError **error)
     return TRUE;
 
   printer = flatpak_table_printer_new ();
-  flatpak_table_printer_set_columns (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns, opt_cols == NULL);
 
   instances = flatpak_instance_get_all ();
   if (instances->len == 0)
