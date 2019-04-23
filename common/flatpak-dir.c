@@ -9705,17 +9705,17 @@ out:
 
 gboolean
 flatpak_dir_update_summary (FlatpakDir   *self,
+                            gboolean      delete,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  g_auto(GLnxLockFile) lock = { 0, };
-
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       const char *installation = flatpak_dir_get_id (self);
 
       return flatpak_dir_system_helper_call_update_summary (self,
-                                                            FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NONE,
+                                                            delete ? FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_DELETE
+                                                                   : FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NONE,
                                                             installation ? installation : "",
                                                             cancellable,
                                                             error);
@@ -9724,13 +9724,36 @@ flatpak_dir_update_summary (FlatpakDir   *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
-  /* Keep a shared repo lock to avoid prunes removing objects we're relying on
-   * while generating the summary. */
-  if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
-    return FALSE;
+  if (delete)
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GFile) summary_file = NULL;
 
-  g_debug ("Updating summary");
-  return ostree_repo_regenerate_summary (self->repo, NULL, cancellable, error);
+      g_debug ("Deleting summary");
+
+      summary_file = g_file_get_child (ostree_repo_get_path (self->repo), "summary");
+
+      if (!g_file_delete (summary_file, cancellable, &local_error) &&
+          !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+      return TRUE;
+    }
+  else
+    {
+      g_auto(GLnxLockFile) lock = { 0, };
+
+      g_debug ("Updating summary");
+
+      /* Keep a shared repo lock to avoid prunes removing objects we're relying on
+       * while generating the summary. */
+      if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
+        return FALSE;
+
+      return ostree_repo_regenerate_summary (self->repo, NULL, cancellable, error);
+    }
 }
 
 GFile *

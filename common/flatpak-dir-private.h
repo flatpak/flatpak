@@ -273,9 +273,11 @@ typedef enum {
 typedef enum {
   FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NONE = 0,
   FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NO_INTERACTION = 1 << 0,
+  FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_DELETE = 1 << 1,
 } FlatpakHelperUpdateSummaryFlags;
 
-#define FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_ALL (FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NO_INTERACTION)
+#define FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_ALL (FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NO_INTERACTION |\
+                                                 FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_DELETE)
 
 typedef enum {
   FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NONE = 0,
@@ -721,6 +723,7 @@ gboolean    flatpak_dir_run_triggers (FlatpakDir   *self,
                                       GCancellable *cancellable,
                                       GError      **error);
 gboolean    flatpak_dir_update_summary (FlatpakDir   *self,
+                                        gboolean      delete,
                                         GCancellable *cancellable,
                                         GError      **error);
 gboolean    flatpak_dir_cleanup_removed (FlatpakDir   *self,

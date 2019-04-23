@@ -1751,6 +1751,7 @@ handle_update_summary (FlatpakSystemHelper   *object,
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
+  gboolean delete_summary;
 
   g_debug ("UpdateSummary %u %s", arg_flags, arg_installation);
 
@@ -1773,10 +1774,11 @@ handle_update_summary (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
-
-  if (!flatpak_dir_update_summary (system, NULL, &error))
+  delete_summary = (arg_flags & FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_DELETE) != 0;
+  if (!flatpak_dir_update_summary (system, delete_summary, NULL, &error))
     {
-      flatpak_invocation_return_error (invocation, error, "Error updating summary");
+      flatpak_invocation_return_error (invocation, error, "Error %s summary",
+                                       delete_summary ? "deleting" : "updating");
       return TRUE;
     }
 

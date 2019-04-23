@@ -738,6 +738,11 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       }
   }
 
+  /* Delete the local source repo summary if it exists. Old versions of this
+   * command erroneously created it and if it's outdated that causes problems. */
+  if (!flatpak_dir_update_summary (dir, TRUE, cancellable, error))
+    return FALSE;
+
   /* Now use code copied from `ostree create-usb` to do the actual copying. We
    * can't just call out to `ostree` because (a) flatpak doesn't have a
    * dependency on the ostree command line tools and (b) we need to only pull
