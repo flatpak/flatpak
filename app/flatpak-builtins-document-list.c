@@ -91,7 +91,7 @@ print_documents (const char   *app_id,
     return FALSE;
 
   printer = flatpak_table_printer_new ();
-  flatpak_table_printer_set_columns (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns, opt_cols == NULL);
   for (i = 0; columns[i].name; i++)
     {
       if (strcmp (columns[i].name, "permissions") == 0 ||

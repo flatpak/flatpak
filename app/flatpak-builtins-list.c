@@ -164,7 +164,8 @@ print_table_for_refs (gboolean      print_apps,
 
   printer = flatpak_table_printer_new ();
 
-  flatpak_table_printer_set_columns (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns,
+                                     opt_cols == NULL && !opt_show_details);
 
   if (app_runtime)
     {

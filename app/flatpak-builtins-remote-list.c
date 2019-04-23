@@ -69,7 +69,8 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
     return TRUE;
 
   printer = flatpak_table_printer_new ();
-  flatpak_table_printer_set_columns (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns,
+                                     opt_cols == NULL && !opt_show_details);
 
   for (j = 0; j < dirs->len; j++)
     {

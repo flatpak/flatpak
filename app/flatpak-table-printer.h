@@ -33,7 +33,8 @@ void                flatpak_table_printer_set_column_title (FlatpakTablePrinter 
                                                             int                  column,
                                                             const char          *title);
 void                flatpak_table_printer_set_columns (FlatpakTablePrinter *printer,
-                                                       Column              *columns);
+                                                       Column              *columns,
+                                                       gboolean             defaults);
 void                flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
                                                       const char          *text);
 void                flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,

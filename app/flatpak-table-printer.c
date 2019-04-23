@@ -152,7 +152,8 @@ flatpak_table_printer_set_column_title (FlatpakTablePrinter *printer,
 
 void
 flatpak_table_printer_set_columns (FlatpakTablePrinter *printer,
-                                   Column              *columns)
+                                   Column              *columns,
+                                   gboolean             defaults)
 {
   int i;
 
@@ -161,6 +162,8 @@ flatpak_table_printer_set_columns (FlatpakTablePrinter *printer,
       flatpak_table_printer_set_column_title (printer, i, _(columns[i].title));
       flatpak_table_printer_set_column_expand (printer, i, columns[i].expand);
       flatpak_table_printer_set_column_ellipsize (printer, i, columns[i].ellipsize);
+      if (defaults && columns[i].skip_unique_if_default)
+        flatpak_table_printer_set_column_skip_unique (printer, i, TRUE);
     }
 }
 

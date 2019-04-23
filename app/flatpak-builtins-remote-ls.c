@@ -120,7 +120,8 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
   printer = flatpak_table_printer_new ();
 
-  flatpak_table_printer_set_columns (printer, columns);
+  flatpak_table_printer_set_columns (printer, columns,
+                                     opt_cols == NULL && !opt_show_details);
 
   if (app_runtime)
     {
