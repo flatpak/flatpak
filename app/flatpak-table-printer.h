@@ -77,5 +77,8 @@ void               flatpak_table_printer_set_column_expand (FlatpakTablePrinter 
 void               flatpak_table_printer_set_column_ellipsize (FlatpakTablePrinter *printer,
                                                                int                  col,
                                                                FlatpakEllipsizeMode mode);
+void               flatpak_table_printer_set_column_skip_unique (FlatpakTablePrinter *printer,
+                                                                 int                  column,
+                                                                 gboolean             skip_unique);
 
 #endif /* __FLATPAK_TABLE_PRINTER_H__ */
