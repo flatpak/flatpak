@@ -127,6 +127,14 @@
 
         <variablelist>
             <varlistentry>
+                <term>name</term>
+
+                <listitem><para>
+                    Show the name
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>description</term>
 
                 <listitem><para>
