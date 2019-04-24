@@ -2207,6 +2207,14 @@ main (int    argc,
     { NULL }
   };
 
+  /* The child repo shared between the client process and the
+     system-helper really needs to support creating files that
+     are readable by others, so override the umask to 022
+     Ideally this should be set when needed, but umask is thread-unsafe
+     so there is really no local way to fix this.
+  */
+  umask(022);
+
   setlocale (LC_ALL, "");
 
   g_setenv ("GIO_USE_VFS", "local", TRUE);
