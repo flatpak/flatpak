@@ -769,6 +769,14 @@ main (int    argc,
   int ret;
   struct sigaction action;
 
+  /* The child repo shared between the client process and the
+     system-helper really needs to support creating files that
+     are readable by others, so override the umask to 022.
+     Ideally this should be set when needed, but umask is thread-unsafe
+     so there is really no local way to fix this.
+  */
+  umask(022);
+
   memset (&action, 0, sizeof (struct sigaction));
   action.sa_handler = handle_sigterm;
   sigaction (SIGTERM, &action, NULL);
