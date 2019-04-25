@@ -282,9 +282,11 @@ typedef enum {
 typedef enum {
   FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NONE = 0,
   FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NO_INTERACTION = 1 << 0,
+  FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ONLY_CACHED = 1 << 1,
 } FlatpakHelperGenerateOciSummaryFlags;
 
-#define FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ALL (FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NO_INTERACTION)
+#define FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ALL (FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NO_INTERACTION |\
+                                                       FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ONLY_CACHED)
 
 typedef enum {
   FLATPAK_PULL_FLAGS_NONE = 0,
@@ -856,6 +858,7 @@ gboolean flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *
                                                             GError            **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state (FlatpakDir   *self,
                                                    const char   *remote,
+                                                   gboolean      only_cached,
                                                    GCancellable *cancellable,
                                                    GError      **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
@@ -866,6 +869,7 @@ FlatpakRemoteState * flatpak_dir_get_remote_state_for_summary (FlatpakDir   *sel
                                                                GError      **error);
 gboolean flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                               const char   *remote,
+                                              gboolean      only_cached,
                                               GBytes      **out_summary,
                                               GCancellable *cancellable,
                                               GError      **error);
