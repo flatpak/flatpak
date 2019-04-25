@@ -125,7 +125,6 @@ operation_error (FlatpakTransaction            *transaction,
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
   g_autofree char *msg = NULL;
   gboolean non_fatal = (detail & FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL) != 0;
-  g_autofree char *text = NULL;
 
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED))
     {
