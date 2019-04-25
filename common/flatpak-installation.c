@@ -2355,7 +2355,7 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_or_uri, cancellable, error);
+  state = flatpak_dir_get_remote_state (dir, remote_or_uri, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2419,7 +2419,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 

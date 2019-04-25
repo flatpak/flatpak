@@ -56,6 +56,7 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_OUT_OF_SPACE: More disk space needed. (Since: 1.2.0)
  * @FLATPAK_ERROR_WRONG_USER: An operation is being attempted by the wrong user (such as
  *                            root operating on a user installation). (Since: 1.2.0)
+ * @FLATPAK_ERROR_NOT_CACHED: Cached data was requested, but it was not available. (Since: 1.4.0)
  *
  * Error codes for library functions.
  */
@@ -80,6 +81,7 @@ typedef enum {
   FLATPAK_ERROR_INVALID_NAME,
   FLATPAK_ERROR_OUT_OF_SPACE,
   FLATPAK_ERROR_WRONG_USER,
+  FLATPAK_ERROR_NOT_CACHED,
 } FlatpakError;
 
 /**

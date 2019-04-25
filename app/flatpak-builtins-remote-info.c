@@ -143,7 +143,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   if (commit_v == NULL)
     return FALSE;
 
-  state = flatpak_dir_get_remote_state (preferred_dir, remote, cancellable, error);
+  state = flatpak_dir_get_remote_state (preferred_dir, remote, FALSE, cancellable, error);
   if (state == NULL)
     return FALSE;
 
