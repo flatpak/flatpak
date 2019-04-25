@@ -698,14 +698,15 @@ flatpak_run (int      argc,
 
   success = TRUE;
 out:
-  g_assert (success || error);
+  /* Note: We allow failures with NULL error (it means don't print anything), useful when e.g. the user aborted */
+  g_assert (!success || error == NULL);
 
   if (error)
     {
       g_propagate_error (res_error, error);
-      return 1;
     }
-  return 0;
+
+  return success ? 0 : 1;
 }
 
 static int
