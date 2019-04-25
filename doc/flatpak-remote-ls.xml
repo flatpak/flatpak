@@ -101,6 +101,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--cached</option></term>
+
+                <listitem><para>
+                  Prefer to use locally cached information if possible, even though it
+                  may be out of date. This is faster, but risks returning stale information.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-d</option></term>
                 <term><option>--show-details</option></term>
 

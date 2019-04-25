@@ -39,6 +39,7 @@ static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_all;
 static gboolean opt_only_updates;
+static gboolean opt_cached;
 static char *opt_arch;
 static char *opt_app_runtime;
 static const char **opt_cols;
@@ -52,6 +53,7 @@ static GOptionEntry options[] = {
   { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
   { "app-runtime", 0, 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
+  { "cached", 0, 0, G_OPTION_ARG_NONE, &opt_cached, N_("Use local caches even if they are stale"), NULL },
   { NULL }
 };
 
@@ -433,7 +435,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
             return FALSE;
         }
 
-      state = flatpak_dir_get_remote_state (preferred_dir, argv[1], FALSE, cancellable, error);
+      state = get_remote_state (preferred_dir, argv[1], opt_cached, cancellable, error);
       if (state == NULL)
         return FALSE;
 
@@ -468,8 +470,8 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
               if (flatpak_dir_get_remote_disabled (dir, remote_name))
                 continue;
 
-              state = flatpak_dir_get_remote_state (dir, remote_name, FALSE,
-                                                    cancellable, error);
+              state = get_remote_state (dir, remote_name, opt_cached,
+                                        cancellable, error);
               if (state == NULL)
                 return FALSE;
 
