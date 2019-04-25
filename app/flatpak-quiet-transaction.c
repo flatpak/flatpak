@@ -145,7 +145,8 @@ operation_error (FlatpakTransaction            *transaction,
   else
     msg = g_strdup (error->message);
 
-  g_printerr (_("Failed to %s %s: %s\n"),
+  g_printerr (_("%s Failed to %s %s: %s\n"),
+              non_fatal ? _("Warning:") : _("Error:"),
               op_type_to_string (op_type),
               flatpak_ref_get_name (rref),
               msg);
@@ -183,7 +184,8 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
       if (!flatpak_transaction_add_uninstall (transaction, ref, &error) ||
           !flatpak_transaction_add_rebase (transaction, remote, rebased_to_ref, NULL, previous_ids, &error))
         {
-          g_printerr (_("Failed to rebase %s to %s: %s\n"), flatpak_ref_get_name (rref), rebased_to_ref, error->message);
+          g_printerr (_("Failed to rebase %s to %s: %s\n"),
+                      flatpak_ref_get_name (rref), rebased_to_ref, error->message);
           self->got_error = TRUE;
           return FALSE;
         }
@@ -207,7 +209,7 @@ flatpak_quiet_transaction_run (FlatpakTransaction *transaction,
   if (self->got_error)
     {
       g_clear_error (error);
-      return flatpak_fail (error, _("There were one or more errors"));
+      return FALSE; /* Don't report on stderr, we already reported */
     }
 
   if (!res)
