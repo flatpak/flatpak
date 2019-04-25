@@ -159,6 +159,7 @@ struct FlatpakDir
   GFile           *basedir;
   DirExtraData    *extra_data;
   OstreeRepo      *repo;
+  GFile           *cache_dir;
   gboolean         no_system_helper;
   gboolean         no_interaction;
   pid_t            source_pid;
@@ -1687,6 +1688,7 @@ flatpak_dir_finalize (GObject *object)
   FlatpakDir *self = FLATPAK_DIR (object);
 
   g_clear_object (&self->repo);
+  g_clear_object (&self->cache_dir);
   g_clear_object (&self->basedir);
   g_clear_pointer (&self->extra_data, dir_extra_data_free);
 
@@ -2676,6 +2678,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
   g_autoptr(GFile) repodir = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   g_autoptr(GError) my_error = NULL;
+  g_autoptr(GFile) cache_dir = NULL;
 
   if (self->repo != NULL)
     return TRUE;
@@ -2717,7 +2720,6 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
-      g_autoptr(GFile) cache_dir = NULL;
       g_autofree char *cache_path = NULL;
 
       repo = system_ostree_repo_new (repodir);
@@ -2825,9 +2827,13 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
         }
     }
 
+  if (cache_dir == NULL)
+    cache_dir = g_file_get_child (repodir, "tmp/cache");
+
   /* Make sure we didn't reenter weirdly */
   g_assert (self->repo == NULL);
   self->repo = g_object_ref (repo);
+  self->cache_dir = g_object_ref (cache_dir);
 
   return TRUE;
 }
