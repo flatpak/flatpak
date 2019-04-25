@@ -433,7 +433,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
             return FALSE;
         }
 
-      state = flatpak_dir_get_remote_state (preferred_dir, argv[1], cancellable, error);
+      state = flatpak_dir_get_remote_state (preferred_dir, argv[1], FALSE, cancellable, error);
       if (state == NULL)
         return FALSE;
 
@@ -468,7 +468,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
               if (flatpak_dir_get_remote_disabled (dir, remote_name))
                 continue;
 
-              state = flatpak_dir_get_remote_state (dir, remote_name,
+              state = flatpak_dir_get_remote_state (dir, remote_name, FALSE,
                                                     cancellable, error);
               if (state == NULL)
                 return FALSE;
