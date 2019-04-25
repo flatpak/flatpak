@@ -1318,3 +1318,29 @@ print_wrapped (int         cols,
       g_print ("\n");
     }
 }
+
+FlatpakRemoteState *
+get_remote_state (FlatpakDir   *dir,
+                  const char   *remote,
+                  gboolean      cached,
+                  GCancellable *cancellable,
+                  GError      **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  FlatpakRemoteState *state;
+
+  state = flatpak_dir_get_remote_state (dir, remote, cached, cancellable, &local_error);
+  if (state == NULL && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED))
+    {
+      g_clear_error (&local_error);
+      state = flatpak_dir_get_remote_state (dir, remote, FALSE, cancellable, &local_error);
+    }
+
+  if (state == NULL)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return NULL;
+    }
+
+  return state;
+}
