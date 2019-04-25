@@ -100,6 +100,9 @@ flatpak_builtin_update (int           argc,
       return TRUE;
     }
 
+  if (opt_noninteractive)
+    opt_yes = TRUE; /* Implied */
+
   prefs = &argv[1];
   n_prefs = argc - 1;
 
