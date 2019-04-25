@@ -305,6 +305,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (argc == 2)
     auto_remote = TRUE;
 
+  if (opt_noninteractive)
+    opt_yes = TRUE; /* Implied */
+
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   if (!opt_noninteractive)
