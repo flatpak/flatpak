@@ -67,6 +67,14 @@
 
  * The FlatpakTransaction API is threadsafe in the sense that it is safe to run two
  * transactions at the same time, in different threads (or processes).
+ *
+ * Note: Transactions (or any other install/update operation) to a
+ * system installation rely on the ability to create files that are readable
+ * by other users. Some users set a umask that prohibits this. Unfortunately
+ * there is no good way to work around this in a threadsafe, local way, so
+ * such setups will break by default. The flatpak commandline app works
+ * around this by calling umask(022) in the early setup, and it is recommended
+ * that other apps using libflatpak do this too.
  */
 
 /* This is an internal-only element of FlatpakTransactionOperationType */
