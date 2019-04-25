@@ -2343,6 +2343,31 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
+  return flatpak_installation_list_remote_refs_sync_full (self, remote_or_uri, 0, cancellable, error);
+}
+
+/**
+ * flatpak_installation_list_remote_refs_sync_full:
+ * @self: a #FlatpakInstallation
+ * @remote_or_uri: the name or URI of the remote
+ * @flags: set of #FlatpakQueryFlags
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists all the applications and runtimes in a remote.
+ *
+ * Returns: (transfer container) (element-type FlatpakRemoteRef): a GPtrArray of
+ *   #FlatpakRemoteRef instances
+ *
+ * Since: 1.3.3
+ */
+GPtrArray *
+flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
+                                                 const char          *remote_or_uri,
+                                                 FlatpakQueryFlags    flags,
+                                                 GCancellable        *cancellable,
+                                                 GError             **error)
+{
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(FlatpakRemoteState) state = NULL;
@@ -2355,7 +2380,7 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_or_uri, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state (dir, remote_or_uri, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2404,6 +2429,40 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
+  return flatpak_installation_fetch_remote_ref_sync_full (self, remote_name,
+                                                          kind, name, arch, branch, 0,
+                                                          cancellable, error);
+}
+
+/**
+ * flatpak_installation_fetch_remote_ref_sync_full:
+ * @self: a #FlatpakInstallation
+ * @remote_name: the name of the remote
+ * @kind: what this ref contains (an #FlatpakRefKind)
+ * @name: name of the app/runtime to fetch
+ * @arch: (nullable): which architecture to fetch (default: current architecture)
+ * @branch: (nullable): which branch to fetch (default: 'master')
+ * @flags: set of #FlatpakQueryFlags
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Gets the current remote branch of a ref in the remote.
+ *
+ * Returns: (transfer full): a #FlatpakRemoteRef instance, or %NULL
+ *
+ * Since: 1.3.3
+ */
+FlatpakRemoteRef *
+flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
+                                                 const char          *remote_name,
+                                                 FlatpakRefKind       kind,
+                                                 const char          *name,
+                                                 const char          *arch,
+                                                 const char          *branch,
+                                                 FlatpakQueryFlags    flags,
+                                                 GCancellable        *cancellable,
+                                                 GError             **error)
+{
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GHashTable) ht = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
@@ -2419,7 +2478,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_name, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
   if (state == NULL)
     return NULL;
 
