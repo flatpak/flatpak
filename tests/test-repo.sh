@@ -211,7 +211,7 @@ UPDATE_REPO_ARGS=--title=new-title update_repo
 assert_file_has_content repos/test/config new-title
 
 # This should make us automatically pick up the new metadata
-${FLATPAK} ${U} install test-repo org.test.Platform
+${FLATPAK} ${U} install -y test-repo org.test.Platform
 ${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
 assert_file_has_content repo-info "new-title"
 
