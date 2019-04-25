@@ -2051,7 +2051,12 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   else if (g_strcmp0 (method_name, "UpdateSummary") == 0 ||
            g_strcmp0 (method_name, "GenerateOciSummary") == 0)
     {
+      guint32 flags;
       action = "org.freedesktop.Flatpak.metadata-update";
+
+      /* all of these methods have flags as first argument, and 1 << 0 as 'no-interaction' */
+      g_variant_get_child (parameters, 0, "u", &flags);
+      no_interaction = (flags & (1 << 0)) != 0;
     }
 
   if (action)
