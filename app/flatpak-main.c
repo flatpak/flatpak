@@ -182,6 +182,14 @@ message_handler (const gchar   *log_domain,
   g_printerr ("F: %s\n", message);
 }
 
+static void
+no_message_handler (const char     *log_domain,
+                    GLogLevelFlags  log_level,
+                    const char     *message,
+                    gpointer        user_data)
+{
+}
+
 static GOptionContext *
 flatpak_option_context_new_with_commands (FlatpakCommand *commands)
 {
@@ -320,7 +328,11 @@ flatpak_option_context_parse (GOptionContext     *context,
     return FALSE;
 
   /* We never want verbose output in the complete case, that breaks completion */
-  if (!is_in_complete)
+  if (is_in_complete)
+    {
+      g_log_set_default_handler (no_message_handler, NULL);
+    }
+  else
     {
       if (opt_verbose > 0)
         g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
