@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-04-26 12:27+0200\n"
-"PO-Revision-Date: 2019-04-14 19:53+0700\n"
+"POT-Creation-Date: 2019-04-28 03:24+0000\n"
+"PO-Revision-Date: 2019-04-28 16:38+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -1755,11 +1755,11 @@ msgstr "tidak dikenal"
 
 #: app/flatpak-builtins-install.c:60
 msgid "Don't pull, only install from local cache"
-msgstr "Jangan tarik, hanya memasang dari tembolok lokal"
+msgstr "Jangan tarik, hanya memasang dari singgahan lokal"
 
 #: app/flatpak-builtins-install.c:61 app/flatpak-builtins-update.c:59
 msgid "Don't deploy, only download to local cache"
-msgstr "Jangan deploy, hanya mengunduh ke tembolok lokal"
+msgstr "Jangan deploy, hanya mengunduh ke singgahan lokal"
 
 #: app/flatpak-builtins-install.c:62
 msgid "Don't install related refs"
@@ -2053,9 +2053,8 @@ msgid "Too few arguments"
 msgstr "Terlalu sedikit argumen"
 
 #: app/flatpak-builtins-permission-reset.c:43
-#, fuzzy
 msgid "Reset all permissions"
-msgstr "Atur ulang izin aplikasi"
+msgstr "Atur ulang semua izin"
 
 #: app/flatpak-builtins-permission-reset.c:137
 msgid "APP_ID - Reset permissions for an app"
@@ -2269,7 +2268,7 @@ msgstr "Tampilkan induk"
 
 #: app/flatpak-builtins-remote-info.c:62 app/flatpak-builtins-remote-ls.c:56
 msgid "Use local caches even if they are stale"
-msgstr ""
+msgstr "Gunakan singgahan lokal bahkan jika itu basi"
 
 #: app/flatpak-builtins-remote-info.c:113
 msgid ""
@@ -2818,7 +2817,7 @@ msgstr "Hapus berkas lama meski berjalan"
 
 #: app/flatpak-builtins-update.c:58
 msgid "Don't pull, only update from local cache"
-msgstr "Jangan tarik, hanya mutakhirkan dari tembolok lokal"
+msgstr "Jangan tarik, hanya mutakhirkan dari singgahan lokal"
 
 #: app/flatpak-builtins-update.c:60
 msgid "Don't update related refs"
@@ -3534,14 +3533,14 @@ msgid "Uninstalling %s\n"
 msgstr "Menghapus pemasangan %s\n"
 
 #: app/flatpak-quiet-transaction.c:148
-#, fuzzy, c-format
+#, c-format
 msgid "%s Failed to %s %s: %s\n"
-msgstr "Gagal untuk %s %s: "
+msgstr "%s Gagal untuk %s %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:187
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to rebase %s to %s: %s\n"
-msgstr "Gagal rebase %s ke %s: "
+msgstr "Gagal rebase %s to %s: %s\n"
 
 #: common/flatpak-context.c:179
 #, c-format
@@ -3757,18 +3756,19 @@ msgstr "Tidak ada ref '%s' pada remote %s"
 #: common/flatpak-dir.c:399
 #, c-format
 msgid "No flatpak cache in remote '%s' summary"
-msgstr "Tidak ada tembolok flatpak dalam ringkasan remote '%s'"
+msgstr "Tidak ada singgahan flatpak dalam ringkasan remote '%s'"
 
 #: common/flatpak-dir.c:408
 #, c-format
 msgid "No entry for %s in remote '%s' summary flatpak cache "
-msgstr "Tidak ada entri untuk %s dalam ringkasan remote tembolok flatpak '%s' "
+msgstr ""
+"Tidak ada entri untuk %s dalam ringkasan singgahan remote flatpak '%s' "
 
 #: common/flatpak-dir.c:454
 #, c-format
 msgid "No entry for %s in remote summary flatpak sparse cache "
 msgstr ""
-"Tidak ada entri untuk %s dalam ringkasan remote sparse tembolok flatpak "
+"Tidak ada entri untuk %s dalam ringkasan singgahan remote sparse flatpak "
 
 #: common/flatpak-dir.c:1266
 msgid "Unable to connect to system bus"
@@ -4112,19 +4112,17 @@ msgstr "Pemangkasan repo gagal: %s"
 
 #: common/flatpak-dir.c:10011
 msgid "Failed to write summary cache: "
-msgstr "Gagal menulis tembolok ringkasan: "
+msgstr "Gagal menulis ringkasan singgahan: "
 
 #: common/flatpak-dir.c:10030
-#, fuzzy, c-format
+#, c-format
 msgid "No oci summary cached for remote '%s'"
-msgstr ""
-"Tidak ada ringkasan atau tembolok Flatpak yang tersedia untuk remote %s"
+msgstr "Tidak ada ringkasan oci disinggahkan untuk remote '%s'"
 
 #: common/flatpak-dir.c:10105
-#, fuzzy, c-format
+#, c-format
 msgid "No summary cached for remote '%s'"
-msgstr ""
-"Tidak ada ringkasan atau tembolok Flatpak yang tersedia untuk remote %s"
+msgstr "Tidak ada ringkasan disinggahkan untuk rmote '%s'"
 
 #: common/flatpak-dir.c:10123
 #, c-format
@@ -4136,16 +4134,15 @@ msgstr ""
 "ringkasan. Periksa URL yang diteruskan ke remote-add valid."
 
 #: common/flatpak-dir.c:10273
-#, fuzzy, c-format
+#, c-format
 msgid "No repo metadata cached for remote '%s'"
-msgstr ""
-"Tidak ada ringkasan atau tembolok Flatpak yang tersedia untuk remote %s"
+msgstr "Tidak ada metadata repo yang disinggahkan untuk remote '%s'"
 
 #: common/flatpak-dir.c:10432
 #, c-format
 msgid "No summary or Flatpak cache available for remote %s"
 msgstr ""
-"Tidak ada ringkasan atau tembolok Flatpak yang tersedia untuk remote %s"
+"Tidak ada ringkasan atau singgahan Flatpak yang tersedia untuk remote %s"
 
 #: common/flatpak-dir.c:10662
 #, c-format
