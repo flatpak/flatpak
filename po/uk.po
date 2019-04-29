@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-04-26 12:27+0200\n"
-"PO-Revision-Date: 2019-03-11 15:34+0200\n"
+"POT-Creation-Date: 2019-04-29 03:24+0000\n"
+"PO-Revision-Date: 2019-04-29 13:26+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -333,10 +333,12 @@ msgid ""
 "Mark refs matching the OLDID prefix as end-of-life, to be replaced with the "
 "given NEWID"
 msgstr ""
+"Позначити посилання, які відповідають префіксу СТАРИЙІД як застарілі, такі,"
+" які слід замінити вказаним ідентифікатором НОВИЙІД"
 
 #: app/flatpak-builtins-build-commit-from.c:66
 msgid "OLDID=NEWID"
-msgstr ""
+msgstr "СТАРИЙІД=НОВИЙІД"
 
 #: app/flatpak-builtins-build-commit-from.c:67
 msgid "Override the timestamp of the commit (NOW for current time)"
@@ -374,12 +376,14 @@ msgstr "Слід вказати або --src-repo, або --src-ref."
 #: app/flatpak-builtins-build-commit-from.c:281
 msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
 msgstr ""
+"Некоректний формат аргументу для використання "
+" --end-of-life-rebase=СТАРИЙІД=НОВИЙІД"
 
 #: app/flatpak-builtins-build-commit-from.c:287
 #: app/flatpak-builtins-build-commit-from.c:290
 #, c-format
 msgid "Invalid name %s in --end-of-life-rebase"
-msgstr ""
+msgstr "Некоректна назва %s у --end-of-life-rebase"
 
 #: app/flatpak-builtins-build-commit-from.c:299
 #: app/flatpak-builtins-build-export.c:1036
@@ -429,6 +433,8 @@ msgstr "Виключені файли для включення"
 #: app/flatpak-builtins-build-export.c:69
 msgid "Mark build as end-of-life, to be replaced with the given ID"
 msgstr ""
+"Позначити збірку як застарілу, щоб її було замінено збіркою із вказаним"
+" ідентифікатором"
 
 #: app/flatpak-builtins-build-export.c:69
 #: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:879
@@ -905,35 +911,30 @@ msgid "TITLE"
 msgstr "ЗАГОЛОВОК"
 
 #: app/flatpak-builtins-build-update-repo.c:62
-#, fuzzy
 msgid "A one-line comment for this repository"
-msgstr "Зручна назва для цього сховища"
+msgstr "Однорядковий коментар до цього сховища"
 
 #: app/flatpak-builtins-build-update-repo.c:62
 #: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:73
-#, fuzzy
 msgid "COMMENT"
-msgstr "COMMIT"
+msgstr "КОМЕНТАР"
 
 #: app/flatpak-builtins-build-update-repo.c:63
-#, fuzzy
 msgid "A full-paragraph description for this repository"
-msgstr "Типова гілка для цього сховища"
+msgstr "Розгорнутий опис цього сховища"
 
 #: app/flatpak-builtins-build-update-repo.c:63
 #: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:74
 msgid "DESCRIPTION"
-msgstr ""
+msgstr "ОПИС"
 
 #: app/flatpak-builtins-build-update-repo.c:64
-#, fuzzy
 msgid "URL for a website for this repository"
-msgstr "Зручна назва для цього сховища"
+msgstr "Адреса сайта цього сховища"
 
 #: app/flatpak-builtins-build-update-repo.c:65
-#, fuzzy
 msgid "URL for an icon for this repository"
-msgstr "Зручна назва для цього сховища"
+msgstr "Адреса піктограми цього сховища"
 
 #: app/flatpak-builtins-build-update-repo.c:66
 msgid "Default branch to use for this repository"
@@ -984,9 +985,8 @@ msgid "NUM-JOBS"
 msgstr "К-ТЬ-ЗАВДАНЬ"
 
 #: app/flatpak-builtins-build-update-repo.c:76
-#, fuzzy
 msgid "Don't create deltas matching refs"
-msgstr "Не оновлювати пов’язані посилання"
+msgstr "Не створювати посилань, які пов'язано із різницями"
 
 #: app/flatpak-builtins-build-update-repo.c:77
 msgid "Prune unused objects"
@@ -1425,9 +1425,8 @@ msgid "Time"
 msgstr "Час"
 
 #: app/flatpak-builtins-history.c:57
-#, fuzzy
 msgid "Show when the change happened"
-msgstr "Показати час, коли було внесено зміну"
+msgstr "Показувати, якщо було внесено зміну"
 
 #: app/flatpak-builtins-history.c:58
 msgid "Change"
@@ -1968,9 +1967,8 @@ msgid "Runtime"
 msgstr "Середовище виконання"
 
 #: app/flatpak-builtins-list.c:63
-#, fuzzy
 msgid "Show the used runtime"
-msgstr "Показати середовища виконання"
+msgstr "Показувати використане середовище виконання"
 
 #: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:67
 msgid "Show the origin remote"
@@ -2084,9 +2082,8 @@ msgid "Too few arguments"
 msgstr "Замало параметрів"
 
 #: app/flatpak-builtins-permission-reset.c:43
-#, fuzzy
 msgid "Reset all permissions"
-msgstr "Скинути права доступу програми"
+msgstr "Скинути усі права доступу"
 
 #: app/flatpak-builtins-permission-reset.c:137
 msgid "APP_ID - Reset permissions for an app"
@@ -2192,24 +2189,20 @@ msgid "A nice name to use for this remote"
 msgstr "Зрозуміла назва для використання цього віддаленого сховища"
 
 #: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:73
-#, fuzzy
 msgid "A one-line comment for this remote"
-msgstr "Зрозуміла назва для використання цього віддаленого сховища"
+msgstr "Однорядковий коментар до цього віддаленого сховища"
 
 #: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:74
-#, fuzzy
 msgid "A full-paragraph description for this remote"
-msgstr "Типова гілка для цього віддаленого сховища"
+msgstr "Розгорнутий опис цього віддаленого сховища"
 
 #: app/flatpak-builtins-remote-add.c:76 app/flatpak-builtins-remote-modify.c:75
-#, fuzzy
 msgid "URL for a website for this remote"
-msgstr "Зрозуміла назва для використання цього віддаленого сховища"
+msgstr "Адреса сайта цього віддаленого сховища"
 
 #: app/flatpak-builtins-remote-add.c:77 app/flatpak-builtins-remote-modify.c:76
-#, fuzzy
 msgid "URL for an icon for this remote"
-msgstr "Типова гілка для цього віддаленого сховища"
+msgstr "Адреса піктограми цього віддаленого сховища"
 
 #: app/flatpak-builtins-remote-add.c:78 app/flatpak-builtins-remote-modify.c:77
 msgid "Default branch to use for this remote"
@@ -2305,7 +2298,7 @@ msgstr "Показати батьківський запис"
 
 #: app/flatpak-builtins-remote-info.c:62 app/flatpak-builtins-remote-ls.c:56
 msgid "Use local caches even if they are stale"
-msgstr ""
+msgstr "Використовувати локальні кеші, навіть якщо вони є застарілими"
 
 #: app/flatpak-builtins-remote-info.c:113
 msgid ""
@@ -2386,37 +2379,32 @@ msgid "Show the priority"
 msgstr "Показати пріоритетність"
 
 #: app/flatpak-builtins-remote-list.c:55
-#, fuzzy
 msgid "Comment"
-msgstr "Внесок"
+msgstr "Коментар"
 
 #: app/flatpak-builtins-remote-list.c:55
-#, fuzzy
 msgid "Show comment"
-msgstr "Показати внесок"
+msgstr "Показати коментар"
 
 #: app/flatpak-builtins-remote-list.c:56
-#, fuzzy
 msgid "Show description"
 msgstr "Показати опис"
 
 #: app/flatpak-builtins-remote-list.c:57
 msgid "Homepage"
-msgstr ""
+msgstr "Домашня сторінка"
 
 #: app/flatpak-builtins-remote-list.c:57
-#, fuzzy
 msgid "Show homepage"
-msgstr "Показати назву"
+msgstr "Показати домашню сторінку"
 
 #: app/flatpak-builtins-remote-list.c:58
 msgid "Icon"
-msgstr ""
+msgstr "Піктограма"
 
 #: app/flatpak-builtins-remote-list.c:58
-#, fuzzy
 msgid "Show icon"
-msgstr "Показати параметри"
+msgstr "Показати піктограму"
 
 #: app/flatpak-builtins-remote-list.c:206
 msgid " - List remote repositories"
@@ -2626,24 +2614,24 @@ msgid "Title: %s\n"
 msgstr "Назва: %s\n"
 
 #: app/flatpak-builtins-repo.c:97
-#, fuzzy, c-format
+#, c-format
 msgid "Comment: %s\n"
-msgstr "Внесок: %s\n"
+msgstr "Коментар: %s\n"
 
 #: app/flatpak-builtins-repo.c:100
-#, fuzzy, c-format
+#, c-format
 msgid "Description: %s\n"
-msgstr "Опис"
+msgstr "Опис: %s\n"
 
 #: app/flatpak-builtins-repo.c:103
 #, c-format
 msgid "Homepage: %s\n"
-msgstr ""
+msgstr "Домашня сторінка: %s\n"
 
 #: app/flatpak-builtins-repo.c:106
-#, fuzzy, c-format
+#, c-format
 msgid "Icon: %s\n"
-msgstr "Внесок: %s\n"
+msgstr "Піктограма: %s\n"
 
 #: app/flatpak-builtins-repo.c:109
 #, c-format
@@ -2760,9 +2748,9 @@ msgid "APP [ARGUMENT…] - Run an app"
 msgstr "ПРОГРАМА [АРГУМЕНТ...] - Виконати програму"
 
 #: app/flatpak-builtins-run.c:250
-#, fuzzy, c-format
+#, c-format
 msgid "runtime/%s/%s/%s not installed"
-msgstr "%s/%s/%s не встановлено"
+msgstr "runtime/%s/%s/%s не встановлено"
 
 #: app/flatpak-builtins-search.c:36
 msgid "Arch to search for"
@@ -3037,10 +3025,9 @@ msgid "Do you want to install it?"
 msgstr "Хочете встановити його?"
 
 #: app/flatpak-cli-transaction.c:98
-#, fuzzy, c-format
+#, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
-msgstr ""
-"Потрібне для %s (%s) середовище виконання виявлено у таких сховищах: %s"
+msgstr "Потрібне для %s (%s) середовище виконання виявлено у таких сховищах:"
 
 #: app/flatpak-cli-transaction.c:100
 msgid "Which do you want to install (0 to abort)?"
@@ -3053,7 +3040,7 @@ msgstr "Налаштовуємо %s як нове віддалене схови�
 
 #. default to yes on Enter
 #: app/flatpak-cli-transaction.c:125
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The remote '%s', referred to by '%s' at location %s contains additional "
 "applications.\n"
@@ -3162,9 +3149,9 @@ msgid "Error:"
 msgstr "Помилка:"
 
 #: app/flatpak-cli-transaction.c:516 app/flatpak-quiet-transaction.c:174
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s is end-of-life, in preference of %s\n"
-msgstr "Інформація: термін підтримки %s сплив, натомість маємо %s"
+msgstr "Інформація: термін підтримки %s сплив, натомість маємо %s\n"
 
 #: app/flatpak-cli-transaction.c:518 app/flatpak-quiet-transaction.c:176
 #, c-format
@@ -3174,17 +3161,16 @@ msgstr "Інформація: термін підтримки %s сплив, п�
 #: app/flatpak-cli-transaction.c:523
 #, c-format
 msgid "Replace it with %s?"
-msgstr ""
+msgstr "Замінити його на %s?"
 
 #: app/flatpak-cli-transaction.c:528 app/flatpak-quiet-transaction.c:182
-#, fuzzy
 msgid "Updating to rebased version\n"
-msgstr "Оновлюємо гілку appstream\n"
+msgstr "Оновлюємо до перенесеної версії\n"
 
 #: app/flatpak-cli-transaction.c:535
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to rebase %s to %s: "
-msgstr "Не вдалося виконати %s %s: "
+msgstr "Не вдалося перенести %s на %s: "
 
 #: app/flatpak-cli-transaction.c:736
 #, c-format
@@ -3580,14 +3566,14 @@ msgid "Uninstalling %s\n"
 msgstr "Вилучаємо %s\n"
 
 #: app/flatpak-quiet-transaction.c:148
-#, fuzzy, c-format
+#, c-format
 msgid "%s Failed to %s %s: %s\n"
-msgstr "Не вдалося виконати %s %s: "
+msgstr "%s Не вдалося %s %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:187
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to rebase %s to %s: %s\n"
-msgstr "Не вдалося виконати %s %s: "
+msgstr "Не вдалося перенести %s на %s: %s\n"
 
 #: common/flatpak-context.c:179
 #, c-format
@@ -3740,9 +3726,8 @@ msgid "Allow app to talk to name on the session bus"
 msgstr "Дозволити програмі обмінюватися даними з назвою на каналі сеансу"
 
 #: common/flatpak-context.c:1239
-#, fuzzy
 msgid "Don't allow app to talk to name on the session bus"
-msgstr "Дозволити програмі обмінюватися даними з назвою на каналі сеансу"
+msgstr "Заборонити програмі обмінюватися даними з назвою на каналі сеансу"
 
 #: common/flatpak-context.c:1240
 msgid "Allow app to own name on the system bus"
@@ -3753,9 +3738,8 @@ msgid "Allow app to talk to name on the system bus"
 msgstr "Дозволити програмі обмінюватися даними з назвою на каналі системи"
 
 #: common/flatpak-context.c:1242
-#, fuzzy
 msgid "Don't allow app to talk to name on the system bus"
-msgstr "Дозволити програмі обмінюватися даними з назвою на каналі системи"
+msgstr "Заборонити програмі обмінюватися даними з назвою на каналі системи"
 
 #: common/flatpak-context.c:1243
 msgid "Add generic policy option"
@@ -4169,14 +4153,14 @@ msgid "Failed to write summary cache: "
 msgstr "Не вдалося записати кеш резюме: "
 
 #: common/flatpak-dir.c:10030
-#, fuzzy, c-format
+#, c-format
 msgid "No oci summary cached for remote '%s'"
-msgstr "Немає резюме або кешу Flatpak для сховища %s"
+msgstr "У кеші немає резюме oci для віддаленого сховища «%s»"
 
 #: common/flatpak-dir.c:10105
-#, fuzzy, c-format
+#, c-format
 msgid "No summary cached for remote '%s'"
-msgstr "Немає резюме або кешу Flatpak для сховища %s"
+msgstr "У кеші немає резюме для віддаленого сховища «%s»"
 
 #: common/flatpak-dir.c:10123
 #, c-format
@@ -4188,9 +4172,9 @@ msgstr ""
 "резюме. Перевірте, чи правильно вказано адресу, яку передано remote-add."
 
 #: common/flatpak-dir.c:10273
-#, fuzzy, c-format
+#, c-format
 msgid "No repo metadata cached for remote '%s'"
-msgstr "Немає резюме або кешу Flatpak для сховища %s"
+msgstr "У кеші немає метаданих сховища для віддаленого сховища «%s»"
 
 #: common/flatpak-dir.c:10432
 #, c-format
@@ -4409,19 +4393,19 @@ msgid "Wrong number of components in runtime %s"
 msgstr "Помилкова кількість компонентів у середовищі виконання %s"
 
 #: common/flatpak-run.c:3404
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to migrate from %s: %s"
-msgstr "Не вдалося прочитати внесок %s: "
+msgstr "Не вдалося перенести з %s: %s"
 
 #: common/flatpak-run.c:3419
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
-msgstr ""
+msgstr "Не вдалося перенести каталог даних старої програми %s до нового %s: %s"
 
 #: common/flatpak-run.c:3428
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to create symlink while migrating %s: %s"
-msgstr "Не вдалося прочитати внесок %s: "
+msgstr "Не вдалося створити символічне посилання під час перенесення %s: %s"
 
 #: common/flatpak-transaction.c:1543
 #, c-format
@@ -4601,14 +4585,14 @@ msgid "No extra data sources"
 msgstr "Немає джерел додаткових даних"
 
 #: common/flatpak-utils.c:3853
-#, fuzzy, c-format
+#, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
-msgstr "Помилка під час копіювання піктограми 64x64: %s\n"
+msgstr "Помилка під час копіювання піктограми 64x64 для компонента %s: %s\n"
 
 #: common/flatpak-utils.c:3859
-#, fuzzy, c-format
+#, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
-msgstr "Помилка під час копіювання піктограми 128x128: %s\n"
+msgstr "Помилка під час копіювання піктограми 128x128 для компонента %s: %s\n"
 
 #: common/flatpak-utils.c:4069
 #, c-format
@@ -4857,145 +4841,3 @@ msgstr "Оновлення метаданих"
 msgid "Authentication is required to update metadata"
 msgstr "Для оновлення метаданих слід пройти розпізнавання"
 
-#~ msgid "Extracting icons for component %s\n"
-#~ msgstr "Видобуваємо піктограми для компонента %s\n"
-
-#~ msgid "0"
-#~ msgstr "0"
-
-#~ msgid "Architecture"
-#~ msgstr "Архітектура"
-
-#~ msgid "Location:"
-#~ msgstr "Місце:"
-
-#~ msgid "Installed size:"
-#~ msgstr "Розмір встановленого:"
-
-#~ msgid "Download size:"
-#~ msgstr "Розмір отриманого:"
-
-#~ msgid "Installing for user: %s from %s\n"
-#~ msgstr "Встановлюємо для користувача %s з %s\n"
-
-#~ msgid "Installing: %s from %s\n"
-#~ msgstr "Встановлюємо: %s з %s\n"
-
-#~ msgid "Updating for user: %s from %s\n"
-#~ msgstr "Оновлюємо для користувача %s з %s\n"
-
-#~ msgid "Updating: %s from %s\n"
-#~ msgstr "Оновлюємо: %s з %s\n"
-
-#~ msgid "Installing for user: %s from bundle %s\n"
-#~ msgstr "Встановлюємо для користувача %s з пакунка %s\n"
-
-#~ msgid "Installing: %s from bundle %s\n"
-#~ msgstr "Встановлюємо: %s з пакунка %s\n"
-
-#~ msgid "Uninstalling for user: %s\n"
-#~ msgstr "Вилучаємо для користувача: %s\n"
-
-#~ msgid "No updates.\n"
-#~ msgstr "Немає оновлень.\n"
-
-#~ msgid "Now at %s.\n"
-#~ msgstr "Зараз %s.\n"
-
-#~ msgid "Warning: Failed to %s %s: %s\n"
-#~ msgstr "Попередження: не вдалося виконати дію %s %s: %s\n"
-
-#~ msgid "Error: Failed to %s %s: %s\n"
-#~ msgstr "Помилка: не вдалося виконати дію %s %s: %s\n"
-
-#~ msgid "new file access"
-#~ msgstr "новий доступ до файла"
-
-#~ msgid "file access"
-#~ msgstr "доступ до файла"
-
-#~ msgid "new dbus access"
-#~ msgstr "новий доступ до dbus"
-
-#~ msgid "dbus access"
-#~ msgstr "доступ до dbus"
-
-#~ msgid "new dbus ownership"
-#~ msgstr "нові права власності для dbus"
-
-#~ msgid "dbus ownership"
-#~ msgstr "права власності для dbus"
-
-#~ msgid "new system dbus access"
-#~ msgstr "новий загальносистемний доступ до dbus"
-
-#~ msgid "system dbus access"
-#~ msgstr "загальносистемний доступ до dbus"
-
-#~ msgid "new system dbus ownership"
-#~ msgstr "нові загальносистемні права власності для dbus"
-
-#~ msgid "system dbus ownership"
-#~ msgstr "загальносистемні права власності для dbus"
-
-#~ msgid "new tags"
-#~ msgstr "нові мітки"
-
-#~ msgid "tags"
-#~ msgstr "мітки"
-
-#~ msgid "Uninstalling from %s:\n"
-#~ msgstr "Вилучаємо з %s:\n"
-
-#~ msgid "Installing in %s:\n"
-#~ msgstr "Встановлюємо у %s:\n"
-
-#~ msgid "Is this ok"
-#~ msgstr "Все як слід"
-
-#~ msgid "Print OSTree debug information during command processing"
-#~ msgstr "Вивести діагностичні дані OSTree під час обробки команди"
-
-#~ msgid "Show help options"
-#~ msgstr "Показати параметри доступ до довідки"
-
-#~ msgid "%s branch already installed"
-#~ msgstr "Гілку %s вже встановлено"
-
-#~ msgid "%s branch %s not installed"
-#~ msgstr "%s, гілка %s не встановлено"
-
-#~ msgid "Invalid .flatpakref"
-#~ msgstr "Некоректний .flatpakref"
-
-#, fuzzy
-#~ msgid "Runtime Branch"
-#~ msgstr "Середовище виконання:"
-
-#, fuzzy
-#~ msgid "Runtime Commit"
-#~ msgstr "Активний внесок"
-
-#~ msgid "Unknown command '%s'"
-#~ msgstr "Невідома команда «%s»"
-
-#~ msgid "Migrating %s to %s\n"
-#~ msgstr "Переносимо %s на %s\n"
-
-#~ msgid "Error during migration: %s\n"
-#~ msgstr "Помилка під час перенесення: %s\n"
-
-#~ msgid "Redirect collection ID: %s\n"
-#~ msgstr "Ідентифікатор збірки переспрямовування: %s\n"
-
-#~ msgid "Invalid sha256 for extra data uri %s"
-#~ msgstr "Некоректна сума sha256 для адреси додаткових даних %s"
-
-#~ msgid "Invalid sha256 for extra data"
-#~ msgstr "Некоректна контрольна сума sha256 для додаткових даних"
-
-#~ msgid "Is this ok?"
-#~ msgstr "Все як слід?"
-
-#~ msgid "Add OCI registry"
-#~ msgstr "Додати реєстр OCI"
