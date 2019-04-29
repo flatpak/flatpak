@@ -10,4 +10,5 @@ EXTRA_DIST += \
 	data/org.freedesktop.systemd1.xml \
 	data/org.freedesktop.Flatpak.xml \
 	data/org.freedesktop.portal.Flatpak.xml \
+	data/flatpak-docker-seccomp.json \
 	$(NULL)
