@@ -3038,11 +3038,17 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   g_autofree char *tmpname = g_strdup (".active-XXXXXX");
   g_auto(GLnxLockFile) lock = { 0, };
   gboolean do_compress = FALSE;
+  gboolean do_uncompress = TRUE;
+  g_autoptr(GRegex) allow_refs = NULL;
+  g_autoptr(GRegex) deny_refs = NULL;
 
   /* Keep a shared repo lock to avoid prunes removing objects we're relying on
    * while we do the checkout. This could happen if the ref changes after we
    * read its current value for the checkout. */
   if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_lookup_remote_filter (self, remote, &allow_refs, &deny_refs, error))
     return FALSE;
 
   appstream_dir = g_file_get_child (flatpak_dir_get_path (self), "appstream");
@@ -3083,9 +3089,13 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
       if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
         return FALSE;
       do_compress = FALSE;
+      do_uncompress = TRUE;
     }
   else
-    do_compress = TRUE;
+    {
+      do_compress = TRUE;
+      do_uncompress = FALSE;
+    }
 
   if (new_checksum == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No appstream commit to deploy"));
@@ -3130,6 +3140,64 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
                                 cancellable, error))
     return FALSE;
 
+  /* Old appstream format don't have uncompressed file, so we uncompress it */
+  if (do_uncompress)
+    {
+      g_autoptr(GFile) appstream_xml = g_file_get_child (checkout_dir, "appstream.xml");
+      g_autoptr(GFile) appstream_gz_xml = g_file_get_child (checkout_dir, "appstream.xml.gz");
+      g_autoptr(GOutputStream) out2 = NULL;
+      g_autoptr(GFileOutputStream) out = NULL;
+      g_autoptr(GFileInputStream) in = NULL;
+
+      in = g_file_read (appstream_gz_xml, NULL, NULL);
+      if (in)
+        {
+          g_autoptr(GZlibDecompressor) decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+          out = g_file_replace (appstream_xml, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
+                                NULL, error);
+          if (out == NULL)
+            return FALSE;
+
+          out2 = g_converter_output_stream_new (G_OUTPUT_STREAM (out), G_CONVERTER (decompressor));
+          if (g_output_stream_splice (out2, G_INPUT_STREAM (in), G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+                                      NULL, error) < 0)
+            return FALSE;
+        }
+    }
+
+  if (deny_refs)
+    {
+      g_autoptr(GFile) appstream_xml = g_file_get_child (checkout_dir, "appstream.xml");
+      g_autoptr(GFileInputStream) in = NULL;
+
+      /* We need some ref filtering, so parse the xml */
+
+      in = g_file_read (appstream_xml, NULL, NULL);
+      if (in)
+        {
+          g_autoptr(FlatpakXml) appstream = NULL;
+          g_autoptr(GBytes) content = NULL;
+
+          appstream = flatpak_xml_parse (G_INPUT_STREAM (in), FALSE, cancellable, error);
+          if (appstream == NULL)
+            return FALSE;
+
+          flatpak_appstream_xml_filter (appstream, allow_refs, deny_refs);
+
+          if (!flatpak_appstream_xml_root_to_data (appstream, &content, NULL, error))
+            return FALSE;
+
+          if (!g_file_replace_contents  (appstream_xml,
+                                         g_bytes_get_data (content, NULL), g_bytes_get_size (content),
+                                         NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL,
+                                         cancellable, error))
+            return FALSE;
+        }
+
+      do_compress = TRUE; /* We need to recompress this */
+    }
+
+  /* New appstream format don't have compressed file, so we compress it */
   if (do_compress)
     {
       g_autoptr(GFile) appstream_xml = g_file_get_child (checkout_dir, "appstream.xml");

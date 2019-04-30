@@ -86,7 +86,7 @@ assert_not_has_file $FL_DIR/repo/refs/remotes/test-repo/appstream2/$ARCH
 
 assert_has_file $FL_DIR/appstream/test-repo/$ARCH/.timestamp
 assert_has_symlink $FL_DIR/appstream/test-repo/$ARCH/active
-assert_not_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml
+assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml
 assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml.gz
 
 echo "ok update compat appstream"
