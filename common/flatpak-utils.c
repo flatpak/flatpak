@@ -4123,6 +4123,57 @@ flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
   return TRUE;
 }
 
+void
+flatpak_appstream_xml_filter (FlatpakXml *appstream,
+                              GRegex *allow_refs,
+                              GRegex *deny_refs)
+{
+  FlatpakXml *components;
+  FlatpakXml *component;
+  FlatpakXml *prev_component, *old;
+
+  for (components = appstream->first_child;
+       components != NULL;
+       components = components->next_sibling)
+    {
+      if (g_strcmp0 (components->element_name, "components") != 0)
+        continue;
+
+
+      prev_component = NULL;
+      component = components->first_child;
+      while (component != NULL)
+        {
+          FlatpakXml *bundle;
+          gboolean allow = FALSE;
+
+          if (g_strcmp0 (component->element_name, "component") == 0)
+            {
+              bundle = flatpak_xml_find (component, "bundle", NULL);
+              if (bundle && bundle->first_child && bundle->first_child->text)
+                allow = flatpak_filters_allow_ref (allow_refs, deny_refs, bundle->first_child->text);
+            }
+
+          if (allow)
+            {
+              prev_component = component;
+              component = component->next_sibling;
+            }
+          else
+            {
+              old = component;
+
+              /* prev_component is same as before */
+              component = component->next_sibling;
+
+              flatpak_xml_unlink (old, prev_component);
+              flatpak_xml_free (old);
+            }
+        }
+    }
+}
+
+
 gboolean
 flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  const char  **gpg_key_ids,
