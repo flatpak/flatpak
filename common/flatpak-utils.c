@@ -1140,6 +1140,213 @@ flatpak_compare_ref (const char *ref1, const char *ref2)
   return 0;
 }
 
+static char *
+line_get_word (char **line)
+{
+  char *word = NULL;
+
+  while (g_ascii_isspace (**line))
+    (*line)++;
+
+  if (**line == 0)
+    return NULL;
+
+  word = *line;
+
+  while (**line && !g_ascii_isspace (**line))
+    (*line)++;
+
+  if (**line)
+    {
+      **line = 0;
+      (*line)++;
+    }
+
+  return word;
+}
+
+static char *
+glob_to_regexp (const char *glob, GError **error)
+{
+  g_autoptr(GString) regexp = g_string_new ("");
+  int parts = 1;
+
+  if (g_str_has_prefix (glob, "app/"))
+    {
+      glob += strlen ("app/");
+      g_string_append (regexp, "app/");
+    }
+  else if (g_str_has_prefix (glob, "runtime/"))
+    {
+      glob += strlen ("runtime/");
+      g_string_append (regexp, "runtime/");
+    }
+  else
+    g_string_append (regexp, "(app|runtime)/");
+
+  /* We really need an id part, the rest is optional */
+  if (*glob == 0)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Empty glob"));
+      return NULL;
+    }
+
+  while (*glob != 0)
+    {
+      char c = *glob;
+      glob++;
+
+      if (c == '/')
+        {
+          parts++;
+          g_string_append (regexp, "/");
+          if (parts > 3)
+            {
+              flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Too many segments in glob"));
+              return NULL;
+            }
+        }
+      else if (c == '*')
+        {
+          g_string_append (regexp, "[.\\-_a-zA-Z0-9]*");
+        }
+      else if (c == '.')
+        {
+          g_string_append (regexp, "\\.");
+        }
+      else if (g_ascii_isalnum (c) || c == '-' || c == '_')
+        {
+          g_string_append_c (regexp, c);
+        }
+      else
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid glob character '%c'"), c);
+          return NULL;
+        }
+    }
+
+  while (parts < 3)
+    {
+      parts++;
+      g_string_append (regexp, "/[.\\-_a-zA-Z0-9]*");
+    }
+
+  return g_string_free (g_steal_pointer (&regexp), FALSE);
+}
+
+gboolean
+flatpak_parse_filters (const char *data,
+                       GRegex **allow_refs_out,
+                       GRegex **deny_refs_out,
+                       GError **error)
+{
+  g_auto(GStrv) lines = NULL;
+  int i;
+  g_autoptr(GString) allow_regexp = g_string_new ("^(");
+  g_autoptr(GString) deny_regexp = g_string_new ("^(");
+  gboolean has_allow = FALSE;
+  gboolean has_deny = FALSE;
+  g_autoptr(GRegex) allow_refs = NULL;
+  g_autoptr(GRegex) deny_refs = NULL;
+
+  lines = g_strsplit (data, "\n", -1);
+  for (i = 0; lines[i] != NULL; i++)
+    {
+      char *line = lines[i];
+      char *comment, *command;
+
+      /* Ignore shell-style comments */
+      comment = strchr (line, '#');
+      if (comment != NULL)
+        *comment = 0;
+
+      command = line_get_word (&line);
+      /* Ignore empty lines */
+      if (command == NULL)
+        continue;
+
+      if (strcmp (command, "allow") == 0 || strcmp (command, "deny") == 0)
+        {
+          char *glob, *next, *ref_regexp;
+          GString *command_regexp;
+          gboolean *has_type = NULL;
+
+          glob = line_get_word (&line);
+          if (glob == NULL)
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Missing glob on line %d"), i + 1);
+
+          next = line_get_word (&line);
+          if (next != NULL)
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Trailing text on line %d"), i + 1);
+
+          ref_regexp = glob_to_regexp (glob, error);
+          if (ref_regexp == NULL)
+            return glnx_prefix_error (error, _("on line %d"), i + 1);
+
+          if (strcmp (command, "allow") == 0)
+            {
+              command_regexp = allow_regexp;
+              has_type = &has_allow;
+            }
+          else
+            {
+              command_regexp = deny_regexp;
+              has_type = &has_deny;
+            }
+
+          if (*has_type)
+            g_string_append (command_regexp, "|");
+          else
+            *has_type = TRUE;
+
+          g_string_append (command_regexp, ref_regexp);
+        }
+      else
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unexpected word '%s' on line %d"), command, i + 1);
+        }
+    }
+
+  g_string_append (allow_regexp, ")$");
+  g_string_append (deny_regexp, ")$");
+
+  if (allow_regexp)
+    {
+      allow_refs = g_regex_new (allow_regexp->str, G_REGEX_DOLLAR_ENDONLY|G_REGEX_RAW|G_REGEX_OPTIMIZE, G_REGEX_MATCH_ANCHORED, error);
+      if (allow_refs == NULL)
+        return FALSE;
+    }
+
+  if (deny_regexp)
+    {
+      deny_refs = g_regex_new (deny_regexp->str, G_REGEX_DOLLAR_ENDONLY|G_REGEX_RAW|G_REGEX_OPTIMIZE, G_REGEX_MATCH_ANCHORED, error);
+      if (deny_refs == NULL)
+        return FALSE;
+    }
+
+  *allow_refs_out = g_steal_pointer (&allow_refs);
+  *deny_refs_out = g_steal_pointer (&deny_refs);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_filters_allow_ref (GRegex *allow_refs,
+                           GRegex *deny_refs,
+                           const char *ref)
+{
+  if (deny_refs == NULL)
+    return TRUE; /* All refs are allowed by default */
+
+  if (!g_regex_match (deny_refs, ref, G_REGEX_MATCH_ANCHORED, NULL))
+    return TRUE; /* Not denied */
+
+  if (allow_refs &&  g_regex_match (allow_refs, ref, G_REGEX_MATCH_ANCHORED, NULL))
+    return TRUE; /* Explicitly allowed */
+
+  return FALSE;
+}
+
 char **
 flatpak_decompose_ref (const char *full_ref,
                        GError    **error)

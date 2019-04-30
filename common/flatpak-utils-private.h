@@ -191,6 +191,14 @@ gboolean flatpak_id_has_subref_suffix (const char *id);
 char **flatpak_decompose_ref (const char *ref,
                               GError    **error);
 
+gboolean flatpak_parse_filters (const char *data,
+                                GRegex **allow_refs_out,
+                                GRegex **deny_refs_out,
+                                GError **error);
+gboolean flatpak_filters_allow_ref (GRegex *allow_refs,
+                                    GRegex *deny_refs,
+                                    const char *ref);
+
 FlatpakKinds flatpak_kinds_from_bools (gboolean app,
                                        gboolean runtime);
 
