@@ -59,6 +59,7 @@
 #define NO_SYSTEM_HELPER ((FlatpakSystemHelper *) (gpointer) 1)
 
 #define SUMMARY_CACHE_TIMEOUT_SEC 5 *60
+#define FILTER_MTIME_CHECK_TIMEOUT_MSEC 500
 
 #define SYSCONF_INSTALLATIONS_DIR "installations.d"
 #define SYSCONF_INSTALLATIONS_FILE_EXT ".conf"
@@ -111,6 +112,11 @@ static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir     
                                                                  gboolean            only_cached,
                                                                  GCancellable       *cancellable,
                                                                  GError            **error);
+static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
+                                                  const char *name,
+                                                  GRegex    **allow_regex,
+                                                  GRegex    **deny_regex,
+                                                  GError **error);
 
 static void ensure_soup_session (FlatpakDir *self);
 
@@ -153,6 +159,14 @@ typedef struct
   FlatpakDirStorageType storage_type;
 } DirExtraData;
 
+typedef struct {
+  GFile *path;
+  GTimeVal mtime;
+  guint64 last_mtime_check;
+  GRegex *allow;
+  GRegex *deny;
+} RemoteFilter;
+
 struct FlatpakDir
 {
   GObject          parent;
@@ -169,6 +183,8 @@ struct FlatpakDir
   GDBusConnection *system_helper_bus;
 
   GHashTable      *summary_cache;
+
+  GHashTable      *remote_filters;
 
   SoupSession     *soup_session;
 };
@@ -1699,6 +1715,7 @@ flatpak_dir_finalize (GObject *object)
 
   g_clear_object (&self->soup_session);
   g_clear_pointer (&self->summary_cache, g_hash_table_unref);
+  g_clear_pointer (&self->remote_filters, g_hash_table_unref);
 
   G_OBJECT_CLASS (flatpak_dir_parent_class)->finalize (object);
 }
@@ -3615,12 +3632,13 @@ child_repo_ensure_summary (OstreeRepo         *child_repo,
 static gboolean
 get_mtime (GFile        *file,
            GTimeVal     *result,
-           GCancellable *cancellable)
+           GCancellable *cancellable,
+           GError      **error)
 {
   g_autoptr(GFileInfo) info = g_file_query_info (file,
                                                  G_FILE_ATTRIBUTE_TIME_MODIFIED,
                                                  G_FILE_QUERY_INFO_NONE,
-                                                 cancellable, NULL);
+                                                 cancellable, error);
   if (info)
     {
       g_file_info_get_modification_time (info, result);
@@ -3640,8 +3658,8 @@ check_destination_mtime (GFile        *src,
   GTimeVal src_mtime;
   GTimeVal dest_mtime;
 
-  return get_mtime (src, &src_mtime, cancellable) &&
-         get_mtime (dest, &dest_mtime, cancellable) &&
+  return get_mtime (src, &src_mtime, cancellable, NULL) &&
+         get_mtime (dest, &dest_mtime, cancellable, NULL) &&
          (src_mtime.tv_sec < dest_mtime.tv_sec ||
           (src_mtime.tv_sec == dest_mtime.tv_sec && src_mtime.tv_usec < dest_mtime.tv_usec));
 }
@@ -9848,6 +9866,133 @@ flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir   *self,
     return g_steal_pointer (&extension_dir);
 }
 
+static void
+remote_filter_free (RemoteFilter *remote_filter)
+{
+  g_object_unref (remote_filter->path);
+  if (remote_filter->allow)
+    g_regex_unref (remote_filter->allow);
+  if (remote_filter->deny)
+    g_regex_unref (remote_filter->deny);
+
+  g_free (remote_filter);
+}
+
+
+static RemoteFilter *
+remote_filter_load (GFile *path, GError **error)
+{
+  RemoteFilter *filter;
+  char *data = NULL;
+  gsize data_size;
+  GTimeVal mtime;
+  g_autoptr(GRegex) allow_refs = NULL;
+  g_autoptr(GRegex) deny_refs = NULL;
+
+  /* Save mtime before loading to avoid races */
+  if (!get_mtime (path, &mtime, NULL, error))
+    {
+      glnx_prefix_error (error, _("Failed to load filter '%s'"), flatpak_file_get_path_cached (path));
+      return NULL;
+    }
+
+  if (!g_file_load_contents (path, NULL, &data, &data_size, NULL, error))
+    {
+      glnx_prefix_error (error, _("Failed to load filter '%s'"), flatpak_file_get_path_cached (path));
+      return NULL;
+    }
+
+  if (!flatpak_parse_filters (data, &allow_refs, &deny_refs, error))
+    {
+      glnx_prefix_error (error, _("Failed to parse filter '%s'"), flatpak_file_get_path_cached (path));
+      return NULL;
+    }
+
+  filter = g_new0 (RemoteFilter, 1);
+  filter->path = g_object_ref (path);
+  filter->mtime = mtime;
+  filter->last_mtime_check = g_get_monotonic_time ();
+  filter->allow = g_steal_pointer (&allow_refs);
+  filter->deny = g_steal_pointer (&deny_refs);
+
+  return filter;
+}
+
+G_LOCK_DEFINE_STATIC (filters);
+
+static gboolean
+flatpak_dir_lookup_remote_filter (FlatpakDir *self,
+                                  const char *name,
+                                  GRegex    **allow_regex,
+                                  GRegex    **deny_regex,
+                                  GError **error)
+{
+  RemoteFilter *filter = NULL;
+  const char *filter_path;
+  g_autoptr(GFile) filter_file = NULL;
+
+  *allow_regex = NULL;
+  *deny_regex = NULL;
+
+  filter_path = flatpak_dir_get_remote_filter (self, name);
+
+  if (filter_path == NULL)
+    return TRUE;
+
+  filter_file = g_file_new_for_path (filter_path);
+
+  G_LOCK (filters);
+
+  if (self->remote_filters == NULL)
+    self->remote_filters = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) remote_filter_free);
+
+  filter = g_hash_table_lookup (self->remote_filters, name);
+  if (filter)
+    {
+      guint64 now = g_get_monotonic_time ();
+      GTimeVal mtime;
+
+      if (g_file_equal (filter->path, filter_file) != 0)
+        filter = NULL; /* New path, reload */
+      else if ((now - filter->last_mtime_check) > (1000 * (FILTER_MTIME_CHECK_TIMEOUT_MSEC)))
+        {
+          filter->last_mtime_check = now;
+          if (!get_mtime (filter_file, &mtime, NULL, NULL) ||
+              mtime.tv_sec != filter->mtime.tv_sec ||
+              mtime.tv_usec != filter->mtime.tv_usec)
+            filter = NULL; /* Different mtime, reload */
+        }
+    }
+
+  if (filter)
+    {
+      if (filter->allow)
+        *allow_regex = g_regex_ref (filter->allow);
+      if (filter->deny)
+        *deny_regex = g_regex_ref (filter->deny);
+    }
+
+  G_UNLOCK (filters);
+
+  if (filter) /* This is outside the lock, but we already copied the returned data, and we're not dereferencing filter */
+    return TRUE;
+
+  filter = remote_filter_load (filter_file, error);
+  if (filter == NULL)
+    return FALSE;
+
+  if (filter->allow)
+    *allow_regex = g_regex_ref (filter->allow);
+  if (filter->deny)
+    *deny_regex = g_regex_ref (filter->deny);
+
+  G_LOCK (filters);
+  g_hash_table_replace (self->remote_filters, g_strdup (name), filter);
+  G_UNLOCK (filters);
+
+  return TRUE;
+}
+
 G_LOCK_DEFINE_STATIC (cache);
 
 /* FIXME: Move all this caching into libostree. */
@@ -11311,6 +11456,19 @@ flatpak_dir_get_remote_title (FlatpakDir *self,
 
   if (config)
     return g_key_file_get_string (config, group, "xa.title", NULL);
+
+  return NULL;
+}
+
+char *
+flatpak_dir_get_remote_filter (FlatpakDir *self,
+                               const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_string (config, group, "xa.filter", NULL);
 
   return NULL;
 }
