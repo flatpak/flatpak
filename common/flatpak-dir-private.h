@@ -106,6 +106,8 @@ typedef struct
   GError   *summary_fetch_error;
   GVariant *metadata;
   GError   *metadata_fetch_error;
+  GRegex   *allow_refs;
+  GRegex   *deny_refs;
   int       refcount;
 } FlatpakRemoteState;
 
@@ -115,6 +117,8 @@ gboolean flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                               GError            **error);
 gboolean flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
                                                GError            **error);
+gboolean flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
+                                         const char *ref);
 gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
                                           const char         *ref,
                                           char              **out_checksum,
