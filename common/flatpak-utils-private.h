@@ -769,6 +769,10 @@ gboolean   flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                             guint64       timestamp,
                                             GCancellable *cancellable,
                                             GError      **error);
+void flatpak_appstream_xml_filter (FlatpakXml *appstream,
+                                   GRegex *allow_refs,
+                                   GRegex *deny_refs);
+
 
 gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   const char   *tmpdir_relpath,
