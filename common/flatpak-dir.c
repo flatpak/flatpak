@@ -332,6 +332,13 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
                                  GVariant          **out_variant,
                                  GError            **error)
 {
+  if (!flatpak_remote_state_allow_ref (self, ref))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("No entry for %s in remote '%s' summary flatpak cache "), ref, self->remote_name);
+      return FALSE;
+    }
+
   if (self->collection_id == NULL || self->summary != NULL)
     {
       if (!flatpak_remote_state_ensure_summary (self, error))
@@ -10518,7 +10525,8 @@ flatpak_dir_remote_has_ref (FlatpakDir *self,
 
 static void
 populate_hash_table_from_refs_map (GHashTable *ret_all_refs, GVariant *ref_map,
-                                   const gchar *collection_id)
+                                   const gchar *collection_id,
+                                   FlatpakRemoteState *state)
 {
   GVariant *value;
   GVariantIter ref_iter;
@@ -10532,6 +10540,9 @@ populate_hash_table_from_refs_map (GHashTable *ret_all_refs, GVariant *ref_map,
 
       g_variant_get_child (child, 0, "&s", &ref_name);
       if (ref_name == NULL)
+        continue;
+
+      if (!flatpak_remote_state_allow_ref (state, ref_name))
         continue;
 
       g_autoptr(GVariant) csum_v = NULL;
@@ -10600,8 +10611,11 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
           child = g_variant_get_child_value (cache, i);
           cur_v = g_variant_get_child_value (child, 0);
           ref = g_variant_get_string (cur_v, NULL);
-          coll_ref = flatpak_collection_ref_new (state->collection_id, ref);
 
+          if (!flatpak_remote_state_allow_ref (state, ref))
+            continue;
+
+          coll_ref = flatpak_collection_ref_new (state->collection_id, ref);
           g_hash_table_insert (ret_all_refs, g_steal_pointer (&coll_ref), NULL);
         }
 
@@ -10619,7 +10633,7 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   if (!g_variant_lookup (exts, "ostree.summary.collection-id", "&s", &collection_id))
     collection_id = NULL;
 
-  populate_hash_table_from_refs_map (ret_all_refs, ref_map, collection_id);
+  populate_hash_table_from_refs_map (ret_all_refs, ref_map, collection_id, state);
 
   /* refs that match other collection-ids */
   collection_map = g_variant_lookup_value (exts, "ostree.summary.collection-map",
@@ -10628,7 +10642,7 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
     {
       g_variant_iter_init (&iter, collection_map);
       while (g_variant_iter_loop (&iter, "{&s@a(s(taya{sv}))}", &collection_id, &ref_map))
-        populate_hash_table_from_refs_map (ret_all_refs, ref_map, collection_id);
+        populate_hash_table_from_refs_map (ret_all_refs, ref_map, collection_id, state);
     }
 
 
