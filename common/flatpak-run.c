@@ -762,18 +762,13 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
         }
       else if (dent->d_type == DT_LNK)
         {
-          ssize_t symlink_size;
-          char path_buffer[PATH_MAX + 1];
+          g_autofree gchar *target = NULL;
 
-          symlink_size = readlinkat (dir_iter.fd, dent->d_name, path_buffer, sizeof (path_buffer) - 1);
-          if (symlink_size < 0)
-            {
-              glnx_set_error_from_errno (error);
-              return FALSE;
-            }
-          path_buffer[symlink_size] = 0;
-
-          flatpak_bwrap_add_args (bwrap, "--symlink", path_buffer, NULL);
+          target = glnx_readlinkat_malloc (dir_iter.fd, dent->d_name,
+                                           NULL, error);
+          if (target == NULL)
+            return FALSE;
+          flatpak_bwrap_add_args (bwrap, "--symlink", target, NULL);
           flatpak_bwrap_add_arg_printf (bwrap, "/%s", dent->d_name);
         }
     }
@@ -2306,21 +2301,18 @@ add_monitor_path_args (gboolean      use_session_helper,
        */
       if (g_file_test ("/etc/localtime", G_FILE_TEST_EXISTS))
         {
-          char localtime[PATH_MAX + 1];
-          ssize_t symlink_size;
+          g_autofree char *localtime = NULL;
           gboolean is_reachable = FALSE;
           g_autofree char *timezone = flatpak_get_timezone ();
           g_autofree char *timezone_content = g_strdup_printf ("%s\n", timezone);
 
-          symlink_size = readlink ("/etc/localtime", localtime, sizeof (localtime) - 1);
-          if (symlink_size > 0)
+          localtime = glnx_readlinkat_malloc (-1, "/etc/localtime", NULL, NULL);
+
+          if (localtime != NULL)
             {
               g_autoptr(GFile) base_file = NULL;
               g_autoptr(GFile) target_file = NULL;
               g_autofree char *target_canonical = NULL;
-
-              /* readlink() does not append a null byte to the buffer. */
-              localtime[symlink_size] = 0;
 
               base_file = g_file_new_for_path ("/etc");
               target_file = g_file_resolve_relative_path (base_file, localtime);
@@ -2788,8 +2780,6 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
     {
       g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
       struct dirent *dent;
-      char path_buffer[PATH_MAX + 1];
-      ssize_t symlink_size;
       gboolean inited;
 
       inited = glnx_dirfd_iterator_init_at (AT_FDCWD, flatpak_file_get_path_cached (etc), FALSE, &dfd_iter, NULL);
@@ -2817,14 +2807,14 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
           dest = g_build_filename ("/etc", dent->d_name, NULL);
           if (dent->d_type == DT_LNK)
             {
-              symlink_size = readlinkat (dfd_iter.fd, dent->d_name, path_buffer, sizeof (path_buffer) - 1);
-              if (symlink_size < 0)
-                {
-                  glnx_set_error_from_errno (error);
-                  return FALSE;
-                }
-              path_buffer[symlink_size] = 0;
-              flatpak_bwrap_add_args (bwrap, "--symlink", path_buffer, dest, NULL);
+              g_autofree char *target = NULL;
+
+              target = glnx_readlinkat_malloc (dfd_iter.fd, dent->d_name,
+                                               NULL, error);
+              if (target == NULL)
+                return FALSE;
+
+              flatpak_bwrap_add_args (bwrap, "--symlink", target, dest, NULL);
             }
           else
             {

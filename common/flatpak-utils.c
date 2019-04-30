@@ -2237,18 +2237,7 @@ char *
 flatpak_readlink (const char *path,
                   GError    **error)
 {
-  char buf[PATH_MAX + 1];
-  ssize_t symlink_size;
-
-  symlink_size = readlink (path, buf, sizeof (buf) - 1);
-  if (symlink_size < 0)
-    {
-      glnx_set_error_from_errno (error);
-      return NULL;
-    }
-
-  buf[symlink_size] = 0;
-  return g_strdup (buf);
+  return glnx_readlinkat_malloc (-1, path, NULL, error);
 }
 
 char *

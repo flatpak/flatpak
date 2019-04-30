@@ -53,10 +53,8 @@ flatpak_builtin_enter (int           argc,
   int rest_argv_start, rest_argc;
   const char *ns_name[] = { "ipc", "net", "pid", "mnt", "user" };
   int ns_fd[G_N_ELEMENTS (ns_name)];
-  char pid_ns[256] = { 0 };
-  ssize_t pid_ns_len;
-  char self_ns[256];
-  ssize_t self_ns_len;
+  g_autofree char *pid_ns = NULL;
+  g_autofree char *self_ns = NULL;
   char *pid_s;
   int pid, i;
   g_autofree char *environment_path = NULL;
@@ -70,11 +68,9 @@ flatpak_builtin_enter (int           argc,
   g_autofree char *xdg_runtime_dir = NULL;
   g_autofree char *stat_path = NULL;
   g_autofree char *root_path = NULL;
-  char root_link[256] = { 0 };
-  gssize root_link_len;
+  g_autofree char *root_link = NULL;
   g_autofree char *cwd_path = NULL;
-  char cwd_link[256] = { 0 };
-  gssize cwd_link_len;
+  g_autofree char *cwd_link = NULL;
   int status;
   struct stat stat_buf;
   uid_t uid;
@@ -143,29 +139,27 @@ flatpak_builtin_enter (int           argc,
     return FALSE;
 
   cwd_path = g_strdup_printf ("/proc/%d/cwd", pid);
-  cwd_link_len = readlink (cwd_path, cwd_link, sizeof (cwd_link) - 1);
-  if (cwd_link_len <= 0)
-    return flatpak_fail (error, _("Can't read cwd"));
+  cwd_link = glnx_readlinkat_malloc (-1, cwd_path, NULL, error);
+  if (cwd_link == NULL)
+    return glnx_prefix_error (error, _("Can't read cwd"));
 
   root_path = g_strdup_printf ("/proc/%d/root", pid);
-  root_link_len = readlink (root_path, root_link, sizeof (root_link) - 1);
-  if (root_link_len <= 0)
-    return flatpak_fail (error, _("Can't read root"));
+  root_link = glnx_readlinkat_malloc (-1, root_path, NULL, error);
+  if (root_link == NULL)
+    return glnx_prefix_error (error, _("Can't read root"));
 
   for (i = 0; i < G_N_ELEMENTS (ns_name); i++)
     {
       g_autofree char *path = g_strdup_printf ("/proc/%d/ns/%s", pid, ns_name[i]);
       g_autofree char *self_path = g_strdup_printf ("/proc/self/ns/%s", ns_name[i]);
 
-      pid_ns_len = readlink (path, pid_ns, sizeof (pid_ns) - 1);
-      if (pid_ns_len <= 0)
-        return flatpak_fail (error, _("Invalid %s namespace for pid %d"), ns_name[i], pid);
-      pid_ns[pid_ns_len] = 0;
+      pid_ns = glnx_readlinkat_malloc (-1, path, NULL, error);
+      if (pid_ns == NULL)
+        return glnx_prefix_error (error, _("Invalid %s namespace for pid %d"), ns_name[i], pid);
 
-      self_ns_len = readlink (self_path, self_ns, sizeof (self_ns) - 1);
-      if (self_ns_len <= 0)
-        return flatpak_fail (error, _("Invalid %s namespace for self"), ns_name[i]);
-      self_ns[self_ns_len] = 0;
+      self_ns = glnx_readlinkat_malloc (-1, self_path, NULL, error);
+      if (self_ns == NULL)
+        return glnx_prefix_error (error, _("Invalid %s namespace for self"), ns_name[i]);
 
       if (strcmp (self_ns, pid_ns) == 0)
         {
