@@ -144,7 +144,7 @@ rerun_in_sandbox (const char *arg_width,
   ssize_t symlink_size;
 
   symlink_size = readlink ("/proc/self/exe", validate_icon, sizeof (validate_icon) - 1);
-  if (symlink_size < 0)
+  if (symlink_size < 0 || (size_t) symlink_size >= sizeof (validate_icon))
     {
       g_printerr ("Error: failed to read /proc/self/exe\n");
       return 1;

@@ -905,7 +905,7 @@ main (int    argc,
     }
 
   exe_path_len = readlink ("/proc/self/exe", exe_path, sizeof (exe_path) - 1);
-  if (exe_path_len > 0)
+  if (exe_path_len > 0 && (size_t) exe_path_len < sizeof (exe_path))
     {
       exe_path[exe_path_len] = 0;
       GFileMonitor *monitor;
