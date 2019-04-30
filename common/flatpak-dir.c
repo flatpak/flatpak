@@ -277,6 +277,8 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
       g_clear_error (&remote_state->summary_fetch_error);
       g_clear_pointer (&remote_state->metadata, g_variant_unref);
       g_clear_error (&remote_state->metadata_fetch_error);
+      g_clear_pointer (&remote_state->allow_refs, g_regex_unref);
+      g_clear_pointer (&remote_state->deny_refs, g_regex_unref);
 
       g_free (remote_state);
     }
@@ -312,6 +314,13 @@ flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
     }
 
   return TRUE;
+}
+
+gboolean
+flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
+                                const char *ref)
+{
+  return flatpak_filters_allow_ref (self->allow_refs, self->deny_refs, ref);
 }
 
 /* Returns TRUE if the ref is found in the summary or cache. out_checksum and
@@ -10305,6 +10314,8 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       if (!flatpak_dir_has_remote (self, remote_or_uri, error))
         return NULL;
       if (!repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
+        return NULL;
+      if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, &state->allow_refs, &state->deny_refs, error))
         return NULL;
     }
 
