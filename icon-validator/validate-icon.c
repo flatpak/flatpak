@@ -87,6 +87,7 @@ validate_icon (const char *arg_width,
   return 0;
 }
 
+G_GNUC_NULL_TERMINATED
 static void
 add_args (GPtrArray *argv_array, ...)
 {

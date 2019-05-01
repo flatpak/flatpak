@@ -48,7 +48,7 @@ void          flatpak_bwrap_add_noinherit_fd (FlatpakBwrap *bwrap,
 void          flatpak_bwrap_add_fd (FlatpakBwrap *bwrap,
                                     int           fd);
 void          flatpak_bwrap_add_args (FlatpakBwrap *bwrap,
-                                      ...);
+                                      ...) G_GNUC_NULL_TERMINATED;
 void          flatpak_bwrap_add_arg_printf (FlatpakBwrap *bwrap,
                                             const char   *format,
                                             ...) G_GNUC_PRINTF (2, 3);
