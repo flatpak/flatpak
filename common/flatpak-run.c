@@ -578,15 +578,28 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
 
   unrestricted = (context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) != 0;
 
-  if (dbus_address == NULL)
-    return FALSE;
+  if (dbus_address != NULL)
+    {
+      dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
+    }
+  else
+    {
+      g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
+      struct stat statbuf;
+
+      dbus_session_socket = g_build_filename (user_runtime_dir, "bus", NULL);
+
+      if (stat (dbus_session_socket, &statbuf) < 0
+          || (statbuf.st_mode & S_IFMT) != S_IFSOCK
+          || statbuf.st_uid != getuid ())
+        return FALSE;
+    }
 
   if (unrestricted)
     g_debug ("Allowing session-dbus access");
 
   no_proxy = (flags & FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY) != 0;
 
-  dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_session_socket != NULL && unrestricted)
     {
       flatpak_bwrap_add_args (app_bwrap,
