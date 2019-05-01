@@ -36,7 +36,6 @@
 #include <stdlib.h>
 #include <sys/resource.h>
 #include <sys/syscall.h>
-#include <uchar.h>
 #include <unistd.h>
 
 /* The precise definition of __O_TMPFILE is arch specific; use the
