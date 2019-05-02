@@ -114,6 +114,8 @@ static gboolean _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir     
                                                                  GError            **error);
 static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                                   const char *name,
+                                                  gboolean    force_load,
+                                                  char      **checksum_out,
                                                   GRegex    **allow_regex,
                                                   GRegex    **deny_regex,
                                                   GError **error);
@@ -163,6 +165,7 @@ typedef struct {
   GFile *path;
   GTimeVal mtime;
   guint64 last_mtime_check;
+  char *checksum;
   GRegex *allow;
   GRegex *deny;
 } RemoteFilter;
@@ -3024,13 +3027,14 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   g_autofree char *arch_path = NULL;
   gboolean checkout_exists;
   g_autofree char *remote_and_branch = NULL;
-  const char *old_checksum = NULL;
+  const char *old_dir = NULL;
   g_autofree char *new_checksum = NULL;
   g_autoptr(GFile) active_link = NULL;
   g_autofree char *branch = NULL;
   g_autoptr(GFile) old_checkout_dir = NULL;
   g_autoptr(GFile) active_tmp_link = NULL;
   g_autoptr(GError) tmp_error = NULL;
+  g_autofree char *new_dir = NULL;
   g_autofree char *checkout_dir_path = NULL;
   OstreeRepoCheckoutAtOptions options = { 0, };
   glnx_autofd int dfd = -1;
@@ -3039,6 +3043,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   g_auto(GLnxLockFile) lock = { 0, };
   gboolean do_compress = FALSE;
   gboolean do_uncompress = TRUE;
+  g_autofree char *filter_checksum = NULL;
   g_autoptr(GRegex) allow_refs = NULL;
   g_autoptr(GRegex) deny_refs = NULL;
 
@@ -3048,7 +3053,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_lookup_remote_filter (self, remote, &allow_refs, &deny_refs, error))
+  if (!flatpak_dir_lookup_remote_filter (self, remote, TRUE, &filter_checksum, &allow_refs, &deny_refs, error))
     return FALSE;
 
   appstream_dir = g_file_get_child (flatpak_dir_get_path (self), "appstream");
@@ -3067,12 +3072,12 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   if (!glnx_opendirat (AT_FDCWD, arch_path, TRUE, &dfd, error))
     return FALSE;
 
-  old_checksum = NULL;
+  old_dir = NULL;
   file_info = g_file_query_info (active_link, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                  cancellable, NULL);
   if (file_info != NULL)
-    old_checksum =  g_file_info_get_symlink_target (file_info);
+    old_dir =  g_file_info_get_symlink_target (file_info);
 
   branch = g_strdup_printf ("appstream2/%s", arch);
   remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
@@ -3100,11 +3105,16 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   if (new_checksum == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No appstream commit to deploy"));
 
-  real_checkout_dir = g_file_get_child (arch_dir, new_checksum);
+  if (filter_checksum)
+    new_dir = g_strconcat (new_checksum, "-", filter_checksum, NULL);
+  else
+    new_dir = g_strdup (new_checksum);
+
+  real_checkout_dir = g_file_get_child (arch_dir, new_dir);
   checkout_exists = g_file_query_exists (real_checkout_dir, NULL);
 
-  if (old_checksum != NULL && new_checksum != NULL &&
-      strcmp (old_checksum, new_checksum) == 0 &&
+  if (old_dir != NULL && new_dir != NULL &&
+      strcmp (old_dir, new_dir) == 0 &&
       checkout_exists)
     {
       if (!g_file_replace_contents (timestamp_file, "", 0, NULL, FALSE,
@@ -3118,7 +3128,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
     }
 
   {
-    g_autofree char *template = g_strdup_printf (".%s-XXXXXX", new_checksum);
+    g_autofree char *template = g_strdup_printf (".%s-XXXXXX", new_dir);
     g_autoptr(GFile) tmp_dir_template = g_file_get_child (arch_dir, template);
     checkout_dir_path = g_file_get_path (tmp_dir_template);
     if (g_mkdtemp_full (checkout_dir_path, 0755) == NULL)
@@ -3226,7 +3236,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   glnx_gen_temp_name (tmpname);
   active_tmp_link = g_file_get_child (arch_dir, tmpname);
 
-  if (!g_file_make_symbolic_link (active_tmp_link, new_checksum, cancellable, error))
+  if (!g_file_make_symbolic_link (active_tmp_link, new_dir, cancellable, error))
     return FALSE;
 
   if (syncfs (dfd) != 0)
@@ -3253,10 +3263,10 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
                             cancellable, error))
     return FALSE;
 
-  if (old_checksum != NULL &&
-      g_strcmp0 (old_checksum, new_checksum) != 0)
+  if (old_dir != NULL &&
+      g_strcmp0 (old_dir, new_dir) != 0)
     {
-      old_checkout_dir = g_file_get_child (arch_dir, old_checksum);
+      old_checkout_dir = g_file_get_child (arch_dir, old_dir);
       if (!flatpak_rm_rf (old_checkout_dir, cancellable, &tmp_error))
         g_warning ("Unable to remove old appstream checkout: %s", tmp_error->message);
     }
@@ -9953,6 +9963,7 @@ flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir   *self,
 static void
 remote_filter_free (RemoteFilter *remote_filter)
 {
+  g_free (remote_filter->checksum);
   g_object_unref (remote_filter->path);
   if (remote_filter->allow)
     g_regex_unref (remote_filter->allow);
@@ -9993,6 +10004,7 @@ remote_filter_load (GFile *path, GError **error)
     }
 
   filter = g_new0 (RemoteFilter, 1);
+  filter->checksum = g_compute_checksum_for_data (G_CHECKSUM_SHA1, (guchar *)data, data_size);
   filter->path = g_object_ref (path);
   filter->mtime = mtime;
   filter->last_mtime_check = g_get_monotonic_time ();
@@ -10007,6 +10019,8 @@ G_LOCK_DEFINE_STATIC (filters);
 static gboolean
 flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                   const char *name,
+                                  gboolean    force_load,
+                                  char      **checksum_out,
                                   GRegex    **allow_regex,
                                   GRegex    **deny_regex,
                                   GError **error)
@@ -10015,6 +10029,8 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
   const char *filter_path;
   g_autoptr(GFile) filter_file = NULL;
 
+  if (checksum_out)
+    *checksum_out = NULL;
   *allow_regex = NULL;
   *deny_regex = NULL;
 
@@ -10050,6 +10066,8 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
 
   if (filter)
     {
+      if (checksum_out)
+        *checksum_out = g_strdup (filter->checksum);
       if (filter->allow)
         *allow_regex = g_regex_ref (filter->allow);
       if (filter->deny)
@@ -10065,6 +10083,8 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
   if (filter == NULL)
     return FALSE;
 
+  if (checksum_out)
+    *checksum_out = g_strdup (filter->checksum);
   if (filter->allow)
     *allow_regex = g_regex_ref (filter->allow);
   if (filter->deny)
@@ -10390,7 +10410,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         return NULL;
       if (!repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
         return NULL;
-      if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, &state->allow_refs, &state->deny_refs, error))
+      if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, FALSE, NULL, &state->allow_refs, &state->deny_refs, error))
         return NULL;
     }
 
