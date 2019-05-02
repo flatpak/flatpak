@@ -432,18 +432,6 @@ flatpak_builtin_remote_add (int argc, char **argv,
   remote_name = argv[1];
   location = argv[2];
 
-  remotes = flatpak_dir_list_remotes (dir, cancellable, error);
-  if (remotes == NULL)
-    return FALSE;
-
-  if (g_strv_contains ((const char **) remotes, remote_name))
-    {
-      if (opt_if_not_exists)
-        return TRUE; /* Do nothing */
-
-      return flatpak_fail (error, _("Remote %s already exists"), remote_name);
-    }
-
   if (opt_from ||
       flatpak_file_arg_has_suffix (location, ".flatpakrepo"))
     {
@@ -459,6 +447,40 @@ flatpak_builtin_remote_add (int argc, char **argv,
       else
         remote_url = g_strdup (location);
       opt_url = remote_url;
+    }
+
+  remotes = flatpak_dir_list_remotes (dir, cancellable, error);
+  if (remotes == NULL)
+    return FALSE;
+
+  if (g_strv_contains ((const char **) remotes, remote_name))
+    {
+      if (opt_if_not_exists)
+        {
+          /* Do nothing */
+
+          /* Except, for historical reasons this applies/clears the filter of pre-existing
+             remotes, so that a default-shipped filtering remote can be replaced, clearing the
+             filter, by following  standard docs. */
+          g_autofree char *old_filter = flatpak_dir_get_remote_filter (dir, remote_name);
+          const char *new_filter = filter ? filter : opt_filter;
+          if (new_filter && *new_filter == 0)
+            new_filter = NULL;
+          if (g_strcmp0 (old_filter, new_filter) != 0)
+            {
+              g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
+              GKeyFile *config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+
+              g_key_file_set_string (config, group, "xa.filter", new_filter ? new_filter : "");
+
+              if (!flatpak_dir_modify_remote (dir, remote_name, config, NULL, cancellable, error))
+                return FALSE;
+            }
+
+          return TRUE;
+        }
+
+      return flatpak_fail (error, _("Remote %s already exists"), remote_name);
     }
 
   /* Default to gpg verify, except for OCI registries */
