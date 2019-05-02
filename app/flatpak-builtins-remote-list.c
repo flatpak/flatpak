@@ -50,6 +50,7 @@ static Column all_columns[] = {
   { "title",      N_("Title"),         N_("Show the title"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "url",        N_("URL"),           N_("Show the URL"),           0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "collection", N_("Collection ID"), N_("Show the collection ID"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "filter",     N_("Filter"),        N_("Show filter file"),       0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "priority",   N_("Priority"),      N_("Show the priority"),      0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "options",    N_("Options"),       N_("Show options"),           0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "comment",    N_("Comment"),       N_("Show comment"),           0, FLATPAK_ELLIPSIZE_MODE_END,  1, 0 },
@@ -118,6 +119,14 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                   else
                     flatpak_table_printer_add_column (printer, "-");
                 }
+              else if (strcmp (columns[k].name, "filter") == 0)
+                {
+                  g_autofree char *filter = flatpak_dir_get_remote_filter (dir, remote_name);
+                  if (filter)
+                    flatpak_table_printer_add_column (printer, filter);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
               else if (strcmp (columns[k].name, "homepage") == 0)
                 {
                   g_autofree char *homepage = flatpak_dir_get_remote_homepage (dir, remote_name);
@@ -160,6 +169,7 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
               else if (strcmp (columns[k].name, "options") == 0)
                 {
                   gboolean gpg_verify = TRUE;
+                  g_autofree char *filter = flatpak_dir_get_remote_filter (dir, remote_name);
 
                   flatpak_table_printer_add_column (printer, ""); /* Options */
 
@@ -182,6 +192,9 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                                                      &gpg_verify, NULL);
                   if (!gpg_verify)
                     flatpak_table_printer_append_with_comma (printer, "no-gpg-verify");
+
+                  if (filter != NULL && *filter != 0)
+                    flatpak_table_printer_append_with_comma (printer, "filtered");
                 }
             }
 

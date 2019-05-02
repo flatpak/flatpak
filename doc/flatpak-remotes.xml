@@ -172,6 +172,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term>filter</term>
+
+                <listitem><para>
+                    Show the path to the client-side filter of the remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>collection</term>
 
                 <listitem><para>
