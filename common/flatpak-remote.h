@@ -115,6 +115,9 @@ FLATPAK_EXTERN void          flatpak_remote_set_disabled (FlatpakRemote *self,
 FLATPAK_EXTERN int           flatpak_remote_get_prio (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_prio (FlatpakRemote *self,
                                                       int            prio);
+FLATPAK_EXTERN char *        flatpak_remote_get_filter (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_filter (FlatpakRemote *self,
+                                                        const char    *filter_path);
 
 FLATPAK_EXTERN FlatpakRemoteType flatpak_remote_get_remote_type (FlatpakRemote *self);
 
