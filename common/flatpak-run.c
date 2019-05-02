@@ -572,7 +572,7 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
 {
   gboolean unrestricted, no_proxy;
   const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
-  char *dbus_session_socket = NULL;
+  g_autofree char *dbus_session_socket = NULL;
   g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/bus", getuid ());
   g_autofree char *sandbox_dbus_address = g_strdup_printf ("unix:path=/run/user/%d/bus", getuid ());
 
