@@ -11561,7 +11561,12 @@ flatpak_dir_get_remote_filter (FlatpakDir *self,
   g_autofree char *group = get_group (remote_name);
 
   if (config)
-    return g_key_file_get_string (config, group, "xa.filter", NULL);
+    {
+      g_autofree char *filter = g_key_file_get_string (config, group, "xa.filter", NULL);
+
+      if (filter && *filter != 0)
+        return g_steal_pointer (&filter);
+    }
 
   return NULL;
 }
