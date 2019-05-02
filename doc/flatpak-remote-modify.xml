@@ -250,6 +250,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-filter</option></term>
+                <term><option>--filter=FILE</option></term>
+
+                <listitem><para>
+                  Modify the path (or unset) for the local filter used for this remote.
+                  See <citerefentry><refentrytitle>flatpak-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry> for details about the filter file format.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--gpg-import=FILE</option></term>
 
                 <listitem><para>
