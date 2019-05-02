@@ -71,6 +71,7 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REPO_DESCRIPTION_KEY "Description"
 #define FLATPAK_REPO_HOMEPAGE_KEY "Homepage"
 #define FLATPAK_REPO_ICON_KEY "Icon"
+#define FLATPAK_REPO_FILTER_KEY "Filter"
 
 #define FLATPAK_REPO_COLLECTION_ID_KEY "CollectionID"
 #define FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY "DeployCollectionID"

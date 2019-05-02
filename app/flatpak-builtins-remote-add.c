@@ -58,6 +58,7 @@ static char *comment = NULL;
 static char *description = NULL;
 static char *icon = NULL;
 static char *homepage = NULL;
+static char *filter = NULL;
 
 
 static GOptionEntry add_options[] = {
@@ -241,6 +242,12 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
       *changed = TRUE;
     }
 
+  if (filter)
+    {
+      g_key_file_set_string (config, group, "xa.filter", filter);
+      *changed = TRUE;
+    }
+
   return config;
 }
 
@@ -366,6 +373,13 @@ load_options (const char *filename,
 
   homepage  = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                      FLATPAK_REPO_HOMEPAGE_KEY, NULL);
+
+  filter = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_FILTER_KEY, NULL);
+
+  /* Default to empty so we unset previous filter if one was enabled, unless given as arg */
+  if (filter == NULL && opt_filter != NULL)
+    filter = g_strdup ("");
 }
 
 gboolean

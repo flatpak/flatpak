@@ -104,6 +104,20 @@
                     <listitem><para>The url of a webpage describing the remote.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>Filter</option> (string)</term>
+                    <listitem><para>The path of a local file to use to filter remote refs. See
+                       <citerefentry><refentrytitle>flatpak-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                       for details on the format of the file.
+                    </para>
+                    <para>
+                      Note: This field is treated a bit special by flatpak remote-add. If you install a remote with --if-not-exists then
+                      and the remote is already configured, then the filter field of the remote configuration will be update anyway.
+                      And, if the filter field is *not* specified then any existing filters are cleared. The goal here is to allow
+                      a pre-configured filtered remote to be replaced with the regular one if you add the normal upstream (unfiltered)
+                      flatpakrepo file.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>DeployCollectionID</option> (string)</term>
                     <listitem><para>
                         The collection ID of the remote, if it has one. This uniquely
