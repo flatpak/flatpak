@@ -42,6 +42,7 @@ static gboolean opt_no_deps;
 static gboolean opt_if_not_exists;
 static gboolean opt_disable;
 static int opt_prio = -1;
+static char *opt_filter;
 static char *opt_title;
 static char *opt_comment;
 static char *opt_description;
@@ -78,6 +79,7 @@ static GOptionEntry common_options[] = {
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this remote"), N_("BRANCH") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
+  { "filter", 0, 0, G_OPTION_ARG_FILENAME, &opt_filter, N_("Set path to local filter FILE"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
   { NULL }
 };
@@ -165,6 +167,12 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
     {
       g_key_file_set_string (config, group, "xa.default-branch", opt_default_branch);
       g_key_file_set_boolean (config, group, "xa.default-branch-is-set", TRUE);
+      *changed = TRUE;
+    }
+
+  if (opt_filter)
+    {
+      g_key_file_set_string (config, group, "xa.filter", opt_filter);
       *changed = TRUE;
     }
 

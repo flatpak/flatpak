@@ -208,6 +208,36 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--filter=PATH</option></term>
+
+                <listitem><para>
+                  Add a local filter to the remote. A filter file is a list of lines, each
+                  file starting with "allow" or "deny", and then a glob for the ref to
+                  allow or disallow. The globs specify a partial ref (i.e. you can leave out
+                  trailing parts which will then match everything), but otherwise only "*" is
+                  special, matching anything in that part of the ref.
+                </para>
+                <para>
+                  By default all refs are allowed, but if a ref
+                  matches a deny rule it is disallowed unless it
+                  specifically matches an allow rule. This means you
+                  can use this to implement both whitelisting and blacklisting.
+                </para>
+                <para>
+                  Here is an example filter file:
+<programlisting>
+# This is a whitelist style filter as it denies all first
+deny *
+allow runtime/org.freedesktop.*
+allow org.some.app/arm
+allow org.signal.Signal/*/stable
+allow org.signal.Signal.*/*/stable
+</programlisting>
+                </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--gpg-import=FILE</option></term>
 
                 <listitem><para>
