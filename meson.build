@@ -1,6 +1,8 @@
 project('libglnx', 'c')
 
 add_project_arguments('-D_GNU_SOURCE', language: 'c')
+add_project_arguments('-std=gnu99', language: 'c')
+add_project_arguments('-Wno-unused-local-typedefs', language: 'c')
 
 cc = meson.get_compiler('c')
 
