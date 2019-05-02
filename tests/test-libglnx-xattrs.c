@@ -218,7 +218,11 @@ test_xattr_races (void)
   /* FIXME - this deadlocks for me on 4.9.4-201.fc25.x86_64, whether
    * using overlayfs or xfs as source/dest.
    */
+#if GLIB_CHECK_VERSION (2, 36, 0)
   const guint nprocs = MAX (4, g_get_num_processors ());
+#else
+  const guint nprocs = 4;
+#endif
   struct XattrWorker wdata[nprocs];
   GThread *threads[nprocs];
   g_autoptr(GError) local_error = NULL;

@@ -63,4 +63,16 @@ gboolean              glnx_set_object  (GObject **object_ptr,
 
 #endif /* !GLIB_CHECK_VERSION(2, 44, 0) */
 
+#ifndef g_assert_nonnull
+#define g_assert_nonnull(x) g_assert (x != NULL)
+#endif
+
+#ifndef g_assert_null
+#define g_assert_null(x) g_assert (x == NULL)
+#endif
+
+#if !GLIB_CHECK_VERSION (2, 38, 0)
+#define g_test_skip(s) g_test_message ("SKIP: %s", s)
+#endif
+
 G_END_DECLS
