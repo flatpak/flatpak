@@ -63,6 +63,7 @@ struct _FlatpakRemotePrivate
   char             *local_title;
   char             *local_default_branch;
   char             *local_main_ref;
+  char             *local_filter;
   gboolean          local_gpg_verify;
   gboolean          local_noenumerate;
   gboolean          local_nodeps;
@@ -79,6 +80,7 @@ struct _FlatpakRemotePrivate
   guint             local_title_set          : 1;
   guint             local_default_branch_set : 1;
   guint             local_main_ref_set       : 1;
+  guint             local_filter_set         : 1;
   guint             local_gpg_verify_set     : 1;
   guint             local_noenumerate_set    : 1;
   guint             local_nodeps_set         : 1;
@@ -438,6 +440,54 @@ flatpak_remote_set_title (FlatpakRemote *self,
   g_free (priv->local_title);
   priv->local_title = g_strdup (title);
   priv->local_title_set = TRUE;
+}
+
+/**
+ * flatpak_remote_get_filter:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the filter file of the remote.
+ *
+ * Returns: (transfer full): a pathname to a filter file
+ *
+ * Since: 1.4
+ */
+char *
+flatpak_remote_get_filter (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_filter_set)
+    return g_strdup (priv->local_filter);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_filter (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_filter:
+ * @self: a #FlatpakRemote
+ * @filter_path: The pathname of the new filter file
+ *
+ * Sets a filter for this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Since: 1.4
+ */
+void
+flatpak_remote_set_filter (FlatpakRemote *self,
+                           const char    *filter_path)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_filter);
+  priv->local_filter = g_strdup (filter_path);
+  priv->local_filter_set = TRUE;
 }
 
 /**
@@ -1117,6 +1167,9 @@ flatpak_remote_commit (FlatpakRemote *self,
 
   if (priv->local_title_set)
     g_key_file_set_string (config, group, "xa.title", priv->local_title);
+
+  if (priv->local_filter_set)
+    g_key_file_set_string (config, group, "xa.filter", priv->local_filter);
 
   if (priv->local_comment_set)
     g_key_file_set_string (config, group, "xa.comment", priv->local_comment);
