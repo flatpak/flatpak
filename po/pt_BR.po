@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-04-26 12:27+0200\n"
-"PO-Revision-Date: 2019-04-08 12:50-0300\n"
+"POT-Creation-Date: 2019-05-03 03:24+0000\n"
+"PO-Revision-Date: 2019-05-03 09:16-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
@@ -256,7 +256,7 @@ msgstr "Nenhum ponto de extensão correspondendo %s em %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Faltando “=” na opção de montagem associativa “%s”"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3624
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3627
 msgid "Unable to start app"
 msgstr "Não foi possível iniciar o aplicativo"
 
@@ -331,10 +331,12 @@ msgid ""
 "Mark refs matching the OLDID prefix as end-of-life, to be replaced with the "
 "given NEWID"
 msgstr ""
+"Marca refs correspondentes a o prefixo de IDANTIGO como fim de vida, para "
+"serem substituídos com o IDNOVO dado"
 
 #: app/flatpak-builtins-build-commit-from.c:66
 msgid "OLDID=NEWID"
-msgstr ""
+msgstr "IDANTIGO=IDNOVO"
 
 #: app/flatpak-builtins-build-commit-from.c:67
 msgid "Override the timestamp of the commit (NOW for current time)"
@@ -374,12 +376,14 @@ msgstr "--src-repo ou --src-ref devem ser especificados."
 #: app/flatpak-builtins-build-commit-from.c:281
 msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
 msgstr ""
+"Formato de argumento inválido para o uso de --end-of-life-"
+"rebase=IDANTIGO=IDNOVO"
 
 #: app/flatpak-builtins-build-commit-from.c:287
 #: app/flatpak-builtins-build-commit-from.c:290
 #, c-format
 msgid "Invalid name %s in --end-of-life-rebase"
-msgstr ""
+msgstr "Nome inválido %s em --end-of-life-rebase"
 
 #: app/flatpak-builtins-build-commit-from.c:299
 #: app/flatpak-builtins-build-export.c:1036
@@ -428,7 +432,7 @@ msgstr "Arquivos excluídos para incluir"
 
 #: app/flatpak-builtins-build-export.c:69
 msgid "Mark build as end-of-life, to be replaced with the given ID"
-msgstr ""
+msgstr "Marca a compilação como fim de vida, a ser substituída com o ID dado"
 
 #: app/flatpak-builtins-build-export.c:69
 #: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:879
@@ -563,7 +567,7 @@ msgid "Command to set"
 msgstr "Comando para definir"
 
 #: app/flatpak-builtins-build-finish.c:51 app/flatpak-builtins-run.c:60
-#: app/flatpak-main.c:191
+#: app/flatpak-main.c:199
 msgid "COMMAND"
 msgstr "COMANDO"
 
@@ -899,35 +903,30 @@ msgid "TITLE"
 msgstr "TÍTULO"
 
 #: app/flatpak-builtins-build-update-repo.c:62
-#, fuzzy
 msgid "A one-line comment for this repository"
-msgstr "Um nome legal para usar para este repositório"
+msgstr "Um comentário de uma linha para este repositório"
 
 #: app/flatpak-builtins-build-update-repo.c:62
 #: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:73
-#, fuzzy
 msgid "COMMENT"
-msgstr "COMMIT"
+msgstr "COMENTÁRIO"
 
 #: app/flatpak-builtins-build-update-repo.c:63
-#, fuzzy
 msgid "A full-paragraph description for this repository"
-msgstr "Ramo padrão para usar para este repositório"
+msgstr "Uma descrição de parágrafo completo para este repositório"
 
 #: app/flatpak-builtins-build-update-repo.c:63
 #: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:74
 msgid "DESCRIPTION"
-msgstr ""
+msgstr "DESCRIÇÃO"
 
 #: app/flatpak-builtins-build-update-repo.c:64
-#, fuzzy
 msgid "URL for a website for this repository"
-msgstr "Um nome legal para usar para este repositório"
+msgstr "URL de um website para este repositório"
 
 #: app/flatpak-builtins-build-update-repo.c:65
-#, fuzzy
 msgid "URL for an icon for this repository"
-msgstr "Um nome legal para usar para este repositório"
+msgstr "URL de um ícone para este repositório"
 
 #: app/flatpak-builtins-build-update-repo.c:66
 msgid "Default branch to use for this repository"
@@ -1315,70 +1314,70 @@ msgstr "[APPID] – Lista arquivos exportados"
 msgid "FILE - Unexport a file to apps"
 msgstr "ARQUIVO – Desfaz exportação de um arquivo para aplicativos"
 
-#: app/flatpak-builtins-enter.c:85
+#: app/flatpak-builtins-enter.c:81
 msgid "INSTANCE [COMMAND [ARGUMENT…]] - Run a command inside a running sandbox"
 msgstr ""
 "INSTÂNCIA [COMANDO [ARGUMENTO…]] – Executa um comando dentro de um sandbox"
 
-#: app/flatpak-builtins-enter.c:106
+#: app/flatpak-builtins-enter.c:102
 msgid "INSTANCE and COMMAND must be specified"
 msgstr "INSTÂNCIA e COMANDO devem ser especificados"
 
-#: app/flatpak-builtins-enter.c:112
+#: app/flatpak-builtins-enter.c:108
 msgid "Not running as root, may be unable to enter namespace"
 msgstr "Não executando como root, pode ser impossível entrar no espaço de nome"
 
-#: app/flatpak-builtins-enter.c:132
+#: app/flatpak-builtins-enter.c:128
 #, c-format
 msgid "%s is neither a pid nor an application or instance ID"
 msgstr "%s não é um pid nem um aplicativo ou ID de instância"
 
-#: app/flatpak-builtins-enter.c:136
+#: app/flatpak-builtins-enter.c:132
 #, c-format
 msgid "No such pid %s"
 msgstr "Pid inexistente %s"
 
-#: app/flatpak-builtins-enter.c:148
+#: app/flatpak-builtins-enter.c:144
 msgid "Can't read cwd"
 msgstr "Não foi possível ler cwd"
 
-#: app/flatpak-builtins-enter.c:153
+#: app/flatpak-builtins-enter.c:149
 msgid "Can't read root"
 msgstr "Não foi possível ler root"
 
-#: app/flatpak-builtins-enter.c:162
+#: app/flatpak-builtins-enter.c:158
 #, c-format
 msgid "Invalid %s namespace for pid %d"
 msgstr "Espaço de nome inválido %s para pid %d"
 
-#: app/flatpak-builtins-enter.c:167
+#: app/flatpak-builtins-enter.c:162
 #, c-format
 msgid "Invalid %s namespace for self"
 msgstr "Espaço de nome inválido %s para si próprio"
 
-#: app/flatpak-builtins-enter.c:179
+#: app/flatpak-builtins-enter.c:173
 #, c-format
 msgid "Can't open %s namespace: %s"
 msgstr "Não foi possível abrir o espaço de nome %s: %s"
 
-#: app/flatpak-builtins-enter.c:188
+#: app/flatpak-builtins-enter.c:182
 #, c-format
 msgid "Can't enter %s namespace: %s"
 msgstr "Não foi possível entrar no espaço de nome %s: %s"
 
-#: app/flatpak-builtins-enter.c:194
+#: app/flatpak-builtins-enter.c:188
 msgid "Can't chdir"
 msgstr "Não foi possível executar chdir"
 
-#: app/flatpak-builtins-enter.c:197
+#: app/flatpak-builtins-enter.c:191
 msgid "Can't chroot"
 msgstr "Não foi possível fazer chroot"
 
-#: app/flatpak-builtins-enter.c:244
+#: app/flatpak-builtins-enter.c:238
 msgid "Can't switch gid"
 msgstr "Não foi possível trocar o gid"
 
-#: app/flatpak-builtins-enter.c:247
+#: app/flatpak-builtins-enter.c:241
 msgid "Can't switch uid"
 msgstr "Não foi possível trocar o uid"
 
@@ -1940,9 +1939,8 @@ msgid "Runtime"
 msgstr "Runtime"
 
 #: app/flatpak-builtins-list.c:63
-#, fuzzy
 msgid "Show the used runtime"
-msgstr "Mostra o runtime"
+msgstr "Mostra o runtime usado"
 
 #: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:67
 msgid "Show the origin remote"
@@ -2056,9 +2054,8 @@ msgid "Too few arguments"
 msgstr "Número insuficiente de argumentos"
 
 #: app/flatpak-builtins-permission-reset.c:43
-#, fuzzy
 msgid "Reset all permissions"
-msgstr "Redefine permissões de aplicativo"
+msgstr "Redefine todas as permissões"
 
 #: app/flatpak-builtins-permission-reset.c:137
 msgid "APP_ID - Reset permissions for an app"
@@ -2163,24 +2160,20 @@ msgid "A nice name to use for this remote"
 msgstr "Um nome legal para usar para este remoto"
 
 #: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:73
-#, fuzzy
 msgid "A one-line comment for this remote"
-msgstr "Um nome legal para usar para este remoto"
+msgstr "Um comentário de uma linha para este remoto"
 
 #: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:74
-#, fuzzy
 msgid "A full-paragraph description for this remote"
-msgstr "Ramo padrão para usar para este remoto"
+msgstr "Uma descrição de parágrafo completo para este remoto"
 
 #: app/flatpak-builtins-remote-add.c:76 app/flatpak-builtins-remote-modify.c:75
-#, fuzzy
 msgid "URL for a website for this remote"
-msgstr "Um nome legal para usar para este remoto"
+msgstr "URL para um website para este remoto"
 
 #: app/flatpak-builtins-remote-add.c:77 app/flatpak-builtins-remote-modify.c:76
-#, fuzzy
 msgid "URL for an icon for this remote"
-msgstr "Ramo padrão para usar para este remoto"
+msgstr "URL para um ícone para este remoto"
 
 #: app/flatpak-builtins-remote-add.c:78 app/flatpak-builtins-remote-modify.c:77
 msgid "Default branch to use for this remote"
@@ -2276,7 +2269,7 @@ msgstr "Mostra pai"
 
 #: app/flatpak-builtins-remote-info.c:62 app/flatpak-builtins-remote-ls.c:56
 msgid "Use local caches even if they are stale"
-msgstr ""
+msgstr "Usa caches locais mesmo se eles estiverem velhos"
 
 #: app/flatpak-builtins-remote-info.c:113
 msgid ""
@@ -2357,37 +2350,32 @@ msgid "Show the priority"
 msgstr "Mostra a prioridade"
 
 #: app/flatpak-builtins-remote-list.c:55
-#, fuzzy
 msgid "Comment"
-msgstr "Commit"
+msgstr "Comentário"
 
 #: app/flatpak-builtins-remote-list.c:55
-#, fuzzy
 msgid "Show comment"
-msgstr "Mostra commit"
+msgstr "Mostra comentário"
 
 #: app/flatpak-builtins-remote-list.c:56
-#, fuzzy
 msgid "Show description"
-msgstr "Mostra a descrição"
+msgstr "Mostra descrição"
 
 #: app/flatpak-builtins-remote-list.c:57
 msgid "Homepage"
-msgstr ""
+msgstr "Página inicial"
 
 #: app/flatpak-builtins-remote-list.c:57
-#, fuzzy
 msgid "Show homepage"
-msgstr "Mostra o nome"
+msgstr "Mostra página inicial"
 
 #: app/flatpak-builtins-remote-list.c:58
 msgid "Icon"
-msgstr ""
+msgstr "Ícone"
 
 #: app/flatpak-builtins-remote-list.c:58
-#, fuzzy
 msgid "Show icon"
-msgstr "Mostra as opções"
+msgstr "Mostra ícone"
 
 #: app/flatpak-builtins-remote-list.c:206
 msgid " - List remote repositories"
@@ -2595,24 +2583,24 @@ msgid "Title: %s\n"
 msgstr "Título: %s\n"
 
 #: app/flatpak-builtins-repo.c:97
-#, fuzzy, c-format
+#, c-format
 msgid "Comment: %s\n"
-msgstr "Commit: %s\n"
+msgstr "Comentário: %s\n"
 
 #: app/flatpak-builtins-repo.c:100
-#, fuzzy, c-format
+#, c-format
 msgid "Description: %s\n"
-msgstr "Descrição"
+msgstr "Descrição: %s\n"
 
 #: app/flatpak-builtins-repo.c:103
 #, c-format
 msgid "Homepage: %s\n"
-msgstr ""
+msgstr "Página inicial: %s\n"
 
 #: app/flatpak-builtins-repo.c:106
-#, fuzzy, c-format
+#, c-format
 msgid "Icon: %s\n"
-msgstr "Commit: %s\n"
+msgstr "Ícone: %s\n"
 
 #: app/flatpak-builtins-repo.c:109
 #, c-format
@@ -2863,7 +2851,7 @@ msgstr "Nada para fazer.\n"
 #: app/flatpak-builtins-utils.c:351
 #, c-format
 msgid "Remote ‘%s’ found in multiple installations:"
-msgstr "Remote “%s” localizado em múltiplas instalações:"
+msgstr "O remoto “%s” foi localizado em múltiplas instalações:"
 
 #: app/flatpak-builtins-utils.c:352 app/flatpak-builtins-utils.c:418
 #: app/flatpak-builtins-utils.c:509 app/flatpak-builtins-utils.c:511
@@ -3050,7 +3038,7 @@ msgstr "atualizar"
 
 #: app/flatpak-cli-transaction.c:154 app/flatpak-quiet-transaction.c:106
 msgid "install bundle"
-msgstr "instala pacote"
+msgstr "instalar pacote"
 
 #: app/flatpak-cli-transaction.c:157 app/flatpak-quiet-transaction.c:109
 msgid "uninstall"
@@ -3127,9 +3115,9 @@ msgid "Error:"
 msgstr "Erro:"
 
 #: app/flatpak-cli-transaction.c:516 app/flatpak-quiet-transaction.c:174
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s is end-of-life, in preference of %s\n"
-msgstr "Info: %s está em fim de vida, na preferência de %s"
+msgstr "Info: %s está em fim de vida, na preferência de %s\n"
 
 #: app/flatpak-cli-transaction.c:518 app/flatpak-quiet-transaction.c:176
 #, c-format
@@ -3139,17 +3127,16 @@ msgstr "Info: %s está em fim de vida, com motivo: %s\n"
 #: app/flatpak-cli-transaction.c:523
 #, c-format
 msgid "Replace it with %s?"
-msgstr ""
+msgstr "Substitui-lo por %s?"
 
 #: app/flatpak-cli-transaction.c:528 app/flatpak-quiet-transaction.c:182
-#, fuzzy
 msgid "Updating to rebased version\n"
-msgstr "Atualizando ramo do appstream\n"
+msgstr "Atualizando para a versão após rebase\n"
 
 #: app/flatpak-cli-transaction.c:535
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to rebase %s to %s: "
-msgstr "Falha ao %s %s: "
+msgstr "Falha ao realizar rebase de %s para %s: "
 
 #: app/flatpak-cli-transaction.c:736
 #, c-format
@@ -3471,11 +3458,11 @@ msgstr "Trabalha na instalação do sistema (padrão)"
 msgid "Work on a non-default system-wide installation"
 msgstr "Trabalha em uma instalação não padrão de sistema"
 
-#: app/flatpak-main.c:194
+#: app/flatpak-main.c:202
 msgid "Builtin Commands:"
 msgstr "Comandos embutidos:"
 
-#: app/flatpak-main.c:266
+#: app/flatpak-main.c:274
 #, c-format
 msgid ""
 "Note that the directories %s are not in the search path set by the "
@@ -3487,7 +3474,7 @@ msgstr ""
 "Flatpak podem não aparecer em sua área de trabalho até que a sessão seja "
 "reiniciada."
 
-#: app/flatpak-main.c:280
+#: app/flatpak-main.c:288
 #, c-format
 msgid ""
 "Note that the directory %s is not in the search path set by the "
@@ -3499,33 +3486,33 @@ msgstr ""
 "Flatpak podem não aparecer em sua área de trabalho até que a sessão seja "
 "reiniciada."
 
-#: app/flatpak-main.c:405
+#: app/flatpak-main.c:417
 msgid ""
 "Multiple installations specified for a command that works on one installation"
 msgstr ""
 "Várias instalações especificadas para um comando que trabalha em uma "
 "instalação"
 
-#: app/flatpak-main.c:454 app/flatpak-main.c:606
+#: app/flatpak-main.c:466 app/flatpak-main.c:618
 #, c-format
 msgid "See '%s --help'"
 msgstr "Veja “%s --help”"
 
-#: app/flatpak-main.c:614
+#: app/flatpak-main.c:626
 #, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s'?"
 msgstr "“%s” não é um comando do flatpak. Você quis dizer “%s”?"
 
-#: app/flatpak-main.c:617
+#: app/flatpak-main.c:629
 #, c-format
 msgid "'%s' is not a flatpak command"
 msgstr "“%s” não é um comando do flatpak"
 
-#: app/flatpak-main.c:679
+#: app/flatpak-main.c:691
 msgid "No command specified"
 msgstr "Nenhum comando especificado"
 
-#: app/flatpak-main.c:823
+#: app/flatpak-main.c:835
 msgid "error:"
 msgstr "erro:"
 
@@ -3544,15 +3531,19 @@ msgstr "Atualizando %s\n"
 msgid "Uninstalling %s\n"
 msgstr "Desinstalando %s\n"
 
+# 1º %s: "Error:", "Warning:"
+# 2º %s: op_type: "install", "update", etc.
+# 3º %s: rref: name of a ref
+# 4º %s: msg: some error/warning message
 #: app/flatpak-quiet-transaction.c:148
-#, fuzzy, c-format
+#, c-format
 msgid "%s Failed to %s %s: %s\n"
-msgstr "Falha ao %s %s: "
+msgstr "%s Falha ao %s %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:187
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to rebase %s to %s: %s\n"
-msgstr "Falha ao %s %s: "
+msgstr "Falha ao realizar rebase de %s para %s: %s\n"
 
 #: common/flatpak-context.c:179
 #, c-format
@@ -3705,9 +3696,8 @@ msgid "Allow app to talk to name on the session bus"
 msgstr "Permite o aplicativo falar com um nome no barramento de sessão"
 
 #: common/flatpak-context.c:1239
-#, fuzzy
 msgid "Don't allow app to talk to name on the session bus"
-msgstr "Permite o aplicativo falar com um nome no barramento de sessão"
+msgstr "Proíbe o aplicativo de falar com um nome no barramento de sessão"
 
 #: common/flatpak-context.c:1240
 msgid "Allow app to own name on the system bus"
@@ -3718,9 +3708,8 @@ msgid "Allow app to talk to name on the system bus"
 msgstr "Permite o aplicativo falar com um nome no barramento de sistema"
 
 #: common/flatpak-context.c:1242
-#, fuzzy
 msgid "Don't allow app to talk to name on the system bus"
-msgstr "Permite o aplicativo falar com um nome no barramento de sistema"
+msgstr "Proíbe o aplicativo de falar com um nome no barramento de sistema"
 
 #: common/flatpak-context.c:1243
 msgid "Add generic policy option"
@@ -3894,7 +3883,7 @@ msgstr "Índice de OCI remoto possui nenhuma uri de registro"
 msgid "%s commit %s already installed"
 msgstr "%s commit %s já está instalado"
 
-#: common/flatpak-dir.c:4743 common/flatpak-utils.c:5122
+#: common/flatpak-dir.c:4743 common/flatpak-utils.c:5111
 msgid "Image is not a manifest"
 msgstr "A imagem não é um manifesto"
 
@@ -3922,7 +3911,7 @@ msgstr ""
 "Assinaturas GPG localizadas para o remoto “%s”, mas nenhuma está no chaveiro "
 "de confiadas"
 
-#: common/flatpak-dir.c:5216 common/flatpak-utils.c:5029
+#: common/flatpak-dir.c:5216 common/flatpak-utils.c:5018
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "Assinaturas GPG localizadas, mas nenhuma está no chaveiro de confiadas"
 
@@ -4132,14 +4121,14 @@ msgid "Failed to write summary cache: "
 msgstr "Falha ao escrever cache de resumo: "
 
 #: common/flatpak-dir.c:10030
-#, fuzzy, c-format
+#, c-format
 msgid "No oci summary cached for remote '%s'"
-msgstr "Nenhum sumário ou cache do Flatpak disponível para o remoto %s"
+msgstr "Nenhum resumo de oci em cache para o remoto “%s”"
 
 #: common/flatpak-dir.c:10105
-#, fuzzy, c-format
+#, c-format
 msgid "No summary cached for remote '%s'"
-msgstr "Nenhum sumário ou cache do Flatpak disponível para o remoto %s"
+msgstr "Nenhum resumo em cache para o remoto “%s”"
 
 #: common/flatpak-dir.c:10123
 #, c-format
@@ -4151,9 +4140,9 @@ msgstr ""
 "resumo. Certifique-se que a URL passada para remote-add é válida."
 
 #: common/flatpak-dir.c:10273
-#, fuzzy, c-format
+#, c-format
 msgid "No repo metadata cached for remote '%s'"
-msgstr "Nenhum sumário ou cache do Flatpak disponível para o remoto %s"
+msgstr "Nenhum metadado de repositório em cache para o remoto “%s”"
 
 #: common/flatpak-dir.c:10432
 #, c-format
@@ -4188,7 +4177,7 @@ msgstr "Erro ao pesquisar repositório local: %s"
 #: common/flatpak-dir.c:11247
 #, c-format
 msgid "Could not find installation %s"
-msgstr "Não foi possível localizar instalação de %s"
+msgstr "Não foi possível localizar instalação de %s"
 
 #: common/flatpak-dir.c:11692
 #, c-format
@@ -4288,102 +4277,104 @@ msgstr "Nome inválido de remoto: %s"
 msgid "No url specified"
 msgstr "Nenhuma url especificada"
 
-#: common/flatpak-run.c:725
+#: common/flatpak-run.c:738
 msgid "Failed to open app info file"
 msgstr "Falha ao abrir arquivo de informação do aplicativo"
 
-#: common/flatpak-run.c:824
+#: common/flatpak-run.c:832
 msgid "Unable to create sync pipe"
 msgstr "Não foi possível criar um pipe de sincronização"
 
-#: common/flatpak-run.c:858
+#: common/flatpak-run.c:866
 msgid "Failed to sync with dbus proxy"
 msgstr "Falha ao sincronizar com proxy de dbus"
 
-#: common/flatpak-run.c:897
+#: common/flatpak-run.c:905
 #, c-format
 msgid "Failed to determine parts from ref: %s"
 msgstr "Falha ao determinar partes do ref: %s"
 
-#: common/flatpak-run.c:1484
+#: common/flatpak-run.c:1492
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 "Nenhuma sessão de usuário de systemd disponível, cgroups não disponível"
 
-#: common/flatpak-run.c:2084
+#: common/flatpak-run.c:2092
 msgid "Unable to allocate instance id"
 msgstr "Não foi possível alocar id de instância"
 
-#: common/flatpak-run.c:2204 common/flatpak-run.c:2214
+#: common/flatpak-run.c:2212 common/flatpak-run.c:2222
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Falha ao abrir arquivo flatpak-info: %s"
 
-#: common/flatpak-run.c:2234
+#: common/flatpak-run.c:2242
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Falha ao abrir arquivo bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2548
+#: common/flatpak-run.c:2553
 msgid "Initialize seccomp failed"
 msgstr "Inicialização de seccomp falhou"
 
-#: common/flatpak-run.c:2587
+#: common/flatpak-run.c:2592
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Falha ao adicionar arquitetura ao filtro seccomp"
 
-#: common/flatpak-run.c:2596
+#: common/flatpak-run.c:2601
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Falha ao adicionar arquitetura multiarch ao filtro seccomp"
 
 #. unknown syscall
-#: common/flatpak-run.c:2615 common/flatpak-run.c:2629
+#: common/flatpak-run.c:2620 common/flatpak-run.c:2634
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Falha ao bloquear a chamada de sistema %d"
 
-#: common/flatpak-run.c:2660
+#: common/flatpak-run.c:2665
 msgid "Failed to export bpf"
 msgstr "Falha ao exportar bpf"
 
-#: common/flatpak-run.c:2715
+#: common/flatpak-run.c:2720
 #, c-format
 msgid "Invalid group: %d"
 msgstr "Grupo inválido: %d"
 
-#: common/flatpak-run.c:2891
+#: common/flatpak-run.c:2894
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Falha ao abrir “%s”"
 
-#: common/flatpak-run.c:3168
+#: common/flatpak-run.c:3171
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig falhou, status de saída %d"
 
-#: common/flatpak-run.c:3175
+#: common/flatpak-run.c:3178
 msgid "Can't open generated ld.so.cache"
 msgstr "Não foi possível abrir o ld.so.cache gerado"
 
-#: common/flatpak-run.c:3290
+#: common/flatpak-run.c:3293
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Número incorreto de componentes no runtime %s"
 
-#: common/flatpak-run.c:3404
-#, fuzzy, c-format
+#: common/flatpak-run.c:3407
+#, c-format
 msgid "Failed to migrate from %s: %s"
-msgstr "Falha ao ler commit %s: "
+msgstr "Falha ao migrar de %s: %s"
 
-#: common/flatpak-run.c:3419
+#: common/flatpak-run.c:3422
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
+"Falha ao migrar o diretório de dados antigo %s do aplicativo para o novo "
+"nome %s: %s"
 
-#: common/flatpak-run.c:3428
-#, fuzzy, c-format
+#: common/flatpak-run.c:3431
+#, c-format
 msgid "Failed to create symlink while migrating %s: %s"
-msgstr "Falha ao ler commit %s: "
+msgstr "Falha ao criar link simbólico ao migrar %s: %s"
 
 #: common/flatpak-transaction.c:1543
 #, c-format
@@ -4557,98 +4548,98 @@ msgstr "Arquitetura inválida %s"
 msgid "Invalid id %s: %s"
 msgstr "ID inválido %s: %s"
 
-#: common/flatpak-utils.c:2807
+#: common/flatpak-utils.c:2796
 msgid "No extra data sources"
 msgstr "Nenhuma fonte de dados extras"
 
-#: common/flatpak-utils.c:3853
+#: common/flatpak-utils.c:3842
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Erro ao copiar ícone 64x64 para componente %s: %s\n"
 
-#: common/flatpak-utils.c:3859
+#: common/flatpak-utils.c:3848
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Erro ao copiar ícone 128x128 para componente %s: %s\n"
 
-#: common/flatpak-utils.c:4069
+#: common/flatpak-utils.c:4058
 #, c-format
 msgid "%s is end-of-life, ignoring\n"
 msgstr "%s está em fim de vida, ignorando\n"
 
-#: common/flatpak-utils.c:4078
+#: common/flatpak-utils.c:4067
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Nenhum dado de appstream para %s: %s\n"
 
-#: common/flatpak-utils.c:4898
+#: common/flatpak-utils.c:4887
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Pacote inválido, nenhuma ref nos metadados"
 
-#: common/flatpak-utils.c:4989
+#: common/flatpak-utils.c:4978
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr "A coleção “%s” de pacotes não correspondem à coleção “%s” do remoto"
 
-#: common/flatpak-utils.c:5068
+#: common/flatpak-utils.c:5057
 msgid "Metadata in header and app are inconsistent"
 msgstr "Metadados no cabeçalho e aplicativo estão inconsistentes"
 
-#: common/flatpak-utils.c:5214
+#: common/flatpak-utils.c:5203
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Nenhuma ref especificada para a imagem OCI %s"
 
-#: common/flatpak-utils.c:5220
+#: common/flatpak-utils.c:5209
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Ref errada (%s) especificada para a imagem OCI %s, esperava %s"
 
-#: common/flatpak-utils.c:5289
+#: common/flatpak-utils.c:5278
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Soma de verificação de camada errada, esperava %s, era %s"
 
-#: common/flatpak-utils.c:5962
+#: common/flatpak-utils.c:5951
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Baixando metadados: %u/(estimando) %s"
 
-#: common/flatpak-utils.c:5986
+#: common/flatpak-utils.c:5975
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Baixando: %s/%s"
 
-#: common/flatpak-utils.c:6006
+#: common/flatpak-utils.c:5995
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Baixando dados extras: %s/%s"
 
-#: common/flatpak-utils.c:6011
+#: common/flatpak-utils.c:6000
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Baixando arquivos: %d/%d %s"
 
-#: common/flatpak-utils.c:6097
+#: common/flatpak-utils.c:6086
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Argumento de require-flatpak inválido %s"
 
-#: common/flatpak-utils.c:6104
+#: common/flatpak-utils.c:6093
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s precisa de uma versão posterior do flatpak (%s)"
 
-#: common/flatpak-utils.c:6150
+#: common/flatpak-utils.c:6139
 msgid "Empty string is not a number"
 msgstr "A string vazia não é um número"
 
-#: common/flatpak-utils.c:6176
+#: common/flatpak-utils.c:6165
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "“%s” não é um número não assinado"
 
-#: common/flatpak-utils.c:6186
+#: common/flatpak-utils.c:6175
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "O número “%s” está fora dos limites [%s, %s]"
