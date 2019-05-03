@@ -1,0 +1,2 @@
+deny *
+allow org.test.Platform

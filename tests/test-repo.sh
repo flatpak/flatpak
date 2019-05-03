@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..30"
+echo "1..31"
 
 #Regular repo
 setup_repo
@@ -608,3 +608,43 @@ else
 fi
 
 echo "ok remote-info"
+
+${FLATPAK} ${U} remote-ls -d -a test-repo > remote-ls-log
+assert_file_has_content remote-ls-log "app/org\.test\.Hello"
+assert_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
+assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
+
+${FLATPAK}  ${U} remote-info test-repo org.test.Hello > remote-ref-info
+assert_file_has_content remote-ref-info "ID: org\.test\.Hello"
+
+${FLATPAK} ${U} update --appstream test-repo
+assert_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml "app/org\.test\.Hello"
+
+
+${FLATPAK} ${U} remote-modify test-repo --filter ${test_builddir}/test.filter
+
+${FLATPAK} ${U} remote-ls -d -a test-repo > remote-ls-log
+
+assert_not_file_has_content remote-ls-log "app/org\.test\.Hello"
+assert_not_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
+assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
+
+if ${FLATPAK}  ${U} remote-info test-repo org.test.Hello > remote-ref-info; then
+        assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
+fi
+
+if ${FLATPAK} ${U} install -y test-repo org.test.Hello; then
+    assert_not_reached "should not be able to install org.test.Hello should fail due to filter"
+fi
+
+${FLATPAK} ${U} update --appstream test-repo
+assert_not_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml "app/org\.test\.Hello"
+
+${FLATPAK} ${U} remote-modify test-repo --no-filter
+
+${FLATPAK} ${U} remote-ls -d -a test-repo > remote-ls-log
+assert_file_has_content remote-ls-log "app/org\.test\.Hello"
+assert_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
+assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
+
+echo "ok filter"

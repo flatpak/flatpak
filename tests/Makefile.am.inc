@@ -104,6 +104,7 @@ dist_installed_test_data = \
 	tests/org.test.Hello.png \
 	tests/package_version.txt \
 	tests/session.conf.in \
+	tests/test.filter \
 	$(NULL)
 
 installed_test_keyringdir = $(installed_testdir)/test-keyring
