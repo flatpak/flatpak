@@ -952,6 +952,143 @@ test_parse_datetime (void)
   g_assert_false (ret);
 }
 
+/* Test various syntax errors */
+static void
+test_filter_parser (void)
+{
+  struct {
+    char *filter;
+    guint expected_error;
+  } filters[] = {
+    {
+     "foobar",
+     FLATPAK_ERROR_INVALID_DATA
+    },
+    {
+     "foobar *",
+     FLATPAK_ERROR_INVALID_DATA
+    },
+    {
+     "deny",
+     FLATPAK_ERROR_INVALID_DATA
+    },
+    {
+     "deny 23+123",
+     FLATPAK_ERROR_INVALID_DATA
+    },
+    {
+     "deny *\n"
+     "allow",
+     FLATPAK_ERROR_INVALID_DATA
+    },
+    {
+     "deny *\n"
+     "allow org.foo.bar extra\n",
+     FLATPAK_ERROR_INVALID_DATA
+    }
+  };
+  gboolean ret;
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS(filters); i++)
+    {
+      g_autoptr(GError) error = NULL;
+      g_autoptr(GRegex) allow_refs = NULL;
+      g_autoptr(GRegex) deny_refs = NULL;
+
+      ret = flatpak_parse_filters (filters[i].filter, &allow_refs, &deny_refs, &error);
+      g_assert_error (error, FLATPAK_ERROR, filters[i].expected_error);
+      g_assert (ret == FALSE);
+      g_assert (allow_refs == NULL);
+      g_assert (deny_refs == NULL);
+    }
+}
+
+static void
+test_filter (void)
+{
+  GError *error = NULL;
+  g_autoptr(GRegex) allow_refs = NULL;
+  g_autoptr(GRegex) deny_refs = NULL;
+  gboolean ret;
+  int i;
+  char *filter =
+    " # This is a comment\n"
+    "\tallow\t org.foo.*#comment\n"
+    "  deny   org.*   # Comment\n"
+    "  deny   com.*   # Comment\n"
+    " # another comment\n"
+    "allow com.foo.bar\n"
+    "allow app/com.bar.foo*/*/stable\n"
+    "allow app/com.armed.foo*/arm\n"
+    "allow runtime/com.gazonk\n"
+    "allow runtime/com.gazonk.*\t#comment*a*"; /* Note: lack of last newline to test */
+  struct {
+    char *ref;
+    gboolean expected_result;
+  } filter_refs[] = {
+     /* General denies (org/com)*/
+     { "app/org.filter.this/x86_64/stable", FALSE },
+     { "app/com.filter.this/arm/stable", FALSE },
+     /* But net. not denied */
+     { "app/net.dont.filter.this/x86_64/stable", TRUE },
+     { "runtime/net.dont.filter.this/x86_64/1.0", TRUE },
+
+     /* Special allow overrides */
+
+     /* allow com.foo.bar */
+     { "app/com.foo.bar/x86_64/stable", TRUE },
+     { "app/com.foo.bar/arm/foo", TRUE },
+     { "runtime/com.foo.bar/x86_64/1.0", TRUE },
+
+     /* allow app/com.bar.foo* / * /stable */
+     { "app/com.bar.foo/x86_64/stable", TRUE },
+     { "app/com.bar.foo/arm/stable", TRUE },
+     { "app/com.bar.foobar/x86_64/stable", TRUE },
+     { "app/com.bar.foobar/arm/stable", TRUE },
+     { "app/com.bar.foo.bar/x86_64/stable", TRUE },
+     { "app/com.bar.foo.bar/arm/stable", TRUE },
+     { "app/com.bar.foo/x86_64/unstable", FALSE },
+     { "app/com.bar.foobar/x86_64/unstable", FALSE },
+     { "runtime/com.bar.foo/x86_64/stable", FALSE },
+
+     /* allow app/com.armed.foo* /arm */
+     { "app/com.armed.foo/arm/stable", TRUE },
+     { "app/com.armed.foo/arm/unstable", TRUE },
+     { "app/com.armed.foo/x86_64/stable", FALSE },
+     { "app/com.armed.foo/x86_64/unstable", FALSE },
+     { "app/com.armed.foobar/arm/stable", TRUE },
+     { "app/com.armed.foobar/arm/unstable", TRUE },
+     { "app/com.armed.foobar/x86_64/stable", FALSE },
+     { "app/com.armed.foobar/x86_64/unstable", FALSE },
+     { "runtime/com.armed.foo/arm/stable", FALSE },
+     { "runtime/com.armed.foobar/arm/stable", FALSE },
+     { "runtime/com.armed.foo/x86_64/stable", FALSE },
+     { "runtime/com.armed.foobar/x86_64/stable", FALSE },
+
+     /* allow runtime/com.gazonk */
+     /* allow runtime/com.gazonk.* */
+     { "runtime/com.gazonk/x86_64/1.0", TRUE },
+     { "runtime/com.gazonk.Locale/x86_64/1.0", TRUE },
+     { "runtime/com.gazonked/x86_64/1.0", FALSE },
+     { "runtime/com.gazonk/arm/1.0", TRUE },
+     { "runtime/com.gazonk.Locale/arm/1.0", TRUE },
+     { "app/com.gazonk/x86_64/stable", FALSE },
+     { "app/com.gazonk.Locale/x86_64/stable", FALSE },
+
+  };
+
+  ret = flatpak_parse_filters (filter, &allow_refs, &deny_refs, &error);
+  g_assert_no_error (error);
+  g_assert (ret == TRUE);
+
+  g_assert (allow_refs != NULL);
+  g_assert (deny_refs != NULL);
+
+  for (i = 0; i < G_N_ELEMENTS(filter_refs); i++)
+    g_assert_cmpint (flatpak_filters_allow_ref (allow_refs, deny_refs, filter_refs[i].ref), ==, filter_refs[i].expected_result);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -975,6 +1112,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/lang-from-locale", test_lang_from_locale);
   g_test_add_func ("/common/appdata", test_parse_appdata);
   g_test_add_func ("/common/name-matching", test_name_matching);
+  g_test_add_func ("/common/filter_parser", test_filter_parser);
+  g_test_add_func ("/common/filter", test_filter);
 
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);
