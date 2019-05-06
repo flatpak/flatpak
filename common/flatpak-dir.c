@@ -1701,24 +1701,6 @@ flatpak_dir_system_helper_call_generate_oci_summary (FlatpakDir   *self,
   return ret != NULL;
 }
 
-static OstreeRepo *
-system_ostree_repo_new (GFile *repodir)
-{
-  g_autofree char *config_dir = NULL;
-
-  config_dir = g_strdup_printf ("%s/%s",
-                                get_config_dir_location (),
-                                SYSCONF_REMOTES_DIR);
-
-  if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
-    g_clear_pointer (&config_dir, g_free);
-
-  return g_object_new (OSTREE_TYPE_REPO,
-                       "path", repodir,
-                       "remotes-config-dir", config_dir,
-                       NULL);
-}
-
 static void
 flatpak_dir_finalize (GObject *object)
 {
@@ -2756,11 +2738,11 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
 
   repodir = g_file_get_child (self->basedir, "repo");
 
+  repo = ostree_repo_new (repodir);
+
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autofree char *cache_path = NULL;
-
-      repo = system_ostree_repo_new (repodir);
 
       cache_dir = flatpak_ensure_user_cache_dir_location (error);
       if (cache_dir == NULL)
@@ -2772,10 +2754,6 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
                                       cancellable, error))
         return FALSE;
     }
-  else if (self->user)
-    repo = ostree_repo_new (repodir);
-  else
-    repo = system_ostree_repo_new (repodir);
 
   if (!g_file_query_exists (repodir, cancellable))
     {
@@ -8020,10 +7998,7 @@ flatpak_dir_create_child_repo (FlatpakDir   *self,
     return NULL;
 
   /* We need to reopen to apply the parent config */
-  if (!self->user)
-    repo = system_ostree_repo_new (repo_dir);
-  else
-    repo = ostree_repo_new (repo_dir);
+  repo = ostree_repo_new (repo_dir);
 
   if (!ostree_repo_open (repo, NULL, error))
     return NULL;
