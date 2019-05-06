@@ -1884,7 +1884,7 @@ path_is_similar (const char *path1, const char *path2)
       return FALSE;
     }
 
-  if (path2[0] != '\0')
+  if (path2[i] != '\0')
     return FALSE;
 
   return TRUE;
@@ -1923,7 +1923,7 @@ get_dconf_data (const char  *app_id,
 
   if (migrate_path)
     {
-      g_debug ("Add values in dir %s", migrate_path);
+      g_debug ("Add values in dir '%s', prefix is '%s'", migrate_path, prefix);
       if (path_is_similar (migrate_path, prefix))
         add_dconf_dir_to_keyfile (values_data, client, migrate_path, DCONF_READ_USER_VALUE);
       else
@@ -2036,15 +2036,23 @@ flatpak_run_add_dconf_args (FlatpakBwrap *bwrap,
                                    "config/glib-2.0/settings/keyfile",
                                    NULL);
 
+      g_debug ("writing D-Conf values to %s", filename);
+
       if (values_size != 0 && !g_file_test (filename, G_FILE_TEST_EXISTS))
         {
           g_autofree char *dir = g_path_get_dirname (filename);
 
           if (g_mkdir_with_parents (dir, 0700) == -1)
-            return FALSE;
+            {
+              g_warning ("failed creating dirs for %s", filename);
+              return FALSE;
+            }
 
           if (!g_file_set_contents (filename, values, values_size, error))
-            return FALSE;
+            {
+              g_warning ("failed writing %s", filename);
+              return FALSE;
+            }
         }
     }
 
