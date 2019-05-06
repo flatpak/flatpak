@@ -1089,6 +1089,52 @@ test_filter (void)
     g_assert_cmpint (flatpak_filters_allow_ref (allow_refs, deny_refs, filter_refs[i].ref), ==, filter_refs[i].expected_result);
 }
 
+static void
+test_dconf_app_id (void)
+{
+  struct {
+    const char *app_id;
+    const char *path;
+  } tests[] = {
+    { "org.gnome.Builder", "/org/gnome/Builder/" },
+    { "org.gnome.builder", "/org/gnome/builder/" },
+    { "org.gnome.builder-2", "/org/gnome/builder-2/" },
+  };
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS (tests); i++)
+    {
+      g_autofree char *path = NULL;
+
+      path = flatpak_dconf_path_for_app_id (tests[i].app_id);
+      g_assert_cmpstr (path, ==, tests[i].path);
+    }
+}
+
+static void
+test_dconf_paths (void)
+{
+  struct {
+    const char *path1;
+    const char *path2;
+    gboolean result;
+  } tests[] = {
+    { "/org/gnome/Builder/", "/org/gnome/builder/", 1 },
+    { "/org/gnome/Builder-2/", "/org/gnome/Builder_2/", 1 },
+    { "/org/gnome/Builder/", "/org/gnome/Builder", 0 },
+    { "/org/gnome/Builder/", "/org/gnome/Buildex/", 0 },
+  };
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS (tests); i++)
+    {
+      gboolean result;
+
+      result = flatpak_dconf_path_is_similar (tests[i].path1, tests[i].path2);
+      g_assert_cmpint (result, ==, tests[i].result);
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1114,6 +1160,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/name-matching", test_name_matching);
   g_test_add_func ("/common/filter_parser", test_filter_parser);
   g_test_add_func ("/common/filter", test_filter);
+  g_test_add_func ("/common/dconf-app-id", test_dconf_app_id);
+  g_test_add_func ("/common/dconf-paths", test_dconf_paths);
 
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);
