@@ -1839,57 +1839,6 @@ add_dconf_locks_to_list (GString     *s,
     }
 }
 
-static char *
-dconf_path_for_app_id (const char *app_id)
-{
-  GString *s;
-  const char *p;
-
-  s = g_string_new ("");
-
-  g_string_append_c (s, '/');
-  for (p = app_id; *p; p++)
-    {
-      if (*p == '.')
-        g_string_append_c (s, '/');
-      else
-        g_string_append_c (s, *p);
-    }
-  g_string_append_c (s, '/');
-
-  return g_string_free (s, FALSE);
-}
-
-/* Check if two dconf paths are 'similar enough', which
- * for now is defined as equal except case differences
- * and -/_
- */
-static gboolean
-path_is_similar (const char *path1, const char *path2)
-{
-  int i;
-
-  for (i = 0; path1[i]; i++)
-    {
-      if (path2[i] == '\0')
-        return FALSE;
-
-      if (tolower (path1[i]) == tolower (path2[i]))
-        continue;
-
-      if ((path1[i] == '-' || path1[i] == '_') &&
-          (path2[i] == '-' || path2[i] == '_'))
-        continue;
-
-      return FALSE;
-    }
-
-  if (path2[i] != '\0')
-    return FALSE;
-
-  return TRUE;
-}
-
 #endif /* HAVE_DCONF */
 
 static void
@@ -1919,12 +1868,12 @@ get_dconf_data (const char  *app_id,
 
   client = dconf_client_new ();
 
-  prefix = dconf_path_for_app_id (app_id);
+  prefix = flatpak_dconf_path_for_app_id (app_id);
 
   if (migrate_path)
     {
       g_debug ("Add values in dir '%s', prefix is '%s'", migrate_path, prefix);
-      if (path_is_similar (migrate_path, prefix))
+      if (flatpak_dconf_path_is_similar (migrate_path, prefix))
         add_dconf_dir_to_keyfile (values_data, client, migrate_path, DCONF_READ_USER_VALUE);
       else
         g_warning ("Ignoring D-Conf migrate-path setting %s", migrate_path);

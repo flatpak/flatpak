@@ -824,6 +824,11 @@ gboolean flatpak_check_required_version (const char *ref,
 int flatpak_levenshtein_distance (const char *s,
                                   const char *t);
 
+char *   flatpak_dconf_path_for_app_id (const char *app_id);
+gboolean flatpak_dconf_path_is_similar (const char *path1,
+                                        const char *path2);
+
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */

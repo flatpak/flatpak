@@ -31,6 +31,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -6928,3 +6929,59 @@ out:
   return datetime;
 }
 #endif
+
+/* Convert an app id to a dconf path in the obvious way.
+ */
+char *
+flatpak_dconf_path_for_app_id (const char *app_id)
+{
+  GString *s;
+  const char *p;
+
+  s = g_string_new ("");
+
+  g_string_append_c (s, '/');
+  for (p = app_id; *p; p++)
+    {
+      if (*p == '.')
+        g_string_append_c (s, '/');
+      else
+        g_string_append_c (s, *p);
+    }
+  g_string_append_c (s, '/');
+
+  return g_string_free (s, FALSE);
+}
+
+/* Check if two dconf paths are 'similar enough', which
+ * for now is defined as equal except case differences
+ * and -/_
+ */
+gboolean
+flatpak_dconf_path_is_similar (const char *path1,
+                               const char *path2)
+{
+  int i;
+
+  for (i = 0; path1[i]; i++)
+    {
+      if (path2[i] == '\0')
+        return FALSE;
+
+      if (tolower (path1[i]) == tolower (path2[i]))
+        continue;
+
+      if ((path1[i] == '-' || path1[i] == '_') &&
+          (path2[i] == '-' || path2[i] == '_'))
+        continue;
+
+      return FALSE;
+    }
+
+  if (path2[i] != '\0')
+    return FALSE;
+
+  return TRUE;
+}
+
+
