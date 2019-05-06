@@ -11927,8 +11927,14 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
   g_autofree char *gpg_key = NULL;
   g_autofree char *collection_id = NULL;
   g_autofree char *default_branch = NULL;
+  g_autofree char *comment = NULL;
+  g_autofree char *description = NULL;
+  g_autofree char *icon = NULL;
+  g_autofree char *homepage = NULL;
+  g_autofree char *filter = NULL;
   gboolean nodeps;
   const char *source_group;
+  g_autofree char *version = NULL;
 
   if (from_ref)
     source_group = FLATPAK_REF_GROUP;
@@ -11951,6 +11957,15 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid %s: Missing key ‘%s’"),
                           from_ref ? ".flatpakref" : ".flatpakrepo", FLATPAK_REPO_URL_KEY);
+      return NULL;
+    }
+
+  version = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_VERSION_KEY, NULL);
+  if (version != NULL && strcmp (version, "1") != 0)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                          _("Invalid version %s, only 1 supported"), version);
       return NULL;
     }
 
@@ -12014,6 +12029,31 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
    * than the summary file. */
   g_key_file_set_boolean (config, group, "gpg-verify-summary",
                           (gpg_key != NULL && collection_id == NULL));
+
+  comment = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_COMMENT_KEY, NULL);
+  if (comment)
+    g_key_file_set_string (config, group, "xa.comment", comment);
+
+  description = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                       FLATPAK_REPO_DESCRIPTION_KEY, NULL);
+  if (description)
+    g_key_file_set_string (config, group, "xa.description", description);
+
+  icon = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                FLATPAK_REPO_ICON_KEY, NULL);
+  if (icon)
+    g_key_file_set_string (config, group, "xa.icon", icon);
+
+  homepage  = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                     FLATPAK_REPO_HOMEPAGE_KEY, NULL);
+  if (homepage)
+    g_key_file_set_string (config, group, "xa.homepage", homepage);
+
+  filter = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_FILTER_KEY, NULL);
+  if (filter)
+    g_key_file_set_string (config, group, "xa.filter", filter);
 
   *gpg_data_out = g_steal_pointer (&gpg_data);
 
