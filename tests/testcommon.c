@@ -1133,6 +1133,7 @@ test_dconf_paths (void)
       result = flatpak_dconf_path_is_similar (tests[i].path1, tests[i].path2);
       g_assert_cmpint (result, ==, tests[i].result);
     }
+}
 
 int
 main (int argc, char *argv[])
