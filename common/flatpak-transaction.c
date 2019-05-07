@@ -2572,7 +2572,7 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
                  name, suggested_name, url, &res);
   if (res)
     {
-      config = flatpak_dir_parse_repofile (priv->dir, suggested_name, TRUE, keyfile, &gpg_key, NULL, error);
+      config = flatpak_parse_repofile (suggested_name, TRUE, keyfile, &gpg_key, NULL, error);
       if (config == NULL)
         return FALSE;
 
@@ -2655,7 +2655,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
     }
   while (remotes != NULL && g_strv_contains ((const char * const *) remotes, new_remote));
 
-  config = flatpak_dir_parse_repofile (priv->dir, new_remote, FALSE, dep_keyfile, &gpg_key, NULL, error);
+  config = flatpak_parse_repofile (new_remote, FALSE, dep_keyfile, &gpg_key, NULL, error);
   if (config == NULL)
     {
       g_prefix_error (error, "Can't parse dependent file %s: ", dep_url);
