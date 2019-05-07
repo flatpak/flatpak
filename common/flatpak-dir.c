@@ -2689,6 +2689,32 @@ flatpak_dir_recreate_repo (FlatpakDir   *self,
   return res;
 }
 
+static void
+copy_remote_config (GKeyFile *config,
+                    GKeyFile *group_config,
+                    const char *remote_name)
+{
+  g_auto(GStrv) keys = NULL;
+  g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
+  int i;
+
+  g_key_file_remove_group (config, group, NULL);
+
+  keys = g_key_file_get_keys (group_config, group, NULL, NULL);
+  if (keys == NULL)
+    return;
+
+  for (i = 0; keys[i] != NULL; i++)
+    {
+      g_autofree gchar *value = g_key_file_get_value (group_config, group, keys[i], NULL);
+      if (value &&
+          /* Canonicalize empty filter to unset */
+          (strcmp (keys[i], "xa.filter") != 0 ||
+           *value != 0))
+        g_key_file_set_value (config, group, keys[i], value);
+    }
+}
+
 static gboolean
 _flatpak_dir_ensure_repo (FlatpakDir   *self,
                           gboolean      allow_empty,
@@ -12441,8 +12467,6 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   g_autofree char *url = NULL;
   g_autofree char *metalink = NULL;
   g_autoptr(GKeyFile) new_config = NULL;
-  g_auto(GStrv) keys = NULL;
-  int i;
   gboolean has_remote;
 
   if (strchr (remote_name, '/') != NULL)
@@ -12502,23 +12526,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
 
   new_config = ostree_repo_copy_config (self->repo);
 
-  g_key_file_remove_group (new_config, group, NULL);
-
-  keys = g_key_file_get_keys (config,
-                              group,
-                              NULL, error);
-  if (keys == NULL)
-    return FALSE;
-
-  for (i = 0; keys[i] != NULL; i++)
-    {
-      g_autofree gchar *value = g_key_file_get_value (config, group, keys[i], NULL);
-      if (value &&
-          /* Canonicalize empty filter to unset */
-          (strcmp (keys[i], "xa.filter") != 0 ||
-           *value != 0))
-        g_key_file_set_value (new_config, group, keys[i], value);
-    }
+  copy_remote_config (new_config, config, remote_name);
 
   if (!ostree_repo_write_config (self->repo, new_config, error))
     return FALSE;
