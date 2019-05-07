@@ -2936,6 +2936,8 @@ flatpak_parse_repofile (const char   *remote_name,
                                    FLATPAK_REPO_FILTER_KEY, NULL);
   if (filter)
     g_key_file_set_string (config, group, "xa.filter", filter);
+  else
+    g_key_file_set_string (config, group, "xa.filter", ""); /* Default to override any pre-existing filters */
 
   *gpg_data_out = g_steal_pointer (&gpg_data);
 
