@@ -58,6 +58,11 @@
             and <filename>app/</filename> subdirectories.
         </para>
 
+       <para>
+            System-wide remotes can be statically preconfigured by dropping
+            flatpakref files into <filename>/etc/flatpak/remotes.d/</filename>.
+       </para>
+
         <para>
             In addition to the system-wide installation in <filename>$prefix/var/lib/flatpak/</filename>,
             which is always considered the default one unless overridden, more

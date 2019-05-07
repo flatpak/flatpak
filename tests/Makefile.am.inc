@@ -133,6 +133,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-run.sh{{user+system+system-norevokefs},{nodeltas+deltas}} \
 	tests/test-info.sh{user+system} \
 	tests/test-repo.sh{user+system+system-norevokefs+collections+collections-server-only} \
+	tests/test-default-remotes.sh \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh{user+system+system-norevokefs} \
 	tests/test-oci.sh \
