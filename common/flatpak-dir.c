@@ -11548,6 +11548,26 @@ flatpak_dir_get_remote_title (FlatpakDir *self,
   return NULL;
 }
 
+static const char *
+canonical_filter (const char *filter)
+{
+  /* Canonicalize "no filter", to NULL (empty means the same) */
+  if (filter && *filter == 0)
+    return NULL;
+  return filter;
+}
+
+gboolean
+flatpak_dir_compare_remote_filter (FlatpakDir *self,
+                                   const char *remote_name,
+                                   const char *filter)
+{
+  g_autofree char *current_filter = flatpak_dir_get_remote_filter (self, remote_name);
+
+  return g_strcmp0 (current_filter, canonical_filter (filter)) == 0;
+}
+
+/* returns the canonical form */
 char *
 flatpak_dir_get_remote_filter (FlatpakDir *self,
                                const char *remote_name)
@@ -12493,7 +12513,10 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   for (i = 0; keys[i] != NULL; i++)
     {
       g_autofree gchar *value = g_key_file_get_value (config, group, keys[i], NULL);
-      if (value)
+      if (value &&
+          /* Canonicalize empty filter to unset */
+          (strcmp (keys[i], "xa.filter") != 0 ||
+           *value != 0))
         g_key_file_set_value (new_config, group, keys[i], value);
     }
 
