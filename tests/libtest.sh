@@ -180,6 +180,18 @@ assert_file_empty() {
     fi
 }
 
+assert_remote_has_config () {
+    ostree config --repo=$FL_DIR/repo get --group 'remote "'"$1"'"' "$2" > key-output
+    assert_file_has_content key-output "$3"
+}
+
+assert_remote_has_no_config () {
+    if ostree config --repo=$FL_DIR/repo get --group 'remote "'"$1"'"' "$2" > /dev/null; then
+        echo 1>&2 "Remote '$1' unexpectedly has key '$2'"
+        exit 1
+    fi
+}
+
 export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
 export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
 mkdir -p ${FL_GPG_HOMEDIR}
