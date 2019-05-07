@@ -408,6 +408,13 @@ gboolean flatpak_switch_symlink_and_remove (const char *symlink_path,
                                             const char *target,
                                             GError    **error);
 
+GKeyFile * flatpak_parse_repofile (const char   *remote_name,
+                                   gboolean      from_ref,
+                                   GKeyFile     *keyfile,
+                                   GBytes      **gpg_data_out,
+                                   GCancellable *cancellable,
+                                   GError      **error);
+
 gboolean flatpak_repo_set_title (OstreeRepo *repo,
                                  const char *title,
                                  GError    **error);

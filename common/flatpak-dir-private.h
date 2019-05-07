@@ -777,14 +777,6 @@ gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
 gboolean   flatpak_dir_create_suggested_remote_for_ref_file (FlatpakDir *self,
                                                              GBytes     *data,
                                                              GError    **error);
-GKeyFile * flatpak_dir_parse_repofile (FlatpakDir   *self,
-                                       const char   *remote_name,
-                                       gboolean      from_ref,
-                                       GKeyFile     *keyfile,
-                                       GBytes      **gpg_data_out,
-                                       GCancellable *cancellable,
-                                       GError      **error);
-
 char      *flatpak_dir_find_remote_by_uri (FlatpakDir *self,
                                            const char *uri,
                                            const char *collection_id);
