@@ -10201,6 +10201,7 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
 {
   RemoteFilter *filter = NULL;
   const char *filter_path;
+  gboolean handled_fallback = FALSE;
   g_autoptr(GFile) filter_file = NULL;
 
   if (checksum_out)
@@ -10230,6 +10231,15 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
         filter = NULL; /* New path, reload */
       else if ((now - filter->last_mtime_check) > (1000 * (FILTER_MTIME_CHECK_TIMEOUT_MSEC)))
         {
+          /* Fall back to backup copy if remote filter disappears */
+          handled_fallback = TRUE;
+          if (!g_file_query_exists (filter_file, NULL))
+            {
+              char *basename = g_strconcat (name, ".filter", NULL);
+              g_object_unref (filter_file);
+              filter_file = flatpak_build_file (self->basedir, "repo", basename, NULL);
+            }
+
           filter->last_mtime_check = now;
           if (!get_mtime (filter_file, &mtime, NULL, NULL) ||
               mtime.tv_sec != filter->mtime.tv_sec ||
@@ -10252,6 +10262,14 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
 
   if (filter) /* This is outside the lock, but we already copied the returned data, and we're not dereferencing filter */
     return TRUE;
+
+  /* Fall back to backup copy if remote filter disappears */
+  if (!handled_fallback && !g_file_query_exists (filter_file, NULL))
+    {
+      char *basename = g_strconcat (name, ".filter", NULL);
+      g_object_unref (filter_file);
+      filter_file = flatpak_build_file (self->basedir, "repo", basename, NULL);
+    }
 
   filter = remote_filter_load (filter_file, error);
   if (filter == NULL)
@@ -12640,6 +12658,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   g_autofree char *url = NULL;
   g_autofree char *metalink = NULL;
   g_autoptr(GKeyFile) new_config = NULL;
+  g_autofree gchar *filter_path = NULL;
   gboolean has_remote;
 
   if (strchr (remote_name, '/') != NULL)
@@ -12716,6 +12735,20 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
       /* XXX If we ever add internationalization, use ngettext() here. */
       g_debug ("Imported %u GPG key%s to remote \"%s\"",
                imported, (imported == 1) ? "" : "s", remote_name);
+    }
+
+  filter_path = g_key_file_get_value (new_config, group, "xa.filter", NULL);
+  if (filter_path && *filter_path && g_file_test (filter_path, G_FILE_TEST_EXISTS))
+    {
+      /* Make a backup filter copy in case it goes away later */
+      char *filter_name = g_strconcat (remote_name, ".filter", NULL);
+      g_autoptr(GFile) filter_file = g_file_new_for_path (filter_path);
+      g_autoptr(GFile) filter_copy = flatpak_build_file (self->basedir, "repo", filter_name, NULL);
+      g_autoptr(GError) local_error = NULL;
+
+      if (!g_file_copy (filter_file, filter_copy, G_FILE_COPY_OVERWRITE | G_FILE_COPY_TARGET_DEFAULT_PERMS,
+                        cancellable, NULL, NULL, &local_error))
+        g_debug ("Failed to make a copy of filter file");
     }
 
   if (!flatpak_dir_mark_changed (self, error))
