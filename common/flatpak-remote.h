@@ -65,6 +65,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemote, g_object_unref)
 #endif
 
 FLATPAK_EXTERN FlatpakRemote * flatpak_remote_new (const char    *name);
+FLATPAK_EXTERN FlatpakRemote * flatpak_remote_new_from_file (const char *name,
+                                                             GBytes     *data,
+                                                             GError **error);
 
 FLATPAK_EXTERN const char *  flatpak_remote_get_name (FlatpakRemote *self);
 FLATPAK_EXTERN GFile *       flatpak_remote_get_appstream_dir (FlatpakRemote *self,
