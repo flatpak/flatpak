@@ -1078,7 +1078,7 @@ flatpak_remote_new_from_ostree (OstreeRemote     *remote,
  * Returns a new remote object which can be used to configure a new remote.
  *
  * Note: This is a local configuration object, you must commit changes
- * using flatpak_installation_modify_remote() for the changes to take
+ * using flatpak_installation_modify_remote() or flatpak_installation_add_remote() for the changes to take
  * effect.
  *
  * Returns: (transfer full): a new #FlatpakRemote
@@ -1104,6 +1104,29 @@ g_key_file_is_group_name (const gchar *name)
 
   if (*q != '\0' || q == p)
     return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_remote_commit_filter (FlatpakRemote *self,
+                              FlatpakDir    *dir,
+                              GCancellable  *cancellable,
+                              GError       **error)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+  g_autofree char *group = g_strdup_printf ("remote \"%s\"", priv->name);
+
+  if (priv->local_filter_set &&
+      !flatpak_dir_compare_remote_filter (dir, priv->name, priv->local_filter))
+    {
+      GKeyFile *config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+
+      g_key_file_set_string (config, group, "xa.filter", priv->local_filter ? priv->local_filter : "");
+
+      if (!flatpak_dir_modify_remote (dir, priv->name, config, NULL, cancellable, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
