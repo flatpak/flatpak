@@ -94,7 +94,11 @@ echo "ok detached icons"
 
 # Try installing from the remote
 
-${FLATPAK} ${U} install -y oci-registry org.test.Platform
+${FLATPAK} ${U} install -y oci-registry org.test.Hello
+
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandbox$'
+
 echo "ok install"
 
 # Remove the app from the registry, check that things were removed properly
@@ -140,6 +144,7 @@ ${FLATPAK} update ${U} --appstream oci-registry
 assert_has_file $base/oci/oci-registry.index.gz
 assert_has_file $base/oci/oci-registry.summary
 assert_has_dir $base/appstream/oci-registry
+${FLATPAK} ${U} -y uninstall org.test.Hello
 ${FLATPAK} ${U} -y uninstall org.test.Platform
 ${FLATPAK} ${U} remote-delete oci-registry
 assert_not_has_file $base/oci/oci-registry.index.gz
