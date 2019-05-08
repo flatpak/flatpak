@@ -194,6 +194,12 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
                 "Labels": {},
             }
 
+            # Delete old versions
+            for i in images:
+                if tag in i['Tags']:
+                    images.remove(i)
+                    del manifests[i['Digest']]
+
             images.append(image)
 
             modified()
