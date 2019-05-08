@@ -40,5 +40,9 @@ gboolean flatpak_remote_commit (FlatpakRemote *self,
                                 FlatpakDir    *dir,
                                 GCancellable  *cancellable,
                                 GError       **error);
+gboolean flatpak_remote_commit_filter (FlatpakRemote *self,
+                                       FlatpakDir    *dir,
+                                       GCancellable  *cancellable,
+                                       GError       **error);
 
 #endif /* __FLATPAK_REMOTE_PRIVATE_H__ */

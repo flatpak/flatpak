@@ -630,14 +630,14 @@ test_remote_new (void)
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 1);
   g_assert_false (flatpak_remote_get_gpg_verify (remote));
 
-  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  res = flatpak_installation_add_remote (inst, remote, FALSE, NULL, &error);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_DATA);
   g_assert_false (res);
   g_clear_error (&error);
 
   flatpak_remote_set_url (remote, "http://127.0.0.1/nowhere");
 
-  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  res = flatpak_installation_add_remote (inst, remote, FALSE, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
@@ -648,11 +648,34 @@ test_remote_new (void)
 
   g_assert_cmpstr (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/nowhere");
 
-  res = flatpak_installation_remove_remote (inst, "my-first-remote", NULL, &error);
+  g_clear_object (&remote);
+
+  remote = flatpak_remote_new ("my-first-remote");
+  flatpak_remote_set_url (remote, "http://127.0.0.1/elsewhere");
+
+  res = flatpak_installation_add_remote (inst, remote, FALSE, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED);
+  g_clear_error (&error);
+  g_assert_false (res);
+
+  /* add if needed */
+  res = flatpak_installation_add_remote (inst, remote, TRUE, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
   g_clear_object (&remote);
+
+  remote = flatpak_installation_get_remote_by_name (inst, "my-first-remote", NULL, &error);
+  g_assert_no_error (error);
+
+  /* Should be the old value */
+  g_assert_cmpstr (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/nowhere");
+
+  g_clear_object (&remote);
+
+  res = flatpak_installation_remove_remote (inst, "my-first-remote", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
 
   remote = flatpak_installation_get_remote_by_name (inst, "my-first-remote", NULL, &error);
   g_assert_null (remote);

@@ -1445,6 +1445,68 @@ flatpak_installation_modify_remote (FlatpakInstallation *self,
   return TRUE;
 }
 
+
+/**
+ * flatpak_installation_add_remote:
+ * @self: a #FlatpakInstallation
+ * @remote: the new #FlatpakRemote
+ * @if_needed: if %TRUE, only add if it doesn't exists
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Adds a new @remote object to the set of remotes. This is similar
+ * to flatpak_installation_modify_remote() for non-existing remote
+ * names. However, if the named remote already exists then instead of
+ * modifying it it fails with %FLATPAK_ERROR_ALREADY_INSTALLED, or if
+ * @if_needed is true it silently succeeds without doing anything.
+ *
+ * As an exception to the last, if the local config has a filter defined,
+ * but the new remote unsets the filter (for example, it comes from an
+ * unfiltered .flatpakref via flatpak_remote_new_from_file()) the the local
+ * remote filter gets reset. This is to allow the setup where there is a
+ * default setup of a filtered remote, yet you can still use the standard
+ * flatpakref file to get the full contents without getting two remotes.
+ *
+ * Returns: %TRUE if the modifications have been committed successfully
+ * Since: 1.3.4
+ */
+gboolean
+flatpak_installation_add_remote (FlatpakInstallation *self,
+                                 FlatpakRemote       *remote,
+                                 gboolean             if_needed,
+                                 GCancellable        *cancellable,
+                                 GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+     it has local changes */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_maybe_ensure_repo (dir_clone, cancellable, error))
+    return FALSE;
+
+  if (flatpak_dir_has_remote (dir, flatpak_remote_get_name (remote), NULL))
+    {
+      if (!if_needed)
+        return flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED, _("Remote '%s' already exists"), flatpak_remote_get_name (remote));
+
+      if (!flatpak_remote_commit_filter (remote, dir_clone, cancellable, error))
+        return FALSE;
+
+      return TRUE;
+    }
+
+  if (!flatpak_remote_commit (remote, dir_clone, cancellable, error))
+    return FALSE;
+
+  /* Make sure we pick up the new config */
+  flatpak_installation_drop_caches (self, NULL, NULL);
+
+  return TRUE;
+}
+
+
 /**
  * flatpak_installation_remove_remote:
  * @self: a #FlatpakInstallation
