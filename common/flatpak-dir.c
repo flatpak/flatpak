@@ -9104,22 +9104,6 @@ flatpak_dir_update (FlatpakDir                           *self,
       if (no_pull)
         {
         }
-      else if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
-        {
-          /* The remote is not gpg verified, so we don't want to allow installation via
-             a download in the home directory, as there is no way to verify you're not
-             injecting anything into the remote. However, in the case of a remote
-             configured to a local filesystem we can just let the system helper do
-             the installation, as it can then avoid network i/o and be certain the
-             data comes from the right place.
-
-             If @collection_id is non-%NULL, we can verify the refs in commit
-             metadata, so don’t need to verify the summary. */
-          if (g_str_has_prefix (url, "file:"))
-            helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
-          else
-            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
-        }
       else if (is_oci)
         {
           g_autoptr(FlatpakOciRegistry) registry = NULL;
@@ -9135,6 +9119,22 @@ flatpak_dir_update (FlatpakDir                           *self,
 
           if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, progress, cancellable, error))
             return FALSE;
+        }
+      else if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
+        {
+          /* The remote is not gpg verified, so we don't want to allow installation via
+             a download in the home directory, as there is no way to verify you're not
+             injecting anything into the remote. However, in the case of a remote
+             configured to a local filesystem we can just let the system helper do
+             the installation, as it can then avoid network i/o and be certain the
+             data comes from the right place.
+
+             If @collection_id is non-%NULL, we can verify the refs in commit
+             metadata, so don’t need to verify the summary. */
+          if (g_str_has_prefix (url, "file:"))
+            helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
+          else
+            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
         }
       else
         {
