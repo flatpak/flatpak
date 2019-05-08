@@ -194,7 +194,6 @@ load_options (const char *remote_name,
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) bytes = NULL;
-  g_autofree char *version = NULL;
 
   if (g_str_has_prefix (filename, "http:") ||
       g_str_has_prefix (filename, "https:"))
