@@ -249,7 +249,6 @@ flatpak_builtin_remote_add (int argc, char **argv,
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autoptr(GError) local_error = NULL;
-  g_autoptr(GKeyFile) from_config = NULL;
 
   context = g_option_context_new (_("NAME LOCATION - Add a remote repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
