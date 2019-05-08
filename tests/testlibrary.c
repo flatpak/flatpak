@@ -684,6 +684,105 @@ test_remote_new (void)
 }
 
 static void
+test_remote_new_from_file (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+  g_autoptr(GError) error = NULL;
+  gboolean res;
+  const char *_data =
+    "[Flatpak Repo]\n"
+    "Url=http://127.0.0.1/repo\n"
+    "Title=The Title\n"
+    "Comment=The Comment\n"
+    "Description=The Description\n"
+    "Homepage=https://the.homepage/\n"
+    "Icon=https://the.icon/\n"
+    "DefaultBranch=default-branch\n"
+    "NoDeps=true\n";
+  g_autoptr(GBytes) data = g_bytes_new_static (_data, strlen (_data));
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  remote = flatpak_installation_get_remote_by_name (inst, "file-remote", NULL, &error);
+  g_assert_null (remote);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND);
+  g_clear_error (&error);
+
+  remote = flatpak_remote_new_from_file ("file-remote", data, &error);
+  g_assert_nonnull (remote);
+  g_assert_no_error (error);
+
+  res = flatpak_installation_add_remote (inst, remote, FALSE, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_clear_object (&remote);
+
+  remote = flatpak_installation_get_remote_by_name (inst, "file-remote", NULL, &error);
+  g_assert_no_error (error);
+
+  g_assert_cmpstr (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/repo");
+  g_assert_cmpstr (flatpak_remote_get_title (remote), ==, "The Title");
+  g_assert_cmpstr (flatpak_remote_get_comment (remote), ==, "The Comment");
+  g_assert_cmpstr (flatpak_remote_get_description (remote), ==, "The Description");
+  g_assert_cmpstr (flatpak_remote_get_homepage (remote), ==, "https://the.homepage/");
+  g_assert_cmpstr (flatpak_remote_get_icon (remote), ==, "https://the.icon/");
+  g_assert_cmpstr (flatpak_remote_get_default_branch (remote), ==, "default-branch");
+  g_assert_cmpint (flatpak_remote_get_nodeps (remote), ==, TRUE);
+
+  g_clear_object (&remote);
+
+  remote = flatpak_installation_get_remote_by_name (inst, "file-remote", NULL, &error);
+  g_assert_no_error (error);
+
+  g_assert_cmpstr (flatpak_remote_get_filter (remote), ==, NULL);
+
+  flatpak_remote_set_url (remote, "http://127.0.0.1/other");
+  flatpak_remote_set_filter (remote, "/some/path/to/filter");
+
+  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_clear_object (&remote);
+
+  remote = flatpak_installation_get_remote_by_name (inst, "file-remote", NULL, &error);
+  g_assert_no_error (error);
+
+  g_assert_cmpstr (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/other");
+  g_assert_cmpstr (flatpak_remote_get_filter (remote), ==, "/some/path/to/filter");
+
+  g_clear_object (&remote);
+
+  remote = flatpak_remote_new_from_file ("file-remote", data, &error);
+  g_assert_nonnull (remote);
+  g_assert_no_error (error);
+
+  /* regular add fails */
+  res = flatpak_installation_add_remote (inst, remote, FALSE, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED);
+  g_clear_error (&error);
+  g_assert_false (res);
+
+  /* add if needed succeeds and resets filter */
+  res = flatpak_installation_add_remote (inst, remote, TRUE, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_clear_object (&remote);
+
+  remote = flatpak_installation_get_remote_by_name (inst, "file-remote", NULL, &error);
+  g_assert_no_error (error);
+
+  g_assert_cmpstr (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/other");
+  g_assert_cmpstr (flatpak_remote_get_filter (remote), ==, NULL);
+
+  g_clear_object (&remote);
+}
+
+static void
 test_list_refs (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -3544,6 +3643,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/remote-by-name", test_remote_by_name);
   g_test_add_func ("/library/remote", test_remote);
   g_test_add_func ("/library/remote-new", test_remote_new);
+  g_test_add_func ("/library/remote-new-from-file", test_remote_new_from_file);
   g_test_add_func ("/library/list-remote-refs", test_list_remote_refs);
   g_test_add_func ("/library/list-remote-related-refs", test_list_remote_related_refs);
   g_test_add_func ("/library/list-refs", test_list_refs);

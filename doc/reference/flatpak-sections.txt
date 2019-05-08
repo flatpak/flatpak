@@ -151,6 +151,7 @@ flatpak_ref_get_type
 <TITLE>FlatpakRemote</TITLE>
 FlatpakRemote
 flatpak_remote_new
+flatpak_remote_new_from_file
 flatpak_remote_get_name
 flatpak_remote_get_appstream_dir
 flatpak_remote_get_appstream_timestamp
