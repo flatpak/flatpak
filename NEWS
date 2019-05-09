@@ -1,3 +1,31 @@
+Changes in 1.3.4
+================
+
+This version changes how default remotes are configured. We still
+use files in /etc/flatpak/remotes.d, however instead of the old
+*.conf files we now use regular flatpakrepo files, and the first
+time you use flatpak these are automatically imported.
+
+The advantage of this new model is that the configuration is imported
+once, but then becomes writable and removable, just like a manually
+added remote. In the previous model the remote was always there and it
+was impossible to change or remove.
+
+However, this means that anyone currently shipping a .conf file with
+a distro needs to change this to a .flatpakrepo file.
+
+ * Support for flatpakrepo files in /etc/flatpak/remotes.d
+ * Support for client side filtering of a remote. This allows you
+   to limit what apps are seen from a remote, using either a whitelist
+   or a blacklist model.
+ * Add library API to easily add remotes from flatpakref files.
+ * Fix the dconf support.
+ * Fix app updates in system-wide OCI remotes.
+ * Fix CLI completion if G_MESSAGES_DEBUG is set
+ * Add a docker seccomp profile for running flatpak inside a container.
+ * Look for the new default dbus session socket at $XDG_RUNTIME_DIR/bus
+ * Improve ability to pull from multiple p2p sources (needs latest ostree).
+
 Changes in 1.3.3
 ================
 
