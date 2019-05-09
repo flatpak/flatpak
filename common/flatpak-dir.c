@@ -12745,10 +12745,22 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
       g_autoptr(GFile) filter_file = g_file_new_for_path (filter_path);
       g_autoptr(GFile) filter_copy = flatpak_build_file (self->basedir, "repo", filter_name, NULL);
       g_autoptr(GError) local_error = NULL;
+      g_autofree char *backup_data = NULL;
+      gsize backup_data_size;
 
-      if (!g_file_copy (filter_file, filter_copy, G_FILE_COPY_OVERWRITE | G_FILE_COPY_TARGET_DEFAULT_PERMS,
-                        cancellable, NULL, NULL, &local_error))
-        g_debug ("Failed to make a copy of filter file");
+      if (g_file_load_contents (filter_file, cancellable, &backup_data, &backup_data_size, NULL, &local_error))
+        {
+          g_autofree char *backup_data_copy =
+            g_strdup_printf ("# backup copy of %s, do not edit!\n%s", filter_path, backup_data);
+
+          if (!g_file_replace_contents (filter_copy, backup_data_copy, strlen (backup_data_copy),
+                                        NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, &local_error))
+            g_debug ("Failed to save backup copy of filter file %s: %s\n", filter_path, local_error->message);
+        }
+      else
+        {
+          g_debug ("Failed to read filter %s file while making a backup copy: %s\n", filter_path, local_error->message);
+        }
     }
 
   if (!flatpak_dir_mark_changed (self, error))
