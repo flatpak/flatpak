@@ -642,7 +642,7 @@ ${FLATPAK} ${U} update --appstream test-repo
 assert_not_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml "app/org\.test\.Hello"
 
 # Ensure that filter works even when the filter file is removed (uses the backup)
-rm test.filter
+rm -f test.filter
 ${FLATPAK} ${U} remote-ls -d -a test-repo > remote-ls-log
 assert_not_file_has_content remote-ls-log "app/org\.test\.Hello"
 assert_not_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
