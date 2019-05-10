@@ -621,7 +621,7 @@ ${FLATPAK} ${U} update --appstream test-repo
 assert_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml "app/org\.test\.Hello"
 
 # Make a copy so we can remove it later
-cp ${test_builddir}/test.filter test.filter
+cp ${test_srcdir}/test.filter test.filter
 ${FLATPAK} ${U} remote-modify test-repo --filter $(pwd)/test.filter
 
 ${FLATPAK} ${U} remote-ls -d -a test-repo > remote-ls-log
@@ -732,9 +732,9 @@ assert_remote_has_no_config new-repo xa.noenumerate
 assert_remote_has_no_config new-repo xa.filter
 
 ${FLATPAK} ${U} remote-delete new-repo
-${FLATPAK} ${U} remote-add  --filter="${test_builddir}/test.filter" new-repo test.flatpakrepo
+${FLATPAK} ${U} remote-add  --filter="${test_srcdir}/test.filter" new-repo test.flatpakrepo
 
-assert_remote_has_config new-repo xa.filter "${test_builddir}/test.filter"
+assert_remote_has_config new-repo xa.filter "${test_srcdir}/test.filter"
 
 # This should unset the filter:
 ${FLATPAK} ${U} remote-add --if-not-exists new-repo test.flatpakrepo
