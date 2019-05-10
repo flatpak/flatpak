@@ -12,7 +12,7 @@ check_functions = [
 ]
 conf = configuration_data()
 foreach check_function : check_functions
-  if cc.compiles('''
+  have_it = cc.compiles('''
     #include <sys/types.h>
     #include <unistd.h>
     #include <stdio.h>
@@ -30,8 +30,7 @@ foreach check_function : check_functions
     args : '-D_GNU_SOURCE',
     name : check_function + '() is declared',
   )
-    conf.set('HAVE_DECL_' + check_function.underscorify().to_upper(), 1)
-  endif
+  conf.set10('HAVE_DECL_' + check_function.underscorify().to_upper(), have_it)
 endforeach
 config_h = configure_file(
   output : 'config.h',
