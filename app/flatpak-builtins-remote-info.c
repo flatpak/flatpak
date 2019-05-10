@@ -155,7 +155,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           if (commit == NULL)
             {
               if (error != NULL && *error == NULL)
-                flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Couldn't find latest checksum for ref %s in remote %s"),
+                flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                                    _("Couldn't find latest checksum for ref %s in remote %s"),
                                     ref, remote);
               return FALSE;
             }
