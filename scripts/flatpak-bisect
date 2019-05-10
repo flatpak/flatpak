@@ -180,7 +180,7 @@ class Bisector():
             stdout = None
         p = subprocess.Popen(cmd, stdout=stdout)
         if pager:
-            ps = subprocess.check_call((pager), stdin=p.stdout)
+            subprocess.check_call((pager), stdin=p.stdout)
         p.wait()
 
     def checkout(self, commit=None):
