@@ -6741,6 +6741,8 @@ flatpak_repo_resolve_rev (OstreeRepo    *repo,
                           GCancellable  *cancellable,
                           GError       **error)
 {
+  g_autoptr(GError) local_error = NULL;
+
   if (collection_id != NULL)
     {
       /* Do a version check to ensure we have these:
@@ -6770,11 +6772,23 @@ flatpak_repo_resolve_rev (OstreeRepo    *repo,
   if (remote_name != NULL)
     {
       g_autofree char *refspec = g_strdup_printf ("%s:%s", remote_name, ref_name);
-      return ostree_repo_resolve_rev (repo, refspec, allow_noent, out_rev, error);
+      ostree_repo_resolve_rev (repo, refspec, allow_noent, out_rev, &local_error);
     }
   else
-    return ostree_repo_resolve_rev_ext (repo, ref_name, allow_noent,
-                                        OSTREE_REPO_LIST_REFS_EXT_NONE, out_rev, error);
+    ostree_repo_resolve_rev_ext (repo, ref_name, allow_noent,
+                                 OSTREE_REPO_LIST_REFS_EXT_NONE, out_rev, &local_error);
+
+  if (local_error != NULL)
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND, "%s", local_error->message);
+      else
+        g_propagate_error (error, local_error);
+
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 
