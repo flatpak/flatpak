@@ -42,7 +42,7 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_SKIPPED: The App/Runtime install was skipped due to earlier errors.
  * @FLATPAK_ERROR_NEED_NEW_FLATPAK: The App/Runtime needs a more recent version of flatpak.
  * @FLATPAK_ERROR_REMOTE_NOT_FOUND: The specified remote was not found.
- * @FLATPAK_ERROR_RUNTIME_NOT_FOUND: An runtime needed for the app was not found.
+ * @FLATPAK_ERROR_RUNTIME_NOT_FOUND: A runtime needed for the app was not found.
  * @FLATPAK_ERROR_DOWNGRADE: The pulled commit is a downgrade, and a downgrade wasn't
  *                           specifically allowed. (Since: 1.0)
  * @FLATPAK_ERROR_INVALID_REF: A ref could not be parsed. (Since: 1.0.3)
