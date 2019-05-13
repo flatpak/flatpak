@@ -1,4 +1,4 @@
-image: fedora:rawhide
+image: registry.fedoraproject.org/fedora:30
 
 stages:
   - build
