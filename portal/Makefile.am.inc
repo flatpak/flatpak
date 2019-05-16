@@ -8,7 +8,22 @@ systemduserunit_DATA += portal/flatpak-portal.service
 service_in_files += portal/org.freedesktop.portal.Flatpak.service.in
 dbus_service_DATA += portal/org.freedesktop.portal.Flatpak.service
 
-nodist_flatpak_portal_SOURCES = portal/flatpak-portal-dbus.c portal/flatpak-portal-dbus.h
+nodist_flatpak_portal_SOURCES = \
+	portal/flatpak-permission-dbus.c \
+	portal/flatpak-permission-dbus.h \
+	portal/flatpak-portal-dbus.c \
+	portal/flatpak-portal-dbus.h \
+	$(NULL)
+
+portal/flatpak-permission-dbus.c: data/org.freedesktop.impl.portal.PermissionStore.xml Makefile
+	mkdir -p $(builddir)/portal
+	$(AM_V_GEN) $(GDBUS_CODEGEN)                            \
+		--interface-prefix org.freedesktop.impl.portal  \
+		--c-namespace XdpDbus                           \
+		--generate-c-code $(builddir)/portal/flatpak-permission-dbus  \
+		$(srcdir)/data/org.freedesktop.impl.portal.PermissionStore.xml  \
+		$(NULL)
+
 
 portal/flatpak-portal-dbus.c: data/org.freedesktop.portal.Flatpak.xml Makefile
 	mkdir -p $(builddir)/portal
@@ -36,10 +51,13 @@ flatpak_portal_SOURCES = \
 BUILT_SOURCES += $(nodist_flatpak_portal_SOURCES)
 CLEANFILES += $(nodist_flatpak_portal_SOURCES)
 
-flatpak_portal_LDADD = $(AM_LDADD) $(BASE_LIBS) libflatpak-common-base.la libglnx.la
+flatpak_portal_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) libflatpak-common.la libflatpak-common-base.la libglnx.la
 flatpak_portal_CFLAGS = \
         $(AM_CFLAGS) \
         $(BASE_CFLAGS) \
+        $(OSTREE_CFLAGS) \
+        $(SOUP_CFLAGS) \
+        $(JSON_CFLAGS) \
         -DFLATPAK_COMPILATION \
         -DDATADIR=\"$(datadir)\" \
         $(NULL)

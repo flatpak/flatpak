@@ -34,7 +34,7 @@
 
       The D-Bus interface for the document portal is available under the
       bus name org.freedesktop.portal.Flatpak and the object path
-      /org/freedesktop/portal/flatpak.
+      /org/freedesktop/portal/Flatpak.
 
       This documentation describes version 1 of this interface.
   -->
@@ -154,6 +154,77 @@
     <signal name="SpawnExited">
       <arg type='u' name='pid' direction='out'/>
       <arg type='u' name='exit_status' direction='out'/>
+    </signal>
+
+    <!--
+        CreateUpdateMonitor:
+        @options: Vardict with optional further information
+        @handle: Object path for the #org.freedesktop.portal.Flatpak.UpdateMonitor object
+
+        Creates an update monitor object that will emit
+        signals when an update for the caller becomes
+        available, and can be used to install it.
+
+        The handle will be of the form /org/freedesktop/portal/Flatpak/update_monitor/SENDER/TOKEN,
+        where SENDER is the caller's unique name, with the initial ':' removed and
+        all '.' replaced by '_', and TOKEN is a unique token that the caller can optionally provide
+        with the 'handle_token' key in the options vardict.
+
+        Currently, no other options are accepted.
+    -->
+    <method name="CreateUpdateMonitor">
+      <arg type="a{sv}" name="options" direction="in"/>
+      <arg type="o" name="handle" direction="out"/>
+    </method>
+  </interface>
+
+  <interface name="org.freedesktop.portal.Flatpak.UpdateMonitor">
+
+    <!--
+        Close:
+
+        Ends the update monitoring and cancels any ongoing
+        installation.
+    -->
+    <method name="Close">
+    </method>
+
+    <!--
+        UpdateAvailable:
+        @update_info: More information about the available update
+
+        Gets emitted when a new update is available. This is only
+        sent once with the same information, but can be sent many
+        times if new updates appear.
+
+        The following information may be included in the
+        @update_info dictionary:
+        <variablelist>
+          <varlistentry>
+            <term>running-commit s</term>
+            <listitem><para>
+              The commit of the currently running instance.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>local-commit s</term>
+            <listitem><para>
+              The commit that is currently installed. Restarting
+              the application will cause this commit to be used.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>remote-commit s</term>
+            <listitem><para>
+              The commit that is available as an update from the
+              remote. Updating the application will deploy this
+              commit.
+            </para></listitem>
+          </varlistentry>
+        </variablelist>
+    -->
+    <signal name="UpdateAvailable">
+      <arg type="a{sv}" name="update_info" direction="out"/>
     </signal>
 
   </interface>
