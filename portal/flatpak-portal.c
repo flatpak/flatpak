@@ -20,6 +20,8 @@
 
 #include "config.h"
 
+/* NOTE: This code was copied mostly as-is from xdg-desktop-portal */
+
 #include <locale.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -33,6 +35,7 @@
 #include "flatpak-portal-app-info.h"
 #include "flatpak-portal-error.h"
 #include "flatpak-utils-base-private.h"
+#include "portal-impl.h"
 
 #define IDLE_TIMEOUT_SECS 10 * 60
 
@@ -942,6 +945,8 @@ main (int    argc,
                                   on_name_lost,
                                   NULL,
                                   NULL);
+
+  load_installed_portals (opt_verbose);
 
   /* Ensure we don't idle exit */
   schedule_idle_callback ();

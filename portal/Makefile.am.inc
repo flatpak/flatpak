@@ -27,6 +27,8 @@ flatpak_portal_SOURCES = \
 	portal/flatpak-portal.h		\
 	portal/flatpak-portal-app-info.c		\
 	portal/flatpak-portal-app-info.h		\
+	portal/portal-impl.c            \
+	portal/portal-impl.h            \
 	common/flatpak-portal-error.c	\
 	common/flatpak-portal-error.h	\
 	$(NULL)
@@ -35,5 +37,10 @@ BUILT_SOURCES += $(nodist_flatpak_portal_SOURCES)
 CLEANFILES += $(nodist_flatpak_portal_SOURCES)
 
 flatpak_portal_LDADD = $(AM_LDADD) $(BASE_LIBS) libflatpak-common-base.la libglnx.la
-flatpak_portal_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) -DFLATPAK_COMPILATION
+flatpak_portal_CFLAGS = \
+        $(AM_CFLAGS) \
+        $(BASE_CFLAGS) \
+        -DFLATPAK_COMPILATION \
+        -DDATADIR=\"$(datadir)\" \
+        $(NULL)
 flatpak_portal_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/portal
