@@ -34,7 +34,10 @@ test_path_match_prefix (void)
 static void
 test_fancy_output (void)
 {
-  g_assert_false (flatpak_fancy_output ()); // no tty
+  if (!isatty (STDOUT_FILENO))
+    g_assert_false (flatpak_fancy_output ()); // no tty
+  else
+    g_assert_true (flatpak_fancy_output ()); // a tty
   flatpak_enable_fancy_output ();
   g_assert_true (flatpak_fancy_output ());
   flatpak_disable_fancy_output ();
