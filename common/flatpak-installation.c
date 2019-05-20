@@ -2604,7 +2604,7 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   if (checksum != NULL)
     return flatpak_remote_ref_new (coll_ref, checksum, remote_name, state);
 
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REF_NOT_FOUND,
                "Reference %s doesn't exist in remote", ref);
   return NULL;
 }
