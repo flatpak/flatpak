@@ -842,7 +842,7 @@ main (int    argc,
     g_debug ("p11-kit not found");
 
   monitor_dir = g_build_filename (flatpak_dir, "monitor", NULL);
-  if (g_mkdir_with_parents (monitor_dir, 0700) != 0)
+  if (g_mkdir_with_parents (monitor_dir, 0755) != 0)
     {
       g_print ("Can't create %s\n", monitor_dir);
       exit (1);
