@@ -377,6 +377,78 @@ add_icon_to_annotations (const char *icon_size_name,
                         g_strconcat ("data:image/png;base64,", encoded, NULL));
 }
 
+static GHashTable *
+generate_annotations (FlatpakOciDescriptor *layer_desc,
+                      OstreeRepo *repo,
+                      GFile *root,
+                      const char *name,
+                      const char *ref,
+                      const char *commit_checksum,
+                      GVariant   *commit_data,
+                      GCancellable *cancellable,
+                      GError **error)
+{
+  g_autoptr(GFile) metadata_file = NULL;
+  gsize metadata_size;
+  g_autofree char *metadata_contents = NULL;
+  g_autoptr(GHashTable) annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  g_autoptr(GKeyFile) keyfile = NULL;
+  g_autoptr(GBytes) xml_data = NULL;
+  guint64 installed_size = 0;
+
+  flatpak_oci_add_annotations_for_commit (annotations, ref, commit_checksum, commit_data);
+
+  metadata_file = g_file_get_child (root, "metadata");
+  if (g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, NULL) &&
+      g_utf8_validate (metadata_contents, -1, NULL))
+    {
+      keyfile = g_key_file_new ();
+
+      if (!g_key_file_load_from_data (keyfile,
+                                      metadata_contents,
+                                      metadata_size,
+                                      G_KEY_FILE_NONE, error))
+        return NULL;
+
+      g_hash_table_replace (annotations,
+                            g_strdup ("org.flatpak.metadata"),
+                            g_steal_pointer (&metadata_contents));
+    }
+
+  if (!flatpak_repo_collect_sizes (repo, root, &installed_size, NULL, NULL, error))
+    return NULL;
+
+  g_hash_table_replace (annotations,
+                        g_strdup ("org.flatpak.installed-size"),
+                        g_strdup_printf ("%" G_GUINT64_FORMAT, installed_size));
+
+  g_hash_table_replace (annotations,
+                        g_strdup ("org.flatpak.download-size"),
+                        g_strdup_printf ("%" G_GUINT64_FORMAT, layer_desc->size));
+
+
+  if (!get_bundle_appstream_data (root, ref, name, keyfile, FALSE,
+                                  &xml_data, cancellable, error))
+    return FALSE;
+
+  if (xml_data)
+    {
+      gsize xml_data_len;
+
+      g_hash_table_replace (annotations,
+                            g_strdup ("org.freedesktop.appstream.appdata"),
+                            g_bytes_unref_to_data (g_steal_pointer (&xml_data), &xml_data_len));
+
+      if (!iterate_bundle_icons (root, name, add_icon_to_annotations,
+                                 annotations, cancellable, error))
+        return FALSE;
+    }
+
+  return g_steal_pointer (&annotations);
+}
+
+
+
 static gboolean
 build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
            const char *name, const char *ref,
@@ -397,13 +469,7 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
   g_autoptr(FlatpakOciManifest) manifest = NULL;
   g_autoptr(FlatpakOciIndex) index = NULL;
-  g_autoptr(GFile) metadata_file = NULL;
-  g_autoptr(GKeyFile) keyfile = NULL;
-  g_autoptr(GBytes) xml_data = NULL;
-  guint64 installed_size = 0;
-  GHashTable *annotations;
-  gsize metadata_size;
-  g_autofree char *metadata_contents = NULL;
+  g_autoptr(GHashTable) flatpak_annotations = NULL;
   g_auto(GStrv) ref_parts = NULL;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
@@ -441,6 +507,9 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
                                        error))
     return FALSE;
 
+  flatpak_annotations = generate_annotations (layer_desc, repo, root, name, ref, commit_checksum, commit_data, cancellable, error);
+  if (flatpak_annotations == NULL)
+    return FALSE;
 
   image = flatpak_oci_image_new ();
   flatpak_oci_image_set_layer (image, uncompressed_digest);
@@ -457,53 +526,8 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   flatpak_oci_manifest_set_config (manifest, image_desc);
   flatpak_oci_manifest_set_layer (manifest, layer_desc);
 
-  annotations = flatpak_oci_manifest_get_annotations (manifest);
-  flatpak_oci_add_annotations_for_commit (annotations, ref, commit_checksum, commit_data);
-
-  metadata_file = g_file_get_child (root, "metadata");
-  if (g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, NULL) &&
-      g_utf8_validate (metadata_contents, -1, NULL))
-    {
-      keyfile = g_key_file_new ();
-
-      if (!g_key_file_load_from_data (keyfile,
-                                      metadata_contents,
-                                      metadata_size,
-                                      G_KEY_FILE_NONE, error))
-        return FALSE;
-
-      g_hash_table_replace (annotations,
-                            g_strdup ("org.flatpak.metadata"),
-                            g_steal_pointer (&metadata_contents));
-    }
-
-  if (!flatpak_repo_collect_sizes (repo, root, &installed_size, NULL, NULL, error))
-    return FALSE;
-
-  g_hash_table_replace (annotations,
-                        g_strdup ("org.flatpak.installed-size"),
-                        g_strdup_printf ("%" G_GUINT64_FORMAT, installed_size));
-
-  g_hash_table_replace (annotations,
-                        g_strdup ("org.flatpak.download-size"),
-                        g_strdup_printf ("%" G_GUINT64_FORMAT, layer_desc->size));
-
-  if (!get_bundle_appstream_data (root, ref, name, keyfile, FALSE,
-                                  &xml_data, cancellable, error))
-    return FALSE;
-
-  if (xml_data)
-    {
-      gsize xml_data_len;
-
-      g_hash_table_replace (annotations,
-                            g_strdup ("org.freedesktop.appstream.appdata"),
-                            g_bytes_unref_to_data (g_steal_pointer (&xml_data), &xml_data_len));
-
-      if (!iterate_bundle_icons (root, name, add_icon_to_annotations,
-                                 annotations, cancellable, error))
-        return FALSE;
-    }
+  flatpak_oci_copy_annotations (flatpak_annotations,
+                                flatpak_oci_manifest_get_annotations (manifest));
 
   manifest_desc = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (manifest), cancellable, error);
   if (manifest_desc == NULL)
