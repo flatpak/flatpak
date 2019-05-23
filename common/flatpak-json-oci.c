@@ -693,6 +693,14 @@ flatpak_oci_image_set_layers (FlatpakOciImage *image,
   image->rootfs.diff_ids = g_strdupv ((char **) layers);
 }
 
+GHashTable *
+flatpak_oci_image_get_labels (FlatpakOciImage *self)
+{
+  if (self->config.labels == NULL)
+    self->config.labels = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  return self->config.labels;
+}
+
 void
 flatpak_oci_image_set_layer (FlatpakOciImage *image,
                              const char      *layer)
