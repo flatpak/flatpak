@@ -515,6 +515,9 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   flatpak_oci_image_set_layer (image, uncompressed_digest);
   flatpak_oci_image_set_architecture (image, flatpak_arch_to_oci_arch (ref_parts[2]));
 
+  flatpak_oci_copy_annotations (flatpak_annotations,
+                                flatpak_oci_image_get_labels (image));
+
   timestamp = timestamp_to_iso8601 (ostree_commit_get_timestamp (commit_data));
   flatpak_oci_image_set_created (image, timestamp);
 
