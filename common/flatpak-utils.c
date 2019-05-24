@@ -6783,7 +6783,7 @@ flatpak_repo_resolve_rev (OstreeRepo    *repo,
       if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
         flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND, "%s", local_error->message);
       else
-        g_propagate_error (error, local_error);
+        g_propagate_error (error, g_steal_pointer (&local_error));
 
       return FALSE;
     }
