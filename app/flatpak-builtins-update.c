@@ -131,7 +131,7 @@ flatpak_builtin_update (int           argc,
       if (opt_noninteractive)
         transaction = flatpak_quiet_transaction_new (dir, error);
       else
-        transaction = flatpak_cli_transaction_new (dir, opt_yes, FALSE, error);
+        transaction = flatpak_cli_transaction_new (dir, opt_yes, FALSE, opt_arch != NULL, error);
       if (transaction == NULL)
         return FALSE;
 
