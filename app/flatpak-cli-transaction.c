@@ -36,6 +36,7 @@ struct _FlatpakCliTransaction
 
   gboolean             disable_interaction;
   gboolean             stop_on_first_error;
+  gboolean             non_default_arch;
   GError              *first_operation_error;
 
   int                  rows;
@@ -873,12 +874,18 @@ transaction_ready (FlatpakTransaction *transaction)
 
   printer = self->printer = flatpak_table_printer_new ();
   i = 0;
+
   flatpak_table_printer_set_column_title (printer, i++, "   ");
   flatpak_table_printer_set_column_title (printer, i++, "   ");
+
   flatpak_table_printer_set_column_expand (printer, i, TRUE);
   flatpak_table_printer_set_column_title (printer, i++, _("ID"));
+
   flatpak_table_printer_set_column_expand (printer, i, TRUE);
+  if (!self->non_default_arch)
+    flatpak_table_printer_set_column_skip_unique (printer, i, TRUE);
   flatpak_table_printer_set_column_title (printer, i++, _("Arch"));
+
   flatpak_table_printer_set_column_expand (printer, i, TRUE);
   flatpak_table_printer_set_column_title (printer, i++, _("Branch"));
 
@@ -1060,6 +1067,7 @@ FlatpakTransaction *
 flatpak_cli_transaction_new (FlatpakDir *dir,
                              gboolean    disable_interaction,
                              gboolean    stop_on_first_error,
+                             gboolean    non_default_arch,
                              GError    **error)
 {
   g_autoptr(FlatpakInstallation) installation = NULL;
@@ -1080,6 +1088,7 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
 
   self->disable_interaction = disable_interaction;
   self->stop_on_first_error = stop_on_first_error;
+  self->non_default_arch = non_default_arch;
 
   flatpak_transaction_add_default_dependency_sources (FLATPAK_TRANSACTION (self));
 

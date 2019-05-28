@@ -351,7 +351,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     if (opt_noninteractive)
       transaction = flatpak_quiet_transaction_new (udir->dir, error);
     else
-      transaction = flatpak_cli_transaction_new (udir->dir, opt_yes, TRUE, error);
+      transaction = flatpak_cli_transaction_new (udir->dir, opt_yes, TRUE, opt_arch != NULL, error);
     if (transaction == NULL)
       return FALSE;
 

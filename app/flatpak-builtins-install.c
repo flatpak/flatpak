@@ -152,7 +152,7 @@ install_bundle (FlatpakDir *dir,
   if (opt_noninteractive)
     transaction = flatpak_quiet_transaction_new (dir, error);
   else
-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
   if (transaction == NULL)
     return FALSE;
 
@@ -225,7 +225,7 @@ install_from (FlatpakDir *dir,
   if (opt_noninteractive)
     transaction = flatpak_quiet_transaction_new (dir, error);
   else
-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
   if (transaction == NULL)
     return FALSE;
 
@@ -446,7 +446,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (opt_noninteractive)
     transaction = flatpak_quiet_transaction_new (dir, error);
   else
-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, error);
+    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
   if (transaction == NULL)
     return FALSE;
 

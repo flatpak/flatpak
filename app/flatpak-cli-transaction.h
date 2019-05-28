@@ -30,6 +30,7 @@ G_DECLARE_FINAL_TYPE (FlatpakCliTransaction, flatpak_cli_transaction, FLATPAK, C
 FlatpakTransaction * flatpak_cli_transaction_new (FlatpakDir * dir,
                                                   gboolean disable_interaction,
                                                   gboolean stop_on_first_error,
+                                                  gboolean non_default_arch,
                                                   GError **error);
 
 #endif /* __FLATPAK_CLI_TRANSACTION_H__ */
