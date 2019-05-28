@@ -131,7 +131,9 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    The default architecture to look for, if not given explicitly in the <arg choice="plain">REF</arg>.
+                    The default architecture to look for, if not given explicitly in
+                    the <arg choice="plain">REF</arg>. See <command>flatpak --supported-arches</command>
+                    for architectures supported by the host.
                 </para></listitem>
             </varlistentry>
 

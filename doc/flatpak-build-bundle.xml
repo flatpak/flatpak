@@ -88,7 +88,8 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    The arch to create a bundle for.
+                    The arch to create a bundle for. See <command>flatpak --supported-arches</command>
+                    for architectures supported by the host.
                 </para></listitem>
             </varlistentry>
 

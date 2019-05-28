@@ -103,7 +103,8 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    Query for this architecture.
+                    Query for this architecture. See <command>flatpak --supported-arches</command>
+                    for architectures supported by the host.
                 </para></listitem>
             </varlistentry>
 

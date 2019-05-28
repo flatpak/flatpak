@@ -135,7 +135,8 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    The architecture to update for.
+                    The architecture to update for. See <command>flatpak --supported-arches</command>
+                    for architectures supported by the host.
                 </para></listitem>
             </varlistentry>
 

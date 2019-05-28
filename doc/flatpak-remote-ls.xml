@@ -159,6 +159,7 @@
                 <listitem><para>
                     Show only those matching the specified architecture. By default, only
                     supported architectures are shown. Use <option>--arch=*</option> to show all architectures.
+                    See <command>flatpak --supported-arches</command> for architectures supported by the host.
                 </para></listitem>
             </varlistentry>
 
