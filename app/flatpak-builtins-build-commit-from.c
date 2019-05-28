@@ -538,6 +538,17 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
          (signatures) */
       g_variant_builder_add (&metadata_builder, "{sv}", "xa.from_commit", g_variant_new_string (resolved_ref));
 
+      if (opt_src_repo)
+	{
+	  guint64 download_size;
+	  if (!flatpak_repo_collect_sizes (dst_repo, src_ref_root, NULL, &download_size,
+					   cancellable, error))
+	    {
+	      return FALSE;
+	    }
+	  g_variant_builder_add (&metadata_builder, "{sv}", "xa.download-size", g_variant_new_uint64 (GUINT64_TO_BE (download_size)));
+	}
+
       for (j = 0; j < g_variant_n_children (commitv_metadata); j++)
         {
           g_autoptr(GVariant) child = g_variant_get_child_value (commitv_metadata, j);
@@ -550,6 +561,9 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
               strcmp (key, "ostree.collection-refs-binding") == 0 ||
               strcmp (key, "ostree.ref-binding") == 0)
             continue;
+
+	  if (opt_src_repo && strcmp (key, "xa.download-size") == 0)
+	    continue ;
 
           if (opt_endoflife &&
               strcmp (key, OSTREE_COMMIT_META_KEY_ENDOFLIFE) == 0)
