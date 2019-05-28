@@ -34,7 +34,7 @@
  * @Title: FlatpakTransaction
  * @Short_description: Transaction information
  *
- * FlatpakTransaction is an object representing an install/update
+ * FlatpakTransaction is an object representing an install/update/uninstall
  * transaction. You create an object like this using flatpak_transaction_new_for_installation()
  * and then you add all the operations (installs, updates, etc) you wish to do. Then
  * you start the transaction with flatpak_transaction_run() which will resolve all kinds
@@ -2836,7 +2836,7 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
  *
  * Executes the transaction.
  *
- * During the cause of the execution, various signals will get emitted.
+ * During the course of the execution, various signals will get emitted.
  * The FlatpakTransaction::choose-remote-for-ref  and
  * #FlatpakTransaction::add-new-remote signals may get emitted while
  * resolving operations. #FlatpakTransaction::ready is emitted when
