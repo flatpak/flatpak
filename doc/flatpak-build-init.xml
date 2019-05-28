@@ -83,7 +83,8 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    The architecture to use.
+                    The architecture to use. See <command>flatpak --supported-arches</command>
+                    for architectures supported by the host.
                 </para></listitem>
             </varlistentry>
 

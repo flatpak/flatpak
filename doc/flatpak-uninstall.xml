@@ -137,7 +137,8 @@
 
                 <listitem><para>
                     The architecture to uninstall, instead of the architecture of
-                    the host system.
+                    the host system. See <command>flatpak --supported-arches</command>
+                    for architectures supported by the host.
                 </para></listitem>
             </varlistentry>
 

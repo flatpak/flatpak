@@ -104,7 +104,8 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    List installations for this architecture.
+                    List apps/runtimes for this architecture. See <command>flatpak --supported-arches</command>
+                    for architectures supported by the host.
                 </para></listitem>
             </varlistentry>
 
