@@ -1581,6 +1581,16 @@ add_font_path_args (FlatpakBwrap *bwrap)
                               SYSTEM_FONTS_DIR);
     }
 
+  if (g_file_test ("/usr/local/share/fonts", G_FILE_TEST_EXISTS))
+    {
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", "/usr/local/share/fonts", "/run/host/local-fonts",
+                              NULL);
+      g_string_append_printf (xml_snippet,
+                              "\t<remap-dir as-path=\"%s\">/run/host/local-fonts</remap-dir>\n",
+                              "/usr/local/share/fonts");
+    }
+
   system_cache_dirs = g_strsplit (SYSTEM_FONT_CACHE_DIRS, ":", 0);
   for (i = 0; system_cache_dirs[i] != NULL; i++)
     {
