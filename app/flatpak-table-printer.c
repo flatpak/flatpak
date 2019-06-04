@@ -364,7 +364,7 @@ string_add_spaces (GString *str, int count)
 }
 
 static gboolean
-colum_is_unique (FlatpakTablePrinter *printer, int col)
+column_is_unique (FlatpakTablePrinter *printer, int col)
 {
   char *first_row = NULL;
   int i;
@@ -431,7 +431,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
     {
       TableColumn *col = g_ptr_array_index (printer->columns, i);
 
-      if (col->skip_unique && colum_is_unique (printer, i))
+      if (col->skip_unique && column_is_unique (printer, i))
         col->skip = TRUE;
     }
 
