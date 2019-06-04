@@ -372,6 +372,9 @@ colum_is_unique (FlatpakTablePrinter *printer, int col)
   for (i = 0; i < printer->rows->len; i++)
     {
       Row *row = g_ptr_array_index (printer->rows, i);
+      if (col >= row->cells->len)
+        continue;
+
       Cell *cell = g_ptr_array_index (row->cells, col);
 
       if (i == 0)
