@@ -221,6 +221,7 @@ void             flatpak_oci_image_set_layers (FlatpakOciImage *image,
 void             flatpak_oci_image_set_layer (FlatpakOciImage *image,
                                               const char      *layer);
 GHashTable *     flatpak_oci_image_get_labels (FlatpakOciImage *self);
+int              flatpak_oci_image_add_history (FlatpakOciImage *image);
 
 void flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
                                              const char *ref,

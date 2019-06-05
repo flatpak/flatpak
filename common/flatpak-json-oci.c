@@ -747,6 +747,31 @@ flatpak_oci_copy_annotations (GHashTable *source,
                           g_strdup ((char *) value));
 }
 
+int
+flatpak_oci_image_add_history (FlatpakOciImage *image)
+{
+  FlatpakOciImageHistory **old;
+  int i, index, old_len;
+
+  old = image->history;
+
+  for (old_len = 0; old != NULL && old[old_len] != NULL; old_len++)
+    ;
+
+  image->history = g_new0 (FlatpakOciImageHistory *, old_len + 2);
+  for (i = 0; i < old_len; i++)
+    image->history[i] = old[i];
+
+  index = i;
+
+  image->history[i++] = g_new0 (FlatpakOciImageHistory, 1);
+  image->history[i++] = NULL;
+
+  g_free (old);
+
+  return index;
+}
+
 static void
 add_annotation (GHashTable *annotations, const char *key, const char *value)
 {
