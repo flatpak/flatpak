@@ -8072,7 +8072,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   ret = TRUE;
 
   commit = flatpak_dir_read_active (self, ref, cancellable);
-  flatpak_dir_log (self, "deploy install", origin, ref, commit, old_active,
+  flatpak_dir_log (self, "deploy install", origin, ref, commit, old_active, NULL,
                    "Installed %s from %s", ref, origin);
 
 out:
