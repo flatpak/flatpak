@@ -12,9 +12,9 @@ if command -v flatpak > /dev/null; then
             do
                 share_path=$install_path/exports/share
                 case ":$XDG_DATA_DIRS:" in
-                    *":$share_path:"*) :;;
-                    *":$share_path/:"*) :;;
-                    *) new_dirs=${new_dirs:+${new_dirs}:}$share_path;;
+                    (*":$share_path:"*) :;;
+                    (*":$share_path/:"*) :;;
+                    (*) new_dirs=${new_dirs:+${new_dirs}:}$share_path;;
                 esac
             done
             echo "$new_dirs"
