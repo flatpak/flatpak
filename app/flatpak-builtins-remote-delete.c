@@ -47,6 +47,7 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   g_autoptr(FlatpakDir) preferred_dir = NULL;
+  gboolean removed_all_refs = FALSE;
   const char *remote_name;
 
   context = g_option_context_new (_("NAME - Delete a remote repository"));
@@ -118,10 +119,12 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
 
               return FALSE;
             }
+
+          removed_all_refs = TRUE;
         }
     }
 
-  if (g_str_has_suffix (remote_name, "-origin"))
+  if (g_str_has_suffix (remote_name, "-origin") && removed_all_refs)
     // The remote has already been deleted because all its refs were deleted.
     return TRUE;
 
