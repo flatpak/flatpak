@@ -1642,11 +1642,13 @@ add_deps (FlatpakTransaction          *self,
   g_autofree char *runtime_remote = NULL;
   FlatpakTransactionOperation *runtime_op = NULL;
 
-  if (!g_str_has_prefix (op->ref, "app/"))
+  if (!op->resolved_metakey)
     return TRUE;
 
-  if (op->resolved_metakey)
+  if (g_str_has_prefix (op->ref, "app/"))
     runtime_ref = g_key_file_get_string (op->resolved_metakey, "Application", "runtime", NULL);
+  else
+    runtime_ref = g_key_file_get_string (op->resolved_metakey, "ExtensionOf", "runtime", NULL);
 
   if (runtime_ref == NULL)
     return TRUE;
