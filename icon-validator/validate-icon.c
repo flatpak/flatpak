@@ -20,6 +20,7 @@
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <glib/gstdio.h>
+#include <errno.h>
 #include <unistd.h>
 
 static int
@@ -138,9 +139,6 @@ rerun_in_sandbox (const char *arg_width,
   const char * const usrmerged_dirs[] = { "bin", "lib64", "lib", "sbin" };
   int i;
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
-  g_autofree char *err = NULL;
-  int status;
-  g_autoptr(GError) error = NULL;
   char validate_icon[PATH_MAX + 1];
   ssize_t symlink_size;
 
@@ -211,19 +209,10 @@ rerun_in_sandbox (const char *arg_width,
     g_debug ("Icon validation: Spawning %s", cmdline);
   }
 
-  if (execvpe (flatpak_get_bwrap (), (char **) args->pdata, NULL) == -1)
-    {
-      g_debug ("Icon validation: %s", error->message);
-      return 1;
-    }
-
-  if (!g_spawn_check_exit_status (status, NULL))
-    {
-      g_debug ("Icon validation: %s", err);
-      return 1;
-    }
-
-  return 0;
+  execvpe (flatpak_get_bwrap (), (char **) args->pdata, NULL);
+  /* If we get here, then execvpe() failed. */
+  g_printerr ("Icon validation: execvpe %s: %s\n", flatpak_get_bwrap (), g_strerror (errno));
+  return 1;
 }
 
 static gboolean opt_sandbox;
