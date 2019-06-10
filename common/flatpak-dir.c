@@ -7375,6 +7375,9 @@ apply_extra_data (FlatpakDir   *self,
   runtime = g_key_file_get_string (metakey, group,
                                    FLATPAK_METADATA_KEY_RUNTIME, error);
   if (runtime == NULL)
+    runtime = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_EXTENSION_OF,
+                                     FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  if (runtime == NULL)
     return FALSE;
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
