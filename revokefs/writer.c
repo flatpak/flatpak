@@ -49,12 +49,12 @@ static GMutex mutex;
 static ssize_t
 do_request (int writer_socket,
             RevokefsRequest *request,
-            const guchar *data,
+            const void *data,
             size_t data_size,
-            const guchar *data2,
+            const void *data2,
             size_t data2_size,
             RevokefsResponse *response,
-            guchar *response_data,
+            void *response_data,
             size_t response_data_size)
 {
   size_t request_size;
@@ -222,7 +222,7 @@ validate_path (char *path)
 static char *
 get_valid_path (guchar *data, size_t len)
 {
-  char *path = g_strndup (data, len);
+  char *path = g_strndup ((const char *) data, len);
 
   if (!validate_path (path))
     {
@@ -252,7 +252,7 @@ get_any_path_and_valid_path (RevokefsRequest *request,
       exit (1);
     }
 
-  *any_path1 = g_strndup (request->data, request->arg1);
+  *any_path1 = g_strndup ((const char *) request->data, request->arg1);
   *valid_path2 = get_valid_path (request->data + request->arg1, data_size - request->arg1);
 }
 
@@ -515,7 +515,7 @@ int
 request_utimens (int writer_socket, const char *path, const struct timespec tv[2])
 {
   return request_path_data (writer_socket, REVOKE_FS_UTIMENS, path,
-                            (guchar *)tv, sizeof (struct timespec) * 2);
+                            (const char *)tv, sizeof (struct timespec) * 2);
 }
 
 static ssize_t
@@ -794,7 +794,7 @@ do_writer (int basefd_arg,
           exit (1);
         }
 
-      if (pollfds[0].revents & POLLIN == 0)
+      if ((pollfds[0].revents & POLLIN) == 0)
         continue;
 
       size = TEMP_FAILURE_RETRY (read (fuse_socket, request_buffer, sizeof (request_buffer)));
