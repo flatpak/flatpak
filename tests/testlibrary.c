@@ -1704,7 +1704,6 @@ static void
 _add_remote (const char *remote_repo_name,
              gboolean    system)
 {
-  g_autoptr(GError) error = NULL;
   char *argv[] = { "flatpak", "remote-add", NULL, "--gpg-import=", "--collection-id=", "name", "url", NULL };
   g_autofree char *gpgimport = NULL;
   g_autofree char *collection_id_arg = NULL;
@@ -2724,7 +2723,6 @@ test_transaction_flatpakref_remote_creation (void)
   g_autoptr(FlatpakInstallation) system_inst = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
   g_autoptr(GError) error = NULL;
-  g_autoptr(FlatpakRemoteRef) ref = NULL;
   g_autofree char *s = NULL;
   g_autoptr(GBytes) data = NULL;
   gboolean res;
