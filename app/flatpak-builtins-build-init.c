@@ -174,6 +174,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GString) metadata_contents = NULL;
   g_autoptr(GError) my_error = NULL;
+  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(FlatpakDeploy) sdk_deploy = NULL;
   const char *app_id;
   const char *directory;
@@ -183,6 +184,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   const char *sdk_branch = NULL;
   g_autofree char *base_ref = NULL;
   g_autofree char *runtime_ref = NULL;
+  g_autofree char *extension_runtime_id = NULL;
   g_autofree char *var_ref = NULL;
   g_autofree char *sdk_ref = NULL;
   g_auto(GStrv) sdk_ref_parts = NULL;
@@ -248,6 +250,25 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                                              &runtime_ref, cancellable, error);
   if (runtime_dir == NULL)
     return FALSE;
+
+  if (is_extension)
+    {
+      if (g_str_has_prefix (runtime_ref, "app/"))
+        {
+          g_autoptr(GKeyFile) runtime_metadata = NULL;
+
+          runtime_deploy = flatpak_dir_load_deployed (runtime_dir, runtime_ref, NULL, cancellable, error);
+          if (runtime_deploy == NULL)
+            return FALSE;
+
+          runtime_metadata = flatpak_deploy_get_metadata (runtime_deploy);
+          extension_runtime_id = g_key_file_get_string (runtime_metadata, FLATPAK_METADATA_GROUP_APPLICATION,
+                                                       FLATPAK_METADATA_KEY_RUNTIME, NULL);
+          g_assert (extension_runtime_id);
+        }
+      else
+        extension_runtime_id = g_strdup (runtime_ref + strlen ("runtime/"));
+    }
 
   base = g_file_new_for_commandline_arg (directory);
   if (flatpak_file_get_path_cached (base) == NULL)
@@ -407,8 +428,10 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                               "\n"
                               "[ExtensionOf]\n"
                               "ref=%s\n"
-                              "%s",
+                              "runtime=%s\n"
+                              "%s\n",
                               runtime_ref,
+                              extension_runtime_id,
                               optional_extension_tag);
     }
 
