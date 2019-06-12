@@ -1896,9 +1896,24 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
 }
 
 static const char *
+get_image_metadata (FlatpakOciIndexImage *img, const char *key)
+{
+  if (img->labels != NULL)
+    {
+      const char *ref = g_hash_table_lookup (img->labels, key);
+      if (ref)
+        return ref;
+    }
+  if (img->annotations)
+    return g_hash_table_lookup (img->annotations, key);
+  return NULL;
+}
+
+
+static const char *
 get_image_ref (FlatpakOciIndexImage *img)
 {
-  return g_hash_table_lookup (img->annotations, "org.flatpak.ref");
+  return get_image_metadata (img, "org.flatpak.ref");
 }
 
 typedef struct
@@ -2115,7 +2130,7 @@ flatpak_oci_index_make_summary (GFile        *index,
       if (ref == NULL)
         continue;
 
-      metadata_contents = g_hash_table_lookup (image->annotations, "org.flatpak.metadata");
+      metadata_contents = get_image_metadata (image, "org.flatpak.metadata");
       if (metadata_contents == NULL && !g_str_has_prefix (ref, "appstream/"))
         continue; /* Not a flatpak, skip */
 
@@ -2127,11 +2142,11 @@ flatpak_oci_index_make_summary (GFile        *index,
 
       fake_commit = image->digest + strlen ("sha256:");
 
-      installed_size_str = g_hash_table_lookup (image->annotations, "org.flatpak.installed-size");
+      installed_size_str = get_image_metadata (image, "org.flatpak.installed-size");
       if (installed_size_str)
         installed_size = g_ascii_strtoull (installed_size_str, NULL, 10);
 
-      download_size_str = g_hash_table_lookup (image->annotations, "org.flatpak.download-size");
+      download_size_str = get_image_metadata (image, "org.flatpak.download-size");
       if (download_size_str)
         download_size = g_ascii_strtoull (download_size_str, NULL, 10);
 
@@ -2266,7 +2281,7 @@ add_image_to_appstream (SoupSession               *soup_session,
     { "org.freedesktop.appstream.icon-128", "128x128" },
   };
 
-  ref = g_hash_table_lookup (image->annotations, "org.flatpak.ref");
+  ref = get_image_ref (image);
   if (!ref)
     return;
 
@@ -2276,7 +2291,7 @@ add_image_to_appstream (SoupSession               *soup_session,
 
   id = ref_parts[1];
 
-  appdata = g_hash_table_lookup (image->annotations, "org.freedesktop.appstream.appdata");
+  appdata = get_image_metadata (image, "org.freedesktop.appstream.appdata");
   if (!appdata)
     return;
 
@@ -2322,8 +2337,7 @@ add_image_to_appstream (SoupSession               *soup_session,
 
   for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
     {
-      const char *icon_data = g_hash_table_lookup (image->annotations,
-                                                   icon_sizes[i].annotation);
+      const char *icon_data = get_image_metadata (image, icon_sizes[i].annotation);
       if (icon_data)
         {
           if (!add_icon_image (soup_session,
