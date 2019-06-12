@@ -1995,7 +1995,7 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
   oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
 
   soup_uri_set_query_from_fields (query_uri,
-                                  "annotation:org.flatpak.ref:exists", "1",
+                                  "label:org.flatpak.ref:exists", "1",
                                   "architecture", oci_arch,
                                   "os", "linux",
                                   "tag", tag,
