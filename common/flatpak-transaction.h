@@ -114,12 +114,6 @@ struct _FlatpakTransactionClass
                                 const char         *ref,
                                 const char         *reason,
                                 const char         *rebase);
-  gboolean (*end_of_lifed_with_rebase) (FlatpakTransaction *transaction,
-                                        const char         *remote,
-                                        const char         *ref,
-                                        const char         *reason,
-                                        const char         *rebased_to_ref,
-                                        const char        **previous_ids);
   gboolean (*ready)            (FlatpakTransaction *transaction);
 
   gboolean (*add_new_remote) (FlatpakTransaction            *transaction,
@@ -131,8 +125,14 @@ struct _FlatpakTransactionClass
   gboolean (*run)            (FlatpakTransaction *transaction,
                               GCancellable       *cancellable,
                               GError            **error);
+  gboolean (*end_of_lifed_with_rebase) (FlatpakTransaction *transaction,
+                                        const char         *remote,
+                                        const char         *ref,
+                                        const char         *reason,
+                                        const char         *rebased_to_ref,
+                                        const char        **previous_ids);
 
-  gpointer padding[9];
+  gpointer padding[8];
 };
 
 FLATPAK_EXTERN
