@@ -2616,15 +2616,35 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
   if (priv->disable_deps)
     return TRUE;
 
-  if (!g_str_has_prefix (dep_url, "http:") && !g_str_has_prefix (dep_url, "https:"))
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not HTTP or HTTPS"), dep_url);
 
-  soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-  dep_data = flatpak_load_http_uri (soup_session, dep_url, 0, NULL, NULL, cancellable, error);
-  if (dep_data == NULL)
+  if (g_str_has_prefix (dep_url, "file:"))
     {
-      g_prefix_error (error, "Can't load dependent file %s", dep_url);
-      return FALSE;
+      g_autoptr(GFile) file = NULL;
+      g_autofree char *data = NULL;
+      gsize data_len;
+
+      file = g_file_new_for_uri (dep_url);
+
+      if (!g_file_load_contents (file, cancellable, &data, &data_len, NULL, error))
+        {
+          g_prefix_error (error, "Can't load dependent file %s", dep_url);
+          return FALSE;
+        }
+
+      dep_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
+    }
+  else
+    {
+      if (!g_str_has_prefix (dep_url, "http:") && !g_str_has_prefix (dep_url, "https:"))
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not HTTP or HTTPS"), dep_url);
+
+      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+      dep_data = flatpak_load_http_uri (soup_session, dep_url, 0, NULL, NULL, cancellable, error);
+      if (dep_data == NULL)
+        {
+          g_prefix_error (error, "Can't load dependent file %s", dep_url);
+          return FALSE;
+        }
     }
 
   if (!g_key_file_load_from_data (dep_keyfile,
