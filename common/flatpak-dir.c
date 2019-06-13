@@ -5050,6 +5050,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 {
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
+  g_autoptr(FlatpakOciImage) image_config = NULL;
   g_autofree char *full_ref = NULL;
   g_autofree char *registry_uri = NULL;
   g_autofree char *oci_repository = NULL;
@@ -5096,6 +5097,12 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (!FLATPAK_IS_OCI_MANIFEST (versioned))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
 
+  image_config = flatpak_oci_registry_load_image_config (registry, oci_repository,
+                                                         FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+                                                         NULL, cancellable, error);
+  if (image_config == NULL)
+    return FALSE;
+
   full_ref = g_strdup_printf ("%s:%s", state->remote_name, ref);
 
   if (repo == NULL)
@@ -5106,7 +5113,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_debug ("Pulling OCI image %s", oci_digest);
 
-  checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, FLATPAK_OCI_MANIFEST (versioned),
+  checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, FLATPAK_OCI_MANIFEST (versioned), image_config,
                                     state->remote_name, ref, oci_pull_progress_cb, progress, cancellable, error);
 
   if (progress)
