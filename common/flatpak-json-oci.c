@@ -173,11 +173,12 @@ flatpak_oci_versioned_init (FlatpakOciVersioned *self)
 }
 
 FlatpakOciVersioned *
-flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
+flatpak_oci_versioned_from_json (GBytes *bytes,
+                                 GError **error)
 {
   g_autoptr(JsonParser) parser = NULL;
   JsonNode *root = NULL;
-  const gchar *mediatype;
+  const gchar *mediatype = NULL;
   JsonObject *object;
 
   parser = json_parser_new ();
@@ -190,7 +191,9 @@ flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
   root = json_parser_get_root (parser);
   object = json_node_get_object (root);
 
-  mediatype = json_object_get_string_member (object, "mediaType");
+  if (json_object_has_member (object, "mediaType"))
+    mediatype = json_object_get_string_member (object, "mediaType");
+
   if (mediatype == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
