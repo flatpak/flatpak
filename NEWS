@@ -1,3 +1,22 @@
+Changes in 1.4.1
+================
+
+*WARNING* *WARNING* *WARNING*
+
+There was an accidental ABI break in libflatpak in 1.4.0 compared to
+the 1.2.x ABI which caused crashes in apps like gnome-software.
+
+This has been fixed in this release so it is now ABI compatible with
+1.2.x, but *NOT* compatible with 1.4.0. It is recommended that all
+distributions that shipped 1.4.0 update to 1.4.1 and rebuild all
+dependencies of libflatpak.
+
+ * Make ABI compatible with 1.2.x
+ * Update translations
+ * Fix some potential crashes
+ * Fix some corner case where it was impossible to remove a remote
+ * Restore support for file: uris in the RuntimeRepo key in flatpakref files
+
 Changes in 1.4.0
 ================
 
