@@ -493,6 +493,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciIndex) index = NULL;
       const FlatpakOciManifestDescriptor *desc;
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
+      g_autoptr(FlatpakOciImage) image_config = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
       FlatpakCollectionRef collection_ref;
       g_autoptr(GHashTable) remote_refs = NULL;
@@ -545,6 +546,16 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
+      image_config = flatpak_oci_registry_load_image_config (registry, NULL,
+                                                             FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+                                                             NULL, NULL, &error);
+      if (image_config == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't open child image config");
+          return TRUE;
+        }
+
       state = flatpak_dir_get_remote_state (system, arg_origin, FALSE, NULL, &error);
       if (state == NULL)
         {
@@ -582,7 +593,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned), image_config,
                                         arg_origin, arg_ref, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {

@@ -872,6 +872,11 @@ flatpak_oci_parse_commit_annotations (GHashTable      *annotations,
   gpointer _key, _value;
 
   oci_ref = g_hash_table_lookup (annotations, "org.flatpak.ref");
+
+  /* Early return if this is not a flatpak manifest or if looking at annotations when the data is in labels */
+  if (oci_ref == NULL)
+    return;
+
   if (oci_ref != NULL && out_ref != NULL && *out_ref == NULL)
     *out_ref = g_strdup (oci_ref);
 

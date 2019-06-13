@@ -5506,6 +5506,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                        const char            *oci_repository,
                        const char            *digest,
                        FlatpakOciManifest    *manifest,
+                       FlatpakOciImage       *image_config,
                        const char            *remote,
                        const char            *ref,
                        FlatpakOciPullProgress progress_cb,
@@ -5525,7 +5526,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
-  GHashTable *annotations;
+  GHashTable *annotations, *labels;
   int i;
 
   g_assert (ref != NULL);
@@ -5537,6 +5538,16 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                                           &subject, &body,
                                           &manifest_ref, NULL, NULL,
                                           metadata_builder);
+  if (manifest_ref == NULL)
+    {
+      labels = flatpak_oci_image_get_labels (image_config);
+      if (labels)
+        flatpak_oci_parse_commit_annotations (labels, &timestamp,
+                                              &subject, &body,
+                                              &manifest_ref, NULL, NULL,
+                                              metadata_builder);
+    }
+
   if (manifest_ref == NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No ref specified for OCI image %s"), digest);
