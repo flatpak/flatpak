@@ -211,6 +211,26 @@ flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
   return NULL;
 }
 
+FlatpakOciImage *
+flatpak_oci_image_from_json (GBytes *bytes,
+                             GError **error)
+{
+  g_autoptr(JsonParser) parser = NULL;
+  JsonNode *root = NULL;
+
+  parser = json_parser_new ();
+  if (!json_parser_load_from_data (parser,
+                                   g_bytes_get_data (bytes, NULL),
+                                   g_bytes_get_size (bytes),
+                                   error))
+    return NULL;
+
+  root = json_parser_get_root (parser);
+
+  return (FlatpakOciImage *) flatpak_json_from_node (root, FLATPAK_TYPE_OCI_IMAGE, error);
+}
+
+
 const char *
 flatpak_oci_versioned_get_mediatype (FlatpakOciVersioned *self)
 {

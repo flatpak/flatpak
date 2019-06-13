@@ -957,6 +957,27 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry *self,
   return flatpak_oci_versioned_from_json (bytes, error);
 }
 
+FlatpakOciImage *
+flatpak_oci_registry_load_image_config (FlatpakOciRegistry *self,
+                                        const char         *repository,
+                                        const char         *digest,
+                                        gsize              *out_size,
+                                        GCancellable       *cancellable,
+                                        GError            **error)
+{
+  g_autoptr(GBytes) bytes = NULL;
+
+  g_assert (self->valid);
+
+  bytes = flatpak_oci_registry_load_blob (self, repository, FALSE, digest, cancellable, error);
+  if (bytes == NULL)
+    return NULL;
+
+  if (out_size)
+    *out_size = g_bytes_get_size (bytes);
+  return flatpak_oci_image_from_json (bytes, error);
+}
+
 struct FlatpakOciLayerWriter
 {
   GObject             parent;

@@ -105,6 +105,12 @@ FlatpakOciVersioned *  flatpak_oci_registry_load_versioned (FlatpakOciRegistry *
                                                             gsize              *out_size,
                                                             GCancellable       *cancellable,
                                                             GError            **error);
+FlatpakOciImage *      flatpak_oci_registry_load_image_config (FlatpakOciRegistry *self,
+                                                               const char         *repository,
+                                                               const char         *digest,
+                                                               gsize              *out_size,
+                                                               GCancellable       *cancellable,
+                                                               GError            **error);
 FlatpakOciLayerWriter *flatpak_oci_registry_write_layer (FlatpakOciRegistry *self,
                                                          GCancellable       *cancellable,
                                                          GError            **error);
