@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-05-28 14:57+0200\n"
+"POT-Creation-Date: 2019-06-13 10:33+0200\n"
 "PO-Revision-Date: 2019-04-29 13:26+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -143,7 +143,7 @@ msgstr "Слід вказати РОЗТАШУВАННЯ, НАЗВУ_ФАЙЛА 
 #: app/flatpak-builtins-permission-list.c:157
 #: app/flatpak-builtins-permission-remove.c:94
 #: app/flatpak-builtins-remote-add.c:272
-#: app/flatpak-builtins-remote-delete.c:67
+#: app/flatpak-builtins-remote-delete.c:68
 #: app/flatpak-builtins-remote-list.c:229 app/flatpak-builtins-remote-ls.c:417
 msgid "Too many arguments"
 msgstr "Забагато аргументів"
@@ -1630,7 +1630,7 @@ msgstr ""
 "середовища виконання"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:266
-#: app/flatpak-builtins-remote-delete.c:62
+#: app/flatpak-builtins-remote-delete.c:63
 msgid "NAME must be specified"
 msgstr "Має бути вказано НАЗВУ"
 
@@ -2253,20 +2253,20 @@ msgstr "Попередження: не вдалося оновити додат�
 msgid "Remove remote even if in use"
 msgstr "Вилучити віддалене сховища, навіть якщо воно використовується"
 
-#: app/flatpak-builtins-remote-delete.c:52
+#: app/flatpak-builtins-remote-delete.c:53
 msgid "NAME - Delete a remote repository"
 msgstr "НАЗВА - Вилучити віддалене сховище"
 
-#: app/flatpak-builtins-remote-delete.c:98
+#: app/flatpak-builtins-remote-delete.c:99
 #, c-format
 msgid "The following refs are installed from remote '%s':"
 msgstr "Вказані нижче посилання встановлено з віддаленого сховища «%s»:"
 
-#: app/flatpak-builtins-remote-delete.c:99
+#: app/flatpak-builtins-remote-delete.c:100
 msgid "Remove them?"
 msgstr "Вилучити їх?"
 
-#: app/flatpak-builtins-remote-delete.c:101
+#: app/flatpak-builtins-remote-delete.c:102
 #, c-format
 msgid "Can't remove remote '%s' with installed refs"
 msgstr "Не можна вилучати віддалене сховище «%s» зі встановленими посиланнями"
@@ -4492,21 +4492,21 @@ msgstr ""
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Попередження: не вдалося знайти метадані %s для залежностей: %s"
 
-#: common/flatpak-transaction.c:2620
+#: common/flatpak-transaction.c:2639
 #, c-format
 msgid "Flatpakrepo URL %s not HTTP or HTTPS"
 msgstr "Адреса Flatpakrepo %s не є ні адресою HTTP, ні адресою HTTPS"
 
-#: common/flatpak-transaction.c:2634
+#: common/flatpak-transaction.c:2654
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "Некоректний .flatpakrepo: %s"
 
-#: common/flatpak-transaction.c:2875
+#: common/flatpak-transaction.c:2895
 msgid "Transaction already executed"
 msgstr "Операцію вже виконано"
 
-#: common/flatpak-transaction.c:2890
+#: common/flatpak-transaction.c:2910
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -4515,16 +4515,16 @@ msgstr ""
 "Виконання таких дій може призвести до помилок у визначенні власника об'єктів "
 "та прав доступу."
 
-#: common/flatpak-transaction.c:2977
+#: common/flatpak-transaction.c:2997
 msgid "Aborted by user"
 msgstr "Перервано користувачем"
 
-#: common/flatpak-transaction.c:3003
+#: common/flatpak-transaction.c:3023
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Пропускаємо %s через попередню помилку"
 
-#: common/flatpak-transaction.c:3192
+#: common/flatpak-transaction.c:3212
 msgid "Aborted due to failure"
 msgstr "Перервано через критичну помилку"
 

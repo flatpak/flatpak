@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-05-28 14:57+0200\n"
+"POT-Creation-Date: 2019-06-13 10:33+0200\n"
 "PO-Revision-Date: 2017-02-10 11:59+0300\n"
 "Last-Translator: Roman Kharin <romiq.kh@gmail.com>\n"
 "Language-Team: romiq.kh@gmail.com\n"
@@ -143,7 +143,7 @@ msgstr "Должны быть указаны ПУТЬ, ИМЯ_ФАЙЛА и ИМ
 #: app/flatpak-builtins-permission-list.c:157
 #: app/flatpak-builtins-permission-remove.c:94
 #: app/flatpak-builtins-remote-add.c:272
-#: app/flatpak-builtins-remote-delete.c:67
+#: app/flatpak-builtins-remote-delete.c:68
 #: app/flatpak-builtins-remote-list.c:229 app/flatpak-builtins-remote-ls.c:417
 msgid "Too many arguments"
 msgstr "Слишком много аргументов"
@@ -1614,7 +1614,7 @@ msgstr ""
 "исполнения"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:266
-#: app/flatpak-builtins-remote-delete.c:62
+#: app/flatpak-builtins-remote-delete.c:63
 msgid "NAME must be specified"
 msgstr "Должно быть указано ИМЯ"
 
@@ -2277,21 +2277,21 @@ msgstr "Невозможно обновить метаданные дополн�
 msgid "Remove remote even if in use"
 msgstr "Удалить удаленный репозиторий даже если он используется"
 
-#: app/flatpak-builtins-remote-delete.c:52
+#: app/flatpak-builtins-remote-delete.c:53
 msgid "NAME - Delete a remote repository"
 msgstr "ИМЯ - Удалить удалённый репозиторий"
 
-#: app/flatpak-builtins-remote-delete.c:98
+#: app/flatpak-builtins-remote-delete.c:99
 #, fuzzy, c-format
 msgid "The following refs are installed from remote '%s':"
 msgstr "%s ветка %s уже установлено"
 
-#: app/flatpak-builtins-remote-delete.c:99
+#: app/flatpak-builtins-remote-delete.c:100
 #, fuzzy
 msgid "Remove them?"
 msgstr "Удалённый репозиторий"
 
-#: app/flatpak-builtins-remote-delete.c:101
+#: app/flatpak-builtins-remote-delete.c:102
 #, c-format
 msgid "Can't remove remote '%s' with installed refs"
 msgstr ""
@@ -4570,36 +4570,36 @@ msgstr ""
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Невозможно обновить метаданные дополнительных данных для %s"
 
-#: common/flatpak-transaction.c:2620
+#: common/flatpak-transaction.c:2639
 #, c-format
 msgid "Flatpakrepo URL %s not HTTP or HTTPS"
 msgstr ""
 
-#: common/flatpak-transaction.c:2634
+#: common/flatpak-transaction.c:2654
 #, fuzzy, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "Неверный pid %s"
 
-#: common/flatpak-transaction.c:2875
+#: common/flatpak-transaction.c:2895
 msgid "Transaction already executed"
 msgstr ""
 
-#: common/flatpak-transaction.c:2890
+#: common/flatpak-transaction.c:2910
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
 msgstr ""
 
-#: common/flatpak-transaction.c:2977
+#: common/flatpak-transaction.c:2997
 msgid "Aborted by user"
 msgstr "Прервано пользователем"
 
-#: common/flatpak-transaction.c:3003
+#: common/flatpak-transaction.c:3023
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr ""
 
-#: common/flatpak-transaction.c:3192
+#: common/flatpak-transaction.c:3212
 msgid "Aborted due to failure"
 msgstr ""
 

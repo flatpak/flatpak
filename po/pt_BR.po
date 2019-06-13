@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-05-28 14:57+0200\n"
+"POT-Creation-Date: 2019-06-13 10:33+0200\n"
 "PO-Revision-Date: 2019-05-03 09:16-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
@@ -143,7 +143,7 @@ msgstr "LOCALIZAÇÃO, ARQUIVO e NOME devem ser especificados"
 #: app/flatpak-builtins-permission-list.c:157
 #: app/flatpak-builtins-permission-remove.c:94
 #: app/flatpak-builtins-remote-add.c:272
-#: app/flatpak-builtins-remote-delete.c:67
+#: app/flatpak-builtins-remote-delete.c:68
 #: app/flatpak-builtins-remote-list.c:229 app/flatpak-builtins-remote-ls.c:417
 msgid "Too many arguments"
 msgstr "Número excessivo de argumentos"
@@ -1605,7 +1605,7 @@ msgid "NAME [BRANCH] - Get info about an installed app or runtime"
 msgstr "NOME [RAMO] – Obtém info sobre aplicativo e/ou runtime instalados"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:266
-#: app/flatpak-builtins-remote-delete.c:62
+#: app/flatpak-builtins-remote-delete.c:63
 msgid "NAME must be specified"
 msgstr "NOME deve ser especificado"
 
@@ -2224,20 +2224,20 @@ msgstr "Aviso: Não foi possível atualizar metadados extras para “%s”: %s\n
 msgid "Remove remote even if in use"
 msgstr "Remove remoto ainda que ele esteja em uso"
 
-#: app/flatpak-builtins-remote-delete.c:52
+#: app/flatpak-builtins-remote-delete.c:53
 msgid "NAME - Delete a remote repository"
 msgstr "NOME – Exclui um repositório remoto"
 
-#: app/flatpak-builtins-remote-delete.c:98
+#: app/flatpak-builtins-remote-delete.c:99
 #, c-format
 msgid "The following refs are installed from remote '%s':"
 msgstr "As seguintes refs já estão instaladas do remoto “%s”:"
 
-#: app/flatpak-builtins-remote-delete.c:99
+#: app/flatpak-builtins-remote-delete.c:100
 msgid "Remove them?"
 msgstr "Removê-las?"
 
-#: app/flatpak-builtins-remote-delete.c:101
+#: app/flatpak-builtins-remote-delete.c:102
 #, c-format
 msgid "Can't remove remote '%s' with installed refs"
 msgstr "Não é possível remover o remoto “%s” com refs instaladas"
@@ -4461,21 +4461,21 @@ msgstr ""
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Aviso: Não foi possível localizar metadados %s para dependências: %s"
 
-#: common/flatpak-transaction.c:2620
+#: common/flatpak-transaction.c:2639
 #, c-format
 msgid "Flatpakrepo URL %s not HTTP or HTTPS"
 msgstr "URL de Flatpakrepo %s não é HTTP ou HTTPS"
 
-#: common/flatpak-transaction.c:2634
+#: common/flatpak-transaction.c:2654
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr ".flatpakrepo inválido: %s"
 
-#: common/flatpak-transaction.c:2875
+#: common/flatpak-transaction.c:2895
 msgid "Transaction already executed"
 msgstr "Transação já executada"
 
-#: common/flatpak-transaction.c:2890
+#: common/flatpak-transaction.c:2910
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -4483,16 +4483,16 @@ msgstr ""
 "Recusando-se a operar em uma instalação de usuário como root! Isso pode "
 "levar à propriedade incorreta do arquivo e a erros de permissão."
 
-#: common/flatpak-transaction.c:2977
+#: common/flatpak-transaction.c:2997
 msgid "Aborted by user"
 msgstr "Abortado pelo usuário"
 
-#: common/flatpak-transaction.c:3003
+#: common/flatpak-transaction.c:3023
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Ignorando %s por causa do erro anterior"
 
-#: common/flatpak-transaction.c:3192
+#: common/flatpak-transaction.c:3212
 msgid "Aborted due to failure"
 msgstr "Abortado por causa de falha"
 

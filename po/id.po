@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-05-28 14:57+0200\n"
+"POT-Creation-Date: 2019-06-13 10:33+0200\n"
 "PO-Revision-Date: 2019-05-22 12:06+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -141,7 +141,7 @@ msgstr "LOKASI, NAMABERKAS dan NAMA harus ditentukan"
 #: app/flatpak-builtins-permission-list.c:157
 #: app/flatpak-builtins-permission-remove.c:94
 #: app/flatpak-builtins-remote-add.c:272
-#: app/flatpak-builtins-remote-delete.c:67
+#: app/flatpak-builtins-remote-delete.c:68
 #: app/flatpak-builtins-remote-list.c:229 app/flatpak-builtins-remote-ls.c:417
 msgid "Too many arguments"
 msgstr "Terlalu banyak argumen"
@@ -1601,7 +1601,7 @@ msgstr ""
 "NAMA [CABANG] - Dapatkan info tentang aplikasi yang terpasang atau runtime"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:266
-#: app/flatpak-builtins-remote-delete.c:62
+#: app/flatpak-builtins-remote-delete.c:63
 msgid "NAME must be specified"
 msgstr "NAMA harus ditentukan"
 
@@ -2223,20 +2223,20 @@ msgstr ""
 msgid "Remove remote even if in use"
 msgstr "Hapus remote meskipun digunakan"
 
-#: app/flatpak-builtins-remote-delete.c:52
+#: app/flatpak-builtins-remote-delete.c:53
 msgid "NAME - Delete a remote repository"
 msgstr "NAMA - Menghapus repositori remote"
 
-#: app/flatpak-builtins-remote-delete.c:98
+#: app/flatpak-builtins-remote-delete.c:99
 #, c-format
 msgid "The following refs are installed from remote '%s':"
 msgstr "Ref berikut dipasang dari remote '%s':"
 
-#: app/flatpak-builtins-remote-delete.c:99
+#: app/flatpak-builtins-remote-delete.c:100
 msgid "Remove them?"
 msgstr "Hapus mereka?"
 
-#: app/flatpak-builtins-remote-delete.c:101
+#: app/flatpak-builtins-remote-delete.c:102
 #, c-format
 msgid "Can't remove remote '%s' with installed refs"
 msgstr "Tidak dapat menghapus remote '%s' dengan ref yang terpasang"
@@ -4453,21 +4453,21 @@ msgstr ""
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Peringatan: Tidak dapat menemukan metadata %s untuk dependensi: %s"
 
-#: common/flatpak-transaction.c:2620
+#: common/flatpak-transaction.c:2639
 #, c-format
 msgid "Flatpakrepo URL %s not HTTP or HTTPS"
 msgstr "URL flatpakrepo %s bukan HTTP atau HTTPS"
 
-#: common/flatpak-transaction.c:2634
+#: common/flatpak-transaction.c:2654
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr ".flatpakrepo tidak valid: %s"
 
-#: common/flatpak-transaction.c:2875
+#: common/flatpak-transaction.c:2895
 msgid "Transaction already executed"
 msgstr "Transaksi sudah dijalankan"
 
-#: common/flatpak-transaction.c:2890
+#: common/flatpak-transaction.c:2910
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -4475,16 +4475,16 @@ msgstr ""
 "Menolak beroperasi pada pemasangan pengguna sebagai root! Ini dapat "
 "menyebabkan galat kepemilikan berkas dan izin."
 
-#: common/flatpak-transaction.c:2977
+#: common/flatpak-transaction.c:2997
 msgid "Aborted by user"
 msgstr "Dibatalkan oleh pengguna"
 
-#: common/flatpak-transaction.c:3003
+#: common/flatpak-transaction.c:3023
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Melewatkan %s karena galat sebelumnya"
 
-#: common/flatpak-transaction.c:3192
+#: common/flatpak-transaction.c:3212
 msgid "Aborted due to failure"
 msgstr "Dibatalkan karena gagal"
 
