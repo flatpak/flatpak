@@ -198,7 +198,9 @@ flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
       return NULL;
     }
 
-  if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) == 0)
+  /* The docker v2 image manifest is similar enough that we can just load it, it does not have the annotation field though */
+  if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) == 0 ||
+      strcmp (mediatype, FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2) == 0)
     return (FlatpakOciVersioned *) flatpak_json_from_node (root, FLATPAK_TYPE_OCI_MANIFEST, error);
 
   if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX) == 0)
