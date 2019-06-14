@@ -82,6 +82,7 @@ flatpak_ref_finalize (GObject *object)
   g_free (priv->arch);
   g_free (priv->branch);
   g_free (priv->commit);
+  g_free (priv->collection_id);
 
   G_OBJECT_CLASS (flatpak_ref_parent_class)->finalize (object);
 }
