@@ -901,8 +901,8 @@ GPtrArray * flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                                          GCancellable *cancellable,
                                                          GError      **error);
 GPtrArray * flatpak_dir_find_local_related (FlatpakDir   *self,
-                                            const char   *remote_name,
                                             const char   *ref,
+                                            const char   *remote_name,
                                             gboolean      deployed,
                                             GCancellable *cancellable,
                                             GError      **error);
