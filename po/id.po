@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-05-28 14:57+0200\n"
-"PO-Revision-Date: 2019-05-22 12:06+0700\n"
+"POT-Creation-Date: 2019-06-12 15:24+0000\n"
+"PO-Revision-Date: 2019-06-21 15:42+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.2.3\n"
 
 #: app/flatpak-builtins-build-bundle.c:56
 msgid "Export runtime instead of app"
@@ -129,7 +129,7 @@ msgstr "LOKASI, NAMABERKAS dan NAMA harus ditentukan"
 #: app/flatpak-builtins-build-bundle.c:559
 #: app/flatpak-builtins-build-export.c:800
 #: app/flatpak-builtins-build-import-bundle.c:182
-#: app/flatpak-builtins-build-init.c:210 app/flatpak-builtins-build-sign.c:75
+#: app/flatpak-builtins-build-init.c:212 app/flatpak-builtins-build-sign.c:75
 #: app/flatpak-builtins-document-export.c:102
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:182
@@ -141,7 +141,7 @@ msgstr "LOKASI, NAMABERKAS dan NAMA harus ditentukan"
 #: app/flatpak-builtins-permission-list.c:157
 #: app/flatpak-builtins-permission-remove.c:94
 #: app/flatpak-builtins-remote-add.c:272
-#: app/flatpak-builtins-remote-delete.c:67
+#: app/flatpak-builtins-remote-delete.c:68
 #: app/flatpak-builtins-remote-list.c:229 app/flatpak-builtins-remote-ls.c:417
 msgid "Too many arguments"
 msgstr "Terlalu banyak argumen"
@@ -160,21 +160,21 @@ msgid "'%s' is not a valid repository: "
 msgstr "'%s' bukan repositori yang valid: "
 
 #: app/flatpak-builtins-build-bundle.c:589 app/flatpak-builtins-build-sign.c:87
-#: common/flatpak-dir.c:11067 common/flatpak-utils.c:1560
+#: common/flatpak-dir.c:11070 common/flatpak-utils.c:1560
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "'%s' bukan nama yang valid: %s"
 
 #: app/flatpak-builtins-build-bundle.c:592
 #: app/flatpak-builtins-build-export.c:821 app/flatpak-builtins-build-sign.c:90
-#: common/flatpak-dir.c:11073 common/flatpak-utils.c:1566
+#: common/flatpak-dir.c:11076 common/flatpak-utils.c:1566
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "'%s' bukan nama cabang yang valid: %s"
 
 #: app/flatpak-builtins-build-bundle.c:603
 #: app/flatpak-builtins-build-import-bundle.c:195
-#: app/flatpak-builtins-build-init.c:254
+#: app/flatpak-builtins-build-init.c:275
 #, c-format
 msgid "'%s' is not a valid filename"
 msgstr "'%s' bukan nama yang valid"
@@ -255,7 +255,7 @@ msgstr "Tidak ada titik ekstensi %s yang cocok pada %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Kehilangan '=' pada opsi kait bind '%s'"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3584
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3594
 msgid "Unable to start app"
 msgstr "Tidak dapat memulai aplikasi"
 
@@ -433,7 +433,7 @@ msgstr ""
 "diberikan"
 
 #: app/flatpak-builtins-build-export.c:69
-#: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:879
+#: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:882
 msgid "ID"
 msgstr "ID"
 
@@ -685,7 +685,7 @@ msgstr ""
 "GRUP=KUNCI[=NILAI]]"
 
 #: app/flatpak-builtins-build-finish.c:587
-#: app/flatpak-builtins-build-init.c:427
+#: app/flatpak-builtins-build-init.c:450
 #, c-format
 msgid ""
 "Too few elements in --extension argument %s, format should be "
@@ -830,29 +830,29 @@ msgstr "Ekstensi %s yang diminta hanya terpasang sebagian"
 msgid "Requested extension %s not installed"
 msgstr "Ekstensi %s yang diminta tidak terpasang"
 
-#: app/flatpak-builtins-build-init.c:200
+#: app/flatpak-builtins-build-init.c:202
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
 msgstr ""
 "DIREKTORI NAMAAPL SDK RUNTIME [CABANG] - Menginisialisasi direktori untuk "
 "membangun"
 
-#: app/flatpak-builtins-build-init.c:207
+#: app/flatpak-builtins-build-init.c:209
 msgid "RUNTIME must be specified"
 msgstr "RUNTIME harus ditentukan"
 
-#: app/flatpak-builtins-build-init.c:228
+#: app/flatpak-builtins-build-init.c:230
 #, c-format
 msgid "'%s' is not a valid build type name, use app, runtime or extension"
 msgstr ""
 "'%s' bukan nama tipe bangun yang valid, gunakan app, runtime, atau ekstensi"
 
-#: app/flatpak-builtins-build-init.c:234 app/flatpak-builtins-override.c:79
+#: app/flatpak-builtins-build-init.c:236 app/flatpak-builtins-override.c:79
 #, c-format
 msgid "'%s' is not a valid application name: %s"
 msgstr "'%s' bukan nama aplikasi yang valid: %s"
 
-#: app/flatpak-builtins-build-init.c:267
+#: app/flatpak-builtins-build-init.c:288
 #, c-format
 msgid "Build directory %s already initialized"
 msgstr "Direktori bangun %s sudah diinisialisasi"
@@ -1425,7 +1425,7 @@ msgstr "Tampilkan ID aplikasi/runtime"
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:62
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:66
-#: app/flatpak-cli-transaction.c:881
+#: app/flatpak-cli-transaction.c:887
 msgid "Arch"
 msgstr "Arsitektur"
 
@@ -1436,7 +1436,7 @@ msgstr "Tampilkan arsitektur"
 
 #: app/flatpak-builtins-history.c:62 app/flatpak-builtins-list.c:61
 #: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-remote-ls.c:65
-#: app/flatpak-builtins-search.c:47 app/flatpak-cli-transaction.c:883
+#: app/flatpak-builtins-search.c:47 app/flatpak-cli-transaction.c:890
 msgid "Branch"
 msgstr "Cabang"
 
@@ -1453,7 +1453,7 @@ msgstr "Pemasangan"
 msgid "Show the affected installation"
 msgstr "Tampilkan pemasangan yang terpengaruh"
 
-#: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:900
+#: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:907
 msgid "Remote"
 msgstr "Remote"
 
@@ -1598,10 +1598,10 @@ msgstr "Tampilkan lokasi"
 #: app/flatpak-builtins-info.c:116
 msgid "NAME [BRANCH] - Get info about an installed app or runtime"
 msgstr ""
-"NAMA [CABANG] - Dapatkan info tentang aplikasi yang terpasang atau runtime"
+"NAMA [CABANG] - Dapatkan info tentang aplikasi atau runtime yang terpasang"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:266
-#: app/flatpak-builtins-remote-delete.c:62
+#: app/flatpak-builtins-remote-delete.c:63
 msgid "NAME must be specified"
 msgstr "NAMA harus ditentukan"
 
@@ -1986,7 +1986,7 @@ msgstr "Tampilkan opsi"
 
 #: app/flatpak-builtins-list.c:427
 msgid " - List installed apps and/or runtimes"
-msgstr " - Daftar aplikasi dan/atau runtimes yang terpasang"
+msgstr " - Daftar aplikasi dan/atau runtime yang terpasang"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -2223,20 +2223,20 @@ msgstr ""
 msgid "Remove remote even if in use"
 msgstr "Hapus remote meskipun digunakan"
 
-#: app/flatpak-builtins-remote-delete.c:52
+#: app/flatpak-builtins-remote-delete.c:53
 msgid "NAME - Delete a remote repository"
 msgstr "NAMA - Menghapus repositori remote"
 
-#: app/flatpak-builtins-remote-delete.c:98
+#: app/flatpak-builtins-remote-delete.c:99
 #, c-format
 msgid "The following refs are installed from remote '%s':"
 msgstr "Ref berikut dipasang dari remote '%s':"
 
-#: app/flatpak-builtins-remote-delete.c:99
+#: app/flatpak-builtins-remote-delete.c:100
 msgid "Remove them?"
 msgstr "Hapus mereka?"
 
-#: app/flatpak-builtins-remote-delete.c:101
+#: app/flatpak-builtins-remote-delete.c:102
 #, c-format
 msgid "Can't remove remote '%s' with installed refs"
 msgstr "Tidak dapat menghapus remote '%s' dengan ref yang terpasang"
@@ -2269,7 +2269,7 @@ msgstr "REMOTE dan REF harus ditentukan"
 
 #: app/flatpak-builtins-remote-info.c:159 common/flatpak-dir.c:3566
 #: common/flatpak-dir.c:5004 common/flatpak-dir.c:5075
-#: common/flatpak-dir.c:5320 common/flatpak-dir.c:13378
+#: common/flatpak-dir.c:5320 common/flatpak-dir.c:13381
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr "Tidak dapat menemukan checksum terbaru untuk %s pada remote %s"
@@ -2634,7 +2634,7 @@ msgstr "%zd cabang\n"
 msgid "Installed"
 msgstr "Terpasang"
 
-#: app/flatpak-builtins-repo.c:160 app/flatpak-cli-transaction.c:909
+#: app/flatpak-builtins-repo.c:160 app/flatpak-cli-transaction.c:916
 msgid "Download"
 msgstr "Unduh"
 
@@ -2797,7 +2797,7 @@ msgstr "Tidak harus menentukan REF ketika menggunakan --unused"
 msgid "Nothing unused to uninstall\n"
 msgstr "Tidak ada yang tidak digunakan untuk menghapus pemasangan\n"
 
-#: app/flatpak-builtins-uninstall.c:311 common/flatpak-dir.c:11623
+#: app/flatpak-builtins-uninstall.c:311 common/flatpak-dir.c:11626
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s tidak terpasang"
@@ -2983,31 +2983,31 @@ msgstr ""
 "Menambahkan :s[tart], :m[iddle], :e[nd] atau :f[ull] untuk mengubah "
 "elipsisasi"
 
-#: app/flatpak-cli-transaction.c:84 app/flatpak-cli-transaction.c:90
+#: app/flatpak-cli-transaction.c:85 app/flatpak-cli-transaction.c:91
 #, c-format
 msgid "Required runtime for %s (%s) found in remote %s\n"
 msgstr "Diperlukan runtime untuk %s (%s) ditemukan di remote %s\n"
 
-#: app/flatpak-cli-transaction.c:92
+#: app/flatpak-cli-transaction.c:93
 msgid "Do you want to install it?"
 msgstr "Apakah Anda ingin memasangnya?"
 
-#: app/flatpak-cli-transaction.c:98
+#: app/flatpak-cli-transaction.c:99
 #, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
 msgstr "Diperlukan runtime untuk %s (%s) yang ditemukan pada remote:"
 
-#: app/flatpak-cli-transaction.c:100
+#: app/flatpak-cli-transaction.c:101
 msgid "Which do you want to install (0 to abort)?"
 msgstr "Mana yang ingin Anda pasang (0 untuk membatalkan)?"
 
-#: app/flatpak-cli-transaction.c:118
+#: app/flatpak-cli-transaction.c:119
 #, c-format
 msgid "Configuring %s as new remote '%s'"
 msgstr "Mengonfigurasi %s sebagai remote baru '%s'"
 
 #. default to yes on Enter
-#: app/flatpak-cli-transaction.c:125
+#: app/flatpak-cli-transaction.c:126
 #, c-format
 msgid ""
 "The remote '%s', referred to by '%s' at location %s contains additional "
@@ -3019,7 +3019,7 @@ msgstr ""
 "Haruskah remote disimpan untuk pemasangan di masa depan?"
 
 #. default to yes on Enter
-#: app/flatpak-cli-transaction.c:133
+#: app/flatpak-cli-transaction.c:134
 #, c-format
 msgid ""
 "The application %s depends on runtimes from:\n"
@@ -3030,174 +3030,174 @@ msgstr ""
 "   %s\n"
 "Konfigurasikan ini sebagai remote baru '%s'"
 
-#: app/flatpak-cli-transaction.c:148 app/flatpak-quiet-transaction.c:100
+#: app/flatpak-cli-transaction.c:149 app/flatpak-quiet-transaction.c:100
 msgid "install"
 msgstr "pasang"
 
-#: app/flatpak-cli-transaction.c:151 app/flatpak-quiet-transaction.c:103
+#: app/flatpak-cli-transaction.c:152 app/flatpak-quiet-transaction.c:103
 msgid "update"
 msgstr "pemutakhiran"
 
-#: app/flatpak-cli-transaction.c:154 app/flatpak-quiet-transaction.c:106
+#: app/flatpak-cli-transaction.c:155 app/flatpak-quiet-transaction.c:106
 msgid "install bundle"
 msgstr "pasang bundel"
 
-#: app/flatpak-cli-transaction.c:157 app/flatpak-quiet-transaction.c:109
+#: app/flatpak-cli-transaction.c:158 app/flatpak-quiet-transaction.c:109
 msgid "uninstall"
 msgstr "hapus pemasangan"
 
-#: app/flatpak-cli-transaction.c:374
+#: app/flatpak-cli-transaction.c:375
 msgid "Installing…"
 msgstr "Memasang…"
 
-#: app/flatpak-cli-transaction.c:376
+#: app/flatpak-cli-transaction.c:377
 #, c-format
 msgid "Installing %d/%d…"
 msgstr "Memasang %d/%d…"
 
-#: app/flatpak-cli-transaction.c:381
+#: app/flatpak-cli-transaction.c:382
 msgid "Updating…"
 msgstr "Memutakhirkan…"
 
-#: app/flatpak-cli-transaction.c:383
+#: app/flatpak-cli-transaction.c:384
 #, c-format
 msgid "Updating %d/%d…"
 msgstr "Memutakhirkan %d/%d…"
 
-#: app/flatpak-cli-transaction.c:388
+#: app/flatpak-cli-transaction.c:389
 msgid "Uninstalling…"
 msgstr "Menghapus pemasangan…"
 
-#: app/flatpak-cli-transaction.c:390
+#: app/flatpak-cli-transaction.c:391
 #, c-format
 msgid "Uninstalling %d/%d…"
 msgstr "Menghapus pemasangan %d/%d…"
 
-#: app/flatpak-cli-transaction.c:449 app/flatpak-quiet-transaction.c:131
+#: app/flatpak-cli-transaction.c:450 app/flatpak-quiet-transaction.c:131
 #, c-format
 msgid "Info: %s was skipped"
 msgstr "Info: %s dilewati"
 
-#: app/flatpak-cli-transaction.c:467 app/flatpak-quiet-transaction.c:136
-#: common/flatpak-dir.c:9094
+#: app/flatpak-cli-transaction.c:468 app/flatpak-quiet-transaction.c:136
+#: common/flatpak-dir.c:9097
 #, c-format
 msgid "%s already installed"
 msgstr "%s sudah dipasang"
 
-#: app/flatpak-cli-transaction.c:469 app/flatpak-cli-transaction.c:471
+#: app/flatpak-cli-transaction.c:470 app/flatpak-cli-transaction.c:472
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
 #: common/flatpak-dir.c:2097 common/flatpak-dir.c:2607
-#: common/flatpak-dir.c:2632 common/flatpak-dir.c:13871
-#: common/flatpak-transaction.c:1768 common/flatpak-transaction.c:1795
+#: common/flatpak-dir.c:2632 common/flatpak-dir.c:13874
+#: common/flatpak-transaction.c:1770 common/flatpak-transaction.c:1797
 #: common/flatpak-utils.c:1753 common/flatpak-utils.c:1846
 #, c-format
 msgid "%s not installed"
 msgstr "%s tidak terpasang"
 
-#: app/flatpak-cli-transaction.c:473 app/flatpak-quiet-transaction.c:142
+#: app/flatpak-cli-transaction.c:474 app/flatpak-quiet-transaction.c:142
 #, c-format
 msgid "%s needs a later flatpak version"
 msgstr "%s membutuhkan versi flatpak yang lebih baru"
 
-#: app/flatpak-cli-transaction.c:475 app/flatpak-quiet-transaction.c:144
+#: app/flatpak-cli-transaction.c:476 app/flatpak-quiet-transaction.c:144
 msgid "Not enough disk space to complete this operation"
 msgstr "Ruang diska tidak cukup untuk menyelesaikan operasi ini"
 
-#: app/flatpak-cli-transaction.c:482
+#: app/flatpak-cli-transaction.c:483
 #, c-format
 msgid "Failed to %s %s: "
 msgstr "Gagal untuk %s %s: "
 
-#: app/flatpak-cli-transaction.c:485 app/flatpak-quiet-transaction.c:149
+#: app/flatpak-cli-transaction.c:486 app/flatpak-quiet-transaction.c:149
 msgid "Warning:"
 msgstr "Peringatan:"
 
-#: app/flatpak-cli-transaction.c:485 app/flatpak-quiet-transaction.c:149
+#: app/flatpak-cli-transaction.c:486 app/flatpak-quiet-transaction.c:149
 msgid "Error:"
 msgstr "Galat:"
 
-#: app/flatpak-cli-transaction.c:516 app/flatpak-quiet-transaction.c:174
+#: app/flatpak-cli-transaction.c:517 app/flatpak-quiet-transaction.c:174
 #, c-format
 msgid "Info: %s is end-of-life, in preference of %s\n"
 msgstr "Info: %s adalah akhir-masa-pakai, dalam preferensi %s\n"
 
-#: app/flatpak-cli-transaction.c:518 app/flatpak-quiet-transaction.c:176
+#: app/flatpak-cli-transaction.c:519 app/flatpak-quiet-transaction.c:176
 #, c-format
 msgid "Info: %s is end-of-life, with reason: %s\n"
 msgstr "Info: %s adalah akhir-masa-pakai, dengan alasan: %s\n"
 
-#: app/flatpak-cli-transaction.c:523
+#: app/flatpak-cli-transaction.c:524
 #, c-format
 msgid "Replace it with %s?"
 msgstr "Ganti dengan %s?"
 
-#: app/flatpak-cli-transaction.c:528 app/flatpak-quiet-transaction.c:182
+#: app/flatpak-cli-transaction.c:529 app/flatpak-quiet-transaction.c:182
 msgid "Updating to rebased version\n"
 msgstr "Memutakhirkan ke versi yang di-rebase\n"
 
-#: app/flatpak-cli-transaction.c:535
+#: app/flatpak-cli-transaction.c:536
 #, c-format
 msgid "Failed to rebase %s to %s: "
 msgstr "Gagal rebase %s ke %s: "
 
-#: app/flatpak-cli-transaction.c:736
+#: app/flatpak-cli-transaction.c:737
 #, c-format
 msgid "New %s permissions:"
 msgstr "Izin %s baru:"
 
-#: app/flatpak-cli-transaction.c:738
+#: app/flatpak-cli-transaction.c:739
 #, c-format
 msgid "%s permissions:"
 msgstr "%s izin:"
 
-#: app/flatpak-cli-transaction.c:801
+#: app/flatpak-cli-transaction.c:802
 msgid "Warning: "
 msgstr "Peringatan: "
 
 #. translators: This is short for operation, the title of a one-char column
-#: app/flatpak-cli-transaction.c:889
+#: app/flatpak-cli-transaction.c:896
 msgid "Op"
 msgstr "Op"
 
 #. Avoid resizing the download column too much,
 #. * by making the title as long as typical content
 #.
-#: app/flatpak-cli-transaction.c:906 app/flatpak-cli-transaction.c:945
+#: app/flatpak-cli-transaction.c:913 app/flatpak-cli-transaction.c:952
 msgid "partial"
 msgstr "parsial"
 
-#: app/flatpak-cli-transaction.c:977
+#: app/flatpak-cli-transaction.c:984
 msgid "Proceed with these changes to the user installation?"
 msgstr "Lanjutkan dengan perubahan ini pada pemasangan pengguna?"
 
-#: app/flatpak-cli-transaction.c:979
+#: app/flatpak-cli-transaction.c:986
 msgid "Proceed with these changes to the system installation?"
 msgstr "Lanjutkan dengan perubahan ini pada pemasangan sistem?"
 
-#: app/flatpak-cli-transaction.c:981
+#: app/flatpak-cli-transaction.c:988
 #, c-format
 msgid "Proceed with these changes to the %s?"
 msgstr "Lanjutkan dengan perubahan ini ke %s?"
 
-#: app/flatpak-cli-transaction.c:1110
+#: app/flatpak-cli-transaction.c:1119
 msgid "Changes complete."
 msgstr "Perubahan selesai."
 
-#: app/flatpak-cli-transaction.c:1112
+#: app/flatpak-cli-transaction.c:1121
 msgid "Uninstall complete."
 msgstr "Hapus pemasangan selesai."
 
-#: app/flatpak-cli-transaction.c:1114
+#: app/flatpak-cli-transaction.c:1123
 msgid "Installation complete."
 msgstr "Pemasangan selesai."
 
-#: app/flatpak-cli-transaction.c:1116
+#: app/flatpak-cli-transaction.c:1125
 msgid "Updates complete."
 msgstr "Pemutakhiran selesai."
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:1149
+#: app/flatpak-cli-transaction.c:1158
 msgid "There were one or more errors"
 msgstr "Ada satu galat atau lebih"
 
@@ -3212,11 +3212,11 @@ msgstr "Pasang aplikasi atau runtime"
 
 #: app/flatpak-main.c:76
 msgid "Update an installed application or runtime"
-msgstr "Mutakhirkan aplikasi yang terpasang atau runtime"
+msgstr "Mutakhirkan aplikasi atau runtime yang terpasang"
 
 #: app/flatpak-main.c:77
 msgid "Uninstall an installed application or runtime"
-msgstr "Hapus aplikasi yang terpasang atau runtime"
+msgstr "Hapus aplikasi atau runtime yang terpasang"
 
 #: app/flatpak-main.c:80
 msgid "List installed apps and/or runtimes"
@@ -3224,7 +3224,7 @@ msgstr "Daftar aplikasi dan/atau runtime yang terpasang"
 
 #: app/flatpak-main.c:81
 msgid "Show info for installed app or runtime"
-msgstr "Tampilkan info untuk aplikasi yang terpasang atau runtime"
+msgstr "Tampilkan info untuk aplikasi atau runtime yang terpasang"
 
 #: app/flatpak-main.c:82
 msgid "Show history"
@@ -3811,7 +3811,7 @@ msgstr "Kunci konfig %s tidak disetel"
 msgid "No appstream commit to deploy"
 msgstr "Tidak ada komit aplikasi untuk dideploy"
 
-#: common/flatpak-dir.c:3319 common/flatpak-dir.c:7603
+#: common/flatpak-dir.c:3319 common/flatpak-dir.c:7606
 msgid "Can't create deploy directory"
 msgstr "Tidak dapat membuat direktori deploy"
 
@@ -3826,8 +3826,8 @@ msgid "No remotes found which provide these refs: [%s]"
 msgstr "Tidak ditemukan remote yang menyediakan ref ini: [%s]"
 
 #: common/flatpak-dir.c:4211 common/flatpak-dir.c:5551
-#: common/flatpak-dir.c:8539 common/flatpak-dir.c:9240
-#: common/flatpak-dir.c:12965 common/flatpak-dir.c:13034
+#: common/flatpak-dir.c:8542 common/flatpak-dir.c:9243
+#: common/flatpak-dir.c:12968 common/flatpak-dir.c:13037
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr "Tidak dapat menarik remote non-gpg yang tidak terpercaya"
 
@@ -3886,8 +3886,8 @@ msgstr "Checksum tidak valid untuk data ekstra %s"
 msgid "Remote OCI index has no registry uri"
 msgstr "Indeks remote OCI tidak memiliki registry uri"
 
-#: common/flatpak-dir.c:5010 common/flatpak-dir.c:7594
-#: common/flatpak-dir.c:9114
+#: common/flatpak-dir.c:5010 common/flatpak-dir.c:7597
+#: common/flatpak-dir.c:9117
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s komit %s sudah terpasang"
@@ -3932,7 +3932,7 @@ msgstr ""
 "Metadata komit yang diharapkan untuk memiliki informasi yang mengikat, tidak "
 "menemukan satu pun"
 
-#: common/flatpak-dir.c:5651 common/flatpak-dir.c:13410
+#: common/flatpak-dir.c:5651 common/flatpak-dir.c:13413
 #, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata"
 msgstr "Komit tidak meminta referensi '%s' dalam metadata yang mengikat ref"
@@ -4006,150 +4006,150 @@ msgstr "Saat menulis berkas data ekstra '%s': "
 msgid "Extra data %s missing in detached metadata"
 msgstr "Data ekstra %s hilang dalam metadata terpisah"
 
-#: common/flatpak-dir.c:7469
+#: common/flatpak-dir.c:7472
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "Skrip apply_extra gagal, status keluar %d"
 
-#: common/flatpak-dir.c:7567
+#: common/flatpak-dir.c:7570
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Saat mencoba menyelesaikan ref %s: "
 
-#: common/flatpak-dir.c:7582
+#: common/flatpak-dir.c:7585
 #, c-format
 msgid "%s is not available"
 msgstr "%s tak tersedia"
 
-#: common/flatpak-dir.c:7611
+#: common/flatpak-dir.c:7614
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Gagal membaca komit %s: "
 
-#: common/flatpak-dir.c:7631
+#: common/flatpak-dir.c:7634
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Saat mencoba melakukan checkout %s ke %s: "
 
-#: common/flatpak-dir.c:7656
+#: common/flatpak-dir.c:7659
 msgid "While trying to checkout metadata subpath: "
 msgstr "Saat mencoba melakukan checkout metadata subpath: "
 
-#: common/flatpak-dir.c:7687
+#: common/flatpak-dir.c:7690
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "Saat mencoba melakukan checkout subpath ‘%s’: "
 
-#: common/flatpak-dir.c:7697
+#: common/flatpak-dir.c:7700
 msgid "While trying to remove existing extra dir: "
 msgstr "Saat mencoba menghapus direktori tambahan yang ada: "
 
-#: common/flatpak-dir.c:7708
+#: common/flatpak-dir.c:7711
 msgid "While trying to apply extra data: "
 msgstr "Saat mencoba menerapkan data tambahan: "
 
-#: common/flatpak-dir.c:7735
+#: common/flatpak-dir.c:7738
 #, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Ref %s yang dideploy tidak valid: "
 
-#: common/flatpak-dir.c:7742
+#: common/flatpak-dir.c:7745
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Komit ref %s tidak valid: "
 
-#: common/flatpak-dir.c:7750
+#: common/flatpak-dir.c:7753
 #, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr "Jenis ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:7758
+#: common/flatpak-dir.c:7761
 #, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr "Nama ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:7766
+#: common/flatpak-dir.c:7769
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr "Arsitektur ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:7772
+#: common/flatpak-dir.c:7775
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Cabang ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:7778
+#: common/flatpak-dir.c:7781
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Ref %s yang dideploy tidak cocok dengan komit (%s)"
 
-#: common/flatpak-dir.c:7807
+#: common/flatpak-dir.c:7810
 msgid "Deployed metadata does not match commit"
 msgstr "Metadata yang dideploy tidak cocok dengan komit"
 
-#: common/flatpak-dir.c:8024 common/flatpak-installation.c:1951
+#: common/flatpak-dir.c:8027 common/flatpak-installation.c:1951
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s cabang %s sudah terpasang"
 
-#: common/flatpak-dir.c:8921
+#: common/flatpak-dir.c:8924
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Versi %s ini sudah terpasang"
 
-#: common/flatpak-dir.c:8928
+#: common/flatpak-dir.c:8931
 msgid "Can't change remote during bundle install"
 msgstr "Tidak dapat mengubah remote saat memasang paket"
 
-#: common/flatpak-dir.c:9186
+#: common/flatpak-dir.c:9189
 msgid "Can't update to a specific commit without root permissions"
 msgstr "Tidak dapat memutakhirkan ke komit spesifik tanpa izin root"
 
-#: common/flatpak-dir.c:9472
+#: common/flatpak-dir.c:9475
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "Tidak dapat menghapus %s, diperlukan untuk: %s"
 
-#: common/flatpak-dir.c:9520 common/flatpak-installation.c:2110
+#: common/flatpak-dir.c:9523 common/flatpak-installation.c:2110
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s cabang %s tidak terpasang"
 
-#: common/flatpak-dir.c:9763
+#: common/flatpak-dir.c:9766
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s komit %s tidak dipasang"
 
-#: common/flatpak-dir.c:10098
+#: common/flatpak-dir.c:10101
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Pemangkasan repo gagal: %s"
 
-#: common/flatpak-dir.c:10267 common/flatpak-dir.c:10273
+#: common/flatpak-dir.c:10270 common/flatpak-dir.c:10276
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "Gagal memuat penyaring '%s'"
 
-#: common/flatpak-dir.c:10279
+#: common/flatpak-dir.c:10282
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "Gagal mengurai penyaring '%s'"
 
-#: common/flatpak-dir.c:10555
+#: common/flatpak-dir.c:10558
 msgid "Failed to write summary cache: "
 msgstr "Gagal menulis ringkasan singgahan: "
 
-#: common/flatpak-dir.c:10574
+#: common/flatpak-dir.c:10577
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "Tidak ada ringkasan oci disinggahkan untuk remote '%s'"
 
-#: common/flatpak-dir.c:10649
+#: common/flatpak-dir.c:10652
 #, c-format
 msgid "No summary cached for remote '%s'"
 msgstr "Tidak ada ringkasan disinggahkan untuk rmote '%s'"
 
-#: common/flatpak-dir.c:10667
+#: common/flatpak-dir.c:10670
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -4158,99 +4158,99 @@ msgstr ""
 "Daftar remote untuk %s tidak tersedia; server tidak memiliki berkas "
 "ringkasan. Periksa URL yang diteruskan ke remote-add valid."
 
-#: common/flatpak-dir.c:10819
+#: common/flatpak-dir.c:10822
 #, c-format
 msgid "No repo metadata cached for remote '%s'"
 msgstr "Tidak ada metadata repo yang disinggahkan untuk remote '%s'"
 
-#: common/flatpak-dir.c:10982
+#: common/flatpak-dir.c:10985
 #, c-format
 msgid "No summary or Flatpak cache available for remote %s"
 msgstr ""
 "Tidak ada ringkasan atau singgahan Flatpak yang tersedia untuk remote %s"
 
-#: common/flatpak-dir.c:11215
+#: common/flatpak-dir.c:11218
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 "Beberapa cabang tersedia untuk %s, Anda harus menentukan salah satu dari: "
 
-#: common/flatpak-dir.c:11236
+#: common/flatpak-dir.c:11239
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Tidak ada yang cocok dengan %s"
 
-#: common/flatpak-dir.c:11342
+#: common/flatpak-dir.c:11345
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Tidak dapat menemukan ref %s%s%s%s%s"
 
-#: common/flatpak-dir.c:11386
+#: common/flatpak-dir.c:11389
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Galat mencari remote %s: %s"
 
-#: common/flatpak-dir.c:11477
+#: common/flatpak-dir.c:11480
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Galat mencari repositori lokal: %s"
 
-#: common/flatpak-dir.c:11800
+#: common/flatpak-dir.c:11803
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Tidak dapat menemukan pemasangan %s"
 
-#: common/flatpak-dir.c:12284
+#: common/flatpak-dir.c:12287
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "Format berkas tidak valid, tidak ada grup %s"
 
-#: common/flatpak-dir.c:12289 common/flatpak-utils.c:2851
+#: common/flatpak-dir.c:12292 common/flatpak-utils.c:2851
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Versi %s tidak valid, hanya 1 yang didukung"
 
-#: common/flatpak-dir.c:12294 common/flatpak-dir.c:12299
+#: common/flatpak-dir.c:12297 common/flatpak-dir.c:12302
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "Format berkas tidak valid, tidak ada %s yang ditentukan"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:12322
+#: common/flatpak-dir.c:12325
 msgid "Invalid file format, gpg key invalid"
 msgstr "Format berkas tidak valid, kunci gpg tidak valid"
 
-#: common/flatpak-dir.c:12340 common/flatpak-utils.c:2904
+#: common/flatpak-dir.c:12343 common/flatpak-utils.c:2904
 msgid "Collection ID requires GPG key to be provided"
 msgstr "ID Koleksi membutuhkan kunci GPG yang akan disediakan"
 
-#: common/flatpak-dir.c:12384
+#: common/flatpak-dir.c:12387
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Runtime %s, cabang %s telah terpasang"
 
-#: common/flatpak-dir.c:12385
+#: common/flatpak-dir.c:12388
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Aplikasi %s, cabang %s sudah terpasang"
 
-#: common/flatpak-dir.c:12668
+#: common/flatpak-dir.c:12671
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 "Tidak dapat menghapus remote '%s' dengan ref %s yang terpasang (setidaknya)"
 
-#: common/flatpak-dir.c:12768
+#: common/flatpak-dir.c:12771
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "Karakter tidak valid '/' dalam nama remote: %s"
 
-#: common/flatpak-dir.c:12774
+#: common/flatpak-dir.c:12777
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "Tidak ada konfigurasi untuk remote %s yang ditentukan"
 
-#: common/flatpak-dir.c:13038
+#: common/flatpak-dir.c:13041
 msgid "No metadata branch for OCI"
 msgstr "Tidak ada cabang metadata untuk OCI"
 
@@ -4319,77 +4319,77 @@ msgstr "Gagal menentukan bagian dari ref: %s"
 msgid "No systemd user session available, cgroups not available"
 msgstr "Tidak ada sesi pengguna systemd, cgroup tidak tersedia"
 
-#: common/flatpak-run.c:2049
+#: common/flatpak-run.c:2059
 msgid "Unable to allocate instance id"
 msgstr "Tidak dapat mengalokasikan id instance"
 
-#: common/flatpak-run.c:2169 common/flatpak-run.c:2179
+#: common/flatpak-run.c:2179 common/flatpak-run.c:2189
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Gagal membuka berkas flatpak-info: %s"
 
-#: common/flatpak-run.c:2199
+#: common/flatpak-run.c:2209
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Gagal membuka berkas bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2510
+#: common/flatpak-run.c:2520
 msgid "Initialize seccomp failed"
 msgstr "Inisialisasi seccomp gagal"
 
-#: common/flatpak-run.c:2549
+#: common/flatpak-run.c:2559
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Gagal menambahkan arsitektur ke penyaring seccomp"
 
-#: common/flatpak-run.c:2558
+#: common/flatpak-run.c:2568
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Gagal menambahkan arsitektur multiarch ke penyaring seccomp"
 
 #. unknown syscall
-#: common/flatpak-run.c:2577 common/flatpak-run.c:2591
+#: common/flatpak-run.c:2587 common/flatpak-run.c:2601
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Gagal memblokir syscall %d"
 
-#: common/flatpak-run.c:2622
+#: common/flatpak-run.c:2632
 msgid "Failed to export bpf"
 msgstr "Gagal mengekspor bpf"
 
-#: common/flatpak-run.c:2677
+#: common/flatpak-run.c:2687
 #, c-format
 msgid "Invalid group: %d"
 msgstr "Grup tidak valid: %d"
 
-#: common/flatpak-run.c:2851
+#: common/flatpak-run.c:2861
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Gagal membuka ‘%s’"
 
-#: common/flatpak-run.c:3128
+#: common/flatpak-run.c:3138
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig gagal, status keluar %d"
 
-#: common/flatpak-run.c:3135
+#: common/flatpak-run.c:3145
 msgid "Can't open generated ld.so.cache"
 msgstr "Tidak dapat membuka ld.so.cache yang dihasilkan"
 
-#: common/flatpak-run.c:3250
+#: common/flatpak-run.c:3260
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Salah jumlah komponen dalam runtime %s"
 
-#: common/flatpak-run.c:3364
+#: common/flatpak-run.c:3374
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Gagal bermigrasi dari %s: %s"
 
-#: common/flatpak-run.c:3379
+#: common/flatpak-run.c:3389
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "Gagal memigrasi direktori data aplikasi lama %s ke nama baru %s: %s"
 
-#: common/flatpak-run.c:3388
+#: common/flatpak-run.c:3398
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Gagal membuat symlink saat memigrasi %s: %s"
@@ -4409,37 +4409,37 @@ msgstr "Aplikasi %s membutuhkan runtime %s yang tidak ditemukan"
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "Aplikasi %s membutuhkan runtime %s yang tidak dipasang"
 
-#: common/flatpak-transaction.c:1708
+#: common/flatpak-transaction.c:1710
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "Tidak dapat menghapus %s yang diperlukan untuk %s"
 
-#: common/flatpak-transaction.c:1772
+#: common/flatpak-transaction.c:1774
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Remote %s dinonaktifkan, mengabaikan pemutakhiran %s"
 
-#: common/flatpak-transaction.c:1784
+#: common/flatpak-transaction.c:1786
 #, c-format
 msgid "%s is already installed"
 msgstr "%s sudah dipasang"
 
-#: common/flatpak-transaction.c:1787
+#: common/flatpak-transaction.c:1789
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s sudah dipasang dari remote %s"
 
-#: common/flatpak-transaction.c:1942
+#: common/flatpak-transaction.c:1944
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr ".flatpakref tidak valid: %s"
 
-#: common/flatpak-transaction.c:2029
+#: common/flatpak-transaction.c:2031
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Galat memutakhirkan metadata remote untuk '%s': %s"
 
-#: common/flatpak-transaction.c:2314
+#: common/flatpak-transaction.c:2316
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -4448,26 +4448,26 @@ msgstr ""
 "Peringatan: Memperlakukan kesalahan pengambilan remote sebagai non-fatal "
 "sejak %s sudah dipasang: %s"
 
-#: common/flatpak-transaction.c:2324
+#: common/flatpak-transaction.c:2326
 #, c-format
 msgid "Warning: Can't find %s metadata for dependencies: %s"
 msgstr "Peringatan: Tidak dapat menemukan metadata %s untuk dependensi: %s"
 
-#: common/flatpak-transaction.c:2620
+#: common/flatpak-transaction.c:2641
 #, c-format
 msgid "Flatpakrepo URL %s not HTTP or HTTPS"
 msgstr "URL flatpakrepo %s bukan HTTP atau HTTPS"
 
-#: common/flatpak-transaction.c:2634
+#: common/flatpak-transaction.c:2656
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr ".flatpakrepo tidak valid: %s"
 
-#: common/flatpak-transaction.c:2875
+#: common/flatpak-transaction.c:2897
 msgid "Transaction already executed"
 msgstr "Transaksi sudah dijalankan"
 
-#: common/flatpak-transaction.c:2890
+#: common/flatpak-transaction.c:2912
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -4475,16 +4475,16 @@ msgstr ""
 "Menolak beroperasi pada pemasangan pengguna sebagai root! Ini dapat "
 "menyebabkan galat kepemilikan berkas dan izin."
 
-#: common/flatpak-transaction.c:2977
+#: common/flatpak-transaction.c:2999
 msgid "Aborted by user"
 msgstr "Dibatalkan oleh pengguna"
 
-#: common/flatpak-transaction.c:3003
+#: common/flatpak-transaction.c:3025
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Melewatkan %s karena galat sebelumnya"
 
-#: common/flatpak-transaction.c:3192
+#: common/flatpak-transaction.c:3214
 msgid "Aborted due to failure"
 msgstr "Dibatalkan karena gagal"
 
