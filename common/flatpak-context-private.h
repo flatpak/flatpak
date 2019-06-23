@@ -73,6 +73,7 @@ struct FlatpakContext
   GHashTable            *session_bus_policy;
   GHashTable            *system_bus_policy;
   GHashTable            *generic_policy;
+  GHashTable            *app_persistent;
 };
 
 extern const char *flatpak_context_sockets[];
@@ -85,6 +86,7 @@ void           flatpak_context_free (FlatpakContext *context);
 void           flatpak_context_merge (FlatpakContext *context,
                                       FlatpakContext *other);
 GOptionEntry  *flatpak_context_get_option_entries (void);
+GOptionEntry  *flatpak_context_get_finish_option_entries (void);
 GOptionGroup  *flatpak_context_get_options (FlatpakContext *context);
 gboolean       flatpak_context_load_metadata (FlatpakContext *context,
                                               GKeyFile       *metakey,

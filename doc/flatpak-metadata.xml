@@ -332,6 +332,27 @@
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>app-persistent</option> (list)</term>
+                    <listitem><para>
+                      In general, applications should conform to the
+                      <ulink url="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html"
+                      >freedesktop.org Base Directory Specification</ulink> instead of
+                      writing data into the read-only application directory.
+                    </para>
+                    <para>
+                      List of /app-relative paths to make available at
+                      the corresponding path in the per-application home directory,
+                      allowing the locations to be used for persistent data when
+                      the application needs to write to the read-only application dir.
+                      For instance making "saves" persistent would make "/app/saves"
+                      in the sandbox a bind mount to "~/.var/app/org.my.App/saves",
+                      thus allowing an unmodified application to save data in
+                      the per-application location. The paths must already exist in /app
+                      and must be empty files or empty directories. This option cannot
+                      be overriden by the user. Available since 1.5.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>persistent</option> (list)</term>
                     <listitem><para>
                       List of homedir-relative paths to make available at

@@ -289,6 +289,61 @@ collect_exports (GFile          *base,
 }
 
 static gboolean
+check_app_persistent (FlatpakContext  *arg_context,
+                      GFile           *files_dir,
+                      GCancellable    *cancellable,
+                      GError         **error)
+{
+  GHashTableIter iter;
+
+  g_hash_table_iter_init (&iter, arg_context->app_persistent);
+  gpointer key, value;
+
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      char *path = (char *) key;
+      g_autoptr (GFile) persistent_file = g_file_get_child (files_dir, path);
+      g_autoptr (GFileInfo) info = g_file_query_info (persistent_file, G_FILE_ATTRIBUTE_STANDARD_TYPE "," G_FILE_ATTRIBUTE_STANDARD_SIZE, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, cancellable, error);
+      GFileType type;
+
+      if (info == NULL)
+        {
+          g_prefix_error (error, _("Invalid --app-persist argument: "));
+          return FALSE;
+        }
+
+      type = g_file_info_get_file_type (info);
+
+      if (type == G_FILE_TYPE_REGULAR)
+        {
+          if (g_file_info_get_size (info) != 0)
+            return flatpak_fail (error, _("Invalid --app-persist file: %s must be empty"), path);
+        }
+      else if (type == G_FILE_TYPE_DIRECTORY)
+        {
+          g_autoptr (GFileInfo) child = NULL;
+          g_autoptr (GFileEnumerator) dir_enumerator = NULL;
+
+          dir_enumerator = g_file_enumerate_children (persistent_file, G_FILE_ATTRIBUTE_STANDARD_NAME, G_FILE_QUERY_INFO_NONE, cancellable, error);
+          if (dir_enumerator == NULL)
+            return FALSE;
+
+          child = g_file_enumerator_next_file (dir_enumerator, cancellable, error);
+          if (*error != NULL)
+            return FALSE;
+          else if (child != NULL)
+            return flatpak_fail (error, _("Invalid --app-persist directory: %s must be empty"), path);
+        }
+      else
+        {
+          return flatpak_fail (error, _("Invalid --app-persist type: %s must be an empty file or directory"), path);
+        }
+    }
+
+  return TRUE;
+}
+
+static gboolean
 update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
@@ -503,6 +558,26 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
         }
     }
 
+  /* app-peristent is not available in old versions and this could break applications */
+  if (!is_runtime && g_hash_table_size (arg_context->app_persistent) > 0)
+    {
+      gboolean doWarn = FALSE;
+
+      if (opt_require_version)
+        {
+          int required_major, required_minor, required_micro;
+          sscanf (opt_require_version, "%d.%d.%d", &required_major, &required_minor, &required_micro);
+          doWarn = required_major < 1 || (required_major == 1 && required_minor < 5);
+        }
+      else
+        {
+          doWarn = TRUE;
+        }
+
+      if (doWarn)
+        g_warning (_("Flatpak 1.5.0 is required for --app-persistent. Ensure the app works without persistent files/directories."));
+    }
+
   app_context = flatpak_context_new ();
   if (inherited_context)
     flatpak_context_merge (app_context, inherited_context);
@@ -626,12 +701,15 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   const char *directory;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(FlatpakContext) arg_context = NULL;
+  GOptionGroup *arg_context_options = NULL;
 
   context = g_option_context_new (_("DIRECTORY - Finalize a build directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   arg_context = flatpak_context_new ();
-  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
+  arg_context_options = flatpak_context_get_options (arg_context);
+  g_option_group_add_entries (arg_context_options, flatpak_context_get_finish_option_entries ());
+  g_option_context_add_group (context, arg_context_options);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
@@ -674,6 +752,13 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   if (!is_runtime)
     {
+      if (g_hash_table_size (arg_context->app_persistent) > 0)
+        {
+          g_debug ("Checking app-persist files & directories");
+          if (!check_app_persistent (arg_context, files_dir, cancellable, error))
+            return FALSE;
+        }
+
       g_debug ("Collecting exports");
       if (!collect_exports (base, id, arg_context, cancellable, error))
         return FALSE;
@@ -693,11 +778,14 @@ flatpak_complete_build_finish (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakContext) arg_context = NULL;
+  GOptionGroup *arg_context_options = NULL;
 
   context = g_option_context_new ("");
 
   arg_context = flatpak_context_new ();
-  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
+  arg_context_options = flatpak_context_get_options (arg_context);
+  g_option_group_add_entries (arg_context_options, flatpak_context_get_finish_option_entries ());
+  g_option_context_add_group (context, arg_context_options);
 
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
                                      FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))

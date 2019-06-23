@@ -92,6 +92,7 @@ flatpak_context_new (void)
   context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->generic_policy = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                    g_free, (GDestroyNotify) g_strfreev);
+  context->app_persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   return context;
 }
@@ -105,6 +106,7 @@ flatpak_context_free (FlatpakContext *context)
   g_hash_table_destroy (context->session_bus_policy);
   g_hash_table_destroy (context->system_bus_policy);
   g_hash_table_destroy (context->generic_policy);
+  g_hash_table_destroy (context->app_persistent);
   g_slice_free (FlatpakContext, context);
 }
 
@@ -482,6 +484,13 @@ flatpak_context_set_persistent (FlatpakContext *context,
   g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
 }
 
+static void
+flatpak_context_set_app_persistent (FlatpakContext *context,
+                                    const char     *path)
+{
+  g_hash_table_insert (context->app_persistent, g_strdup (path), GINT_TO_POINTER (1));
+}
+
 static gboolean
 get_xdg_dir_from_prefix (const char  *prefix,
                          const char **where,
@@ -835,6 +844,10 @@ flatpak_context_merge (FlatpakContext *context,
       for (i = 0; policy_values[i] != NULL; i++)
         flatpak_context_apply_generic_policy (context, (char *) key, policy_values[i]);
     }
+
+  g_hash_table_iter_init (&iter, other->app_persistent);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    g_hash_table_insert (context->app_persistent, g_strdup (key), value);
 }
 
 static gboolean
@@ -1271,6 +1284,30 @@ flatpak_context_get_options (FlatpakContext *context)
   return group;
 }
 
+// Can only be set on build-finish
+static gboolean
+option_app_persist_cb (const gchar *option_name,
+                   const gchar *value,
+                   gpointer     data,
+                   GError     **error)
+{
+  FlatpakContext *context = data;
+
+  flatpak_context_set_app_persistent (context, value);
+  return TRUE;
+}
+
+static GOptionEntry finish_context_options[] = {
+  { "app-persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_app_persist_cb, N_("Persist a file or directory from the app dir"), N_("FILENAME") },
+  { NULL }
+};
+
+GOptionEntry *
+flatpak_context_get_finish_option_entries (void)
+{
+  return finish_context_options;
+}
+
 static const char *
 parse_negated (const char *option, gboolean *negated)
 {
@@ -1513,6 +1550,17 @@ flatpak_context_load_metadata (FlatpakContext *context,
         }
     }
 
+    if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_APP_PERSISTENT, NULL))
+    {
+      g_auto(GStrv) persistent = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                             FLATPAK_METADATA_KEY_APP_PERSISTENT, NULL, error);
+      if (persistent == NULL)
+        return FALSE;
+
+      for (i = 0; persistent[i] != NULL; i++)
+        flatpak_context_set_app_persistent (context, persistent[i]);
+    }
+
   return TRUE;
 }
 
@@ -1672,6 +1720,23 @@ flatpak_context_save_metadata (FlatpakContext *context,
       g_key_file_remove_key (metakey,
                              FLATPAK_METADATA_GROUP_CONTEXT,
                              FLATPAK_METADATA_KEY_PERSISTENT,
+                             NULL);
+    }
+
+  if (g_hash_table_size (context->app_persistent) > 0)
+    {
+      g_autofree char **keys = (char **) g_hash_table_get_keys_as_array (context->app_persistent, NULL);
+
+      g_key_file_set_string_list (metakey,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_APP_PERSISTENT,
+                                  (const char * const *) keys, g_strv_length (keys));
+    }
+  else
+    {
+      g_key_file_remove_key (metakey,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_APP_PERSISTENT,
                              NULL);
     }
 
@@ -1885,14 +1950,16 @@ flatpak_context_reset_permissions (FlatpakContext *context)
   g_hash_table_remove_all (context->session_bus_policy);
   g_hash_table_remove_all (context->system_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
+  // Allow app_persistent removal since it's not allowed for runtimes
+  g_hash_table_remove_all (context->app_persistent);
 }
 
 void
 flatpak_context_make_sandboxed (FlatpakContext *context)
 {
   /* We drop almost everything from the app permission, except
-   * multiarch which is inherited, to make sure app code keeps
-   * running. */
+   * multiarch & app-persistent which are inherited, to make sure
+   * app code keeps running. */
   context->shares_valid &= 0;
   context->sockets_valid &= 0;
   context->devices_valid &= 0;
@@ -1908,6 +1975,8 @@ flatpak_context_make_sandboxed (FlatpakContext *context)
   g_hash_table_remove_all (context->session_bus_policy);
   g_hash_table_remove_all (context->system_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
+  /* Explicitly don't remove the app-persistent which has to be handled
+   * differently since missing bind mounts could break applications */
 }
 
 const char *dont_mount_in_root[] = {
@@ -2213,6 +2282,21 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
 
       flatpak_bwrap_add_args_data (bwrap, "xdg-config-dirs",
                                    xdg_dirs_conf->str, xdg_dirs_conf->len, path, NULL);
+    }
+
+  /* TODO: If sandboxed then the source should be set to a temporary folder.
+   *       It's not possible to not set the bind mounts since this could break apps. */
+  g_hash_table_iter_init (&iter, context->app_persistent);
+  while (g_hash_table_iter_next (&iter, &key, NULL))
+    {
+      const char *persist = key;
+      g_autofree char *src = g_build_filename (g_get_home_dir (), ".var/app", app_id, persist, NULL);
+      g_autofree char *dest = g_build_filename ("/app", persist, NULL);
+
+      // TODO: Handle files
+      g_mkdir_with_parents (src, 0755);
+
+      flatpak_bwrap_add_args (bwrap, "--bind", src, dest, NULL);
     }
 
   if (exports_out)

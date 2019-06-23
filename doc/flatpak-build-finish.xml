@@ -329,6 +329,21 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--app-persist=FILENAME</option></term>
+
+                <listitem><para>
+                      For buggy applications which don't conform to the
+                      <ulink url="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html"
+                      >freedesktop.org Base Directory Specification</ulink> and try to write into the read-only application
+                      directory, make the (<filename>/app</filename>-relative) path <arg choice="plain">FILENAME</arg> a bind
+                      mount to the corresponding path in the per-application directory of the user, allowing that location to
+                      be used for persistent data. An empty file or empty directory must exist in <filename>/app</filename>.
+                      This updates the [Context] group in the metadata.
+                      This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--persist=FILENAME</option></term>
 
                 <listitem><para>
