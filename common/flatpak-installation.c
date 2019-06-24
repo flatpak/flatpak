@@ -2078,6 +2078,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                                   const char             *arch,
                                   const char             *branch,
                                   const char * const     *subpaths,
+                                  const char * const     *newsubpaths,
                                   FlatpakProgressCallback progress,
                                   gpointer                progress_data,
                                   GCancellable           *cancellable,
@@ -2121,6 +2122,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
 
   target_commit = flatpak_dir_check_for_update (dir, state, ref, NULL,
                                                 (const char **) subpaths,
+                                                (const char **) newsubpaths,
                                                 (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                                                 &check_results,
                                                 cancellable, error);
@@ -2147,7 +2149,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            FALSE, FALSE, FALSE, state,
                            ref, target_commit,
                            (const OstreeRepoFinderResult * const *) check_results,
-                           (const char **) subpaths, NULL,
+                           (const char **) subpaths, (const char **) newsubpaths, NULL,
                            ostree_progress, cancellable, error))
     goto out;
 
@@ -2206,7 +2208,7 @@ flatpak_installation_update (FlatpakInstallation    *self,
                              GError                **error)
 {
   return flatpak_installation_update_full (self, flags, kind, name, arch,
-                                           branch, NULL, progress, progress_data,
+                                           branch, NULL, NULL, progress, progress_data,
                                            cancellable, error);
 }
 

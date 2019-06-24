@@ -39,6 +39,7 @@
 static char *opt_arch;
 static char *opt_commit;
 static char **opt_subpaths;
+static char **opt_newsubpaths;
 static gboolean opt_force_remove;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
@@ -63,6 +64,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, N_("Update appstream for remote"), NULL },
+  { "newsubpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Add this subpath"), N_("PATH") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only update this subpath"), N_("PATH") },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { "noninteractive", 0, 0, G_OPTION_ARG_NONE, &opt_noninteractive, N_("Produce minimal output and don't ask questions"), NULL },
@@ -200,7 +202,9 @@ flatpak_builtin_update (int           argc,
                     continue;
 
                   found = TRUE;
-                  if (flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
+                  if (flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths,
+                                                      (const char **) opt_newsubpaths,
+                                                      opt_commit, error))
                     continue;
 
                   if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
@@ -241,7 +245,9 @@ flatpak_builtin_update (int           argc,
                     continue;
 
                   found = TRUE;
-                  if (flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
+                  if (flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths,
+                                                      (const char **) opt_newsubpaths,
+                                                      opt_commit, error))
                     continue;
 
                   if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))

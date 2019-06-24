@@ -9029,10 +9029,12 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
                                                   const char  *remote,
                                                   const char  *ref,
                                                   const char  *target_commit,
-                                                  const char **opt_subpaths)
+                                                  const char **opt_subpaths,
+                                                  const char **opt_newsubpaths)
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
+  g_auto(GStrv) merged_subpaths = NULL;
   const char **subpaths;
   g_autofree char *url = NULL;
   const char *installed_commit;
@@ -9054,9 +9056,14 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
     old_subpaths = g_new0 (const char *, 1); /* Empty strv == all subpaths*/
 
   if (opt_subpaths)
-    subpaths = opt_subpaths;
+    {
+      subpaths = opt_subpaths;
+    }
   else
-    subpaths = old_subpaths;
+    {
+      merged_subpaths = flatpak_subpaths_merge ((char **) old_subpaths, (char **)opt_newsubpaths);
+      subpaths = (const char**)merged_subpaths;
+    }
 
   /* Not deployed => need update */
   if (deploy_data == NULL)
@@ -9086,6 +9093,7 @@ flatpak_dir_check_for_update (FlatpakDir               *self,
                               const char               *ref,
                               const char               *checksum_or_latest,
                               const char              **opt_subpaths,
+                              const char              **opt_newsubpaths,
                               gboolean                  no_pull,
                               OstreeRepoFinderResult ***out_results,
                               GCancellable             *cancellable,
@@ -9116,7 +9124,7 @@ flatpak_dir_check_for_update (FlatpakDir               *self,
   else
     target_rev = latest_rev;
 
-  if (flatpak_dir_needs_update_for_commit_and_subpaths (self, state->remote_name, ref, target_rev, opt_subpaths))
+  if (flatpak_dir_needs_update_for_commit_and_subpaths (self, state->remote_name, ref, target_rev, opt_subpaths, opt_newsubpaths))
     return g_strdup (target_rev);
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
@@ -9137,6 +9145,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     const char                           *commit,
                     const OstreeRepoFinderResult * const *results,
                     const char                          **opt_subpaths,
+                    const char                          **opt_newsubpaths,
                     const char                          **opt_previous_ids,
                     OstreeAsyncProgress                  *progress,
                     GCancellable                         *cancellable,
@@ -9147,6 +9156,7 @@ flatpak_dir_update (FlatpakDir                           *self,
   g_autofree char *url = NULL;
   FlatpakPullFlags flatpak_flags;
   g_autofree const char **old_subpaths = NULL;
+  g_auto(GStrv) merged_subpaths = NULL;
   gboolean is_oci;
 
   /* This and @results are calculated in check_for_update. @results will be
@@ -9166,9 +9176,14 @@ flatpak_dir_update (FlatpakDir                           *self,
     old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
 
   if (opt_subpaths)
-    subpaths = opt_subpaths;
+    {
+      subpaths = opt_subpaths;
+    }
   else
-    subpaths = old_subpaths;
+    {
+      merged_subpaths = flatpak_subpaths_merge ((char **) old_subpaths, (char **)opt_newsubpaths);
+      subpaths = (const char**)merged_subpaths;
+    }
 
   if (!ostree_repo_remote_get_url (self->repo, state->remote_name, &url, error))
     return FALSE;

@@ -245,6 +245,7 @@ FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_update (FlatpakTransaction *self,
                                                     const char         *ref,
                                                     const char        **subpaths,
+                                                    const char        **newsubpaths,
                                                     const char         *commit,
                                                     GError            **error);
 FLATPAK_EXTERN
