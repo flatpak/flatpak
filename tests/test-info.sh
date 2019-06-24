@@ -6,6 +6,10 @@ set -euo pipefail
 
 skip_revokefs_without_fuse
 
+if [ x${USE_SYSTEMDIR-} == xyes ] ; then
+    skip_if_root
+fi
+
 echo "1..7"
 
 setup_repo

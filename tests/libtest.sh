@@ -364,6 +364,12 @@ skip() {
     exit 0
 }
 
+skip_if_root () {
+    if [ "x$(id -u)" = x0 ] || [ "x$(id -g)" = x0 ]; then
+        skip "system helper refuses to run in test mode as root"
+    fi
+}
+
 skip_without_bwrap () {
     if "${_flatpak_bwrap_works}"; then
         return 0

@@ -24,6 +24,8 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
+skip_if_root
+
 echo "1..5"
 
 ${FLATPAK} config --list > list_out

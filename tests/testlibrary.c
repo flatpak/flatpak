@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <glib.h>
 #include <ostree.h>
@@ -2726,6 +2727,12 @@ test_transaction_flatpakref_remote_creation (void)
   g_autofree char *s = NULL;
   g_autoptr(GBytes) data = NULL;
   gboolean res;
+
+  if (getuid () == 0 || getgid () == 0 || geteuid () == 0 || getegid () == 0)
+    {
+      g_test_skip ("system helper refuses to run in test mode as root");
+      return;
+    }
 
   system_inst = flatpak_installation_new_system (NULL, &error);
   g_assert_no_error (error);
