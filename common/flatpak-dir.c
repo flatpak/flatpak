@@ -7665,6 +7665,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
           g_autofree char *dstpath = g_build_filename (checkoutdirpath, "/files", subpaths[i], NULL);
           g_autofree char *dstpath_parent = g_path_get_dirname (dstpath);
+          gboolean is_dir = FALSE;
           g_autoptr(GFile) child = NULL;
 
           child = g_file_resolve_relative_path (root, subpath);
@@ -7682,8 +7683,13 @@ flatpak_dir_deploy (FlatpakDir          *self,
             }
 
           options.subpath = subpath;
+
+          if (g_file_query_file_type (child, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, cancellable)
+              == G_FILE_TYPE_DIRECTORY)
+            is_dir = TRUE;
+
           if (!ostree_repo_checkout_at (self->repo, &options,
-                                        AT_FDCWD, dstpath,
+                                        AT_FDCWD, is_dir?dstpath:dstpath_parent,
                                         checksum,
                                         cancellable, error))
             {
