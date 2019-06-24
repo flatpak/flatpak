@@ -329,6 +329,12 @@ handle_spawn (PortalFlatpak         *object,
   app_id = g_key_file_get_string (app_info,
                                   FLATPAK_METADATA_GROUP_APPLICATION,
                                   FLATPAK_METADATA_KEY_NAME, NULL);
+  if (app_id == NULL)
+    {
+      app_id = g_key_file_get_string (app_info,
+                                      FLATPAK_METADATA_GROUP_RUNTIME,
+                                      FLATPAK_METADATA_KEY_NAME, NULL);
+    }
   g_assert (app_id != NULL);
 
   g_debug ("spawn() called from app: '%s'", app_id);
@@ -688,6 +694,14 @@ authorize_method_handler (GDBusInterfaceSkeleton *interface,
   app_id = g_key_file_get_string (keyfile,
                                   FLATPAK_METADATA_GROUP_APPLICATION,
                                   FLATPAK_METADATA_KEY_NAME, &error);
+
+  if (app_id == NULL)
+    {
+      app_id = g_key_file_get_string (keyfile,
+                                      FLATPAK_METADATA_GROUP_RUNTIME,
+                                      FLATPAK_METADATA_KEY_NAME, NULL);
+    }
+
   if (app_id == NULL)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
