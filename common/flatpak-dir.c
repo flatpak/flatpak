@@ -13527,7 +13527,9 @@ add_related (FlatpakDir *self,
              const char *download_if,
              const char *autoprune_unless,
              gboolean    autodelete,
-             gboolean    locale_subset)
+             gboolean    locale_subset,
+             gboolean    on_demand,
+             GStrv       new_subpaths)
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
@@ -13580,9 +13582,13 @@ add_related (FlatpakDir *self,
   if (g_str_has_suffix (extension, ".Locale"))
     locale_subset = TRUE;
 
+  if (subpaths) {
+    extra_subpaths = g_strdupv(new_subpaths);
+  }
   if (locale_subset)
     {
-      extra_subpaths = flatpak_dir_get_locale_subpaths (self);
+      if (extra_subpaths == NULL)
+        extra_subpaths = flatpak_dir_get_locale_subpaths (self);
 
       /* Always remove locale */
       delete = TRUE;
@@ -13598,6 +13604,7 @@ add_related (FlatpakDir *self,
   rel->download = download;
   rel->delete = delete;
   rel->auto_prune = auto_prune;
+  rel->on_demand = on_demand;
 
   g_ptr_array_add (related, rel);
 }
@@ -13655,6 +13662,12 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                                                         FLATPAK_METADATA_KEY_AUTODELETE, NULL);
           gboolean locale_subset = g_key_file_get_boolean (metakey, groups[i],
                                                            FLATPAK_METADATA_KEY_LOCALE_SUBSET, NULL);
+          gboolean on_demand = g_key_file_get_boolean (metakey, groups[i],
+                                                       FLATPAK_METADATA_KEY_ON_DEMAND, NULL);
+          g_auto(GStrv) subpaths = g_key_file_get_string_list (metakey, groups[i],
+                                                               FLATPAK_METADATA_KEY_SUBPATHS,
+                                                               NULL, NULL);
+
           g_autofree char *extension_collection_id = NULL;
           const char *default_branches[] = { NULL, NULL};
           const char **branches;
@@ -13702,7 +13715,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
               if (flatpak_remote_state_lookup_ref (state, extension_ref, &checksum, NULL, NULL))
                 {
                   add_related (self, related, extension, extension_collection_id, extension_ref, checksum,
-                               no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                               no_autodownload, download_if, autoprune_unless, autodelete, locale_subset, on_demand, subpaths);
                 }
               else if (subdirectories)
                 {
@@ -13714,7 +13727,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
 
                       if (flatpak_remote_state_lookup_ref (state, refs[j], &subref_checksum, NULL, NULL))
                         add_related (self, related, extension, extension_collection_id, refs[j], subref_checksum,
-                                     no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                                     no_autodownload, download_if, autoprune_unless, autodelete, locale_subset, on_demand, subpaths);
                     }
                 }
             }
@@ -13858,6 +13871,12 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                                         FLATPAK_METADATA_KEY_AUTODELETE, NULL);
           gboolean locale_subset = g_key_file_get_boolean (metakey, groups[i],
                                                            FLATPAK_METADATA_KEY_LOCALE_SUBSET, NULL);
+          gboolean on_demand = g_key_file_get_boolean (metakey, groups[i],
+                                                       FLATPAK_METADATA_KEY_ON_DEMAND, NULL);
+          g_auto(GStrv) subpaths = g_key_file_get_string_list (metakey, groups[i],
+                                                               FLATPAK_METADATA_KEY_SUBPATHS,
+                                                               NULL, NULL);
+
           const char *branch;
           g_autofree char *extension_ref = NULL;
           g_autofree char *checksum = NULL;
@@ -13900,7 +13919,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                         NULL))
             {
               add_related (self, related, extension, extension_collection_id, extension_ref,
-                           checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                           checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset, on_demand, subpaths);
             }
           else if (subdirectories)
             {
@@ -13922,7 +13941,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                     {
                       add_related (self, related, extension,
                                    extension_collection_id, match, match_checksum,
-                                   no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                                   no_autodownload, download_if, autoprune_unless, autodelete, locale_subset, on_demand, subpaths);
                     }
                 }
             }

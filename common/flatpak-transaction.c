@@ -1586,7 +1586,8 @@ add_related (FlatpakTransaction          *self,
           related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
                                                    (const char **) rel->subpaths,
                                                    NULL, NULL, NULL, NULL,
-                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE);
+                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
+                                                   rel->on_demand);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
           run_operation_before (op, related_op, 1);

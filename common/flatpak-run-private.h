@@ -88,6 +88,8 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_LOCALE_SUBSET "locale-subset"
 #define FLATPAK_METADATA_KEY_VERSION "version"
 #define FLATPAK_METADATA_KEY_VERSIONS "versions"
+#define FLATPAK_METADATA_KEY_ON_DEMAND "on-demand"
+#define FLATPAK_METADATA_KEY_SUBPATHS "subpaths"
 
 #define FLATPAK_METADATA_KEY_COLLECTION_ID "collection-id"
 
