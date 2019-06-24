@@ -48,6 +48,7 @@ static char *opt_runtime_repo;
 static gboolean opt_runtime = FALSE;
 static char **opt_gpg_file;
 static gboolean opt_oci = FALSE;
+static gboolean opt_oci_use_labels = FALSE;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
 static char *opt_from_commit;
@@ -62,6 +63,7 @@ static GOptionEntry options[] = {
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { "from-commit", 0, 0, G_OPTION_ARG_STRING, &opt_from_commit, N_("OSTree commit to create a delta bundle from"), N_("COMMIT") },
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Export oci image instead of flatpak bundle"), NULL },
+  { "oci-use-labels", 0, 0, G_OPTION_ARG_NONE, &opt_oci_use_labels, N_("Use OCI labels instead of annotations"), NULL },
   { NULL }
 };
 
@@ -522,8 +524,9 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   image->history[history_index]->created = g_time_val_to_iso8601 (&tv);
   image->history[history_index]->created_by = g_strdup ("flatpak build-bundle");
 
-  flatpak_oci_copy_annotations (flatpak_annotations,
-                                flatpak_oci_image_get_labels (image));
+  if (opt_oci_use_labels)
+    flatpak_oci_copy_annotations (flatpak_annotations,
+                                  flatpak_oci_image_get_labels (image));
 
   timestamp = timestamp_to_iso8601 (ostree_commit_get_timestamp (commit_data));
   flatpak_oci_image_set_created (image, timestamp);
@@ -536,8 +539,9 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   flatpak_oci_manifest_set_config (manifest, image_desc);
   flatpak_oci_manifest_set_layer (manifest, layer_desc);
 
-  flatpak_oci_copy_annotations (flatpak_annotations,
-                                flatpak_oci_manifest_get_annotations (manifest));
+  if (!opt_oci_use_labels)
+    flatpak_oci_copy_annotations (flatpak_annotations,
+                                  flatpak_oci_manifest_get_annotations (manifest));
 
   manifest_desc = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (manifest), cancellable, error);
   if (manifest_desc == NULL)
