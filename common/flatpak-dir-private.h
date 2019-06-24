@@ -88,6 +88,7 @@ typedef struct
   gboolean download;
   gboolean        delete;
   gboolean auto_prune;
+  gboolean on_demand;
 } FlatpakRelated;
 
 void         flatpak_related_free (FlatpakRelated *related);
@@ -352,6 +353,7 @@ int                 flatpak_deploy_data_get_version (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_origin (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_commit (GVariant *deploy_data);
 const char **       flatpak_deploy_data_get_subpaths (GVariant *deploy_data);
+gboolean            flatpak_deploy_data_get_on_demand (GVariant *deploy_data);
 guint64             flatpak_deploy_data_get_installed_size (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_alt_id (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol (GVariant *deploy_data);
@@ -407,7 +409,8 @@ GFile *     flatpak_dir_get_deploy_dir (FlatpakDir *self,
                                         const char *ref);
 char *      flatpak_dir_get_deploy_subdir (FlatpakDir          *self,
                                            const char          *checksum,
-                                           const char * const * subpaths);
+                                           const char * const * subpaths,
+                                           gboolean             on_demand);
 GFile *     flatpak_dir_get_unmaintained_extension_dir (FlatpakDir *self,
                                                         const char *name,
                                                         const char *arch,
@@ -544,6 +547,7 @@ gboolean    flatpak_dir_pull (FlatpakDir                           *self,
                               const char                           *opt_rev,
                               const OstreeRepoFinderResult * const *results,
                               const char                          **subpaths,
+                              gboolean                              on_demand,
                               OstreeRepo                           *repo,
                               FlatpakPullFlags                      flatpak_flags,
                               OstreeRepoPullFlags                   flags,
@@ -555,6 +559,7 @@ gboolean    flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                               const char          *remote_name,
                                               const char          *ref,
                                               const char         **subpaths,
+                                              gboolean             on_demand,
                                               OstreeAsyncProgress *progress,
                                               GCancellable        *cancellable,
                                               GError             **error);
@@ -620,6 +625,7 @@ gboolean    flatpak_dir_deploy (FlatpakDir          *self,
                                 const char          *checksum_or_latest,
                                 const char * const * subpaths,
                                 const char * const * previous_ids,
+                                gboolean             on_demand,
                                 GCancellable        *cancellable,
                                 GError             **error);
 gboolean    flatpak_dir_deploy_update (FlatpakDir   *self,
@@ -635,6 +641,7 @@ gboolean   flatpak_dir_deploy_install (FlatpakDir   *self,
                                        const char  **subpaths,
                                        const char  **previous_ids,
                                        gboolean      reinstall,
+                                       gboolean      on_demand,
                                        GCancellable *cancellable,
                                        GError      **error);
 gboolean   flatpak_dir_install (FlatpakDir          *self,
@@ -643,6 +650,7 @@ gboolean   flatpak_dir_install (FlatpakDir          *self,
                                 gboolean             no_static_deltas,
                                 gboolean             reinstall,
                                 gboolean             app_hint,
+                                gboolean             on_demand,
                                 FlatpakRemoteState  *state,
                                 const char          *ref,
                                 const char          *opt_commit,

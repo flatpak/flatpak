@@ -340,6 +340,7 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update_full (FlatpakIn
                                                                        const char             *branch,
                                                                        const char * const     *subpaths,
                                                                        const char * const     *newsubpaths,
+                                                                       gboolean                on_demand,
                                                                        FlatpakProgressCallback progress,
                                                                        gpointer                progress_data,
                                                                        GCancellable           *cancellable,

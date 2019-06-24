@@ -743,7 +743,7 @@ get_ref (FlatpakDir   *dir,
   installed_size = flatpak_deploy_data_get_installed_size (deploy_data);
 
   deploy_dir = flatpak_dir_get_deploy_dir (dir, full_ref);
-  deploy_subdirname = flatpak_dir_get_deploy_subdir (dir, commit, subpaths);
+  deploy_subdirname = flatpak_dir_get_deploy_subdir (dir, commit, subpaths, FALSE);
   deploy_subdir = g_file_get_child (deploy_dir, deploy_subdirname);
   deploy_path = g_file_get_path (deploy_subdir);
 
@@ -1973,7 +1973,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_PULL) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
-                            FALSE, FALSE, state,
+                            FALSE, FALSE, FALSE, state,
                             ref, NULL, (const char **) subpaths, NULL,
                             ostree_progress, cancellable, error))
     goto out;
@@ -2079,6 +2079,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                                   const char             *branch,
                                   const char * const     *subpaths,
                                   const char * const     *newsubpaths,
+                                  gboolean                on_demand,
                                   FlatpakProgressCallback progress,
                                   gpointer                progress_data,
                                   GCancellable           *cancellable,
@@ -2208,7 +2209,7 @@ flatpak_installation_update (FlatpakInstallation    *self,
                              GError                **error)
 {
   return flatpak_installation_update_full (self, flags, kind, name, arch,
-                                           branch, NULL, NULL, progress, progress_data,
+                                           branch, NULL, NULL, FALSE, progress, progress_data,
                                            cancellable, error);
 }
 

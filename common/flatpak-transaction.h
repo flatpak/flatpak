@@ -224,6 +224,7 @@ gboolean            flatpak_transaction_add_install (FlatpakTransaction *self,
                                                      const char         *remote,
                                                      const char         *ref,
                                                      const char        **subpaths,
+                                                     gboolean            on_demand,
                                                      GError            **error);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_rebase (FlatpakTransaction *self,

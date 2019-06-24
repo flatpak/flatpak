@@ -120,6 +120,7 @@ struct _FlatpakTransactionOperation
   int                             run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList                          *run_before_ops;
   FlatpakTransactionOperation    *fail_if_op_fails; /* main app/runtime for related extensions, runtime for apps */
+  gboolean                        on_demand;
 };
 
 typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
@@ -595,7 +596,8 @@ flatpak_transaction_operation_new (const char                     *remote,
                                    const char                    **previous_ids,
                                    const char                     *commit,
                                    GFile                          *bundle,
-                                   FlatpakTransactionOperationType kind)
+                                   FlatpakTransactionOperationType kind,
+                                   gboolean                        on_demand)
 {
   FlatpakTransactionOperation *self;
 
@@ -610,6 +612,7 @@ flatpak_transaction_operation_new (const char                     *remote,
   if (bundle)
     self->bundle = g_object_ref (bundle);
   self->kind = kind;
+  self->on_demand = on_demand;
 
   return self;
 }
@@ -1462,7 +1465,8 @@ flatpak_transaction_add_op (FlatpakTransaction             *self,
                             const char                    **previous_ids,
                             const char                     *commit,
                             GFile                          *bundle,
-                            FlatpakTransactionOperationType kind)
+                            FlatpakTransactionOperationType kind,
+                            gboolean                        on_demand)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   FlatpakTransactionOperation *op;
@@ -1488,10 +1492,12 @@ flatpak_transaction_add_op (FlatpakTransaction             *self,
       old_previous_ids = op->previous_ids;
       op->previous_ids = flatpak_strv_merge (old_previous_ids, (char **) previous_ids);
 
+      op->on_demand = op->on_demand || on_demand;
+
       return op;
     }
 
-  op = flatpak_transaction_operation_new (remote, ref, subpaths, newsubpaths, previous_ids, commit, bundle, kind);
+  op = flatpak_transaction_operation_new (remote, ref, subpaths, newsubpaths, previous_ids, commit, bundle, kind, on_demand);
   g_hash_table_insert (priv->last_op_for_ref, g_strdup (ref), op);
 
   priv->ops = g_list_prepend (priv->ops, op);
@@ -1561,7 +1567,7 @@ add_related (FlatpakTransaction          *self,
 
           related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
                                                    NULL, NULL, NULL, NULL, NULL,
-                                                   FLATPAK_TRANSACTION_OPERATION_UNINSTALL);
+                                                   FLATPAK_TRANSACTION_OPERATION_UNINSTALL, FALSE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
           run_operation_before (op, related_op, 1);
@@ -1580,7 +1586,7 @@ add_related (FlatpakTransaction          *self,
           related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
                                                    (const char **) rel->subpaths,
                                                    NULL, NULL, NULL, NULL,
-                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
+                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
           run_operation_before (op, related_op, 1);
@@ -1692,7 +1698,7 @@ add_deps (FlatpakTransaction          *self,
             return FALSE;
 
           runtime_op = flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL, NULL, NULL,
-                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
+                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE);
         }
       else
         {
@@ -1701,7 +1707,7 @@ add_deps (FlatpakTransaction          *self,
             {
               g_debug ("Updating dependent runtime %s", full_runtime_ref);
               runtime_op = flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL, NULL, NULL,
-                                                       FLATPAK_TRANSACTION_OPERATION_UPDATE);
+                                                       FLATPAK_TRANSACTION_OPERATION_UPDATE, FALSE);
               runtime_op->non_fatal = TRUE;
             }
         }
@@ -1733,6 +1739,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
                              FlatpakTransactionOperationType kind,
                              GFile                          *bundle,
                              const char                     *external_metadata,
+                             gboolean                        on_demand,
                              GError                        **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -1812,7 +1819,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   if (state == NULL)
     return FALSE;
 
-  op = flatpak_transaction_add_op (self, remote, ref, subpaths, newsubpaths, previous_ids, commit, bundle, kind);
+  op = flatpak_transaction_add_op (self, remote, ref, subpaths, newsubpaths, previous_ids, commit, bundle, kind, on_demand);
 
   if (external_metadata)
     op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata) + 1);
@@ -1842,6 +1849,7 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
                                  const char         *remote,
                                  const char         *ref,
                                  const char        **subpaths,
+                                 gboolean            on_demand,
                                  GError            **error)
 {
   const char *all_paths[] = { NULL };
@@ -1853,7 +1861,8 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
   if (subpaths == NULL)
     subpaths = all_paths;
 
-  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL, NULL, NULL, error);
+  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL, NULL, NULL,
+                                      on_demand, error);
 }
 
 /**
@@ -1895,7 +1904,7 @@ flatpak_transaction_add_rebase (FlatpakTransaction *self,
   if (subpaths == NULL)
     subpaths = all_paths;
 
-  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, previous_ids, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, NULL, NULL, error);
+  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, previous_ids, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, NULL, NULL, FALSE, error);
 }
 
 /**
@@ -1983,7 +1992,7 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
   if (subpaths != NULL && subpaths[0] != NULL && subpaths[0][0] == 0)
     subpaths = all_paths;
 
-  return flatpak_transaction_add_ref (self, NULL, ref, subpaths, newsubpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, error);
+  return flatpak_transaction_add_ref (self, NULL, ref, subpaths, newsubpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, FALSE, error);
 }
 
 /**
@@ -2003,7 +2012,7 @@ flatpak_transaction_add_uninstall (FlatpakTransaction *self,
 {
   g_return_val_if_fail (ref != NULL, FALSE);
 
-  return flatpak_transaction_add_ref (self, NULL, ref, NULL, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, error);
+  return flatpak_transaction_add_ref (self, NULL, ref, NULL, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, FALSE, error);
 }
 
 static gboolean
@@ -2773,7 +2782,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
 
       flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
-      if (!flatpak_transaction_add_install (self, remote, ref, NULL, error))
+      if (!flatpak_transaction_add_install (self, remote, ref, NULL, FALSE, error))
         return FALSE;
     }
 
@@ -2850,7 +2859,7 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
 
       if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, NULL, commit,
                                         FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE,
-                                        data->file, metadata, error))
+                                        data->file, metadata, FALSE, error))
         return FALSE;
     }
 
@@ -3053,6 +3062,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                                        priv->disable_static_deltas,
                                        priv->reinstall,
                                        priv->max_op >= APP_UPDATE,
+                                       op->on_demand,
                                        state, op->ref, op->resolved_commit,
                                        (const char **) op->subpaths,
                                        (const char **) op->previous_ids,

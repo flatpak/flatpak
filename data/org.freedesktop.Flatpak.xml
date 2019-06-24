@@ -71,6 +71,7 @@
       <arg type='as' name='subpaths' direction='in'/>
       <arg type='as' name='previous_ids' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
+      <arg type='b' name='on_demand' direction='in'/>
     </method>
 
     <method name="DeployAppstream">

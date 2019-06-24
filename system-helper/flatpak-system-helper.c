@@ -378,7 +378,8 @@ handle_deploy (FlatpakSystemHelper   *object,
                const gchar           *arg_origin,
                const gchar *const    *arg_subpaths,
                const gchar *const    *arg_previous_ids,
-               const gchar           *arg_installation)
+               const gchar           *arg_installation,
+               gboolean               arg_on_demand)
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GFile) repo_file = g_file_new_for_path (arg_repo_path);
@@ -604,6 +605,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                              arg_origin,
                                              arg_ref,
                                              (const char **) arg_subpaths,
+                                             arg_on_demand,
                                              ostree_progress,
                                              NULL, &error))
         {
@@ -646,7 +648,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-      if (!flatpak_dir_pull (system, state, arg_ref, NULL, NULL, (const char **) arg_subpaths, NULL,
+      if (!flatpak_dir_pull (system, state, arg_ref, NULL, NULL, (const char **) arg_subpaths, FALSE, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &error))
         {
@@ -676,7 +678,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           if (!flatpak_dir_deploy_install (system, arg_ref, arg_origin,
                                            (const char **) arg_subpaths,
                                            (const char **) arg_previous_ids,
-                                           reinstall, NULL, &error))
+                                           reinstall, arg_on_demand, NULL, &error))
             {
               flatpak_invocation_return_error (invocation, error, "Error deploying");
               return TRUE;
@@ -831,6 +833,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                              arg_origin,
                                              new_branch,
                                              NULL,
+                                             FALSE,
                                              ostree_progress,
                                              NULL, &first_error))
         {
@@ -838,6 +841,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                                  arg_origin,
                                                  old_branch,
                                                  NULL,
+                                                 FALSE,
                                                  ostree_progress,
                                                  NULL, &second_error))
             {
@@ -886,11 +890,11 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-      if (!flatpak_dir_pull (system, state, new_branch, NULL, NULL, NULL, NULL,
+      if (!flatpak_dir_pull (system, state, new_branch, NULL, NULL, NULL, FALSE, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &first_error))
         {
-          if (!flatpak_dir_pull (system, state, old_branch, NULL, NULL, NULL, NULL,
+          if (!flatpak_dir_pull (system, state, old_branch, NULL, NULL, NULL, FALSE, NULL,
                                  FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                                  NULL, &second_error))
             {

@@ -257,6 +257,7 @@ transaction_add_local_ref (FlatpakDir         *dir,
   g_autofree char *repo_checksum = NULL;
   const char *origin;
   const char **subpaths;
+  gboolean on_demand;
 
   deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, &local_error);
   if (deploy_data == NULL)
@@ -269,11 +270,12 @@ transaction_add_local_ref (FlatpakDir         *dir,
 
   origin = flatpak_deploy_data_get_origin (deploy_data);
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+  on_demand = flatpak_deploy_data_get_on_demand (deploy_data);
 
   repo_checksum = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
   if (repo_checksum == NULL || opt_reinstall_all)
     {
-      if (!flatpak_transaction_add_install (transaction, origin, ref, subpaths, &local_error))
+      if (!flatpak_transaction_add_install (transaction, origin, ref, subpaths, on_demand, &local_error))
         {
           g_printerr (_("Error reinstalling %s: %s\n"), ref, local_error->message);
           g_clear_error (&local_error);

@@ -54,6 +54,7 @@ static gboolean opt_from;
 static gboolean opt_yes;
 static gboolean opt_reinstall;
 static gboolean opt_noninteractive;
+static gboolean opt_on_demand;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -71,6 +72,7 @@ static GOptionEntry options[] = {
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { "reinstall", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall, N_("Uninstall first if already installed"), NULL },
   { "noninteractive", 0, 0, G_OPTION_ARG_NONE, &opt_noninteractive, N_("Produce minimal output and don't ask questions"), NULL },
+  { "on-demand", 0, 0, G_OPTION_ARG_NONE, &opt_on_demand, N_("Install files on demand"), NULL },
   { NULL }
 };
 
@@ -502,7 +504,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, &ref, error))
         return FALSE;
 
-      if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, error))
+      if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, opt_on_demand, error))
         {
           if (!g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
             return FALSE;
