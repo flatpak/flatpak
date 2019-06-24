@@ -156,6 +156,16 @@
       <arg type='u' name='exit_status' direction='out'/>
     </signal>
 
+    <!--
+        GetDebugFiles:
+        @paths: paths to the requested files
+
+        Request missing files from .Debug runtime extension to be downloaded.
+    -->
+    <method name="GetDebugFiles">
+      <arg type='aay' name='paths' direction='in'/>
+    </method>
+
   </interface>
 
 </node>

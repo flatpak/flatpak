@@ -672,6 +672,139 @@ handle_spawn_signal (PortalFlatpak         *object,
 }
 
 static gboolean
+handle_get_debug_files (PortalFlatpak         *object,
+                        GDBusMethodInvocation *invocation,
+                        GStrv                  arg_paths) {
+  GKeyFile *app_info;
+  g_autofree char *runtime = NULL;
+  g_autofree char *runtime_extensions = NULL;
+  g_auto(GStrv) runtime_parts = NULL;
+  gsize runtime_len;
+  g_autofree char *commit = NULL;
+  g_autofree char *ref = NULL;
+  g_autofree char *commit_param = NULL;
+  char* r;
+  gsize i;
+  g_autoptr(GPtrArray) argv = NULL;
+  int exit_status;
+  GError *error = NULL;
+
+  app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
+
+  runtime = g_key_file_get_string
+    (app_info,
+     FLATPAK_METADATA_GROUP_APPLICATION,
+     FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  if (runtime == NULL)
+    {
+      runtime = g_key_file_get_string
+        (app_info,
+         FLATPAK_METADATA_GROUP_RUNTIME,
+         FLATPAK_METADATA_KEY_RUNTIME, NULL);
+    }
+
+  if (runtime == NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "Runtime not found in app info");
+      return TRUE;
+    }
+
+  runtime_extensions = g_key_file_get_string
+    (app_info,
+     FLATPAK_METADATA_GROUP_INSTANCE,
+     FLATPAK_METADATA_KEY_RUNTIME_EXTENSIONS, NULL);
+
+  if (runtime_extensions == NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "Runtime extensions not found in app info");
+      return TRUE;
+    }
+
+  runtime_parts = g_strsplit (runtime, "/", 4);
+  runtime_len = strlen(runtime_parts[1]);
+
+  r = runtime_extensions;
+  while (r)
+    {
+      if ((strncmp(r, runtime_parts[1], runtime_len) == 0)
+          && (strncmp(r + runtime_len, ".Debug=", 7) == 0))
+        {
+          char* end = strchr(r, ';');
+          if (end)
+            {
+              commit = g_strndup(r+runtime_len+7, end-(r+runtime_len+7));
+            }
+          else
+            {
+              commit = g_strdup(r + runtime_len + 7);
+            }
+          break ;
+        }
+      else
+        {
+          r = strchr(r, ';');
+          if (r)
+            ++r;
+        }
+    }
+
+  ref = g_strdup_printf ("runtime/%s.Debug/%s/%s",
+                          runtime_parts[1],
+                          runtime_parts[2],
+                          runtime_parts[3]);
+
+  commit_param = g_strdup_printf ("--commit=%s", commit);
+
+  argv = g_ptr_array_new_with_free_func (g_free);
+
+  g_ptr_array_add (argv, g_strdup ("/home/valentin/.local/bin/flatpak"));
+  g_ptr_array_add (argv, g_strdup ("update"));
+  g_ptr_array_add (argv, g_strdup ("--assumeyes"));
+  g_ptr_array_add (argv, g_strdup ("-v"));
+  for (i = 0; arg_paths[i] != NULL; ++i)
+    {
+      g_ptr_array_add (argv,
+                       g_strdup_printf ("--newsubpath=%s", arg_paths[i]));
+    }
+  g_ptr_array_add (argv, g_strdup (commit_param));
+  g_ptr_array_add (argv, g_strdup (ref));
+
+  if (!g_spawn_sync (NULL,
+                     (char**)argv->pdata,
+                     NULL,
+                     G_SPAWN_SEARCH_PATH,
+                     NULL,
+                     NULL,
+                     NULL,
+                     NULL,
+                     &exit_status,
+                     &error)) {
+    gint code = G_DBUS_ERROR_FAILED;
+    if (g_error_matches (error, G_SPAWN_ERROR, G_SPAWN_ERROR_ACCES))
+      code = G_DBUS_ERROR_ACCESS_DENIED;
+    else if (g_error_matches (error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
+      code = G_DBUS_ERROR_FILE_NOT_FOUND;
+    g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, code,
+                                           "Failed to run command: %s",
+                                           error->message);
+    return TRUE;
+  }
+  if (exit_status) {
+    g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                           G_DBUS_ERROR_FAILED,
+                                           "Command completed with failure.");
+    return TRUE;
+  }
+
+  portal_flatpak_complete_get_debug_files (portal, invocation);
+  return TRUE;
+}
+
+static gboolean
 authorize_method_handler (GDBusInterfaceSkeleton *interface,
                           GDBusMethodInvocation  *invocation,
                           gpointer                user_data)
@@ -791,6 +924,7 @@ on_bus_acquired (GDBusConnection *connection,
   portal_flatpak_set_version (PORTAL_FLATPAK (portal), 1);
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);
   g_signal_connect (portal, "handle-spawn-signal", G_CALLBACK (handle_spawn_signal), NULL);
+  g_signal_connect (portal, "handle-get-debug-files", G_CALLBACK (handle_get_debug_files), NULL);
 
   g_signal_connect (portal, "g-authorize-method", G_CALLBACK (authorize_method_handler), NULL);
 
