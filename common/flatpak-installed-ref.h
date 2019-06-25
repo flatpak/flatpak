@@ -59,6 +59,8 @@ FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_name (FlatpakInsta
 FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_summary (FlatpakInstalledRef *self);
 FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_version (FlatpakInstalledRef *self);
 FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_license (FlatpakInstalledRef *self);
+FLATPAK_EXTERN const char  *flatpak_installed_ref_get_appdata_content_rating_type (FlatpakInstalledRef *self);
+FLATPAK_EXTERN GHashTable  *flatpak_installed_ref_get_appdata_content_rating (FlatpakInstalledRef *self);
 FLATPAK_EXTERN gboolean     flatpak_installed_ref_get_is_current (FlatpakInstalledRef *self);
 FLATPAK_EXTERN GBytes      *flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
                                                                  GCancellable        *cancellable,
