@@ -773,7 +773,8 @@ get_ref (FlatpakDir   *dir,
                                     flatpak_deploy_data_get_appdata_summary (deploy_data),
                                     flatpak_deploy_data_get_appdata_version (deploy_data),
                                     flatpak_deploy_data_get_appdata_license (deploy_data),
-                                    NULL, NULL);
+                                    flatpak_deploy_data_get_appdata_content_rating_type (deploy_data),
+                                    flatpak_deploy_data_get_appdata_content_rating (deploy_data));
 }
 
 /**
