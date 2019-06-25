@@ -2398,6 +2398,36 @@ flatpak_deploy_data_get_appdata_license (GVariant *deploy_data)
   return flatpak_deploy_data_get_string (deploy_data, "appdata-license");
 }
 
+const char *
+flatpak_deploy_data_get_appdata_content_rating_type (GVariant *deploy_data)
+{
+  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  const char *value = NULL;
+
+  g_variant_lookup (metadata, "appdata-content-rating", "(&s*)", &value, NULL);
+
+  return value;
+}
+
+GHashTable *  /* (transfer container) (nullable) */
+flatpak_deploy_data_get_appdata_content_rating (GVariant *deploy_data)
+{
+  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  const char *id = NULL, *val = NULL;
+  g_autoptr(GHashTable) content_rating = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+  g_autoptr(GVariantIter) iter = NULL;
+
+  if (!g_variant_lookup (metadata, "appdata-content-rating", "(*a{ss})", NULL, &iter))
+    return NULL;
+
+  while (g_variant_iter_loop (iter, "{&s&s}", &id, &val))
+    g_hash_table_insert (content_rating,
+                         (gpointer) g_intern_string (id),
+                         (gpointer) g_intern_string (val));
+
+  return g_steal_pointer (&content_rating);
+}
+
 /*<private>
  * flatpak_deploy_data_get_subpaths:
  *
@@ -2473,6 +2503,32 @@ add_locale_metadata_string (GVariantBuilder *metadata_builder,
   }
 }
 
+/* Convert @content_rating_type and @content_rating to a floating #GVariant of
+ * type `(sa{ss})`. */
+static GVariant *
+appdata_content_rating_to_variant (const char *content_rating_type,
+                                   GHashTable *content_rating)
+{
+  g_auto(GVariantBuilder) builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("(sa{ss})"));
+  GHashTableIter iter;
+  gpointer key, value;
+
+  g_variant_builder_add (&builder, "s", content_rating_type);
+  g_variant_builder_open (&builder, G_VARIANT_TYPE ("a{ss}"));
+
+  g_hash_table_iter_init (&iter, content_rating);
+
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *id = key, *val = value;
+      g_variant_builder_add (&builder, "{ss}", id, val);
+    }
+
+  g_variant_builder_close (&builder);
+
+  return g_variant_builder_end (&builder);
+}
+
 static void
 add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
                             GFile           *deploy_dir,
@@ -2483,12 +2539,15 @@ add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
   g_autoptr(GHashTable) comments = NULL;
   g_autofree char *version = NULL;
   g_autofree char *license = NULL;
+  g_autofree char *content_rating_type = NULL;
+  g_autoptr(GHashTable) content_rating = NULL;
 
   appdata_xml = read_appdata_xml_from_deploy_dir (deploy_dir, id);
   if (appdata_xml == NULL)
     return;
 
-  if (flatpak_parse_appdata (appdata_xml, id, &names, &comments, &version, &license, NULL, NULL))
+  if (flatpak_parse_appdata (appdata_xml, id, &names, &comments, &version, &license,
+                             &content_rating_type, &content_rating))
     {
       add_locale_metadata_string (metadata_builder, "appdata-name", names);
       add_locale_metadata_string (metadata_builder, "appdata-summary", comments);
@@ -2498,6 +2557,9 @@ add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
       if (license)
         g_variant_builder_add (metadata_builder, "{s@v}", "appdata-license",
                                g_variant_new_variant (g_variant_new_string (license)));
+      if (content_rating_type != NULL && content_rating != NULL)
+        g_variant_builder_add (metadata_builder, "{s@v}", "appdata-content-rating",
+                               g_variant_new_variant (appdata_content_rating_to_variant (content_rating_type, content_rating)));
     }
 }
 
