@@ -28,6 +28,8 @@ gboolean flatpak_parse_appdata (const char  *appdata,
                                 GHashTable **names,
                                 GHashTable **comments,
                                 char       **version,
-                                char       **license);
+                                char       **license,
+                                char       **content_rating_type,
+                                GHashTable **content_rating);
 
 #endif /* __FLATPAK_APPDATA_PRIVATE_H__ */

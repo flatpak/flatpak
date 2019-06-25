@@ -457,6 +457,11 @@ test_parse_appdata (void)
     "    <releases>\n"
     "      <release timestamp=\"1525132800\" version=\"0.0.1\"/>\n" /* 01-05-2018 */
     "    </releases>\n"
+    "    <content_rating type=\"oars-1.0\">\n"
+    "      <content_attribute id=\"drugs-alcohol\">moderate</content_attribute>\n"
+    "      <content_attribute id=\"language-humor\">mild</content_attribute>\n"
+    "      <content_attribute id=\"violence-blood\">none</content_attribute>\n"
+    "    </content_rating>\n"
     "  </component>\n"
     "</components>";
   const char appdata2[] =
@@ -480,17 +485,21 @@ test_parse_appdata (void)
     "      <release timestamp=\"1000000000\" version=\"0.0.1\" type=\"stable\" urgency=\"low\"/>\n"
     "    </releases>\n"
     "    <project_license>anything goes</project_license>\n"
+    "    <content_rating type=\"oars-1.1\">\n"
+    "    </content_rating>\n"
     "  </component>\n"
     "</components>";
   g_autoptr(GHashTable) names = NULL;
   g_autoptr(GHashTable) comments = NULL;
   g_autofree char *version = NULL;
   g_autofree char *license = NULL;
+  g_autofree char *content_rating_type = NULL;
+  g_autoptr(GHashTable) content_rating = NULL;
   gboolean res;
   char *name;
   char *comment;
 
-  res = flatpak_parse_appdata (appdata1, "org.test.Hello", &names, &comments, &version, &license);
+  res = flatpak_parse_appdata (appdata1, "org.test.Hello", &names, &comments, &version, &license, &content_rating_type, &content_rating);
   g_assert_true (res);
   g_assert_cmpstr (version, ==, "0.0.1");
   g_assert_null (license);
@@ -502,13 +511,20 @@ test_parse_appdata (void)
   g_assert_cmpstr (name, ==, "Hello world test app: org.test.Hello");
   comment = g_hash_table_lookup (comments, "C");
   g_assert_cmpstr (comment, ==, "Print a greeting");
+  g_assert_cmpstr (content_rating_type, ==, "oars-1.0");
+  g_assert_cmpuint (g_hash_table_size (content_rating), ==, 3);
+  g_assert_cmpstr (g_hash_table_lookup (content_rating, "drugs-alcohol"), ==, "moderate");
+  g_assert_cmpstr (g_hash_table_lookup (content_rating, "language-humor"), ==, "mild");
+  g_assert_cmpstr (g_hash_table_lookup (content_rating, "violence-blood"), ==, "none");
 
   g_clear_pointer (&names, g_hash_table_unref);
   g_clear_pointer (&comments, g_hash_table_unref);
   g_clear_pointer (&version, g_free);
   g_clear_pointer (&license, g_free);
+  g_clear_pointer (&content_rating_type, g_free);
+  g_clear_pointer (&content_rating, g_hash_table_unref);
 
-  res = flatpak_parse_appdata (appdata2, "org.test.Hello", &names, &comments, &version, &license);
+  res = flatpak_parse_appdata (appdata2, "org.test.Hello", &names, &comments, &version, &license, &content_rating_type, &content_rating);
   g_assert_true (res);
   g_assert_cmpstr (version, ==, "0.1.0");
   g_assert_cmpstr (license, ==, "anything goes");
@@ -524,6 +540,8 @@ test_parse_appdata (void)
   g_assert_cmpstr (comment, ==, "Print a greeting");
   comment = g_hash_table_lookup (comments, "de");
   g_assert_cmpstr (comment, ==, "Schreib mal was");
+  g_assert_cmpstr (content_rating_type, ==, "oars-1.1");
+  g_assert_cmpuint (g_hash_table_size (content_rating), ==, 0);
 }
 
 static void

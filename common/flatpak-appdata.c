@@ -32,6 +32,8 @@ typedef struct
   GHashTable *comments;
   char       *version;
   char       *license;
+  char       *content_rating_type;
+  GHashTable *content_rating;  /* (element-type interned-utf8 interned-utf8) */
 } Component;
 
 typedef struct
@@ -40,8 +42,10 @@ typedef struct
   GString   *text;
   gboolean   in_text;
   gboolean   in_component;
+  gboolean   in_content_rating;
   char      *lang;
   guint64    timestamp;
+  const char *id;  /* interned */
 } ParserData;
 
 static void
@@ -53,6 +57,8 @@ component_free (gpointer data)
   g_hash_table_unref (component->comments);
   g_free (component->version);
   g_free (component->license);
+  g_free (component->content_rating_type);
+  g_clear_pointer (&component->content_rating, g_hash_table_unref);
 
   g_free (component);
 }
@@ -187,6 +193,71 @@ start_element (GMarkupParseContext *context,
             }
         }
     }
+  else if (g_str_equal (element_name, "content_rating"))
+    {
+      /* https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-content_rating */
+      Component *component = NULL;
+
+      g_assert (data->components->len > 0);
+
+      component = g_ptr_array_index (data->components, data->components->len - 1);
+
+      if (component->content_rating == NULL)
+        {
+          const gchar *type = NULL;
+
+          if (g_markup_collect_attributes (element_name,
+                                                 attribute_names,
+                                                 attribute_values,
+                                                 error,
+                                                 G_MARKUP_COLLECT_STRING, "type", &type,
+                                                 G_MARKUP_COLLECT_INVALID))
+            {
+              component->content_rating_type = g_strdup (type);
+              component->content_rating = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+              data->in_content_rating = TRUE;
+            }
+          else
+            {
+              g_warning ("Ignoring content rating missing type attribute");
+            }
+        }
+      else
+        {
+          g_warning ("Ignoring duplicate content rating");
+        }
+    }
+  else if (data->in_content_rating && g_str_equal (element_name, "content_attribute"))
+    {
+      /* https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-content_rating */
+      Component *component = NULL;
+      const gchar *id = NULL;
+
+      g_assert (data->components->len > 0);
+
+      component = g_ptr_array_index (data->components, data->components->len - 1);
+      g_assert (component->content_rating != NULL);
+
+      if (g_markup_collect_attributes (element_name,
+                                       attribute_names,
+                                       attribute_values,
+                                       error,
+                                       G_MARKUP_COLLECT_STRING, "id", &id,
+                                       G_MARKUP_COLLECT_INVALID))
+        {
+          /* FIXME: We use interned strings here (for keys and, below, for
+           * values) as the set of OARS keys and values is small and bounded.
+           * In future (once we can depend on GLib 2.58), we could switch to
+           * using #GRefString to avoid expanding the interned string hash
+           * table. */
+          data->id = g_intern_string (id);
+          data->in_text = TRUE;
+        }
+      else
+        {
+          g_warning ("Ignoring content attribute missing id attribute");
+        }
+    }
 }
 
 static void
@@ -234,6 +305,16 @@ end_element (GMarkupParseContext *context,
     {
       component->license = g_steal_pointer (&text);
     }
+  else if (g_str_equal (element_name, "content_rating"))
+    {
+      data->in_content_rating = FALSE;
+    }
+  else if (data->in_content_rating && g_str_equal (element_name, "content_attribute"))
+    {
+      /* https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-content_rating */
+      g_assert (component->content_rating != NULL);
+      g_hash_table_insert (component->content_rating, (gpointer) data->id, (gpointer) g_intern_string (text));
+    }
 }
 
 static void
@@ -255,7 +336,9 @@ flatpak_parse_appdata (const char  *appdata_xml,
                        GHashTable **names,
                        GHashTable **comments,
                        char       **version,
-                       char       **license)
+                       char       **license,
+                       char       **content_rating_type,
+                       GHashTable **content_rating)
 {
   g_autoptr(GMarkupParseContext) context = NULL;
   GMarkupParser parser = {
@@ -291,6 +374,10 @@ flatpak_parse_appdata (const char  *appdata_xml,
           *comments = g_hash_table_ref (component->comments);
           *version = g_steal_pointer (&component->version);
           *license = g_steal_pointer (&component->license);
+          if (content_rating_type != NULL)
+            *content_rating_type = g_steal_pointer (&component->content_rating_type);
+          if (content_rating != NULL)
+            *content_rating = g_steal_pointer (&component->content_rating);
           return TRUE;
         }
     }

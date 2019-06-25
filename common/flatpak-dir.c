@@ -2488,7 +2488,7 @@ add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
   if (appdata_xml == NULL)
     return;
 
-  if (flatpak_parse_appdata (appdata_xml, id, &names, &comments, &version, &license))
+  if (flatpak_parse_appdata (appdata_xml, id, &names, &comments, &version, &license, NULL, NULL))
     {
       add_locale_metadata_string (metadata_builder, "appdata-name", names);
       add_locale_metadata_string (metadata_builder, "appdata-summary", comments);
