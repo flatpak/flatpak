@@ -222,6 +222,11 @@ PKG_CHECK_MODULES(SYSTEMD, [libsystemd], [have_libsystemd=yes], [have_libsystemd
 if test $have_libsystemd = yes; then
   AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if libsystemd is available])
 fi
+PKG_CHECK_MODULES([MALCONTENT], [malcontent-0 >= 0.4.0], [have_libmalcontent=yes], [have_libmalcontent=no])
+AS_IF([test "$have_libmalcontent" = "yes"],[
+  AC_DEFINE([HAVE_LIBMALCONTENT], [1], [Define if libmalcontent is available])
+])
+AM_CONDITIONAL([HAVE_LIBMALCONTENT],[test "$have_libmalcontent" = "yes"])
 
 PKG_CHECK_MODULES(GLIB260, glib-2.0 >= 2.60,
                   [AC_DEFINE(GLIB_VERSION_MIN_REQUIRED, GLIB_VERSION_2_60, [Ignore massive GTimeVal deprecation warnings in 2.62])],
@@ -532,4 +537,5 @@ echo "          Privileged group:       $PRIVILEGED_GROUP"
 echo "          Privilege mode:         $with_priv_mode"
 echo "          Use dconf:              $have_dconf"
 echo "          Use libsystemd:         $have_libsystemd"
+echo "          Use libmalcontent:      $have_libmalcontent"
 echo ""
