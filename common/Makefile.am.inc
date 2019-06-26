@@ -149,6 +149,13 @@ libflatpak_common_la_SOURCES = \
 	common/valgrind-private.h \
 	$(NULL)
 
+if HAVE_LIBMALCONTENT
+libflatpak_common_la_SOURCES += \
+	common/flatpak-parental-controls.c \
+	common/flatpak-parental-controls-private.h \
+	$(NULL)
+endif
+
 libflatpak_common_la_CFLAGS = \
 	-DFLATPAK_COMPILATION \
 	-DLIBEXECDIR=\"$(libexecdir)\" \
@@ -163,6 +170,7 @@ libflatpak_common_la_CFLAGS = \
 	$(LIBSECCOMP_CFLAGS) \
 	$(MALCONTENT_CFLAGS) \
 	$(OSTREE_CFLAGS) \
+	$(POLKIT_CFLAGS) \
 	$(SOUP_CFLAGS) \
 	$(SYSTEMD_CFLAGS) \
 	$(XAUTH_CFLAGS) \
@@ -178,6 +186,7 @@ libflatpak_common_la_LIBADD = \
 	$(LIBSECCOMP_LIBS) \
 	$(MALCONTENT_LIBS) \
 	$(OSTREE_LIBS) \
+	$(POLKIT_LIBS) \
 	$(SOUP_LIBS) \
 	$(SYSTEMD_LIBS) \
 	$(XAUTH_LIBS) \

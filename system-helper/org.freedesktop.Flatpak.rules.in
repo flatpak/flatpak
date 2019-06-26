@@ -11,3 +11,11 @@ polkit.addRule(function(action, subject) {
 
     return polkit.Result.NOT_HANDLED;
 });
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.Flatpak.override-parental-controls") {
+            return polkit.Result.AUTH_ADMIN;
+    }
+
+    return polkit.Result.NOT_HANDLED;
+});
