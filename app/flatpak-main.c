@@ -254,9 +254,19 @@ check_environment (void)
   dirs = g_get_system_data_dirs ();
   for (i = 0; dirs[i]; i++)
     {
-      if (g_str_has_prefix (dirs[i], system_exports))
+      /* There should never be a relative path but just in case we don't want
+       * g_file_new_for_path() to take the current directory into account.
+       */
+      if (!g_str_has_prefix (dirs[i], "/"))
+        continue;
+
+      /* Normalize the path using GFile to e.g. replace // with / */
+      g_autoptr(GFile) dir_file = g_file_new_for_path (dirs[i]);
+      g_autofree char *dir_path = g_file_get_path (dir_file);
+
+      if (g_str_has_prefix (dir_path, system_exports))
         has_system = TRUE;
-      if (g_str_has_prefix (dirs[i], user_exports))
+      if (g_str_has_prefix (dir_path, user_exports))
         has_user = TRUE;
     }
 
