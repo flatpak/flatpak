@@ -1,3 +1,10 @@
+Changes in 1.4.2
+================
+
+ * Support extra_data in extensions.
+ * Handle double slashes ("//")in XDG_DATA_DIRS.
+ * Fix detection of local related refs.
+
 Changes in 1.4.1
 ================
 
