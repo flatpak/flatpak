@@ -554,6 +554,15 @@ install_polkit_agent (void)
 #ifdef USE_SYSTEM_HELPER
   PolkitAgentListener *listener = NULL;
   g_autoptr(GError) local_error = NULL;
+  g_autoptr(GDBusConnection) bus = NULL;
+
+  bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &local_error);
+
+  if (bus == NULL)
+    {
+      g_debug ("Unable to connect to system bus: %s", local_error->message);
+      return NULL;
+    }
 
   /* Install a polkit agent as fallback, in case we're running on a console */
   listener = flatpak_polkit_agent_text_listener_new (NULL, &local_error);
