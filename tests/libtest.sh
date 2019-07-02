@@ -370,7 +370,6 @@ skip_without_bwrap () {
     else
         sed -e 's/^/# /' < bwrap-result
         skip "Cannot run bwrap"
-        exit 0
     fi
 }
 
