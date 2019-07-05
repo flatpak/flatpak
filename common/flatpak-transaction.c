@@ -2629,7 +2629,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
 
       if (!g_file_load_contents (file, cancellable, &data, &data_len, NULL, error))
         {
-          g_prefix_error (error, "Can't load dependent file %s", dep_url);
+          g_prefix_error (error, _("Can't load dependent file %s: "), dep_url);
           return FALSE;
         }
 
@@ -2644,7 +2644,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
       dep_data = flatpak_load_http_uri (soup_session, dep_url, 0, NULL, NULL, cancellable, error);
       if (dep_data == NULL)
         {
-          g_prefix_error (error, "Can't load dependent file %s", dep_url);
+          g_prefix_error (error, _("Can't load dependent file %s: "), dep_url);
           return FALSE;
         }
     }
