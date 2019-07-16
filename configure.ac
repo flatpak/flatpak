@@ -282,6 +282,16 @@ if test "x$enable_sandboxed_triggers" = "xno"; then
       [Define if sandboxed triggers are disabled])
 fi
 
+AC_ARG_ENABLE([diskspace-check],
+              AC_HELP_STRING([--enable-diskspace-check],
+                             [Enables diskspace check for installs or updates]),
+              [],
+              [enable_diskspace_check=no])
+if test "x$enable_diskspace_check" = "xyes"; then
+   AC_DEFINE([ENABLE_DISKSPACE_CHECK], [1],
+      [Define if diskspace check is enabled])
+fi
+
 PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
 
 PKG_CHECK_MODULES(JSON, [json-glib-1.0])

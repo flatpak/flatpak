@@ -183,6 +183,9 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
                                                        gboolean            no_deploy);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_enable_diskspace_check (FlatpakTransaction *self,
+                                                                    gboolean            enable_diskspace_check);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_disable_static_deltas (FlatpakTransaction *self,
                                                                    gboolean            disable_static_deltas);
 FLATPAK_EXTERN
