@@ -45,7 +45,8 @@
         <para>
             <arg choice="plain">INSTANCE</arg> can be
             either the numeric instance ID or the application ID of a running
-            Flatpak.
+            Flatpak. You can use <command>flatpak ps</command> to find the
+            instance IDs of running flatpaks.
         </para>
 
     </refsect1>
