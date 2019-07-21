@@ -25,7 +25,7 @@
 
     <refnamediv>
         <refname>flatpak-enter</refname>
-        <refpurpose>Enter an application</refpurpose>
+        <refpurpose>Enter an application or runtime's sandbox</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
@@ -43,9 +43,14 @@
 
         <para>
             Enter a running sandbox.
+        </para>
+        <para>
             <arg choice="plain">INSTANCE</arg> must be either the pid of a process running
-            in a flatpak sandbox, or the ID of a running application or a the instance ID
-             of a running sandbox.
+            in a flatpak sandbox, or the ID of a running application, or the instance ID
+            of a running sandbox. You can use <command>flatpak ps</command> to find the
+            instance IDs of running flatpaks.
+        </para>
+        <para>
             <arg choice="plain">COMMAND</arg> is the command to run in the sandbox.
             Extra arguments are passed on to the command.
         </para>
@@ -109,6 +114,7 @@
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-ps</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>
