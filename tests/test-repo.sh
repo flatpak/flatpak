@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..32"
+echo "1..33"
 
 #Regular repo
 setup_repo
@@ -177,6 +177,44 @@ fi
 assert_file_has_content install-error-log "Server returned status 404: Not Found"
 
 echo "ok install fails gracefully for 404 URLs"
+
+# Use a new remote so we can be sure it doesn't match any existing one's URL
+setup_repo_no_add flatpakref org.test.Collection.Flatpakref
+
+cat << EOF > repos/flatpakref/flatpakref-repo.flatpakrepo
+[Flatpak Repo]
+Version=1
+Url=http://127.0.0.1:$(cat httpd-port-main)/flatpakref/
+Title=The Title
+GPGKey=${FL_GPG_BASE64}
+EOF
+
+if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
+    echo "DeployCollectionID=org.test.Collection.Flatpakref" >> repos/flatpakref/flatpakref-repo.flatpakrepo
+fi
+
+cat << EOF > org.test.Hello.flatpakref
+[Flatpak Ref]
+Name=org.test.Hello
+Branch=master
+Url=http://127.0.0.1:$(cat httpd-port-main)/flatpakref
+GPGKey=${FL_GPG_BASE64}
+RuntimeRepo=http://127.0.0.1:$(cat httpd-port-main)/flatpakref/flatpakref-repo.flatpakrepo
+EOF
+
+${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
+
+# Ensure that only one remote is added even though the URL in the flatpakref
+# does not have a trailing slash and the URL in the flatpakrepo file does
+NUM_REMOTES_BEFORE=$(flatpak remotes | wc -l)
+${FLATPAK} ${U} install -y org.test.Hello.flatpakref
+NUM_REMOTES_AFTER=$(flatpak remotes | wc -l)
+
+if [ $NUM_REMOTES_AFTER -ne $((NUM_REMOTES_BEFORE + 1)) ]; then
+    assert_not_reached "install of flatpakref should only add one remote"
+fi
+
+echo "ok install flatpakref normalizes remote URL trailing slash"
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 
