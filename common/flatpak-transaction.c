@@ -1912,7 +1912,7 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
-  priv->bundles = g_list_append (priv->flatpakrefs, bundle_data_new (file, gpg_data));
+  priv->bundles = g_list_append (priv->bundles, bundle_data_new (file, gpg_data));
 
   return TRUE;
 }
