@@ -248,7 +248,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
 {
   FlatpakCliTransaction *cli = data;
   FlatpakTransaction *self = FLATPAK_TRANSACTION (cli);
-  FlatpakTransactionOperation *op = flatpak_transaction_get_current_operation (self);
+  g_autoptr(FlatpakTransactionOperation) op = flatpak_transaction_get_current_operation (self);
   g_autoptr(GString) str = g_string_new ("");
   int i;
   int n_full, partial;
@@ -970,7 +970,7 @@ transaction_ready (FlatpakTransaction *transaction)
 
   if (!self->disable_interaction)
     {
-      FlatpakInstallation *installation = flatpak_transaction_get_installation (transaction);
+      g_autoptr(FlatpakInstallation) installation = flatpak_transaction_get_installation (transaction);
       const char *name;
       const char *id;
       gboolean ret;
