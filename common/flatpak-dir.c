@@ -2422,11 +2422,7 @@ flatpak_dir_get_origin (FlatpakDir   *self,
   deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
                                              cancellable, error);
   if (deploy_data == NULL)
-    {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s not installed"), ref);
-      return NULL;
-    }
+    return NULL;
 
   return g_strdup (flatpak_deploy_data_get_origin (deploy_data));
 }
