@@ -6776,7 +6776,7 @@ flatpak_repo_resolve_rev (OstreeRepo    *repo,
     }
   else
     ostree_repo_resolve_rev_ext (repo, ref_name, allow_noent,
-                                 OSTREE_REPO_LIST_REFS_EXT_NONE, out_rev, &local_error);
+                                 OSTREE_REPO_RESOLVE_REV_EXT_NONE, out_rev, &local_error);
 
   if (local_error != NULL)
     {
