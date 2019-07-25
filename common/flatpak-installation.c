@@ -1197,7 +1197,8 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 /* Find all USB and LAN repositories which share the same collection ID as
  * @remote_name, and add a #FlatpakRemote to @remotes for each of them. The caller
  * must initialise @remotes. Returns %TRUE without modifying @remotes if the
- * given remote doesn’t have a collection ID configured.
+ * given remote doesn’t have a collection ID configured or if the @dir doesn’t
+ * have a repo.
  *
  * FIXME: If this were async, the parallelisation could be handled in the caller. */
 static gboolean
@@ -1209,6 +1210,7 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
                                     GCancellable        *cancellable,
                                     GError             **error)
 {
+  OstreeRepo *repo;
   g_autofree gchar *collection_id = NULL;
   OstreeCollectionRef ref;
   OstreeCollectionRef ref2;
@@ -1227,8 +1229,12 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
       !types_filter[FLATPAK_REMOTE_TYPE_LAN])
     return TRUE;
 
+  repo = flatpak_dir_get_repo (dir);
+  if (repo == NULL)
+    return TRUE;
+
   /* Find the collection ID for @remote_name, or bail if there is none. */
-  if (!ostree_repo_get_remote_option (flatpak_dir_get_repo (dir),
+  if (!ostree_repo_get_remote_option (repo,
                                       remote_name, "collection-id",
                                       NULL, &collection_id, error))
     return FALSE;
@@ -1272,7 +1278,7 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
         }
     }
 
-  ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
+  ostree_repo_find_remotes_async (repo,
                                   (const OstreeCollectionRef * const *) refs,
                                   NULL,  /* no options */
                                   finders,
@@ -1284,7 +1290,7 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
   while (result == NULL)
     g_main_context_iteration (context, TRUE);
 
-  results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
+  results = ostree_repo_find_remotes_finish (repo, result, error);
 
   if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
     ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
