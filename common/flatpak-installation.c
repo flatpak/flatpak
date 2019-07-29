@@ -976,6 +976,16 @@ async_result_cb (GObject      *obj,
   *result_out = g_object_ref (result);
 }
 
+/* Useful as the #GDestroyNotify in NULL-terminated pointer arrays. */
+static void
+_ostree_collection_ref_free0 (OstreeCollectionRef *ref)
+{
+  if (ref == NULL)
+    return;
+
+  ostree_collection_ref_free (ref);
+}
+
 /**
  * flatpak_installation_list_installed_refs_for_update:
  * @self: a #FlatpakInstallation
@@ -1077,7 +1087,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  collection_refs = g_ptr_array_new ();
+  collection_refs = g_ptr_array_new_with_free_func ((GDestroyNotify) _ostree_collection_ref_free0);
 
   refs_str = g_string_new ("");
   for (i = 0; i < installed->len; i++)
