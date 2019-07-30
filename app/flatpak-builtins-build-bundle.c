@@ -212,7 +212,7 @@ add_icon_to_metadata (const char *icon_size_name,
 }
 
 static gboolean
-build_bundle (OstreeRepo *repo, const char *collection_id, GFile *file,
+build_bundle (OstreeRepo *repo, const char *commit_checksum, GFile *file,
               const char *name, const char *full_branch,
               const char *from_commit,
               GCancellable *cancellable, GError **error)
@@ -224,14 +224,10 @@ build_bundle (OstreeRepo *repo, const char *collection_id, GFile *file,
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GInputStream) in = NULL;
   g_autoptr(GFile) root = NULL;
-  g_autofree char *commit_checksum = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autoptr(GVariant) params = NULL;
   g_autoptr(GVariant) metadata = NULL;
-
-  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, full_branch, FALSE,
-                                 &commit_checksum, cancellable, error))
-    return FALSE;
+  const char *collection_id;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
     return FALSE;
@@ -294,6 +290,7 @@ build_bundle (OstreeRepo *repo, const char *collection_id, GFile *file,
   if (opt_runtime_repo)
     g_variant_builder_add (&metadata_builder, "{sv}", "runtime-repo", g_variant_new_string (opt_runtime_repo));
 
+  collection_id = ostree_repo_get_collection_id (repo);
   g_variant_builder_add (&metadata_builder, "{sv}", "collection-id",
                          g_variant_new_string (collection_id ? collection_id : ""));
 
@@ -381,14 +378,13 @@ add_icon_to_annotations (const char *icon_size_name,
 }
 
 static gboolean
-build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
+build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
            const char *name, const char *ref,
            GCancellable *cancellable, GError **error)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
-  g_autofree char *commit_checksum = NULL;
   g_autofree char *dir_uri = NULL;
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciLayerWriter) layer_writer = NULL;
@@ -409,10 +405,6 @@ build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
   gsize metadata_size;
   g_autofree char *metadata_contents = NULL;
   g_auto(GStrv) ref_parts = NULL;
-
-  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, ref, FALSE,
-                                 &commit_checksum, cancellable, error))
-    return FALSE;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
     return FALSE;
@@ -531,6 +523,50 @@ build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
   return TRUE;
 }
 
+static gboolean
+_repo_resolve_rev (OstreeRepo *repo, const char *ref, char **out_rev,
+                   GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GError) my_error = NULL;
+
+  g_return_val_if_fail (repo != NULL, FALSE);
+  g_return_val_if_fail (ref != NULL, FALSE);
+  g_return_val_if_fail (out_rev != NULL, FALSE);
+  g_return_val_if_fail (*out_rev == NULL, FALSE);
+
+  if (ostree_repo_resolve_rev (repo, ref, FALSE, out_rev, &my_error))
+    return TRUE;
+  else
+    {
+      g_autoptr(GHashTable) collection_refs = NULL;  /* (element-type OstreeCollectionRef utf8) */
+
+      /* Fall back to iterating over every collection-ref. We can't use
+       * ostree_repo_resolve_collection_ref() since we don't know the
+       * collection ID. */
+      if (!ostree_repo_list_collection_refs (repo, NULL, &collection_refs,
+                                             OSTREE_REPO_LIST_REFS_EXT_NONE,
+                                             cancellable, error))
+        return FALSE;
+
+      /* Take the checksum of the first matching ref. There's no point in
+       * checking for duplicates because (a) it's not possible to install the
+       * same app from two collections in the same flatpak installation and (b)
+       * ostree_repo_resolve_rev() also takes the first matching ref. */
+      GLNX_HASH_TABLE_FOREACH_KV (collection_refs, const OstreeCollectionRef *, c_r,
+                                  const char*, checksum)
+        {
+          if (g_strcmp0 (c_r->ref_name, ref) == 0)
+            {
+              *out_rev = g_strdup (checksum);
+              return TRUE;
+            }
+        }
+
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return FALSE;
+    }
+}
+
 gboolean
 flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -544,7 +580,7 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   const char *name;
   const char *branch;
   g_autofree char *full_branch = NULL;
-  const char *collection_id;
+  g_autofree char *commit_checksum = NULL;
 
   context = g_option_context_new (_("LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -579,9 +615,9 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
       return FALSE;
     }
 
-  collection_id = ostree_repo_get_collection_id (repo);
-
-  if (flatpak_repo_resolve_rev (repo, collection_id, NULL, name, FALSE, NULL, NULL, NULL))
+  /* We can't use flatpak_repo_resolve_rev() here because it takes a NULL
+   * remote name to mean the ref is local. */
+  if (_repo_resolve_rev (repo, name, &commit_checksum, NULL, NULL))
     full_branch = g_strdup (name);
   else
     {
@@ -595,6 +631,9 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
         full_branch = flatpak_build_runtime_ref (name, branch, opt_arch);
       else
         full_branch = flatpak_build_app_ref (name, branch, opt_arch);
+
+      if (!_repo_resolve_rev (repo, full_branch, &commit_checksum, cancellable, error))
+        return FALSE;
     }
 
   file = g_file_new_for_commandline_arg (filename);
@@ -604,12 +643,12 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_oci)
     {
-      if (!build_oci (repo, collection_id, file, name, full_branch, cancellable, error))
+      if (!build_oci (repo, commit_checksum, file, name, full_branch, cancellable, error))
         return FALSE;
     }
   else
     {
-      if (!build_bundle (repo, collection_id, file, name, full_branch, opt_from_commit, cancellable, error))
+      if (!build_bundle (repo, commit_checksum, file, name, full_branch, opt_from_commit, cancellable, error))
         return FALSE;
     }
 
