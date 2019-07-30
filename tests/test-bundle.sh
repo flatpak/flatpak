@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..7"
+echo "1..8"
 
 mkdir bundles
 
@@ -35,8 +35,16 @@ assert_has_file bundles/hello.flatpak
 ${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform
 assert_has_file bundles/platform.flatpak
 
-echo "ok create bundles"
+echo "ok create bundles server-side"
 
+rm bundles/hello.flatpak
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
+assert_has_file bundles/hello.flatpak
+
+echo "ok create bundles client-side"
+
+${FLATPAK} uninstall ${U} -y org.test.Hello
 ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak
 
 # This should have installed the runtime dependency too
