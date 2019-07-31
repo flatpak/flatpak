@@ -532,6 +532,7 @@ _repo_resolve_rev (OstreeRepo *repo, const char *ref, char **out_rev,
   g_return_val_if_fail (repo != NULL, FALSE);
   g_return_val_if_fail (ref != NULL, FALSE);
   g_return_val_if_fail (out_rev != NULL, FALSE);
+  g_return_val_if_fail (*out_rev == NULL, FALSE);
 
   if (ostree_repo_resolve_rev (repo, ref, FALSE, out_rev, &my_error))
     return TRUE;
@@ -561,7 +562,6 @@ _repo_resolve_rev (OstreeRepo *repo, const char *ref, char **out_rev,
             }
         }
 
-      g_assert (*out_rev == NULL);
       g_propagate_error (error, g_steal_pointer (&my_error));
       return FALSE;
     }
