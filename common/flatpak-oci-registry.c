@@ -2215,13 +2215,18 @@ add_icon_image (SoupSession  *soup_session,
       g_autoptr(SoupURI) base_uri = soup_uri_new (index_uri);
       g_autoptr(SoupURI) icon_uri = soup_uri_new_with_base (base_uri, icon_data);
       g_autofree char *icon_uri_s = soup_uri_to_string (icon_uri, FALSE);
+      g_autoptr(GError) local_error = NULL;
 
       if (!flatpak_cache_http_uri (soup_session, icon_uri_s,
                                    0 /* flags */,
                                    icons_dfd, icon_path,
                                    NULL, NULL,
-                                   cancellable, error))
-        return FALSE;
+                                   cancellable, &local_error) &&
+          !g_error_matches (local_error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED))
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
 
       g_hash_table_replace (used_icons, g_steal_pointer (&icon_path), GUINT_TO_POINTER (1));
 
