@@ -113,8 +113,6 @@ gboolean flatpak_extension_matches_reason (const char *extension_id,
 
 const char * flatpak_get_bwrap (void);
 
-char *flatpak_get_timezone (void);
-
 char **flatpak_strv_merge (char   **strv1,
                            char   **strv2);
 char **flatpak_subpaths_merge (char **subpaths1,
@@ -602,12 +600,6 @@ gboolean flatpak_canonicalize_permissions (int         parent_dfd,
                                            int         uid,
                                            int         gid,
                                            GError    **error);
-
-char * flatpak_readlink (const char *path,
-                         GError    **error);
-char * flatpak_resolve_link (const char *path,
-                             GError    **error);
-char * flatpak_canonicalize_filename (const char *path);
 
 gboolean flatpak_file_rename (GFile        *from,
                               GFile        *to,

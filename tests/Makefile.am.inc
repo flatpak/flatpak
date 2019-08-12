@@ -53,9 +53,10 @@ testcommon_LDADD = \
 	$(SOUP_LIBS) \
 	$(JSON_LIBS) \
 	$(APPSTREAM_GLIB_LIBS) \     
-	libglnx.la \
-	libflatpak-common.la \
 	libflatpak-app.la \
+	libflatpak-common.la \
+	libflatpak-common-base.la \
+	libglnx.la \
 	$(NULL)
 testcommon_SOURCES = tests/testcommon.c
 
@@ -63,7 +64,7 @@ tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFL
 	-DFLATPAK_COMPILATION \
         -DLOCALEDIR=\"$(localedir)\"
 tests_httpcache_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
-	libglnx.la libflatpak-common.la
+	libflatpak-common.la libflatpak-common-base.la libglnx.la
 
 tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
 	mkdir -p tests/services

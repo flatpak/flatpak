@@ -1,5 +1,5 @@
 lib_LTLIBRARIES += libflatpak.la
-noinst_LTLIBRARIES += libflatpak-common.la
+noinst_LTLIBRARIES += libflatpak-common-base.la libflatpak-common.la
 noinst_PROGRAMS += test-libflatpak
 
 flatpakincludedir = $(includedir)/flatpak
@@ -67,9 +67,30 @@ common/flatpak-systemd-dbus-generated.c: data/org.freedesktop.systemd1.xml Makef
 common/%-dbus-generated.h: common/%-dbus-generated.c
 	@true # Built as a side-effect of the rules for the .c
 
+nodist_libflatpak_common_base_la_SOURCES = \
+	$(dbus_built_sources)		\
+	$(NULL)
+
+BUILT_SOURCES += $(nodist_libflatpak_common_base_la_SOURCES)
+CLEANFILES += $(nodist_libflatpak_common_base_la_SOURCES)
+
+libflatpak_common_base_la_SOURCES = \
+	common/flatpak-utils-base.c \
+	common/flatpak-utils-base-private.h \
+	$(NULL)
+
+libflatpak_common_base_la_CFLAGS = \
+	-DFLATPAK_COMPILATION \
+	$(AM_CFLAGS) \
+	$(BASE_CFLAGS) \
+	$(HIDDEN_VISIBILITY_CFLAGS) \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	$(NULL)
+
+libflatpak_common_base_la_LIBADD = $(AM_LIBADD) $(BASE_LIBS)
+
 nodist_libflatpak_common_la_SOURCES = \
 	$(nodist_flatpakinclude_HEADERS)    \
-	$(dbus_built_sources)		\
 	$(systemd_dbus_built_sources)	\
 	$(xdp_dbus_built_sources) \
 	common/flatpak-enum-types.c \
@@ -146,7 +167,7 @@ libflatpak_common_la_CFLAGS = \
 	-DLIBEXECDIR=\"$(libexecdir)\" \
 	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libflatpak_common_la_LIBADD = $(AM_LIBADD) libglnx.la $(ARCHIVE_LIBS) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(XML_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS) $(SYSTEMD_LIBS) $(DCONF_LIBS)
+libflatpak_common_la_LIBADD = $(AM_LIBADD) $(ARCHIVE_LIBS) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(XML_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS) $(SYSTEMD_LIBS) $(DCONF_LIBS)
 
 
 libflatpak_la_SOURCES = \
@@ -175,6 +196,8 @@ libflatpak_la_LDFLAGS = \
 libflatpak_la_LIBADD = \
 	$(AM_LIBADD) \
 	libflatpak-common.la \
+	libflatpak-common-base.la \
+	libglnx.la \
 	$(BASE_LIBS)	\
 	$(OSTREE_LIBS)	\
 	$(SOUP_LIBS)	\
