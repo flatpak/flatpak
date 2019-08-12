@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Red Hat, Inc
+ * Copyright © 2014-2019 Red Hat, Inc
  * Copyright © 2017 Endless Mobile, Inc.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@
 #include <ostree.h>
 
 #include "flatpak-dir-private.h"
-#include "flatpak-utils-private.h"
+#include "flatpak-utils-base-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-appdata-private.h"
