@@ -210,7 +210,8 @@ AC_SUBST([GDBUS_CODEGEN], [`$PKG_CONFIG --variable gdbus_codegen gio-2.0`])
 
 POLKIT_GOBJECT_REQUIRED=0.98
 
-PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0 libarchive >= 2.8.0 libxml-2.0 >= 2.4 ])
+PKG_CHECK_MODULES(ARCHIVE, [libarchive >= 2.8.0])
+PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0 libxml-2.0 >= 2.4 ])
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
 PKG_CHECK_MODULES(DCONF, [dconf >= 0.26], [have_dconf=yes], [have_dconf=no])
 if test $have_dconf = yes; then
