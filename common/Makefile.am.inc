@@ -138,6 +138,7 @@ libflatpak_common_la_CFLAGS = \
 	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(XAUTH_CFLAGS) \
+	$(XML_CFLAGS) \
 	$(LIBSECCOMP_CFLAGS) \
 	$(INTERNAL_GPGME_CFLAGS) \
 	$(SYSTEMD_CFLAGS) \
@@ -145,7 +146,7 @@ libflatpak_common_la_CFLAGS = \
 	-DLIBEXECDIR=\"$(libexecdir)\" \
 	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libflatpak_common_la_LIBADD = $(AM_LIBADD) libglnx.la $(ARCHIVE_LIBS) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS) $(SYSTEMD_LIBS) $(DCONF_LIBS)
+libflatpak_common_la_LIBADD = $(AM_LIBADD) libglnx.la $(ARCHIVE_LIBS) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(XML_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS) $(SYSTEMD_LIBS) $(DCONF_LIBS)
 
 
 libflatpak_la_SOURCES = \
