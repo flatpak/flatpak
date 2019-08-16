@@ -69,10 +69,6 @@ parse_lang (const char *value, GError **error)
   g_auto(GStrv) strs = NULL;
   int i;
 
-  if (strcmp (value, "*") == 0 ||
-      strcmp (value, "*all*") == 0)
-    return g_strdup ("");
-
   strs = g_strsplit (value, ";", 0);
   for (i = 0; strs[i]; i++)
     {
@@ -87,11 +83,27 @@ parse_lang (const char *value, GError **error)
 }
 
 static char *
+parse_special_lang (const char *value, GError **error)
+{
+  if (strcmp (value, "*") == 0 ||
+      strcmp (value, "*all*") == 0)
+    return g_strdup ("");
+
+  return parse_lang (value, error);
+}
+
+static char *
 print_lang (const char *value)
+{
+  return g_strdup (value);
+}
+
+static char *
+print_special_lang (const char *value)
 {
   if (*value == 0)
     return g_strdup ("*all*");
-  return g_strdup (value);
+  return print_lang (value);
 }
 
 static char *
@@ -111,7 +123,8 @@ typedef struct
 } ConfigKey;
 
 ConfigKey keys[] = {
-  { "languages", parse_lang, print_lang, get_lang_default },
+  { "languages", parse_special_lang, print_special_lang, get_lang_default },
+  { "extra-languages", parse_lang, print_lang, NULL },
 };
 
 static ConfigKey *

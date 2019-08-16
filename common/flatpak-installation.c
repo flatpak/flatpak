@@ -1649,6 +1649,33 @@ flatpak_installation_get_config (FlatpakInstallation *self,
 }
 
 /**
+ * flatpak_installation_get_default_languages:
+ * @self: a #FlatpakInstallation
+ * @error: return location for a #GError
+ *
+ * Get the default languages used by the installation to decide which
+ * subpaths to install of locale extensions. This list may also be used
+ * by frontends like GNOME Software to decide which language-specific apps
+ * to display. An empty array means that all languages should be installed.
+ *
+ * Returns: (array zero-terminated=1) (element-type utf8) (transfer full):
+ *   A possibly empty array of locale strings, or %NULL on error.
+ * Since: 1.5.0
+ */
+char **
+flatpak_installation_get_default_languages (FlatpakInstallation  *self,
+                                            GError              **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  return flatpak_dir_get_locale_languages (dir);
+}
+
+/**
  * flatpak_installation_get_min_free_space_bytes:
  * @self: a #FlatpakInstallation
  * @out_bytes: (out): Location to store the result
