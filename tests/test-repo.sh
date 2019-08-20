@@ -443,12 +443,12 @@ assert_not_file_has_content list-log "org\.test\.Platform"
 
 # Disable the remote to make sure we don't do i/o
 port=$(cat httpd-port-main)
-${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
 
 ${FLATPAK} ${U} install -y --no-pull test-repo org.test.Hello
 
 # re-enable remote
-${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
 
 ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "org\.test\.Hello"
@@ -466,13 +466,13 @@ assert_not_file_has_content list-log "org\.test\.Platform"
 
 # Disable the remote to make sure we don't do i/o
 port=$(cat httpd-port-main)
-${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
 
 # Note: The partial ref is only auto-corrected without user interaction because we're using -y
 ${FLATPAK} ${U} install -y --no-pull test-repo hello
 
 # re-enable remote
-${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
 
 ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "org\.test\.Hello"
@@ -696,7 +696,7 @@ assert_not_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
 assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
 
 if ${FLATPAK}  ${U} remote-info test-repo org.test.Hello > remote-ref-info; then
-        assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
+    assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
 fi
 
 if ${FLATPAK} ${U} install -y test-repo org.test.Hello; then
@@ -713,7 +713,7 @@ assert_not_file_has_content remote-ls-log "app/org\.test\.Hello"
 assert_not_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
 assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
 if ${FLATPAK}  ${U} remote-info test-repo org.test.Hello > remote-ref-info; then
-        assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
+    assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
 fi
 if ${FLATPAK} ${U} install -y test-repo org.test.Hello; then
     assert_not_reached "should not be able to install org.test.Hello should fail due to filter"
@@ -733,7 +733,7 @@ assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
 
 echo "ok filter"
 
-# Try installing it from a flatpakref file. Don’t uninstall afterwards because
+# Try installing it from a flatpakrepo file. Don’t uninstall afterwards because
 # we need it for the next test.
 cat << EOF > test.flatpakrepo
 [Flatpak Repo]
