@@ -151,23 +151,36 @@ libflatpak_common_la_SOURCES = \
 
 libflatpak_common_la_CFLAGS = \
 	-DFLATPAK_COMPILATION \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-I$(srcdir)/dbus-proxy \
 	$(AM_CFLAGS) \
 	$(ARCHIVE_CFLAGS) \
 	$(BASE_CFLAGS) \
+	$(DCONF_CFLAGS) \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
+	$(INTERNAL_GPGME_CFLAGS) \
+	$(JSON_CFLAGS) \
+	$(LIBSECCOMP_CFLAGS) \
 	$(OSTREE_CFLAGS) \
 	$(SOUP_CFLAGS) \
-	$(JSON_CFLAGS) \
+	$(SYSTEMD_CFLAGS) \
 	$(XAUTH_CFLAGS) \
 	$(XML_CFLAGS) \
-	$(LIBSECCOMP_CFLAGS) \
-	$(INTERNAL_GPGME_CFLAGS) \
-	$(SYSTEMD_CFLAGS) \
-	$(DCONF_CFLAGS) \
-	-DLIBEXECDIR=\"$(libexecdir)\" \
-	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libflatpak_common_la_LIBADD = $(AM_LIBADD) $(ARCHIVE_LIBS) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(XML_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS) $(SYSTEMD_LIBS) $(DCONF_LIBS)
+libflatpak_common_la_LIBADD = \
+	$(AM_LIBADD) \
+	$(ARCHIVE_LIBS) \
+	$(BASE_LIBS) \
+	$(DCONF_LIBS) \
+	$(INTERNAL_GPGME_LIBS) \
+	$(JSON_LIBS) \
+	$(LIBSECCOMP_LIBS) \
+	$(OSTREE_LIBS) \
+	$(SOUP_LIBS) \
+	$(SYSTEMD_LIBS) \
+	$(XAUTH_LIBS) \
+	$(XML_LIBS) \
+	$(NULL)
 
 
 libflatpak_la_SOURCES = \
