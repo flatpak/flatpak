@@ -1139,13 +1139,10 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         return NULL;
 
       if (results[0] == NULL)
-        {
-          flatpak_fail (error, _("No remotes found which provide these refs: [%s]"), refs_str->str);
-          return NULL;
-        }
+        g_debug ("No remotes found which provide these refs: [%s]", refs_str->str);
     }
 
-  for (i = 0; i < installed->len; i++)
+  for (i = 0; i < installed->len && results[0] != NULL; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
       const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
