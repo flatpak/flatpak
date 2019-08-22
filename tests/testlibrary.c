@@ -1733,7 +1733,7 @@ run_test_subprocess (char                 **argv,
 static void
 make_bundle (void)
 {
-  g_autofree char *repo_url = g_strdup_printf ("http://127.0.01:%s/test", httpd_port);
+  g_autofree char *repo_url = g_strdup_printf ("http://127.0.0.1:%s/test", httpd_port);
   g_autofree char *arg2 = g_strdup_printf ("--repo-url=%s", repo_url);
   g_autofree char *path = g_build_filename (testdir, "bundles", NULL);
   g_autofree char *file = g_build_filename (path, "hello.flatpak", NULL);
@@ -3400,7 +3400,7 @@ test_bundle (void)
   g_autofree char *path = NULL;
   g_autoptr(GFile) file2 = NULL;
   g_autofree char *origin = NULL;
-  g_autofree char *repo_url = g_strdup_printf ("http://127.0.01:%s/test", httpd_port);
+  g_autofree char *repo_url = g_strdup_printf ("http://127.0.0.1:%s/test", httpd_port);
   g_autoptr(GBytes) metadata = NULL;
   g_autoptr(GBytes) appstream = NULL;
   g_autoptr(GBytes) icon = NULL;
