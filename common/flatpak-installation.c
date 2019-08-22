@@ -1425,7 +1425,7 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
  * Lists the static remotes, in priority (highest first) order. For same
  * priority, an earlier added remote comes before a later added one.
  *
- * Returns: (transfer container) (element-type FlatpakRemote): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakRemote): a GPtrArray of
  *   #FlatpakRemote instances
  */
 GPtrArray *
@@ -1760,7 +1760,8 @@ flatpak_installation_update_remote_sync (FlatpakInstallation *self,
  *
  * Looks up a remote by name.
  *
- * Returns: (transfer full): a #FlatpakRemote instances, or %NULL error
+ * Returns: (transfer full): a #FlatpakRemote instance, or %NULL with @error
+ *   set
  */
 FlatpakRemote *
 flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
