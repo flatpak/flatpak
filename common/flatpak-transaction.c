@@ -1533,7 +1533,7 @@ add_related (FlatpakTransaction          *self,
     }
 
   if (transaction_is_local_only (self, op->kind))
-    related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref, op->remote, op->resolved_metakey,
+    related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref, op->resolved_commit, op->remote, op->resolved_metakey,
                                                            NULL, &local_error);
   else
     related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref, op->resolved_metakey,
@@ -2070,7 +2070,7 @@ emit_op_done (FlatpakTransaction          *self,
 }
 
 static GBytes *
-load_deployed_metadata (FlatpakTransaction *self, const char *ref)
+load_deployed_metadata (FlatpakTransaction *self, const char *ref, char **out_commit)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GFile) deploy_dir = NULL;
@@ -2081,6 +2081,16 @@ load_deployed_metadata (FlatpakTransaction *self, const char *ref)
   deploy_dir = flatpak_dir_get_if_deployed (priv->dir, ref, NULL, NULL);
   if (deploy_dir == NULL)
     return NULL;
+
+  if (out_commit)
+    {
+      g_autoptr(GVariant) deploy_data = NULL;
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+      if (deploy_data == NULL)
+        return NULL;
+
+      *out_commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+    }
 
   metadata_file = g_file_get_child (deploy_dir, "metadata");
 
@@ -2121,8 +2131,7 @@ mark_op_resolved (FlatpakTransactionOperation *op,
 
   g_assert (op != NULL);
 
-  if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-    g_assert (commit != NULL);
+  g_assert (commit != NULL);
 
   op->resolved = TRUE;
   op->resolved_commit = g_strdup (commit);
@@ -2193,7 +2202,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
       op->eol = g_strdup (resolve->eol);
       op->eol_rebase = g_strdup (resolve->eol_rebase);
 
-      old_metadata_bytes = load_deployed_metadata (self, op->ref);
+      old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL);
       mark_op_resolved (op, resolve->resolved_commit, resolve->resolved_metadata, old_metadata_bytes);
 
       emit_eol_and_maybe_skip (self, op);
@@ -2234,8 +2243,8 @@ resolve_ops (FlatpakTransaction *self,
         {
           /* We resolve to the deployed metadata, because we need it to uninstall related ops */
 
-          metadata_bytes = load_deployed_metadata (self, op->ref);
-          mark_op_resolved (op, NULL, metadata_bytes, NULL);
+          metadata_bytes = load_deployed_metadata (self, op->ref, &checksum);
+          mark_op_resolved (op, checksum, metadata_bytes, NULL);
           continue;
         }
 
@@ -2288,7 +2297,7 @@ resolve_ops (FlatpakTransaction *self,
           g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &op->eol);
           g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &op->eol_rebase);
 
-          old_metadata_bytes = load_deployed_metadata (self, op->ref);
+          old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL);
           mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
 
           emit_eol_and_maybe_skip (self, op);
@@ -2339,7 +2348,7 @@ resolve_ops (FlatpakTransaction *self,
               g_variant_lookup (sparse_cache, "eolr", "s", &op->eol_rebase);
             }
 
-          old_metadata_bytes = load_deployed_metadata (self, op->ref);
+          old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL);
           mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
 
           emit_eol_and_maybe_skip (self, op);

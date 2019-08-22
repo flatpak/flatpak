@@ -13728,9 +13728,33 @@ local_match_prefix (FlatpakDir *self,
   return matches;
 }
 
+static gboolean
+repo_get_ref_collection_binding (OstreeRepo  *repo,
+                                 const char  *ref,
+                                 const char  *commit,
+                                 char       **out_collection_id,
+                                 GError     **error)
+{
+  g_autoptr(GVariant) commit_v = NULL;
+  g_autoptr(GVariant) commit_metadata = NULL;
+  const char *collection_id = NULL;
+
+  if (!ostree_repo_load_commit (repo, commit, &commit_v, NULL, error))
+    return FALSE;
+
+  commit_metadata = g_variant_get_child_value (commit_v, 0);
+  g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
+
+  if (out_collection_id)
+    *out_collection_id = g_strdup (collection_id);
+
+  return TRUE;
+}
+
 GPtrArray *
 flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                              const char   *ref,
+                                             const char   *commit,
                                              const char   *remote_name,
                                              GKeyFile     *metakey,
                                              GCancellable *cancellable,
@@ -13742,16 +13766,16 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
   g_autofree char *collection_id = NULL;
   g_auto(GStrv) groups = NULL;
 
-  /* Derive the collection ID from the remote we are querying. This will act as
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  /* Derive the collection ID from the commit metadata. This will act as
    * a sanity check on the summary ref lookup. */
-  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
+  if (!repo_get_ref_collection_binding (flatpak_dir_get_repo (self), ref, commit, &collection_id, error))
     return NULL;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
-    return NULL;
-
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
 
   groups = g_key_file_get_groups (metakey, NULL);
@@ -13861,10 +13885,12 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
                                 GError      **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   g_autoptr(GPtrArray) related = NULL;
+  g_autofree char *checksum = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
@@ -13879,6 +13905,12 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
           return NULL;
         }
 
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+      if (deploy_data == NULL)
+        return NULL;
+
+      checksum = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+
       metadata = g_file_get_child (deploy_dir, "metadata");
       if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
         {
@@ -13888,7 +13920,6 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
     }
   else
     {
-      g_autofree char *checksum = NULL;
       g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, ref, &checksum, NULL, NULL);
       if (commit_data)
         {
@@ -13901,7 +13932,7 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
 
   if (metadata_contents &&
       g_key_file_load_from_data (metakey, metadata_contents, -1, 0, NULL))
-    related = flatpak_dir_find_local_related_for_metadata (self, ref, remote_name, metakey, cancellable, error);
+    related = flatpak_dir_find_local_related_for_metadata (self, ref, checksum, remote_name, metakey, cancellable, error);
   else
     related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
 
