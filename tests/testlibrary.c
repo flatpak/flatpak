@@ -1617,6 +1617,71 @@ test_list_updates (void)
 }
 
 static void
+test_list_updates_offline (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(FlatpakInstalledRef) runtime_ref = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+  gboolean res;
+  g_autofree char *saved_url = NULL;
+  g_autofree char *wrong_url = NULL;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  /* Install a runtime */
+  runtime_ref = flatpak_installation_install (inst,
+                                              repo_name,
+                                              FLATPAK_REF_KIND_RUNTIME,
+                                              "org.test.Platform",
+                                              NULL, NULL, NULL, NULL, NULL,
+                                              &error);
+  g_assert_no_error (error);
+  g_assert (FLATPAK_IS_INSTALLED_REF (runtime_ref));
+
+  /* Note: here we could create an update for the runtime, but it won't be
+   * found anyway since the URL will be wrong.
+   */
+
+  /* Make the URL wrong to simulate being offline */
+  remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remote);
+  saved_url = flatpak_remote_get_url (remote);
+  wrong_url = g_strdup_printf ("http://127.0.0.1:%s/nonexistent", httpd_port);
+  flatpak_remote_set_url (remote, wrong_url);
+  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  /* Listing updates offline should return an empty array */
+  refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 0);
+
+  /* Restore the correct URL to the remote */
+  flatpak_remote_set_url (remote, saved_url);
+  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  /* Uninstall the runtime */
+  res = flatpak_installation_uninstall (inst,
+                                        flatpak_ref_get_kind (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_name (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_arch (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_branch (FLATPAK_REF (runtime_ref)),
+                                        NULL, NULL, NULL,
+                                        &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+}
+
+static void
 run_test_subprocess (char                 **argv,
                      RunTestSubprocessFlags flags)
 {
@@ -3716,6 +3781,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
   g_test_add_func ("/library/list-refs-in-remote", test_list_refs_in_remotes);
   g_test_add_func ("/library/list-updates", test_list_updates);
+  g_test_add_func ("/library/list-updates-offline", test_list_updates_offline);
   g_test_add_func ("/library/transaction", test_misc_transaction);
   g_test_add_func ("/library/transaction-install-uninstall", test_transaction_install_uninstall);
   g_test_add_func ("/library/transaction-install-flatpakref", test_transaction_install_flatpakref);
