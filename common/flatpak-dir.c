@@ -9534,8 +9534,8 @@ gboolean
 flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
                                    const char   *type,
                                    const char   *name_prefix,
-                                   const char   *branch,
                                    const char   *arch,
+                                   const char   *branch,
                                    GHashTable   *hash,
                                    GCancellable *cancellable,
                                    GError      **error)
@@ -9565,8 +9565,8 @@ flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
           name[0] != '.' && (name_prefix == NULL || g_str_has_prefix (name, name_prefix)))
         {
           g_autoptr(GFile) child1 = g_file_get_child (dir, name);
-          g_autoptr(GFile) child2 = g_file_get_child (child1, branch);
-          g_autoptr(GFile) child3 = g_file_get_child (child2, arch);
+          g_autoptr(GFile) child2 = g_file_get_child (child1, arch);
+          g_autoptr(GFile) child3 = g_file_get_child (child2, branch);
           g_autoptr(GFile) active = g_file_get_child (child3, "active");
 
           if (g_file_query_exists (active, cancellable))

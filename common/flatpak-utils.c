@@ -1576,8 +1576,8 @@ flatpak_build_app_ref (const char *app,
 char **
 flatpak_list_deployed_refs (const char   *type,
                             const char   *name_prefix,
-                            const char   *branch,
                             const char   *arch,
+                            const char   *branch,
                             GCancellable *cancellable,
                             GError      **error)
 {
@@ -1598,7 +1598,7 @@ flatpak_list_deployed_refs (const char   *type,
     goto out;
 
   if (!flatpak_dir_collect_deployed_refs (user_dir, type, name_prefix,
-                                          branch, arch, hash, cancellable,
+                                          arch, branch, hash, cancellable,
                                           error))
     goto out;
 
@@ -1606,7 +1606,7 @@ flatpak_list_deployed_refs (const char   *type,
     {
       FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
       if (!flatpak_dir_collect_deployed_refs (system_dir, type, name_prefix,
-                                              branch, arch, hash, cancellable,
+                                              arch, branch, hash, cancellable,
                                               error))
         goto out;
     }
@@ -1628,8 +1628,8 @@ out:
 
 char **
 flatpak_list_unmaintained_refs (const char   *name_prefix,
-                                const char   *branch,
                                 const char   *arch,
+                                const char   *branch,
                                 GCancellable *cancellable,
                                 GError      **error)
 {
@@ -1647,7 +1647,7 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
   user_dir = flatpak_dir_get_user ();
 
   if (!flatpak_dir_collect_unmaintained_refs (user_dir, name_prefix,
-                                              branch, arch, hash, cancellable,
+                                              arch, branch, hash, cancellable,
                                               error))
     return NULL;
 
@@ -1660,7 +1660,7 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
       FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
 
       if (!flatpak_dir_collect_unmaintained_refs (system_dir, name_prefix,
-                                                  branch, arch, hash, cancellable,
+                                                  arch, branch, hash, cancellable,
                                                   error))
         return NULL;
     }
