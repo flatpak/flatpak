@@ -256,8 +256,8 @@ FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
                                              GError      **error);
 char ** flatpak_list_deployed_refs (const char   *type,
                                     const char   *name_prefix,
-                                    const char   *branch,
                                     const char   *arch,
+                                    const char   *branch,
                                     GCancellable *cancellable,
                                     GError      **error);
 char ** flatpak_list_unmaintained_refs (const char   *name_prefix,
