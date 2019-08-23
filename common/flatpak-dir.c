@@ -13673,12 +13673,12 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
   return g_steal_pointer (&related);
 }
 
-static GPtrArray *
+static GHashTable *
 local_match_prefix (FlatpakDir *self,
                     const char *extension_ref,
                     const char *remote)
 {
-  GPtrArray *matches = g_ptr_array_new_with_free_func (g_free);
+  GHashTable *matches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   g_auto(GStrv) parts = NULL;
   g_autofree char *parts_prefix = NULL;
   g_autoptr(GHashTable) refs = NULL;
@@ -13713,9 +13713,13 @@ local_match_prefix (FlatpakDir *self,
           if (!g_str_has_prefix (cur_parts[0], parts_prefix))
             continue;
 
-          g_ptr_array_add (matches, g_strconcat (parts[0], "/", partial_ref, NULL));
+          g_hash_table_add (matches, g_strconcat (parts[0], "/", partial_ref, NULL));
         }
     }
+
+  /* Also check deploys. In case remote-delete --force is run, we can end up
+   * with a deploy without a corresponding ref in the repo. */
+  flatpak_dir_collect_deployed_refs (self, parts[0], parts[1], parts[2], matches, NULL, NULL);
 
   return matches;
 }
@@ -13797,6 +13801,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
           g_autofree char *extension_ref = NULL;
           g_autofree char *checksum = NULL;
           g_autofree char *extension_collection_id = NULL;
+          g_autoptr(GVariant) deploy_data = NULL;
 
           /* Parse actual extension name */
           flatpak_parse_extension_with_tag (tagged_extension, &extension, NULL);
@@ -13837,14 +13842,25 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
               add_related (self, related, extension, extension_collection_id, extension_ref,
                            checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
             }
+          else if ((deploy_data = flatpak_dir_get_deploy_data (self, extension_ref,
+                                                               FLATPAK_DEPLOY_VERSION_ANY,
+                                                               NULL, NULL)) != NULL)
+            {
+              /* Here we're including extensions that are deployed but might
+               * not have a ref in the repo, as happens with remote-delete
+               * --force
+               */
+              checksum = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+              add_related (self, related, extension, extension_collection_id, extension_ref,
+                           checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+            }
           else if (subdirectories)
             {
-              g_autoptr(GPtrArray) matches = local_match_prefix (self, extension_ref, remote_name);
-              int j;
-              for (j = 0; j < matches->len; j++)
+              g_autoptr(GHashTable) matches = local_match_prefix (self, extension_ref, remote_name);
+              GLNX_HASH_TABLE_FOREACH (matches, const char *, match)
                 {
-                  const char *match = g_ptr_array_index (matches, j);
                   g_autofree char *match_checksum = NULL;
+                  g_autoptr(GVariant) match_deploy_data = NULL;
 
                   if (flatpak_repo_resolve_rev (self->repo,
                                                 collection_id,
@@ -13855,6 +13871,18 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                                 NULL,
                                                 NULL))
                     {
+                      add_related (self, related, extension,
+                                   extension_collection_id, match, match_checksum,
+                                   no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                    }
+                  else if ((match_deploy_data = flatpak_dir_get_deploy_data (self, match,
+                                                                             FLATPAK_DEPLOY_VERSION_ANY,
+                                                                             NULL, NULL)) != NULL)
+                    {
+                      /* Here again we're including extensions that are deployed but might
+                       * not have a ref in the repo
+                       */
+                      match_checksum = g_strdup (flatpak_deploy_data_get_commit (match_deploy_data));
                       add_related (self, related, extension,
                                    extension_collection_id, match, match_checksum,
                                    no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
