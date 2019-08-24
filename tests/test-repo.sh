@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..33"
+echo "1..34"
 
 #Regular repo
 setup_repo
@@ -466,6 +466,16 @@ assert_not_file_has_content list-log "org\.test\.Hello\.Locale"
 setup_repo
 
 echo "ok uninstall with missing remote"
+
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_file_has_content list-log "org\.test\.Platform"
+
+${FLATPAK} ${U} uninstall -y --unused
+
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_not_file_has_content list-log "org\.test\.Platform"
+
+echo "ok uninstall --unused"
 
 # Test that remote-ls works in all of the following cases:
 # * system remote, and --system is used
