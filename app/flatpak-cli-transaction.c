@@ -982,7 +982,7 @@ transaction_ready (FlatpakTransaction *transaction)
 
       if (flatpak_installation_get_is_user (installation))
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the user installation?"));
-      else if (g_strcmp0 (id, "default") == 0)
+      else if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) == 0)
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the system installation?"));
       else
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s?"), name);
