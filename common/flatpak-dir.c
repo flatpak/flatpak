@@ -566,6 +566,8 @@ dir_extra_data_free (DirExtraData *dir_extra_data)
   g_free (dir_extra_data);
 }
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (DirExtraData, dir_extra_data_free);
+
 static GVariant *
 variant_new_ay_bytes (GBytes *bytes)
 {
@@ -1897,7 +1899,7 @@ flatpak_dir_get_display_name (FlatpakDir *self)
   if (self->user)
     return g_strdup (_("User installation"));
 
-  if (self->extra_data != NULL)
+  if (self->extra_data != NULL && g_strcmp0 (self->extra_data->id, SYSTEM_DIR_DEFAULT_ID) != 0)
     {
       if (self->extra_data->display_name)
         return g_strdup (self->extra_data->display_name);
@@ -11763,7 +11765,11 @@ FlatpakDir *
 flatpak_dir_get_system_default (void)
 {
   g_autoptr(GFile) path = flatpak_get_system_default_base_dir_location ();
-  return flatpak_dir_new_full (path, FALSE, NULL);
+  g_autoptr(DirExtraData) extra_data = dir_extra_data_new (SYSTEM_DIR_DEFAULT_ID,
+                                                           SYSTEM_DIR_DEFAULT_DISPLAY_NAME,
+                                                           SYSTEM_DIR_DEFAULT_PRIORITY,
+                                                           SYSTEM_DIR_DEFAULT_STORAGE_TYPE);
+  return flatpak_dir_new_full (path, FALSE, extra_data);
 }
 
 FlatpakDir *
@@ -11776,7 +11782,7 @@ flatpak_dir_get_system_by_id (const char   *id,
   FlatpakDir *ret = NULL;
   int i;
 
-  if (id == NULL)
+  if (id == NULL || g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) == 0)
     return flatpak_dir_get_system_default ();
 
   /* An error in flatpak_get_system_base_dir_locations() will still return
