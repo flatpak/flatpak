@@ -101,9 +101,9 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
   g_autoptr(GError) lookup_error = NULL;
-  FlatpakDir *dir = NULL;
   g_autofree char *ref = NULL;
   FlatpakKinds kind = 0;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(FlatpakDir) system_dir = NULL;
   g_autoptr(GPtrArray) system_dirs = NULL;
@@ -123,7 +123,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
                                             kinds, &kind,
                                             &lookup_error);
       if (ref)
-        dir = user_dir;
+        dir = g_steal_pointer (&user_dir);
 
       if (g_error_matches (lookup_error, G_IO_ERROR, G_IO_ERROR_FAILED))
         {
@@ -154,7 +154,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
                                                 &lookup_error);
           if (ref)
             {
-              dir = system_dir;
+              dir = g_object_ref (system_dir);
               break;
             }
 
@@ -191,7 +191,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
                                                         &lookup_error);
                   if (ref)
                     {
-                      dir = installation_dir;
+                      dir = g_steal_pointer (&installation_dir);
                       break;
                     }
 
@@ -218,7 +218,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
                                                 &lookup_error);
 
           if (ref)
-            dir = system_dir;
+            dir = g_steal_pointer (&system_dir);
         }
     }
 
@@ -229,7 +229,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
     }
 
   *out_ref = g_steal_pointer (&ref);
-  return g_object_ref (dir);
+  return g_steal_pointer (&dir);
 }
 
 
