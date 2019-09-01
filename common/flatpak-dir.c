@@ -66,11 +66,6 @@
 #define SYSCONF_REMOTES_DIR "remotes.d"
 #define SYSCONF_REMOTES_FILE_EXT ".flatpakrepo"
 
-#define SYSTEM_DIR_DEFAULT_ID "default"
-#define SYSTEM_DIR_DEFAULT_DISPLAY_NAME _("Default system installation")
-#define SYSTEM_DIR_DEFAULT_STORAGE_TYPE FLATPAK_DIR_STORAGE_TYPE_DEFAULT
-#define SYSTEM_DIR_DEFAULT_PRIORITY 0
-
 static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
                                                                          GLnxLockFile *file_lock,
                                                                          GError      **error);
@@ -783,7 +778,7 @@ is_good_installation_id (const char *id)
 {
   if (strcmp (id, "") == 0 ||
       strcmp (id, "user") == 0 ||
-      strcmp (id, "default") == 0 ||
+      strcmp (id, SYSTEM_DIR_DEFAULT_ID) == 0 ||
       strcmp (id, "system") == 0)
     return FALSE;
 
@@ -1872,7 +1867,7 @@ flatpak_dir_get_name (FlatpakDir *self)
     return g_strdup ("user");
 
   id = flatpak_dir_get_id (self);
-  if (id != NULL && g_strcmp0 (id, "default") != 0)
+  if (id != NULL && g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) != 0)
     return g_strdup_printf ("system (%s)", id);
 
   return g_strdup ("system");

@@ -411,7 +411,7 @@ flatpak_option_context_parse (GOptionContext     *context,
                 {
                   FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
                   const char *id = flatpak_dir_get_id (dir);
-                  if (g_strcmp0 (id, "default") != 0)
+                  if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) != 0)
                     g_ptr_array_add (dirs, g_object_ref (dir));
                 }
             }
