@@ -152,6 +152,7 @@ struct _FlatpakOciIndexClass
 
 FlatpakOciIndex *             flatpak_oci_index_new (void);
 void                          flatpak_oci_index_add_manifest (FlatpakOciIndex      *self,
+                                                              const char           *ref,
                                                               FlatpakOciDescriptor *desc);
 gboolean                      flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
                                                                  const char      *ref);

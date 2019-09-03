@@ -5426,6 +5426,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                FlatpakOciRegistry    *registry,
                                const char            *oci_repository,
                                const char            *digest,
+                               const char            *ref,
                                FlatpakOciPullProgress progress_cb,
                                gpointer               progress_user_data,
                                GCancellable          *cancellable,
@@ -5491,7 +5492,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
-  flatpak_oci_index_add_manifest (index, manifest_desc);
+  flatpak_oci_index_add_manifest (index, ref, manifest_desc);
 
   if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
     return FALSE;
