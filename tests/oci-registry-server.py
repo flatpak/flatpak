@@ -179,10 +179,15 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             if detach_icons:
                 for size in (64, 128):
                     annotation = 'org.freedesktop.appstream.icon-{}'.format(size)
-                    icon = manifest['annotations'].get(annotation)
+                    icon = manifest.get('annotations', {}).get(annotation)
                     if icon:
                         path = cache_icon(icon)
                         manifest['annotations'][annotation] = path
+                    else:
+                        icon = config.get('config', {}).get('Labels', {}).get(annotation)
+                        if icon:
+                            path = cache_icon(icon)
+                            config['config']['Labels'][annotation] = path
 
             image = {
                 "Tags": [tag],
@@ -190,8 +195,8 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
                 "MediaType": "application/vnd.oci.image.manifest.v1+json",
                 "OS": config['os'],
                 "Architecture": config['architecture'],
-                "Annotations": manifest['annotations'],
-                "Labels": {},
+                "Annotations": manifest.get('annotations', {}),
+                "Labels": config.get('config', {}).get('Labels', {}),
             }
 
             # Delete old versions
