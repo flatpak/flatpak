@@ -5025,7 +5025,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   g_debug ("Mirroring OCI image %s", oci_digest);
 
-  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, oci_pull_progress_cb,
+  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, ref, oci_pull_progress_cb,
                                        progress, cancellable, error);
 
   if (progress)

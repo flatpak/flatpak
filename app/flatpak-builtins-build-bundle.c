@@ -553,7 +553,7 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   if (index == NULL)
     index = flatpak_oci_index_new ();
 
-  flatpak_oci_index_add_manifest (index, manifest_desc);
+  flatpak_oci_index_add_manifest (index, ref, manifest_desc);
 
   if (!flatpak_oci_registry_save_index (registry, index, cancellable, error))
     return FALSE;

@@ -448,21 +448,18 @@ flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self)
 
 void
 flatpak_oci_index_add_manifest (FlatpakOciIndex      *self,
+                                const char           *ref,
                                 FlatpakOciDescriptor *desc)
 {
   FlatpakOciManifestDescriptor *m;
-  const char *m_ref = NULL;
   int count;
 
-  if (desc->annotations != NULL)
-    m_ref = g_hash_table_lookup (desc->annotations, "org.flatpak.ref");
-
-  if (m_ref != NULL)
-    flatpak_oci_index_remove_manifest (self, m_ref);
+  if (ref != NULL)
+    flatpak_oci_index_remove_manifest (self, ref);
 
   count = flatpak_oci_index_get_n_manifests (self);
 
-  m = manifest_desc_for_desc (desc, m_ref);
+  m = manifest_desc_for_desc (desc, ref);
   self->manifests = g_renew (FlatpakOciManifestDescriptor *, self->manifests, count + 2);
   self->manifests[count] = m;
   self->manifests[count + 1] = NULL;
