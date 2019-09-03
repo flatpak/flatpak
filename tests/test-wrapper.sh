@@ -26,6 +26,12 @@ for feature in $(echo $1 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
             export USE_COLLECTIONS_IN_SERVER=yes
             export USE_COLLECTIONS_IN_CLIENT=no
             ;;
+        labels)
+            export USE_OCI_LABELS=yes
+            ;;
+        annotations)
+            export USE_OCI_ANNOTATIONS=yes
+            ;;
         *)
             echo unsupported test feature $feature
             exit 1
