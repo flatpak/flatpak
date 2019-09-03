@@ -744,6 +744,9 @@ flatpak_oci_export_annotations (GHashTable *source,
   };
   int i;
 
+  if (source == NULL)
+    return;
+
   for (i = 0; i < G_N_ELEMENTS (keys); i++)
     {
       const char *key = keys[i];
