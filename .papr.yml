@@ -6,7 +6,7 @@ branches:
     - try
 
 required: true
-context: f29-primary
+context: f30-primary
 
 # This test case wants an "unprivileged container with bubblewrap",
 # which we don't have right now; so just provision a VM and do a
@@ -27,7 +27,7 @@ tests:
     -e "ASAN_OPTIONS=${ASAN_OPTIONS:-}"
     -v /etc/yum.repos.d:/etc/yum.repos.d.host:ro
     -v $(pwd):/srv/code -w /srv/code
-    registry.fedoraproject.org/fedora:29 /bin/sh -c
+    registry.fedoraproject.org/fedora:30 /bin/sh -c
     "cp -fv /etc/yum.repos.d{.host/*.repo,} &&
      ./ci/build-check.sh"
 
