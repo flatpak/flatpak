@@ -44,6 +44,11 @@ pkg_install_builddeps() {
     if test -x /usr/bin/dnf; then
         yum -y install dnf-plugins-core
         yum install -y 'dnf-command(builddep)'
+        # https://github.com/projectatomic/rpm-ostree/pull/1889/commits/9ff611758bea22b0ad4892cc16182dd1f7f47e89
+        # https://fedoraproject.org/wiki/Common_F30_bugs#Conflicts_between_fedora-release_packages_when_installing_package_groups
+        if rpm -q fedora-release-container; then
+            yum -y swap fedora-release{-container,}
+        fi
         # Base buildroot
         pkg_install @buildsys-build
     else
