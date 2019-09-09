@@ -6,7 +6,7 @@ set -xeuo pipefail
 dn=$(dirname $0)
 . ${dn}/libbuild.sh
 
-pkg_install sudo which attr fuse bison \
+pkg_install sudo which attr fuse bison dbus-daemon \
     libubsan libasan libtsan clang python2 \
     elfutils git gettext-devel libappstream-glib-devel hicolor-icon-theme \
     dconf-devel fuse-devel \
