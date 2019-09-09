@@ -150,6 +150,7 @@ struct _FlatpakTransactionPrivate
 
   gboolean                     no_pull;
   gboolean                     no_deploy;
+  gboolean                     enable_diskspace_check;
   gboolean                     disable_static_deltas;
   gboolean                     disable_prune;
   gboolean                     disable_deps;
@@ -1124,6 +1125,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
   priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
   priv->can_run = TRUE;
+  priv->enable_diskspace_check = FALSE;
 }
 
 
@@ -1211,6 +1213,25 @@ flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   priv->no_deploy = no_deploy;
+}
+
+/**
+ * flatpak_transaction_set_enable_diskspace_check:
+ * @self: a #FlatpakTransaction
+ * @enable_diskspace_check: whether to enable free disk space checks
+ *
+ * Sets whether the transaction should enable the checking of free disk space
+ * for the filesystem on which the current #FlatpakInstallation resides.
+ * This can be convenient for clients programs (for e.g. GNOME Software), if
+ * they want to guard against overfilling of user's disk space.
+ */
+void
+flatpak_transaction_set_enable_diskspace_check (FlatpakTransaction *self,
+                                                gboolean            enable_diskspace_check)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->enable_diskspace_check = enable_diskspace_check;
 }
 
 /**
@@ -2880,6 +2901,89 @@ flatpak_transaction_run (FlatpakTransaction *transaction,
 }
 
 static gboolean
+get_installation_dir_free_space (FlatpakInstallation  *installation,
+                                 guint64              *free_space,
+                                 GError              **error)
+{
+  g_autoptr (GFile) installation_dir = NULL;
+  g_autoptr (GFileInfo) info = NULL;
+
+  installation_dir = flatpak_installation_get_path (installation);
+
+  info = g_file_query_filesystem_info (installation_dir,
+                                       G_FILE_ATTRIBUTE_FILESYSTEM_FREE,
+                                       NULL,
+                                       error);
+  if (info == NULL)
+    return FALSE;
+
+  *free_space = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+  return TRUE;
+}
+
+static gboolean
+check_for_disk_space (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr (GFile) installation_dir = NULL;
+  g_autoptr (GError) error = NULL;
+  GList *l;
+  guint64 space_required = 0;
+  guint64 min_free_space = 0;
+  guint64 free_disk_space = 0;
+
+  g_debug ("Checking for free disk space for the current transaction");
+
+  for (l = priv->ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+
+      if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
+        space_required += flatpak_transaction_operation_get_installed_size (op);
+      else if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE)
+        {
+          /* Runtime updates typically are small hence keep their sizes out of
+           * of the disk space check.*/
+          if (g_str_has_prefix (op->ref, "runtime/"))
+            continue;
+
+          /* An app's worst possible case for update is that, all bits of the app
+           * are changed. Therefore, consider new installed size from remote metadata in
+           * order to update the app (because pruning happens at the end of transaction
+           * so we need this much available space anyway before updating it). */
+          space_required += flatpak_transaction_operation_get_installed_size (op);
+        }
+    }
+
+  installation_dir = flatpak_installation_get_path (priv->installation);
+  if (!flatpak_installation_get_min_free_space_bytes (priv->installation,
+                                                      &min_free_space,
+                                                      &error))
+    {
+      g_autofree gchar *installation_path = g_file_get_path (installation_dir);
+
+      g_warning ("Failed to query min-free-space for %s installation: %s",
+                 installation_path, error->message);
+    }
+  space_required += min_free_space;
+
+  if (!get_installation_dir_free_space (priv->installation, &free_disk_space, &error))
+    {
+      g_autofree gchar *installation_path = g_file_get_path (installation_dir);
+
+      g_warning ("Error getting the free space available for %s installation: %s",
+                 installation_path, error->message);
+
+      /* Even if we fail to get free space, we don't want to block this transaction.
+       * It might happen that there is enough space to install but an error happened
+       * during querying the filesystem info. */
+      return TRUE;
+    }
+
+  return free_disk_space >= space_required;
+}
+
+static gboolean
 flatpak_transaction_real_run (FlatpakTransaction *self,
                               GCancellable       *cancellable,
                               GError            **error)
@@ -2997,6 +3101,16 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   g_signal_emit (self, signals[READY], 0, &ready_res);
   if (!ready_res)
     return flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Aborted by user"));
+
+#ifdef ENABLE_DISKSPACE_CHECK
+  flatpak_transaction_set_enable_diskspace_check (self, TRUE);
+#endif
+
+  if (priv->enable_diskspace_check)
+    {
+      if (!check_for_disk_space (self))
+        return flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Disk space checked failed"));
+    }
 
   for (l = priv->ops; l != NULL; l = l->next)
     {
