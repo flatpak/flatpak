@@ -13729,7 +13729,7 @@ local_match_prefix (FlatpakDir *self,
 
   /* Also check deploys. In case remote-delete --force is run, we can end up
    * with a deploy without a corresponding ref in the repo. */
-  flatpak_dir_collect_deployed_refs (self, parts[0], parts[1], parts[2], parts[3], matches, NULL, NULL);
+  flatpak_dir_collect_deployed_refs (self, parts[0], parts_prefix, parts[2], parts[3], matches, NULL, NULL);
 
   return matches;
 }
