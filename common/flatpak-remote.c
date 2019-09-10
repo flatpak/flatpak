@@ -1298,6 +1298,11 @@ flatpak_remote_commit (FlatpakRemote *self,
 
   if (priv->local_gpg_verify_set)
     {
+      if (!priv->local_gpg_verify &&
+           priv->local_collection_id_set && priv->local_collection_id != NULL)
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   _("GPG verification must be enabled when a collection ID is set"));
+
       g_key_file_set_boolean (config, group, "gpg-verify", priv->local_gpg_verify);
 
       if (!priv->local_collection_id_set || priv->local_collection_id == NULL)

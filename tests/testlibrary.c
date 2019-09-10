@@ -565,13 +565,23 @@ test_remote (void)
   flatpak_remote_set_disabled (remote, TRUE);
   g_assert_true (flatpak_remote_get_disabled (remote));
 
-  g_assert_true (flatpak_remote_get_gpg_verify (remote));
-  flatpak_remote_set_gpg_verify (remote, FALSE);
-  g_assert_false (flatpak_remote_get_gpg_verify (remote));
-
   g_assert_null (flatpak_remote_get_default_branch (remote));
   flatpak_remote_set_default_branch (remote, "master");
   g_assert_cmpstr (flatpak_remote_get_default_branch (remote), ==, "master");
+
+  /* It should be an error to disable GPG while a collection ID is set. */
+  g_assert_true (flatpak_remote_get_gpg_verify (remote));
+  flatpak_remote_set_gpg_verify (remote, FALSE);
+  g_assert_false (flatpak_remote_get_gpg_verify (remote));
+  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_DATA);
+  g_clear_error (&error);
+  g_assert_false (res);
+
+  /* Unset the collection ID and try again. */
+  flatpak_remote_set_collection_id (remote, NULL);
+  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, NULL);
+  g_assert_false (flatpak_remote_get_gpg_verify (remote));
 
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
   g_assert_no_error (error);
@@ -594,6 +604,7 @@ test_remote (void)
   flatpak_remote_set_nodeps (remote, FALSE);
   flatpak_remote_set_disabled (remote, FALSE);
   flatpak_remote_set_gpg_verify (remote, TRUE);
+  flatpak_remote_set_collection_id (remote, repo_collection_id);
 
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
   g_assert_no_error (error);
