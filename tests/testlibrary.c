@@ -2255,11 +2255,11 @@ end_of_lifed (FlatpakTransaction *transaction,
 }
 
 static gboolean
-add_new_remote (FlatpakTransaction *transaction,
-                const char         *reason,
-                const char         *from_id,
-                const char         *suggested_name,
-                const char         *url)
+add_new_remote (FlatpakTransaction             *transaction,
+                FlatpakTransactionRemoteReason  reason,
+                const char                     *from_id,
+                const char                     *suggested_name,
+                const char                     *url)
 {
   g_assert_not_reached ();
   return TRUE;
@@ -2700,11 +2700,11 @@ test_transaction_install_uninstall (void)
 static int remote_added;
 
 static gboolean
-add_new_remote2 (FlatpakTransaction *transaction,
-                 const char         *reason,
-                 const char         *from_id,
-                 const char         *suggested_name,
-                 const char         *url)
+add_new_remote2 (FlatpakTransaction             *transaction,
+                 FlatpakTransactionRemoteReason  reason,
+                 const char                     *from_id,
+                 const char                     *suggested_name,
+                 const char                     *url)
 {
   remote_added++;
   g_assert_cmpstr (suggested_name, ==, "my-little-repo");
@@ -2836,11 +2836,11 @@ assert_remote_not_in_installation (FlatpakInstallation *installation,
 }
 
 static gboolean
-add_new_remote3 (FlatpakTransaction *transaction,
-                 const char         *reason,
-                 const char         *from_id,
-                 const char         *suggested_name,
-                 const char         *url)
+add_new_remote3 (FlatpakTransaction             *transaction,
+                 FlatpakTransactionRemoteReason  reason,
+                 const char                     *from_id,
+                 const char                     *suggested_name,
+                 const char                     *url)
 {
   return TRUE;
 }
