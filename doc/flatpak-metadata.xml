@@ -429,7 +429,7 @@
                 <varlistentry>
                     <term><option>app-commit</option> (string)</term>
                     <listitem><para>
-                        The commit ID or the application that is running.
+                        The commit ID of the application that is running.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -472,7 +472,7 @@
                 <varlistentry>
                     <term><option>runtime-commit</option> (string)</term>
                     <listitem><para>
-                        The commit ID or the runtime that is used.
+                        The commit ID of the runtime that is used.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
