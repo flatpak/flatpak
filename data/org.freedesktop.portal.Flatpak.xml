@@ -36,7 +36,7 @@
       bus name org.freedesktop.portal.Flatpak and the object path
       /org/freedesktop/portal/Flatpak.
 
-      This documentation describes version 1 of this interface.
+      This documentation describes version 2 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
     <property name="version" type="u" access="read"/>
@@ -171,6 +171,8 @@
         with the 'handle_token' key in the options vardict.
 
         Currently, no other options are accepted.
+
+        This was added in version 2 of this interface (available from flatpak 1.5.0 and later).
     -->
     <method name="CreateUpdateMonitor">
       <arg type="a{sv}" name="options" direction="in"/>

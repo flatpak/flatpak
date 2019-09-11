@@ -1356,7 +1356,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
-  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 1);
+  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 2);
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);
   g_signal_connect (portal, "handle-spawn-signal", G_CALLBACK (handle_spawn_signal), NULL);
   g_signal_connect (portal, "handle-create-update-monitor", G_CALLBACK (handle_create_update_monitor), NULL);
