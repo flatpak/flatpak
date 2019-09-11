@@ -28,17 +28,26 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <glib/gi18n-lib.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
+#include <gio/gunixinputstream.h>
+#include <gio/gunixoutputstream.h>
+#include <gio/gdesktopappinfo.h>
 #include "flatpak-portal-dbus.h"
 #include "flatpak-portal.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-transaction.h"
 #include "flatpak-installation-private.h"
 #include "flatpak-portal-app-info.h"
 #include "flatpak-portal-error.h"
 #include "flatpak-utils-base-private.h"
 #include "portal-impl.h"
+#include "flatpak-permission-dbus.h"
 
 #define IDLE_TIMEOUT_SECS 10 * 60
 
@@ -58,10 +67,23 @@ static gboolean update_monitors_timeout_running_thread = FALSE;
 /* Poll all update monitors twice an hour */
 #define UPDATE_POLL_TIMEOUT_SEC (30 * 60)
 
+#define PERMISSION_TABLE "flatpak"
+#define PERMISSION_ID "updates"
+
+typedef enum { UNSET, ASK, YES, NO } Permission;
+typedef enum {
+  PROGRESS_STATUS_RUNNING = 0,
+  PROGRESS_STATUS_EMPTY   = 1,
+  PROGRESS_STATUS_DONE    = 2,
+  PROGRESS_STATUS_ERROR   = 3
+} UpdateStatus;
+static XdpDbusPermissionStore *permission_store;
+
 typedef struct {
-  GMutex lock; /* This protects the closed and running state */
+  GMutex lock; /* This protects the closed, running and installed state */
   gboolean closed;
   gboolean running; /* While this is set, don't close the monitor */
+  gboolean installing;
 
   char *sender;
   char *obj_path;
@@ -84,7 +106,10 @@ static gboolean           has_update_monitors      (void);
 static UpdateMonitorData *update_monitor_get_data  (PortalFlatpakUpdateMonitor *monitor);
 static gboolean           handle_close             (PortalFlatpakUpdateMonitor *monitor,
                                                     GDBusMethodInvocation      *invocation);
-
+static gboolean           handle_update            (PortalFlatpakUpdateMonitor *monitor,
+                                                    GDBusMethodInvocation      *invocation,
+                                                    const char                 *arg_window,
+                                                    GVariant                   *arg_options);
 
 static void
 skeleton_died_cb (gpointer data)
@@ -1206,6 +1231,7 @@ handle_create_update_monitor (PortalFlatpak *object,
     }
 
   g_signal_connect (monitor, "handle-close", G_CALLBACK (handle_close), NULL);
+  g_signal_connect (monitor, "handle-update", G_CALLBACK (handle_update), NULL);
   g_signal_connect (monitor, "g-authorize-method", G_CALLBACK (authorize_method_handler), NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (monitor),
@@ -1278,6 +1304,624 @@ close_update_monitors_for_sender (const char *sender)
     }
 }
 
+static guint32
+get_update_permission (const char *app_id)
+{
+  g_autoptr(GVariant) out_perms = NULL;
+  g_autoptr(GVariant) out_data = NULL;
+  g_autoptr(GError) error = NULL;
+  guint32 ret = UNSET;
+
+  if (permission_store == NULL)
+    {
+      g_debug ("No portals installed, assume no permissions");
+      return NO;
+    }
+
+  if (!xdp_dbus_permission_store_call_lookup_sync (permission_store,
+                                                   PERMISSION_TABLE,
+                                                   PERMISSION_ID,
+                                                   &out_perms,
+                                                   &out_data,
+                                                   NULL,
+                                                   &error))
+    {
+      g_dbus_error_strip_remote_error (error);
+      g_debug ("No updates permissions found: %s", error->message);
+      g_clear_error (&error);
+    }
+
+  if (out_perms != NULL)
+    {
+      const char **perms;
+
+      if (g_variant_lookup (out_perms, app_id, "^a&s", &perms))
+        {
+          if (strcmp (perms[0], "ask") == 0)
+            ret = ASK;
+          else if (strcmp (perms[0], "yes") == 0)
+            ret = YES;
+          else
+            ret = NO;
+        }
+    }
+
+  g_debug ("Updates permissions for %s: %d", app_id, ret);
+
+  return ret;
+}
+
+static void
+set_update_permission (const char *app_id,
+                       Permission permission)
+{
+  g_autoptr(GError) error = NULL;
+  const char *permissions[2];
+
+  if (permission == ASK)
+    permissions[0] = "ask";
+  else if (permission == YES)
+    permissions[0] = "yes";
+  else if (permission == NO)
+    permissions[0] = "no";
+  else
+    {
+      g_warning ("Wrong permission format, ignoring");
+      return;
+    }
+  permissions[1] = NULL;
+
+  if (!xdp_dbus_permission_store_call_set_permission_sync (permission_store,
+                                                           PERMISSION_TABLE,
+                                                           TRUE,
+                                                           PERMISSION_ID,
+                                                           app_id,
+                                                           (const char * const*)permissions,
+                                                           NULL,
+                                                           &error))
+    {
+      g_dbus_error_strip_remote_error (error);
+      g_warning ("Error updating permission store: %s", error->message);
+    }
+}
+
+static char *
+get_app_display_name (const char *app_id)
+{
+  g_autofree char *id = NULL;
+  g_autoptr(GDesktopAppInfo) info = NULL;
+  const char *name = NULL;
+
+  id = g_strconcat (app_id, ".desktop", NULL);
+  info = g_desktop_app_info_new (id);
+  if (info)
+    {
+      name = g_app_info_get_display_name (G_APP_INFO (info));
+      if (name)
+        return g_strdup (name);
+    }
+
+  return g_strdup (app_id);
+}
+
+static gboolean
+request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
+                                 const char *app_id,
+                                 const char *window,
+                                 GError **error)
+{
+  Permission permission;
+
+  permission = get_update_permission (app_id);
+  if (permission == UNSET || permission == ASK)
+    {
+      guint access_response = 2;
+      PortalImplementation *access_impl;
+      GVariantBuilder access_opt_builder;
+      g_autofree char *app_name = NULL;
+      g_autofree char *title = NULL;
+      g_autoptr(GVariant) ret = NULL;
+
+      access_impl = find_portal_implementation ("org.freedesktop.impl.portal.Access");
+      if (access_impl == NULL)
+        {
+          g_warning ("No Access portal implementation found");
+          g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, _("No portal support found"));
+          return FALSE;
+        }
+
+      g_variant_builder_init (&access_opt_builder, G_VARIANT_TYPE_VARDICT);
+      g_variant_builder_add (&access_opt_builder, "{sv}",
+                             "deny_label", g_variant_new_string (_("Deny")));
+      g_variant_builder_add (&access_opt_builder, "{sv}",
+                             "grant_label", g_variant_new_string (_("Update")));
+      g_variant_builder_add (&access_opt_builder, "{sv}",
+                             "icon", g_variant_new_string ("package-x-generic-symbolic"));
+
+      app_name = get_app_display_name (app_id);
+      title = g_strdup_printf (_("Update %s?"), app_name);
+
+      ret = g_dbus_connection_call_sync (update_monitor_get_connection (monitor),
+                                         access_impl->dbus_name,
+                                         "/org/freedesktop/portal/desktop",
+                                         "org.freedesktop.impl.portal.Access",
+                                         "AccessDialog",
+                                         g_variant_new ("(osssssa{sv})",
+                                                        "/request/path",
+                                                        app_id,
+                                                        window,
+                                                        title,
+                                                        _("The application wants to update itself."),
+                                                        _("Update access can be changed any time from the privacy settings."),
+                                                        &access_opt_builder),
+                                         G_VARIANT_TYPE ("(ua{sv})"),
+                                         G_DBUS_CALL_FLAGS_NONE,
+                                         G_MAXINT,
+                                         NULL,
+                                         error);
+      if (ret == NULL)
+        {
+          g_dbus_error_strip_remote_error (*error);
+          g_warning ("Failed to show access dialog: %s", (*error)->message);
+          return FALSE;
+        }
+
+      g_variant_get (ret, "(ua{sv})", &access_response, NULL);
+
+      if (permission == UNSET)
+        set_update_permission (app_id, (access_response == 0) ? YES : NO);
+
+      permission = (access_response == 0) ? YES : NO;
+    }
+
+  if (permission == NO)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_ACCESS_DENIED,
+                   _("Application update not allowed"));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static void
+emit_progress (PortalFlatpakUpdateMonitor *monitor,
+               int op,
+               int n_ops,
+               int progress,
+               int status,
+               const char *error_name,
+               const char *error_message)
+{
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  GDBusConnection *connection;
+  GVariantBuilder builder;
+  g_autoptr(GError) error = NULL;
+
+  g_debug ("%d/%d ops, progress %d, status: %d", op, n_ops, progress, status);
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
+  if (n_ops > 0)
+    {
+      g_variant_builder_add (&builder, "{sv}", "op", g_variant_new_uint32 (op));
+      g_variant_builder_add (&builder, "{sv}", "n_ops", g_variant_new_uint32 (n_ops));
+      g_variant_builder_add (&builder, "{sv}", "progress", g_variant_new_uint32 (progress));
+    }
+
+  g_variant_builder_add (&builder, "{sv}", "status", g_variant_new_uint32 (status));
+
+  if (error_name)
+    {
+      g_variant_builder_add (&builder, "{sv}", "error", g_variant_new_string (error_name));
+      g_variant_builder_add (&builder, "{sv}", "error-message", g_variant_new_string (error_message));
+    }
+
+  connection = update_monitor_get_connection (monitor);
+  if (!g_dbus_connection_emit_signal (connection,
+                                      m->sender,
+                                      "/org/freedesktop/portal/desktop",
+                                      "org.freedesktop.portal.Flatpak",
+                                      "Progress",
+                                      g_variant_new ("(a{sv})", &builder),
+                                      &error))
+    {
+      g_warning ("Failed to emit ::progress: %s", error->message);
+    }
+}
+
+static void
+emit_progress_error (PortalFlatpakUpdateMonitor *monitor,
+                     GError *update_error)
+{
+  g_autofree gchar *error_name = g_dbus_error_encode_gerror (update_error);
+
+  emit_progress (monitor, 0, 0, 0,
+                 PROGRESS_STATUS_ERROR,
+                 error_name, update_error->message);
+}
+
+static void
+send_variant (GVariant *v, GOutputStream *out)
+{
+  g_autoptr(GError) error = NULL;
+  const guchar *data;
+  gsize size;
+  guint32 size32;
+
+  data = g_variant_get_data (v);
+  size = g_variant_get_size (v);
+  size32 = size;
+
+  if (!g_output_stream_write_all (out, &size32, 4, NULL, NULL, &error) ||
+      !g_output_stream_write_all (out, data, size, NULL, NULL, &error))
+    {
+      g_warning ("sending to parent failed: %s", error->message);
+      exit (1); // This will exit the child process and cause the parent to report an error
+    }
+}
+
+static void
+send_progress (GOutputStream *out,
+               int op,
+               int n_ops,
+               int progress,
+               int status,
+               const GError *update_error)
+{
+  g_autoptr(GVariant) v = NULL;
+  g_autofree gchar *error_name = NULL;
+
+  if (update_error)
+    error_name = g_dbus_error_encode_gerror (update_error);
+
+  v = g_variant_ref_sink (g_variant_new ("(uuuuss)",
+                                         op, n_ops, progress, status,
+                                         error_name ? error_name : "",
+                                         update_error ? update_error->message : ""));
+  send_variant (v, out);
+}
+
+typedef struct {
+  GOutputStream *out;
+  int n_ops;
+  int op;
+  int progress;
+} TransactionData;
+
+static gboolean
+transaction_ready (FlatpakTransaction *transaction,
+                   TransactionData *d)
+{
+  int status;
+
+  d->n_ops = g_list_length (flatpak_transaction_get_operations (transaction));
+  d->op = 0;
+
+  if (flatpak_transaction_is_empty (transaction))
+    status = PROGRESS_STATUS_EMPTY;
+  else
+    status = PROGRESS_STATUS_RUNNING;
+
+  send_progress (d->out,
+                 d->op,  d->n_ops,
+                 d->progress, status,
+                 NULL);
+
+  if (status == PROGRESS_STATUS_EMPTY)
+    return FALSE; /* This will cause us to return an ABORTED error */
+
+  return TRUE;
+}
+
+static void
+transaction_progress_changed (FlatpakTransactionProgress *progress,
+                              TransactionData *d)
+{
+  d->progress = flatpak_transaction_progress_get_progress (progress);
+
+  send_progress (d->out,
+                 d->op,  d->n_ops,
+                 d->progress, PROGRESS_STATUS_RUNNING,
+                 NULL);
+}
+
+static void
+transaction_new_operation (FlatpakTransaction *transaction,
+                           FlatpakTransactionOperation *op,
+                           FlatpakTransactionProgress *progress,
+                           TransactionData *d)
+{
+  d->progress = 0;
+
+  send_progress (d->out,
+                 d->op,  d->n_ops,
+                 d->progress, PROGRESS_STATUS_RUNNING,
+                 NULL);
+
+  g_signal_connect (progress, "changed", G_CALLBACK (transaction_progress_changed), d);
+}
+
+static gboolean
+transaction_operation_error  (FlatpakTransaction            *transaction,
+                              FlatpakTransactionOperation   *operation,
+                              const GError                  *error,
+                              FlatpakTransactionErrorDetails detail,
+                              TransactionData *d)
+{
+  gboolean non_fatal = (detail & FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL) != 0;
+
+  if (non_fatal)
+    return TRUE;  /* Continue */
+
+  send_progress (d->out,
+                 d->op,  d->n_ops, d->progress,
+                 PROGRESS_STATUS_ERROR,
+                 error);
+
+  return FALSE; /* This will cause us to return an ABORTED error */
+}
+
+
+static void
+transaction_operation_done (FlatpakTransaction *transaction,
+                            FlatpakTransactionOperation *op,
+                            const char *commit,
+                            FlatpakTransactionResult result,
+                            TransactionData *d)
+{
+  d->op++;
+  send_progress (d->out,
+                 d->op,  d->n_ops,
+                 d->progress, PROGRESS_STATUS_RUNNING,
+                 NULL);
+}
+
+static void
+update_child_setup_func (gpointer user_data)
+{
+  int *socket = user_data;
+
+  dup2 (*socket, 3);
+}
+
+/* This is the meat of the update process, its run out of process (via
+   spawn) to avoid running lots of complicated code in the portal
+   process and possibly long-term leaks in a long-running process. */
+static int
+do_update_child_process (const char *installation_path, const char *ref, int socket_fd)
+{
+  g_autoptr(GOutputStream) out = g_unix_output_stream_new (socket_fd, TRUE);
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GFile) f = g_file_new_for_path (installation_path);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  TransactionData transaction_data = { NULL };
+
+  dir = flatpak_dir_get_by_path (f);
+
+  if (!flatpak_dir_maybe_ensure_repo (dir, NULL, &error))
+    {
+      send_progress (out, 0, 0, 100,
+                     PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  installation = flatpak_installation_new_for_dir (dir, NULL, &error);
+  if (installation)
+    transaction = flatpak_transaction_new_for_installation (installation, NULL, &error);
+  if (transaction == NULL)
+    {
+      send_progress (out, 0, 0, 100,
+                     PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  flatpak_transaction_add_default_dependency_sources (transaction);
+
+  if (!flatpak_transaction_add_update (transaction, ref, NULL, NULL, &error))
+    {
+      send_progress (out, 0, 0, 100,
+                     PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  transaction_data.out = out;
+
+  g_signal_connect (transaction, "ready", G_CALLBACK (transaction_ready), &transaction_data);
+  g_signal_connect (transaction, "new-operation", G_CALLBACK (transaction_new_operation), &transaction_data);
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (transaction_operation_done), &transaction_data);
+  g_signal_connect (transaction, "operation-error", G_CALLBACK (transaction_operation_error), &transaction_data);
+
+  if (!flatpak_transaction_run (transaction, NULL, &error))
+    {
+      if (!g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED)) /* If aborted we already sent error */
+        send_progress (out, 0, 0, 100,
+                       PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  send_progress (out, 0, 0, 100,
+                 PROGRESS_STATUS_DONE, error);
+
+  return 0;
+}
+
+static GVariant *
+read_variant (GInputStream *in,
+              GCancellable *cancellable,
+              GError **error)
+{
+  guint32 size;
+  guchar *data;
+  gsize bytes_read;
+
+  if (!g_input_stream_read_all (in, &size, 4, &bytes_read, cancellable, error))
+    return NULL;
+
+  if (bytes_read != 4)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                   _("Update ended unexpectedly"));
+      return NULL;
+    }
+
+  data = g_try_malloc (size);
+  if (data == NULL)
+    {
+      flatpak_fail (error, "Out of memory");
+      return NULL;
+    }
+
+  if (!g_input_stream_read_all (in, data, size, &bytes_read, cancellable, error))
+    return NULL;
+
+  if (bytes_read != size)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                   _("Update ended unexpectedly"));
+      return NULL;
+    }
+
+  return g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE("(uuuuss)"),
+                                                      data, size, FALSE, g_free, data));
+}
+
+/* We do the actual update out of process (in do_update_child_process,
+   via spawn) and just proxy the feedback here */
+static gboolean
+handle_update_responses (PortalFlatpakUpdateMonitor *monitor,
+                         int socket_fd,
+                         GError **error)
+{
+  g_autoptr(GInputStream) in = g_unix_input_stream_new (socket_fd, FALSE); /* Closed by parent */
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  guint32 status;
+
+  do
+    {
+      g_autoptr(GVariant) v = NULL;
+      guint32 op;
+      guint32 n_ops;
+      guint32 progress;
+      const char *error_name;
+      const char *error_message;
+
+      v = read_variant (in, m->cancellable, error);
+      if (v == NULL)
+        {
+          g_debug ("Reading message from child update process failed %s", (*error)->message);
+          return FALSE;
+        }
+
+      g_variant_get (v, "(uuuu&s&s)",
+                     &op, &n_ops, &progress, &status, &error_name, &error_message);
+
+      emit_progress (monitor, op, n_ops, progress, status,
+                     *error_name != 0 ? error_name : NULL,
+                     *error_message != 0 ? error_message : NULL);
+    }
+  while (status == PROGRESS_STATUS_RUNNING);
+
+  /* Don't return an received error as we emited it already, that would cause it to be emitted twice */
+  return TRUE;
+}
+
+static void
+handle_update_in_thread_func (GTask *task,
+                              gpointer source_object,
+                              gpointer task_data,
+                              GCancellable *cancellable)
+{
+  PortalFlatpakUpdateMonitor *monitor = source_object;
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  g_autoptr(GError) error = NULL;
+  const char *window;
+
+  window = (const char *)g_object_get_data (G_OBJECT (task), "window");
+
+  if (request_update_permissions_sync (monitor, m->name, window, &error))
+    {
+      g_autoptr(GFile) installation_path = update_monitor_get_installation_path (monitor);
+      g_autofree char *ref = flatpak_build_app_ref (m->name, m->branch, m->arch);
+      const char *argv[] = { "/proc/self/exe", "flatpak-portal", "--update", flatpak_file_get_path_cached (installation_path), ref, NULL };
+      int sockets[2];
+      GPid pid;
+
+      if (socketpair (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sockets) != 0)
+        {
+          glnx_throw_errno (&error);
+        }
+      else
+        {
+          gboolean spawn_ok;
+
+          spawn_ok = g_spawn_async (NULL, (char **)argv, NULL,
+                                    G_SPAWN_FILE_AND_ARGV_ZERO |
+                                    G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
+                                    update_child_setup_func, &sockets[1],
+                                    &pid, &error);
+          close (sockets[1]); // Close remote side
+          if (spawn_ok)
+            {
+              if (!handle_update_responses (monitor, sockets[0], &error))
+                {
+                  if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+                    kill (pid, SIGINT);
+                }
+            }
+          close (sockets[0]); // Close local side
+        }
+    }
+
+  if (error)
+    emit_progress_error (monitor, error);
+
+  g_mutex_lock (&m->lock);
+  m->installing = FALSE;
+  g_mutex_unlock (&m->lock);
+}
+
+static gboolean
+handle_update (PortalFlatpakUpdateMonitor *monitor,
+               GDBusMethodInvocation *invocation,
+               const char *arg_window,
+               GVariant *arg_options)
+{
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  g_autoptr(GTask) task = NULL;
+  gboolean already_installing = FALSE;
+
+  g_debug ("handle UpdateMonitor.Update");
+
+  g_mutex_lock (&m->lock);
+  if (m->installing)
+    already_installing = TRUE;
+  else
+    m->installing = TRUE;
+  g_mutex_unlock (&m->lock);
+
+  if (already_installing)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "Already installing");
+      return TRUE;
+    }
+
+  task = g_task_new (monitor, NULL, NULL, NULL);
+  g_object_set_data_full (G_OBJECT (task), "window", g_strdup (arg_window), g_free);
+  g_task_run_in_thread (task, handle_update_in_thread_func);
+
+  portal_flatpak_update_monitor_complete_update (monitor, invocation);
+
+  return TRUE;
+}
+
+
+
+
 static void
 name_owner_changed (GDBusConnection *connection,
                     const gchar     *sender_name,
@@ -1338,6 +1982,12 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_connection_set_exit_on_close (connection, FALSE);
 
   update_monitors = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
+
+  permission_store = xdp_dbus_permission_store_proxy_new_sync (connection,
+                                                               G_DBUS_PROXY_FLAGS_NONE,
+                                                               "org.freedesktop.impl.portal.PermissionStore",
+                                                               "/org/freedesktop/impl/portal/PermissionStore",
+                                                               NULL, NULL);
 
   portal = portal_flatpak_skeleton_new ();
 
@@ -1448,6 +2098,11 @@ main (int    argc,
   g_set_prgname (argv[0]);
 
   g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, message_handler, NULL);
+
+  if (argc >= 4 && strcmp (argv[1], "--update") == 0)
+    {
+      return do_update_child_process (argv[2], argv[3], 3);
+    }
 
   context = g_option_context_new ("");
 

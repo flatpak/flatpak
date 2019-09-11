@@ -229,6 +229,88 @@
       <arg type="a{sv}" name="update_info" direction="out"/>
     </signal>
 
+    <!--
+        Update:
+        @parent_window: Identifier for the application window,
+          see <link linkend="parent_window">Common Conventions</link>
+        @options: Vardict with optional further information
+
+        Asks to install an update of the calling app.
+        During the installation,
+        #org.freedesktop.portal.Flatpak.UpdateMonitor::Progress
+        signals will be emitted to communicate the status
+        and progress.
+
+        Currently, no options are accepted.
+    -->
+    <method name="Update">
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+    </method>
+
+    <!--
+      Progress:
+      @handle: the handle of the Request
+      @info: More information about the update progress
+
+      Gets emitted to indicate progress of the installation.  It's
+      undefined exactly how often this is sent, but it will be emitted
+      at least once at the end with non-zero status field.
+
+      The following fields may be included in the info:
+         <variablelist>
+           <varlistentry>
+             <term>n_ops u</term>
+             <listitem><para>
+               The number of operations that the update
+               consists of.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>op u</term>
+             <listitem><para>
+               The position of the currently active
+               operation.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>progress u</term>
+             <listitem><para>
+               The progress of the currently active
+               operation, as a number between 0 and 100.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>status u</term>
+             <listitem><para>
+               The overall status of the update.
+               <simplelist>
+                 <member>0: Running</member>
+                 <member>1: Empty. No update to install</member>
+                 <member>2: Done</member>
+                 <member>3: Failed</member>
+               </simplelist>
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>error s</term>
+             <listitem><para>
+               The error name, sent when status is Failed
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>error-message s</term>
+             <listitem><para>
+               The error message, sent when status is Failed
+             </para></listitem>
+           </varlistentry>
+         </variablelist>
+    -->
+    <signal name="Progress">
+      <arg type="o" name="handle" direction="out"/>
+      <arg type="a{sv}" name="info" direction="out"/>
+    </signal>
+
   </interface>
 
 </node>
