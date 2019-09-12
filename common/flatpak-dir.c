@@ -12425,6 +12425,12 @@ _flatpak_uri_equal (const char *uri1,
   gsize uri1_len = strlen (uri1);
   gsize uri2_len = strlen (uri2);
 
+  /* URIs handled by libostree are equivalent with or without a trailing slash,
+   * but this isn't otherwise guaranteed to be the case.
+   */
+  if (g_str_has_prefix (uri1, "oci+") || g_str_has_prefix (uri2, "oci+"))
+    return g_strcmp0 (uri1, uri2) == 0;
+
   if (g_str_has_suffix (uri1, "/"))
     uri1_norm = g_strndup (uri1, uri1_len - 1);
   else
@@ -12453,7 +12459,7 @@ _flatpak_uri_equal (const char *uri1,
  *  the same remote, even if the url is different (because it could be
  *  some other mirror of the same repo).
  *
- *  We also consider URLs equal even if one lacks a trailing slash.
+ *  We also consider non-OCI URLs equal even if one lacks a trailing slash.
  */
 char *
 flatpak_dir_find_remote_by_uri (FlatpakDir *self,
