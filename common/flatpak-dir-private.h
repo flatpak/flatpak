@@ -394,6 +394,7 @@ GPtrArray   *flatpak_dir_get_system_list (GCancellable *cancellable,
 FlatpakDir  *flatpak_dir_get_system_by_id (const char   *id,
                                            GCancellable *cancellable,
                                            GError      **error);
+FlatpakDir *flatpak_dir_get_by_path (GFile *path);
 gboolean    flatpak_dir_is_user (FlatpakDir *self);
 void        flatpak_dir_set_no_system_helper (FlatpakDir *self,
                                               gboolean    no_system_helper);

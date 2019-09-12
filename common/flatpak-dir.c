@@ -11809,6 +11809,35 @@ flatpak_dir_get_system_default (void)
   return flatpak_dir_new_full (path, FALSE, extra_data);
 }
 
+/* This figures out if it is a user or system dir automatically */
+FlatpakDir *
+flatpak_dir_get_by_path (GFile *path)
+{
+  GPtrArray *locations = flatpak_get_system_base_dir_locations (NULL, NULL);
+  int i;
+
+  if (locations)
+    {
+      for (i = 0; i < locations->len; i++)
+        {
+          GFile *system_path = g_ptr_array_index (locations, i);
+
+          if (g_file_equal (system_path, path))
+            {
+              DirExtraData *extra_data = g_object_get_data (G_OBJECT (path), "extra-data");
+              return flatpak_dir_new_full (path, FALSE, extra_data);
+            }
+        }
+    }
+
+  /* If its not configured as a system installation it will not have
+     an installation id and we can't use the system helper, so assume
+     user (and fail later with permission issues if its not owned by
+     the caller) */
+
+  return flatpak_dir_new (path, TRUE);
+}
+
 FlatpakDir *
 flatpak_dir_get_system_by_id (const char   *id,
                               GCancellable *cancellable,
