@@ -14166,17 +14166,37 @@ sort_strv (char **strv)
   return strv;
 }
 
+static char **
+flatpak_dir_get_config_strv (FlatpakDir *self, char *key) 
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_auto(GStrv) lang = NULL;
+
+  if (config)
+    {
+      if (g_key_file_has_key (config, "core", key, NULL))
+        {
+          lang = g_key_file_get_string_list (config, "core", key, NULL, NULL);
+          return g_steal_pointer (&lang);
+        }
+    }
+  return NULL;
+}
+
 char **
 flatpak_dir_get_default_locale_languages (FlatpakDir *self)
 {
   g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GDBusProxy) localed_proxy = NULL;
   g_autoptr(GDBusProxy) accounts_proxy = NULL;
+  g_auto(GStrv) extra_languages = NULL;
+
+  extra_languages = flatpak_dir_get_config_strv (self, "xa.extra-languages");
 
   if (flatpak_dir_is_user (self))
-    return flatpak_get_current_locale_langs ();
+    return sort_strv (flatpak_strv_merge (extra_languages, flatpak_get_current_locale_langs ()));
 
-  /* First get the system default locales */
+  /* Then get the system default locales */
   localed_proxy = get_localed_dbus_proxy ();
   if (localed_proxy != NULL)
     get_locale_langs_from_localed_dbus (localed_proxy, langs);
@@ -14187,27 +14207,23 @@ flatpak_dir_get_default_locale_languages (FlatpakDir *self)
   if (accounts_proxy != NULL)
     get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
 
-  /* If none were found, fall back to using all languages */
-  if (langs->len == 0)
-    return g_new0 (char *, 1);
-
-  g_ptr_array_sort (langs, flatpak_strcmp0_ptr);
   g_ptr_array_add (langs, NULL);
 
-  return (char **) g_ptr_array_free (g_steal_pointer (&langs), FALSE);
+  return sort_strv (flatpak_strv_merge (extra_languages, (char **) langs->pdata));
 }
 
 char **
 flatpak_dir_get_locale_languages (FlatpakDir *self)
 {
-  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  char **langs = NULL;
 
-  if (config)
-    {
-      char **langs = g_key_file_get_string_list (config, "core", "xa.languages", NULL, NULL);
-      if (langs)
-        return sort_strv (langs);
-    }
+  /* Fetch the list of languages specified by xa.languages - if this key is empty,
+   * this would mean that all languages are accepted. You can read the man for the
+   * flatpak-config section for more info.
+   */
+  langs = flatpak_dir_get_config_strv (self, "xa.languages");
+  if (langs)
+    return sort_strv (langs);
 
   return flatpak_dir_get_default_locale_languages (self);
 }
