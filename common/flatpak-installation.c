@@ -728,6 +728,7 @@ get_ref (FlatpakDir   *dir,
   g_autofree char *deploy_subdirname = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **subpaths = NULL;
+  g_autofree char *collection_id = NULL;
   gboolean is_current = FALSE;
   guint64 installed_size = 0;
 
@@ -757,10 +758,12 @@ get_ref (FlatpakDir   *dir,
 
   latest_commit = flatpak_dir_read_latest (dir, origin, full_ref, &latest_alt_id, NULL, NULL);
 
+  collection_id = flatpak_dir_get_remote_collection_id (dir, origin);
+
   return flatpak_installed_ref_new (full_ref,
                                     alt_id ? alt_id : commit,
                                     latest_alt_id ? latest_alt_id : latest_commit,
-                                    origin, subpaths,
+                                    origin, collection_id, subpaths,
                                     deploy_path,
                                     installed_size,
                                     is_current,

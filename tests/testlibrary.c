@@ -1205,7 +1205,7 @@ test_install_launch_uninstall (void)
   g_assert_cmpstr (flatpak_ref_get_arch (FLATPAK_REF (ref)), ==, flatpak_get_default_arch ());
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "master");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (ref)), ==, FLATPAK_REF_KIND_RUNTIME);
-  g_assert_null (flatpak_ref_get_collection_id (FLATPAK_REF (ref)));
+  g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, repo_collection_id);
 
   g_assert_cmpuint (flatpak_installed_ref_get_installed_size (ref), >, 0);
 
@@ -1253,7 +1253,7 @@ test_install_launch_uninstall (void)
   g_assert_cmpstr (flatpak_ref_get_arch (FLATPAK_REF (ref)), ==, flatpak_get_default_arch ());
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "master");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (ref)), ==, FLATPAK_REF_KIND_APP);
-  g_assert_null (flatpak_ref_get_collection_id (FLATPAK_REF (ref)));
+  g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, repo_collection_id);
 
   g_assert_cmpuint (flatpak_installed_ref_get_installed_size (ref), >, 0);
   g_assert_true (flatpak_installed_ref_get_is_current (ref));
