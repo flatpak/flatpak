@@ -526,12 +526,15 @@ extract_command (int         *argc,
 }
 
 static const char *
-find_similar_command (const char *word)
+find_similar_command (const char *word,
+                      gboolean   *option)
 {
-  int i, d, best;
+  int i, d, k;
+  const char *suggestion;
+  GOptionEntry *entries[3] = { global_entries, empty_entries, user_entries };
 
   d = G_MAXINT;
-  best = 0;
+  suggestion = commands[0].name;
 
   for (i = 0; commands[i].name; i++)
     {
@@ -539,11 +542,26 @@ find_similar_command (const char *word)
       if (d1 < d)
         {
           d = d1;
-          best = i;
+          suggestion = commands[i].name;
+          *option = FALSE;
         }
     }
 
-  return commands[best].name;
+  for (k = 0; k < 3; k++)
+    {
+      for (i = 0; entries[k][i].long_name; i++)
+        {
+          int d1 = flatpak_levenshtein_distance (word, entries[k][i].long_name);
+          if (d1 < d)
+            {
+              d = d1;
+              suggestion = entries[k][i].long_name;
+              *option = TRUE;
+            }
+        }
+    }
+
+  return suggestion;
 }
 
 static gpointer
@@ -639,11 +657,12 @@ flatpak_run (int      argc,
       if (command_name != NULL)
         {
           const char *similar;
+          gboolean option;
 
-          similar = find_similar_command (command_name);
+          similar = find_similar_command (command_name, &option);
           if (similar)
-            msg = g_strdup_printf (_("'%s' is not a flatpak command. Did you mean '%s'?"),
-                                   command_name, similar);
+            msg = g_strdup_printf (_("'%s' is not a flatpak command. Did you mean '%s%s'?"),
+                                   command_name, option ? "--" : "", similar);
           else
             msg = g_strdup_printf (_("'%s' is not a flatpak command"),
                                    command_name);
