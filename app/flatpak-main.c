@@ -534,10 +534,13 @@ find_similar_command (const char *word,
   GOptionEntry *entries[3] = { global_entries, empty_entries, user_entries };
 
   d = G_MAXINT;
-  suggestion = commands[0].name;
+  suggestion = NULL;
 
   for (i = 0; commands[i].name; i++)
     {
+      if (!commands[i].fn)
+        continue;
+
       int d1 = flatpak_levenshtein_distance (word, commands[i].name);
       if (d1 < d)
         {
