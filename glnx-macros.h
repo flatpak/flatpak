@@ -31,6 +31,16 @@ G_BEGIN_DECLS
 /* All of these are for C only. */
 #ifndef __GI_SCANNER__
 
+/* fixes builds against musl, taken from glibc unistd.h */
+#ifndef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(expression) \
+  (__extension__                                                              \
+    ({ long int __result;                                                     \
+       do __result = (long int) (expression);                                 \
+       while (__result == -1L && errno == EINTR);                             \
+       __result; }))
+#endif
+
 /* Taken from https://github.com/systemd/systemd/src/basic/string-util.h
  * at revision v228-666-gcf6c8c4
  */
