@@ -1,3 +1,17 @@
+Changes in 1.4.3
+================
+ * Fix crash in revokefs.
+ * Handle 'versions' extension key (in addition to 'version') when
+   checking for local extensions, which was causing us to uninstall
+   some actually used extensions with uninstall --unused.
+ * Fix crash with older versions of polkit.
+ * Fix installation of bundles.
+ * Fix crash on deploy error.
+ * Support building bundles of apps installed from a remote.
+ * OCI: Fix handling of locally cached icons.
+ * Fix crash when listing unconfigured remotes.
+ * Ignore differences in trailing slashes for repo uris.
+
 Changes in 1.4.2
 ================
 
