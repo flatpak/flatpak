@@ -6478,31 +6478,78 @@ flatpak_check_required_version (const char *ref,
                                 GKeyFile   *metakey,
                                 GError    **error)
 {
-  g_autofree char *required_version = NULL;
+  g_auto(GStrv) required_versions = NULL;
   const char *group;
-  int required_major, required_minor, required_micro;
+  int max_required_major = 0, max_required_minor = 0;
+  const char *max_required_version = "0.0";
+  int i;
 
   if (g_str_has_prefix (ref, "app/"))
     group = "Application";
   else
     group = "Runtime";
 
-  required_version = g_key_file_get_string (metakey, group, "required-flatpak", NULL);
-  if (required_version)
+  /* We handle handle multiple version requirements here. Each requirement must
+   * be in the form major.minor.micro, and if the flatpak version matches the
+   * major.minor part, t must be equal or later in the micro. If the major.minor part
+   * doesn't exactly match any of the specified requirements it must be larger
+   * than the maximum specified requirement.
+   *
+   * For example, specifying
+   *   required-flatpak=1.6.2;1.4.2;1.0.2;
+   * would allow flatpak versions:
+   *  1.7.0, 1.6.2, 1.6.3, 1.4.2, 1.4.3, 1.0.2, 1.0.3
+   * but not:
+   *  1.6.1, 1.4.1 or 1.2.100.
+   *
+   * The goal here is to be able to specify a version (like 1.6.2 above) where a feature
+   * was introduced, but also allow backports of said feature to earlier version series.
+   *
+   * Earlier versions that only support specifying one version will only look at the first
+   * element in the list, so put the largest version first.
+   */
+  required_versions = g_key_file_get_string_list (metakey, group, "required-flatpak", NULL, NULL);
+  if (required_versions == 0 || required_versions[0] == NULL)
+    return TRUE;
+
+  for (i = 0; required_versions[i] != NULL; i++)
     {
+      int required_major, required_minor, required_micro;
+      const char *required_version = required_versions[i];
+
       if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
                                    _("Invalid require-flatpak argument %s"), required_version);
       else
         {
-          if (required_major > PACKAGE_MAJOR_VERSION ||
-              (required_major == PACKAGE_MAJOR_VERSION && required_minor > PACKAGE_MINOR_VERSION) ||
-              (required_major == PACKAGE_MAJOR_VERSION && required_minor == PACKAGE_MINOR_VERSION && required_micro > PACKAGE_MICRO_VERSION))
-            return flatpak_fail_error (error, FLATPAK_ERROR_NEED_NEW_FLATPAK,
-                                       _("%s needs a later flatpak version (%s)"),
-                                       ref, required_version);
+          /* If flatpak is in the same major.minor series as the requirement, do a micro check */
+          if (required_major == PACKAGE_MAJOR_VERSION && required_minor == PACKAGE_MINOR_VERSION)
+            {
+              if (required_micro <= PACKAGE_MICRO_VERSION)
+                return TRUE;
+              else
+                return flatpak_fail_error (error, FLATPAK_ERROR_NEED_NEW_FLATPAK,
+                                           _("%s needs a later flatpak version (%s)"),
+                                           ref, required_version);
+            }
+
+          /* Otherwise, keep track of the largest major.minor that is required */
+          if ((required_major > max_required_major) ||
+              (required_major == max_required_major &&
+               required_minor > max_required_minor))
+            {
+              max_required_major = required_major;
+              max_required_minor = required_minor;
+              max_required_version = required_version;
+            }
         }
     }
+
+  if (max_required_major > PACKAGE_MAJOR_VERSION ||
+      (max_required_major == PACKAGE_MAJOR_VERSION && max_required_minor > PACKAGE_MINOR_VERSION))
+    return flatpak_fail_error (error, FLATPAK_ERROR_NEED_NEW_FLATPAK,
+                               _("%s needs a later flatpak version (%s)"),
+                               ref, max_required_version);
 
   return TRUE;
 }
