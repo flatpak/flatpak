@@ -256,6 +256,8 @@ make_required_version_app org.test.NeedNewerMaster "$(expr ${V[0]} + 1).${V[1]}.
 make_required_version_app org.test.NeedOlderMinor "${V[0]}.$(expr ${V[1]} - 1).${V[2]}"
 make_required_version_app org.test.MultiVersionFallback "${V[0]}.${V[1]}.${V[2]};1.0.0;"
 make_required_version_app org.test.MultiVersionFallbackFail "${V[0]}.$(expr ${V[1]} + 1).${V[2]};1.0.0;"
+make_required_version_app org.test.MultiVersionOk "${V[0]}.$(expr ${V[1]} + 1).0;${V[0]}.${V[1]}.${V[2]};"
+make_required_version_app org.test.MultiVersionNotOk "${V[0]}.$(expr ${V[1]} + 1).0;${V[0]}.${V[1]}.$(expr ${V[2]} + 1);"
 
 update_repo $REPONAME "${COLLECTION_ID}"
 
@@ -281,6 +283,13 @@ ${FLATPAK} ${U} install -y test-repo org.test.MultiVersionFallback
 
 if ${FLATPAK} ${U} install -y test-repo org.test.MultiVersionFallbackFail 2> install-error-log; then
     assert_not_reached "Should not be able to install with wrong fallback version"
+fi
+assert_file_has_content install-error-log "needs a later flatpak version"
+
+${FLATPAK} ${U} install -y test-repo org.test.MultiVersionOk
+
+if ${FLATPAK} ${U} install -y test-repo org.test.MultiVersionNotOk 2> install-error-log; then
+    assert_not_reached "Should not be able to install with wrong multi version"
 fi
 assert_file_has_content install-error-log "needs a later flatpak version"
 
