@@ -13757,6 +13757,9 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
           g_autofree char *extension = NULL;
           g_autofree char *version = g_key_file_get_string (metakey, groups[i],
                                                             FLATPAK_METADATA_KEY_VERSION, NULL);
+          g_auto(GStrv) versions = g_key_file_get_string_list (metakey, groups[i],
+                                                               FLATPAK_METADATA_KEY_VERSIONS,
+                                                               NULL, NULL);
           gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
                                                             FLATPAK_METADATA_KEY_SUBDIRECTORIES, NULL);
           gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
@@ -13769,18 +13772,24 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                                         FLATPAK_METADATA_KEY_AUTODELETE, NULL);
           gboolean locale_subset = g_key_file_get_boolean (metakey, groups[i],
                                                            FLATPAK_METADATA_KEY_LOCALE_SUBSET, NULL);
-          const char *branch;
-          g_autofree char *extension_ref = NULL;
-          g_autofree char *checksum = NULL;
           g_autofree char *extension_collection_id = NULL;
+          const char *default_branches[] = { NULL, NULL};
+          const char **branches;
+          int branch_i;
 
           /* Parse actual extension name */
           flatpak_parse_extension_with_tag (tagged_extension, &extension, NULL);
 
-          if (version)
-            branch = version;
+          if (versions)
+            branches = (const char **) versions;
           else
-            branch = parts[3];
+            {
+              if (version)
+                default_branches[0] = version;
+              else
+                default_branches[0] = parts[3];
+              branches = default_branches;
+            }
 
           extension_collection_id = g_key_file_get_string (metakey, groups[i],
                                                            FLATPAK_METADATA_KEY_COLLECTION_ID, NULL);
@@ -13800,40 +13809,47 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
           g_clear_pointer (&extension_collection_id, g_free);
           extension_collection_id = g_strdup (collection_id);
 
-          extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
-          if (flatpak_repo_resolve_rev (self->repo,
-                                        collection_id,
-                                        remote_name,
-                                        extension_ref,
-                                        FALSE,
-                                        &checksum,
-                                        NULL,
-                                        NULL))
+          for (branch_i = 0; branches[branch_i] != NULL; branch_i++)
             {
-              add_related (self, related, extension, extension_collection_id, extension_ref,
-                           checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
-            }
-          else if (subdirectories)
-            {
-              g_autoptr(GPtrArray) matches = local_match_prefix (self, extension_ref, remote_name);
-              int j;
-              for (j = 0; j < matches->len; j++)
-                {
-                  const char *match = g_ptr_array_index (matches, j);
-                  g_autofree char *match_checksum = NULL;
+              g_autofree char *extension_ref = NULL;
+              g_autofree char *checksum = NULL;
+              const char *branch = branches[branch_i];
 
-                  if (flatpak_repo_resolve_rev (self->repo,
-                                                collection_id,
-                                                remote_name,
-                                                match,
-                                                FALSE,
-                                                &match_checksum,
-                                                NULL,
-                                                NULL))
+              extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
+              if (flatpak_repo_resolve_rev (self->repo,
+                                            collection_id,
+                                            remote_name,
+                                            extension_ref,
+                                            FALSE,
+                                            &checksum,
+                                            NULL,
+                                            NULL))
+                {
+                  add_related (self, related, extension, extension_collection_id, extension_ref,
+                               checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                }
+              else if (subdirectories)
+                {
+                  g_autoptr(GPtrArray) matches = local_match_prefix (self, extension_ref, remote_name);
+                  int j;
+                  for (j = 0; j < matches->len; j++)
                     {
-                      add_related (self, related, extension,
-                                   extension_collection_id, match, match_checksum,
-                                   no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                      const char *match = g_ptr_array_index (matches, j);
+                      g_autofree char *match_checksum = NULL;
+
+                      if (flatpak_repo_resolve_rev (self->repo,
+                                                    collection_id,
+                                                    remote_name,
+                                                    match,
+                                                    FALSE,
+                                                    &match_checksum,
+                                                    NULL,
+                                                    NULL))
+                        {
+                          add_related (self, related, extension,
+                                       extension_collection_id, match, match_checksum,
+                                       no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                        }
                     }
                 }
             }
