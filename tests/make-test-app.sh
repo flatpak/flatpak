@@ -25,7 +25,15 @@ cat > ${DIR}/metadata <<EOF
 name=$APP_ID
 runtime=org.test.Platform/$ARCH/master
 sdk=org.test.Platform/$ARCH/master
+EOF
 
+if [ x${REQUIRED_VERSION-} != x ]; then
+cat >> ${DIR}/metadata <<EOF
+required-flatpak=$REQUIRED_VERSION
+EOF
+fi
+
+cat >> ${DIR}/metadata <<EOF
 [Extension org.test.Hello.Locale]
 directory=share/runtime/locale
 autodelete=true
