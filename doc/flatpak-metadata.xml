@@ -100,12 +100,19 @@
                     </listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>required-flatpak</option> (string)</term>
+                    <term><option>required-flatpak</option> (string list)</term>
                     <listitem><para>
                         The required version of Flatpak to run this application
                         or runtime. For applications, this was available since
                         0.8.0. For runtimes, this was available since 0.9.1,
                         and backported to 0.8.3 for the 0.8.x branch.
+                      </para><para>
+                        Flatpak after version 1.4.3 and 1.2.5 support multiple versions here.
+                        This can be useful if you need to support features that are backported
+                        to a previous stable series. For example if you want to use a feature
+                        added in 1.6.0 that was also backported to 1.4.4 you would use
+                        <literal>1.6.0;1.4.4;</literal>. Note that older versions of flatpak will
+                        just use the first element in the list, so make that the largest version.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
