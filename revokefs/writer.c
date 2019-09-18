@@ -60,7 +60,7 @@ do_request (int writer_socket,
   size_t request_size;
   size_t response_max_size;
   ssize_t written_size, read_size;
-  struct iovec write_vecs[2] = {};
+  struct iovec write_vecs[3] = {};
   int n_write_vecs = 0;
   struct iovec read_vecs[2] = {};
   int n_read_vecs = 0;
