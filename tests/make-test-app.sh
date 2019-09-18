@@ -27,6 +27,12 @@ runtime=org.test.Platform/$ARCH/master
 sdk=org.test.Platform/$ARCH/master
 EOF
 
+if [ x${REQUIRED_VERSION-} != x ]; then
+cat >> ${DIR}/metadata <<EOF
+required-flatpak=$REQUIRED_VERSION
+EOF
+fi
+
 mkdir -p ${DIR}/files/bin
 cat > ${DIR}/files/bin/hello.sh <<EOF
 #!/bin/sh
