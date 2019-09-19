@@ -226,7 +226,7 @@ if test $have_libsystemd = yes; then
 fi
 
 save_LIBS=$LIBS
-LIBS=$BASE_LIBS
+LIBS=$ARCHIVE_LIBS
 AC_CHECK_FUNCS(archive_read_support_filter_all)
 LIBS=$save_LIBS
 
