@@ -4,6 +4,8 @@ Changes in 1.4.3
  * Handle 'versions' extension key (in addition to 'version') when
    checking for local extensions, which was causing us to uninstall
    some actually used extensions with uninstall --unused.
+ * The 'required-flatpak' metadata key now supports listing multiple
+   versions to support backported features.
  * Fix crash with older versions of polkit.
  * Fix installation of bundles.
  * Fix crash on deploy error.
