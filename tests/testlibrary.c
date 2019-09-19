@@ -1917,7 +1917,7 @@ setup_repo (void)
   configure_languages ();
 
   /* another copy of the same repo, with different url */
-  symlink ("test", "repos/copy-of-test");
+  g_assert_cmpint (symlink ("test", "repos/copy-of-test"), ==, 0);
 
   /* another repo, with only the app */
   make_test_app ("test-without-runtime");
