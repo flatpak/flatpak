@@ -1212,8 +1212,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
  *
  * FIXME: If this were async, the parallelisation could be handled in the caller. */
 static gboolean
-list_remotes_for_configured_remote (FlatpakInstallation *self,
-                                    const gchar         *remote_name,
+list_remotes_for_configured_remote (const gchar         *remote_name,
                                     FlatpakDir          *dir,
                                     gboolean             types_filter[],
                                     GPtrArray           *remotes /* (element-type FlatpakRemote) */,
@@ -1409,7 +1408,7 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
                                                                dir_clone));
 
       /* Add the dynamic mirrors of this remote. */
-      if (!list_remotes_for_configured_remote (self, remote_names[i], dir_clone,
+      if (!list_remotes_for_configured_remote (remote_names[i], dir_clone,
                                                types_filter, remotes,
                                                cancellable, &local_error))
         g_debug ("Couldn't find remotes for configured remote %s: %s",
