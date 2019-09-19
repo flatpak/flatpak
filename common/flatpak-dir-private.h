@@ -882,6 +882,7 @@ gboolean flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                               GError      **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                                             const char   *remote,
+                                                            gboolean      only_cached,
                                                             GCancellable *cancellable,
                                                             GError      **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,

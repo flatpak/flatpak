@@ -1997,7 +1997,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
       return NULL;
     }
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2160,7 +2160,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (remote_name == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2394,7 +2394,7 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return FALSE;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -2435,7 +2435,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -2600,7 +2600,7 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2625,6 +2625,77 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
 
   coll_ref = flatpak_collection_ref_new (collection_id, ref);
   checksum = g_hash_table_lookup (ht, coll_ref);
+
+  /* Check LAN/USB sources too in case we're offline */
+  if (checksum == NULL && collection_id != NULL && *collection_id != '\0')
+    {
+      OstreeRepo *repo;
+      const char * const *default_repo_finders;
+      g_autoptr(GAsyncResult) result = NULL;
+      OstreeCollectionRef ostree_coll_ref;
+      const OstreeCollectionRef *refs[2] = { NULL, };
+      OstreeRepoFinder *finders[3] = { NULL, };
+      guint finder_index = 0;
+      gsize i;
+      g_autoptr(GMainContextPopDefault) context = NULL;
+      g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
+
+      context = flatpak_main_context_new_default ();
+
+      ostree_coll_ref.collection_id = collection_id;
+      ostree_coll_ref.ref_name = ref;
+      refs[0] = &ostree_coll_ref;
+
+      if (!flatpak_dir_ensure_repo (dir, cancellable, error))
+        return NULL;
+      repo = flatpak_dir_get_repo (dir);
+      default_repo_finders = ostree_repo_get_default_repo_finders (repo);
+      if (default_repo_finders == NULL || g_strv_contains (default_repo_finders, "mount"))
+        {
+          finder_mount = OSTREE_REPO_FINDER (ostree_repo_finder_mount_new (NULL));
+          finders[finder_index++] = finder_mount;
+        }
+
+      if (default_repo_finders == NULL || g_strv_contains (default_repo_finders, "lan"))
+        {
+          g_autoptr(GError) local_error = NULL;
+          finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
+          finders[finder_index++] = finder_avahi;
+
+          /* The Avahi finder may fail to start on, for example, a CI server. */
+          ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), &local_error);
+          if (local_error != NULL)
+            {
+              finders[--finder_index] = NULL;
+              g_clear_object (&finder_avahi);
+            }
+        }
+
+      if (finders[0] != NULL)
+        {
+          g_auto(OstreeRepoFinderResultv) results = NULL;
+
+          ostree_repo_find_remotes_async (repo, (const OstreeCollectionRef * const *)refs,
+                                          NULL, finders, NULL, cancellable, async_result_cb, &result);
+          while (result == NULL)
+            g_main_context_iteration (context, TRUE);
+
+          results = ostree_repo_find_remotes_finish (repo, result, error);
+
+          if (finder_avahi != NULL)
+            ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
+
+          if (results == NULL)
+            return NULL;
+
+          for (i = 0; results[i] != NULL; i++)
+            {
+              checksum = g_hash_table_lookup (results[i]->ref_to_checksum, &ostree_coll_ref);
+              if (checksum != NULL)
+                break;
+            }
+        }
+    }
 
   /* If there was not a match, it may be because the collection ID is
    * not set in the local configuration, or it is wrong, so we resort to
@@ -2816,7 +2887,7 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 
