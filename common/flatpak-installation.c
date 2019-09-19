@@ -1304,7 +1304,7 @@ list_remotes_for_configured_remote (const gchar         *remote_name,
 
   results = ostree_repo_find_remotes_finish (repo, result, error);
 
-  if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
+  if (finder_avahi != NULL)
     ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
 
   if (results == NULL)
