@@ -645,7 +645,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      state = flatpak_dir_get_remote_state_optional (system, arg_origin, NULL, &error);
+      state = flatpak_dir_get_remote_state_optional (system, arg_origin, FALSE, NULL, &error);
       if (state == NULL)
         {
           flatpak_invocation_return_error (invocation, error, "Error getting remote state");
@@ -885,7 +885,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      state = flatpak_dir_get_remote_state_optional (system, arg_origin, NULL, &error);
+      state = flatpak_dir_get_remote_state_optional (system, arg_origin, FALSE, NULL, &error);
       if (state == NULL)
         {
           flatpak_invocation_return_error (invocation, error, "Error getting remote state");

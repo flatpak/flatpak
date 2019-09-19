@@ -4153,7 +4153,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   is_oci = flatpak_dir_get_remote_oci (self, remote);
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -10876,10 +10876,11 @@ flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
 FlatpakRemoteState *
 flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                        const char   *remote,
+                                       gboolean      only_cached,
                                        GCancellable *cancellable,
                                        GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, TRUE, FALSE, FALSE, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, FALSE, only_cached, NULL, NULL, cancellable, error);
 }
 
 
@@ -10902,7 +10903,7 @@ flatpak_dir_remote_has_ref (FlatpakDir *self,
   g_autoptr(GError) local_error = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, NULL, &local_error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, NULL, &local_error);
   if (state == NULL)
     {
       g_debug ("Can't get state for remote %s: %s", remote, local_error->message);
@@ -11275,7 +11276,7 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
   g_autoptr(FlatpakRemoteState) state = NULL;
   GPtrArray *matched_refs;
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -11372,7 +11373,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 
