@@ -1,3 +1,33 @@
+Changes in 1.2.5
+================
+
+This release to the 1.2 old stable series matches some new features
+that were added in 1.4.3 stable release. These are backported because
+these features are in use on flathub at the moment.
+
+The main feature is the support for allowing the use of extra_data
+for runtimes (as opposed to only for apps) which is used by the new
+org.freedesktop.Platform.openh264 extension.
+
+Supporting this, flatpak now supports specifying several flatpak
+versions to require, rather than just a single one. This is used by
+the above extension in order to express that it needs flatpak 1.2.5 or
+1.4.2 (but not e.g. 1.4.1).
+
+Only the client side features for this are backported. To build such
+extensions you need to use a newer flatpak.
+
+Other changes are:
+ * Various fixes for OCI repos
+ * Some crashers fixes
+ * Set looser permissions on the /run/host/monitor directory to
+   work with e.g. toolbox on the host.
+ * Fix installation of bundles.
+ * Handle 'versions' extension key (in addition to 'version') when
+   checking for installed extensions. Thg lack of this was causing
+   flatpak to incorrectly consider some extensions not in use,
+   thus removing them in 'uninstall --unused'.
+
 Changes in 1.2.4
 ================
 
