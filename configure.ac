@@ -34,8 +34,6 @@ SYSTEM_BWRAP_REQS=0.2.1
 SYSTEM_DBUS_PROXY_REQS=0.1.0
 OSTREE_REQS=2018.9
 
-AC_DEFINE(GLIB_VERSION_MIN_REQUIRED, GLIB_VERSION_2_60, [Ignore massive GTimeVal deprecation warnings in 2.62])
-
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 
@@ -224,6 +222,10 @@ PKG_CHECK_MODULES(SYSTEMD, [libsystemd], [have_libsystemd=yes], [have_libsystemd
 if test $have_libsystemd = yes; then
   AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if libsystemd is available])
 fi
+
+PKG_CHECK_MODULES(GLIB260, glib-2.0 >= 2.60,
+                  [AC_DEFINE(GLIB_VERSION_MIN_REQUIRED, GLIB_VERSION_2_60, [Ignore massive GTimeVal deprecation warnings in 2.62])],
+                  [true])
 
 save_LIBS=$LIBS
 LIBS=$ARCHIVE_LIBS
