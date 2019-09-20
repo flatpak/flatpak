@@ -7443,7 +7443,7 @@ apply_extra_data (FlatpakDir   *self,
   /* We run the sandbox without caps, but it can still create files owned by itself with
    * arbitrary permissions, including setuid myself. This is extra risky in the case where
    * this runs as root in the system helper case. We canonicalize the permissions at the
-   * end, but do avoid non-canonical permissions leaking out before then we make the
+   * end, but to avoid non-canonical permissions leaking out before then we make the
    * toplevel dir only accessible to the user */
   if (chmod (flatpak_file_get_path_cached (extra_files), 0700) != 0)
     {
