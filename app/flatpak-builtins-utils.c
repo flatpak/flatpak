@@ -1173,7 +1173,6 @@ flatpak_dir_load_appstream_store (FlatpakDir   *self,
   return success;
 }
 
-
 void
 print_aligned (int len, const char *title, const char *value)
 {
@@ -1186,7 +1185,7 @@ print_aligned (int len, const char *title, const char *value)
       off = FLATPAK_ANSI_BOLD_OFF;
     }
 
-  g_print ("%s%*s%s%s %s\n", on, len - (int) g_utf8_strlen (title, -1), "", title, off, value);
+  g_print ("%s%*s%s%s %s\n", on, len - (int) cell_width (title), "", title, off, value);
 }
 
 
@@ -1227,11 +1226,14 @@ skip_escape_sequence (const char *p)
   return p;
 }
 
-/* a variant of g_utf8_strlen that skips Escape sequences */
+/* A variant of g_utf8_strlen that skips Escape sequences,
+ * and takes character width into account
+ */
 int
 cell_width (const char *text)
 {
   const char *p = text;
+  gunichar c;
   int width = 0;
 
   while (*p)
@@ -1242,19 +1244,28 @@ cell_width (const char *text)
       if (!*p)
         break;
 
-      width += 1;
+      c = g_utf8_get_char (p);
+
+      if (g_unichar_iswide (c))
+        width += 2;
+      else if (!g_unichar_iszerowidth (c))
+        width += 1;
+
       p = g_utf8_next_char (p);
     }
 
   return width;
 }
 
-/* advance text by num utf8 chars, skipping Escape sequences */
+/* Advance text by num cells, skipping Escape sequences,
+ * and taking character width into account
+ */
 const char *
 cell_advance (const char *text,
               int         num)
 {
   const char *p = text;
+  gunichar c;
   int width = 0;
 
   while (width < num)
@@ -1265,7 +1276,13 @@ cell_advance (const char *text,
       if (!*p)
         break;
 
-      width += 1;
+      c = g_utf8_get_char (p);
+
+      if (g_unichar_iswide (c))
+        width += 2;
+      else if (!g_unichar_iszerowidth (c))
+        width += 1;
+
       p = g_utf8_next_char (p);
     }
 
@@ -1281,7 +1298,7 @@ print_line_wrapped (int cols, const char *line)
 
   for (i = 0; words[i]; i++)
     {
-      int len = g_utf8_strlen (words[i], -1);
+      int len = cell_width (words[i]);
       int space = col > 0;
 
       if (col + space + len >= cols)
