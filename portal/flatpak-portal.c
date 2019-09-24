@@ -32,6 +32,7 @@
 #include "flatpak-portal.h"
 #include "flatpak-portal-app-info.h"
 #include "flatpak-portal-error.h"
+#include "flatpak-utils-base-private.h"
 
 #define IDLE_TIMEOUT_SECS 10 * 60
 
@@ -175,6 +176,8 @@ child_setup_func (gpointer user_data)
   FdMapEntry *fd_map = data->fd_map;
   sigset_t set;
   int i;
+
+  flatpak_close_fds_workaround (3);
 
   /* Unblock all signals */
   sigemptyset (&set);
@@ -591,10 +594,11 @@ handle_spawn (PortalFlatpak         *object,
       g_debug ("Starting: %s\n", cmd->str);
     }
 
+  /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
   if (!g_spawn_async_with_pipes (NULL,
                                  (char **) flatpak_argv->pdata,
                                  env,
-                                 G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
+                                 G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                                  child_setup_func, &child_setup_data,
                                  &pid,
                                  NULL,
