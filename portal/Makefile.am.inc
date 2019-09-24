@@ -34,6 +34,6 @@ flatpak_portal_SOURCES = \
 BUILT_SOURCES += $(nodist_flatpak_portal_SOURCES)
 CLEANFILES += $(nodist_flatpak_portal_SOURCES)
 
-flatpak_portal_LDADD = $(AM_LDADD) $(BASE_LIBS)
+flatpak_portal_LDADD = $(AM_LDADD) $(BASE_LIBS) libflatpak-common-base.la libglnx.la
 flatpak_portal_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) -DFLATPAK_COMPILATION
 flatpak_portal_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/portal

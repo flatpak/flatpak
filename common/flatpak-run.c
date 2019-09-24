@@ -851,10 +851,11 @@ start_dbus_proxy (FlatpakBwrap *app_bwrap,
   commandline = flatpak_quote_argv ((const char **) proxy_bwrap->argv->pdata, -1);
   g_debug ("Running '%s'", commandline);
 
+  /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
   if (!g_spawn_async (NULL,
                       (char **) proxy_bwrap->argv->pdata,
                       NULL,
-                      G_SPAWN_SEARCH_PATH,
+                      G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                       flatpak_bwrap_child_setup_cb, proxy_bwrap->fds,
                       NULL, error))
     return FALSE;
@@ -3122,10 +3123,11 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   g_array_append_vals (combined_fd_array, base_fd_array->data, base_fd_array->len);
   g_array_append_vals (combined_fd_array, bwrap->fds->data, bwrap->fds->len);
 
+  /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
   if (!g_spawn_sync (NULL,
                      (char **) bwrap->argv->pdata,
                      bwrap->envp,
-                     G_SPAWN_SEARCH_PATH,
+                     G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                      flatpak_bwrap_child_setup_cb, combined_fd_array,
                      NULL, NULL,
                      &exit_status,
@@ -3563,6 +3565,9 @@ flatpak_run_app (const char     *app_ref,
       spawn_flags = G_SPAWN_SEARCH_PATH;
       if (flags & FLATPAK_RUN_FLAG_DO_NOT_REAP)
         spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
+
+      /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
+      spawn_flags |= G_SPAWN_LEAVE_DESCRIPTORS_OPEN;
 
       if (!g_spawn_async (NULL,
                           (char **) bwrap->argv->pdata,

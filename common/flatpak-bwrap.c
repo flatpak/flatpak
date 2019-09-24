@@ -39,6 +39,7 @@
 
 #include "flatpak-bwrap-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-utils-base-private.h"
 
 static void
 clear_fd (gpointer data)
@@ -330,6 +331,8 @@ flatpak_bwrap_child_setup_cb (gpointer user_data)
 {
   GArray *fd_array = user_data;
   int i;
+
+  flatpak_close_fds_workaround (3);
 
   /* If no fd_array was specified, don't care. */
   if (fd_array == NULL)

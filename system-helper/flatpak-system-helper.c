@@ -32,12 +32,14 @@
 #include <gio/gunixfdlist.h>
 #include <sys/mount.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "flatpak-dbus-generated.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-error.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-utils-base-private.h"
 
 static PolkitAuthority *authority = NULL;
 static FlatpakSystemHelper *helper = NULL;
@@ -1465,6 +1467,10 @@ revokefs_fuse_backend_child_setup (gpointer user_data)
 {
   struct passwd *passwd = user_data;
 
+  /* We use 4 instead of 3 here, because fd 3 is the inerited socket
+     and got dup2() into place before this by GSubprocess */
+  flatpak_close_fds_workaround (4);
+
   if (setgid (passwd->pw_gid) == -1)
     {
       g_warning ("Failed to setgid(%d) for revokefs backend: %s",
@@ -1548,7 +1554,8 @@ ongoing_pull_new (FlatpakSystemHelper   *object,
       return NULL;
     }
 
-  launcher = g_subprocess_launcher_new (G_SUBPROCESS_FLAGS_NONE);
+  /* We use INHERIT_FDS to work around dead-lock, see flatpak_close_fds_workaround */
+  launcher = g_subprocess_launcher_new (G_SUBPROCESS_FLAGS_INHERIT_FDS);
   g_subprocess_launcher_set_child_setup (launcher, revokefs_fuse_backend_child_setup, passwd, NULL);
   g_subprocess_launcher_take_fd (launcher, sockets[0], 3);
   fcntl (sockets[1], F_SETFD, FD_CLOEXEC);

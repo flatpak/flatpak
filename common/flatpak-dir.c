@@ -6248,10 +6248,11 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
           commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
           g_debug ("Running '%s'", commandline);
 
+          /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
           if (!g_spawn_sync ("/",
                              (char **) bwrap->argv->pdata,
                              NULL,
-                             G_SPAWN_SEARCH_PATH,
+                             G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                              flatpak_bwrap_child_setup_cb, bwrap->fds,
                              NULL, NULL,
                              NULL, &trigger_error))
