@@ -645,6 +645,23 @@ append_tags (GPtrArray *tags_array,
     }
 }
 
+static char *
+extract_eula (GKeyFile *metadata,
+              GKeyFile *old_metadata)
+{
+  g_autofree char *eula_url;
+  g_autofree char *old_eula_url;
+
+  // FIXME: Better group?
+  eula_url = g_key_file_get_string (metadata, FLATPAK_METADATA_GROUP_APPLICATION, "eula-url", NULL);
+  old_eula_url = g_key_file_get_string (old_metadata, FLATPAK_METADATA_GROUP_APPLICATION, "eula-url", NULL);
+
+  if (eula_url && g_strcmp0(eula_url, old_eula_url))
+    return g_steal_pointer (&eula_url);
+
+  return NULL;
+}
+
 static void
 print_perm_line (int        idx,
                  GPtrArray *items,
@@ -688,6 +705,7 @@ print_permissions (FlatpakCliTransaction *self,
   g_autoptr(GPtrArray) system_bus_talk = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) system_bus_own = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) tags = g_ptr_array_new_with_free_func (g_free);
+  g_autofree char *eula_url = NULL;
   FlatpakTablePrinter *printer;
   int max_permission_width;
   int n_permission_cols;
@@ -698,6 +716,7 @@ print_permissions (FlatpakCliTransaction *self,
   if (metadata == NULL)
     return;
 
+  // FIXME: EULA can apply to runtimes
   /* Only apps have permissions */
   if (flatpak_ref_get_kind (rref) != FLATPAK_REF_KIND_APP)
     return;
@@ -712,6 +731,7 @@ print_permissions (FlatpakCliTransaction *self,
   append_bus (system_bus_talk, system_bus_own,
               metadata, old_metadata, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY);
   append_tags (tags, metadata, old_metadata);
+  eula_url = extract_eula (metadata, old_metadata);
 
   j = 1;
   if (files->len > 0)
@@ -788,6 +808,8 @@ print_permissions (FlatpakCliTransaction *self,
     print_perm_line (j++, system_bus_own, cols);
   if (tags->len > 0)
     print_perm_line (j++, tags, cols);
+  if (eula_url) // FIXME: Better formatting
+    g_print ("    EULA: %s\n", eula_url);
 }
 
 static void
