@@ -186,8 +186,13 @@ struct FlatpakDir
 
   GHashTable      *remote_filters;
 
+  /* Config cache, protected by config_cache lock */
+  GRegex          *masked;
+
   SoupSession     *soup_session;
 };
+
+G_LOCK_DEFINE_STATIC (config_cache);
 
 typedef struct
 {
@@ -1721,6 +1726,7 @@ flatpak_dir_finalize (GObject *object)
   g_clear_object (&self->soup_session);
   g_clear_pointer (&self->summary_cache, g_hash_table_unref);
   g_clear_pointer (&self->remote_filters, g_hash_table_unref);
+  g_clear_pointer (&self->masked, g_regex_unref);
 
   G_OBJECT_CLASS (flatpak_dir_parent_class)->finalize (object);
 }
@@ -2686,6 +2692,13 @@ flatpak_dir_recreate_repo (FlatpakDir   *self,
 
   res = flatpak_dir_ensure_repo (self, cancellable, error);
   g_clear_object (&old_repo);
+
+  G_LOCK (config_cache);
+
+  g_clear_pointer (&self->masked, g_regex_unref);
+
+  G_UNLOCK (config_cache);
+
   return res;
 }
 
@@ -3068,6 +3081,26 @@ flatpak_dir_maybe_ensure_repo (FlatpakDir   *self,
   return _flatpak_dir_ensure_repo (self, TRUE, cancellable, error);
 }
 
+static gboolean
+_flatpak_dir_reload_config (FlatpakDir   *self,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  if (self->repo)
+    {
+      if (!ostree_repo_reload_config (self->repo, cancellable, error))
+        return FALSE;
+    }
+
+  /* Clear cached stuff from repo config */
+  G_LOCK (config_cache);
+
+  g_clear_pointer (&self->masked, g_regex_unref);
+
+  G_UNLOCK (config_cache);
+  return TRUE;
+}
+
 char *
 flatpak_dir_get_config (FlatpakDir *self,
                         const char *key,
@@ -3135,7 +3168,7 @@ flatpak_dir_set_config (FlatpakDir *self,
   if (!ostree_repo_write_config (self->repo, config, error))
     return FALSE;
 
-  if (!ostree_repo_reload_config (self->repo, NULL, error))
+  if (!_flatpak_dir_reload_config (self, NULL, error))
     return FALSE;
 
   return TRUE;
@@ -12257,7 +12290,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   gpg_data, cancellable, error))
     return NULL;
 
-  if (!ostree_repo_reload_config (self->repo, cancellable, error))
+  if (!_flatpak_dir_reload_config (self, cancellable, error))
     return FALSE;
 
   return g_steal_pointer (&remote);
@@ -13558,6 +13591,55 @@ add_related (FlatpakDir *self,
   g_ptr_array_add (related, rel);
 }
 
+static GRegex *
+flatpak_dir_get_mask_regexp (FlatpakDir *self)
+{
+  GRegex *res = NULL;
+
+  G_LOCK (config_cache);
+
+  if (self->masked == NULL)
+    {
+      g_autofree char *masked = NULL;
+
+      masked = flatpak_dir_get_config (self, "masked", NULL);
+      if (masked)
+        {
+          g_auto(GStrv) patterns = g_strsplit (masked, ";", -1);
+          g_autoptr(GString) deny_regexp = g_string_new ("^(");
+          int i;
+
+          for (i = 0; patterns[i] != NULL; i++)
+            {
+              const char *pattern = patterns[i];
+
+              if (*pattern != 0)
+                {
+                  g_autofree char *regexp = NULL;
+
+                  regexp = flatpak_filter_glob_to_regexp (pattern, NULL);
+                  if (regexp)
+                    {
+                      if (i != 0)
+                        g_string_append (deny_regexp, "|");
+                      g_string_append (deny_regexp, regexp);
+                    }
+                }
+            }
+
+          g_string_append (deny_regexp, ")$");
+          self->masked = g_regex_new (deny_regexp->str, G_REGEX_DOLLAR_ENDONLY|G_REGEX_RAW|G_REGEX_OPTIMIZE, G_REGEX_MATCH_ANCHORED, NULL);
+        }
+    }
+
+  if (self->masked)
+    res = g_regex_ref (self->masked);
+
+  G_UNLOCK (config_cache);
+
+  return res;
+}
+
 GPtrArray *
 flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                                               FlatpakRemoteState *state,
@@ -13571,6 +13653,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
   g_autofree char *url = NULL;
   g_auto(GStrv) groups = NULL;
+  g_autoptr(GRegex) masked = NULL;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
@@ -13584,6 +13667,8 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
 
   if (*url == 0)
     return g_steal_pointer (&related);  /* Empty url, silently disables updates */
+
+  masked = flatpak_dir_get_mask_regexp (self);
 
   groups = g_key_file_get_groups (metakey, NULL);
   for (i = 0; groups[i] != NULL; i++)
@@ -13657,8 +13742,9 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
 
               if (flatpak_remote_state_lookup_ref (state, extension_ref, &checksum, NULL, NULL))
                 {
-                  add_related (self, related, extension, extension_collection_id, extension_ref, checksum,
-                               no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                  if (flatpak_filters_allow_ref (NULL, masked, extension_ref))
+                    add_related (self, related, extension, extension_collection_id, extension_ref, checksum,
+                                 no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                 }
               else if (subdirectories)
                 {
@@ -13668,7 +13754,8 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                     {
                       g_autofree char *subref_checksum = NULL;
 
-                      if (flatpak_remote_state_lookup_ref (state, refs[j], &subref_checksum, NULL, NULL))
+                      if (flatpak_remote_state_lookup_ref (state, refs[j], &subref_checksum, NULL, NULL) &&
+                          flatpak_filters_allow_ref (NULL, masked,  refs[j]))
                         add_related (self, related, extension, extension_collection_id, refs[j], subref_checksum,
                                      no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                     }
