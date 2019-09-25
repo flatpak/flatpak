@@ -1127,11 +1127,12 @@ line_get_word (char **line)
   return word;
 }
 
-static char *
-glob_to_regexp (const char *glob, GError **error)
+char *
+flatpak_filter_glob_to_regexp (const char *glob, GError **error)
 {
   g_autoptr(GString) regexp = g_string_new ("");
   int parts = 1;
+  gboolean empty_part;
 
   if (g_str_has_prefix (glob, "app/"))
     {
@@ -1153,6 +1154,7 @@ glob_to_regexp (const char *glob, GError **error)
       return NULL;
     }
 
+  empty_part = TRUE;
   while (*glob != 0)
     {
       char c = *glob;
@@ -1160,6 +1162,9 @@ glob_to_regexp (const char *glob, GError **error)
 
       if (c == '/')
         {
+          if (empty_part)
+            g_string_append (regexp, "[.\\-_a-zA-Z0-9]*");
+          empty_part = TRUE;
           parts++;
           g_string_append (regexp, "/");
           if (parts > 3)
@@ -1170,14 +1175,17 @@ glob_to_regexp (const char *glob, GError **error)
         }
       else if (c == '*')
         {
-          g_string_append (regexp, "[.\\-_a-zA-Z0-9]*");
+          empty_part = FALSE;
+         g_string_append (regexp, "[.\\-_a-zA-Z0-9]*");
         }
       else if (c == '.')
         {
+          empty_part = FALSE;
           g_string_append (regexp, "\\.");
         }
       else if (g_ascii_isalnum (c) || c == '-' || c == '_')
         {
+          empty_part = FALSE;
           g_string_append_c (regexp, c);
         }
       else
@@ -1241,7 +1249,7 @@ flatpak_parse_filters (const char *data,
           if (next != NULL)
             return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Trailing text on line %d"), i + 1);
 
-          ref_regexp = glob_to_regexp (glob, error);
+          ref_regexp = flatpak_filter_glob_to_regexp (glob, error);
           if (ref_regexp == NULL)
             return glnx_prefix_error (error, _("on line %d"), i + 1);
 

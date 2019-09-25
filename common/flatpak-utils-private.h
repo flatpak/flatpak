@@ -184,6 +184,7 @@ gboolean flatpak_id_has_subref_suffix (const char *id);
 char **flatpak_decompose_ref (const char *ref,
                               GError    **error);
 
+char * flatpak_filter_glob_to_regexp (const char *glob, GError **error);
 gboolean flatpak_parse_filters (const char *data,
                                 GRegex **allow_refs_out,
                                 GRegex **deny_refs_out,
