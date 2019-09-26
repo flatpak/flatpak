@@ -446,6 +446,8 @@ char **     flatpak_dir_search_for_dependency (FlatpakDir   *self,
                                                const char   *runtime_ref,
                                                GCancellable *cancellable,
                                                GError      **error);
+gboolean    flatpak_dir_ref_is_masked (FlatpakDir *self,
+                                       const char *ref);
 char *      flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                          const char   *remote,
                                          const char   *name,

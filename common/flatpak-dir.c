@@ -13640,6 +13640,15 @@ flatpak_dir_get_mask_regexp (FlatpakDir *self)
   return res;
 }
 
+gboolean
+flatpak_dir_ref_is_masked (FlatpakDir *self,
+                           const char *ref)
+{
+  g_autoptr(GRegex) masked = flatpak_dir_get_mask_regexp (self);
+
+  return !flatpak_filters_allow_ref (NULL, masked, ref);
+}
+
 GPtrArray *
 flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                                               FlatpakRemoteState *state,
