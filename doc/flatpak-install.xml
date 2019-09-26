@@ -235,6 +235,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--or-update</option></term>
+                <listitem><para>
+                  Normally install just ignores things that are already installed (printing a warning), but if
+                  --or-update is specified it silently turns it into an update operation instead.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--app</option></term>
 
                 <listitem><para>

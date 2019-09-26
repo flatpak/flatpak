@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..15"
+echo "1..16"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -243,6 +243,27 @@ NEW_NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 assert_streq "$NEW_COMMIT" "$NEW_NEW_COMMIT"
 
 echo "ok backwards update"
+
+make_updated_app "" "" stable UPDATED2
+
+OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
+
+# We should ignore the update (and warn) by default
+${FLATPAK} ${U} install -y test-repo org.test.Hello >& install_stderr
+
+NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
+
+assert_streq "$OLD_COMMIT" "$NEW_COMMIT"
+assert_file_has_content install_stderr 'org.test.Hello/.* is already installed'
+
+# But --or-update should do the update
+${FLATPAK} ${U} install -y --or-update test-repo org.test.Hello
+
+NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
+
+assert_not_streq "$OLD_COMMIT" "$NEW_COMMIT"
+
+echo "ok install --or-update"
 
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.Split org.test.Platform org.test.Platform stable

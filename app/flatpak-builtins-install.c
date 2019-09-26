@@ -54,6 +54,7 @@ static gboolean opt_from;
 static gboolean opt_yes;
 static gboolean opt_reinstall;
 static gboolean opt_noninteractive;
+static gboolean opt_or_update;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -71,6 +72,7 @@ static GOptionEntry options[] = {
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { "reinstall", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall, N_("Uninstall first if already installed"), NULL },
   { "noninteractive", 0, 0, G_OPTION_ARG_NONE, &opt_noninteractive, N_("Produce minimal output and don't ask questions"), NULL },
+  { "or-update", 0, 0, G_OPTION_ARG_NONE, &opt_or_update, N_("Update install if already installed"), NULL },
   { NULL }
 };
 
@@ -502,13 +504,21 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, &ref, error))
         return FALSE;
 
-      if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, error))
+      if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, &local_error))
         {
-          if (!g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-            return FALSE;
+          if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
 
-          g_printerr (_("Skipping: %s\n"), (*error)->message);
-          g_clear_error (error);
+          if (opt_or_update)
+            {
+              if (!flatpak_transaction_add_update (transaction, ref, (const char **) opt_subpaths, NULL, error))
+                return FALSE;
+            }
+          else
+            g_printerr (_("Skipping: %s\n"), local_error->message);
         }
     }
 
