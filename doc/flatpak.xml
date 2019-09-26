@@ -195,6 +195,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-mask</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Mask out updates and automatic installation
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
