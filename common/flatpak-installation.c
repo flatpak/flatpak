@@ -1145,7 +1145,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         g_debug ("No remotes found which provide these refs: [%s]", refs_str->str);
     }
 
-  for (i = 0; i < installed->len && results[0] != NULL; i++)
+  for (i = 0; i < installed->len && results != NULL && results[0] != NULL; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
       const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
@@ -1157,7 +1157,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       collection_ref = ostree_collection_ref_new (collection_id, ref);
 
       /* Look for matching remote refs that are updates */
-      for (j = 0; results != NULL && results[j] != NULL; j++)
+      for (j = 0; results[j] != NULL; j++)
         {
           const char *local_commit, *remote_commit;
 
