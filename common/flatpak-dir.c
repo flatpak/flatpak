@@ -9090,6 +9090,10 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
   if (deploy_data == NULL)
     return TRUE;
 
+  /* If masked, don't update */
+  if (flatpak_dir_ref_is_masked (self, ref))
+    return FALSE;
+
   installed_commit = flatpak_deploy_data_get_commit (deploy_data);
   installed_alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
 
