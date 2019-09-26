@@ -1071,6 +1071,10 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 
   updates = g_ptr_array_new_with_free_func (g_object_unref);
 
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
   for (i = 0; i < installed->len; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
@@ -1080,15 +1084,14 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       const char *remote_commit = g_hash_table_lookup (remote_commits, key);
       const char *local_commit = flatpak_installed_ref_get_latest_commit (installed_ref);
 
+      if (flatpak_dir_ref_is_masked (dir, full_ref))
+        continue;
+
       /* Note: local_commit may be NULL here */
       if (remote_commit != NULL &&
           g_strcmp0 (remote_commit, local_commit) != 0)
         g_ptr_array_add (updates, g_object_ref (installed_ref));
     }
-
-  dir = flatpak_installation_get_dir (self, error);
-  if (dir == NULL)
-    return NULL;
 
   collection_refs = g_ptr_array_new_with_free_func ((GDestroyNotify) _ostree_collection_ref_free0);
 
@@ -1096,17 +1099,20 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   for (i = 0; i < installed->len; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
+      g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
       g_autofree char *collection_id = NULL;
       const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
+
+      if (flatpak_dir_ref_is_masked (dir, ref))
+        continue;
 
       collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
       if (collection_id != NULL)
         {
-          g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
           OstreeCollectionRef *c_r = ostree_collection_ref_new (collection_id, ref);
           g_ptr_array_add (collection_refs, c_r);
 
-          if (i != 0)
+          if (refs_str->len > 0)
             g_string_append (refs_str, ", ");
           g_string_append_printf (refs_str, "(%s, %s)", collection_id, ref);
         }

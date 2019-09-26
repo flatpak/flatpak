@@ -83,7 +83,7 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GPtrArray) patterns = NULL;
   int i;
 
-  context = g_option_context_new (_("[PATTERN…] - disable auto-installation of extensions matching patterns"));
+  context = g_option_context_new (_("[PATTERN…] - disable updates and automatic installation matching patterns"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
