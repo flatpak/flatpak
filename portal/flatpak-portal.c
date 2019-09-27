@@ -58,6 +58,7 @@ static guint name_owner_id = 0;
 static GMainLoop *main_loop;
 static PortalFlatpak *portal;
 static gboolean opt_verbose;
+static int opt_poll_timeout;
 
 G_LOCK_DEFINE (update_monitors); /* This protects the three variables below */
 static GHashTable *update_monitors;
@@ -65,7 +66,7 @@ static guint update_monitors_timeout = 0;
 static gboolean update_monitors_timeout_running_thread = FALSE;
 
 /* Poll all update monitors twice an hour */
-#define UPDATE_POLL_TIMEOUT_SEC (30 * 60)
+#define DEFAULT_UPDATE_POLL_TIMEOUT_SEC (30 * 60)
 
 #define PERMISSION_TABLE "flatpak"
 #define PERMISSION_ID "updates"
@@ -798,7 +799,7 @@ register_update_monitor (PortalFlatpakUpdateMonitor *monitor,
 
   /* Trigger update timeout if needed */
   if (update_monitors_timeout == 0 && !update_monitors_timeout_running_thread)
-    update_monitors_timeout = g_timeout_add_seconds (UPDATE_POLL_TIMEOUT_SEC, check_all_for_updates_cb, NULL);
+    update_monitors_timeout = g_timeout_add_seconds (opt_poll_timeout, check_all_for_updates_cb, NULL);
 
   G_UNLOCK (update_monitors);
 }
@@ -1168,7 +1169,7 @@ check_all_for_updates_in_thread_func (GTask *task,
   update_monitors_timeout_running_thread = FALSE;
 
   if (g_hash_table_size (update_monitors) > 0)
-    update_monitors_timeout = g_timeout_add_seconds (UPDATE_POLL_TIMEOUT_SEC, check_all_for_updates_cb, NULL);
+    update_monitors_timeout = g_timeout_add_seconds (opt_poll_timeout, check_all_for_updates_cb, NULL);
 
   G_UNLOCK (update_monitors);
 }
@@ -2088,6 +2089,7 @@ main (int    argc,
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose,  "Enable debug output.", NULL },
     { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
     { "no-idle-exit", 0, 0, G_OPTION_ARG_NONE, &no_idle_exit,  "Don't exit when idle.", NULL },
+    { "poll-timeout", 0, 0, G_OPTION_ARG_INT, &opt_poll_timeout,  "Delay in seconds between polls for updates.", NULL },
     { NULL }
   };
 
@@ -2123,6 +2125,9 @@ main (int    argc,
       g_option_context_free (context);
       return 1;
     }
+
+  if (opt_poll_timeout == 0)
+    opt_poll_timeout = DEFAULT_UPDATE_POLL_TIMEOUT_SEC;
 
   if (show_version)
     {
