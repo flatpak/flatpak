@@ -95,8 +95,8 @@ EOF
 
 mkdir -p repos
 ostree init --repo=repos/test --mode=archive-z2
-. $(dirname $0)/make-test-runtime.sh repos/test org.test.Platform master "" bash ls cat echo readlink > /dev/null
-. $(dirname $0)/make-test-app.sh repos/test "" master "" > /dev/null
+$(dirname $0)/make-test-runtime.sh repos/test org.test.Platform master "" bash ls cat echo readlink > /dev/null
+$(dirname $0)/make-test-app.sh repos/test "" master "" > /dev/null
 
 # Modify platform metadata
 ostree checkout -U --repo=repos/test runtime/org.test.Platform/${ARCH}/master platform
