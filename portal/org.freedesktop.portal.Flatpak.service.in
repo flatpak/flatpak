@@ -1,4 +1,4 @@
 [D-BUS Service]
 Name=org.freedesktop.portal.Flatpak
-Exec=@libexecdir@/flatpak-portal
+Exec=@libexecdir@/flatpak-portal@extraargs@
 SystemdService=flatpak-portal.service

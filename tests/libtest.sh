@@ -335,6 +335,14 @@ run () {
 
 }
 
+run_with_sandboxed_bus () {
+    BUSSOCK=$(mktemp ${test_tmpdir}/bus.XXXXXX)
+    rm -rf ${BUSSOCK}
+    run --command=socat --filesystem=${test_tmpdir} org.test.Hello unix-listen:${BUSSOCK} unix-connect:/run/user/`id -u`/bus &
+    while [ ! -e ${BUSSOCK} ]; do sleep 1; done
+    DBUS_SESSION_BUS_ADDRESS="unix:path=${BUSSOCK}" "$@"
+}
+
 run_sh () {
     ID=${1:-org.test.Hello}
     shift

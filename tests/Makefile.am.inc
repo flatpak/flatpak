@@ -62,19 +62,31 @@ testcommon_SOURCES = tests/testcommon.c
 
 tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
 	-DFLATPAK_COMPILATION \
-        -DLOCALEDIR=\"$(localedir)\"
+	-DLOCALEDIR=\"$(localedir)\"
 tests_httpcache_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(APPSTREAM_GLIB_LIBS) \
 	libflatpak-common.la libflatpak-common-base.la libglnx.la
+
+tests_test_update_portal_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+	-DLOCALEDIR=\"$(localedir)\"
+tests_test_update_portal_LDADD = $(AM_LDADD) $(BASE_LIBS)
+tests_test_update_portal_SOURCES = \
+	tests/test-update-portal.c \
+	portal/flatpak-portal-dbus.c
 
 tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
 
+tests/services/org.freedesktop.portal.Flatpak.service: portal/org.freedesktop.portal.Flatpak.service.in
+	mkdir -p tests/services
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" -e "s|\@extraargs\@| --poll-timeout=1|"  $< > $@
+
 tests/services/org.freedesktop.Flatpak.SystemHelper.service: system-helper/org.freedesktop.Flatpak.SystemHelper.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $< > $@
 
-tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service
+tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service tests/services/org.freedesktop.portal.Flatpak.service
 
 install-test-data-hook:
 if ENABLE_INSTALLED_TESTS
@@ -143,6 +155,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \
 	tests/test-p2p-security.sh{user,collections+system,collections} \
+	tests/test-update-portal.sh \
 	$(NULL)
 
 update-test-matrix:
@@ -167,7 +180,7 @@ dist_test_scripts = ${TEST_MATRIX_DIST}
 dist_installed_test_extra_scripts += ${TEST_MATRIX_EXTRA_DIST}
 
 test_programs = testlibrary testcommon
-test_extra_programs = tests/httpcache
+test_extra_programs = tests/httpcache tests/test-update-portal
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
