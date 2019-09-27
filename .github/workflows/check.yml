@@ -28,7 +28,7 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libcap-dev libattr1-dev libdw-dev libelf-dev \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang
+        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat
     - name: Check out flatpak
       uses: actions/checkout@v1
       with:
