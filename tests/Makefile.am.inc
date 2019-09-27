@@ -52,7 +52,7 @@ testcommon_LDADD = \
 	$(OSTREE_LIBS) \
 	$(SOUP_LIBS) \
 	$(JSON_LIBS) \
-	$(APPSTREAM_GLIB_LIBS) \     
+	$(APPSTREAM_GLIB_LIBS) \
 	libflatpak-app.la \
 	libflatpak-common.la \
 	libflatpak-common-base.la \
