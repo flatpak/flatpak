@@ -2,6 +2,9 @@
 
 set -e
 
+# Don't inherit the -x from the testsuite
+set +x
+
 DIR=`mktemp -d`
 
 REPO=$1

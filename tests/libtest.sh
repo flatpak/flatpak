@@ -57,10 +57,6 @@ export G_DEBUG=fatal-warnings
 # tarballs are predictable, except we don't want this in our tests.
 unset TAR_OPTIONS
 
-if test -n "${FLATPAK_TESTS_DEBUG:-}"; then
-    set -x
-fi
-
 if test -n "${FLATPAK_TESTS_VALGRIND:-}"; then
     CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=no --error-exitcode=1 --gen-suppressions=all --num-callers=30 --suppressions=${test_srcdir}/flatpak.supp --suppressions=${test_srcdir}/glib.supp"
 elif test -n "${FLATPAK_TESTS_VALGRIND_LEAKS:-}"; then
@@ -252,7 +248,7 @@ setup_repo_no_add () {
     BRANCH=${3:-master}
 
     make_runtime "${REPONAME}" "${COLLECTION_ID}" "${BRANCH}" "${GPGARGS:-${FL_GPGARGS}}"
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
         $(dirname $0)/test-webserver.sh repos
@@ -304,7 +300,7 @@ make_updated_app () {
     fi
     BRANCH=${3:-master}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" ${4:-UPDATED} > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" ${4:-UPDATED} > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -440,3 +436,7 @@ cleanup () {
     fi
 }
 trap cleanup EXIT
+
+if test -n "${FLATPAK_TESTS_DEBUG:-}"; then
+    set -x
+fi
