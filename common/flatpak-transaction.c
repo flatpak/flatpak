@@ -968,7 +968,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @object: A #FlatpakTransaction
    * @operation: The #FlatpakTransactionOperation which failed
    * @error: A #GError
-   * @details: A #FlatpakTransactionErrorDetails with details about the error
+   * @details: (type FlatpakTransactionErrorDetails): A #FlatpakTransactionErrorDetails with details about the error
    *
    * The ::operation-error signal gets emitted when an error occurs during the
    * execution of the transaction.
@@ -989,7 +989,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @object: A #FlatpakTransaction
    * @operation: The #FlatpakTransactionOperation which finished
    * @commit: The commit
-   * @result: A #FlatpakTransactionResult giving details about the result
+   * @result: (type FlatpakTransactionResult): A #FlatpakTransactionResult giving details about the result
    *
    * The ::operation-done signal gets emitted during the execution of
    * the transaction when an operation is finished.
@@ -1093,7 +1093,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::add-new-remote:
    * @object: A #FlatpakTransaction
-   * @reason: A #FlatpakTransactionRemoteReason for this suggestion
+   * @reason: (type FlatpakTransactionRemoteReason): A #FlatpakTransactionRemoteReason for this suggestion
    * @from_id: The id of the app/runtime
    * @suggested_remote_name: The suggested remote name
    * @url: The repo url
