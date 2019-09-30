@@ -51,7 +51,7 @@ jobs:
       if: failure()
       run: mv test-suite.log test-logs/ || true
     - name: Collect individual test logs on cancel
-      if: cancelled()
+      if: failure() || cancelled()
       run: mv tests/*.log test-logs/ || true
     - name: Upload test logs
       uses: actions/upload-artifact@v1
