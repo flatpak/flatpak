@@ -74,6 +74,12 @@ tests_test_update_portal_SOURCES = \
 	tests/test-update-portal.c \
 	portal/flatpak-portal-dbus.c
 
+tests_test_portal_impl_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+	-DLOCALEDIR=\"$(localedir)\"
+tests_test_portal_impl_LDADD = $(AM_LDADD) $(BASE_LIBS)
+tests_test_portal_impl_SOURCES = tests/test-portal-impl.c
+
 tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
@@ -86,13 +92,25 @@ tests/services/org.freedesktop.Flatpak.SystemHelper.service: system-helper/org.f
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $< > $@
 
-tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service tests/services/org.freedesktop.portal.Flatpak.service
+tests/services/org.freedesktop.impl.portal.desktop.test.service: tests/org.freedesktop.impl.portal.desktop.test.service.in
+	mkdir -p tests/services
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)/tests|" $< > $@
+
+tests/share/xdg-desktop-portal/portals/test.portal: tests/test.portal.in
+	mkdir -p tests/share/xdg-desktop-portal/portals
+	$(AM_V_GEN) install $< $@
+
+tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service tests/services/org.freedesktop.portal.Flatpak.service tests/share/xdg-desktop-portal/portals/test.portal tests/services/org.freedesktop.impl.portal.desktop.test.service
 
 install-test-data-hook:
 if ENABLE_INSTALLED_TESTS
 	mkdir -p $(DESTDIR)$(installed_testdir)/services
 	ln -sf $(dbus_servicedir)/org.freedesktop.Flatpak.service $(DESTDIR)$(installed_testdir)/services/
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@extraargs\@| --poll-timeout=1|" $(top_srcdir)/portal/org.freedesktop.portal.Flatpak.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.portal.Flatpak.service
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $(top_srcdir)/system-helper/org.freedesktop.Flatpak.SystemHelper.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.Flatpak.SystemHelper.service
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(installed_testdir)|" tests/org.freedesktop.impl.portal.desktop.test.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.impl.portal.desktop.test.service
+	mkdir -p $(DESTDIR)$(installed_testdir)/share/xdg-desktop-portal/portals
+	install tests/test.portal.in $(DESTDIR)$(installed_testdir)/share/xdg-desktop-portal/portals/test.portal
 endif
 
 tests/package_version.txt: Makefile
@@ -180,7 +198,7 @@ dist_test_scripts = ${TEST_MATRIX_DIST}
 dist_installed_test_extra_scripts += ${TEST_MATRIX_EXTRA_DIST}
 
 test_programs = testlibrary testcommon
-test_extra_programs = tests/httpcache tests/test-update-portal
+test_extra_programs = tests/httpcache tests/test-update-portal tests/test-portal-impl
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
