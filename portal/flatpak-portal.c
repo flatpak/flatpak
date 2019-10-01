@@ -1520,8 +1520,8 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
   connection = update_monitor_get_connection (monitor);
   if (!g_dbus_connection_emit_signal (connection,
                                       m->sender,
-                                      "/org/freedesktop/portal/desktop",
-                                      "org.freedesktop.portal.Flatpak",
+                                      m->obj_path,
+                                      "org.freedesktop.portal.Flatpak.UpdateMonitor",
                                       "Progress",
                                       g_variant_new ("(a{sv})", &builder),
                                       &error))
