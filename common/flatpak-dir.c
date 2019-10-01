@@ -9079,6 +9079,7 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
   g_autofree char *url = NULL;
   const char *installed_commit;
   const char *installed_alt_id;
+  const char *extension_of;
 
   g_assert (target_commit != NULL);
 
@@ -9106,6 +9107,11 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
 
   /* If masked, don't update */
   if (flatpak_dir_ref_is_masked (self, ref))
+    return FALSE;
+
+  extension_of = flatpak_deploy_data_get_extension_of (deploy_data);
+  /* If the main ref is masked, don't update extensions of it (like .Locale or .Debug) */
+  if (extension_of && flatpak_dir_ref_is_masked (self, extension_of))
     return FALSE;
 
   installed_commit = flatpak_deploy_data_get_commit (deploy_data);
