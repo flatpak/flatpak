@@ -1514,7 +1514,7 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
   if (error_name)
     {
       g_variant_builder_add (&builder, "{sv}", "error", g_variant_new_string (error_name));
-      g_variant_builder_add (&builder, "{sv}", "error-message", g_variant_new_string (error_message));
+      g_variant_builder_add (&builder, "{sv}", "error_message", g_variant_new_string (error_message));
     }
 
   connection = update_monitor_get_connection (monitor);
