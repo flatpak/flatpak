@@ -299,7 +299,7 @@
              </para></listitem>
            </varlistentry>
            <varlistentry>
-             <term>error-message s</term>
+             <term>error_message s</term>
              <listitem><para>
                The error message, sent when status is Failed
              </para></listitem>
