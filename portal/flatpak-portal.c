@@ -1382,7 +1382,7 @@ set_update_permission (const char *app_id,
                                                            &error))
     {
       g_dbus_error_strip_remote_error (error);
-      g_warning ("Error updating permission store: %s", error->message);
+      g_info ("Error updating permission store: %s", error->message);
     }
 }
 
