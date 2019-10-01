@@ -23,10 +23,14 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..4"
+echo "1..5"
 
 setup_repo
 install_repo
+
+
+${test_builddir}/../flatpak-portal -vv -r --no-idle-exit --poll-timeout=1 &
+${test_builddir}/test-portal-impl &
 
 run_with_sandboxed_bus ${test_builddir}/test-update-portal monitor monitor.pid > update-monitor.out
 MONITOR_PID=$(cat monitor.pid)
@@ -89,3 +93,21 @@ rm -rf repos/test/objects
 mv repos/test/orig-objects repos/test/objects
 
 echo "ok update fail"
+
+${FLATPAK} ${U} mask org.test.Hello org.test.Hello.*
+
+NEW_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/$ARCH/master)
+
+# Should not report update due to mask
+run_with_sandboxed_bus ${test_builddir}/test-update-portal monitor monitor.pid > update-monitor.out
+MONITOR_PID=$(cat monitor.pid)
+sleep 4; # 4 secs should be ok, as poll timeout is 1 sec.
+assert_not_file_has_content update-monitor.out "remote=${NEW_COMMIT}"
+
+# Make sure monitor is dead
+kill -9 $MONITOR_PID
+
+# Should be a "null" update due to mask
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.pid
+
+echo "ok update vs masked"
