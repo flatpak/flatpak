@@ -32,8 +32,9 @@
  * The version field was added in flatpak 1.2, anything before is 0.
  *
  * Version 1 added appdata-name/summary/version/license
+ * Version 2 added extension-of
  */
-#define FLATPAK_DEPLOY_VERSION_CURRENT 1
+#define FLATPAK_DEPLOY_VERSION_CURRENT 2
 #define FLATPAK_DEPLOY_VERSION_ANY 0
 
 #define FLATPAK_TYPE_DIR flatpak_dir_get_type ()
@@ -362,6 +363,7 @@ const char *        flatpak_deploy_data_get_alt_id (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol_rebase (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_runtime (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_extension_of (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_name (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_summary (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_version (GVariant *deploy_data);
