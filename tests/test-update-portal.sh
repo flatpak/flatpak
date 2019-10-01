@@ -69,12 +69,10 @@ kill -9 $MONITOR_PID
 echo "ok monitor updates"
 
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid
-MONITOR_PID=$(cat monitor.pid)
 
 echo "ok update self"
 
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.pid
-MONITOR_PID=$(cat monitor.pid)
 
 echo "ok null-update self"
 
@@ -85,11 +83,9 @@ cp -r repos/test/objects repos/test/orig-objects
 find repos/test/objects -name "*.filez" | xargs  -I FILENAME mv FILENAME FILENAME.broken
 
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update-fail monitor.pid
-MONITOR_PID=$(cat monitor.pid)
 
 # Unbreak it again
 rm -rf repos/test/objects
 mv repos/test/orig-objects repos/test/objects
-
 
 echo "ok update fail"
