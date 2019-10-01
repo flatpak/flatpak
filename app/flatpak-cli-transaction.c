@@ -521,7 +521,7 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
   if (rebased_to_ref && remote)
     {
       if (self->disable_interaction ||
-          flatpak_yes_no_prompt (TRUE, _("Replace it with %s?"), flatpak_ref_get_name (rref)))
+          flatpak_yes_no_prompt (TRUE, _("Replace it with %s?"), rebased_to_ref))
         {
           g_autoptr(GError) error = NULL;
 
