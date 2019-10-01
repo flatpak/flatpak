@@ -1600,6 +1600,7 @@ typedef struct {
   int n_ops;
   int op;
   int progress;
+  gboolean saw_first_operation;
 } TransactionData;
 
 static gboolean
@@ -1631,7 +1632,8 @@ static void
 transaction_progress_changed (FlatpakTransactionProgress *progress,
                               TransactionData *d)
 {
-  d->progress = flatpak_transaction_progress_get_progress (progress);
+  /* Only report 100 when really done */
+  d->progress = MIN (flatpak_transaction_progress_get_progress (progress), 99);
 
   send_progress (d->out,
                  d->op,  d->n_ops,
@@ -1646,6 +1648,10 @@ transaction_new_operation (FlatpakTransaction *transaction,
                            TransactionData *d)
 {
   d->progress = 0;
+  if (d->saw_first_operation)
+    d->op++;
+  else
+    d->saw_first_operation = TRUE;
 
   send_progress (d->out,
                  d->op,  d->n_ops,
@@ -1683,7 +1689,8 @@ transaction_operation_done (FlatpakTransaction *transaction,
                             FlatpakTransactionResult result,
                             TransactionData *d)
 {
-  d->op++;
+  d->progress = 100;
+
   send_progress (d->out,
                  d->op,  d->n_ops,
                  d->progress, PROGRESS_STATUS_RUNNING,
@@ -1717,7 +1724,7 @@ do_update_child_process (const char *installation_path, const char *ref, int soc
 
   if (!flatpak_dir_maybe_ensure_repo (dir, NULL, &error))
     {
-      send_progress (out, 0, 0, 100,
+      send_progress (out, 0, 0, 0,
                      PROGRESS_STATUS_ERROR, error);
       return 0;
     }
@@ -1727,7 +1734,7 @@ do_update_child_process (const char *installation_path, const char *ref, int soc
     transaction = flatpak_transaction_new_for_installation (installation, NULL, &error);
   if (transaction == NULL)
     {
-      send_progress (out, 0, 0, 100,
+      send_progress (out, 0, 0, 0,
                      PROGRESS_STATUS_ERROR, error);
       return 0;
     }
@@ -1736,7 +1743,7 @@ do_update_child_process (const char *installation_path, const char *ref, int soc
 
   if (!flatpak_transaction_add_update (transaction, ref, NULL, NULL, &error))
     {
-      send_progress (out, 0, 0, 100,
+      send_progress (out, 0, 0, 0,
                      PROGRESS_STATUS_ERROR, error);
       return 0;
     }
@@ -1751,12 +1758,12 @@ do_update_child_process (const char *installation_path, const char *ref, int soc
   if (!flatpak_transaction_run (transaction, NULL, &error))
     {
       if (!g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED)) /* If aborted we already sent error */
-        send_progress (out, 0, 0, 100,
+        send_progress (out, transaction_data.op, transaction_data.n_ops, transaction_data.progress,
                        PROGRESS_STATUS_ERROR, error);
       return 0;
     }
 
-  send_progress (out, 0, 0, 100,
+  send_progress (out, transaction_data.op, transaction_data.n_ops, transaction_data.progress,
                  PROGRESS_STATUS_DONE, error);
 
   return 0;
