@@ -1683,6 +1683,7 @@ update_child_setup_func (gpointer user_data)
   int *socket = user_data;
 
   dup2 (*socket, 3);
+  flatpak_close_fds_workaround (4);
 }
 
 /* This is the meat of the update process, its run out of process (via
