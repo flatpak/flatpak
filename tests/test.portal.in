@@ -1,0 +1,4 @@
+[portal]
+DBusName=org.freedesktop.impl.portal.desktop.test
+Interfaces=org.freedesktop.impl.portal.Access
+UseIn=test
