@@ -1530,11 +1530,24 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
     }
 }
 
+static char *
+get_progress_error (const GError *update_error)
+{
+  g_autofree gchar *name = NULL;
+
+  name = g_dbus_error_encode_gerror (update_error);
+
+  /* Don't return weird dbus wrapped things from the portal */
+  if (g_str_has_prefix (name, "org.gtk.GDBus.UnmappedGError.Quark"))
+    return g_strdup ("org.freedesktop.DBus.Error.Failed");
+  return g_steal_pointer (&name);
+}
+
 static void
 emit_progress_error (PortalFlatpakUpdateMonitor *monitor,
                      GError *update_error)
 {
-  g_autofree gchar *error_name = g_dbus_error_encode_gerror (update_error);
+  g_autofree gchar *error_name = get_progress_error (update_error);
 
   emit_progress (monitor, 0, 0, 0,
                  PROGRESS_STATUS_ERROR,
@@ -1573,7 +1586,7 @@ send_progress (GOutputStream *out,
   g_autofree gchar *error_name = NULL;
 
   if (update_error)
-    error_name = g_dbus_error_encode_gerror (update_error);
+    error_name = get_progress_error (update_error);
 
   v = g_variant_ref_sink (g_variant_new ("(uuuuss)",
                                          op, n_ops, progress, status,
