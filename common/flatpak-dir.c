@@ -2369,6 +2369,12 @@ flatpak_deploy_data_get_runtime (GVariant *deploy_data)
 }
 
 const char *
+flatpak_deploy_data_get_extension_of (GVariant *deploy_data)
+{
+  return flatpak_deploy_data_get_string (deploy_data, "extension-of");
+}
+
+const char *
 flatpak_deploy_data_get_appdata_name (GVariant *deploy_data)
 {
   return flatpak_deploy_data_get_localed_string (deploy_data, "appdata-name");
@@ -2510,6 +2516,7 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
   char *empty_subpaths[] = {NULL};
   GVariantBuilder metadata_builder;
   g_autofree char *application_runtime = NULL;
+  g_autofree char *extension_of = NULL;
   const char *alt_id = NULL;
   const char *eol = NULL;
   const char *eol_rebase = NULL;
@@ -2521,6 +2528,9 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
   application_runtime = g_key_file_get_string (metadata,
                                                FLATPAK_METADATA_GROUP_APPLICATION,
                                                FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  extension_of = g_key_file_get_string (metadata,
+                                        FLATPAK_METADATA_GROUP_EXTENSION_OF,
+                                        FLATPAK_METADATA_KEY_REF, NULL);
 
   g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&metadata_builder, "{s@v}", "deploy-version",
@@ -2537,6 +2547,9 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
   if (application_runtime)
     g_variant_builder_add (&metadata_builder, "{s@v}", "runtime",
                            g_variant_new_variant (g_variant_new_string (application_runtime)));
+  if (extension_of)
+    g_variant_builder_add (&metadata_builder, "{s@v}", "extension-of",
+                           g_variant_new_variant (g_variant_new_string (extension_of)));
 
   if (previous_ids)
     g_variant_builder_add (&metadata_builder, "{s@v}", "previous-ids",
