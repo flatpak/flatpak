@@ -307,7 +307,6 @@
          </variablelist>
     -->
     <signal name="Progress">
-      <arg type="o" name="handle" direction="out"/>
       <arg type="a{sv}" name="info" direction="out"/>
     </signal>
 
