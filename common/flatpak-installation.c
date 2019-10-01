@@ -381,7 +381,7 @@ out:
   return dir;
 }
 
-static FlatpakDir *
+FlatpakDir *
 flatpak_installation_get_dir (FlatpakInstallation *self, GError **error)
 {
   return _flatpak_installation_get_dir (self, TRUE, error);

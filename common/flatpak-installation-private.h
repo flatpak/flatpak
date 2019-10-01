@@ -27,6 +27,8 @@
 
 FlatpakDir *flatpak_installation_clone_dir_noensure (FlatpakInstallation *self);
 
+FlatpakDir *flatpak_installation_get_dir  (FlatpakInstallation *self,
+                                           GError             **error);
 FlatpakDir *flatpak_installation_clone_dir (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error);
