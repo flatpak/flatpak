@@ -116,12 +116,18 @@ sort_impl_by_name (gconstpointer a,
 void
 load_installed_portals (gboolean opt_verbose)
 {
-  const char *portal_dir = DATADIR "/xdg-desktop-portal/portals";
-  g_autoptr(GFile) dir = g_file_new_for_path (portal_dir);
+  const char *portal_dir;
+  g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) enumerator = NULL;
+
+  /* We need to override this in the tests */
+  portal_dir = g_getenv ("XDG_DESKTOP_PORTAL_DIR");
+  if (portal_dir == NULL)
+    portal_dir = DATADIR "/xdg-desktop-portal/portals";
 
   g_debug ("load portals from %s", portal_dir);
 
+  dir = g_file_new_for_path (portal_dir);
   enumerator = g_file_enumerate_children (dir, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
 
   if (enumerator == NULL)
