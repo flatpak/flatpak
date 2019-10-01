@@ -105,6 +105,194 @@ monitor_test (PortalFlatpak *portal, int status_pipe)
   return 0;
 }
 
+typedef enum {
+  PROGRESS_STATUS_RUNNING = 0,
+  PROGRESS_STATUS_EMPTY   = 1,
+  PROGRESS_STATUS_DONE    = 2,
+  PROGRESS_STATUS_ERROR   = 3
+} UpdateStatus;
+
+typedef struct {
+  GMainLoop *loop;
+  int expected_end_status;
+  int expected_n_ops;
+
+  int expected_op;
+
+  int exit_status;
+} UpdateData;
+
+static void
+progress_cb (PortalFlatpakUpdateMonitor *object,
+             GVariant *arg_info,
+             UpdateData *data)
+{
+  g_autofree char *args = g_variant_print (arg_info, FALSE);
+  guint32 op = 0;
+  guint32 n_ops = 0;
+  guint32 progress = 0;
+  guint32 status = 0;
+  const char *error = "";
+  const char *error_message = "";
+
+  g_variant_lookup (arg_info, "op", "u", &op);
+  g_variant_lookup (arg_info, "n_ops", "u", &n_ops);
+  g_variant_lookup (arg_info, "progress", "u", &progress);
+  g_variant_lookup (arg_info, "status", "u", &status);
+  g_variant_lookup (arg_info, "error", "&s", &error);
+  g_variant_lookup (arg_info, "error_message", "&s", &error_message);
+
+  g_print ("progress op=%d n_ops=%d progress=%d status=%d error=%s error_message='%s'\n", op, n_ops, progress, status, error, error_message);
+
+  if (status == PROGRESS_STATUS_RUNNING)
+    {
+      if (n_ops != data->expected_n_ops)
+        {
+          g_printerr ("Unexpected number of ops: %d (expected %d)\n", n_ops, data->expected_n_ops);
+          data->exit_status = 1;
+          g_main_loop_quit (data->loop);
+        }
+
+      if (op == data->expected_op)
+        {
+          if (progress == 100)
+            data->expected_op = op + 1;
+        }
+      else
+        {
+          g_printerr ("Unexpected op nr: %d (expected %d)\n", op, data->expected_op);
+          data->exit_status = 1;
+          g_main_loop_quit (data->loop);
+        }
+    }
+  else
+    {
+      if (data->expected_end_status != status)
+        {
+          g_printerr ("Unexpected end status: %d (error %s: %s)\n", status, error, error_message);
+          data->exit_status = 1;
+        }
+      else if (status == PROGRESS_STATUS_DONE)
+        {
+          if (data->expected_op != data->expected_n_ops)
+            {
+              g_printerr ("Unexpected number of ops seen: %d, should be %d\n", data->expected_op, data->expected_n_ops);
+              data->exit_status = 1;
+            }
+        }
+
+      g_main_loop_quit (data->loop);
+    }
+}
+
+static int
+update_test (PortalFlatpak *portal, int status_pipe)
+{
+  g_autoptr(GError) error = NULL;
+  PortalFlatpakUpdateMonitor *monitor;
+  GVariantBuilder opt_builder;
+  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  UpdateData data = { loop };
+
+  monitor = create_monitor (portal, NULL, NULL, &error);
+  if (monitor == NULL)
+    {
+      g_printerr ("Error creating monitor: %s\n", error->message);
+      return 1;
+    }
+
+  g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
+
+  g_signal_connect (monitor, "progress", G_CALLBACK (progress_cb), &data);
+
+  data.expected_end_status = PROGRESS_STATUS_DONE;
+  data.expected_n_ops = 2;
+
+  if (!portal_flatpak_update_monitor_call_update_sync (monitor, "",
+                                                       g_variant_builder_end (&opt_builder),
+                                                       NULL, &error))
+    {
+      g_printerr ("Error calling update: %s\n", error->message);
+      return 1;
+    }
+
+  g_main_loop_run (loop);
+
+  return data.exit_status;
+}
+
+static int
+update_null_test (PortalFlatpak *portal, int status_pipe)
+{
+  g_autoptr(GError) error = NULL;
+  PortalFlatpakUpdateMonitor *monitor;
+  GVariantBuilder opt_builder;
+  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  UpdateData data = { loop };
+
+  monitor = create_monitor (portal, NULL, NULL, &error);
+  if (monitor == NULL)
+    {
+      g_printerr ("Error creating monitor: %s\n", error->message);
+      return 1;
+    }
+
+  g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
+
+  g_signal_connect (monitor, "progress", G_CALLBACK (progress_cb), &data);
+
+  data.expected_end_status = PROGRESS_STATUS_EMPTY;
+  data.expected_n_ops = 0;
+
+  if (!portal_flatpak_update_monitor_call_update_sync (monitor, "",
+                                                       g_variant_builder_end (&opt_builder),
+                                                       NULL, &error))
+    {
+      g_printerr ("Error calling update: %s\n", error->message);
+      return 1;
+    }
+
+  g_main_loop_run (loop);
+
+  return data.exit_status;
+}
+
+static int
+update_fail_test (PortalFlatpak *portal, int status_pipe)
+{
+  g_autoptr(GError) error = NULL;
+  PortalFlatpakUpdateMonitor *monitor;
+  GVariantBuilder opt_builder;
+  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  UpdateData data = { loop };
+
+  monitor = create_monitor (portal, NULL, NULL, &error);
+  if (monitor == NULL)
+    {
+      g_printerr ("Error creating monitor: %s\n", error->message);
+      return 1;
+    }
+
+  g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
+
+  g_signal_connect (monitor, "progress", G_CALLBACK (progress_cb), &data);
+
+  data.expected_end_status = PROGRESS_STATUS_ERROR;
+  data.expected_n_ops = 2;
+
+  if (!portal_flatpak_update_monitor_call_update_sync (monitor, "",
+                                                       g_variant_builder_end (&opt_builder),
+                                                       NULL, &error))
+    {
+      g_printerr ("Error calling update: %s\n", error->message);
+      return 1;
+    }
+
+  g_main_loop_run (loop);
+
+  return data.exit_status;
+}
+
 static int
 run_test (int status_pipe, const char *pidfile, TestCallback test)
 {
@@ -154,9 +342,15 @@ main (int argc, char *argv[])
 
   if (strcmp (argv[1], "monitor") == 0)
     test_callback = monitor_test;
+  else if (strcmp (argv[1], "update") == 0)
+    test_callback = update_test;
+  else if (strcmp (argv[1], "update-null") == 0)
+    test_callback = update_null_test;
+  else if (strcmp (argv[1], "update-fail") == 0)
+    test_callback = update_fail_test;
   else
     {
-      g_printerr ("Unknown command %s specified", argv[1]);
+      g_printerr ("Unknown command %s specified\n", argv[1]);
       return 1;
     }
 
