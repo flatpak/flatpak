@@ -7091,20 +7091,31 @@ export_dir (int           source_parent_fd,
         }
       else if (S_ISREG (stbuf.st_mode))
         {
+          g_autofree char *symlink_name = g_strdup (".export-symlink-XXXXXX");
           g_autofree gchar *target = NULL;
 
           target = g_build_filename (source_symlink_prefix, dent->d_name, NULL);
 
-          if (unlinkat (destination_dfd, dent->d_name, 0) != 0 && errno != ENOENT)
+          for (int count = 0; count < 100; count++)
             {
-              glnx_set_error_from_errno (error);
-              goto out;
-            }
+              glnx_gen_temp_name (symlink_name);
 
-          if (symlinkat (target, destination_dfd, dent->d_name) != 0)
-            {
-              glnx_set_error_from_errno (error);
-              goto out;
+              if (symlinkat (target, destination_dfd, symlink_name) != 0)
+                {
+                  if (errno == EEXIST)
+                    continue;
+
+                  glnx_set_error_from_errno (error);
+                  goto out;
+                }
+
+              if (renameat (destination_dfd, symlink_name, destination_dfd, dent->d_name) != 0)
+                {
+                  glnx_set_error_from_errno (error);
+                  goto out;
+                }
+
+              break;
             }
         }
     }
