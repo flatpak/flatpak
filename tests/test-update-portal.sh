@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..5"
+echo "1..6"
 
 setup_repo
 install_repo
@@ -94,7 +94,7 @@ mv repos/test/orig-objects repos/test/objects
 
 echo "ok update fail"
 
-${FLATPAK} ${U} mask org.test.Hello org.test.Hello.*
+${FLATPAK} ${U} mask "org.test.Hello*"
 
 NEW_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/$ARCH/master)
 
@@ -110,4 +110,23 @@ kill -9 $MONITOR_PID
 # Should be a "null" update due to mask
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.pid
 
+${FLATPAK} ${U} mask --remove "org.test.Hello*"
+
 echo "ok update vs masked"
+
+BUILD_FINISH_ARGS="--filesystem=host" make_updated_app test "" master UPDATE41
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
+
+BUILD_FINISH_ARGS="--share=network" make_updated_app test "" master UPDATE42
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
+
+BUILD_FINISH_ARGS="--socket=x11" make_updated_app test "" master UPDATE43
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
+
+BUILD_FINISH_ARGS="--own-name=org.some.Name" make_updated_app test "" master UPDATE44
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
+
+make_updated_app test "" master UPDATE45
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid
+
+echo "ok update with changed permissions"

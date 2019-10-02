@@ -116,6 +116,7 @@ typedef struct {
   GMainLoop *loop;
   int expected_end_status;
   int expected_n_ops;
+  const char *expected_error;
 
   int expected_op;
 
@@ -177,6 +178,15 @@ progress_cb (PortalFlatpakUpdateMonitor *object,
           if (data->expected_op != data->expected_n_ops)
             {
               g_printerr ("Unexpected number of ops seen: %d, should be %d\n", data->expected_op, data->expected_n_ops);
+              data->exit_status = 1;
+            }
+        }
+      else if (status == PROGRESS_STATUS_ERROR)
+        {
+          if (data->expected_error != NULL &&
+              strcmp (data->expected_error, error) != 0)
+            {
+              g_printerr ("Unexpected error: %s, should be %s\n", error, data->expected_error);
               data->exit_status = 1;
             }
         }
@@ -294,6 +304,43 @@ update_fail_test (PortalFlatpak *portal, int status_pipe)
 }
 
 static int
+update_notsupp_test (PortalFlatpak *portal, int status_pipe)
+{
+  g_autoptr(GError) error = NULL;
+  PortalFlatpakUpdateMonitor *monitor;
+  GVariantBuilder opt_builder;
+  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  UpdateData data = { loop };
+
+  monitor = create_monitor (portal, NULL, NULL, &error);
+  if (monitor == NULL)
+    {
+      g_printerr ("Error creating monitor: %s\n", error->message);
+      return 1;
+    }
+
+  g_variant_builder_init (&opt_builder, G_VARIANT_TYPE_VARDICT);
+
+  g_signal_connect (monitor, "progress", G_CALLBACK (progress_cb), &data);
+
+  data.expected_end_status = PROGRESS_STATUS_ERROR;
+  data.expected_n_ops = 2;
+  data.expected_error = "org.freedesktop.DBus.Error.NotSupported";
+
+  if (!portal_flatpak_update_monitor_call_update_sync (monitor, "",
+                                                       g_variant_builder_end (&opt_builder),
+                                                       NULL, &error))
+    {
+      g_printerr ("Error calling update: %s\n", error->message);
+      return 1;
+    }
+
+  g_main_loop_run (loop);
+
+  return data.exit_status;
+}
+
+static int
 run_test (int status_pipe, const char *pidfile, TestCallback test)
 {
   g_autoptr(GError) error = NULL;
@@ -348,6 +395,8 @@ main (int argc, char *argv[])
     test_callback = update_null_test;
   else if (strcmp (argv[1], "update-fail") == 0)
     test_callback = update_fail_test;
+  else if (strcmp (argv[1], "update-notsupp") == 0)
+    test_callback = update_notsupp_test;
   else
     {
       g_printerr ("Unknown command %s specified\n", argv[1]);
