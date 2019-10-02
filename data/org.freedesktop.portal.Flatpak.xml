@@ -241,6 +241,12 @@
         signals will be emitted to communicate the status
         and progress.
 
+        Note that updates are only allowed if the new version
+        has the same permissions (or less) than the currently installed
+        version. If the new version requires a new permission then the
+        operation will fail with the error org.freedesktop.DBus.Error.NotSupported
+        and updates has to be done with the system tools.
+
         Currently, no options are accepted.
     -->
     <method name="Update">
@@ -255,7 +261,9 @@
 
       Gets emitted to indicate progress of the installation.  It's
       undefined exactly how often this is sent, but it will be emitted
-      at least once at the end with non-zero status field.
+      at least once at the end with non-zero status field. For each
+      successful operation in the update we're also guaranteed to send
+      one (and only one) signal with progress 100.
 
       The following fields may be included in the info:
          <variablelist>
