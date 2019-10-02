@@ -28,10 +28,6 @@ echo "1..6"
 setup_repo
 install_repo
 
-
-${test_builddir}/../flatpak-portal -vv -r --no-idle-exit --poll-timeout=1 &
-${test_builddir}/test-portal-impl &
-
 run_with_sandboxed_bus ${test_builddir}/test-update-portal monitor monitor.pid > update-monitor.out
 MONITOR_PID=$(cat monitor.pid)
 
