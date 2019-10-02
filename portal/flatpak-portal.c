@@ -1617,10 +1617,43 @@ static gboolean
 transaction_ready (FlatpakTransaction *transaction,
                    TransactionData *d)
 {
+  GList *ops = flatpak_transaction_get_operations (transaction);
   int status;
+  GList *l;
 
-  d->n_ops = g_list_length (flatpak_transaction_get_operations (transaction));
+  d->n_ops = g_list_length (ops);
   d->op = 0;
+  d->progress = 0;
+
+  for (l = ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      const char *ref = flatpak_transaction_operation_get_ref (op);
+      FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
+
+      /* Actual app updates need to not increase premission requirements */
+      if (type == FLATPAK_TRANSACTION_OPERATION_UPDATE && g_str_has_prefix (ref, "app/"))
+        {
+          GKeyFile *new_metadata = flatpak_transaction_operation_get_metadata (op);
+          GKeyFile *old_metadata = flatpak_transaction_operation_get_old_metadata (op);
+          g_autoptr(FlatpakContext) new_context = flatpak_context_new ();
+          g_autoptr(FlatpakContext) old_context = flatpak_context_new ();
+
+          if (!flatpak_context_load_metadata (new_context, new_metadata, NULL) ||
+              !flatpak_context_load_metadata (old_context, old_metadata, NULL) ||
+              flatpak_context_adds_permissions (old_context, new_context))
+            {
+              g_autoptr(GError) error = NULL;
+              g_set_error (&error, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED,
+                           _("Self update not supported, new version requires new permissions"));
+              send_progress (d->out,
+                             d->op,  d->n_ops, d->progress,
+                             PROGRESS_STATUS_ERROR,
+                             error);
+              return FALSE;
+            }
+        }
+    }
 
   if (flatpak_transaction_is_empty (transaction))
     status = PROGRESS_STATUS_EMPTY;
