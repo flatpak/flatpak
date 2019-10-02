@@ -1767,6 +1767,125 @@ flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context)
   return g_hash_table_size (context->system_bus_policy) > 0;
 }
 
+static gboolean
+adds_flags (guint32 old_flags, guint32 new_flags)
+{
+  return (new_flags & ~old_flags) != 0;
+}
+
+static gboolean
+adds_bus_policy (GHashTable *old, GHashTable *new)
+{
+  GLNX_HASH_TABLE_FOREACH_KV (new, const char *, name, gpointer, _new_policy)
+    {
+      int new_policy = GPOINTER_TO_INT (_new_policy);
+      int old_policy = GPOINTER_TO_INT (g_hash_table_lookup (old, name));
+      if (new_policy > old_policy)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static gboolean
+adds_generic_policy (GHashTable *old, GHashTable *new)
+{
+  GLNX_HASH_TABLE_FOREACH_KV (new, const char *, key, GPtrArray *, new_values)
+    {
+      GPtrArray *old_values = g_hash_table_lookup (old, key);
+      int i;
+
+      if (new_values == NULL || new_values->len == 0)
+        continue;
+
+      if (old_values == NULL || old_values->len == 0)
+        return TRUE;
+
+      for (i = 0; i < new_values->len; i++)
+        {
+          const char *new_value = g_ptr_array_index (new_values, i);
+
+          if (!flatpak_g_ptr_array_contains_string (old_values, new_value))
+            return TRUE;
+        }
+    }
+
+  return FALSE;
+}
+
+static gboolean
+adds_filesystem_access (GHashTable *old, GHashTable *new)
+{
+  FlatpakFilesystemMode old_host_mode = GPOINTER_TO_INT (g_hash_table_lookup (old, "host"));
+  FlatpakFilesystemMode old_home_mode = GPOINTER_TO_INT (g_hash_table_lookup (old, "home"));
+
+  GLNX_HASH_TABLE_FOREACH_KV (new, const char *, location, gpointer, _new_mode)
+    {
+      FlatpakFilesystemMode new_mode = GPOINTER_TO_INT (_new_mode);
+      FlatpakFilesystemMode old_mode = GPOINTER_TO_INT (g_hash_table_lookup (old, location));
+
+      if (new_mode <= old_mode)
+        continue;
+
+      if (new_mode <= old_host_mode)
+        continue;
+
+      /* All but absolute paths are in homedir */
+      if (!g_path_is_absolute (location) && new_mode <= old_home_mode)
+        continue;
+
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
+
+gboolean
+flatpak_context_adds_permissions (FlatpakContext *old,
+                                  FlatpakContext *new)
+{
+  guint32 old_sockets;
+
+  if (adds_flags (old->shares & old->shares_valid,
+                  new->shares & new->shares_valid))
+    return TRUE;
+
+  old_sockets = old->sockets & old->sockets_valid;
+
+  /* If we used to allow X11, also allow new fallback X11,
+     as that is actually less permissions */
+  if (old_sockets & FLATPAK_CONTEXT_SOCKET_X11)
+    old_sockets |= FLATPAK_CONTEXT_SOCKET_FALLBACK_X11;
+
+  if (adds_flags (old_sockets,
+                  new->sockets & new->sockets_valid))
+    return TRUE;
+
+  if (adds_flags (old->devices & old->devices_valid,
+                  new->devices & new->devices_valid))
+    return TRUE;
+
+  /* We allow upgrade to multiarch, that is really not a huge problem */
+  if (adds_flags ((old->features & old->features_valid) | FLATPAK_CONTEXT_FEATURE_MULTIARCH,
+                  new->features & new->features_valid))
+    return TRUE;
+
+  if (adds_bus_policy (old->session_bus_policy, new->session_bus_policy))
+    return TRUE;
+
+  if (adds_bus_policy (old->system_bus_policy, new->system_bus_policy))
+    return TRUE;
+
+  if (adds_generic_policy (old->generic_policy, new->generic_policy))
+    return TRUE;
+
+  if (adds_filesystem_access (old->filesystems, new->filesystems))
+    return TRUE;
+
+  return FALSE;
+}
+
 gboolean
 flatpak_context_allows_features (FlatpakContext        *context,
                                  FlatpakContextFeatures features)
