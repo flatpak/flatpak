@@ -136,6 +136,8 @@ dist_installed_test_data = \
 	tests/package_version.txt \
 	tests/session.conf.in \
 	tests/test.filter \
+        tests/test.portal.in \
+        tests/org.freedesktop.impl.portal.desktop.test.service.in \
 	$(NULL)
 
 installed_test_keyringdir = $(installed_testdir)/test-keyring
@@ -206,5 +208,8 @@ EXTRA_DIST += tests/flatpak.supp tests/glib.supp tests/Makefile-test-matrix.am.i
 DISTCLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
 	tests/services/org.freedesktop.Flatpak.SystemHelper.service \
+	tests/services/org.freedesktop.portal.Flatpak.service \
+	tests/services/org.freedesktop.impl.portal.desktop.test.service \
+	tests/share/xdg-desktop-portal/portals/test.portal \
 	tests/package_version.txt \
 	$(NULL)
