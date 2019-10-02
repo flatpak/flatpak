@@ -1,3 +1,21 @@
+Changes in 1.5.0
+================
+
+ * New options flatpak install --or-update operation.
+ * New command flatpak mask allows pinning version and avoiding auto-downloads.
+ * Support self-updates and update monitoring in the flatpak portal.
+ * Fix updates of exported services with dbus-broken.
+ * Don't show arch columns in terminal outout if all are the same.
+ * Fix some cases where origin remotes were not properly removed.
+ * flatpak-session-helper now links to more libraries.
+ * OCI: Support images tagged with labels as well as annotations.
+ * OCI: Alway generate a history for images.
+ * OCI: Support docker mimetypes in addition to OCI mimetypes.
+ * Uninstall now always work, even if the remote it came from was force removed.
+ * New config key default-languages that allows additions to the system list
+  instead of overriding it.
+ * Various minor tweak to CLI behaviour and output.
+
 Changes in 1.4.3
 ================
  * Fix crash in revokefs.
