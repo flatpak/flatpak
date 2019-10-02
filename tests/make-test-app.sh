@@ -117,7 +117,7 @@ ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/de/share/de
 mkdir -p ${DIR}/files/share/runtime/locale/fr
 ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/fr/share/fr
 
-flatpak build-finish --command=hello.sh ${DIR}
+flatpak build-finish ${BUILD_FINISH_ARGS-} --command=hello.sh ${DIR}
 mkdir -p repos
 flatpak build-export --disable-sandbox ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
 rm -rf ${DIR}
