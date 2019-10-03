@@ -243,7 +243,9 @@
             once the app’s data (including its content rating) has been
             downloaded.
           - This action is checked to see if the installation should be allowed
-            based on whether the app being installed has extreme content.
+            based on whether the app being installed has content which doesn’t
+            comply with the user’s parental controls policy (the content is
+            ‘too extreme’).
           - It is checked only if an app has too extreme content for the user
             who is trying to install it (in which case, the app is ‘unsafe’).
           - Typically, normal users will need admin permission to install apps
