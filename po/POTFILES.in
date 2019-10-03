@@ -22,6 +22,7 @@ app/flatpak-builtins-install.c
 app/flatpak-builtins-kill.c
 app/flatpak-builtins-list.c
 app/flatpak-builtins-make-current.c
+app/flatpak-builtins-mask.c
 app/flatpak-builtins-override.c
 app/flatpak-builtins-permission-list.c
 app/flatpak-builtins-permission-remove.c
@@ -52,5 +53,6 @@ common/flatpak-remote.c
 common/flatpak-run.c
 common/flatpak-transaction.c
 common/flatpak-utils.c
+portal/flatpak-portal.c
 system-helper/flatpak-system-helper.service.in
 system-helper/org.freedesktop.Flatpak.policy.in
