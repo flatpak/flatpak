@@ -28,11 +28,20 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libcap-dev libattr1-dev libdw-dev libelf-dev \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat
+        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev
     - name: Check out flatpak
       uses: actions/checkout@v1
       with:
         submodules: true
+    - name: Build malcontent dependency
+      run: |
+        git clone https://gitlab.freedesktop.org/pwithnall/malcontent.git ./malcontent
+        pushd ./malcontent
+        git checkout tags/0.4.0
+        meson setup --prefix=/usr _build
+        ninja -C _build
+        sudo ninja -C _build install
+        popd
     - name: Create logs dir
       run: mkdir test-logs
     - name: configure
