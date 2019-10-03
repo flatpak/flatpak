@@ -298,6 +298,8 @@ FLATPAK_EXTERN char *                flatpak_installation_get_config (FlatpakIns
                                                                       GError             **error);
 FLATPAK_EXTERN char **               flatpak_installation_get_default_languages (FlatpakInstallation  *self,
                                                                                  GError              **error);
+FLATPAK_EXTERN char **               flatpak_installation_get_default_locales (FlatpakInstallation  *self,
+                                                                               GError              **error);
 FLATPAK_EXTERN char *              flatpak_installation_load_app_overrides (FlatpakInstallation *self,
                                                                             const char          *app_id,
                                                                             GCancellable        *cancellable,

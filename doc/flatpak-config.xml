@@ -70,7 +70,8 @@
                 <listitem><para>
                    This key is used when languages is not set, and it defines extra locale
                    extensions on top of the system configured languages. The value is a
-                   semicolon-separated list of two-letter language codes.
+                   semicolon-separated list of two-letter language codes or locale identifiers
+                   (eg. en;en_DK;az_Latn_AZ).
                 </para></listitem>
             </varlistentry>
         </variablelist>

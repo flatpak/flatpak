@@ -254,6 +254,22 @@ clean_languages (void)
 }
 
 static void
+configure_extra_languages (void)
+{
+  char *argv[] = { "flatpak", "config", "--user", "--set", "extra-languages", "de_DE", NULL };
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
+clean_extra_languages (void)
+{
+  char *argv[] = { "flatpak", "config", "--user", "--unset", "extra-languages", NULL };
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
 test_languages_config (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -273,18 +289,31 @@ test_languages_config (void)
   value = flatpak_installation_get_default_languages (inst, &error);
   g_assert_no_error (error);
   g_assert_cmpstr (value[0], ==, "en");
+  g_assert_null (value[1]);
 
-  res = flatpak_installation_set_config_sync (inst, "extra-languages", "en;pt", NULL, &error);
+  res = flatpak_installation_set_config_sync (inst, "extra-languages", "pt_BR;az_Latn_AZ;es", NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
   value = flatpak_installation_get_default_languages (inst, &error);
   g_assert_no_error (error);
-  g_assert_cmpstr (value[0], ==, "en");
-  g_assert_cmpstr (value[1], ==, "pt");
-  g_assert_null (value[2]);
+  g_assert_cmpstr (value[0], ==, "az");
+  g_assert_cmpstr (value[1], ==, "en");
+  g_assert_cmpstr (value[2], ==, "es");
+  g_assert_cmpstr (value[3], ==, "pt");
+  g_assert_null (value[4]);
 
-  g_clear_pointer (&value, g_free);
+  g_clear_pointer (&value, g_strfreev);
+
+  value = flatpak_installation_get_default_locales (inst, &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (value[0], ==, "az_Latn_AZ");
+  g_assert_cmpstr (value[1], ==, "en");
+  g_assert_cmpstr (value[2], ==, "es");
+  g_assert_cmpstr (value[3], ==, "pt_BR");
+  g_assert_null (value[4]);
+
+  g_clear_pointer (&value, g_strfreev);
 
   res = flatpak_installation_set_config_sync (inst, "languages", "ar;es", NULL, &error);
   g_assert_no_error (error);
@@ -296,7 +325,8 @@ test_languages_config (void)
   g_assert_cmpstr (value[1], ==, "es");
   g_assert_null (value[2]);
 
-  g_clear_pointer (&value, g_free);
+  g_clear_pointer (&value, g_strfreev);
+  clean_extra_languages ();
   configure_languages ();
 }
 
@@ -1083,6 +1113,45 @@ test_list_remote_related_refs (void)
   g_assert_true (should_download);
   g_assert_true (should_delete);
   g_assert_false (should_autoprune);
+
+  // Make the test with extra-languages, instead of languages
+  clean_languages();
+  configure_extra_languages();
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  refs = flatpak_installation_list_remote_related_refs_sync (inst, repo_name, app, NULL, &error);
+  g_assert_nonnull (refs);
+  g_assert_no_error (error);
+
+  g_assert_cmpint (refs->len, ==, 1);
+  ref = g_ptr_array_index (refs, 0);
+
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
+  g_assert_true (flatpak_related_ref_should_download (ref));
+  g_assert_true (flatpak_related_ref_should_delete (ref));
+  g_assert_false (flatpak_related_ref_should_autoprune (ref));
+  g_assert (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 2);
+  g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
+  g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[1], ==, "/en");
+
+  g_object_get (ref,
+                "subpaths", &subpaths,
+                "should-download", &should_download,
+                "should-delete", &should_delete,
+                "should-autoprune", &should_autoprune,
+                NULL);
+
+  g_assert (g_strv_length (subpaths) == 2);
+  g_assert_cmpstr (subpaths[0], ==, "/de");
+  g_assert_cmpstr (subpaths[1], ==, "/en");
+  g_assert_true (should_download);
+  g_assert_true (should_delete);
+  g_assert_false (should_autoprune);
+
+  configure_languages();
+  clean_extra_languages();
 }
 
 static void
@@ -3578,6 +3647,59 @@ test_list_installed_related_refs (void)
   g_assert_false (flatpak_related_ref_should_autoprune (ref));
   g_assert (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 1);
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
+
+  // Make the test with extra-languages, instead of languages
+  clean_languages();
+  configure_extra_languages();
+  empty_installation (inst);
+
+  refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, app, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
+  g_assert_null (refs);
+  g_clear_error (&error);
+
+  iref = flatpak_installation_install (inst, repo_name, FLATPAK_REF_KIND_APP, "org.test.Hello", NULL, "master", NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (iref);
+  g_clear_object (&iref);
+
+  refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 0);
+  g_clear_pointer (&refs, g_ptr_array_unref);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_update (transaction, app, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_clear_object (&transaction);
+
+  refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 1);
+
+  ref = g_ptr_array_index (refs, 0);
+
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
+  g_assert_true (flatpak_related_ref_should_download (ref));
+  g_assert_true (flatpak_related_ref_should_delete (ref));
+  g_assert_false (flatpak_related_ref_should_autoprune (ref));
+  g_assert (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 2);
+  g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
+  g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[1], ==, "/en");
+
+  configure_languages();
+  clean_extra_languages();
 }
 
 static void
