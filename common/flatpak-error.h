@@ -60,7 +60,7 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_REF_NOT_FOUND: The specified ref was not found. (Since: 1.4.0)
  * @FLATPAK_ERROR_PERMISSION_DENIED: An operation was not allowed by the administrative policy.
  *                                   For example, an app is not allowed to be installed due
- *                                   to not complying with the parental controls policy. (Since: 1.5.0)
+ *                                   to not complying with the parental controls policy. (Since: 1.5.1)
  *
  * Error codes for library functions.
  */
