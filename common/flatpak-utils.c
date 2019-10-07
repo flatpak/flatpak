@@ -3608,9 +3608,9 @@ flatpak_repo_update (OstreeRepo   *repo,
           g_auto(GVariantBuilder) sparse_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
           g_variant_builder_init (&sparse_builder, G_VARIANT_TYPE_VARDICT);
           if (eol)
-            g_variant_builder_add (&sparse_builder, "{sv}", "eol", g_variant_new_string (eol));
+            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, g_variant_new_string (eol));
           if (eol_rebase)
-            g_variant_builder_add (&sparse_builder, "{sv}", "eolr", g_variant_new_string (eol_rebase));
+            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, g_variant_new_string (eol_rebase));
 
           rev_data->sparse_data = g_variant_ref_sink (g_variant_builder_end (&sparse_builder));
         }

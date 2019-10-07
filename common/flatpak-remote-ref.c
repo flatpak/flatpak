@@ -354,8 +354,8 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
 
   if (sparse)
     {
-      g_variant_lookup (sparse, "eol", "&s", &eol);
-      g_variant_lookup (sparse, "eolr", "&s", &eol_rebase);
+      g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol);
+      g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol_rebase);
     }
 
   if (strcmp (parts[0], "app") != 0)

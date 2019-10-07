@@ -272,7 +272,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
           if (sparse)
             {
               const char *eol;
-              if (!opt_all && (g_variant_lookup (sparse, "eol", "&s", &eol) || g_variant_lookup (sparse, "eolr", "&s", &eol)))
+              if (!opt_all && (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol) || g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol)))
                 continue;
             }
 
@@ -365,9 +365,9 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
                     {
                       const char *eol;
 
-                      if (g_variant_lookup (sparse, "eol", "&s", &eol))
+                      if (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol))
                         flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
-                      if (g_variant_lookup (sparse, "eolr", "&s", &eol))
+                      if (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol))
                         flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
                     }
                 }

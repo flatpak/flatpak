@@ -179,9 +179,9 @@ print_branches (GVariant *meta)
               if (g_variant_lookup (sparse_cache, ref, "@a{sv}", &sparse))
                 {
                   const char *eol;
-                  if (g_variant_lookup (sparse, "eol", "&s", &eol))
+                  if (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol))
                     flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
-                  if (g_variant_lookup (sparse, "eolr", "&s", &eol))
+                  if (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol))
                     flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
                 }
             }

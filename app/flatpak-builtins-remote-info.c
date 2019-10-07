@@ -172,8 +172,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   sparse = flatpak_remote_state_lookup_sparse_cache (state, ref, NULL);
   if (sparse)
     {
-      g_variant_lookup (sparse, "eol", "&s", &eol);
-      g_variant_lookup (sparse, "eolr", "&s", &eol_rebase);
+      g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol);
+      g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol_rebase);
     }
 
   if (opt_show_ref || opt_show_commit || opt_show_parent || opt_show_metadata || opt_show_runtime || opt_show_sdk)
