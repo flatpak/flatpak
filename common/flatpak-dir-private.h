@@ -87,6 +87,7 @@ GType flatpak_deploy_get_type (void);
 
 #define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE "eol"
 #define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE "eolr"
+#define FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE "tokt"
 
 typedef struct
 {
