@@ -4889,6 +4889,14 @@ msgstr "Mutakhirkan metadata"
 msgid "Authentication is required to update metadata"
 msgstr "Autentikasi diperlukan untuk memutakhirkan metadata"
 
+#. Translators: The placeholder is for an app ref.
+#: common/flatpak-dir.c:7773
+#, c-format
+msgid "Installing %s is not allowed by the policy set by your administrator"
+msgstr ""
+"Instalasi %s tidak diizinkan oleh kebijakan yang ditetapkan oleh "
+"administrator Anda"
+
 #~ msgid "Default system installation"
 #~ msgstr "Pemasangan sistem bawaan"
 
