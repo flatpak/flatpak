@@ -21,7 +21,7 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-$(dirname $0)/test-webserver.sh "" "python $test_srcdir/http-utils-test-server.py 0"
+$(dirname $0)/test-webserver.sh "" "python3 $test_srcdir/http-utils-test-server.py 0"
 FLATPAK_HTTP_PID=$(cat httpd-pid)
 mv httpd-port httpd-port-main
 port=$(cat httpd-port-main)

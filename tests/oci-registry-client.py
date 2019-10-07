@@ -1,6 +1,4 @@
-#!/usr/bin/python
-
-from __future__ import print_function
+#!/usr/bin/python3
 
 import sys
 
@@ -8,7 +6,7 @@ if sys.version_info[0] >= 3:
     import http.client as http_client
     import urllib.parse as urllib_parse
 else:
-    import httplib as http_client
+    import http.client as http_client
     import urllib as urllib_parse
 
 if sys.argv[2] == 'add':
