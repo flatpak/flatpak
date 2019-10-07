@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 from wsgiref.handlers import format_date_time
 from email.utils import parsedate
@@ -13,9 +13,9 @@ if sys.version_info[0] >= 3:
     import http.server as http_server
     from io import BytesIO
 else:
-    from urlparse import parse_qs
-    import BaseHTTPServer as http_server
-    from StringIO import StringIO as BytesIO
+    from urllib.parse import parse_qs
+    import http.server as http_server
+    from io import StringIO as BytesIO
 
 server_start_time = int(time.time())
 
@@ -54,7 +54,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             add_headers['Etag'] = etag
 
         self.send_response(response)
-        for k, v in add_headers.items():
+        for k, v in list(add_headers.items()):
             self.send_header(k, v)
 
         if 'max-age' in query:
