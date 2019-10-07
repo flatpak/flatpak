@@ -85,6 +85,9 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_DEFAULT_UPDATE_FREQUENCY 100
 #define FLATPAK_CLI_UPDATE_FREQUENCY 300
 
+#define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE "eol"
+#define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE "eolr"
+
 typedef struct
 {
   char    *collection_id;         /* (nullable) */

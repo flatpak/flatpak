@@ -2394,8 +2394,8 @@ resolve_ops (FlatpakTransaction *self,
           sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, op->ref, NULL);
           if (sparse_cache)
             {
-              g_variant_lookup (sparse_cache, "eol", "s", &op->eol);
-              g_variant_lookup (sparse_cache, "eolr", "s", &op->eol_rebase);
+              g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "s", &op->eol);
+              g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "s", &op->eol_rebase);
             }
 
           old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL);
