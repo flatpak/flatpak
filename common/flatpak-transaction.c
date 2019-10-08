@@ -1214,6 +1214,25 @@ flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
 }
 
 /**
+ * flatpak_transaction_get_no_deploy:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets whether the transaction is only downloading updates,
+ * and not deploying them.
+ *
+ * Returns: %TRUE if no_deploy is set, %FALSE otherwise
+ *
+ * Since: 1.5.1
+ */
+gboolean
+flatpak_transaction_get_no_deploy (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->no_deploy;
+}
+
+/**
  * flatpak_transaction_set_disable_static_deltas:
  * @self: a #FlatpakTransaction
  * @disable_static_deltas: whether to avoid static deltas
