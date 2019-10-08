@@ -1197,6 +1197,25 @@ flatpak_transaction_set_no_pull (FlatpakTransaction *self,
 }
 
 /**
+ * flatpak_transaction_get_no_pull:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets whether the transaction should operate only on locally
+ * available data.
+ *
+ * Returns: %TRUE if no_pull is set, %FALSE otherwise
+ *
+ * Since: 1.5.1
+ */
+gboolean
+flatpak_transaction_get_no_pull (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->no_pull;
+}
+
+/**
  * flatpak_transaction_set_no_deploy:
  * @self: a #FlatpakTransaction
  * @no_deploy: whether to avoid deploying
@@ -1211,6 +1230,25 @@ flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   priv->no_deploy = no_deploy;
+}
+
+/**
+ * flatpak_transaction_get_no_deploy:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets whether the transaction is only downloading updates,
+ * and not deploying them.
+ *
+ * Returns: %TRUE if no_deploy is set, %FALSE otherwise
+ *
+ * Since: 1.5.1
+ */
+gboolean
+flatpak_transaction_get_no_deploy (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->no_deploy;
 }
 
 /**
