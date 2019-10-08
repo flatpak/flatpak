@@ -2190,6 +2190,9 @@ test_misc_transaction (void)
   flatpak_transaction_set_no_deploy (transaction, TRUE);
   g_assert (flatpak_transaction_get_no_deploy (transaction) == TRUE);
 
+  flatpak_transaction_set_no_pull (transaction, TRUE);
+  g_assert (flatpak_transaction_get_no_pull (transaction) == TRUE);
+
   g_assert (flatpak_transaction_is_empty (transaction));
 }
 
