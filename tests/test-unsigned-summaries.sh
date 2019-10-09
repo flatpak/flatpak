@@ -101,10 +101,10 @@ cat << EOF > org.test.App.flatpakref
 Title=Test App
 Name=org.test.App
 Branch=master
-Url=http://127.0.0.1:$(cat httpd-port-main)/test
+Url=http://127.0.0.1:$(cat httpd-port)/test
 IsRuntime=False
 GPGKey=${FL_GPG_BASE64}
-#RuntimeRepo=http://127.0.0.1:$(cat httpd-port-main)/test
+#RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/test
 DeployCollectionID=org.test.Collection
 EOF
 

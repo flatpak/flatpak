@@ -35,10 +35,8 @@ fi
 
 # Start the fake registry server
 
-$(dirname $0)/test-webserver.sh "" "python3 $test_srcdir/oci-registry-server.py 0"
-FLATPAK_HTTP_PID=$(cat httpd-pid)
-mv httpd-port httpd-port-main
-port=$(cat httpd-port-main)
+httpd oci-registry-server.py .
+port=$(cat httpd-port)
 client="python3 $test_srcdir/oci-registry-client.py 127.0.0.1:$port"
 
 setup_repo_no_add oci
