@@ -41,7 +41,7 @@ class RequestHandler(http_server.SimpleHTTPRequestHandler):
 
 def run(dir):
     RequestHandler.protocol_version = "HTTP/1.0"
-    httpd = http_server.ThreadingHTTPServer( ("127.0.0.1", 0), RequestHandler)
+    httpd = http_server.HTTPServer( ("127.0.0.1", 0), RequestHandler)
     host, port = httpd.socket.getsockname()[:2]
     with open("httpd-port", 'w') as file:
         file.write("%d" % port)
