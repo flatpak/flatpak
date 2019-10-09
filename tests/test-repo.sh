@@ -50,7 +50,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
 elif [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     # Set a collection ID and GPG on the server, but not in the client configuration
     setup_repo_no_add test-no-gpg org.test.Collection.NoGpg
-    port=$(cat httpd-port-main)
+    port=$(cat httpd-port)
     flatpak remote-add ${U} --no-gpg-verify test-no-gpg-repo "http://127.0.0.1:${port}/test-no-gpg"
 else
     GPGPUBKEY="" GPGARGS="" setup_repo test-no-gpg
@@ -64,13 +64,13 @@ GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo t
 #remote with missing GPG key
 # Don’t use --collection-id= here, or the collections code will grab the appropriate
 # GPG key from one of the previously-configured remotes with the same collection ID.
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 if flatpak remote-add ${U} test-missing-gpg-repo "http://127.0.0.1:${port}/test"; then
     assert_not_reached "Should fail metadata-update due to missing gpg key"
 fi
 
 #remote with wrong GPG key
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 if flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-wrong-gpg-repo "http://127.0.0.1:${port}/test"; then
     assert_not_reached "Should fail metadata-update due to wrong gpg key"
 fi
@@ -170,7 +170,7 @@ fi
 
 echo "ok missing remote name auto-corrects for install"
 
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 if ${FLATPAK} ${U} install -y http://127.0.0.1:${port}/nonexistent.flatpakref 2> install-error-log; then
     assert_not_reached "Should not be able to install a nonexistent flatpakref"
 fi
@@ -184,7 +184,7 @@ setup_repo_no_add flatpakref org.test.Collection.Flatpakref
 cat << EOF > repos/flatpakref/flatpakref-repo.flatpakrepo
 [Flatpak Repo]
 Version=1
-Url=http://127.0.0.1:$(cat httpd-port-main)/flatpakref/
+Url=http://127.0.0.1:$(cat httpd-port)/flatpakref/
 Title=The Title
 GPGKey=${FL_GPG_BASE64}
 EOF
@@ -197,9 +197,9 @@ cat << EOF > org.test.Hello.flatpakref
 [Flatpak Ref]
 Name=org.test.Hello
 Branch=master
-Url=http://127.0.0.1:$(cat httpd-port-main)/flatpakref
+Url=http://127.0.0.1:$(cat httpd-port)/flatpakref
 GPGKey=${FL_GPG_BASE64}
-RuntimeRepo=http://127.0.0.1:$(cat httpd-port-main)/flatpakref/flatpakref-repo.flatpakrepo
+RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/flatpakref/flatpakref-repo.flatpakrepo
 EOF
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
@@ -427,7 +427,7 @@ echo "ok eol-rebase"
 
 ${FLATPAK} ${U} install -y test-repo org.test.Platform
 
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 UPDATE_REPO_ARGS="--redirect-url=http://127.0.0.1:${port}/test-gpg3 --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg" update_repo
 GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo_no_add test-gpg3 org.test.Collection.test master
 
@@ -505,7 +505,7 @@ assert_not_file_has_content list-log "org\.test\.Hello"
 assert_not_file_has_content list-log "org\.test\.Platform"
 
 # Disable the remote to make sure we don't do i/o
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
 
 ${FLATPAK} ${U} install -y --no-pull test-repo org.test.Hello
@@ -528,7 +528,7 @@ assert_not_file_has_content list-log "org\.test\.Hello"
 assert_not_file_has_content list-log "org\.test\.Platform"
 
 # Disable the remote to make sure we don't do i/o
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
 
 # Note: The partial ref is only auto-corrected without user interaction because we're using -y

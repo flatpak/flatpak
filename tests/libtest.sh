@@ -241,6 +241,16 @@ make_runtime () {
     flatpak build-commit-from --disable-fsync --src-repo=${RUNTIME_REPO} --force ${GPGARGS} repos/${REPONAME}  ${RUNTIME_REF}
 }
 
+httpd () {
+    COMMAND=${1:-web-server.py}
+    DIR=${2:-repos}
+
+    rm -f httpd-pipe
+    mkfifo httpd-pipe
+    $(dirname $0)/$COMMAND "$DIR" 3> httpd-pipe &
+    read < httpd-pipe
+}
+
 setup_repo_no_add () {
     REPONAME=${1:-test}
     if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
@@ -254,9 +264,7 @@ setup_repo_no_add () {
     GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
-        $(dirname $0)/test-webserver.sh repos
-        FLATPAK_HTTP_PID=$(cat httpd-pid)
-        mv httpd-port httpd-port-main
+        httpd
     fi
 }
 
@@ -266,7 +274,7 @@ setup_repo () {
 
     setup_repo_no_add "$@"
 
-    port=$(cat httpd-port-main)
+    port=$(cat httpd-port)
     if [ x${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} != x ]; then
         import_args=--gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}
     else
@@ -437,9 +445,10 @@ if ! /bin/kill -0 "$DBUS_SESSION_BUS_PID"; then
 fi
 
 cleanup () {
-    /bin/kill -9 $DBUS_SESSION_BUS_PID ${FLATPAK_HTTP_PID:-}
+    /bin/kill -9 $DBUS_SESSION_BUS_PID
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
     fusermount -u $XDG_RUNTIME_DIR/doc || :
+    kill $(jobs -p) &> /dev/null || true
     if test -n "${TEST_SKIP_CLEANUP:-}"; then
         echo "Skipping cleanup of ${TEST_DATA_DIR}"
     else

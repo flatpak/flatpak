@@ -7,12 +7,8 @@ import os
 import sys
 import time
 
-if sys.version_info[0] >= 3:
-    from urllib.parse import parse_qs
-    import http.server as http_server
-else:
-    from urllib.parse import parse_qs
-    import http.server as http_server
+from urllib.parse import parse_qs
+import http.server as http_server
 
 repositories = {}
 icons = {}
@@ -246,11 +242,24 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-def test():
-    if sys.version_info[0] >= 3:
-        http_server.test(RequestHandler, port=0)
-    else:
-        http_server.test(RequestHandler)
+def run(dir):
+    RequestHandler.protocol_version = "HTTP/1.0"
+    httpd = http_server.ThreadingHTTPServer( ("127.0.0.1", 0), RequestHandler)
+    host, port = httpd.socket.getsockname()[:2]
+    with open("httpd-port", 'w') as file:
+        file.write("%d" % port)
+    try:
+        os.write(3, bytes("Started\n", 'utf-8'));
+    except:
+        pass
+    print("Serving HTTP on port %d" % port);
+    if dir:
+        os.chdir(dir)
+    httpd.serve_forever()
 
 if __name__ == '__main__':
-    test()
+    dir = None
+    if len(sys.argv) >= 2 and len(sys.argv[1]) > 0:
+        dir = sys.argv[1]
+
+    run(dir)
