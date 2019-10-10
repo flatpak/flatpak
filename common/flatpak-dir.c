@@ -4415,12 +4415,12 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
           /* No need to use an existing OstreeRepoFinderResult array, since
            * appstream updates do not need to be atomic wrt other updates. */
           used_branch = new_branch;
-          if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL,
+          if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL,
                                  child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, &first_error))
             {
               used_branch = old_branch;
-              if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL,
+              if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL,
                                      child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                      progress, cancellable, &second_error))
                 {
@@ -4472,12 +4472,12 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   /* No need to use an existing OstreeRepoFinderResult array, since
    * appstream updates do not need to be atomic wrt other updates. */
   used_branch = new_branch;
-  if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL,
+  if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL, NULL,
                          FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                          cancellable, &first_error))
     {
       used_branch = old_branch;
-      if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL,
+      if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                              cancellable, &second_error))
         {
@@ -4526,6 +4526,7 @@ repo_get_remote_collection_id (OstreeRepo *repo,
 static void
 get_common_pull_options (GVariantBuilder     *builder,
                          const char          *ref_to_fetch,
+                         const char          *token,
                          const gchar * const *dirs_to_pull,
                          const char          *current_local_checksum,
                          gboolean             force_disable_deltas,
@@ -4557,6 +4558,11 @@ get_common_pull_options (GVariantBuilder     *builder,
 
   g_variant_builder_init (&hdr_builder, G_VARIANT_TYPE ("a(ss)"));
   g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Ref", ref_to_fetch);
+  if (token)
+    {
+      g_autofree char *bearer_token = g_strdup_printf ("Bearer %s", token);
+      g_variant_builder_add (&hdr_builder, "(ss)", "Authorization", bearer_token);
+    }
   if (current_local_checksum)
     g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Upgrade-From", current_local_checksum);
   g_variant_builder_add (builder, "{s@v}", "http-headers",
@@ -4594,8 +4600,9 @@ repo_pull (OstreeRepo                           *self,
            const char                           *remote_name,
            const char                          **dirs_to_pull,
            const char                           *ref_to_fetch,
-           const char                           *rev_to_fetch,
-           const OstreeRepoFinderResult * const *results_to_fetch,
+           const char                           *rev_to_fetch, /* (nullable) */
+           const char                           *token,
+           const OstreeRepoFinderResult * const *results_to_fetch, /* (nullable) */
            FlatpakPullFlags                      flatpak_flags,
            OstreeRepoPullFlags                   flags,
            OstreeAsyncProgress                  *progress,
@@ -4707,7 +4714,7 @@ repo_pull (OstreeRepo                           *self,
 
           /* Pull options */
           g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
-          get_common_pull_options (&pull_builder, ref_to_fetch, dirs_to_pull, current_checksum,
+          get_common_pull_options (&pull_builder, ref_to_fetch, token, dirs_to_pull, current_checksum,
                                    force_disable_deltas, flags, progress);
 
           /* Ensure the results are signed with the GPG keys associated with the correct remote */
@@ -4749,7 +4756,7 @@ repo_pull (OstreeRepo                           *self,
 
       /* Pull options */
       g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
-      get_common_pull_options (&builder, ref_to_fetch, dirs_to_pull, current_checksum,
+      get_common_pull_options (&builder, ref_to_fetch, token, dirs_to_pull, current_checksum,
                                force_disable_deltas, flags, progress);
 
       refs_to_fetch[0] = ref_to_fetch;
@@ -4824,6 +4831,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                               const char                           *repository,
                               const char                           *ref,
                               const char                           *rev,
+                              const char                           *token,
                               const OstreeRepoFinderResult * const *results,
                               FlatpakPullFlags                      flatpak_flags,
                               OstreeAsyncProgress                  *progress,
@@ -4848,6 +4856,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                       NULL,
                       ref,
                       rev,
+                      token,
                       results,
                       flatpak_flags,
                       OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY,
@@ -5336,6 +5345,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
                   const char                           *opt_rev,
                   const OstreeRepoFinderResult * const *opt_results,
                   const char                          **subpaths,
+                  const char                           *token,
                   OstreeRepo                           *repo,
                   FlatpakPullFlags                      flatpak_flags,
                   OstreeRepoPullFlags                   flags,
@@ -5502,7 +5512,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
   /* Setup extra data information before starting to pull, so we can have precise
    * progress reports */
   if (!flatpak_dir_setup_extra_data (self, repo, state->remote_name,
-                                     ref, rev, results,
+                                     ref, rev, token, results,
                                      flatpak_flags,
                                      progress,
                                      cancellable,
@@ -5514,7 +5524,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
 
   if (!repo_pull (repo, state->remote_name,
                   subdirs_arg ? (const char **) subdirs_arg->pdata : NULL,
-                  ref, rev, results, flatpak_flags, flags,
+                  ref, rev, token, results, flatpak_flags, flags,
                   progress,
                   cancellable, error))
     {
@@ -8768,6 +8778,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      const char          *opt_commit,
                      const char         **opt_subpaths,
                      const char         **opt_previous_ids,
+                     const char          *token,
                      OstreeAsyncProgress *progress,
                      GCancellable        *cancellable,
                      GError             **error)
@@ -8927,7 +8938,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
-          if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, subpaths,
+          if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, subpaths, token,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -9003,7 +9014,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, opt_subpaths, NULL,
+      if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, opt_subpaths, token, NULL,
                              flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
@@ -9450,6 +9461,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     const OstreeRepoFinderResult * const *results,
                     const char                          **opt_subpaths,
                     const char                          **opt_previous_ids,
+                    const char                           *token,
                     OstreeAsyncProgress                  *progress,
                     GCancellable                         *cancellable,
                     GError                              **error)
@@ -9620,7 +9632,7 @@ flatpak_dir_update (FlatpakDir                           *self,
             }
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
-          if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths,
+          if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths, token,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
@@ -9692,7 +9704,7 @@ flatpak_dir_update (FlatpakDir                           *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths,
+      if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths, token,
                              NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
@@ -13451,7 +13463,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
           if (child_repo == NULL)
             return FALSE;
 
-          if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL,
+          if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -13481,7 +13493,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
       return TRUE;
     }
 
-  if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL,
+  if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL, NULL,
                          flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                          progress, cancellable, error))
     return FALSE;

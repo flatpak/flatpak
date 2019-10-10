@@ -3007,6 +3007,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                    remote_state, op->ref, op->resolved_commit,
                                    (const char **) op->subpaths,
                                    (const char **) op->previous_ids,
+                                   NULL,
                                    progress->ostree_progress,
                                    cancellable, error);
 
@@ -3056,6 +3057,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                       NULL,
                                       (const char **) op->subpaths,
                                       (const char **) op->previous_ids,
+                                      NULL,
                                       progress->ostree_progress,
                                       cancellable, &local_error);
           flatpak_transaction_progress_done (progress);
