@@ -18,6 +18,10 @@ for feature in $(echo $1 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
         nodeltas)
             export USE_DELTAS=no
             ;;
+        nocollections)
+            export USE_COLLECTIONS_IN_SERVER=no
+            export USE_COLLECTIONS_IN_CLIENT=no
+            ;;
         collections)
             export USE_COLLECTIONS_IN_SERVER=yes
             export USE_COLLECTIONS_IN_CLIENT=yes
