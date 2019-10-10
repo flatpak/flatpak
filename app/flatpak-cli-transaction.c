@@ -494,7 +494,7 @@ operation_error (FlatpakTransaction            *transaction,
       redraw (self);
     }
   else
-    g_print ("\r%-*s\n", self->table_width, text);
+    g_printerr ("\r%-*s\n", self->table_width, text);
 
   if (!non_fatal && self->stop_on_first_error)
     return FALSE;
