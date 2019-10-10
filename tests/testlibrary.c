@@ -2960,15 +2960,15 @@ check_ready3_abort (FlatpakTransaction *transaction)
   g_assert_cmpint (g_list_length (ops), ==, 3);
   op = ops->data;
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, runtime);
+  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, locale);
 
   op = ops->next->data;
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, app);
+  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, runtime);
 
   op = ops->next->next->data;
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, locale);
+  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, app);
 
   g_list_free_full (ops, g_object_unref);
 
