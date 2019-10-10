@@ -444,6 +444,10 @@ if ! /bin/kill -0 "$DBUS_SESSION_BUS_PID"; then
     assert_not_reached "Failed to start dbus-daemon"
 fi
 
+gdb_bt () {
+    gdb -batch -ex "run" -ex "thread apply all bt" -ex "quit 1"  --args "$@"
+}
+
 cleanup () {
     /bin/kill -9 $DBUS_SESSION_BUS_PID
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
