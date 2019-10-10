@@ -201,6 +201,7 @@ child_setup_func (gpointer user_data)
 static gboolean
 handle_host_command (FlatpakDevelopment    *object,
                      GDBusMethodInvocation *invocation,
+                     GUnixFDList           *fd_list,
                      const gchar           *arg_cwd_path,
                      const gchar *const    *arg_argv,
                      GVariant              *arg_fds,
@@ -208,8 +209,6 @@ handle_host_command (FlatpakDevelopment    *object,
                      guint                  flags)
 {
   g_autoptr(GError) error = NULL;
-  GDBusMessage *message = g_dbus_method_invocation_get_message (invocation);
-  GUnixFDList *fd_list = g_dbus_message_get_unix_fd_list (message);
   ChildSetupData child_setup_data = { NULL };
   GPid pid;
   PidData *pid_data;
@@ -362,7 +361,7 @@ handle_host_command (FlatpakDevelopment    *object,
                         pid_data);
 
 
-  flatpak_development_complete_host_command (object, invocation,
+  flatpak_development_complete_host_command (object, invocation, NULL,
                                              pid_data->pid);
   return TRUE;
 }
