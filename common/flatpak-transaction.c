@@ -111,10 +111,13 @@ struct _FlatpakTransactionOperation
   GKeyFile                       *resolved_metakey;
   GBytes                         *resolved_old_metadata;
   GKeyFile                       *resolved_old_metakey;
+  char                           *resolved_token;
+  gboolean                        requested_token; /* TRUE if we requested a token. value in resolved_token, but may be NULL if token not needed. */
   guint64                         download_size;
   guint64                         installed_size;
   char                           *eol;
   char                           *eol_rebase;
+  gint32                          token_type;
   int                             run_after_count;
   int                             run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList                          *run_before_ops;
@@ -567,6 +570,7 @@ flatpak_transaction_operation_finalize (GObject *object)
     g_bytes_unref (self->resolved_old_metadata);
   if (self->resolved_old_metakey)
     g_key_file_unref (self->resolved_old_metakey);
+  g_free (self->resolved_token);
   g_list_free (self->run_before_ops);
 
   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
@@ -2282,9 +2286,20 @@ resolve_op_from_metadata (FlatpakTransaction *self,
     {
       g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "s", &op->eol);
       g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "s", &op->eol_rebase);
+      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, "i", &op->token_type);
     }
 
   resolve_op_end (self, op, checksum, metadata_bytes);
+}
+
+static gboolean
+op_may_need_token (FlatpakTransactionOperation *op)
+{
+  return
+    !op->skip &&
+    (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
+     op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE  ||
+     op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
 }
 
 static gboolean
@@ -2354,7 +2369,6 @@ resolve_ops (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   GList *l;
   g_autoptr(GList) collection_id_ops = NULL;
-
 
   for (l = priv->ops; l != NULL; l = l->next)
     {
@@ -2464,6 +2478,85 @@ resolve_all_ops (FlatpakTransaction *self,
     {
       priv->needs_resolve = FALSE;
       if (!resolve_ops (self, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+
+static gboolean
+request_tokens_for_remote (FlatpakTransaction *self,
+                           const char         *remote,
+                           GList              *ops,
+                           GCancellable       *cancellable,
+                           GError            **error)
+{
+  g_autoptr(GString) refs_as_str = g_string_new ("");
+  GList *l;
+  const char *token;
+
+  for (l = ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+
+      if (l != ops)
+        g_string_append (refs_as_str, ", ");
+      g_string_append (refs_as_str, op->ref);
+    }
+
+  g_debug ("Requesting tokens for remote %s, refs: %s", remote, refs_as_str->str);
+
+  /* FIXME: This is just some temporary testing code and will be
+     replaces with a callout later. */
+  token = g_getenv ("FLATPAK_TEST_TOKEN");
+  if (token == NULL)
+    token = "default-token";
+
+  g_debug ("Got token %s", token);
+
+  for (l = ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+
+      op->resolved_token = g_strdup (token);
+      op->requested_token = TRUE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+request_required_tokens (FlatpakTransaction *self,
+                         const char         *optional_remote, /* else all remotes */
+                         GCancellable       *cancellable,
+                         GError            **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  GList *l;
+  g_autoptr(GHashTable) need_token_ht = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) g_list_free); /* remote name -> list of op */
+
+  for (l = priv->ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      GList *old;
+
+      if (!op_may_need_token (op) || op->token_type == 0 || op->requested_token)
+        continue;
+
+      if (optional_remote != NULL && g_strcmp0 (op->remote, optional_remote) != 0)
+        continue;
+
+      old = g_hash_table_lookup (need_token_ht, op->remote);
+      if (old == NULL)
+        g_hash_table_insert (need_token_ht, op->remote, g_list_append (NULL, op));
+      else
+        old = g_list_append (old, op);
+    }
+
+  GLNX_HASH_TABLE_FOREACH_KV(need_token_ht, const char *, remote, GList *, remote_ops)
+    {
+      if (!request_tokens_for_remote (self, remote, remote_ops, cancellable, error))
         return FALSE;
     }
 
@@ -3007,7 +3100,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                    remote_state, op->ref, op->resolved_commit,
                                    (const char **) op->subpaths,
                                    (const char **) op->previous_ids,
-                                   NULL,
+                                   op->resolved_token,
                                    progress->ostree_progress,
                                    cancellable, error);
 
@@ -3057,7 +3150,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                       NULL,
                                       (const char **) op->subpaths,
                                       (const char **) op->previous_ids,
-                                      NULL,
+                                      op->resolved_token,
                                       progress->ostree_progress,
                                       cancellable, &local_error);
           flatpak_transaction_progress_done (progress);
@@ -3216,6 +3309,10 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
   /* Resolve new ops */
   if (!resolve_all_ops (self, cancellable, error))
+    return FALSE;
+
+  /* Ensure we have all required tokens */
+  if (!request_required_tokens (self, NULL, cancellable, error))
     return FALSE;
 
   sort_ops (self);
