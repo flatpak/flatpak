@@ -70,9 +70,8 @@ tests_test_update_portal_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) \
 	-DFLATPAK_COMPILATION \
 	-DLOCALEDIR=\"$(localedir)\"
 tests_test_update_portal_LDADD = $(AM_LDADD) $(BASE_LIBS)
-tests_test_update_portal_SOURCES = \
-	tests/test-update-portal.c \
-	portal/flatpak-portal-dbus.c
+tests_test_update_portal_SOURCES = tests/test-update-portal.c
+nodist_tests_test_update_portal_SOURCES = portal/flatpak-portal-dbus.c
 
 tests_test_portal_impl_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) \
 	-DFLATPAK_COMPILATION \
