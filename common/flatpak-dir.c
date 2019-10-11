@@ -3724,7 +3724,10 @@ flatpak_dir_resolve_free (FlatpakDirResolve *resolve)
       g_bytes_unref (resolve->resolved_metadata);
       g_free (resolve->eol);
       g_free (resolve->eol_rebase);
+      g_free (resolve->collection_ref.collection_id);
+      g_free (resolve->local_commit);
       g_free (resolve);
+
     }
 }
 
@@ -3747,24 +3750,6 @@ remove_ref_from_p2p_results (OstreeRepoFinderResult **results, OstreeCollectionR
 
   for (i = 0; results[i] != NULL; i++)
     g_hash_table_remove (results[i]->ref_to_checksum, cr);
-}
-
-typedef struct
-{
-  FlatpakDirResolve  *resolve; /* not owned */
-  OstreeCollectionRef collection_ref; /* owns the collection_id member only */
-  char               *local_commit;
-} FlatpakDirResolveData;
-
-static void
-flatpak_dir_resolve_data_free (FlatpakDirResolveData *data)
-{
-  if (data == NULL)
-    return;
-
-  g_free (data->collection_ref.collection_id);
-  g_free (data->local_commit);
-  g_free (data);
 }
 
 static void
@@ -3794,12 +3779,64 @@ resolve_p2p_update_from_commit (FlatpakDirResolve *resolve,
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &resolve->eol_rebase);
 }
 
+struct _FlatpakDirP2PState {
+  OstreeRepo *child_repo;
+  GLnxLockFile child_repo_lock;
+  GPtrArray *results;
+};
+
+void
+flatpak_dir_p2p_state_free (FlatpakDirP2PState *state)
+{
+  if (state->child_repo)
+    {
+      flatpak_rm_rf (ostree_repo_get_path (state->child_repo), NULL, NULL);
+      g_object_unref (state->child_repo);
+      glnx_release_lock_file (&state->child_repo_lock);
+    }
+
+  if (state->results)
+    g_ptr_array_unref (state->results);
+}
+
+static void
+finder_result_maybe_free (OstreeRepoFinderResult *result)
+{
+  if (result)
+    ostree_repo_finder_result_free (result);
+}
+
+static FlatpakDirP2PState *
+flatpak_dir_create_p2p_state (FlatpakDir             *self,
+                              GCancellable           *cancellable,
+                              GError                **error)
+{
+  g_autoptr(FlatpakDirP2PState) state = g_new0 (FlatpakDirP2PState, 1);
+  g_autoptr(GFile) user_cache_dir = NULL;
+
+  /* We create a temporary child repo in the user homedir so that we can just blow it away when we're done.
+   * This lets us always write to the directory in the system-helper case, but also lets us properly clean up
+   * the transaction state directory, as that doesn't happen on abort.   */
+  user_cache_dir = flatpak_ensure_user_cache_dir_location (error);
+  if (user_cache_dir == NULL)
+    return NULL;
+
+  state->child_repo = flatpak_dir_create_child_repo (self, user_cache_dir, &state->child_repo_lock, NULL, error);
+  if (state->child_repo == NULL)
+    return NULL;
+
+  state->results = g_ptr_array_new_with_free_func ((GDestroyNotify) finder_result_maybe_free);
+
+  return g_steal_pointer (&state);
+}
+
 static gboolean
-flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
-                                 FlatpakDirResolveData **datas,
-                                 gboolean                with_commit_ids,
-                                 GCancellable           *cancellable,
-                                 GError                **error)
+flatpak_dir_prepare_resolve_p2p_refs_helper (FlatpakDir             *self,
+                                             GPtrArray              *resolves,
+                                             gboolean                with_commit_ids,
+                                             FlatpakDirP2PState     *state,
+                                             GCancellable           *cancellable,
+                                             GError                **error)
 {
   g_autoptr(GPtrArray) collection_refs_to_fetch = g_ptr_array_new ();
   g_autoptr(GPtrArray) commit_ids_to_fetch = NULL;
@@ -3807,36 +3844,25 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GVariant) find_options = NULL;
   g_auto(GVariantBuilder) find_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
-  GVariantBuilder pull_builder, ref_keyring_map_builder;
-  g_autoptr(GVariant) pull_options = NULL;
-  g_autoptr(GAsyncResult) pull_result = NULL;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
-  g_autoptr(FlatpakRepoTransaction) transaction = NULL;
-  g_autoptr(OstreeRepo) child_repo = NULL;
-  g_auto(GLnxLockFile) child_repo_lock = { 0, };
-  g_autoptr(GFile) user_cache_dir = NULL;
-  g_autoptr(FlatpakTempDir) child_repo_tmp_dir = NULL;
   g_autoptr(GString) refs_str = NULL;
   int i;
-
-  main_context = flatpak_main_context_new_default ();
 
   if (with_commit_ids)
     commit_ids_to_fetch = g_ptr_array_new ();
 
   refs_str = g_string_new ("");
-  for (i = 0; datas[i] != NULL; i++)
+  for (i = 0; i < resolves->len; i++)
     {
-      FlatpakDirResolveData *data = datas[i];
-      FlatpakDirResolve *resolve = data->resolve;
+      FlatpakDirResolve *resolve = resolves->pdata[i];
 
       if (i != 0)
         g_string_append (refs_str, ", ");
       g_string_append_printf (refs_str, "(%s, %s)",
-                              data->collection_ref.collection_id,
-                              data->collection_ref.ref_name);
+                              resolve->collection_ref.collection_id,
+                              resolve->collection_ref.ref_name);
 
-      g_ptr_array_add (collection_refs_to_fetch, &data->collection_ref);
+      g_ptr_array_add (collection_refs_to_fetch, &resolve->collection_ref);
       if (commit_ids_to_fetch)
         {
           g_assert (resolve->opt_commit != NULL);
@@ -3855,21 +3881,9 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
                                                                       commit_ids_to_fetch->len)));
   find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-  /* We create a temporary child repo in the user homedir so that we can just blow it away when we're done.
-   * This lets us always write to the directory in the system-helper case, but also lets us properly clean up
-   * the transaction state directory, as that doesn't happen on abort.   */
-  user_cache_dir = flatpak_ensure_user_cache_dir_location (error);
-  if (user_cache_dir == NULL)
-    return FALSE;
+  main_context = flatpak_main_context_new_default ();
 
-  child_repo = flatpak_dir_create_child_repo (self, user_cache_dir, &child_repo_lock, NULL, error);
-  if (child_repo == NULL)
-    return FALSE;
-
-  /* Ensure we clean up the child repo */
-  child_repo_tmp_dir = g_object_ref (ostree_repo_get_path (child_repo));
-
-  ostree_repo_find_remotes_async (child_repo,
+  ostree_repo_find_remotes_async (state->child_repo,
                                   (const OstreeCollectionRef * const *) collection_refs_to_fetch->pdata,
                                   find_options,
                                   NULL /* default finders */,
@@ -3879,7 +3893,7 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
   while (find_result == NULL)
     g_main_context_iteration (main_context, TRUE);
 
-  results = ostree_repo_find_remotes_finish (child_repo, find_result, error);
+  results = ostree_repo_find_remotes_finish (state->child_repo, find_result, error);
   if (results == NULL)
     return FALSE;
 
@@ -3889,17 +3903,16 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
                                refs_str->str);
 
   /* Drop from the results all ops that are no-op updates */
-  for (i = 0; datas[i] != NULL; i++)
+  for (i = 0; i < resolves->len; i++)
     {
-      FlatpakDirResolveData *data = datas[i];
-      FlatpakDirResolve *resolve = data->resolve;
+      FlatpakDirResolve *resolve = resolves->pdata[i];
       const char *latest_rev = NULL;
 
-      if (data->local_commit == NULL)
+      if (resolve->local_commit == NULL)
         continue;
 
-      latest_rev = find_latest_p2p_result (results, &data->collection_ref);
-      if (g_strcmp0 (latest_rev, data->local_commit) == 0)
+      latest_rev = find_latest_p2p_result (results, &resolve->collection_ref);
+      if (g_strcmp0 (latest_rev, resolve->local_commit) == 0)
         {
           g_autoptr(GVariant) commit_data = NULL;
 
@@ -3907,16 +3920,113 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
            * the local commit and remove from all results. This way we
            * avoid pulling this ref from all remotes. */
 
-          if (!ostree_repo_load_commit (child_repo, data->local_commit, &commit_data, NULL, NULL))
+          if (!ostree_repo_load_commit (state->child_repo, resolve->local_commit, &commit_data, NULL, NULL))
             return FALSE;
 
-          resolve->resolved_commit = g_strdup (data->local_commit);
+          resolve->resolved_commit = g_strdup (resolve->local_commit);
           resolve_p2p_update_from_commit (resolve, commit_data);
-          remove_ref_from_p2p_results (results, &data->collection_ref);
+          remove_ref_from_p2p_results (results, &resolve->collection_ref);
         }
     }
 
+  /* Copy any (now) non-empty FinderResults into the state */
+  for (i = 0; results[i] != NULL; i++)
+    {
+      OstreeRepoFinderResult *result = results[i];
+
+      if (g_hash_table_size (result->ref_to_checksum) > 0)
+        g_ptr_array_add (state->results, result);
+      else
+        ostree_repo_finder_result_free (result);
+    }
+
+  g_free (g_steal_pointer (&results)); /* content was freed or stolen above */
+
+  return TRUE;
+}
+
+/* Unfortunately the p2p resolve case has to be split into two phases. The first (prepare)
+ * phase only works on public data such as the summary and ostree-metadata branch, whereas the second
+ * phace (_finish) actually needs to look at the commit objects, and before that is possible we have
+ * to externally any require bearer tokens for this to be possible.
+ */
+FlatpakDirP2PState *
+flatpak_dir_prepare_resolve_p2p_refs (FlatpakDir         *self,
+                                      FlatpakDirResolve **resolves,
+                                      GCancellable       *cancellable,
+                                      GError            **error)
+{
+  g_autoptr(GPtrArray) latest_resolves = g_ptr_array_new ();
+  g_autoptr(GPtrArray) specific_resolves = g_ptr_array_new ();
+  g_autoptr(FlatpakDirP2PState) state = NULL;
+  int i;
+
+  for (i = 0; resolves[i] != NULL; i++)
+    {
+      FlatpakDirResolve *resolve = resolves[i];
+
+      g_assert (resolve->ref != NULL);
+      g_assert (resolve->remote != NULL);
+
+      resolve->collection_ref.ref_name = resolve->ref;
+      resolve->collection_ref.collection_id = flatpak_dir_get_remote_collection_id (self, resolve->remote);
+
+      g_assert (resolve->collection_ref.collection_id != NULL);
+
+      if (resolve->opt_commit == NULL)
+        {
+          flatpak_repo_resolve_rev (self->repo, resolve->collection_ref.collection_id, resolve->remote,
+                                    resolve->ref, TRUE, &resolve->local_commit, cancellable, NULL);
+        }
+
+      /* The ostree p2p api doesn't let you mix pulls with specific commit IDs
+       * and HEAD (https://github.com/ostreedev/ostree/issues/1622) so we need
+       * to split these into two pull ops */
+      if (resolve->opt_commit)
+        g_ptr_array_add (specific_resolves, resolve);
+      else
+        g_ptr_array_add (latest_resolves, resolve);
+    }
+
+  state = flatpak_dir_create_p2p_state (self, cancellable, error);
+  if (state == NULL)
+    return NULL;
+
+  if (specific_resolves->len > 0)
+    {
+      if (!flatpak_dir_prepare_resolve_p2p_refs_helper (self, specific_resolves, TRUE, state, cancellable, error))
+        return NULL;
+    }
+
+  if (latest_resolves->len > 0)
+    {
+      if (!flatpak_dir_prepare_resolve_p2p_refs_helper (self, latest_resolves, FALSE, state, cancellable, error))
+        return NULL;
+    }
+
+  g_ptr_array_add (state->results, NULL); /* NULL terminate */
+
+  return g_steal_pointer (&state);
+}
+
+gboolean
+flatpak_dir_finish_resolve_p2p_refs (FlatpakDir              *self,
+                                     FlatpakDirResolve      **resolves,
+                                     FlatpakDirP2PState      *state,
+                                     GCancellable            *cancellable,
+                                     GError                 **error)
+{
   OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY;
+  GVariantBuilder pull_builder, ref_keyring_map_builder;
+  g_autoptr(GVariant) pull_options = NULL;
+  g_autoptr(GAsyncResult) pull_result = NULL;
+  g_autoptr(FlatpakRepoTransaction) transaction = NULL;
+  g_autoptr(GMainContextPopDefault) main_context = NULL;
+  int i;
+
+  if (state->results->pdata[0] == NULL)
+    return TRUE;
+
   /* Do a version check to ensure we have these:
    * https://github.com/ostreedev/ostree/pull/1821
    * https://github.com/ostreedev/ostree/pull/1825 */
@@ -3932,16 +4042,15 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
 
   /* Ensure the results are signed with the GPG keys associated with the correct remote */
   g_variant_builder_init (&ref_keyring_map_builder, G_VARIANT_TYPE ("a(sss)"));
-  for (i = 0; datas[i] != NULL; i++)
+  for (i = 0; resolves[i] != NULL; i++)
     {
-      FlatpakDirResolveData *data = datas[i];
-      FlatpakDirResolve *resolve = data->resolve;
+      FlatpakDirResolve *resolve = resolves[i];
 
-      /* It's okay if some of the refs added here were removed above; the map
-       * can be a superset of the refs being pulled */
+      /* It's okay if some of the refs added here were removed from the results;
+       * the map can be a superset of the refs being pulled */
       g_variant_builder_add (&ref_keyring_map_builder, "(sss)",
-                             data->collection_ref.collection_id,
-                             data->collection_ref.ref_name,
+                             resolve->collection_ref.collection_id,
+                             resolve->collection_ref.ref_name,
                              resolve->remote);
     }
   g_variant_builder_add (&pull_builder, "{s@v}", "ref-keyring-map",
@@ -3949,11 +4058,13 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
 
   pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
-  transaction = flatpak_repo_transaction_start (child_repo, cancellable, error);
+  main_context = flatpak_main_context_new_default ();
+
+  transaction = flatpak_repo_transaction_start (state->child_repo, cancellable, error);
   if (transaction == NULL)
     return FALSE;
 
-  ostree_repo_pull_from_remotes_async (child_repo, (const OstreeRepoFinderResult * const *) results,
+  ostree_repo_pull_from_remotes_async (state->child_repo, (const OstreeRepoFinderResult * const *) state->results->pdata,
                                        pull_options, NULL,
                                        cancellable, async_result_cb,
                                        &pull_result);
@@ -3961,85 +4072,26 @@ flatpak_dir_do_resolve_p2p_refs (FlatpakDir             *self,
   while (pull_result == NULL)
     g_main_context_iteration (main_context, TRUE);
 
-  if (!ostree_repo_pull_from_remotes_finish (child_repo, pull_result, error))
+  if (!ostree_repo_pull_from_remotes_finish (state->child_repo, pull_result, error))
     return FALSE;
 
-  for (i = 0; datas[i] != NULL; i++)
+  for (i = 0; resolves[i] != NULL; i++)
     {
-      FlatpakDirResolveData *data = datas[i];
-      FlatpakDirResolve *resolve = data->resolve;
+      FlatpakDirResolve *resolve = resolves[i];
       g_autoptr(GVariant) commit_data = NULL;
 
       if (resolve->resolved_commit != NULL)
         continue;
 
-      if (!flatpak_repo_resolve_rev (child_repo, data->collection_ref.collection_id, resolve->remote,
+      if (!flatpak_repo_resolve_rev (state->child_repo, resolve->collection_ref.collection_id, resolve->remote,
                                      resolve->ref, FALSE, &resolve->resolved_commit,
                                      cancellable, error))
         return FALSE;
 
-      if (!ostree_repo_load_commit (child_repo, resolve->resolved_commit, &commit_data, NULL, error))
+      if (!ostree_repo_load_commit (state->child_repo, resolve->resolved_commit, &commit_data, NULL, error))
         return FALSE;
 
       resolve_p2p_update_from_commit (resolve, commit_data);
-    }
-
-  return TRUE;
-}
-
-gboolean
-flatpak_dir_resolve_p2p_refs (FlatpakDir         *self,
-                              FlatpakDirResolve **resolves,
-                              GCancellable       *cancellable,
-                              GError            **error)
-{
-  g_autoptr(GPtrArray) latest_resolves = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_dir_resolve_data_free);
-  g_autoptr(GPtrArray) specific_resolves = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_dir_resolve_data_free);
-  int i;
-
-  for (i = 0; resolves[i] != NULL; i++)
-    {
-      FlatpakDirResolve *resolve = resolves[i];
-      FlatpakDirResolveData *data = g_new0 (FlatpakDirResolveData, 1);
-
-      g_assert (resolve->ref != NULL);
-      g_assert (resolve->remote != NULL);
-
-      data->resolve = resolve;
-      data->collection_ref.ref_name = resolve->ref;
-      data->collection_ref.collection_id = flatpak_dir_get_remote_collection_id (self, resolve->remote);
-
-      g_assert (data->collection_ref.collection_id != NULL);
-
-      if (resolve->opt_commit == NULL)
-        {
-          flatpak_repo_resolve_rev (self->repo, data->collection_ref.collection_id, resolve->remote,
-                                    resolve->ref, TRUE, &data->local_commit, cancellable, NULL);
-        }
-
-      /* The ostree p2p api doesn't let you mix pulls with specific commit IDs
-       * and HEAD (https://github.com/ostreedev/ostree/issues/1622) so we need
-       * to split these into two pull ops */
-      if (resolve->opt_commit)
-        g_ptr_array_add (specific_resolves, data);
-      else
-        g_ptr_array_add (latest_resolves, data);
-    }
-
-  if (specific_resolves->len > 0)
-    {
-      g_ptr_array_add (specific_resolves, NULL);
-      if (!flatpak_dir_do_resolve_p2p_refs (self, (FlatpakDirResolveData **) specific_resolves->pdata, TRUE,
-                                            cancellable, error))
-        return FALSE;
-    }
-
-  if (latest_resolves->len > 0)
-    {
-      g_ptr_array_add (latest_resolves, NULL);
-      if (!flatpak_dir_do_resolve_p2p_refs (self, (FlatpakDirResolveData **) latest_resolves->pdata, FALSE,
-                                            cancellable, error))
-        return FALSE;
     }
 
   return TRUE;
