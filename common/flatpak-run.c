@@ -203,7 +203,7 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
 #ifdef ENABLE_XAUTH
       g_auto(GLnxTmpfile) xauth_tmpf  = { 0, };
 
-      if (glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, &xauth_tmpf, NULL))
+      if (glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &xauth_tmpf, NULL))
         {
           FILE *output = fdopen (xauth_tmpf.fd, "wb");
           if (output != NULL)
@@ -2630,7 +2630,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   /* Blacklist the rest */
   seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
 
-  if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, &seccomp_tmpf, error))
+  if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &seccomp_tmpf, error))
     return FALSE;
 
   if (seccomp_export_bpf (seccomp, seccomp_tmpf.fd) != 0)
