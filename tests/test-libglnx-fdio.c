@@ -237,6 +237,7 @@ test_filecopy (void)
 
 int main (int argc, char **argv)
 {
+  _GLNX_TEST_SCOPED_TEMP_DIR;
   int ret;
 
   g_test_init (&argc, &argv, NULL);

@@ -28,6 +28,32 @@ One could also compare this project to gnulib; the salient differences
 there are that at least some of this module is eventually destined for
 inclusion in GLib.
 
+Adding this to your project
+---------------------------
+
+## Meson
+
+First, set up a Git submodule:
+
+```
+git submodule add https://gitlab.gnome.org/GNOME/libglnx subprojects/libglnx
+```
+
+Or a Git [subtree](https://github.com/git/git/blob/master/contrib/subtree/git-subtree.txt):
+
+```
+git remote add libglnx https://gitlab.gnome.org/GNOME/libglnx.git
+git fetch libglnx
+git subtree add -P subprojects/libglnx libglnx/master
+```
+
+Then, in your top-level `meson.build`:
+
+```
+libglnx_dep = subproject('libglnx').get_variable('libglnx_dep')
+# now use libglnx_dep in your dependencies
+```
+
 Porting from libgsystem
 -----------------------
 

@@ -1,0 +1,22 @@
+image: registry.fedoraproject.org/fedora:30
+
+stages:
+  - build
+
+before_script:
+  - dnf install -y gcc meson ninja-build "pkgconfig(gio-2.0)" "pkgconfig(gio-unix-2.0)" "pkgconfig(glib-2.0)"
+
+build:
+  stage: build
+  script:
+    - meson _build .
+    - cd _build
+    - ninja
+    - meson test
+    # Run it again! This previously did not work.
+    - meson test
+  artifacts:
+    when: on_failure
+    name: "libglnx-${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}"
+    paths:
+      - "${CI_PROJECT_DIR}/_build/meson-logs"

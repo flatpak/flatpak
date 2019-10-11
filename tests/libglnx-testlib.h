@@ -1,6 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
  * Copyright (C) 2017 Red Hat, Inc.
+ * Copyright 2019 Collabora Ltd.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,10 @@
 
 #pragma once
 
+#include <glib.h>
+
+#include "glnx-backport-autoptr.h"
+
 typedef GError _GLnxTestAutoError;
 static inline void
 _glnx_test_auto_error_cleanup (_GLnxTestAutoError *autoerror)
@@ -32,3 +37,12 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(_GLnxTestAutoError, _glnx_test_auto_error_cleanup)
 #define _GLNX_TEST_DECLARE_ERROR(local_error, error)      \
   g_autoptr(_GLnxTestAutoError) local_error = NULL; \
   GError **error = &local_error
+
+typedef struct _GLnxTestAutoTempDir _GLnxTestAutoTempDir;
+
+_GLnxTestAutoTempDir *_glnx_test_auto_temp_dir_enter (void);
+void _glnx_test_auto_temp_dir_leave (_GLnxTestAutoTempDir *dir);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(_GLnxTestAutoTempDir, _glnx_test_auto_temp_dir_leave);
+
+#define _GLNX_TEST_SCOPED_TEMP_DIR \
+  g_autoptr(_GLnxTestAutoTempDir) temp_dir = _glnx_test_auto_temp_dir_enter ()
