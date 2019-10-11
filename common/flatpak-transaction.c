@@ -2217,6 +2217,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GPtrArray) resolves = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_dir_resolve_free);
+  g_autoptr(FlatpakDirP2PState) state = NULL;
   GList *l;
   int i;
 
@@ -2237,8 +2238,15 @@ resolve_p2p_ops (FlatpakTransaction *self,
 
   g_ptr_array_add (resolves, NULL);
 
-  if (!flatpak_dir_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) resolves->pdata,
-                                     cancellable, error))
+  /* This does the metadata checks and resolving of no-op updates. */
+  state = flatpak_dir_prepare_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) resolves->pdata,
+                                                cancellable, error);
+  if (state == NULL)
+    return FALSE;
+
+  /* This does the downloads of the actual commit objects that are needed. */
+  if (!flatpak_dir_finish_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) resolves->pdata,
+                                            state, cancellable, error))
     return FALSE;
 
   for (i = 0, l = p2p_ops; l != NULL; i++, l = l->next)
