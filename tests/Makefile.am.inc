@@ -98,7 +98,7 @@ tests/services/org.freedesktop.impl.portal.desktop.test.service: tests/org.freed
 
 tests/share/xdg-desktop-portal/portals/test.portal: tests/test.portal.in
 	mkdir -p tests/share/xdg-desktop-portal/portals
-	$(AM_V_GEN) install $< $@
+	$(AM_V_GEN) install -m644 $< $@
 
 tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service tests/services/org.freedesktop.portal.Flatpak.service tests/share/xdg-desktop-portal/portals/test.portal tests/services/org.freedesktop.impl.portal.desktop.test.service
 
@@ -110,7 +110,7 @@ if ENABLE_INSTALLED_TESTS
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $(top_srcdir)/system-helper/org.freedesktop.Flatpak.SystemHelper.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.Flatpak.SystemHelper.service
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(installed_testdir)|" $(top_srcdir)/tests/org.freedesktop.impl.portal.desktop.test.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.impl.portal.desktop.test.service
 	mkdir -p $(DESTDIR)$(installed_testdir)/share/xdg-desktop-portal/portals
-	install $(top_srcdir)/tests/test.portal.in $(DESTDIR)$(installed_testdir)/share/xdg-desktop-portal/portals/test.portal
+	install -m644 $(top_srcdir)/tests/test.portal.in $(DESTDIR)$(installed_testdir)/share/xdg-desktop-portal/portals/test.portal
 endif
 
 tests/package_version.txt: Makefile
