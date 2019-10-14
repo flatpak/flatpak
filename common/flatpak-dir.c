@@ -3841,6 +3841,7 @@ struct _FlatpakDirP2PState {
   OstreeRepo *child_repo;
   GLnxLockFile child_repo_lock;
   GPtrArray *results;
+  GPtrArray *results_refs; /* contains the original ref_to_checksum hashes from the items in results */
 };
 
 void
@@ -3884,6 +3885,7 @@ flatpak_dir_create_p2p_state (FlatpakDir             *self,
     return NULL;
 
   state->results = g_ptr_array_new_with_free_func ((GDestroyNotify) finder_result_maybe_free);
+  state->results_refs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_hash_table_unref);
 
   return g_steal_pointer (&state);
 }
@@ -4064,6 +4066,18 @@ flatpak_dir_prepare_resolve_p2p_refs (FlatpakDir         *self,
         return NULL;
     }
 
+  for (i = 0; i < state->results->len; i++)
+    {
+      OstreeRepoFinderResult *result = state->results->pdata[i];
+
+      /* Squirrel away the original ref_to_checksum hash so that we can reuse it multiple times
+         each with a different subset */
+      g_ptr_array_add (state->results_refs, g_steal_pointer (&result->ref_to_checksum));
+      result->ref_to_checksum = g_hash_table_new_full (ostree_collection_ref_hash,
+                                                       ostree_collection_ref_equal,
+                                                       NULL, g_free);
+    }
+
   g_ptr_array_add (state->results, NULL); /* NULL terminate */
 
   return g_steal_pointer (&state);
@@ -4071,7 +4085,8 @@ flatpak_dir_prepare_resolve_p2p_refs (FlatpakDir         *self,
 
 gboolean
 flatpak_dir_finish_resolve_p2p_refs (FlatpakDir              *self,
-                                     FlatpakDirResolve      **resolves,
+                                     FlatpakDirResolve      **resolves, // This can be a subset of the prepare_resolve list
+                                     const char              *token,
                                      FlatpakDirP2PState      *state,
                                      GCancellable            *cancellable,
                                      GError                 **error)
@@ -4099,6 +4114,18 @@ flatpak_dir_finish_resolve_p2p_refs (FlatpakDir              *self,
                          g_variant_new_variant (g_variant_new_int32 (flags)));
   g_variant_builder_add (&pull_builder, "{s@v}", "inherit-transaction",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
+  g_variant_builder_add (&pull_builder, "{s@v}", "append-user-agent",
+                         g_variant_new_variant (g_variant_new_string ("flatpak/" PACKAGE_VERSION)));
+
+  if (token)
+    {
+      GVariantBuilder hdr_builder;
+      g_variant_builder_init (&hdr_builder, G_VARIANT_TYPE ("a(ss)"));
+      g_autofree char *bearer_token = g_strdup_printf ("Bearer %s", token);
+      g_variant_builder_add (&hdr_builder, "(ss)", "Authorization", bearer_token);
+      g_variant_builder_add (&pull_builder, "{s@v}", "http-headers",
+                             g_variant_new_variant (g_variant_builder_end (&hdr_builder)));
+    }
 
   /* Ensure the results are signed with the GPG keys associated with the correct remote */
   g_variant_builder_init (&ref_keyring_map_builder, G_VARIANT_TYPE ("a(sss)"));
@@ -4106,8 +4133,6 @@ flatpak_dir_finish_resolve_p2p_refs (FlatpakDir              *self,
     {
       FlatpakDirResolve *resolve = resolves[i];
 
-      /* It's okay if some of the refs added here were removed from the results;
-       * the map can be a superset of the refs being pulled */
       g_variant_builder_add (&ref_keyring_map_builder, "(sss)",
                              resolve->collection_ref.collection_id,
                              resolve->collection_ref.ref_name,
@@ -4123,6 +4148,23 @@ flatpak_dir_finish_resolve_p2p_refs (FlatpakDir              *self,
   transaction = flatpak_repo_transaction_start (state->child_repo, cancellable, error);
   if (transaction == NULL)
     return FALSE;
+
+  /* Update the ref_to_checksum array to only contain the original mappings that intersect
+     the set of refs we're pulling now. */
+  for (i = 0; state->results->pdata[i] != NULL; i++)
+    {
+      GHashTable *orig_ref_to_checksum = state->results_refs->pdata[i];
+      OstreeRepoFinderResult *result = state->results->pdata[i];
+
+      g_hash_table_remove_all (result->ref_to_checksum);
+      for (int j = 0; resolves[j] != NULL; j++)
+        {
+          FlatpakDirResolve *resolve = resolves[j];
+          const char *checksum = g_hash_table_lookup (orig_ref_to_checksum, &resolve->collection_ref);
+          if (checksum)
+            g_hash_table_insert (result->ref_to_checksum, &resolve->collection_ref, g_strdup (checksum));
+        }
+    }
 
   ostree_repo_pull_from_remotes_async (state->child_repo, (const OstreeRepoFinderResult * const *) state->results->pdata,
                                        pull_options, NULL,

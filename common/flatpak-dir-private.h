@@ -982,6 +982,7 @@ FlatpakDirP2PState *flatpak_dir_prepare_resolve_p2p_refs (FlatpakDir          *s
                                                           GError             **error);
 gboolean            flatpak_dir_finish_resolve_p2p_refs  (FlatpakDir          *self,
                                                           FlatpakDirResolve  **resolves,
+                                                          const char          *token,
                                                           FlatpakDirP2PState  *state,
                                                           GCancellable        *cancellable,
                                                           GError             **error);

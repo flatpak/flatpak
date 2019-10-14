@@ -2352,7 +2352,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
     }
 
   /* This does the downloads of the actual commit objects that are needed. */
-  if (!flatpak_dir_finish_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) resolves->pdata,
+  if (!flatpak_dir_finish_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) resolves->pdata, NULL,
                                             state, cancellable, error))
     return FALSE;
 
