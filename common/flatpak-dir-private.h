@@ -960,6 +960,7 @@ typedef struct
   guint64 installed_size;
   char   *eol;
   char   *eol_rebase;
+  gint32  token_type;
 } FlatpakDirResolve;
 
 
