@@ -40,8 +40,8 @@
         <title>Description</title>
 
         <para>
-          Flatpak maintains a list of patterns that that define which refs are masked.
-          A masked ref will never be updated or automatically installed (for example an
+          Flatpak maintains a list of patterns that define which refs are masked.
+          A masked ref will never be updated or automatically installed (for example a
           masked extension marked auto-download will not be downloaded). You can still
           manually install such refs, but once they are installed the version will be pinned.
         </para>
