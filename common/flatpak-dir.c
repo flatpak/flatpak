@@ -3793,6 +3793,8 @@ resolve_p2p_update_from_commit (FlatpakDirResolve *resolve,
 
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &resolve->eol);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &resolve->eol_rebase);
+  /* NOTE: The transaction code already stored token_type from ostree-metadata here, but fix it up from the commit anyway */
+  g_variant_lookup (commit_metadata, "xa.token-type", "i", &resolve->token_type);
 }
 
 struct _FlatpakDirP2PState {

@@ -2351,6 +2351,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
       op->installed_size = resolve->installed_size;
       op->eol = g_strdup (resolve->eol);
       op->eol_rebase = g_strdup (resolve->eol_rebase);
+      op->token_type = resolve->token_type;
 
       resolve_op_end (self, op, resolve->resolved_commit, resolve->resolved_metadata);
     }
