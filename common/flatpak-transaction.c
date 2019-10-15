@@ -2337,6 +2337,20 @@ resolve_p2p_ops (FlatpakTransaction *self,
   if (state == NULL)
     return FALSE;
 
+  /* Resolve any ops that we can resolve from the ostree-metadata info */
+  for (i = 0, l = p2p_ops; l != NULL; i++, l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakDirResolve *resolve = g_ptr_array_index (resolves, i);
+
+      if (resolve->resolved_commit == NULL)
+        {
+          g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, NULL);
+          if (state != NULL)
+            flatpak_dir_resolve_maybe_resolve_from_metadata (resolve, state);
+        }
+    }
+
   /* This does the downloads of the actual commit objects that are needed. */
   if (!flatpak_dir_finish_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) resolves->pdata,
                                             state, cancellable, error))
