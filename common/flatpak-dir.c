@@ -3726,6 +3726,7 @@ flatpak_dir_resolve_free (FlatpakDirResolve *resolve)
       g_free (resolve->eol_rebase);
       g_free (resolve->collection_ref.collection_id);
       g_free (resolve->local_commit);
+      g_free (resolve->latest_remote_commit);
       g_free (resolve);
 
     }
@@ -3908,10 +3909,12 @@ flatpak_dir_prepare_resolve_p2p_refs_helper (FlatpakDir             *self,
       FlatpakDirResolve *resolve = resolves->pdata[i];
       const char *latest_rev = NULL;
 
+      latest_rev = find_latest_p2p_result (results, &resolve->collection_ref);
+      resolve->latest_remote_commit = g_strdup (latest_rev);
+
       if (resolve->local_commit == NULL)
         continue;
 
-      latest_rev = find_latest_p2p_result (results, &resolve->collection_ref);
       if (g_strcmp0 (latest_rev, resolve->local_commit) == 0)
         {
           g_autoptr(GVariant) commit_data = NULL;
