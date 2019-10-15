@@ -2388,7 +2388,7 @@ resolve_ops (FlatpakTransaction *self,
 
           /* TODO: This only gets the metadata for the latest only, we need to handle the case
              where the user specified a commit, or p2p doesn't have the latest commit available */
-          if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, &local_error))
+          if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, NULL, &local_error))
             {
               g_message (_("Warning: Can't find %s metadata for dependencies: %s"), op->ref, local_error->message);
               g_clear_error (&local_error);
