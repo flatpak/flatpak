@@ -3406,6 +3406,7 @@ flatpak_repo_update (OstreeRepo   *repo,
                      GError      **error)
 {
   GVariantBuilder builder;
+  GVariantBuilder commits_builder;
   GVariantBuilder ref_data_builder;
   GVariantBuilder ref_sparse_data_builder;
   GKeyFile *config;
@@ -3498,6 +3499,7 @@ flatpak_repo_update (OstreeRepo   *repo,
 
   g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE ("a{s(tts)}"));
   g_variant_builder_init (&ref_sparse_data_builder, G_VARIANT_TYPE ("a{sa{sv}}"));
+  g_variant_builder_init (&commits_builder, G_VARIANT_TYPE ("aay"));
 
   /* Only operate on flatpak relevant refs */
   refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -3633,6 +3635,7 @@ flatpak_repo_update (OstreeRepo   *repo,
       if (rev_data->sparse_data)
         g_variant_builder_add (&ref_sparse_data_builder, "{s@a{sv}}",
                                ref, rev_data->sparse_data);
+      g_variant_builder_add (&commits_builder, "@ay", ostree_checksum_to_bytes_v (rev));
     }
 
   /* Note: xa.cache doesn’t need to support collection IDs for the refs listed
@@ -3661,6 +3664,8 @@ flatpak_repo_update (OstreeRepo   *repo,
 
       /* Add bindings to the metadata. */
       new_summary_commit_dict = g_variant_dict_new (new_summary);
+      g_variant_dict_insert_value (new_summary_commit_dict, "xa.commits",
+                                   g_variant_builder_end (&commits_builder));
       g_variant_dict_insert (new_summary_commit_dict, "ostree.collection-binding",
                              "s", collection_ref.collection_id);
       g_variant_dict_insert_value (new_summary_commit_dict, "ostree.ref-binding",
