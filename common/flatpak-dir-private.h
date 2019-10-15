@@ -946,6 +946,7 @@ typedef struct
   /* Used during p2p resolve */
   OstreeCollectionRef collection_ref; /* owns the collection_id member only, ref_name is from above */
   char               *local_commit;
+  char               *latest_remote_commit;
 
   /* out */
   char   *resolved_commit;
