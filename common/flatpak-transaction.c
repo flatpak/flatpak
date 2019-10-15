@@ -2030,6 +2030,72 @@ mark_op_resolved (FlatpakTransactionOperation *op,
     }
 }
 
+static void
+resolve_op_end (FlatpakTransaction *self,
+                FlatpakTransactionOperation *op,
+                const char *checksum,
+                GBytes *metadata_bytes)
+{
+  g_autoptr(GBytes) old_metadata_bytes = NULL;
+
+  old_metadata_bytes = load_deployed_metadata (self, op->ref);
+  mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
+ }
+
+
+static void
+resolve_op_from_commit (FlatpakTransaction *self,
+                        FlatpakTransactionOperation *op,
+                        const char *checksum,
+                        GVariant *commit_data)
+{
+  g_autoptr(GBytes) metadata_bytes = NULL;
+  g_autoptr(GVariant) commit_metadata = NULL;
+  const char *xa_metadata = NULL;
+  guint64 download_size = 0;
+  guint64 installed_size = 0;
+
+  commit_metadata = g_variant_get_child_value (commit_data, 0);
+  g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+  if (xa_metadata == NULL)
+    g_message ("Warning: No xa.metadata in local commit %s ref %s", checksum, op->ref);
+  else
+    metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata));
+
+  if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
+    op->download_size = GUINT64_FROM_BE (download_size);
+  if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
+    op->installed_size = GUINT64_FROM_BE (installed_size);
+
+  resolve_op_end (self, op, checksum, metadata_bytes);
+}
+
+static void
+resolve_op_from_metadata (FlatpakTransaction *self,
+                          FlatpakTransactionOperation *op,
+                          const char *checksum,
+                          FlatpakRemoteState *state)
+{
+  g_autoptr(GBytes) metadata_bytes = NULL;
+  guint64 download_size = 0;
+  guint64 installed_size = 0;
+  const char *metadata = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, &local_error))
+    {
+      g_message (_("Warning: Can't find %s metadata for dependencies: %s"), op->ref, local_error->message);
+      g_clear_error (&local_error);
+    }
+  else
+    metadata_bytes = g_bytes_new (metadata, strlen (metadata));
+
+  op->installed_size = installed_size;
+  op->download_size = download_size;
+
+  resolve_op_end (self, op, checksum, metadata_bytes);
+}
+
 static gboolean
 resolve_p2p_ops (FlatpakTransaction *self,
                  GList              *p2p_ops,
@@ -2068,13 +2134,11 @@ resolve_p2p_ops (FlatpakTransaction *self,
     {
       FlatpakTransactionOperation *op = l->data;
       FlatpakDirResolve *resolve = g_ptr_array_index (resolves, i);
-      g_autoptr(GBytes) old_metadata_bytes = NULL;
 
       op->download_size = resolve->download_size;
       op->installed_size = resolve->installed_size;
 
-      old_metadata_bytes = load_deployed_metadata (self, op->ref);
-      mark_op_resolved (op, resolve->resolved_commit, resolve->resolved_metadata, old_metadata_bytes);
+      resolve_op_end (self, op, resolve->resolved_commit, resolve->resolved_metadata);
     }
 
   return TRUE;
@@ -2100,11 +2164,7 @@ resolve_ops (FlatpakTransaction *self,
       g_autoptr(FlatpakRemoteState) state = NULL;
       g_autofree char *checksum = NULL;
       g_autoptr(GVariant) commit_data = NULL;
-      g_autoptr(GVariant) commit_metadata = NULL;
       g_autoptr(GBytes) metadata_bytes = NULL;
-      g_autoptr(GBytes) old_metadata_bytes = NULL;
-      guint64 download_size = 0;
-      guint64 installed_size = 0;
 
       if (op->resolved)
         continue;
@@ -2147,29 +2207,14 @@ resolve_ops (FlatpakTransaction *self,
       /* Should we use local state */
       if (transaction_is_local_only (self, op->kind))
         {
-          const char *xa_metadata = NULL;
           commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref, &checksum, NULL, error);
           if (commit_data == NULL)
             return FALSE;
 
-          commit_metadata = g_variant_get_child_value (commit_data, 0);
-          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
-          if (xa_metadata == NULL)
-            g_message ("Warning: No xa.metadata in local commit %s ref %s", checksum, op->ref);
-          else
-            metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata));
-
-          if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
-            op->download_size = GUINT64_FROM_BE (download_size);
-          if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
-            op->installed_size = GUINT64_FROM_BE (installed_size);
-
-          old_metadata_bytes = load_deployed_metadata (self, op->ref);
-          mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
+          resolve_op_from_commit (self, op, checksum, commit_data);
         }
       else if (state->collection_id == NULL) /* In the non-p2p case we have all the info available in the summary, so use it */
         {
-          const char *metadata = NULL;
           g_autoptr(GError) local_error = NULL;
 
           if (op->commit != NULL)
@@ -2194,24 +2239,11 @@ resolve_ops (FlatpakTransaction *self,
 
           /* TODO: This only gets the metadata for the latest only, we need to handle the case
              where the user specified a commit, or p2p doesn't have the latest commit available */
-          if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, &local_error))
-            {
-              g_message (_("Warning: Can't find %s metadata for dependencies: %s"), op->ref, local_error->message);
-              g_clear_error (&local_error);
-            }
-          else
-            metadata_bytes = g_bytes_new (metadata, strlen (metadata));
-
-          op->installed_size = installed_size;
-          op->download_size = download_size;
-
-          old_metadata_bytes = load_deployed_metadata (self, op->ref);
-          mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
+          resolve_op_from_metadata (self, op, checksum, state);
         }
       else
         {
           /* This is a (potential) p2p operation, so rather than do these individually we queue them up in an operation later */
-
           collection_id_ops = g_list_prepend (collection_id_ops, op);
         }
     }
