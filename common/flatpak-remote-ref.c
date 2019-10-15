@@ -341,7 +341,7 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
   if (state &&
       !flatpak_remote_state_lookup_cache (state, full_ref,
                                           &download_size, &installed_size, &metadata,
-                                          NULL))
+                                          NULL, NULL))
     {
       g_debug ("Can't find metadata for ref %s", full_ref);
     }

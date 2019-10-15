@@ -285,7 +285,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
               if (!flatpak_remote_state_lookup_cache (state, ref,
                                                       &download_size, &installed_size, &metadata,
-                                                      error))
+                                                      NULL, error))
                 return FALSE;
 
               metakey = g_key_file_new ();

@@ -392,7 +392,7 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
       if (!flatpak_remote_state_ensure_metadata (self, error))
         return FALSE;
 
-      if (!flatpak_remote_state_lookup_cache (self, ref, NULL, NULL, NULL, error))
+      if (!flatpak_remote_state_lookup_cache (self, ref, NULL, NULL, NULL, NULL, error))
         return FALSE;
     }
 
@@ -447,10 +447,12 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                    guint64            *download_size,
                                    guint64            *installed_size,
                                    const char        **metadata,
+                                   GVariant          **maybe_commit,
                                    GError            **error)
 {
   g_autoptr(GVariant) cache_v = NULL;
   g_autoptr(GVariant) cache = NULL;
+  g_autoptr(GVariant) commits = NULL;
   g_autoptr(GVariant) res = NULL;
   g_autoptr(GVariant) refdata = NULL;
   int pos;
@@ -465,6 +467,8 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                    _("No flatpak cache in remote '%s' summary"), self->remote_name);
       return FALSE;
     }
+
+  commits = g_variant_lookup_value (self->metadata, "xa.commits", NULL);
 
   cache = g_variant_get_child_value (cache_v, 0);
 
@@ -494,6 +498,17 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
 
   if (metadata)
     g_variant_get_child (res, 2, "&s", metadata);
+
+
+  refdata = g_variant_get_child_value (cache, pos);
+
+  if (maybe_commit)
+    {
+      if (commits)
+        *maybe_commit = g_variant_get_child_value (commits, pos);
+      else
+        *maybe_commit = NULL;
+    }
 
   return TRUE;
 }
@@ -14153,7 +14168,7 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
 
   if (flatpak_remote_state_lookup_cache (state, ref,
                                          NULL, NULL, &metadata,
-                                         NULL) &&
+                                         NULL, NULL) &&
       g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
     related = flatpak_dir_find_remote_related_for_metadata (self, state, ref, metakey, cancellable, error);
   else
