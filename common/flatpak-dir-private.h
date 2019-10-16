@@ -969,6 +969,9 @@ FlatpakDirResolve  *flatpak_dir_resolve_new  (const char        *remote,
                                               const char        *opt_commit);
 void                flatpak_dir_resolve_free (FlatpakDirResolve *resolve);
 
+gboolean flatpak_dir_resolve_maybe_resolve_from_metadata (FlatpakDirResolve *resolve,
+                                                          FlatpakRemoteState *state);
+
 typedef struct _FlatpakDirP2PState FlatpakDirP2PState;
 void flatpak_dir_p2p_state_free (FlatpakDirP2PState *state);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDirP2PState, flatpak_dir_p2p_state_free)
