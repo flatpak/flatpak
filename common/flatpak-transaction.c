@@ -202,6 +202,12 @@ enum {
   LAST_PROGRESS_SIGNAL
 };
 
+static gboolean request_required_tokens (FlatpakTransaction *self,
+                                         const char         *optional_remote,
+                                         GCancellable       *cancellable,
+                                         GError            **error);
+
+
 static BundleData *
 bundle_data_new (GFile  *file,
                  GBytes *gpg_data)
@@ -2311,6 +2317,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GPtrArray) resolves = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_dir_resolve_free);
   g_autoptr(FlatpakDirP2PState) state = NULL;
+  gboolean got_new_need_token;
   GList *l;
   int i;
 
@@ -2351,10 +2358,103 @@ resolve_p2p_ops (FlatpakTransaction *self,
         }
     }
 
+  /* We now pre-resolved all p2p operations, which is all we can do without full access
+     to the commit objects. To get the commit objects we might need a token, but the information
+     about whether we need a token or not is in the commit object. This is a catch-22, which we
+     break by using the extracted commit info in the ostree-metadata branch. There is a minor
+     risk that this is out-of-sync with the exact information in the commit if using a p2p mirror
+     with an old version of the app, but the latest ostree-metadata version. The need-token info
+     is unlikely to change though, and the worst case issue here is some permission error during
+     download, so this is not *unsafe*, just kinda iffy.
+  */
+  got_new_need_token = FALSE;
+  for (i = 0, l = p2p_ops; l != NULL; i++, l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakDirResolve *resolve = g_ptr_array_index (resolves, i);
+
+      if (resolve->resolved_commit != NULL)
+        continue; /* Already resolved this (as no-op) */
+
+      if (op_may_need_token (op))
+        {
+          g_autoptr(FlatpakRemoteState) state = NULL;
+          g_autoptr(GVariant) sparse_cache = NULL;
+
+          state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
+          if (state == NULL)
+            return FALSE;
+
+          sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, op->ref, NULL);
+          if (sparse_cache)
+            {
+              gint32 token_type = 0;
+              g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, "i", &token_type);
+              if (token_type > 0)
+                {
+                  /* We set op->need_token here from the ostree-repo
+                     so we query a token for this, later we'll
+                     override it with the resolved value */
+                  op->token_type = token_type;
+                  got_new_need_token = TRUE;
+                }
+            }
+        }
+    }
+
+  if (got_new_need_token)
+    {
+      if (!request_required_tokens (self, NULL, cancellable, error))
+        return FALSE;
+    }
+
+  /* We can't get all the resolve commit objects in one pull request,
+     because the token can be different for each ref, so we need to
+     split things up by token.*/
+
+  g_autoptr(GPtrArray) non_token_resolves = g_ptr_array_new ();
+  g_autoptr(GHashTable) token_resolves_ht = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) g_ptr_array_unref);
+
+  for (i = 0, l = p2p_ops; l != NULL; i++, l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakDirResolve *resolve = g_ptr_array_index (resolves, i);
+
+      if (resolve->resolved_commit != NULL)
+        continue; /* Already resolved this (as no-op) */
+
+      if (op->resolved_token)
+        {
+          GPtrArray *token_resolves = g_hash_table_lookup (token_resolves_ht, op->resolved_token);
+          if (token_resolves == NULL)
+            {
+              token_resolves = g_ptr_array_new ();
+              g_hash_table_insert (token_resolves_ht, op->resolved_token, token_resolves);
+            }
+          g_ptr_array_add (token_resolves, resolve);
+        }
+      else
+        {
+          g_ptr_array_add (non_token_resolves, resolve);
+        }
+    }
+
   /* This does the downloads of the actual commit objects that are needed. */
-  if (!flatpak_dir_finish_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) resolves->pdata, NULL,
+
+  /* First refs that need no token */
+  g_ptr_array_add (non_token_resolves, NULL); // NULL terminate
+  if (!flatpak_dir_finish_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) non_token_resolves->pdata, NULL,
                                             state, cancellable, error))
     return FALSE;
+
+  /* Then once per token */
+  GLNX_HASH_TABLE_FOREACH_KV(token_resolves_ht, const char *, token, GPtrArray *, token_resolves)
+    {
+      g_ptr_array_add (token_resolves, NULL); // NULL terminate
+      if (!flatpak_dir_finish_resolve_p2p_refs (priv->dir, (FlatpakDirResolve **) token_resolves->pdata, token,
+                                                state, cancellable, error))
+        return FALSE;
+    }
 
   for (i = 0, l = p2p_ops; l != NULL; i++, l = l->next)
     {
