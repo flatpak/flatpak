@@ -63,11 +63,78 @@ looks_like_a_language (const char *s)
   return TRUE;
 }
 
+static gboolean
+looks_like_a_region (const char *s)
+{
+  g_auto(GStrv) locale = g_strsplit (s, "_", 3);
+  int i;
+  int len;
+
+  if (!looks_like_a_language(locale[0]))
+    return FALSE;
+
+  if (locale[1] != NULL)
+    {
+      len = strlen (locale[1]);
+
+      // This can be either GB or Latn
+      if (len < 2 || len > 4)
+        return FALSE;
+
+      for (i = 0; i < len; i++)
+        {
+          if ((locale[2] == NULL) && (!g_ascii_isalpha (locale[1][i]) || !g_ascii_isupper (locale[1][i])))
+            return FALSE;
+          else if (!g_ascii_isalpha (locale[1][i]))
+            return FALSE;
+        }
+    }
+
+  if (g_strv_length (locale) > 2)
+    {
+      len = strlen (locale[2]);
+
+      if (len < 2 || len > 3)
+        return FALSE;
+
+      for (i = 0; i < len; i++)
+        {
+          if (!g_ascii_isalpha (locale[2][i]) || !g_ascii_isupper (locale[2][i]))
+            return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
+static char *
+parse_locale (const char *value, GError **error)
+{
+  g_auto(GStrv) strs = NULL;
+  int i;
+
+  strs = g_strsplit (value, ";", 0);
+  for (i = 0; strs[i]; i++)
+    {
+      if (!looks_like_a_language (strs[i]) && !looks_like_a_region (strs[i]))
+        {
+          flatpak_fail (error, _("'%s' does not look like a language/locale code"), strs[i]);
+          return NULL;
+        }
+    }
+
+  return g_strdup (value);
+}
+
 static char *
 parse_lang (const char *value, GError **error)
 {
   g_auto(GStrv) strs = NULL;
   int i;
+
+  if (strcmp (value, "*") == 0 ||
+      strcmp (value, "*all*") == 0)
+    return g_strdup ("");
 
   strs = g_strsplit (value, ";", 0);
   for (i = 0; strs[i]; i++)
@@ -83,27 +150,17 @@ parse_lang (const char *value, GError **error)
 }
 
 static char *
-parse_special_lang (const char *value, GError **error)
-{
-  if (strcmp (value, "*") == 0 ||
-      strcmp (value, "*all*") == 0)
-    return g_strdup ("");
-
-  return parse_lang (value, error);
-}
-
-static char *
-print_lang (const char *value)
+print_locale (const char *value)
 {
   return g_strdup (value);
 }
 
 static char *
-print_special_lang (const char *value)
+print_lang (const char *value)
 {
   if (*value == 0)
     return g_strdup ("*all*");
-  return print_lang (value);
+  return g_strdup (value);
 }
 
 static char *
@@ -123,8 +180,8 @@ typedef struct
 } ConfigKey;
 
 ConfigKey keys[] = {
-  { "languages", parse_special_lang, print_special_lang, get_lang_default },
-  { "extra-languages", parse_lang, print_lang, NULL },
+  { "languages", parse_lang, print_lang, get_lang_default },
+  { "extra-languages", parse_locale, print_locale, NULL },
 };
 
 static ConfigKey *

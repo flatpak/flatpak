@@ -955,7 +955,9 @@ gboolean           flatpak_dir_resolve_p2p_refs (FlatpakDir         *self,
                                                  GError            **error);
 
 
+char ** flatpak_dir_get_default_locales (FlatpakDir *self);
 char ** flatpak_dir_get_default_locale_languages (FlatpakDir *self);
+char ** flatpak_dir_get_locales (FlatpakDir *self);
 char ** flatpak_dir_get_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locale_subpaths (FlatpakDir *self);
 

@@ -14561,20 +14561,13 @@ flatpak_dir_get_config_strv (FlatpakDir *self, char *key)
   return NULL;
 }
 
-char **
-flatpak_dir_get_default_locale_languages (FlatpakDir *self)
+static void
+get_system_locales (FlatpakDir *self, GPtrArray *langs)
 {
-  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GDBusProxy) localed_proxy = NULL;
   g_autoptr(GDBusProxy) accounts_proxy = NULL;
-  g_auto(GStrv) extra_languages = NULL;
 
-  extra_languages = flatpak_dir_get_config_strv (self, "xa.extra-languages");
-
-  if (flatpak_dir_is_user (self))
-    return sort_strv (flatpak_strv_merge (extra_languages, flatpak_get_current_locale_langs ()));
-
-  /* Then get the system default locales */
+  /* Get the system default locales */
   localed_proxy = get_localed_dbus_proxy ();
   if (localed_proxy != NULL)
     get_locale_langs_from_localed_dbus (localed_proxy, langs);
@@ -14584,11 +14577,66 @@ flatpak_dir_get_default_locale_languages (FlatpakDir *self)
   accounts_proxy = get_accounts_dbus_proxy ();
   if (accounts_proxy != NULL)
     get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
-
   g_ptr_array_add (langs, NULL);
+}
+
+char **
+flatpak_dir_get_default_locales (FlatpakDir *self)
+{
+  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
+  g_auto(GStrv) extra_languages = NULL;
+
+  extra_languages = flatpak_dir_get_config_strv (self, "xa.extra-languages");
+
+  if (flatpak_dir_is_user (self))
+    return sort_strv (flatpak_strv_merge (extra_languages, flatpak_get_current_locale_langs ()));
+
+  /* Then get the system default locales */
+  get_system_locales (self, langs);
 
   return sort_strv (flatpak_strv_merge (extra_languages, (char **) langs->pdata));
 }
+
+char **
+flatpak_dir_get_default_locale_languages (FlatpakDir *self)
+{
+  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
+  g_auto(GStrv) extra_languages = NULL;
+  int i;
+
+  extra_languages = flatpak_dir_get_config_strv (self, "xa.extra-languages");
+  for (i = 0; extra_languages != NULL && extra_languages[i] != NULL; i++)
+    {
+       g_auto(GStrv) locales = g_strsplit (extra_languages[i], "_", -1);
+       g_free (extra_languages[i]);
+       extra_languages[i] = g_strdup (locales[0]);
+    }
+
+  if (flatpak_dir_is_user (self))
+    return sort_strv (flatpak_strv_merge (extra_languages, flatpak_get_current_locale_langs ()));
+
+  /* Then get the system default locales */
+  get_system_locales (self, langs);
+
+  return sort_strv (flatpak_strv_merge (extra_languages, (char **) langs->pdata));
+}
+
+char **
+flatpak_dir_get_locales (FlatpakDir *self)
+{
+  char **langs = NULL;
+
+  /* Fetch the list of languages specified by xa.languages - if this key is empty,
+   * this would mean that all languages are accepted. You can read the man for the
+   * flatpak-config section for more info.
+   */
+  langs = flatpak_dir_get_config_strv (self, "xa.languages");
+  if (langs)
+    return sort_strv (langs);
+
+  return flatpak_dir_get_default_locales (self);
+}
+
 
 char **
 flatpak_dir_get_locale_languages (FlatpakDir *self)

@@ -1683,6 +1683,32 @@ flatpak_installation_get_default_languages (FlatpakInstallation  *self,
 }
 
 /**
+ * flatpak_installation_get_default_locales:
+ * @self: a #FlatpakInstallation
+ * @error: return location for a #GError
+ *
+ * Like flatpak_installation_get_default_languages() but includes region 
+ * information (e.g. en_US rather than en) which may be included in the 
+ * xa.extra-languages configuration.
+ *
+ * Returns: (array zero-terminated=1) (element-type utf8) (transfer full):
+ *   A possibly empty array of language and locale strings, or %NULL on error.
+ * Since: 1.5.1
+ */
+char **
+flatpak_installation_get_default_locales (FlatpakInstallation  *self,
+                                          GError              **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  return flatpak_dir_get_locales (dir);
+}
+
+/**
  * flatpak_installation_get_min_free_space_bytes:
  * @self: a #FlatpakInstallation
  * @out_bytes: (out): Location to store the result
