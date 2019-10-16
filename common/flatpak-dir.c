@@ -3768,6 +3768,46 @@ remove_ref_from_p2p_results (OstreeRepoFinderResult **results, OstreeCollectionR
     g_hash_table_remove (results[i]->ref_to_checksum, cr);
 }
 
+gboolean
+flatpak_dir_resolve_maybe_resolve_from_metadata (FlatpakDirResolve *resolve,
+                                                 FlatpakRemoteState *state)
+{
+  g_autoptr(GVariant) metadata_checksum_v = NULL;
+  guint64 download_size = 0;
+  guint64 installed_size = 0;
+  const char *xa_metadata = NULL;
+  g_autoptr(GVariant) sparse_cache = NULL;
+  g_autofree char *metadata_checksum = NULL;
+
+  if (!flatpak_remote_state_lookup_cache (state, resolve->ref, &download_size, &installed_size, &xa_metadata, &metadata_checksum_v, NULL))
+    return FALSE;
+
+  if (metadata_checksum_v == NULL)
+    return FALSE; /* Commit unknown, old server version */
+
+  metadata_checksum = ostree_checksum_from_bytes_v (metadata_checksum_v);
+
+  /* If the latest available commit is the same as the one we have info on in the ostree-metadata
+     then we can use the ostree-metadata to resolve the op without having to download the commit */
+  if (g_strcmp0 (metadata_checksum, resolve->latest_remote_commit) != 0)
+    return FALSE;
+
+  resolve->resolved_commit = g_strdup (metadata_checksum);
+  resolve->resolved_metadata = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
+  resolve->installed_size = installed_size;
+  resolve->download_size = download_size;
+
+  sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, resolve->ref, NULL);
+  if (sparse_cache)
+    {
+      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "s", &resolve->eol);
+      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "s", &resolve->eol_rebase);
+      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, "i", &resolve->token_type);
+    }
+
+  return TRUE; /* Resolved */
+}
+
 static void
 resolve_p2p_update_from_commit (FlatpakDirResolve *resolve,
                                 GVariant          *commit_data)
