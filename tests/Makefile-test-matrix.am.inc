@@ -21,6 +21,7 @@ TEST_MATRIX= \
 	tests/test-oci-registry@system,annotations.wrap \
 	tests/test-oci-registry@system,labels.wrap \
 	tests/test-auth@nocollections.wrap \
+	tests/test-auth@collections.wrap \
 	$(NULL)
 TEST_MATRIX_DIST= \
 	tests/test-basic.sh \

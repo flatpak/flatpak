@@ -174,7 +174,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \
 	tests/test-update-portal.sh \
-	tests/test-auth.sh{nocollections} \
+	tests/test-auth.sh{nocollections+collections} \
 	$(NULL)
 
 update-test-matrix:
