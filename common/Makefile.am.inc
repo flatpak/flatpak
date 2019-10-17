@@ -104,6 +104,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-common-types-private.h \
 	common/flatpak-appdata.c \
 	common/flatpak-appdata-private.h \
+	common/flatpak-auth.c \
+	common/flatpak-auth-private.h \
 	common/flatpak-bwrap.c \
 	common/flatpak-bwrap-private.h \
 	common/flatpak-dir.c \

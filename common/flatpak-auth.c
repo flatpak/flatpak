@@ -1,0 +1,180 @@
+/*
+ * Copyright © 2019 Red Hat, Inc
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Authors:
+ *       Alexander Larsson <alexl@redhat.com>
+ */
+
+#include "config.h"
+
+#include <glib/gi18n-lib.h>
+
+#include "flatpak-dir-private.h"
+#include "flatpak-auth-private.h"
+#include "flatpak-utils-private.h"
+
+FlatpakAuthenticator *
+flatpak_auth_new_for_remote (FlatpakDir *dir,
+                             const char *remote,
+                             GCancellable *cancellable,
+                             GError **error)
+{
+  g_autofree char *name = NULL;
+  g_autofree char *options = NULL;
+  g_autoptr(AutoFlatpakAuthenticator) authenticator = NULL;
+  g_autoptr(GVariant) options_v = NULL;
+  OstreeRepo *repo;
+
+  if (!flatpak_dir_ensure_repo (dir, cancellable, error))
+    return FALSE;
+
+  repo = flatpak_dir_get_repo (dir);
+  if (repo != NULL)
+    {
+      if (!ostree_repo_get_remote_option (repo, remote, FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_NAME, NULL, &name, error))
+        return NULL;
+    }
+  if (name == NULL /* or if no repo */)
+    {
+      flatpak_fail (error, _("No authenticator configured for remote `%s`"), remote);
+      return NULL;
+    }
+
+  if (!ostree_repo_get_remote_option (repo, remote, FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_OPTIONS, "{}", &options, error))
+    return NULL;
+
+  options_v = g_variant_parse (G_VARIANT_TYPE("a{sv}"), options, NULL, NULL, error);
+  if (options_v == NULL)
+    return NULL;
+
+  authenticator = flatpak_authenticator_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+                                                                G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                                name,
+                                                                FLATPAK_AUTHENTICATOR_OBJECT_PATH,
+                                                                cancellable, error);
+  if (authenticator == NULL)
+    return NULL;
+
+  g_object_set_data_full (G_OBJECT (authenticator), "authenticator-options", g_steal_pointer (&options_v), (GDestroyNotify)g_variant_unref);
+  return g_steal_pointer (&authenticator);
+}
+
+char *
+flatpak_auth_create_request_path (const char *peer,
+                                  const char *token,
+                                  GError **error)
+{
+  gchar *escaped_peer;
+  int i;
+
+  for (i = 0; token[i]; i++)
+    {
+      if (!g_ascii_isalnum (token[i]) && token[i] != '_')
+        {
+          flatpak_fail (error, "Invalid token %s", token);
+          return NULL;
+        }
+    }
+
+  escaped_peer = g_strdup (peer + 1);
+  for (i = 0; escaped_peer[i]; i++)
+    if (escaped_peer[i] == '.')
+      escaped_peer[i] = '_';
+
+  return g_strconcat (FLATPAK_AUTHENTICATOR_REQUEST_OBJECT_PATH_PREFIX, escaped_peer, "/", token, NULL);
+}
+
+FlatpakAuthenticatorRequest *
+flatpak_auth_create_request (FlatpakAuthenticator *authenticator,
+                             GCancellable *cancellable,
+                             GError **error)
+{
+  static int next_token = 0;
+  g_autofree char *request_path = NULL;
+  GDBusConnection *bus;
+  FlatpakAuthenticatorRequest *request;
+  g_autofree char *token = NULL;
+
+  token = g_strdup_printf ("%d", ++next_token);
+  bus = g_dbus_proxy_get_connection (G_DBUS_PROXY (authenticator));
+
+  request_path = flatpak_auth_create_request_path (g_dbus_connection_get_unique_name (bus), token, error);
+  if (request_path == NULL)
+    return NULL;
+
+  request = flatpak_authenticator_request_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+                                                                  G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+                                                                  g_dbus_proxy_get_name (G_DBUS_PROXY (authenticator)),
+                                                                  request_path,
+                                                                  cancellable, error);
+  if (request == NULL)
+    return NULL;
+
+  return request;
+}
+
+gboolean
+flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
+                                 FlatpakAuthenticatorRequest *request,
+                                 const char **refs,
+                                 GCancellable *cancellable,
+                                 GError **error)
+{
+  const char *token;
+  GVariant *options;
+  g_autofree char *handle = NULL;
+
+  token = strrchr (g_dbus_proxy_get_object_path (G_DBUS_PROXY (request)), '/') + 1;
+
+  options = g_object_get_data (G_OBJECT (authenticator), "authenticator-options");
+
+  if (!flatpak_authenticator_call_request_ref_tokens_sync (authenticator, token, options, refs,
+                                                           &handle, cancellable, error))
+    return FALSE;
+
+  if (strcmp (g_dbus_proxy_get_object_path (G_DBUS_PROXY (request)), handle) !=0)
+    {
+      /* This shouldn't happen, as it would be a broken authenticator, but lets validate it */
+      flatpak_fail (error, "Authenticator returned wrong handle");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+
+void
+flatpak_auth_request_emit_response (FlatpakAuthenticatorRequest *request,
+                                    const gchar *destination_bus_name,
+                                    guint arg_response,
+                                    GVariant *arg_results)
+{
+  FlatpakAuthenticatorRequestSkeleton *skeleton = FLATPAK_AUTHENTICATOR_REQUEST_SKELETON (request);
+  GList *connections, *l;
+  g_autoptr(GVariant)  signal_variant = NULL;
+
+  connections = g_dbus_interface_skeleton_get_connections (G_DBUS_INTERFACE_SKELETON (skeleton));
+  signal_variant = g_variant_ref_sink (g_variant_new ("(u@a{sv})", arg_response, arg_results));
+  for (l = connections; l != NULL; l = l->next)
+    {
+      GDBusConnection *connection = l->data;
+      g_dbus_connection_emit_signal (connection, destination_bus_name,
+                                     g_dbus_interface_skeleton_get_object_path (G_DBUS_INTERFACE_SKELETON (skeleton)),
+                                     "org.freedesktop.Flatpak.AuthenticatorRequest",
+                                     "Response", signal_variant, NULL);
+    }
+  g_list_free_full (connections, g_object_unref);
+}
