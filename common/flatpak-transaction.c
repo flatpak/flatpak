@@ -28,6 +28,7 @@
 #include "flatpak-installation-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
+#include "flatpak-auth-private.h"
 
 /**
  * SECTION:flatpak-transaction
@@ -2599,6 +2600,24 @@ resolve_all_ops (FlatpakTransaction *self,
   return TRUE;
 }
 
+typedef struct {
+  FlatpakTransaction *transaction;
+  gboolean done;
+  guint response;
+  GVariant *results;
+} RequestTokensData;
+
+
+static void
+request_tokens_response (FlatpakAuthenticatorRequest *object,
+                         guint response,
+                         GVariant *results,
+                         RequestTokensData *data)
+{
+  data->response = response;
+  data->results = g_variant_ref (results);
+  data->done = TRUE;
+}
 
 static gboolean
 request_tokens_for_remote (FlatpakTransaction *self,
@@ -2607,34 +2626,90 @@ request_tokens_for_remote (FlatpakTransaction *self,
                            GCancellable       *cancellable,
                            GError            **error)
 {
-  g_autoptr(GString) refs_as_str = g_string_new ("");
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autofree char *refs_as_str = NULL;
   GList *l;
-  const char *token;
+  g_autoptr(GPtrArray) refs = g_ptr_array_new ();
+  g_autoptr(AutoFlatpakAuthenticatorRequest) request = NULL;
+  g_autoptr(AutoFlatpakAuthenticator) authenticator = NULL;
+  g_autoptr(GMainContextPopDefault) context = NULL;
+  RequestTokensData data = { self };
+  g_autoptr(GVariant) tokens = NULL;
+  g_autoptr(GVariant) results = NULL;
 
   for (l = ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
+      g_ptr_array_add (refs, op->ref);
+    }
+  g_ptr_array_add (refs, NULL);
 
-      if (l != ops)
-        g_string_append (refs_as_str, ", ");
-      g_string_append (refs_as_str, op->ref);
+  refs_as_str = g_strjoinv (", ", (char **)refs->pdata);
+  g_debug ("Requesting tokens for remote %s, refs: %s", remote, refs_as_str);
+
+  context = flatpak_main_context_new_default ();
+
+  authenticator = flatpak_auth_new_for_remote (priv->dir, remote, cancellable, error);
+  if (authenticator == NULL)
+    return FALSE;
+
+  request = flatpak_auth_create_request (authenticator, cancellable, error);
+  if (request == NULL)
+    return FALSE;
+
+  g_signal_connect (request, "response", (GCallback)request_tokens_response, &data);
+
+  if (!flatpak_auth_request_ref_tokens (authenticator, request, (const char **)refs->pdata, cancellable, error))
+    return FALSE;
+
+  while (!data.done)
+    g_main_context_iteration (context, TRUE);
+
+  results = data.results; /* Make sure its freed as needed */
+
+  {
+    g_autofree char *results_str = g_variant_print (results, FALSE);
+    g_debug ("Response from request_tokens: %d - %s\n", data.response, results_str);
+  }
+
+  if (data.response == FLATPAK_AUTH_RESPONSE_CANCELLED)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_CANCELLED,
+                   "User cancelled authentication request");
+      return FALSE;
     }
 
-  g_debug ("Requesting tokens for remote %s, refs: %s", remote, refs_as_str->str);
+  if (data.response != FLATPAK_AUTH_RESPONSE_OK)
+    return flatpak_fail (error, "Failed to get tokens for ref");
 
-  /* FIXME: This is just some temporary testing code and will be
-     replaces with a callout later. */
-  token = g_getenv ("FLATPAK_TEST_TOKEN");
-  if (token == NULL)
-    token = "default-token";
-
-  g_debug ("Got token %s", token);
+  tokens = g_variant_lookup_value (results, "tokens", G_VARIANT_TYPE ("a{sas}"));
+  if (tokens == NULL)
+    return flatpak_fail (error, "Authenticator didn't send requested tokens");
 
   for (l = ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
+      GVariantIter iter;
+      const char *token = NULL;
+      const char *token_for_refs;
+      g_autofree const char **refs;
 
-      op->resolved_token = g_strdup (token);
+      g_variant_iter_init (&iter, tokens);
+      while (g_variant_iter_next (&iter, "{&s^a&s}", &token_for_refs, &refs))
+        {
+          if (g_strv_contains (refs, op->ref))
+            {
+              token = token_for_refs;
+              break;
+            }
+        }
+
+      if (token == NULL)
+        return flatpak_fail (error, "Authenticator didn't send tokens for ref");
+
+      /* Allow sending empty tokens to mean no token needed */
+
+      op->resolved_token = *token == 0 ? NULL : g_strdup (token);
       op->requested_token = TRUE;
     }
 

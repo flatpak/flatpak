@@ -47,7 +47,6 @@ assert_failed_with_401 () {
     fi
 }
 
-
 # Mark as need token, even though the app doesn't have token-type set
 # We should not be able to install this because we will not present
 # the token unnecessarily
@@ -62,26 +61,38 @@ assert_failed_with_401
 EXPORT_ARGS="--token-type=2" make_updated_app
 mark_need_token app/org.test.Hello/$ARCH/master the-secret
 
+# Install with no authenticator
+if ${FLATPAK} ${U} install -y test-repo org.test.Hello master 2> install-error-log; then
+    assert_not_reached "Should not be able to install without authenticator"
+fi
+assert_file_has_content install-error-log "No authenticator configured for remote"
+
+${FLATPAK} ${U} remote-modify test-repo --authenticator-name org.flatpak.Authenticator.test
+
 # Install with wrong token
-if FLATPAK_TEST_TOKEN=not-the-secret ${FLATPAK} ${U} install -y test-repo org.test.Hello master 2> install-error-log; then
+echo -n not-the-secret > ${XDG_RUNTIME_DIR}/required-token
+if ${FLATPAK} ${U} install -y test-repo org.test.Hello master  2> install-error-log; then
     assert_not_reached "Should not be able to install with wrong secret"
 fi
 assert_failed_with_401
 
 # Install with right token
-FLATPAK_TEST_TOKEN=the-secret ${FLATPAK} ${U} install -y test-repo org.test.Hello master
+echo -n the-secret > ${XDG_RUNTIME_DIR}/required-token
+${FLATPAK} ${U} install -y test-repo org.test.Hello master
 
 EXPORT_ARGS="--token-type=2" make_updated_app test "" master UPDATE2
 mark_need_token app/org.test.Hello/$ARCH/master the-secret
 
 # Update with wrong token
-if FLATPAK_TEST_TOKEN=not-the-secret ${FLATPAK} ${U} update -y org.test.Hello 2> install-error-log; then
+echo -n not-the-secret > ${XDG_RUNTIME_DIR}/required-token
+if ${FLATPAK} ${U} update -y org.test.Hello 2> install-error-log; then
     assert_not_reached "Should not be able to install with wrong secret"
 fi
 assert_failed_with_401
 
 # Update with right token
-FLATPAK_TEST_TOKEN=the-secret ${FLATPAK} ${U} update -y org.test.Hello
+echo -n the-secret > ${XDG_RUNTIME_DIR}/required-token
+${FLATPAK} ${U} update -y org.test.Hello
 
 echo "ok installed build-exported token-type app"
 
@@ -95,12 +106,14 @@ $FLATPAK build-commit-from  ${FL_GPGARGS} --token-type=2 --disable-fsync --src-r
 mark_need_token app/org.test.Hello/$ARCH/copy the-secret
 
 # Install with wrong token
-if FLATPAK_TEST_TOKEN=not-the-secret ${FLATPAK} ${U} install -y test-repo org.test.Hello//copy 2> install-error-log; then
+echo -n not-the-secret > ${XDG_RUNTIME_DIR}/required-token
+if ${FLATPAK} ${U} install -y test-repo org.test.Hello//copy 2> install-error-log; then
     assert_not_reached "Should not be able to install with wrong secret"
 fi
 assert_failed_with_401
 
 # Install with right token
-FLATPAK_TEST_TOKEN=the-secret ${FLATPAK} ${U} install -y test-repo org.test.Hello//copy
+echo -n the-secret > ${XDG_RUNTIME_DIR}/required-token
+${FLATPAK} ${U} install -y test-repo org.test.Hello//copy
 
 echo "ok installed build-commit-from token-type app"
