@@ -79,6 +79,12 @@ tests_test_portal_impl_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) \
 tests_test_portal_impl_LDADD = $(AM_LDADD) $(BASE_LIBS)
 tests_test_portal_impl_SOURCES = tests/test-portal-impl.c
 
+tests_test_authenticator_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+	-DLOCALEDIR=\"$(localedir)\"
+tests_test_authenticator_LDADD = $(AM_LDADD) $(BASE_LIBS) libflatpak-common.la libflatpak-common-base.la libglnx.la
+tests_test_authenticator_SOURCES = tests/test-authenticator.c
+
 tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
@@ -95,11 +101,15 @@ tests/services/org.freedesktop.impl.portal.desktop.test.service: tests/org.freed
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)/tests|" $< > $@
 
+tests/services/org.flatpak.Authenticator.test.service: tests/org.flatpak.Authenticator.test.service.in
+	mkdir -p tests/services
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)/tests|" $< > $@
+
 tests/share/xdg-desktop-portal/portals/test.portal: tests/test.portal.in
 	mkdir -p tests/share/xdg-desktop-portal/portals
 	$(AM_V_GEN) install -m644 $< $@
 
-tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service tests/services/org.freedesktop.portal.Flatpak.service tests/share/xdg-desktop-portal/portals/test.portal tests/services/org.freedesktop.impl.portal.desktop.test.service
+tests/libtest.sh: tests/services/org.freedesktop.Flatpak.service tests/services/org.freedesktop.Flatpak.SystemHelper.service tests/services/org.freedesktop.portal.Flatpak.service tests/share/xdg-desktop-portal/portals/test.portal tests/services/org.freedesktop.impl.portal.desktop.test.service tests/services/org.flatpak.Authenticator.test.service
 
 install-test-data-hook:
 if ENABLE_INSTALLED_TESTS
@@ -108,6 +118,7 @@ if ENABLE_INSTALLED_TESTS
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@extraargs\@| --poll-timeout=1|" $(top_srcdir)/portal/org.freedesktop.portal.Flatpak.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.portal.Flatpak.service
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@extraargs\@| --session --no-idle-exit|" $(top_srcdir)/system-helper/org.freedesktop.Flatpak.SystemHelper.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.Flatpak.SystemHelper.service
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(installed_testdir)|" $(top_srcdir)/tests/org.freedesktop.impl.portal.desktop.test.service.in > $(DESTDIR)$(installed_testdir)/services/org.freedesktop.impl.portal.desktop.test.service
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(installed_testdir)|" $(top_srcdir)/tests/tests/services/org.flatpak.Authenticator.test.service.in > $(DESTDIR)$(installed_testdir)/services/org.flatpak.Authenticator.test.service.service
 	mkdir -p $(DESTDIR)$(installed_testdir)/share/xdg-desktop-portal/portals
 	install -m644 $(top_srcdir)/tests/test.portal.in $(DESTDIR)$(installed_testdir)/share/xdg-desktop-portal/portals/test.portal
 endif
@@ -135,8 +146,9 @@ dist_installed_test_data = \
 	tests/package_version.txt \
 	tests/session.conf.in \
 	tests/test.filter \
-        tests/test.portal.in \
-        tests/org.freedesktop.impl.portal.desktop.test.service.in \
+	tests/test.portal.in \
+	tests/org.freedesktop.impl.portal.desktop.test.service.in \
+	tests/org.flatpak.Authenticator.test.service.in \
 	$(NULL)
 
 installed_test_keyringdir = $(installed_testdir)/test-keyring
@@ -199,7 +211,7 @@ dist_test_scripts = ${TEST_MATRIX_DIST}
 dist_installed_test_extra_scripts += ${TEST_MATRIX_EXTRA_DIST}
 
 test_programs = testlibrary testcommon
-test_extra_programs = tests/httpcache tests/test-update-portal tests/test-portal-impl
+test_extra_programs = tests/httpcache tests/test-update-portal tests/test-portal-impl tests/test-authenticator
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
@@ -209,6 +221,7 @@ DISTCLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.SystemHelper.service \
 	tests/services/org.freedesktop.portal.Flatpak.service \
 	tests/services/org.freedesktop.impl.portal.desktop.test.service \
+	tests/services/org.flatpak.Authenticator.test.service \
 	tests/share/xdg-desktop-portal/portals/test.portal \
 	tests/package_version.txt \
 	$(NULL)
