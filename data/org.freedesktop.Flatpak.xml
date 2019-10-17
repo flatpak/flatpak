@@ -169,4 +169,24 @@
     </method>
   </interface>
 
+  <interface name='org.freedesktop.Flatpak.Authenticator'>
+    <property name="version" type="u" access="read"/>
+
+    <method name="RequestRefTokens">
+      <arg type='s' name='handle_token' direction='in'/>
+      <arg type='a{sv}' name='authenticator_options' direction='in'/>
+      <arg type='as' name='refs' direction='in'/>
+      <arg type='o' name='handle' direction='out'/>
+    </method>
+  </interface>
+
+  <interface name="org.freedesktop.Flatpak.AuthenticatorRequest">
+    <method name="Close">
+    </method>
+    <signal name="Response">
+      <arg type="u" name="response"/>
+      <arg type="a{sv}" name="results"/>
+    </signal>
+  </interface>
+
 </node>
