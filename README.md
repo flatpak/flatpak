@@ -5,7 +5,7 @@ using the WSL subsystem. Due to WSL bugs and missing features it isn't really
 "production" ready, but it is nevertheless interesting to play with.
 
 To use it you need (WSL with some distribution
-installed|https://docs.microsoft.com/en-us/windows/wsl/install-win10), and a Win32 X server, such as (VcXsrc|https://sourceforge.net/projects/vcxsrv/).
+installed|https://docs.microsoft.com/en-us/windows/wsl/install-win10), and a Win32 X server, such as (VcXsrv|https://sourceforge.net/projects/vcxsrv/).
 
 To build it in Ubuntu (install in the microsoft store), first install the build dependencies:
 
