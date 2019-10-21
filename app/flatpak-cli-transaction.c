@@ -503,6 +503,50 @@ operation_error (FlatpakTransaction            *transaction,
 }
 
 static gboolean
+webflow_start (FlatpakTransaction *transaction,
+               const char         *remote,
+               const char         *url,
+               guint               id)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  const char *browser;
+  g_autoptr(GError) local_error = NULL;
+  const char *args[3] = { NULL, url, NULL };
+
+  if (!self->disable_interaction)
+    {
+      g_print (_("Authentication required for remote '%s'\n"), remote);
+      if (!flatpak_yes_no_prompt (TRUE, _("Open browser?")))
+        return FALSE;
+    }
+
+  browser = g_getenv ("BROWSER");
+  if (browser == NULL)
+    browser = "xdg-open";
+
+  /* TODO: Use better way to find default browser */
+
+  args[0] = browser;
+  if (!g_spawn_async (NULL, (char **)args, NULL, G_SPAWN_SEARCH_PATH,
+                      NULL, NULL, NULL, &local_error))
+    {
+      g_printerr ("Failed to spawn browser %s: %s\n", browser, local_error->message);
+      return FALSE;
+    }
+
+  g_print ("Waiting for browser...\n");
+
+  return TRUE;
+}
+
+static void
+webflow_done (FlatpakTransaction *transaction,
+              guint               id)
+{
+  g_print ("Browser done\n");
+}
+
+static gboolean
 end_of_lifed_with_rebase (FlatpakTransaction *transaction,
                           const char         *remote,
                           const char         *ref,
@@ -1056,6 +1100,8 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   transaction_class->choose_remote_for_ref = choose_remote_for_ref;
   transaction_class->end_of_lifed_with_rebase = end_of_lifed_with_rebase;
   transaction_class->run = flatpak_cli_transaction_run;
+  transaction_class->webflow_start = webflow_start;
+  transaction_class->webflow_done = webflow_done;
 }
 
 FlatpakTransaction *
