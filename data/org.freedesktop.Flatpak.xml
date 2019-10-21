@@ -183,6 +183,11 @@
   <interface name="org.freedesktop.Flatpak.AuthenticatorRequest">
     <method name="Close">
     </method>
+    <signal name="Webflow">
+      <arg type="s" name="uri"/>
+    </signal>
+    <signal name="WebflowDone">
+    </signal>
     <signal name="Response">
       <arg type="u" name="response"/>
       <arg type="a{sv}" name="results"/>
