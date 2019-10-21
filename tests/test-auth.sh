@@ -22,7 +22,7 @@ set -euo pipefail
 . $(dirname $0)/libtest.sh
 
 
-echo "1..2"
+echo "1..3"
 
 setup_repo
 
@@ -117,3 +117,33 @@ echo -n the-secret > ${XDG_RUNTIME_DIR}/required-token
 ${FLATPAK} ${U} install -y test-repo org.test.Hello//copy
 
 echo "ok installed build-commit-from token-type app"
+
+EXPORT_ARGS="--token-type=2" make_updated_app test "" master UPDATE4
+mark_need_token app/org.test.Hello/$ARCH/master the-secret
+
+# In the below test, do a webflow
+touch ${XDG_RUNTIME_DIR}/request-webflow
+touch ${XDG_RUNTIME_DIR}/require-webflow
+echo -n the-secret > ${XDG_RUNTIME_DIR}/required-token
+
+# Broken browser, will not do webflow
+export BROWSER=no-such-binary
+
+# This should fail with no auth due to missing binary
+if ${FLATPAK} ${U} update -y org.test.Hello; then
+    assert_not_reached "Should not be able to install with webflow"
+fi
+
+rm ${XDG_RUNTIME_DIR}/require-webflow
+
+# This should be ok, falling back to silent no-auth case due to !require-webflow
+${FLATPAK} ${U} update -y org.test.Hello
+
+# Try again with real webflow handler (curl)
+touch ${XDG_RUNTIME_DIR}/require-webflow
+export BROWSER=curl
+
+EXPORT_ARGS="--token-type=2" make_updated_app test "" master UPDATE5
+mark_need_token app/org.test.Hello/$ARCH/master the-secret
+
+echo "ok update with webflow"
