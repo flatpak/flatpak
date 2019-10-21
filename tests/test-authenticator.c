@@ -28,6 +28,145 @@ static GMainLoop *main_loop;
 static guint name_owner_id = 0;
 FlatpakAuthenticator *authenticator;
 
+typedef struct {
+  FlatpakAuthenticatorRequest *request;
+  GSocketService *server;
+  char *sender;
+  char **arg_refs;
+} TokenRequestData;
+
+static void
+token_request_data_free (TokenRequestData *data)
+{
+  g_clear_object (&data->request);
+  g_socket_service_stop  (data->server);
+  g_clear_object (&data->server);
+  g_free (data->sender);
+  g_strfreev (data->arg_refs);
+  g_free (data);
+}
+
+static TokenRequestData *
+token_request_data_new (GDBusMethodInvocation *invocation,
+                        FlatpakAuthenticatorRequest *request,
+                        GSocketService *server,
+                        const gchar *const *arg_refs)
+{
+  TokenRequestData *data = g_new0 (TokenRequestData, 1);
+  data->request = g_object_ref (request);
+  data->server = g_object_ref (server);
+  data->sender = g_strdup (g_dbus_method_invocation_get_sender (invocation));
+  data->arg_refs = g_strdupv ((char **)arg_refs);
+  return data;
+}
+
+static char *
+get_required_token (void)
+{
+  g_autofree char *required_token_file = NULL;
+  g_autofree char *required_token = NULL;
+
+  required_token_file = g_build_filename (g_get_user_runtime_dir (), "required-token", NULL);
+  if (!g_file_get_contents (required_token_file, &required_token, NULL, NULL))
+    required_token = g_strdup ("default-token");
+  return g_steal_pointer (&required_token);
+}
+
+static gboolean
+requires_webflow (void)
+{
+  g_autofree char *require_webflow_file = g_build_filename (g_get_user_runtime_dir (), "require-webflow", NULL);
+
+  return g_file_test (require_webflow_file, G_FILE_TEST_EXISTS);
+}
+
+static gboolean
+request_webflow (void)
+{
+  g_autofree char *request_webflow_file = g_build_filename (g_get_user_runtime_dir (), "request-webflow", NULL);
+
+  return g_file_test (request_webflow_file, G_FILE_TEST_EXISTS);
+}
+
+static void
+finish_request_ref_tokens (TokenRequestData *data)
+{
+  g_autofree char *required_token = NULL;
+  GVariantBuilder tokens;
+  GVariantBuilder results;
+
+  g_assert (data->request != NULL);
+
+  required_token = get_required_token ();
+
+  g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
+  g_variant_builder_add (&tokens, "{s^as}", required_token, data->arg_refs);
+
+  g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&results, "{sv}", "tokens", g_variant_builder_end (&tokens));
+
+  g_debug ("emiting response");
+  flatpak_auth_request_emit_response (data->request, data->sender,
+                                      FLATPAK_AUTH_RESPONSE_OK,
+                                      g_variant_builder_end (&results));
+}
+
+static gboolean
+http_incoming (GSocketService    *service,
+               GSocketConnection *connection,
+               GObject           *source_object,
+               gpointer           user_data)
+{
+  TokenRequestData *data = user_data;
+
+  g_assert (data->request != NULL);
+
+  /* For the test, just assume any connection is a valid use of the web flow */
+  g_debug ("handling incomming http request for %s", data->sender);
+
+  g_debug ("emiting webflow done");
+  flatpak_auth_request_emit_webflow_done (data->request, data->sender);
+
+  finish_request_ref_tokens (data);
+
+  token_request_data_free (data);
+
+  return TRUE;
+}
+
+static gboolean
+handle_request_close (FlatpakAuthenticatorRequest *object,
+                      GDBusMethodInvocation *invocation,
+                      gpointer           user_data)
+{
+  TokenRequestData *data = user_data;
+
+  g_debug ("handle_request_close");
+
+  flatpak_authenticator_request_complete_close (object, invocation);
+
+  if (requires_webflow ())
+    {
+      GVariantBuilder results;
+
+      g_debug ("Webflow was cancelled by client");
+
+      g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
+      flatpak_auth_request_emit_response (data->request, data->sender,
+                                          FLATPAK_AUTH_RESPONSE_CANCELLED,
+                                          g_variant_builder_end (&results));
+    }
+  else
+    {
+      g_debug ("Ignored webflow cancel by client");
+      finish_request_ref_tokens (data); /* Silently succeed anyway */
+    }
+
+  token_request_data_free (data);
+
+  return TRUE;
+}
+
 static gboolean
 handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                            GDBusMethodInvocation *invocation,
@@ -36,15 +175,17 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                            const gchar *const *arg_refs)
 {
   g_autoptr(GError) error = NULL;
-  GVariantBuilder results;
-  GVariantBuilder tokens;
-  g_autofree char *required_token = NULL;
-  g_autofree char *required_token_file = NULL;
-  g_autofree char *request_path = flatpak_auth_create_request_path (g_dbus_method_invocation_get_sender (invocation),
-                                                                    arg_handle_token,
-                                                                    NULL);
+  g_autoptr(GSocketService) server = NULL;
   g_autoptr(AutoFlatpakAuthenticatorRequest) request = NULL;
+  g_autofree char *uri = NULL;
+  g_autofree char *request_path = NULL;
+  guint16 port;
+  TokenRequestData *data;
 
+  g_debug ("handling RequestRefTokens");
+
+  request_path = flatpak_auth_create_request_path (g_dbus_method_invocation_get_sender (invocation),
+                                                   arg_handle_token, NULL);
   if (request_path == NULL)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
@@ -54,7 +195,6 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
     }
 
   request = flatpak_authenticator_request_skeleton_new ();
-
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (request),
                                          g_dbus_method_invocation_get_connection (invocation),
                                          request_path,
@@ -64,22 +204,32 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
       return TRUE;
     }
 
+  server = g_socket_service_new ();
+  port = g_socket_listener_add_any_inet_port (G_SOCKET_LISTENER (server), NULL, &error);
+  if (port == 0)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  data = token_request_data_new (invocation, request, server, arg_refs);
+
+  g_signal_connect (server, "incoming", (GCallback)http_incoming, data);
+  g_signal_connect (request, "handle-close", G_CALLBACK (handle_request_close), data);
+
   flatpak_authenticator_complete_request_ref_tokens (authenticator, invocation, request_path);
 
-  g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
-
-  required_token_file = g_build_filename (g_get_user_runtime_dir (), "required-token", NULL);
-  if (!g_file_get_contents (required_token_file, &required_token, NULL, NULL))
-      required_token = g_strdup ("default-token");
-
-  g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
-  g_variant_builder_add (&tokens, "{s^as}", required_token, arg_refs);
-  g_variant_builder_add (&results, "{sv}", "tokens", g_variant_builder_end (&tokens));
-
-  flatpak_auth_request_emit_response (request,
-                                      g_dbus_method_invocation_get_sender (invocation),
-                                      FLATPAK_AUTH_RESPONSE_OK,
-                                      g_variant_builder_end (&results));
+  if (request_webflow ())
+    {
+      uri = g_strdup_printf ("http://localhost:%d", (int)port);
+      g_debug ("Requesting webflow %s", uri);
+      flatpak_auth_request_emit_webflow (request, g_dbus_method_invocation_get_sender (invocation), uri);
+    }
+  else
+    {
+      finish_request_ref_tokens (data);
+      token_request_data_free (data);
+    }
 
   return TRUE;
 }
