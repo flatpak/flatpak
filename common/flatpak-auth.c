@@ -178,3 +178,46 @@ flatpak_auth_request_emit_response (FlatpakAuthenticatorRequest *request,
     }
   g_list_free_full (connections, g_object_unref);
 }
+
+void
+flatpak_auth_request_emit_webflow (FlatpakAuthenticatorRequest *request,
+                                   const gchar *destination_bus_name,
+                                   const char *arg_uri)
+{
+  FlatpakAuthenticatorRequestSkeleton *skeleton = FLATPAK_AUTHENTICATOR_REQUEST_SKELETON (request);
+  GList      *connections, *l;
+  g_autoptr(GVariant) signal_variant = NULL;
+  connections = g_dbus_interface_skeleton_get_connections (G_DBUS_INTERFACE_SKELETON (skeleton));
+
+  signal_variant = g_variant_ref_sink (g_variant_new ("(s)", arg_uri));
+  for (l = connections; l != NULL; l = l->next)
+    {
+      GDBusConnection *connection = l->data;
+      g_dbus_connection_emit_signal (connection, destination_bus_name,
+                                     g_dbus_interface_skeleton_get_object_path (G_DBUS_INTERFACE_SKELETON (skeleton)),
+                                     "org.freedesktop.Flatpak.AuthenticatorRequest", "Webflow",
+                                     signal_variant, NULL);
+    }
+  g_list_free_full (connections, g_object_unref);
+}
+
+void
+flatpak_auth_request_emit_webflow_done (FlatpakAuthenticatorRequest *request,
+                                        const gchar *destination_bus_name)
+{
+  FlatpakAuthenticatorRequestSkeleton *skeleton = FLATPAK_AUTHENTICATOR_REQUEST_SKELETON (request);
+  GList      *connections, *l;
+  g_autoptr(GVariant) signal_variant = NULL;
+  connections = g_dbus_interface_skeleton_get_connections (G_DBUS_INTERFACE_SKELETON (skeleton));
+
+  signal_variant = g_variant_ref_sink (g_variant_new ("()"));
+  for (l = connections; l != NULL; l = l->next)
+    {
+      GDBusConnection *connection = l->data;
+      g_dbus_connection_emit_signal (connection, destination_bus_name,
+                                     g_dbus_interface_skeleton_get_object_path (G_DBUS_INTERFACE_SKELETON (skeleton)),
+                                     "org.freedesktop.Flatpak.AuthenticatorRequest", "WebflowDone",
+                                     signal_variant, NULL);
+    }
+  g_list_free_full (connections, g_object_unref);
+}
