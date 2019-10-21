@@ -135,6 +135,15 @@ struct _BundleData
   GBytes *gpg_data;
 };
 
+typedef struct {
+  FlatpakTransaction *transaction;
+  const char *remote;
+  FlatpakAuthenticatorRequest *request;
+  gboolean done;
+  guint response;
+  GVariant *results;
+} RequestData;
+
 struct _FlatpakTransactionPrivate
 {
   GObject                      parent;
@@ -149,6 +158,10 @@ struct _FlatpakTransactionPrivate
 
   GList                       *flatpakrefs; /* GKeyFiles */
   GList                       *bundles; /* BundleData */
+
+  guint                        next_webflow_id;
+  guint                        active_webflow_id;
+  RequestData                 *active_webflow;
 
   FlatpakTransactionOperation *current_op;
 
@@ -176,6 +189,8 @@ enum {
   END_OF_LIFED_WITH_REBASE,
   READY,
   ADD_NEW_REMOTE,
+  WEBFLOW_START,
+  WEBFLOW_DONE,
   LAST_SIGNAL
 };
 
@@ -1123,6 +1138,53 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   g_signal_accumulator_first_wins, NULL,
                   NULL,
                   G_TYPE_BOOLEAN, 4, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+
+  /**
+   * FlatpakTransaction::webflow-start:
+   * @object: A #FlatpakTransaction
+   * @remote: The remote we're authenticating with
+   * @url: The url to show
+   * @id: The id of the operation, can be used to cancel it
+   *
+   * The ::webflow-start signal gets emitted when some kind of user authentication is needed
+   * during the operation. If the caller handles this it should show the url in a webbrowser
+   * and return TRUE. This will eventually cause the webbrowser to finish the authentication
+   * operation and operation will continue, as signaled by the webflow-done being emitted.
+   *
+   * If the client does not support webflow then return FALSE from this signal (or don't
+   * implement it). This will abort the authentication and likely result in the transaction
+   * failing (unless the authentication was somehow optional).
+   *
+   * During the time between webflow-start and webflow-done the client can call flatpak_transaction_abort_webflow()
+   * to manually abort the authentication. This is useful if the user aborted the authentication
+   * operation some way, like e.g. closing the browser window.
+   */
+  signals[WEBFLOW_START] =
+    g_signal_new ("webflow-start",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, webflow_start),
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_BOOLEAN, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
+  /**
+   * FlatpakTransaction::webflow-done:
+   * @object: A #FlatpakTransaction
+   * @id: The id of the operation
+   *
+   * The ::webflow-done signal gets emitted when the authentication
+   * finished the webflow, independent of the reason and results.  If
+   * you for were showing a web-browser window it can now be closed.
+   */
+  signals[WEBFLOW_DONE] =
+    g_signal_new ("webflow-done",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, webflow_done),
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE, 1, G_TYPE_INT);
+
 }
 
 static void
@@ -2600,23 +2662,107 @@ resolve_all_ops (FlatpakTransaction *self,
   return TRUE;
 }
 
-typedef struct {
-  FlatpakTransaction *transaction;
-  gboolean done;
-  guint response;
-  GVariant *results;
-} RequestTokensData;
-
-
 static void
 request_tokens_response (FlatpakAuthenticatorRequest *object,
                          guint response,
                          GVariant *results,
-                         RequestTokensData *data)
+                         RequestData *data)
 {
+  FlatpakTransaction *transaction = data->transaction;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (transaction);
+
+  if (data->done)
+    return; /* Don't respond twice */
+
+  g_assert (priv->active_webflow_id == 0); /* It should have reported done */
+
   data->response = response;
   data->results = g_variant_ref (results);
   data->done = TRUE;
+  g_main_context_wakeup (g_main_context_get_thread_default ());
+}
+
+static void
+request_tokens_webflow (FlatpakAuthenticatorRequest *object,
+                        const gchar *arg_uri,
+                        RequestData *data)
+{
+  g_autoptr(FlatpakTransaction) transaction = g_object_ref (data->transaction);
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (transaction);
+  gboolean retval = FALSE;
+
+  if (data->done)
+    return; /* Don't respond twice */
+
+  g_assert (priv->active_webflow_id == 0);
+  priv->active_webflow_id = ++priv->next_webflow_id;
+
+  g_debug ("Webflow start %s", arg_uri);
+  g_signal_emit (transaction, signals[WEBFLOW_START], 0, data->remote, arg_uri, priv->active_webflow_id, &retval);
+  if (!retval)
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      priv->active_webflow_id = 0;
+
+      /* We didn't handle the uri, cancel the auth op. */
+      if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
+        g_debug ("Failed to close auth request: %s", local_error->message);
+    }
+}
+
+static void
+request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
+                             RequestData *data)
+{
+  g_autoptr(FlatpakTransaction) transaction = g_object_ref (data->transaction);
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (transaction);
+  guint id;
+
+  if (data->done)
+    return; /* Don't respond twice */
+
+  g_assert (priv->active_webflow_id != 0);
+  id = priv->active_webflow_id;
+  priv->active_webflow_id = 0;
+
+  g_debug ("Webflow done");
+  g_signal_emit (transaction, signals[WEBFLOW_DONE], 0, id);
+}
+
+/**
+ * flatpak_transaction_abort_webflow:
+ * @self: a #FlatpakTransaction
+ * @id: The webflow id, as passed into the webflow-start signal
+ *
+ * Cancel an ongoing webflow authentication request. This can be call
+ * in the time between FlatpakTransaction::webflow-start returned
+ * TRUE, and FlatpakTransaction::webflow-done is emitted. It will
+ * cancel the ongoing authentication operation.
+ *
+ * This is useful for example if you're showing an authenticaion
+ * window with a browser, but the user closed it before it was finished.
+ */
+void
+flatpak_transaction_abort_webflow (FlatpakTransaction *self,
+                                   guint id)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GError) local_error = NULL;
+
+  if (priv->active_webflow_id == id)
+    {
+      RequestData *data = priv->active_webflow;
+
+      g_assert (data != NULL);
+      priv->active_webflow_id = 0;
+
+      if (!data->done)
+        {
+          if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
+            g_debug ("Failed to close auth request: %s", local_error->message);
+        }
+    }
 }
 
 static gboolean
@@ -2633,7 +2779,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
   g_autoptr(AutoFlatpakAuthenticatorRequest) request = NULL;
   g_autoptr(AutoFlatpakAuthenticator) authenticator = NULL;
   g_autoptr(GMainContextPopDefault) context = NULL;
-  RequestTokensData data = { self };
+  RequestData data = { self, remote };
   g_autoptr(GVariant) tokens = NULL;
   g_autoptr(GVariant) results = NULL;
 
@@ -2657,18 +2803,26 @@ request_tokens_for_remote (FlatpakTransaction *self,
   if (request == NULL)
     return FALSE;
 
+  g_signal_connect (request, "webflow", (GCallback)request_tokens_webflow, &data);
+  g_signal_connect (request, "webflow-done", (GCallback)request_tokens_webflow_done, &data);
   g_signal_connect (request, "response", (GCallback)request_tokens_response, &data);
 
+  priv->active_webflow = &data;
+
+  data.request = request;
   if (!flatpak_auth_request_ref_tokens (authenticator, request, (const char **)refs->pdata, cancellable, error))
     return FALSE;
 
   while (!data.done)
     g_main_context_iteration (context, TRUE);
 
+  g_assert (priv->active_webflow_id == 0); /* No outstanding webflows */
+  priv->active_webflow = NULL;
+
   results = data.results; /* Make sure its freed as needed */
 
   {
-    g_autofree char *results_str = g_variant_print (results, FALSE);
+    g_autofree char *results_str = results != NULL ? g_variant_print (results, FALSE) : g_strdup ("NULL");
     g_debug ("Response from request_tokens: %d - %s\n", data.response, results_str);
   }
 

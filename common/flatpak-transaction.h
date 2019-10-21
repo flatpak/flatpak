@@ -132,7 +132,14 @@ struct _FlatpakTransactionClass
                                         const char         *rebased_to_ref,
                                         const char        **previous_ids);
 
-  gpointer padding[8];
+  gboolean (*webflow_start) (FlatpakTransaction *transaction,
+                             const char         *remote,
+                             const char         *url,
+                             guint               id);
+  void (*webflow_done) (FlatpakTransaction *transaction,
+                        guint               id);
+
+  gpointer padding[6];
 };
 
 FLATPAK_EXTERN
@@ -222,6 +229,10 @@ FLATPAK_EXTERN
 FlatpakInstallation *flatpak_transaction_get_installation (FlatpakTransaction *self);
 FLATPAK_EXTERN
 GList *flatpak_transaction_get_operations (FlatpakTransaction *self);
+
+FLATPAK_EXTERN
+void               flatpak_transaction_abort_webflow (FlatpakTransaction *self,
+                                                      guint               id);
 
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install (FlatpakTransaction *self,
