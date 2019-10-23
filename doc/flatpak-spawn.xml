@@ -168,6 +168,17 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--directory=DIR</option></term>
+
+                <listitem><para>
+                  The working directory in which to run the command.
+                </para><para>
+                  Note that the given directory must exist in the sandbox or, when used in conjunction
+                  with <option>--host</option>, on the host.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 
