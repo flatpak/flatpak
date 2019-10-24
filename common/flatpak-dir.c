@@ -14607,9 +14607,10 @@ flatpak_dir_get_default_locale_languages (FlatpakDir *self)
   extra_languages = flatpak_dir_get_config_strv (self, "xa.extra-languages");
   for (i = 0; extra_languages != NULL && extra_languages[i] != NULL; i++)
     {
-       g_auto(GStrv) locales = g_strsplit (extra_languages[i], "_", -1);
-       g_free (extra_languages[i]);
-       extra_languages[i] = g_strdup (locales[0]);
+      /* Strip the locale, modifier or codeset, if present. */
+      gchar *match = strpbrk (extra_languages[i], "._@");
+      if (match != NULL)
+        *match = '\0';
     }
 
   if (flatpak_dir_is_user (self))
