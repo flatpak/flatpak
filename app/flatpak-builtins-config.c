@@ -51,6 +51,10 @@ looks_like_a_language (const char *s)
   int len = strlen (s);
   int i;
 
+  if (g_str_equal (s, "C") ||
+      g_str_equal (s, "POSIX"))
+    return TRUE;
+
   if (len < 2 || len > 3)
     return FALSE;
 
