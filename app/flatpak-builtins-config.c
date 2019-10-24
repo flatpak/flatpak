@@ -55,7 +55,7 @@ looks_like_a_language (const char *s)
       g_str_equal (s, "POSIX"))
     return TRUE;
 
-  if (len < 2 || len > 3)
+  if (len < 2)
     return FALSE;
 
   for (i = 0; i < len; i++)
