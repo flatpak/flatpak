@@ -1687,12 +1687,15 @@ flatpak_installation_get_default_languages (FlatpakInstallation  *self,
  * @self: a #FlatpakInstallation
  * @error: return location for a #GError
  *
- * Like flatpak_installation_get_default_languages() but includes region 
- * information (e.g. en_US rather than en) which may be included in the 
- * xa.extra-languages configuration.
+ * Like flatpak_installation_get_default_languages() but includes territory
+ * information (e.g. `en_US` rather than `en`) which may be included in the
+ * `xa.extra-languages` configuration.
+ *
+ * Strings returned by this function are in the format specified by
+ * [`setlocale()`](man:setlocale): `language[_territory][.codeset][@modifier]`.
  *
  * Returns: (array zero-terminated=1) (element-type utf8) (transfer full):
- *   A possibly empty array of language and locale strings, or %NULL on error.
+ *   A possibly empty array of locale strings, or %NULL on error.
  * Since: 1.5.1
  */
 char **

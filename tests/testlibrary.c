@@ -291,27 +291,30 @@ test_languages_config (void)
   g_assert_cmpstr (value[0], ==, "en");
   g_assert_null (value[1]);
 
-  res = flatpak_installation_set_config_sync (inst, "extra-languages", "pt_BR;az_Latn_AZ;es", NULL, &error);
+  res = flatpak_installation_set_config_sync (inst, "extra-languages", "pt_BR;uz_UZ.utf8@cyrillic;es;zh_HK.big5hkscs;uz_UZ@cyrillic", NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
   value = flatpak_installation_get_default_languages (inst, &error);
   g_assert_no_error (error);
-  g_assert_cmpstr (value[0], ==, "az");
-  g_assert_cmpstr (value[1], ==, "en");
-  g_assert_cmpstr (value[2], ==, "es");
-  g_assert_cmpstr (value[3], ==, "pt");
-  g_assert_null (value[4]);
+  g_assert_cmpstr (value[0], ==, "en");
+  g_assert_cmpstr (value[1], ==, "es");
+  g_assert_cmpstr (value[2], ==, "pt");
+  g_assert_cmpstr (value[3], ==, "uz");
+  g_assert_cmpstr (value[4], ==, "zh");
+  g_assert_null (value[5]);
 
   g_clear_pointer (&value, g_strfreev);
 
   value = flatpak_installation_get_default_locales (inst, &error);
   g_assert_no_error (error);
-  g_assert_cmpstr (value[0], ==, "az_Latn_AZ");
-  g_assert_cmpstr (value[1], ==, "en");
-  g_assert_cmpstr (value[2], ==, "es");
-  g_assert_cmpstr (value[3], ==, "pt_BR");
-  g_assert_null (value[4]);
+  g_assert_cmpstr (value[0], ==, "en");
+  g_assert_cmpstr (value[1], ==, "es");
+  g_assert_cmpstr (value[2], ==, "pt_BR");
+  g_assert_cmpstr (value[3], ==, "uz_UZ.utf8@cyrillic");
+  g_assert_cmpstr (value[4], ==, "uz_UZ@cyrillic");
+  g_assert_cmpstr (value[5], ==, "zh_HK.big5hkscs");
+  g_assert_null (value[6]);
 
   g_clear_pointer (&value, g_strfreev);
 

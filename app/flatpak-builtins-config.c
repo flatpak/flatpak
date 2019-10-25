@@ -51,7 +51,11 @@ looks_like_a_language (const char *s)
   int len = strlen (s);
   int i;
 
-  if (len < 2 || len > 3)
+  if (g_str_equal (s, "C") ||
+      g_str_equal (s, "POSIX"))
+    return TRUE;
+
+  if (len < 2)
     return FALSE;
 
   for (i = 0; i < len; i++)
@@ -64,45 +68,69 @@ looks_like_a_language (const char *s)
 }
 
 static gboolean
-looks_like_a_region (const char *s)
+looks_like_a_territory (const char *s)
 {
-  g_auto(GStrv) locale = g_strsplit (s, "_", 3);
-  int i;
-  int len;
+  gsize len = strlen (s);
+  gsize i;
 
-  if (!looks_like_a_language(locale[0]))
+  if (len < 2)
     return FALSE;
 
-  if (locale[1] != NULL)
+  for (i = 0; i < len; i++)
     {
-      len = strlen (locale[1]);
-
-      // This can be either GB or Latn
-      if (len < 2 || len > 4)
+      if (!g_ascii_isalpha (s[i]) || !g_ascii_isupper (s[i]))
         return FALSE;
-
-      for (i = 0; i < len; i++)
-        {
-          if ((locale[2] == NULL) && (!g_ascii_isalpha (locale[1][i]) || !g_ascii_isupper (locale[1][i])))
-            return FALSE;
-          else if (!g_ascii_isalpha (locale[1][i]))
-            return FALSE;
-        }
     }
 
-  if (g_strv_length (locale) > 2)
+  return TRUE;
+}
+
+static gboolean
+looks_like_a_codeset_or_modifier (const char *s)
+{
+  gsize len = strlen (s);
+  gsize i;
+
+  if (len < 1)
+    return FALSE;
+
+  for (i = 0; i < len; i++)
     {
-      len = strlen (locale[2]);
-
-      if (len < 2 || len > 3)
+      if (!g_ascii_isalnum (s[i]) && s[i] != '-')
         return FALSE;
-
-      for (i = 0; i < len; i++)
-        {
-          if (!g_ascii_isalpha (locale[2][i]) || !g_ascii_isupper (locale[2][i]))
-            return FALSE;
-        }
     }
+
+  return TRUE;
+}
+
+static gboolean
+looks_like_a_locale (const char *s)
+{
+  g_autofree gchar *locale = g_strdup (s);
+  gchar *language, *territory, *codeset, *modifier;
+
+  modifier = strchr (locale, '@');
+  if (modifier != NULL)
+    *modifier++ = '\0';
+
+  codeset = strchr (locale, '.');
+  if (codeset != NULL)
+    *codeset++ = '\0';
+
+  territory = strchr (locale, '_');
+  if (territory != NULL)
+    *territory++ = '\0';
+
+  language = locale;
+
+  if (!looks_like_a_language (language))
+    return FALSE;
+  if (territory != NULL && !looks_like_a_territory (territory))
+    return FALSE;
+  if (codeset != NULL && !looks_like_a_codeset_or_modifier (codeset))
+    return FALSE;
+  if (modifier != NULL && !looks_like_a_codeset_or_modifier (modifier))
+    return FALSE;
 
   return TRUE;
 }
@@ -116,7 +144,7 @@ parse_locale (const char *value, GError **error)
   strs = g_strsplit (value, ";", 0);
   for (i = 0; strs[i]; i++)
     {
-      if (!looks_like_a_language (strs[i]) && !looks_like_a_region (strs[i]))
+      if (!looks_like_a_language (strs[i]) && !looks_like_a_locale (strs[i]))
         {
           flatpak_fail (error, _("'%s' does not look like a language/locale code"), strs[i]);
           return NULL;
