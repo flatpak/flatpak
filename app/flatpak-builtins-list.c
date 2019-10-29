@@ -440,7 +440,7 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (!opt_app && !opt_runtime)
     {
       opt_app = TRUE;
-      opt_runtime = TRUE;
+      opt_runtime = !opt_app_runtime;
     }
 
   /* Default to showing installation if we're listing multiple installations */

@@ -411,7 +411,10 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
     return FALSE;
 
   if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
+    {
+      opt_app = TRUE;
+      opt_runtime = !opt_app_runtime;
+    }
 
   if (argc > 2)
     return usage_error (context, _("Too many arguments"), error);
