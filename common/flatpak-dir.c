@@ -42,7 +42,10 @@
 #include "libglnx/libglnx.h"
 #include "flatpak-error.h"
 #include <ostree.h>
+
+#ifdef USE_SYSTEM_HELPER
 #include <polkit/polkit.h>
+#endif
 
 #include "flatpak-dir-private.h"
 #include "flatpak-utils-base-private.h"
@@ -74,6 +77,7 @@
 #define SYSCONF_REMOTES_DIR "remotes.d"
 #define SYSCONF_REMOTES_FILE_EXT ".flatpakrepo"
 
+#ifdef USE_SYSTEM_HELPER
 /* This uses a weird Auto prefix to avoid conflicts with later added polkit types.
  */
 typedef PolkitAuthority           AutoPolkitAuthority;
@@ -85,6 +89,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitAuthority, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitAuthorizationResult, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitDetails, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
+#endif
 
 static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
                                                                          GLnxLockFile *file_lock,
@@ -7641,6 +7646,7 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
                                      GError       **error)
 {
 #ifdef HAVE_LIBMALCONTENT
+#ifdef USE_SYSTEM_HELPER
   g_autoptr(GError) local_error = NULL;
   const char *on_session = g_getenv ("FLATPAK_SYSTEM_HELPER_ON_SESSION");
   g_autoptr(GDBusConnection) dbus_connection = NULL;
@@ -7753,6 +7759,7 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
                                ref);
 
   g_debug ("Parental controls policy overridden by polkit for %s", ref);
+#endif  /* USE_SYSTEM_HELPER */
 #endif  /* HAVE_LIBMALCONTENT */
 
   return TRUE;
