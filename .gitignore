@@ -39,6 +39,7 @@ flatpak-validate-icon
 profile/flatpak.sh
 *-dbus-generated.[ch]
 flatpak-resources.[ch]
+flatpak-permission-dbus.[ch]
 flatpak-portal-dbus.[ch]
 flatpak-dbus-proxy
 permission-store-dbus.[ch]
