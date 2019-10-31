@@ -363,8 +363,7 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
     {
       /* This case we have O_TMPFILE, so our reference to it is via /proc/self/fd */
       char proc_fd_path[strlen("/proc/self/fd/") + DECIMAL_STR_MAX(tmpf->fd) + 1];
-
-      sprintf (proc_fd_path, "/proc/self/fd/%i", tmpf->fd);
+      snprintf (proc_fd_path, sizeof (proc_fd_path), "/proc/self/fd/%i", tmpf->fd);
 
       if (replace)
         {
@@ -421,6 +420,45 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
         }
 
     }
+  return TRUE;
+}
+
+/* glnx_tmpfile_reopen_rdonly:
+ * @tmpf: tmpfile
+ * @error: Error
+ *
+ * Give up write access to the file descriptior.  One use
+ * case for this is fs-verity, which requires a read-only fd.
+ * It could also be useful to allocate an anonymous tmpfile
+ * write some sort of caching/indexing data to it, then reopen it
+ * read-only thereafter.
+ **/
+gboolean
+glnx_tmpfile_reopen_rdonly (GLnxTmpfile *tmpf,
+                            GError **error)
+{
+  g_return_val_if_fail (tmpf->fd >= 0, FALSE);
+  g_return_val_if_fail (tmpf->src_dfd == AT_FDCWD || tmpf->src_dfd >= 0, FALSE);
+
+  glnx_fd_close int rdonly_fd = -1;
+
+  if (tmpf->path)
+    {
+      if (!glnx_openat_rdonly (tmpf->src_dfd, tmpf->path, FALSE, &rdonly_fd, error))
+        return FALSE;
+    }
+  else
+    {
+      /* This case we have O_TMPFILE, so our reference to it is via /proc/self/fd */
+      char proc_fd_path[strlen("/proc/self/fd/") + DECIMAL_STR_MAX(tmpf->fd) + 1];
+      snprintf (proc_fd_path, sizeof (proc_fd_path), "/proc/self/fd/%i", tmpf->fd);
+
+      if (!glnx_openat_rdonly (AT_FDCWD, proc_fd_path, TRUE, &rdonly_fd, error))
+        return FALSE;
+    }
+
+  glnx_close_fd (&tmpf->fd);
+  tmpf->fd = glnx_steal_fd (&rdonly_fd);
   return TRUE;
 }
 
