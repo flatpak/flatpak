@@ -34,6 +34,7 @@ typedef enum {
 
 static void run_test_subprocess (char                 **argv,
                                  RunTestSubprocessFlags flags);
+static void empty_installation (FlatpakInstallation *inst);
 
 typedef struct
 {
@@ -1600,35 +1601,56 @@ static void
 test_list_updates (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
   g_autoptr(GError) error = NULL;
-  g_autoptr(GPtrArray) refs = NULL;
   g_autoptr(FlatpakInstalledRef) ref = NULL;
-  g_autoptr(FlatpakInstalledRef) runtime_ref = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
   FlatpakInstalledRef *update_ref = NULL;
   g_autoptr(FlatpakInstalledRef) updated_ref = NULL;
+  g_autofree gchar *app = NULL;
+  g_autofree gchar *runtime = NULL;
   gboolean res;
+
+  app = g_strdup_printf ("app/org.test.Hello/%s/master",
+                         flatpak_get_default_arch ());
+
+  runtime = g_strdup_printf ("runtime/org.test.Platform/%s/master",
+                             flatpak_get_default_arch ());
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
 
-  /* Install a runtime and app */
-  runtime_ref = flatpak_installation_install (inst,
-                                              repo_name,
-                                              FLATPAK_REF_KIND_RUNTIME,
-                                              "org.test.Platform",
-                                              NULL, NULL, NULL, NULL, NULL,
-                                              &error);
-  g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (runtime_ref));
+  empty_installation (inst);
 
-  ref = flatpak_installation_install (inst,
-                                      repo_name,
-                                      FLATPAK_REF_KIND_APP,
-                                      "org.test.Hello",
-                                      NULL, NULL, NULL, NULL, NULL,
-                                      &error);
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (ref));
+  g_assert_nonnull (transaction);
+
+  /* install org.test.Hello, and have org.test.Hello.Locale and org.test.Platform
+   * added as deps/related
+   */
+  res = flatpak_transaction_add_install (transaction, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  g_clear_object (&transaction);
+
+  refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 3);
+  g_clear_pointer (&refs, g_ptr_array_unref);
+
+  ref = flatpak_installation_get_installed_ref (inst,
+                                                FLATPAK_REF_KIND_APP,
+                                                "org.test.Hello",
+                                                flatpak_get_default_arch (),
+                                                "master", NULL, &error);
+  g_assert_nonnull (ref);
+  g_assert_no_error (error);
 
   /* Add a previous-id to the deploy file */
   mangle_deploy_file (ref);
@@ -1644,20 +1666,23 @@ test_list_updates (void)
   refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);
-  g_assert_cmpint (refs->len, ==, 1);
+  g_assert_cmpint (refs->len, ==, 2);
   update_ref = g_ptr_array_index (refs, 0);
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_APP);
+  update_ref = g_ptr_array_index (refs, 1);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello.Locale");
+  g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_RUNTIME);
 
   /* Install the new update */
   updated_ref = flatpak_installation_update (inst,
                                              FLATPAK_UPDATE_FLAGS_NONE,
                                              FLATPAK_REF_KIND_APP,
                                              "org.test.Hello",
-                                             NULL, NULL, NULL, NULL, NULL,
-                                             &error);
+                                             flatpak_get_default_arch (), "master",
+                                             NULL, NULL, NULL, &error);
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (updated_ref));
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (updated_ref));
 
   check_desktop_file (updated_ref,
                       "org.test.Hello.desktop",
@@ -1667,23 +1692,19 @@ test_list_updates (void)
                       "hello-again.desktop;net.example.Goodbye.Again.desktop;");
 
   /* Uninstall the runtime and app */
-  res = flatpak_installation_uninstall (inst,
-                                        flatpak_ref_get_kind (FLATPAK_REF (ref)),
-                                        flatpak_ref_get_name (FLATPAK_REF (ref)),
-                                        flatpak_ref_get_arch (FLATPAK_REF (ref)),
-                                        flatpak_ref_get_branch (FLATPAK_REF (ref)),
-                                        NULL, NULL, NULL,
-                                        &error);
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_uninstall (transaction, app, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
-  res = flatpak_installation_uninstall (inst,
-                                        flatpak_ref_get_kind (FLATPAK_REF (runtime_ref)),
-                                        flatpak_ref_get_name (FLATPAK_REF (runtime_ref)),
-                                        flatpak_ref_get_arch (FLATPAK_REF (runtime_ref)),
-                                        flatpak_ref_get_branch (FLATPAK_REF (runtime_ref)),
-                                        NULL, NULL, NULL,
-                                        &error);
+  res = flatpak_transaction_add_uninstall (transaction, runtime, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 }
