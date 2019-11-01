@@ -105,12 +105,18 @@ flatpak_error_quark (void)
 gboolean
 flatpak_fail_error (GError **error, FlatpakError code, const char *fmt, ...)
 {
+  GError *new;
+
   if (error == NULL)
     return FALSE;
 
   va_list args;
   va_start (args, fmt);
-  GError *new = g_error_new_valist (FLATPAK_ERROR, code, fmt, args);
+  if (*error != NULL &&
+      g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+    new = g_error_new_valist (G_IO_ERROR, G_IO_ERROR_CANCELLED, fmt, args);
+  else
+    new = g_error_new_valist (FLATPAK_ERROR, code, fmt, args);
   va_end (args);
   g_propagate_error (error, g_steal_pointer (&new));
   return FALSE;
