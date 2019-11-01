@@ -11189,7 +11189,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
       else
         {
-          if (optional)
+          if (optional && !g_cancellable_is_cancelled (cancellable))
             {
               state->summary_fetch_error = g_steal_pointer (&local_error);
               g_debug ("Failed to download optional summary");
@@ -11218,7 +11218,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       if (!_flatpak_dir_fetch_remote_state_metadata_branch (self, state, only_cached, cancellable, &local_error) &&
           !g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_DOWNGRADE))
         {
-          if (optional)
+          if (optional && !g_cancellable_is_cancelled (cancellable))
             {
               /* This happens for instance in the case where a p2p remote is invalid (wrong signature)
                  and we should just silently fail to update to it. */
