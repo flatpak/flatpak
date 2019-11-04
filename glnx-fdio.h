@@ -111,6 +111,10 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
                       GError **error);
 
 gboolean
+glnx_tmpfile_reopen_rdonly (GLnxTmpfile *tmpf,
+                            GError **error);
+
+gboolean
 glnx_openat_rdonly (int             dfd,
                     const char     *path,
                     gboolean        follow,
