@@ -51,6 +51,7 @@ FlatpakAuthenticatorRequest *flatpak_auth_create_request            (FlatpakAuth
                                                                      GError                      **error);
 gboolean                     flatpak_auth_request_ref_tokens        (FlatpakAuthenticator         *authenticator,
                                                                      FlatpakAuthenticatorRequest  *request,
+                                                                     const char                   *remote,
                                                                      const char                  **refs,
                                                                      GCancellable                 *cancellable,
                                                                      GError                      **error);
