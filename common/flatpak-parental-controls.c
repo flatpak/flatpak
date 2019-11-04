@@ -113,7 +113,7 @@ flatpak_oars_check_rating (GHashTable   *content_rating,
       MctAppFilterOarsValue rating_value;
       MctAppFilterOarsValue filter_value = mct_app_filter_get_oars_value (filter,
                                                                           oars_sections[i]);
-      const gchar *appdata_value;
+      const gchar *appdata_value = NULL;
 
       if (content_rating != NULL)
         appdata_value = g_hash_table_lookup (content_rating, oars_sections[i]);
