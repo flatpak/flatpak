@@ -2810,7 +2810,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
   priv->active_webflow = &data;
 
   data.request = request;
-  if (!flatpak_auth_request_ref_tokens (authenticator, request, (const char **)refs->pdata, cancellable, error))
+  if (!flatpak_auth_request_ref_tokens (authenticator, request, remote, (const char **)refs->pdata, cancellable, error))
     return FALSE;
 
   while (!data.done)

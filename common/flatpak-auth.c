@@ -129,6 +129,7 @@ flatpak_auth_create_request (FlatpakAuthenticator *authenticator,
 gboolean
 flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
                                  FlatpakAuthenticatorRequest *request,
+                                 const char *remote,
                                  const char **refs,
                                  GCancellable *cancellable,
                                  GError **error)
@@ -141,7 +142,7 @@ flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
 
   options = g_object_get_data (G_OBJECT (authenticator), "authenticator-options");
 
-  if (!flatpak_authenticator_call_request_ref_tokens_sync (authenticator, token, options, refs,
+  if (!flatpak_authenticator_call_request_ref_tokens_sync (authenticator, token, options, remote, refs,
                                                            &handle, cancellable, error))
     return FALSE;
 

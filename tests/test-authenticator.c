@@ -172,6 +172,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                            GDBusMethodInvocation *invocation,
                            const gchar *arg_handle_token,
                            GVariant *arg_authenticator_option,
+                           const gchar *arg_remote,
                            const gchar *const *arg_refs)
 {
   g_autoptr(GError) error = NULL;
