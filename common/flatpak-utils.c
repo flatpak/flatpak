@@ -6208,11 +6208,13 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint64 total_transferred;
   g_autofree gchar *formatted_bytes_total_transferred = NULL;
   g_autoptr(GVariant) outstanding_fetchesv = NULL;
+  g_autoptr(GVariant) outstanding_extra_datav = NULL;
 
   /* We get some extra calls before we've really started due to the initialization of the
      extra data, so ignore those */
   outstanding_fetchesv = ostree_async_progress_get_variant (progress, "outstanding-fetches");
-  if (outstanding_fetchesv == NULL)
+  outstanding_extra_datav = ostree_async_progress_get_variant (progress, "outstanding-extra-data");
+  if (outstanding_fetchesv == NULL || outstanding_extra_datav == NULL)
     return;
 
   buf = g_string_new ("");
