@@ -6187,7 +6187,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint64 bytes_transferred;
   guint64 fetched_delta_part_size;
   guint64 total_delta_part_size;
-  guint outstanding_extra_data;
+  guint64 outstanding_extra_data;
   guint64 total_extra_data_bytes;
   guint64 transferred_extra_data_bytes;
   guint64 total = 0;
@@ -6271,7 +6271,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
                              "requested", "u", &requested,
                              "start-time", "t", &start_time,
                              "status", "s", &status,
-                             "outstanding-extra-data", "u", &outstanding_extra_data,
+                             "outstanding-extra-data", "t", &outstanding_extra_data,
                              "total-extra-data-bytes", "t", &total_extra_data_bytes,
                              "transferred-extra-data-bytes", "t", &transferred_extra_data_bytes,
                              "downloading-extra-data", "u", &downloading_extra_data,
