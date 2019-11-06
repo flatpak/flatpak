@@ -4761,8 +4761,8 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                               GError                              **error)
 {
   g_autoptr(GVariant) extra_data_sources = NULL;
-  int i;
-  gsize n_extra_data;
+  guint64 i;
+  guint64 n_extra_data;
   guint64 total_download_size;
 
   /* If @results is set, @rev must be. */
@@ -4818,8 +4818,8 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
   if (progress)
     {
       ostree_async_progress_set (progress,
-                                 "outstanding-extra-data", "u", n_extra_data,
-                                 "total-extra-data", "u", n_extra_data,
+                                 "outstanding-extra-data", "t", n_extra_data,
+                                 "total-extra-data", "t", n_extra_data,
                                  "total-extra-data-bytes", "t", total_download_size,
                                  "transferred-extra-data-bytes", "t", (guint64) 0,
                                  "downloading-extra-data", "u", 0,
@@ -4960,7 +4960,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
       extra_data_progress.previous_dl += download_size;
       if (progress)
-        ostree_async_progress_set_uint (progress, "outstanding-extra-data", n_extra_data - i - 1);
+        ostree_async_progress_set_uint64 (progress, "outstanding-extra-data", n_extra_data - i - 1);
 
       sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
       if (strcmp (sha256, extra_data_sha256) != 0)
@@ -5051,8 +5051,8 @@ oci_pull_init_progress (OstreeAsyncProgress *progress)
                              "start-time", "t", start_time,
                              "outstanding-metadata-fetches", "u", 0,
                              "metadata-fetched", "u", 0,
-                             "outstanding-extra-data", "u", 0,
-                             "total-extra-data", "u", 0,
+                             "outstanding-extra-data", "t", (guint64) 0,
+                             "total-extra-data", "t", (guint64) 0,
                              "total-extra-data-bytes", "t", (guint64) 0,
                              "transferred-extra-data-bytes", "t", (guint64) 0,
                              "downloading-extra-data", "u", 0,
