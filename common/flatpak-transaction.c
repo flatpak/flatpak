@@ -2834,7 +2834,13 @@ request_tokens_for_remote (FlatpakTransaction *self,
     }
 
   if (data.response != FLATPAK_AUTH_RESPONSE_OK)
-    return flatpak_fail (error, "Failed to get tokens for ref");
+    {
+      const char *error_message = NULL;
+      if (g_variant_lookup (results, "error-message", "&s", &error_message))
+        return flatpak_fail (error, "Failed to get tokens for ref: %s", error_message);
+      else
+        return flatpak_fail (error, "Failed to get tokens for ref");
+    }
 
   tokens = g_variant_lookup_value (results, "tokens", G_VARIANT_TYPE ("a{sas}"));
   if (tokens == NULL)
