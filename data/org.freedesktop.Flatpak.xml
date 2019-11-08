@@ -176,7 +176,8 @@
       <arg type='s' name='handle_token' direction='in'/>
       <arg type='a{sv}' name='authenticator_options' direction='in'/>
       <arg type='s' name='remote' direction='in'/>
-      <arg type='as' name='refs' direction='in'/>
+      <!-- This is the ref and its token-type -->
+      <arg type='a(si)' name='refs' direction='in'/>
       <arg type='o' name='handle' direction='out'/>
     </method>
   </interface>

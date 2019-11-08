@@ -130,7 +130,7 @@ gboolean
 flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
                                  FlatpakAuthenticatorRequest *request,
                                  const char *remote,
-                                 const char **refs,
+                                 GVariant *refs,
                                  GCancellable *cancellable,
                                  GError **error)
 {
