@@ -2773,25 +2773,30 @@ request_tokens_for_remote (FlatpakTransaction *self,
                            GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_autofree char *refs_as_str = NULL;
+  g_autoptr(GString) refs_as_str = g_string_new ("");
   GList *l;
-  g_autoptr(GPtrArray) refs = g_ptr_array_new ();
   g_autoptr(AutoFlatpakAuthenticatorRequest) request = NULL;
   g_autoptr(AutoFlatpakAuthenticator) authenticator = NULL;
   g_autoptr(GMainContextPopDefault) context = NULL;
   RequestData data = { self, remote };
   g_autoptr(GVariant) tokens = NULL;
   g_autoptr(GVariant) results = NULL;
+  g_autoptr(GVariant) refs = NULL;
+  GVariantBuilder refs_builder;
+
+  g_variant_builder_init (&refs_builder, G_VARIANT_TYPE ("a(si)"));
 
   for (l = ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
-      g_ptr_array_add (refs, op->ref);
+      g_variant_builder_add (&refs_builder, "(si)", op->ref, (gint32)op->token_type);
+      g_string_append_printf (refs_as_str, "(%s, %d)", op->ref, op->token_type);
+      if (l->next != NULL)
+        g_string_append (refs_as_str, ", ");
     }
-  g_ptr_array_add (refs, NULL);
 
-  refs_as_str = g_strjoinv (", ", (char **)refs->pdata);
-  g_debug ("Requesting tokens for remote %s, refs: %s", remote, refs_as_str);
+  g_debug ("Requesting tokens for remote %s: %s", remote, refs_as_str->str);
+  refs = g_variant_ref_sink (g_variant_builder_end (&refs_builder));
 
   context = flatpak_main_context_new_default ();
 
@@ -2810,7 +2815,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
   priv->active_webflow = &data;
 
   data.request = request;
-  if (!flatpak_auth_request_ref_tokens (authenticator, request, remote, (const char **)refs->pdata, cancellable, error))
+  if (!flatpak_auth_request_ref_tokens (authenticator, request, remote, refs, cancellable, error))
     return FALSE;
 
   while (!data.done)

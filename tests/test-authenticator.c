@@ -173,7 +173,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                            const gchar *arg_handle_token,
                            GVariant *arg_authenticator_option,
                            const gchar *arg_remote,
-                           const gchar *const *arg_refs)
+                           GVariant *arg_refs)
 {
   g_autoptr(GError) error = NULL;
   g_autoptr(GSocketService) server = NULL;
@@ -182,6 +182,8 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   g_autofree char *request_path = NULL;
   guint16 port;
   TokenRequestData *data;
+  g_autoptr(GPtrArray) refs = NULL;
+  gsize n_refs, i;
 
   g_debug ("handling RequestRefTokens");
 
@@ -213,7 +215,18 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
       return TRUE;
     }
 
-  data = token_request_data_new (invocation, request, server, arg_refs);
+  refs = g_ptr_array_new_with_free_func (g_free);
+  n_refs = g_variant_n_children (arg_refs);
+  for (i = 0; i < n_refs; i++)
+    {
+      const char *ref;
+      gint32 token_type;
+      g_variant_get_child (arg_refs, i, "(&si)", &ref, &token_type);
+      g_ptr_array_add (refs, g_strdup (ref));
+    }
+  g_ptr_array_add (refs, NULL);
+
+  data = token_request_data_new (invocation, request, server, (const char *const*)refs->pdata);
 
   g_signal_connect (server, "incoming", (GCallback)http_incoming, data);
   g_signal_connect (request, "handle-close", G_CALLBACK (handle_request_close), data);
