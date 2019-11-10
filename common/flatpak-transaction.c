@@ -968,7 +968,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @object: A #FlatpakTransaction
    * @operation: The #FlatpakTransactionOperation which failed
    * @error: A #GError
-   * @details: A #FlatpakTransactionErrorDetails with details about the error
+   * @details: (type FlatpakTransactionErrorDetails): A #FlatpakTransactionErrorDetails with details about the error
    *
    * The ::operation-error signal gets emitted when an error occurs during the
    * execution of the transaction.
@@ -989,7 +989,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @object: A #FlatpakTransaction
    * @operation: The #FlatpakTransactionOperation which finished
    * @commit: The commit
-   * @result: A #FlatpakTransactionResult giving details about the result
+   * @result: (type FlatpakTransactionResult): A #FlatpakTransactionResult giving details about the result
    *
    * The ::operation-done signal gets emitted during the execution of
    * the transaction when an operation is finished.
@@ -1093,7 +1093,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   /**
    * FlatpakTransaction::add-new-remote:
    * @object: A #FlatpakTransaction
-   * @reason: A #FlatpakTransactionRemoteReason for this suggestion
+   * @reason: (type FlatpakTransactionRemoteReason): A #FlatpakTransactionRemoteReason for this suggestion
    * @from_id: The id of the app/runtime
    * @suggested_remote_name: The suggested remote name
    * @url: The repo url
@@ -1197,6 +1197,25 @@ flatpak_transaction_set_no_pull (FlatpakTransaction *self,
 }
 
 /**
+ * flatpak_transaction_get_no_pull:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets whether the transaction should operate only on locally
+ * available data.
+ *
+ * Returns: %TRUE if no_pull is set, %FALSE otherwise
+ *
+ * Since: 1.5.1
+ */
+gboolean
+flatpak_transaction_get_no_pull (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->no_pull;
+}
+
+/**
  * flatpak_transaction_set_no_deploy:
  * @self: a #FlatpakTransaction
  * @no_deploy: whether to avoid deploying
@@ -1211,6 +1230,25 @@ flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   priv->no_deploy = no_deploy;
+}
+
+/**
+ * flatpak_transaction_get_no_deploy:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets whether the transaction is only downloading updates,
+ * and not deploying them.
+ *
+ * Returns: %TRUE if no_deploy is set, %FALSE otherwise
+ *
+ * Since: 1.5.1
+ */
+gboolean
+flatpak_transaction_get_no_deploy (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->no_deploy;
 }
 
 /**
@@ -1412,7 +1450,7 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
   if (state)
     return flatpak_remote_state_ref (state);
 
-  state = flatpak_dir_get_remote_state_optional (priv->dir, remote, NULL, error);
+  state = flatpak_dir_get_remote_state_optional (priv->dir, remote, FALSE, NULL, error);
 
   if (state)
     g_hash_table_insert (priv->remote_states, state->remote_name, flatpak_remote_state_ref (state));
@@ -1522,9 +1560,12 @@ add_related (FlatpakTransaction          *self,
   if (priv->disable_related)
     return TRUE;
 
-  state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
-  if (state == NULL)
-    return FALSE;
+  if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    {
+      state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
+      if (state == NULL)
+        return FALSE;
+    }
 
   if (op->resolved_metakey == NULL)
     {
@@ -1533,7 +1574,7 @@ add_related (FlatpakTransaction          *self,
     }
 
   if (transaction_is_local_only (self, op->kind))
-    related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref, op->remote, op->resolved_metakey,
+    related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref, op->resolved_commit, op->remote, op->resolved_metakey,
                                                            NULL, &local_error);
   else
     related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref, op->resolved_metakey,
@@ -1578,7 +1619,7 @@ add_related (FlatpakTransaction          *self,
                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
-          run_operation_before (op, related_op, 1);
+          run_operation_before (related_op, op, 1);
         }
     }
 
@@ -1802,9 +1843,14 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   /* This should have been passed in or found out above */
   g_assert (remote != NULL);
 
-  state = flatpak_transaction_ensure_remote_state (self, kind, remote, error);
-  if (state == NULL)
-    return FALSE;
+  /* We don't need remote state for an uninstall, and we don't want a missing
+   * remote to be fatal */
+  if (kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    {
+      state = flatpak_transaction_ensure_remote_state (self, kind, remote, error);
+      if (state == NULL)
+        return FALSE;
+    }
 
   op = flatpak_transaction_add_op (self, remote, ref, subpaths, previous_ids, commit, bundle, kind);
 
@@ -2070,7 +2116,7 @@ emit_op_done (FlatpakTransaction          *self,
 }
 
 static GBytes *
-load_deployed_metadata (FlatpakTransaction *self, const char *ref)
+load_deployed_metadata (FlatpakTransaction *self, const char *ref, char **out_commit)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GFile) deploy_dir = NULL;
@@ -2081,6 +2127,16 @@ load_deployed_metadata (FlatpakTransaction *self, const char *ref)
   deploy_dir = flatpak_dir_get_if_deployed (priv->dir, ref, NULL, NULL);
   if (deploy_dir == NULL)
     return NULL;
+
+  if (out_commit)
+    {
+      g_autoptr(GVariant) deploy_data = NULL;
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+      if (deploy_data == NULL)
+        return NULL;
+
+      *out_commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+    }
 
   metadata_file = g_file_get_child (deploy_dir, "metadata");
 
@@ -2121,8 +2177,7 @@ mark_op_resolved (FlatpakTransactionOperation *op,
 
   g_assert (op != NULL);
 
-  if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-    g_assert (commit != NULL);
+  g_assert (commit != NULL);
 
   op->resolved = TRUE;
   op->resolved_commit = g_strdup (commit);
@@ -2193,7 +2248,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
       op->eol = g_strdup (resolve->eol);
       op->eol_rebase = g_strdup (resolve->eol_rebase);
 
-      old_metadata_bytes = load_deployed_metadata (self, op->ref);
+      old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL);
       mark_op_resolved (op, resolve->resolved_commit, resolve->resolved_metadata, old_metadata_bytes);
 
       emit_eol_and_maybe_skip (self, op);
@@ -2234,8 +2289,8 @@ resolve_ops (FlatpakTransaction *self,
         {
           /* We resolve to the deployed metadata, because we need it to uninstall related ops */
 
-          metadata_bytes = load_deployed_metadata (self, op->ref);
-          mark_op_resolved (op, NULL, metadata_bytes, NULL);
+          metadata_bytes = load_deployed_metadata (self, op->ref, &checksum);
+          mark_op_resolved (op, checksum, metadata_bytes, NULL);
           continue;
         }
 
@@ -2288,7 +2343,7 @@ resolve_ops (FlatpakTransaction *self,
           g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &op->eol);
           g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &op->eol_rebase);
 
-          old_metadata_bytes = load_deployed_metadata (self, op->ref);
+          old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL);
           mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
 
           emit_eol_and_maybe_skip (self, op);
@@ -2339,7 +2394,7 @@ resolve_ops (FlatpakTransaction *self,
               g_variant_lookup (sparse_cache, "eolr", "s", &op->eol_rebase);
             }
 
-          old_metadata_bytes = load_deployed_metadata (self, op->ref);
+          old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL);
           mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
 
           emit_eol_and_maybe_skip (self, op);
@@ -2880,6 +2935,172 @@ flatpak_transaction_run (FlatpakTransaction *transaction,
 }
 
 static gboolean
+_run_op_kind (FlatpakTransaction           *self,
+              FlatpakTransactionOperation  *op,
+              FlatpakRemoteState           *remote_state, /* nullable */
+              gboolean                     *out_needs_prune,
+              gboolean                     *out_needs_triggers,
+              GCancellable                 *cancellable,
+              GError                      **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  gboolean res = TRUE;
+
+  g_return_val_if_fail (remote_state != NULL || op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL, FALSE);
+
+  if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
+    {
+      g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
+
+      emit_new_op (self, op, progress);
+
+      g_assert (op->resolved_commit != NULL); /* We resolved this before */
+
+      if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
+        res = FALSE;
+      else
+        res = flatpak_dir_install (priv->dir,
+                                   priv->no_pull,
+                                   priv->no_deploy,
+                                   priv->disable_static_deltas,
+                                   priv->reinstall,
+                                   priv->max_op >= APP_UPDATE,
+                                   remote_state, op->ref, op->resolved_commit,
+                                   (const char **) op->subpaths,
+                                   (const char **) op->previous_ids,
+                                   progress->ostree_progress,
+                                   cancellable, error);
+
+      flatpak_transaction_progress_done (progress);
+      if (res)
+        {
+          emit_op_done (self, op, 0);
+
+          /* Normally we don't need to prune after install, because it makes no old objects
+             stale. However if we reinstall, that is not true. */
+          if (!priv->no_pull && priv->reinstall)
+            *out_needs_prune = TRUE;
+
+          if (g_str_has_prefix (op->ref, "app"))
+            *out_needs_triggers = TRUE;
+        }
+    }
+  else if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE)
+    {
+      g_assert (op->resolved_commit != NULL); /* We resolved this before */
+
+      if (flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, op->ref, op->resolved_commit,
+                                                            (const char **) op->subpaths))
+        {
+          g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
+          FlatpakTransactionResult result_details = 0;
+          g_autoptr(GError) local_error = NULL;
+
+          emit_new_op (self, op, progress);
+
+          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, &local_error))
+            res = FALSE;
+          else if (op->update_only_deploy)
+            res = flatpak_dir_deploy_update (priv->dir, op->ref, op->resolved_commit,
+                                             (const char **) op->subpaths,
+                                             (const char **) op->previous_ids,
+                                             cancellable, &local_error);
+          else
+            res = flatpak_dir_update (priv->dir,
+                                      priv->no_pull,
+                                      priv->no_deploy,
+                                      priv->disable_static_deltas,
+                                      op->commit != NULL, /* Allow downgrade if we specify commit */
+                                      priv->max_op >= APP_UPDATE,
+                                      priv->max_op == APP_INSTALL || priv->max_op == RUNTIME_INSTALL,
+                                      remote_state, op->ref, op->resolved_commit,
+                                      NULL,
+                                      (const char **) op->subpaths,
+                                      (const char **) op->previous_ids,
+                                      progress->ostree_progress,
+                                      cancellable, &local_error);
+          flatpak_transaction_progress_done (progress);
+
+          /* Handle noop-updates */
+          if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+            {
+              res = TRUE;
+              g_clear_error (&local_error);
+
+              result_details |= FLATPAK_TRANSACTION_RESULT_NO_CHANGE;
+            }
+          else if (!res)
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+            }
+
+          if (res)
+            {
+              emit_op_done (self, op, result_details);
+
+              if (!priv->no_pull)
+                *out_needs_prune = TRUE;
+
+              if (g_str_has_prefix (op->ref, "app"))
+                *out_needs_triggers = TRUE;
+            }
+        }
+      else
+        g_debug ("%s need no update", op->ref);
+    }
+  else if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
+    {
+      g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
+      emit_new_op (self, op, progress);
+      if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
+        res = FALSE;
+      else
+        res = flatpak_dir_install_bundle (priv->dir, op->bundle,
+                                          op->remote, NULL,
+                                          cancellable, error);
+      flatpak_transaction_progress_done (progress);
+
+      if (res)
+        {
+          emit_op_done (self, op, 0);
+          *out_needs_prune = TRUE;
+          *out_needs_triggers = TRUE;
+        }
+    }
+  else if (op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    {
+      g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
+      FlatpakHelperUninstallFlags flags = 0;
+
+      if (priv->disable_prune)
+        flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
+
+      if (priv->force_uninstall)
+        flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
+
+      emit_new_op (self, op, progress);
+
+      res = flatpak_dir_uninstall (priv->dir, op->ref, flags,
+                                   cancellable, error);
+
+      flatpak_transaction_progress_done (progress);
+
+      if (res)
+        {
+          emit_op_done (self, op, 0);
+          *out_needs_prune = TRUE;
+
+          if (g_str_has_prefix (op->ref, "app"))
+            *out_needs_triggers = TRUE;
+        }
+    }
+  else
+    g_assert_not_reached ();
+
+  return res;
+}
+
+static gboolean
 flatpak_transaction_real_run (FlatpakTransaction *self,
                               GCancellable       *cancellable,
                               GError            **error)
@@ -3004,7 +3225,6 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       g_autoptr(GError) local_error = NULL;
       gboolean res = TRUE;
       const char *pref;
-      FlatpakTransactionOperationType kind;
       g_autoptr(FlatpakRemoteState) state = NULL;
 
       if (op->skip)
@@ -3012,7 +3232,6 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
       priv->current_op = op;
 
-      kind = op->kind;
       pref = strchr (op->ref, '/') + 1;
 
       if (op->fail_if_op_fails && (op->fail_if_op_fails->failed) &&
@@ -3025,153 +3244,15 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                               _("Skipping %s due to previous error"), pref);
           res = FALSE;
         }
-      else if ((state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, &local_error)) == NULL)
+      else if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL &&
+               (state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, &local_error)) == NULL)
         {
           res = FALSE;
         }
-      else if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
-        {
-          g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
 
-          emit_new_op (self, op, progress);
-
-          g_assert (op->resolved_commit != NULL); /* We resolved this before */
-
-          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, &local_error))
-            res = FALSE;
-          else
-            res = flatpak_dir_install (priv->dir,
-                                       priv->no_pull,
-                                       priv->no_deploy,
-                                       priv->disable_static_deltas,
-                                       priv->reinstall,
-                                       priv->max_op >= APP_UPDATE,
-                                       state, op->ref, op->resolved_commit,
-                                       (const char **) op->subpaths,
-                                       (const char **) op->previous_ids,
-                                       progress->ostree_progress,
-                                       cancellable, &local_error);
-
-          flatpak_transaction_progress_done (progress);
-          if (res)
-            {
-              emit_op_done (self, op, 0);
-
-              /* Normally we don't need to prune after install, because it makes no old objects
-                 stale. However if we reinstall, that is not true. */
-              if (!priv->no_pull && priv->reinstall)
-                needs_prune = TRUE;
-
-              if (g_str_has_prefix (op->ref, "app"))
-                needs_triggers = TRUE;
-            }
-        }
-      else if (kind == FLATPAK_TRANSACTION_OPERATION_UPDATE)
-        {
-          g_assert (op->resolved_commit != NULL); /* We resolved this before */
-
-          if (flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, op->ref, op->resolved_commit,
-                                                                (const char **) op->subpaths))
-            {
-              g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
-              FlatpakTransactionResult result_details = 0;
-
-              emit_new_op (self, op, progress);
-
-              if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, &local_error))
-                res = FALSE;
-              else if (op->update_only_deploy)
-                res = flatpak_dir_deploy_update (priv->dir, op->ref, op->resolved_commit,
-                                                 (const char **) op->subpaths,
-                                                 (const char **) op->previous_ids,
-                                                 cancellable, &local_error);
-              else
-                res = flatpak_dir_update (priv->dir,
-                                          priv->no_pull,
-                                          priv->no_deploy,
-                                          priv->disable_static_deltas,
-                                          op->commit != NULL, /* Allow downgrade if we specify commit */
-                                          priv->max_op >= APP_UPDATE,
-                                          priv->max_op == APP_INSTALL || priv->max_op == RUNTIME_INSTALL,
-                                          state, op->ref, op->resolved_commit,
-                                          NULL,
-                                          (const char **) op->subpaths,
-                                          (const char **) op->previous_ids,
-                                          progress->ostree_progress,
-                                          cancellable, &local_error);
-              flatpak_transaction_progress_done (progress);
-
-              /* Handle noop-updates */
-              if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-                {
-                  res = TRUE;
-                  g_clear_error (&local_error);
-
-                  result_details |= FLATPAK_TRANSACTION_RESULT_NO_CHANGE;
-                }
-
-              if (res)
-                {
-                  emit_op_done (self, op, result_details);
-
-                  if (!priv->no_pull)
-                    needs_prune = TRUE;
-
-                  if (g_str_has_prefix (op->ref, "app"))
-                    needs_triggers = TRUE;
-                }
-            }
-          else
-            g_debug ("%s need no update", op->ref);
-        }
-      else if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
-        {
-          g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
-          emit_new_op (self, op, progress);
-          if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, &local_error))
-            res = FALSE;
-          else
-            res = flatpak_dir_install_bundle (priv->dir, op->bundle,
-                                              op->remote, NULL,
-                                              cancellable, &local_error);
-          flatpak_transaction_progress_done (progress);
-
-          if (res)
-            {
-              emit_op_done (self, op, 0);
-              needs_prune = TRUE;
-              needs_triggers = TRUE;
-            }
-        }
-      else if (kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-        {
-          g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
-          FlatpakHelperUninstallFlags flags = 0;
-
-          if (priv->disable_prune)
-            flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
-
-          if (priv->force_uninstall)
-            flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
-
-          emit_new_op (self, op, progress);
-
-          res = flatpak_dir_uninstall (priv->dir, op->ref, flags,
-                                       cancellable, &local_error);
-
-          flatpak_transaction_progress_done (progress);
-
-          if (res)
-            {
-              emit_op_done (self, op, 0);
-              needs_prune = TRUE;
-
-              if (g_str_has_prefix (op->ref, "app"))
-                needs_triggers = TRUE;
-            }
-        }
-      else
-        g_assert_not_reached ();
+      /* Here we execute the operation in a helper function */
+      if (res && !_run_op_kind (self, op, state, &needs_prune, &needs_triggers, cancellable, &local_error))
+        res = FALSE;
 
       if (res)
         {

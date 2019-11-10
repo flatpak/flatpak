@@ -47,9 +47,16 @@
             between computers that doesn't require an Internet connection. After using
             this command, the USB drive can be connected to another computer and
             <command>flatpak install</command> will prefer to install from it rather than
-            the Internet if the refs are the newest available. For this process to work a
-            collection ID must be configured on the relevant remotes on both the source
-            and destination computers, and on the remote server.
+            the Internet if (a) each ref comes from a configured remote whose GPG keyring will be
+            used for verification and (b) the refs on the drive are at least as new as what's
+            available elsewhere (e.g. the Internet if you're online). For this process to work a
+            collection ID must be configured on the relevant remotes on both the source and
+            destination computers, and on the remote server.
+        </para>
+        <para>
+            On the destination computer one can install from the USB (or any mounted filesystem) the
+            same way you would install from the Internet, e.g. with
+            <command>flatpak install flathub org.gnome.Builder</command> or using a GUI.
         </para>
         <para>
             Each <arg choice="plain">REF</arg> argument is a full or partial identifier in the

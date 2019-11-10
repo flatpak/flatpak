@@ -548,7 +548,7 @@ flatpak_load_http_uri (SoupSession           *soup_session,
 
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
     soup_message_headers_replace (m->request_headers, "Accept",
-                                  "application/vnd.oci.image.manifest.v1+json");
+                                  FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
 
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,
@@ -604,7 +604,7 @@ flatpak_download_http_uri (SoupSession           *soup_session,
   m = soup_request_http_get_message (request);
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
     soup_message_headers_replace (m->request_headers, "Accept",
-                                  "application/vnd.oci.image.manifest.v1+json");
+                                  FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
 
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,
@@ -744,7 +744,7 @@ flatpak_cache_http_uri (SoupSession           *soup_session,
 
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
     soup_message_headers_replace (m->request_headers, "Accept",
-                                  "application/vnd.oci.image.manifest.v1+json");
+                                  FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
 
   if (flags & FLATPAK_HTTP_FLAGS_STORE_COMPRESSED)
     {

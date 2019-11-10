@@ -53,6 +53,8 @@ struct _FlatpakInstalledRefPrivate
   char    *appdata_summary;
   char    *appdata_version;
   char    *appdata_license;
+  char    *appdata_content_rating_type;
+  GHashTable *appdata_content_rating;  /* (element-type interned-utf8 interned-utf8) */
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstalledRef, flatpak_installed_ref, FLATPAK_TYPE_REF)
@@ -72,6 +74,8 @@ enum {
   PROP_APPDATA_SUMMARY,
   PROP_APPDATA_VERSION,
   PROP_APPDATA_LICENSE,
+  PROP_APPDATA_CONTENT_RATING_TYPE,
+  PROP_APPDATA_CONTENT_RATING,
 };
 
 static void
@@ -90,6 +94,8 @@ flatpak_installed_ref_finalize (GObject *object)
   g_free (priv->appdata_summary);
   g_free (priv->appdata_version);
   g_free (priv->appdata_license);
+  g_free (priv->appdata_content_rating_type);
+  g_clear_pointer (&priv->appdata_content_rating, g_hash_table_unref);
 
   G_OBJECT_CLASS (flatpak_installed_ref_parent_class)->finalize (object);
 }
@@ -163,6 +169,16 @@ flatpak_installed_ref_set_property (GObject      *object,
       priv->appdata_license = g_value_dup_string (value);
       break;
 
+    case PROP_APPDATA_CONTENT_RATING_TYPE:
+      g_clear_pointer (&priv->appdata_content_rating_type, g_free);
+      priv->appdata_content_rating_type = g_value_dup_string (value);
+      break;
+
+    case PROP_APPDATA_CONTENT_RATING:
+      g_clear_pointer (&priv->appdata_content_rating, g_hash_table_unref);
+      priv->appdata_content_rating = g_value_dup_boxed (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -226,6 +242,14 @@ flatpak_installed_ref_get_property (GObject    *object,
 
     case PROP_APPDATA_LICENSE:
       g_value_set_string (value, priv->appdata_license);
+      break;
+
+    case PROP_APPDATA_CONTENT_RATING_TYPE:
+      g_value_set_string (value, priv->appdata_content_rating_type);
+      break;
+
+    case PROP_APPDATA_CONTENT_RATING:
+      g_value_set_boxed (value, priv->appdata_content_rating);
       break;
 
     default:
@@ -327,6 +351,20 @@ flatpak_installed_ref_class_init (FlatpakInstalledRefClass *klass)
                                                         "The license from the appdata",
                                                         NULL,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_APPDATA_CONTENT_RATING_TYPE,
+                                   g_param_spec_string ("appdata-content-rating-type",
+                                                        "Appdata Content Rating Type",
+                                                        "The type of the content rating data from the appdata",
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_APPDATA_CONTENT_RATING,
+                                   g_param_spec_boxed ("appdata-content-rating",
+                                                       "Appdata Content Rating",
+                                                       "The content rating data from the appdata",
+                                                       G_TYPE_HASH_TABLE,
+                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -615,11 +653,52 @@ flatpak_installed_ref_get_appdata_license (FlatpakInstalledRef *self)
   return priv->appdata_license;
 }
 
+/**
+ * flatpak_installed_ref_get_appdata_content_rating_type:
+ * @self: a #FlatpakInstalledRef
+ *
+ * Returns the content rating type from the appdata. For example, `oars-1.0` or
+ * `oars-1.1`.
+ *
+ * Returns: (transfer none) (nullable): the content rating type or %NULL
+ *
+ * Since: 1.4.2
+ */
+const char *
+flatpak_installed_ref_get_appdata_content_rating_type (FlatpakInstalledRef *self)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+
+  return priv->appdata_content_rating_type;
+}
+
+/**
+ * flatpak_installed_ref_get_appdata_content_rating:
+ * @self: a #FlatpakInstalledRef
+ *
+ * Returns the content rating field from the appdata. This is a potentially
+ * empty mapping of content rating attribute IDs to values, to be interpreted
+ * by the semantics of the content rating type (see
+ * flatpak_installed_ref_get_appdata_content_rating_type()).
+ *
+ * Returns: (transfer none) (nullable): the content rating or %NULL
+ *
+ * Since: 1.4.2
+ */
+GHashTable *
+flatpak_installed_ref_get_appdata_content_rating (FlatpakInstalledRef *self)
+{
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
+
+  return priv->appdata_content_rating;
+}
+
 FlatpakInstalledRef *
 flatpak_installed_ref_new (const char  *full_ref,
                            const char  *commit,
                            const char  *latest_commit,
                            const char  *origin,
+                           const char  *collection_id,
                            const char **subpaths,
                            const char  *deploy_dir,
                            guint64      installed_size,
@@ -629,7 +708,9 @@ flatpak_installed_ref_new (const char  *full_ref,
                            const char  *appdata_name,
                            const char  *appdata_summary,
                            const char  *appdata_version,
-                           const char  *appdata_license)
+                           const char  *appdata_license,
+                           const char  *appdata_content_rating_type,
+                           GHashTable  *appdata_content_rating)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakInstalledRef *ref;
@@ -652,6 +733,7 @@ flatpak_installed_ref_new (const char  *full_ref,
                       "commit", commit,
                       "latest-commit", latest_commit,
                       "origin", origin,
+                      "collection-id", collection_id,
                       "subpaths", subpaths,
                       "is-current", is_current,
                       "installed-size", installed_size,
@@ -662,6 +744,8 @@ flatpak_installed_ref_new (const char  *full_ref,
                       "appdata-summary", appdata_summary,
                       "appdata-version", appdata_version,
                       "appdata-license", appdata_license,
+                      "appdata-content-rating-type", appdata_content_rating_type,
+                      "appdata-content-rating", appdata_content_rating,
                       NULL);
 
   return ref;

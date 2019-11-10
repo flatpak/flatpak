@@ -514,14 +514,14 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
 
   if (rebased_to_ref)
-    g_print (_("Info: %s is end-of-life, in preference of %s\n"), flatpak_ref_get_name (rref), rebased_to_ref);
+    g_print (_("Info: %s is end-of-life, in favor of %s\n"), flatpak_ref_get_name (rref), rebased_to_ref);
   else if (reason)
     g_print (_("Info: %s is end-of-life, with reason: %s\n"), flatpak_ref_get_name (rref), reason);
 
   if (rebased_to_ref && remote)
     {
       if (self->disable_interaction ||
-          flatpak_yes_no_prompt (FALSE, _("Replace it with %s?"), flatpak_ref_get_name (rref)))
+          flatpak_yes_no_prompt (TRUE, _("Replace it with %s?"), rebased_to_ref))
         {
           g_autoptr(GError) error = NULL;
 
@@ -982,7 +982,7 @@ transaction_ready (FlatpakTransaction *transaction)
 
       if (flatpak_installation_get_is_user (installation))
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the user installation?"));
-      else if (g_strcmp0 (id, "default") == 0)
+      else if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) == 0)
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the system installation?"));
       else
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s?"), name);

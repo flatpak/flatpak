@@ -2,6 +2,9 @@
 
 set -e
 
+# Don't inherit the -x from the testsuite
+set +x
+
 DIR=`mktemp -d`
 
 REPO=$1
@@ -27,7 +30,15 @@ cat > ${DIR}/metadata <<EOF
 name=$APP_ID
 runtime=org.test.Platform/$ARCH/$BRANCH
 sdk=org.test.Platform/$ARCH/$BRANCH
+EOF
 
+if [ x${REQUIRED_VERSION-} != x ]; then
+cat >> ${DIR}/metadata <<EOF
+required-flatpak=$REQUIRED_VERSION
+EOF
+fi
+
+cat >> ${DIR}/metadata <<EOF
 [Extension $APP_ID.Locale]
 directory=share/runtime/locale
 autodelete=true
@@ -106,7 +117,7 @@ ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/de/share/de
 mkdir -p ${DIR}/files/share/runtime/locale/fr
 ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/fr/share/fr
 
-flatpak build-finish --command=hello.sh ${DIR}
+flatpak build-finish ${BUILD_FINISH_ARGS-} --command=hello.sh ${DIR}
 mkdir -p repos
 flatpak build-export --disable-sandbox ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
 rm -rf ${DIR}

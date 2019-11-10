@@ -957,6 +957,27 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry *self,
   return flatpak_oci_versioned_from_json (bytes, error);
 }
 
+FlatpakOciImage *
+flatpak_oci_registry_load_image_config (FlatpakOciRegistry *self,
+                                        const char         *repository,
+                                        const char         *digest,
+                                        gsize              *out_size,
+                                        GCancellable       *cancellable,
+                                        GError            **error)
+{
+  g_autoptr(GBytes) bytes = NULL;
+
+  g_assert (self->valid);
+
+  bytes = flatpak_oci_registry_load_blob (self, repository, FALSE, digest, cancellable, error);
+  if (bytes == NULL)
+    return NULL;
+
+  if (out_size)
+    *out_size = g_bytes_get_size (bytes);
+  return flatpak_oci_image_from_json (bytes, error);
+}
+
 struct FlatpakOciLayerWriter
 {
   GObject             parent;
@@ -1896,9 +1917,24 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
 }
 
 static const char *
+get_image_metadata (FlatpakOciIndexImage *img, const char *key)
+{
+  if (img->labels != NULL)
+    {
+      const char *ref = g_hash_table_lookup (img->labels, key);
+      if (ref)
+        return ref;
+    }
+  if (img->annotations)
+    return g_hash_table_lookup (img->annotations, key);
+  return NULL;
+}
+
+
+static const char *
 get_image_ref (FlatpakOciIndexImage *img)
 {
-  return g_hash_table_lookup (img->annotations, "org.flatpak.ref");
+  return get_image_metadata (img, "org.flatpak.ref");
 }
 
 typedef struct
@@ -1934,6 +1970,9 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
   const char *oci_arch = NULL;
   gboolean success = FALSE;
   g_autoptr(GError) local_error = NULL;
+  gboolean use_labels = FALSE;
+  const char *query_uri_part;
+  const char *metadata_query;
 
   if (!g_str_has_prefix (uri, "oci+http:") && !g_str_has_prefix (uri, "oci+https:"))
     {
@@ -1975,12 +2014,25 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
     }
   soup_uri_set_fragment (base_uri, NULL);
 
+  query_uri_part = soup_uri_get_query (base_uri);
+  if (query_uri_part)
+    {
+      g_autoptr(GHashTable) query_args = soup_form_decode (query_uri_part);
+      const char *index = g_hash_table_lookup (query_args, "index");
+      use_labels = g_strcmp0 (index, "labels") == 0;
+    }
+
+  if (use_labels)
+    metadata_query = "label:org.flatpak.ref:exists";
+  else
+    metadata_query = "annotation:org.flatpak.ref:exists";
+
   query_uri = soup_uri_copy (base_uri);
 
   oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
 
   soup_uri_set_query_from_fields (query_uri,
-                                  "annotation:org.flatpak.ref:exists", "1",
+                                  metadata_query, "1",
                                   "architecture", oci_arch,
                                   "os", "linux",
                                   "tag", tag,
@@ -2115,7 +2167,7 @@ flatpak_oci_index_make_summary (GFile        *index,
       if (ref == NULL)
         continue;
 
-      metadata_contents = g_hash_table_lookup (image->annotations, "org.flatpak.metadata");
+      metadata_contents = get_image_metadata (image, "org.flatpak.metadata");
       if (metadata_contents == NULL && !g_str_has_prefix (ref, "appstream/"))
         continue; /* Not a flatpak, skip */
 
@@ -2127,11 +2179,11 @@ flatpak_oci_index_make_summary (GFile        *index,
 
       fake_commit = image->digest + strlen ("sha256:");
 
-      installed_size_str = g_hash_table_lookup (image->annotations, "org.flatpak.installed-size");
+      installed_size_str = get_image_metadata (image, "org.flatpak.installed-size");
       if (installed_size_str)
         installed_size = g_ascii_strtoull (installed_size_str, NULL, 10);
 
-      download_size_str = g_hash_table_lookup (image->annotations, "org.flatpak.download-size");
+      download_size_str = get_image_metadata (image, "org.flatpak.download-size");
       if (download_size_str)
         download_size = g_ascii_strtoull (download_size_str, NULL, 10);
 
@@ -2215,13 +2267,18 @@ add_icon_image (SoupSession  *soup_session,
       g_autoptr(SoupURI) base_uri = soup_uri_new (index_uri);
       g_autoptr(SoupURI) icon_uri = soup_uri_new_with_base (base_uri, icon_data);
       g_autofree char *icon_uri_s = soup_uri_to_string (icon_uri, FALSE);
+      g_autoptr(GError) local_error = NULL;
 
       if (!flatpak_cache_http_uri (soup_session, icon_uri_s,
                                    0 /* flags */,
                                    icons_dfd, icon_path,
                                    NULL, NULL,
-                                   cancellable, error))
-        return FALSE;
+                                   cancellable, &local_error) &&
+          !g_error_matches (local_error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED))
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
 
       g_hash_table_replace (used_icons, g_steal_pointer (&icon_path), GUINT_TO_POINTER (1));
 
@@ -2261,7 +2318,7 @@ add_image_to_appstream (SoupSession               *soup_session,
     { "org.freedesktop.appstream.icon-128", "128x128" },
   };
 
-  ref = g_hash_table_lookup (image->annotations, "org.flatpak.ref");
+  ref = get_image_ref (image);
   if (!ref)
     return;
 
@@ -2271,7 +2328,7 @@ add_image_to_appstream (SoupSession               *soup_session,
 
   id = ref_parts[1];
 
-  appdata = g_hash_table_lookup (image->annotations, "org.freedesktop.appstream.appdata");
+  appdata = get_image_metadata (image, "org.freedesktop.appstream.appdata");
   if (!appdata)
     return;
 
@@ -2317,8 +2374,7 @@ add_image_to_appstream (SoupSession               *soup_session,
 
   for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
     {
-      const char *icon_data = g_hash_table_lookup (image->annotations,
-                                                   icon_sizes[i].annotation);
+      const char *icon_data = get_image_metadata (image, icon_sizes[i].annotation);
       if (icon_data)
         {
           if (!add_icon_image (soup_session,

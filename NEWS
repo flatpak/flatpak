@@ -1,3 +1,63 @@
+Changes in 1.5.0
+================
+
+ * New options flatpak install --or-update operation.
+ * New command flatpak mask allows pinning version and avoiding auto-downloads.
+ * Support self-updates and update monitoring in the flatpak portal.
+ * Fix updates of exported services with dbus-broken.
+ * Don't show arch columns in terminal outout if all are the same.
+ * Fix some cases where origin remotes were not properly removed.
+ * flatpak-session-helper now links to more libraries.
+ * OCI: Support images tagged with labels as well as annotations.
+ * OCI: Alway generate a history for images.
+ * OCI: Support docker mimetypes in addition to OCI mimetypes.
+ * Uninstall now always work, even if the remote it came from was force removed.
+ * New config key default-languages that allows additions to the system list
+  instead of overriding it.
+ * Various minor tweak to CLI behaviour and output.
+
+Changes in 1.4.3
+================
+ * Fix crash in revokefs.
+ * Handle 'versions' extension key (in addition to 'version') when
+   checking for local extensions, which was causing us to uninstall
+   some actually used extensions with uninstall --unused.
+ * The 'required-flatpak' metadata key now supports listing multiple
+   versions to support backported features.
+ * Fix crash with older versions of polkit.
+ * Fix installation of bundles.
+ * Fix crash on deploy error.
+ * Support building bundles of apps installed from a remote.
+ * OCI: Fix handling of locally cached icons.
+ * Fix crash when listing unconfigured remotes.
+ * Ignore differences in trailing slashes for repo uris.
+
+Changes in 1.4.2
+================
+
+ * Support extra_data in extensions.
+ * Handle double slashes ("//")in XDG_DATA_DIRS.
+ * Fix detection of local related refs.
+
+Changes in 1.4.1
+================
+
+*WARNING* *WARNING* *WARNING*
+
+There was an accidental ABI break in libflatpak in 1.4.0 compared to
+the 1.2.x ABI which caused crashes in apps like gnome-software.
+
+This has been fixed in this release so it is now ABI compatible with
+1.2.x, but *NOT* compatible with 1.4.0. It is recommended that all
+distributions that shipped 1.4.0 update to 1.4.1 and rebuild all
+dependencies of libflatpak.
+
+ * Make ABI compatible with 1.2.x
+ * Update translations
+ * Fix some potential crashes
+ * Fix some corner case where it was impossible to remove a remote
+ * Restore support for file: uris in the RuntimeRepo key in flatpakref files
+
 Changes in 1.4.0
 ================
 

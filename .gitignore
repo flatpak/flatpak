@@ -39,6 +39,7 @@ flatpak-validate-icon
 profile/flatpak.sh
 *-dbus-generated.[ch]
 flatpak-resources.[ch]
+flatpak-permission-dbus.[ch]
 flatpak-portal-dbus.[ch]
 flatpak-dbus-proxy
 permission-store-dbus.[ch]
@@ -58,6 +59,8 @@ common/flatpak-enum-types.c
 common/flatpak-enum-types.h
 test-libflatpak
 httpcache
+test-update-portal
+test-portal-impl
 revokefs-fuse
 revokefs-demo
 Flatpak-1.0.*

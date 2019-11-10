@@ -51,7 +51,11 @@ looks_like_a_language (const char *s)
   int len = strlen (s);
   int i;
 
-  if (len < 2 || len > 3)
+  if (g_str_equal (s, "C") ||
+      g_str_equal (s, "POSIX"))
+    return TRUE;
+
+  if (len < 2)
     return FALSE;
 
   for (i = 0; i < len; i++)
@@ -61,6 +65,93 @@ looks_like_a_language (const char *s)
     }
 
   return TRUE;
+}
+
+static gboolean
+looks_like_a_territory (const char *s)
+{
+  gsize len = strlen (s);
+  gsize i;
+
+  if (len < 2)
+    return FALSE;
+
+  for (i = 0; i < len; i++)
+    {
+      if (!g_ascii_isalpha (s[i]) || !g_ascii_isupper (s[i]))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+looks_like_a_codeset_or_modifier (const char *s)
+{
+  gsize len = strlen (s);
+  gsize i;
+
+  if (len < 1)
+    return FALSE;
+
+  for (i = 0; i < len; i++)
+    {
+      if (!g_ascii_isalnum (s[i]) && s[i] != '-')
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+looks_like_a_locale (const char *s)
+{
+  g_autofree gchar *locale = g_strdup (s);
+  gchar *language, *territory, *codeset, *modifier;
+
+  modifier = strchr (locale, '@');
+  if (modifier != NULL)
+    *modifier++ = '\0';
+
+  codeset = strchr (locale, '.');
+  if (codeset != NULL)
+    *codeset++ = '\0';
+
+  territory = strchr (locale, '_');
+  if (territory != NULL)
+    *territory++ = '\0';
+
+  language = locale;
+
+  if (!looks_like_a_language (language))
+    return FALSE;
+  if (territory != NULL && !looks_like_a_territory (territory))
+    return FALSE;
+  if (codeset != NULL && !looks_like_a_codeset_or_modifier (codeset))
+    return FALSE;
+  if (modifier != NULL && !looks_like_a_codeset_or_modifier (modifier))
+    return FALSE;
+
+  return TRUE;
+}
+
+static char *
+parse_locale (const char *value, GError **error)
+{
+  g_auto(GStrv) strs = NULL;
+  int i;
+
+  strs = g_strsplit (value, ";", 0);
+  for (i = 0; strs[i]; i++)
+    {
+      if (!looks_like_a_language (strs[i]) && !looks_like_a_locale (strs[i]))
+        {
+          flatpak_fail (error, _("'%s' does not look like a language/locale code"), strs[i]);
+          return NULL;
+        }
+    }
+
+  return g_strdup (value);
 }
 
 static char *
@@ -83,6 +174,12 @@ parse_lang (const char *value, GError **error)
         }
     }
 
+  return g_strdup (value);
+}
+
+static char *
+print_locale (const char *value)
+{
   return g_strdup (value);
 }
 
@@ -112,6 +209,7 @@ typedef struct
 
 ConfigKey keys[] = {
   { "languages", parse_lang, print_lang, get_lang_default },
+  { "extra-languages", parse_locale, print_locale, NULL },
 };
 
 static ConfigKey *

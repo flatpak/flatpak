@@ -25,27 +25,33 @@ skip_without_bwrap
 
 echo "1..14"
 
+if [ x${USE_OCI_LABELS-} == xyes ] ; then
+    URI_SUFFIX="?index=labels"
+    BUILD_BUNDLE_FLAGS="--oci-use-labels"
+else
+    URI_SUFFIX=""
+    BUILD_BUNDLE_FLAGS=""
+fi
+
 # Start the fake registry server
 
-$(dirname $0)/test-webserver.sh "" "python $test_srcdir/oci-registry-server.py 0"
-FLATPAK_HTTP_PID=$(cat httpd-pid)
-mv httpd-port httpd-port-main
-port=$(cat httpd-port-main)
-client="python $test_srcdir/oci-registry-client.py 127.0.0.1:$port"
+httpd oci-registry-server.py .
+port=$(cat httpd-port)
+client="python3 $test_srcdir/oci-registry-client.py 127.0.0.1:$port"
 
 setup_repo_no_add oci
 
 # Add OCI bundles to it
 
-${FLATPAK} build-bundle --runtime --oci $FL_GPGARGS repos/oci oci/platform-image org.test.Platform
+${FLATPAK} build-bundle ${BUILD_BUNDLE_FLAGS} --runtime --oci $FL_GPGARGS repos/oci oci/platform-image org.test.Platform
 $client add platform latest $(pwd)/oci/platform-image
 
-${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello
+${FLATPAK} build-bundle ${BUILD_BUNDLE_FLAGS} --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello
 $client add hello latest $(pwd)/oci/app-image
 
 # Add an OCI remote
 
-${FLATPAK} remote-add ${U} oci-registry "oci+http://127.0.0.1:${port}"
+${FLATPAK} remote-add ${U} oci-registry "oci+http://127.0.0.1:${port}${URI_SUFFIX}"
 
 # Check that the images we expect are listed
 
@@ -103,7 +109,8 @@ echo "ok install"
 
 make_updated_app oci
 
-${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello
+${FLATPAK} build-bundle ${BUILD_BUNDLE_FLAGS} --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello
+
 $client add hello latest $(pwd)/oci/app-image
 
 OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
@@ -154,7 +161,7 @@ echo "ok change remote to non-OCI"
 
 # Change it back and refetch
 
-${FLATPAK} remote-modify ${U} --url=oci+http://127.0.0.1:${port} oci-registry
+${FLATPAK} remote-modify ${U} --url=oci+http://127.0.0.1:${port}${URI_SUFFIX} oci-registry
 ${FLATPAK} update ${U} --appstream oci-registry
 
 # Delete the remote, check that everything was removed
@@ -178,7 +185,7 @@ cat << EOF > org.test.Platform.flatpakref
 Title=Test Platform
 Name=org.test.Platform
 Branch=master
-Url=oci+http://127.0.0.1:${port}
+Url=oci+http://127.0.0.1:${port}${URI_SUFFIX}
 IsRuntime=true
 EOF
 
@@ -205,12 +212,12 @@ echo "ok prune origin remote"
 
 # Install from a (non-OCI) bundle, check that the repo-url is respected
 
-${FLATPAK} build-bundle --runtime --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS repos/oci org.test.Platform.flatpak org.test.Platform
+${FLATPAK} build-bundle --runtime --repo-url "oci+http://127.0.0.1:${port}${URI_SUFFIX}" $FL_GPGARGS repos/oci org.test.Platform.flatpak org.test.Platform
 
 ${FLATPAK} ${U} install -y --bundle org.test.Platform.flatpak
 
 ${FLATPAK} remotes -d > remotes-list
-assert_file_has_content remotes-list "^platform-origin.*[ 	]oci+http://127\.0\.0\.1:${port}"
+assert_file_has_content remotes-list "^platform-origin.*[ 	]oci+http://127\.0\.0\.1:${port}${URI_SUFFIX}"
 
 assert_has_file $base/oci/platform-origin.index.gz
 
@@ -218,12 +225,12 @@ echo "ok install via bundle"
 
 # Install an app from a bundle
 
-${FLATPAK} build-bundle --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS repos/oci org.test.Hello.flatpak org.test.Hello
+${FLATPAK} build-bundle --repo-url "oci+http://127.0.0.1:${port}${URI_SUFFIX}" $FL_GPGARGS repos/oci org.test.Hello.flatpak org.test.Hello
 
 ${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak
 
 ${FLATPAK} remotes -d > remotes-list
-assert_file_has_content remotes-list "^hello-origin.*[ 	]oci+http://127\.0\.0\.1:${port}"
+assert_file_has_content remotes-list "^hello-origin.*[ 	]oci+http://127\.0\.0\.1:${port}${URI_SUFFIX}"
 
 assert_has_file $base/oci/hello-origin.index.gz
 

@@ -235,5 +235,64 @@
     </defaults>
   </action>
 
+  <action id="org.freedesktop.Flatpak.override-parental-controls">
+    <!-- SECURITY:
+          - Authorisation to actually install software is controlled by
+            org.freedesktop.Flatpak.app-install.
+          - This action is checked after app-install, as it can only be done
+            once the app’s data (including its content rating) has been
+            downloaded.
+          - This action is checked to see if the installation should be allowed
+            based on whether the app being installed has content which doesn’t
+            comply with the user’s parental controls policy (the content is
+            ‘too extreme’).
+          - It is checked only if an app has too extreme content for the user
+            who is trying to install it (in which case, the app is ‘unsafe’).
+          - Typically, normal users will need admin permission to install apps
+            with extreme content; admins will be able to install it without
+            additional checks.
+          - In order to configure the policy so that admins can install safe and
+            unsafe software anywhere without authorisation, and non-admins can
+            install safe software in their user or system dirs without
+            authorisation, but need authorisation to install unsafe software
+            anywhere:
+             * Unconditionally return `yes` from `app-install`.
+             * Return `auth_admin` from `override-parental-controls` for users
+               not in `@privileged_group@`, and `yes` for users in it.
+             * Set the malcontent `is-{user,system}-installation-allowed`
+               properties of all non-admins’ parental controls policies to true.
+          - In order to configure the policy so that admins can install safe and
+            unsafe software anywhere without authorisation, and non-admins can
+            install safe software in their user dir without authorisation, but
+            need authorisation to install safe software in the system dir or to
+            install unsafe software anywhere:
+             * Unconditionally return `yes` from `app-install`.
+             * Return `auth_admin` from `override-parental-controls` for users
+               not in `@privileged_group@`, and `yes` for users in it.
+             * Set the malcontent `is-user-installation-allowed` property of all
+               non-admins’ parental controls policies to true.
+             * Set the malcontent `is-system-installation-allowed` property of
+               all non-admins’ parental controls policies to false.
+          - In order to configure the policy so that all users (including
+            admins) can install safe software anywhere without authorisation,
+            but need authorisation to install unsafe software anywhere (i.e.
+            applying parental controls to admins too):
+             * Unconditionally return `yes` from `app-install`.
+             * Unconditionally return `auth_admin` from `override-parental-controls`.
+             * Set the malcontent `is-user-installation-allowed` property of all
+               users’ parental controls policies to true.
+             * Set the malcontent `is-system-installation-allowed` property of
+               all users’ parental controls policies to true.
+     -->
+    <description>Override parental controls</description>
+    <message>Authentication is required to install software which is restricted by your parental controls policy</message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+  </action>
+
 </policyconfig>
 

@@ -1,3 +1,4 @@
+if BUILD_SELINUX_MODULE
 selinux_moduledir = ${datadir}/selinux/packages
 selinux_module_DATA = $(NULL)
 
@@ -12,7 +13,6 @@ flatpak.pp.bz2: selinux/flatpak.te selinux/flatpak.fc
 	cp $(TMP)/flatpak.pp.bz2 .
 	rm -rf $(TMP)
 
-if BUILD_SELINUX_MODULE
 selinux_module_DATA += flatpak.pp.bz2
 selinux_devel_DATA += selinux/flatpak.if
 endif

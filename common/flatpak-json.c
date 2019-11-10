@@ -543,10 +543,13 @@ marshal (JsonObject          *parent,
               {
                 const char *key = _key;
                 const char *value = _value;
-                JsonNode *str = json_node_new (JSON_NODE_VALUE);
+                if (value != NULL)
+                  {
+                    JsonNode *str = json_node_new (JSON_NODE_VALUE);
 
-                json_node_set_string (str, value);
-                json_object_set_member (object, key, str);
+                    json_node_set_string (str, value);
+                    json_object_set_member (object, key, str);
+                  }
               }
 
             retval = json_node_init_object (json_node_alloc (), object);

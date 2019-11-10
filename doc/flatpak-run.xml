@@ -112,6 +112,11 @@
             Flatpak sets the environment variable <envar>FLATPAK_ID</envar> to the application
             ID of the running app.
         </para>
+        <para>
+            If parental controls support is enabled, flatpak will check the
+            current user’s parental controls settings, and will refuse to
+            run an app if it is blacklisted for the current user.
+        </para>
     </refsect1>
 
     <refsect1>

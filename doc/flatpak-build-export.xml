@@ -193,7 +193,7 @@
 
                 <listitem><para>
                     Mark the build as end-of-life. Unlike <option>--end-of-life</option>,
-                    this one takes an ID that supercedes the current one. By the user's
+                    this one takes an ID that supersedes the current one. By the user's
                     request, the application data may be preserved for the new application.
                 </para></listitem>
             </varlistentry>

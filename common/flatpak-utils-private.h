@@ -37,11 +37,6 @@
 
 #define AUTOFS_SUPER_MAGIC 0x0187
 
-typedef enum {
-  FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
-  FLATPAK_HOST_COMMAND_FLAGS_WATCH_BUS = 1 << 1,
-} FlatpakHostCommandFlags;
-
 #define FLATPAK_ANSI_ALT_SCREEN_ON "\x1b[?1049h"
 #define FLATPAK_ANSI_ALT_SCREEN_OFF "\x1b[?1049l"
 #define FLATPAK_ANSI_HIDE_CURSOR "\x1b[?25l"
@@ -118,8 +113,6 @@ gboolean flatpak_extension_matches_reason (const char *extension_id,
 
 const char * flatpak_get_bwrap (void);
 
-char *flatpak_get_timezone (void);
-
 char **flatpak_strv_merge (char   **strv1,
                            char   **strv2);
 char **flatpak_subpaths_merge (char **subpaths1,
@@ -191,6 +184,7 @@ gboolean flatpak_id_has_subref_suffix (const char *id);
 char **flatpak_decompose_ref (const char *ref,
                               GError    **error);
 
+char * flatpak_filter_glob_to_regexp (const char *glob, GError **error);
 gboolean flatpak_parse_filters (const char *data,
                                 GRegex **allow_refs_out,
                                 GRegex **deny_refs_out,
@@ -263,8 +257,8 @@ FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
                                              GError      **error);
 char ** flatpak_list_deployed_refs (const char   *type,
                                     const char   *name_prefix,
-                                    const char   *branch,
                                     const char   *arch,
+                                    const char   *branch,
                                     GCancellable *cancellable,
                                     GError      **error);
 char ** flatpak_list_unmaintained_refs (const char   *name_prefix,
@@ -521,6 +515,7 @@ char * flatpak_pull_from_oci (OstreeRepo            *repo,
                               const char            *oci_repository,
                               const char            *digest,
                               FlatpakOciManifest    *manifest,
+                              FlatpakOciImage       *image_config,
                               const char            *remote,
                               const char            *ref,
                               FlatpakOciPullProgress progress_cb,
@@ -532,6 +527,7 @@ gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                         FlatpakOciRegistry    *registry,
                                         const char            *oci_repository,
                                         const char            *digest,
+                                        const char            *ref,
                                         FlatpakOciPullProgress progress_cb,
                                         gpointer               progress_data,
                                         GCancellable          *cancellable,
@@ -607,12 +603,6 @@ gboolean flatpak_canonicalize_permissions (int         parent_dfd,
                                            int         uid,
                                            int         gid,
                                            GError    **error);
-
-char * flatpak_readlink (const char *path,
-                         GError    **error);
-char * flatpak_resolve_link (const char *path,
-                             GError    **error);
-char * flatpak_canonicalize_filename (const char *path);
 
 gboolean flatpak_file_rename (GFile        *from,
                               GFile        *to,

@@ -381,7 +381,7 @@ out:
   return dir;
 }
 
-static FlatpakDir *
+FlatpakDir *
 flatpak_installation_get_dir (FlatpakInstallation *self, GError **error)
 {
   return _flatpak_installation_get_dir (self, TRUE, error);
@@ -728,6 +728,7 @@ get_ref (FlatpakDir   *dir,
   g_autofree char *deploy_subdirname = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **subpaths = NULL;
+  g_autofree char *collection_id = NULL;
   gboolean is_current = FALSE;
   guint64 installed_size = 0;
 
@@ -757,10 +758,12 @@ get_ref (FlatpakDir   *dir,
 
   latest_commit = flatpak_dir_read_latest (dir, origin, full_ref, &latest_alt_id, NULL, NULL);
 
+  collection_id = flatpak_dir_get_remote_collection_id (dir, origin);
+
   return flatpak_installed_ref_new (full_ref,
                                     alt_id ? alt_id : commit,
                                     latest_alt_id ? latest_alt_id : latest_commit,
-                                    origin, subpaths,
+                                    origin, collection_id, subpaths,
                                     deploy_path,
                                     installed_size,
                                     is_current,
@@ -769,7 +772,9 @@ get_ref (FlatpakDir   *dir,
                                     flatpak_deploy_data_get_appdata_name (deploy_data),
                                     flatpak_deploy_data_get_appdata_summary (deploy_data),
                                     flatpak_deploy_data_get_appdata_version (deploy_data),
-                                    flatpak_deploy_data_get_appdata_license (deploy_data));
+                                    flatpak_deploy_data_get_appdata_license (deploy_data),
+                                    flatpak_deploy_data_get_appdata_content_rating_type (deploy_data),
+                                    flatpak_deploy_data_get_appdata_content_rating (deploy_data));
 }
 
 /**
@@ -1068,6 +1073,10 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 
   updates = g_ptr_array_new_with_free_func (g_object_unref);
 
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
   for (i = 0; i < installed->len; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
@@ -1077,15 +1086,14 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       const char *remote_commit = g_hash_table_lookup (remote_commits, key);
       const char *local_commit = flatpak_installed_ref_get_latest_commit (installed_ref);
 
+      if (flatpak_dir_ref_is_masked (dir, full_ref))
+        continue;
+
       /* Note: local_commit may be NULL here */
       if (remote_commit != NULL &&
           g_strcmp0 (remote_commit, local_commit) != 0)
         g_ptr_array_add (updates, g_object_ref (installed_ref));
     }
-
-  dir = flatpak_installation_get_dir (self, error);
-  if (dir == NULL)
-    return NULL;
 
   collection_refs = g_ptr_array_new_with_free_func ((GDestroyNotify) _ostree_collection_ref_free0);
 
@@ -1093,17 +1101,20 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   for (i = 0; i < installed->len; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
+      g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
       g_autofree char *collection_id = NULL;
       const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
+
+      if (flatpak_dir_ref_is_masked (dir, ref))
+        continue;
 
       collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
       if (collection_id != NULL)
         {
-          g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
           OstreeCollectionRef *c_r = ostree_collection_ref_new (collection_id, ref);
           g_ptr_array_add (collection_refs, c_r);
 
-          if (i != 0)
+          if (refs_str->len > 0)
             g_string_append (refs_str, ", ");
           g_string_append_printf (refs_str, "(%s, %s)", collection_id, ref);
         }
@@ -1139,13 +1150,10 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         return NULL;
 
       if (results[0] == NULL)
-        {
-          flatpak_fail (error, _("No remotes found which provide these refs: [%s]"), refs_str->str);
-          return NULL;
-        }
+        g_debug ("No remotes found which provide these refs: [%s]", refs_str->str);
     }
 
-  for (i = 0; i < installed->len; i++)
+  for (i = 0; i < installed->len && results != NULL && results[0] != NULL; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
       const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
@@ -1157,7 +1165,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       collection_ref = ostree_collection_ref_new (collection_id, ref);
 
       /* Look for matching remote refs that are updates */
-      for (j = 0; results != NULL && results[j] != NULL; j++)
+      for (j = 0; results[j] != NULL; j++)
         {
           const char *local_commit, *remote_commit;
 
@@ -1207,18 +1215,19 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 /* Find all USB and LAN repositories which share the same collection ID as
  * @remote_name, and add a #FlatpakRemote to @remotes for each of them. The caller
  * must initialise @remotes. Returns %TRUE without modifying @remotes if the
- * given remote doesn’t have a collection ID configured.
+ * given remote doesn’t have a collection ID configured or if the @dir doesn’t
+ * have a repo.
  *
  * FIXME: If this were async, the parallelisation could be handled in the caller. */
 static gboolean
-list_remotes_for_configured_remote (FlatpakInstallation *self,
-                                    const gchar         *remote_name,
+list_remotes_for_configured_remote (const gchar         *remote_name,
                                     FlatpakDir          *dir,
                                     gboolean             types_filter[],
                                     GPtrArray           *remotes /* (element-type FlatpakRemote) */,
                                     GCancellable        *cancellable,
                                     GError             **error)
 {
+  OstreeRepo *repo;
   g_autofree gchar *collection_id = NULL;
   OstreeCollectionRef ref;
   OstreeCollectionRef ref2;
@@ -1237,8 +1246,12 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
       !types_filter[FLATPAK_REMOTE_TYPE_LAN])
     return TRUE;
 
+  repo = flatpak_dir_get_repo (dir);
+  if (repo == NULL)
+    return TRUE;
+
   /* Find the collection ID for @remote_name, or bail if there is none. */
-  if (!ostree_repo_get_remote_option (flatpak_dir_get_repo (dir),
+  if (!ostree_repo_get_remote_option (repo,
                                       remote_name, "collection-id",
                                       NULL, &collection_id, error))
     return FALSE;
@@ -1282,7 +1295,7 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
         }
     }
 
-  ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
+  ostree_repo_find_remotes_async (repo,
                                   (const OstreeCollectionRef * const *) refs,
                                   NULL,  /* no options */
                                   finders,
@@ -1294,9 +1307,9 @@ list_remotes_for_configured_remote (FlatpakInstallation *self,
   while (result == NULL)
     g_main_context_iteration (context, TRUE);
 
-  results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
+  results = ostree_repo_find_remotes_finish (repo, result, error);
 
-  if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
+  if (finder_avahi != NULL)
     ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
 
   if (results == NULL)
@@ -1403,7 +1416,7 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
                                                                dir_clone));
 
       /* Add the dynamic mirrors of this remote. */
-      if (!list_remotes_for_configured_remote (self, remote_names[i], dir_clone,
+      if (!list_remotes_for_configured_remote (remote_names[i], dir_clone,
                                                types_filter, remotes,
                                                cancellable, &local_error))
         g_debug ("Couldn't find remotes for configured remote %s: %s",
@@ -1422,7 +1435,7 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
  * Lists the static remotes, in priority (highest first) order. For same
  * priority, an earlier added remote comes before a later added one.
  *
- * Returns: (transfer container) (element-type FlatpakRemote): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakRemote): a GPtrArray of
  *   #FlatpakRemote instances
  */
 GPtrArray *
@@ -1643,6 +1656,62 @@ flatpak_installation_get_config (FlatpakInstallation *self,
 }
 
 /**
+ * flatpak_installation_get_default_languages:
+ * @self: a #FlatpakInstallation
+ * @error: return location for a #GError
+ *
+ * Get the default languages used by the installation to decide which
+ * subpaths to install of locale extensions. This list may also be used
+ * by frontends like GNOME Software to decide which language-specific apps
+ * to display. An empty array means that all languages should be installed.
+ *
+ * Returns: (array zero-terminated=1) (element-type utf8) (transfer full):
+ *   A possibly empty array of locale strings, or %NULL on error.
+ * Since: 1.5.0
+ */
+char **
+flatpak_installation_get_default_languages (FlatpakInstallation  *self,
+                                            GError              **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  return flatpak_dir_get_locale_languages (dir);
+}
+
+/**
+ * flatpak_installation_get_default_locales:
+ * @self: a #FlatpakInstallation
+ * @error: return location for a #GError
+ *
+ * Like flatpak_installation_get_default_languages() but includes territory
+ * information (e.g. `en_US` rather than `en`) which may be included in the
+ * `xa.extra-languages` configuration.
+ *
+ * Strings returned by this function are in the format specified by
+ * [`setlocale()`](man:setlocale): `language[_territory][.codeset][@modifier]`.
+ *
+ * Returns: (array zero-terminated=1) (element-type utf8) (transfer full):
+ *   A possibly empty array of locale strings, or %NULL on error.
+ * Since: 1.5.1
+ */
+char **
+flatpak_installation_get_default_locales (FlatpakInstallation  *self,
+                                          GError              **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  return flatpak_dir_get_locales (dir);
+}
+
+/**
  * flatpak_installation_get_min_free_space_bytes:
  * @self: a #FlatpakInstallation
  * @out_bytes: (out): Location to store the result
@@ -1730,7 +1799,8 @@ flatpak_installation_update_remote_sync (FlatpakInstallation *self,
  *
  * Looks up a remote by name.
  *
- * Returns: (transfer full): a #FlatpakRemote instances, or %NULL error
+ * Returns: (transfer full): a #FlatpakRemote instance, or %NULL with @error
+ *   set
  */
 FlatpakRemote *
 flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
@@ -1962,7 +2032,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
       return NULL;
     }
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2125,7 +2195,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (remote_name == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2359,7 +2429,7 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return FALSE;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -2400,7 +2470,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -2565,7 +2635,7 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2590,6 +2660,77 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
 
   coll_ref = flatpak_collection_ref_new (collection_id, ref);
   checksum = g_hash_table_lookup (ht, coll_ref);
+
+  /* Check LAN/USB sources too in case we're offline */
+  if (checksum == NULL && collection_id != NULL && *collection_id != '\0')
+    {
+      OstreeRepo *repo;
+      const char * const *default_repo_finders;
+      g_autoptr(GAsyncResult) result = NULL;
+      OstreeCollectionRef ostree_coll_ref;
+      const OstreeCollectionRef *refs[2] = { NULL, };
+      OstreeRepoFinder *finders[3] = { NULL, };
+      guint finder_index = 0;
+      gsize i;
+      g_autoptr(GMainContextPopDefault) context = NULL;
+      g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
+
+      context = flatpak_main_context_new_default ();
+
+      ostree_coll_ref.collection_id = collection_id;
+      ostree_coll_ref.ref_name = ref;
+      refs[0] = &ostree_coll_ref;
+
+      if (!flatpak_dir_ensure_repo (dir, cancellable, error))
+        return NULL;
+      repo = flatpak_dir_get_repo (dir);
+      default_repo_finders = ostree_repo_get_default_repo_finders (repo);
+      if (default_repo_finders == NULL || g_strv_contains (default_repo_finders, "mount"))
+        {
+          finder_mount = OSTREE_REPO_FINDER (ostree_repo_finder_mount_new (NULL));
+          finders[finder_index++] = finder_mount;
+        }
+
+      if (default_repo_finders == NULL || g_strv_contains (default_repo_finders, "lan"))
+        {
+          g_autoptr(GError) local_error = NULL;
+          finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
+          finders[finder_index++] = finder_avahi;
+
+          /* The Avahi finder may fail to start on, for example, a CI server. */
+          ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), &local_error);
+          if (local_error != NULL)
+            {
+              finders[--finder_index] = NULL;
+              g_clear_object (&finder_avahi);
+            }
+        }
+
+      if (finders[0] != NULL)
+        {
+          g_auto(OstreeRepoFinderResultv) results = NULL;
+
+          ostree_repo_find_remotes_async (repo, (const OstreeCollectionRef * const *)refs,
+                                          NULL, finders, NULL, cancellable, async_result_cb, &result);
+          while (result == NULL)
+            g_main_context_iteration (context, TRUE);
+
+          results = ostree_repo_find_remotes_finish (repo, result, error);
+
+          if (finder_avahi != NULL)
+            ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
+
+          if (results == NULL)
+            return NULL;
+
+          for (i = 0; results[i] != NULL; i++)
+            {
+              checksum = g_hash_table_lookup (results[i]->ref_to_checksum, &ostree_coll_ref);
+              if (checksum != NULL)
+                break;
+            }
+        }
+    }
 
   /* If there was not a match, it may be because the collection ID is
    * not set in the local configuration, or it is wrong, so we resort to
@@ -2781,7 +2922,7 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
 

@@ -41,6 +41,7 @@
          to do this. For instance for developer tools this lets you
          build flatpaks from inside a flatpak. -->
     <method name="HostCommand">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='ay' name='cwd_path' direction='in'/>
       <arg type='aay' name='argv' direction='in'/>
       <arg type='a{uh}' name='fds' direction='in'/>

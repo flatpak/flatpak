@@ -27,13 +27,14 @@ enum {
   PROP_STREAMS
 };
 
-G_DEFINE_TYPE (FlatpakChainInputStream, flatpak_chain_input_stream, G_TYPE_INPUT_STREAM)
-
 struct _FlatpakChainInputStreamPrivate
 {
   GPtrArray *streams;
   guint      index;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (FlatpakChainInputStream, flatpak_chain_input_stream, G_TYPE_INPUT_STREAM)
+
 
 static void     flatpak_chain_input_stream_set_property (GObject      *object,
                                                          guint         prop_id,
@@ -58,8 +59,6 @@ flatpak_chain_input_stream_class_init (FlatpakChainInputStreamClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GInputStreamClass *stream_class = G_INPUT_STREAM_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (FlatpakChainInputStreamPrivate));
 
   gobject_class->get_property = flatpak_chain_input_stream_get_property;
   gobject_class->set_property = flatpak_chain_input_stream_set_property;
@@ -89,13 +88,15 @@ flatpak_chain_input_stream_set_property (GObject      *object,
                                          GParamSpec   *pspec)
 {
   FlatpakChainInputStream *self;
+  FlatpakChainInputStreamPrivate *priv;
 
   self = FLATPAK_CHAIN_INPUT_STREAM (object);
+  priv = flatpak_chain_input_stream_get_instance_private (self);
 
   switch (prop_id)
     {
     case PROP_STREAMS:
-      self->priv->streams = g_ptr_array_ref (g_value_get_pointer (value));
+      priv->streams = g_ptr_array_ref (g_value_get_pointer (value));
       break;
 
     default:
@@ -111,13 +112,15 @@ flatpak_chain_input_stream_get_property (GObject    *object,
                                          GParamSpec *pspec)
 {
   FlatpakChainInputStream *self;
+  FlatpakChainInputStreamPrivate *priv;
 
   self = FLATPAK_CHAIN_INPUT_STREAM (object);
+  priv = flatpak_chain_input_stream_get_instance_private (self);
 
   switch (prop_id)
     {
     case PROP_STREAMS:
-      g_value_set_pointer (value, self->priv->streams);
+      g_value_set_pointer (value, priv->streams);
       break;
 
     default:
@@ -129,10 +132,12 @@ static void
 flatpak_chain_input_stream_finalize (GObject *object)
 {
   FlatpakChainInputStream *stream;
+  FlatpakChainInputStreamPrivate *priv;
 
   stream = (FlatpakChainInputStream *) (object);
+  priv = flatpak_chain_input_stream_get_instance_private (stream);
 
-  g_ptr_array_unref (stream->priv->streams);
+  g_ptr_array_unref (priv->streams);
 
   G_OBJECT_CLASS (flatpak_chain_input_stream_parent_class)->finalize (object);
 }
@@ -140,9 +145,6 @@ flatpak_chain_input_stream_finalize (GObject *object)
 static void
 flatpak_chain_input_stream_init (FlatpakChainInputStream *self)
 {
-  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
-                                            FLATPAK_TYPE_CHAIN_INPUT_STREAM,
-                                            FlatpakChainInputStreamPrivate);
 }
 
 FlatpakChainInputStream *
@@ -165,26 +167,27 @@ flatpak_chain_input_stream_read (GInputStream *stream,
                                  GError      **error)
 {
   FlatpakChainInputStream *self = (FlatpakChainInputStream *) stream;
+  FlatpakChainInputStreamPrivate *priv = flatpak_chain_input_stream_get_instance_private (self);
   GInputStream *child;
   gssize res = -1;
 
   if (g_cancellable_set_error_if_cancelled (cancellable, error))
     return -1;
 
-  if (self->priv->index >= self->priv->streams->len)
+  if (priv->index >= priv->streams->len)
     return 0;
 
   res = 0;
-  while (res == 0 && self->priv->index < self->priv->streams->len)
+  while (res == 0 && priv->index < priv->streams->len)
     {
-      child = self->priv->streams->pdata[self->priv->index];
+      child = priv->streams->pdata[priv->index];
       res = g_input_stream_read (child,
                                  buffer,
                                  count,
                                  cancellable,
                                  error);
       if (res == 0)
-        self->priv->index++;
+        priv->index++;
     }
 
   return res;
@@ -197,11 +200,12 @@ flatpak_chain_input_stream_close (GInputStream *stream,
 {
   gboolean ret = FALSE;
   FlatpakChainInputStream *self = (gpointer) stream;
+  FlatpakChainInputStreamPrivate *priv = flatpak_chain_input_stream_get_instance_private (self);
   guint i;
 
-  for (i = 0; i < self->priv->streams->len; i++)
+  for (i = 0; i < priv->streams->len; i++)
     {
-      GInputStream *child = self->priv->streams->pdata[i];
+      GInputStream *child = priv->streams->pdata[i];
       if (!g_input_stream_close (child, cancellable, error))
         goto out;
     }

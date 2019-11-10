@@ -32,6 +32,7 @@ FlatpakInstalledRef *flatpak_installed_ref_new (const char  *full_ref,
                                                 const char  *commit,
                                                 const char  *latest_commit,
                                                 const char  *origin,
+                                                const char  *collection_id,
                                                 const char **subpaths,
                                                 const char  *deploy_dir,
                                                 guint64      installed_size,
@@ -41,6 +42,8 @@ FlatpakInstalledRef *flatpak_installed_ref_new (const char  *full_ref,
                                                 const char  *appdata_name,
                                                 const char  *appdata_summary,
                                                 const char  *appdata_version,
-                                                const char  *appdata_license);
+                                                const char  *appdata_license,
+                                                const char  *appdata_content_rating_type,
+                                                GHashTable  *appdata_content_rating);
 
 #endif /* __FLATPAK_INSTALLED_REF_PRIVATE_H__ */

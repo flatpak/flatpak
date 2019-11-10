@@ -60,16 +60,16 @@ add_bin() {
     fi
 }
 
-for i in $@ bash ls cat echo readlink; do
+for i in $@ bash ls cat echo readlink socat; do
     I=`which $i`
     add_bin $I
 done
 for i in `cat $BINS`; do
-    echo Adding binary $i 1>&2
+    #echo Adding binary $i 1>&2
     cp "$i" ${DIR}/usr/bin/
 done
 for i in `cat $LIBS`; do
-    echo Adding library $i 1>&2
+    #echo Adding library $i 1>&2
     cp "$i" ${DIR}/usr/lib/
 done
 ln -s bash ${DIR}/usr/bin/sh

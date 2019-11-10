@@ -61,8 +61,19 @@
                 <listitem><para>
                    The languages that are included when installing Locale extensions.
                    The value is a semicolon-separated list of two-letter language codes,
-                   or one of the special values * or all. If this key is unset, flatpak
-                   defaults to including just the current locale.
+                   or one of the special values <literal>*</literal> or <literal>all</literal>. If this key is unset, flatpak
+                   defaults to including the <varname>extra-languages</varname> key and the current locale.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><varname>extra-languages</varname></term>
+                <listitem><para>
+                   This key is used when languages is not set, and it defines extra locale
+                   extensions on top of the system configured languages. The value is a
+                   semicolon-separated list of locale identifiers
+                   (language, optional locale, optional codeset, optional modifier) as documented by
+                   <citerefentry><refentrytitle>setlocale</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+                   (for example, <literal>en;en_DK;zh_HK.big5hkscs;uz_UZ.utf8@cyrillic</literal>).
                 </para></listitem>
             </varlistentry>
         </variablelist>

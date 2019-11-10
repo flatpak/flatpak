@@ -32,12 +32,14 @@
 #include <gio/gunixfdlist.h>
 #include <sys/mount.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "flatpak-dbus-generated.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-error.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-utils-base-private.h"
 
 static PolkitAuthority *authority = NULL;
 static FlatpakSystemHelper *helper = NULL;
@@ -493,6 +495,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciIndex) index = NULL;
       const FlatpakOciManifestDescriptor *desc;
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
+      g_autoptr(FlatpakOciImage) image_config = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
       FlatpakCollectionRef collection_ref;
       g_autoptr(GHashTable) remote_refs = NULL;
@@ -545,6 +548,16 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
+      image_config = flatpak_oci_registry_load_image_config (registry, NULL,
+                                                             FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+                                                             NULL, NULL, &error);
+      if (image_config == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't open child image config");
+          return TRUE;
+        }
+
       state = flatpak_dir_get_remote_state (system, arg_origin, FALSE, NULL, &error);
       if (state == NULL)
         {
@@ -582,7 +595,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned), image_config,
                                         arg_origin, arg_ref, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
@@ -634,7 +647,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      state = flatpak_dir_get_remote_state_optional (system, arg_origin, NULL, &error);
+      state = flatpak_dir_get_remote_state_optional (system, arg_origin, FALSE, NULL, &error);
       if (state == NULL)
         {
           flatpak_invocation_return_error (invocation, error, "Error getting remote state");
@@ -874,7 +887,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      state = flatpak_dir_get_remote_state_optional (system, arg_origin, NULL, &error);
+      state = flatpak_dir_get_remote_state_optional (system, arg_origin, FALSE, NULL, &error);
       if (state == NULL)
         {
           flatpak_invocation_return_error (invocation, error, "Error getting remote state");
@@ -1120,8 +1133,7 @@ handle_configure (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  /* We only support this for now */
-  if (strcmp (arg_key, "languages") != 0)
+  if ((strcmp (arg_key, "languages") != 0) && (strcmp (arg_key, "extra-languages") != 0))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported key: %s", arg_key);
@@ -1455,6 +1467,10 @@ revokefs_fuse_backend_child_setup (gpointer user_data)
 {
   struct passwd *passwd = user_data;
 
+  /* We use 4 instead of 3 here, because fd 3 is the inerited socket
+     and got dup2() into place before this by GSubprocess */
+  flatpak_close_fds_workaround (4);
+
   if (setgid (passwd->pw_gid) == -1)
     {
       g_warning ("Failed to setgid(%d) for revokefs backend: %s",
@@ -1538,7 +1554,8 @@ ongoing_pull_new (FlatpakSystemHelper   *object,
       return NULL;
     }
 
-  launcher = g_subprocess_launcher_new (G_SUBPROCESS_FLAGS_NONE);
+  /* We use INHERIT_FDS to work around dead-lock, see flatpak_close_fds_workaround */
+  launcher = g_subprocess_launcher_new (G_SUBPROCESS_FLAGS_INHERIT_FDS);
   g_subprocess_launcher_set_child_setup (launcher, revokefs_fuse_backend_child_setup, passwd, NULL);
   g_subprocess_launcher_take_fd (launcher, sockets[0], 3);
   fcntl (sockets[1], F_SETFD, FD_CLOEXEC);

@@ -15,7 +15,7 @@ AC_PREREQ([2.63])
 
 m4_define([flatpak_major_version], [1])
 m4_define([flatpak_minor_version], [5])
-m4_define([flatpak_micro_version], [0])
+m4_define([flatpak_micro_version], [1])
 m4_define([flatpak_extra_version], [])
 m4_define([flatpak_interface_age], [0])
 m4_define([flatpak_binary_age],
@@ -210,8 +210,10 @@ AC_SUBST([GDBUS_CODEGEN], [`$PKG_CONFIG --variable gdbus_codegen gio-2.0`])
 
 POLKIT_GOBJECT_REQUIRED=0.98
 
-PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0 libarchive >= 2.8.0 libxml-2.0 >= 2.4 ])
+PKG_CHECK_MODULES(ARCHIVE, [libarchive >= 2.8.0])
+PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0])
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
+PKG_CHECK_MODULES(XML, [libxml-2.0 >= 2.4])
 PKG_CHECK_MODULES(DCONF, [dconf >= 0.26], [have_dconf=yes], [have_dconf=no])
 if test $have_dconf = yes; then
   AC_DEFINE(HAVE_DCONF, 1, [Define if dconf is available])
@@ -220,9 +222,18 @@ PKG_CHECK_MODULES(SYSTEMD, [libsystemd], [have_libsystemd=yes], [have_libsystemd
 if test $have_libsystemd = yes; then
   AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if libsystemd is available])
 fi
+PKG_CHECK_MODULES([MALCONTENT], [malcontent-0 >= 0.4.0], [have_libmalcontent=yes], [have_libmalcontent=no])
+AS_IF([test "$have_libmalcontent" = "yes"],[
+  AC_DEFINE([HAVE_LIBMALCONTENT], [1], [Define if libmalcontent is available])
+])
+AM_CONDITIONAL([HAVE_LIBMALCONTENT],[test "$have_libmalcontent" = "yes"])
+
+PKG_CHECK_MODULES(GLIB260, glib-2.0 >= 2.60,
+                  [AC_DEFINE(GLIB_VERSION_MIN_REQUIRED, GLIB_VERSION_2_60, [Ignore massive GTimeVal deprecation warnings in 2.62])],
+                  [true])
 
 save_LIBS=$LIBS
-LIBS=$BASE_LIBS
+LIBS=$ARCHIVE_LIBS
 AC_CHECK_FUNCS(archive_read_support_filter_all)
 LIBS=$save_LIBS
 
@@ -526,4 +537,5 @@ echo "          Privileged group:       $PRIVILEGED_GROUP"
 echo "          Privilege mode:         $with_priv_mode"
 echo "          Use dconf:              $have_dconf"
 echo "          Use libsystemd:         $have_libsystemd"
+echo "          Use libmalcontent:      $have_libmalcontent"
 echo ""

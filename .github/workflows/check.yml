@@ -1,0 +1,97 @@
+name: Flatpak CI
+
+on:
+  push:
+    branches:
+    - master
+    - flatpak-1.0.x
+    - flatpak-1.2.x
+    - flatpak-1.4.x
+  pull_request:
+    branches:
+    - master
+    - flatpak-1.0.x
+    - flatpak-1.2.x
+    - flatpak-1.4.x
+
+jobs:
+  check:
+    name: Build with gcc and test
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Install Dependencies
+      run: |
+        sudo add-apt-repository ppa:alexlarsson/flatpak
+        sudo add-apt-repository ppa:alexlarsson/glib260
+        sudo apt-get update
+        sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        libfuse-dev ostree libostree-dev libarchive-dev libcap-dev libattr1-dev libdw-dev libelf-dev \
+        libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
+        libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev
+    - name: Check out flatpak
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Build malcontent dependency
+      run: |
+        git clone https://gitlab.freedesktop.org/pwithnall/malcontent.git ./malcontent
+        pushd ./malcontent
+        git checkout tags/0.4.0
+        meson setup --prefix=/usr _build
+        ninja -C _build
+        sudo ninja -C _build install
+        popd
+    - name: Create logs dir
+      run: mkdir test-logs
+    - name: configure
+      # TODO: Enable gtk-doc builds
+      run: ./autogen.sh
+      env:
+        CFLAGS: -fsanitize=undefined -fsanitize-undefined-trap-on-error -fsanitize=address -O2 -Wp,-D_FORTIFY_SOURCE=2
+    - name: Build flatpak
+      run: make -j $(getconf _NPROCESSORS_ONLN)
+    - name: Run tests
+      # TODO: Build with -j (currently ends up with hangs in the tests)
+      run: make check
+      env:
+        ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
+    - name: Collect overall test logs on failure
+      if: failure()
+      run: mv test-suite.log test-logs/ || true
+    - name: Collect individual test logs on cancel
+      if: failure() || cancelled()
+      run: mv tests/*.log test-logs/ || true
+    - name: Upload test logs
+      uses: actions/upload-artifact@v1
+      if: failure() || cancelled()
+      with:
+        name: test logs
+        path: test-logs
+
+  clang:
+    name: Build with clang
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Install Dependencies
+      run: |
+        sudo add-apt-repository ppa:alexlarsson/flatpak
+        sudo add-apt-repository ppa:alexlarsson/glib260
+        sudo apt-get update
+        sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        libfuse-dev ostree libostree-dev libarchive-dev libcap-dev libattr1-dev libdw-dev libelf-dev \
+        libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
+        libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang
+    - name: Check out flatpak
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: configure
+      # We disable introspection because it fails with clang: https://bugzilla.redhat.com/show_bug.cgi?id=1543295
+      run: ./autogen.sh --disable-introspection
+      env:
+        CC: clang
+        CFLAGS: -Werror=unused-variable
+    - name: Build flatpak
+      run: make -j $(getconf _NPROCESSORS_ONLN)

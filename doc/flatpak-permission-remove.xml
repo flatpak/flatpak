@@ -25,7 +25,7 @@
 
     <refnamediv>
         <refname>flatpak-permission-remove</refname>
-        <refpurpose>List permissions</refpurpose>
+        <refpurpose>Remove permissions</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>

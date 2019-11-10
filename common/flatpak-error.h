@@ -58,6 +58,9 @@ G_BEGIN_DECLS
  *                            root operating on a user installation). (Since: 1.2.0)
  * @FLATPAK_ERROR_NOT_CACHED: Cached data was requested, but it was not available. (Since: 1.4.0)
  * @FLATPAK_ERROR_REF_NOT_FOUND: The specified ref was not found. (Since: 1.4.0)
+ * @FLATPAK_ERROR_PERMISSION_DENIED: An operation was not allowed by the administrative policy.
+ *                                   For example, an app is not allowed to be installed due
+ *                                   to not complying with the parental controls policy. (Since: 1.5.1)
  *
  * Error codes for library functions.
  */
@@ -84,6 +87,7 @@ typedef enum {
   FLATPAK_ERROR_WRONG_USER,
   FLATPAK_ERROR_NOT_CACHED,
   FLATPAK_ERROR_REF_NOT_FOUND,
+  FLATPAK_ERROR_PERMISSION_DENIED,
 } FlatpakError;
 
 /**

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 from wsgiref.handlers import format_date_time
 from email.utils import parsedate
@@ -7,15 +7,11 @@ import gzip
 import sys
 import time
 import zlib
+import os
 
-if sys.version_info[0] >= 3:
-    from urllib.parse import parse_qs
-    import http.server as http_server
-    from io import BytesIO
-else:
-    from urlparse import parse_qs
-    import BaseHTTPServer as http_server
-    from StringIO import StringIO as BytesIO
+from urllib.parse import parse_qs
+import http.server as http_server
+from io import BytesIO
 
 server_start_time = int(time.time())
 
@@ -54,7 +50,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             add_headers['Etag'] = etag
 
         self.send_response(response)
-        for k, v in add_headers.items():
+        for k, v in list(add_headers.items()):
             self.send_header(k, v)
 
         if 'max-age' in query:
@@ -93,11 +89,24 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             else:
                 self.wfile.write(contents.encode('utf-8'))
 
-def test():
-    if sys.version_info[0] >= 3:
-        http_server.test(RequestHandler, port=0)
-    else:
-        http_server.test(RequestHandler)
+def run(dir):
+    RequestHandler.protocol_version = "HTTP/1.0"
+    httpd = http_server.HTTPServer( ("127.0.0.1", 0), RequestHandler)
+    host, port = httpd.socket.getsockname()[:2]
+    with open("httpd-port", 'w') as file:
+        file.write("%d" % port)
+    try:
+        os.write(3, bytes("Started\n", 'utf-8'));
+    except:
+        pass
+    print("Serving HTTP on port %d" % port);
+    if dir:
+        os.chdir(dir)
+    httpd.serve_forever()
 
 if __name__ == '__main__':
-    test()
+    dir = None
+    if len(sys.argv) >= 2 and len(sys.argv[1]) > 0:
+        dir = sys.argv[1]
+
+    run(dir)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Red Hat, Inc
+ * Copyright © 2014-2019 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-run-private.h"
+#include "flatpak-utils-base-private.h"
 #include "valgrind-private.h"
 
 #include <glib/gi18n-lib.h>
@@ -74,6 +75,8 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_OUT_OF_SPACE,          "org.freedesktop.Flatpak.Error.OutOfSpace"}, /* Since: 1.2.0 */
   {FLATPAK_ERROR_WRONG_USER,            "org.freedesktop.Flatpak.Error.WrongUser"}, /* Since: 1.2.0 */
   {FLATPAK_ERROR_NOT_CACHED,            "org.freedesktop.Flatpak.Error.NotCached"}, /* Since: 1.3.3 */
+  {FLATPAK_ERROR_REF_NOT_FOUND,         "org.freedesktop.Flatpak.Error.RefNotFound"}, /* Since: 1.4.0 */
+  {FLATPAK_ERROR_PERMISSION_DENIED,     "org.freedesktop.Flatpak.Error.PermissionDenied"}, /* Since: 1.5.1 */
 };
 
 typedef struct archive FlatpakAutoArchiveRead;
@@ -638,46 +641,6 @@ flatpak_get_bwrap (void)
   return HELPER;
 }
 
-char *
-flatpak_get_timezone (void)
-{
-  g_autofree gchar *symlink = NULL;
-  gchar *etc_timezone = NULL;
-  const gchar *tzdir;
-
-  tzdir = getenv ("TZDIR");
-  if (tzdir == NULL)
-    tzdir = "/usr/share/zoneinfo";
-
-  symlink = flatpak_resolve_link ("/etc/localtime", NULL);
-  if (symlink != NULL)
-    {
-      /* Resolve relative path */
-      g_autofree gchar *canonical = flatpak_canonicalize_filename (symlink);
-      char *canonical_suffix;
-
-      /* Strip the prefix and slashes if possible. */
-      if (g_str_has_prefix (canonical, tzdir))
-        {
-          canonical_suffix = canonical + strlen (tzdir);
-          while (*canonical_suffix == '/')
-            canonical_suffix++;
-
-          return g_strdup (canonical_suffix);
-        }
-    }
-
-  if (g_file_get_contents ("/etc/timezeone", &etc_timezone,
-                           NULL, NULL))
-    {
-      g_strchomp (etc_timezone);
-      return etc_timezone;
-    }
-
-  /* Final fall-back is UTC */
-  return g_strdup ("UTC");
-}
-
 static gboolean
 is_valid_initial_name_character (gint c, gboolean allow_dash)
 {
@@ -999,7 +962,7 @@ is_valid_branch_character (gint c)
  *
  * Branch names must only contain the ASCII characters
  * "[A-Z][a-z][0-9]_-.".
- * Branch names may not begin with a digit.
+ * Branch names may not begin with a period.
  * Branch names must contain at least one character.
  *
  * Returns: %TRUE if valid, %FALSE otherwise.
@@ -1166,11 +1129,12 @@ line_get_word (char **line)
   return word;
 }
 
-static char *
-glob_to_regexp (const char *glob, GError **error)
+char *
+flatpak_filter_glob_to_regexp (const char *glob, GError **error)
 {
   g_autoptr(GString) regexp = g_string_new ("");
   int parts = 1;
+  gboolean empty_part;
 
   if (g_str_has_prefix (glob, "app/"))
     {
@@ -1192,6 +1156,7 @@ glob_to_regexp (const char *glob, GError **error)
       return NULL;
     }
 
+  empty_part = TRUE;
   while (*glob != 0)
     {
       char c = *glob;
@@ -1199,6 +1164,9 @@ glob_to_regexp (const char *glob, GError **error)
 
       if (c == '/')
         {
+          if (empty_part)
+            g_string_append (regexp, "[.\\-_a-zA-Z0-9]*");
+          empty_part = TRUE;
           parts++;
           g_string_append (regexp, "/");
           if (parts > 3)
@@ -1209,14 +1177,17 @@ glob_to_regexp (const char *glob, GError **error)
         }
       else if (c == '*')
         {
-          g_string_append (regexp, "[.\\-_a-zA-Z0-9]*");
+          empty_part = FALSE;
+         g_string_append (regexp, "[.\\-_a-zA-Z0-9]*");
         }
       else if (c == '.')
         {
+          empty_part = FALSE;
           g_string_append (regexp, "\\.");
         }
       else if (g_ascii_isalnum (c) || c == '-' || c == '_')
         {
+          empty_part = FALSE;
           g_string_append_c (regexp, c);
         }
       else
@@ -1280,7 +1251,7 @@ flatpak_parse_filters (const char *data,
           if (next != NULL)
             return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Trailing text on line %d"), i + 1);
 
-          ref_regexp = glob_to_regexp (glob, error);
+          ref_regexp = flatpak_filter_glob_to_regexp (glob, error);
           if (ref_regexp == NULL)
             return glnx_prefix_error (error, _("on line %d"), i + 1);
 
@@ -1615,8 +1586,8 @@ flatpak_build_app_ref (const char *app,
 char **
 flatpak_list_deployed_refs (const char   *type,
                             const char   *name_prefix,
-                            const char   *branch,
                             const char   *arch,
+                            const char   *branch,
                             GCancellable *cancellable,
                             GError      **error)
 {
@@ -1637,7 +1608,7 @@ flatpak_list_deployed_refs (const char   *type,
     goto out;
 
   if (!flatpak_dir_collect_deployed_refs (user_dir, type, name_prefix,
-                                          branch, arch, hash, cancellable,
+                                          arch, branch, hash, cancellable,
                                           error))
     goto out;
 
@@ -1645,7 +1616,7 @@ flatpak_list_deployed_refs (const char   *type,
     {
       FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
       if (!flatpak_dir_collect_deployed_refs (system_dir, type, name_prefix,
-                                              branch, arch, hash, cancellable,
+                                              arch, branch, hash, cancellable,
                                               error))
         goto out;
     }
@@ -1667,8 +1638,8 @@ out:
 
 char **
 flatpak_list_unmaintained_refs (const char   *name_prefix,
-                                const char   *branch,
                                 const char   *arch,
+                                const char   *branch,
                                 GCancellable *cancellable,
                                 GError      **error)
 {
@@ -1686,7 +1657,7 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
   user_dir = flatpak_dir_get_user ();
 
   if (!flatpak_dir_collect_unmaintained_refs (user_dir, name_prefix,
-                                              branch, arch, hash, cancellable,
+                                              arch, branch, hash, cancellable,
                                               error))
     return NULL;
 
@@ -1699,7 +1670,7 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
       FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
 
       if (!flatpak_dir_collect_unmaintained_refs (system_dir, name_prefix,
-                                                  branch, arch, hash, cancellable,
+                                                  arch, branch, hash, cancellable,
                                                   error))
         return NULL;
     }
@@ -2439,37 +2410,6 @@ flatpak_rm_rf (GFile        *dir,
   return glnx_shutil_rm_rf_at (AT_FDCWD,
                                flatpak_file_get_path_cached (dir),
                                cancellable, error);
-}
-
-char *
-flatpak_readlink (const char *path,
-                  GError    **error)
-{
-  return glnx_readlinkat_malloc (-1, path, NULL, error);
-}
-
-char *
-flatpak_resolve_link (const char *path,
-                      GError    **error)
-{
-  g_autofree char *link = flatpak_readlink (path, error);
-  g_autofree char *dirname = NULL;
-
-  if (link == NULL)
-    return NULL;
-
-  if (g_path_is_absolute (link))
-    return g_steal_pointer (&link);
-
-  dirname = g_path_get_dirname (path);
-  return g_build_filename (dirname, link, NULL);
-}
-
-char *
-flatpak_canonicalize_filename (const char *path)
-{
-  g_autoptr(GFile) file = g_file_new_for_path (path);
-  return g_file_get_path (file);
 }
 
 gboolean
@@ -5496,6 +5436,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                FlatpakOciRegistry    *registry,
                                const char            *oci_repository,
                                const char            *digest,
+                               const char            *ref,
                                FlatpakOciPullProgress progress_cb,
                                gpointer               progress_user_data,
                                GCancellable          *cancellable,
@@ -5561,7 +5502,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
-  flatpak_oci_index_add_manifest (index, manifest_desc);
+  flatpak_oci_index_add_manifest (index, ref, manifest_desc);
 
   if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
     return FALSE;
@@ -5576,6 +5517,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                        const char            *oci_repository,
                        const char            *digest,
                        FlatpakOciManifest    *manifest,
+                       FlatpakOciImage       *image_config,
                        const char            *remote,
                        const char            *ref,
                        FlatpakOciPullProgress progress_cb,
@@ -5595,7 +5537,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
-  GHashTable *annotations;
+  GHashTable *annotations, *labels;
   int i;
 
   g_assert (ref != NULL);
@@ -5607,6 +5549,16 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                                           &subject, &body,
                                           &manifest_ref, NULL, NULL,
                                           metadata_builder);
+  if (manifest_ref == NULL)
+    {
+      labels = flatpak_oci_image_get_labels (image_config);
+      if (labels)
+        flatpak_oci_parse_commit_annotations (labels, &timestamp,
+                                              &subject, &body,
+                                              &manifest_ref, NULL, NULL,
+                                              metadata_builder);
+    }
+
   if (manifest_ref == NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No ref specified for OCI image %s"), digest);
@@ -6478,31 +6430,78 @@ flatpak_check_required_version (const char *ref,
                                 GKeyFile   *metakey,
                                 GError    **error)
 {
-  g_autofree char *required_version = NULL;
+  g_auto(GStrv) required_versions = NULL;
   const char *group;
-  int required_major, required_minor, required_micro;
+  int max_required_major = 0, max_required_minor = 0;
+  const char *max_required_version = "0.0";
+  int i;
 
   if (g_str_has_prefix (ref, "app/"))
     group = "Application";
   else
     group = "Runtime";
 
-  required_version = g_key_file_get_string (metakey, group, "required-flatpak", NULL);
-  if (required_version)
+  /* We handle handle multiple version requirements here. Each requirement must
+   * be in the form major.minor.micro, and if the flatpak version matches the
+   * major.minor part, t must be equal or later in the micro. If the major.minor part
+   * doesn't exactly match any of the specified requirements it must be larger
+   * than the maximum specified requirement.
+   *
+   * For example, specifying
+   *   required-flatpak=1.6.2;1.4.2;1.0.2;
+   * would allow flatpak versions:
+   *  1.7.0, 1.6.2, 1.6.3, 1.4.2, 1.4.3, 1.0.2, 1.0.3
+   * but not:
+   *  1.6.1, 1.4.1 or 1.2.100.
+   *
+   * The goal here is to be able to specify a version (like 1.6.2 above) where a feature
+   * was introduced, but also allow backports of said feature to earlier version series.
+   *
+   * Earlier versions that only support specifying one version will only look at the first
+   * element in the list, so put the largest version first.
+   */
+  required_versions = g_key_file_get_string_list (metakey, group, "required-flatpak", NULL, NULL);
+  if (required_versions == 0 || required_versions[0] == NULL)
+    return TRUE;
+
+  for (i = 0; required_versions[i] != NULL; i++)
     {
+      int required_major, required_minor, required_micro;
+      const char *required_version = required_versions[i];
+
       if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
                                    _("Invalid require-flatpak argument %s"), required_version);
       else
         {
-          if (required_major > PACKAGE_MAJOR_VERSION ||
-              (required_major == PACKAGE_MAJOR_VERSION && required_minor > PACKAGE_MINOR_VERSION) ||
-              (required_major == PACKAGE_MAJOR_VERSION && required_minor == PACKAGE_MINOR_VERSION && required_micro > PACKAGE_MICRO_VERSION))
-            return flatpak_fail_error (error, FLATPAK_ERROR_NEED_NEW_FLATPAK,
-                                       _("%s needs a later flatpak version (%s)"),
-                                       ref, required_version);
+          /* If flatpak is in the same major.minor series as the requirement, do a micro check */
+          if (required_major == PACKAGE_MAJOR_VERSION && required_minor == PACKAGE_MINOR_VERSION)
+            {
+              if (required_micro <= PACKAGE_MICRO_VERSION)
+                return TRUE;
+              else
+                return flatpak_fail_error (error, FLATPAK_ERROR_NEED_NEW_FLATPAK,
+                                           _("%s needs a later flatpak version (%s)"),
+                                           ref, required_version);
+            }
+
+          /* Otherwise, keep track of the largest major.minor that is required */
+          if ((required_major > max_required_major) ||
+              (required_major == max_required_major &&
+               required_minor > max_required_minor))
+            {
+              max_required_major = required_major;
+              max_required_minor = required_minor;
+              max_required_version = required_version;
+            }
         }
     }
+
+  if (max_required_major > PACKAGE_MAJOR_VERSION ||
+      (max_required_major == PACKAGE_MAJOR_VERSION && max_required_minor > PACKAGE_MINOR_VERSION))
+    return flatpak_fail_error (error, FLATPAK_ERROR_NEED_NEW_FLATPAK,
+                               _("%s needs a later flatpak version (%s)"),
+                               ref, max_required_version);
 
   return TRUE;
 }
@@ -6776,7 +6775,7 @@ flatpak_repo_resolve_rev (OstreeRepo    *repo,
     }
   else
     ostree_repo_resolve_rev_ext (repo, ref_name, allow_noent,
-                                 OSTREE_REPO_LIST_REFS_EXT_NONE, out_rev, &local_error);
+                                 OSTREE_REPO_RESOLVE_REV_EXT_NONE, out_rev, &local_error);
 
   if (local_error != NULL)
     {

@@ -77,6 +77,7 @@ static FlatpakCommand commands[] = {
   { "uninstall", N_("Uninstall an installed application or runtime"), flatpak_builtin_uninstall, flatpak_complete_uninstall },
   /* Alias remove to uninstall to help users of yum/dnf/apt */
   { "remove", NULL, flatpak_builtin_uninstall, flatpak_complete_uninstall, TRUE },
+  { "mask", N_("Mask out updates and automatic installation"), flatpak_builtin_mask, flatpak_complete_mask },
   { "list", N_("List installed apps and/or runtimes"), flatpak_builtin_list, flatpak_complete_list },
   { "info", N_("Show info for installed app or runtime"), flatpak_builtin_info, flatpak_complete_info },
   { "history", N_("Show history"), flatpak_builtin_history, flatpak_complete_history },
@@ -411,7 +412,7 @@ flatpak_option_context_parse (GOptionContext     *context,
                 {
                   FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
                   const char *id = flatpak_dir_get_id (dir);
-                  if (g_strcmp0 (id, "default") != 0)
+                  if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) != 0)
                     g_ptr_array_add (dirs, g_object_ref (dir));
                 }
             }
@@ -526,24 +527,45 @@ extract_command (int         *argc,
 }
 
 static const char *
-find_similar_command (const char *word)
+find_similar_command (const char *word,
+                      gboolean   *option)
 {
-  int i, d, best;
+  int i, d, k;
+  const char *suggestion;
+  GOptionEntry *entries[3] = { global_entries, empty_entries, user_entries };
 
   d = G_MAXINT;
-  best = 0;
+  suggestion = NULL;
 
   for (i = 0; commands[i].name; i++)
     {
+      if (!commands[i].fn)
+        continue;
+
       int d1 = flatpak_levenshtein_distance (word, commands[i].name);
       if (d1 < d)
         {
           d = d1;
-          best = i;
+          suggestion = commands[i].name;
+          *option = FALSE;
         }
     }
 
-  return commands[best].name;
+  for (k = 0; k < 3; k++)
+    {
+      for (i = 0; entries[k][i].long_name; i++)
+        {
+          int d1 = flatpak_levenshtein_distance (word, entries[k][i].long_name);
+          if (d1 < d)
+            {
+              d = d1;
+              suggestion = entries[k][i].long_name;
+              *option = TRUE;
+            }
+        }
+    }
+
+  return suggestion;
 }
 
 static gpointer
@@ -639,11 +661,12 @@ flatpak_run (int      argc,
       if (command_name != NULL)
         {
           const char *similar;
+          gboolean option;
 
-          similar = find_similar_command (command_name);
+          similar = find_similar_command (command_name, &option);
           if (similar)
-            msg = g_strdup_printf (_("'%s' is not a flatpak command. Did you mean '%s'?"),
-                                   command_name, similar);
+            msg = g_strdup_printf (_("'%s' is not a flatpak command. Did you mean '%s%s'?"),
+                                   command_name, option ? "--" : "", similar);
           else
             msg = g_strdup_printf (_("'%s' is not a flatpak command"),
                                    command_name);

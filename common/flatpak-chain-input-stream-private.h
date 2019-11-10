@@ -41,9 +41,6 @@ typedef struct _FlatpakChainInputStreamPrivate FlatpakChainInputStreamPrivate;
 struct _FlatpakChainInputStream
 {
   GInputStream parent_instance;
-
-  /*< private >*/
-  FlatpakChainInputStreamPrivate *priv;
 };
 
 struct _FlatpakChainInputStreamClass

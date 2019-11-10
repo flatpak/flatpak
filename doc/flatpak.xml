@@ -60,7 +60,7 @@
 
        <para>
             System-wide remotes can be statically preconfigured by dropping
-            flatpakref files into <filename>/etc/flatpak/remotes.d/</filename>.
+            flatpakrepo files into <filename>/etc/flatpak/remotes.d/</filename>.
        </para>
 
         <para>
@@ -192,6 +192,13 @@
 
                 <listitem><para>
                     Uninstall an installed application or runtime.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-mask</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Mask out updates and automatic installation
                 </para></listitem>
             </varlistentry>
             <varlistentry>

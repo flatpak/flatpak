@@ -1,6 +1,4 @@
-#!/usr/bin/python
-
-from __future__ import print_function
+#!/usr/bin/python3
 
 import base64
 import hashlib
@@ -9,12 +7,8 @@ import os
 import sys
 import time
 
-if sys.version_info[0] >= 3:
-    from urllib.parse import parse_qs
-    import http.server as http_server
-else:
-    from urlparse import parse_qs
-    import BaseHTTPServer as http_server
+from urllib.parse import parse_qs
+import http.server as http_server
 
 repositories = {}
 icons = {}
@@ -120,7 +114,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             response = 404
 
         self.send_response(response)
-        for k, v in add_headers.items():
+        for k, v in list(add_headers.items()):
             self.send_header(k, v)
 
         if response == 200:
@@ -179,10 +173,15 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             if detach_icons:
                 for size in (64, 128):
                     annotation = 'org.freedesktop.appstream.icon-{}'.format(size)
-                    icon = manifest['annotations'].get(annotation)
+                    icon = manifest.get('annotations', {}).get(annotation)
                     if icon:
                         path = cache_icon(icon)
                         manifest['annotations'][annotation] = path
+                    else:
+                        icon = config.get('config', {}).get('Labels', {}).get(annotation)
+                        if icon:
+                            path = cache_icon(icon)
+                            config['config']['Labels'][annotation] = path
 
             image = {
                 "Tags": [tag],
@@ -190,8 +189,8 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
                 "MediaType": "application/vnd.oci.image.manifest.v1+json",
                 "OS": config['os'],
                 "Architecture": config['architecture'],
-                "Annotations": manifest['annotations'],
-                "Labels": {},
+                "Annotations": manifest.get('annotations', {}),
+                "Labels": config.get('config', {}).get('Labels', {}),
             }
 
             # Delete old versions
@@ -243,11 +242,24 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-def test():
-    if sys.version_info[0] >= 3:
-        http_server.test(RequestHandler, port=0)
-    else:
-        http_server.test(RequestHandler)
+def run(dir):
+    RequestHandler.protocol_version = "HTTP/1.0"
+    httpd = http_server.HTTPServer( ("127.0.0.1", 0), RequestHandler)
+    host, port = httpd.socket.getsockname()[:2]
+    with open("httpd-port", 'w') as file:
+        file.write("%d" % port)
+    try:
+        os.write(3, bytes("Started\n", 'utf-8'));
+    except:
+        pass
+    print("Serving HTTP on port %d" % port);
+    if dir:
+        os.chdir(dir)
+    httpd.serve_forever()
 
 if __name__ == '__main__':
-    test()
+    dir = None
+    if len(sys.argv) >= 2 and len(sys.argv[1]) > 0:
+        dir = sys.argv[1]
+
+    run(dir)

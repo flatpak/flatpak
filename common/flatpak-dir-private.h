@@ -32,13 +32,19 @@
  * The version field was added in flatpak 1.2, anything before is 0.
  *
  * Version 1 added appdata-name/summary/version/license
+ * Version 2 added extension-of/appdata-content-rating
  */
-#define FLATPAK_DEPLOY_VERSION_CURRENT 1
+#define FLATPAK_DEPLOY_VERSION_CURRENT 2
 #define FLATPAK_DEPLOY_VERSION_ANY 0
 
 #define FLATPAK_TYPE_DIR flatpak_dir_get_type ()
 #define FLATPAK_DIR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_DIR, FlatpakDir))
 #define FLATPAK_IS_DIR(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_DIR))
+
+#define SYSTEM_DIR_DEFAULT_ID "default"
+#define SYSTEM_DIR_DEFAULT_DISPLAY_NAME _("Default system installation")
+#define SYSTEM_DIR_DEFAULT_STORAGE_TYPE FLATPAK_DIR_STORAGE_TYPE_DEFAULT
+#define SYSTEM_DIR_DEFAULT_PRIORITY 0
 
 #define FLATPAK_TYPE_DEPLOY flatpak_deploy_get_type ()
 #define FLATPAK_DEPLOY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_DEPLOY, FlatpakDeploy))
@@ -351,12 +357,15 @@ gboolean       flatpak_remove_override_keyfile (const char *app_id,
 int                 flatpak_deploy_data_get_version (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_origin (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_commit (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_content_rating_type (GVariant *deploy_data);
+GHashTable *        flatpak_deploy_data_get_appdata_content_rating (GVariant *deploy_data);
 const char **       flatpak_deploy_data_get_subpaths (GVariant *deploy_data);
 guint64             flatpak_deploy_data_get_installed_size (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_alt_id (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_eol_rebase (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_runtime (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_extension_of (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_name (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_summary (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_version (GVariant *deploy_data);
@@ -389,6 +398,7 @@ GPtrArray   *flatpak_dir_get_system_list (GCancellable *cancellable,
 FlatpakDir  *flatpak_dir_get_system_by_id (const char   *id,
                                            GCancellable *cancellable,
                                            GError      **error);
+FlatpakDir *flatpak_dir_get_by_path (GFile *path);
 gboolean    flatpak_dir_is_user (FlatpakDir *self);
 void        flatpak_dir_set_no_system_helper (FlatpakDir *self,
                                               gboolean    no_system_helper);
@@ -441,6 +451,8 @@ char **     flatpak_dir_search_for_dependency (FlatpakDir   *self,
                                                const char   *runtime_ref,
                                                GCancellable *cancellable,
                                                GError      **error);
+gboolean    flatpak_dir_ref_is_masked (FlatpakDir *self,
+                                       const char *ref);
 char *      flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                          const char   *remote,
                                          const char   *name,
@@ -742,8 +754,8 @@ gboolean    flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
 gboolean    flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
                                                const char   *type,
                                                const char   *name_prefix,
-                                               const char   *branch,
                                                const char   *arch,
+                                               const char   *branch,
                                                GHashTable   *hash,
                                                GCancellable *cancellable,
                                                GError      **error);
@@ -877,6 +889,7 @@ gboolean flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                               GError      **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                                             const char   *remote,
+                                                            gboolean      only_cached,
                                                             GCancellable *cancellable,
                                                             GError      **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,
@@ -896,6 +909,7 @@ GPtrArray * flatpak_dir_find_remote_related (FlatpakDir         *dir,
                                              GError            **error);
 GPtrArray * flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                                          const char   *ref,
+                                                         const char   *commit,
                                                          const char   *remote_name,
                                                          GKeyFile     *metakey,
                                                          GCancellable *cancellable,
@@ -941,7 +955,9 @@ gboolean           flatpak_dir_resolve_p2p_refs (FlatpakDir         *self,
                                                  GError            **error);
 
 
+char ** flatpak_dir_get_default_locales (FlatpakDir *self);
 char ** flatpak_dir_get_default_locale_languages (FlatpakDir *self);
+char ** flatpak_dir_get_locales (FlatpakDir *self);
 char ** flatpak_dir_get_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locale_subpaths (FlatpakDir *self);
 

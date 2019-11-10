@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Red Hat, Inc
+ * Copyright © 2014-2019 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <gio/gdesktopappinfo.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -35,6 +36,9 @@
 #include <gio/gunixfdlist.h>
 #ifdef HAVE_DCONF
 #include <dconf/dconf.h>
+#endif
+#ifdef HAVE_LIBMALCONTENT
+#include <libmalcontent/malcontent.h>
 #endif
 
 #ifdef ENABLE_SECCOMP
@@ -52,7 +56,7 @@
 
 #include "flatpak-run-private.h"
 #include "flatpak-proxy.h"
-#include "flatpak-utils-private.h"
+#include "flatpak-utils-base-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-systemd-dbus-generated.h"
 #include "flatpak-document-dbus-generated.h"
@@ -199,7 +203,7 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
 #ifdef ENABLE_XAUTH
       g_auto(GLnxTmpfile) xauth_tmpf  = { 0, };
 
-      if (glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, &xauth_tmpf, NULL))
+      if (glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &xauth_tmpf, NULL))
         {
           FILE *output = fdopen (xauth_tmpf.fd, "wb");
           if (output != NULL)
@@ -851,10 +855,11 @@ start_dbus_proxy (FlatpakBwrap *app_bwrap,
   commandline = flatpak_quote_argv ((const char **) proxy_bwrap->argv->pdata, -1);
   g_debug ("Running '%s'", commandline);
 
+  /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
   if (!g_spawn_async (NULL,
                       (char **) proxy_bwrap->argv->pdata,
                       NULL,
-                      G_SPAWN_SEARCH_PATH,
+                      G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                       flatpak_bwrap_child_setup_cb, proxy_bwrap->fds,
                       NULL, error))
     return FALSE;
@@ -2625,7 +2630,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   /* Blacklist the rest */
   seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
 
-  if (!glnx_open_anonymous_tmpfile (O_RDWR | O_CLOEXEC, &seccomp_tmpf, error))
+  if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &seccomp_tmpf, error))
     return FALSE;
 
   if (seccomp_export_bpf (seccomp, seccomp_tmpf.fd) != 0)
@@ -3122,10 +3127,11 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   g_array_append_vals (combined_fd_array, base_fd_array->data, base_fd_array->len);
   g_array_append_vals (combined_fd_array, bwrap->fds->data, bwrap->fds->len);
 
+  /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
   if (!g_spawn_sync (NULL,
                      (char **) bwrap->argv->pdata,
                      bwrap->envp,
-                     G_SPAWN_SEARCH_PATH,
+                     G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                      flatpak_bwrap_child_setup_cb, combined_fd_array,
                      NULL, NULL,
                      &exit_status,
@@ -3163,6 +3169,92 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
     }
 
   return glnx_steal_fd (&ld_so_fd);
+}
+
+/* Check that this user is actually allowed to run this app. When running
+ * from the gnome-initial-setup session, an app filter might not be available. */
+static gboolean
+check_parental_controls (const char     *app_ref,
+                         FlatpakDeploy  *deploy,
+                         GCancellable   *cancellable,
+                         GError        **error)
+{
+#ifdef HAVE_LIBMALCONTENT
+  g_auto(GStrv) app_ref_parts = NULL;
+  g_autoptr(MctManager) manager = NULL;
+  g_autoptr(MctAppFilter) app_filter = NULL;
+  g_autoptr(GAsyncResult) app_filter_result = NULL;
+  g_autoptr(GDBusConnection) system_bus = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GDesktopAppInfo) app_info = NULL;
+  gboolean allowed = FALSE;
+
+  app_ref_parts = flatpak_decompose_ref (app_ref, error);
+  if (app_ref_parts == NULL)
+    return FALSE;
+
+  system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, error);
+  if (system_bus == NULL)
+    return FALSE;
+
+  manager = mct_manager_new (system_bus);
+  app_filter = mct_manager_get_app_filter (manager, getuid (),
+                                           MCT_GET_APP_FILTER_FLAGS_INTERACTIVE,
+                                           cancellable, &local_error);
+  if (g_error_matches (local_error, MCT_APP_FILTER_ERROR, MCT_APP_FILTER_ERROR_DISABLED))
+    {
+      g_debug ("Skipping parental controls check for %s since parental "
+               "controls are disabled globally", app_ref);
+      return TRUE;
+    }
+  else if (local_error != NULL)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  /* Always filter by app ID. Additionally, filter by app info (which runs
+   * multiple checks, including whether the app ID, executable path and
+   * content types are allowed) if available. If the flatpak contains
+   * multiple .desktop files, we use the main one. The app ID check is
+   * always done, as the binary executed by `flatpak run` isn’t necessarily
+   * extracted from a .desktop file. */
+  allowed = mct_app_filter_is_flatpak_ref_allowed (app_filter, app_ref);
+
+  /* Look up the app’s main .desktop file. */
+  if (deploy != NULL && allowed)
+    {
+      g_autoptr(GFile) deploy_dir = NULL;
+      const char *deploy_path;
+      g_autofree char *desktop_file_name = NULL;
+      g_autofree char *desktop_file_path = NULL;
+
+      deploy_dir = flatpak_deploy_get_dir (deploy);
+      deploy_path = flatpak_file_get_path_cached (deploy_dir);
+
+      desktop_file_name = g_strconcat (app_ref_parts[1], ".desktop", NULL);
+      desktop_file_path = g_build_path (G_DIR_SEPARATOR_S,
+                                        deploy_path,
+                                        "export",
+                                        "share",
+                                        "applications",
+                                        desktop_file_name,
+                                        NULL);
+      app_info = g_desktop_app_info_new_from_filename (desktop_file_path);
+    }
+
+  if (app_info != NULL)
+    allowed = allowed && mct_app_filter_is_appinfo_allowed (app_filter,
+                                                            G_APP_INFO (app_info));
+
+  if (!allowed)
+    return flatpak_fail_error (error, FLATPAK_ERROR_PERMISSION_DENIED,
+                               /* Translators: The placeholder is for an app ref. */
+                               _("Running %s is not allowed by the policy set by your administrator"),
+                               app_ref);
+#endif  /* HAVE_LIBMALCONTENT */
+
+  return TRUE;
 }
 
 gboolean
@@ -3223,6 +3315,11 @@ flatpak_run_app (const char     *app_ref,
   if (app_ref_parts == NULL)
     return FALSE;
 
+  /* Check the user is allowed to run this flatpak. */
+  if (!check_parental_controls (app_ref, app_deploy, cancellable, error))
+    return FALSE;
+
+  /* Construct the bwrap context. */
   bwrap = flatpak_bwrap_new (NULL);
   flatpak_bwrap_add_arg (bwrap, flatpak_get_bwrap ());
 
@@ -3563,6 +3660,9 @@ flatpak_run_app (const char     *app_ref,
       spawn_flags = G_SPAWN_SEARCH_PATH;
       if (flags & FLATPAK_RUN_FLAG_DO_NOT_REAP)
         spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
+
+      /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
+      spawn_flags |= G_SPAWN_LEAVE_DESCRIPTORS_OPEN;
 
       if (!g_spawn_async (NULL,
                           (char **) bwrap->argv->pdata,

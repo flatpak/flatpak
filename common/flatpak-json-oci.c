@@ -173,11 +173,12 @@ flatpak_oci_versioned_init (FlatpakOciVersioned *self)
 }
 
 FlatpakOciVersioned *
-flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
+flatpak_oci_versioned_from_json (GBytes *bytes,
+                                 GError **error)
 {
   g_autoptr(JsonParser) parser = NULL;
   JsonNode *root = NULL;
-  const gchar *mediatype;
+  const gchar *mediatype = NULL;
   JsonObject *object;
 
   parser = json_parser_new ();
@@ -190,7 +191,9 @@ flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
   root = json_parser_get_root (parser);
   object = json_node_get_object (root);
 
-  mediatype = json_object_get_string_member (object, "mediaType");
+  if (json_object_has_member (object, "mediaType"))
+    mediatype = json_object_get_string_member (object, "mediaType");
+
   if (mediatype == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
@@ -198,7 +201,9 @@ flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
       return NULL;
     }
 
-  if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) == 0)
+  /* The docker v2 image manifest is similar enough that we can just load it, it does not have the annotation field though */
+  if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) == 0 ||
+      strcmp (mediatype, FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2) == 0)
     return (FlatpakOciVersioned *) flatpak_json_from_node (root, FLATPAK_TYPE_OCI_MANIFEST, error);
 
   if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX) == 0)
@@ -208,6 +213,26 @@ flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
                "Unsupported media type %s", mediatype);
   return NULL;
 }
+
+FlatpakOciImage *
+flatpak_oci_image_from_json (GBytes *bytes,
+                             GError **error)
+{
+  g_autoptr(JsonParser) parser = NULL;
+  JsonNode *root = NULL;
+
+  parser = json_parser_new ();
+  if (!json_parser_load_from_data (parser,
+                                   g_bytes_get_data (bytes, NULL),
+                                   g_bytes_get_size (bytes),
+                                   error))
+    return NULL;
+
+  root = json_parser_get_root (parser);
+
+  return (FlatpakOciImage *) flatpak_json_from_node (root, FLATPAK_TYPE_OCI_IMAGE, error);
+}
+
 
 const char *
 flatpak_oci_versioned_get_mediatype (FlatpakOciVersioned *self)
@@ -423,21 +448,18 @@ flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self)
 
 void
 flatpak_oci_index_add_manifest (FlatpakOciIndex      *self,
+                                const char           *ref,
                                 FlatpakOciDescriptor *desc)
 {
   FlatpakOciManifestDescriptor *m;
-  const char *m_ref = NULL;
   int count;
 
-  if (desc->annotations != NULL)
-    m_ref = g_hash_table_lookup (desc->annotations, "org.flatpak.ref");
-
-  if (m_ref != NULL)
-    flatpak_oci_index_remove_manifest (self, m_ref);
+  if (ref != NULL)
+    flatpak_oci_index_remove_manifest (self, ref);
 
   count = flatpak_oci_index_get_n_manifests (self);
 
-  m = manifest_desc_for_desc (desc, m_ref);
+  m = manifest_desc_for_desc (desc, ref);
   self->manifests = g_renew (FlatpakOciManifestDescriptor *, self->manifests, count + 2);
   self->manifests[count] = m;
   self->manifests[count + 1] = NULL;
@@ -693,6 +715,14 @@ flatpak_oci_image_set_layers (FlatpakOciImage *image,
   image->rootfs.diff_ids = g_strdupv ((char **) layers);
 }
 
+GHashTable *
+flatpak_oci_image_get_labels (FlatpakOciImage *self)
+{
+  if (self->config.labels == NULL)
+    self->config.labels = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  return self->config.labels;
+}
+
 void
 flatpak_oci_image_set_layer (FlatpakOciImage *image,
                              const char      *layer)
@@ -713,6 +743,9 @@ flatpak_oci_export_annotations (GHashTable *source,
     "org.flatpak.metadata",
   };
   int i;
+
+  if (source == NULL)
+    return;
 
   for (i = 0; i < G_N_ELEMENTS (keys); i++)
     {
@@ -737,6 +770,31 @@ flatpak_oci_copy_annotations (GHashTable *source,
     g_hash_table_replace (dest,
                           g_strdup ((char *) key),
                           g_strdup ((char *) value));
+}
+
+int
+flatpak_oci_image_add_history (FlatpakOciImage *image)
+{
+  FlatpakOciImageHistory **old;
+  int i, index, old_len;
+
+  old = image->history;
+
+  for (old_len = 0; old != NULL && old[old_len] != NULL; old_len++)
+    ;
+
+  image->history = g_new0 (FlatpakOciImageHistory *, old_len + 2);
+  for (i = 0; i < old_len; i++)
+    image->history[i] = old[i];
+
+  index = i;
+
+  image->history[i++] = g_new0 (FlatpakOciImageHistory, 1);
+  image->history[i++] = NULL;
+
+  g_free (old);
+
+  return index;
 }
 
 static void
@@ -814,6 +872,11 @@ flatpak_oci_parse_commit_annotations (GHashTable      *annotations,
   gpointer _key, _value;
 
   oci_ref = g_hash_table_lookup (annotations, "org.flatpak.ref");
+
+  /* Early return if this is not a flatpak manifest or if looking at annotations when the data is in labels */
+  if (oci_ref == NULL)
+    return;
+
   if (oci_ref != NULL && out_ref != NULL && *out_ref == NULL)
     *out_ref = g_strdup (oci_ref);
 

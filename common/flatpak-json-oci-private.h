@@ -27,10 +27,12 @@ G_BEGIN_DECLS
 
 #define FLATPAK_OCI_MEDIA_TYPE_DESCRIPTOR "application/vnd.oci.descriptor.v1+json"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST "application/vnd.oci.image.manifest.v1+json"
+#define FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2 "application/vnd.docker.distribution.manifest.v2+json"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX "application/vnd.oci.image.index.v1+json"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER "application/vnd.oci.image.layer.v1.tar+gzip"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER_NONDISTRIBUTABLE "application/vnd.oci.image.layer.nondistributable.v1.tar+gzip"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_CONFIG "application/vnd.oci.image.config.v1+json"
+#define FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_IMAGE_CONFIG "application/vnd.docker.container.image.v1+json"
 
 #define FLATPAK_OCI_SIGNATURE_TYPE_FLATPAK "flatpak oci image signature"
 
@@ -150,6 +152,7 @@ struct _FlatpakOciIndexClass
 
 FlatpakOciIndex *             flatpak_oci_index_new (void);
 void                          flatpak_oci_index_add_manifest (FlatpakOciIndex      *self,
+                                                              const char           *ref,
                                                               FlatpakOciDescriptor *desc);
 gboolean                      flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
                                                                  const char      *ref);
@@ -220,6 +223,11 @@ void             flatpak_oci_image_set_layers (FlatpakOciImage *image,
                                                const char     **layers);
 void             flatpak_oci_image_set_layer (FlatpakOciImage *image,
                                               const char      *layer);
+GHashTable *     flatpak_oci_image_get_labels (FlatpakOciImage *self);
+int              flatpak_oci_image_add_history (FlatpakOciImage *image);
+
+FlatpakOciImage * flatpak_oci_image_from_json (GBytes *bytes,
+                                               GError **error);
 
 void flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
                                              const char *ref,

@@ -48,6 +48,7 @@ static char *opt_runtime_repo;
 static gboolean opt_runtime = FALSE;
 static char **opt_gpg_file;
 static gboolean opt_oci = FALSE;
+static gboolean opt_oci_use_labels = FALSE;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
 static char *opt_from_commit;
@@ -62,6 +63,7 @@ static GOptionEntry options[] = {
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { "from-commit", 0, 0, G_OPTION_ARG_STRING, &opt_from_commit, N_("OSTree commit to create a delta bundle from"), N_("COMMIT") },
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Export oci image instead of flatpak bundle"), NULL },
+  { "oci-use-labels", 0, 0, G_OPTION_ARG_NONE, &opt_oci_use_labels, N_("Use OCI labels instead of annotations"), NULL },
   { NULL }
 };
 
@@ -212,7 +214,7 @@ add_icon_to_metadata (const char *icon_size_name,
 }
 
 static gboolean
-build_bundle (OstreeRepo *repo, const char *collection_id, GFile *file,
+build_bundle (OstreeRepo *repo, const char *commit_checksum, GFile *file,
               const char *name, const char *full_branch,
               const char *from_commit,
               GCancellable *cancellable, GError **error)
@@ -224,14 +226,10 @@ build_bundle (OstreeRepo *repo, const char *collection_id, GFile *file,
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GInputStream) in = NULL;
   g_autoptr(GFile) root = NULL;
-  g_autofree char *commit_checksum = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autoptr(GVariant) params = NULL;
   g_autoptr(GVariant) metadata = NULL;
-
-  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, full_branch, FALSE,
-                                 &commit_checksum, cancellable, error))
-    return FALSE;
+  const char *collection_id;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
     return FALSE;
@@ -294,6 +292,7 @@ build_bundle (OstreeRepo *repo, const char *collection_id, GFile *file,
   if (opt_runtime_repo)
     g_variant_builder_add (&metadata_builder, "{sv}", "runtime-repo", g_variant_new_string (opt_runtime_repo));
 
+  collection_id = ostree_repo_get_collection_id (repo);
   g_variant_builder_add (&metadata_builder, "{sv}", "collection-id",
                          g_variant_new_string (collection_id ? collection_id : ""));
 
@@ -380,15 +379,86 @@ add_icon_to_annotations (const char *icon_size_name,
                         g_strconcat ("data:image/png;base64,", encoded, NULL));
 }
 
+static GHashTable *
+generate_annotations (FlatpakOciDescriptor *layer_desc,
+                      OstreeRepo *repo,
+                      GFile *root,
+                      const char *name,
+                      const char *ref,
+                      const char *commit_checksum,
+                      GVariant   *commit_data,
+                      GCancellable *cancellable,
+                      GError **error)
+{
+  g_autoptr(GFile) metadata_file = NULL;
+  gsize metadata_size;
+  g_autofree char *metadata_contents = NULL;
+  g_autoptr(GHashTable) annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  g_autoptr(GKeyFile) keyfile = NULL;
+  g_autoptr(GBytes) xml_data = NULL;
+  guint64 installed_size = 0;
+
+  flatpak_oci_add_annotations_for_commit (annotations, ref, commit_checksum, commit_data);
+
+  metadata_file = g_file_get_child (root, "metadata");
+  if (g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, NULL) &&
+      g_utf8_validate (metadata_contents, -1, NULL))
+    {
+      keyfile = g_key_file_new ();
+
+      if (!g_key_file_load_from_data (keyfile,
+                                      metadata_contents,
+                                      metadata_size,
+                                      G_KEY_FILE_NONE, error))
+        return NULL;
+
+      g_hash_table_replace (annotations,
+                            g_strdup ("org.flatpak.metadata"),
+                            g_steal_pointer (&metadata_contents));
+    }
+
+  if (!flatpak_repo_collect_sizes (repo, root, &installed_size, NULL, NULL, error))
+    return NULL;
+
+  g_hash_table_replace (annotations,
+                        g_strdup ("org.flatpak.installed-size"),
+                        g_strdup_printf ("%" G_GUINT64_FORMAT, installed_size));
+
+  g_hash_table_replace (annotations,
+                        g_strdup ("org.flatpak.download-size"),
+                        g_strdup_printf ("%" G_GUINT64_FORMAT, layer_desc->size));
+
+
+  if (!get_bundle_appstream_data (root, ref, name, keyfile, FALSE,
+                                  &xml_data, cancellable, error))
+    return FALSE;
+
+  if (xml_data)
+    {
+      gsize xml_data_len;
+
+      g_hash_table_replace (annotations,
+                            g_strdup ("org.freedesktop.appstream.appdata"),
+                            g_bytes_unref_to_data (g_steal_pointer (&xml_data), &xml_data_len));
+
+      if (!iterate_bundle_icons (root, name, add_icon_to_annotations,
+                                 annotations, cancellable, error))
+        return FALSE;
+    }
+
+  return g_steal_pointer (&annotations);
+}
+
+
+
 static gboolean
-build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
+build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
            const char *name, const char *ref,
            GCancellable *cancellable, GError **error)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
-  g_autofree char *commit_checksum = NULL;
   g_autofree char *dir_uri = NULL;
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciLayerWriter) layer_writer = NULL;
@@ -401,18 +471,10 @@ build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
   g_autoptr(FlatpakOciManifest) manifest = NULL;
   g_autoptr(FlatpakOciIndex) index = NULL;
-  g_autoptr(GFile) metadata_file = NULL;
-  g_autoptr(GKeyFile) keyfile = NULL;
-  g_autoptr(GBytes) xml_data = NULL;
-  guint64 installed_size = 0;
-  GHashTable *annotations;
-  gsize metadata_size;
-  g_autofree char *metadata_contents = NULL;
+  g_autoptr(GHashTable) flatpak_annotations = NULL;
   g_auto(GStrv) ref_parts = NULL;
-
-  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, ref, FALSE,
-                                 &commit_checksum, cancellable, error))
-    return FALSE;
+  int history_index;
+  GTimeVal tv;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
     return FALSE;
@@ -449,10 +511,22 @@ build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
                                        error))
     return FALSE;
 
+  flatpak_annotations = generate_annotations (layer_desc, repo, root, name, ref, commit_checksum, commit_data, cancellable, error);
+  if (flatpak_annotations == NULL)
+    return FALSE;
 
   image = flatpak_oci_image_new ();
   flatpak_oci_image_set_layer (image, uncompressed_digest);
   flatpak_oci_image_set_architecture (image, flatpak_arch_to_oci_arch (ref_parts[2]));
+  history_index = flatpak_oci_image_add_history (image);
+
+  g_get_current_time (&tv);
+  image->history[history_index]->created = g_time_val_to_iso8601 (&tv);
+  image->history[history_index]->created_by = g_strdup ("flatpak build-bundle");
+
+  if (opt_oci_use_labels)
+    flatpak_oci_copy_annotations (flatpak_annotations,
+                                  flatpak_oci_image_get_labels (image));
 
   timestamp = timestamp_to_iso8601 (ostree_commit_get_timestamp (commit_data));
   flatpak_oci_image_set_created (image, timestamp);
@@ -465,53 +539,9 @@ build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
   flatpak_oci_manifest_set_config (manifest, image_desc);
   flatpak_oci_manifest_set_layer (manifest, layer_desc);
 
-  annotations = flatpak_oci_manifest_get_annotations (manifest);
-  flatpak_oci_add_annotations_for_commit (annotations, ref, commit_checksum, commit_data);
-
-  metadata_file = g_file_get_child (root, "metadata");
-  if (g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, NULL) &&
-      g_utf8_validate (metadata_contents, -1, NULL))
-    {
-      keyfile = g_key_file_new ();
-
-      if (!g_key_file_load_from_data (keyfile,
-                                      metadata_contents,
-                                      metadata_size,
-                                      G_KEY_FILE_NONE, error))
-        return FALSE;
-
-      g_hash_table_replace (annotations,
-                            g_strdup ("org.flatpak.metadata"),
-                            g_steal_pointer (&metadata_contents));
-    }
-
-  if (!flatpak_repo_collect_sizes (repo, root, &installed_size, NULL, NULL, error))
-    return FALSE;
-
-  g_hash_table_replace (annotations,
-                        g_strdup ("org.flatpak.installed-size"),
-                        g_strdup_printf ("%" G_GUINT64_FORMAT, installed_size));
-
-  g_hash_table_replace (annotations,
-                        g_strdup ("org.flatpak.download-size"),
-                        g_strdup_printf ("%" G_GUINT64_FORMAT, layer_desc->size));
-
-  if (!get_bundle_appstream_data (root, ref, name, keyfile, FALSE,
-                                  &xml_data, cancellable, error))
-    return FALSE;
-
-  if (xml_data)
-    {
-      gsize xml_data_len;
-
-      g_hash_table_replace (annotations,
-                            g_strdup ("org.freedesktop.appstream.appdata"),
-                            g_bytes_unref_to_data (g_steal_pointer (&xml_data), &xml_data_len));
-
-      if (!iterate_bundle_icons (root, name, add_icon_to_annotations,
-                                 annotations, cancellable, error))
-        return FALSE;
-    }
+  if (!opt_oci_use_labels)
+    flatpak_oci_copy_annotations (flatpak_annotations,
+                                  flatpak_oci_manifest_get_annotations (manifest));
 
   manifest_desc = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (manifest), cancellable, error);
   if (manifest_desc == NULL)
@@ -523,12 +553,56 @@ build_oci (OstreeRepo *repo, const char *collection_id, GFile *dir,
   if (index == NULL)
     index = flatpak_oci_index_new ();
 
-  flatpak_oci_index_add_manifest (index, manifest_desc);
+  flatpak_oci_index_add_manifest (index, ref, manifest_desc);
 
   if (!flatpak_oci_registry_save_index (registry, index, cancellable, error))
     return FALSE;
 
   return TRUE;
+}
+
+static gboolean
+_repo_resolve_rev (OstreeRepo *repo, const char *ref, char **out_rev,
+                   GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GError) my_error = NULL;
+
+  g_return_val_if_fail (repo != NULL, FALSE);
+  g_return_val_if_fail (ref != NULL, FALSE);
+  g_return_val_if_fail (out_rev != NULL, FALSE);
+  g_return_val_if_fail (*out_rev == NULL, FALSE);
+
+  if (ostree_repo_resolve_rev (repo, ref, FALSE, out_rev, &my_error))
+    return TRUE;
+  else
+    {
+      g_autoptr(GHashTable) collection_refs = NULL;  /* (element-type OstreeCollectionRef utf8) */
+
+      /* Fall back to iterating over every collection-ref. We can't use
+       * ostree_repo_resolve_collection_ref() since we don't know the
+       * collection ID. */
+      if (!ostree_repo_list_collection_refs (repo, NULL, &collection_refs,
+                                             OSTREE_REPO_LIST_REFS_EXT_NONE,
+                                             cancellable, error))
+        return FALSE;
+
+      /* Take the checksum of the first matching ref. There's no point in
+       * checking for duplicates because (a) it's not possible to install the
+       * same app from two collections in the same flatpak installation and (b)
+       * ostree_repo_resolve_rev() also takes the first matching ref. */
+      GLNX_HASH_TABLE_FOREACH_KV (collection_refs, const OstreeCollectionRef *, c_r,
+                                  const char*, checksum)
+        {
+          if (g_strcmp0 (c_r->ref_name, ref) == 0)
+            {
+              *out_rev = g_strdup (checksum);
+              return TRUE;
+            }
+        }
+
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return FALSE;
+    }
 }
 
 gboolean
@@ -544,7 +618,7 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   const char *name;
   const char *branch;
   g_autofree char *full_branch = NULL;
-  const char *collection_id;
+  g_autofree char *commit_checksum = NULL;
 
   context = g_option_context_new (_("LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -579,9 +653,9 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
       return FALSE;
     }
 
-  collection_id = ostree_repo_get_collection_id (repo);
-
-  if (flatpak_repo_resolve_rev (repo, collection_id, NULL, name, FALSE, NULL, NULL, NULL))
+  /* We can't use flatpak_repo_resolve_rev() here because it takes a NULL
+   * remote name to mean the ref is local. */
+  if (_repo_resolve_rev (repo, name, &commit_checksum, NULL, NULL))
     full_branch = g_strdup (name);
   else
     {
@@ -595,6 +669,9 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
         full_branch = flatpak_build_runtime_ref (name, branch, opt_arch);
       else
         full_branch = flatpak_build_app_ref (name, branch, opt_arch);
+
+      if (!_repo_resolve_rev (repo, full_branch, &commit_checksum, cancellable, error))
+        return FALSE;
     }
 
   file = g_file_new_for_commandline_arg (filename);
@@ -604,12 +681,12 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_oci)
     {
-      if (!build_oci (repo, collection_id, file, name, full_branch, cancellable, error))
+      if (!build_oci (repo, commit_checksum, file, name, full_branch, cancellable, error))
         return FALSE;
     }
   else
     {
-      if (!build_bundle (repo, collection_id, file, name, full_branch, opt_from_commit, cancellable, error))
+      if (!build_bundle (repo, commit_checksum, file, name, full_branch, opt_from_commit, cancellable, error))
         return FALSE;
     }
 

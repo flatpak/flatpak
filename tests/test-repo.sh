@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..32"
+echo "1..36"
 
 #Regular repo
 setup_repo
@@ -50,7 +50,7 @@ if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
 elif [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     # Set a collection ID and GPG on the server, but not in the client configuration
     setup_repo_no_add test-no-gpg org.test.Collection.NoGpg
-    port=$(cat httpd-port-main)
+    port=$(cat httpd-port)
     flatpak remote-add ${U} --no-gpg-verify test-no-gpg-repo "http://127.0.0.1:${port}/test-no-gpg"
 else
     GPGPUBKEY="" GPGARGS="" setup_repo test-no-gpg
@@ -64,13 +64,13 @@ GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo t
 #remote with missing GPG key
 # Don’t use --collection-id= here, or the collections code will grab the appropriate
 # GPG key from one of the previously-configured remotes with the same collection ID.
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 if flatpak remote-add ${U} test-missing-gpg-repo "http://127.0.0.1:${port}/test"; then
     assert_not_reached "Should fail metadata-update due to missing gpg key"
 fi
 
 #remote with wrong GPG key
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 if flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-wrong-gpg-repo "http://127.0.0.1:${port}/test"; then
     assert_not_reached "Should fail metadata-update due to wrong gpg key"
 fi
@@ -170,13 +170,51 @@ fi
 
 echo "ok missing remote name auto-corrects for install"
 
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 if ${FLATPAK} ${U} install -y http://127.0.0.1:${port}/nonexistent.flatpakref 2> install-error-log; then
     assert_not_reached "Should not be able to install a nonexistent flatpakref"
 fi
 assert_file_has_content install-error-log "Server returned status 404: Not Found"
 
 echo "ok install fails gracefully for 404 URLs"
+
+# Use a new remote so we can be sure it doesn't match any existing one's URL
+setup_repo_no_add flatpakref org.test.Collection.Flatpakref
+
+cat << EOF > repos/flatpakref/flatpakref-repo.flatpakrepo
+[Flatpak Repo]
+Version=1
+Url=http://127.0.0.1:$(cat httpd-port)/flatpakref/
+Title=The Title
+GPGKey=${FL_GPG_BASE64}
+EOF
+
+if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
+    echo "DeployCollectionID=org.test.Collection.Flatpakref" >> repos/flatpakref/flatpakref-repo.flatpakrepo
+fi
+
+cat << EOF > org.test.Hello.flatpakref
+[Flatpak Ref]
+Name=org.test.Hello
+Branch=master
+Url=http://127.0.0.1:$(cat httpd-port)/flatpakref
+GPGKey=${FL_GPG_BASE64}
+RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/flatpakref/flatpakref-repo.flatpakrepo
+EOF
+
+${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
+
+# Ensure that only one remote is added even though the URL in the flatpakref
+# does not have a trailing slash and the URL in the flatpakrepo file does
+NUM_REMOTES_BEFORE=$(flatpak remotes | wc -l)
+${FLATPAK} ${U} install -y org.test.Hello.flatpakref
+NUM_REMOTES_AFTER=$(flatpak remotes | wc -l)
+
+if [ $NUM_REMOTES_AFTER -ne $((NUM_REMOTES_BEFORE + 1)) ]; then
+    assert_not_reached "install of flatpakref should only add one remote"
+fi
+
+echo "ok install flatpakref normalizes remote URL trailing slash"
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 
@@ -204,6 +242,69 @@ fi
 assert_file_has_content install-error-log "GPG signatures found, but none are in trusted keyring"
 
 echo "ok fail with wrong gpg key"
+
+make_required_version_app () {
+    APP_ID=${1}
+    VERSION=${2}
+    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+        CID=org.test.Collection.test
+    else
+        CID=""
+    fi
+
+    REQUIRED_VERSION="${VERSION}" GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test ${APP_ID} master "${CID}" > /dev/null
+}
+
+CURRENT_VERSION=`cat "$test_builddir/package_version.txt"`
+V=( ${CURRENT_VERSION//./ } )  # Split parts to array
+
+make_required_version_app org.test.SameVersion "${V[0]}.${V[1]}.${V[2]}"
+make_required_version_app org.test.NeedNewerMicro "${V[0]}.${V[1]}.$(expr ${V[2]} + 1)"
+make_required_version_app org.test.NeedNewerMinor "${V[0]}.$(expr ${V[1]} + 1).${V[2]}"
+make_required_version_app org.test.NeedNewerMajor "$(expr ${V[0]} + 1).${V[1]}.${V[2]}"
+make_required_version_app org.test.NeedOlderMinor "${V[0]}.$(expr ${V[1]} - 1).${V[2]}"
+make_required_version_app org.test.MultiVersionFallback "${V[0]}.${V[1]}.${V[2]};1.0.0;"
+make_required_version_app org.test.MultiVersionFallbackFail "${V[0]}.$(expr ${V[1]} + 1).${V[2]};1.0.0;"
+make_required_version_app org.test.MultiVersionOk "${V[0]}.$(expr ${V[1]} + 1).0;${V[0]}.${V[1]}.${V[2]};"
+make_required_version_app org.test.MultiVersionNotOk "${V[0]}.$(expr ${V[1]} + 1).0;${V[0]}.${V[1]}.$(expr ${V[2]} + 1);"
+
+update_repo
+
+${FLATPAK} ${U} install -y test-repo org.test.SameVersion
+${FLATPAK} ${U} install -y test-repo org.test.NeedOlderMinor
+
+if ${FLATPAK} ${U} install -y test-repo org.test.NeedNewerMicro 2> install-error-log; then
+    assert_not_reached "Should not be able to install with wrong micro version"
+fi
+assert_file_has_content install-error-log "needs a later flatpak version"
+
+if ${FLATPAK} ${U} install -y test-repo org.test.NeedNewerMinor 2> install-error-log; then
+    assert_not_reached "Should not be able to install with wrong minor version"
+fi
+assert_file_has_content install-error-log "needs a later flatpak version"
+
+if ${FLATPAK} ${U} install -y test-repo org.test.NeedNewerMajor 2> install-error-log; then
+    assert_not_reached "Should not be able to install with wrong major version"
+fi
+assert_file_has_content install-error-log "needs a later flatpak version"
+
+${FLATPAK} ${U} install -y test-repo org.test.MultiVersionFallback
+
+if ${FLATPAK} ${U} install -y test-repo org.test.MultiVersionFallbackFail 2> install-error-log; then
+    assert_not_reached "Should not be able to install with wrong fallback version"
+fi
+assert_file_has_content install-error-log "needs a later flatpak version"
+
+${FLATPAK} ${U} install -y test-repo org.test.MultiVersionOk
+
+if ${FLATPAK} ${U} install -y test-repo org.test.MultiVersionNotOk 2> install-error-log; then
+    assert_not_reached "Should not be able to install with wrong multi version"
+fi
+assert_file_has_content install-error-log "needs a later flatpak version"
+
+${FLATPAK} ${U} uninstall -y --all
+
+echo "ok handles version requirements"
 
 ${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
 assert_not_file_has_content repo-info "new-title"
@@ -326,7 +427,7 @@ echo "ok eol-rebase"
 
 ${FLATPAK} ${U} install -y test-repo org.test.Platform
 
-port=$(cat httpd-port-main)
+port=$(cat httpd-port)
 UPDATE_REPO_ARGS="--redirect-url=http://127.0.0.1:${port}/test-gpg3 --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg" update_repo
 GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo_no_add test-gpg3 org.test.Collection.test master
 
@@ -404,13 +505,13 @@ assert_not_file_has_content list-log "org\.test\.Hello"
 assert_not_file_has_content list-log "org\.test\.Platform"
 
 # Disable the remote to make sure we don't do i/o
-port=$(cat httpd-port-main)
-${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
+port=$(cat httpd-port)
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
 
 ${FLATPAK} ${U} install -y --no-pull test-repo org.test.Hello
 
 # re-enable remote
-${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
 
 ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "org\.test\.Hello"
@@ -427,14 +528,14 @@ assert_not_file_has_content list-log "org\.test\.Hello"
 assert_not_file_has_content list-log "org\.test\.Platform"
 
 # Disable the remote to make sure we don't do i/o
-port=$(cat httpd-port-main)
-${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
+port=$(cat httpd-port)
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
 
 # Note: The partial ref is only auto-corrected without user interaction because we're using -y
 ${FLATPAK} ${U} install -y --no-pull test-repo hello
 
 # re-enable remote
-${FLATPAK}  ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
 
 ${FLATPAK} ${U} list -d > list-log
 assert_file_has_content list-log "org\.test\.Hello"
@@ -449,6 +550,33 @@ assert_not_file_has_content list-log "org\.test\.Hello"
 assert_not_file_has_content list-log "org\.test\.Platform"
 
 echo "ok uninstall --all"
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_file_has_content list-log "org\.test\.Hello"
+assert_file_has_content list-log "org\.test\.Hello\.Locale"
+
+${FLATPAK} ${U} remote-delete --force test-repo
+${FLATPAK} ${U} uninstall -y org.test.Hello
+
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_not_file_has_content list-log "org\.test\.Hello"
+assert_not_file_has_content list-log "org\.test\.Hello\.Locale"
+
+setup_repo
+
+echo "ok uninstall with missing remote"
+
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_file_has_content list-log "org\.test\.Platform"
+
+${FLATPAK} ${U} uninstall -y --unused
+
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_not_file_has_content list-log "org\.test\.Platform"
+
+echo "ok uninstall --unused"
 
 # Test that remote-ls works in all of the following cases:
 # * system remote, and --system is used
@@ -631,7 +759,7 @@ assert_not_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
 assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
 
 if ${FLATPAK}  ${U} remote-info test-repo org.test.Hello > remote-ref-info; then
-        assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
+    assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
 fi
 
 if ${FLATPAK} ${U} install -y test-repo org.test.Hello; then
@@ -648,7 +776,7 @@ assert_not_file_has_content remote-ls-log "app/org\.test\.Hello"
 assert_not_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
 assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
 if ${FLATPAK}  ${U} remote-info test-repo org.test.Hello > remote-ref-info; then
-        assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
+    assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
 fi
 if ${FLATPAK} ${U} install -y test-repo org.test.Hello; then
     assert_not_reached "should not be able to install org.test.Hello should fail due to filter"
@@ -668,7 +796,7 @@ assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
 
 echo "ok filter"
 
-# Try installing it from a flatpakref file. Don’t uninstall afterwards because
+# Try installing it from a flatpakrepo file. Don’t uninstall afterwards because
 # we need it for the next test.
 cat << EOF > test.flatpakrepo
 [Flatpak Repo]

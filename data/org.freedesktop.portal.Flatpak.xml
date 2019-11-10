@@ -34,9 +34,9 @@
 
       The D-Bus interface for the document portal is available under the
       bus name org.freedesktop.portal.Flatpak and the object path
-      /org/freedesktop/portal/flatpak.
+      /org/freedesktop/portal/Flatpak.
 
-      This documentation describes version 1 of this interface.
+      This documentation describes version 2 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
     <property name="version" type="u" access="read"/>
@@ -154,6 +154,168 @@
     <signal name="SpawnExited">
       <arg type='u' name='pid' direction='out'/>
       <arg type='u' name='exit_status' direction='out'/>
+    </signal>
+
+    <!--
+        CreateUpdateMonitor:
+        @options: Vardict with optional further information
+        @handle: Object path for the #org.freedesktop.portal.Flatpak.UpdateMonitor object
+
+        Creates an update monitor object that will emit
+        signals when an update for the caller becomes
+        available, and can be used to install it.
+
+        The handle will be of the form /org/freedesktop/portal/Flatpak/update_monitor/SENDER/TOKEN,
+        where SENDER is the caller's unique name, with the initial ':' removed and
+        all '.' replaced by '_', and TOKEN is a unique token that the caller can optionally provide
+        with the 'handle_token' key in the options vardict.
+
+        Currently, no other options are accepted.
+
+        This was added in version 2 of this interface (available from flatpak 1.5.0 and later).
+    -->
+    <method name="CreateUpdateMonitor">
+      <arg type="a{sv}" name="options" direction="in"/>
+      <arg type="o" name="handle" direction="out"/>
+    </method>
+  </interface>
+
+  <interface name="org.freedesktop.portal.Flatpak.UpdateMonitor">
+
+    <!--
+        Close:
+
+        Ends the update monitoring and cancels any ongoing
+        installation.
+    -->
+    <method name="Close">
+    </method>
+
+    <!--
+        UpdateAvailable:
+        @update_info: More information about the available update
+
+        Gets emitted when a new update is available. This is only
+        sent once with the same information, but can be sent many
+        times if new updates appear.
+
+        The following information may be included in the
+        @update_info dictionary:
+        <variablelist>
+          <varlistentry>
+            <term>running-commit s</term>
+            <listitem><para>
+              The commit of the currently running instance.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>local-commit s</term>
+            <listitem><para>
+              The commit that is currently installed. Restarting
+              the application will cause this commit to be used.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>remote-commit s</term>
+            <listitem><para>
+              The commit that is available as an update from the
+              remote. Updating the application will deploy this
+              commit.
+            </para></listitem>
+          </varlistentry>
+        </variablelist>
+    -->
+    <signal name="UpdateAvailable">
+      <arg type="a{sv}" name="update_info" direction="out"/>
+    </signal>
+
+    <!--
+        Update:
+        @parent_window: Identifier for the application window,
+          see <link linkend="parent_window">Common Conventions</link>
+        @options: Vardict with optional further information
+
+        Asks to install an update of the calling app.
+        During the installation,
+        #org.freedesktop.portal.Flatpak.UpdateMonitor::Progress
+        signals will be emitted to communicate the status
+        and progress.
+
+        Note that updates are only allowed if the new version
+        has the same permissions (or less) than the currently installed
+        version. If the new version requires a new permission then the
+        operation will fail with the error org.freedesktop.DBus.Error.NotSupported
+        and updates has to be done with the system tools.
+
+        Currently, no options are accepted.
+    -->
+    <method name="Update">
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+    </method>
+
+    <!--
+      Progress:
+      @handle: the handle of the Request
+      @info: More information about the update progress
+
+      Gets emitted to indicate progress of the installation.  It's
+      undefined exactly how often this is sent, but it will be emitted
+      at least once at the end with non-zero status field. For each
+      successful operation in the update we're also guaranteed to send
+      one (and only one) signal with progress 100.
+
+      The following fields may be included in the info:
+         <variablelist>
+           <varlistentry>
+             <term>n_ops u</term>
+             <listitem><para>
+               The number of operations that the update
+               consists of.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>op u</term>
+             <listitem><para>
+               The position of the currently active
+               operation.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>progress u</term>
+             <listitem><para>
+               The progress of the currently active
+               operation, as a number between 0 and 100.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>status u</term>
+             <listitem><para>
+               The overall status of the update.
+               <simplelist>
+                 <member>0: Running</member>
+                 <member>1: Empty. No update to install</member>
+                 <member>2: Done</member>
+                 <member>3: Failed</member>
+               </simplelist>
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>error s</term>
+             <listitem><para>
+               The error name, sent when status is Failed
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>error_message s</term>
+             <listitem><para>
+               The error message, sent when status is Failed
+             </para></listitem>
+           </varlistentry>
+         </variablelist>
+    -->
+    <signal name="Progress">
+      <arg type="a{sv}" name="info" direction="out"/>
     </signal>
 
   </interface>
