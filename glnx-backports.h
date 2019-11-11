@@ -27,6 +27,26 @@
 
 G_BEGIN_DECLS
 
+#if !GLIB_CHECK_VERSION(2, 34, 0)
+#define g_clear_pointer(pp, destroy) \
+  G_STMT_START {                                                               \
+    G_STATIC_ASSERT (sizeof *(pp) == sizeof (gpointer));                       \
+    /* Only one access, please; work around type aliasing */                   \
+    union { char *in; gpointer *out; } _pp;                                    \
+    gpointer _p;                                                               \
+    /* This assignment is needed to avoid a gcc warning */                     \
+    GDestroyNotify _destroy = (GDestroyNotify) (destroy);                      \
+                                                                               \
+    _pp.in = (char *) (pp);                                                    \
+    _p = *_pp.out;                                                             \
+    if (_p)                                                                    \
+      {                                                                        \
+        *_pp.out = NULL;                                                       \
+        _destroy (_p);                                                         \
+      }                                                                        \
+  } G_STMT_END
+#endif
+
 #if !GLIB_CHECK_VERSION(2, 44, 0)
 
 #define g_strv_contains glnx_strv_contains
@@ -42,5 +62,17 @@ gboolean              glnx_set_object  (GObject **object_ptr,
                                         GObject  *new_object);
 
 #endif /* !GLIB_CHECK_VERSION(2, 44, 0) */
+
+#ifndef g_assert_nonnull
+#define g_assert_nonnull(x) g_assert (x != NULL)
+#endif
+
+#ifndef g_assert_null
+#define g_assert_null(x) g_assert (x == NULL)
+#endif
+
+#if !GLIB_CHECK_VERSION (2, 38, 0)
+#define g_test_skip(s) g_test_message ("SKIP: %s", s)
+#endif
 
 G_END_DECLS

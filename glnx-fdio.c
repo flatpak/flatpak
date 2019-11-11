@@ -37,6 +37,7 @@
 #include <glnx-errors.h>
 #include <glnx-xattrs.h>
 #include <glnx-backport-autoptr.h>
+#include <glnx-backports.h>
 #include <glnx-local-alloc.h>
 #include <glnx-missing.h>
 
