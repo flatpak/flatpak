@@ -4766,6 +4766,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                               const char                           *rev,
                               const OstreeRepoFinderResult * const *results,
                               FlatpakPullFlags                      flatpak_flags,
+                              OstreeRepoPullFlags                   flags,
                               OstreeAsyncProgress                  *progress,
                               GCancellable                         *cancellable,
                               GError                              **error)
@@ -4781,6 +4782,8 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
   extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
   if (extra_data_sources == NULL)
     {
+      flags |= OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY;
+
       /* Pull the commits (and only the commits) to check for extra data
        * again. Here we don't pass the progress because we don't want any
        * reports coming out of it. */
@@ -4790,7 +4793,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                       rev,
                       results,
                       flatpak_flags,
-                      OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY,
+                      flags,
                       NULL,
                       cancellable,
                       error))
@@ -5336,6 +5339,11 @@ flatpak_dir_pull (FlatpakDir                           *self,
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     goto out;
 
+#if OSTREE_CHECK_VERSION (2019, 2)
+  if (state->collection_id)
+    flags |= OSTREE_REPO_PULL_FLAGS_MIRROR;
+#endif
+
   /* We get the rev ahead of time so that we know it for looking up e.g. extra-data
      and to make sure we're atomically using a single rev if we happen to do multiple
      pulls (e.g. with subpaths) */
@@ -5414,8 +5422,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
           if (results[0] != NULL)
             {
               OstreeRepoPullFlags metadata_pull_flags = flags | OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY;
-              /*TODO: Use OSTREE_REPO_PULL_FLAGS_MIRROR for all collection-ref pulls */
-              metadata_pull_flags |= OSTREE_REPO_PULL_FLAGS_MIRROR;
               if (!repo_pull (repo, state->remote_name,
                               NULL, ref, NULL, results,
                               flatpak_flags, metadata_pull_flags,
@@ -5479,6 +5485,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
   if (!flatpak_dir_setup_extra_data (self, repo, state->remote_name,
                                      ref, rev, results,
                                      flatpak_flags,
+                                     flags,
                                      progress,
                                      cancellable,
                                      error))
