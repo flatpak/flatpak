@@ -20,8 +20,6 @@ TEST_MATRIX= \
 	tests/test-oci-registry@user,labels.wrap \
 	tests/test-oci-registry@system,annotations.wrap \
 	tests/test-oci-registry@system,labels.wrap \
-	tests/test-p2p-security@user,collections.wrap \
-	tests/test-p2p-security@system,collections.wrap \
 	$(NULL)
 TEST_MATRIX_DIST= \
 	tests/test-basic.sh \
@@ -43,5 +41,4 @@ TEST_MATRIX_EXTRA_DIST= \
 	tests/test-repo.sh \
 	tests/test-bundle.sh \
 	tests/test-oci-registry.sh \
-	tests/test-p2p-security.sh \
 	$(NULL)
