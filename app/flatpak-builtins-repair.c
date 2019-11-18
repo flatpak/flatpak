@@ -324,6 +324,8 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
   /*
    * Try to repair a flatpak directory:
+   *  + Delete any mirror refs which may be leaking disk space
+   *    (https://github.com/flatpak/flatpak/issues/3222)
    *  + Scan all locally available refs
    *  + remove ref that don't correspond to a deployed ref
    *  + Verify the commits they point to and all object they reference:
@@ -335,6 +337,9 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
    *  + Enumerate all deployed refs:
    *  +   if they are not in the repo (or is partial for a non-subdir deploy), re-install them (pull + deploy)
    */
+
+  if (!flatpak_dir_delete_mirror_refs (dir, opt_dry_run, cancellable, error))
+    return FALSE;
 
   object_status_cache = g_hash_table_new_full (ostree_hash_object_name, g_variant_equal,
                                                (GDestroyNotify) g_variant_unref, NULL);

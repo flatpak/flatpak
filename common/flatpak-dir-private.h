@@ -965,4 +965,9 @@ void flatpak_dir_set_source_pid (FlatpakDir *self,
                                  pid_t       pid);
 pid_t flatpak_dir_get_source_pid (FlatpakDir *self);
 
+gboolean flatpak_dir_delete_mirror_refs (FlatpakDir    *self,
+                                         gboolean       dry_run,
+                                         GCancellable  *cancellable,
+                                         GError       **error);
+
 #endif /* __FLATPAK_DIR_H__ */
