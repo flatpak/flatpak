@@ -388,6 +388,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   gboolean is_oci;
+  gboolean is_update;
   gboolean no_deploy;
   gboolean local_pull;
   gboolean reinstall;
@@ -467,7 +468,8 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   deploy_dir = flatpak_dir_get_if_deployed (system, arg_ref, NULL, NULL);
 
-  if (deploy_dir && !reinstall)
+  is_update = (deploy_dir && !reinstall);
+  if (is_update)
     {
       g_autofree char *real_origin = NULL;
       real_origin = flatpak_dir_get_origin (system, arg_ref, NULL, NULL);
@@ -486,6 +488,19 @@ handle_deploy (FlatpakSystemHelper   *object,
     }
 
   is_oci = flatpak_dir_get_remote_oci (system, arg_origin);
+
+  if (is_update && !is_oci)
+    {
+      /* Take this opportunity to clean up refs/mirrors/ since a prune will happen
+       * after this update operation. See
+       * https://github.com/flatpak/flatpak/issues/3222
+       */
+      if (!flatpak_dir_delete_mirror_refs (system, FALSE, NULL, &error))
+        {
+          flatpak_invocation_return_error (invocation, error, "Can't delete mirror refs");
+          return TRUE;
+        }
+    }
 
   if (strlen (arg_repo_path) > 0 && is_oci)
     {

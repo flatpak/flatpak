@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..36"
+echo "1..37"
 
 #Regular repo
 setup_repo
@@ -444,6 +444,16 @@ ${FLATPAK} ${U} install -y test-repo org.test.Hello
 assert_file_has_content $FL_DIR/app/org.test.Hello/$ARCH/master/active/files/bin/hello.sh UPDATED
 
 echo "ok redirect url and gpg key"
+
+# Test https://github.com/flatpak/flatpak/issues/3222
+mkdir -p $FL_DIR/repo/refs/mirrors/org.test.Collection.test/app/org.test.Hello/$ARCH/
+cp $FL_DIR/repo/refs/remotes/test-repo/app/org.test.Hello/$ARCH/master $FL_DIR/repo/refs/mirrors/org.test.Collection.test/app/org.test.Hello/$ARCH/
+make_updated_app test-gpg3 org.test.Collection.test master UPDATE2
+${FLATPAK} ${U} update -y org.test.Hello
+assert_not_has_file $FL_DIR/repo/refs/mirrors/org.test.Collection.test/app/org.test.Hello/$ARCH/master
+assert_has_file $FL_DIR/repo/refs/remotes/test-repo/app/org.test.Hello/$ARCH/master
+
+echo "ok mirror ref deletion on update"
 
 ${FLATPAK} ${U} list --arch=$ARCH --columns=ref > list-log
 assert_file_has_content list-log "org\.test\.Hello"
