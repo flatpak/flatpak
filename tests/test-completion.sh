@@ -161,7 +161,7 @@ done
 
 echo "ok complete NO_DIR commands"
 
-for cmd in history info list run update \
+for cmd in history info list run update mask \
            config install make-current override remote-add repair \
            create-usb remote-delete remote-info remote-list remote-ls \
            remote-modify search uninstall update; do

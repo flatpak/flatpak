@@ -60,7 +60,8 @@ for cmd in install update uninstall list info config repair create-usb \
            permissions permission-show permission-reset remotes remote-add \
            remote-modify remote-delete remote-ls remote-info build-init \
            build build-finish build-export build-bundle build-import-bundle \
-           build-sign build-update-repo build-commit-from repo kill history;
+           build-sign build-update-repo build-commit-from repo kill history \
+           mask;
 do
   ${FLATPAK} $cmd --help | head -2 > help_out
 
