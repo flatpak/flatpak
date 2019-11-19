@@ -36,12 +36,20 @@
 #include "flatpak-dbus-generated.h"
 #include "flatpak-run-private.h"
 #include "flatpak-instance.h"
-
+#include <sys/capability.h>
 
 static GOptionEntry options[] = {
   { NULL }
 };
 
+static void
+drop_all_caps (void)
+{
+  struct __user_cap_header_struct hdr = { _LINUX_CAPABILITY_VERSION_3, 0 };
+  struct __user_cap_data_struct data[2] = { { 0 } };
+
+  capset (&hdr, data);
+}
 
 gboolean
 flatpak_builtin_enter (int           argc,
@@ -51,10 +59,8 @@ flatpak_builtin_enter (int           argc,
 {
   g_autoptr(GOptionContext) context = NULL;
   int rest_argv_start, rest_argc;
-  const char *ns_name[] = { "ipc", "net", "pid", "mnt", "user" };
+  const char *ns_name[] = { "user_base", "ipc", "net", "pid", "mnt", "user" };
   int ns_fd[G_N_ELEMENTS (ns_name)];
-  g_autofree char *pid_ns = NULL;
-  g_autofree char *self_ns = NULL;
   char *pid_s;
   int pid, i;
   g_autofree char *environment_path = NULL;
@@ -103,10 +109,6 @@ flatpak_builtin_enter (int           argc,
       return FALSE;
     }
 
-  /* Before further checks, warn if we are not already root */
-  if (geteuid () != 0)
-    g_printerr ("%s\n", _("Not running as root, may be unable to enter namespace"));
-
   pid = 0;
   pid_s = argv[rest_argv_start];
   i = atoi (pid_s);
@@ -150,28 +152,36 @@ flatpak_builtin_enter (int           argc,
 
   for (i = 0; i < G_N_ELEMENTS (ns_name); i++)
     {
-      g_autofree char *path = g_strdup_printf ("/proc/%d/ns/%s", pid, ns_name[i]);
+      g_autofree char *path = NULL;
       g_autofree char *self_path = g_strdup_printf ("/proc/self/ns/%s", ns_name[i]);
+      g_autofree char *pid_ns = NULL;
+      g_autofree char *self_ns = NULL;
 
-      pid_ns = glnx_readlinkat_malloc (-1, path, NULL, error);
-      if (pid_ns == NULL)
-        return glnx_prefix_error (error, _("Invalid %s namespace for pid %d"), ns_name[i], pid);
-
-      self_ns = glnx_readlinkat_malloc (-1, self_path, NULL, error);
-      if (self_ns == NULL)
-        return glnx_prefix_error (error, _("Invalid %s namespace for self"), ns_name[i]);
-
-      if (strcmp (self_ns, pid_ns) == 0)
-        {
-          /* No need to setns to the same namespace, it will only fail */
-          ns_fd[i] = -1;
-        }
+      if (strcmp (ns_name[i], "user_base") == 0)
+        path = g_strdup_printf ("%s/run/.userns", root_path);
       else
         {
-          ns_fd[i] = open (path, O_RDONLY);
-          if (ns_fd[i] == -1)
-            return flatpak_fail (error, _("Can't open %s namespace: %s"), ns_name[i], g_strerror (errno));
+          path = g_strdup_printf ("/proc/%d/ns/%s", pid, ns_name[i]);
+
+          pid_ns = glnx_readlinkat_malloc (-1, path, NULL, error);
+          if (pid_ns == NULL)
+            return glnx_prefix_error (error, _("Invalid %s namespace for pid %d"), ns_name[i], pid);
+
+          self_ns = glnx_readlinkat_malloc (-1, self_path, NULL, error);
+          if (self_ns == NULL)
+            return glnx_prefix_error (error, _("Invalid %s namespace for self"), ns_name[i]);
+
+          if (strcmp (self_ns, pid_ns) == 0)
+            {
+              /* No need to setns to the same namespace, it will only fail */
+              ns_fd[i] = -1;
+              continue;
+            }
         }
+
+      ns_fd[i] = open (path, O_RDONLY);
+      if (ns_fd[i] == -1)
+        return flatpak_fail (error, _("Can't open %s namespace: %s"), ns_name[i], g_strerror (errno));
     }
 
   for (i = 0; i < G_N_ELEMENTS (ns_fd); i++)
@@ -189,6 +199,8 @@ flatpak_builtin_enter (int           argc,
 
   if (chroot (root_link))
     return flatpak_fail (error, _("Can't chroot"));
+
+  drop_all_caps ();
 
   envp_array = g_ptr_array_new_with_free_func (g_free);
   for (e = environment; e < environment + environment_len; e = e + strlen (e) + 1)
