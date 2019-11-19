@@ -119,7 +119,7 @@ flatpak_builtin_enter (int           argc,
           strcmp (pid_s, flatpak_instance_get_app (instance)) == 0 ||
           strcmp (pid_s, flatpak_instance_get_id (instance)) == 0)
         {
-          pid = flatpak_instance_get_pid (instance);
+          pid = flatpak_instance_get_child_pid (instance);
           break;
         }
     }
