@@ -2728,6 +2728,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                           "--ro-bind", "/sys/class", "/sys/class",
                           "--ro-bind", "/sys/dev", "/sys/dev",
                           "--ro-bind", "/sys/devices", "/sys/devices",
+                          "--ro-bind-try", "/proc/self/ns/user", "/run/.userns",
                           /* glib uses this like /etc/timezone */
                           "--symlink", "/etc/timezone", "/var/db/zoneinfo",
                           NULL);
