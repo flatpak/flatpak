@@ -1467,9 +1467,10 @@ revokefs_fuse_backend_child_setup (gpointer user_data)
 {
   struct passwd *passwd = user_data;
 
-  /* We use 4 instead of 3 here, because fd 3 is the inerited socket
-     and got dup2() into place before this by GSubprocess */
-  flatpak_close_fds_workaround (4);
+  /* We use 5 instead of 3 here, because fd 3 is the inherited SOCK_SEQPACKET
+   * socket and fd 4 is the --close-with-fd pipe; both were dup2()'d into place
+   * before this by GSubprocess */
+  flatpak_close_fds_workaround (5);
 
   if (setgid (passwd->pw_gid) == -1)
     {
