@@ -59,8 +59,8 @@
             This is useful when you want to debug a problem with a running application.
         </para>
         <para>
-            This command requires extra privileges, so must be run as root or via e.g. sudo.
-            To get TAB completion for the application ID, use sudo -E.
+          This command works as a regular user if the system support unprivileged user namespace. If
+          that is not available you need to run run it like: <command>sudo -E flatpak enter</command>.
         </para>
 
     </refsect1>

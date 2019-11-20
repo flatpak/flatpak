@@ -129,13 +129,13 @@ flatpak_builtin_enter (int           argc,
     }
 
   if (pid <= 0)
-    return flatpak_fail (error, _("%s is neither a pid nor an application or instance ID"), pid_s);
+    return flatpak_fail (error, _("%s is neither a pid nor an application or instance ID, or sudo -E"), pid_s);
 
   stat_path = g_strdup_printf ("/proc/%d/root", pid);
   if (stat (stat_path, &stat_buf))
     {
       if (errno == EACCES)
-        return flatpak_fail (error, _("entering not supported (need unprivileged user namespaces)"));
+        return flatpak_fail (error, _("entering not supported (need unprivileged user namespaces, or sudo -E)"));
       return flatpak_fail (error, _("No such pid %s"), pid_s);
     }
 
@@ -220,6 +220,12 @@ flatpak_builtin_enter (int           argc,
   if (chroot (root_link))
     return flatpak_fail (error, _("Can't chroot"));
 
+  if (setgid (gid))
+    return flatpak_fail (error, _("Can't switch gid"));
+
+  if (setuid (uid))
+    return flatpak_fail (error, _("Can't switch uid"));
+
   drop_all_caps ();
 
   envp_array = g_ptr_array_new_with_free_func (g_free);
@@ -265,12 +271,6 @@ flatpak_builtin_enter (int           argc,
   for (i = 1; i < rest_argc; i++)
     g_ptr_array_add (argv_array, g_strdup (argv[rest_argv_start + i]));
   g_ptr_array_add (argv_array, NULL);
-
-  if (setgid (gid))
-    return flatpak_fail (error, _("Can't switch gid"));
-
-  if (setuid (uid))
-    return flatpak_fail (error, _("Can't switch uid"));
 
   if (!g_spawn_sync (NULL, (char **) argv_array->pdata, (char **) envp_array->pdata,
                      G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_CHILD_INHERITS_STDIN,
