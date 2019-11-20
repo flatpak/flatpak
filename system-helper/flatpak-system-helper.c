@@ -36,10 +36,10 @@
 
 #include "flatpak-dbus-generated.h"
 #include "flatpak-dir-private.h"
-#include "flatpak-oci-registry-private.h"
 #include "flatpak-error.h"
-#include "flatpak-utils-private.h"
+#include "flatpak-oci-registry-private.h"
 #include "flatpak-utils-base-private.h"
+#include "flatpak-utils-private.h"
 
 static PolkitAuthority *authority = NULL;
 static FlatpakSystemHelper *helper = NULL;

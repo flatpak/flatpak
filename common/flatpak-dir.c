@@ -23,12 +23,13 @@
 
 #include "config.h"
 
-#include <string.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/file.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <utime.h>
 
 #include <glib/gi18n-lib.h>
@@ -39,22 +40,20 @@
 
 #include <gio/gio.h>
 #include <gio/gunixsocketaddress.h>
-#include "libglnx/libglnx.h"
-#include "flatpak-error.h"
 #include <ostree.h>
 
 #ifdef USE_SYSTEM_HELPER
 #include <polkit/polkit.h>
 #endif
 
+#include "flatpak-appdata-private.h"
 #include "flatpak-dir-private.h"
-#include "flatpak-utils-base-private.h"
+#include "flatpak-error.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-ref.h"
 #include "flatpak-run-private.h"
-#include "flatpak-appdata-private.h"
-
-#include "errno.h"
+#include "flatpak-utils-base-private.h"
+#include "libglnx/libglnx.h"
 
 #ifdef HAVE_LIBMALCONTENT
 #include <libmalcontent/malcontent.h>

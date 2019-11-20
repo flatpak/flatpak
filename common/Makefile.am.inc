@@ -102,53 +102,53 @@ CLEANFILES += $(nodist_libflatpak_common_la_SOURCES)
 
 libflatpak_common_la_SOURCES = \
 	$(flatpakinclude_HEADERS) \
-	common/flatpak-common-types-private.h \
-	common/flatpak-appdata.c \
 	common/flatpak-appdata-private.h \
-	common/flatpak-auth.c \
+	common/flatpak-appdata.c \
 	common/flatpak-auth-private.h \
-	common/flatpak-bwrap.c \
-	common/flatpak-bwrap-private.h \
-	common/flatpak-dir.c \
-	common/flatpak-dir-private.h \
-	common/flatpak-run.c \
-	common/flatpak-run-private.h \
-	common/flatpak-context.c \
-	common/flatpak-context-private.h \
-	common/flatpak-exports.c \
-	common/flatpak-exports-private.h \
-	common/flatpak-transaction-private.h \
-	common/flatpak-transaction.h \
-	common/flatpak-transaction.c \
-	common/flatpak-utils.c \
-	common/flatpak-utils-http.c \
-	common/flatpak-utils-http-private.h \
-	common/flatpak-utils-private.h \
-	common/flatpak-chain-input-stream.c \
-	common/flatpak-chain-input-stream-private.h \
-	common/flatpak-portal-error.c \
-	common/flatpak-portal-error.h \
-	common/flatpak-json.c \
-	common/flatpak-json-private.h \
-	common/flatpak-json-oci.c \
-	common/flatpak-json-oci-private.h \
-	common/flatpak-oci-registry.c \
-	common/flatpak-oci-registry-private.h \
-	common/flatpak-ref.c \
-	common/flatpak-installed-ref.c \
-	common/flatpak-installed-ref-private.h \
-	common/flatpak-instance-private.h \
-	common/flatpak-remote-ref.c \
-	common/flatpak-remote-ref-private.h \
+	common/flatpak-auth.c \
 	common/flatpak-bundle-ref.c \
-	common/flatpak-related-ref.c \
-	common/flatpak-related-ref-private.h \
-	common/flatpak-remote-private.h \
-	common/flatpak-remote.c \
+	common/flatpak-bwrap-private.h \
+	common/flatpak-bwrap.c \
+	common/flatpak-chain-input-stream-private.h \
+	common/flatpak-chain-input-stream.c \
+	common/flatpak-common-types-private.h \
+	common/flatpak-context-private.h \
+	common/flatpak-context.c \
+	common/flatpak-dir-private.h \
+	common/flatpak-dir.c \
 	common/flatpak-error.c \
+	common/flatpak-exports-private.h \
+	common/flatpak-exports.c \
 	common/flatpak-installation-private.h \
 	common/flatpak-installation.c \
+	common/flatpak-installed-ref-private.h \
+	common/flatpak-installed-ref.c \
+	common/flatpak-instance-private.h \
 	common/flatpak-instance.c \
+	common/flatpak-json-oci-private.h \
+	common/flatpak-json-oci.c \
+	common/flatpak-json-private.h \
+	common/flatpak-json.c \
+	common/flatpak-oci-registry-private.h \
+	common/flatpak-oci-registry.c \
+	common/flatpak-portal-error.c \
+	common/flatpak-portal-error.h \
+	common/flatpak-ref.c \
+	common/flatpak-related-ref-private.h \
+	common/flatpak-related-ref.c \
+	common/flatpak-remote-private.h \
+	common/flatpak-remote-ref-private.h \
+	common/flatpak-remote-ref.c \
+	common/flatpak-remote.c \
+	common/flatpak-run-private.h \
+	common/flatpak-run.c \
+	common/flatpak-transaction-private.h \
+	common/flatpak-transaction.c \
+	common/flatpak-transaction.h \
+	common/flatpak-utils-http-private.h \
+	common/flatpak-utils-http.c \
+	common/flatpak-utils-private.h \
+	common/flatpak-utils.c \
 	common/valgrind-private.h \
 	$(NULL)
 

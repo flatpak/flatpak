@@ -23,10 +23,9 @@
 
 #include <ostree.h>
 
+#include "flatpak-common-types-private.h"
+#include "flatpak-context-private.h"
 #include "libglnx/libglnx.h"
-#include <flatpak-common-types-private.h>
-#include <flatpak-context-private.h>
-
 
 /* Version history:
  * The version field was added in flatpak 1.2, anything before is 0.

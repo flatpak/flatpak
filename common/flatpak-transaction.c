@@ -24,11 +24,11 @@
 #include <glib/gi18n-lib.h>
 #include <libsoup/soup.h>
 
-#include "flatpak-transaction-private.h"
-#include "flatpak-installation-private.h"
-#include "flatpak-utils-private.h"
-#include "flatpak-error.h"
 #include "flatpak-auth-private.h"
+#include "flatpak-error.h"
+#include "flatpak-installation-private.h"
+#include "flatpak-transaction-private.h"
+#include "flatpak-utils-private.h"
 
 /**
  * SECTION:flatpak-transaction
