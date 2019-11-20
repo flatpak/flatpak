@@ -155,30 +155,39 @@ flatpak_builtin_enter (int           argc,
   for (i = 0; i < G_N_ELEMENTS (ns_name); i++)
     {
       g_autofree char *path = NULL;
-      g_autofree char *self_path = g_strdup_printf ("/proc/self/ns/%s", ns_name[i]);
-      g_autofree char *pid_ns = NULL;
-      g_autofree char *self_ns = NULL;
+      g_autofree char *self_path = NULL;
+      struct stat path_stat, self_path_stat;
 
       if (strcmp (ns_name[i], "user_base") == 0)
-        path = g_strdup_printf ("%s/run/.userns", root_path);
+        {
+          path = g_strdup_printf ("%s/run/.userns", root_path);
+          self_path = g_strdup ("/proc/self/ns/user");
+        }
       else
         {
           path = g_strdup_printf ("/proc/%d/ns/%s", pid, ns_name[i]);
+          self_path = g_strdup_printf ("/proc/self/ns/%s", ns_name[i]);
+        }
 
-          pid_ns = glnx_readlinkat_malloc (-1, path, NULL, error);
-          if (pid_ns == NULL)
-            return glnx_prefix_error (error, _("Invalid %s namespace for pid %d"), ns_name[i], pid);
-
-          self_ns = glnx_readlinkat_malloc (-1, self_path, NULL, error);
-          if (self_ns == NULL)
-            return glnx_prefix_error (error, _("Invalid %s namespace for self"), ns_name[i]);
-
-          if (strcmp (self_ns, pid_ns) == 0)
+      if (stat (path, &path_stat) != 0)
+        {
+          if (errno == ENOENT)
             {
-              /* No need to setns to the same namespace, it will only fail */
+              /* If for whatever reason the namespace doesn't exist, skip it */
               ns_fd[i] = -1;
               continue;
             }
+          return glnx_prefix_error (error, _("Invalid %s namespace for pid %d"), ns_name[i], pid);
+        }
+
+      if (stat (self_path, &self_path_stat) != 0)
+        return glnx_prefix_error (error, _("Invalid %s namespace for self"), ns_name[i]);
+
+      if (self_path_stat.st_ino == path_stat.st_ino)
+        {
+          /* No need to setns to the same namespace, it will only fail */
+          ns_fd[i] = -1;
+          continue;
         }
 
       ns_fd[i] = open (path, O_RDONLY);
