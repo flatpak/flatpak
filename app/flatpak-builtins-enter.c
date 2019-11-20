@@ -160,6 +160,7 @@ flatpak_builtin_enter (int           argc,
 
       if (strcmp (ns_name[i], "user_base") == 0)
         {
+          /* We could use the NS_GET_USERNS ioctl instead of the .userns bind hack, but that would require >= 4.9 kernel */
           path = g_strdup_printf ("%s/run/.userns", root_path);
           self_path = g_strdup ("/proc/self/ns/user");
         }
