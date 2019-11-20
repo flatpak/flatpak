@@ -133,7 +133,11 @@ flatpak_builtin_enter (int           argc,
 
   stat_path = g_strdup_printf ("/proc/%d/root", pid);
   if (stat (stat_path, &stat_buf))
-    return flatpak_fail (error, _("No such pid %s"), pid_s);
+    {
+      if (errno == EACCES)
+        return flatpak_fail (error, _("entering not supported (need unprivileged user namespaces)"));
+      return flatpak_fail (error, _("No such pid %s"), pid_s);
+    }
 
   uid = stat_buf.st_uid;
   gid = stat_buf.st_gid;
@@ -201,7 +205,11 @@ flatpak_builtin_enter (int           argc,
       if (ns_fd[i] != -1)
         {
           if (setns (ns_fd[i], 0) == -1)
-            return flatpak_fail (error, _("Can't enter %s namespace: %s"), ns_name[i], g_strerror (errno));
+            {
+              if (errno == EPERM)
+                return flatpak_fail (error, _("entering not supported (need unprivileged user namespaces)"));
+              return flatpak_fail (error, _("Can't enter %s namespace: %s"), ns_name[i], g_strerror (errno));
+            }
           close (ns_fd[i]);
         }
     }
