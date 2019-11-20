@@ -109,15 +109,17 @@ flatpak_builtin_enter (int           argc,
       return FALSE;
     }
 
-  pid = 0;
   pid_s = argv[rest_argv_start];
-  i = atoi (pid_s);
+  pid = atoi (pid_s);
+
+  /* Check to see if it matches some running instance, otherwise use
+     as pid if it looks as a number. */
   instances = flatpak_instance_get_all ();
   for (j = 0; j < instances->len; j++)
     {
       FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, j);
 
-      if (i == flatpak_instance_get_pid (instance) ||
+      if (pid == flatpak_instance_get_pid (instance) ||
           strcmp (pid_s, flatpak_instance_get_app (instance)) == 0 ||
           strcmp (pid_s, flatpak_instance_get_id (instance)) == 0)
         {
