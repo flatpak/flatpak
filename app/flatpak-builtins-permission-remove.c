@@ -56,14 +56,46 @@ static gboolean
 remove_item (XdpDbusPermissionStore *store,
              const char             *table,
              const char             *id,
+             const char             *app_id,
              GError                **error)
 {
   /* FIXME some portals cache their permission tables and assume that they're
    * the only writers, so they may miss these changes.
    * See https://github.com/flatpak/xdg-desktop-portal/issues/197
    */
-  if (!xdp_dbus_permission_store_call_delete_sync (store, table, id, NULL, error))
-    return FALSE;
+
+  if (!app_id)
+    {
+      if (!xdp_dbus_permission_store_call_delete_sync (store, table, id, NULL, error))
+        return FALSE;
+    }
+  else
+    {
+      GVariant *perms = NULL;
+      GVariant *data = NULL;
+      GVariantBuilder builder;
+      int i;
+
+      if (!xdp_dbus_permission_store_call_lookup_sync (store, table, id, &perms, &data, NULL, error))
+        return FALSE;
+
+      g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sas}"));
+      for (i = 0; perms && i < g_variant_n_children (perms); i++)
+        {
+          const char *key;
+          GVariant *value = NULL;
+
+          g_variant_get_child (perms, i, "{&s@as}", &key, &value);
+          if (strcmp (key, app_id) != 0)
+            g_variant_builder_add (&builder, "{s@as}", key, value);
+        }
+
+      if (!xdp_dbus_permission_store_call_set_sync (store, table, TRUE, id,
+                                                    g_variant_builder_end (&builder),
+                                                    data ? data : g_variant_new_byte (0),
+                                                    NULL, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
@@ -78,8 +110,9 @@ flatpak_builtin_permission_remove (int argc, char **argv,
   XdpDbusPermissionStore *store = NULL;
   const char *table;
   const char *id;
+  const char *app_id;
 
-  context = g_option_context_new (_("TABLE ID - Remove item from permission store"));
+  context = g_option_context_new (_("TABLE ID [APP_ID] - Remove item from permission store"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
@@ -90,11 +123,12 @@ flatpak_builtin_permission_remove (int argc, char **argv,
   if (argc < 3)
     return usage_error (context, _("Too few arguments"), error);
 
-  if (argc > 3)
+  if (argc > 4)
     return usage_error (context, _("Too many arguments"), error);
 
   table = argv[1];
   id = argv[2];
+  app_id = argv[3];
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
   if (session_bus == NULL)
@@ -107,7 +141,7 @@ flatpak_builtin_permission_remove (int argc, char **argv,
   if (store == NULL)
     return FALSE;
 
-  if (!remove_item (store, table, id, error))
+  if (!remove_item (store, table, id, app_id, error))
     return FALSE;
 
   return TRUE;
@@ -165,6 +199,11 @@ flatpak_complete_permission_remove (FlatpakCompletion *completion)
           }
       }
 
+      break;
+
+    case 3:
+      flatpak_complete_partial_ref (completion, FLATPAK_KINDS_APP, FALSE, flatpak_dir_get_user (), NULL);
+      flatpak_complete_partial_ref (completion, FLATPAK_KINDS_APP, FALSE, flatpak_dir_get_system_default (), NULL);
       break;
 
     default:

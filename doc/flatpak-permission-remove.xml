@@ -34,6 +34,7 @@
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">TABLE</arg>
                 <arg choice="plain">ID</arg>
+                <arg choice="opt">APP_ID</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -42,8 +43,9 @@
 
         <para>
           Removes an entry for the object with id <arg choice="plain">ID</arg> to the permission
-          store table <arg choice="plain">TABLE</arg>. The <arg choice="plain">ID</arg> must be in a suitable format
-          for the table.
+          store table <arg choice="plain">TABLE</arg>. The <arg choice="plain">ID</arg> must be in
+          a suitable format for the table. If <arg choice="plain">APP_ID</arg> is specified, only
+          the entry for that application is removed.
         </para>
         <para>
           The permission store is used by portals.
