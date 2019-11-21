@@ -889,12 +889,9 @@ transaction_ready (FlatpakTransaction *transaction)
   flatpak_table_printer_set_column_expand (printer, i, TRUE);
   flatpak_table_printer_set_column_title (printer, i++, _("Branch"));
 
-  if (self->installing + self->updating + self->uninstalling > 1)
-    {
-      flatpak_table_printer_set_column_expand (printer, i, TRUE);
-      /* translators: This is short for operation, the title of a one-char column */
-      flatpak_table_printer_set_column_title (printer, i++, _("Op"));
-    }
+  flatpak_table_printer_set_column_expand (printer, i, TRUE);
+  /* translators: This is short for operation, the title of a one-char column */
+  flatpak_table_printer_set_column_title (printer, i++, _("Op"));
 
   if (self->installing || self->updating)
     {
@@ -931,9 +928,7 @@ transaction_ready (FlatpakTransaction *transaction)
       flatpak_table_printer_add_column (printer, parts[1]);
       flatpak_table_printer_add_column (printer, parts[2]);
       flatpak_table_printer_add_column (printer, parts[3]);
-
-      if (self->installing + self->updating + self->uninstalling > 1)
-        flatpak_table_printer_add_column (printer, op_shorthand[type]);
+      flatpak_table_printer_add_column (printer, op_shorthand[type]);
 
       if (type == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
           type == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE ||
