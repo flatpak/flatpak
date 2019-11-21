@@ -1074,6 +1074,75 @@ test_list_remote_refs (void)
 }
 
 static void
+test_update_installed_ref_if_missing_runtime (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GPtrArray) updatable_refs = NULL;
+  g_autoptr(GError) error = NULL;
+  FlatpakInstalledRef *iref = NULL;
+  gboolean res;
+  g_autofree char *app = NULL;
+
+  app = g_strdup_printf ("app/org.test.Hello/%s/master",
+                         flatpak_get_default_arch ());
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  /* Install the app */
+  iref = flatpak_installation_install (inst,
+                                       repo_name,
+                                       FLATPAK_REF_KIND_APP,
+                                       "org.test.Hello",
+                                       flatpak_get_default_arch (),
+                                       "master",
+                                       NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert (FLATPAK_IS_INSTALLED_REF (iref));
+  iref = NULL;
+
+  /* Install the Locale extension */
+  iref = flatpak_installation_install (inst,
+                                       repo_name,
+                                       FLATPAK_REF_KIND_RUNTIME,
+                                       "org.test.Hello.Locale",
+                                       flatpak_get_default_arch (),
+                                       "master",
+                                       NULL, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert (FLATPAK_IS_INSTALLED_REF (iref));
+  iref = NULL;
+
+  updatable_refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
+  g_assert_cmpint (updatable_refs->len, ==, 1);
+  iref = g_ptr_array_index (updatable_refs, 0);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (iref)), ==, "org.test.Hello");
+  iref = NULL;
+
+  /* Prepare an update transaction to update org.test.Hello. The missing org.test.Platform
+     runtime should automatically be installed with it. */
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_update (transaction, app, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  iref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_RUNTIME, "org.test.Platform", NULL, NULL, NULL, &error);
+  g_assert_nonnull (iref);
+  g_assert_no_error (error);
+}
+
+static void
 test_update_related_refs (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -4018,6 +4087,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/install-flatpakref", test_install_flatpakref);
   g_test_add_func ("/library/list-installed-related-refs", test_list_installed_related_refs);
   g_test_add_func ("/library/update-related-refs", test_update_related_refs);
+  g_test_add_func ("/library/update-installed-ref-if-missing-runtime", test_update_installed_ref_if_missing_runtime);
   g_test_add_func ("/library/no-deploy", test_no_deploy);
   g_test_add_func ("/library/bad-remote-name", test_bad_remote_name);
   g_test_add_func ("/library/transaction-no-runtime", test_transaction_no_runtime);
