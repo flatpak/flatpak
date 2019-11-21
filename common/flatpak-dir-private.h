@@ -902,6 +902,10 @@ GPtrArray * flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *se
                                                           GKeyFile           *metakey,
                                                           GCancellable       *cancellable,
                                                           GError            **error);
+gboolean    flatpak_dir_check_installed_ref_missing_related_ref (FlatpakDir          *self,
+                                                                 FlatpakRemoteState  *state,
+                                                                 const gchar         *full_ref,
+                                                                 GCancellable        *cancellable);
 GPtrArray * flatpak_dir_find_remote_related (FlatpakDir         *dir,
                                              FlatpakRemoteState *state,
                                              const char         *ref,
