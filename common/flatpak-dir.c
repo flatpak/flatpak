@@ -14034,6 +14034,41 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
   return g_steal_pointer (&related);
 }
 
+gboolean
+flatpak_dir_check_installed_ref_missing_related_ref (FlatpakDir          *self,
+                                                     FlatpakRemoteState  *state,
+                                                     const gchar         *full_ref,
+                                                     GCancellable        *cancellable)
+{
+  g_autoptr(GPtrArray) remote_related_refs = NULL;
+  g_autoptr(GError) local_error = NULL;
+  guint j;
+
+  remote_related_refs = flatpak_dir_find_remote_related (self, state, full_ref,
+                                                         cancellable, &local_error);
+  if (remote_related_refs == NULL)
+    {
+      g_warning ("Unable to get remote related refs for %s: %s", full_ref, local_error->message);
+      return FALSE;
+    }
+
+  for (j = 0; j < remote_related_refs->len; j++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (remote_related_refs, j);
+      g_autoptr(GFile) deploy = NULL;
+
+      if (!rel->download || flatpak_dir_ref_is_masked (self, rel->ref))
+          continue;
+
+      deploy = flatpak_dir_get_if_deployed (self, rel->ref, NULL, cancellable);
+      /* If the related extension ref was meant to be auto-installed but was not found to be
+       * deployed, return TRUE. It will be pulled in via a FlatpakTransaction's update-op again. */
+      if (rel->download && deploy == NULL)
+          return TRUE;
+    }
+
+  return FALSE;
+}
 
 GPtrArray *
 flatpak_dir_find_remote_related (FlatpakDir         *self,
