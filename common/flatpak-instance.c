@@ -420,7 +420,7 @@ flatpak_instance_new (const char *dir)
   return self;
 }
 
-static FlatpakInstance *
+FlatpakInstance *
 flatpak_instance_new_for_id (const char *id)
 {
   g_autofree char *dir = NULL;
