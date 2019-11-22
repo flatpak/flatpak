@@ -43,6 +43,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-transaction.h"
 #include "flatpak-installation-private.h"
+#include "flatpak-instance-private.h"
 #include "flatpak-portal-app-info.h"
 #include "flatpak-portal-error.h"
 #include "flatpak-utils-base-private.h"
@@ -531,6 +532,7 @@ handle_spawn (PortalFlatpak         *object,
   guint sandbox_flags = 0;
   gboolean sandboxed;
   gboolean devel;
+  gboolean expose_pids;
 
   if (fd_list != NULL)
     fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
@@ -551,7 +553,6 @@ handle_spawn (PortalFlatpak         *object,
                                              "org.freedesktop.portal.Flatpak.Spawn only works in a flatpak");
       return TRUE;
     }
-
 
   if (*arg_cwd_path == 0)
     arg_cwd_path = NULL;
@@ -783,6 +784,32 @@ handle_spawn (PortalFlatpak         *object,
     {
       for (i = 0; extra_args != NULL && extra_args[i] != NULL; i++)
         g_ptr_array_add (flatpak_argv, g_strdup (extra_args[i]));
+    }
+
+  expose_pids = (arg_flags & FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS) != 0;
+  if (expose_pids)
+    {
+      int sender_pid1 = 0;
+      g_autofree char *instance_id = g_key_file_get_string (app_info,
+                                                            FLATPAK_METADATA_GROUP_INSTANCE,
+                                                            FLATPAK_METADATA_KEY_INSTANCE_ID, NULL);
+
+      if (instance_id)
+        {
+          g_autoptr(FlatpakInstance) instance = flatpak_instance_new_for_id (instance_id);
+          sender_pid1 = flatpak_instance_get_child_pid (instance);
+        }
+
+      if (sender_pid1 == 0)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Could not find requesting pid");
+          return TRUE;
+        }
+
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--parent-pid=%d", sender_pid1));
+      g_ptr_array_add (flatpak_argv, g_strdup ("--parent-expose-pids"));
     }
 
   if (devel)

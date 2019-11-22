@@ -291,6 +291,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     flags |= FLATPAK_RUN_FLAG_FILE_FORWARDING;
   if (opt_no_documents_portal)
     flags |= FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL;
+  if (opt_parent_expose_pids)
+    flags |= FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS;
   if (!opt_a11y_bus)
     flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
   if (!opt_session_bus)
