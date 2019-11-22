@@ -40,6 +40,8 @@
 
       In addition, the permission store allows to associate extra data
       (in the form of a GVariant) with each resource.
+
+      This document describes version 2 of the permission store interface.
   -->
   <interface name='org.freedesktop.impl.portal.PermissionStore'>
     <property name="version" type="u" access="read"/>
@@ -124,6 +126,23 @@
       <arg name='id' type='s' direction='in'/>
       <arg name='app' type='s' direction='in'/>
       <arg name='permissions' type='as' direction='in'/>
+    </method>
+
+    <!--
+        DeletePermission:
+        @table: the name of the table to use
+        @id: the resource ID to modify
+        @app: the application ID to modify
+
+        Removes the entry for an application and a resource
+        in the given table.
+
+        This method was added in version 2.
+    -->
+    <method name="DeletePermission">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='app' type='s' direction='in'/>
     </method>
 
     <!--
