@@ -24,5 +24,6 @@
 #include "flatpak-instance.h"
 
 FlatpakInstance *flatpak_instance_new (const char *dir);
+FlatpakInstance *flatpak_instance_new_for_id (const char *id);
 
 #endif /* __FLATPAK_INSTANCE_PRIVATE_H__ */
