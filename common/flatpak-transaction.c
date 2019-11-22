@@ -280,7 +280,7 @@ flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *s
  *
  * Gets the current status string
  *
- * Returns: (transfer none): the current status
+ * Returns: (transfer full): the current status
  */
 char *
 flatpak_transaction_progress_get_status (FlatpakTransactionProgress *self)
