@@ -55,6 +55,8 @@ static char *opt_runtime;
 static char *opt_runtime_version;
 static char *opt_commit;
 static char *opt_runtime_commit;
+static int opt_parent_pid;
+static gboolean opt_parent_expose_pids;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -77,6 +79,8 @@ static GOptionEntry options[] = {
   { "runtime-commit", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_commit, N_("Use specified runtime commit"), NULL },
   { "sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_sandbox, N_("Run completely sandboxed"), NULL },
   { "die-with-parent", 'p', 0, G_OPTION_ARG_NONE, &opt_die_with_parent, N_("Kill processes when the parent process dies"), NULL },
+  { "parent-pid", 0, 0, G_OPTION_ARG_INT, &opt_parent_pid, N_("Use this as parent pid for sharing namespaces"), NULL },
+  { "parent-expose-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_expose_pids, N_("Make processes visible in parent namespace"), NULL },
   { NULL }
 };
 
@@ -298,6 +302,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         opt_runtime,
                         opt_runtime_version,
                         opt_runtime_commit,
+                        opt_parent_pid,
                         flags,
                         opt_cwd,
                         opt_command,
