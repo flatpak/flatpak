@@ -3270,6 +3270,24 @@ check_parental_controls (const char     *app_ref,
   return TRUE;
 }
 
+static int
+open_namespace_fd_if_needed (const char *path, const char *type)
+{
+  g_autofree char *self_path = g_strdup_printf ("/proc/self/ns/%s", type);
+  struct stat s, self_s;
+
+  if (stat (path, &s) != 0)
+    return -1; /* No such namespace, ignore */
+
+  if (stat (self_path, &self_s) != 0)
+    return -1; /* No such namespace, ignore */
+
+  if (s.st_ino != self_s.st_ino)
+    return open (path, O_RDONLY|O_CLOEXEC);
+
+  return -1;
+}
+
 gboolean
 flatpak_run_app (const char     *app_ref,
                  FlatpakDeploy  *app_deploy,
@@ -3277,6 +3295,7 @@ flatpak_run_app (const char     *app_ref,
                  const char     *custom_runtime,
                  const char     *custom_runtime_version,
                  const char     *custom_runtime_commit,
+                 int             parent_pid,
                  FlatpakRunFlags flags,
                  const char     *cwd,
                  const char     *custom_command,
@@ -3321,6 +3340,7 @@ flatpak_run_app (const char     *app_ref,
   gboolean generate_ld_so_conf = TRUE;
   gboolean use_ld_so_cache = TRUE;
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
+  gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
 
   struct stat s;
 
@@ -3622,6 +3642,35 @@ flatpak_run_app (const char     *app_ref,
 
   if (cwd)
     flatpak_bwrap_add_args (bwrap, "--chdir", cwd, NULL);
+
+  if (parent_expose_pids)
+    {
+      g_autofree char *userns_path = NULL;
+      g_autofree char *pidns_path = NULL;
+      g_autofree char *userns2_path = NULL;
+      int userns_fd, userns2_fd, pidns_fd;
+
+      if (parent_pid == 0)
+        return flatpak_fail (error, "No parent pid specified");
+
+      userns_path = g_strdup_printf ("/proc/%d/root/run/.userns", parent_pid);
+
+      userns_fd = open_namespace_fd_if_needed (userns_path, "user");
+      if (userns_fd != -1)
+        {
+          flatpak_bwrap_add_args_data_fd (bwrap, "--userns", userns_fd, NULL);
+
+          userns2_path = g_strdup_printf ("/proc/%d/ns/user", parent_pid);
+          userns2_fd = open (userns2_path, O_RDONLY|O_CLOEXEC);
+          if (userns2_fd != -1)
+            flatpak_bwrap_add_args_data_fd (bwrap, "--userns2", userns2_fd, NULL);
+        }
+
+      pidns_path = g_strdup_printf ("/proc/%d/ns/pid", parent_pid);
+      pidns_fd = open (pidns_path, O_RDONLY|O_CLOEXEC);
+      if (pidns_fd != -1)
+        flatpak_bwrap_add_args_data_fd (bwrap, "--pidns", pidns_fd, NULL);
+    }
 
   if (custom_command)
     {
