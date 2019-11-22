@@ -69,6 +69,11 @@ remove_item (XdpDbusPermissionStore *store,
       if (!xdp_dbus_permission_store_call_delete_sync (store, table, id, NULL, error))
         return FALSE;
     }
+  else if (xdp_dbus_permission_store_get_version (store) == 2)
+    {
+      if (!xdp_dbus_permission_store_call_delete_permission_sync (store, table, id, app_id, NULL, error))
+        return FALSE;
+    }
   else
     {
       GVariant *perms = NULL;
