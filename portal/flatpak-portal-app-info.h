@@ -37,6 +37,7 @@
 #define FLATPAK_METADATA_KEY_DEVICES "devices"
 #define FLATPAK_METADATA_KEY_DEVEL "devel"
 #define FLATPAK_METADATA_KEY_INSTANCE_PATH "instance-path"
+#define FLATPAK_METADATA_KEY_INSTANCE_ID "instance-id"
 
 GKeyFile * flatpak_invocation_lookup_app_info (GDBusMethodInvocation *invocation,
                                                GCancellable          *cancellable,
