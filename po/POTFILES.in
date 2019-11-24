@@ -27,6 +27,7 @@ app/flatpak-builtins-override.c
 app/flatpak-builtins-permission-list.c
 app/flatpak-builtins-permission-remove.c
 app/flatpak-builtins-permission-reset.c
+app/flatpak-builtins-permission-set.c
 app/flatpak-builtins-permission-show.c
 app/flatpak-builtins-ps.c
 app/flatpak-builtins-remote-add.c
