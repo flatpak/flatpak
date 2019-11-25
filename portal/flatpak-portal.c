@@ -375,7 +375,8 @@ handle_spawn (PortalFlatpak         *object,
   GPid pid;
   PidData *pid_data;
   gsize i, j, n_fds, n_envs;
-  const gint *fds;
+  const gint *fds = NULL;
+  gint fds_len = 0;
   g_autofree FdMapEntry *fd_map = NULL;
   gchar **env;
   gint32 max_fd;
@@ -398,6 +399,9 @@ handle_spawn (PortalFlatpak         *object,
   guint sandbox_flags = 0;
   gboolean sandboxed;
   gboolean devel;
+
+  if (fd_list != NULL)
+    fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
 
   app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
   g_assert (app_info != NULL);
@@ -523,12 +527,8 @@ handle_spawn (PortalFlatpak         *object,
   g_debug ("Running spawn command %s", arg_argv[0]);
 
   n_fds = 0;
-  fds = NULL;
-  if (fd_list != NULL)
-    {
-      n_fds = g_variant_n_children (arg_fds);
-      fds = g_unix_fd_list_peek_fds (fd_list, NULL);
-    }
+  if (fds != NULL)
+    n_fds = g_variant_n_children (arg_fds);
   fd_map = g_new0 (FdMapEntry, n_fds);
 
   child_setup_data.fd_map = fd_map;
@@ -537,20 +537,26 @@ handle_spawn (PortalFlatpak         *object,
   max_fd = -1;
   for (i = 0; i < n_fds; i++)
     {
-      gint32 handle, fd;
-      g_variant_get_child (arg_fds, i, "{uh}", &fd, &handle);
-      fd_map[i].to = fd;
-      fd_map[i].from = fds[i];
+      gint32 handle, dest_fd;
+      int handle_fd;
+
+      g_variant_get_child (arg_fds, i, "{uh}", &dest_fd, &handle);
+      if (handle >= fds_len)
+        continue;
+      handle_fd = fds[handle];
+
+      fd_map[i].to = dest_fd;
+      fd_map[i].from = handle_fd;
       fd_map[i].final = fd_map[i].to;
 
       /* If stdin/out/err is a tty we try to set it as the controlling
          tty for the app, this way we can use this to run in a terminal. */
-      if ((fd == 0 || fd == 1 || fd == 2) &&
+      if ((dest_fd == 0 || dest_fd == 1 || dest_fd == 2) &&
           !child_setup_data.set_tty &&
-          isatty (fds[i]))
+          isatty (handle_fd))
         {
           child_setup_data.set_tty = TRUE;
-          child_setup_data.tty = fds[i];
+          child_setup_data.tty = handle_fd;
         }
 
       max_fd = MAX (max_fd, fd_map[i].to);
