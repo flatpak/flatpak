@@ -106,6 +106,7 @@ FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
 void           flatpak_context_add_bus_filters (FlatpakContext *context,
                                                 const char     *app_id,
                                                 gboolean        session_bus,
+                                                gboolean        sandboxed,
                                                 FlatpakBwrap   *bwrap);
 
 gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context);
