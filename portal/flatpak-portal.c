@@ -391,8 +391,11 @@ handle_spawn (PortalFlatpak         *object,
   g_autofree char *instance_path = NULL;
   g_auto(GStrv) extra_args = NULL;
   g_auto(GStrv) shares = NULL;
+  g_auto(GStrv) sockets = NULL;
+  g_auto(GStrv) devices = NULL;
   g_auto(GStrv) sandbox_expose = NULL;
   g_auto(GStrv) sandbox_expose_ro = NULL;
+  guint sandbox_flags = 0;
   gboolean sandboxed;
   gboolean devel;
 
@@ -464,12 +467,25 @@ handle_spawn (PortalFlatpak         *object,
                                           FLATPAK_METADATA_KEY_RUNTIME_COMMIT, NULL);
   shares = g_key_file_get_string_list (app_info, FLATPAK_METADATA_GROUP_CONTEXT,
                                        FLATPAK_METADATA_KEY_SHARED, NULL, NULL);
+  sockets = g_key_file_get_string_list (app_info, FLATPAK_METADATA_GROUP_CONTEXT,
+                                       FLATPAK_METADATA_KEY_SOCKETS, NULL, NULL);
+  devices = g_key_file_get_string_list (app_info, FLATPAK_METADATA_GROUP_CONTEXT,
+                                        FLATPAK_METADATA_KEY_DEVICES, NULL, NULL);
 
   devel = g_key_file_get_boolean (app_info, FLATPAK_METADATA_GROUP_INSTANCE,
                                   FLATPAK_METADATA_KEY_DEVEL, NULL);
 
   g_variant_lookup (arg_options, "sandbox-expose", "^as", &sandbox_expose);
   g_variant_lookup (arg_options, "sandbox-expose-ro", "^as", &sandbox_expose_ro);
+  g_variant_lookup (arg_options, "sandbox-flags", "u", &sandbox_flags);
+
+
+  if ((sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported sandbox flags enabled: 0x%x", arg_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL);
+      return TRUE;
+    }
 
   if (instance_path == NULL &&
       ((sandbox_expose != NULL && sandbox_expose[0] != NULL) ||
@@ -593,7 +609,33 @@ handle_spawn (PortalFlatpak         *object,
   sandboxed = (arg_flags & FLATPAK_SPAWN_FLAGS_SANDBOX) != 0;
 
   if (sandboxed)
-    g_ptr_array_add (flatpak_argv, g_strdup ("--sandbox"));
+    {
+      g_ptr_array_add (flatpak_argv, g_strdup ("--sandbox"));
+
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_DISPLAY)
+        {
+          if (sockets != NULL && g_strv_contains ((const char * const *) sockets, "wayland"))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--socket=wayland"));
+          if (sockets != NULL && g_strv_contains ((const char * const *) sockets, "fallback-x11"))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--socket=fallback-x11"));
+          if (sockets != NULL && g_strv_contains ((const char * const *) sockets, "x11"))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--socket=x11"));
+          if (shares != NULL && g_strv_contains ((const char * const *) shares, "ipc") &&
+              sockets != NULL && (g_strv_contains ((const char * const *) sockets, "fallback-x11") ||
+                                  g_strv_contains ((const char * const *) sockets, "x11")))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--share=ipc"));
+        }
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_SOUND)
+        {
+          if (sockets != NULL && g_strv_contains ((const char * const *) sockets, "pulseaudio"))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--socket=pulseaudio"));
+        }
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_GPU)
+        {
+          if (devices != NULL && g_strv_contains ((const char * const *) devices, "dri"))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--device=dri"));
+        }
+    }
   else
     {
       for (i = 0; extra_args != NULL && extra_args[i] != NULL; i++)
@@ -610,6 +652,7 @@ handle_spawn (PortalFlatpak         *object,
     g_ptr_array_add (flatpak_argv, g_strdup ("--share=network"));
   else
     g_ptr_array_add (flatpak_argv, g_strdup ("--unshare=network"));
+
 
   if (instance_path)
     {

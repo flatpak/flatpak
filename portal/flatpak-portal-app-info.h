@@ -33,6 +33,8 @@
 #define FLATPAK_METADATA_KEY_APP_COMMIT "app-commit"
 #define FLATPAK_METADATA_KEY_RUNTIME_COMMIT "runtime-commit"
 #define FLATPAK_METADATA_KEY_SHARED "shared"
+#define FLATPAK_METADATA_KEY_SOCKETS "sockets"
+#define FLATPAK_METADATA_KEY_DEVICES "devices"
 #define FLATPAK_METADATA_KEY_DEVEL "devel"
 #define FLATPAK_METADATA_KEY_INSTANCE_PATH "instance-path"
 
