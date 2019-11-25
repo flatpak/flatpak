@@ -3418,13 +3418,7 @@ flatpak_run_app (const char     *app_ref,
     }
 
   if (sandboxed)
-    {
-      flatpak_context_make_sandboxed (app_context);
-      flags |=
-        FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
-        FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
-        FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
-    }
+    flatpak_context_make_sandboxed (app_context);
 
   if (extra_context)
     flatpak_context_merge (app_context, extra_context);

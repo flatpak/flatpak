@@ -45,7 +45,8 @@ static gboolean opt_devel;
 static gboolean opt_log_session_bus;
 static gboolean opt_log_system_bus;
 static gboolean opt_log_a11y_bus;
-static gboolean opt_no_a11y_bus;
+static int opt_a11y_bus = -1;
+static int opt_session_bus = -1;
 static gboolean opt_no_documents_portal;
 static gboolean opt_file_forwarding;
 static gboolean opt_die_with_parent;
@@ -66,7 +67,10 @@ static GOptionEntry options[] = {
   { "log-session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_session_bus, N_("Log session bus calls"), NULL },
   { "log-system-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_system_bus, N_("Log system bus calls"), NULL },
   { "log-a11y-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_a11y_bus, N_("Log accessibility bus calls"), NULL },
-  { "no-a11y-bus", 0, 0, G_OPTION_ARG_NONE, &opt_no_a11y_bus, N_("Don't proxy accessibility bus calls"), NULL },
+  { "no-a11y-bus", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_a11y_bus, N_("Don't proxy accessibility bus calls"), NULL },
+  { "a11y-bus", 0, 0, G_OPTION_ARG_NONE, &opt_a11y_bus, N_("Proxy accessibility bus calls (default except when sandboxed)"), NULL },
+  { "no-session-bus", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_a11y_bus, N_("Don't proxy session bus calls"), NULL },
+  { "session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_session_bus, N_("Proxy session bus calls (default except when sandboxed)"), NULL },
   { "no-documents-portal", 0, 0, G_OPTION_ARG_NONE, &opt_no_documents_portal, N_("Don't start portals"), NULL },
   { "file-forwarding", 0, 0, G_OPTION_ARG_NONE, &opt_file_forwarding, N_("Enable file forwarding"), NULL },
   { "commit", 0, 0, G_OPTION_ARG_STRING, &opt_commit, N_("Run specified commit"), NULL },
@@ -261,8 +265,14 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       g_clear_error (&local_error);
     }
 
+  /* Default to TRUE, unless sandboxed */
+  if (opt_a11y_bus == -1)
+    opt_a11y_bus = !opt_sandbox;
+  if (opt_session_bus == -1)
+    opt_a11y_bus = !opt_sandbox;
+
   if (opt_sandbox)
-    flags |= FLATPAK_RUN_FLAG_SANDBOX;
+    flags |= FLATPAK_RUN_FLAG_SANDBOX | FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY;
   if (opt_die_with_parent)
     flags |= FLATPAK_RUN_FLAG_DIE_WITH_PARENT;
   if (opt_devel)
@@ -275,10 +285,12 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     flags |= FLATPAK_RUN_FLAG_LOG_A11Y_BUS;
   if (opt_file_forwarding)
     flags |= FLATPAK_RUN_FLAG_FILE_FORWARDING;
-  if (opt_no_a11y_bus)
-    flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
   if (opt_no_documents_portal)
     flags |= FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL;
+  if (!opt_a11y_bus)
+    flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
+  if (!opt_session_bus)
+    flags |= FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY;
 
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,
