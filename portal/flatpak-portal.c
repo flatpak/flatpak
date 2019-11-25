@@ -635,6 +635,10 @@ handle_spawn (PortalFlatpak         *object,
           if (devices != NULL && g_strv_contains ((const char * const *) devices, "dri"))
             g_ptr_array_add (flatpak_argv, g_strdup ("--device=dri"));
         }
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_DBUS)
+        g_ptr_array_add (flatpak_argv, g_strdup ("--session-bus"));
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y)
+        g_ptr_array_add (flatpak_argv, g_strdup ("--a11y-bus"));
     }
   else
     {
