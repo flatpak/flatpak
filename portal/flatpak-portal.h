@@ -29,10 +29,20 @@ typedef enum {
   FLATPAK_SPAWN_FLAGS_WATCH_BUS = 1 << 4,
 } FlatpakSpawnFlags;
 
+typedef enum {
+  FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_DISPLAY = 1 << 0,
+  FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_SOUND = 1 << 1,
+  FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_GPU = 1 << 2,
+} FlatpakSpawnSandboxFlags;
+
 #define FLATPAK_SPAWN_FLAGS_ALL (FLATPAK_SPAWN_FLAGS_CLEAR_ENV | \
                                  FLATPAK_SPAWN_FLAGS_LATEST_VERSION | \
                                  FLATPAK_SPAWN_FLAGS_SANDBOX | \
                                  FLATPAK_SPAWN_FLAGS_NO_NETWORK | \
                                  FLATPAK_SPAWN_FLAGS_WATCH_BUS)
+
+#define FLATPAK_SPAWN_SANDBOX_FLAGS_ALL (FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_DISPLAY | \
+                                         FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_SOUND | \
+                                         FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_GPU)
 
 #endif /* __FLATPAK_PORTAL_H__ */
