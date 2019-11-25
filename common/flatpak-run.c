@@ -1669,10 +1669,22 @@ add_font_path_args (FlatpakBwrap *bwrap)
 static void
 add_icon_path_args (FlatpakBwrap *bwrap)
 {
+  g_autoptr(GFile) home = NULL;
+  g_autoptr(GFile) user_icons = NULL;
+
   if (g_file_test ("/usr/share/icons", G_FILE_TEST_IS_DIR))
     {
       flatpak_bwrap_add_args (bwrap,
                               "--ro-bind", "/usr/share/icons", "/run/host/share/icons",
+                              NULL);
+    }
+
+  home = g_file_new_for_path (g_get_home_dir ());
+  user_icons = g_file_resolve_relative_path (home, ".local/share/icons");
+  if (g_file_query_exists (user_icons, NULL))
+    {
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", flatpak_file_get_path_cached (user_icons), "/run/host/user-share/icons",
                               NULL);
     }
 }
