@@ -328,6 +328,28 @@ is_valid_expose (const char *expose,
 }
 
 static char *
+filesystem_arg (const char *path,
+                gboolean    readonly)
+{
+  g_autoptr(GString) s = g_string_new ("--filesystem=");
+  const char *p;
+
+  for (p = path; *p != 0; p++)
+    {
+      if (*p == ':')
+        g_string_append (s, "\\:");
+      else
+        g_string_append_c (s, *p);
+    }
+
+  if (readonly)
+    g_string_append (s, ":ro");
+
+  return g_string_free (g_steal_pointer (&s), FALSE);
+}
+
+
+static char *
 filesystem_sandbox_arg (const char *path,
                         const char *sandbox,
                         gboolean    readonly)
@@ -357,6 +379,114 @@ filesystem_sandbox_arg (const char *path,
     g_string_append (s, ":ro");
 
   return g_string_free (g_steal_pointer (&s), FALSE);
+}
+
+static char *
+bubblewrap_remap_path (const char *path)
+{
+  if (g_str_has_prefix (path, "/newroot/"))
+    path = path + strlen ("/newroot");
+  return g_strdup (path);
+}
+
+static char *
+verify_proc_self_fd (const char *proc_path)
+{
+  char path_buffer[PATH_MAX + 1];
+  ssize_t symlink_size;
+
+  symlink_size = readlink (proc_path, path_buffer, PATH_MAX);
+  if (symlink_size < 0)
+    return NULL;
+
+  path_buffer[symlink_size] = 0;
+
+  /* All normal paths start with /, but some weird things
+     don't, such as socket:[27345] or anon_inode:[eventfd].
+     We don't support any of these */
+  if (path_buffer[0] != '/')
+    return NULL;
+
+  /* File descriptors to actually deleted files have " (deleted)"
+     appended to them. This also happens to some fake fd types
+     like shmem which are "/<name> (deleted)". All such
+     files are considered invalid. Unfortunatelly this also
+     matches files with filenames that actually end in " (deleted)",
+     but there is not much to do about this. */
+  if (g_str_has_suffix (path_buffer, " (deleted)"))
+    return NULL;
+
+  /* remap from sandbox to host if needed */
+  return bubblewrap_remap_path (path_buffer);
+}
+
+static char *
+get_path_for_fd (int fd, gboolean *writable_out)
+{
+  g_autofree char *proc_path = NULL;
+  int fd_flags;
+  struct stat st_buf;
+  struct stat real_st_buf;
+  g_autofree char *path = NULL;
+  gboolean writable = FALSE;
+  int read_access_mode;
+
+  /* Must be able to get fd flags */
+  fd_flags = fcntl (fd, F_GETFL);
+  if (fd_flags == -1)
+    return NULL;
+
+  /* Must be O_PATH */
+  if ((fd_flags & O_PATH) != O_PATH)
+    return NULL;
+
+  /* We don't want to allow exposing symlinks, because if they are
+   * under the callers control they could be changed between now and
+   * starting the child allowing it to point anywhere, so enforce NOFOLLOW.
+   * and verify that stat is not a link.
+   */
+  if ((fd_flags & O_NOFOLLOW) != O_NOFOLLOW)
+    return NULL;
+
+  /* Must be able to fstat */
+  if (fstat (fd, &st_buf) < 0)
+    return NULL;
+
+  /* As per above, no symlinks */
+  if (S_ISLNK (st_buf.st_mode))
+    return NULL;
+
+  proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
+
+  /* Must be able to read valid path from /proc/self/fd */
+  /* This is an absolute and (at least at open time) symlink-expanded path */
+  path = verify_proc_self_fd (proc_path);
+  if (path == NULL)
+    return NULL;
+
+  /* Verify that this is the same file as the app opened */
+  if (stat (path, &real_st_buf) < 0 ||
+      st_buf.st_dev != real_st_buf.st_dev ||
+      st_buf.st_ino != real_st_buf.st_ino)
+    {
+      /* Different files on the inside and the outside, reject the request */
+      return NULL;
+    }
+
+  read_access_mode = R_OK;
+  if (S_ISDIR (st_buf.st_mode))
+    read_access_mode |= X_OK;
+
+  /* Must be able to access the path via the sandbox supplied O_PATH fd,
+     which applies the sandbox side mount options (like readonly). */
+  if (access (proc_path, read_access_mode) != 0)
+    return NULL;
+
+  if (access (proc_path, W_OK) == 0)
+    writable = TRUE;
+
+  *writable_out = writable;
+  return g_steal_pointer (&path);
 }
 
 static gboolean
@@ -396,6 +526,8 @@ handle_spawn (PortalFlatpak         *object,
   g_auto(GStrv) devices = NULL;
   g_auto(GStrv) sandbox_expose = NULL;
   g_auto(GStrv) sandbox_expose_ro = NULL;
+  g_autoptr(GVariant) sandbox_expose_fd = NULL;
+  g_autoptr(GVariant) sandbox_expose_fd_ro = NULL;
   guint sandbox_flags = 0;
   gboolean sandboxed;
   gboolean devel;
@@ -482,7 +614,8 @@ handle_spawn (PortalFlatpak         *object,
   g_variant_lookup (arg_options, "sandbox-expose", "^as", &sandbox_expose);
   g_variant_lookup (arg_options, "sandbox-expose-ro", "^as", &sandbox_expose_ro);
   g_variant_lookup (arg_options, "sandbox-flags", "u", &sandbox_flags);
-
+  sandbox_expose_fd = g_variant_lookup_value (arg_options, "sandbox-expose-fd", G_VARIANT_TYPE ("ah"));
+  sandbox_expose_fd_ro = g_variant_lookup_value (arg_options, "sandbox-expose-fd-ro", G_VARIANT_TYPE ("ah"));
 
   if ((sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL) != 0)
     {
@@ -678,6 +811,46 @@ handle_spawn (PortalFlatpak         *object,
     {
       const char *expose = sandbox_expose_ro[i];
       g_debug ("exposing %s", expose);
+    }
+
+  if (fds && sandbox_expose_fd != NULL)
+    {
+      gsize len = g_variant_n_children (sandbox_expose_fd);
+      for (i = 0; i < len; i++)
+        {
+          gint32 handle;
+          g_variant_get_child (sandbox_expose_fd, i, "h", &handle);
+          if (handle < fds_len)
+            {
+              int handle_fd = fds[handle];
+              g_autofree char *path = NULL;
+              gboolean writable = FALSE;
+
+              path = get_path_for_fd (handle_fd, &writable);
+              if (path)
+                g_ptr_array_add (flatpak_argv, filesystem_arg (path, !writable));
+            }
+        }
+    }
+
+  if (fds && sandbox_expose_fd_ro != NULL)
+    {
+      gsize len = g_variant_n_children (sandbox_expose_fd_ro);
+      for (i = 0; i < len; i++)
+        {
+          gint32 handle;
+          g_variant_get_child (sandbox_expose_fd_ro, i, "h", &handle);
+          if (handle < fds_len)
+            {
+              int handle_fd = fds[handle];
+              g_autofree char *path = NULL;
+              gboolean writable = FALSE;
+
+              path = get_path_for_fd (handle_fd, &writable);
+              if (path)
+                g_ptr_array_add (flatpak_argv, filesystem_arg (path, TRUE));
+            }
+        }
     }
 
   g_ptr_array_add (flatpak_argv, g_strdup_printf ("--runtime=%s", runtime_parts[1]));
