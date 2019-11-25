@@ -93,6 +93,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   FlatpakKinds kinds;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakRunFlags flags = 0;
 
   context = g_option_context_new (_("APP [ARGUMENT…] - Run an app"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -260,21 +261,32 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       g_clear_error (&local_error);
     }
 
+  if (opt_sandbox)
+    flags |= FLATPAK_RUN_FLAG_SANDBOX;
+  if (opt_die_with_parent)
+    flags |= FLATPAK_RUN_FLAG_DIE_WITH_PARENT;
+  if (opt_devel)
+    flags |= FLATPAK_RUN_FLAG_DEVEL;
+  if (opt_log_session_bus)
+    flags |= FLATPAK_RUN_FLAG_LOG_SESSION_BUS;
+  if (opt_log_system_bus)
+    flags |= FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS;
+  if (opt_log_a11y_bus)
+    flags |= FLATPAK_RUN_FLAG_LOG_A11Y_BUS;
+  if (opt_file_forwarding)
+    flags |= FLATPAK_RUN_FLAG_FILE_FORWARDING;
+  if (opt_no_a11y_bus)
+    flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
+  if (opt_no_documents_portal)
+    flags |= FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL;
+
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,
                         arg_context,
                         opt_runtime,
                         opt_runtime_version,
                         opt_runtime_commit,
-                        (opt_sandbox ? FLATPAK_RUN_FLAG_SANDBOX : 0) |
-                        (opt_die_with_parent ? FLATPAK_RUN_FLAG_DIE_WITH_PARENT : 0) |
-                        (opt_devel ? FLATPAK_RUN_FLAG_DEVEL : 0) |
-                        (opt_log_session_bus ? FLATPAK_RUN_FLAG_LOG_SESSION_BUS : 0) |
-                        (opt_log_system_bus ? FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS : 0) |
-                        (opt_log_a11y_bus ? FLATPAK_RUN_FLAG_LOG_A11Y_BUS : 0) |
-                        (opt_file_forwarding ? FLATPAK_RUN_FLAG_FILE_FORWARDING : 0) |
-                        (opt_no_a11y_bus ? FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY : 0) |
-                        (opt_no_documents_portal ? FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL : 0),
+                        flags,
                         opt_cwd,
                         opt_command,
                         &argv[rest_argv_start + 1],
