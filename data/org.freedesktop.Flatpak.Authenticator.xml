@@ -1,0 +1,202 @@
+<!DOCTYPE node PUBLIC
+"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<!--
+ Copyright (C) 2015 Red Hat, Inc.
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General
+ Public License along with this library; if not, write to the
+ Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+
+ Author: Alexander Larsson <alexl@redhat.com>
+-->
+
+<node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+  <!--
+     'org.freedesktop.Flatpak.Authenticator:
+      @short_description: Flatpak authenticator
+
+      An authenticator is a dbus service that flatpak talks to in
+      order to negotiate downloads of protected content. Each commit
+      in the repository has a "token-type" value (either directly or
+      from a default), and whenever this is non-zero flatpak assumes
+      it will need to do some sort of authentication to download it.
+
+      Each configured remote in the system has information about what
+      authenticator to use for the remote, as well as some config
+      options for it. The configuration contains the dbus name of the
+      authenticator, which is activated on demand by dbus. This allows
+      authenticators to be shipped with the system, or installed as
+      flatpaks.
+
+      The main operation that the authenticator supports is the
+      RequestRefToken where you pass a set of references and the
+      authenticator returns a HTTP bearer token (if any) to use for
+      each ref. Flatpak will then use the returned tokens in all its
+      http requests, and it is then up to the server to validate the
+      tokens.
+
+      The authenticator dbus calls are not regular dbus calls, but
+      instead long running (cancellable) object implementing the
+      AuthenticatorRequest interface. This is very similiar to how
+      org.freedesktop.portal.Request work when its used in
+      xdg-desktop-portal.
+
+      Most of the details in how the tokens look, are created and
+      validated and how the token-type is interpreted is up to the
+      authenticator (in combination with the actual repo server). The
+      system has been designed to be very generic.
+
+      The D-Bus interface for the authenticator is supposed to be
+      available on the given bus name at the object path
+      /org/freedesktop/Flatpak/Authenticator.
+
+      This documentation describes version 1 of this interface.
+  -->
+  <interface name='org.freedesktop.Flatpak.Authenticator'>
+    <property name="version" type="u" access="read"/>
+
+    <!--
+        RequestRefTokens:
+        @handle_token: A string that will be used as the last element of the @handle. Must be a valid
+              object path element. See the #org.freedesktop.Flatpak.AuthenticatorRequest documentation for
+              more information about the @handle.
+        @authenticator_options: Data from the xa.authenticator-options key in the configuration for the remote, it is up to the authenticator to interpret this how it wants.
+        @remote: The name of the remote we're pulling from.
+        @refs: An array of refs that flatpak wants to pull and the token-type for each ref.
+        @parent_window: Identifier for the application window, see <link linkend="https://flatpak.github.io/xdg-desktop-portal/portal-docs.html#parent_window">xdg-desktop-portal docs</link> for details on its format.
+        @handle: Object path for the #org.freedesktop.Flatpak.AuthenticatorRequest object representing this call.
+
+        Starts a request for resolving the tokens to use for @refs from the @remote. This is not a regular dbus call that blocks until the result is done, instead
+        it creates a org.freedesktop.Flatpak.AuthenticatorRequest object representing the ongoing operation and returns an object path @handle to it. When
+        the operation succeds the Response signal is emitted on the request with a response status and a dict with details.
+
+        On success (response 0) the returned details should have:
+        <variablelist>
+          <varlistentry>
+            <term>tokens a{sas}</term>
+            <listitem><para>
+              A list of tokens (the first element of the struct), and the refs that it applies to (the second element of the struct).
+              The returned token may be the empty string, to signal that flatpak doesn't need to use a token for these refs.
+            </para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        For other response types, see the #org.freedesktop.Flatpak.AuthenticatorRequest docs.
+
+        Exactly how the authenticator decides on what token to use is up to each implementation, but typically it needs to talk to
+        some kind of network service which in turn may need interaction such as login or entering credit card details.
+        This can be done in two ways:
+
+        The authenticator can use a native ui toolkit directly (as its running in the session). To make this work well the
+        flatpak client can (if its has a UI) pass in the @parent_window argument, allowing the authenticator to open its
+        dialog in a way that is correctly parented.
+
+        Alternatively, if the interaction is web-based, then rather than showing a web browser itself it can emit
+        the WebFlow signal on the request object, which lets the flatpak client show a webview embedded in its ui in a
+        way that works best with its user interface.
+    -->
+    <method name="RequestRefTokens">
+      <arg type='s' name='handle_token' direction='in'/>
+      <arg type='a{sv}' name='authenticator_options' direction='in'/>
+      <arg type='s' name='remote' direction='in'/>
+      <!-- This is the ref and its token-type -->
+      <arg type='a(si)' name='refs' direction='in'/>
+      <arg type='s' name='parent_window' direction='in'/>
+      <arg type='o' name='handle' direction='out'/>
+    </method>
+  </interface>
+
+  <!--
+     'org.freedesktop.Flatpak.AuthenticatorRequest:
+      @short_description: Ongoing authenticator request
+
+      The AuthenticatorRequest interface is used by the #org.freedesktop.Flatpak.Authenticator interface. When a
+      method is called, the reply includes a handle (i.e. object path)
+      for a AuthenticatorRequest object, which will stay alive for the duration of the
+      user interaction related to the method call.
+
+      The authenticator indicates that a request interaction is over by
+      emitting the #org.freedesktop.Flatpak.AuthenticatorRequest::Response signal on the
+      Request object.
+
+      The application can abort the interaction calling
+      org.freedesktop.Flatpak.AuthenticatorRequest.Close() on the AuthenticatorRequest object.
+
+      The object path of each request object will be of the form
+       /org/freedesktop/Flatpak/Authenticator/request/SENDER/TOKEN,
+      where SENDER is the callers unique name, with the initial ':' removed and
+      all '.' replaced by '_', and TOKEN is a unique token that the caller provided
+      with the handle_token argument. This lets applications subscribe to the
+      Response signal before making the initial portal call, thereby avoiding a race condition.
+  -->
+  <interface name="org.freedesktop.Flatpak.AuthenticatorRequest">
+    <!--
+        Close:
+
+        Closes the authenticator request to which this object refers and ends all
+        related user interaction (dialogs, webflows etc).
+
+        A Response signal with the cancelled response will be emitted if the operation
+        was cancelled. There is still a posibility of a race, so the operation might succeed
+        or fail before processing the close request, so there is no guarantee that the
+        operation will be cancelled.
+    -->
+    <method name="Close">
+    </method>
+    <!--
+        Webflow:
+
+        Emitted by the authenticator when it needs to do web-based interaction. The
+        client handles this by showing the URI in a graphical web view. Typically the uri
+        includes information about a final redirect to a localhost uri that will happen
+        when the operation is finished allowing the authenticator to get the result of
+        the operation. This is similar to how OAUTH2 webflows typically work.
+
+        If at any point the user closes or otherwise dismisses the web view the client
+        should call the org.freedesktop.Flatpak.AuthenticatorRequest.Close method to
+        tell the authenticator that the operation is aborted.
+    -->
+    <signal name="Webflow">
+      <arg type="s" name="uri"/>
+    </signal>
+    <!--
+        WebflowDone:
+
+        Emitted by the authenticator when the web view is done, at this point the client
+        can close the WebView.
+    -->
+    <signal name="WebflowDone">
+    </signal>
+    <!--
+        Response:
+        @response: Numeric response
+        @results: Vardict with results. The keys and values in the vardict depend on the request.
+        Emitted when the user interaction for a portal request is over.
+        The @response indicates how the user interaction ended:
+            <simplelist>
+              <member>0: Success, the request is carried out</member>
+              <member>1: The user cancelled the interaction</member>
+              <member>2: The user interaction was ended in some other way</member>
+            </simplelist>
+        In the case of an error (response 2) @results can contain a error-message value
+        describing what went wrong.
+    -->
+    <signal name="Response">
+      <arg type="u" name="response"/>
+      <arg type="a{sv}" name="results"/>
+    </signal>
+  </interface>
+</node>

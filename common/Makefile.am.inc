@@ -37,13 +37,14 @@ common/flatpak-enum-types.c: $(flatpakinclude_HEADERS) common/flatpak-enum-types
 
 EXTRA_DIST += common/flatpak-enum-types.c.template common/flatpak-enum-types.h.template
 
-common/flatpak-dbus-generated.c: data/org.freedesktop.Flatpak.xml Makefile
+common/flatpak-dbus-generated.c: data/org.freedesktop.Flatpak.xml data/org.freedesktop.Flatpak.Authenticator.xml Makefile
 	mkdir -p $(builddir)/common
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.Flatpak.	\
 		--c-namespace Flatpak				\
 		--generate-c-code $(builddir)/common/flatpak-dbus-generated	\
 		$(srcdir)/data/org.freedesktop.Flatpak.xml  \
+		$(srcdir)/data/org.freedesktop.Flatpak.Authenticator.xml  \
 		$(NULL)
 
 common/flatpak-document-dbus-generated.c: data/org.freedesktop.portal.Documents.xml Makefile
