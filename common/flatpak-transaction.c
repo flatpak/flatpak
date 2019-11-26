@@ -1686,9 +1686,13 @@ add_deps (FlatpakTransaction          *self,
   if (!op->resolved_metakey)
     return TRUE;
 
+  /* Generally only app needs runtimes dependencies, not dependencies because you don't run extensions directly.
+     However if the extension has extra data (and doesn't define NoRuntime) its also needed so we can run the
+     apply-extra script. */
   if (g_str_has_prefix (op->ref, "app/"))
     runtime_ref = g_key_file_get_string (op->resolved_metakey, "Application", "runtime", NULL);
-  else
+  else if (g_key_file_has_group (op->resolved_metakey, "Extra Data") &&
+           !g_key_file_get_boolean (op->resolved_metakey, "Extra Data", "NoRuntime", NULL))
     runtime_ref = g_key_file_get_string (op->resolved_metakey, "ExtensionOf", "runtime", NULL);
 
   if (runtime_ref == NULL)
