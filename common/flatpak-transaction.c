@@ -165,6 +165,7 @@ struct _FlatpakTransactionPrivate
 
   FlatpakTransactionOperation *current_op;
 
+  char                        *parent_window;
   gboolean                     no_pull;
   gboolean                     no_deploy;
   gboolean                     disable_static_deltas;
@@ -852,6 +853,7 @@ flatpak_transaction_finalize (GObject *object)
 
   g_clear_object (&priv->installation);
 
+  g_free (priv->parent_window);
   g_list_free_full (priv->flatpakrefs, (GDestroyNotify) g_key_file_unref);
   g_list_free_full (priv->bundles, (GDestroyNotify) bundle_data_free);
   g_free (priv->default_arch);
@@ -1286,6 +1288,55 @@ flatpak_transaction_get_no_pull (FlatpakTransaction *self)
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   return priv->no_pull;
+}
+
+/**
+ * flatpak_transaction_set_parent_window:
+ * @self: a #FlatpakTransaction
+ * @parent_window: whether to avoid pulls
+ *
+ * Sets the parent window (if any) to use for any UI show by this transaction.
+ * This is used by authenticators if they need to interact with the user during
+ * authentication.
+ *
+ * The format of this string depends on the display system in use, and is the
+ * same as used by xdg-desktop-portal.
+ *
+ * On X11 it should be of the form x11:$xid where $xid is the hex
+ * version of the xwindows id.
+ *
+ * On wayland is should be wayland:$handle where handle is gotten by
+ * using the export call of the xdg-foreign-unstable wayland extension.
+ *
+ * Since: 1.5.1
+ */
+void
+flatpak_transaction_set_parent_window (FlatpakTransaction *self,
+                                       const char *parent_window)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  g_free (priv->parent_window);
+  priv->parent_window = g_strdup (parent_window);
+}
+
+/**
+ * flatpak_transaction_get_parent_window:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets the parent window set for this transaction, or %NULL if unset. See
+ * flatpak_transaction_get_parent_window().
+ *
+ * Returns: (transfer none): a window name, or %NULL
+ *
+ * Since: 1.5.1
+ */
+const char *
+flatpak_transaction_get_parent_window (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->parent_window;
 }
 
 /**
@@ -2815,7 +2866,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
   priv->active_webflow = &data;
 
   data.request = request;
-  if (!flatpak_auth_request_ref_tokens (authenticator, request, remote, refs, cancellable, error))
+  if (!flatpak_auth_request_ref_tokens (authenticator, request, remote, refs, priv->parent_window, cancellable, error))
     return FALSE;
 
   while (!data.done)
