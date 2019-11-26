@@ -478,6 +478,51 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-session-bus</option></term>
+
+                <listitem><para>
+                    Run this instance without the filtered access to the session dbus connection. Note, this is the default when run with --sandbox.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--session-bus</option></term>
+
+                <listitem><para>
+                  Allow filtered access to the session dbus connection. This is the default, except when run with --sandbox.
+                  </para><para>
+                  Isandbox mode, even if you allow access to the session bus the sandbox cannot talk to or own
+                  the application ids (org.the.App.*) on the bus (unless explicitly added), only names in the
+                  .Sandbox subset (org.the.App.Sandbox.*).
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-a11y-bus</option></term>
+
+                <listitem><para>
+                    Run this instance without the access to the accessibility bus. Note, this is the default when run with --sandbox.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--a11y-bus</option></term>
+
+                <listitem><para>
+                    Allow access to the accessibility bus. This is the default, except when run with --sandbox.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--sandbox</option></term>
+
+                <listitem><para>
+                  Run the application in sandboxed mode, which means dropping all the extra permissions it would otherwise have, as
+                  well as access to the session/system/a11y busses and document portal.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--log-session-bus</option></term>
 
                 <listitem><para>
