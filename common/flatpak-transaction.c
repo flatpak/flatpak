@@ -2401,6 +2401,9 @@ resolve_op_from_metadata (FlatpakTransaction *self,
   op->installed_size = installed_size;
   op->download_size = download_size;
 
+  if (state->metadata)
+    g_variant_lookup (state->metadata, "xa.default-token-type", "i", &op->token_type);
+
   sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, op->ref, NULL);
   if (sparse_cache)
     {
@@ -2494,24 +2497,26 @@ resolve_p2p_ops (FlatpakTransaction *self,
         {
           g_autoptr(FlatpakRemoteState) state = NULL;
           g_autoptr(GVariant) sparse_cache = NULL;
+          gint32 token_type = 0;
 
           state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
           if (state == NULL)
             return FALSE;
 
+          if (state->metadata)
+            g_variant_lookup (state->metadata, "xa.default-token-type", "i", &token_type);
+
           sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, op->ref, NULL);
           if (sparse_cache)
+            g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, "i", &token_type);
+
+          if (token_type > 0)
             {
-              gint32 token_type = 0;
-              g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, "i", &token_type);
-              if (token_type > 0)
-                {
-                  /* We set op->need_token here from the ostree-repo
-                     so we query a token for this, later we'll
-                     override it with the resolved value */
-                  op->token_type = token_type;
-                  got_new_need_token = TRUE;
-                }
+              /* We set op->need_token here from the ostree-repo
+                 so we query a token for this, later we'll
+                 override it with the resolved value */
+              op->token_type = token_type;
+              got_new_need_token = TRUE;
             }
         }
     }
