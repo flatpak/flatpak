@@ -95,6 +95,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--watch-bus</option></term>
+
+                <listitem><para>
+                    Make the spawned command exit if we do
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--env=VAR=VALUE</option></term>
 
                 <listitem><para>
