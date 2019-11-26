@@ -53,6 +53,7 @@ gboolean                     flatpak_auth_request_ref_tokens        (FlatpakAuth
                                                                      FlatpakAuthenticatorRequest  *request,
                                                                      const char                   *remote,
                                                                      GVariant                     *refs,
+                                                                     const char                   *parent_window,
                                                                      GCancellable                 *cancellable,
                                                                      GError                      **error);
 char *                       flatpak_auth_create_request_path       (const char                   *peer,

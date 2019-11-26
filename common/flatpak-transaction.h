@@ -215,6 +215,11 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_default_arch (FlatpakTransaction *self,
                                                           const char         *arch);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_parent_window (FlatpakTransaction *self,
+                                                           const char *parent_window);
+FLATPAK_EXTERN
+const char *        flatpak_transaction_get_parent_window (FlatpakTransaction *self);
+FLATPAK_EXTERN
 void                flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
                                                                FlatpakInstallation *installation);
 FLATPAK_EXTERN

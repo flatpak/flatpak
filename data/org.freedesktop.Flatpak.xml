@@ -178,6 +178,7 @@
       <arg type='s' name='remote' direction='in'/>
       <!-- This is the ref and its token-type -->
       <arg type='a(si)' name='refs' direction='in'/>
+      <arg type='s' name='parent_window' direction='in'/>
       <arg type='o' name='handle' direction='out'/>
     </method>
   </interface>
