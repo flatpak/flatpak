@@ -1,3 +1,29 @@
+Changes in 1.5.1
+================
+
+The major new feature of this is the support for protected applications and the system
+around authenticting downloads to it. This is not considered stable yet, but this release
+has the initial work to make it possible for developers to play around with this. I
+will send out a separate mail about this later.
+
+Other changes:
+ * Flatpak now bundles bubblewrap 0.4.0, and requires 0.4.0 to use the system bubblewrap.
+ * Optional support for parental controls using libmalcontent.
+ * Transaction now installs extensions before apps to ensure we have a working app immediately after install.
+ * Changes in temporary file use makes flatpak run work better in low disk space situations.
+ * flatpak enter now works without sudo, and works better in general.
+ * New features for the flatpak portal:
+   * Support starting a sub-sandbox with the child processes visible in the original sandbox.
+   * Support adding some kinds of permissions to sub-sandboxes
+ * New commands flatpak permission-set and permission-remove
+ * flatpak install CLI now always shows what kind of operations everything is.
+ * libflatpak now returns apps as updatable if doing so would auto-download missing extensions or runtimes.
+ * new API: flatpak_transaction_get_no_(deploy|pull).
+ * We can now store locale info in the extra-languages key (in addition to the country code).
+ * remote-ls and list --app-runtime now only shows apps, no runtimes.
+ * Stop using mirror refs and delete any useless mirror refs you might have in your repo.
+ * Fix busy-loop regression in revokefs-fuse in 1.5.0
+
 Changes in 1.5.0
 ================
 
