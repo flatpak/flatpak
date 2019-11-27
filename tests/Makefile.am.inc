@@ -138,6 +138,7 @@ dist_installed_test_extra_scripts += \
 	tests/make-test-runtime.sh \
 	tests/test-webserver.sh \
 	tests/test-wrapper.sh \
+	tests/web-server.py \
 	$(NULL)
 
 dist_installed_test_data = \
