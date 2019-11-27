@@ -137,6 +137,66 @@
                the instance directory (i.e. <filename>~/.var/app/$APP_ID/sandbox</filename>).
              </para></listitem>
            </varlistentry>
+           <varlistentry>
+             <term>sandbox-expose-fd ah</term>
+             <listitem><para>
+               A list of file descriptor for files inside the sandbox that will be exposed
+               to the new sandbox, for reading and writing (if the caller has write access).
+               The file descriptors must be opened with O_PATH and O_NOFOLLOW and cannot be symlinks.
+             </para><para>
+               This was added in version 3 of this interface (available from flatpak 1.6.0 and later).
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>sandbox-expose-fd-ro ah</term>
+             <listitem><para>
+               A list of file descriptor for files inside the sandbox that will be exposed
+               to the new sandbox, readonly. The file descriptors must be opened with O_PATH and O_NOFOLLOW and cannot be symlinks.
+             </para><para>
+               This was added in version 3 of this interface (available from flatpak 1.6.0 and later).
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>sandbox-flags u</term>
+             <listitem><para>
+             Flags affecting the created sandbox. The following flags values are supported:
+             <variablelist>
+               <varlistentry>
+                 <term>1</term>
+                 <listitem><para>
+                   Share the display access (X11, wayland) with the caller.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>2</term>
+                 <listitem><para>
+                   Share the sound access (pulseaudio) with the caller.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>4</term>
+                 <listitem><para>
+                   Share the gpu access with the caller.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>8</term>
+                 <listitem><para>
+                   Allow sandbox access to (filtered) session bus.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>16</term>
+                 <listitem><para>
+                   Allow sandbox access to accessibility bus.
+                 </para></listitem>
+               </varlistentry>
+             </variablelist>
+
+             </para><para>
+             This was added in version 3 of this interface (available from flatpak 1.6.0 and later).
+             </para></listitem>
+           </varlistentry>
          </variablelist>
 
     -->
