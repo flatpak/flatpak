@@ -36,10 +36,27 @@
       bus name org.freedesktop.portal.Flatpak and the object path
       /org/freedesktop/portal/Flatpak.
 
-      This documentation describes version 2 of this interface.
+      This documentation describes version 3 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
     <property name="version" type="u" access="read"/>
+    <!--
+        supports:
+
+        Flags marking what optional features are available.
+         The following flags values are supported:
+         <variablelist>
+           <varlistentry>
+             <term>1</term>
+             <listitem><para>
+               Supports the expose sandbox pids flag of Spawn.
+             </para></listitem>
+           </varlistentry>
+         </variablelist>
+
+         This was added in version 3 of this interface (available from flatpak 1.6.0 and later).
+        -->
+    <property name="supports" type="u" access="read"/>
 
     <!--
          Spawn:
@@ -84,6 +101,14 @@
              <term>16</term>
              <listitem><para>
                Kill the sandbox when the caller disappears from the session bus.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>32</term>
+             <listitem><para>
+               Expose the sandbox pids in the callers sandbox, only supported if using user namespaces for containers (not setuid), see the support property.
+               </para><para>
+               This was added in version 3 of this interface (available from flatpak 1.6.0 and later).
              </para></listitem>
            </varlistentry>
          </variablelist>
