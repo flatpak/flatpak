@@ -60,6 +60,7 @@ static GMainLoop *main_loop;
 static PortalFlatpak *portal;
 static gboolean opt_verbose;
 static int opt_poll_timeout;
+static FlatpakSpawnSupportFlags supports = 0;
 
 G_LOCK_DEFINE (update_monitors); /* This protects the three variables below */
 static GHashTable *update_monitors;
@@ -789,10 +790,20 @@ handle_spawn (PortalFlatpak         *object,
   expose_pids = (arg_flags & FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS) != 0;
   if (expose_pids)
     {
+      g_autofree char *instance_id = NULL;
       int sender_pid1 = 0;
-      g_autofree char *instance_id = g_key_file_get_string (app_info,
-                                                            FLATPAK_METADATA_GROUP_INSTANCE,
-                                                            FLATPAK_METADATA_KEY_INSTANCE_ID, NULL);
+
+      if (!(supports & FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_NOT_SUPPORTED,
+                                                 "Expose pids not supported");
+          return TRUE;
+        }
+
+      instance_id = g_key_file_get_string (app_info,
+                                           FLATPAK_METADATA_GROUP_INSTANCE,
+                                           FLATPAK_METADATA_KEY_INSTANCE_ID, NULL);
 
       if (instance_id)
         {
@@ -2288,6 +2299,19 @@ name_owner_changed (GDBusConnection *connection,
 #define DBUS_INTERFACE_DBUS DBUS_NAME_DBUS
 #define DBUS_PATH_DBUS "/org/freedesktop/DBus"
 
+static gboolean
+supports_expose_pids (void)
+{
+  const char *path = g_find_program_in_path (flatpak_get_bwrap ());
+  struct stat st;
+
+  /* This is supported only if bwrap exists and is not setuid */
+  return
+    path != NULL &&
+    stat (path, &st) == 0 &&
+    (st.st_mode & S_ISUID) == 0;
+}
+
 static void
 on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
@@ -2325,6 +2349,8 @@ on_bus_acquired (GDBusConnection *connection,
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
   portal_flatpak_set_version (PORTAL_FLATPAK (portal), 3);
+  portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
+
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);
   g_signal_connect (portal, "handle-spawn-signal", G_CALLBACK (handle_spawn_signal), NULL);
   g_signal_connect (portal, "handle-create-update-monitor", G_CALLBACK (handle_create_update_monitor), NULL);
@@ -2485,6 +2511,9 @@ main (int    argc,
     }
 
   flatpak_connection_track_name_owners (session_bus);
+
+  if (supports_expose_pids ())
+    supports |= FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS;
 
   flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
   if (replace)

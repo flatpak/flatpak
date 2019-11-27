@@ -38,6 +38,11 @@ typedef enum {
   FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y = 1 << 4,
 } FlatpakSpawnSandboxFlags;
 
+
+typedef enum {
+  FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS = 1 << 0,
+} FlatpakSpawnSupportFlags;
+
 #define FLATPAK_SPAWN_FLAGS_ALL (FLATPAK_SPAWN_FLAGS_CLEAR_ENV | \
                                  FLATPAK_SPAWN_FLAGS_LATEST_VERSION | \
                                  FLATPAK_SPAWN_FLAGS_SANDBOX | \
