@@ -46,6 +46,8 @@ assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/stable/active/export
 assert_has_file $FL_DIR/exports/share/applications/org.test.Hello.desktop
 # Ensure Exec key is rewritten
 assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/flatpak run --branch=stable --arch=$ARCH --command=hello\.sh org\.test\.Hello$"
+assert_has_file $FL_DIR/exports/share/gnome-shell/search-providers/org.test.Hello.search-provider.ini
+assert_file_has_content $FL_DIR/exports/share/gnome-shell/search-providers/org.test.Hello.search-provider.ini "^DefaultDisabled=true$"
 assert_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
 assert_not_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/dont-export.png
 assert_has_file $FL_DIR/exports/share/icons/HighContrast/64x64/apps/org.test.Hello.png

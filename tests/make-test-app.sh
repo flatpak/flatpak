@@ -76,6 +76,15 @@ MimeType=x-test/Hello;
 X-Flatpak-RenamedFrom=hello-again.desktop;
 EOF
 
+mkdir -p ${DIR}/files/share/gnome-shell/search-providers
+cat > ${DIR}/files/share/gnome-shell/search-providers/org.test.Hello.search-provider.ini <<EOF
+[Shell Search Provider]
+DesktopId=org.test.Hello.desktop
+BusName=org.test.Hello.SearchProvider
+ObjectPath=/org/test/Hello/SearchProvider
+Version=2
+EOF
+
 mkdir -p ${DIR}/files/share/icons/hicolor/64x64/apps
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/${APP_ID}.png
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/dont-export.png
