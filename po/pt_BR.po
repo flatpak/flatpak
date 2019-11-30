@@ -1,5 +1,5 @@
 # Brazilian Portuguese translation for flatpak.
-# Copyright (C) 2019 THE PACKAGE'S COPYRIGHT HOLDER
+# Copyright (C) 2019 THE flatpak'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
 # Fábio Nogueira <fnogueira@gnome.org>, 2017.
 # Rafael Fontenelle <rafaelff@gnome.org>, 2017-2019.
@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-11-27 14:59+0100\n"
-"PO-Revision-Date: 2019-06-13 10:00-0300\n"
+"POT-Creation-Date: 2019-11-30 03:25+0000\n"
+"PO-Revision-Date: 2019-11-30 03:27-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
@@ -118,7 +118,7 @@ msgstr "Exporta a imagem oci em vez do pacote flatpak"
 
 #: app/flatpak-builtins-build-bundle.c:66
 msgid "Use OCI labels instead of annotations"
-msgstr ""
+msgstr "Usa rótulos OCI em vez de anotações"
 
 #: app/flatpak-builtins-build-bundle.c:623
 msgid ""
@@ -346,11 +346,10 @@ msgstr "IDANTIGO=IDNOVO"
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
 msgid "Set type of token needed to install this commit"
-msgstr ""
+msgstr "Define o tipo de token necessário para instalar este commit"
 
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
-#, fuzzy
 msgid "VAL"
 msgstr "VALOR"
 
@@ -1069,9 +1068,9 @@ msgid "Unset configuration for KEY"
 msgstr "Remove configuração da CHAVE"
 
 #: app/flatpak-builtins-config.c:149
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' does not look like a language/locale code"
-msgstr "“%s” não se parece um código de idioma"
+msgstr "“%s” não parece ser um código de idioma/localidade"
 
 #: app/flatpak-builtins-config.c:172
 #, c-format
@@ -1174,7 +1173,7 @@ msgstr ""
 #, c-format
 msgid "Refs must all be in the same installation (found in %s and %s)."
 msgstr ""
-"As refs devem estar todas na mesma instalação (encontradas em %s e %s)."
+"As refs devem estar todas na mesma instalação (localizadas em %s e %s)."
 
 #: app/flatpak-builtins-create-usb.c:670
 #, c-format
@@ -1346,13 +1345,15 @@ msgid "INSTANCE and COMMAND must be specified"
 msgstr "INSTÂNCIA e COMANDO devem ser especificados"
 
 #: app/flatpak-builtins-enter.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "%s is neither a pid nor an application or instance ID, or sudo -E"
-msgstr "%s não é um pid nem um aplicativo ou ID de instância"
+msgstr "%s não é um pid nem um aplicativo ou ID de instância ou sudo -E"
 
 #: app/flatpak-builtins-enter.c:138
 msgid "entering not supported (need unprivileged user namespaces, or sudo -E)"
 msgstr ""
+"entrada sem suporte (precisa de espaços de nome de usuário sem privilégios "
+"ou sudo -E)"
 
 #: app/flatpak-builtins-enter.c:139
 #, c-format
@@ -1385,6 +1386,7 @@ msgstr "Não foi possível abrir o espaço de nome %s: %s"
 #: app/flatpak-builtins-enter.c:210
 msgid "entering not supported (need unprivileged user namespaces)"
 msgstr ""
+"entrada sem suporte (precisa de espaços de nome de usuário sem privilégios)"
 
 #: app/flatpak-builtins-enter.c:211
 #, c-format
@@ -1834,9 +1836,8 @@ msgid "Produce minimal output and don't ask questions"
 msgstr "Produz saída mínima e não faz perguntas"
 
 #: app/flatpak-builtins-install.c:75
-#, fuzzy
 msgid "Update install if already installed"
-msgstr "Desinstala primeiro, se já instalado"
+msgstr "Atualiza instalação se já instalada"
 
 #: app/flatpak-builtins-install.c:134
 msgid "Bundle filename must be specified"
@@ -1865,7 +1866,7 @@ msgstr "Procurando por correspondências…\n"
 #: app/flatpak-builtins-install.c:417
 #, c-format
 msgid "No remote refs found similar to ‘%s’"
-msgstr "Nenhum ref remoto encontrado similar a “%s”"
+msgstr "Nenhuma ref de remoto localizada similar a “%s”"
 
 #: app/flatpak-builtins-install.c:479 app/flatpak-builtins-uninstall.c:276
 #: common/flatpak-utils.c:1356 common/flatpak-utils.c:1460
@@ -2041,27 +2042,28 @@ msgid "App %s branch %s is not installed"
 msgstr "Aplicativo %s ramo %s não está instalado"
 
 #: app/flatpak-builtins-mask.c:45
-#, fuzzy
 msgid "Remove matching masks"
-msgstr "Removê-las?"
+msgstr "Remove máscaras correspondentes"
 
 #: app/flatpak-builtins-mask.c:86
 msgid ""
 "[PATTERN…] - disable updates and automatic installation matching patterns"
 msgstr ""
+"[PADRÃO…] - desabilita atualizações e instalação automática correspondendo a "
+"padrões"
 
 #: app/flatpak-builtins-mask.c:103
 msgid "No masked patterns\n"
-msgstr ""
+msgstr "Nenhum padrão mascarado\n"
 
 #: app/flatpak-builtins-mask.c:107
 msgid "Masked patterns:\n"
-msgstr ""
+msgstr "Padrões mascarados:\n"
 
 #: app/flatpak-builtins-mask.c:133
-#, fuzzy, c-format
+#, c-format
 msgid "No current mask matching %s"
-msgstr "Não cria deltas correspondendo a refs"
+msgstr "Nenhuma máscara atual correspondendo a %s"
 
 #: app/flatpak-builtins-override.c:42
 msgid "Remove existing overrides"
@@ -2100,9 +2102,8 @@ msgid "Data"
 msgstr "Dados"
 
 #: app/flatpak-builtins-permission-remove.c:120
-#, fuzzy
 msgid "TABLE ID [APP_ID] - Remove item from permission store"
-msgstr "ID TABELA – Remove item do armazenamento de permissão"
+msgstr "TABELA ID [APP_ID] – Remove item do armazenamento de permissão"
 
 #: app/flatpak-builtins-permission-remove.c:129
 #: app/flatpak-builtins-permission-set.c:116
@@ -2123,9 +2124,8 @@ msgid "Wrong number of arguments"
 msgstr "Número incorreto de argumentos"
 
 #: app/flatpak-builtins-permission-set.c:107
-#, fuzzy
 msgid "TABLE ID APP_ID [PERMISSION...] - Set permissions"
-msgstr "[TABELA] [ID] – Lista permissões"
+msgstr "TABELA ID APP_ID [PERMISSÃO…] – Define permissões"
 
 #: app/flatpak-builtins-permission-show.c:112
 msgid "APP_ID - Show permissions for an app"
@@ -2254,16 +2254,15 @@ msgstr "Desabilita o remoto"
 
 #: app/flatpak-builtins-remote-add.c:80 app/flatpak-builtins-remote-modify.c:87
 msgid "Name of authenticator"
-msgstr ""
+msgstr "Nome do autenticador"
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:88
-#, fuzzy
 msgid "Authenticator options"
-msgstr "Mostra as opções"
+msgstr "Opções do autenticador"
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:88
 msgid "OPTIONS"
-msgstr ""
+msgstr "OPÇÕES"
 
 #: app/flatpak-builtins-remote-add.c:220 app/flatpak-builtins-remote-add.c:227
 #, c-format
@@ -2290,14 +2289,14 @@ msgstr "O remoto %s já existe"
 
 #: app/flatpak-builtins-remote-add.c:364
 #: app/flatpak-builtins-remote-modify.c:285
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid authenticator name %s"
-msgstr "Nome de dbus inválido %s"
+msgstr "Nome de autenticador inválido %s"
 
 #: app/flatpak-builtins-remote-add.c:373
 #: app/flatpak-builtins-remote-modify.c:294
 msgid "Invalid authenticator options: "
-msgstr ""
+msgstr "Opções de autenticador inválido: "
 
 #: app/flatpak-builtins-remote-add.c:393
 #, c-format
@@ -2358,7 +2357,7 @@ msgstr "REMOTO e REF devem ser especificados"
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr ""
-"Não foi possível encontrar a última soma de verificação para o ref %s no "
+"Não foi possível localizar a última soma de verificação para o ref %s no "
 "remoto %s"
 
 #: app/flatpak-builtins-remote-info.c:257
@@ -2773,20 +2772,23 @@ msgstr "Registra o log das chamadas de barramento de acessibilidade"
 
 #: app/flatpak-builtins-run.c:72
 msgid "Don't proxy accessibility bus calls"
-msgstr "Não fazer chamadas de barramento de acessibilidade"
+msgstr "Não intermedeia chamadas de barramento de acessibilidade"
 
 #: app/flatpak-builtins-run.c:73
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr ""
+"Intermedeia chamadas de barramento de acessibilidade (padrão, exceto quando "
+"em sandbox)"
 
 #: app/flatpak-builtins-run.c:74
-#, fuzzy
 msgid "Don't proxy session bus calls"
-msgstr "Não fazer chamadas de barramento de acessibilidade"
+msgstr "Não intermedeia chamadas de barramento de sessão"
 
 #: app/flatpak-builtins-run.c:75
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr ""
+"Intermedeia chamadas de barramento de sessão (padrão, exceto quando em "
+"sandbox)"
 
 #: app/flatpak-builtins-run.c:76
 msgid "Don't start portals"
@@ -2806,15 +2808,15 @@ msgstr "Usa o commit de runtime especificado"
 
 #: app/flatpak-builtins-run.c:80
 msgid "Run completely sandboxed"
-msgstr "Execute totalmente em sandbox"
+msgstr "Executa totalmente em sandbox"
 
 #: app/flatpak-builtins-run.c:82
 msgid "Use this as parent pid for sharing namespaces"
-msgstr ""
+msgstr "Usa este como pid pai para compartilhamento de espaços de nome"
 
 #: app/flatpak-builtins-run.c:83
 msgid "Make processes visible in parent namespace"
-msgstr ""
+msgstr "Torna os processos visíveis no espaço de nome pai"
 
 #: app/flatpak-builtins-run.c:106
 msgid "APP [ARGUMENT…] - Run an app"
@@ -2976,7 +2978,7 @@ msgid ""
 "Found ref ‘%s’ in remote ‘%s’ (%s).\n"
 "Use this ref?"
 msgstr ""
-"Encontrada ref “%s” em remoto “%s” (%s).\n"
+"Localizada ref “%s” em remoto “%s” (%s).\n"
 "Usar essa ref?"
 
 #: app/flatpak-builtins-utils.c:411 app/flatpak-builtins-utils.c:420
@@ -2988,13 +2990,13 @@ msgstr "Nenhuma ref escolhida para resolver ocorrências para “%s”"
 #: app/flatpak-builtins-utils.c:416
 #, c-format
 msgid "Similar refs found for ‘%s’ in remote ‘%s’ (%s):"
-msgstr "Refs similares encontradas para “%s” no remoto “%s” (%s):"
+msgstr "Refs similares localizadas para “%s” no remoto “%s” (%s):"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:489
 #, c-format
 msgid "Found installed ref ‘%s’ (%s). Is this correct?"
-msgstr "Encontrada ref instalada “%s” (%s). Isso está correto?"
+msgstr "Localizada ref instalada “%s” (%s). Isso está correto?"
 
 #: app/flatpak-builtins-utils.c:505
 msgid "All of the above"
@@ -3003,7 +3005,7 @@ msgstr "Todas acima"
 #: app/flatpak-builtins-utils.c:506
 #, c-format
 msgid "Similar installed refs found for ‘%s’:"
-msgstr "Refs instaladas similares encontradas para “%s”:"
+msgstr "Refs instaladas similares localizadas para “%s”:"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:560
@@ -3012,7 +3014,7 @@ msgid ""
 "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
 "Use this remote?"
 msgstr ""
-"Encontrada(s) ref(s) similares para “%s” em remoto “%s” (%s).\n"
+"Localizada(s) ref(s) similares para “%s” em remoto “%s” (%s).\n"
 "Usar esse remoto?"
 
 #: app/flatpak-builtins-utils.c:564 app/flatpak-builtins-utils.c:577
@@ -3023,7 +3025,7 @@ msgstr "Nenhum remoto escolhido para resolver ocorrências para “%s”"
 #: app/flatpak-builtins-utils.c:574
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
-msgstr "Remotos encontrados com refs similares a “%s”:"
+msgstr "Remotos localizados com refs similares a “%s”:"
 
 #: app/flatpak-builtins-utils.c:683 app/flatpak-builtins-utils.c:686
 #, c-format
@@ -3219,18 +3221,18 @@ msgid "Error:"
 msgstr "Erro:"
 
 #: app/flatpak-cli-transaction.c:518
-#, fuzzy, c-format
+#, c-format
 msgid "Authentication required for remote '%s'\n"
-msgstr "Autenticação é necessária para atualizar informações de remoto"
+msgstr "Autenticação necessária para remoto “%s”\n"
 
 #: app/flatpak-cli-transaction.c:519
 msgid "Open browser?"
-msgstr ""
+msgstr "Abrir navegador?"
 
 #: app/flatpak-cli-transaction.c:561 app/flatpak-quiet-transaction.c:174
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s is end-of-life, in favor of %s\n"
-msgstr "Info: %s está em fim de vida, na preferência de %s\n"
+msgstr "Info: %s está em fim de vida, em favor de %s\n"
 
 #: app/flatpak-cli-transaction.c:563 app/flatpak-quiet-transaction.c:176
 #, c-format
@@ -3331,7 +3333,7 @@ msgstr "Desinstala um aplicativo ou runtime instalado"
 
 #: app/flatpak-main.c:80
 msgid "Mask out updates and automatic installation"
-msgstr ""
+msgstr "Mascara atualizações e instalação automática"
 
 #: app/flatpak-main.c:81
 msgid "List installed apps and/or runtimes"
@@ -3446,9 +3448,8 @@ msgid "Remove item from permission store"
 msgstr "Remove item para armazenamento de permissão"
 
 #: app/flatpak-main.c:114
-#, fuzzy
 msgid "Set permissions"
-msgstr "Lista permissões"
+msgstr "Define permissões"
 
 #: app/flatpak-main.c:115
 msgid "Show app permissions"
@@ -3621,9 +3622,9 @@ msgid "See '%s --help'"
 msgstr "Veja “%s --help”"
 
 #: app/flatpak-main.c:669
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
-msgstr "“%s” não é um comando do flatpak. Você quis dizer “%s”?"
+msgstr "“%s” não é um comando do flatpak. Você quis dizer “%s%s”?"
 
 #: app/flatpak-main.c:672
 #, c-format
@@ -3666,6 +3667,11 @@ msgstr "%s Falha ao %s %s: %s\n"
 #, c-format
 msgid "Failed to rebase %s to %s: %s\n"
 msgstr "Falha ao realizar rebase de %s para %s: %s\n"
+
+#: common/flatpak-auth.c:52
+#, c-format
+msgid "No authenticator configured for remote `%s`"
+msgstr "Nenhum autenticador configurador para remoto “%s”"
 
 #: common/flatpak-context.c:179
 #, c-format
@@ -3947,7 +3953,7 @@ msgstr "Ref inexistente (%s, %s) no remoto %s ou em outro lugar"
 #: common/flatpak-dir.c:3962
 #, c-format
 msgid "No remotes found which provide these refs: [%s]"
-msgstr "Nenhum remoto encontrado que forneça esses refs: [%s]"
+msgstr "Nenhum remoto localizado que forneça esses refs: [%s]"
 
 #: common/flatpak-dir.c:4491 common/flatpak-dir.c:5803
 #: common/flatpak-dir.c:8945 common/flatpak-dir.c:9657
@@ -3958,7 +3964,7 @@ msgstr "Não foi possível obter de remoto sem gpg verificada e não confiado"
 #: common/flatpak-dir.c:4790
 #, c-format
 msgid "No remotes found which provide the ref (%s, %s)"
-msgstr "Nenhum remoto encontrado que forneça o ref (%s, %s)"
+msgstr "Nenhum remoto localizado que forneça o ref (%s, %s)"
 
 #: common/flatpak-dir.c:4964 common/flatpak-dir.c:5033
 msgid "Extra data not supported for non-gpg-verified local system installs"
@@ -4052,7 +4058,7 @@ msgstr "Assinaturas GPG localizadas, mas nenhuma está no chaveiro de confiadas"
 msgid "Expected commit metadata to have ref binding information, found none"
 msgstr ""
 "Esperava que metadados de commit tivessem informações de associação de ref, "
-"encontrou nada"
+"localizou nada"
 
 #: common/flatpak-dir.c:5903 common/flatpak-dir.c:13911
 #, c-format
@@ -4066,7 +4072,7 @@ msgid ""
 "none"
 msgstr ""
 "Esperava que metadados de commit tivessem informações de associação de ID da "
-"coleção, encontrou nada"
+"coleção, localizou nada"
 
 #: common/flatpak-dir.c:5916
 #, c-format
@@ -4383,9 +4389,9 @@ msgid "No metadata branch for OCI"
 msgstr "Nenhum ramo de metadados para OCI"
 
 #: common/flatpak-dir.c:15047
-#, fuzzy, c-format
+#, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
-msgstr "Ignorando ref não implantada %s…\n"
+msgstr "Ignorando exclusão de ref espelho (%s, %s)…\n"
 
 #: common/flatpak-installation.c:827
 #, c-format
@@ -4410,7 +4416,7 @@ msgstr "Conforme requisitado, %s foi obtida, mas não instalada"
 #: common/flatpak-oci-registry.c:1694
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
-msgstr "Nenhuma chave gpg encontrada com ID %s (homedir: %s)"
+msgstr "Nenhuma chave gpg localizada com ID %s (homedir: %s)"
 
 #: common/flatpak-oci-registry.c:1701
 #, c-format
@@ -4432,9 +4438,9 @@ msgid "No url specified"
 msgstr "Nenhuma url especificada"
 
 #: common/flatpak-remote.c:1304
-#, fuzzy
 msgid "GPG verification must be enabled when a collection ID is set"
-msgstr "Verificação GPG é exigida se coleções estiverem habilitadas"
+msgstr ""
+"Verificação GPG deve estar habilitada quando um ID de coleção for definido"
 
 #: common/flatpak-run.c:742
 msgid "Failed to open app info file"
@@ -4515,9 +4521,10 @@ msgstr "Não foi possível abrir o ld.so.cache gerado"
 
 #. Translators: The placeholder is for an app ref.
 #: common/flatpak-run.c:3266
-#, fuzzy, c-format
+#, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
-msgstr "Instalar %s não é permitido pela política definida pelo administrador"
+msgstr ""
+"A execução de %s não é permitida pela política definida pelo administrador"
 
 #: common/flatpak-run.c:3390
 #, c-format
@@ -4601,9 +4608,9 @@ msgstr ""
 "instalado: %s"
 
 #: common/flatpak-transaction.c:3230 common/flatpak-transaction.c:3245
-#, fuzzy, c-format
+#, c-format
 msgid "Can't load dependent file %s: "
-msgstr "Não foi possível carregar o arquivo %s: %s\n"
+msgstr "Não foi possível carregar o arquivo dependente %s: "
 
 #: common/flatpak-transaction.c:3239
 #, c-format
@@ -4862,44 +4869,43 @@ msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "O número “%s” está fora dos limites [%s, %s]"
 
 #: portal/flatpak-portal.c:1704
-#, fuzzy
 msgid "No portal support found"
-msgstr "Nenhum resumo localizado"
+msgstr "Não foi localizado suporte a portal"
 
 #: portal/flatpak-portal.c:1710
 msgid "Deny"
-msgstr ""
+msgstr "Negar"
 
 #: portal/flatpak-portal.c:1712
-#, fuzzy
 msgid "Update"
-msgstr "atualizar"
+msgstr "Atualizar"
 
 #: portal/flatpak-portal.c:1717
-#, fuzzy, c-format
+#, c-format
 msgid "Update %s?"
-msgstr "Atualizando %s\n"
+msgstr "Atualizar %s?"
 
 #: portal/flatpak-portal.c:1729
 msgid "The application wants to update itself."
-msgstr ""
+msgstr "O aplicativo deseja atualizar a si próprio."
 
 #: portal/flatpak-portal.c:1730
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
+"Acesso a atualização pode ser alterado a qualquer momento a partir das "
+"configurações de privacidade."
 
 #: portal/flatpak-portal.c:1755
 msgid "Application update not allowed"
-msgstr ""
+msgstr "Atualização de aplicativo não permitida"
 
 #: portal/flatpak-portal.c:1912
 msgid "Self update not supported, new version requires new permissions"
-msgstr ""
+msgstr "Sem suporte à autoatualização, nova versão requer novas permissões"
 
 #: portal/flatpak-portal.c:2094 portal/flatpak-portal.c:2111
-#, fuzzy
 msgid "Update ended unexpectedly"
-msgstr "Atualizar runtime assinado"
+msgstr "Atualização encerrada inesperadamente"
 
 #. SECURITY:
 #. - Normal users need admin authentication to install software
@@ -5109,14 +5115,15 @@ msgstr "Autenticação é necessária para atualizar metadados"
 #. all users’ parental controls policies to true.
 #: system-helper/org.freedesktop.Flatpak.policy.in:287
 msgid "Override parental controls"
-msgstr ""
+msgstr "Sobrepor controle parental"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:288
-#, fuzzy
 msgid ""
 "Authentication is required to install software which is restricted by your "
 "parental controls policy"
-msgstr "Autenticação é necessária para instalar software de $(path)"
+msgstr ""
+"Autenticação é necessária para instalar software que está restrito por sua "
+"política de controle parental"
 
 #~ msgid "Not running as root, may be unable to enter namespace"
 #~ msgstr ""
