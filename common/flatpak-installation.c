@@ -1663,8 +1663,10 @@ flatpak_installation_remove_remote (FlatpakInstallation *self,
  * @error: return location for a #GError
  *
  * Set a global configuration option for the installation, currently
- * the only supported key is "languages", which is a comman-separated
- * list of langue codes like "sv;en;pl", or "" to mean all languages.
+ * the only supported keys are `languages`, which is a semicolon-separated
+ * list of language codes like `"sv;en;pl"`, or `""` to mean all languages,
+ * and `extra-languages`, which is a semicolon-separated list of locale
+ * identifiers like `"en;en_DK;zh_HK.big5hkscs;uz_UZ.utf8@cyrillic"`.
  *
  * Returns: %TRUE if the option was set correctly
  */
@@ -1735,7 +1737,7 @@ flatpak_installation_get_config (FlatpakInstallation *self,
  * to display. An empty array means that all languages should be installed.
  *
  * Returns: (array zero-terminated=1) (element-type utf8) (transfer full):
- *   A possibly empty array of locale strings, or %NULL on error.
+ *   A possibly empty array of strings, or %NULL on error.
  * Since: 1.5.0
  */
 char **
@@ -1758,7 +1760,7 @@ flatpak_installation_get_default_languages (FlatpakInstallation  *self,
  *
  * Like flatpak_installation_get_default_languages() but includes territory
  * information (e.g. `en_US` rather than `en`) which may be included in the
- * `xa.extra-languages` configuration.
+ * `extra-languages` configuration.
  *
  * Strings returned by this function are in the format specified by
  * [`setlocale()`](man:setlocale): `language[_territory][.codeset][@modifier]`.
