@@ -265,7 +265,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
     return usage_error (context, _("If --src-ref is specified, exactly one destination ref must be specified"), error);
 
   if (opt_src_repo == NULL && opt_src_ref == NULL)
-    return flatpak_fail (error, _("Either --src-repo or --src-ref must be specified."));
+    return flatpak_fail (error, _("Either --src-repo or --src-ref must be specified"));
 
   /* Always create a commit if we're eol:ing, even though the app is the same */
   if (opt_endoflife != NULL || opt_endoflife_rebase != NULL)
@@ -466,7 +466,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
         return FALSE;
 
       if (src_commit_state & OSTREE_REPO_COMMIT_STATE_PARTIAL)
-        return flatpak_fail (error, _("Can't commit from partial source commit."));
+        return flatpak_fail (error, _("Can't commit from partial source commit"));
 
       /* Don't create a new commit if this is the same tree */
       if (!opt_force && dst_parent_root != NULL && g_file_equal (dst_parent_root, src_ref_root))
