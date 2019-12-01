@@ -2029,15 +2029,16 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
  * @self: a #FlatpakTransaction
  * @remote: the name of the remote
  * @ref: the ref
+ * @subpaths: (nullable): the subpaths to include, or %NULL to install the complete ref
  * @previous_ids: (nullable) (array zero-terminated=1): Previous ids to add to the
- * given ref. These should simply be the ids, not the full ref names (e.g. org.foo.Bar,
- * not org.foo.Bar/x86_64/master).
+ *     given ref. These should simply be the ids, not the full ref names (e.g. org.foo.Bar,
+ *     not org.foo.Bar/x86_64/master).
  * @error: return location for a #GError
  *
- * Adds updating the previous-ids of the given ref to this transaction, via either
+ * Adds updating the @previous_ids of the given ref to this transaction, via either
  * installing the @ref if it was not already present. The will treat @ref as the
  * result of following an eol-rebase, and data migration from the refs in
- * @previous-ids will be set up.
+ * @previous_ids will be set up.
  *
  * See flatpak_transaction_add_install() for a description of @remote.
  *
