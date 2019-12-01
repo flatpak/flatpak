@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="flatpak-enter">
+<refentry id="flatpak-ps">
 
     <refentryinfo>
-        <title>flatpak enter</title>
+        <title>flatpak ps</title>
         <productname>flatpak</productname>
 
         <authorgroup>
