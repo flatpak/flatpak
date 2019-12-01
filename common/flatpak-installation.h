@@ -128,7 +128,7 @@ typedef enum {
  * This can return stale data, or a #FLATPAK_ERROR_NOT_CACHED error, however it is a
  * lot more efficient if you're doing many requests.
  *
- * Flags to alter the behavior of e.g flatpak_installation_list_remote_refs_full().
+ * Flags to alter the behavior of e.g flatpak_installation_list_remote_refs_sync_full().
  *
  * Since: 1.3.3
  */
@@ -145,7 +145,7 @@ typedef enum {
  * @FLATPAK_STORAGE_TYPE_MMC: installation is on an MMC
  * @FLATPAK_STORAGE_TYPE_NETWORK: installation is on the network
  *
- * Flags to alter the behavior of flatpak_installation_install_full().
+ * Information about the storage of an installation.
  *
  * Since: 0.6.15
  */
