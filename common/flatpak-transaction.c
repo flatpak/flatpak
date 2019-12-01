@@ -1160,6 +1160,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * During the time between webflow-start and webflow-done the client can call flatpak_transaction_abort_webflow()
    * to manually abort the authentication. This is useful if the user aborted the authentication
    * operation some way, like e.g. closing the browser window.
+   *
+   * Since: 1.5.1
    */
   signals[WEBFLOW_START] =
     g_signal_new ("webflow-start",
@@ -1177,6 +1179,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * The ::webflow-done signal gets emitted when the authentication
    * finished the webflow, independent of the reason and results.  If
    * you for were showing a web-browser window it can now be closed.
+   *
+   * Since: 1.5.1
    */
   signals[WEBFLOW_DONE] =
     g_signal_new ("webflow-done",
@@ -2793,12 +2797,14 @@ request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
  * @id: The webflow id, as passed into the webflow-start signal
  *
  * Cancel an ongoing webflow authentication request. This can be call
- * in the time between FlatpakTransaction::webflow-start returned
- * TRUE, and FlatpakTransaction::webflow-done is emitted. It will
+ * in the time between #FlatpakTransaction::webflow-start returned
+ * TRUE, and #FlatpakTransaction::webflow-done is emitted. It will
  * cancel the ongoing authentication operation.
  *
  * This is useful for example if you're showing an authenticaion
  * window with a browser, but the user closed it before it was finished.
+ *
+ * Since: 1.5.1
  */
 void
 flatpak_transaction_abort_webflow (FlatpakTransaction *self,
