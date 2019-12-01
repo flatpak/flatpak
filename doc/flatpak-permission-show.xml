@@ -25,7 +25,7 @@
 
     <refnamediv>
         <refname>flatpak-permission-show</refname>
-        <refpurpose>List permissions</refpurpose>
+        <refpurpose>Show permissions</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
