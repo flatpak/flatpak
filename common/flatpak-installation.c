@@ -174,6 +174,16 @@ flatpak_installation_set_no_interaction (FlatpakInstallation *self,
   flatpak_dir_set_no_interaction (priv->dir_unlocked, no_interaction);
 }
 
+/**
+ * flatpak_installation_get_no_interaction:
+ * @self: a #FlatpakTransaction
+ *
+ * Returns the value set with flatpak_installation_set_no_interaction().
+ *
+ * Returns: %TRUE if interactive authorization dialogs are not allowed
+ *
+ * Since: 1.1.1
+ */
 gboolean
 flatpak_installation_get_no_interaction (FlatpakInstallation *self)
 {

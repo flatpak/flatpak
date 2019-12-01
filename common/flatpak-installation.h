@@ -181,7 +181,7 @@ FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_for_path (GFile    
                                                                        GError      **error);
 FLATPAK_EXTERN void flatpak_installation_set_no_interaction (FlatpakInstallation *self,
                                                              gboolean             no_interaction);
-FLATPAK_EXTERN gboolean flatpak_installation_get_no_interaction (FlatpakInstallation *installation);
+FLATPAK_EXTERN gboolean flatpak_installation_get_no_interaction (FlatpakInstallation *self);
 
 /**
  * FlatpakProgressCallback:
