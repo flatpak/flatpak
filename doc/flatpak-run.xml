@@ -550,7 +550,7 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
-                <term><option>--parent-pid</option></term>
+                <term><option>--parent-pid=PID</option></term>
 
                 <listitem><para>
                     Specifies the pid of the "parent" flatpak, used by --parent-expose-pids.
