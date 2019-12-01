@@ -183,6 +183,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term>active</term>
+
+                <listitem><para>
+                    Show whether the app is active (i.e. has an active window)
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>background</term>
+
+                <listitem><para>
+                    Show whether the app is in the background (with no open windows)
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>all</term>
 
                 <listitem><para>
