@@ -220,6 +220,9 @@
         <para>
             <command>$ flatpak info org.gnome.Builder//master</command>
         </para>
+        <para>
+            <command>$ tree `flatpak info -l org.gnome.Builder//master`/files</command>
+        </para>
 
     </refsect1>
 
