@@ -345,7 +345,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
         g_print ("\r%s", str->str); /* redraw failed, just update the progress */
     }
   else
-    g_print ("\r%s", str->str);
+    g_print ("\n%s", str->str);
 }
 
 static void
