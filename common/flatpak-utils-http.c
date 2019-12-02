@@ -352,7 +352,7 @@ load_uri_read_cb (GObject *source, GAsyncResult *res, gpointer user_data)
 {
   LoadUriData *data = user_data;
   GInputStream *stream = G_INPUT_STREAM (source);
-  gsize nread;
+  gssize nread;
 
   nread = g_input_stream_read_finish (stream, res, &data->error);
   if (nread == -1 || nread == 0)
