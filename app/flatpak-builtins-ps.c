@@ -81,11 +81,11 @@ enumerate_instances (Column *columns, GError **error)
     {
       FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, j);
 
-      flatpak_table_printer_add_column (printer, flatpak_instance_get_id (instance));
-
       for (i = 0; columns[i].name; i++)
         {
-          if (strcmp (columns[i].name, "pid") == 0)
+          if (strcmp (columns[i].name, "instance") == 0)
+            flatpak_table_printer_add_column (printer, flatpak_instance_get_id (instance));
+          else if (strcmp (columns[i].name, "pid") == 0)
             {
               g_autofree char *pid = g_strdup_printf ("%d", flatpak_instance_get_pid (instance));
               flatpak_table_printer_add_column (printer, pid);
