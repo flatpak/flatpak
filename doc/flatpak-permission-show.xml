@@ -25,7 +25,7 @@
 
     <refnamediv>
         <refname>flatpak-permission-show</refname>
-        <refpurpose>List permissions</refpurpose>
+        <refpurpose>Show permissions</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
@@ -102,7 +102,8 @@
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-permissions</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-permission-remove</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-permission-reset</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-permission-reset</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-permission-set</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

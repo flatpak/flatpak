@@ -363,6 +363,13 @@
                     Reset app permissions.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-permission-set</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Set app permissions.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
         <para>Commands for managing remote repositories:</para>
