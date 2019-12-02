@@ -1160,6 +1160,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * During the time between webflow-start and webflow-done the client can call flatpak_transaction_abort_webflow()
    * to manually abort the authentication. This is useful if the user aborted the authentication
    * operation some way, like e.g. closing the browser window.
+   *
+   * Since: 1.5.1
    */
   signals[WEBFLOW_START] =
     g_signal_new ("webflow-start",
@@ -1177,6 +1179,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * The ::webflow-done signal gets emitted when the authentication
    * finished the webflow, independent of the reason and results.  If
    * you for were showing a web-browser window it can now be closed.
+   *
+   * Since: 1.5.1
    */
   signals[WEBFLOW_DONE] =
     g_signal_new ("webflow-done",
@@ -2029,15 +2033,16 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
  * @self: a #FlatpakTransaction
  * @remote: the name of the remote
  * @ref: the ref
+ * @subpaths: (nullable): the subpaths to include, or %NULL to install the complete ref
  * @previous_ids: (nullable) (array zero-terminated=1): Previous ids to add to the
- * given ref. These should simply be the ids, not the full ref names (e.g. org.foo.Bar,
- * not org.foo.Bar/x86_64/master).
+ *     given ref. These should simply be the ids, not the full ref names (e.g. org.foo.Bar,
+ *     not org.foo.Bar/x86_64/master).
  * @error: return location for a #GError
  *
- * Adds updating the previous-ids of the given ref to this transaction, via either
+ * Adds updating the @previous_ids of the given ref to this transaction, via either
  * installing the @ref if it was not already present. The will treat @ref as the
  * result of following an eol-rebase, and data migration from the refs in
- * @previous-ids will be set up.
+ * @previous_ids will be set up.
  *
  * See flatpak_transaction_add_install() for a description of @remote.
  *
@@ -2792,12 +2797,14 @@ request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
  * @id: The webflow id, as passed into the webflow-start signal
  *
  * Cancel an ongoing webflow authentication request. This can be call
- * in the time between FlatpakTransaction::webflow-start returned
- * TRUE, and FlatpakTransaction::webflow-done is emitted. It will
+ * in the time between #FlatpakTransaction::webflow-start returned
+ * TRUE, and #FlatpakTransaction::webflow-done is emitted. It will
  * cancel the ongoing authentication operation.
  *
  * This is useful for example if you're showing an authenticaion
  * window with a browser, but the user closed it before it was finished.
+ *
+ * Since: 1.5.1
  */
 void
 flatpak_transaction_abort_webflow (FlatpakTransaction *self,

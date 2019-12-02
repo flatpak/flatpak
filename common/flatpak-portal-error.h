@@ -39,6 +39,8 @@ G_BEGIN_DECLS
  * @FLATPAK_PORTAL_ERROR_NOT_ALLOWED: The call was not allowed
  * @FLATPAK_PORTAL_ERROR_CANCELLED: The call was cancelled by the user
  * @FLATPAK_PORTAL_ERROR_WINDOW_DESTROYED: The window was destroyed by the user
+ *
+ * Error codes returned by portal calls.
  */
 typedef enum {
   FLATPAK_PORTAL_ERROR_FAILED     = 0,
