@@ -2962,13 +2962,13 @@ flatpak_installation_create_monitor (FlatpakInstallation *self,
  * @ref. For instance, locale data or debug information.
  *
  * The returned list contains all available related refs, but not
- * everyone should always be installed. For example,
- * flatpak_related_ref_should_download () returns TRUE if the
+ * every one should always be installed. For example,
+ * flatpak_related_ref_should_download() returns %TRUE if the
  * reference should be installed/updated with the app, and
- * flatpak_related_ref_should_delete () returns TRUE if it
+ * flatpak_related_ref_should_delete() returns %TRUE if it
  * should be uninstalled with the main ref.
  *
- * The commit property of each FlatpakRelatedRef is not guaranteed to be
+ * The commit property of each #FlatpakRelatedRef is not guaranteed to be
  * non-%NULL.
  *
  * Returns: (transfer container) (element-type FlatpakRelatedRef): a GPtrArray of
