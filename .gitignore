@@ -107,6 +107,7 @@ Flatpak-1.0.*
 /tests/repo
 /tests/runtime-repo
 /tests/package_version.txt
+/tests/test-authenticator
 *.test
 /tests/*.sh.log
 /tests/*.sh.test
