@@ -42,7 +42,7 @@ packages).
 Most configure arguments are documented in `./configure --help`. However,
 there are some options that are a bit more complicated.
 
-Flatpak relies on a project called [Bubblewrap](https://github.com/projectatomic/bubblewrap) for the
+Flatpak relies on a project called [Bubblewrap](https://github.com/containers/bubblewrap) for the
 low-level sandboxing.  By default, an in-tree copy of this is built
 (distributed in the tarball or using git submodules in the git
 tree). This will build a helper called flatpak-bwrap. If your system
@@ -84,7 +84,7 @@ activated (on the system bus) and if you install in a non-standard
 location it is likely that D-Bus will not find it and PolicyKit
 integration will not work. However, if the system installation is
 synchronized, you can often use the system installed helper instead—
-at least if the two versions are close in versions.
+at least if the two versions are close enough.
 
 # This repository
 
@@ -102,4 +102,5 @@ quick intro to the major components of the flatpak repo:
 * `bubblewrap`: Flatpak's unprivileged sandboxing tool which is developed separately and exists here as a submodule
 * `libglnx`: a small utility library for projects that use GLib on Linux, as a submodule
 * `dbus-proxy`: a filtering proxy for D-Bus connections, as a submodule
-
+* `icon-validator`: A small utility that is used to validate icons
+* `revokefs`: A fuse filesystem that is used to transfer files to the system-helper without copying
