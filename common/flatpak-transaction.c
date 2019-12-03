@@ -1148,18 +1148,21 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @url: The url to show
    * @id: The id of the operation, can be used to cancel it
    *
-   * The ::webflow-start signal gets emitted when some kind of user authentication is needed
-   * during the operation. If the caller handles this it should show the url in a webbrowser
-   * and return TRUE. This will eventually cause the webbrowser to finish the authentication
-   * operation and operation will continue, as signaled by the webflow-done being emitted.
+   * The ::webflow-start signal gets emitted when some kind of user
+   * authentication is needed during the operation. If the caller handles this
+   * it should show the url in a webbrowser and return %TRUE. This will
+   * eventually cause the webbrowser to finish the authentication operation and
+   * operation will continue, as signaled by the webflow-done being emitted.
    *
-   * If the client does not support webflow then return FALSE from this signal (or don't
-   * implement it). This will abort the authentication and likely result in the transaction
-   * failing (unless the authentication was somehow optional).
+   * If the client does not support webflow then return %FALSE from this signal
+   * (or don't implement it). This will abort the authentication and likely
+   * result in the transaction failing (unless the authentication was somehow
+   * optional).
    *
-   * During the time between webflow-start and webflow-done the client can call flatpak_transaction_abort_webflow()
-   * to manually abort the authentication. This is useful if the user aborted the authentication
-   * operation some way, like e.g. closing the browser window.
+   * During the time between webflow-start and webflow-done the client can call
+   * flatpak_transaction_abort_webflow() to manually abort the authentication.
+   * This is useful if the user aborted the authentication operation some way,
+   * like e.g. closing the browser window.
    *
    * Since: 1.5.1
    */
@@ -2798,7 +2801,7 @@ request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
  *
  * Cancel an ongoing webflow authentication request. This can be call
  * in the time between #FlatpakTransaction::webflow-start returned
- * TRUE, and #FlatpakTransaction::webflow-done is emitted. It will
+ * %TRUE, and #FlatpakTransaction::webflow-done is emitted. It will
  * cancel the ongoing authentication operation.
  *
  * This is useful for example if you're showing an authenticaion
