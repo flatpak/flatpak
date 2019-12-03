@@ -59,8 +59,6 @@ common/flatpak-enum-types.c
 common/flatpak-enum-types.h
 test-libflatpak
 httpcache
-test-update-portal
-test-portal-impl
 revokefs-fuse
 revokefs-demo
 Flatpak-1.0.*
@@ -107,6 +105,9 @@ Flatpak-1.0.*
 /tests/repo
 /tests/runtime-repo
 /tests/package_version.txt
+/tests/test-authenticator
+/tests/test-update-portal
+/tests/test-portal-impl
 *.test
 /tests/*.sh.log
 /tests/*.sh.test
