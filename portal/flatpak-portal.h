@@ -53,6 +53,7 @@ typedef enum {
 #define FLATPAK_SPAWN_SANDBOX_FLAGS_ALL (FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_DISPLAY | \
                                          FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_SOUND | \
                                          FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_GPU | \
-                                         FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_DBUS)
+                                         FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_DBUS | \
+                                         FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y)
 
 #endif /* __FLATPAK_PORTAL_H__ */
