@@ -42,6 +42,7 @@ typedef enum {
   FLATPAK_CONTEXT_SOCKET_FALLBACK_X11 = 1 << 5, /* For backwards compat, also set SOCKET_X11 */
   FLATPAK_CONTEXT_SOCKET_SSH_AUTH    = 1 << 6,
   FLATPAK_CONTEXT_SOCKET_PCSC        = 1 << 7,
+  FLATPAK_CONTEXT_SOCKET_CUPS        = 1 << 8,
 } FlatpakContextSockets;
 
 typedef enum {

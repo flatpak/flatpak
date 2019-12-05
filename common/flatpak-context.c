@@ -61,6 +61,7 @@ const char *flatpak_context_sockets[] = {
   "fallback-x11",
   "ssh-auth",
   "pcsc",
+  "cups",
   NULL
 };
 
