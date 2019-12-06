@@ -120,6 +120,7 @@ typedef struct
   GRegex   *allow_refs;
   GRegex   *deny_refs;
   int       refcount;
+  gint32    default_token_type;
 } FlatpakRemoteState;
 
 FlatpakRemoteState *flatpak_remote_state_ref (FlatpakRemoteState *remote_state);
@@ -826,6 +827,8 @@ char      *flatpak_dir_get_remote_comment (FlatpakDir *self,
                                            const char *remote_name);
 char      *flatpak_dir_get_remote_description (FlatpakDir *self,
                                                const char *remote_name);
+gint32     flatpak_dir_get_remote_default_token_type (FlatpakDir *self,
+                                                      const char *remote_name);
 char      *flatpak_dir_get_remote_homepage (FlatpakDir *self,
                                             const char *remote_name);
 char      *flatpak_dir_get_remote_icon (FlatpakDir *self,
