@@ -2409,8 +2409,7 @@ resolve_op_from_metadata (FlatpakTransaction *self,
   op->installed_size = installed_size;
   op->download_size = download_size;
 
-  if (state->metadata)
-    g_variant_lookup (state->metadata, "xa.default-token-type", "i", &op->token_type);
+  op->token_type = state->default_token_type;
 
   sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, op->ref, NULL);
   if (sparse_cache)
@@ -2505,14 +2504,13 @@ resolve_p2p_ops (FlatpakTransaction *self,
         {
           g_autoptr(FlatpakRemoteState) state = NULL;
           g_autoptr(GVariant) sparse_cache = NULL;
-          gint32 token_type = 0;
+          gint32 token_type;
 
           state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
           if (state == NULL)
             return FALSE;
 
-          if (state->metadata)
-            g_variant_lookup (state->metadata, "xa.default-token-type", "i", &token_type);
+          token_type = state->default_token_type;
 
           sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, op->ref, NULL);
           if (sparse_cache)

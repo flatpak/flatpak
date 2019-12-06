@@ -11140,6 +11140,8 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         return NULL;
       if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, FALSE, NULL, &state->allow_refs, &state->deny_refs, error))
         return NULL;
+
+      state->default_token_type = flatpak_dir_get_remote_default_token_type (self, remote_or_uri);
     }
 
   if (local_only)
@@ -11259,6 +11261,13 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 
           state->metadata = g_variant_get_child_value (commit_v, 0);
         }
+    }
+
+  if (state->metadata)
+    {
+      gint32 token_type;
+      if (g_variant_lookup (state->metadata, "xa.default-token-type", "i", &token_type))
+        state->default_token_type = token_type;
     }
 
   return g_steal_pointer (&state);
@@ -12438,6 +12447,19 @@ flatpak_dir_get_remote_oci (FlatpakDir *self,
     return FALSE;
 
   return url && g_str_has_prefix (url, "oci+");
+}
+
+gint32
+flatpak_dir_get_remote_default_token_type (FlatpakDir *self,
+                                           const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return (gint32)g_key_file_get_integer (config, group, "xa.default-token-type", NULL);
+
+  return 0;
 }
 
 char *
