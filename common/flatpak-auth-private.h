@@ -52,7 +52,9 @@ FlatpakAuthenticatorRequest *flatpak_auth_create_request            (FlatpakAuth
 gboolean                     flatpak_auth_request_ref_tokens        (FlatpakAuthenticator         *authenticator,
                                                                      FlatpakAuthenticatorRequest  *request,
                                                                      const char                   *remote,
+                                                                     const char                   *remote_uri,
                                                                      GVariant                     *refs,
+                                                                     GVariant                     *extra_data,
                                                                      const char                   *parent_window,
                                                                      GCancellable                 *cancellable,
                                                                      GError                      **error);

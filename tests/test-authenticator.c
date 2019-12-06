@@ -173,7 +173,10 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                            const gchar *arg_handle_token,
                            GVariant *arg_authenticator_option,
                            const gchar *arg_remote,
-                           GVariant *arg_refs)
+                           const gchar *arg_remote_uri,
+                           GVariant *arg_refs,
+                           GVariant *arg_extra_data,
+                           const gchar *arg_parent_window)
 {
   g_autoptr(GError) error = NULL;
   g_autoptr(GSocketService) server = NULL;
@@ -219,9 +222,12 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   n_refs = g_variant_n_children (arg_refs);
   for (i = 0; i < n_refs; i++)
     {
-      const char *ref;
+      const char *ref, *commit;
       gint32 token_type;
-      g_variant_get_child (arg_refs, i, "(&si)", &ref, &token_type);
+      g_autoptr(GVariant) data = NULL;
+
+      g_variant_get_child (arg_refs, i, "(&s&si@a{sv})", &ref, &commit, &token_type, &data);
+
       g_ptr_array_add (refs, g_strdup (ref));
     }
   g_ptr_array_add (refs, NULL);

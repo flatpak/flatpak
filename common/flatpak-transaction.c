@@ -2847,20 +2847,30 @@ request_tokens_for_remote (FlatpakTransaction *self,
   g_autoptr(GVariant) results = NULL;
   g_autoptr(GVariant) refs = NULL;
   GVariantBuilder refs_builder;
+  g_autofree char *remote_url = NULL;
+  g_autoptr(GVariantBuilder) extra_builder = NULL;
+  FlatpakRemoteState *state;
 
-  g_variant_builder_init (&refs_builder, G_VARIANT_TYPE ("a(si)"));
+  if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (priv->dir), remote, &remote_url, error))
+    return FALSE;
+
+  g_variant_builder_init (&refs_builder, G_VARIANT_TYPE ("a(ssia{sv})"));
 
   for (l = ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
-      g_variant_builder_add (&refs_builder, "(si)", op->ref, (gint32)op->token_type);
-      g_string_append_printf (refs_as_str, "(%s, %d)", op->ref, op->token_type);
+      g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+      g_variant_builder_add (&refs_builder, "(ssi@a{sv})", op->ref, op->resolved_commit ? op->resolved_commit : "", (gint32)op->token_type, g_variant_builder_end (metadata_builder));
+      g_string_append_printf (refs_as_str, "(%s, %s %d)", op->ref, op->resolved_commit ? op->resolved_commit : "", op->token_type);
       if (l->next != NULL)
         g_string_append (refs_as_str, ", ");
     }
 
   g_debug ("Requesting tokens for remote %s: %s", remote, refs_as_str->str);
   refs = g_variant_ref_sink (g_variant_builder_end (&refs_builder));
+
+  extra_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
   context = flatpak_main_context_new_default ();
 
@@ -2878,8 +2888,10 @@ request_tokens_for_remote (FlatpakTransaction *self,
 
   priv->active_webflow = &data;
 
+
   data.request = request;
-  if (!flatpak_auth_request_ref_tokens (authenticator, request, remote, refs, priv->parent_window, cancellable, error))
+  if (!flatpak_auth_request_ref_tokens (authenticator, request, remote, remote_url, refs, g_variant_builder_end (extra_builder),
+                                        priv->parent_window, cancellable, error))
     return FALSE;
 
   while (!data.done)
