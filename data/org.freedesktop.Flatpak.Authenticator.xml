@@ -75,7 +75,9 @@
               more information about the @handle.
         @authenticator_options: Data from the xa.authenticator-options key in the configuration for the remote, it is up to the authenticator to interpret this how it wants.
         @remote: The name of the remote we're pulling from.
+        @remote_uri: The uri of the remote we're pulling from.
         @refs: An array of refs that flatpak wants to pull and the token-type for each ref.
+        @extra_data: An extensible  dict with extra data for the request.
         @parent_window: Identifier for the application window, see <link linkend="https://flatpak.github.io/xdg-desktop-portal/portal-docs.html#parent_window">xdg-desktop-portal docs</link> for details on its format.
         @handle: Object path for the #org.freedesktop.Flatpak.AuthenticatorRequest object representing this call.
 
@@ -88,7 +90,8 @@
           <varlistentry>
             <term>tokens a{sas}</term>
             <listitem><para>
-              A list of tokens (the first element of the struct), and the refs that it applies to (the second element of the struct).
+              A list of tokens (the first element of the struct), and the refs+commit that it applies to (the second and third element of the struct).
+              Each element also has an dict with extra data as element 4.
               The returned token may be the empty string, to signal that flatpak doesn't need to use a token for these refs.
             </para></listitem>
           </varlistentry>
@@ -112,8 +115,10 @@
       <arg type='s' name='handle_token' direction='in'/>
       <arg type='a{sv}' name='authenticator_options' direction='in'/>
       <arg type='s' name='remote' direction='in'/>
+      <arg type='s' name='remote_uri' direction='in'/>
       <!-- This is the ref and its token-type -->
-      <arg type='a(si)' name='refs' direction='in'/>
+      <arg type='a(ssia{sv})' name='refs' direction='in'/>
+      <arg type='a{sv}' name='extra_data' direction='in'/>
       <arg type='s' name='parent_window' direction='in'/>
       <arg type='o' name='handle' direction='out'/>
     </method>

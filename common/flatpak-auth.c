@@ -130,7 +130,9 @@ gboolean
 flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
                                  FlatpakAuthenticatorRequest *request,
                                  const char *remote,
+                                 const char *remote_uri,
                                  GVariant *refs,
+                                 GVariant *extra_data,
                                  const char *parent_window,
                                  GCancellable *cancellable,
                                  GError **error)
@@ -143,7 +145,7 @@ flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
 
   options = g_object_get_data (G_OBJECT (authenticator), "authenticator-options");
 
-  if (!flatpak_authenticator_call_request_ref_tokens_sync (authenticator, token, options, remote, refs,
+  if (!flatpak_authenticator_call_request_ref_tokens_sync (authenticator, token, options, remote, remote_uri, refs, extra_data,
                                                            parent_window ? parent_window : "",
                                                            &handle, cancellable, error))
     return FALSE;
