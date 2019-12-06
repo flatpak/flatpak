@@ -119,6 +119,7 @@ struct _FlatpakTransactionOperation
   char                           *eol;
   char                           *eol_rebase;
   gint32                          token_type;
+  GVariant                       *summary_metadata; /* Additional metadatafield for commit from summary */
   int                             run_after_count;
   int                             run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList                          *run_before_ops;
@@ -595,6 +596,8 @@ flatpak_transaction_operation_finalize (GObject *object)
     g_key_file_unref (self->resolved_old_metakey);
   g_free (self->resolved_token);
   g_list_free (self->run_before_ops);
+  if (self->summary_metadata)
+    g_variant_unref (self->summary_metadata);
 
   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
 }
@@ -2397,6 +2400,7 @@ resolve_op_from_metadata (FlatpakTransaction *self,
   const char *metadata = NULL;
   g_autoptr(GVariant) sparse_cache = NULL;
   g_autoptr(GError) local_error = NULL;
+  g_autoptr(GVariant) summary_metadata = NULL;
 
   if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, NULL, &local_error))
     {
@@ -2405,6 +2409,10 @@ resolve_op_from_metadata (FlatpakTransaction *self,
     }
   else
     metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
+
+  flatpak_remote_state_lookup_ref (state, op->ref, NULL, &summary_metadata, NULL);
+  if (summary_metadata)
+    op->summary_metadata = g_variant_get_child_value (summary_metadata, 2);
 
   op->installed_size = installed_size;
   op->download_size = download_size;
@@ -2860,6 +2868,22 @@ request_tokens_for_remote (FlatpakTransaction *self,
     {
       FlatpakTransactionOperation *op = l->data;
       g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+      if (op->summary_metadata)
+        {
+          const int n = g_variant_n_children (op->summary_metadata);
+          for (int i = 0; i < n; i++)
+            {
+              const char *key;
+              g_autofree char *new_key = NULL;
+              GVariant *value = NULL;
+
+              g_variant_get_child (op->summary_metadata, i, "{&s@v}", &key, &value);
+
+              new_key = g_strconcat ("summary.", key, NULL);
+              g_variant_builder_add (metadata_builder, "{s@v}", new_key, value);
+            }
+        }
 
       g_variant_builder_add (&refs_builder, "(ssi@a{sv})", op->ref, op->resolved_commit ? op->resolved_commit : "", (gint32)op->token_type, g_variant_builder_end (metadata_builder));
       g_string_append_printf (refs_as_str, "(%s, %s %d)", op->ref, op->resolved_commit ? op->resolved_commit : "", op->token_type);
