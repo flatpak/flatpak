@@ -514,6 +514,7 @@ GBytes *
 flatpak_load_http_uri (SoupSession           *soup_session,
                        const char            *uri,
                        FlatpakHTTPFlags       flags,
+                       const char            *token,
                        FlatpakLoadUriProgress progress,
                        gpointer               user_data,
                        GCancellable          *cancellable,
@@ -550,6 +551,13 @@ flatpak_load_http_uri (SoupSession           *soup_session,
     soup_message_headers_replace (m->request_headers, "Accept",
                                   FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
 
+
+  if (token)
+    {
+      g_autofree char *bearer_token = g_strdup_printf ("Bearer %s", token);
+      soup_message_headers_replace (m->request_headers, "Authorization", bearer_token);
+    }
+
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,
                            load_uri_callback, &data);
@@ -573,6 +581,7 @@ flatpak_download_http_uri (SoupSession           *soup_session,
                            const char            *uri,
                            FlatpakHTTPFlags       flags,
                            GOutputStream         *out,
+                           const char            *token,
                            FlatpakLoadUriProgress progress,
                            gpointer               user_data,
                            GCancellable          *cancellable,
@@ -605,6 +614,12 @@ flatpak_download_http_uri (SoupSession           *soup_session,
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
     soup_message_headers_replace (m->request_headers, "Accept",
                                   FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
+
+  if (token)
+    {
+      g_autofree char *bearer_token = g_strdup_printf ("Bearer %s", token);
+      soup_message_headers_replace (m->request_headers, "Authorization", bearer_token);
+    }
 
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,
