@@ -109,6 +109,7 @@ static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
                                         FlatpakRemoteState  *state,
                                         const char          *ref,
                                         const char          *skip_if_current_is,
+                                        const char          *token,
                                         OstreeAsyncProgress *progress,
                                         GCancellable        *cancellable,
                                         GError             **error);
@@ -5102,7 +5103,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       else
         {
           ensure_soup_session (self);
-          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, 0,
+          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, 0, NULL,
                                          extra_data_progress_report, &extra_data_progress,
                                          cancellable, error);
         }
@@ -5261,6 +5262,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                         FlatpakRemoteState  *state,
                         const char          *ref,
                         const char          *skip_if_current_is,
+                        const char          *token,
                         OstreeAsyncProgress *progress,
                         GCancellable        *cancellable,
                         GError             **error)
@@ -5302,6 +5304,8 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   if (registry == NULL)
     return FALSE;
 
+  flatpak_oci_registry_set_token (registry, token);
+
   g_assert (progress != NULL);
   oci_pull_init_progress (progress);
 
@@ -5326,6 +5330,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
                       OstreeRepo          *repo,
                       FlatpakPullFlags     flatpak_flags,
                       OstreeRepoPullFlags  flags,
+                      const char          *token,
                       OstreeAsyncProgress *progress,
                       GCancellable        *cancellable,
                       GError             **error)
@@ -5370,6 +5375,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, error);
   if (registry == NULL)
     return FALSE;
+
+  flatpak_oci_registry_set_token (registry, token);
 
   versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
                                                    NULL, cancellable, error);
@@ -5463,7 +5470,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
 
   if (flatpak_dir_get_remote_oci (self, state->remote_name))
     return flatpak_dir_pull_oci (self, state, ref, repo, flatpak_flags,
-                                 flags, progress, cancellable, error);
+                                 flags, token, progress, cancellable, error);
 
   if (!ostree_repo_remote_get_url (self->repo,
                                    state->remote_name,
@@ -8924,7 +8931,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, token, progress, cancellable, error))
             return FALSE;
         }
       else if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
@@ -9636,7 +9643,7 @@ flatpak_dir_update (FlatpakDir                           *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, token, progress, cancellable, error))
             return FALSE;
         }
       else if ((!gpg_verify_summary && state->collection_id == NULL) || !gpg_verify)
@@ -13862,7 +13869,7 @@ flatpak_dir_fetch_remote_object (FlatpakDir   *self,
 
   object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
 
-  bytes = flatpak_load_http_uri (self->soup_session, object_url, 0,
+  bytes = flatpak_load_http_uri (self->soup_session, object_url, 0, NULL,
                                  NULL, NULL,
                                  cancellable, error);
   if (bytes == NULL)

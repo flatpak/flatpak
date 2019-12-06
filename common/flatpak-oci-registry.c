@@ -60,6 +60,7 @@ struct FlatpakOciRegistry
   gboolean is_docker;
   char    *uri;
   int      tmp_dfd;
+  char    *token;
 
   /* Local repos */
   int dfd;
@@ -97,6 +98,7 @@ flatpak_oci_registry_finalize (GObject *object)
   g_clear_object (&self->soup_session);
   g_clear_pointer (&self->base_uri, soup_uri_free);
   g_free (self->uri);
+  g_free (self->token);
 
   G_OBJECT_CLASS (flatpak_oci_registry_parent_class)->finalize (object);
 }
@@ -208,6 +210,14 @@ flatpak_oci_registry_get_uri (FlatpakOciRegistry *self)
   return self->uri;
 }
 
+void
+flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
+                                const char *token)
+{
+  g_free (self->token);
+  self->token = g_strdup (token);
+}
+
 FlatpakOciRegistry *
 flatpak_oci_registry_new (const char   *uri,
                           gboolean      for_write,
@@ -290,6 +300,7 @@ static GBytes *
 remote_load_file (SoupSession  *soup_session,
                   SoupURI      *base,
                   const char   *subpath,
+                  const char   *token,
                   GCancellable *cancellable,
                   GError      **error)
 {
@@ -308,6 +319,7 @@ remote_load_file (SoupSession  *soup_session,
   uri_s = soup_uri_to_string (uri, FALSE);
   bytes = flatpak_load_http_uri (soup_session,
                                  uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                 token,
                                  NULL, NULL,
                                  cancellable, error);
   if (bytes == NULL)
@@ -325,7 +337,7 @@ flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
   if (self->dfd != -1)
     return local_load_file (self->dfd, subpath, cancellable, error);
   else
-    return remote_load_file (self->soup_session, self->base_uri, subpath, cancellable, error);
+    return remote_load_file (self->soup_session, self->base_uri, subpath, self->token, cancellable, error);
 }
 
 static JsonNode *
@@ -738,6 +750,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
       if (!flatpak_download_http_uri (self->soup_session, uri_s,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                                       out_stream,
+                                      self->token,
                                       progress_cb, user_data,
                                       cancellable, error))
         return -1;
@@ -835,6 +848,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       uri_s = soup_uri_to_string (uri, FALSE);
       if (!flatpak_download_http_uri (source_registry->soup_session, uri_s,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
+                                      self->token,
                                       progress_cb, user_data,
                                       cancellable, error))
         return FALSE;
