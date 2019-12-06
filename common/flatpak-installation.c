@@ -1105,6 +1105,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       g_autofree char *key = g_strdup_printf ("%s:%s", remote_name, full_ref);
       const char *remote_commit = g_hash_table_lookup (remote_commits, key);
       const char *local_commit = flatpak_installed_ref_get_latest_commit (installed_ref);
+      g_autoptr(GError) local_error = NULL;
 
       if (flatpak_dir_ref_is_masked (dir, full_ref))
         continue;
@@ -1130,9 +1131,13 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       if (state == NULL)
         {
 
-          state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
+          state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, &local_error);
           if (state == NULL)
-            continue;
+            {
+              g_debug ("Update: Failed to get remote state for %s: %s",
+                       remote_name, local_error->message);
+              continue;
+            }
 
           g_hash_table_insert (remote_states, g_strdup (remote_name), state);
         }
