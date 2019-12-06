@@ -78,6 +78,12 @@ int                    flatpak_oci_registry_download_blob (FlatpakOciRegistry   
                                                            gpointer               user_data,
                                                            GCancellable          *cancellable,
                                                            GError               **error);
+char *                 flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
+                                                       const char         *repository,
+                                                       const char         *digest,
+                                                       const char         *basic_auth,
+                                                       GCancellable       *cancellable,
+                                                       GError            **error);
 GBytes             *   flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
                                                        const char         *repository,
                                                        gboolean            manifest,
