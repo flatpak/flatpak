@@ -97,6 +97,7 @@ include app/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include portal/Makefile.am.inc
 include system-helper/Makefile.am.inc
+include oci-authenticator/Makefile.am.inc
 include icon-validator/Makefile.am.inc
 include revokefs/Makefile.am.inc
 include selinux/Makefile.am.inc

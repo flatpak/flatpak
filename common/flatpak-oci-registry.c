@@ -983,8 +983,6 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
 {
   g_autofree char *subpath = NULL;
   g_autoptr(SoupURI) uri = NULL;
-  g_autoptr(GBytes) bytes = NULL;
-  g_autofree char *uri_s = NULL;
   g_autoptr(GInputStream) stream = NULL;
   g_autoptr(SoupMessage) msg = NULL;
   g_autofree char *www_authenticate = NULL;
