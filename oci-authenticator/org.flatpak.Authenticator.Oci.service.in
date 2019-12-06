@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.flatpak.Authenticator.Oci
+Exec=@libexecdir@/flatpak-oci-authenticator
+SystemdService=flatpak-oci-authenticator.service

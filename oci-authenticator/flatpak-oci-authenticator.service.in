@@ -1,0 +1,7 @@
+[Unit]
+Description=flatpak oci authenticator
+
+[Service]
+BusName=org.flatpak.Authenticator.Oci
+ExecStart=@libexecdir@/flatpak-oci-authenticator
+Type=dbus
