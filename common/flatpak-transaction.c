@@ -2837,6 +2837,18 @@ flatpak_transaction_abort_webflow (FlatpakTransaction *self,
     }
 }
 
+static void
+copy_summary_data (GVariantBuilder *builder, GVariant *summary, const char *key)
+{
+  g_autoptr(GVariant) extensions = g_variant_get_child_value (summary, 1);
+  g_autoptr(GVariant) value = NULL;
+
+  value = g_variant_lookup_value (extensions, key, NULL);
+  if (value)
+    g_variant_builder_add (builder, "{s@v}", key, g_variant_new_variant (value));
+}
+
+
 static gboolean
 request_tokens_for_remote (FlatpakTransaction *self,
                            const char         *remote,
@@ -2895,6 +2907,12 @@ request_tokens_for_remote (FlatpakTransaction *self,
   refs = g_variant_ref_sink (g_variant_builder_end (&refs_builder));
 
   extra_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+  state = g_hash_table_lookup (priv->remote_states, remote);
+  if (state && state->summary)
+    {
+      copy_summary_data (extra_builder, state->summary, "xa.oci-registry-uri");
+    }
 
   context = flatpak_main_context_new_default ();
 
