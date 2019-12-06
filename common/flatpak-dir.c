@@ -23,12 +23,13 @@
 
 #include "config.h"
 
-#include <string.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/file.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <utime.h>
 
 #include <glib/gi18n-lib.h>
@@ -39,22 +40,20 @@
 
 #include <gio/gio.h>
 #include <gio/gunixsocketaddress.h>
-#include "libglnx/libglnx.h"
-#include "flatpak-error.h"
 #include <ostree.h>
 
 #ifdef USE_SYSTEM_HELPER
 #include <polkit/polkit.h>
 #endif
 
+#include "flatpak-appdata-private.h"
 #include "flatpak-dir-private.h"
-#include "flatpak-utils-base-private.h"
+#include "flatpak-error.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-ref.h"
 #include "flatpak-run-private.h"
-#include "flatpak-appdata-private.h"
-
-#include "errno.h"
+#include "flatpak-utils-base-private.h"
+#include "libglnx/libglnx.h"
 
 #ifdef HAVE_LIBMALCONTENT
 #include <libmalcontent/malcontent.h>
@@ -4617,7 +4616,7 @@ get_common_pull_options (GVariantBuilder     *builder,
                          OstreeRepoPullFlags  flags,
                          OstreeAsyncProgress *progress)
 {
-  guint32 update_freq = 0;
+  guint32 update_interval = 0;
   GVariantBuilder hdr_builder;
 
   if (dirs_to_pull)
@@ -4655,12 +4654,12 @@ get_common_pull_options (GVariantBuilder     *builder,
                          g_variant_new_variant (g_variant_new_string ("flatpak/" PACKAGE_VERSION)));
 
   if (progress != NULL)
-    update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
-  if (update_freq == 0)
-    update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+    update_interval = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-interval"));
+  if (update_interval == 0)
+    update_interval = FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
 
   g_variant_builder_add (builder, "{s@v}", "update-frequency",
-                         g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+                         g_variant_new_variant (g_variant_new_uint32 (update_interval)));
 }
 
 static gboolean
@@ -4729,7 +4728,7 @@ repo_pull (OstreeRepo                           *self,
       g_auto(OstreeRepoFinderResultv) results = NULL;
       OstreeCollectionRef collection_ref;
       OstreeCollectionRef *collection_refs_to_fetch[2];
-      guint32 update_freq = 0;
+      guint32 update_interval = 0;
       g_autoptr(GMainContextPopDefault) context = NULL;
       g_autoptr(FlatpakAsyncProgressChained) chained_progress = NULL;
 
@@ -4757,12 +4756,12 @@ repo_pull (OstreeRepo                           *self,
           collection_refs_to_fetch[1] = NULL;
 
           if (progress != NULL)
-            update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
-          if (update_freq == 0)
-            update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+            update_interval = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-interval"));
+          if (update_interval == 0)
+            update_interval = FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
 
           g_variant_builder_add (&find_builder, "{s@v}", "update-frequency",
-                                 g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+                                 g_variant_new_variant (g_variant_new_uint32 (update_interval)));
 
           if (rev_to_fetch != NULL)
             {
@@ -5495,7 +5494,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
           OstreeCollectionRef collection_ref;
           OstreeCollectionRef *collection_refs_to_fetch[2];
           gboolean force_disable_deltas = (flatpak_flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
-          guint update_freq = 0;
+          guint update_interval = 0;
           gsize i;
           g_autoptr(GMainContextPopDefault) context = NULL;
           g_autoptr(FlatpakAsyncProgressChained) chained_progress = NULL;
@@ -5519,12 +5518,12 @@ flatpak_dir_pull (FlatpakDir                           *self,
           collection_refs_to_fetch[1] = NULL;
 
           if (progress != NULL)
-            update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
-          if (update_freq == 0)
-            update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+            update_interval = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-interval"));
+          if (update_interval == 0)
+            update_interval = FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
 
           g_variant_builder_add (&find_builder, "{s@v}", "update-frequency",
-                                 g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+                                 g_variant_new_variant (g_variant_new_uint32 (update_interval)));
 
           find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
@@ -5719,7 +5718,7 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
   g_variant_builder_add (&builder, "{s@v}", "update-frequency",
-                         g_variant_new_variant (g_variant_new_uint32 (FLATPAK_DEFAULT_UPDATE_FREQUENCY)));
+                         g_variant_new_variant (g_variant_new_uint32 (FLATPAK_DEFAULT_UPDATE_INTERVAL_MS)));
 
   if (dirs_to_pull)
     {

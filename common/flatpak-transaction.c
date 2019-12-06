@@ -24,11 +24,11 @@
 #include <glib/gi18n-lib.h>
 #include <libsoup/soup.h>
 
-#include "flatpak-transaction-private.h"
-#include "flatpak-installation-private.h"
-#include "flatpak-utils-private.h"
-#include "flatpak-error.h"
 #include "flatpak-auth-private.h"
+#include "flatpak-error.h"
+#include "flatpak-installation-private.h"
+#include "flatpak-transaction-private.h"
+#include "flatpak-utils-private.h"
 
 /**
  * SECTION:flatpak-transaction
@@ -263,15 +263,15 @@ G_DEFINE_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, G_TYPE_
 /**
  * flatpak_transaction_progress_set_update_frequency:
  * @self: a #FlatpakTransactionProgress
- * @update_frequency: the update frequency, in milliseconds
+ * @update_interval: the update interval, in milliseconds
  *
  * Sets how often progress should be updated.
  */
 void
 flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *self,
-                                                   guint                       update_frequency)
+                                                   guint                       update_interval)
 {
-  g_object_set_data (G_OBJECT (self->ostree_progress), "update-frequency", GUINT_TO_POINTER (update_frequency));
+  g_object_set_data (G_OBJECT (self->ostree_progress), "update-interval", GUINT_TO_POINTER (update_interval));
 }
 
 /**
@@ -280,7 +280,7 @@ flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *s
  *
  * Gets the current status string
  *
- * Returns: (transfer none): the current status
+ * Returns: (transfer full): the current status
  */
 char *
 flatpak_transaction_progress_get_status (FlatpakTransactionProgress *self)

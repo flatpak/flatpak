@@ -149,7 +149,7 @@ FlatpakTransaction *flatpak_transaction_new_for_installation (FlatpakInstallatio
 
 FLATPAK_EXTERN
 void        flatpak_transaction_progress_set_update_frequency (FlatpakTransactionProgress *self,
-                                                               guint                       update_frequency);
+                                                               guint                       update_interval);
 FLATPAK_EXTERN
 char *      flatpak_transaction_progress_get_status (FlatpakTransactionProgress *self);
 FLATPAK_EXTERN

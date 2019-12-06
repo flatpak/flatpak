@@ -27,19 +27,19 @@
 #include <ostree.h>
 #include <ostree-repo-finder-avahi.h>
 
+#include "flatpak-dir-private.h"
+#include "flatpak-enum-types.h"
+#include "flatpak-error.h"
 #include "flatpak-installation-private.h"
-#include "flatpak-utils-private.h"
 #include "flatpak-installation.h"
 #include "flatpak-installed-ref-private.h"
-#include "flatpak-transaction-private.h"
+#include "flatpak-instance-private.h"
 #include "flatpak-related-ref-private.h"
 #include "flatpak-remote-private.h"
 #include "flatpak-remote-ref-private.h"
-#include "flatpak-enum-types.h"
-#include "flatpak-dir-private.h"
 #include "flatpak-run-private.h"
-#include "flatpak-instance-private.h"
-#include "flatpak-error.h"
+#include "flatpak-transaction-private.h"
+#include "flatpak-utils-private.h"
 
 /**
  * SECTION:flatpak-installation

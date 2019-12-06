@@ -409,7 +409,7 @@ new_operation (FlatpakTransaction          *transaction,
   self->progress_msg = g_steal_pointer (&text);
 
   g_signal_connect (progress, "changed", G_CALLBACK (progress_changed_cb), self);
-  flatpak_transaction_progress_set_update_frequency (progress, FLATPAK_CLI_UPDATE_FREQUENCY);
+  flatpak_transaction_progress_set_update_frequency (progress, FLATPAK_CLI_UPDATE_INTERVAL_MS);
 }
 
 static void

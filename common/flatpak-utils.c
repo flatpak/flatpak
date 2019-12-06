@@ -20,14 +20,6 @@
 
 #include "config.h"
 
-#include "flatpak-utils-private.h"
-#include "flatpak-error.h"
-#include "flatpak-dir-private.h"
-#include "flatpak-oci-registry-private.h"
-#include "flatpak-run-private.h"
-#include "flatpak-utils-base-private.h"
-#include "valgrind-private.h"
-
 #include <glib/gi18n-lib.h>
 
 #include <string.h>
@@ -47,10 +39,17 @@
 #include <termios.h>
 
 #include <glib.h>
-#include "libglnx/libglnx.h"
 #include <gio/gunixoutputstream.h>
 #include <gio/gunixinputstream.h>
 
+#include "flatpak-dir-private.h"
+#include "flatpak-error.h"
+#include "flatpak-oci-registry-private.h"
+#include "flatpak-run-private.h"
+#include "flatpak-utils-base-private.h"
+#include "flatpak-utils-private.h"
+#include "libglnx/libglnx.h"
+#include "valgrind-private.h"
 
 /* This is also here so the common code can report these errors to the lib */
 static const GDBusErrorEntry flatpak_error_entries[] = {

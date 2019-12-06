@@ -670,6 +670,7 @@ flatpak_repo_transaction_cleanup (void *p)
       g_autoptr(GError) error = NULL;
       if (!ostree_repo_abort_transaction (repo, NULL, &error))
         g_warning ("Error aborting ostree transaction: %s", error->message);
+      g_object_unref (repo);
     }
 }
 
@@ -680,7 +681,7 @@ flatpak_repo_transaction_start (OstreeRepo   *repo,
 {
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return NULL;
-  return (FlatpakRepoTransaction *) repo;
+  return (FlatpakRepoTransaction *) g_object_ref (repo);
 }
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRepoTransaction, flatpak_repo_transaction_cleanup)
 
