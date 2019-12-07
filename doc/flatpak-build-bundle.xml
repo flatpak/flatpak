@@ -172,6 +172,9 @@
         <para>
             <command>$ flatpak build-bundle /var/lib/flatpak/repo gnome-calculator.flatpak org.gnome.Calculator stable</command>
         </para>
+        <para>
+            <command>$ flatpak build-bundle ~/.local/share/flatpak/repo gnome-calculator.flatpak org.gnome.Calculator stable</command>
+        </para>
 
     </refsect1>
 
