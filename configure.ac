@@ -218,9 +218,17 @@ PKG_CHECK_MODULES(DCONF, [dconf >= 0.26], [have_dconf=yes], [have_dconf=no])
 if test $have_dconf = yes; then
   AC_DEFINE(HAVE_DCONF, 1, [Define if dconf is available])
 fi
-PKG_CHECK_MODULES(SYSTEMD, [libsystemd], [have_libsystemd=yes], [have_libsystemd=no])
-if test $have_libsystemd = yes; then
-  AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if libsystemd is available])
+AC_ARG_WITH([systemd], AS_HELP_STRING([--with-systemd],
+    [Build without systemd support]), [], [with_systemd=auto],)
+if test "x$with_systemd" != "xno"; then
+  PKG_CHECK_MODULES(SYSTEMD, [libsystemd], [have_libsystemd=yes], [have_libsystemd=no])
+  if test $have_libsystemd = yes; then
+    AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if libsystemd is available])
+  elif test "x$with_systemd" == "xyes"; then
+    AC_MSG_ERROR([systemd was requested but it could not be found])
+  fi
+else
+  have_libsystemd=no
 fi
 PKG_CHECK_MODULES([MALCONTENT], [malcontent-0 >= 0.4.0], [have_libmalcontent=yes], [have_libmalcontent=no])
 AS_IF([test "$have_libmalcontent" = "yes"],[
