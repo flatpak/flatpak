@@ -36,7 +36,10 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 
+static char *opt_data;
+
 static GOptionEntry options[] = {
+  { "data", 0, 0, G_OPTION_ARG_STRING, &opt_data, N_("Associate DATA with the entry"), N_("DATA") },
   { NULL }
 };
 
@@ -103,6 +106,7 @@ flatpak_builtin_permission_set (int argc, char **argv,
   const char *id;
   const char *app_id;
   const char **perms;
+  g_autoptr(GVariant) data = NULL;
 
   context = g_option_context_new (_("TABLE ID APP_ID [PERMISSION...] - Set permissions"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -120,6 +124,16 @@ flatpak_builtin_permission_set (int argc, char **argv,
   app_id = argv[3];
   perms = (const char **)&argv[4];
 
+  if (opt_data)
+    {
+      data = g_variant_parse (NULL, opt_data, NULL, NULL, error);
+      if (!data)
+        {
+          g_prefix_error (error, _("Failed to parse '%s' as GVariant: "), opt_data);
+          return FALSE;
+        }
+    }
+
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
   if (session_bus == NULL)
     return FALSE;
@@ -135,6 +149,13 @@ flatpak_builtin_permission_set (int argc, char **argv,
                                                            id, app_id, perms, 
                                                            NULL, error))
     return FALSE;
+
+  if (data)
+    {
+      if (!xdp_dbus_permission_store_call_set_value_sync (store, table, FALSE,
+                                                          id, data, NULL, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
