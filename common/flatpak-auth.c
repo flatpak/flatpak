@@ -226,3 +226,25 @@ flatpak_auth_request_emit_webflow_done (FlatpakAuthenticatorRequest *request,
     }
   g_list_free_full (connections, g_object_unref);
 }
+
+void
+flatpak_auth_request_emit_basic_auth (FlatpakAuthenticatorRequest *request,
+                                      const char *destination_bus_name,
+                                      const char *arg_realm)
+{
+  FlatpakAuthenticatorRequestSkeleton *skeleton = FLATPAK_AUTHENTICATOR_REQUEST_SKELETON (request);
+  GList      *connections, *l;
+  g_autoptr(GVariant) signal_variant = NULL;
+  connections = g_dbus_interface_skeleton_get_connections (G_DBUS_INTERFACE_SKELETON (skeleton));
+
+  signal_variant = g_variant_ref_sink (g_variant_new ("(s)", arg_realm));
+  for (l = connections; l != NULL; l = l->next)
+    {
+      GDBusConnection *connection = l->data;
+      g_dbus_connection_emit_signal (connection, destination_bus_name,
+                                     g_dbus_interface_skeleton_get_object_path (G_DBUS_INTERFACE_SKELETON (skeleton)),
+                                     "org.freedesktop.Flatpak.AuthenticatorRequest", "BasicAuth",
+                                     signal_variant, NULL);
+    }
+  g_list_free_full (connections, g_object_unref);
+}

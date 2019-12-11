@@ -70,5 +70,8 @@ void                         flatpak_auth_request_emit_webflow      (FlatpakAuth
                                                                      const char                   *arg_uri);
 void                         flatpak_auth_request_emit_webflow_done (FlatpakAuthenticatorRequest  *request,
                                                                      const gchar                  *destination_bus_name);
+void                         flatpak_auth_request_emit_basic_auth   (FlatpakAuthenticatorRequest  *request,
+                                                                     const char                   *destination_bus_name,
+                                                                     const char                   *arg_realm);
 
 #endif /* __FLATPAK_AUTH_H__ */
