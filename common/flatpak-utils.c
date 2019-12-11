@@ -5824,6 +5824,82 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
   return TRUE;
 }
 
+char *
+flatpak_prompt (gboolean allow_empty,
+                const char *prompt, ...)
+{
+  char buf[512];
+  va_list var_args;
+  g_autofree char *s = NULL;
+
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+  va_start (var_args, prompt);
+  s = g_strdup_vprintf (prompt, var_args);
+  va_end (var_args);
+#pragma GCC diagnostic pop
+
+  while (TRUE)
+    {
+      g_print ("%s: ", s);
+
+      if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
+        {
+          g_print ("n\n");
+          return NULL;
+        }
+
+      if (fgets (buf, sizeof (buf), stdin) == NULL)
+        return NULL;
+
+      g_strstrip (buf);
+
+      if (buf[0] != 0 || allow_empty)
+        return g_strdup (buf);
+    }
+}
+
+char *
+flatpak_password_prompt (const char *prompt, ...)
+{
+  char buf[512];
+  va_list var_args;
+  g_autofree char *s = NULL;
+  gboolean was_echo;
+
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+  va_start (var_args, prompt);
+  s = g_strdup_vprintf (prompt, var_args);
+  va_end (var_args);
+#pragma GCC diagnostic pop
+
+  while (TRUE)
+    {
+      g_print ("%s: ", s);
+
+      if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
+        {
+          g_print ("n\n");
+          return NULL;
+        }
+
+      was_echo = flatpak_set_tty_echo (FALSE);
+
+      if (fgets (buf, sizeof (buf), stdin) == NULL)
+        return NULL;
+
+      flatpak_set_tty_echo (was_echo);
+
+      g_strstrip (buf);
+
+      return g_strdup (buf);
+    }
+}
+
+
 gboolean
 flatpak_yes_no_prompt (gboolean default_yes, const char *prompt, ...)
 {
@@ -6781,6 +6857,24 @@ flatpak_get_window_size (int *rows, int *cols)
       *rows = 24;
       *cols = 80;
     }
+}
+
+gboolean
+flatpak_set_tty_echo (gboolean echo)
+{
+  struct termios term;
+  gboolean was;
+
+  tcgetattr (STDIN_FILENO, &term);
+  was = (term.c_lflag & ECHO) != 0;
+
+  if (echo)
+    term.c_lflag |= ECHO;
+  else
+    term.c_lflag &= ~ECHO;
+  tcsetattr (STDIN_FILENO, TCSANOW, &term);
+
+  return was;
 }
 
 gboolean

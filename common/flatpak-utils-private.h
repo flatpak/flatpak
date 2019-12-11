@@ -52,6 +52,7 @@
 #define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
 #define FLATPAK_ANSI_CLEAR "\x1b[0J"
 
+gboolean flatpak_set_tty_echo (gboolean echo);
 void flatpak_get_window_size (int *rows,
                               int *cols);
 gboolean flatpak_get_cursor_pos (int *row,
@@ -782,6 +783,13 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   GCancellable *cancellable,
                                   GError      **error);
 
+
+char * flatpak_prompt (gboolean allow_empty,
+                       const char *prompt,
+                       ...) G_GNUC_PRINTF (2, 3);
+
+char * flatpak_password_prompt (const char *prompt,
+                                ...) G_GNUC_PRINTF (1, 2);
 
 gboolean flatpak_yes_no_prompt (gboolean    default_yes,
                                 const char *prompt,
