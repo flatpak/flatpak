@@ -97,14 +97,164 @@ schedule_idle_callback (void)
     }
 }
 
+typedef struct {
+  gboolean done;
+  char *user;
+  char *password;
+  GCond cond;
+  GMutex mutex;
+} BasicAuthData;
+
+
+G_LOCK_DEFINE (active_auth);
+static GHashTable *active_auth;
+
+static void
+cancel_basic_auth (BasicAuthData *auth)
+{
+  g_mutex_lock (&auth->mutex);
+  if (!auth->done)
+    {
+      auth->done = TRUE;
+      g_cond_signal (&auth->cond);
+    }
+  g_mutex_unlock (&auth->mutex);
+}
+
 static gboolean
 handle_request_ref_tokens_close (FlatpakAuthenticatorRequest *object,
                                  GDBusMethodInvocation *invocation,
-                                 gpointer           user_data)
+                                 gpointer user_data)
 {
+  BasicAuthData *auth = user_data;
+
   g_debug ("handlling Request.Close");
 
+  cancel_basic_auth (auth);
+
   return TRUE;
+}
+
+static void
+add_auth_for_peer (const char *sender,
+                   BasicAuthData *auth)
+{
+  GList *list;
+
+  G_LOCK (active_auth);
+  if (active_auth == NULL)
+    active_auth = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  list = g_hash_table_lookup (active_auth, sender);
+  list = g_list_prepend (list, auth);
+  g_hash_table_insert (active_auth, g_strdup (sender), list);
+
+  G_UNLOCK (active_auth);
+}
+
+static void
+remove_auth_for_peer (const char *sender,
+                      BasicAuthData *auth)
+{
+  GList *list;
+
+  G_LOCK (active_auth);
+  list = g_hash_table_lookup (active_auth, sender);
+  list = g_list_remove (list, auth);
+  g_hash_table_insert (active_auth, g_strdup (sender), list);
+
+  G_UNLOCK (active_auth);
+}
+
+static gpointer
+peer_died (const char *name)
+{
+  G_LOCK (active_auth);
+  if (active_auth)
+    {
+      GList *active = g_hash_table_lookup (active_auth, name);
+      if (active)
+        {
+          for (GList *l = active; l != NULL; l = l->next)
+            {
+              g_debug ("Cancelling auth operation for dying peer %s", name);
+              cancel_basic_auth (l->data);
+            }
+          g_list_free (active);
+          g_hash_table_remove (active_auth, name);
+        }
+    }
+  G_UNLOCK (active_auth);
+  return NULL;
+}
+
+static gboolean
+handle_request_ref_tokens_basic_auth_reply (FlatpakAuthenticatorRequest *object,
+                                            GDBusMethodInvocation *invocation,
+                                            const gchar *arg_user,
+                                            const gchar *arg_password,
+                                            gpointer user_data)
+{
+  BasicAuthData *auth = user_data;
+
+  g_debug ("handlling Request.BasicAuthReply %s %s", arg_user, arg_password);
+
+  flatpak_authenticator_request_complete_basic_auth_reply (object, invocation);
+
+  g_mutex_lock (&auth->mutex);
+  if (!auth->done)
+    {
+      auth->done = TRUE;
+      auth->user = g_strdup (arg_user);
+      auth->password = g_strdup (arg_password);
+      g_cond_signal (&auth->cond);
+    }
+  g_mutex_unlock (&auth->mutex);
+
+  return TRUE;
+}
+
+static char *
+run_basic_auth (FlatpakAuthenticatorRequest *request,
+                const char *sender)
+{
+  BasicAuthData auth = { FALSE };
+  int id1, id2;
+  g_autofree char *combined = NULL;
+
+  g_cond_init (&auth.cond);
+  g_mutex_init (&auth.mutex);
+
+  g_mutex_lock (&auth.mutex);
+
+  add_auth_for_peer (sender, &auth);
+
+  id1 = g_signal_connect (request, "handle-close", G_CALLBACK (handle_request_ref_tokens_close), &auth);
+  id2 = g_signal_connect (request, "handle-basic-auth-reply", G_CALLBACK (handle_request_ref_tokens_basic_auth_reply), &auth);
+
+  flatpak_auth_request_emit_basic_auth (request, sender, "TODO");
+
+  while (!auth.done)
+    g_cond_wait (&auth.cond, &auth.mutex);
+
+  g_signal_handler_disconnect (request, id1);
+  g_signal_handler_disconnect (request, id2);
+
+  remove_auth_for_peer (sender, &auth);
+
+  g_mutex_unlock (&auth.mutex);
+
+  g_cond_clear (&auth.cond);
+  g_mutex_clear (&auth.mutex);
+
+  if (auth.user == NULL)
+    return NULL;
+
+  combined = g_strdup_printf ("%s:%s", auth.user, auth.password);
+  g_free (auth.user);
+  g_free (auth.password);
+
+  return g_base64_encode ((guchar *)combined, strlen (combined));
 }
 
 static char *
@@ -185,13 +335,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
 
   g_debug ("handling Authenticator.RequestRefTokens");
 
-  if (!g_variant_lookup (arg_authenticator_options, "auth", "&s", &auth))
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_INVALID_ARGS,
-                                             "No auth configured");
-      return TRUE;
-    }
+  g_variant_lookup (arg_authenticator_options, "auth", "&s", &auth);
 
   if (!g_variant_lookup (arg_extra_data, "xa.oci-registry-uri", "&s", &oci_registry_uri))
     {
@@ -221,17 +365,37 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
       return TRUE;
     }
 
-  g_signal_connect (request, "handle-close", G_CALLBACK (handle_request_ref_tokens_close), NULL);
-
   flatpak_authenticator_complete_request_ref_tokens (authenticator, invocation, request_path);
 
   registry = flatpak_oci_registry_new (oci_registry_uri, FALSE, -1, NULL, &error);
   if (registry == NULL)
     return error_request (request, sender, error->message);
 
+  n_refs = g_variant_n_children (arg_refs);
+
+  if (auth == NULL && n_refs > 0)
+    {
+      g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
+      g_autofree char *token = NULL;
+
+      while (auth == NULL)
+        {
+          g_autofree char *test_auth = NULL;
+
+          /* TODO: Handle the case where the peer dies */
+          test_auth = run_basic_auth (request, sender);
+
+          if (test_auth == NULL)
+            return cancel_request (request, sender);
+
+          token = get_token_for_ref (registry, ref_data, test_auth, &error);
+          if (token != NULL)
+            auth = g_steal_pointer (&test_auth);
+        }
+    }
+
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
 
-  n_refs = g_variant_n_children (arg_refs);
   for (i = 0; i < n_refs; i++)
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, i);
@@ -335,6 +499,28 @@ message_handler (const gchar   *log_domain,
     g_printerr ("%s: %s\n", g_get_prgname (), message);
 }
 
+static void
+name_owner_changed (GDBusConnection *connection,
+                    const gchar     *sender_name,
+                    const gchar     *object_path,
+                    const gchar     *interface_name,
+                    const gchar     *signal_name,
+                    GVariant        *parameters,
+                    gpointer         user_data)
+{
+  const char *name, *from, *to;
+
+  g_variant_get (parameters, "(&s&s&s)", &name, &from, &to);
+
+  if (name[0] == ':' &&
+      strcmp (name, from) == 0 &&
+      strcmp (to, "") == 0)
+    {
+      peer_died (name);
+    }
+}
+
+
 int
 main (int    argc,
       char **argv)
@@ -408,6 +594,16 @@ main (int    argc,
 
   /* Ensure we don't idle exit */
   schedule_idle_callback ();
+
+  g_dbus_connection_signal_subscribe (session_bus,
+                                      "org.freedesktop.DBus",
+                                      "org.freedesktop.DBus",
+                                      "NameOwnerChanged",
+                                      "/org/freedesktop/DBus",
+                                      NULL,
+                                      G_DBUS_SIGNAL_FLAGS_NONE,
+                                      name_owner_changed,
+                                      NULL, NULL);
 
   main_loop = g_main_loop_new (NULL, FALSE);
   g_main_loop_run (main_loop);
