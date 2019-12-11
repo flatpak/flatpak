@@ -131,6 +131,35 @@ get_token_for_ref (FlatpakOciRegistry *registry,
   return flatpak_oci_registry_get_token (registry, oci_repository, oci_digest, basic_auth, NULL, error);
 }
 
+static gboolean
+cancel_request (FlatpakAuthenticatorRequest *request,
+                const char *sender)
+{
+  GVariantBuilder results;
+
+  g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
+  flatpak_auth_request_emit_response (request, sender,
+                                      FLATPAK_AUTH_RESPONSE_CANCELLED,
+                                      g_variant_builder_end (&results));
+  return TRUE;
+}
+
+static gboolean
+error_request (FlatpakAuthenticatorRequest *request,
+               const char *sender,
+               const char *error_message)
+{
+  GVariantBuilder results;
+
+  g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&results, "{sv}", "error-message", g_variant_new_string (error_message));
+  flatpak_auth_request_emit_response (request, sender,
+                                      FLATPAK_AUTH_RESPONSE_ERROR,
+                                      g_variant_builder_end (&results));
+  return TRUE;
+}
+
+
 /* Note: This runs on a thread, so we can just block */
 static gboolean
 handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
@@ -198,14 +227,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
 
   registry = flatpak_oci_registry_new (oci_registry_uri, FALSE, -1, NULL, &error);
   if (registry == NULL)
-    {
-      g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
-      g_variant_builder_add (&results, "{sv}", "error-message", g_variant_new_string (error->message));
-      flatpak_auth_request_emit_response (request, sender,
-                                          FLATPAK_AUTH_RESPONSE_ERROR,
-                                          g_variant_builder_end (&results));
-      return TRUE;
-    }
+    return error_request (request, sender, error->message);
 
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
 
@@ -218,14 +240,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
 
       token = get_token_for_ref (registry, ref_data, auth, &error);
       if (token == NULL)
-        {
-          g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
-          g_variant_builder_add (&results, "{sv}", "error-message", g_variant_new_string (error->message));
-          flatpak_auth_request_emit_response (request, sender,
-                                              FLATPAK_AUTH_RESPONSE_ERROR,
-                                              g_variant_builder_end (&results));
-          return TRUE;
-        }
+        return error_request (request, sender, error->message);
 
       g_variant_get_child (ref_data, 0, "&s", &for_refs_strv[0]);
       g_variant_builder_add (&tokens, "{s^as}", token, for_refs_strv);
