@@ -216,7 +216,8 @@ handle_request_ref_tokens_basic_auth_reply (FlatpakAuthenticatorRequest *object,
 
 static char *
 run_basic_auth (FlatpakAuthenticatorRequest *request,
-                const char *sender)
+                const char *sender,
+                const char *realm)
 {
   BasicAuthData auth = { FALSE };
   int id1, id2;
@@ -232,7 +233,7 @@ run_basic_auth (FlatpakAuthenticatorRequest *request,
   id1 = g_signal_connect (request, "handle-close", G_CALLBACK (handle_request_ref_tokens_close), &auth);
   id2 = g_signal_connect (request, "handle-basic-auth-reply", G_CALLBACK (handle_request_ref_tokens_basic_auth_reply), &auth);
 
-  flatpak_auth_request_emit_basic_auth (request, sender, "TODO");
+  flatpak_auth_request_emit_basic_auth (request, sender, realm);
 
   while (!auth.done)
     g_cond_wait (&auth.cond, &auth.mutex);
@@ -383,7 +384,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
           g_autofree char *test_auth = NULL;
 
           /* TODO: Handle the case where the peer dies */
-          test_auth = run_basic_auth (request, sender);
+          test_auth = run_basic_auth (request, sender, oci_registry_uri);
 
           if (test_auth == NULL)
             return cancel_request (request, sender);
