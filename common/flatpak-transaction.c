@@ -160,9 +160,9 @@ struct _FlatpakTransactionPrivate
   GList                       *flatpakrefs; /* GKeyFiles */
   GList                       *bundles; /* BundleData */
 
-  guint                        next_webflow_id;
-  guint                        active_webflow_id;
-  RequestData                 *active_webflow;
+  guint                        next_request_id;
+  guint                        active_request_id;
+  RequestData                 *active_request;
 
   FlatpakTransactionOperation *current_op;
 
@@ -2744,7 +2744,7 @@ request_tokens_response (FlatpakAuthenticatorRequest *object,
   if (data->done)
     return; /* Don't respond twice */
 
-  g_assert (priv->active_webflow_id == 0); /* It should have reported done */
+  g_assert (priv->active_request_id == 0); /* It should have reported done */
 
   data->response = response;
   data->results = g_variant_ref (results);
@@ -2764,16 +2764,16 @@ request_tokens_webflow (FlatpakAuthenticatorRequest *object,
   if (data->done)
     return; /* Don't respond twice */
 
-  g_assert (priv->active_webflow_id == 0);
-  priv->active_webflow_id = ++priv->next_webflow_id;
+  g_assert (priv->active_request_id == 0);
+  priv->active_request_id = ++priv->next_request_id;
 
   g_debug ("Webflow start %s", arg_uri);
-  g_signal_emit (transaction, signals[WEBFLOW_START], 0, data->remote, arg_uri, priv->active_webflow_id, &retval);
+  g_signal_emit (transaction, signals[WEBFLOW_START], 0, data->remote, arg_uri, priv->active_request_id, &retval);
   if (!retval)
     {
       g_autoptr(GError) local_error = NULL;
 
-      priv->active_webflow_id = 0;
+      priv->active_request_id = 0;
 
       /* We didn't handle the uri, cancel the auth op. */
       if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
@@ -2792,9 +2792,9 @@ request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
   if (data->done)
     return; /* Don't respond twice */
 
-  g_assert (priv->active_webflow_id != 0);
-  id = priv->active_webflow_id;
-  priv->active_webflow_id = 0;
+  g_assert (priv->active_request_id != 0);
+  id = priv->active_request_id;
+  priv->active_request_id = 0;
 
   g_debug ("Webflow done");
   g_signal_emit (transaction, signals[WEBFLOW_DONE], 0, id);
@@ -2822,12 +2822,12 @@ flatpak_transaction_abort_webflow (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GError) local_error = NULL;
 
-  if (priv->active_webflow_id == id)
+  if (priv->active_request_id == id)
     {
-      RequestData *data = priv->active_webflow;
+      RequestData *data = priv->active_request;
 
       g_assert (data != NULL);
-      priv->active_webflow_id = 0;
+      priv->active_request_id = 0;
 
       if (!data->done)
         {
@@ -2928,8 +2928,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
   g_signal_connect (request, "webflow-done", (GCallback)request_tokens_webflow_done, &data);
   g_signal_connect (request, "response", (GCallback)request_tokens_response, &data);
 
-  priv->active_webflow = &data;
-
+  priv->active_request = &data;
 
   data.request = request;
   if (!flatpak_auth_request_ref_tokens (authenticator, request, remote, remote_url, refs, g_variant_builder_end (extra_builder),
@@ -2939,8 +2938,8 @@ request_tokens_for_remote (FlatpakTransaction *self,
   while (!data.done)
     g_main_context_iteration (context, TRUE);
 
-  g_assert (priv->active_webflow_id == 0); /* No outstanding webflows */
-  priv->active_webflow = NULL;
+  g_assert (priv->active_request_id == 0); /* No outstanding requests */
+  priv->active_request = NULL;
 
   results = data.results; /* Make sure its freed as needed */
 
