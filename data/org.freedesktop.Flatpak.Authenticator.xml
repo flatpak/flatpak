@@ -186,6 +186,28 @@
     <signal name="WebflowDone">
     </signal>
     <!--
+        BasicAuth:
+
+        Emitted by the authenticator when it needs to do a simple user + password authentication.
+        This is only useful for very simple authentication interaction, but this is still used (for
+        instance for http basic access authentication), and for those cases this allows a nicely
+        integrated UI and CLI experience.
+    -->
+    <signal name="BasicAuth">
+      <arg type="s" name="realm"/>
+    </signal>
+    <!--
+        BasicAuthReply:
+        @user: The user
+        @password: The password
+
+        Call to finish the request started with the BasicAuth signal.
+    -->
+    <method name="BasicAuthReply">
+      <arg type="s" name="user"/>
+      <arg type="s" name="password"/>
+    </method>
+    <!--
         Response:
         @response: Numeric response
         @results: Vardict with results. The keys and values in the vardict depend on the request.

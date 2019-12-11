@@ -193,6 +193,7 @@ enum {
   ADD_NEW_REMOTE,
   WEBFLOW_START,
   WEBFLOW_DONE,
+  BASIC_AUTH_START,
   LAST_SIGNAL
 };
 
@@ -1196,6 +1197,34 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 1, G_TYPE_INT);
+  /**
+   * FlatpakTransaction::basic-auth-start:
+   * @object: A #FlatpakTransaction
+   * @remote: The remote we're authenticating with
+   * @realm: The url to show
+   * @id: The id of the operation, can be used to finish it
+   *
+   * The ::basic-auth-start signal gets emitted when a basic user/password
+   * authentication is needed during the operation. If the caller handles this
+   * it should ask the user for the user and password and return %TRUE. Once
+   * the information is gathered call flatpak_transaction_complete_basic_auth()
+   * with it.
+   *
+   * If the client does not support basic auth then return %FALSE from this signal
+   * (or don't implement it). This will abort the authentication and likely
+   * result in the transaction failing (unless the authentication was somehow
+   * optional).
+   *
+   * Since: 1.5.2
+   */
+  signals[BASIC_AUTH_START] =
+    g_signal_new ("basic-auth-start",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, basic_auth_start),
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_BOOLEAN, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
 
 }
 
@@ -2800,6 +2829,36 @@ request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
   g_signal_emit (transaction, signals[WEBFLOW_DONE], 0, id);
 }
 
+static void
+request_tokens_basic_auth (FlatpakAuthenticatorRequest *object,
+                           const gchar *arg_realm,
+                           RequestData *data)
+{
+  g_autoptr(FlatpakTransaction) transaction = g_object_ref (data->transaction);
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (transaction);
+  gboolean retval = FALSE;
+
+  if (data->done)
+    return; /* Don't respond twice */
+
+  g_assert (priv->active_request_id == 0);
+  priv->active_request_id = ++priv->next_request_id;
+
+  g_debug ("BasicAuth start %s", arg_realm);
+  g_signal_emit (transaction, signals[BASIC_AUTH_START], 0, data->remote, arg_realm, priv->active_request_id, &retval);
+  if (!retval)
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      priv->active_request_id = 0;
+
+      /* We didn't handle the request, cancel the auth op. */
+      if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
+        g_debug ("Failed to close auth request: %s", local_error->message);
+    }
+
+}
+
 /**
  * flatpak_transaction_abort_webflow:
  * @self: a #FlatpakTransaction
@@ -2833,6 +2892,48 @@ flatpak_transaction_abort_webflow (FlatpakTransaction *self,
         {
           if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
             g_debug ("Failed to close auth request: %s", local_error->message);
+        }
+    }
+}
+
+/**
+ * flatpak_transaction_complete_basic_auth:
+ * @self: a #FlatpakTransaction
+ * @id: The webflow id, as passed into the webflow-start signal
+ * @user: The user name, or %NULL if aborting request
+ * @password: The password
+ *
+ * Finishes (or aborts) an ongoing basic auth request.
+ *
+ * Since: 1.5.2
+ */
+void
+flatpak_transaction_complete_basic_auth (FlatpakTransaction *self,
+                                         guint id,
+                                         const char *user,
+                                         const char *password)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GError) local_error = NULL;
+
+  if (priv->active_request_id == id)
+    {
+      RequestData *data = priv->active_request;
+
+      g_assert (data != NULL);
+      priv->active_request_id = 0;
+
+      if (user == NULL)
+        {
+          if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
+            g_debug ("Failed to abort basic auth request: %s", local_error->message);
+        }
+      else
+        {
+          if (!flatpak_authenticator_request_call_basic_auth_reply_sync (data->request,
+                                                                         user, password,
+                                                                         NULL, &local_error))
+            g_debug ("Failed to reply to basic auth request: %s", local_error->message);
         }
     }
 }
@@ -2927,6 +3028,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
   g_signal_connect (request, "webflow", (GCallback)request_tokens_webflow, &data);
   g_signal_connect (request, "webflow-done", (GCallback)request_tokens_webflow_done, &data);
   g_signal_connect (request, "response", (GCallback)request_tokens_response, &data);
+  g_signal_connect (request, "basic-auth", (GCallback)request_tokens_basic_auth, &data);
 
   priv->active_request = &data;
 
