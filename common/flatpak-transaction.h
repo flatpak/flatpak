@@ -139,7 +139,11 @@ struct _FlatpakTransactionClass
   void (*webflow_done) (FlatpakTransaction *transaction,
                         guint               id);
 
-  gpointer padding[6];
+  gboolean (*basic_auth_start) (FlatpakTransaction *transaction,
+                                const char         *remote,
+                                const char         *realm,
+                                guint               id);
+  gpointer padding[5];
 };
 
 FLATPAK_EXTERN
@@ -238,6 +242,11 @@ GList *flatpak_transaction_get_operations (FlatpakTransaction *self);
 FLATPAK_EXTERN
 void               flatpak_transaction_abort_webflow (FlatpakTransaction *self,
                                                       guint               id);
+FLATPAK_EXTERN
+void               flatpak_transaction_complete_basic_auth (FlatpakTransaction *self,
+                                                            guint id,
+                                                            const char *user,
+                                                            const char *password);
 
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install (FlatpakTransaction *self,
