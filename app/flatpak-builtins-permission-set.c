@@ -153,7 +153,7 @@ flatpak_builtin_permission_set (int argc, char **argv,
   if (data)
     {
       if (!xdp_dbus_permission_store_call_set_value_sync (store, table, FALSE,
-                                                          id, data, NULL, error))
+                                                          id, g_variant_new_variant (data), NULL, error))
         return FALSE;
     }
 
