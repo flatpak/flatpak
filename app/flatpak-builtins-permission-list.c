@@ -91,7 +91,7 @@ list_table (XdpDbusPermissionStore *store,
       d = g_variant_get_child_value (data, 0);
       txt = g_variant_print (d, FALSE);
 
-      if (g_variant_iter_init (&iter, permissions) == 0 && id != 0)
+      if (g_variant_iter_init (&iter, permissions) == 0)
         {
           flatpak_table_printer_add_column (printer, table);
           flatpak_table_printer_add_column (printer, ids[i]);
