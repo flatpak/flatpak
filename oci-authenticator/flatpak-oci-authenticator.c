@@ -310,6 +310,103 @@ error_request (FlatpakAuthenticatorRequest *request,
   return TRUE;
 }
 
+static char *
+canonicalize_registry_uri (const char *oci_registry_uri)
+{
+  const char *slash;
+  /* Skip http: part */
+  while (*oci_registry_uri != 0 &&
+         *oci_registry_uri != ':')
+    oci_registry_uri++;
+
+  if (*oci_registry_uri != 0)
+    oci_registry_uri++;
+
+  /* Skip slashes */
+  while (*oci_registry_uri != 0 &&
+         *oci_registry_uri == '/')
+    oci_registry_uri++;
+
+  slash = strchr (oci_registry_uri, '/');
+  if (slash)
+    return g_strndup (oci_registry_uri, slash - oci_registry_uri);
+  else
+    return g_strdup (oci_registry_uri);
+}
+
+static char *
+lookup_auth_from_config_path (const char *oci_registry_uri,
+                              const char *path)
+{
+  g_autofree char *data = NULL;
+  g_autoptr(JsonNode) json = NULL;
+  JsonObject *auths = NULL, *registry_auth = NULL;
+
+  if (!g_file_get_contents (path, &data, NULL, NULL))
+    return NULL;
+
+  json = json_from_string (data, NULL);
+  if (json == NULL)
+    return NULL;
+  if (json_object_has_member (json_node_get_object (json), "auths"))
+    auths = json_object_get_object_member (json_node_get_object (json), "auths");
+  if (auths)
+    {
+      if (json_object_has_member (auths, oci_registry_uri))
+        registry_auth = json_object_get_object_member (auths, oci_registry_uri);
+      if (registry_auth == NULL)
+        {
+          g_autofree char *canonical = canonicalize_registry_uri (oci_registry_uri);
+          if (canonical && json_object_has_member (auths, canonical))
+            registry_auth = json_object_get_object_member (auths, canonical);
+        }
+      if (registry_auth != NULL)
+        {
+          if (json_object_has_member (registry_auth, "auth"))
+            {
+              return g_strdup (json_object_get_string_member (registry_auth, "auth"));
+            }
+        }
+    }
+
+  return NULL;
+}
+
+
+static char *
+lookup_auth_from_config (const char *oci_registry_uri)
+{
+  /* These are flatpak specific, but use same format as docker/skopeo: */
+  g_autofree char *flatpak_user_path = g_build_filename (g_get_user_config_dir (), "flatpak/oci-auth.json", NULL);
+  const char *flatpak_global_path = "/etc/flatpak/oci-auth.json";
+
+  /* These are what skopeo & co use as per:
+     https://github.com/containers/image/blob/master/pkg/docker/config/config.go#L34
+  */
+  g_autofree char *user_container_path = g_build_filename (g_get_user_runtime_dir (), "containers/auth.json", NULL);
+  g_autofree char *container_path = g_strdup_printf ("/run/containers/%d/auth.json", getuid ());
+  g_autofree char *docker_path = g_build_filename (g_get_home_dir (), ".docker/config.json", NULL);
+
+  char *auth;
+
+  auth = lookup_auth_from_config_path (oci_registry_uri, flatpak_user_path);
+  if (auth != NULL)
+    return auth;
+  auth = lookup_auth_from_config_path (oci_registry_uri, flatpak_global_path);
+  if (auth != NULL)
+    return auth;
+  auth = lookup_auth_from_config_path (oci_registry_uri, user_container_path);
+  if (auth != NULL)
+    return auth;
+  auth = lookup_auth_from_config_path (oci_registry_uri, container_path);
+  if (auth != NULL)
+    return auth;
+  auth = lookup_auth_from_config_path (oci_registry_uri, docker_path);
+  if (auth != NULL)
+    return auth;
+
+  return NULL;
+}
 
 /* Note: This runs on a thread, so we can just block */
 static gboolean
@@ -372,8 +469,14 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   if (registry == NULL)
     return error_request (request, sender, error->message);
 
-  n_refs = g_variant_n_children (arg_refs);
 
+  if (auth == NULL)
+    {
+      g_debug ("Looking for %s in auth info", oci_registry_uri);
+      auth = lookup_auth_from_config (oci_registry_uri);
+    }
+
+  n_refs = g_variant_n_children (arg_refs);
   if (auth == NULL && n_refs > 0)
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
@@ -394,6 +497,9 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
             auth = g_steal_pointer (&test_auth);
         }
     }
+
+  if (auth == NULL)
+    return error_request (request, sender, "No authentication information available");
 
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
 
