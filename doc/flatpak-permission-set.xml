@@ -70,7 +70,14 @@
                     Show help options and exit.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><option>--data=DATA</option></term>
 
+                <listitem><para>
+                    Associate <arg choice="plain">DATA</arg> with the entry.
+                    The data must be a serialized GVariant.
+                </para></listitem>
+            </varlistentry>
             <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
