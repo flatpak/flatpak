@@ -547,6 +547,34 @@ webflow_done (FlatpakTransaction *transaction,
 }
 
 static gboolean
+basic_auth_start (FlatpakTransaction *transaction,
+                  const char         *remote,
+                  const char         *realm,
+                  guint               id)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  char *user, *password;
+
+  if (self->disable_interaction)
+    return FALSE;
+
+  g_print (_("Login required remote %s (realm %s)\n"), remote, realm);
+  user = flatpak_prompt (FALSE, _("User"));
+  g_print ("Using user %s\n", user);
+  if (user == NULL)
+    return FALSE;
+
+  password = flatpak_password_prompt (_("Password"));
+  g_print ("Using pwd %s\n", password);
+  if (password == NULL)
+    return FALSE;
+
+  flatpak_transaction_complete_basic_auth (transaction, id, user, password);
+  return TRUE;
+}
+
+
+static gboolean
 end_of_lifed_with_rebase (FlatpakTransaction *transaction,
                           const char         *remote,
                           const char         *ref,
@@ -1102,6 +1130,7 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   transaction_class->run = flatpak_cli_transaction_run;
   transaction_class->webflow_start = webflow_start;
   transaction_class->webflow_done = webflow_done;
+  transaction_class->basic_auth_start = basic_auth_start;
 }
 
 FlatpakTransaction *
