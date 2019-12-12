@@ -5508,8 +5508,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
   manifest_desc = flatpak_oci_descriptor_new (versioned->mediatype, digest, versioned_size);
 
-  flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
-
   flatpak_oci_index_add_manifest (index, ref, manifest_desc);
 
   if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
@@ -5545,27 +5543,18 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
-  GHashTable *annotations, *labels;
+  GHashTable *labels;
   int i;
 
   g_assert (ref != NULL);
   g_assert (g_str_has_prefix (digest, "sha256:"));
 
-  annotations = flatpak_oci_manifest_get_annotations (manifest);
-  if (annotations)
-    flatpak_oci_parse_commit_annotations (annotations, &timestamp,
-                                          &subject, &body,
-                                          &manifest_ref, NULL, NULL,
-                                          metadata_builder);
-  if (manifest_ref == NULL)
-    {
-      labels = flatpak_oci_image_get_labels (image_config);
-      if (labels)
-        flatpak_oci_parse_commit_annotations (labels, &timestamp,
-                                              &subject, &body,
-                                              &manifest_ref, NULL, NULL,
-                                              metadata_builder);
-    }
+  labels = flatpak_oci_image_get_labels (image_config);
+  if (labels)
+    flatpak_oci_parse_commit_labels (labels, &timestamp,
+                                     &subject, &body,
+                                     &manifest_ref, NULL, NULL,
+                                     metadata_builder);
 
   if (manifest_ref == NULL)
     {

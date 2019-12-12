@@ -64,7 +64,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   FlatpakOciManifest *manifest = NULL;
   g_autoptr(FlatpakOciIndex) index = NULL;
   const FlatpakOciManifestDescriptor *desc;
-  GHashTable *annotations, *labels;
+  GHashTable *labels;
 
   dir_uri = g_file_get_uri (file);
   registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
@@ -110,18 +110,10 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (image_config == NULL)
     return FALSE;
 
-  annotations = flatpak_oci_manifest_get_annotations (manifest);
-  if (annotations)
-    flatpak_oci_parse_commit_annotations (annotations, NULL, NULL, NULL,
-                                          &target_ref, NULL, NULL, NULL);
-  if (target_ref == NULL)
-    {
-      labels = flatpak_oci_image_get_labels (image_config);
-      if (labels)
-        flatpak_oci_parse_commit_annotations (labels, NULL, NULL, NULL,
-                                              &target_ref, NULL, NULL, NULL);
-    }
-
+  labels = flatpak_oci_image_get_labels (image_config);
+  if (labels)
+    flatpak_oci_parse_commit_labels (labels, NULL, NULL, NULL,
+                                     &target_ref, NULL, NULL, NULL);
   if (target_ref == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,

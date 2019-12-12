@@ -43,8 +43,15 @@ digest=$(grep sha256: oci/image/index.json | sed s'@.*sha256:\([a-fA-F0-9]\+\).*
 manifest=oci/image/blobs/sha256/$digest
 
 assert_has_file $manifest
-assert_file_has_content $manifest "org\.freedesktop\.appstream\.appdata.*<summary>Print a greeting</summary>"
-assert_file_has_content $manifest "org\.freedesktop\.appstream\.icon-64"
+
+DIGEST=$(grep -C2 application/vnd.oci.image.config.v1+json $manifest | grep digest  | sed s/.*\"sha256:\\\(.*\\\)\".*/\\1/)
+echo DIGEST: $DIGEST
+image=oci/image/blobs/sha256/$DIGEST
+
+assert_has_file $image
+assert_file_has_content $image "org\.freedesktop\.appstream\.appdata.*<summary>Print a greeting</summary>"
+assert_file_has_content $image "org\.freedesktop\.appstream\.icon-64"
+assert_file_has_content $image org.flatpak.ref.*app/org.test.Hello/x86_64/master
 
 echo "ok export oci"
 
