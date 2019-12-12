@@ -193,6 +193,7 @@ handle_request_ref_tokens_basic_auth_reply (FlatpakAuthenticatorRequest *object,
                                             GDBusMethodInvocation *invocation,
                                             const gchar *arg_user,
                                             const gchar *arg_password,
+                                            GVariant *options,
                                             gpointer user_data)
 {
   BasicAuthData *auth = user_data;
@@ -233,7 +234,7 @@ run_basic_auth (FlatpakAuthenticatorRequest *request,
   id1 = g_signal_connect (request, "handle-close", G_CALLBACK (handle_request_ref_tokens_close), &auth);
   id2 = g_signal_connect (request, "handle-basic-auth-reply", G_CALLBACK (handle_request_ref_tokens_basic_auth_reply), &auth);
 
-  flatpak_auth_request_emit_basic_auth (request, sender, realm);
+  flatpak_auth_request_emit_basic_auth (request, sender, realm, NULL);
 
   while (!auth.done)
     g_cond_wait (&auth.cond, &auth.mutex);
@@ -417,7 +418,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                            const gchar *arg_remote,
                            const gchar *arg_remote_uri,
                            GVariant *arg_refs,
-                           GVariant *arg_extra_data,
+                           GVariant *arg_options,
                            const gchar *arg_parent_window)
 {
   g_autofree char *request_path = NULL;
@@ -435,7 +436,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
 
   g_variant_lookup (arg_authenticator_options, "auth", "&s", &auth);
 
-  if (!g_variant_lookup (arg_extra_data, "xa.oci-registry-uri", "&s", &oci_registry_uri))
+  if (!g_variant_lookup (arg_options, "xa.oci-registry-uri", "&s", &oci_registry_uri))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,

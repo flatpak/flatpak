@@ -125,7 +125,7 @@ http_incoming (GSocketService    *service,
   g_debug ("handling incomming http request for %s", data->sender);
 
   g_debug ("emiting webflow done");
-  flatpak_auth_request_emit_webflow_done (data->request, data->sender);
+  flatpak_auth_request_emit_webflow_done (data->request, data->sender, NULL);
 
   finish_request_ref_tokens (data);
 
@@ -175,7 +175,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                            const gchar *arg_remote,
                            const gchar *arg_remote_uri,
                            GVariant *arg_refs,
-                           GVariant *arg_extra_data,
+                           GVariant *arg_options,
                            const gchar *arg_parent_window)
 {
   g_autoptr(GError) error = NULL;
@@ -243,7 +243,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
     {
       uri = g_strdup_printf ("http://localhost:%d", (int)port);
       g_debug ("Requesting webflow %s", uri);
-      flatpak_auth_request_emit_webflow (request, g_dbus_method_invocation_get_sender (invocation), uri);
+      flatpak_auth_request_emit_webflow (request, g_dbus_method_invocation_get_sender (invocation), uri, NULL);
     }
   else
     {

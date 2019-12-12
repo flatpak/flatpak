@@ -506,6 +506,7 @@ static gboolean
 webflow_start (FlatpakTransaction *transaction,
                const char         *remote,
                const char         *url,
+               GVariant           *options,
                guint               id)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
@@ -541,6 +542,7 @@ webflow_start (FlatpakTransaction *transaction,
 
 static void
 webflow_done (FlatpakTransaction *transaction,
+              GVariant           *options,
               guint               id)
 {
   g_print ("Browser done\n");
@@ -550,6 +552,7 @@ static gboolean
 basic_auth_start (FlatpakTransaction *transaction,
                   const char         *remote,
                   const char         *realm,
+                  GVariant           *options,
                   guint               id)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
@@ -569,7 +572,7 @@ basic_auth_start (FlatpakTransaction *transaction,
   if (password == NULL)
     return FALSE;
 
-  flatpak_transaction_complete_basic_auth (transaction, id, user, password);
+  flatpak_transaction_complete_basic_auth (transaction, id, user, password, NULL);
   return TRUE;
 }
 

@@ -54,7 +54,7 @@ gboolean                     flatpak_auth_request_ref_tokens        (FlatpakAuth
                                                                      const char                   *remote,
                                                                      const char                   *remote_uri,
                                                                      GVariant                     *refs,
-                                                                     GVariant                     *extra_data,
+                                                                     GVariant                     *options,
                                                                      const char                   *parent_window,
                                                                      GCancellable                 *cancellable,
                                                                      GError                      **error);
@@ -67,11 +67,14 @@ void                         flatpak_auth_request_emit_response     (FlatpakAuth
                                                                      GVariant                     *arg_results);
 void                         flatpak_auth_request_emit_webflow      (FlatpakAuthenticatorRequest  *request,
                                                                      const gchar                  *destination_bus_name,
-                                                                     const char                   *arg_uri);
+                                                                     const char                   *arg_uri,
+                                                                     GVariant                      *options);
 void                         flatpak_auth_request_emit_webflow_done (FlatpakAuthenticatorRequest  *request,
-                                                                     const gchar                  *destination_bus_name);
+                                                                     const gchar                  *destination_bus_name,
+                                                                     GVariant                      *options);
 void                         flatpak_auth_request_emit_basic_auth   (FlatpakAuthenticatorRequest  *request,
                                                                      const char                   *destination_bus_name,
-                                                                     const char                   *arg_realm);
+                                                                     const char                   *arg_realm,
+                                                                     GVariant                      *options);
 
 #endif /* __FLATPAK_AUTH_H__ */
