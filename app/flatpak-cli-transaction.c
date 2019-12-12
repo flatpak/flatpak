@@ -521,18 +521,25 @@ webflow_start (FlatpakTransaction *transaction,
         return FALSE;
     }
 
+  /* Allow hard overrides with $BROWSER */
   browser = g_getenv ("BROWSER");
-  if (browser == NULL)
-    browser = "xdg-open";
-
-  /* TODO: Use better way to find default browser */
-
-  args[0] = browser;
-  if (!g_spawn_async (NULL, (char **)args, NULL, G_SPAWN_SEARCH_PATH,
-                      NULL, NULL, NULL, &local_error))
+  if (browser != NULL)
     {
-      g_printerr ("Failed to spawn browser %s: %s\n", browser, local_error->message);
-      return FALSE;
+      args[0] = browser;
+      if (!g_spawn_async (NULL, (char **)args, NULL, G_SPAWN_SEARCH_PATH,
+                          NULL, NULL, NULL, &local_error))
+        {
+          g_printerr ("Failed to start browser %s: %s\n", browser, local_error->message);
+          return FALSE;
+        }
+    }
+  else
+    {
+      if (!g_app_info_launch_default_for_uri (url, NULL, &local_error))
+        {
+          g_printerr ("Failed to show url: %s\n", local_error->message);
+          return FALSE;
+        }
     }
 
   g_print ("Waiting for browser...\n");
