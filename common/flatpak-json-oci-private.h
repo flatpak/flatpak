@@ -37,10 +37,10 @@ G_BEGIN_DECLS
 #define FLATPAK_OCI_SIGNATURE_TYPE_FLATPAK "flatpak oci image signature"
 
 const char * flatpak_arch_to_oci_arch (const char *flatpak_arch);
-void flatpak_oci_export_annotations (GHashTable *source,
-                                     GHashTable *dest);
-void flatpak_oci_copy_annotations (GHashTable *source,
-                                   GHashTable *dest);
+void flatpak_oci_export_labels (GHashTable *source,
+                                GHashTable *dest);
+void flatpak_oci_copy_labels (GHashTable *source,
+                              GHashTable *dest);
 
 typedef struct
 {
@@ -229,18 +229,18 @@ int              flatpak_oci_image_add_history (FlatpakOciImage *image);
 FlatpakOciImage * flatpak_oci_image_from_json (GBytes *bytes,
                                                GError **error);
 
-void flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
-                                             const char *ref,
-                                             const char *commit,
-                                             GVariant   *commit_data);
-void flatpak_oci_parse_commit_annotations (GHashTable      *annotations,
-                                           guint64         *out_timestamp,
-                                           char           **out_subject,
-                                           char           **out_body,
-                                           char           **out_ref,
-                                           char           **out_commit,
-                                           char           **out_parent_commit,
-                                           GVariantBuilder *metadata_builder);
+void flatpak_oci_add_labels_for_commit (GHashTable *labels,
+                                        const char *ref,
+                                        const char *commit,
+                                        GVariant   *commit_data);
+void flatpak_oci_parse_commit_labels (GHashTable      *labels,
+                                      guint64         *out_timestamp,
+                                      char           **out_subject,
+                                      char           **out_body,
+                                      char           **out_ref,
+                                      char           **out_commit,
+                                      char           **out_parent_commit,
+                                      GVariantBuilder *metadata_builder);
 
 #define FLATPAK_TYPE_OCI_SIGNATURE flatpak_oci_signature_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK, OCI_SIGNATURE, FlatpakJson)

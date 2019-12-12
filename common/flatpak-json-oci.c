@@ -64,7 +64,7 @@ flatpak_oci_descriptor_copy (FlatpakOciDescriptor *source,
   dest->urls = g_strdupv ((char **) source->urls);
   dest->annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   if (source->annotations)
-    flatpak_oci_copy_annotations (source->annotations, dest->annotations);
+    flatpak_oci_copy_labels (source->annotations, dest->annotations);
 }
 
 void
@@ -733,8 +733,8 @@ flatpak_oci_image_set_layer (FlatpakOciImage *image,
 }
 
 void
-flatpak_oci_export_annotations (GHashTable *source,
-                                GHashTable *dest)
+flatpak_oci_export_labels (GHashTable *source,
+                           GHashTable *dest)
 {
   const char *keys[] = {
     "org.flatpak.ref",
@@ -759,8 +759,8 @@ flatpak_oci_export_annotations (GHashTable *source,
 }
 
 void
-flatpak_oci_copy_annotations (GHashTable *source,
-                              GHashTable *dest)
+flatpak_oci_copy_labels (GHashTable *source,
+                         GHashTable *dest)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -798,24 +798,24 @@ flatpak_oci_image_add_history (FlatpakOciImage *image)
 }
 
 static void
-add_annotation (GHashTable *annotations, const char *key, const char *value)
+add_label (GHashTable *labels, const char *key, const char *value)
 {
-  g_hash_table_replace (annotations,
+  g_hash_table_replace (labels,
                         g_strdup (key),
                         g_strdup (value));
 }
 
 void
-flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
-                                        const char *ref,
-                                        const char *commit,
-                                        GVariant   *commit_data)
+flatpak_oci_add_labels_for_commit (GHashTable *labels,
+                                   const char *ref,
+                                   const char *commit,
+                                   GVariant   *commit_data)
 {
   if (ref)
-    add_annotation (annotations, "org.flatpak.ref", ref);
+    add_label (labels, "org.flatpak.ref", ref);
 
   if (commit)
-    add_annotation (annotations, "org.flatpak.commit", commit);
+    add_label (labels, "org.flatpak.commit", commit);
 
   if (commit_data)
     {
@@ -828,7 +828,7 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
 
       parent = ostree_commit_get_parent (commit_data);
       if (parent)
-        add_annotation (annotations, "org.flatpak.parent-commit", parent);
+        add_label (labels, "org.flatpak.parent-commit", parent);
 
       metadata = g_variant_get_child_value (commit_data, 0);
       for (i = 0; i < g_variant_n_children (metadata); i++)
@@ -843,66 +843,66 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
           full_key = g_strdup_printf ("org.flatpak.commit-metadata.%s", key);
 
           value_base64 = g_base64_encode (g_variant_get_data (value), g_variant_get_size (value));
-          add_annotation (annotations, full_key, value_base64);
+          add_label (labels, full_key, value_base64);
         }
 
       timestamp = g_strdup_printf ("%"G_GUINT64_FORMAT, ostree_commit_get_timestamp (commit_data));
-      add_annotation (annotations, "org.flatpak.timestamp", timestamp);
+      add_label (labels, "org.flatpak.timestamp", timestamp);
 
       g_variant_get_child (commit_data, 3, "s", &subject);
-      add_annotation (annotations, "org.flatpak.subject", subject);
+      add_label (labels, "org.flatpak.subject", subject);
 
       g_variant_get_child (commit_data, 4, "s", &body);
-      add_annotation (annotations, "org.flatpak.body", body);
+      add_label (labels, "org.flatpak.body", body);
     }
 }
 
 void
-flatpak_oci_parse_commit_annotations (GHashTable      *annotations,
-                                      guint64         *out_timestamp,
-                                      char           **out_subject,
-                                      char           **out_body,
-                                      char           **out_ref,
-                                      char           **out_commit,
-                                      char           **out_parent_commit,
-                                      GVariantBuilder *metadata_builder)
+flatpak_oci_parse_commit_labels (GHashTable      *labels,
+                                 guint64         *out_timestamp,
+                                 char           **out_subject,
+                                 char           **out_body,
+                                 char           **out_ref,
+                                 char           **out_commit,
+                                 char           **out_parent_commit,
+                                 GVariantBuilder *metadata_builder)
 {
   const char *oci_timestamp, *oci_subject, *oci_body, *oci_parent_commit, *oci_commit, *oci_ref;
   GHashTableIter iter;
   gpointer _key, _value;
 
-  oci_ref = g_hash_table_lookup (annotations, "org.flatpak.ref");
+  oci_ref = g_hash_table_lookup (labels, "org.flatpak.ref");
 
-  /* Early return if this is not a flatpak manifest or if looking at annotations when the data is in labels */
+  /* Early return if this is not a flatpak manifest  */
   if (oci_ref == NULL)
     return;
 
   if (oci_ref != NULL && out_ref != NULL && *out_ref == NULL)
     *out_ref = g_strdup (oci_ref);
 
-  oci_commit = g_hash_table_lookup (annotations, "org.flatpak.commit");
+  oci_commit = g_hash_table_lookup (labels, "org.flatpak.commit");
   if (oci_commit != NULL && out_commit != NULL && *out_commit == NULL)
     *out_commit = g_strdup (oci_commit);
 
-  oci_parent_commit = g_hash_table_lookup (annotations, "org.flatpak.parent-commit");
+  oci_parent_commit = g_hash_table_lookup (labels, "org.flatpak.parent-commit");
   if (oci_parent_commit != NULL && out_parent_commit != NULL && *out_parent_commit == NULL)
     *out_parent_commit = g_strdup (oci_parent_commit);
 
-  oci_timestamp = g_hash_table_lookup (annotations, "org.flatpak.timestamp");
+  oci_timestamp = g_hash_table_lookup (labels, "org.flatpak.timestamp");
   if (oci_timestamp != NULL && out_timestamp != NULL && *out_timestamp == 0)
     *out_timestamp = g_ascii_strtoull (oci_timestamp, NULL, 10);
 
-  oci_subject = g_hash_table_lookup (annotations, "org.flatpak.subject");
+  oci_subject = g_hash_table_lookup (labels, "org.flatpak.subject");
   if (oci_subject != NULL && out_subject != NULL && *out_subject == NULL)
     *out_subject = g_strdup (oci_subject);
 
-  oci_body = g_hash_table_lookup (annotations, "org.flatpak.body");
+  oci_body = g_hash_table_lookup (labels, "org.flatpak.body");
   if (oci_body != NULL && out_body != NULL && *out_body == NULL)
     *out_body = g_strdup (oci_body);
 
   if (metadata_builder)
     {
-      g_hash_table_iter_init (&iter, annotations);
+      g_hash_table_iter_init (&iter, labels);
       while (g_hash_table_iter_next (&iter, &_key, &_value))
         {
           const char *key = _key;

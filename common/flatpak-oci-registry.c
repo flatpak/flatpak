@@ -2097,8 +2097,6 @@ get_image_metadata (FlatpakOciIndexImage *img, const char *key)
       if (ref)
         return ref;
     }
-  if (img->annotations)
-    return g_hash_table_lookup (img->annotations, key);
   return NULL;
 }
 
@@ -2142,9 +2140,6 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
   const char *oci_arch = NULL;
   gboolean success = FALSE;
   g_autoptr(GError) local_error = NULL;
-  gboolean use_labels = FALSE;
-  const char *query_uri_part;
-  const char *metadata_query;
 
   if (!g_str_has_prefix (uri, "oci+http:") && !g_str_has_prefix (uri, "oci+https:"))
     {
@@ -2184,27 +2179,15 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
       g_clear_pointer (&tag, g_free);
       tag = g_strdup ("latest");
     }
+
   soup_uri_set_fragment (base_uri, NULL);
-
-  query_uri_part = soup_uri_get_query (base_uri);
-  if (query_uri_part)
-    {
-      g_autoptr(GHashTable) query_args = soup_form_decode (query_uri_part);
-      const char *index = g_hash_table_lookup (query_args, "index");
-      use_labels = g_strcmp0 (index, "labels") == 0;
-    }
-
-  if (use_labels)
-    metadata_query = "label:org.flatpak.ref:exists";
-  else
-    metadata_query = "annotation:org.flatpak.ref:exists";
 
   query_uri = soup_uri_copy (base_uri);
 
   oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
 
   soup_uri_set_query_from_fields (query_uri,
-                                  metadata_query, "1",
+                                  "label:org.flatpak.ref:exists", "1",
                                   "architecture", oci_arch,
                                   "os", "linux",
                                   "tag", tag,
@@ -2532,7 +2515,7 @@ add_image_to_appstream (SoupSession               *soup_session,
 
   static struct
   {
-    const char *annotation;
+    const char *label;
     const char *subdir;
   } icon_sizes[] = {
     { "org.freedesktop.appstream.icon-64", "64x64" },
@@ -2595,7 +2578,7 @@ add_image_to_appstream (SoupSession               *soup_session,
 
   for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
     {
-      const char *icon_data = get_image_metadata (image, icon_sizes[i].annotation);
+      const char *icon_data = get_image_metadata (image, icon_sizes[i].label);
       if (icon_data)
         {
           if (!add_icon_image (soup_session,
