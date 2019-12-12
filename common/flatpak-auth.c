@@ -33,10 +33,12 @@ flatpak_auth_new_for_remote (FlatpakDir *dir,
                              GError **error)
 {
   g_autofree char *name = NULL;
-  g_autofree char *options = NULL;
   g_autoptr(AutoFlatpakAuthenticator) authenticator = NULL;
-  g_autoptr(GVariant) options_v = NULL;
+  g_autoptr(GVariant) auth_options = NULL;
+  g_auto(GStrv) keys = NULL;
+  g_autoptr(GVariantBuilder) auth_options_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   OstreeRepo *repo;
+  int i;
 
   if (!flatpak_dir_ensure_repo (dir, cancellable, error))
     return FALSE;
@@ -53,12 +55,28 @@ flatpak_auth_new_for_remote (FlatpakDir *dir,
       return NULL;
     }
 
-  if (!ostree_repo_get_remote_option (repo, remote, FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_OPTIONS, "{}", &options, error))
-    return NULL;
+  keys = flatpak_dir_list_remote_config_keys (dir, remote);
 
-  options_v = g_variant_parse (G_VARIANT_TYPE("a{sv}"), options, NULL, NULL, error);
-  if (options_v == NULL)
-    return NULL;
+  for (i = 0; keys != NULL && keys[i] != NULL; i++)
+    {
+      const char *key = keys[i];
+      const char *key_suffix;
+      g_autofree char *value = NULL;
+
+      if (!g_str_has_prefix (key, FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_OPTIONS_PREFIX))
+        continue;
+
+      key_suffix = key + strlen(FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_OPTIONS_PREFIX);
+      if (key_suffix[0] == 0)
+        continue;
+
+      if (!ostree_repo_get_remote_option (repo, remote, key, NULL, &value, error))
+        return NULL;
+
+      g_variant_builder_add (auth_options_builder, "{sv}", key_suffix, g_variant_new_string(value));
+    }
+
+  auth_options = g_variant_ref_sink (g_variant_builder_end (auth_options_builder));
 
   authenticator = flatpak_authenticator_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
                                                                 G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
@@ -68,7 +86,7 @@ flatpak_auth_new_for_remote (FlatpakDir *dir,
   if (authenticator == NULL)
     return NULL;
 
-  g_object_set_data_full (G_OBJECT (authenticator), "authenticator-options", g_steal_pointer (&options_v), (GDestroyNotify)g_variant_unref);
+  g_object_set_data_full (G_OBJECT (authenticator), "authenticator-options", g_steal_pointer (&auth_options), (GDestroyNotify)g_variant_unref);
   return g_steal_pointer (&authenticator);
 }
 
