@@ -76,23 +76,32 @@
         @authenticator_options: Data from the xa.authenticator-options key in the configuration for the remote, it is up to the authenticator to interpret this how it wants.
         @remote: The name of the remote we're pulling from.
         @remote_uri: The uri of the remote we're pulling from.
-        @refs: An array of refs that flatpak wants to pull and the token-type for each ref.
+        @refs: An array of ref that flatpak wants to pull and info about each ref.
         @extra_data: An extensible  dict with extra data for the request.
         @parent_window: Identifier for the application window, see <link linkend="https://flatpak.github.io/xdg-desktop-portal/portal-docs.html#parent_window">xdg-desktop-portal docs</link> for details on its format.
         @handle: Object path for the #org.freedesktop.Flatpak.AuthenticatorRequest object representing this call.
 
-        Starts a request for resolving the tokens to use for @refs from the @remote. This is not a regular dbus call that blocks until the result is done, instead
-        it creates a org.freedesktop.Flatpak.AuthenticatorRequest object representing the ongoing operation and returns an object path @handle to it. When
-        the operation succeds the Response signal is emitted on the request with a response status and a dict with details.
+        Starts a request for resolving the tokens to use for @refs from the @remote (with uri @remote_uri).
+
+        This is not a regular dbus call that blocks until the result is done, instead it creates
+        a org.freedesktop.Flatpak.AuthenticatorRequest object representing the ongoing operation and
+        returns an object path @handle to it. When the operation succeds the Response signal is emitted
+        on the request with a response status and a dict with details.
+
+        The @refs array elements are of type (ssia{sv}) where the items are:
+        <simplelist>
+          <member>s: The ref being pulled</member>
+          <member>s: The exact commit being pulled</member>
+          <member>i: The token-type of the commit</member>
+          <member>a{sv}: Extra per-ref metadata, currenlty only has summary.* fields which are copied from the summary per-commit metadata.</member>
+        </simplelist>
 
         On success (response 0) the returned details should have:
         <variablelist>
           <varlistentry>
             <term>tokens a{sas}</term>
             <listitem><para>
-              A list of tokens (the first element of the struct), and the refs+commit that it applies to (the second and third element of the struct).
-              Each element also has an dict with extra data as element 4.
-              The returned token may be the empty string, to signal that flatpak doesn't need to use a token for these refs.
+              A list of tokens (the first element of the struct), and the refs (the second).
             </para></listitem>
           </varlistentry>
         </variablelist>
@@ -110,6 +119,21 @@
         Alternatively, if the interaction is web-based, then rather than showing a web browser itself it can emit
         the WebFlow signal on the request object, which lets the flatpak client show a webview embedded in its ui in a
         way that works best with its user interface.
+
+        For simple user/password authentication (such as http basic authentication systems) there is also a BasicAuth signal
+        that can be used to get the user to interactively authenticate. This kind of authentication is quite limited, but
+        if used it can allow nice interactive authentication even in the command line case.
+
+        Currently used keys in the @extra_data argument:
+        <variablelist>
+          <varlistentry>
+            <term>xa.oci-registry-uri s</term>
+            <listitem><para>
+              For OCI remotes this is extracted from the summary file and contains the uri to the OCI registry that
+              contains the images.
+            </para></listitem>
+          </varlistentry>
+        </variablelist>
     -->
     <method name="RequestRefTokens">
       <arg type='s' name='handle_token' direction='in'/>
@@ -187,6 +211,7 @@
     </signal>
     <!--
         BasicAuth:
+        @realm: String showing what the auth is for, similar to http basic auth realm.
 
         Emitted by the authenticator when it needs to do a simple user + password authentication.
         This is only useful for very simple authentication interaction, but this is still used (for
