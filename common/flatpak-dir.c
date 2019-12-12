@@ -12338,6 +12338,19 @@ flatpak_dir_get_repo_config (FlatpakDir *self)
   return ostree_repo_get_config (self->repo);
 }
 
+char **
+flatpak_dir_list_remote_config_keys (FlatpakDir *self,
+                                     const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_keys (config, group, NULL, NULL);
+
+  return NULL;
+}
+
 char *
 flatpak_dir_get_remote_title (FlatpakDir *self,
                               const char *remote_name)
