@@ -5881,10 +5881,7 @@ flatpak_password_prompt (const char *prompt, ...)
       g_print ("%s: ", s);
 
       if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
-        {
-          g_print ("n\n");
-          return NULL;
-        }
+        return NULL;
 
       was_echo = flatpak_set_tty_echo (FALSE);
 
@@ -5895,6 +5892,8 @@ flatpak_password_prompt (const char *prompt, ...)
 
       g_strstrip (buf);
 
+      /* We stole the return, so manual new line */
+      g_print ("\n");
       return g_strdup (buf);
     }
 }
