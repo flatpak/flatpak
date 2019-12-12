@@ -28,7 +28,7 @@
 #define FLATPAK_AUTHENTICATOR_REQUEST_OBJECT_PATH_PREFIX "/org/freedesktop/Flatpak/Authenticator/request/"
 
 #define FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_NAME "xa.authenticator-name"
-#define FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_OPTIONS "xa.authenticator-options"
+#define FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_OPTIONS_PREFIX "xa.authenticator-options."
 
 enum {
       FLATPAK_AUTH_RESPONSE_OK,
