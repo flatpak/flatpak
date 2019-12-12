@@ -30,6 +30,7 @@
 #include <libsoup/soup.h>
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-dir-private.h"
 
 G_DEFINE_QUARK (flatpak_oci_error, flatpak_oci_error)
 
@@ -2264,6 +2265,21 @@ load_oci_index (GFile        *index,
   return (FlatpakOciIndexResponse *) g_steal_pointer (&json);
 }
 
+static GVariant *
+maybe_variant_from_base64 (const char *base64)
+{
+  guchar *bin;
+  gsize bin_len;
+
+  if (base64 == NULL)
+    return NULL;
+
+  bin = g_base64_decode (base64, &bin_len);
+  return g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("v"),
+                                                      bin, bin_len, FALSE,
+                                                      g_free, bin));
+}
+
 GVariant *
 flatpak_oci_index_make_summary (GFile        *index,
                                 const char   *index_uri,
@@ -2277,6 +2293,7 @@ flatpak_oci_index_make_summary (GFile        *index,
   g_autoptr(GArray) images = g_array_new (FALSE, TRUE, sizeof (ImageInfo));
   g_autoptr(GVariantBuilder) refs_builder = NULL;
   g_autoptr(GVariantBuilder) additional_metadata_builder = NULL;
+  g_autoptr(GVariantBuilder) ref_sparse_data_builder = NULL;
   g_autoptr(GVariantBuilder) summary_builder = NULL;
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariantBuilder) ref_data_builder = NULL;
@@ -2318,6 +2335,7 @@ flatpak_oci_index_make_summary (GFile        *index,
   refs_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(s(taya{sv}))"));
   ref_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(tts)}"));
   additional_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  ref_sparse_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sa{sv}}"));
 
   /* The summary has to be sorted by ref */
   g_array_sort (images, (GCompareFunc) compare_image_by_ref);
@@ -2332,8 +2350,14 @@ flatpak_oci_index_make_summary (GFile        *index,
       guint64 download_size = 0;
       const char *installed_size_str;
       const char *download_size_str;
+      const char *token_type_base64;
+      const char *endoflife_base64;
+      const char *endoflife_rebase_base64 = NULL;
       const char *metadata_contents = NULL;
       g_autoptr(GVariantBuilder) ref_metadata_builder = NULL;
+      g_autoptr(GVariant) token_type_v = NULL;
+      g_autoptr(GVariant) endoflife_v = NULL;
+      g_autoptr(GVariant) endoflife_rebase_v = NULL;
 
       if (ref == NULL)
         continue;
@@ -2373,10 +2397,36 @@ flatpak_oci_index_make_summary (GFile        *index,
                              GUINT64_TO_BE (installed_size),
                              GUINT64_TO_BE (download_size),
                              metadata_contents ? metadata_contents : "");
+
+      token_type_base64 = get_image_metadata (image, "org.flatpak.commit-metadata.xa.token-type");
+      token_type_v = maybe_variant_from_base64 (token_type_base64);
+      endoflife_base64 = get_image_metadata (image, "org.flatpak.commit-metadata.ostree.endoflife");
+      endoflife_v = maybe_variant_from_base64 (endoflife_base64);
+      endoflife_rebase_base64 = get_image_metadata (image, "org.flatpak.commit-metadata.ostree.endoflife-rebase");
+      endoflife_rebase_v = maybe_variant_from_base64 (endoflife_rebase_base64);
+
+      if (token_type_v != NULL ||
+          endoflife_v != NULL ||
+          endoflife_rebase_v != NULL)
+        {
+          g_autoptr(GVariantBuilder) sparse_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+          if (token_type_v != NULL)
+            g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, token_type_v);
+          if (endoflife_v != NULL)
+            g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, endoflife_v);
+          if (endoflife_rebase_v != NULL)
+            g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, endoflife_rebase_v);
+
+          g_variant_builder_add (ref_sparse_data_builder, "{s@a{sv}}",
+                                 ref, g_variant_builder_end (sparse_builder));
+        }
     }
 
   g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.cache",
                          g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
+  g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.sparse-cache",
+                         g_variant_builder_end (ref_sparse_data_builder));
   g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.oci-registry-uri",
                          g_variant_new_string (registry_uri_s));
 
