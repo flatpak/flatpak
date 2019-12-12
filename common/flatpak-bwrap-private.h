@@ -80,7 +80,8 @@ gboolean      flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
                                          GError      **error);
 
 void          flatpak_bwrap_child_setup_cb (gpointer user_data);
-
+void          flatpak_bwrap_child_setup (GArray *fd_array,
+                                         gboolean close_fd_workaround);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakBwrap, flatpak_bwrap_free)
 

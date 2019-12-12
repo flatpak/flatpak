@@ -3742,8 +3742,11 @@ flatpak_run_app (const char     *app_ref,
       pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
       g_file_set_contents (pid_path, pid_str, -1, NULL);
 
-      /* Ensure we unset O_CLOEXEC */
-      flatpak_bwrap_child_setup_cb (bwrap->fds);
+      /* Ensure we unset O_CLOEXEC for marked fds and rewind fds as needed.
+       * Note that this does not close fds that are not already marked O_CLOEXEC, because
+       * we do want to allow inheriting fds into flatpak run. */
+      flatpak_bwrap_child_setup (bwrap->fds, FALSE);
+
       if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
         {
           g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),

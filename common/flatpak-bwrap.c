@@ -325,14 +325,14 @@ flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
   return TRUE;
 }
 
-/* Unset FD_CLOEXEC on the array of fds passed in @user_data */
 void
-flatpak_bwrap_child_setup_cb (gpointer user_data)
+flatpak_bwrap_child_setup (GArray *fd_array,
+                           gboolean close_fd_workaround)
 {
-  GArray *fd_array = user_data;
   int i;
 
-  flatpak_close_fds_workaround (3);
+  if (close_fd_workaround)
+    flatpak_close_fds_workaround (3);
 
   /* If no fd_array was specified, don't care. */
   if (fd_array == NULL)
@@ -352,4 +352,13 @@ flatpak_bwrap_child_setup_cb (gpointer user_data)
 
       fcntl (fd, F_SETFD, 0);
     }
+}
+
+/* Unset FD_CLOEXEC on the array of fds passed in @user_data */
+void
+flatpak_bwrap_child_setup_cb (gpointer user_data)
+{
+  GArray *fd_array = user_data;
+
+  flatpak_bwrap_child_setup (fd_array, TRUE);
 }
