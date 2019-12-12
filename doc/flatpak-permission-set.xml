@@ -98,6 +98,15 @@
     </refsect1>
 
     <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak permission-set --data "{'always-ask':&lt;true&gt;}" desktop-used-apps text/plain org.mozilla.Firefox org.gnome.gedit 0 3</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
         <title>See also</title>
 
         <para>
