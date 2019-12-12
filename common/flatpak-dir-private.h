@@ -820,6 +820,8 @@ gboolean   flatpak_dir_remove_remote (FlatpakDir   *self,
                                       const char   *remote_name,
                                       GCancellable *cancellable,
                                       GError      **error);
+char **   flatpak_dir_list_remote_config_keys (FlatpakDir *self,
+                                               const char *remote_name);
 char      *flatpak_dir_get_remote_title (FlatpakDir *self,
                                          const char *remote_name);
 char      *flatpak_dir_get_remote_comment (FlatpakDir *self,
