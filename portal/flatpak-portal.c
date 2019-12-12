@@ -242,6 +242,12 @@ typedef struct
 } ChildSetupData;
 
 static void
+drop_cloexec (int fd)
+{
+  fcntl (fd, F_SETFD, 0);
+}
+
+static void
 child_setup_func (gpointer user_data)
 {
   ChildSetupData *data = (ChildSetupData *) user_data;
@@ -283,6 +289,9 @@ child_setup_func (gpointer user_data)
           dup2 (fd_map[i].to, fd_map[i].final);
           close (fd_map[i].to);
         }
+
+      /* Ensure we inherit the final fd value */
+      drop_cloexec (fd_map[i].final);
     }
 
   /* We become our own session and process group, because it never makes sense
