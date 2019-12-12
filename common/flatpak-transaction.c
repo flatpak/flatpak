@@ -1150,6 +1150,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @object: A #FlatpakTransaction
    * @remote: The remote we're authenticating with
    * @url: The url to show
+   * @options: Extra options, currently unused
    * @id: The id of the operation, can be used to cancel it
    *
    * The ::webflow-start signal gets emitted when some kind of user
@@ -1177,10 +1178,11 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_STRUCT_OFFSET (FlatpakTransactionClass, webflow_start),
                   NULL, NULL,
                   NULL,
-                  G_TYPE_BOOLEAN, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
+                  G_TYPE_BOOLEAN, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_VARIANT, G_TYPE_INT);
   /**
    * FlatpakTransaction::webflow-done:
    * @object: A #FlatpakTransaction
+   * @options: Extra options, currently unused
    * @id: The id of the operation
    *
    * The ::webflow-done signal gets emitted when the authentication
@@ -1196,12 +1198,13 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_STRUCT_OFFSET (FlatpakTransactionClass, webflow_done),
                   NULL, NULL,
                   NULL,
-                  G_TYPE_NONE, 1, G_TYPE_INT);
+                  G_TYPE_NONE, 2, G_TYPE_VARIANT, G_TYPE_INT);
   /**
    * FlatpakTransaction::basic-auth-start:
    * @object: A #FlatpakTransaction
    * @remote: The remote we're authenticating with
    * @realm: The url to show
+   * @options: Extra options, currently unused
    * @id: The id of the operation, can be used to finish it
    *
    * The ::basic-auth-start signal gets emitted when a basic user/password
@@ -1224,7 +1227,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_STRUCT_OFFSET (FlatpakTransactionClass, basic_auth_start),
                   NULL, NULL,
                   NULL,
-                  G_TYPE_BOOLEAN, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
+                  G_TYPE_BOOLEAN, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_VARIANT, G_TYPE_INT);
 
 }
 
@@ -2784,6 +2787,7 @@ request_tokens_response (FlatpakAuthenticatorRequest *object,
 static void
 request_tokens_webflow (FlatpakAuthenticatorRequest *object,
                         const gchar *arg_uri,
+                        GVariant *options,
                         RequestData *data)
 {
   g_autoptr(FlatpakTransaction) transaction = g_object_ref (data->transaction);
@@ -2797,7 +2801,7 @@ request_tokens_webflow (FlatpakAuthenticatorRequest *object,
   priv->active_request_id = ++priv->next_request_id;
 
   g_debug ("Webflow start %s", arg_uri);
-  g_signal_emit (transaction, signals[WEBFLOW_START], 0, data->remote, arg_uri, priv->active_request_id, &retval);
+  g_signal_emit (transaction, signals[WEBFLOW_START], 0, data->remote, arg_uri, options, priv->active_request_id, &retval);
   if (!retval)
     {
       g_autoptr(GError) local_error = NULL;
@@ -2812,6 +2816,7 @@ request_tokens_webflow (FlatpakAuthenticatorRequest *object,
 
 static void
 request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
+                             GVariant *options,
                              RequestData *data)
 {
   g_autoptr(FlatpakTransaction) transaction = g_object_ref (data->transaction);
@@ -2826,12 +2831,13 @@ request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
   priv->active_request_id = 0;
 
   g_debug ("Webflow done");
-  g_signal_emit (transaction, signals[WEBFLOW_DONE], 0, id);
+  g_signal_emit (transaction, signals[WEBFLOW_DONE], 0, options, id);
 }
 
 static void
 request_tokens_basic_auth (FlatpakAuthenticatorRequest *object,
                            const gchar *arg_realm,
+                           GVariant *options,
                            RequestData *data)
 {
   g_autoptr(FlatpakTransaction) transaction = g_object_ref (data->transaction);
@@ -2845,7 +2851,7 @@ request_tokens_basic_auth (FlatpakAuthenticatorRequest *object,
   priv->active_request_id = ++priv->next_request_id;
 
   g_debug ("BasicAuth start %s", arg_realm);
-  g_signal_emit (transaction, signals[BASIC_AUTH_START], 0, data->remote, arg_realm, priv->active_request_id, &retval);
+  g_signal_emit (transaction, signals[BASIC_AUTH_START], 0, data->remote, arg_realm, options, priv->active_request_id, &retval);
   if (!retval)
     {
       g_autoptr(GError) local_error = NULL;
@@ -2902,6 +2908,7 @@ flatpak_transaction_abort_webflow (FlatpakTransaction *self,
  * @id: The webflow id, as passed into the webflow-start signal
  * @user: The user name, or %NULL if aborting request
  * @password: The password
+ * @options: Extra a{sv] variant with options (or %NULL), currently unused.
  *
  * Finishes (or aborts) an ongoing basic auth request.
  *
@@ -2911,10 +2918,18 @@ void
 flatpak_transaction_complete_basic_auth (FlatpakTransaction *self,
                                          guint id,
                                          const char *user,
-                                         const char *password)
+                                         const char *password,
+                                         GVariant *options)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(GError) local_error = NULL;
+  g_autoptr(GVariant) default_options = NULL;
+
+  if (options == NULL)
+    {
+      default_options = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sv}"), NULL, 0));
+      options = default_options;
+    }
 
   if (priv->active_request_id == id)
     {
@@ -2932,6 +2947,7 @@ flatpak_transaction_complete_basic_auth (FlatpakTransaction *self,
         {
           if (!flatpak_authenticator_request_call_basic_auth_reply_sync (data->request,
                                                                          user, password,
+                                                                         options,
                                                                          NULL, &local_error))
             g_debug ("Failed to reply to basic auth request: %s", local_error->message);
         }

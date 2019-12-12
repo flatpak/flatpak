@@ -132,20 +132,20 @@ flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
                                  const char *remote,
                                  const char *remote_uri,
                                  GVariant *refs,
-                                 GVariant *extra_data,
+                                 GVariant *options,
                                  const char *parent_window,
                                  GCancellable *cancellable,
                                  GError **error)
 {
   const char *token;
-  GVariant *options;
+  GVariant *auth_options;
   g_autofree char *handle = NULL;
 
   token = strrchr (g_dbus_proxy_get_object_path (G_DBUS_PROXY (request)), '/') + 1;
 
-  options = g_object_get_data (G_OBJECT (authenticator), "authenticator-options");
+  auth_options = g_object_get_data (G_OBJECT (authenticator), "authenticator-options");
 
-  if (!flatpak_authenticator_call_request_ref_tokens_sync (authenticator, token, options, remote, remote_uri, refs, extra_data,
+  if (!flatpak_authenticator_call_request_ref_tokens_sync (authenticator, token, auth_options, remote, remote_uri, refs, options,
                                                            parent_window ? parent_window : "",
                                                            &handle, cancellable, error))
     return FALSE;
@@ -187,14 +187,23 @@ flatpak_auth_request_emit_response (FlatpakAuthenticatorRequest *request,
 void
 flatpak_auth_request_emit_webflow (FlatpakAuthenticatorRequest *request,
                                    const gchar *destination_bus_name,
-                                   const char *arg_uri)
+                                   const char *arg_uri,
+                                   GVariant *options)
 {
   FlatpakAuthenticatorRequestSkeleton *skeleton = FLATPAK_AUTHENTICATOR_REQUEST_SKELETON (request);
   GList      *connections, *l;
   g_autoptr(GVariant) signal_variant = NULL;
+  g_autoptr(GVariant) default_options = NULL;
+
+  if (options == NULL)
+    {
+      default_options = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sv}"), NULL, 0));
+      options = default_options;
+    }
+
   connections = g_dbus_interface_skeleton_get_connections (G_DBUS_INTERFACE_SKELETON (skeleton));
 
-  signal_variant = g_variant_ref_sink (g_variant_new ("(s)", arg_uri));
+  signal_variant = g_variant_ref_sink (g_variant_new ("(s@a{sv})", arg_uri, options));
   for (l = connections; l != NULL; l = l->next)
     {
       GDBusConnection *connection = l->data;
@@ -208,14 +217,23 @@ flatpak_auth_request_emit_webflow (FlatpakAuthenticatorRequest *request,
 
 void
 flatpak_auth_request_emit_webflow_done (FlatpakAuthenticatorRequest *request,
-                                        const gchar *destination_bus_name)
+                                        const gchar *destination_bus_name,
+                                        GVariant *options)
 {
   FlatpakAuthenticatorRequestSkeleton *skeleton = FLATPAK_AUTHENTICATOR_REQUEST_SKELETON (request);
   GList      *connections, *l;
   g_autoptr(GVariant) signal_variant = NULL;
+  g_autoptr(GVariant) default_options = NULL;
+
+  if (options == NULL)
+    {
+      default_options = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sv}"), NULL, 0));
+      options = default_options;
+    }
+
   connections = g_dbus_interface_skeleton_get_connections (G_DBUS_INTERFACE_SKELETON (skeleton));
 
-  signal_variant = g_variant_ref_sink (g_variant_new ("()"));
+  signal_variant = g_variant_ref_sink (g_variant_new ("(@a{sv})", options));
   for (l = connections; l != NULL; l = l->next)
     {
       GDBusConnection *connection = l->data;
@@ -230,14 +248,23 @@ flatpak_auth_request_emit_webflow_done (FlatpakAuthenticatorRequest *request,
 void
 flatpak_auth_request_emit_basic_auth (FlatpakAuthenticatorRequest *request,
                                       const char *destination_bus_name,
-                                      const char *arg_realm)
+                                      const char *arg_realm,
+                                      GVariant *options)
 {
   FlatpakAuthenticatorRequestSkeleton *skeleton = FLATPAK_AUTHENTICATOR_REQUEST_SKELETON (request);
   GList      *connections, *l;
   g_autoptr(GVariant) signal_variant = NULL;
+  g_autoptr(GVariant) default_options = NULL;
+
+  if (options == NULL)
+    {
+      default_options = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sv}"), NULL, 0));
+      options = default_options;
+    }
+
   connections = g_dbus_interface_skeleton_get_connections (G_DBUS_INTERFACE_SKELETON (skeleton));
 
-  signal_variant = g_variant_ref_sink (g_variant_new ("(s)", arg_realm));
+  signal_variant = g_variant_ref_sink (g_variant_new ("(s@a{sv})", arg_realm, options));
   for (l = connections; l != NULL; l = l->next)
     {
       GDBusConnection *connection = l->data;
