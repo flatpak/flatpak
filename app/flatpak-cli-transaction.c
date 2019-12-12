@@ -563,12 +563,10 @@ basic_auth_start (FlatpakTransaction *transaction,
 
   g_print (_("Login required remote %s (realm %s)\n"), remote, realm);
   user = flatpak_prompt (FALSE, _("User"));
-  g_print ("Using user %s\n", user);
   if (user == NULL)
     return FALSE;
 
   password = flatpak_password_prompt (_("Password"));
-  g_print ("Using pwd %s\n", password);
   if (password == NULL)
     return FALSE;
 
