@@ -1,3 +1,31 @@
+Changes in 1.5.2
+================
+
+This version has further changes to the protocol and API for handing
+authentication, in order to make it more flexible and futureproof. The
+sample authenticator has been updated to the new APIs. Flatpak now
+ships with a OCI authenticator that can be used to access private OCI
+registries.
+
+FlatpakTransaction now also has a callback for simple user/password
+authentication for an authenticator (the basic-auth-start signal)
+modeled on HTTP basic authentication. This is handled in the flatpak
+CLI by interactive prompts on the terminal. This is needed by the OCI
+authenticator, but can also be used by other authenticators that have
+simple authentication requirements.
+
+There were also some fixes to the new self-sandboxing support of the
+flatpak spawn portal, allowing webkit to use it.
+
+Other changes:
+ * Show background status in flatpak ps
+ * Improved docs and help output
+ * Fix support for fd forwarding and the allow_a11y flag in the sandboxing portal
+ * Some improvements to the new permission-set command
+ * New remote option that allows settting the default token type (mostly for debugging)
+
+
+
 Changes in 1.5.1
 ================
 
