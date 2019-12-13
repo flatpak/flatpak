@@ -3031,6 +3031,9 @@ request_tokens_for_remote (FlatpakTransaction *self,
       copy_summary_data (extra_builder, state->summary, "xa.oci-registry-uri");
     }
 
+  if (state->collection_id)
+    g_variant_builder_add (extra_builder, "{sv}", "collection-id", g_variant_new_string (state->collection_id));
+
   context = flatpak_main_context_new_default ();
 
   authenticator = flatpak_auth_new_for_remote (priv->dir, remote, cancellable, error);
