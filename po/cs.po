@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2019-12-13 10:26+0100\n"
-"PO-Revision-Date: 2019-10-04 13:58+0200\n"
+"PO-Revision-Date: 2019-12-13 14:38+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.2.4\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -349,7 +349,6 @@ msgstr ""
 
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
-#, fuzzy
 msgid "VAL"
 msgstr "HODNOTA"
 
@@ -381,9 +380,8 @@ msgid ""
 msgstr "Pokud je --src-ref určeno, musí být určen přesně jeden cílový ref"
 
 #: app/flatpak-builtins-build-commit-from.c:268
-#, fuzzy
 msgid "Either --src-repo or --src-ref must be specified"
-msgstr "Buď --src-repo nebo --src-ref musí být určeno."
+msgstr "Buď --src-repo nebo --src-ref musí být určeno"
 
 #: app/flatpak-builtins-build-commit-from.c:284
 msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
@@ -800,7 +798,7 @@ msgstr "TAG_ROZŠÍŘENÍ"
 
 #: app/flatpak-builtins-build-init.c:59
 msgid "Initialize /usr with a writable copy of the sdk"
-msgstr ""
+msgstr "Inicializovat /usr se zapisovatelnou kopií sdk"
 
 #: app/flatpak-builtins-build-init.c:60
 msgid "Specify the build type (app, runtime, extension)"
@@ -828,7 +826,7 @@ msgstr "Kam uložit sdk (výchozí je „usr“)"
 
 #: app/flatpak-builtins-build-init.c:65
 msgid "Re-initialize the sdk/var"
-msgstr ""
+msgstr "Znovu inicializovat sdk/var"
 
 #: app/flatpak-builtins-build-init.c:114
 #, c-format
@@ -1054,9 +1052,9 @@ msgid "Unset configuration for KEY"
 msgstr "Zrušit konfiguraci pro KLÍČ"
 
 #: app/flatpak-builtins-config.c:149
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' does not look like a language/locale code"
-msgstr "„%s“ nevypadá jako jazykový kód"
+msgstr "„%s“ nevypadá jako jazykový/locale kód"
 
 #: app/flatpak-builtins-config.c:172
 #, c-format
@@ -1324,16 +1322,15 @@ msgid "FILE - Unexport a file to apps"
 msgstr "SOUBOR - Zrušit export souboru pro aplikace"
 
 #: app/flatpak-builtins-enter.c:87
-#, fuzzy
 msgid "INSTANCE COMMAND [ARGUMENT…] - Run a command inside a running sandbox"
-msgstr "INSTANCE [PŘÍKAZ [ARGUMENT…]] - Spustit příkaz v běžícím sandboxu"
+msgstr "INSTANCE PŘÍKAZ [ARGUMENT…] - Spustit příkaz v běžícím sandboxu"
 
 #: app/flatpak-builtins-enter.c:108
 msgid "INSTANCE and COMMAND must be specified"
 msgstr "INSTANCE a PŘÍKAZ musí být určeny"
 
 #: app/flatpak-builtins-enter.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "%s is neither a pid nor an application or instance ID"
 msgstr "%s není pid ani aplikace nebo ID instance"
 
@@ -1876,9 +1873,9 @@ msgid "Skipping: %s\n"
 msgstr "Přeskakuje se: %s\n"
 
 #: app/flatpak-builtins-kill.c:68
-#, fuzzy, c-format
+#, c-format
 msgid "%s is not running"
-msgstr "%s neběží."
+msgstr "%s neběží"
 
 #: app/flatpak-builtins-kill.c:82
 msgid "INSTANCE - Stop a running application"
@@ -2088,9 +2085,8 @@ msgid "Data"
 msgstr "Data"
 
 #: app/flatpak-builtins-permission-remove.c:120
-#, fuzzy
 msgid "TABLE ID [APP_ID] - Remove item from permission store"
-msgstr "TABULKA ID - Odstranit položku z úložiště oprávnění"
+msgstr "TABULKA ID [APP_ID] - Odstranit položku z úložiště oprávnění"
 
 #: app/flatpak-builtins-permission-remove.c:129
 #: app/flatpak-builtins-permission-set.c:120
@@ -2112,21 +2108,20 @@ msgstr "Špatný počet parametrů"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "Associate DATA with the entry"
-msgstr ""
+msgstr "Asociovat DATA s položkou"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "DATA"
-msgstr ""
+msgstr "DATA"
 
 #: app/flatpak-builtins-permission-set.c:111
-#, fuzzy
 msgid "TABLE ID APP_ID [PERMISSION...] - Set permissions"
-msgstr "[TABULKA] [ID] - Zobrazit oprávnění"
+msgstr "TABULKA ID APP_ID [OPRÁVNĚNÍ...] - Nastavit oprávnění"
 
 #: app/flatpak-builtins-permission-set.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse '%s' as GVariant: "
-msgstr "Nelze zpracovat filtr „%s“"
+msgstr ""
 
 #: app/flatpak-builtins-permission-show.c:112
 msgid "APP_ID - Show permissions for an app"
@@ -2185,23 +2180,20 @@ msgid "Show the runtime commit"
 msgstr "Zobrazit commit prostředí"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Active"
-msgstr "Aktivní commit"
+msgstr "Aktivní"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Show whether the app is active"
-msgstr "Zobrazit, kdy změna nastala"
+msgstr "Zobrazit, když je aplikace aktivní"
 
 #: app/flatpak-builtins-ps.c:58
 msgid "Background"
-msgstr ""
+msgstr "Pozadí"
 
 #: app/flatpak-builtins-ps.c:58
-#, fuzzy
 msgid "Show whether the app is background"
-msgstr "Zobrazit, kdy změna nastala"
+msgstr "Zobrazit, když běží aplikace na pozadí"
 
 #: app/flatpak-builtins-ps.c:238
 msgid " - Enumerate running sandboxes"
@@ -2275,16 +2267,15 @@ msgstr "Zakázat vzdálený repozitář"
 
 #: app/flatpak-builtins-remote-add.c:80 app/flatpak-builtins-remote-modify.c:87
 msgid "Name of authenticator"
-msgstr ""
+msgstr "Název autentikátoru"
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:88
-#, fuzzy
 msgid "Authenticator options"
-msgstr "Zobrazit volby"
+msgstr "Volby autentikátoru"
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:88
 msgid "OPTIONS"
-msgstr ""
+msgstr "VOLBY"
 
 #: app/flatpak-builtins-remote-add.c:220 app/flatpak-builtins-remote-add.c:227
 #, c-format
@@ -2311,14 +2302,14 @@ msgstr "Vzdálený repozitář %s již existuje"
 
 #: app/flatpak-builtins-remote-add.c:364
 #: app/flatpak-builtins-remote-modify.c:285
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid authenticator name %s"
-msgstr "Neplatný název dbus %s"
+msgstr "Neplatný název autentikátoru %s"
 
 #: app/flatpak-builtins-remote-add.c:373
 #: app/flatpak-builtins-remote-modify.c:294
 msgid "Invalid authenticator options: "
-msgstr ""
+msgstr "Neplatné volby autentikátoru: "
 
 #: app/flatpak-builtins-remote-add.c:393
 #, c-format
@@ -2802,9 +2793,8 @@ msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr ""
 
 #: app/flatpak-builtins-run.c:74
-#, fuzzy
 msgid "Don't proxy session bus calls"
-msgstr "Nepoužívat proxy pro volání sběrnice zpřístupnění"
+msgstr "Nepoužívat proxy pro volání sběrnice sezení"
 
 #: app/flatpak-builtins-run.c:75
 msgid "Proxy session bus calls (default except when sandboxed)"
@@ -3244,25 +3234,25 @@ msgid "Error:"
 msgstr "Chyba:"
 
 #: app/flatpak-cli-transaction.c:519
-#, fuzzy, c-format
+#, c-format
 msgid "Authentication required for remote '%s'\n"
-msgstr "K aktualizaci vzdálených informací je vyžadováno ověření"
+msgstr "Pro vzdálený repozitář „%s“ je vyžadováno ověření\n"
 
 #: app/flatpak-cli-transaction.c:520
 msgid "Open browser?"
-msgstr ""
+msgstr "Otevřít prohlížeč?"
 
 #: app/flatpak-cli-transaction.c:571
 #, c-format
 msgid "Login required remote %s (realm %s)\n"
-msgstr ""
+msgstr "Přihlášení vyžadující vzdálený repozitář %s (doména %s)\n"
 
 #: app/flatpak-cli-transaction.c:576
 msgid "Password"
-msgstr ""
+msgstr "Heslo"
 
 #: app/flatpak-cli-transaction.c:597 app/flatpak-quiet-transaction.c:174
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s is end-of-life, in favor of %s\n"
 msgstr "Informace: %s je end-of-life, ve prospěch %s\n"
 
@@ -3480,9 +3470,8 @@ msgid "Remove item from permission store"
 msgstr "Odstranit položku z úložiště oprávnění"
 
 #: app/flatpak-main.c:114
-#, fuzzy
 msgid "Set permissions"
-msgstr "Vypsat oprávnění"
+msgstr "Nastavit oprávnění"
 
 #: app/flatpak-main.c:115
 msgid "Show app permissions"
@@ -3688,9 +3677,9 @@ msgid "Failed to rebase %s to %s: %s\n"
 msgstr "Selhalo rebase %s na %s: %s\n"
 
 #: common/flatpak-auth.c:54
-#, fuzzy, c-format
+#, c-format
 msgid "No authenticator configured for remote `%s`"
-msgstr "K aktualizaci vzdálených informací je vyžadováno ověření"
+msgstr "Nenastaven žádný autentikátor pro vzdálený repozitář „%s“"
 
 #: common/flatpak-context.c:179
 #, c-format
@@ -3867,9 +3856,8 @@ msgid "Remove generic policy option"
 msgstr "Odebrat generickou volbu bezpečnostní politiky"
 
 #: common/flatpak-context.c:1245
-#, fuzzy
 msgid "Persist home directory subpath"
-msgstr "Trvalý domovský adresář"
+msgstr "Trvalá podcesta domovského adresáře"
 
 #: common/flatpak-context.c:1245
 msgid "FILENAME"
