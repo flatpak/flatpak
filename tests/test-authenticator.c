@@ -72,6 +72,16 @@ get_required_token (void)
   return g_steal_pointer (&required_token);
 }
 
+static void
+write_request (char *str)
+{
+  g_autofree char *request_file = NULL;
+
+  request_file = g_build_filename (g_get_user_runtime_dir (), "request", NULL);
+  g_file_set_contents (request_file, str, -1, NULL);
+  g_free (str);
+}
+
 static gboolean
 requires_webflow (void)
 {
@@ -187,8 +197,17 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   TokenRequestData *data;
   g_autoptr(GPtrArray) refs = NULL;
   gsize n_refs, i;
+  g_autofree char *options_s = NULL;
 
   g_debug ("handling RequestRefTokens");
+
+  options_s = g_variant_print (arg_options, FALSE);
+  write_request (g_strdup_printf ("remote: %s\n"
+                                  "uri: %s\n"
+                                  "options: %s",
+                                  arg_remote,
+                                  arg_remote_uri,
+                                  options_s));
 
   request_path = flatpak_auth_create_request_path (g_dbus_method_invocation_get_sender (invocation),
                                                    arg_handle_token, NULL);
