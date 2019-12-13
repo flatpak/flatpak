@@ -21,6 +21,8 @@ jobs:
     steps:
     - name: Install Dependencies
       run: |
+        # Work around github repo bug (see https://github.community/t5/GitHub-Actions/ubuntu-latest-Apt-repository-list-issues/m-p/41163/highlight/true#M4513)
+        for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
         sudo add-apt-repository ppa:alexlarsson/flatpak
         sudo add-apt-repository ppa:alexlarsson/glib260
         sudo apt-get update
@@ -75,6 +77,8 @@ jobs:
     steps:
     - name: Install Dependencies
       run: |
+        # Work around github repo bug (see https://github.community/t5/GitHub-Actions/ubuntu-latest-Apt-repository-list-issues/m-p/41163/highlight/true#M4513)
+        for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
         sudo add-apt-repository ppa:alexlarsson/flatpak
         sudo add-apt-repository ppa:alexlarsson/glib260
         sudo apt-get update
