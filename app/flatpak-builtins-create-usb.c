@@ -261,7 +261,7 @@ ostree_create_usb (GOptionContext *context,
                    GCancellable   *cancellable,
                    GError        **error)
 {
-  g_autoptr(OstreeAsyncProgress) progress = NULL;
+  g_autoptr(OstreeAsyncProgressFinish) progress = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   guint num_refs = 0;
 
@@ -347,9 +347,6 @@ ostree_create_usb (GOptionContext *context,
         ostree_repo_abort_transaction (dest_repo, cancellable, NULL);
         return FALSE;
       }
-
-    if (progress != NULL)
-      ostree_async_progress_finish (progress);
 
     glnx_console_unlock (&console);
   }

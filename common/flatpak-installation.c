@@ -2096,8 +2096,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
-  FlatpakInstalledRef *result = NULL;
+  g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
@@ -2142,7 +2141,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             FALSE, FALSE, state,
                             ref, NULL, (const char **) subpaths, NULL, NULL,
                             ostree_progress, cancellable, error))
-    goto out;
+    return NULL;
 
   if (!(flags & FLATPAK_INSTALL_FLAGS_NO_TRIGGERS) &&
       g_str_has_prefix (ref, "app"))
@@ -2155,18 +2154,10 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
     {
       flatpak_fail_error (error, FLATPAK_ERROR_ONLY_PULLED,
                           _("As requested, %s was only pulled, but not installed"), name);
-      goto out;
+      return NULL;
     }
 
-  result = get_ref (dir, ref, cancellable, error);
-  if (result == NULL)
-    goto out;
-
-out:
-  if (ostree_progress)
-    ostree_async_progress_finish (ostree_progress);
-
-  return result;
+  return get_ref (dir, ref, cancellable, error);
 }
 
 /**
@@ -2253,7 +2244,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   g_autofree char *ref = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+  g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
   g_autofree char *remote_name = NULL;
   FlatpakInstalledRef *result = NULL;
   g_autofree char *target_commit = NULL;
@@ -2315,7 +2306,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            (const OstreeRepoFinderResult * const *) check_results,
                            (const char **) subpaths, NULL, NULL,
                            ostree_progress, cancellable, error))
-    goto out;
+    return NULL;
 
   if (!(flags & FLATPAK_UPDATE_FLAGS_NO_TRIGGERS) &&
       g_str_has_prefix (ref, "app"))
@@ -2323,15 +2314,12 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
 
   result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
-    goto out;
+    return NULL;
 
   /* We don't get prunable objects if not pulling or if NO_PRUNE is passed */
   if (!(flags & FLATPAK_UPDATE_FLAGS_NO_PULL) && !(flags & FLATPAK_UPDATE_FLAGS_NO_PRUNE))
     flatpak_dir_prune (dir_clone, cancellable, NULL);
 
-out:
-  if (ostree_progress)
-    ostree_async_progress_finish (ostree_progress);
 
   return result;
 }
@@ -2900,7 +2888,7 @@ flatpak_installation_update_appstream_full_sync (FlatpakInstallation    *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+  g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
   gboolean res;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
 
@@ -2928,9 +2916,6 @@ flatpak_installation_update_appstream_full_sync (FlatpakInstallation    *self,
                                       ostree_progress,
                                       cancellable,
                                       error);
-
-  if (ostree_progress)
-    ostree_async_progress_finish (ostree_progress);
 
   return res;
 }
