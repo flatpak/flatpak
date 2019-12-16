@@ -5319,9 +5319,6 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, ref, oci_pull_progress_cb,
                                        progress, cancellable, error);
 
-  if (progress)
-    ostree_async_progress_finish (progress);
-
   if (!res)
     return FALSE;
 
@@ -5409,9 +5406,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, FLATPAK_OCI_MANIFEST (versioned), image_config,
                                     state->remote_name, ref, oci_pull_progress_cb, progress, cancellable, error);
-
-  if (progress)
-    ostree_async_progress_finish (progress);
 
   if (checksum == NULL)
     return FALSE;
@@ -5661,9 +5655,6 @@ out:
       g_assert (error == NULL || *error != NULL);
     }
 
-  if (progress)
-    ostree_async_progress_finish (progress);
-
   return ret;
 }
 
@@ -5745,9 +5736,6 @@ repo_pull_local_untrusted (FlatpakDir          *self,
                                        progress, cancellable, error);
   if (!res)
     translate_ostree_repo_pull_errors (error);
-
-  if (progress)
-    ostree_async_progress_finish (progress);
 
   return res;
 }
@@ -6007,9 +5995,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 out:
   if (!ret)
     ostree_repo_abort_transaction (self->repo, cancellable, NULL);
-
-  if (progress)
-    ostree_async_progress_finish (progress);
 
   return ret;
 }
