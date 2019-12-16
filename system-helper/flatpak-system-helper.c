@@ -386,7 +386,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GFile) repo_file = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+  g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
   gboolean is_oci;
   gboolean is_update;
   gboolean no_deploy;
@@ -638,9 +638,6 @@ handle_deploy (FlatpakSystemHelper   *object,
           flatpak_invocation_return_error (invocation, error, "Error pulling from repo");
           return TRUE;
         }
-
-      if (ostree_progress)
-        ostree_async_progress_finish (ostree_progress);
     }
   else if (local_pull)
     {
@@ -681,9 +678,6 @@ handle_deploy (FlatpakSystemHelper   *object,
           flatpak_invocation_return_error (invocation, error, "Error pulling from repo");
           return TRUE;
         }
-
-      if (ostree_progress)
-        ostree_async_progress_finish (ostree_progress);
     }
 
   if (!no_deploy)
@@ -848,7 +842,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       g_autoptr(GError) first_error = NULL;
       g_autoptr(GError) second_error = NULL;
       g_autoptr(GMainContextPopDefault) main_context = NULL;
-      g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+      g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
 
       /* Work around ostree-pull spinning the default main context for the sync calls */
       main_context = flatpak_main_context_new_default ();
@@ -880,7 +874,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
   else /* empty path == local pull */
     {
       g_autoptr(FlatpakRemoteState) state = NULL;
-      g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+      g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
       g_autoptr(GError) first_error = NULL;
       g_autoptr(GError) second_error = NULL;
       g_autofree char *url = NULL;
@@ -929,9 +923,6 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
               return TRUE;
             }
         }
-
-      if (ostree_progress)
-        ostree_async_progress_finish (ostree_progress);
     }
 
   if (!flatpak_dir_deploy_appstream (system,

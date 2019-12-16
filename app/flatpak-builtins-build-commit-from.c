@@ -383,7 +383,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
     {
       OstreeRepoPullFlags pullflags = 0;
       GVariantBuilder builder;
-      g_autoptr(OstreeAsyncProgress) progress = NULL;
+      g_autoptr(OstreeAsyncProgressFinish) progress = NULL;
       g_auto(GLnxConsoleRef) console = { 0, };
       g_autoptr(GVariant) options = NULL;
       gboolean res;
@@ -409,9 +409,6 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
                                            options,
                                            progress,
                                            cancellable, error);
-
-      if (progress)
-        ostree_async_progress_finish (progress);
 
       if (!res)
         return FALSE;

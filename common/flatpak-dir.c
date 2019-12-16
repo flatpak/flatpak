@@ -13495,7 +13495,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
                                                  GCancellable       *cancellable,
                                                  GError            **error)
 {
-  g_autoptr(OstreeAsyncProgress) progress = ostree_async_progress_new ();
+  g_autoptr(OstreeAsyncProgressFinish) progress = ostree_async_progress_new ();
   FlatpakPullFlags flatpak_flags;
   gboolean gpg_verify;
   g_autofree char *checksum_from_summary = NULL;

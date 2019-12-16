@@ -661,7 +661,7 @@ update_appstream (GPtrArray    *dirs,
           for (i = 0; remotes[i] != NULL; i++)
             {
               g_autoptr(GError) local_error = NULL;
-              g_autoptr(OstreeAsyncProgress) progress = NULL;
+              g_autoptr(OstreeAsyncProgressFinish) progress = NULL;
               guint64 ts_file_age;
 
               ts_file_age = get_appstream_timestamp (dir, remotes[i], arch);
@@ -706,7 +706,6 @@ update_appstream (GPtrArray    *dirs,
                   else
                     g_printerr ("%s: %s\n", _("Error updating"), local_error->message);
                 }
-              ostree_async_progress_finish (progress);
             }
         }
     }
@@ -720,7 +719,7 @@ update_appstream (GPtrArray    *dirs,
 
           if (flatpak_dir_has_remote (dir, remote, NULL))
             {
-              g_autoptr(OstreeAsyncProgress) progress = NULL;
+              g_autoptr(OstreeAsyncProgressFinish) progress = NULL;
               guint64 ts_file_age;
 
               found = TRUE;
@@ -737,7 +736,6 @@ update_appstream (GPtrArray    *dirs,
               progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
               res = flatpak_dir_update_appstream (dir, remote, arch, &changed,
                                                   progress, cancellable, error);
-              ostree_async_progress_finish (progress);
               if (!res)
                 return FALSE;
             }

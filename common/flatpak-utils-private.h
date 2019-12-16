@@ -845,6 +845,20 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAsyncProgressChained, flatpak_progress_unc
 
 FlatpakAsyncProgressChained *flatpak_progress_chain (OstreeAsyncProgress *progress);
 
+static inline void
+flatpak_ostree_progress_finish (OstreeAsyncProgress *progress)
+{
+  if (progress != NULL)
+    {
+      ostree_async_progress_finish (progress);
+      g_object_unref (progress);
+    }
+}
+
+typedef OstreeAsyncProgress OstreeAsyncProgressFinish;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeAsyncProgressFinish, flatpak_ostree_progress_finish);
+
+
 void flatpak_log_dir_access (FlatpakDir *dir);
 
 gboolean flatpak_check_required_version (const char *ref,
