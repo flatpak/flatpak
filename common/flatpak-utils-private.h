@@ -824,19 +824,26 @@ typedef void (*FlatpakProgressCallback)(const char *status,
 OstreeAsyncProgress *flatpak_progress_new (FlatpakProgressCallback progress,
                                            gpointer                progress_data);
 
-OstreeAsyncProgress *flatpak_progress_chain (OstreeAsyncProgress *progress);
+#if OSTREE_CHECK_VERSION (2019, 6)
+#define FLATPAK_DO_CHAIN_PROGRESS 1
+#endif
 
 static inline void
 flatpak_progress_unchain (OstreeAsyncProgress *chained_progress)
 {
-#if OSTREE_CHECK_VERSION (2019, 6)
+#ifdef FLATPAK_DO_CHAIN_PROGRESS
   if (chained_progress != NULL)
-    ostree_async_progress_finish (chained_progress);
+    {
+      ostree_async_progress_finish (chained_progress);
+      g_object_unref (chained_progress);
+    }
 #endif
 }
 
 typedef OstreeAsyncProgress FlatpakAsyncProgressChained;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAsyncProgressChained, flatpak_progress_unchain);
+
+FlatpakAsyncProgressChained *flatpak_progress_chain (OstreeAsyncProgress *progress);
 
 void flatpak_log_dir_access (FlatpakDir *dir);
 

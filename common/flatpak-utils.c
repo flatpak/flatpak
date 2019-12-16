@@ -6495,7 +6495,7 @@ flatpak_progress_new (FlatpakProgressCallback progress,
   return ostree_progress;
 }
 
-#if OSTREE_CHECK_VERSION (2019, 6)
+#ifdef FLATPAK_DO_CHAIN_PROGRESS
 static void
 handle_chained_progress (OstreeAsyncProgress *chained_progress,
                          gpointer             user_data)
@@ -6532,7 +6532,7 @@ handle_chained_progress (OstreeAsyncProgress *chained_progress,
        * case. */
     }
 }
-#endif  /* libostree ≥ 2019.6 */
+#endif  /* FLATPAK_DO_CHAIN_PROGRESS */
 
 /*
  * This is necessary when pushing a temporary GMainContext to be the thread
@@ -6576,10 +6576,10 @@ handle_chained_progress (OstreeAsyncProgress *chained_progress,
  * This is a no-op, preserving the current behaviour where progress events are
  * not fired, if the libostree version isn't new enough.
  */
-OstreeAsyncProgress *
+FlatpakAsyncProgressChained *
 flatpak_progress_chain (OstreeAsyncProgress *progress)
 {
-#if OSTREE_CHECK_VERSION (2019, 6)
+#ifdef FLATPAK_DO_CHAIN_PROGRESS
   if (progress == NULL)
     return NULL;
 
@@ -6600,9 +6600,9 @@ flatpak_progress_chain (OstreeAsyncProgress *progress)
   g_object_set_data (G_OBJECT (chained_progress), "chained_from", progress);
 
   return chained_progress;
-#else
+#else /* !FLATPAK_DO_CHAIN_PROGRESS */
   return progress;
-#endif  /* libostree ≥ 2019.6 */
+#endif
 }
 
 void
