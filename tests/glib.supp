@@ -340,6 +340,12 @@
    fun:g_private_set
 }
 {
+   g_private_set_alloc0
+   Memcheck:Leak
+   ...
+   fun:g_private_set_alloc0
+}
+{
    g_static_mutex_get_mutex_impl
    Memcheck:Leak
    ...
