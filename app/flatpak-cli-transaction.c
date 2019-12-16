@@ -1109,6 +1109,9 @@ flatpak_cli_transaction_finalize (GObject *object)
 
   g_free (self->progress_msg);
 
+  if (self->printer)
+    flatpak_table_printer_free (self->printer);
+
   G_OBJECT_CLASS (flatpak_cli_transaction_parent_class)->finalize (object);
 }
 
