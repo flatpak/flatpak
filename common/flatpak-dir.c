@@ -500,8 +500,6 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
     g_variant_get_child (res, 2, "&s", metadata);
 
 
-  refdata = g_variant_get_child_value (cache, pos);
-
   if (maybe_commit)
     {
       if (commits)
