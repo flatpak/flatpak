@@ -645,7 +645,10 @@ flatpak_main_context_pop_default_destroy (void *p)
   GMainContext *main_context = p;
 
   if (main_context)
-    g_main_context_pop_thread_default (main_context);
+    {
+      g_main_context_pop_thread_default (main_context);
+      g_main_context_unref (main_context);
+    }
 }
 
 static inline GMainContextPopDefault *
