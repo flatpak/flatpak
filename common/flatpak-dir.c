@@ -2804,6 +2804,9 @@ flatpak_dir_recreate_repo (FlatpakDir   *self,
   gboolean res;
   OstreeRepo *old_repo = g_steal_pointer (&self->repo);
 
+  /* This is also set by ensure repo, so clear it too */
+  g_clear_object (&self->cache_dir);
+
   res = flatpak_dir_ensure_repo (self, cancellable, error);
   g_clear_object (&old_repo);
 
