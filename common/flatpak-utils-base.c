@@ -57,7 +57,7 @@ flatpak_get_timezone (void)
         }
     }
 
-  if (g_file_get_contents ("/etc/timezeone", &etc_timezone,
+  if (g_file_get_contents ("/etc/timezone", &etc_timezone,
                            NULL, NULL))
     {
       g_strchomp (etc_timezone);
