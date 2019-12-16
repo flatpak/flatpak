@@ -3033,21 +3033,6 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
 
   repo = ostree_repo_new (repodir);
 
-  if (flatpak_dir_use_system_helper (self, NULL))
-    {
-      g_autofree char *cache_path = NULL;
-
-      cache_dir = flatpak_ensure_user_cache_dir_location (error);
-      if (cache_dir == NULL)
-        return FALSE;
-
-      cache_path = g_file_get_path (cache_dir);
-      if (!ostree_repo_set_cache_dir (repo,
-                                      AT_FDCWD, cache_path,
-                                      cancellable, error))
-        return FALSE;
-    }
-
   if (!g_file_query_exists (repodir, cancellable))
     {
       /* We always use bare-user-only these days, except old installations
@@ -3082,6 +3067,26 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
           g_prefix_error (error, _("While opening repository %s: "), repopath);
           return FALSE;
         }
+    }
+
+  /* In the system-helper case we're directly using the global repo, and we can't write any
+   * caches for summaries there, so we need to set a custom dir for this. Note, as per #3303
+   * this has to be called after ostree_repo_open() in order to the custom cachedir being
+   * overridden if the system dir is writable (like in the testsuite).
+   */
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      g_autofree char *cache_path = NULL;
+
+      cache_dir = flatpak_ensure_user_cache_dir_location (error);
+      if (cache_dir == NULL)
+        return FALSE;
+
+      cache_path = g_file_get_path (cache_dir);
+      if (!ostree_repo_set_cache_dir (repo,
+                                      AT_FDCWD, cache_path,
+                                      cancellable, error))
+        return FALSE;
     }
 
   /* Earlier flatpak used to reset min-free-space-percent to 0 every time, but now we
