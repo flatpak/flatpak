@@ -3864,6 +3864,8 @@ flatpak_dir_p2p_state_free (FlatpakDirP2PState *state)
 
   if (state->results)
     g_ptr_array_unref (state->results);
+
+  g_free (state);
 }
 
 static void
