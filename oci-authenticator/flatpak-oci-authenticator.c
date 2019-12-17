@@ -130,6 +130,8 @@ handle_request_ref_tokens_close (FlatpakAuthenticatorRequest *object,
 
   g_debug ("handlling Request.Close");
 
+  flatpak_authenticator_request_complete_close (object, invocation);
+
   cancel_basic_auth (auth);
 
   return TRUE;
