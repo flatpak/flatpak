@@ -13622,6 +13622,22 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
   return TRUE;
 }
 
+static gboolean
+strv_contains_prefix (const gchar * const *strv,
+                      const gchar         *str)
+{
+  g_return_val_if_fail (strv != NULL, FALSE);
+  g_return_val_if_fail (str != NULL, FALSE);
+
+  for (; *strv != NULL; strv++)
+    {
+      if (g_str_has_prefix (str, *strv))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
 gboolean
 flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
                                                    FlatpakRemoteState *remote_state,
@@ -13642,7 +13658,13 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
     "xa.default-branch",
     "xa.gpg-keys",
     "xa.redirect-url",
+    "xa.authenticator-name",
+    "xa.authenticator-install",
     OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
+    NULL
+  };
+  static const char *const supported_param_prefixes[] = {
+    "xa.authenticator-options.",
     NULL
   };
   g_autoptr(GPtrArray) updated_params = NULL;
@@ -13662,7 +13684,8 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
 
       while (g_variant_iter_next (&iter, "{sv}", &key, &value_var))
         {
-          if (g_strv_contains (supported_params, key))
+          if (g_strv_contains (supported_params, key) ||
+              strv_contains_prefix (supported_param_prefixes, key))
             {
               if (strcmp (key, "xa.gpg-keys") == 0)
                 {
@@ -13693,6 +13716,15 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
                         g_ptr_array_add (updated_params, g_strdup (key));
                       g_ptr_array_add (updated_params, g_strdup (value));
                     }
+                }
+              else if (g_variant_is_of_type (value_var, G_VARIANT_TYPE_BOOLEAN))
+                {
+                  gboolean value = g_variant_get_boolean (value_var);
+                  g_ptr_array_add (updated_params, g_strdup (key));
+                  if (value)
+                    g_ptr_array_add (updated_params, g_strdup ("true"));
+                  else
+                    g_ptr_array_add (updated_params, g_strdup ("false"));
                 }
             }
 
