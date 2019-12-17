@@ -2754,6 +2754,7 @@ flatpak_parse_repofile (const char   *remote_name,
   g_autofree char *icon = NULL;
   g_autofree char *homepage = NULL;
   g_autofree char *filter = NULL;
+  g_autofree char *authenticator_name = NULL;
   gboolean nodeps;
   const char *source_group;
   g_autofree char *version = NULL;
@@ -2851,6 +2852,18 @@ flatpak_parse_repofile (const char   *remote_name,
    * than the summary file. */
   g_key_file_set_boolean (config, group, "gpg-verify-summary",
                           (gpg_key != NULL && collection_id == NULL));
+
+  authenticator_name = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                              FLATPAK_REPO_AUTHENTICATOR_NAME_KEY, NULL);
+  if (authenticator_name)
+    g_key_file_set_string (config, group, "xa.authenticator-name", authenticator_name);
+
+  if (g_key_file_has_key (keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_AUTHENTICATOR_INSTALL_KEY, NULL))
+    {
+      gboolean authenticator_install = g_key_file_get_boolean (keyfile, FLATPAK_REPO_GROUP,
+                                                               FLATPAK_REPO_AUTHENTICATOR_INSTALL_KEY, NULL);
+      g_key_file_set_boolean (config, group, "xa.authenticator-install", authenticator_install);
+    }
 
   comment = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                    FLATPAK_REPO_COMMENT_KEY, NULL);
