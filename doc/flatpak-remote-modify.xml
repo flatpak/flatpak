@@ -270,6 +270,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--authenticator-name=NAME</option></term>
+
+                <listitem><para>
+                    Specify the authenticator to use for the remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--authenticator-option=KEY=VALUE</option></term>
+
+                <listitem><para>
+                    Specify an authenticator option for the remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
