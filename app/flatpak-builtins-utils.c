@@ -357,8 +357,19 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
   if (out_dir)
     {
       if (dirs_with_remote->len == 0)
-        return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND,
-                                   "Remote \"%s\" not found", remote_name);
+        {
+          if (dirs->len > 1 || dirs->len == 0)
+            return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND,
+                                       _("Remote \"%s\" not found\nHint: Use flatpak remote-add to add a remote"),
+                                       remote_name);
+          else
+            {
+              FlatpakDir *dir = g_ptr_array_index (dirs, 0);
+              return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND,
+                                         _("Remote \"%s\" not found in the %s installation"),
+                                         remote_name, flatpak_dir_get_name_cached (dir));
+            }
+        }
       else
         *out_dir = g_object_ref (g_ptr_array_index (dirs_with_remote, chosen - 1));
     }
