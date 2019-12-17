@@ -49,7 +49,7 @@ flatpak_auth_new_for_remote (FlatpakDir *dir,
       if (!ostree_repo_get_remote_option (repo, remote, FLATPAK_REMOTE_CONFIG_AUTHENTICATOR_NAME, NULL, &name, error))
         return NULL;
     }
-  if (name == NULL /* or if no repo */)
+  if (name == NULL || *name == 0 /* or if no repo */)
     {
       flatpak_fail (error, _("No authenticator configured for remote `%s`"), remote);
       return NULL;
