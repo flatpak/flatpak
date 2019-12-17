@@ -133,6 +133,13 @@
               contains the images.
             </para></listitem>
           </varlistentry>
+          <varlistentry>
+            <term>no-interation b</term>
+            <listitem><para>
+              If true, the authenticator should not do any interaction (and fail instead if it needs to). This can be enabled by
+              clients that want to run in the background.
+            </para></listitem>
+          </varlistentry>
         </variablelist>
     -->
     <method name="RequestRefTokens">

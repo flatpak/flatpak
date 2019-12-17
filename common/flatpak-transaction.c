@@ -3034,6 +3034,9 @@ request_tokens_for_remote (FlatpakTransaction *self,
   if (state->collection_id)
     g_variant_builder_add (extra_builder, "{sv}", "collection-id", g_variant_new_string (state->collection_id));
 
+  if (flatpak_dir_get_no_interaction (priv->dir))
+    g_variant_builder_add (extra_builder, "{sv}", "no-interaction", g_variant_new_boolean (TRUE));
+
   context = flatpak_main_context_new_default ();
 
   authenticator = flatpak_auth_new_for_remote (priv->dir, remote, cancellable, error);
