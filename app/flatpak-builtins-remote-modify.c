@@ -54,7 +54,7 @@ static char *opt_default_branch;
 static char *opt_url;
 static char *opt_collection_id = NULL;
 static char *opt_authenticator_name = NULL;
-static char *opt_authenticator_options = NULL;
+static char **opt_authenticator_options = NULL;
 static char **opt_gpg_import;
 
 
@@ -85,7 +85,7 @@ static GOptionEntry common_options[] = {
   { "filter", 0, 0, G_OPTION_ARG_FILENAME, &opt_filter, N_("Set path to local filter FILE"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
   { "authenticator-name", 0, 0, G_OPTION_ARG_STRING, &opt_authenticator_name, N_("Name of authenticator"), N_("NAME") },
-  { "authenticator-options", 0, 0, G_OPTION_ARG_STRING, &opt_authenticator_options, N_("Authenticator options"), N_("OPTIONS") },
+  { "authenticator-option", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_authenticator_options, N_("Authenticator options"), N_("KEY=VALUE") },
   { NULL }
 };
 
@@ -231,7 +231,16 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
 
   if (opt_authenticator_options)
     {
-      g_key_file_set_string (config, group, "xa.authenticator-options", opt_authenticator_options);
+      for (int i = 0; opt_authenticator_options[i] != NULL; i++)
+        {
+          g_auto(GStrv) split = g_strsplit (opt_authenticator_options[i], "=", 2);
+          g_autofree char *key = g_strdup_printf ("xa.authenticator-options.%s", split[0]);
+
+          if (split[0] == NULL ||split[1] == NULL || *split[1] == 0)
+            g_key_file_remove_key (config, group, key, NULL);
+          else
+            g_key_file_set_string (config, group, key, split[1]);
+        }
       *changed = TRUE;
     }
 
@@ -284,18 +293,6 @@ flatpak_builtin_remote_modify (int argc, char **argv, GCancellable *cancellable,
 
   if (opt_authenticator_name && !g_dbus_is_name (opt_authenticator_name))
     return flatpak_fail (error, _("Invalid authenticator name %s"), opt_authenticator_name);
-
-  if (opt_authenticator_options)
-    {
-      g_autoptr(GVariant) v =
-        g_variant_parse (G_VARIANT_TYPE("a{sv}"), opt_authenticator_options, NULL, NULL, error);
-
-      if (v == NULL)
-        {
-          g_prefix_error (error, _("Invalid authenticator options: "));
-          return FALSE;
-        }
-    }
 
   config = get_config_from_opts (preferred_dir, remote_name, &changed);
 
