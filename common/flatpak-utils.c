@@ -6486,6 +6486,16 @@ flatpak_progress_new (FlatpakProgressCallback progress,
 
 #ifdef FLATPAK_DO_CHAIN_PROGRESS
 static void
+progress_trigger_change (OstreeAsyncProgress *progress)
+{
+  guint chain_count;
+
+  /* Trigger changed signal in original progress by changing *something* */
+  chain_count = ostree_async_progress_get_uint (progress, "flatpak-chain-count");
+  ostree_async_progress_set_uint (progress, "flatpak-chain-count", chain_count + 1);
+}
+
+static void
 handle_chained_progress (OstreeAsyncProgress *chained_progress,
                          gpointer             user_data)
 {
@@ -6495,31 +6505,31 @@ handle_chained_progress (OstreeAsyncProgress *chained_progress,
    * into account any updates received while a different GMainContext was
    * active */
   ostree_async_progress_copy_state (chained_progress, original_progress);
+  progress_trigger_change (original_progress);
 
-  OstreeAsyncProgress *chained_from =
-    OSTREE_ASYNC_PROGRESS (g_object_get_data (G_OBJECT (original_progress), "chained_from"));
-  FlatpakProgressCallback chained_callback =
-    g_object_get_data (G_OBJECT (original_progress), "callback");
+}
 
-  if (chained_from != NULL)
-    {
-      /* It's possible we chained to an already-chained progress object. */
-      handle_chained_progress (original_progress, chained_from);
-    }
-  else if (chained_callback != NULL)
-    {
-      /* The normal case; we chained to a progress object created by
-       * flatpak_progress_new(). */
-      gpointer original_data = g_object_get_data (G_OBJECT (original_progress), "callback_data");
-      progress_cb (original_progress, original_data);
-    }
-  else
-    {
-      /* Do nothing. It's possible we chained to a progress object without the
-       * GObject data, that was not created by flatpak_progress_new().
-       * Unfortunately it doesn't seem possible to call the callback in this
-       * case. */
-    }
+void
+flatpak_chained_progress_finish (OstreeAsyncProgress *progress)
+{
+  /* At this point there might be outstanding idle events with changes in
+   * the chained progress, so we need to call ostree_async_progress_finish() to
+   * emit the changed signal which will call handle_chained_progress,
+   * copying the data to the original progress.
+   *
+   * Unfortunately it will first mark the chained progress dead
+   * which makes ostree_async_progress_copy_state() not actually copy
+   * anything. So, to fix this we do a copy ahead of time in case it
+   * was needed.
+   *
+   * We still need to call the regular finish() though to avoid some
+   * idle callback hanging around unresolved forever (and to cause
+   * the changed signal to be emitted).
+   */
+  OstreeAsyncProgress *original_progress = OSTREE_ASYNC_PROGRESS (g_object_get_data (G_OBJECT (progress), "chained-from"));
+
+  ostree_async_progress_copy_state (progress, original_progress);
+  ostree_async_progress_finish (progress);
 }
 #endif  /* FLATPAK_DO_CHAIN_PROGRESS */
 
@@ -6577,16 +6587,11 @@ flatpak_progress_chain (OstreeAsyncProgress *progress)
   /* Copy the OstreeAsyncProgress's state to the chained instance */
   ostree_async_progress_copy_state (progress, chained_progress);
 
-  g_signal_connect (chained_progress, "changed",
-                    G_CALLBACK (handle_chained_progress), progress);
+  g_object_set_data (G_OBJECT (chained_progress), "chained-from", progress);
 
-  /* Now initialize the expected FlatpakProgress state on the chained instance */
-
-  g_object_set_data (G_OBJECT (chained_progress), "callback", NULL);
-  g_object_set_data (G_OBJECT (chained_progress), "callback_data", NULL);
-  g_object_set_data (G_OBJECT (chained_progress), "last_progress", GUINT_TO_POINTER (0));
-  g_object_set_data (G_OBJECT (chained_progress), "last_total", GUINT_TO_POINTER (0));
-  g_object_set_data (G_OBJECT (chained_progress), "chained_from", progress);
+  g_signal_connect_data (chained_progress, "changed",
+                         G_CALLBACK (handle_chained_progress),
+                         g_object_ref (progress), (GClosureNotify)g_object_unref, 0);
 
   return chained_progress;
 #else /* !FLATPAK_DO_CHAIN_PROGRESS */
