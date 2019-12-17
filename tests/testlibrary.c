@@ -292,6 +292,8 @@ test_languages_config (void)
   g_assert_cmpstr (value[0], ==, "en");
   g_assert_null (value[1]);
 
+  g_clear_pointer (&value, g_strfreev);
+
   res = flatpak_installation_set_config_sync (inst, "extra-languages", "pt_BR;uz_UZ.utf8@cyrillic;es;zh_HK.big5hkscs;uz_UZ@cyrillic", NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
@@ -446,6 +448,7 @@ test_ref (void)
 
   formatted = flatpak_ref_format_ref (ref);
   g_assert_cmpstr (formatted, ==, valid);
+  g_clear_pointer (&formatted, g_free);
 
   g_clear_object (&ref);
 
@@ -471,6 +474,7 @@ test_ref (void)
 
   formatted = flatpak_ref_format_ref (ref);
   g_assert_cmpstr (formatted, ==, valid);
+  g_clear_pointer (&formatted, g_free);
 
   g_clear_object (&ref);
 
