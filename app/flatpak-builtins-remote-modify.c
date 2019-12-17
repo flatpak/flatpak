@@ -225,6 +225,7 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
   if (opt_authenticator_name)
     {
       g_key_file_set_string (config, group, "xa.authenticator-name", opt_authenticator_name);
+      g_key_file_set_string (config, group, "xa.authenticator-name-is-set", opt_authenticator_name);
       *changed = TRUE;
     }
 

@@ -186,7 +186,10 @@ get_config_from_opts (GKeyFile *config,
     }
 
   if (opt_authenticator_name)
-    g_key_file_set_string (config, group, "xa.authenticator-name", opt_authenticator_name);
+    {
+      g_key_file_set_string (config, group, "xa.authenticator-name", opt_authenticator_name);
+      g_key_file_set_string (config, group, "xa.authenticator-name-is-set", opt_authenticator_name);
+    }
 
   if (opt_authenticator_options)
     g_key_file_set_string (config, group, "xa.authenticator-options", opt_authenticator_options);
