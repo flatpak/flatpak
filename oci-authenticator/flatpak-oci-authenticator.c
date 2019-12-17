@@ -492,7 +492,6 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
         {
           g_autofree char *test_auth = NULL;
 
-          /* TODO: Handle the case where the peer dies */
           test_auth = run_basic_auth (request, sender, oci_registry_uri);
 
           if (test_auth == NULL)
