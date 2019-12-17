@@ -427,6 +427,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   const char *auth = NULL;
   const char *oci_registry_uri = NULL;
   gsize n_refs, i;
+  gboolean no_interaction = FALSE;
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   GVariantBuilder tokens;
   GVariantBuilder results;
@@ -443,6 +444,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                                              "Not a OCI remote");
       return TRUE;
     }
+  g_variant_lookup (arg_options, "no-interaction", "b", &no_interaction);
 
   request_path = flatpak_auth_create_request_path (g_dbus_method_invocation_get_sender (invocation),
                                                    arg_handle_token, NULL);
@@ -478,7 +480,8 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
     }
 
   n_refs = g_variant_n_children (arg_refs);
-  if (auth == NULL && n_refs > 0)
+  if (auth == NULL && n_refs > 0 &&
+      !no_interaction)
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
       g_autofree char *token = NULL;
