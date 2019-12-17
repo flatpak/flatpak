@@ -237,3 +237,11 @@
    fun:gnutls_x509_ext_import_subject_alt_names
    fun:gnutls_x509_crt_import
 }
+# Deliberately leaking once per process
+{
+   flatpak_get_user_base_dir_location
+   Memcheck:Leak
+   ...
+   fun:g_file_new_for_path
+   fun:flatpak_get_user_base_dir_location
+}
