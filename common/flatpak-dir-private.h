@@ -948,6 +948,8 @@ gboolean flatpak_dir_find_latest_rev (FlatpakDir               *self,
                                       OstreeRepoFinderResult ***out_results,
                                       GCancellable             *cancellable,
                                       GError                  **error);
+GPtrArray * flatpak_dir_find_remote_auto_install_refs (FlatpakDir         *self,
+                                                       const char         *remote_name);
 
 typedef struct
 {
