@@ -3019,6 +3019,65 @@ flatpak_repo_set_redirect_url (OstreeRepo *repo,
 }
 
 gboolean
+flatpak_repo_set_authenticator_name (OstreeRepo *repo,
+                                     const char *authenticator_name,
+                                     GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (authenticator_name)
+    g_key_file_set_string (config, "flatpak", "authenticator-name", authenticator_name);
+  else
+    g_key_file_remove_key (config, "flatpak", "authenticator-name", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_repo_set_authenticator_install (OstreeRepo *repo,
+                                        gboolean authenticator_install,
+                                        GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  g_key_file_set_boolean (config, "flatpak", "authenticator-install", authenticator_install);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_repo_set_authenticator_option (OstreeRepo *repo,
+                                       const char *key,
+                                       const char *value,
+                                       GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+  g_autofree char *full_key = g_strdup_printf ("authenticator-options.%s", key);
+
+  config = ostree_repo_copy_config (repo);
+
+  if (value)
+    g_key_file_set_string (config, "flatpak", full_key, value);
+  else
+    g_key_file_remove_key (config, "flatpak", full_key, NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 flatpak_repo_set_deploy_collection_id (OstreeRepo *repo,
                                        gboolean    deploy_collection_id,
                                        GError    **error)
@@ -3429,7 +3488,10 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *icon = NULL;
   g_autofree char *redirect_url = NULL;
   g_autofree char *default_branch = NULL;
+  g_autofree char *authenticator_name = NULL;
   g_autofree char *gpg_keys = NULL;
+  g_auto(GStrv) config_keys = NULL;
+  int authenticator_install = -1;
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
@@ -3458,6 +3520,11 @@ flatpak_repo_update (OstreeRepo   *repo,
       gpg_keys = g_key_file_get_string (config, "flatpak", "gpg-keys", NULL);
       redirect_url = g_key_file_get_string (config, "flatpak", "redirect-url", NULL);
       deploy_collection_id = g_key_file_get_boolean (config, "flatpak", "deploy-collection-id", NULL);
+      authenticator_name = g_key_file_get_string (config, "flatpak", "authenticator-name", NULL);
+      if (g_key_file_has_key (config, "flatpak", "authenticator-install", NULL))
+        authenticator_install = g_key_file_get_boolean (config, "flatpak", "authenticator-install", NULL);
+
+      config_keys = g_key_file_get_keys (config, "flatpak", NULL, NULL);
     }
 
   collection_id = ostree_repo_get_collection_id (repo);
@@ -3495,6 +3562,35 @@ flatpak_repo_update (OstreeRepo   *repo,
                            g_variant_new_string (collection_id));
   else if (deploy_collection_id)
     g_debug ("Ignoring deploy-collection-id=true because no collection ID is set.");
+
+  if (authenticator_name)
+    g_variant_builder_add (&builder, "{sv}", "xa.authenticator-name",
+                           g_variant_new_string (authenticator_name));
+
+  if (authenticator_install != -1)
+    g_variant_builder_add (&builder, "{sv}", "xa.authenticator-install",
+                           g_variant_new_boolean (authenticator_install));
+
+  if (config_keys != NULL)
+    {
+      for (int i = 0; config_keys[i] != NULL; i++)
+        {
+          const char *key = config_keys[i];
+          g_autofree char *xa_key = NULL;
+          g_autofree char *value = NULL;
+
+          if (!g_str_has_prefix (key, "authenticator-options."))
+            continue;
+
+          value = g_key_file_get_string (config, "flatpak", key, NULL);
+          if (value == NULL)
+            continue;
+
+          xa_key = g_strconcat ("xa.", key, NULL);
+          g_variant_builder_add (&builder, "{sv}", xa_key,
+                                 g_variant_new_string (value));
+        }
+    }
 
   if (gpg_keys)
     {
