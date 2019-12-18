@@ -198,7 +198,7 @@ get_config_from_opts (GKeyFile *config,
           g_auto(GStrv) split = g_strsplit (opt_authenticator_options[i], "=", 2);
           g_autofree char *key = g_strdup_printf ("xa.authenticator-options.%s", split[0]);
 
-          if (split[1] == NULL && *split[1] == 0)
+          if (split[0] == NULL || split[1] == NULL || *split[1] == 0)
             g_key_file_remove_key (config, group, key, NULL);
           else
             g_key_file_set_string (config, group, key, split[1]);
