@@ -55,6 +55,7 @@ static char *opt_url;
 static char *opt_collection_id = NULL;
 static char *opt_authenticator_name = NULL;
 static char **opt_authenticator_options = NULL;
+static gboolean opt_authenticator_install = -1;
 static char **opt_gpg_import;
 
 
@@ -86,6 +87,8 @@ static GOptionEntry common_options[] = {
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
   { "authenticator-name", 0, 0, G_OPTION_ARG_STRING, &opt_authenticator_name, N_("Name of authenticator"), N_("NAME") },
   { "authenticator-option", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_authenticator_options, N_("Authenticator options"), N_("KEY=VALUE") },
+  { "authenticator-install", 0, 0, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Autoinstall authenticator"), NULL },
+  { "no-authenticator-install", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Don't autoinstall authenticator"), NULL },
   { NULL }
 };
 
@@ -226,6 +229,13 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
     {
       g_key_file_set_string (config, group, "xa.authenticator-name", opt_authenticator_name);
       g_key_file_set_boolean (config, group, "xa.authenticator-name-is-set", TRUE);
+      *changed = TRUE;
+    }
+
+  if (opt_authenticator_install != -1)
+    {
+      g_key_file_set_boolean (config, group, "xa.authenticator-install", opt_authenticator_install);
+      g_key_file_set_boolean (config, group, "xa.authenticator-install-is-set", TRUE);
       *changed = TRUE;
     }
 
