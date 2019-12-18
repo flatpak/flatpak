@@ -2225,6 +2225,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
   g_auto(GStrv) remotes = NULL;
   int i;
   GList *l;
+  gboolean some_updated;
   g_autoptr(GHashTable) ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   /* Collect all dir+remotes used in this transaction */
@@ -2241,21 +2242,29 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
   for (i = 0; remotes[i] != NULL; i++)
     {
       char *remote = remotes[i];
+      gboolean updated = FALSE;
       g_autoptr(GError) my_error = NULL;
+      g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
 
       g_debug ("Updating remote metadata for %s", remote);
-      if (!flatpak_dir_update_remote_configuration (priv->dir, remote, cancellable, &my_error))
+      if (!flatpak_dir_update_remote_configuration (priv->dir, remote, state, &updated, cancellable, &my_error))
         g_message (_("Error updating remote metadata for '%s': %s"), remote, my_error->message);
+
+      if (updated)
+        some_updated = TRUE;
     }
 
-  /* Reload changed configuration */
-  if (!flatpak_dir_recreate_repo (priv->dir, cancellable, error))
-    return FALSE;
+  if (some_updated)
+    {
+      /* Reload changed configuration */
+      if (!flatpak_dir_recreate_repo (priv->dir, cancellable, error))
+        return FALSE;
 
-  flatpak_installation_drop_caches (priv->installation, NULL, NULL);
+      flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
-  /* These are potentially out of date now */
-  g_hash_table_remove_all (priv->remote_states);
+      /* These are potentially out of date now */
+      g_hash_table_remove_all (priv->remote_states);
+    }
 
   return TRUE;
 }

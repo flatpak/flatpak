@@ -1867,7 +1867,7 @@ flatpak_installation_update_remote_sync (FlatpakInstallation *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_update_remote_configuration (dir, name, cancellable, error))
+  if (!flatpak_dir_update_remote_configuration (dir, name, NULL, NULL, cancellable, error))
     return FALSE;
 
   /* Make sure we pick up the new config */
