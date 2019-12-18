@@ -388,7 +388,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
      ostree_repo_remote_fetch_summary() works with the repository's name, not its URL.
      Don't propagate IO failed errors here because we might just be offline - the
      remote should already be usable. */
-  if (!flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, &local_error))
+  if (!flatpak_dir_update_remote_configuration (dir, remote_name, NULL, NULL, cancellable, &local_error))
     {
       if (local_error->domain == G_RESOLVER_ERROR || local_error->domain == G_IO_ERROR)
         {

@@ -280,7 +280,7 @@ flatpak_builtin_remote_modify (int argc, char **argv, GCancellable *cancellable,
       g_autoptr(GError) local_error = NULL;
 
       g_print (_("Updating extra metadata from remote summary for %s\n"), remote_name);
-      if (!flatpak_dir_update_remote_configuration (preferred_dir, remote_name, cancellable, &local_error))
+      if (!flatpak_dir_update_remote_configuration (preferred_dir, remote_name, NULL, NULL, cancellable, &local_error))
         {
           g_printerr (_("Error updating extra metadata for '%s': %s\n"), remote_name, local_error->message);
           return flatpak_fail (error, _("Could not update extra metadata for %s"), remote_name);

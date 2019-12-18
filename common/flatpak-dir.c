@@ -13651,6 +13651,9 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
 
   updated_params = g_ptr_array_new_with_free_func (g_free);
 
+  if (!flatpak_remote_state_ensure_metadata (remote_state, error))
+    return FALSE;
+
   g_variant_iter_init (&iter, remote_state->metadata);
   if (g_variant_iter_n_children (&iter) > 0)
     {
@@ -13766,11 +13769,18 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
 gboolean
 flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                          const char   *remote,
+                                         FlatpakRemoteState *optional_remote_state,
+                                         gboolean     *updated_out,
                                          GCancellable *cancellable,
                                          GError      **error)
 {
   gboolean is_oci;
-  g_autoptr(FlatpakRemoteState) state = NULL;
+  g_autoptr(FlatpakRemoteState) local_state = NULL;
+  FlatpakRemoteState *state;
+
+  /* Initialize if we exit early */
+  if (updated_out)
+    *updated_out = FALSE;
 
   if (flatpak_dir_get_remote_disabled (self, remote))
     return TRUE;
@@ -13779,9 +13789,15 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   if (is_oci)
     return TRUE;
 
-  state = flatpak_dir_get_remote_state (self, remote, FALSE, cancellable, error);
-  if (state == NULL)
-    return FALSE;
+  if (optional_remote_state)
+    state = optional_remote_state;
+  else
+    {
+      local_state = flatpak_dir_get_remote_state (self, remote, FALSE, cancellable, error);
+      if (local_state == NULL)
+        return FALSE;
+      state = local_state;
+    }
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -13845,12 +13861,15 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
           unlink (summary_path);
           if (summary_sig_path)
             unlink (summary_sig_path);
+
+          if (updated_out)
+            *updated_out = TRUE;
         }
 
       return TRUE;
     }
 
-  return flatpak_dir_update_remote_configuration_for_state (self, state, FALSE, NULL, cancellable, error);
+  return flatpak_dir_update_remote_configuration_for_state (self, state, FALSE, updated_out, cancellable, error);
 }
 
 

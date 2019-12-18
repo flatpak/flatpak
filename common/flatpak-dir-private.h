@@ -874,6 +874,8 @@ GVariant * flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
                                             GError      **error);
 gboolean flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                                   const char   *remote,
+                                                  FlatpakRemoteState *optional_remote_state,
+                                                  gboolean     *changed_out,
                                                   GCancellable *cancellable,
                                                   GError      **error);
 gboolean flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
