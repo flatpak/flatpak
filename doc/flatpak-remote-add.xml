@@ -264,6 +264,22 @@ allow org.signal.Signal.*/*/stable
             </varlistentry>
 
             <varlistentry>
+                <term><option>--authenticator-install</option></term>
+
+                <listitem><para>
+                    Enable auto-installation of authenticator.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-authenticator-install</option></term>
+
+                <listitem><para>
+                    Disable auto-installation of authenticator.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

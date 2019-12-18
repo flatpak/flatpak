@@ -55,6 +55,7 @@ static gboolean opt_from;
 static char **opt_gpg_import;
 static char *opt_authenticator_name = NULL;
 static char **opt_authenticator_options = NULL;
+static gboolean opt_authenticator_install = -1;
 
 static GOptionEntry add_options[] = {
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, N_("Do nothing if the provided remote exists"), NULL },
@@ -79,6 +80,8 @@ static GOptionEntry common_options[] = {
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
   { "authenticator-name", 0, 0, G_OPTION_ARG_STRING, &opt_authenticator_name, N_("Name of authenticator"), N_("NAME") },
   { "authenticator-option", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_authenticator_options, N_("Authenticator option"), N_("KEY=VALUE") },
+  { "authenticator-install", 0, 0, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Autoinstall authenticator"), NULL },
+  { "no-authenticator-install", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Don't autoinstall authenticator"), NULL },
   { NULL }
 };
 
@@ -189,6 +192,12 @@ get_config_from_opts (GKeyFile *config,
     {
       g_key_file_set_string (config, group, "xa.authenticator-name", opt_authenticator_name);
       g_key_file_set_boolean (config, group, "xa.authenticator-name-is-set", TRUE);
+    }
+
+  if (opt_authenticator_install != -1)
+    {
+      g_key_file_set_boolean (config, group, "xa.authenticator-install", opt_authenticator_install);
+      g_key_file_set_boolean (config, group, "xa.authenticator-install-is-set", TRUE);
     }
 
   if (opt_authenticator_options)
