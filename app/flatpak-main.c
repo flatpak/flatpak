@@ -242,6 +242,10 @@ check_environment (void)
   int i;
   int rows, cols;
 
+  /* Only print warnings on ttys */
+  if (!flatpak_fancy_output ())
+    return;
+
   /* Don't recommend restarting the session when we're not in one */
   if (!g_getenv ("DBUS_SESSION_BUS_ADDRESS"))
     return;
@@ -744,7 +748,13 @@ flatpak_run (int      argc,
   prgname = g_strdup_printf ("%s %s", g_get_prgname (), command_name);
   g_set_prgname (prgname);
 
-  check_environment ();
+  /* Only print environment warnings in some commonly used interactive operations so we
+     avoid messing up output in commands where you might parse the output. */
+  if (g_strcmp0 (command->name, "install") == 0 ||
+      g_strcmp0 (command->name, "update") == 0 ||
+      g_strcmp0 (command->name, "remote-add") == 0 ||
+      g_strcmp0 (command->name, "run") == 0)
+    check_environment ();
 
   /* Don't talk to dbus in enter, as it must be thread-free to setns, also
      skip run/build for performance reasons (no need to connect to dbus). */
