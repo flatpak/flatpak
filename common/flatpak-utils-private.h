@@ -428,6 +428,16 @@ gboolean flatpak_repo_set_homepage (OstreeRepo *repo,
 gboolean flatpak_repo_set_redirect_url (OstreeRepo *repo,
                                         const char *redirect_url,
                                         GError    **error);
+gboolean flatpak_repo_set_authenticator_name (OstreeRepo *repo,
+                                              const char *authenticator_name,
+                                              GError    **error);
+gboolean flatpak_repo_set_authenticator_install (OstreeRepo *repo,
+                                                 gboolean authenticator_install,
+                                                 GError    **error);
+gboolean flatpak_repo_set_authenticator_option (OstreeRepo *repo,
+                                                const char *key,
+                                                const char *value,
+                                                GError    **error);
 gboolean flatpak_repo_set_default_branch (OstreeRepo *repo,
                                           const char *branch,
                                           GError    **error);

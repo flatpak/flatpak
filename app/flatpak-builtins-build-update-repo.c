@@ -55,6 +55,9 @@ static gboolean opt_no_update_summary;
 static gint opt_prune_depth = -1;
 static gint opt_static_delta_jobs;
 static char **opt_static_delta_ignore_refs;
+static char *opt_authenticator_name = NULL;
+static gboolean opt_authenticator_install = -1;
+static char **opt_authenticator_options = NULL;
 
 static GOptionEntry options[] = {
   { "redirect-url", 0, 0, G_OPTION_ARG_STRING, &opt_redirect_url, N_("Redirect this repo to a new URL"), N_("URL") },
@@ -66,6 +69,10 @@ static GOptionEntry options[] = {
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
   { "deploy-collection-id", 0, 0, G_OPTION_ARG_NONE, &opt_deploy_collection_id, N_("Permanently deploy collection ID to client remote configurations"), NULL },
+  { "authenticator-name", 0, 0, G_OPTION_ARG_STRING, &opt_authenticator_name, N_("Name of authenticator for this repository"), N_("NAME") },
+  { "authenticator-install", 0, 0, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Autoinstall authenticator for this repository"), NULL },
+  { "no-authenticator-install", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Don't autoinstall authenticator for this repository"), NULL },
+  { "authenticator-option", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_authenticator_options, N_("Authenticator option"), N_("KEY=VALUE") },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import new default GPG public key from FILE"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
@@ -527,6 +534,30 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
   if (opt_default_branch &&
       !flatpak_repo_set_default_branch (repo, opt_default_branch[0] ? opt_default_branch : NULL, error))
     return FALSE;
+
+  if (opt_authenticator_name &&
+      !flatpak_repo_set_authenticator_name (repo, opt_authenticator_name[0] ? opt_authenticator_name : NULL, error))
+    return FALSE;
+
+  if (opt_authenticator_install != -1 &&
+      !flatpak_repo_set_authenticator_install (repo, opt_authenticator_install, error))
+    return FALSE;
+
+  if (opt_authenticator_options)
+    {
+      for (int i = 0; opt_authenticator_options[i] != NULL; i++)
+        {
+          g_auto(GStrv) split = g_strsplit (opt_authenticator_options[i], "=", 2);
+          const char *key = split[0];
+          const char *value = NULL;
+
+          if (split[0] != NULL && split[1] != NULL && *split[1] != 0)
+            value = split[1];
+
+          if (!flatpak_repo_set_authenticator_option (repo, key, value, error))
+            return FALSE;
+        }
+    }
 
   if (opt_collection_id != NULL)
     {
