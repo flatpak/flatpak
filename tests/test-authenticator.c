@@ -31,7 +31,6 @@ FlatpakAuthenticator *authenticator;
 typedef struct {
   FlatpakAuthenticatorRequest *request;
   GSocketService *server;
-  char *sender;
   char **arg_refs;
 } TokenRequestData;
 
@@ -41,21 +40,18 @@ token_request_data_free (TokenRequestData *data)
   g_clear_object (&data->request);
   g_socket_service_stop  (data->server);
   g_clear_object (&data->server);
-  g_free (data->sender);
   g_strfreev (data->arg_refs);
   g_free (data);
 }
 
 static TokenRequestData *
-token_request_data_new (GDBusMethodInvocation *invocation,
-                        FlatpakAuthenticatorRequest *request,
+token_request_data_new (FlatpakAuthenticatorRequest *request,
                         GSocketService *server,
                         const gchar *const *arg_refs)
 {
   TokenRequestData *data = g_new0 (TokenRequestData, 1);
   data->request = g_object_ref (request);
   data->server = g_object_ref (server);
-  data->sender = g_strdup (g_dbus_method_invocation_get_sender (invocation));
   data->arg_refs = g_strdupv ((char **)arg_refs);
   return data;
 }
@@ -116,9 +112,9 @@ finish_request_ref_tokens (TokenRequestData *data)
   g_variant_builder_add (&results, "{sv}", "tokens", g_variant_builder_end (&tokens));
 
   g_debug ("emiting response");
-  flatpak_auth_request_emit_response (data->request, data->sender,
-                                      FLATPAK_AUTH_RESPONSE_OK,
-                                      g_variant_builder_end (&results));
+  flatpak_authenticator_request_emit_response (data->request,
+                                               FLATPAK_AUTH_RESPONSE_OK,
+                                               g_variant_builder_end (&results));
 }
 
 static gboolean
@@ -128,14 +124,15 @@ http_incoming (GSocketService    *service,
                gpointer           user_data)
 {
   TokenRequestData *data = user_data;
+  g_autoptr(GVariant) options = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sv}"), NULL, 0));
 
   g_assert (data->request != NULL);
 
   /* For the test, just assume any connection is a valid use of the web flow */
-  g_debug ("handling incomming http request for %s", data->sender);
+  g_debug ("handling incomming http request");
 
   g_debug ("emiting webflow done");
-  flatpak_auth_request_emit_webflow_done (data->request, data->sender, NULL);
+  flatpak_authenticator_request_emit_webflow_done (data->request, options);
 
   finish_request_ref_tokens (data);
 
@@ -162,9 +159,9 @@ handle_request_close (FlatpakAuthenticatorRequest *object,
       g_debug ("Webflow was cancelled by client");
 
       g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
-      flatpak_auth_request_emit_response (data->request, data->sender,
-                                          FLATPAK_AUTH_RESPONSE_CANCELLED,
-                                          g_variant_builder_end (&results));
+      flatpak_authenticator_request_emit_response (data->request,
+                                                   FLATPAK_AUTH_RESPONSE_CANCELLED,
+                                                   g_variant_builder_end (&results));
     }
   else
     {
@@ -251,7 +248,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
     }
   g_ptr_array_add (refs, NULL);
 
-  data = token_request_data_new (invocation, request, server, (const char *const*)refs->pdata);
+  data = token_request_data_new (request, server, (const char *const*)refs->pdata);
 
   g_signal_connect (server, "incoming", (GCallback)http_incoming, data);
   g_signal_connect (request, "handle-close", G_CALLBACK (handle_request_close), data);
@@ -260,9 +257,10 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
 
   if (request_webflow ())
     {
+      g_autoptr(GVariant) options = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sv}"), NULL, 0));
       uri = g_strdup_printf ("http://localhost:%d", (int)port);
       g_debug ("Requesting webflow %s", uri);
-      flatpak_auth_request_emit_webflow (request, g_dbus_method_invocation_get_sender (invocation), uri, NULL);
+      flatpak_authenticator_request_emit_webflow (request, uri, options);
     }
   else
     {

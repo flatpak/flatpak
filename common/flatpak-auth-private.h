@@ -61,20 +61,5 @@ gboolean                     flatpak_auth_request_ref_tokens        (FlatpakAuth
 char *                       flatpak_auth_create_request_path       (const char                   *peer,
                                                                      const char                   *token,
                                                                      GError                      **error);
-void                         flatpak_auth_request_emit_response     (FlatpakAuthenticatorRequest  *request,
-                                                                     const gchar                  *destination_bus_name,
-                                                                     guint                         arg_response,
-                                                                     GVariant                     *arg_results);
-void                         flatpak_auth_request_emit_webflow      (FlatpakAuthenticatorRequest  *request,
-                                                                     const gchar                  *destination_bus_name,
-                                                                     const char                   *arg_uri,
-                                                                     GVariant                      *options);
-void                         flatpak_auth_request_emit_webflow_done (FlatpakAuthenticatorRequest  *request,
-                                                                     const gchar                  *destination_bus_name,
-                                                                     GVariant                      *options);
-void                         flatpak_auth_request_emit_basic_auth   (FlatpakAuthenticatorRequest  *request,
-                                                                     const char                   *destination_bus_name,
-                                                                     const char                   *arg_realm,
-                                                                     GVariant                      *options);
 
 #endif /* __FLATPAK_AUTH_H__ */
