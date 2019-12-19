@@ -2606,7 +2606,7 @@ clean_unused_icons_recurse (int           icons_dfd,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  GLnxDirFdIterator iter = { 0, };
+  g_auto(GLnxDirFdIterator) iter = { 0, };
   gboolean any_found = FALSE;
 
   if (!glnx_dirfd_iterator_init_at (icons_dfd,
