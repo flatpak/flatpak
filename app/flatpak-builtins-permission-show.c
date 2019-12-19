@@ -161,6 +161,8 @@ flatpak_complete_permission_show (FlatpakCompletion *completion)
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GDBusConnection) session_bus = NULL;
   XdpDbusPermissionStore *store = NULL;
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
 
   context = g_option_context_new ("");
 
@@ -187,8 +189,10 @@ flatpak_complete_permission_show (FlatpakCompletion *completion)
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
 
-      flatpak_complete_partial_ref (completion, FLATPAK_KINDS_APP, FALSE, flatpak_dir_get_user (), NULL);
-      flatpak_complete_partial_ref (completion, FLATPAK_KINDS_APP, FALSE, flatpak_dir_get_system_default (), NULL);
+      user_dir = flatpak_dir_get_user ();
+      system_dir = flatpak_dir_get_system_default ();
+      flatpak_complete_partial_ref (completion, FLATPAK_KINDS_APP, FALSE, user_dir, NULL);
+      flatpak_complete_partial_ref (completion, FLATPAK_KINDS_APP, FALSE, system_dir, NULL);
 
       break;
 
