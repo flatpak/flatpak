@@ -2374,6 +2374,8 @@ on_bus_acquired (GDBusConnection *connection,
       g_warning ("error: %s", error->message);
       g_error_free (error);
     }
+
+  g_debug ("providing portal %s", g_dbus_interface_skeleton_get_info (G_DBUS_INTERFACE_SKELETON (portal))->name);
 }
 
 static void
