@@ -41,6 +41,7 @@
 #include "flatpak-portal.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-run-private.h"
 #include "flatpak-transaction.h"
 #include "flatpak-installation-private.h"
 #include "flatpak-instance-private.h"
@@ -98,6 +99,8 @@ typedef struct {
   char *branch;
   char *commit;
   char *app_path;
+  char *origin;
+  char *runtime;
 
   /* Last reported values, starting at the instance commit */
   char *reported_local_commit;
@@ -112,6 +115,11 @@ static gboolean           handle_close             (PortalFlatpakUpdateMonitor *
 static gboolean           handle_update            (PortalFlatpakUpdateMonitor *monitor,
                                                     GDBusMethodInvocation      *invocation,
                                                     const char                 *arg_window,
+                                                    GVariant                   *arg_options);
+static gboolean           handle_install           (PortalFlatpakUpdateMonitor *monitor,
+                                                    GDBusMethodInvocation      *invocation,
+                                                    const char                 *arg_window,
+                                                    const char                 *arg_ref,
                                                     GVariant                   *arg_options);
 
 static void
@@ -1083,6 +1091,8 @@ unregister_update_monitor (const char *obj_path)
   G_LOCK (update_monitors);
   g_hash_table_remove (update_monitors, obj_path);
   G_UNLOCK (update_monitors);
+
+  schedule_idle_callback ();
 }
 
 static gboolean
@@ -1133,6 +1143,7 @@ update_monitor_data_free (gpointer data)
   g_free (m->branch);
   g_free (m->commit);
   g_free (m->app_path);
+  g_free (m->runtime);
 
   g_free (m->reported_local_commit);
   g_free (m->reported_remote_commit);
@@ -1190,6 +1201,9 @@ create_update_monitor (GDBusMethodInvocation *invocation,
   m->app_path = g_key_file_get_string (app_info,
                                        FLATPAK_METADATA_GROUP_INSTANCE,
                                        "app-path", NULL);
+  m->runtime = g_key_file_get_string (app_info,
+                                      FLATPAK_METADATA_GROUP_APPLICATION,
+                                      "runtime", NULL);
 
   m->reported_local_commit = g_strdup (m->commit);
   m->reported_remote_commit = g_strdup (m->commit);
@@ -1288,6 +1302,26 @@ update_monitor_get_installation_path (PortalFlatpakUpdateMonitor *monitor)
    * like $dir/app/org.the.app/x86_64/stable/$commit/files, so we find
    * the installation by just going up 6 parents. */
   return g_file_resolve_relative_path (app_path, "../../../../../..");
+}
+
+static char *
+update_monitor_get_origin (PortalFlatpakUpdateMonitor *monitor)
+{
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  g_autoptr(GFile) installation_path = NULL;
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(FlatpakInstalledRef) installed_ref = NULL;
+
+  installation_path = update_monitor_get_installation_path (monitor);
+  installation = lookup_installation_for_path (installation_path, NULL);
+  if (installation == NULL)
+    return NULL;
+
+  installed_ref = flatpak_installation_get_current_installed_app (installation, m->name, NULL, NULL);
+  if (installed_ref == NULL)
+    return NULL;
+
+  return g_strdup (flatpak_installed_ref_get_origin (installed_ref));
 }
 
 static void
@@ -1516,6 +1550,7 @@ handle_create_update_monitor (PortalFlatpak *object,
 
   g_signal_connect (monitor, "handle-close", G_CALLBACK (handle_close), NULL);
   g_signal_connect (monitor, "handle-update", G_CALLBACK (handle_update), NULL);
+  g_signal_connect (monitor, "handle-install", G_CALLBACK (handle_install), NULL);
   g_signal_connect (monitor, "g-authorize-method", G_CALLBACK (authorize_method_handler), NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (monitor),
@@ -1589,12 +1624,14 @@ close_update_monitors_for_sender (const char *sender)
 }
 
 static guint32
-get_update_permission (const char *app_id)
+get_update_permission (const char *app_id,
+                       const char *permission_id)
 {
   g_autoptr(GVariant) out_perms = NULL;
   g_autoptr(GVariant) out_data = NULL;
   g_autoptr(GError) error = NULL;
   guint32 ret = UNSET;
+  const char *name[] = { "unset", "no", "yes", "ask" }; 
 
   if (permission_store == NULL)
     {
@@ -1604,14 +1641,14 @@ get_update_permission (const char *app_id)
 
   if (!xdp_dbus_permission_store_call_lookup_sync (permission_store,
                                                    PERMISSION_TABLE,
-                                                   PERMISSION_ID,
+                                                   permission_id,
                                                    &out_perms,
                                                    &out_data,
                                                    NULL,
                                                    &error))
     {
       g_dbus_error_strip_remote_error (error);
-      g_debug ("No updates permissions found: %s", error->message);
+      g_debug ("No %s permissions found: %s", permission_id, error->message);
       g_clear_error (&error);
     }
 
@@ -1630,13 +1667,14 @@ get_update_permission (const char *app_id)
         }
     }
 
-  g_debug ("Updates permissions for %s: %d", app_id, ret);
+  g_debug ("%s permissions for %s: %s", permission_id, app_id, name[ret]);
 
   return ret;
 }
 
 static void
 set_update_permission (const char *app_id,
+                       const char *permission_id,
                        Permission permission)
 {
   g_autoptr(GError) error = NULL;
@@ -1658,7 +1696,7 @@ set_update_permission (const char *app_id,
   if (!xdp_dbus_permission_store_call_set_permission_sync (permission_store,
                                                            PERMISSION_TABLE,
                                                            TRUE,
-                                                           PERMISSION_ID,
+                                                           permission_id,
                                                            app_id,
                                                            (const char * const*)permissions,
                                                            NULL,
@@ -1688,15 +1726,131 @@ get_app_display_name (const char *app_id)
   return g_strdup (app_id);
 }
 
+typedef enum {
+  UNINSTALLABLE,
+  SELF_UPDATE,
+  APP_EXTENSION,
+  RUNTIME_EXTENSION
+} UpdateKind;
+
+static UpdateKind
+classify_ref (PortalFlatpakUpdateMonitor *monitor,
+              const char                 *ref)
+{
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  g_autoptr(GFile) installation_path = NULL;
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(FlatpakInstalledRef) installed_ref = NULL;
+  g_autoptr(FlatpakRef) r = NULL;
+  g_autoptr(FlatpakRemoteRef) rref = NULL;
+  GBytes *metadata = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
+  const char *origin;
+  g_autofree char *extension_of = NULL;
+  g_autofree char *app_ref = NULL;
+
+  if (ref == NULL)
+    return SELF_UPDATE;
+
+  r = flatpak_ref_parse (ref, NULL);
+  if (flatpak_ref_get_kind (r) != FLATPAK_REF_KIND_RUNTIME)
+    return UNINSTALLABLE;
+
+  installation_path = update_monitor_get_installation_path (monitor);
+  installation = lookup_installation_for_path (installation_path, NULL);
+  if (installation == NULL)
+    return UNINSTALLABLE;
+
+  installed_ref = flatpak_installation_get_current_installed_app (installation, m->name, NULL, NULL);
+  if (installed_ref == NULL)
+    return UNINSTALLABLE;
+
+  /* TODO: handle different installation / origin between app and runtime */
+  origin = flatpak_installed_ref_get_origin (installed_ref);
+  rref = flatpak_installation_fetch_remote_ref_sync (installation,
+                                                     origin,
+                                                     flatpak_ref_get_kind (r),
+                                                     flatpak_ref_get_name (r),
+                                                     NULL, NULL,
+                                                     NULL, NULL);
+  if (!rref)
+    {
+      g_debug ("Did not find remote ref for %s in %s\n", ref, origin);
+      return UNINSTALLABLE;
+    }
+
+  metadata = flatpak_remote_ref_get_metadata (rref);
+  keyfile = g_key_file_new ();
+  if (!g_key_file_load_from_data (keyfile,
+                                  g_bytes_get_data (metadata, NULL),
+                                  g_bytes_get_size (metadata),
+                                  G_KEY_FILE_NONE, NULL))
+    return UNINSTALLABLE;
+
+  extension_of = g_key_file_get_string (keyfile,
+                                        FLATPAK_METADATA_GROUP_EXTENSION_OF,
+                                        FLATPAK_METADATA_KEY_REF,
+                                        NULL);
+
+  app_ref = flatpak_compose_ref (TRUE, m->name, m->branch, m->arch, NULL);
+
+  if (strcmp (extension_of, app_ref) == 0)
+    return APP_EXTENSION;
+  else if (strcmp (extension_of, m->runtime) == 0)
+    return RUNTIME_EXTENSION;
+  
+  return UNINSTALLABLE;
+}
+
 static gboolean
 request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
-                                 const char *app_id,
-                                 const char *window,
-                                 GError **error)
+                                  const char *window,
+                                  const char *ref,
+                                  GError **error)
 {
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  UpdateKind update_kind;
+  const char *permission_id;
   Permission permission;
 
-  permission = get_update_permission (app_id);
+  update_kind = classify_ref (monitor, ref);
+  switch (update_kind)
+    {
+    case UNINSTALLABLE:
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED,
+                   _("Not supported (not an extension or self-update)"));
+      return FALSE;
+    case SELF_UPDATE:
+      permission_id = "updates";
+      break;
+    case APP_EXTENSION:
+      permission_id = "install-app-extensions";
+      break;
+    case RUNTIME_EXTENSION:
+      permission_id = "install-extensions";
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+
+  permission = get_update_permission (m->name, permission_id);
+  if (permission == UNSET)
+    {
+      switch (update_kind)
+        {
+        case SELF_UPDATE:
+          /* We allow self-updates by default */
+          permission = YES;
+          break;
+        case APP_EXTENSION:
+          /* Allow installing app extensions by default. Ask for runtime extensions */
+          permission = YES;
+          break;
+        default:
+          break;
+        }
+    }
+
   if (permission == UNSET || permission == ASK)
     {
       guint access_response = 2;
@@ -1704,6 +1858,9 @@ request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
       GVariantBuilder access_opt_builder;
       g_autofree char *app_name = NULL;
       g_autofree char *title = NULL;
+      g_autofree char *subtitle = NULL;
+      g_autofree char *body = NULL;
+      const char *confirm;
       g_autoptr(GVariant) ret = NULL;
 
       access_impl = find_portal_implementation ("org.freedesktop.impl.portal.Access");
@@ -1714,16 +1871,41 @@ request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
           return FALSE;
         }
 
+      app_name = get_app_display_name (m->name);
+
+      switch (update_kind)
+        {
+        case SELF_UPDATE:
+          title = g_strdup_printf (_("Update %s?"), app_name);
+          subtitle = g_strdup (_("The application wants to update itself."));
+          body = g_strdup (_("Update access can be changed any time from the privacy settings."));
+          confirm = _("Update");
+          break;
+        case APP_EXTENSION:
+          title = g_strdup_printf (_("Install %s?"), ref);
+          subtitle = g_strdup_printf (_("%s wants to install an extension."), app_name);
+          body = g_strdup (_("Extensions can provide additional functionality such as translations, documentation, "
+                             "or hardware support. This extension is only used by the application."));
+          confirm = _("Update");
+          break;
+        case RUNTIME_EXTENSION:
+          title = g_strdup_printf (_("Install %s?"), ref);
+          subtitle = g_strdup_printf (_("%s wants to install a runtime extension."), app_name);
+          body = g_strdup (_("Extensions can provide additional functionality such as translations, documentation, "
+                             "or hardware support. This extension is used by all applications using the same runtime."));
+          confirm = _("Update");
+          break;
+        default:
+          g_assert_not_reached ();
+        }
+
       g_variant_builder_init (&access_opt_builder, G_VARIANT_TYPE_VARDICT);
       g_variant_builder_add (&access_opt_builder, "{sv}",
-                             "deny_label", g_variant_new_string (_("Deny")));
+                             "deny_label", g_variant_new_string (_("Cancel")));
       g_variant_builder_add (&access_opt_builder, "{sv}",
-                             "grant_label", g_variant_new_string (_("Update")));
+                             "grant_label", g_variant_new_string (confirm));
       g_variant_builder_add (&access_opt_builder, "{sv}",
                              "icon", g_variant_new_string ("package-x-generic-symbolic"));
-
-      app_name = get_app_display_name (app_id);
-      title = g_strdup_printf (_("Update %s?"), app_name);
 
       ret = g_dbus_connection_call_sync (update_monitor_get_connection (monitor),
                                          access_impl->dbus_name,
@@ -1732,11 +1914,11 @@ request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
                                          "AccessDialog",
                                          g_variant_new ("(osssssa{sv})",
                                                         "/request/path",
-                                                        app_id,
+                                                        m->name,
                                                         window,
                                                         title,
-                                                        _("The application wants to update itself."),
-                                                        _("Update access can be changed any time from the privacy settings."),
+                                                        subtitle,
+                                                        body,
                                                         &access_opt_builder),
                                          G_VARIANT_TYPE ("(ua{sv})"),
                                          G_DBUS_CALL_FLAGS_NONE,
@@ -1753,7 +1935,7 @@ request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
       g_variant_get (ret, "(ua{sv})", &access_response, NULL);
 
       if (permission == UNSET)
-        set_update_permission (app_id, (access_response == 0) ? YES : NO);
+        set_update_permission (m->name, permission_id, (access_response == 0) ? YES : NO);
 
       permission = (access_response == 0) ? YES : NO;
     }
@@ -1761,7 +1943,7 @@ request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
   if (permission == NO)
     {
       g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_ACCESS_DENIED,
-                   _("Application update not allowed"));
+                   _("Installation/Update not allowed"));
       return FALSE;
     }
 
@@ -1785,13 +1967,9 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
   g_debug ("%d/%d ops, progress %d, status: %d", op, n_ops, progress, status);
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
-  if (n_ops > 0)
-    {
-      g_variant_builder_add (&builder, "{sv}", "op", g_variant_new_uint32 (op));
-      g_variant_builder_add (&builder, "{sv}", "n_ops", g_variant_new_uint32 (n_ops));
-      g_variant_builder_add (&builder, "{sv}", "progress", g_variant_new_uint32 (progress));
-    }
-
+  g_variant_builder_add (&builder, "{sv}", "op", g_variant_new_uint32 (op));
+  g_variant_builder_add (&builder, "{sv}", "n_ops", g_variant_new_uint32 (n_ops));
+  g_variant_builder_add (&builder, "{sv}", "progress", g_variant_new_uint32 (progress));
   g_variant_builder_add (&builder, "{sv}", "status", g_variant_new_uint32 (status));
 
   if (error_name)
@@ -2026,7 +2204,7 @@ update_child_setup_func (gpointer user_data)
    spawn) to avoid running lots of complicated code in the portal
    process and possibly long-term leaks in a long-running process. */
 static int
-do_update_child_process (const char *installation_path, const char *ref, int socket_fd)
+do_update_child_process (const char *installation_path, const char *remote, const char *ref, int socket_fd)
 {
   g_autoptr(GOutputStream) out = g_unix_output_stream_new (socket_fd, TRUE);
   g_autoptr(FlatpakInstallation) installation = NULL;
@@ -2035,6 +2213,7 @@ do_update_child_process (const char *installation_path, const char *ref, int soc
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   TransactionData transaction_data = { NULL };
+  gboolean res;
 
   dir = flatpak_dir_get_by_path (f);
 
@@ -2057,7 +2236,12 @@ do_update_child_process (const char *installation_path, const char *ref, int soc
 
   flatpak_transaction_add_default_dependency_sources (transaction);
 
-  if (!flatpak_transaction_add_update (transaction, ref, NULL, NULL, &error))
+  if (remote)
+    res = flatpak_transaction_add_install (transaction, remote, ref, NULL, &error);
+  else
+    res = flatpak_transaction_add_update (transaction, ref, NULL, NULL, &error);
+
+  if (!res)
     {
       send_progress (out, 0, 0, 0,
                      PROGRESS_STATUS_ERROR, error);
@@ -2178,7 +2362,7 @@ handle_update_in_thread_func (GTask *task,
 
   window = (const char *)g_object_get_data (G_OBJECT (task), "window");
 
-  if (request_update_permissions_sync (monitor, m->name, window, &error))
+  if (request_update_permissions_sync (monitor, window, NULL, &error))
     {
       g_autoptr(GFile) installation_path = update_monitor_get_installation_path (monitor);
       g_autofree char *ref = flatpak_build_app_ref (m->name, m->branch, m->arch);
@@ -2253,6 +2437,102 @@ handle_update (PortalFlatpakUpdateMonitor *monitor,
   g_task_run_in_thread (task, handle_update_in_thread_func);
 
   portal_flatpak_update_monitor_complete_update (monitor, invocation);
+
+  return TRUE;
+}
+
+static void
+handle_install_in_thread_func (GTask *task,
+                               gpointer source_object,
+                               gpointer task_data,
+                               GCancellable *cancellable)
+{
+  PortalFlatpakUpdateMonitor *monitor = source_object;
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  g_autoptr(GError) error = NULL;
+  const char *window;
+  const char *ref;
+
+  window = (const char *)g_object_get_data (G_OBJECT (task), "window");
+  ref = (const char *)g_object_get_data (G_OBJECT (task), "ref");
+
+  if (request_update_permissions_sync (monitor, window, ref, &error))
+    {
+      g_autoptr(GFile) installation_path = update_monitor_get_installation_path (monitor);
+      g_autofree char *origin = update_monitor_get_origin (monitor);
+      const char *argv[] = { "/proc/self/exe", "flatpak-portal", "--install", flatpak_file_get_path_cached (installation_path), origin, ref, NULL };
+      int sockets[2];
+      GPid pid;
+
+      if (socketpair (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sockets) != 0)
+        {
+          glnx_throw_errno (&error);
+        }
+      else
+        {
+          gboolean spawn_ok;
+
+          spawn_ok = g_spawn_async (NULL, (char **)argv, NULL,
+                                    G_SPAWN_FILE_AND_ARGV_ZERO |
+                                    G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
+                                    update_child_setup_func, &sockets[1],
+                                    &pid, &error);
+          close (sockets[1]); // Close remote side
+          if (spawn_ok)
+            {
+              if (!handle_update_responses (monitor, sockets[0], &error))
+                {
+                  if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+                    kill (pid, SIGINT);
+                }
+            }
+          close (sockets[0]); // Close local side
+        }
+    }
+
+  if (error)
+    emit_progress_error (monitor, error);
+
+  g_mutex_lock (&m->lock);
+  m->installing = FALSE;
+  g_mutex_unlock (&m->lock);
+}
+
+static gboolean
+handle_install (PortalFlatpakUpdateMonitor *monitor,
+                GDBusMethodInvocation *invocation,
+                const char *arg_window,
+                const char *arg_ref,
+                GVariant *arg_options)
+{
+  UpdateMonitorData *m = update_monitor_get_data (monitor);
+  g_autoptr(GTask) task = NULL;
+  gboolean already_installing = FALSE;
+
+  g_debug ("handle UpdateMonitor.Install");
+
+  g_mutex_lock (&m->lock);
+  if (m->installing)
+    already_installing = TRUE;
+  else
+    m->installing = TRUE;
+  g_mutex_unlock (&m->lock);
+
+  if (already_installing)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "Already installing");
+      return TRUE;
+    }
+
+  task = g_task_new (monitor, NULL, NULL, NULL);
+  g_object_set_data_full (G_OBJECT (task), "window", g_strdup (arg_window), g_free);
+  g_object_set_data_full (G_OBJECT (task), "ref", g_strdup (arg_ref), g_free);
+  g_task_run_in_thread (task, handle_install_in_thread_func);
+
+  portal_flatpak_update_monitor_complete_install (monitor, invocation);
 
   return TRUE;
 }
@@ -2357,7 +2637,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
-  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 3);
+  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 4);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
 
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);
@@ -2457,7 +2737,12 @@ main (int    argc,
 
   if (argc >= 4 && strcmp (argv[1], "--update") == 0)
     {
-      return do_update_child_process (argv[2], argv[3], 3);
+      return do_update_child_process (argv[2], NULL, argv[3], 3);
+    }
+
+  if (argc >= 5 && strcmp (argv[1], "--install") == 0)
+    {
+      return do_update_child_process (argv[2], argv[3], argv[4],  3);
     }
 
   context = g_option_context_new ("");
