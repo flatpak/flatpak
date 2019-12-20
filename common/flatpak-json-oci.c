@@ -549,6 +549,8 @@ flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
   if (i < 0)
     return FALSE;
 
+  flatpak_oci_manifest_descriptor_free (self->manifests[i]);
+
   for (; self->manifests[i] != NULL; i++)
     self->manifests[i] = self->manifests[i + 1];
 
