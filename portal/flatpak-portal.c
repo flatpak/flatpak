@@ -54,12 +54,14 @@
 
 static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
+static GNetworkMonitor *network_monitor = NULL;
 static gboolean no_idle_exit = FALSE;
 static guint name_owner_id = 0;
 static GMainLoop *main_loop;
 static PortalFlatpak *portal;
 static gboolean opt_verbose;
 static int opt_poll_timeout;
+static gboolean opt_poll_when_metered;
 static FlatpakSpawnSupportFlags supports = 0;
 
 G_LOCK_DEFINE (update_monitors); /* This protects the three variables below */
@@ -1463,6 +1465,14 @@ check_all_for_updates_cb (void *data)
 {
   g_autoptr(GTask) task = g_task_new (NULL, NULL, NULL, NULL);
 
+  if (!opt_poll_when_metered &&
+      g_network_monitor_get_network_metered (network_monitor))
+    {
+      g_debug ("Skipping update check on metered network");
+
+      return G_SOURCE_CONTINUE;
+    }
+
   g_debug ("Checking all update monitors");
 
   G_LOCK (update_monitors);
@@ -2442,6 +2452,7 @@ main (int    argc,
     { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
     { "no-idle-exit", 0, 0, G_OPTION_ARG_NONE, &no_idle_exit,  "Don't exit when idle.", NULL },
     { "poll-timeout", 0, 0, G_OPTION_ARG_INT, &opt_poll_timeout,  "Delay in seconds between polls for updates.", NULL },
+    { "poll-when-metered", 0, 0, G_OPTION_ARG_NONE, &opt_poll_when_metered, "Whether to check for updates on metered networks",  NULL },
     { NULL }
   };
 
@@ -2541,6 +2552,8 @@ main (int    argc,
 
   /* Ensure we don't idle exit */
   schedule_idle_callback ();
+
+  network_monitor = g_network_monitor_get_default ();
 
   main_loop = g_main_loop_new (NULL, FALSE);
   g_main_loop_run (main_loop);
