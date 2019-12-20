@@ -17,6 +17,7 @@ Changes since 1.5.2:
  * New no-interaction flag for authenticators
  * Support for auto-installing authenticators from a flatpak remote
  * Warn less about unset XDG_DATA_DIRS
+ * Don't poll for updates in the portal when on a metered connection
 
 Changes in 1.5.2
 ================
