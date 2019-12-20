@@ -2546,24 +2546,24 @@ static GVariant *
 appdata_content_rating_to_variant (const char *content_rating_type,
                                    GHashTable *content_rating)
 {
-  g_auto(GVariantBuilder) builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("(sa{ss})"));
+  g_autoptr(GVariantBuilder) builder = g_variant_builder_new (G_VARIANT_TYPE ("(sa{ss})"));
   GHashTableIter iter;
   gpointer key, value;
 
-  g_variant_builder_add (&builder, "s", content_rating_type);
-  g_variant_builder_open (&builder, G_VARIANT_TYPE ("a{ss}"));
+  g_variant_builder_add (builder, "s", content_rating_type);
+  g_variant_builder_open (builder, G_VARIANT_TYPE ("a{ss}"));
 
   g_hash_table_iter_init (&iter, content_rating);
 
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *id = key, *val = value;
-      g_variant_builder_add (&builder, "{ss}", id, val);
+      g_variant_builder_add (builder, "{ss}", id, val);
     }
 
-  g_variant_builder_close (&builder);
+  g_variant_builder_close (builder);
 
-  return g_variant_builder_end (&builder);
+  return g_variant_builder_end (builder);
 }
 
 static void
