@@ -1,3 +1,23 @@
+Changes in 1.6.0
+================
+
+This is the first stable release in the 1.6 series, main changes
+since 1.4 is the support for protected content and improvements
+in the self-sandboxing support.
+
+There is one change in the support for OCI remotes, we now
+only support the use of labels, not annotations, as labels
+work with more registries. This means pre-existing OCI flatpak
+registries (like fedora) may need some changes.
+
+Changes since 1.5.2:
+ * New permissions --socket=cups for direct cups access
+ * Fix some leaks
+ * Fix reporting of progress with latest version of ostree
+ * New no-interaction flag for authenticators
+ * Support for auto-installing authenticators from a flatpak remote
+ * Warn less about unset XDG_DATA_DIRS
+
 Changes in 1.5.2
 ================
 
