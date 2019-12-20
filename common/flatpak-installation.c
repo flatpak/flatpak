@@ -3258,7 +3258,7 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
                                        GCancellable        *cancellable,
                                        GError             **error)
 {
-  FlatpakDir *dir;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GHashTable) refs_hash = NULL;
   g_autoptr(GPtrArray) refs =  NULL;
   g_auto(GStrv) app_refs = NULL;
