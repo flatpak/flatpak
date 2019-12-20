@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2019-12-20 11:40+0100\n"
-"PO-Revision-Date: 2019-12-13 14:38+0100\n"
+"PO-Revision-Date: 2019-12-20 16:04+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -341,7 +341,7 @@ msgstr "OLDID=NEWID"
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
 msgid "Set type of token needed to install this commit"
-msgstr ""
+msgstr "Nastavit typ tokenu požadovaného k instalaci tohoto commitu"
 
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
@@ -947,31 +947,26 @@ msgid "Permanently deploy collection ID to client remote configurations"
 msgstr ""
 
 #: app/flatpak-builtins-build-update-repo.c:72
-#, fuzzy
 msgid "Name of authenticator for this repository"
-msgstr "URL pro ikonu pro tento repozitář"
+msgstr "Název autentikátoru pro tento repozitář"
 
 #: app/flatpak-builtins-build-update-repo.c:73
-#, fuzzy
 msgid "Autoinstall authenticator for this repository"
-msgstr "URL pro ikonu pro tento repozitář"
+msgstr "Automaticky instalovat autentikátor pro tento repozitář"
 
 #: app/flatpak-builtins-build-update-repo.c:74
-#, fuzzy
 msgid "Don't autoinstall authenticator for this repository"
-msgstr "Výchozí větev pro použití s tímto vzdáleným repozitářem"
+msgstr "Neinstalovat automaticky autentikátor pro tento repozitář"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:82
-#, fuzzy
 msgid "Authenticator option"
-msgstr "Volby autentikátoru"
+msgstr "Volba autentikátoru"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:89
-#, fuzzy
 msgid "KEY=VALUE"
-msgstr "HODNOTA"
+msgstr "KLÍČ=HODNOTA"
 
 #: app/flatpak-builtins-build-update-repo.c:76
 msgid "Import new default GPG public key from FILE"
@@ -2145,7 +2140,7 @@ msgstr "TABULKA ID APP_ID [OPRÁVNĚNÍ...] - Nastavit oprávnění"
 #: app/flatpak-builtins-permission-set.c:132
 #, c-format
 msgid "Failed to parse '%s' as GVariant: "
-msgstr ""
+msgstr "Nelze zpracovat „%s“ jako GVariant: "
 
 #: app/flatpak-builtins-permission-show.c:112
 msgid "APP_ID - Show permissions for an app"
@@ -2294,14 +2289,12 @@ msgid "Name of authenticator"
 msgstr "Název autentikátoru"
 
 #: app/flatpak-builtins-remote-add.c:83 app/flatpak-builtins-remote-modify.c:90
-#, fuzzy
 msgid "Autoinstall authenticator"
-msgstr "Název autentikátoru"
+msgstr "Automaticky instalovat autentikátor"
 
 #: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:91
-#, fuzzy
 msgid "Don't autoinstall authenticator"
-msgstr "Neodinstalovat související refy"
+msgstr "Neinstalovat automaticky autentikátor"
 
 #: app/flatpak-builtins-remote-add.c:243 app/flatpak-builtins-remote-add.c:250
 #, c-format
@@ -2744,14 +2737,14 @@ msgid "Deploy collection ID: %s\n"
 msgstr "ID kolekce nasazení: %s\n"
 
 #: app/flatpak-builtins-repo.c:123
-#, fuzzy, c-format
+#, c-format
 msgid "Authenticator name: %s\n"
-msgstr "Neplatný název autentikátoru %s"
+msgstr "Název autentikátoru: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
-#, fuzzy, c-format
+#, c-format
 msgid "Authenticator install: %s\n"
-msgstr "Volby autentikátoru"
+msgstr "Instalace autentikátoru: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "true"
@@ -3031,11 +3024,13 @@ msgid ""
 "Remote \"%s\" not found\n"
 "Hint: Use flatpak remote-add to add a remote"
 msgstr ""
+"Vzdálený repozitář „%s“ nebyl nalezen\n"
+"Tip: Pro přidání vzdáleného repozitáře použijte flatpak remote-add"
 
 #: app/flatpak-builtins-utils.c:369
-#, fuzzy, c-format
+#, c-format
 msgid "Remote \"%s\" not found in the %s installation"
-msgstr "Vzdálený repozitář „%s“ nalezen ve více instalacích:"
+msgstr "Vzdálený repozitář „%s“ nebyl nalezen v instalaci %s"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:418
