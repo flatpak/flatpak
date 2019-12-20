@@ -1238,7 +1238,8 @@ flatpak_parse_filters (const char *data,
 
       if (strcmp (command, "allow") == 0 || strcmp (command, "deny") == 0)
         {
-          char *glob, *next, *ref_regexp;
+          char *glob, *next;
+          g_autofree char *ref_regexp = NULL;
           GString *command_regexp;
           gboolean *has_type = NULL;
 

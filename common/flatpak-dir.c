@@ -10691,7 +10691,7 @@ static RemoteFilter *
 remote_filter_load (GFile *path, GError **error)
 {
   RemoteFilter *filter;
-  char *data = NULL;
+  g_autofree char *data = NULL;
   gsize data_size;
   GTimeVal mtime;
   g_autoptr(GRegex) allow_refs = NULL;
@@ -10739,7 +10739,7 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                   GError **error)
 {
   RemoteFilter *filter = NULL;
-  const char *filter_path;
+  g_autofree char *filter_path = NULL;
   gboolean handled_fallback = FALSE;
   g_autoptr(GFile) filter_file = NULL;
 
@@ -10774,7 +10774,7 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
           handled_fallback = TRUE;
           if (!g_file_query_exists (filter_file, NULL))
             {
-              char *basename = g_strconcat (name, ".filter", NULL);
+              g_autofree char *basename = g_strconcat (name, ".filter", NULL);
               g_object_unref (filter_file);
               filter_file = flatpak_build_file (self->basedir, "repo", basename, NULL);
             }
@@ -10805,7 +10805,7 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
   /* Fall back to backup copy if remote filter disappears */
   if (!handled_fallback && !g_file_query_exists (filter_file, NULL))
     {
-      char *basename = g_strconcat (name, ".filter", NULL);
+      g_autofree char *basename = g_strconcat (name, ".filter", NULL);
       g_object_unref (filter_file);
       filter_file = flatpak_build_file (self->basedir, "repo", basename, NULL);
     }
@@ -13396,7 +13396,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   if (filter_path && *filter_path && g_file_test (filter_path, G_FILE_TEST_EXISTS))
     {
       /* Make a backup filter copy in case it goes away later */
-      char *filter_name = g_strconcat (remote_name, ".filter", NULL);
+      g_autofree char *filter_name = g_strconcat (remote_name, ".filter", NULL);
       g_autoptr(GFile) filter_file = g_file_new_for_path (filter_path);
       g_autoptr(GFile) filter_copy = flatpak_build_file (self->basedir, "repo", filter_name, NULL);
       g_autoptr(GError) local_error = NULL;
