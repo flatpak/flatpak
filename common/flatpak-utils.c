@@ -3477,10 +3477,10 @@ flatpak_repo_update (OstreeRepo   *repo,
                      GCancellable *cancellable,
                      GError      **error)
 {
-  g_auto(GVariantBuilder) builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE_VARDICT);
-  g_auto(GVariantBuilder) commits_builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("aay"));
-  g_auto(GVariantBuilder) ref_data_builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("a{s(tts)}"));
-  g_auto(GVariantBuilder) ref_sparse_data_builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("a{sa{sv}}"));
+  g_autoptr(GVariantBuilder) builder = g_variant_builder_new (G_VARIANT_TYPE_VARDICT);
+  g_autoptr(GVariantBuilder) commits_builder = g_variant_builder_new (G_VARIANT_TYPE ("aay"));
+  g_autoptr(GVariantBuilder) ref_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(tts)}"));
+  g_autoptr(GVariantBuilder) ref_sparse_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sa{sv}}"));
   GKeyFile *config;
   g_autofree char *title = NULL;
   g_autofree char *comment = NULL;
@@ -3529,45 +3529,45 @@ flatpak_repo_update (OstreeRepo   *repo,
   collection_id = ostree_repo_get_collection_id (repo);
 
   if (title)
-    g_variant_builder_add (&builder, "{sv}", "xa.title",
+    g_variant_builder_add (builder, "{sv}", "xa.title",
                            g_variant_new_string (title));
 
   if (comment)
-    g_variant_builder_add (&builder, "{sv}", "xa.comment",
+    g_variant_builder_add (builder, "{sv}", "xa.comment",
                            g_variant_new_string (comment));
 
   if (description)
-    g_variant_builder_add (&builder, "{sv}", "xa.description",
+    g_variant_builder_add (builder, "{sv}", "xa.description",
                            g_variant_new_string (description));
 
   if (homepage)
-    g_variant_builder_add (&builder, "{sv}", "xa.homepage",
+    g_variant_builder_add (builder, "{sv}", "xa.homepage",
                            g_variant_new_string (homepage));
 
   if (icon)
-    g_variant_builder_add (&builder, "{sv}", "xa.icon",
+    g_variant_builder_add (builder, "{sv}", "xa.icon",
                            g_variant_new_string (icon));
 
   if (redirect_url)
-    g_variant_builder_add (&builder, "{sv}", "xa.redirect-url",
+    g_variant_builder_add (builder, "{sv}", "xa.redirect-url",
                            g_variant_new_string (redirect_url));
 
   if (default_branch)
-    g_variant_builder_add (&builder, "{sv}", "xa.default-branch",
+    g_variant_builder_add (builder, "{sv}", "xa.default-branch",
                            g_variant_new_string (default_branch));
 
   if (deploy_collection_id && collection_id != NULL)
-    g_variant_builder_add (&builder, "{sv}", OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
+    g_variant_builder_add (builder, "{sv}", OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
                            g_variant_new_string (collection_id));
   else if (deploy_collection_id)
     g_debug ("Ignoring deploy-collection-id=true because no collection ID is set.");
 
   if (authenticator_name)
-    g_variant_builder_add (&builder, "{sv}", "xa.authenticator-name",
+    g_variant_builder_add (builder, "{sv}", "xa.authenticator-name",
                            g_variant_new_string (authenticator_name));
 
   if (authenticator_install != -1)
-    g_variant_builder_add (&builder, "{sv}", "xa.authenticator-install",
+    g_variant_builder_add (builder, "{sv}", "xa.authenticator-install",
                            g_variant_new_boolean (authenticator_install));
 
   if (config_keys != NULL)
@@ -3586,7 +3586,7 @@ flatpak_repo_update (OstreeRepo   *repo,
             continue;
 
           xa_key = g_strconcat ("xa.", key, NULL);
-          g_variant_builder_add (&builder, "{sv}", xa_key,
+          g_variant_builder_add (builder, "{sv}", xa_key,
                                  g_variant_new_string (value));
         }
     }
@@ -3599,7 +3599,7 @@ flatpak_repo_update (OstreeRepo   *repo,
       gpg_keys = g_strstrip (gpg_keys);
       decoded = g_base64_decode (gpg_keys, &decoded_len);
 
-      g_variant_builder_add (&builder, "{sv}", "xa.gpg-keys",
+      g_variant_builder_add (builder, "{sv}", "xa.gpg-keys",
                              g_variant_new_from_data (G_VARIANT_TYPE ("ay"), decoded, decoded_len,
                                                       TRUE, (GDestroyNotify) g_free, decoded));
     }
@@ -3734,15 +3734,15 @@ flatpak_repo_update (OstreeRepo   *repo,
       const CommitData *rev_data = g_hash_table_lookup (commit_data_cache,
                                                         rev);
 
-      g_variant_builder_add (&ref_data_builder, "{s(tts)}",
+      g_variant_builder_add (ref_data_builder, "{s(tts)}",
                              ref,
                              GUINT64_TO_BE (rev_data->installed_size),
                              GUINT64_TO_BE (rev_data->download_size),
                              rev_data->metadata_contents);
       if (rev_data->sparse_data)
-        g_variant_builder_add (&ref_sparse_data_builder, "{s@a{sv}}",
+        g_variant_builder_add (ref_sparse_data_builder, "{s@a{sv}}",
                                ref, rev_data->sparse_data);
-      g_variant_builder_add (&commits_builder, "@ay", ostree_checksum_to_bytes_v (rev));
+      g_variant_builder_add (commits_builder, "@ay", ostree_checksum_to_bytes_v (rev));
     }
 
   /* Note: xa.cache doesn’t need to support collection IDs for the refs listed
@@ -3751,13 +3751,13 @@ flatpak_repo_update (OstreeRepo   *repo,
    * is bound to all the refs in xa.cache. If a client is using the xa.cache
    * data from a summary file (rather than an ostree-metadata branch), they are
    * too old to care about collection IDs anyway. */
-  g_variant_builder_add (&builder, "{sv}", "xa.cache",
-                         g_variant_new_variant (g_variant_builder_end (&ref_data_builder)));
+  g_variant_builder_add (builder, "{sv}", "xa.cache",
+                         g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
 
-  g_variant_builder_add (&builder, "{sv}", "xa.sparse-cache",
-                         g_variant_builder_end (&ref_sparse_data_builder));
+  g_variant_builder_add (builder, "{sv}", "xa.sparse-cache",
+                         g_variant_builder_end (ref_sparse_data_builder));
 
-  new_summary = g_variant_ref_sink (g_variant_builder_end (&builder));
+  new_summary = g_variant_ref_sink (g_variant_builder_end (builder));
 
   /* Write out a new metadata commit for the repository. */
   if (collection_id != NULL)
@@ -3772,7 +3772,7 @@ flatpak_repo_update (OstreeRepo   *repo,
       /* Add bindings to the metadata. */
       new_summary_commit_dict = g_variant_dict_new (new_summary);
       g_variant_dict_insert_value (new_summary_commit_dict, "xa.commits",
-                                   g_variant_builder_end (&commits_builder));
+                                   g_variant_builder_end (commits_builder));
       g_variant_dict_insert (new_summary_commit_dict, "ostree.collection-binding",
                              "s", collection_ref.collection_id);
       g_variant_dict_insert_value (new_summary_commit_dict, "ostree.ref-binding",
