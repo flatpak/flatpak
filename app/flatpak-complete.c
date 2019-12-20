@@ -612,6 +612,7 @@ flatpak_completion_free (FlatpakCompletion *completion)
   g_free (completion->prev);
   g_free (completion->line);
   g_free (completion->argv);
+  g_free (completion->shell_cur);
   g_strfreev (completion->original_argv);
   g_free (completion);
 }

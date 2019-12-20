@@ -3476,10 +3476,10 @@ flatpak_repo_update (OstreeRepo   *repo,
                      GCancellable *cancellable,
                      GError      **error)
 {
-  GVariantBuilder builder;
-  GVariantBuilder commits_builder;
-  GVariantBuilder ref_data_builder;
-  GVariantBuilder ref_sparse_data_builder;
+  g_auto(GVariantBuilder) builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE_VARDICT);
+  g_auto(GVariantBuilder) commits_builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("aay"));
+  g_auto(GVariantBuilder) ref_data_builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("a{s(tts)}"));
+  g_auto(GVariantBuilder) ref_sparse_data_builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("a{sa{sv}}"));
   GKeyFile *config;
   g_autofree char *title = NULL;
   g_autofree char *comment = NULL;
@@ -3504,8 +3504,6 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *old_ostree_metadata_checksum = NULL;
   g_autoptr(GVariant) old_ostree_metadata_v = NULL;
   gboolean deploy_collection_id = FALSE;
-
-  g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
 
   config = ostree_repo_get_config (repo);
 
@@ -3604,10 +3602,6 @@ flatpak_repo_update (OstreeRepo   *repo,
                              g_variant_new_from_data (G_VARIANT_TYPE ("ay"), decoded, decoded_len,
                                                       TRUE, (GDestroyNotify) g_free, decoded));
     }
-
-  g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE ("a{s(tts)}"));
-  g_variant_builder_init (&ref_sparse_data_builder, G_VARIANT_TYPE ("a{sa{sv}}"));
-  g_variant_builder_init (&commits_builder, G_VARIANT_TYPE ("aay"));
 
   /* Only operate on flatpak relevant refs */
   refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);

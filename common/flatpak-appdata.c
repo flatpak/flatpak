@@ -27,7 +27,7 @@
 
 typedef struct
 {
-  const char *id;
+  char *id;
   GHashTable *names;
   GHashTable *comments;
   char       *version;
@@ -55,6 +55,7 @@ component_free (gpointer data)
 
   g_hash_table_unref (component->names);
   g_hash_table_unref (component->comments);
+  g_free (component->id);
   g_free (component->version);
   g_free (component->license);
   g_free (component->content_rating_type);

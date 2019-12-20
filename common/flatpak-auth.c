@@ -95,7 +95,7 @@ flatpak_auth_create_request_path (const char *peer,
                                   const char *token,
                                   GError **error)
 {
-  gchar *escaped_peer;
+  g_autofree gchar *escaped_peer = NULL;
   int i;
 
   for (i = 0; token[i]; i++)

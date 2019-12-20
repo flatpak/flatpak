@@ -182,7 +182,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh{user+system+system-norevokefs} \
 	tests/test-oci.sh \
-	tests/test-oci-registry.sh{{user+system},{annotations+labels}} \
+	tests/test-oci-registry.sh{{user+system} \
 	tests/test-unsigned-summaries.sh \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \

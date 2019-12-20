@@ -361,7 +361,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
 
           if (!flatpak_dir_compare_remote_filter (dir, remote_name, new_filter))
             {
-              GKeyFile *config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+              g_autoptr(GKeyFile) config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
 
               g_key_file_set_string (config, group, "xa.filter", new_filter ? new_filter : "");
 

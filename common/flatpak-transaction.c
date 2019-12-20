@@ -3070,7 +3070,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
             {
               const char *key;
               g_autofree char *new_key = NULL;
-              GVariant *value = NULL;
+              g_autoptr(GVariant) value = NULL;
 
               g_variant_get_child (op->summary_metadata, i, "{&s@v}", &key, &value);
 
