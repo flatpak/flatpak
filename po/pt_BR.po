@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-12-20 11:40+0100\n"
-"PO-Revision-Date: 2019-11-30 03:27-0300\n"
+"POT-Creation-Date: 2019-12-24 03:23+0000\n"
+"PO-Revision-Date: 2019-12-24 10:42-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
@@ -381,9 +381,8 @@ msgstr ""
 "especificado"
 
 #: app/flatpak-builtins-build-commit-from.c:268
-#, fuzzy
 msgid "Either --src-repo or --src-ref must be specified"
-msgstr "--src-repo ou --src-ref devem ser especificados."
+msgstr "--src-repo ou --src-ref devem ser especificados"
 
 #: app/flatpak-builtins-build-commit-from.c:284
 msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
@@ -404,9 +403,8 @@ msgid "Could not parse '%s'"
 msgstr "Não foi possível analisar “%s”"
 
 #: app/flatpak-builtins-build-commit-from.c:466
-#, fuzzy
 msgid "Can't commit from partial source commit"
-msgstr "Não foi possível fazer commit de commit fonte parcial."
+msgstr "Não foi possível fazer commit de commit fonte parcial"
 
 #: app/flatpak-builtins-build-commit-from.c:471
 #, c-format
@@ -965,31 +963,26 @@ msgstr ""
 "Implementa permanentemente ID de coleção em configurações remotas de cliente"
 
 #: app/flatpak-builtins-build-update-repo.c:72
-#, fuzzy
 msgid "Name of authenticator for this repository"
-msgstr "URL de um ícone para este repositório"
+msgstr "Nome do autenticador para este repositório"
 
 #: app/flatpak-builtins-build-update-repo.c:73
-#, fuzzy
 msgid "Autoinstall authenticator for this repository"
-msgstr "URL de um ícone para este repositório"
+msgstr "Instala automaticamente um autenticador para este repositório"
 
 #: app/flatpak-builtins-build-update-repo.c:74
-#, fuzzy
 msgid "Don't autoinstall authenticator for this repository"
-msgstr "Ramo padrão para usar para este repositório"
+msgstr "Não instala automaticamente um autenticador para este repositório"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:82
-#, fuzzy
 msgid "Authenticator option"
-msgstr "Opções do autenticador"
+msgstr "Opção do autenticador"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:89
-#, fuzzy
 msgid "KEY=VALUE"
-msgstr "VALOR"
+msgstr "CHAVE=VALOR"
 
 #: app/flatpak-builtins-build-update-repo.c:76
 msgid "Import new default GPG public key from FILE"
@@ -1362,19 +1355,18 @@ msgid "FILE - Unexport a file to apps"
 msgstr "ARQUIVO – Desfaz exportação de um arquivo para aplicativos"
 
 #: app/flatpak-builtins-enter.c:87
-#, fuzzy
 msgid "INSTANCE COMMAND [ARGUMENT…] - Run a command inside a running sandbox"
 msgstr ""
-"INSTÂNCIA [COMANDO [ARGUMENTO…]] – Executa um comando dentro de um sandbox"
+"INSTÂNCIA COMANDO [ARGUMENTO…] – Executa um comando dentro de um sandbox"
 
 #: app/flatpak-builtins-enter.c:108
 msgid "INSTANCE and COMMAND must be specified"
 msgstr "INSTÂNCIA e COMANDO devem ser especificados"
 
 #: app/flatpak-builtins-enter.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "%s is neither a pid nor an application or instance ID"
-msgstr "%s não é um pid nem um aplicativo ou ID de instância ou sudo -E"
+msgstr "%s não é um pid nem um aplicativo ou ID de instância"
 
 #: app/flatpak-builtins-enter.c:138
 msgid "entering not supported (need unprivileged user namespaces, or sudo -E)"
@@ -1917,9 +1909,9 @@ msgid "Skipping: %s\n"
 msgstr "Ignorando: %s\n"
 
 #: app/flatpak-builtins-kill.c:68
-#, fuzzy, c-format
+#, c-format
 msgid "%s is not running"
-msgstr "%s não está em execução."
+msgstr "%s não está em execução"
 
 #: app/flatpak-builtins-kill.c:82
 msgid "INSTANCE - Stop a running application"
@@ -2152,20 +2144,20 @@ msgstr "Número incorreto de argumentos"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "Associate DATA with the entry"
-msgstr ""
+msgstr "Associa DADOS com a entrada"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "DATA"
-msgstr ""
+msgstr "DADOS"
 
 #: app/flatpak-builtins-permission-set.c:111
 msgid "TABLE ID APP_ID [PERMISSION...] - Set permissions"
 msgstr "TABELA ID APP_ID [PERMISSÃO…] – Define permissões"
 
 #: app/flatpak-builtins-permission-set.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse '%s' as GVariant: "
-msgstr "Falha ao analisar o filtro “%s”"
+msgstr "Falha ao analisar “%s” como GVariant: "
 
 #: app/flatpak-builtins-permission-show.c:112
 msgid "APP_ID - Show permissions for an app"
@@ -2224,23 +2216,20 @@ msgid "Show the runtime commit"
 msgstr "Mostra o commit de runtime"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Active"
-msgstr "Commit ativo"
+msgstr "Ativo"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Show whether the app is active"
-msgstr "Mostra quando as alterações ocorreram"
+msgstr "Mostra se o aplicativo está ativo"
 
 #: app/flatpak-builtins-ps.c:58
 msgid "Background"
-msgstr ""
+msgstr "Segundo plano"
 
 #: app/flatpak-builtins-ps.c:58
-#, fuzzy
 msgid "Show whether the app is background"
-msgstr "Mostra quando as alterações ocorreram"
+msgstr "Mostra se o aplicativo está em segundo plano"
 
 #: app/flatpak-builtins-ps.c:238
 msgid " - Enumerate running sandboxes"
@@ -2316,14 +2305,12 @@ msgid "Name of authenticator"
 msgstr "Nome do autenticador"
 
 #: app/flatpak-builtins-remote-add.c:83 app/flatpak-builtins-remote-modify.c:90
-#, fuzzy
 msgid "Autoinstall authenticator"
-msgstr "Nome do autenticador"
+msgstr "Instala automaticamente autenticador"
 
 #: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:91
-#, fuzzy
 msgid "Don't autoinstall authenticator"
-msgstr "Não desinstala refs relacionadas"
+msgstr "Não instala automaticamente autenticador"
 
 #: app/flatpak-builtins-remote-add.c:243 app/flatpak-builtins-remote-add.c:250
 #, c-format
@@ -2765,22 +2752,22 @@ msgid "Deploy collection ID: %s\n"
 msgstr "ID de coleção de implementação: %s\n"
 
 #: app/flatpak-builtins-repo.c:123
-#, fuzzy, c-format
+#, c-format
 msgid "Authenticator name: %s\n"
-msgstr "Nome de autenticador inválido %s"
+msgstr "Nome do autenticador: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
-#, fuzzy, c-format
+#, c-format
 msgid "Authenticator install: %s\n"
-msgstr "Opções do autenticador"
+msgstr "Instalação do autenticador: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "true"
-msgstr ""
+msgstr "verdadeiro"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "false"
-msgstr ""
+msgstr "falso"
 
 #: app/flatpak-builtins-repo.c:134
 #, c-format
@@ -2889,9 +2876,8 @@ msgid "Run completely sandboxed"
 msgstr "Executa totalmente em sandbox"
 
 #: app/flatpak-builtins-run.c:82
-#, fuzzy
 msgid "Use PID as parent pid for sharing namespaces"
-msgstr "Usa este como pid pai para compartilhamento de espaços de nome"
+msgstr "Usa PID como pid pai para compartilhamento de espaços de nome"
 
 #: app/flatpak-builtins-run.c:83
 msgid "Make processes visible in parent namespace"
@@ -3056,11 +3042,13 @@ msgid ""
 "Remote \"%s\" not found\n"
 "Hint: Use flatpak remote-add to add a remote"
 msgstr ""
+"Remoto “%s” não localizado\n"
+"Dica: Use flatpak remote-add para adicionar um remoto"
 
 #: app/flatpak-builtins-utils.c:369
-#, fuzzy, c-format
+#, c-format
 msgid "Remote \"%s\" not found in the %s installation"
-msgstr "O remoto “%s” foi localizado em múltiplas instalações:"
+msgstr "Remoto “%s” não localizado na instalação %s"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:418
@@ -3323,11 +3311,11 @@ msgstr "Abrir navegador?"
 #: app/flatpak-cli-transaction.c:571
 #, c-format
 msgid "Login required remote %s (realm %s)\n"
-msgstr ""
+msgstr "A autenticação exigiu o remoto %s (domínio %s)\n"
 
 #: app/flatpak-cli-transaction.c:576
 msgid "Password"
-msgstr ""
+msgstr "Senha"
 
 #: app/flatpak-cli-transaction.c:597 app/flatpak-quiet-transaction.c:174
 #, c-format
@@ -3952,9 +3940,8 @@ msgid "Remove generic policy option"
 msgstr "Remove uma opção de política genérica"
 
 #: common/flatpak-context.c:1246
-#, fuzzy
 msgid "Persist home directory subpath"
-msgstr "Persiste o diretório pessoal"
+msgstr "Persiste o subcaminho do diretório pessoal"
 
 #: common/flatpak-context.c:1246
 msgid "FILENAME"
