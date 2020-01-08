@@ -92,20 +92,23 @@ class Type:
     def generate(self):
         print("/* TODO: Generate %s -- %s */" % (self.typename, self))
 
+    def get_ctype(self):
+         return self.typename
+
 basic_types = {
-    "boolean": ("b", True, 1),
-    "byte": ("y", True, 1),
-    "int16": ("n", True, 2),
-    "uint16": ("q", True, 2),
-    "int32": ("i", True, 4),
-    "uint32": ("u", True, 4),
-    "int64": ("x", True, 8),
-    "uint64": ("t", True, 8),
-    "handle": ("h", True, 4),
-    "double": ("d", True, 8),
-    "string": ("s", False, 1),
-    "objectpath": ("o", False, 1),
-    "signature": ("g", False, 1),
+    "boolean": ("b", True, 1, "gboolean"),
+    "byte": ("y", True, 1, "guint8"),
+    "int16": ("n", True, 2, "gint16"),
+    "uint16": ("q", True, 2, "guint16"),
+    "int32": ("i", True, 4, "gint32"),
+    "uint32": ("u", True, 4, "guint32"),
+    "int64": ("x", True, 8, "gint64"),
+    "uint64": ("t", True, 8, "guint64"),
+    "handle": ("h", True, 4, "guint32"),
+    "double": ("d", True, 8, "double"),
+    "string": ("s", False, 1, "const char *"),
+    "objectpath": ("o", False, 1, "const char *"),
+    "signature": ("g", False, 1, "const char *"),
 }
 
 class BasicType(Type):
@@ -127,6 +130,8 @@ class BasicType(Type):
          return basic_types[self.kind][2]
     def alignment(self):
          return basic_types[self.kind][2]
+    def get_ctype(self):
+         return basic_types[self.kind][3]
 
 class ArrayType(Type):
     def __init__(self, element_type):
