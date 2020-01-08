@@ -1,6 +1,7 @@
 #!/bin/env python3
 
 import sys
+import os
 from pyparsing import *
 from pyparsing import pyparsing_common as ppc
 
@@ -9,6 +10,21 @@ LBRACK, RBRACK, LBRACE, RBRACE, COLON, SEMI = map(Suppress, "[]{}:;")
 ident = Word(alphas + "_", alphanums + "_").setName("identifier")
 
 named_types = {}
+
+def generate_header(filename):
+    print(
+"""/* generated code for {filename} */
+#include <glib.h>
+typedef struct {{
+ gconstpointer base;
+ gsize size;
+}} VariantChunk;
+""".format(filename=filename))
+
+def generate_footer(filename):
+    print(
+"""
+""".format(filename=filename))
 
 def align_down(value, alignment):
     return value & ~(alignment - 1)
@@ -31,6 +47,17 @@ class TypeDef:
         self.type = type
 
         add_named_type(name, type)
+
+    def generate(self, generated):
+        def do_generate (type, generated):
+            for c in type.get_children():
+                do_generate (c, generated)
+            if type.typename != None and type.typename not in generated:
+                generated[type.typename] = True
+                type.generate()
+
+        do_generate(self.type, generated)
+
 
 class Type:
     def __init__(self):
@@ -58,6 +85,12 @@ class Type:
 
     def alignment(self):
         return 1
+
+    def get_children(self):
+        return []
+
+    def generate(self):
+        print("/* TODO: Generate %s -- %s */" % (self.typename, self))
 
 basic_types = {
     "boolean": ("b", True, 1),
@@ -111,6 +144,8 @@ class ArrayType(Type):
         self.element_type.set_typename (name + "__element")
     def alignment(self):
         return self.element_type.alignment()
+    def get_children(self):
+        return [self.element_type]
 
 class DictType(Type):
     def __init__(self, key_type, element_type):
@@ -125,6 +160,8 @@ class DictType(Type):
         self.element_type.set_typename (name + "__element")
     def alignment(self):
         return max(self.element_type.alignment(), self.key_type.alignment())
+    def get_children(self):
+        return [self.key_type, self.element_type]
 
 class MaybeType(Type):
     def __init__(self, element_type):
@@ -140,6 +177,8 @@ class MaybeType(Type):
         self.element_type.set_typename (name + "__element")
     def alignment(self):
         return self.element_type.alignment()
+    def get_children(self):
+        return [self.element_type]
 
 class VariantType(Type):
     def __init__(self):
@@ -201,6 +240,12 @@ class StructType(Type):
         res.append(')')
         return "".join(res)
 
+    def get_children(self):
+        children = []
+        for f in self.fields:
+            children.append(f.type)
+        return children
+
     def propagate_typename(self, name):
         for f in self.fields:
             f.propagate_typename(name)
@@ -243,13 +288,19 @@ typeDef = (Suppress(Keyword("type")) + ident + typeSpec + SEMI).setParseAction(l
 
 typeDefs = ZeroOrMore(typeDef).ignore(cppStyleComment)
 
+def generate(typedefs, filename):
+    generate_header(filename)
+    generated = {}
+    for td in typedefs:
+        td.generate(generated)
+    generate_footer(filename)
+
 if __name__ == "__main__":
-    f = open(sys.argv[1], "r")
-    testdata = f.read()
-    try:
-        results = typeDefs.parseString(testdata, parseAll=True)
-        for t in results:
-            print("%s - %s" % (t.name, t.type.typestring()))
-            print("> ", t.type)
-    except ParseException as pe:
-        print("Parse error:", pe)
+    file = sys.argv[1]
+    with  open(file, "r") as f:
+        testdata = f.read()
+        try:
+            typedefs = typeDefs.parseString(testdata, parseAll=True)
+            generate(typedefs, os.path.basename(file))
+        except ParseException as pe:
+            print("Parse error:", pe)
