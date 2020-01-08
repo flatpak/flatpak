@@ -10,6 +10,12 @@ ident = Word(alphas + "_", alphanums + "_").setName("identifier")
 
 named_types = {}
 
+def align_down(value, alignment):
+    return value & ~(alignment - 1)
+
+def align_up(value, alignment):
+    return align_down(value + alignment - 1, alignment)
+
 def add_named_type(name, type):
     assert not name in named_types
     type.set_typename(name, True)
@@ -44,35 +50,50 @@ class Type:
     def is_basic(self):
         return False
 
-basic_typestrings = {
-    "boolean": "b",
-    "byte": "y",
-    "int16": "n",
-    "uint16": "q",
-    "int32": "i",
-    "uint32": "u",
-    "int64": "x",
-    "uint64": "t",
-    "handle": "h",
-    "double": "d",
-    "string": "s",
-    "objectpath": "o",
-    "signature": "g"
+    def is_fixed(self):
+        return False
+
+    def get_fixed_size(self):
+         assert False # Should not be reached
+
+    def alignment(self):
+        return 1
+
+basic_types = {
+    "boolean": ("b", True, 1),
+    "byte": ("y", True, 1),
+    "int16": ("n", True, 2),
+    "uint16": ("q", True, 2),
+    "int32": ("i", True, 4),
+    "uint32": ("u", True, 4),
+    "int64": ("x", True, 8),
+    "uint64": ("t", True, 8),
+    "handle": ("h", True, 4),
+    "double": ("d", True, 8),
+    "string": ("s", False, 1),
+    "objectpath": ("o", False, 1),
+    "signature": ("g", False, 1),
 }
 
 class BasicType(Type):
     def __init__(self, kind):
         super().__init__()
-        assert kind in basic_typestrings
+        assert kind in basic_types
         self.kind = kind
     def __repr__(self):
          return "BasicType(%s)" % self.kind
     def typestring(self):
-         return basic_typestrings[self.kind]
+         return basic_types[self.kind][0]
     def set_typename(self, name):
         pass # No names for basic types
     def is_basic(self):
         return True
+    def is_fixed(self):
+         return basic_types[self.kind][1]
+    def get_fixed_size(self):
+         return basic_types[self.kind][2]
+    def alignment(self):
+         return basic_types[self.kind][2]
 
 class ArrayType(Type):
     def __init__(self, element_type):
@@ -88,6 +109,8 @@ class ArrayType(Type):
          return "a" + self.element_type.typestring()
     def propagate_typename(self, name):
         self.element_type.set_typename (name + "__element")
+    def alignment(self):
+        return self.element_type.alignment()
 
 class DictType(Type):
     def __init__(self, key_type, element_type):
@@ -100,6 +123,8 @@ class DictType(Type):
          return "a{%s%s}" % (self.key_type.typestring(), self.element_type.typestring())
     def propagate_typename(self, name):
         self.element_type.set_typename (name + "__element")
+    def alignment(self):
+        return max(self.element_type.alignment(), self.key_type.alignment())
 
 class MaybeType(Type):
     def __init__(self, element_type):
@@ -113,6 +138,8 @@ class MaybeType(Type):
          return "m" + self.element_type.typestring()
     def propagate_typename(self, name):
         self.element_type.set_typename (name + "__element")
+    def alignment(self):
+        return self.element_type.alignment()
 
 class VariantType(Type):
     def __init__(self):
@@ -124,6 +151,8 @@ class VariantType(Type):
          return "v"
     def set_typename(self, name):
         pass # No names for variant
+    def alignment(self):
+        return 8
 
 class Field:
     def __init__(self, name, attributes, type):
@@ -141,6 +170,27 @@ class StructType(Type):
     def __init__(self, fields):
         super().__init__()
         self.fields = list(fields)
+
+        self._fixed = True
+        pos = 0
+        index = 0
+        for f in fields:
+            f.offset = pos
+            f.offset_index = index
+            if f.type.is_fixed():
+                pos = align_up(pos, f.type.alignment()) + f.type.get_fixed_size()
+            else:
+                pos = 0
+                index = index + 1
+
+        self._fixed = (index == 0)
+        if self._fixed:
+            if pos == 0:
+                self._fixed_size = 1; # Special case unit struct
+            else:
+                # Round up to aligement
+                self._fixed_size = align_up(pos, self.alignment())
+
     def __repr__(self):
         return "StructType<%s>(%s)" % (self.typename, ",".join(map(repr, self.fields)))
 
@@ -155,9 +205,21 @@ class StructType(Type):
         for f in self.fields:
             f.propagate_typename(name)
 
+    def alignment(self):
+        alignment = 1;
+        for f in self.fields:
+            alignment = max(alignment, f.type.alignment())
+        return alignment
+
+    def is_fixed(self):
+        return self._fixed;
+    def get_fixed_size(self):
+        return self._fixed_size
+
+
 typeSpec = Forward()
 
-basicType = oneOf(basic_typestrings.keys()).setParseAction(lambda toks: BasicType(toks[0]))
+basicType = oneOf(basic_types.keys()).setParseAction(lambda toks: BasicType(toks[0]))
 
 variantType = Keyword("variant").setParseAction(lambda toks: VariantType())
 
