@@ -259,6 +259,7 @@ class Field:
         self.name = name
         self.attributes = attributes
         self.type = type
+        self.last = False
 
     def __repr__(self):
          return "Field(%s, %s)" % (self.name, self.type)
@@ -269,22 +270,33 @@ class Field:
     def generate(self, struct):
         # Getter
         print ("static inline {ctype} {structname}_get_{fieldname}({structname} v) {{".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
-        if self.type.is_basic():
-            if self.offset_index == 0:
-                offset = "%d" % (self.offset)
+        if self.offset_index == 0:
+            offset = "%d" % (self.offset)
+        else:
+            print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
+            print ("  gsize last_end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % self.offset_index);
+            if self.offset_alignment == 1:
+                offset = "last_end + %d" % (self.offset)
             else:
-                print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
-                print ("  gsize last_end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % self.offset_index);
-                if self.offset_alignment == 1:
-                    offset = "last_end + %d" % (self.offset)
-                else:
-                    offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.offset_alignment - 1, self.offset_alignment - 1, self.offset)
+                offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.offset_alignment - 1, self.offset_alignment - 1, self.offset)
+
+        if self.type.is_basic():
             if self.type.is_fixed():
                 print ("  return G_STRUCT_MEMBER(%s, v.base, %s);" % (self.type.get_ctype(), offset))
             else: # string
                 print ("  return &G_STRUCT_MEMBER(char, v.base, %s);" % (offset))
         else:
-            print ("/* TODO container */")
+            if self.type.is_fixed():
+                print ("  %s val = { &G_STRUCT_MEMBER(void, v.base, %s), %d }" % (self.type.typename, offset, self.type.get_fixed_size()))
+                print ("  return val;")
+            else:
+                print ("  gsize start = %s;" % offset);
+                if self.last:
+                    print ("  gsize end = v.size - offset_size * %d;" % (struct.framing_offset_size))
+                else:
+                    print ("  gsize end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % (self.offset_index + 1));
+                print ("  %s val = { G_STRUCT_MEMBER_P(v.base, start), end - start };" % (self.type.typename))
+                print ("  return val;")
         print("}")
 
 class StructType(Type):
@@ -292,7 +304,10 @@ class StructType(Type):
         super().__init__()
         self.fields = list(fields)
 
-        self._fixed = True
+        if len(self.fields) > 0:
+            self.fields[len(self.fields) - 1].last = True
+
+        framing_offset_size = 0
         pos = 0
         index = 0
         alignment = -1;
@@ -306,10 +321,13 @@ class StructType(Type):
             if f.type.is_fixed():
                 pos = pos + f.type.get_fixed_size()
             else:
+                if not f.last:
+                    framing_offset_size = framing_offset_size + 1
                 pos = 0
                 index = index + 1
                 alignment = -1
 
+        self.framing_offset_size = framing_offset_size
         self._fixed = (index == 0)
         if self._fixed:
             if pos == 0:
