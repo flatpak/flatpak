@@ -19,6 +19,62 @@ typedef struct {{
  gconstpointer base;
  gsize size;
 }} VariantChunk;
+
+/* Note: clz is undefinded for 0, so never call this size == 0 */
+G_GNUC_CONST static inline guint
+variant_chunk_get_offset_size (gsize size)
+{{
+#if defined(__GNUC__) && (__GNUC__ >= 4) && defined(__OPTIMIZE__)
+  /* Instead of using a lookup table we use nibbles in a lookup word */
+  guint32 v = (guint32)0x88884421;
+  return (v >> (((__builtin_clzl(size) ^ 63) / 8) * 4)) & 0xf;
+#else
+  if (size > G_MAXUINT16)
+    {{
+      if (size > G_MAXUINT32)
+        return 8;
+      else
+        return 4;
+    }}
+  else
+    {{
+      if (size > G_MAXUINT8)
+         return 2;
+      else
+         return 1;
+    }}
+#endif
+}}
+
+G_GNUC_PURE static inline gsize
+variant_chunk_read_unaligned_le (guchar *bytes, guint   size)
+{{
+  union
+  {{
+    guchar bytes[GLIB_SIZEOF_SIZE_T];
+    gsize integer;
+  }} tmpvalue;
+
+  tmpvalue.integer = 0;
+  /* we unroll the size checks here so that memcpy gets constant args */
+  if (size >= 4)
+    {{
+      if (size == 8)
+        memcpy (&tmpvalue.bytes, bytes, 8);
+      else
+        memcpy (&tmpvalue.bytes, bytes, 4);
+    }}
+  else
+    {{
+      if (size == 2)
+        memcpy (&tmpvalue.bytes, bytes, 2);
+      else
+        memcpy (&tmpvalue.bytes, bytes, 1);
+    }}
+
+  return GSIZE_FROM_LE (tmpvalue.integer);
+}}
+
 """.format(filename=filename))
 
 def generate_footer(filename):
@@ -210,6 +266,27 @@ class Field:
     def propagate_typename(self, struct_name):
         self.type.set_typename (struct_name + "__" + self.name)
 
+    def generate(self, struct):
+        # Getter
+        print ("static inline {ctype} {structname}_get_{fieldname}({structname} v) {{".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
+        if self.type.is_basic():
+            if self.offset_index == 0:
+                offset = "%d" % (self.offset)
+            else:
+                print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
+                print ("  gsize last_end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % self.offset_index);
+                if self.offset_alignment == 1:
+                    offset = "last_end + %d" % (self.offset)
+                else:
+                    offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.offset_alignment - 1, self.offset_alignment - 1, self.offset)
+            if self.type.is_fixed():
+                print ("  return G_STRUCT_MEMBER(%s, v.base, %s);" % (self.type.get_ctype(), offset))
+            else: # string
+                print ("  return &G_STRUCT_MEMBER(char, v.base, %s);" % (offset))
+        else:
+            print ("/* TODO container */")
+        print("}")
+
 class StructType(Type):
     def __init__(self, fields):
         super().__init__()
@@ -272,6 +349,17 @@ class StructType(Type):
     def get_fixed_size(self):
         return self._fixed_size
 
+    def generate(self):
+        print (
+'''
+typedef VariantChunk {typename};
+#define {typename}_typestring "{typestring}"
+static inline {typename} {typename}_from_variant(GVariant *v) {{
+    {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
+    return val;
+}}'''.format(typename=self.typename, typestring=self.typestring()))
+        for f in self.fields:
+            f.generate(self)
 
 typeSpec = Forward()
 
