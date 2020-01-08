@@ -213,14 +213,20 @@ class StructType(Type):
         self._fixed = True
         pos = 0
         index = 0
+        alignment = -1;
         for f in fields:
+            pos = align_up(pos, f.type.alignment())
             f.offset = pos
             f.offset_index = index
+            if alignment == -1:
+                alignment = f.type.alignment()
+            f.offset_alignment = alignment
             if f.type.is_fixed():
-                pos = align_up(pos, f.type.alignment()) + f.type.get_fixed_size()
+                pos = pos + f.type.get_fixed_size()
             else:
                 pos = 0
                 index = index + 1
+                alignment = -1
 
         self._fixed = (index == 0)
         if self._fixed:
