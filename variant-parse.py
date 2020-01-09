@@ -494,9 +494,8 @@ class StructType(Type):
                 fixed_pos = align_up(fixed_pos, f.type.alignment()) + f.type.get_fixed_size()
             else:
                 fixed = False
-
-            if not f.last:
-                framing_offset_size = framing_offset_size + 1
+                if not f.last:
+                    framing_offset_size = framing_offset_size + 1
 
         self.framing_offset_size = framing_offset_size
         self._fixed = fixed
