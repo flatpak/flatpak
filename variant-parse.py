@@ -367,15 +367,12 @@ class Field:
     def generate(self, struct):
         # Getter
         print ("static inline {ctype} {structname}_get_{fieldname}({structname} v) {{".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
-        if self.offset_index == 0:
-            offset = "%d" % (self.offset)
+        if self.table_i == -1:
+            offset = "%d" % (self.table_c)
         else:
             print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
-            print ("  gsize last_end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % self.offset_index);
-            if self.offset_alignment == 1:
-                offset = "last_end + %d" % (self.offset)
-            else:
-                offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.offset_alignment - 1, self.offset_alignment - 1, self.offset)
+            print ("  gsize last_end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % (self.table_i + 1));
+            offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
 
         if self.type.is_basic():
             if self.type.is_fixed():
@@ -391,7 +388,7 @@ class Field:
                 if self.last:
                     print ("  gsize end = v.size - offset_size * %d;" % (struct.framing_offset_size))
                 else:
-                    print ("  gsize end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % (self.offset_index + 1));
+                    print ("  gsize end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % (self.table_i + 2));
                 print ("  %s val = { G_STRUCT_MEMBER_P(v.base, start), end - start };" % (self.type.typename))
                 print ("  return val;")
         print("}")
@@ -405,33 +402,65 @@ class StructType(Type):
             self.fields[len(self.fields) - 1].last = True
 
         framing_offset_size = 0
-        pos = 0
-        index = 0
-        alignment = -1;
+        fixed = True
+        fixed_pos = 0
         for f in fields:
-            pos = align_up(pos, f.type.alignment())
-            f.offset = pos
-            f.offset_index = index
-            if alignment == -1:
-                alignment = f.type.alignment()
-            f.offset_alignment = alignment
             if f.type.is_fixed():
-                pos = pos + f.type.get_fixed_size()
+                fixed_pos = align_up(fixed_pos, f.type.alignment()) + f.type.get_fixed_size()
             else:
-                if not f.last:
-                    framing_offset_size = framing_offset_size + 1
-                pos = 0
-                index = index + 1
-                alignment = -1
+                fixed = False
+
+            if not f.last:
+                framing_offset_size = framing_offset_size + 1
 
         self.framing_offset_size = framing_offset_size
-        self._fixed = (index == 0)
-        if self._fixed:
-            if pos == 0:
-                self._fixed_size = 1; # Special case unit struct
+        self._fixed = fixed
+        if fixed:
+            if fixed_pos == 0: # Special case unit struct
+                self._fixed_size = 1;
             else:
-                # Round up to aligement
-                self._fixed_size = align_up(pos, self.alignment())
+                # Round up to alignment
+                self._fixed_size = align_up(fixed_pos, self.alignment())
+
+        def tuple_align(offset, alignment):
+            return offset + ((-offset) & alignment)
+
+        # This is code equivalend to tuple_generate_table() in gvariantinfo.c, see its docs
+        i = -1
+        a = 0
+        b = 0
+        c = 0
+        for f in fields:
+            d = f.type.alignment() - 1;
+            e = f.type.get_fixed_size() if f.type.is_fixed() else 0
+
+            # align to 'd'
+            if d <= b: # rule 1
+                c = tuple_align(c, d)
+            else: # rule 2
+                a = a + tuple_align(c, b)
+                b = d
+                c = 0
+
+            # the start of the item is at this point (ie: right after we
+            # have aligned for it).  store this information in the table.
+            f.table_i = i
+            f.table_a = a
+            f.table_b = b
+            f.table_c = c
+
+            # "move past" the item by adding in its size.
+            if e == 0:
+                # variable size:
+                #
+                # we'll have an offset stored to mark the end of this item, so
+                # just bump the offset index to give us a new starting point
+                # and reset all the counters.
+                i = i + 1
+                a = b = c = 0
+            else:
+                # fixed size
+                c = c + e # rule 3
 
     def __repr__(self):
         return "StructType<%s>(%s)" % (self.typename, ",".join(map(repr, self.fields)))
