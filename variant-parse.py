@@ -494,7 +494,7 @@ class Field:
         print ("static inline {ctype} {structname}_get_{fieldname}({structname} v) {{".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
         has_offset_size = False
         if self.table_i == -1:
-            offset = "%d" % (self.table_c)
+            offset = "((%d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
         else:
             has_offset_size = True
             print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
