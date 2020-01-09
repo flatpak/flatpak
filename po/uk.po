@@ -2,13 +2,13 @@
 # Copyright (C) 2016 flatpak's COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
 #
-# Yuri Chornoivan <yurchor@ukr.net>, 2016, 2017, 2018, 2019.
+# Yuri Chornoivan <yurchor@ukr.net>, 2016, 2017, 2018, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2019-12-20 11:40+0100\n"
-"PO-Revision-Date: 2019-11-10 13:45+0200\n"
+"POT-Creation-Date: 2020-01-09 03:25+0000\n"
+"PO-Revision-Date: 2020-01-09 14:27+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n"
 "%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Lokalize 19.11.70\n"
+"X-Generator: Lokalize 20.03.70\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -344,11 +344,10 @@ msgstr "СТАРИЙІД=НОВИЙІД"
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
 msgid "Set type of token needed to install this commit"
-msgstr ""
+msgstr "Встановити тип ключа, який потрібен для встановлення цього внеску"
 
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
-#, fuzzy
 msgid "VAL"
 msgstr "ЗНАЧЕННЯ"
 
@@ -382,9 +381,8 @@ msgstr ""
 "Якщо вказано --src-ref, має бути вказано точно одне посилання призначення"
 
 #: app/flatpak-builtins-build-commit-from.c:268
-#, fuzzy
 msgid "Either --src-repo or --src-ref must be specified"
-msgstr "Слід вказати або --src-repo, або --src-ref."
+msgstr "Слід вказати або --src-repo, або --src-ref"
 
 #: app/flatpak-builtins-build-commit-from.c:284
 msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
@@ -405,9 +403,8 @@ msgid "Could not parse '%s'"
 msgstr "Не вдалося обробити «%s»"
 
 #: app/flatpak-builtins-build-commit-from.c:466
-#, fuzzy
 msgid "Can't commit from partial source commit"
-msgstr "Неможливо створити внесок на основі часткового внеску до джерела."
+msgstr "Неможливо створити внесок на основі часткового внеску до джерела"
 
 #: app/flatpak-builtins-build-commit-from.c:471
 #, c-format
@@ -975,31 +972,26 @@ msgstr ""
 "клієнта"
 
 #: app/flatpak-builtins-build-update-repo.c:72
-#, fuzzy
 msgid "Name of authenticator for this repository"
-msgstr "Адреса піктограми цього сховища"
+msgstr "Назва засобу розпізнавання для цього сховища"
 
 #: app/flatpak-builtins-build-update-repo.c:73
-#, fuzzy
 msgid "Autoinstall authenticator for this repository"
-msgstr "Адреса піктограми цього сховища"
+msgstr "Автоматично встановлювати засіб розпізнавання для цього сховища"
 
 #: app/flatpak-builtins-build-update-repo.c:74
-#, fuzzy
 msgid "Don't autoinstall authenticator for this repository"
-msgstr "Типова гілка для цього сховища"
+msgstr "Не встановлювати автоматично засіб розпізнавання для цього сховища"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:82
-#, fuzzy
 msgid "Authenticator option"
-msgstr "Показати параметри"
+msgstr "Параметр засобу розпізнавання"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:89
-#, fuzzy
 msgid "KEY=VALUE"
-msgstr "ЗНАЧЕННЯ"
+msgstr "КЛЮЧ=ЗНАЧЕННЯ"
 
 #: app/flatpak-builtins-build-update-repo.c:76
 msgid "Import new default GPG public key from FILE"
@@ -1384,17 +1376,15 @@ msgid "FILE - Unexport a file to apps"
 msgstr "ФАЙЛ - Скасувати експортування файла до програм"
 
 #: app/flatpak-builtins-enter.c:87
-#, fuzzy
 msgid "INSTANCE COMMAND [ARGUMENT…] - Run a command inside a running sandbox"
-msgstr ""
-"ЕКЗЕМПЛЯР [КОМАНДА [АРГУМЕНТ…]] — виконати команду у запущеній пісочниці"
+msgstr "ЕКЗЕМПЛЯР КОМАНДА [АРГУМЕНТ…] — виконати команду у запущеній пісочниці"
 
 #: app/flatpak-builtins-enter.c:108
 msgid "INSTANCE and COMMAND must be specified"
 msgstr "Слід вказати ЕКЗЕМПЛЯР та КОМАНДУ"
 
 #: app/flatpak-builtins-enter.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "%s is neither a pid nor an application or instance ID"
 msgstr ""
 "%s не є ні ідентифікатором процесу, ні програмою, ні ідентифікатором "
@@ -1403,6 +1393,8 @@ msgstr ""
 #: app/flatpak-builtins-enter.c:138
 msgid "entering not supported (need unprivileged user namespaces, or sudo -E)"
 msgstr ""
+"підтримки входу не передбачено (потребує непривілейованих просторів назв"
+" користувачів або sudo -E)"
 
 #: app/flatpak-builtins-enter.c:139
 #, c-format
@@ -1435,6 +1427,8 @@ msgstr "не вдалося відкрити простір назв %s: %s"
 #: app/flatpak-builtins-enter.c:210
 msgid "entering not supported (need unprivileged user namespaces)"
 msgstr ""
+"підтримки входу не передбачено (потребує непривілейованих просторів назв"
+" користувачів)"
 
 #: app/flatpak-builtins-enter.c:211
 #, c-format
@@ -1943,9 +1937,9 @@ msgid "Skipping: %s\n"
 msgstr "Пропускаємо: %s\n"
 
 #: app/flatpak-builtins-kill.c:68
-#, fuzzy, c-format
+#, c-format
 msgid "%s is not running"
-msgstr "%s не запущено."
+msgstr "%s не запущено"
 
 #: app/flatpak-builtins-kill.c:82
 msgid "INSTANCE - Stop a running application"
@@ -2155,9 +2149,8 @@ msgid "Data"
 msgstr "Дані"
 
 #: app/flatpak-builtins-permission-remove.c:120
-#, fuzzy
 msgid "TABLE ID [APP_ID] - Remove item from permission store"
-msgstr "ТАБЛИЦЯ ІД - вилучити запис зі сховища прав доступу"
+msgstr "ТАБЛИЦЯ ІД [ІД_ПРОГРАМИ] - вилучити запис зі сховища прав доступу"
 
 #: app/flatpak-builtins-permission-remove.c:129
 #: app/flatpak-builtins-permission-set.c:120
@@ -2179,21 +2172,20 @@ msgstr "Помилкова кількість параметрів"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "Associate DATA with the entry"
-msgstr ""
+msgstr "Пов'язати ДАНІ із записом"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "DATA"
-msgstr ""
+msgstr "ДАНІ"
 
 #: app/flatpak-builtins-permission-set.c:111
-#, fuzzy
 msgid "TABLE ID APP_ID [PERMISSION...] - Set permissions"
-msgstr "[ТАБЛИЦЯ] [ІД] - список прав доступу"
+msgstr "ТАБЛИЦЯ ІД ІД_ПРОГРАМИ [ПРАВА_ДОСТУПУ…] — встановити права доступу"
 
 #: app/flatpak-builtins-permission-set.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse '%s' as GVariant: "
-msgstr "Не вдалося обробити фільтр «%s»"
+msgstr "Не вдалося обробити «%s» як GVariant: "
 
 #: app/flatpak-builtins-permission-show.c:112
 msgid "APP_ID - Show permissions for an app"
@@ -2252,23 +2244,20 @@ msgid "Show the runtime commit"
 msgstr "Показати внесок середовища виконання"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Active"
-msgstr "Активний внесок"
+msgstr "Активна"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Show whether the app is active"
-msgstr "Показувати, якщо було внесено зміну"
+msgstr "Показувати, чи є програма активною"
 
 #: app/flatpak-builtins-ps.c:58
 msgid "Background"
-msgstr ""
+msgstr "Фонова"
 
 #: app/flatpak-builtins-ps.c:58
-#, fuzzy
 msgid "Show whether the app is background"
-msgstr "Показувати, якщо було внесено зміну"
+msgstr "Показувати, чи працює програма у фоновому режимі"
 
 #: app/flatpak-builtins-ps.c:238
 msgid " - Enumerate running sandboxes"
@@ -2342,17 +2331,15 @@ msgstr "Вимкнути віддалене сховище"
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:88
 msgid "Name of authenticator"
-msgstr ""
+msgstr "Назва розпізнавальника"
 
 #: app/flatpak-builtins-remote-add.c:83 app/flatpak-builtins-remote-modify.c:90
-#, fuzzy
 msgid "Autoinstall authenticator"
-msgstr "Некоректна назва D-Bus, %s"
+msgstr "Автоматично встановлювати засіб розпізнавання"
 
 #: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:91
-#, fuzzy
 msgid "Don't autoinstall authenticator"
-msgstr "Не встановлювати пов’язані посилання"
+msgstr "Не встановлювати засіб розпізнавання автоматично"
 
 #: app/flatpak-builtins-remote-add.c:243 app/flatpak-builtins-remote-add.c:250
 #, c-format
@@ -2379,9 +2366,9 @@ msgstr "Запис віддаленого сховища %s вже існує"
 
 #: app/flatpak-builtins-remote-add.c:387
 #: app/flatpak-builtins-remote-modify.c:305
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid authenticator name %s"
-msgstr "Некоректна назва D-Bus, %s"
+msgstr "Некоректна назва засобу розпізнавання, %s"
 
 #: app/flatpak-builtins-remote-add.c:404
 #, c-format
@@ -2611,9 +2598,8 @@ msgid "Disable local filter"
 msgstr "Вимкнути локальний фільтр"
 
 #: app/flatpak-builtins-remote-modify.c:89
-#, fuzzy
 msgid "Authenticator options"
-msgstr "Показати параметри"
+msgstr "Параметри засобу розпізнавання"
 
 #: app/flatpak-builtins-remote-modify.c:271
 msgid "NAME - Modify a remote repository"
@@ -2797,22 +2783,22 @@ msgid "Deploy collection ID: %s\n"
 msgstr "Ідентифікатор розгортання збірки: %s\n"
 
 #: app/flatpak-builtins-repo.c:123
-#, fuzzy, c-format
+#, c-format
 msgid "Authenticator name: %s\n"
-msgstr "Некоректна назва D-Bus, %s"
+msgstr "Назва засобу розпізнавання: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
-#, fuzzy, c-format
+#, c-format
 msgid "Authenticator install: %s\n"
-msgstr "Показати параметри"
+msgstr "Встановлення засобу розпізнавання: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "true"
-msgstr ""
+msgstr "true"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "false"
-msgstr ""
+msgstr "false"
 
 #: app/flatpak-builtins-repo.c:134
 #, c-format
@@ -2887,15 +2873,18 @@ msgstr "Не використовувати проксі для викликів
 #: app/flatpak-builtins-run.c:73
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr ""
+"Пропускати крізь проксі виклики каналу доступності (типова поведінка, якщо не"
+" працюємо у пісочниці)"
 
 #: app/flatpak-builtins-run.c:74
-#, fuzzy
 msgid "Don't proxy session bus calls"
-msgstr "Не використовувати проксі для викликів до каналу доступності"
+msgstr "Не пропускати крізь проксі виклику каналу сеансу"
 
 #: app/flatpak-builtins-run.c:75
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr ""
+"Пропускати крізь проксі виклики каналу сеансу (типова поведінка, якщо не"
+" працюємо у пісочниці)"
 
 #: app/flatpak-builtins-run.c:76
 msgid "Don't start portals"
@@ -2920,10 +2909,12 @@ msgstr "Запустити повністю у пісочниці"
 #: app/flatpak-builtins-run.c:82
 msgid "Use PID as parent pid for sharing namespaces"
 msgstr ""
+"Використовувати PID як батьківський pid для спільного використання просторів"
+" назв"
 
 #: app/flatpak-builtins-run.c:83
 msgid "Make processes visible in parent namespace"
-msgstr ""
+msgstr "Зробити процеси видимими у батьківському просторі назв"
 
 #: app/flatpak-builtins-run.c:106
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3085,11 +3076,14 @@ msgid ""
 "Remote \"%s\" not found\n"
 "Hint: Use flatpak remote-add to add a remote"
 msgstr ""
+"Віддаленого сховища «%s» не знайдено.\n"
+"Підказка: скористайтеся командою flatpak remote-add для додавання віддаленого"
+" сховища"
 
 #: app/flatpak-builtins-utils.c:369
-#, fuzzy, c-format
+#, c-format
 msgid "Remote \"%s\" not found in the %s installation"
-msgstr "Віддалене сховище «%s» знайдено у декількох встановленнях:"
+msgstr "Віддалене сховище «%s» не знайдено у встановленні %s"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:418
@@ -3343,22 +3337,22 @@ msgid "Error:"
 msgstr "Помилка:"
 
 #: app/flatpak-cli-transaction.c:519
-#, fuzzy, c-format
+#, c-format
 msgid "Authentication required for remote '%s'\n"
-msgstr "Для оновлення даних віддаленого сховища слід пройти розпізнавання"
+msgstr "Для доступу до віддаленого сховища «%s» слід пройти розпізнавання\n"
 
 #: app/flatpak-cli-transaction.c:520
 msgid "Open browser?"
-msgstr ""
+msgstr "Відкрити браузер?"
 
 #: app/flatpak-cli-transaction.c:571
 #, c-format
 msgid "Login required remote %s (realm %s)\n"
-msgstr ""
+msgstr "Для входу до сховища %s потрібне ім'я користувача (область %s)\n"
 
 #: app/flatpak-cli-transaction.c:576
 msgid "Password"
-msgstr ""
+msgstr "Пароль"
 
 #: app/flatpak-cli-transaction.c:597 app/flatpak-quiet-transaction.c:174
 #, c-format
@@ -3581,9 +3575,8 @@ msgid "Remove item from permission store"
 msgstr "Вилучити пункт зі сховища прав доступу"
 
 #: app/flatpak-main.c:114
-#, fuzzy
 msgid "Set permissions"
-msgstr "Показати список прав доступу"
+msgstr "Встановити права доступу"
 
 #: app/flatpak-main.c:115
 msgid "Show app permissions"
@@ -3797,9 +3790,9 @@ msgid "Failed to rebase %s to %s: %s\n"
 msgstr "Не вдалося перенести %s на %s: %s\n"
 
 #: common/flatpak-auth.c:54
-#, fuzzy, c-format
+#, c-format
 msgid "No authenticator configured for remote `%s`"
-msgstr "Для оновлення даних віддаленого сховища слід пройти розпізнавання"
+msgstr "Для віддаленого сховища «%s» не налаштовано способу розпізнавання"
 
 #: common/flatpak-context.c:180
 #, c-format
@@ -3980,9 +3973,8 @@ msgid "Remove generic policy option"
 msgstr "Вилучити параметр загальних правил"
 
 #: common/flatpak-context.c:1246
-#, fuzzy
 msgid "Persist home directory subpath"
-msgstr "Примусово встановити домашній каталог"
+msgstr "Не змінювати підшлях домашнього каталогу"
 
 #: common/flatpak-context.c:1246
 msgid "FILENAME"
@@ -4525,9 +4517,9 @@ msgid "No metadata branch for OCI"
 msgstr "Немає гілки метаданих для OCI"
 
 #: common/flatpak-dir.c:15176
-#, fuzzy, c-format
+#, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
-msgstr "Пропускаємо нерозгорнуте джерело %s…\n"
+msgstr "Пропускаємо вилучення посилання на дзеркало (%s, %s)…\n"
 
 #: common/flatpak-installation.c:837
 #, c-format
@@ -5267,21 +5259,3 @@ msgstr ""
 "Для встановлення програмного забезпечення, доступ до якого обмежено вашими "
 "правилами батьківського контролю, слід пройти розпізнавання"
 
-#~ msgid "Use OCI labels instead of annotations"
-#~ msgstr "Використовувати мітки OCI замість анотацій"
-
-#~ msgid "Not running as root, may be unable to enter namespace"
-#~ msgstr ""
-#~ "Запущено не від імені root, вхід до простору назв може бути неможливим"
-
-#~ msgid "Info: %s is end-of-life, in preference of %s\n"
-#~ msgstr "Інформація: термін підтримки %s сплив, натомість маємо %s\n"
-
-#~ msgid "Default system installation"
-#~ msgstr "Типове загальносистемне встановлення"
-
-#~ msgid "Invalid file format"
-#~ msgstr "Некоректний формат файла"
-
-#~ msgid "No url specified in flatpakrepo file"
-#~ msgstr "У файлі flatpakrepo не вказано адреси"
