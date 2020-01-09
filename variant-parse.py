@@ -75,6 +75,90 @@ variant_chunk_read_unaligned_le (guchar *bytes, guint   size)
   return GSIZE_FROM_LE (tmpvalue.integer);
 }}
 
+static inline void
+__variant_string_append_double (GString *string, double d)
+{{
+  gchar buffer[100];
+  gint i;
+
+  g_ascii_dtostr (buffer, sizeof buffer, d);
+  for (i = 0; buffer[i]; i++)
+    if (buffer[i] == '.' || buffer[i] == 'e' ||
+        buffer[i] == 'n' || buffer[i] == 'N')
+      break;
+
+  /* if there is no '.' or 'e' in the float then add one */
+  if (buffer[i] == '\\0')
+    {{
+      buffer[i++] = '.';
+      buffer[i++] = '0';
+      buffer[i++] = '\\0';
+    }}
+   g_string_append (string, buffer);
+}}
+
+static inline void
+__variant_string_append_string (GString *string, const char *str)
+{{
+  gunichar quote = strchr (str, '\\'') ? '"' : '\\'';
+
+  g_string_append_c (string, quote);
+  while (*str)
+    {{
+      gunichar c = g_utf8_get_char (str);
+
+      if (c == quote || c == '\\\\')
+        g_string_append_c (string, '\\\\');
+
+      if (g_unichar_isprint (c))
+        g_string_append_unichar (string, c);
+      else
+        {{
+          g_string_append_c (string, '\\\\');
+          if (c < 0x10000)
+            switch (c)
+              {{
+              case '\\a':
+                g_string_append_c (string, 'a');
+                break;
+
+              case '\\b':
+                g_string_append_c (string, 'b');
+                break;
+
+              case '\\f':
+                g_string_append_c (string, 'f');
+                break;
+
+              case '\\n':
+                g_string_append_c (string, 'n');
+                break;
+
+              case '\\r':
+                g_string_append_c (string, 'r');
+                break;
+
+              case '\\t':
+                g_string_append_c (string, 't');
+                break;
+
+              case '\\v':
+                g_string_append_c (string, 'v');
+                break;
+
+              default:
+                g_string_append_printf (string, "u%04x", c);
+                break;
+              }}
+           else
+             g_string_append_printf (string, "U%08x", c);
+        }}
+
+      str = g_utf8_next_char (str);
+    }}
+
+  g_string_append_c (string, quote);
+}}
 """.format(filename=filename))
 
 def generate_footer(filename):
@@ -151,20 +235,23 @@ class Type:
     def get_ctype(self):
          return self.typename
 
+    def can_printf_format(self):
+         return False
+
 basic_types = {
-    "boolean": ("b", True, 1, "gboolean"),
-    "byte": ("y", True, 1, "guint8"),
-    "int16": ("n", True, 2, "gint16"),
-    "uint16": ("q", True, 2, "guint16"),
-    "int32": ("i", True, 4, "gint32"),
-    "uint32": ("u", True, 4, "guint32"),
-    "int64": ("x", True, 8, "gint64"),
-    "uint64": ("t", True, 8, "guint64"),
-    "handle": ("h", True, 4, "guint32"),
-    "double": ("d", True, 8, "double"),
-    "string": ("s", False, 1, "const char *"),
-    "objectpath": ("o", False, 1, "const char *"),
-    "signature": ("g", False, 1, "const char *"),
+    "boolean": ("b", True, 1, "gboolean", "", '%s'),
+    "byte": ("y", True, 1, "guint8", "byte ", '0x%02x'),
+    "int16": ("n", True, 2, "gint16", "int16 ", '%"G_GINT16_FORMAT"'),
+    "uint16": ("q", True, 2, "guint16", "uint16 ", '%"G_GUINT16_FORMAT"'),
+    "int32": ("i", True, 4, "gint32", "", '%"G_GINT32_FORMAT"'),
+    "uint32": ("u", True, 4, "guint32", "uint32 ", '%"G_GUINT32_FORMAT"'),
+    "int64": ("x", True, 8, "gint64", "int64 ", '%"G_GINT64_FORMAT"'),
+    "uint64": ("t", True, 8, "guint64", "uint64 ", '%"G_GUINT64_FORMAT"'),
+    "handle": ("h", True, 4, "guint32", "handle ", '%"G_GINT32_FORMAT"'),
+    "double": ("d", True, 8, "double", "", None), # double formating is special
+    "string": ("s", False, 1, "const char *", "", None), # String formating is special
+    "objectpath": ("o", False, 1, "const char *", "objectpath ", '\\"%s\"'),
+    "signature": ("g", False, 1, "const char *", "signature ", '\\"%s\\"'),
 }
 
 class BasicType(Type):
@@ -188,6 +275,16 @@ class BasicType(Type):
          return basic_types[self.kind][2]
     def get_ctype(self):
          return basic_types[self.kind][3]
+    def get_type_annotation(self):
+        return basic_types[self.kind][4]
+    def get_format_string(self):
+        return basic_types[self.kind][5]
+    def convert_value_for_format(self, value):
+        if self.kind == "boolean":
+            value = '(%s) ? "true" : "false" % value'
+        return value
+    def can_printf_format(self):
+         return self.get_format_string() != None
 
 class ArrayType(Type):
     def __init__(self, element_type):
@@ -378,6 +475,61 @@ static inline {typename} {typename}_from_variant(GVariant *v) {{
 }}'''.format(typename=self.typename, typestring=self.typestring()))
         for f in self.fields:
             f.generate(self)
+        print ("static inline void {typename}_to_string ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
+
+        # Create runs of things we can combine into single printf
+        field_runs = []
+        current_run = None
+        for f in self.fields:
+            if current_run and f.type.can_printf_format() == current_run[0].type.can_printf_format():
+                current_run.append(f)
+            else:
+                current_run = [f]
+                field_runs.append(current_run)
+
+        for i, run in enumerate(field_runs):
+            if run[0].type.can_printf_format():
+                # A run of printf fields
+                print ('  g_string_append_printf (s, "%s' % ("(" if i == 0 else ""), end = '')
+                for f in run:
+                    print ('%%s%s' % (f.type.get_format_string()), end = '')
+                    if not f.last:
+                        print (', ', end = '')
+                    elif len(self.fields) == 1:
+                        print (',)', end = '')
+                    else:
+                        print (')', end = '')
+                print ('",')
+                for j, f in enumerate(run):
+                    print ('                   type_annotate ? "%s" : "",' % (f.type.get_type_annotation()))
+                    value = f.type.convert_value_for_format("{structname}_get_{fieldname}(v)".format(structname=self.typename, fieldname=f.name))
+                    print ('                   %s%s' % (value, "," if j != len(run) - 1 else ");"))
+            else:
+                # A run of container fields
+                if i == 0:
+                    print ('  g_string_append (s, "(");')
+                for f in run:
+                    value = "{structname}_get_{fieldname}(v)".format(structname=self.typename, fieldname=f.name)
+                    if f.type.is_basic():
+                        # Special case some basic types
+                        if f.type.kind == "string":
+                            print ('  __variant_string_append_string (s, %s);' % value)
+                        else:
+                            print ('  __variant_string_append_double (s, %s);' % value)
+                    else:
+                        print ("  {typename}_to_string ({value}, s, type_annotate);".format(typename=f.type.typename,value=value))
+                    if not f.last:
+                        print ('  g_string_append (s, ", ");')
+                    elif len(self.fields) == 1:
+                        print ('  g_string_append (s, ",)");')
+                    else:
+                        print ('  g_string_append (s, ")");')
+        print ("}")
+        print ("static inline char * {typename}_print ({typename} v, gboolean type_annotate) {{".format(typename=self.typename))
+        print ('  GString *s = g_string_new ("");')
+        print ("  {typename}_to_string (v, s, type_annotate);".format(typename=self.typename))
+        print ('  return g_string_free (s, FALSE);')
+        print ("}")
 
 typeSpec = Forward()
 
