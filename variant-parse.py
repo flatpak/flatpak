@@ -14,11 +14,50 @@ named_types = {}
 def generate_header(filename):
     print(
 """/* generated code for {filename} */
+#include <string.h>
 #include <glib.h>
 typedef struct {{
  gconstpointer base;
  gsize size;
 }} VariantChunk;
+
+typedef VariantChunk variant;
+static inline const GVariantType * variant_get_type (variant v)
+{{
+  gsize size = v.size - 1;
+  while (((guchar *)v.base)[size] != 0)
+    size--;
+  return (const GVariantType *)((guchar *)v.base + size + 1);
+}}
+
+static inline VariantChunk variant_get_child (variant v)
+{{
+  gsize size = v.size - 1;
+  while (((guchar *)v.base)[size] != 0)
+    size--;
+  VariantChunk val = {{ v.base, size }};
+  return val;
+}}
+
+static inline void variant_format (variant v, GString *s, gboolean type_annotate)
+{{
+  const GVariantType  *type = variant_get_type (v);
+  g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
+}}
+
+static inline GVariant *variant_dup_to_gvariant (variant v)
+{{
+  const GVariantType  *type = variant_get_type (v);
+  VariantChunk child = variant_get_child (v);
+  return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
+}}
+
+static inline char * variant_print (variant v, gboolean type_annotate)
+{{
+  GString *s = g_string_new ("");
+  variant_format (v, s, type_annotate);
+  return g_string_free (s, FALSE);
+}}
 
 /* Note: clz is undefinded for 0, so never call this size == 0 */
 G_GNUC_CONST static inline guint
@@ -230,7 +269,7 @@ class Type:
         return []
 
     def generate(self):
-        print("/* TODO: Generate %s -- %s */" % (self.typename, self))
+        assert False # Should not be reached
 
     def get_ctype(self):
          return self.typename
@@ -328,6 +367,8 @@ class ArrayType(Type):
         return self.element_type.alignment()
     def get_children(self):
         return [self.element_type]
+    def generate(self):
+        print("/* TODO: Generate %s -- %s */" % (self.typename, self))
 
 class DictType(Type):
     def __init__(self, key_type, element_type):
@@ -344,6 +385,8 @@ class DictType(Type):
         return max(self.element_type.alignment(), self.key_type.alignment())
     def get_children(self):
         return [self.key_type, self.element_type]
+    def generate(self):
+        print("/* TODO: Generate %s -- %s */" % (self.typename, self))
 
 class MaybeType(Type):
     def __init__(self, element_type):
@@ -367,7 +410,7 @@ class MaybeType(Type):
 '''
 typedef VariantChunk {typename};
 #define {typename}_typestring "{typestring}"
-static inline {typename} {typename}_from_variant(GVariant *v) {{
+static inline {typename} {typename}_from_gvariant(GVariant *v) {{
     {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
     return val;
 }}'''.format(typename=self.typename, typestring=self.typestring()))
@@ -430,6 +473,8 @@ class VariantType(Type):
         pass # No names for variant
     def alignment(self):
         return 8
+    def generate(self):
+        pass # These are hardcoded in the prefix so all types can use it
 
 class Field:
     def __init__(self, name, attributes, type):
@@ -582,9 +627,13 @@ class StructType(Type):
 '''
 typedef VariantChunk {typename};
 #define {typename}_typestring "{typestring}"
-static inline {typename} {typename}_from_variant(GVariant *v) {{
+static inline {typename} {typename}_from_gvariant(GVariant *v) {{
     {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
     return val;
+}}
+static inline {typename} {typename}_from_variant(variant v) {{
+    g_assert (g_variant_type_equal(variant_get_type (v), {typename}_typestring));
+    return ({typename}) variant_get_child (v);
 }}'''.format(typename=self.typename, typestring=self.typestring()))
         for f in self.fields:
             f.generate(self)
