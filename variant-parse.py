@@ -287,7 +287,7 @@ class Field:
                 print ("  return &G_STRUCT_MEMBER(char, v.base, %s);" % (offset))
         else:
             if self.type.is_fixed():
-                print ("  %s val = { &G_STRUCT_MEMBER(void, v.base, %s), %d }" % (self.type.typename, offset, self.type.get_fixed_size()))
+                print ("  %s val = { G_STRUCT_MEMBER_P(v.base, %s), %d };" % (self.type.typename, offset, self.type.get_fixed_size()))
                 print ("  return val;")
             else:
                 print ("  gsize start = %s;" % offset);
