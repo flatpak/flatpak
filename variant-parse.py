@@ -238,6 +238,9 @@ class Type:
     def can_printf_format(self):
          return False
 
+    def generate_append_value(self, value, with_type_annotate):
+        print ("  {typename}_format ({value}, s, {ta});".format(typename=self.typename, value=value, ta="type_annotate" if with_type_annotate else "FALSE"))
+
 basic_types = {
     "boolean": ("b", True, 1, "gboolean", "", '%s'),
     "byte": ("y", True, 1, "guint8", "byte ", '0x%02x'),
@@ -275,16 +278,37 @@ class BasicType(Type):
          return basic_types[self.kind][2]
     def get_ctype(self):
          return basic_types[self.kind][3]
+    def get_read_ctype(self):
+        if self.kind == "boolean":
+            return "guint8"
+        return self.get_ctype()
     def get_type_annotation(self):
         return basic_types[self.kind][4]
     def get_format_string(self):
         return basic_types[self.kind][5]
     def convert_value_for_format(self, value):
         if self.kind == "boolean":
-            value = '(%s) ? "true" : "false" % value'
+            value = '(%s) ? "true" : "false"' % value
         return value
     def can_printf_format(self):
          return self.get_format_string() != None
+    def generate_append_value(self, value, with_type_annotate):
+        # Special case some basic types
+        if self.kind == "string":
+            print ('  __variant_string_append_string (s, %s);' % value)
+        elif self.kind == "string":
+            print ('  __variant_string_append_double (s, %s);' % value)
+        else:
+            value = self.convert_value_for_format(value)
+            if with_type_annotate and self.get_type_annotation() != "":
+                print ('  g_string_append_printf (s, "%s{format}", type_annotate ? "{annotate}" : "", {value});'
+                       .format(format=self.get_format_string(),
+                               annotate=self.get_type_annotation(),
+                               value=value))
+            else:
+                print ('  g_string_append_printf (s, "{format}", {value});'
+                       .format(format=self.get_format_string(),
+                               value=value))
 
 class ArrayType(Type):
     def __init__(self, element_type):
@@ -338,6 +362,62 @@ class MaybeType(Type):
     def get_children(self):
         return [self.element_type]
 
+    def generate(self):
+        print (
+'''
+typedef VariantChunk {typename};
+#define {typename}_typestring "{typestring}"
+static inline {typename} {typename}_from_variant(GVariant *v) {{
+    {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
+    return val;
+}}'''.format(typename=self.typename, typestring=self.typestring()))
+
+        # has_value
+        print ("static inline gboolean {typename}_has_value({typename} v) {{".format(typename=self.typename, ctype=self.get_ctype()))
+        print("  return v.size != 0;")
+        print("}")
+
+        # Getter
+        print ("static inline {ctype} {typename}_get_value({typename} v) {{".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print("  g_assert(v.size != 0);")
+
+        if self.element_type.is_basic():
+            if self.element_type.is_fixed():
+                print ("  return (%s)*((%s *)v.base);" % (self.element_type.get_ctype(), self.element_type.get_read_ctype()))
+            else: # string
+                print ("  return (%s)v.base;" % (self.element_type.get_ctype()))
+        else:
+            if self.element_type.is_fixed():
+                # Fixed means use whole size
+                size = "v.size"
+            else:
+                # Otherwise, ignore extra zero byte
+                size = "(v.size - 1)"
+            print ("  %s val = { v.base, %s};" % (self.element_type.typename, size))
+            print ("  return val;")
+        print("}")
+
+        print ("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
+        print ("  if (type_annotate)")
+        print ('    g_string_append_printf (s, "@%%s ", %s_typestring);' % (self.typename))
+        print ("  if (v.size != 0)")
+        print ("    {")
+        if isinstance(self.element_type, MaybeType):
+            print ('      g_string_append (s, "just ");')
+        print ('    ', end='')
+        self.element_type.generate_append_value("{typename}_get_value(v)".format(typename=self.typename), False)
+        print ("    }")
+        print ("  else")
+        print ("    {")
+        print ('      g_string_append (s, "nothing");')
+        print ("    }")
+        print ("}")
+        print ("static inline char * {typename}_print ({typename} v, gboolean type_annotate) {{".format(typename=self.typename))
+        print ('  GString *s = g_string_new ("");')
+        print ("  {typename}_format (v, s, type_annotate);".format(typename=self.typename))
+        print ('  return g_string_free (s, FALSE);')
+        print ("}")
+
 class VariantType(Type):
     def __init__(self):
         super().__init__()
@@ -367,16 +447,18 @@ class Field:
     def generate(self, struct):
         # Getter
         print ("static inline {ctype} {structname}_get_{fieldname}({structname} v) {{".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
+        has_offset_size = False
         if self.table_i == -1:
             offset = "%d" % (self.table_c)
         else:
+            has_offset_size = True
             print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
             print ("  gsize last_end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * %d, offset_size);"  % (self.table_i + 1));
             offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
 
         if self.type.is_basic():
             if self.type.is_fixed():
-                print ("  return G_STRUCT_MEMBER(%s, v.base, %s);" % (self.type.get_ctype(), offset))
+                print ("  return (%s)G_STRUCT_MEMBER(%s, v.base, %s);" % (self.type.get_ctype(), self.type.get_read_ctype(), offset))
             else: # string
                 print ("  return &G_STRUCT_MEMBER(char, v.base, %s);" % (offset))
         else:
@@ -384,6 +466,9 @@ class Field:
                 print ("  %s val = { G_STRUCT_MEMBER_P(v.base, %s), %d };" % (self.type.typename, offset, self.type.get_fixed_size()))
                 print ("  return val;")
             else:
+                if not has_offset_size:
+                    has_offset_size = True
+                    print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
                 print ("  gsize start = %s;" % offset);
                 if self.last:
                     print ("  gsize end = v.size - offset_size * %d;" % (struct.framing_offset_size))
@@ -504,7 +589,7 @@ static inline {typename} {typename}_from_variant(GVariant *v) {{
 }}'''.format(typename=self.typename, typestring=self.typestring()))
         for f in self.fields:
             f.generate(self)
-        print ("static inline void {typename}_to_string ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
+        print ("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
 
         # Create runs of things we can combine into single printf
         field_runs = []
@@ -521,7 +606,9 @@ static inline {typename} {typename}_from_variant(GVariant *v) {{
                 # A run of printf fields
                 print ('  g_string_append_printf (s, "%s' % ("(" if i == 0 else ""), end = '')
                 for f in run:
-                    print ('%%s%s' % (f.type.get_format_string()), end = '')
+                    if f.type.get_type_annotation() != "":
+                        print ('%s', end = '')
+                    print ('%s' % (f.type.get_format_string()), end = '')
                     if not f.last:
                         print (', ', end = '')
                     elif len(self.fields) == 1:
@@ -530,7 +617,8 @@ static inline {typename} {typename}_from_variant(GVariant *v) {{
                         print (')', end = '')
                 print ('",')
                 for j, f in enumerate(run):
-                    print ('                   type_annotate ? "%s" : "",' % (f.type.get_type_annotation()))
+                    if f.type.get_type_annotation() != "":
+                        print ('                   type_annotate ? "%s" : "",' % (f.type.get_type_annotation()))
                     value = f.type.convert_value_for_format("{structname}_get_{fieldname}(v)".format(structname=self.typename, fieldname=f.name))
                     print ('                   %s%s' % (value, "," if j != len(run) - 1 else ");"))
             else:
@@ -539,14 +627,7 @@ static inline {typename} {typename}_from_variant(GVariant *v) {{
                     print ('  g_string_append (s, "(");')
                 for f in run:
                     value = "{structname}_get_{fieldname}(v)".format(structname=self.typename, fieldname=f.name)
-                    if f.type.is_basic():
-                        # Special case some basic types
-                        if f.type.kind == "string":
-                            print ('  __variant_string_append_string (s, %s);' % value)
-                        else:
-                            print ('  __variant_string_append_double (s, %s);' % value)
-                    else:
-                        print ("  {typename}_to_string ({value}, s, type_annotate);".format(typename=f.type.typename,value=value))
+                    f.type.generate_append_value(value, True)
                     if not f.last:
                         print ('  g_string_append (s, ", ");')
                     elif len(self.fields) == 1:
@@ -556,7 +637,7 @@ static inline {typename} {typename}_from_variant(GVariant *v) {{
         print ("}")
         print ("static inline char * {typename}_print ({typename} v, gboolean type_annotate) {{".format(typename=self.typename))
         print ('  GString *s = g_string_new ("");')
-        print ("  {typename}_to_string (v, s, type_annotate);".format(typename=self.typename))
+        print ("  {typename}_format (v, s, type_annotate);".format(typename=self.typename))
         print ('  return g_string_free (s, FALSE);')
         print ("}")
 
