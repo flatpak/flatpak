@@ -412,7 +412,7 @@ class BasicType(Type):
             if with_type_annotate != "FALSE" and self.get_type_annotation() != "":
                 print ('  g_string_append_printf (s, "%s{format}", {type_annotate} ? "{annotate}" : "", {value});'
                        .format(format=self.get_format_string(),
-                               type_annotate=type_annotate,
+                               type_annotate=with_type_annotate,
                                annotate=self.get_type_annotation(),
                                value=value))
             else:
