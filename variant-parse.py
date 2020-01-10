@@ -1,9 +1,13 @@
 #!/bin/env python3
 
+import argparse
 import sys
 import os
 from pyparsing import *
 from pyparsing import pyparsing_common as ppc
+
+typename_prefix = ""
+funcname_prefix = ""
 
 LBRACK, RBRACK, LBRACE, RBRACE, COLON, SEMI = map(Suppress, "[]{}:;")
 
@@ -22,14 +26,14 @@ def generate_header(filename):
 typedef struct {{
  gconstpointer base;
  gsize size;
-}} VariantChunk;
+}} {tprefix}VariantChunk;
 
-#define VARIANT_CHUNK_READ_FRAME_OFFSET(_v, _index) variant_chunk_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
-#define VARIANT_CHUNK_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
+#define {FPREFIX}VARIANT_CHUNK_READ_FRAME_OFFSET(_v, _index) {fprefix}variant_chunk_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
+#define {FPREFIX}VARIANT_CHUNK_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
 
-typedef VariantChunk variant;
+typedef {tprefix}VariantChunk {tprefix}variant;
 static inline const GVariantType *
-variant_get_type (variant v)
+{tprefix}variant_get_type ({tprefix}variant v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
@@ -37,67 +41,67 @@ variant_get_type (variant v)
   return (const GVariantType *)((guchar *)v.base + size + 1);
 }}
 
-static inline VariantChunk
-variant_get_child (variant v)
+static inline {tprefix}VariantChunk
+{tprefix}variant_get_child ({tprefix}variant v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
     size--;
-  return (VariantChunk) {{ v.base, size }};
+  return ({tprefix}VariantChunk) {{ v.base, size }};
 }}
 
 static inline GVariant *
-variant_dup_to_gvariant (variant v)
+{tprefix}variant_dup_to_gvariant ({tprefix}variant v)
 {{
   return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
-variant_peek_as_gvariant (variant v)
+{tprefix}variant_peek_as_gvariant ({tprefix}variant v)
 {{
   return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, NULL, NULL);
 }}
 
 static inline GVariant *
-variant_dup_child_to_gvariant (variant v)
+{tprefix}variant_dup_child_to_gvariant ({tprefix}variant v)
 {{
-  const GVariantType  *type = variant_get_type (v);
-  VariantChunk child = variant_get_child (v);
+  const GVariantType  *type = {tprefix}variant_get_type (v);
+  {tprefix}VariantChunk child = {tprefix}variant_get_child (v);
   return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
-variant_peek_child_as_gvariant (variant v)
+{tprefix}variant_peek_child_as_gvariant ({tprefix}variant v)
 {{
-  const GVariantType  *type = variant_get_type (v);
-  VariantChunk child = variant_get_child (v);
+  const GVariantType  *type = {tprefix}variant_get_type (v);
+  {tprefix}VariantChunk child = {tprefix}variant_get_child (v);
   return g_variant_new_from_data (type, child.base, child.size, TRUE, NULL, NULL);
 }}
 
 static inline GString *
-variant_format (variant v, GString *s, gboolean type_annotate)
+{tprefix}variant_format ({tprefix}variant v, GString *s, gboolean type_annotate)
 {{
 #ifdef SHALLOW_VARIANT_FORMAT
-  const GVariantType  *type = variant_get_type (v);
+  const GVariantType  *type = {tprefix}variant_get_type (v);
   g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
   return s;
 #else
-  GVariant *gv = variant_peek_as_gvariant (v);
+  GVariant *gv = {tprefix}variant_peek_as_gvariant (v);
   return g_variant_print_string (gv, s, TRUE);
 #endif
 }}
 
 static inline char *
-variant_print (variant v, gboolean type_annotate)
+{tprefix}variant_print ({tprefix}variant v, gboolean type_annotate)
 {{
   GString *s = g_string_new ("");
-  variant_format (v, s, type_annotate);
+  {tprefix}variant_format (v, s, type_annotate);
   return g_string_free (s, FALSE);
 }}
 
 /* Note: clz is undefinded for 0, so never call this size == 0 */
 G_GNUC_CONST static inline guint
-variant_chunk_get_offset_size (gsize size)
+{fprefix}variant_chunk_get_offset_size (gsize size)
 {{
 #if defined(__GNUC__) && (__GNUC__ >= 4) && defined(__OPTIMIZE__)
   /* Instead of using a lookup table we use nibbles in a lookup word */
@@ -122,7 +126,7 @@ variant_chunk_get_offset_size (gsize size)
 }}
 
 G_GNUC_PURE static inline gsize
-variant_chunk_read_unaligned_le (guchar *bytes, guint   size)
+{fprefix}variant_chunk_read_unaligned_le (guchar *bytes, guint   size)
 {{
   union
   {{
@@ -151,7 +155,7 @@ variant_chunk_read_unaligned_le (guchar *bytes, guint   size)
 }}
 
 static inline void
-__variant_string_append_double (GString *string, double d)
+{fprefix}__variant_string_append_double (GString *string, double d)
 {{
   gchar buffer[100];
   gint i;
@@ -173,7 +177,7 @@ __variant_string_append_double (GString *string, double d)
 }}
 
 static inline void
-__variant_string_append_string (GString *string, const char *str)
+{fprefix}__variant_string_append_string (GString *string, const char *str)
 {{
   gunichar quote = strchr (str, '\\'') ? '"' : '\\'';
 
@@ -234,7 +238,7 @@ __variant_string_append_string (GString *string, const char *str)
 
   g_string_append_c (string, quote);
 }}
-""".format(filename=filename))
+""".format(filename=filename, tprefix=typename_prefix, fprefix=funcname_prefix, FPREFIX=funcname_prefix.upper()))
 
 def generate_footer(filename):
     print(
@@ -253,11 +257,13 @@ def add_named_type(name, type):
     named_types[name] = type
 
 def get_named_type(name):
+    name = typename_prefix + name
     assert name in named_types
     return named_types[name]
 
 class TypeDef:
     def __init__(self, name, type):
+        name = typename_prefix + name
         self.name = name
         self.type = type
 
@@ -309,7 +315,7 @@ class Type:
 '''
 /************** {typename} *******************/
 
-typedef VariantChunk {typename};
+typedef {tprefix}VariantChunk {typename};
 #define {typename}_typestring "{typestring}"
 #define {typename}_typeformat G_VARIANT_TYPE ({typename}_typestring)
 static inline {typename}
@@ -324,10 +330,10 @@ static inline GVariant *
   return g_variant_new_from_data ({typename}_typeformat, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 static inline {typename}
-{typename}_from_variant(variant v) {{
-    g_assert (g_variant_type_equal(variant_get_type (v), {typename}_typestring));
-    return ({typename}) variant_get_child (v);
-}}'''.format(typename=self.typename, typestring=self.typestring()))
+{typename}_from_variant({tprefix}variant v) {{
+    g_assert (g_variant_type_equal({tprefix}variant_get_type (v), {typename}_typestring));
+    return ({typename}) {tprefix}variant_get_child (v);
+}}'''.format(typename=self.typename, typestring=self.typestring(), tprefix=typename_prefix, fprefix=funcname_prefix))
 
     def generate_print(self):
         print (
@@ -404,9 +410,9 @@ class BasicType(Type):
     def generate_append_value(self, value, with_type_annotate):
         # Special case some basic types
         if self.kind == "string":
-            print ('  __variant_string_append_string (s, %s);' % value)
+            print ('  %s__variant_string_append_string (s, %s);' % (funcname_prefix, value))
         elif self.kind == "double":
-            print ('  __variant_string_append_double (s, %s);' % value)
+            print ('  %s__variant_string_append_double (s, %s);' % (funcname_prefix, value))
         else:
             value = self.convert_value_for_format(value)
             if with_type_annotate != "FALSE" and self.get_type_annotation() != "":
@@ -455,8 +461,8 @@ class ArrayType(Type):
         if self.element_type.is_fixed():
             print("  return v.size / %d;" % self.element_type.get_fixed_size())
         else:
-            print("  guint offset_size = variant_chunk_get_offset_size (v.size);");
-            print("  gsize last_end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);");
+            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix);
+            print("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
             print("  return (v.size - last_end) / offset_size;")
         print("}")
         print("static inline {ctype}".format(typename=self.typename, ctype=self.element_type.get_ctype()))
@@ -470,15 +476,15 @@ class ArrayType(Type):
                 print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.element_type.typename, fixed_size, fixed_size))
         else:
             # non-fixed size
-            print("  guint offset_size = variant_chunk_get_offset_size (v.size);")
-            print("  gsize last_end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);");
+            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix)
+            print("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
             print("  gsize len = (v.size - last_end) / offset_size;")
             print("  gsize start = 0;")
             if not self.element_type.is_basic():
-                print("  gsize end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 1);");
+                print("  gsize end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 1);" % funcname_prefix.upper());
             print("  if (index > 0) {")
-            print("    start = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index);")
-            print("    start = VARIANT_CHUNK_ALIGN(start, %d);" % (self.element_type.alignment()))
+            print("    start = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index);"  % funcname_prefix.upper())
+            print("    start = %sVARIANT_CHUNK_ALIGN(start, %d);" % (funcname_prefix.upper(), self.element_type.alignment()))
             print("  }");
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
                 print ("  return ((const char *)v.base) + start;")
@@ -534,7 +540,7 @@ class DictType(Type):
         return [self.key_type, self.element_type]
     def generate(self):
         super().generate()
-        print ('typedef VariantChunk {typename}__entry;'.format(typename=self.typename))
+        print ('typedef {tprefix}VariantChunk {typename}__entry;'.format(typename=self.typename, tprefix=typename_prefix))
 
         print ("static inline gsize")
         print ("{typename}_get_length({typename} v)".format(typename=self.typename))
@@ -542,8 +548,8 @@ class DictType(Type):
         if self.element_is_fixed():
             print("  return v.size / %d;" % self.element_fixed_size())
         else:
-            print("  guint offset_size = variant_chunk_get_offset_size (v.size);");
-            print("  gsize last_end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);");
+            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix);
+            print("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
             print("  return (v.size - last_end) / offset_size;")
         print("}")
 
@@ -555,14 +561,14 @@ class DictType(Type):
             print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.typename + "__entry", fixed_size, fixed_size))
         else:
             # non-fixed size
-            print("  guint offset_size = variant_chunk_get_offset_size (v.size);")
-            print("  gsize last_end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);");
+            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix)
+            print("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
             print("  gsize len = (v.size - last_end) / offset_size;")
             print("  gsize start = 0;")
-            print("  gsize end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 1);");
+            print("  gsize end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 1);" % funcname_prefix.upper());
             print("  if (index > 0) {")
-            print("    start = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index);")
-            print("    start = VARIANT_CHUNK_ALIGN(start, %d);" % (self.alignment()))
+            print("    start = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index);" % funcname_prefix.upper())
+            print("    start = %sVARIANT_CHUNK_ALIGN(start, %d);" % (funcname_prefix.upper(), self.alignment()))
             print("  }");
             print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.typename + "__entry"))
         print("}")
@@ -581,9 +587,9 @@ class DictType(Type):
         print("{typename}__entry_get_value({typename}__entry v)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
         print("{")
         if not self.key_type.is_fixed():
-            print("  guint offset_size = variant_chunk_get_offset_size (v.size);")
-            print("  gsize end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);");
-            print("  gsize offset = VARIANT_CHUNK_ALIGN(end, %d);" % (self.element_type.alignment()))
+            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix)
+            print("  gsize end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
+            print("  gsize offset = %sVARIANT_CHUNK_ALIGN(end, %d);" % (funcname_prefix.upper(), self.element_type.alignment()))
             offset = "offset"
             end = "(v.size - offset_size)"
         else:
@@ -718,7 +724,7 @@ class MaybeType(Type):
 class VariantType(Type):
     def __init__(self):
         super().__init__()
-        self.typename = "variant"
+        self.typename = typename_prefix + "variant"
     def __repr__(self):
          return "VariantType()"
     def typestring(self):
@@ -754,8 +760,8 @@ class Field:
             offset = "((%d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
         else:
             has_offset_size = True
-            print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
-            print ("  gsize last_end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, %d);" % (self.table_i));
+            print ("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix);
+            print ("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, %d);" % (funcname_prefix.upper(), self.table_i));
             offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
 
         if self.type.is_basic():
@@ -769,12 +775,12 @@ class Field:
             else:
                 if not has_offset_size:
                     has_offset_size = True
-                    print ("  guint offset_size = variant_chunk_get_offset_size (v.size);");
+                    print ("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix);
                 print ("  gsize start = %s;" % offset);
                 if self.last:
                     print ("  gsize end = v.size - offset_size * %d;" % (struct.framing_offset_size))
                 else:
-                    print ("  gsize end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
+                    print ("  gsize end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, %d);" % (funcname_prefix.upper(), self.table_i + 1));
                 print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, start), end - start };" % (self.type.typename))
         print("}")
 
@@ -956,7 +962,7 @@ def handleNameableType(toks):
     type = toks[-1]
     if len(toks) == 2:
         name = toks[0]
-        add_named_type(name, type)
+        add_named_type(typename_prefix + name, type)
     return type
 
 nameableType = (Optional((Suppress("'") + ident).leaveWhitespace()) + (arrayType ^ maybeType ^ dictType ^ structType)).setParseAction(handleNameableType)
@@ -975,12 +981,19 @@ def generate(typedefs, filename):
     generate_footer(filename)
 
 if __name__ == "__main__":
-    file = sys.argv[1]
-    with  open(file, "r") as f:
+    parser = argparse.ArgumentParser(description='Generate variant accessors.')
+    parser.add_argument('--prefix', help='prefix')
+    parser.add_argument('file')
+    args = parser.parse_args()
+    if args.prefix:
+        typename_prefix = args.prefix[0].upper() + args.prefix[1:]
+        funcname_prefix = args.prefix + "_"
+
+    with open(args.file, "r") as f:
         testdata = f.read()
         try:
             typedefs = typeDefs.parseString(testdata, parseAll=True)
-            generate(typedefs, os.path.basename(file))
+            generate(typedefs, os.path.basename(args.file))
         except ParseException as pe:
             print("Parse error:", pe)
             sys.exit(1)
