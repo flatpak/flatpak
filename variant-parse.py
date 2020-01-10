@@ -28,8 +28,8 @@ typedef struct {{
  gsize size;
 }} {tprefix}VariantRef;
 
-#define {FPREFIX}VARIANT_CHUNK_READ_FRAME_OFFSET(_v, _index) {fprefix}variant_chunk_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
-#define {FPREFIX}VARIANT_CHUNK_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
+#define {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(_v, _index) {fprefix}variant_ref_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
+#define {FPREFIX}VARIANT_REF_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
 
 typedef {tprefix}VariantRef {tprefix}Variant;
 static inline const GVariantType *
@@ -101,7 +101,7 @@ static inline char *
 
 /* Note: clz is undefinded for 0, so never call this size == 0 */
 G_GNUC_CONST static inline guint
-{fprefix}variant_chunk_get_offset_size (gsize size)
+{fprefix}variant_ref_get_offset_size (gsize size)
 {{
 #if defined(__GNUC__) && (__GNUC__ >= 4) && defined(__OPTIMIZE__)
   /* Instead of using a lookup table we use nibbles in a lookup word */
@@ -126,7 +126,7 @@ G_GNUC_CONST static inline guint
 }}
 
 G_GNUC_PURE static inline gsize
-{fprefix}variant_chunk_read_unaligned_le (guchar *bytes, guint   size)
+{fprefix}variant_ref_read_unaligned_le (guchar *bytes, guint   size)
 {{
   union
   {{
@@ -461,8 +461,8 @@ class ArrayType(Type):
         if self.element_type.is_fixed():
             print("  return v.size / %d;" % self.element_type.get_fixed_size())
         else:
-            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix);
-            print("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
+            print("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix);
+            print("  gsize last_end = %sVARIANT_REF_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
             print("  return (v.size - last_end) / offset_size;")
         print("}")
         print("static inline {ctype}".format(typename=self.typename, ctype=self.element_type.get_ctype()))
@@ -476,15 +476,15 @@ class ArrayType(Type):
                 print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.element_type.typename, fixed_size, fixed_size))
         else:
             # non-fixed size
-            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix)
-            print("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
+            print("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix)
+            print("  gsize last_end = %sVARIANT_REF_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
             print("  gsize len = (v.size - last_end) / offset_size;")
             print("  gsize start = 0;")
             if not self.element_type.is_basic():
-                print("  gsize end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 1);" % funcname_prefix.upper());
+                print("  gsize end = %sVARIANT_REF_READ_FRAME_OFFSET(v, len - index - 1);" % funcname_prefix.upper());
             print("  if (index > 0) {")
-            print("    start = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index);"  % funcname_prefix.upper())
-            print("    start = %sVARIANT_CHUNK_ALIGN(start, %d);" % (funcname_prefix.upper(), self.element_type.alignment()))
+            print("    start = %sVARIANT_REF_READ_FRAME_OFFSET(v, len - index);"  % funcname_prefix.upper())
+            print("    start = %sVARIANT_REF_ALIGN(start, %d);" % (funcname_prefix.upper(), self.element_type.alignment()))
             print("  }");
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
                 print ("  return ((const char *)v.base) + start;")
@@ -548,8 +548,8 @@ class DictType(Type):
         if self.element_is_fixed():
             print("  return v.size / %d;" % self.element_fixed_size())
         else:
-            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix);
-            print("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
+            print("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix);
+            print("  gsize last_end = %sVARIANT_REF_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
             print("  return (v.size - last_end) / offset_size;")
         print("}")
 
@@ -561,14 +561,14 @@ class DictType(Type):
             print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.typename + "__entry", fixed_size, fixed_size))
         else:
             # non-fixed size
-            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix)
-            print("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
+            print("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix)
+            print("  gsize last_end = %sVARIANT_REF_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
             print("  gsize len = (v.size - last_end) / offset_size;")
             print("  gsize start = 0;")
-            print("  gsize end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 1);" % funcname_prefix.upper());
+            print("  gsize end = %sVARIANT_REF_READ_FRAME_OFFSET(v, len - index - 1);" % funcname_prefix.upper());
             print("  if (index > 0) {")
-            print("    start = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index);" % funcname_prefix.upper())
-            print("    start = %sVARIANT_CHUNK_ALIGN(start, %d);" % (funcname_prefix.upper(), self.alignment()))
+            print("    start = %sVARIANT_REF_READ_FRAME_OFFSET(v, len - index);" % funcname_prefix.upper())
+            print("    start = %sVARIANT_REF_ALIGN(start, %d);" % (funcname_prefix.upper(), self.alignment()))
             print("  }");
             print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.typename + "__entry"))
         print("}")
@@ -587,9 +587,9 @@ class DictType(Type):
         print("{typename}__entry_get_value({typename}__entry v)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
         print("{")
         if not self.key_type.is_fixed():
-            print("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix)
-            print("  gsize end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
-            print("  gsize offset = %sVARIANT_CHUNK_ALIGN(end, %d);" % (funcname_prefix.upper(), self.element_type.alignment()))
+            print("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix)
+            print("  gsize end = %sVARIANT_REF_READ_FRAME_OFFSET(v, 0);" % funcname_prefix.upper());
+            print("  gsize offset = %sVARIANT_REF_ALIGN(end, %d);" % (funcname_prefix.upper(), self.element_type.alignment()))
             offset = "offset"
             end = "(v.size - offset_size)"
         else:
@@ -760,8 +760,8 @@ class Field:
             offset = "((%d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
         else:
             has_offset_size = True
-            print ("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix);
-            print ("  gsize last_end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, %d);" % (funcname_prefix.upper(), self.table_i));
+            print ("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix);
+            print ("  gsize last_end = %sVARIANT_REF_READ_FRAME_OFFSET(v, %d);" % (funcname_prefix.upper(), self.table_i));
             offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
 
         if self.type.is_basic():
@@ -775,12 +775,12 @@ class Field:
             else:
                 if not has_offset_size:
                     has_offset_size = True
-                    print ("  guint offset_size = %svariant_chunk_get_offset_size (v.size);" % funcname_prefix);
+                    print ("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix);
                 print ("  gsize start = %s;" % offset);
                 if self.last:
                     print ("  gsize end = v.size - offset_size * %d;" % (struct.framing_offset_size))
                 else:
-                    print ("  gsize end = %sVARIANT_CHUNK_READ_FRAME_OFFSET(v, %d);" % (funcname_prefix.upper(), self.table_i + 1));
+                    print ("  gsize end = %sVARIANT_REF_READ_FRAME_OFFSET(v, %d);" % (funcname_prefix.upper(), self.table_i + 1));
                 print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, start), end - start };" % (self.type.typename))
         print("}")
 
