@@ -24,7 +24,7 @@ type Test {
   d1: [int32]int32;
   meta: Metadata;
   d2: 'D2 [int32]string;
-  optional: ?{
+  optional: ? 'Optional {
     op: objectpath;
     s: signature;
     b: boolean;

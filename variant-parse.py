@@ -15,6 +15,9 @@ ident = Word(alphas + "_", alphanums + "_").setName("identifier")
 
 named_types = {}
 
+def remove_prefix(text, prefix):
+    return text[text.startswith(prefix) and len(prefix):]
+
 def generate_header(filename):
     print(
 """/* generated code for {filename} */
@@ -442,6 +445,8 @@ class ArrayType(Type):
 
         if element_type.is_basic():
             self.typename = typename_prefix + "Arrayof" + self.element_type.kind
+        elif element_type.typename:
+            self.typename = typename_prefix + "Arrayof" + remove_prefix(element_type.typename, typename_prefix)
 
     def __repr__(self):
          return "ArrayType<%s>(%s)" % (self.typename, repr(self.element_type))
@@ -659,6 +664,8 @@ class MaybeType(Type):
         self.element_type = element_type
         if element_type.is_basic():
             self.typename = typename_prefix + "Maybe" + self.element_type.kind
+        elif element_type.typename:
+            self.typename = typename_prefix + "Maybe" + remove_prefix(element_type.typename, typename_prefix)
     def __repr__(self):
          return "MaybeType<%s>(%s, %s)" % (self.typename, repr(self.element_type))
     def typestring(self):
