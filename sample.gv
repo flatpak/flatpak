@@ -3,6 +3,7 @@ type Metadata [string] variant;
 type Var {
   foo: int16;
   bar: int32;
+  b: byte;
 };
 
 type Test {
@@ -23,4 +24,13 @@ type Test {
   d1: [int32]int32;
   meta: Metadata;
   d2: 'D2 [int32]string;
+  optional: ?{
+    op: objectpath;
+    s: signature;
+    b: boolean;
+    h: handle;
+    large: int64;
+    larger: uint64;
+    pi: double;
+  };
 };

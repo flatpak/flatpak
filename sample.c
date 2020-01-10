@@ -9,6 +9,7 @@ test_sample_variant (GVariant *v)
   const char *res;
   variant resv;
 
+  g_print ("sample type: %s\n", g_variant_get_type_string (v));
   g_print ("sample: %s\n", g_variant_print (v, FALSE));
   g_print ("sample with types: %s\n", g_variant_print (v, TRUE));
 
@@ -57,9 +58,11 @@ main (int argc,
 
 #define DATA \
   "([32, 22], '%s', uint16 16, "                                        \
-    "('s2', 322), ('ssss2', 3222), (323,), 324, <(int16 67, 1023)>, "   \
-    "[(int16 68, 1025), (int16 69, 1026)]"                              \
-    ", {1:2, 3:4}, {'foo': <1>, 'bar': <'s'>}, {1:'a', 3:'b'}"          \
+    "('s2', 322), ('ssss2', 3222), (323,), 324, "                       \
+    "<(int16 67, 1023, byte 3)>, "                                          \
+    "[(int16 68, 1025, byte 42), (int16 69, 1026, byte 42)]"                              \
+    ", {1:2, 3:4}, {'foo': <1>, 'bar': <'s'>}, {1:'a', 3:'b'}, "        \
+    "just (objectpath '/', signature 's', true, handle 3, int64 88, uint64 89, 3.1415 )"             \
     ")"
 
   v = g_variant_new_parsed (g_strdup_printf (DATA, "s"));
