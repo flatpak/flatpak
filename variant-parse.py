@@ -16,6 +16,9 @@ def generate_header(filename):
 """/* generated code for {filename} */
 #include <string.h>
 #include <glib.h>
+
+/********** Header *****************/
+
 typedef struct {{
  gconstpointer base;
  gsize size;
@@ -269,7 +272,26 @@ class Type:
         return []
 
     def generate(self):
-        assert False # Should not be reached
+        print (
+'''
+/************** {typename} *******************/
+
+typedef VariantChunk {typename};
+#define {typename}_typestring "{typestring}"
+#define {typename}_typeformat G_VARIANT_TYPE ({typename}_typestring)
+static inline {typename} {typename}_from_gvariant(GVariant *v) {{
+    g_assert (g_variant_type_equal (g_variant_get_type (v), {typename}_typestring));
+    {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
+    return val;
+}}
+static inline GVariant *{typename}_dup_to_gvariant ({typename} v)
+{{
+  return g_variant_new_from_data ({typename}_typeformat, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
+}}
+static inline {typename} {typename}_from_variant(variant v) {{
+    g_assert (g_variant_type_equal(variant_get_type (v), {typename}_typestring));
+    return ({typename}) variant_get_child (v);
+}}'''.format(typename=self.typename, typestring=self.typestring()))
 
     def get_ctype(self):
          return self.typename
@@ -368,18 +390,7 @@ class ArrayType(Type):
     def get_children(self):
         return [self.element_type]
     def generate(self):
-        print (
-'''
-typedef VariantChunk {typename};
-#define {typename}_typestring "{typestring}"
-static inline {typename} {typename}_from_gvariant(GVariant *v) {{
-    {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
-    return val;
-}}
-static inline {typename} {typename}_from_variant(variant v) {{
-    g_assert (g_variant_type_equal(variant_get_type (v), {typename}_typestring));
-    return ({typename}) variant_get_child (v);
-}}'''.format(typename=self.typename, typestring=self.typestring()))
+        super().generate()
         print ("static inline gsize {typename}_get_length({typename} v) {{".format(typename=self.typename))
         if self.element_type.is_fixed():
             print("  return v.size / %d;" % self.element_type.get_fixed_size())
@@ -462,19 +473,8 @@ class DictType(Type):
     def get_children(self):
         return [self.key_type, self.element_type]
     def generate(self):
-        print (
-'''
-typedef VariantChunk {typename};
-typedef VariantChunk {typename}__entry;
-#define {typename}_typestring "{typestring}"
-static inline {typename} {typename}_from_gvariant(GVariant *v) {{
-    {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
-    return val;
-}}
-static inline {typename} {typename}_from_variant(variant v) {{
-    g_assert (g_variant_type_equal(variant_get_type (v), {typename}_typestring));
-    return ({typename}) variant_get_child (v);
-}}'''.format(typename=self.typename, typestring=self.typestring()))
+        super().generate()
+        print ('typedef VariantChunk {typename}__entry;'.format(typename=self.typename))
 
         print ("static inline gsize {typename}_get_length({typename} v) {{".format(typename=self.typename))
         if self.element_is_fixed():
@@ -580,14 +580,7 @@ class MaybeType(Type):
         return [self.element_type]
 
     def generate(self):
-        print (
-'''
-typedef VariantChunk {typename};
-#define {typename}_typestring "{typestring}"
-static inline {typename} {typename}_from_gvariant(GVariant *v) {{
-    {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
-    return val;
-}}'''.format(typename=self.typename, typestring=self.typestring()))
+        super().generate()
 
         # has_value
         print ("static inline gboolean {typename}_has_value({typename} v) {{".format(typename=self.typename, ctype=self.get_ctype()))
@@ -797,18 +790,7 @@ class StructType(Type):
         return self._fixed_size
 
     def generate(self):
-        print (
-'''
-typedef VariantChunk {typename};
-#define {typename}_typestring "{typestring}"
-static inline {typename} {typename}_from_gvariant(GVariant *v) {{
-    {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
-    return val;
-}}
-static inline {typename} {typename}_from_variant(variant v) {{
-    g_assert (g_variant_type_equal(variant_get_type (v), {typename}_typestring));
-    return ({typename}) variant_get_child (v);
-}}'''.format(typename=self.typename, typestring=self.typestring()))
+        super().generate()
         for f in self.fields:
             f.generate(self)
         print ("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
