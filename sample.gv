@@ -9,11 +9,12 @@ type Test {
   foo: []int32;
   s: string;
   sh: uint16;
-  sub: {
+  sub: 'Sub {
     str: string;
     bar: int32;
   };
-  sub2: {
+  subagain: Sub;
+  sub2: 'Sub2 {
     bar: int32;
   };
   bar: int32;
@@ -21,5 +22,5 @@ type Test {
   arr: []Var;
   d1: [int32]int32;
   meta: Metadata;
-  d2: [int32]string;
+  d2: 'D2 [int32]string;
 };

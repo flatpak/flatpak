@@ -25,15 +25,15 @@ test_sample_variant (GVariant *v)
   varv = g_variant_get_variant (g_variant_get_child_value (v, Test_indexof_v));
   g_assert_cmpstr (g_variant_print (varv, TRUE), ==, Var_print (var, TRUE));
 
-  Test__d2 d2 = Test_get_d2(t);
-  GVariant *v3 = Test__d2_dup_to_gvariant(d2);
-  g_assert_cmpstr (g_variant_print (v3, TRUE), ==, Test__d2_print(d2, FALSE));
+  D2 d2 = Test_get_d2(t);
+  GVariant *v3 = D2_dup_to_gvariant(d2);
+  g_assert_cmpstr (g_variant_print (v3, TRUE), ==, D2_print(d2, FALSE));
 
-  g_assert (Test__d2_lookup(d2, 1, &res));
+  g_assert (D2_lookup(d2, 1, &res));
   g_assert_cmpstr (res, ==, "a");
-  g_assert (Test__d2_lookup(d2, 3, &res));
+  g_assert (D2_lookup(d2, 3, &res));
   g_assert_cmpstr (res, ==, "b");
-  g_assert (!Test__d2_lookup(d2, 2, &res));
+  g_assert (!D2_lookup(d2, 2, &res));
 
   Metadata meta = Test_get_meta(t);
   g_print ("meta: %s\n", Metadata_print(meta, FALSE));
@@ -57,10 +57,10 @@ main (int argc,
   GVariant *v;
 
 #define DATA \
-  "([32, 22], '%s', uint16 16, "                                   \
-    "('s2', 322), (323,), 324, <(int16 67, 1023)>, "              \
-    "[(int16 68, 1025), (int16 69, 1026)]"                        \
-    ", {1:2, 3:4}, {'foo': <1>, 'bar': <'s'>}, {1:'a', 3:'b'}"    \
+  "([32, 22], '%s', uint16 16, "                                        \
+    "('s2', 322), ('ssss2', 3222), (323,), 324, <(int16 67, 1023)>, "   \
+    "[(int16 68, 1025), (int16 69, 1026)]"                              \
+    ", {1:2, 3:4}, {'foo': <1>, 'bar': <'s'>}, {1:'a', 3:'b'}"          \
     ")"
 
   v = g_variant_new_parsed (g_strdup_printf (DATA, "s"));
