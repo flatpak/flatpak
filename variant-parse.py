@@ -486,7 +486,7 @@ class ArrayType(Type):
                 print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.element_type.typename))
         print("}")
 
-        print("static inline void")
+        print("static inline GString *")
         print("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
         print ("{")
         print("  gsize len = %s_get_length(v);" % self.typename)
@@ -501,6 +501,7 @@ class ArrayType(Type):
         self.element_type.generate_append_value("%s_get_at(v, i)" % self.typename, "((i == 0) ? type_annotate : FALSE)")
         print("  }")
         print("  g_string_append_c (s, ']');")
+        print("  return s;")
         print("}")
         self.generate_print()
 
@@ -623,7 +624,7 @@ class DictType(Type):
              equal=self.key_type.equal_code("canonical_key", "e_key"),
              canonicalize=self.key_type.canonicalize_code("key")))
 
-        print("static inline void")
+        print("static inline GString *")
         print("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
         print ("{")
         print("  gsize len = %s_get_length(v);" % self.typename)
@@ -642,6 +643,7 @@ class DictType(Type):
         self.element_type.generate_append_value("%s__entry_get_value(entry)" % self.typename, "type_annotate")
         print("  }")
         print("  g_string_append_c (s, '}');")
+        print("  return s;")
         print("}")
         self.generate_print()
 
@@ -693,7 +695,7 @@ class MaybeType(Type):
             print ("  return (%s) { v.base, %s};" % (self.element_type.typename, size))
         print("}")
 
-        print ("static inline void")
+        print ("static inline GString *")
         print ("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
         print ("{")
         print ("  if (type_annotate)")
@@ -709,6 +711,7 @@ class MaybeType(Type):
         print ("    {")
         print ('      g_string_append (s, "nothing");')
         print ("    }")
+        print("  return s;")
         print ("}")
         self.generate_print()
 
@@ -878,7 +881,7 @@ class StructType(Type):
         super().generate()
         for i, f in enumerate(self.fields):
             f.generate(self, i)
-        print ("static inline void")
+        print ("static inline GString *")
         print ("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
         print ("{")
 
@@ -925,6 +928,7 @@ class StructType(Type):
                         print ('  g_string_append (s, ",)");')
                     else:
                         print ('  g_string_append (s, ")");')
+        print("  return s;")
         print ("}")
         self.generate_print()
 
