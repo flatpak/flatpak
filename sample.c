@@ -36,7 +36,6 @@ test_sample_variant (GVariant *v)
   g_assert (!D2_lookup(d2, 2, &res));
 
   Metadata meta = Test_get_meta(t);
-  g_print ("meta: %s\n", Metadata_print(meta, FALSE));
   GVariant *meta_v = Metadata_dup_to_gvariant(meta);
 
   g_assert (g_variant_type_equal (g_variant_get_type(meta_v), Metadata_typeformat));
@@ -64,6 +63,7 @@ main (int argc,
     ")"
 
   v = g_variant_new_parsed (g_strdup_printf (DATA, "s"));
+  test_sample_variant(v);
 
   /* Try with larger offsets */
   v = g_variant_new_parsed (g_strdup_printf (DATA, "sxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"));
