@@ -483,7 +483,7 @@ class ArrayType(Type):
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
                 print ("  return ((const char *)v.base) + start;")
             else:
-                print("  return (%s) = { ((const char *)v.base) + start, end - start };" % (self.element_type.typename))
+                print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.element_type.typename))
         print("}")
 
         print("static inline void")
