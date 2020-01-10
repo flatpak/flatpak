@@ -28,7 +28,8 @@ typedef struct {{
 #define VARIANT_CHUNK_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
 
 typedef VariantChunk variant;
-static inline const GVariantType * variant_get_type (variant v)
+static inline const GVariantType *
+variant_get_type (variant v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
@@ -36,7 +37,8 @@ static inline const GVariantType * variant_get_type (variant v)
   return (const GVariantType *)((guchar *)v.base + size + 1);
 }}
 
-static inline VariantChunk variant_get_child (variant v)
+static inline VariantChunk
+variant_get_child (variant v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
@@ -44,20 +46,23 @@ static inline VariantChunk variant_get_child (variant v)
   return (VariantChunk) {{ v.base, size }};
 }}
 
-static inline void variant_format (variant v, GString *s, gboolean type_annotate)
+static inline void
+variant_format (variant v, GString *s, gboolean type_annotate)
 {{
   const GVariantType  *type = variant_get_type (v);
   g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
 }}
 
-static inline GVariant *variant_dup_to_gvariant (variant v)
+static inline GVariant *
+variant_dup_to_gvariant (variant v)
 {{
   const GVariantType  *type = variant_get_type (v);
   VariantChunk child = variant_get_child (v);
   return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
 }}
 
-static inline char * variant_print (variant v, gboolean type_annotate)
+static inline char *
+variant_print (variant v, gboolean type_annotate)
 {{
   GString *s = g_string_new ("");
   variant_format (v, s, type_annotate);
@@ -281,15 +286,19 @@ class Type:
 typedef VariantChunk {typename};
 #define {typename}_typestring "{typestring}"
 #define {typename}_typeformat G_VARIANT_TYPE ({typename}_typestring)
-static inline {typename} {typename}_from_gvariant(GVariant *v) {{
+static inline {typename}
+{typename}_from_gvariant(GVariant *v)
+{{
     g_assert (g_variant_type_equal (g_variant_get_type (v), {typename}_typestring));
     return ({typename}) {{ g_variant_get_data (v), g_variant_get_size (v) }};
 }}
-static inline GVariant *{typename}_dup_to_gvariant ({typename} v)
+static inline GVariant *
+{typename}_dup_to_gvariant ({typename} v)
 {{
   return g_variant_new_from_data ({typename}_typeformat, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
-static inline {typename} {typename}_from_variant(variant v) {{
+static inline {typename}
+{typename}_from_variant(variant v) {{
     g_assert (g_variant_type_equal(variant_get_type (v), {typename}_typestring));
     return ({typename}) variant_get_child (v);
 }}'''.format(typename=self.typename, typestring=self.typestring()))
@@ -404,7 +413,9 @@ class ArrayType(Type):
         return [self.element_type]
     def generate(self):
         super().generate()
-        print ("static inline gsize {typename}_get_length({typename} v) {{".format(typename=self.typename))
+        print ("static inline gsize")
+        print ("{typename}_get_length({typename} v)".format(typename=self.typename))
+        print ("{")
         if self.element_type.is_fixed():
             print("  return v.size / %d;" % self.element_type.get_fixed_size())
         else:
@@ -412,7 +423,8 @@ class ArrayType(Type):
             print("  gsize last_end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);");
             print("  return (v.size - last_end) / offset_size;")
         print("}")
-        print("static inline {ctype} {typename}_get_at({typename} v, gsize index)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print("static inline {ctype}".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print("{typename}_get_at({typename} v, gsize index)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
         print("{")
         if self.element_type.is_fixed():
             fixed_size = self.element_type.get_fixed_size()
@@ -438,7 +450,9 @@ class ArrayType(Type):
                 print("  return (%s) = { ((const char *)v.base) + start, end - start };" % (self.element_type.typename))
         print("}")
 
-        print("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
+        print("static inline void")
+        print("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
+        print ("{")
         print("  gsize len = %s_get_length(v);" % self.typename)
         print("  gsize i;")
         print("  if (len == 0 && type_annotate)")
@@ -485,7 +499,9 @@ class DictType(Type):
         super().generate()
         print ('typedef VariantChunk {typename}__entry;'.format(typename=self.typename))
 
-        print ("static inline gsize {typename}_get_length({typename} v) {{".format(typename=self.typename))
+        print ("static inline gsize")
+        print ("{typename}_get_length({typename} v)".format(typename=self.typename))
+        print ("{")
         if self.element_is_fixed():
             print("  return v.size / %d;" % self.element_fixed_size())
         else:
@@ -494,7 +510,8 @@ class DictType(Type):
             print("  return (v.size - last_end) / offset_size;")
         print("}")
 
-        print("static inline {typename}__entry {typename}_get_at({typename} v, gsize index)".format(typename=self.typename))
+        print("static inline {typename}__entry".format(typename=self.typename))
+        print("{typename}_get_at({typename} v, gsize index)".format(typename=self.typename))
         print("{")
         if self.element_is_fixed():
             fixed_size = self.element_fixed_size()
@@ -513,7 +530,8 @@ class DictType(Type):
             print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.typename + "__entry"))
         print("}")
 
-        print("static inline {ctype} {typename}__entry_get_key({typename}__entry v)".format(typename=self.typename, ctype=self.key_type.get_ctype()))
+        print("static inline {ctype}".format(typename=self.typename, ctype=self.key_type.get_ctype()))
+        print("{typename}__entry_get_key({typename}__entry v)".format(typename=self.typename, ctype=self.key_type.get_ctype()))
         print("{")
         # Keys are always basic
         if self.key_type.is_fixed():
@@ -522,7 +540,8 @@ class DictType(Type):
             print ("  return (%s)v.base;" % (self.key_type.get_ctype()))
         print("}")
 
-        print("static inline {ctype} {typename}__entry_get_value({typename}__entry v)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print("static inline {ctype}".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print("{typename}__entry_get_value({typename}__entry v)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
         print("{")
         if not self.key_type.is_fixed():
             print("  guint offset_size = variant_chunk_get_offset_size (v.size);")
@@ -543,7 +562,9 @@ class DictType(Type):
 
         print("}")
 
-        print("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
+        print("static inline void")
+        print("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
+        print ("{")
         print("  gsize len = %s_get_length(v);" % self.typename)
         print("  gsize i;")
         print("  if (len == 0 && type_annotate)")
@@ -586,12 +607,16 @@ class MaybeType(Type):
         super().generate()
 
         # has_value
-        print ("static inline gboolean {typename}_has_value({typename} v) {{".format(typename=self.typename, ctype=self.get_ctype()))
+        print ("static inline gboolean")
+        print ("{typename}_has_value({typename} v)".format(typename=self.typename, ctype=self.get_ctype()))
+        print ("{")
         print("  return v.size != 0;")
         print("}")
 
         # Getter
-        print ("static inline {ctype} {typename}_get_value({typename} v) {{".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print ("static inline {ctype}".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print ("{typename}_get_value({typename} v)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print ("{")
         print("  g_assert(v.size != 0);")
 
         if self.element_type.is_basic():
@@ -609,7 +634,9 @@ class MaybeType(Type):
             print ("  return (%s) { v.base, %s};" % (self.element_type.typename, size))
         print("}")
 
-        print ("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
+        print ("static inline void")
+        print ("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
+        print ("{")
         print ("  if (type_annotate)")
         print ('    g_string_append_printf (s, "@%%s ", %s_typestring);' % (self.typename))
         print ("  if (v.size != 0)")
@@ -656,7 +683,9 @@ class Field:
 
     def generate(self, struct):
         # Getter
-        print ("static inline {ctype} {structname}_get_{fieldname}({structname} v) {{".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
+        print ("static inline {ctype}".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
+        print ("{structname}_get_{fieldname}({structname} v)".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
+        print ("{")
         has_offset_size = False
         if self.table_i == -1:
             offset = "((%d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
@@ -789,7 +818,9 @@ class StructType(Type):
         super().generate()
         for f in self.fields:
             f.generate(self)
-        print ("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
+        print ("static inline void")
+        print ("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
+        print ("{")
 
         # Create runs of things we can combine into single printf
         field_runs = []
