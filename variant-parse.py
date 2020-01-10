@@ -418,6 +418,15 @@ class BasicType(Type):
                 print ('  g_string_append_printf (s, "{format}", {value});'
                        .format(format=self.get_format_string(),
                                value=value))
+    def equal_code(self, val1, val2):
+        if self.is_fixed():
+            return "%s == %s" % (val1, val2)
+        else: # String type
+            return "strcmp(%s, %s) == 0" % (val1, val2)
+    def canonicalize_code(self, val):
+        if self.kind == "boolean":
+            return "!!%s" % val
+        return val
 
 class ArrayType(Type):
     def __init__(self, element_type):
@@ -588,6 +597,29 @@ class DictType(Type):
 
         print("}")
 
+        print(
+"""static inline gboolean
+{typename}_lookup({typename} v, {keyctype} key, {elementctype} *out)
+{{
+  gsize len = {typename}_get_length(v);
+  {keyctype} canonical_key = {canonicalize};
+  gsize i;
+
+  for (i = 0; i < len; i++)
+    {{
+        {typename}__entry e = {typename}_get_at(v, i);
+        {keyctype} e_key = {typename}__entry_get_key(e);
+        if ({equal})
+          {{
+             *out = {typename}__entry_get_value (e);
+             return TRUE;
+          }}
+    }}
+    return FALSE;
+}}""".format(elementctype=self.element_type.get_ctype(), keyctype=self.key_type.get_ctype(), typename=self.typename,
+             equal=self.key_type.equal_code("canonical_key", "e_key"),
+             canonicalize=self.key_type.canonicalize_code("key")))
+
         print("static inline void")
         print("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
         print ("{")
@@ -609,8 +641,6 @@ class DictType(Type):
         print("  g_string_append_c (s, '}');")
         print("}")
         self.generate_print()
-
-        print("/* TODO: Generate %s -- %s */" % (self.typename, self))
 
 class MaybeType(Type):
     def __init__(self, element_type):
