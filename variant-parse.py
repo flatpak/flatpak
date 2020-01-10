@@ -441,7 +441,7 @@ class ArrayType(Type):
             if not self.element_type.is_basic():
                 print("  gsize end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 1);");
             print("  if (index > 0) {")
-            print("    start = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 2);")
+            print("    start = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index);")
             print("    start = VARIANT_CHUNK_ALIGN(start, %d);" % (self.element_type.alignment()))
             print("  }");
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
@@ -524,7 +524,7 @@ class DictType(Type):
             print("  gsize start = 0;")
             print("  gsize end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 1);");
             print("  if (index > 0) {")
-            print("    start = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 2);")
+            print("    start = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index);")
             print("    start = VARIANT_CHUNK_ALIGN(start, %d);" % (self.alignment()))
             print("  }");
             print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.typename + "__entry"))
