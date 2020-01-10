@@ -440,20 +440,32 @@ class DictType(Type):
         super().__init__()
         self.key_type = key_type
         self.element_type = element_type
+
+        self._fixed_element = element_type.is_fixed() and key_type.is_fixed();
+        if self._fixed_element:
+            fixed_pos = key_type.get_fixed_size()
+            fixed_pos = align_up(fixed_pos, element_type.alignment()) + element_type.get_fixed_size()
+            self._fixed_element_size = align_up(fixed_pos, self.alignment())
+
     def __repr__(self):
          return "DictType<%s>(%s, %s)" % (self.typename, repr(self.key_type), repr(self.element_type))
     def typestring(self):
          return "a{%s%s}" % (self.key_type.typestring(), self.element_type.typestring())
     def propagate_typename(self, name):
-        self.element_type.set_typename (name + "__element")
+        self.element_type.set_typename (name + "__value")
     def alignment(self):
         return max(self.element_type.alignment(), self.key_type.alignment())
+    def element_is_fixed(self):
+        return self._fixed_element
+    def element_fixed_size(self):
+        return self._fixed_element_size
     def get_children(self):
         return [self.key_type, self.element_type]
     def generate(self):
         print (
 '''
 typedef VariantChunk {typename};
+typedef VariantChunk {typename}__entry;
 #define {typename}_typestring "{typestring}"
 static inline {typename} {typename}_from_gvariant(GVariant *v) {{
     {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
@@ -463,6 +475,91 @@ static inline {typename} {typename}_from_variant(variant v) {{
     g_assert (g_variant_type_equal(variant_get_type (v), {typename}_typestring));
     return ({typename}) variant_get_child (v);
 }}'''.format(typename=self.typename, typestring=self.typestring()))
+
+        print ("static inline gsize {typename}_get_length({typename} v) {{".format(typename=self.typename))
+        if self.element_is_fixed():
+            print("  return v.size / %d;" % self.element_fixed_size())
+        else:
+            print("  guint offset_size = variant_chunk_get_offset_size (v.size);");
+            print("  gsize last_end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size, offset_size);");
+            print("  return (v.size - last_end) / offset_size;")
+        print("}")
+
+        print("static inline {typename}__entry {typename}_get_at({typename} v, gsize index)".format(typename=self.typename))
+        print("{")
+        if self.element_is_fixed():
+            fixed_size = self.element_fixed_size()
+            print ("  %s val = { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.typename + "__entry", fixed_size, fixed_size))
+            print ("  return val;")
+        else:
+            # non-fixed size
+            print("  guint offset_size = variant_chunk_get_offset_size (v.size);")
+            print("  gsize start = 0;")
+            print("  gsize end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * index, offset_size);");
+            print("  if (index > 0) {")
+            print("    start = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size * (index - 1), offset_size);")
+            print("    start = (start + %d) & ~(gsize)%d;" % (self.alignment() - 1, self.alignment() - 1))
+            print("  }");
+            print("  %s val = { ((const char *)v.base) + start, end - start };" % (self.typename + "__entry"))
+            print("  return val;")
+        print("}")
+
+        print("static inline {ctype} {typename}__entry_get_key({typename}__entry v)".format(typename=self.typename, ctype=self.key_type.get_ctype()))
+        print("{")
+        # Keys are always basic
+        if self.key_type.is_fixed():
+            print ("  return (%s)*((%s *)v.base);" % (self.key_type.get_ctype(), self.key_type.get_read_ctype()))
+        else: # string-style
+            print ("  return (%s)v.base;" % (self.key_type.get_ctype()))
+        print("}")
+
+        print("static inline {ctype} {typename}__entry_get_value({typename}__entry v)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print("{")
+        if not self.key_type.is_fixed():
+            print("  guint offset_size = variant_chunk_get_offset_size (v.size);")
+            print("  gsize end = variant_chunk_read_unaligned_le ((guchar*)(v.base) + v.size - offset_size, offset_size);");
+            print("  gsize offset = (end + %d) & ~(gsize)%d;" % (self.element_type.alignment() - 1, self.element_type.alignment() - 1))
+            offset = "offset"
+        else:
+            # Fixed key, so known offset
+            offset = align_up(self.key_type.get_fixed_size(), self.element_type.alignment())
+
+        if self.element_type.is_basic():
+            if self.element_type.is_fixed():
+                print ("  return (%s)*((%s *)((char *)v.base + %s));" % (self.element_type.get_ctype(), self.element_type.get_read_ctype(), offset))
+            else: # string-style
+                print ("  return (%s)v.base + %s;" % (self.element_type.get_ctype(), offset))
+        else:
+            print ("  %s val = { (char *)v.base + %s, v.size - %s};" % (self.element_type.typename, offset, offset))
+            print ("  return val;")
+
+        print("}")
+
+        print("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
+        print("  gsize len = %s_get_length(v);" % self.typename)
+        print("  gsize i;")
+        print("  if (len == 0 && type_annotate)")
+        print('    g_string_append_printf (s, "@%%s ", %s_typestring);' % (self.typename))
+        print("  g_string_append_c (s, '{');")
+        print("  for (i = 0; i < len; i++) {")
+        print("    {typename}__entry entry = {typename}_get_at(v, i);".format(typename=self.typename))
+        print('    if (i != 0)')
+        print('      g_string_append (s, ", ");')
+        print('  ', end='')
+        self.key_type.generate_append_value("%s__entry_get_key(entry)" % self.typename, True)
+        print('    g_string_append (s, ": ");')
+        print('  ', end='')
+        self.element_type.generate_append_value("%s__entry_get_value(entry)" % self.typename, True)
+        print("  }")
+        print("  g_string_append_c (s, '}');")
+        print("}")
+
+        print("static inline char * {typename}_print ({typename} v, gboolean type_annotate) {{".format(typename=self.typename))
+        print('  GString *s = g_string_new ("");')
+        print("  {typename}_format (v, s, type_annotate);".format(typename=self.typename))
+        print('  return g_string_free (s, FALSE);')
+        print("}")
+
         print("/* TODO: Generate %s -- %s */" % (self.typename, self))
 
 class MaybeType(Type):
