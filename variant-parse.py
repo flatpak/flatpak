@@ -948,7 +948,16 @@ structType = (LBRACE + ZeroOrMore(field) + RBRACE).setParseAction(lambda toks: S
 
 namedType = ident.copy().setParseAction(lambda toks: get_named_type(str(toks[0])))
 
-typeSpec <<= basicType ^ arrayType ^ maybeType ^ variantType ^ dictType ^ structType ^ namedType
+def handleNameableType(toks):
+    type = toks[-1]
+    if len(toks) == 2:
+        name = toks[0]
+        add_named_type(name, type)
+    return type
+
+nameableType = (Optional((Suppress("'") + ident).leaveWhitespace()) + (arrayType ^ maybeType ^ dictType ^ structType)).setParseAction(handleNameableType)
+
+typeSpec <<= basicType  ^ variantType ^ namedType ^ nameableType
 
 typeDef = (Suppress(Keyword("type")) + ident + typeSpec + SEMI).setParseAction(lambda toks: TypeDef(toks[0], toks[1]))
 
