@@ -1,0 +1,25 @@
+type Metadata [string] variant;
+
+type Var {
+  foo: int16;
+  bar: int32;
+};
+
+type Test {
+  foo: []int32;
+  s: string;
+  sh: uint16;
+  sub: {
+    str: string;
+    bar: int32;
+  };
+  sub2: {
+    bar: int32;
+  };
+  bar: int32;
+  v: variant;
+  arr: []Var;
+  d1: [int32]int32;
+  meta: Metadata;
+  d2: [int32]string;
+};
