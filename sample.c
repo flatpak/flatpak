@@ -7,7 +7,7 @@ test_sample_variant (GVariant *v)
   SampleVar var;
   GVariant *varv;
   const char *res;
-  Samplevariant resv;
+  SampleVariant resv;
 
   g_print ("sample type: %s\n", g_variant_get_type_string (v));
   g_print ("sample: %s\n", g_variant_print (v, FALSE));
@@ -44,9 +44,9 @@ test_sample_variant (GVariant *v)
   g_assert_cmpstr (g_variant_print (meta_v, TRUE), ==, SampleMetadata_print (meta, TRUE));
 
   g_assert (SampleMetadata_lookup(meta, "foo", &resv));
-  g_assert_cmpstr ("<1>", ==, Samplevariant_print (resv, TRUE));
+  g_assert_cmpstr ("<1>", ==, SampleVariant_print (resv, TRUE));
   g_assert (SampleMetadata_lookup(meta, "bar", &resv));
-  g_assert_cmpstr ("<'s'>", ==, Samplevariant_print (resv, TRUE));
+  g_assert_cmpstr ("<'s'>", ==, SampleVariant_print (resv, TRUE));
   g_assert (!SampleMetadata_lookup(meta, "missing", &resv));
 }
 

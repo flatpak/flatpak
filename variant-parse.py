@@ -31,9 +31,9 @@ typedef struct {{
 #define {FPREFIX}VARIANT_CHUNK_READ_FRAME_OFFSET(_v, _index) {fprefix}variant_chunk_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
 #define {FPREFIX}VARIANT_CHUNK_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
 
-typedef {tprefix}VariantRef {tprefix}variant;
+typedef {tprefix}VariantRef {tprefix}Variant;
 static inline const GVariantType *
-{tprefix}variant_get_type ({tprefix}variant v)
+{tprefix}Variant_get_type ({tprefix}Variant v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
@@ -42,7 +42,7 @@ static inline const GVariantType *
 }}
 
 static inline {tprefix}VariantRef
-{tprefix}variant_get_child ({tprefix}variant v)
+{tprefix}Variant_get_child ({tprefix}Variant v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
@@ -51,51 +51,51 @@ static inline {tprefix}VariantRef
 }}
 
 static inline GVariant *
-{tprefix}variant_dup_to_gvariant ({tprefix}variant v)
+{tprefix}Variant_dup_to_gvariant ({tprefix}Variant v)
 {{
   return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
-{tprefix}variant_peek_as_gvariant ({tprefix}variant v)
+{tprefix}Variant_peek_as_gvariant ({tprefix}Variant v)
 {{
   return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, NULL, NULL);
 }}
 
 static inline GVariant *
-{tprefix}variant_dup_child_to_gvariant ({tprefix}variant v)
+{tprefix}Variant_dup_child_to_gvariant ({tprefix}Variant v)
 {{
-  const GVariantType  *type = {tprefix}variant_get_type (v);
-  {tprefix}VariantRef child = {tprefix}variant_get_child (v);
+  const GVariantType  *type = {tprefix}Variant_get_type (v);
+  {tprefix}VariantRef child = {tprefix}Variant_get_child (v);
   return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
-{tprefix}variant_peek_child_as_gvariant ({tprefix}variant v)
+{tprefix}Variant_peek_child_as_gvariant ({tprefix}Variant v)
 {{
-  const GVariantType  *type = {tprefix}variant_get_type (v);
-  {tprefix}VariantRef child = {tprefix}variant_get_child (v);
+  const GVariantType  *type = {tprefix}Variant_get_type (v);
+  {tprefix}VariantRef child = {tprefix}Variant_get_child (v);
   return g_variant_new_from_data (type, child.base, child.size, TRUE, NULL, NULL);
 }}
 
 static inline GString *
-{tprefix}variant_format ({tprefix}variant v, GString *s, gboolean type_annotate)
+{tprefix}Variant_format ({tprefix}Variant v, GString *s, gboolean type_annotate)
 {{
 #ifdef SHALLOW_VARIANT_FORMAT
-  const GVariantType  *type = {tprefix}variant_get_type (v);
+  const GVariantType  *type = {tprefix}Variant_get_type (v);
   g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
   return s;
 #else
-  GVariant *gv = {tprefix}variant_peek_as_gvariant (v);
+  GVariant *gv = {tprefix}Variant_peek_as_gvariant (v);
   return g_variant_print_string (gv, s, TRUE);
 #endif
 }}
 
 static inline char *
-{tprefix}variant_print ({tprefix}variant v, gboolean type_annotate)
+{tprefix}Variant_print ({tprefix}Variant v, gboolean type_annotate)
 {{
   GString *s = g_string_new ("");
-  {tprefix}variant_format (v, s, type_annotate);
+  {tprefix}Variant_format (v, s, type_annotate);
   return g_string_free (s, FALSE);
 }}
 
@@ -330,9 +330,9 @@ static inline GVariant *
   return g_variant_new_from_data ({typename}_typeformat, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 static inline {typename}
-{typename}_from_variant({tprefix}variant v) {{
-    g_assert (g_variant_type_equal({tprefix}variant_get_type (v), {typename}_typestring));
-    return ({typename}) {tprefix}variant_get_child (v);
+{typename}_from_variant({tprefix}Variant v) {{
+    g_assert (g_variant_type_equal({tprefix}Variant_get_type (v), {typename}_typestring));
+    return ({typename}) {tprefix}Variant_get_child (v);
 }}'''.format(typename=self.typename, typestring=self.typestring(), tprefix=typename_prefix, fprefix=funcname_prefix))
 
     def generate_print(self):
@@ -724,7 +724,7 @@ class MaybeType(Type):
 class VariantType(Type):
     def __init__(self):
         super().__init__()
-        self.typename = typename_prefix + "variant"
+        self.typename = typename_prefix + "Variant"
     def __repr__(self):
          return "VariantType()"
     def typestring(self):
