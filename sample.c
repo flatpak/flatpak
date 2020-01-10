@@ -3,51 +3,51 @@
 void
 test_sample_variant (GVariant *v)
 {
-  Test t;
-  Var var;
+  SampleTest t;
+  SampleVar var;
   GVariant *varv;
   const char *res;
-  variant resv;
+  Samplevariant resv;
 
   g_print ("sample type: %s\n", g_variant_get_type_string (v));
   g_print ("sample: %s\n", g_variant_print (v, FALSE));
   g_print ("sample with types: %s\n", g_variant_print (v, TRUE));
 
-  g_assert (g_variant_type_equal (g_variant_get_type(v), Test_typeformat));
+  g_assert (g_variant_type_equal (g_variant_get_type(v), SampleTest_typeformat));
 
-  t = Test_from_gvariant (v);
-  g_print ("custom: %s\n", Test_print (t, FALSE));
-  g_print ("custom with types: %s\n", Test_print (t, TRUE));
+  t = SampleTest_from_gvariant (v);
+  g_print ("custom: %s\n", SampleTest_print (t, FALSE));
+  g_print ("custom with types: %s\n", SampleTest_print (t, TRUE));
 
-  g_assert_cmpstr (g_variant_print (v, FALSE), ==, Test_print (t, FALSE));
-  g_assert_cmpstr (g_variant_print (v, TRUE), ==, Test_print (t, TRUE));
+  g_assert_cmpstr (g_variant_print (v, FALSE), ==, SampleTest_print (t, FALSE));
+  g_assert_cmpstr (g_variant_print (v, TRUE), ==, SampleTest_print (t, TRUE));
 
-  var = Var_from_variant(Test_get_v(t));
-  varv = g_variant_get_variant (g_variant_get_child_value (v, Test_indexof_v));
-  g_assert_cmpstr (g_variant_print (varv, TRUE), ==, Var_print (var, TRUE));
+  var = SampleVar_from_variant(SampleTest_get_v(t));
+  varv = g_variant_get_variant (g_variant_get_child_value (v, SampleTest_indexof_v));
+  g_assert_cmpstr (g_variant_print (varv, TRUE), ==, SampleVar_print (var, TRUE));
 
-  D2 d2 = Test_get_d2(t);
-  GVariant *v3 = D2_dup_to_gvariant(d2);
-  g_assert_cmpstr (g_variant_print (v3, TRUE), ==, D2_print(d2, FALSE));
+  SampleD2 d2 = SampleTest_get_d2(t);
+  GVariant *v3 = SampleD2_dup_to_gvariant(d2);
+  g_assert_cmpstr (g_variant_print (v3, TRUE), ==, SampleD2_print(d2, FALSE));
 
-  g_assert (D2_lookup(d2, 1, &res));
+  g_assert (SampleD2_lookup(d2, 1, &res));
   g_assert_cmpstr (res, ==, "a");
-  g_assert (D2_lookup(d2, 3, &res));
+  g_assert (SampleD2_lookup(d2, 3, &res));
   g_assert_cmpstr (res, ==, "b");
-  g_assert (!D2_lookup(d2, 2, &res));
+  g_assert (!SampleD2_lookup(d2, 2, &res));
 
-  Metadata meta = Test_get_meta(t);
-  GVariant *meta_v = Metadata_dup_to_gvariant(meta);
+  SampleMetadata meta = SampleTest_get_meta(t);
+  GVariant *meta_v = SampleMetadata_dup_to_gvariant(meta);
 
-  g_assert (g_variant_type_equal (g_variant_get_type(meta_v), Metadata_typeformat));
-  g_assert_cmpstr (g_variant_print (meta_v, FALSE), ==, Metadata_print (meta, FALSE));
-  g_assert_cmpstr (g_variant_print (meta_v, TRUE), ==, Metadata_print (meta, TRUE));
+  g_assert (g_variant_type_equal (g_variant_get_type(meta_v), SampleMetadata_typeformat));
+  g_assert_cmpstr (g_variant_print (meta_v, FALSE), ==, SampleMetadata_print (meta, FALSE));
+  g_assert_cmpstr (g_variant_print (meta_v, TRUE), ==, SampleMetadata_print (meta, TRUE));
 
-  g_assert (Metadata_lookup(meta, "foo", &resv));
-  g_assert_cmpstr ("<1>", ==, variant_print (resv, TRUE));
-  g_assert (Metadata_lookup(meta, "bar", &resv));
-  g_assert_cmpstr ("<'s'>", ==, variant_print (resv, TRUE));
-  g_assert (!Metadata_lookup(meta, "missing", &resv));
+  g_assert (SampleMetadata_lookup(meta, "foo", &resv));
+  g_assert_cmpstr ("<1>", ==, Samplevariant_print (resv, TRUE));
+  g_assert (SampleMetadata_lookup(meta, "bar", &resv));
+  g_assert_cmpstr ("<'s'>", ==, Samplevariant_print (resv, TRUE));
+  g_assert (!SampleMetadata_lookup(meta, "missing", &resv));
 }
 
 int
