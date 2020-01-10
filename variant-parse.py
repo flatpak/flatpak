@@ -155,7 +155,7 @@ G_GNUC_PURE static inline gsize
 }}
 
 static inline void
-{fprefix}__variant_string_append_double (GString *string, double d)
+__{fprefix}gstring_append_double (GString *string, double d)
 {{
   gchar buffer[100];
   gint i;
@@ -177,7 +177,7 @@ static inline void
 }}
 
 static inline void
-{fprefix}__variant_string_append_string (GString *string, const char *str)
+__{fprefix}gstring_append_string (GString *string, const char *str)
 {{
   gunichar quote = strchr (str, '\\'') ? '"' : '\\'';
 
@@ -410,9 +410,9 @@ class BasicType(Type):
     def generate_append_value(self, value, with_type_annotate):
         # Special case some basic types
         if self.kind == "string":
-            print ('  %s__variant_string_append_string (s, %s);' % (funcname_prefix, value))
+            print ('  __%sgstring_append_string (s, %s);' % (funcname_prefix, value))
         elif self.kind == "double":
-            print ('  %s__variant_string_append_double (s, %s);' % (funcname_prefix, value))
+            print ('  __%sgstring_append_double (s, %s);' % (funcname_prefix, value))
         else:
             value = self.convert_value_for_format(value)
             if with_type_annotate != "FALSE" and self.get_type_annotation() != "":
@@ -448,7 +448,7 @@ class ArrayType(Type):
     def typestring(self):
          return "a" + self.element_type.typestring()
     def propagate_typename(self, name):
-        self.element_type.set_typename (name + "__element")
+        self.element_type.set_typename (name + "Element")
     def alignment(self):
         return self.element_type.alignment()
     def get_children(self):
@@ -529,7 +529,7 @@ class DictType(Type):
     def typestring(self):
          return "a{%s%s}" % (self.key_type.typestring(), self.element_type.typestring())
     def propagate_typename(self, name):
-        self.element_type.set_typename (name + "__value")
+        self.element_type.set_typename (name + "Value")
     def alignment(self):
         return max(self.element_type.alignment(), self.key_type.alignment())
     def element_is_fixed(self):
@@ -540,7 +540,7 @@ class DictType(Type):
         return [self.key_type, self.element_type]
     def generate(self):
         super().generate()
-        print ('typedef {tprefix}VariantRef {typename}__entry;'.format(typename=self.typename, tprefix=typename_prefix))
+        print ('typedef {tprefix}VariantRef {typename}Entry;'.format(typename=self.typename, tprefix=typename_prefix))
 
         print ("static inline gsize")
         print ("{typename}_get_length({typename} v)".format(typename=self.typename))
@@ -553,12 +553,12 @@ class DictType(Type):
             print("  return (v.size - last_end) / offset_size;")
         print("}")
 
-        print("static inline {typename}__entry".format(typename=self.typename))
+        print("static inline {typename}Entry".format(typename=self.typename))
         print("{typename}_get_at({typename} v, gsize index)".format(typename=self.typename))
         print("{")
         if self.element_is_fixed():
             fixed_size = self.element_fixed_size()
-            print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.typename + "__entry", fixed_size, fixed_size))
+            print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.typename + "Entry", fixed_size, fixed_size))
         else:
             # non-fixed size
             print("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix)
@@ -570,11 +570,11 @@ class DictType(Type):
             print("    start = %sVARIANT_REF_READ_FRAME_OFFSET(v, len - index);" % funcname_prefix.upper())
             print("    start = %sVARIANT_REF_ALIGN(start, %d);" % (funcname_prefix.upper(), self.alignment()))
             print("  }");
-            print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.typename + "__entry"))
+            print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.typename + "Entry"))
         print("}")
 
         print("static inline {ctype}".format(typename=self.typename, ctype=self.key_type.get_ctype()))
-        print("{typename}__entry_get_key({typename}__entry v)".format(typename=self.typename, ctype=self.key_type.get_ctype()))
+        print("{typename}Entry_get_key({typename}Entry v)".format(typename=self.typename, ctype=self.key_type.get_ctype()))
         print("{")
         # Keys are always basic
         if self.key_type.is_fixed():
@@ -584,7 +584,7 @@ class DictType(Type):
         print("}")
 
         print("static inline {ctype}".format(typename=self.typename, ctype=self.element_type.get_ctype()))
-        print("{typename}__entry_get_value({typename}__entry v)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
+        print("{typename}Entry_get_value({typename}Entry v)".format(typename=self.typename, ctype=self.element_type.get_ctype()))
         print("{")
         if not self.key_type.is_fixed():
             print("  guint offset_size = %svariant_ref_get_offset_size (v.size);" % funcname_prefix)
@@ -617,11 +617,11 @@ class DictType(Type):
 
   for (i = 0; i < len; i++)
     {{
-        {typename}__entry e = {typename}_get_at(v, i);
-        {keyctype} e_key = {typename}__entry_get_key(e);
+        {typename}Entry e = {typename}_get_at(v, i);
+        {keyctype} e_key = {typename}Entry_get_key(e);
         if ({equal})
           {{
-             *out = {typename}__entry_get_value (e);
+             *out = {typename}Entry_get_value (e);
              return TRUE;
           }}
     }}
@@ -639,14 +639,14 @@ class DictType(Type):
         print('    g_string_append_printf (s, "@%%s ", %s_typestring);' % (self.typename))
         print("  g_string_append_c (s, '{');")
         print("  for (i = 0; i < len; i++) {")
-        print("    {typename}__entry entry = {typename}_get_at(v, i);".format(typename=self.typename))
+        print("    {typename}Entry entry = {typename}_get_at(v, i);".format(typename=self.typename))
         print('    if (i != 0)')
         print('      g_string_append (s, ", ");')
         print('  ', end='')
-        self.key_type.generate_append_value("%s__entry_get_key(entry)" % self.typename, "type_annotate")
+        self.key_type.generate_append_value("%sEntry_get_key(entry)" % self.typename, "type_annotate")
         print('    g_string_append (s, ": ");')
         print('  ', end='')
-        self.element_type.generate_append_value("%s__entry_get_value(entry)" % self.typename, "type_annotate")
+        self.element_type.generate_append_value("%sEntry_get_value(entry)" % self.typename, "type_annotate")
         print("  }")
         print("  g_string_append_c (s, '}');")
         print("  return s;")
@@ -664,7 +664,7 @@ class MaybeType(Type):
     def typestring(self):
          return "m" + self.element_type.typestring()
     def propagate_typename(self, name):
-        self.element_type.set_typename (name + "__element")
+        self.element_type.set_typename (name + "Element")
     def alignment(self):
         return self.element_type.alignment()
     def get_children(self):
@@ -747,7 +747,7 @@ class Field:
          return "Field(%s, %s)" % (self.name, self.type)
 
     def propagate_typename(self, struct_name):
-        self.type.set_typename (struct_name + "__" + self.name)
+        self.type.set_typename (struct_name + "_" + self.name)
 
     def generate(self, struct, index):
         # Getter
