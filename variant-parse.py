@@ -348,7 +348,7 @@ static inline char *
          return False
 
     def generate_append_value(self, value, with_type_annotate):
-        print ("  {typename}_format ({value}, s, {ta});".format(typename=self.typename, value=value, ta="type_annotate" if with_type_annotate else "FALSE"))
+        print ("  {typename}_format ({value}, s, {ta});".format(typename=self.typename, value=value, ta=with_type_annotate))
 
 basic_types = {
     "boolean": ("b", True, 1, "gboolean", "", '%s'),
@@ -409,9 +409,10 @@ class BasicType(Type):
             print ('  __variant_string_append_double (s, %s);' % value)
         else:
             value = self.convert_value_for_format(value)
-            if with_type_annotate and self.get_type_annotation() != "":
-                print ('  g_string_append_printf (s, "%s{format}", type_annotate ? "{annotate}" : "", {value});'
+            if with_type_annotate != "FALSE" and self.get_type_annotation() != "":
+                print ('  g_string_append_printf (s, "%s{format}", {type_annotate} ? "{annotate}" : "", {value});'
                        .format(format=self.get_format_string(),
+                               type_annotate=type_annotate,
                                annotate=self.get_type_annotation(),
                                value=value))
             else:
@@ -497,7 +498,7 @@ class ArrayType(Type):
         print('    if (i != 0)')
         print('      g_string_append (s, ", ");')
         print('  ', end='')
-        self.element_type.generate_append_value("%s_get_at(v, i)" % self.typename, True)
+        self.element_type.generate_append_value("%s_get_at(v, i)" % self.typename, "((i == 0) ? type_annotate : FALSE)")
         print("  }")
         print("  g_string_append_c (s, ']');")
         print("}")
@@ -635,10 +636,10 @@ class DictType(Type):
         print('    if (i != 0)')
         print('      g_string_append (s, ", ");')
         print('  ', end='')
-        self.key_type.generate_append_value("%s__entry_get_key(entry)" % self.typename, True)
+        self.key_type.generate_append_value("%s__entry_get_key(entry)" % self.typename, "type_annotate")
         print('    g_string_append (s, ": ");')
         print('  ', end='')
-        self.element_type.generate_append_value("%s__entry_get_value(entry)" % self.typename, True)
+        self.element_type.generate_append_value("%s__entry_get_value(entry)" % self.typename, "type_annotate")
         print("  }")
         print("  g_string_append_c (s, '}');")
         print("}")
@@ -702,7 +703,7 @@ class MaybeType(Type):
         if isinstance(self.element_type, MaybeType):
             print ('      g_string_append (s, "just ");')
         print ('    ', end='')
-        self.element_type.generate_append_value("{typename}_get_value(v)".format(typename=self.typename), False)
+        self.element_type.generate_append_value("{typename}_get_value(v)".format(typename=self.typename), "FALSE")
         print ("    }")
         print ("  else")
         print ("    {")
@@ -916,7 +917,7 @@ class StructType(Type):
                     print ('  g_string_append (s, "(");')
                 for f in run:
                     value = "{structname}_get_{fieldname}(v)".format(structname=self.typename, fieldname=f.name)
-                    f.type.generate_append_value(value, True)
+                    f.type.generate_append_value(value, "type_annotate")
                     if not f.last:
                         print ('  g_string_append (s, ", ");')
                     elif len(self.fields) == 1:
