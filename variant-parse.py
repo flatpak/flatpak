@@ -979,3 +979,4 @@ if __name__ == "__main__":
             generate(typedefs, os.path.basename(file))
         except ParseException as pe:
             print("Parse error:", pe)
+            sys.exit(1)
