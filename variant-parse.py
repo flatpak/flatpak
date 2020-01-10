@@ -41,8 +41,7 @@ static inline VariantChunk variant_get_child (variant v)
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
     size--;
-  VariantChunk val = {{ v.base, size }};
-  return val;
+  return (VariantChunk) {{ v.base, size }};
 }}
 
 static inline void variant_format (variant v, GString *s, gboolean type_annotate)
@@ -284,8 +283,7 @@ typedef VariantChunk {typename};
 #define {typename}_typeformat G_VARIANT_TYPE ({typename}_typestring)
 static inline {typename} {typename}_from_gvariant(GVariant *v) {{
     g_assert (g_variant_type_equal (g_variant_get_type (v), {typename}_typestring));
-    {typename} val = {{ g_variant_get_data (v), g_variant_get_size (v) }};
-    return val;
+    return ({typename}) {{ g_variant_get_data (v), g_variant_get_size (v) }};
 }}
 static inline GVariant *{typename}_dup_to_gvariant ({typename} v)
 {{
@@ -409,8 +407,7 @@ class ArrayType(Type):
             if self.element_type.is_basic():
                 print ("  return (%s)G_STRUCT_MEMBER(%s, v.base, index * %d);" % (self.element_type.get_ctype(), self.element_type.get_read_ctype(), fixed_size))
             else:
-                print ("  %s val = { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.element_type.typename, fixed_size, fixed_size))
-                print ("  return val;")
+                print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.element_type.typename, fixed_size, fixed_size))
         else:
             # non-fixed size
             print("  guint offset_size = variant_chunk_get_offset_size (v.size);")
@@ -426,8 +423,7 @@ class ArrayType(Type):
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
                 print ("  return ((const char *)v.base) + start;")
             else:
-                print("  %s val = { ((const char *)v.base) + start, end - start };" % (self.element_type.typename))
-                print("  return val;")
+                print("  return (%s) = { ((const char *)v.base) + start, end - start };" % (self.element_type.typename))
         print("}")
 
         print("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
@@ -494,8 +490,7 @@ class DictType(Type):
         print("{")
         if self.element_is_fixed():
             fixed_size = self.element_fixed_size()
-            print ("  %s val = { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.typename + "__entry", fixed_size, fixed_size))
-            print ("  return val;")
+            print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, index * %s), %d};" % (self.typename + "__entry", fixed_size, fixed_size))
         else:
             # non-fixed size
             print("  guint offset_size = variant_chunk_get_offset_size (v.size);")
@@ -507,8 +502,7 @@ class DictType(Type):
             print("    start = VARIANT_CHUNK_READ_FRAME_OFFSET(v, len - index - 2);")
             print("    start = VARIANT_CHUNK_ALIGN(start, %d);" % (self.alignment()))
             print("  }");
-            print("  %s val = { ((const char *)v.base) + start, end - start };" % (self.typename + "__entry"))
-            print("  return val;")
+            print("  return (%s) { ((const char *)v.base) + start, end - start };" % (self.typename + "__entry"))
         print("}")
 
         print("static inline {ctype} {typename}__entry_get_key({typename}__entry v)".format(typename=self.typename, ctype=self.key_type.get_ctype()))
@@ -537,8 +531,7 @@ class DictType(Type):
             else: # string-style
                 print ("  return (%s)v.base + %s;" % (self.element_type.get_ctype(), offset))
         else:
-            print ("  %s val = { (char *)v.base + %s, v.size - %s};" % (self.element_type.typename, offset, offset))
-            print ("  return val;")
+            print ("  return (%s) { (char *)v.base + %s, v.size - %s};" % (self.element_type.typename, offset, offset))
 
         print("}")
 
@@ -610,8 +603,7 @@ class MaybeType(Type):
             else:
                 # Otherwise, ignore extra zero byte
                 size = "(v.size - 1)"
-            print ("  %s val = { v.base, %s};" % (self.element_type.typename, size))
-            print ("  return val;")
+            print ("  return (%s) { v.base, %s};" % (self.element_type.typename, size))
         print("}")
 
         print ("static inline void {typename}_format ({typename} v, GString *s, gboolean type_annotate) {{".format(typename=self.typename))
@@ -682,8 +674,7 @@ class Field:
                 print ("  return &G_STRUCT_MEMBER(char, v.base, %s);" % (offset))
         else:
             if self.type.is_fixed():
-                print ("  %s val = { G_STRUCT_MEMBER_P(v.base, %s), %d };" % (self.type.typename, offset, self.type.get_fixed_size()))
-                print ("  return val;")
+                print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, %s), %d };" % (self.type.typename, offset, self.type.get_fixed_size()))
             else:
                 if not has_offset_size:
                     has_offset_size = True
@@ -693,8 +684,7 @@ class Field:
                     print ("  gsize end = v.size - offset_size * %d;" % (struct.framing_offset_size))
                 else:
                     print ("  gsize end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
-                print ("  %s val = { G_STRUCT_MEMBER_P(v.base, start), end - start };" % (self.type.typename))
-                print ("  return val;")
+                print ("  return (%s) { G_STRUCT_MEMBER_P(v.base, start), end - start };" % (self.type.typename))
         print("}")
 
 class StructType(Type):
