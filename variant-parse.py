@@ -441,7 +441,7 @@ class ArrayType(Type):
         self.element_type = element_type
 
         if element_type.is_basic():
-            self.typename = self.element_type.kind + "array"
+            self.typename = typename_prefix + "Arrayof" + self.element_type.kind
 
     def __repr__(self):
          return "ArrayType<%s>(%s)" % (self.typename, repr(self.element_type))
@@ -658,7 +658,7 @@ class MaybeType(Type):
         super().__init__()
         self.element_type = element_type
         if element_type.is_basic():
-            self.typename = "maybe" + self.element_type.kind
+            self.typename = typename_prefix + "Maybe" + self.element_type.kind
     def __repr__(self):
          return "MaybeType<%s>(%s, %s)" % (self.typename, repr(self.element_type))
     def typestring(self):
