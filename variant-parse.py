@@ -362,7 +362,7 @@ basic_types = {
     "handle": ("h", True, 4, "guint32", "handle ", '%"G_GINT32_FORMAT"'),
     "double": ("d", True, 8, "double", "", None), # double formating is special
     "string": ("s", False, 1, "const char *", "", None), # String formating is special
-    "objectpath": ("o", False, 1, "const char *", "objectpath ", '\\"%s\"'),
+    "objectpath": ("o", False, 1, "const char *", "objectpath ", '\\"%s\\"'),
     "signature": ("g", False, 1, "const char *", "signature ", '\\"%s\\"'),
 }
 
