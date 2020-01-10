@@ -294,6 +294,18 @@ static inline {typename} {typename}_from_variant(variant v) {{
     return ({typename}) variant_get_child (v);
 }}'''.format(typename=self.typename, typestring=self.typestring()))
 
+    def generate_print(self):
+        print (
+'''
+static inline char *
+{typename}_print ({typename} v, gboolean type_annotate)
+{{
+  GString *s = g_string_new ("");
+  {typename}_format (v, s, type_annotate);
+  return g_string_free (s, FALSE);
+}}
+'''.format(typename=self.typename))
+
     def get_ctype(self):
          return self.typename
 
@@ -440,12 +452,8 @@ class ArrayType(Type):
         print("  }")
         print("  g_string_append_c (s, ']');")
         print("}")
+        self.generate_print()
 
-        print("static inline char * {typename}_print ({typename} v, gboolean type_annotate) {{".format(typename=self.typename))
-        print('  GString *s = g_string_new ("");')
-        print("  {typename}_format (v, s, type_annotate);".format(typename=self.typename))
-        print('  return g_string_free (s, FALSE);')
-        print("}")
 
 class DictType(Type):
     def __init__(self, key_type, element_type):
@@ -553,12 +561,7 @@ class DictType(Type):
         print("  }")
         print("  g_string_append_c (s, '}');")
         print("}")
-
-        print("static inline char * {typename}_print ({typename} v, gboolean type_annotate) {{".format(typename=self.typename))
-        print('  GString *s = g_string_new ("");')
-        print("  {typename}_format (v, s, type_annotate);".format(typename=self.typename))
-        print('  return g_string_free (s, FALSE);')
-        print("}")
+        self.generate_print()
 
         print("/* TODO: Generate %s -- %s */" % (self.typename, self))
 
@@ -621,11 +624,7 @@ class MaybeType(Type):
         print ('      g_string_append (s, "nothing");')
         print ("    }")
         print ("}")
-        print ("static inline char * {typename}_print ({typename} v, gboolean type_annotate) {{".format(typename=self.typename))
-        print ('  GString *s = g_string_new ("");')
-        print ("  {typename}_format (v, s, type_annotate);".format(typename=self.typename))
-        print ('  return g_string_free (s, FALSE);')
-        print ("}")
+        self.generate_print()
 
 class VariantType(Type):
     def __init__(self):
@@ -836,11 +835,7 @@ class StructType(Type):
                     else:
                         print ('  g_string_append (s, ")");')
         print ("}")
-        print ("static inline char * {typename}_print ({typename} v, gboolean type_annotate) {{".format(typename=self.typename))
-        print ('  GString *s = g_string_new ("");')
-        print ("  {typename}_format (v, s, type_annotate);".format(typename=self.typename))
-        print ('  return g_string_free (s, FALSE);')
-        print ("}")
+        self.generate_print()
 
 typeSpec = Forward()
 
