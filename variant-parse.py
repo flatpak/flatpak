@@ -583,9 +583,11 @@ class DictType(Type):
             print("  gsize end = VARIANT_CHUNK_READ_FRAME_OFFSET(v, 0);");
             print("  gsize offset = VARIANT_CHUNK_ALIGN(end, %d);" % (self.element_type.alignment()))
             offset = "offset"
+            end = "(v.size - offset_size)"
         else:
             # Fixed key, so known offset
             offset = align_up(self.key_type.get_fixed_size(), self.element_type.alignment())
+            end = "v.size"
 
         if self.element_type.is_basic():
             if self.element_type.is_fixed():
@@ -593,7 +595,7 @@ class DictType(Type):
             else: # string-style
                 print ("  return (%s)v.base + %s;" % (self.element_type.get_ctype(), offset))
         else:
-            print ("  return (%s) { (char *)v.base + %s, v.size - %s};" % (self.element_type.typename, offset, offset))
+            print ("  return (%s) { (char *)v.base + %s, %s - %s};" % (self.element_type.typename, offset, end, offset))
 
         print("}")
 
