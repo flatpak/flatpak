@@ -740,8 +740,9 @@ class Field:
     def propagate_typename(self, struct_name):
         self.type.set_typename (struct_name + "__" + self.name)
 
-    def generate(self, struct):
+    def generate(self, struct, index):
         # Getter
+        print ("#define {structname}_indexof_{fieldname} {index}".format(structname=struct.typename, fieldname=self.name, index=index))
         print ("static inline {ctype}".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
         print ("{structname}_get_{fieldname}({structname} v)".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
         print ("{")
@@ -875,8 +876,8 @@ class StructType(Type):
 
     def generate(self):
         super().generate()
-        for f in self.fields:
-            f.generate(self)
+        for i, f in enumerate(self.fields):
+            f.generate(self, i)
         print ("static inline void")
         print ("{typename}_format ({typename} v, GString *s, gboolean type_annotate)".format(typename=self.typename))
         print ("{")
