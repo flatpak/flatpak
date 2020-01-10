@@ -26,12 +26,12 @@ def generate_header(filename):
 typedef struct {{
  gconstpointer base;
  gsize size;
-}} {tprefix}VariantChunk;
+}} {tprefix}VariantRef;
 
 #define {FPREFIX}VARIANT_CHUNK_READ_FRAME_OFFSET(_v, _index) {fprefix}variant_chunk_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
 #define {FPREFIX}VARIANT_CHUNK_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
 
-typedef {tprefix}VariantChunk {tprefix}variant;
+typedef {tprefix}VariantRef {tprefix}variant;
 static inline const GVariantType *
 {tprefix}variant_get_type ({tprefix}variant v)
 {{
@@ -41,13 +41,13 @@ static inline const GVariantType *
   return (const GVariantType *)((guchar *)v.base + size + 1);
 }}
 
-static inline {tprefix}VariantChunk
+static inline {tprefix}VariantRef
 {tprefix}variant_get_child ({tprefix}variant v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
     size--;
-  return ({tprefix}VariantChunk) {{ v.base, size }};
+  return ({tprefix}VariantRef) {{ v.base, size }};
 }}
 
 static inline GVariant *
@@ -66,7 +66,7 @@ static inline GVariant *
 {tprefix}variant_dup_child_to_gvariant ({tprefix}variant v)
 {{
   const GVariantType  *type = {tprefix}variant_get_type (v);
-  {tprefix}VariantChunk child = {tprefix}variant_get_child (v);
+  {tprefix}VariantRef child = {tprefix}variant_get_child (v);
   return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
 }}
 
@@ -74,7 +74,7 @@ static inline GVariant *
 {tprefix}variant_peek_child_as_gvariant ({tprefix}variant v)
 {{
   const GVariantType  *type = {tprefix}variant_get_type (v);
-  {tprefix}VariantChunk child = {tprefix}variant_get_child (v);
+  {tprefix}VariantRef child = {tprefix}variant_get_child (v);
   return g_variant_new_from_data (type, child.base, child.size, TRUE, NULL, NULL);
 }}
 
@@ -315,7 +315,7 @@ class Type:
 '''
 /************** {typename} *******************/
 
-typedef {tprefix}VariantChunk {typename};
+typedef {tprefix}VariantRef {typename};
 #define {typename}_typestring "{typestring}"
 #define {typename}_typeformat G_VARIANT_TYPE ({typename}_typestring)
 static inline {typename}
@@ -540,7 +540,7 @@ class DictType(Type):
         return [self.key_type, self.element_type]
     def generate(self):
         super().generate()
-        print ('typedef {tprefix}VariantChunk {typename}__entry;'.format(typename=self.typename, tprefix=typename_prefix))
+        print ('typedef {tprefix}VariantRef {typename}__entry;'.format(typename=self.typename, tprefix=typename_prefix))
 
         print ("static inline gsize")
         print ("{typename}_get_length({typename} v)".format(typename=self.typename))
