@@ -405,7 +405,7 @@ class BasicType(Type):
         # Special case some basic types
         if self.kind == "string":
             print ('  __variant_string_append_string (s, %s);' % value)
-        elif self.kind == "string":
+        elif self.kind == "double":
             print ('  __variant_string_append_double (s, %s);' % value)
         else:
             value = self.convert_value_for_format(value)
