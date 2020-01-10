@@ -46,19 +46,45 @@ variant_get_child (variant v)
   return (VariantChunk) {{ v.base, size }};
 }}
 
-static inline void
-variant_format (variant v, GString *s, gboolean type_annotate)
+static inline GVariant *
+variant_dup_to_gvariant (variant v)
 {{
-  const GVariantType  *type = variant_get_type (v);
-  g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
-variant_dup_to_gvariant (variant v)
+variant_peek_as_gvariant (variant v)
+{{
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, NULL, NULL);
+}}
+
+static inline GVariant *
+variant_dup_child_to_gvariant (variant v)
 {{
   const GVariantType  *type = variant_get_type (v);
   VariantChunk child = variant_get_child (v);
   return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
+}}
+
+static inline GVariant *
+variant_peek_child_as_gvariant (variant v)
+{{
+  const GVariantType  *type = variant_get_type (v);
+  VariantChunk child = variant_get_child (v);
+  return g_variant_new_from_data (type, child.base, child.size, TRUE, NULL, NULL);
+}}
+
+static inline GString *
+variant_format (variant v, GString *s, gboolean type_annotate)
+{{
+#ifdef SHALLOW_VARIANT_FORMAT
+  const GVariantType  *type = variant_get_type (v);
+  g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
+  return s;
+#else
+  GVariant *gv = variant_peek_as_gvariant (v);
+  return g_variant_print_string (gv, s, TRUE);
+#endif
 }}
 
 static inline char *
