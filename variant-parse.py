@@ -243,7 +243,7 @@ static inline GVariant *
 }}
 
 static inline GVariant *
-{prefix_}variant_ref_peek_as_gvariant ({Prefix}VariantRef v)
+{prefix_}variant_ref_peek_as_variant ({Prefix}VariantRef v)
 {{
   return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, NULL, NULL);
 }}
@@ -257,7 +257,7 @@ static inline GVariant *
 }}
 
 static inline GVariant *
-{prefix_}variant_ref_peek_child_as_gvariant ({Prefix}VariantRef v)
+{prefix_}variant_ref_peek_child_as_variant ({Prefix}VariantRef v)
 {{
   const GVariantType  *type = {prefix_}variant_ref_get_type (v);
   {Prefix}Ref child = {prefix_}variant_ref_get_child (v);
@@ -272,7 +272,7 @@ static inline GString *
   g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
   return s;
 #else
-  GVariant *gv = {prefix_}variant_ref_peek_as_gvariant (v);
+  GVariant *gv = {prefix_}variant_ref_peek_as_variant (v);
   return g_variant_print_string (gv, s, TRUE);
 #endif
 }}
