@@ -18,7 +18,7 @@ named_types = {}
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
 
-def C(code, extra_vars = None, end = '\n'):
+def genC(code, extra_vars = None):
     vars = {
         'tprefix': typename_prefix,
         'fprefix': funcname_prefix,
@@ -26,7 +26,12 @@ def C(code, extra_vars = None, end = '\n'):
     }
     if extra_vars:
         vars = {**vars, **extra_vars}
-    print(code.format_map(vars), end=end)
+    return code.format_map(vars)
+def escapeC(s):
+    return s.replace('{', '{{').replace('}', '}}')
+
+def C(code, extra_vars = None, end = '\n'):
+    print(genC(code, extra_vars), end=end)
 
 def generate_header(filename):
     C(
@@ -324,17 +329,21 @@ class Type:
     def add_expansion_vars(self, vars):
         pass
 
-    def C(self, code, extra_vars = None, end = '\n'):
+    def genC(self, code, extra_vars = None):
         vars = {
             'typename': self.typename,
             'typestring': self.typestring(),
             'ctype': self.get_ctype(),
             'alignment': self.alignment(),
+            'fixed_size': self.get_fixed_size()
         }
         if extra_vars:
             vars = {**vars, **extra_vars}
         self.add_expansion_vars(vars)
-        C(code, vars, end=end)
+        return genC(code, vars)
+
+    def C(self, code, extra_vars = None, end = '\n'):
+        print(self.genC(code, extra_vars), end=end)
 
     def generate(self):
         self.C (
@@ -380,7 +389,7 @@ static inline char *
          return False
 
     def generate_append_value(self, value, with_type_annotate):
-        self.C ("  {typename}_format ({value}, s, {ta});", {'value': value, 'ta': with_type_annotate})
+        return self.genC("{typename}_format ({value}, s, {type_annotate});", {'value': value, 'type_annotate': with_type_annotate})
 
 basic_types = {
     "boolean": ("b", True, 1, "gboolean", "", '%s'),
@@ -433,17 +442,19 @@ class BasicType(Type):
         return value
     def can_printf_format(self):
          return self.get_format_string() != None
+    def add_expansion_vars(self, vars):
+        vars['readctype'] = self.get_read_ctype()
     def generate_append_value(self, value, with_type_annotate):
         # Special case some basic types
-        C = self.C
+        genC = self.genC
         if self.kind == "string":
-            C('  __{fprefix}gstring_append_string (s, {value});', {'value': value})
+            return genC('__{fprefix}gstring_append_string (s, {value});', {'value': value})
         elif self.kind == "double":
-            C ('  __%sgstring_append_double (s, %s);' % (funcname_prefix, value))
+            return genC ('__{fprefix}gstring_append_double (s, {value});', {'value': value})
         else:
             value = self.convert_value_for_format(value)
             if with_type_annotate != "FALSE" and self.get_type_annotation() != "":
-                C('  g_string_append_printf (s, "%s{format}", {type_annotate} ? "{annotate}" : "", {value});',
+                return genC('g_string_append_printf (s, "%s{format}", {type_annotate} ? "{annotate}" : "", {value});',
                   {
                       'format': self.get_format_string(),
                       'type_annotate': with_type_annotate,
@@ -451,7 +462,7 @@ class BasicType(Type):
                       'value': value
                   })
             else:
-                C('  g_string_append_printf (s, "{format}", {value});',
+                return genC('g_string_append_printf (s, "{format}", {value});',
                   {
                       'format': self.get_format_string(),
                       'value': value
@@ -545,8 +556,9 @@ class ArrayType(Type):
         C("  for (i = 0; i < len; i++) {{")
         C('    if (i != 0)')
         C('      g_string_append (s, ", ");')
-        C('  ', end='')
-        self.element_type.generate_append_value("%s_get_at(v, i)" % self.typename, "((i == 0) ? type_annotate : FALSE)")
+        C('    {append_element_code}', {
+            'append_element_code': escapeC(self.element_type.generate_append_value(self.genC("{typename}_get_at(v, i)"), "((i == 0) ? type_annotate : FALSE)"))
+            })
         C("  }}")
         C("  g_string_append_c (s, ']');")
         C("  return s;")
@@ -697,11 +709,11 @@ class DictType(Type):
         C("    {typename}Entry entry = {typename}_get_at(v, i);")
         C('    if (i != 0)')
         C('      g_string_append (s, ", ");')
-        C('  ', end='')
-        self.key_type.generate_append_value("%sEntry_get_key(entry)" % self.typename, "type_annotate")
+        C('    {append_key_code}', {'append_key_code': escapeC(self.key_type.generate_append_value(self.genC("{typename}Entry_get_key(entry)"), "type_annotate"))})
         C('    g_string_append (s, ": ");')
-        C('  ', end='')
-        self.element_type.generate_append_value("%sEntry_get_value(entry)" % self.typename, "type_annotate")
+        C('    {append_element_code}', {
+            'append_element_code': escapeC(self.element_type.generate_append_value(self.genC("{typename}Entry_get_value(entry)"), "type_annotate"))
+            })
         C("  }}")
         C("  g_string_append_c (s, '}}');")
         C("  return s;")
@@ -775,8 +787,9 @@ class MaybeType(Type):
         C("    {{")
         if isinstance(self.element_type, MaybeType):
             C('      g_string_append (s, "just ");')
-        C('    ', end='')
-        self.element_type.generate_append_value("{typename}_get_value(v)".format(typename=self.typename), "FALSE")
+        C('      {append_element_code}', {
+            'append_element_code': escapeC(self.element_type.generate_append_value(self.genC("{typename}_get_value(v)"), "FALSE"))
+        })
         C("    }}")
         C("  else")
         C("    {{")
@@ -816,12 +829,25 @@ class Field:
     def propagate_typename(self, struct_name):
         self.type.set_typename (struct_name + "_" + self.name)
 
-    def generate(self, struct, index):
+    def genC(self, code, extra_vars = None):
+        vars = {
+            'fieldname': self.name,
+            'structname': self.struct.typename,
+            'fieldindex': self.fieldindex,
+        }
+        if extra_vars:
+            vars = {**vars, **extra_vars}
+        return self.type.genC(code, vars)
+
+    def C(self, code, extra_vars = None, end = '\n'):
+        print(self.genC(code, extra_vars), end=end)
+
+    def generate(self):
         # Getter
-        C=self.type.C
-        C("#define {structname}_indexof_{fieldname} {index}".format(structname=struct.typename, fieldname=self.name, index=index))
-        C("static inline {ctype}".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
-        C("{structname}_get_{fieldname}({structname} v)".format(structname=struct.typename, ctype=self.type.get_ctype(), fieldname=self.name))
+        C=self.C
+        C("#define {structname}_indexof_{fieldname} {fieldindex}")
+        C("static inline {ctype}")
+        C("{structname}_get_{fieldname}({structname} v)")
         C("{{")
         has_offset_size = False
         if self.table_i == -1:
@@ -834,19 +860,19 @@ class Field:
 
         if self.type.is_basic():
             if self.type.is_fixed():
-                C("  return (%s)G_STRUCT_MEMBER(%s, v.base, %s);" % (self.type.get_ctype(), self.type.get_read_ctype(), offset))
+                C("  return ({ctype})G_STRUCT_MEMBER({readctype}, v.base, {offset});", {'offset': offset})
             else: # string
-                C("  return &G_STRUCT_MEMBER(char, v.base, %s);" % (offset))
+                C("  return &G_STRUCT_MEMBER(char, v.base, {offset});", {'offset': offset})
         else:
             if self.type.is_fixed():
-                C("  return (%s) {{ G_STRUCT_MEMBER_P(v.base, %s), %d }};" % (self.type.typename, offset, self.type.get_fixed_size()))
+                C("  return ({typename}) {{ G_STRUCT_MEMBER_P(v.base, {offset}), {fixed_size} }};", {'offset': offset})
             else:
                 if not has_offset_size:
                     has_offset_size = True
                     C("  guint offset_size = {fprefix}variant_ref_get_offset_size (v.size);");
-                C("  gsize start = %s;" % offset);
+                C("  gsize start = {offset};", {'offset': offset});
                 if self.last:
-                    C("  gsize end = v.size - offset_size * %d;" % (struct.framing_offset_size))
+                    C("  gsize end = v.size - offset_size * %d;" % (self.struct.framing_offset_size))
                 else:
                     C("  gsize end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
                 C("  return ({typename}) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
@@ -959,7 +985,7 @@ class StructType(Type):
     def generate(self):
         super().generate()
         for i, f in enumerate(self.fields):
-            f.generate(self, i)
+            f.generate()
         C=self.C
         C("static inline GString *")
         C("{typename}_format ({typename} v, GString *s, gboolean type_annotate)")
@@ -1000,8 +1026,7 @@ class StructType(Type):
                 if i == 0:
                     C('  g_string_append (s, "(");')
                 for f in run:
-                    value = "{structname}_get_{fieldname}(v)".format(structname=self.typename, fieldname=f.name)
-                    f.type.generate_append_value(value, "type_annotate")
+                    C('  {append_field_code}', {'append_field_code': escapeC(f.type.generate_append_value(f.genC("{structname}_get_{fieldname}(v)"), "type_annotate"))})
                     if not f.last:
                         C('  g_string_append (s, ", ");')
                     elif len(self.fields) == 1:
