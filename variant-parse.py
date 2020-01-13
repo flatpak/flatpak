@@ -18,6 +18,9 @@ named_types = {}
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
 
+def writeC(code, continued = False):
+    print(code, end='' if continued else '\n')
+
 def genC(code, extra_vars = None):
     vars = {
         'tprefix': typename_prefix,
@@ -30,8 +33,8 @@ def genC(code, extra_vars = None):
 def escapeC(s):
     return s.replace('{', '{{').replace('}', '}}')
 
-def C(code, extra_vars = None, end = '\n'):
-    print(genC(code, extra_vars), end=end)
+def C(code, extra_vars = None, continued = False):
+    writeC(genC(code, extra_vars), continued)
 
 def generate_header(filename):
     C(
@@ -342,8 +345,8 @@ class Type:
         self.add_expansion_vars(vars)
         return genC(code, vars)
 
-    def C(self, code, extra_vars = None, end = '\n'):
-        print(self.genC(code, extra_vars), end=end)
+    def C(self, code, extra_vars = None, continued=False):
+        writeC(self.genC(code, extra_vars), continued)
 
     def generate(self):
         self.C (
@@ -845,8 +848,8 @@ class Field:
             vars = {**vars, **extra_vars}
         return self.type.genC(code, vars)
 
-    def C(self, code, extra_vars = None, end = '\n'):
-        print(self.genC(code, extra_vars), end=end)
+    def C(self, code, extra_vars = None, continued = False):
+        writeC(self.genC(code, extra_vars), continued=continued)
 
     def generate(self):
         # Getter
@@ -1010,17 +1013,17 @@ class StructType(Type):
         for i, run in enumerate(field_runs):
             if run[0].type.can_printf_format():
                 # A run of printf fields
-                C('  g_string_append_printf (s, "%s' % ("(" if i == 0 else ""), end = '')
+                C('  g_string_append_printf (s, "%s' % ("(" if i == 0 else ""), continued=True)
                 for f in run:
                     if f.type.get_type_annotation() != "":
-                        C('%s', end = '')
-                    C('%s' % (f.type.get_format_string()), end = '')
+                        C('%s', continued=True)
+                    C('%s' % (f.type.get_format_string()), continued=True)
                     if not f.last:
-                        C(', ', end = '')
+                        C(', ', continued=True)
                     elif len(self.fields) == 1:
-                        C(',)', end = '')
+                        C(',)', continued=True)
                     else:
-                        C(')', end = '')
+                        C(')', continued=True)
                 C('",')
                 for j, f in enumerate(run):
                     if f.type.get_type_annotation() != "":
