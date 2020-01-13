@@ -21,6 +21,17 @@ def snake_case_to_CamelCase(name):
         res = res + run[0].upper() + run[1:]
     return res
 
+def CamelCase_to_snake_case(name):
+    res = ""
+    for i, c in enumerate(name):
+        if c.isupper():
+            if i > 0:
+                res = res + "_"
+            res = res + c.lower()
+        else:
+            res = res + c
+    return res
+
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
 
@@ -1127,7 +1138,7 @@ if __name__ == "__main__":
     parser.add_argument('file')
     args = parser.parse_args()
     if args.prefix:
-        typename_prefix = args.prefix[0].upper() + args.prefix[1:]
+        typename_prefix = snake_case_to_CamelCase(args.prefix)
         funcname_prefix = args.prefix + "_"
     if args.outfile:
         output_file = open(args.outfile, "w")
