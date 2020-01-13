@@ -379,15 +379,19 @@ class Type:
     def C(self, code, extra_vars = None, continued=False):
         writeC(self.genC(code, extra_vars), continued)
 
-    def generate(self):
-        self.C (
+    def generate_types(self):
+        self.C(
 '''
 /************** {TypeName} *******************/
 
-typedef {Prefix}Ref {TypeNameRef};
 #define {TYPE_NAME_}TYPESTRING "{typestring}"
 #define {TYPE_NAME_}TYPEFORMAT G_VARIANT_TYPE ({TYPE_NAME_}TYPESTRING)
 
+typedef {Prefix}Ref {TypeNameRef};''')
+
+    def generate_standard_functions(self):
+        self.C(
+'''
 static inline {TypeNameRef}
 {type_name_ref_}from_variant (GVariant *v)
 {{
@@ -409,7 +413,7 @@ static inline {TypeNameRef}
 ''')
 
     def generate_print(self):
-        self.C (
+        self.C(
 '''
 static inline char *
 {type_name_ref_}print ({TypeNameRef} v, gboolean type_annotate)
@@ -547,7 +551,8 @@ class ArrayType(Type):
             vars['element_read_ctype'] = self.element_type.get_read_ctype()
 
     def generate(self):
-        super().generate()
+        super().generate_types()
+        super().generate_standard_functions()
         C = self.C
         C("static inline gsize")
         C("{type_name_ref_}get_length({TypeNameRef} v)")
@@ -649,8 +654,9 @@ class DictType(Type):
 
     def generate(self):
         C=self.C
-        super().generate()
+        super().generate_types()
         C('typedef {Prefix}Ref {TypeName}EntryRef;')
+        super().generate_standard_functions()
         C('')
 
         C("static inline gsize")
@@ -809,7 +815,8 @@ class MaybeType(Type):
             vars['element_read_ctype'] = self.element_type.get_read_ctype()
 
     def generate(self):
-        super().generate()
+        super().generate_types()
+        super().generate_standard_functions()
 
         C=self.C
         # has_value
@@ -1051,7 +1058,8 @@ class StructType(Type):
         return self._fixed_size
 
     def generate(self):
-        super().generate()
+        super().generate_types()
+        super().generate_standard_functions()
         for i, f in enumerate(self.fields):
             f.generate()
         C=self.C
