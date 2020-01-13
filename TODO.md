@@ -1,4 +1,5 @@
 TODO:
+ * XxxVariantRef => XxxRef, XxxVariant => XxxVariantRef, XxxFoo => XxxxFooRef, (and then XxxFoo for fixed structs)
  * Use different case in types and method names
  * Generate structs for fixed structs, Struct_peek(), struct_peek_var()
  * Apply endianness attribute in getters
