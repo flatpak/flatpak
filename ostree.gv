@@ -3,7 +3,7 @@ type Metadata [string] variant;
 type Checksum []byte;
 
 type Summary {
-    ref_map: [string] {
+    ref_map: [string] 'SummaryInfo {
         size: uint64;
         checksum: Checksum;
         metadata: Metadata;
@@ -14,7 +14,7 @@ type Summary {
 type Commit {
     metadata: Metadata;
     patent: Checksum;
-    related: [] {
+    related: [] 'Related {
         ref: string;
         commit: Checksum;
     };
@@ -26,35 +26,34 @@ type Commit {
 };
 
 type TreeMeta {
-  files: [] {
+  files: [] 'TreeFile {
     name: string;
     checksum: Checksum;
   };
-  dirs: [] {
+  dirs: [] 'TreeDir {
     name: string;
     tree_checksum: Checksum;
     meta_checksum: Checksum;
   };
 };
 
+type Xattr {
+  name: []byte;
+  value: []byte;
+};
+
 type DirMeta {
   uid: bigendian uint32;
   gid: bigendian uint32;
   mode: bigendian uint32;
-  xattrs: [] {
-   name: []byte;
-   value: []byte;
-  };
+  xattrs: [] Xattr;
 };
 
 type FileMeta {
   uid: bigendian uint32;
   gid: bigendian uint32;
   mode: bigendian uint32;
-  xattrs: []{
-   name: []byte;
-   value: []byte;
-  };
+  xattrs: [] Xattr;
 };
 
 type DeltaFallback {
@@ -69,7 +68,7 @@ type DeltaMetaEntry {
   checksum: Checksum;
   size: uint64; /* non-canonical endian */
   usize: uint64; /* non-canonical endian */
-  objects: []{
+  objects: [] 'DeltaObject {
     objtype: byte;
     object: Checksum;
   };
@@ -81,7 +80,7 @@ type DeltaSuperblock {
   from: Checksum;
   to: Checksum;
   commit: Commit;
-  apply_before: []{
+  apply_before: [] 'DeltaName {
     from: Checksum;
     to: Checksum;
   };
@@ -90,15 +89,12 @@ type DeltaSuperblock {
 };
 
 type DeltaPayload {
-  modes: []{
+  modes: [] 'DeltaMode {
       uid: uint32;
       gid: uint32;
       mode: uint32;
   };
-  xattrs: [][]{
-    name: []byte;
-    value: []byte;
-  };
+  xattrs: [][]Xattr;
   raw_data: []byte;
   operations: []byte;
 };
