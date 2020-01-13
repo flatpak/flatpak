@@ -928,7 +928,7 @@ class VariantType(Type):
 class Field:
     def __init__(self, name, attributes, type):
         self.name = name
-        self.attributes = attributes
+        self.attributes = list(attributes)
         self.type = type
         self.last = False
         self.struct = None
@@ -960,6 +960,7 @@ class Field:
     def generate(self):
         # Getter
         C=self.C
+        genC=self.genC
         C("#define {STRUCT_NAME_}INDEXOF_{FIELDNAME} {fieldindex}")
         C("")
         C("static inline {ctype}")
@@ -976,7 +977,12 @@ class Field:
 
         if self.type.is_basic():
             if self.type.is_fixed():
-                C("  return ({ctype})G_STRUCT_MEMBER({readctype}, v.base, {offset});", {'offset': offset})
+                val = genC("({ctype})G_STRUCT_MEMBER({readctype}, v.base, {offset})", {'offset': offset})
+                if "bigendian" in self.attributes:
+                    val = "%s_FROM_BE(%s)" % (self.type.get_ctype().upper(), val)
+                if "littleendian" in self.attributes:
+                    val = "%s_FROM_LE(%s)" % (self.type.get_ctype().upper(), val)
+                C("  return {val};", {"val": val})
             else: # string
                 C("  return &G_STRUCT_MEMBER(char, v.base, {offset});", {'offset': offset})
         else:
@@ -1027,9 +1033,16 @@ class Field:
     'element_fixed_ctype': self.type.typename + "Entry",
 })
 
-
     def generate_fixed(self):
-        self.C("  {field_type} {fieldname};", {'field_type': self.type.get_fixed_ctype()})
+        comments = []
+        if "bigendian" in self.attributes:
+            comments.append("big endian")
+        if "littleendian" in self.attributes:
+            comments.append("little endian")
+        self.C("  {field_type} {fieldname};{comment}", {
+            'field_type': self.type.get_fixed_ctype(),
+            'comment': "" if len(comments) == 0 else "/* " +  ",".join(comments) + " */",
+        })
 
 class StructType(Type):
     def __init__(self, fields):
@@ -1234,7 +1247,7 @@ dictType = (LBRACK + basicType + RBRACK + typeSpec).setParseAction(lambda toks: 
 
 maybeType = (Suppress("?") + typeSpec).setParseAction(lambda toks: MaybeType(toks[0]))
 
-fieldAttribute = oneOf("bigendian littleendian nativeendian")
+fieldAttribute = oneOf("bigendian littleendian")
 
 field = (ident + COLON + Group(ZeroOrMore(fieldAttribute)) + typeSpec + SEMI).setParseAction(lambda toks: Field(toks[0], toks[1], toks[2]))
 

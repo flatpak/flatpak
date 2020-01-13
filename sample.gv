@@ -43,3 +43,8 @@ type LotsOfDicts {
  foo: [byte]int16;
  foo2: [int16]{a: int32;};
 };
+
+type Endian {
+  little: littleendian uint16;
+  big: bigendian int32;
+};
