@@ -407,6 +407,20 @@ static inline GVariant *
   return g_variant_new_from_data ({TYPE_NAME_}TYPEFORMAT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 
+static inline GVariant *
+{type_name_ref_}ref_to_variant ({TypeNameRef} v,
+                                GDestroyNotify      notify,
+                                gpointer            user_data)
+{{
+  return g_variant_new_from_data ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, TRUE, notify, user_data);
+}}
+
+static inline GVariant *
+{type_name_ref_}peek_as_variant ({TypeNameRef} v)
+{{
+  return g_variant_new_from_data ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, TRUE, NULL, NULL);
+}}
+
 static inline {TypeNameRef}
 {type_name_ref_}from_variant_ref ({Prefix}VariantRef v) {{
     g_assert (g_variant_type_equal({prefix_}variant_ref_get_type (v), {TYPE_NAME_}TYPESTRING));
