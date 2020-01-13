@@ -1,7 +1,5 @@
 TODO:
- * Inline stuff in lookup() to avoid recomputing. Also, maybe do special frame_size == 1 case
- * Struct_key typename => StructKey
- * Use different case in types and method names
+ * Inline code in lookup() to avoid recomputing. Also, maybe do special frame_size == 1 case
  * Generate structs for fixed structs, Struct_peek(), struct_peek_var()
  * Apply endianness attribute in getters
  * Add _peek_as_gvariant() for generated types
