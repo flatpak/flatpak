@@ -578,38 +578,41 @@ class ArrayType(Type):
 
 
 class DictType(Type):
-    def __init__(self, key_type, element_type):
+    def __init__(self, key_type, value_type):
         super().__init__()
         self.key_type = key_type
-        self.element_type = element_type
+        self.value_type = value_type
 
-        self._fixed_element = element_type.is_fixed() and key_type.is_fixed();
+        self._fixed_element = value_type.is_fixed() and key_type.is_fixed();
         if self._fixed_element:
             fixed_pos = key_type.get_fixed_size()
-            fixed_pos = align_up(fixed_pos, element_type.alignment()) + element_type.get_fixed_size()
+            fixed_pos = align_up(fixed_pos, value_type.alignment()) + value_type.get_fixed_size()
             self._fixed_element_size = align_up(fixed_pos, self.alignment())
+        else:
+            self._fixed_element_size = None
 
     def __repr__(self):
-         return "DictType<%s>(%s, %s)" % (self.typename, repr(self.key_type), repr(self.element_type))
+         return "DictType<%s>(%s, %s)" % (self.typename, repr(self.key_type), repr(self.value_type))
     def typestring(self):
-         return "a{%s%s}" % (self.key_type.typestring(), self.element_type.typestring())
+         return "a{%s%s}" % (self.key_type.typestring(), self.value_type.typestring())
     def propagate_typename(self, name):
-        self.element_type.set_typename (name + "Value")
+        self.value_type.set_typename (name + "Value")
     def alignment(self):
-        return max(self.element_type.alignment(), self.key_type.alignment())
+        return max(self.value_type.alignment(), self.key_type.alignment())
     def element_is_fixed(self):
         return self._fixed_element
     def element_fixed_size(self):
         return self._fixed_element_size
     def get_children(self):
-        return [self.key_type, self.element_type]
+        return [self.key_type, self.value_type]
     def add_expansion_vars(self, vars):
-        vars['element_ctype'] = self.element_type.get_ctype()
-        vars['element_typename'] = self.element_type.typename
-        vars['element_fixed_size'] = self.element_type.get_fixed_size()
-        vars['element_alignment'] = self.element_type.alignment()
-        if self.element_type.is_basic():
-            vars['element_read_ctype'] = self.element_type.get_read_ctype()
+        vars['element_fixed_size'] = self.element_fixed_size()
+        vars['value_ctype'] = self.value_type.get_ctype()
+        vars['value_typename'] = self.value_type.typename
+        vars['value_fixed_size'] = self.value_type.get_fixed_size()
+        vars['value_alignment'] = self.value_type.alignment()
+        if self.value_type.is_basic():
+            vars['value_read_ctype'] = self.value_type.get_read_ctype()
         vars['key_ctype'] = self.key_type.get_ctype()
         if self.key_type.is_basic():
             vars['key_read_ctype'] = self.key_type.get_read_ctype()
@@ -659,33 +662,33 @@ class DictType(Type):
             C("  return ({key_ctype})v.base;")
         C("}}")
 
-        C("static inline {element_ctype}")
+        C("static inline {value_ctype}")
         C("{typename}Entry_get_value({typename}Entry v)")
         C("{{")
         if not self.key_type.is_fixed():
             C("  guint offset_size = {fprefix}variant_ref_get_offset_size (v.size);")
             C("  gsize end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, 0);");
-            C("  gsize offset = {FPREFIX}VARIANT_REF_ALIGN(end, {element_alignment});")
+            C("  gsize offset = {FPREFIX}VARIANT_REF_ALIGN(end, {value_alignment});")
             offset = "offset"
             end = "(v.size - offset_size)"
         else:
             # Fixed key, so known offset
-            offset = align_up(self.key_type.get_fixed_size(), self.element_type.alignment())
+            offset = align_up(self.key_type.get_fixed_size(), self.value_type.alignment())
             end = "v.size"
 
-        if self.element_type.is_basic():
-            if self.element_type.is_fixed():
-                C("  return ({element_ctype})*(({element_read_ctype} *)((char *)v.base + {offset}));", {'offset': offset})
+        if self.value_type.is_basic():
+            if self.value_type.is_fixed():
+                C("  return ({value_ctype})*(({value_read_ctype} *)((char *)v.base + {offset}));", {'offset': offset})
             else: # string-style
-                C("  return ({element_ctype})v.base + {offset};", {'offset': offset})
+                C("  return ({value_ctype})v.base + {offset};", {'offset': offset})
         else:
-            C("  return ({element_typename}) {{ (char *)v.base + {offset}, {end} - {offset} }};", {'offset': offset, 'end': end })
+            C("  return ({value_typename}) {{ (char *)v.base + {offset}, {end} - {offset} }};", {'offset': offset, 'end': end })
 
         C("}}")
 
         C(
 """static inline gboolean
-{typename}_lookup({typename} v, {key_ctype} key, {element_ctype} *out)
+{typename}_lookup({typename} v, {key_ctype} key, {value_ctype} *out)
 {{
   gsize len = {typename}_get_length(v);
   {key_ctype} canonical_key = {canonicalize};
@@ -723,13 +726,13 @@ class DictType(Type):
       g_string_append (s, \", \");
     {append_key_code}
     g_string_append (s, ": ");
-    {append_element_code}
+    {append_value_code}
   }}
   g_string_append_c (s, '}}');
   return s;
 }}""",{
     'append_key_code': escapeC(self.key_type.generate_append_value(self.genC("{typename}Entry_get_key(entry)"), "type_annotate")),
-    'append_element_code': escapeC(self.element_type.generate_append_value(self.genC("{typename}Entry_get_value(entry)"), "type_annotate")),
+    'append_value_code': escapeC(self.value_type.generate_append_value(self.genC("{typename}Entry_get_value(entry)"), "type_annotate")),
 })
 
         self.generate_print()
