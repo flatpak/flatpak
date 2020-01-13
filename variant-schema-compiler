@@ -217,7 +217,10 @@ __{prefix_}gstring_append_string (GString *string, const char *str)
 
 /************** {Prefix}VariantRef *******************/
 
-typedef {Prefix}Ref {Prefix}VariantRef;
+typedef struct {{
+ gconstpointer base;
+ gsize size;
+}} {Prefix}VariantRef;
 static inline const GVariantType *
 {prefix_}variant_ref_get_type ({Prefix}VariantRef v)
 {{
@@ -389,7 +392,10 @@ class Type:
 #define {TYPE_NAME_}TYPESTRING "{typestring}"
 #define {TYPE_NAME_}TYPEFORMAT G_VARIANT_TYPE ({TYPE_NAME_}TYPESTRING)
 
-typedef {Prefix}Ref {TypeNameRef};''')
+typedef struct {{
+ gconstpointer base;
+ gsize size;
+}} {TypeNameRef};''')
 
     def generate_standard_functions(self):
         self.C(
@@ -436,7 +442,8 @@ static inline GVariant *
 static inline {TypeNameRef}
 {type_name_ref_}from_variant_ref ({Prefix}VariantRef v) {{
   g_assert (g_variant_type_equal({prefix_}variant_ref_get_type (v), {TYPE_NAME_}TYPESTRING));
-  return ({TypeNameRef}) {prefix_}variant_ref_get_child (v);
+  {Prefix}Ref child = {prefix_}variant_ref_get_child (v);
+  return ({TypeNameRef}) {{ child.base, child.size }};
 }}
 ''')
 
@@ -692,7 +699,11 @@ class DictType(Type):
     def generate(self):
         C=self.C
         super().generate_types()
-        C('typedef {Prefix}Ref {TypeName}EntryRef;')
+        C(
+'''typedef struct {{
+ gconstpointer base;
+ gsize size;
+}} {TypeName}EntryRef;''')
 
         if self.element_is_fixed():
             C("typedef struct {{")
