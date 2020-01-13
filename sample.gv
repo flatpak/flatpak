@@ -4,6 +4,10 @@ type Var {
   foo: int16;
   bar: int32;
   b: byte;
+  the_rest: {
+    gazonk: uint16;
+    b: byte;
+  };
 };
 
 type Test {
@@ -33,4 +37,9 @@ type Test {
     larger: uint64;
     pi: double;
   };
+};
+
+type LotsOfDicts {
+ foo: [byte]int16;
+ foo2: [int16]{a: int32;};
 };

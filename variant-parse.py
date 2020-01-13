@@ -427,6 +427,9 @@ static inline char *
     def get_ctype(self):
          return self.typename + "Ref"
 
+    def get_fixed_ctype(self):
+         return self.typename
+
     def can_printf_format(self):
          return False
 
@@ -474,6 +477,8 @@ class BasicType(Type):
         if self.kind == "boolean":
             return "guint8"
         return self.get_ctype()
+    def get_fixed_ctype(self):
+         return self.get_read_ctype()
     def get_type_annotation(self):
         return basic_types[self.kind][4]
     def get_format_string(self):
@@ -656,6 +661,26 @@ class DictType(Type):
         C=self.C
         super().generate_types()
         C('typedef {Prefix}Ref {TypeName}EntryRef;')
+
+        if self.element_is_fixed():
+            C("typedef struct {{")
+            pad_index = 1;
+            pos = 0
+            for k, t in [("key", self.key_type), ("value", self.value_type)]:
+                old_pos = pos
+                pos = align_up(pos, t.alignment())
+                if pos > old_pos:
+                    C("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
+                    pad_index += 1
+                self.C("  {field_type} {fieldname};", {'field_type': t.get_fixed_ctype(), 'fieldname': k})
+                pos += t.get_fixed_size()
+            old_pos = pos
+            pos = align_up(pos, self.alignment())
+            if pos > old_pos:
+                C("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
+                pad_index += 1
+            C("}} {TypeName}Entry;")
+
         super().generate_standard_functions()
         C('')
 
@@ -953,6 +978,9 @@ class Field:
                 C("  return ({TypeNameRef}) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
         C("}}")
 
+    def generate_fixed(self):
+        self.C("  {field_type} {fieldname};", {'field_type': self.type.get_fixed_ctype()})
+
 class StructType(Type):
     def __init__(self, fields):
         super().__init__()
@@ -1058,11 +1086,34 @@ class StructType(Type):
         return self._fixed_size
 
     def generate(self):
-        super().generate_types()
-        super().generate_standard_functions()
-        for i, f in enumerate(self.fields):
-            f.generate()
         C=self.C
+        super().generate_types()
+
+        if self.is_fixed():
+            C("typedef struct {{")
+            pos = 0
+            pad_index = 1;
+            for f in self.fields:
+                old_pos = pos
+                pos = align_up(pos, f.type.alignment())
+                if pos > old_pos:
+                    C("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
+                    pad_index += 1
+                f.generate_fixed()
+                pos += f.type.get_fixed_size()
+            old_pos = pos
+            pos = align_up(pos, self.alignment())
+            if pos > old_pos:
+                C("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
+                pad_index += 1
+            C("}} {TypeName};")
+
+
+        super().generate_standard_functions()
+
+        for f in self.fields:
+            f.generate()
+
         C("static inline GString *")
         C("{type_name_ref_}format ({TypeNameRef} v, GString *s, gboolean type_annotate)")
         C("{{")

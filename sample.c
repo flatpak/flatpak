@@ -59,8 +59,8 @@ main (int argc,
 #define DATA \
   "([32, 22], '%s', uint16 16, "                                        \
     "('s2', 322), ('ssss2', 3222), (323,), 324, "                       \
-    "<(int16 67, 1023, byte 3)>, "                                          \
-    "[(int16 68, 1025, byte 42), (int16 69, 1026, byte 42)]"                              \
+    "<(int16 67, 1023, byte 3, (uint16 5, byte 6))>, "                                          \
+    "[(int16 68, 1025, byte 42, (uint16 7, byte 8)), (int16 69, 1026, byte 42, (uint16 9, byte 11))]"                              \
     ", {1:2, 3:4}, {'foo': <1>, 'bar': <'s'>}, {1:'a', 3:'b'}, "        \
     "just (objectpath '/', signature 's', true, handle 3, int64 88, uint64 89, 3.1415 )"             \
     ")"
