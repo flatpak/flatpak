@@ -15,6 +15,12 @@ ident = Word(alphas + "_", alphanums + "_").setName("identifier")
 
 named_types = {}
 
+def snake_case_to_CamelCase(name):
+    res = ""
+    for run in name.split("_"):
+        res = res + run[0].upper() + run[1:]
+    return res
+
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
 
@@ -862,7 +868,7 @@ class Field:
          return "Field(%s, %s)" % (self.name, self.type)
 
     def propagate_typename(self, struct_name):
-        self.type.set_typename (struct_name + "_" + self.name)
+        self.type.set_typename (struct_name + snake_case_to_CamelCase (self.name))
 
     def genC(self, code, extra_vars = None):
         vars = {
