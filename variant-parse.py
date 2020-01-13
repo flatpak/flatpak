@@ -48,87 +48,19 @@ def generate_header(filename):
 #include <string.h>
 #include <glib.h>
 
-/********** Header *****************/
+/********** Basic types and helpers *****************/
 
 typedef struct {{
  gconstpointer base;
  gsize size;
-}} {tprefix}VariantRef;
+}} {tprefix}Ref;
 
-#define {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(_v, _index) {fprefix}variant_ref_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
-#define {FPREFIX}VARIANT_REF_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
-
-typedef {tprefix}VariantRef {tprefix}Variant;
-static inline const GVariantType *
-{tprefix}Variant_get_type ({tprefix}Variant v)
-{{
-  gsize size = v.size - 1;
-  while (((guchar *)v.base)[size] != 0)
-    size--;
-  return (const GVariantType *)((guchar *)v.base + size + 1);
-}}
-
-static inline {tprefix}VariantRef
-{tprefix}Variant_get_child ({tprefix}Variant v)
-{{
-  gsize size = v.size - 1;
-  while (((guchar *)v.base)[size] != 0)
-    size--;
-  return ({tprefix}VariantRef) {{ v.base, size }};
-}}
-
-static inline GVariant *
-{tprefix}Variant_dup_to_gvariant ({tprefix}Variant v)
-{{
-  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
-}}
-
-static inline GVariant *
-{tprefix}Variant_peek_as_gvariant ({tprefix}Variant v)
-{{
-  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, NULL, NULL);
-}}
-
-static inline GVariant *
-{tprefix}Variant_dup_child_to_gvariant ({tprefix}Variant v)
-{{
-  const GVariantType  *type = {tprefix}Variant_get_type (v);
-  {tprefix}VariantRef child = {tprefix}Variant_get_child (v);
-  return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
-}}
-
-static inline GVariant *
-{tprefix}Variant_peek_child_as_gvariant ({tprefix}Variant v)
-{{
-  const GVariantType  *type = {tprefix}Variant_get_type (v);
-  {tprefix}VariantRef child = {tprefix}Variant_get_child (v);
-  return g_variant_new_from_data (type, child.base, child.size, TRUE, NULL, NULL);
-}}
-
-static inline GString *
-{tprefix}Variant_format ({tprefix}Variant v, GString *s, gboolean type_annotate)
-{{
-#ifdef SHALLOW_VARIANT_FORMAT
-  const GVariantType  *type = {tprefix}Variant_get_type (v);
-  g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
-  return s;
-#else
-  GVariant *gv = {tprefix}Variant_peek_as_gvariant (v);
-  return g_variant_print_string (gv, s, TRUE);
-#endif
-}}
-
-static inline char *
-{tprefix}Variant_print ({tprefix}Variant v, gboolean type_annotate)
-{{
-  GString *s = g_string_new ("");
-  {tprefix}Variant_format (v, s, type_annotate);
-  return g_string_free (s, FALSE);
-}}
+#define {FPREFIX}REF_READ_FRAME_OFFSET(_v, _index) {fprefix}ref_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
+#define {FPREFIX}REF_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
 
 /* Note: clz is undefinded for 0, so never call this size == 0 */
 G_GNUC_CONST static inline guint
-{fprefix}variant_ref_get_offset_size (gsize size)
+{fprefix}ref_get_offset_size (gsize size)
 {{
 #if defined(__GNUC__) && (__GNUC__ >= 4) && defined(__OPTIMIZE__)
   /* Instead of using a lookup table we use nibbles in a lookup word */
@@ -153,7 +85,7 @@ G_GNUC_CONST static inline guint
 }}
 
 G_GNUC_PURE static inline gsize
-{fprefix}variant_ref_read_unaligned_le (guchar *bytes, guint   size)
+{fprefix}ref_read_unaligned_le (guchar *bytes, guint   size)
 {{
   union
   {{
@@ -265,7 +197,76 @@ __{fprefix}gstring_append_string (GString *string, const char *str)
 
   g_string_append_c (string, quote);
 }}
-""", {'filename': filename})
+
+/************** {tprefix}Variant *******************/
+
+typedef {tprefix}Ref {tprefix}Variant;
+static inline const GVariantType *
+{tprefix}Variant_get_type ({tprefix}Variant v)
+{{
+  gsize size = v.size - 1;
+  while (((guchar *)v.base)[size] != 0)
+    size--;
+  return (const GVariantType *)((guchar *)v.base + size + 1);
+}}
+
+static inline {tprefix}Ref
+{tprefix}Variant_get_child ({tprefix}Variant v)
+{{
+  gsize size = v.size - 1;
+  while (((guchar *)v.base)[size] != 0)
+    size--;
+  return ({tprefix}Ref) {{ v.base, size }};
+}}
+
+static inline GVariant *
+{tprefix}Variant_dup_to_gvariant ({tprefix}Variant v)
+{{
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
+}}
+
+static inline GVariant *
+{tprefix}Variant_peek_as_gvariant ({tprefix}Variant v)
+{{
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, NULL, NULL);
+}}
+
+static inline GVariant *
+{tprefix}Variant_dup_child_to_gvariant ({tprefix}Variant v)
+{{
+  const GVariantType  *type = {tprefix}Variant_get_type (v);
+  {tprefix}Ref child = {tprefix}Variant_get_child (v);
+  return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
+}}
+
+static inline GVariant *
+{tprefix}Variant_peek_child_as_gvariant ({tprefix}Variant v)
+{{
+  const GVariantType  *type = {tprefix}Variant_get_type (v);
+  {tprefix}Ref child = {tprefix}Variant_get_child (v);
+  return g_variant_new_from_data (type, child.base, child.size, TRUE, NULL, NULL);
+}}
+
+static inline GString *
+{tprefix}Variant_format ({tprefix}Variant v, GString *s, gboolean type_annotate)
+{{
+#ifdef SHALLOW_VARIANT_FORMAT
+  const GVariantType  *type = {tprefix}Variant_get_type (v);
+  g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
+  return s;
+#else
+  GVariant *gv = {tprefix}Variant_peek_as_gvariant (v);
+  return g_variant_print_string (gv, s, TRUE);
+#endif
+}}
+
+static inline char *
+{tprefix}Variant_print ({tprefix}Variant v, gboolean type_annotate)
+{{
+  GString *s = g_string_new ("");
+  {tprefix}Variant_format (v, s, type_annotate);
+  return g_string_free (s, FALSE);
+}}""", {'filename': filename})
 
 def generate_footer(filename):
     C('', {'filename': filename})
@@ -359,7 +360,7 @@ class Type:
 '''
 /************** {typename} *******************/
 
-typedef {tprefix}VariantRef {typename};
+typedef {tprefix}Ref {typename};
 #define {typename}_typestring "{typestring}"
 #define {typename}_typeformat G_VARIANT_TYPE ({typename}_typestring)
 static inline {typename}
@@ -524,8 +525,8 @@ class ArrayType(Type):
         if self.element_type.is_fixed():
             C("  return v.size / {element_fixed_size};")
         else:
-            C("  guint offset_size = {fprefix}variant_ref_get_offset_size (v.size);");
-            C("  gsize last_end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, 0);");
+            C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);");
+            C("  gsize last_end = {FPREFIX}REF_READ_FRAME_OFFSET(v, 0);");
             C("  return (v.size - last_end) / offset_size;")
         C("}}")
         C("static inline {element_ctype}")
@@ -538,15 +539,15 @@ class ArrayType(Type):
                 C("  return ({element_typename}) {{ G_STRUCT_MEMBER_P(v.base, index * {element_fixed_size}), {element_fixed_size}}};")
         else:
             # non-fixed size
-            C("  guint offset_size = {fprefix}svariant_ref_get_offset_size (v.size);")
-            C("  gsize last_end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, 0);");
+            C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);")
+            C("  gsize last_end = {FPREFIX}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize len = (v.size - last_end) / offset_size;")
             C("  gsize start = 0;")
             if not self.element_type.is_basic():
-                C("  gsize end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, len - index - 1);");
+                C("  gsize end = {FPREFIX}REF_READ_FRAME_OFFSET(v, len - index - 1);");
             C("  if (index > 0) {{")
-            C("    start = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, len - index);")
-            C("    start = {FPREFIX}VARIANT_REF_ALIGN(start, {element_alignment});")
+            C("    start = {FPREFIX}REF_READ_FRAME_OFFSET(v, len - index);")
+            C("    start = {FPREFIX}REF_ALIGN(start, {element_alignment});")
             C("  }}");
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
                 C("  return ((const char *)v.base) + start;")
@@ -620,7 +621,7 @@ class DictType(Type):
     def generate(self):
         super().generate()
         C=self.C
-        C('typedef {tprefix}VariantRef {typename}Entry;')
+        C('typedef {tprefix}Ref {typename}Entry;')
 
         C("static inline gsize")
         C("{typename}_get_length({typename} v)")
@@ -628,8 +629,8 @@ class DictType(Type):
         if self.element_is_fixed():
             C("  return v.size / {element_fixed_size};")
         else:
-            C("  guint offset_size = {fprefix}variant_ref_get_offset_size (v.size);");
-            C("  gsize last_end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, 0);");
+            C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);");
+            C("  gsize last_end = {FPREFIX}REF_READ_FRAME_OFFSET(v, 0);");
             C("  return (v.size - last_end) / offset_size;")
         C("}}")
 
@@ -640,14 +641,14 @@ class DictType(Type):
             C("  return ({typename}Entry) {{ G_STRUCT_MEMBER_P(v.base, index * {element_fixed_size}), {element_fixed_size} }};")
         else:
             # non-fixed size
-            C("  guint offset_size = {fprefix}variant_ref_get_offset_size (v.size);")
-            C("  gsize last_end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, 0);");
+            C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);")
+            C("  gsize last_end = {FPREFIX}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize len = (v.size - last_end) / offset_size;")
             C("  gsize start = 0;")
-            C("  gsize end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, len - index - 1);");
+            C("  gsize end = {FPREFIX}REF_READ_FRAME_OFFSET(v, len - index - 1);");
             C("  if (index > 0) {{")
-            C("    start = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, len - index);")
-            C("    start = {FPREFIX}VARIANT_REF_ALIGN(start, {alignment});")
+            C("    start = {FPREFIX}REF_READ_FRAME_OFFSET(v, len - index);")
+            C("    start = {FPREFIX}REF_ALIGN(start, {alignment});")
             C("  }}");
             C("  return ({typename}Entry) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
@@ -666,9 +667,9 @@ class DictType(Type):
         C("{typename}Entry_get_value({typename}Entry v)")
         C("{{")
         if not self.key_type.is_fixed():
-            C("  guint offset_size = {fprefix}variant_ref_get_offset_size (v.size);")
-            C("  gsize end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, 0);");
-            C("  gsize offset = {FPREFIX}VARIANT_REF_ALIGN(end, {value_alignment});")
+            C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);")
+            C("  gsize end = {FPREFIX}REF_READ_FRAME_OFFSET(v, 0);");
+            C("  gsize offset = {FPREFIX}REF_ALIGN(end, {value_alignment});")
             offset = "offset"
             end = "(v.size - offset_size)"
         else:
@@ -872,8 +873,8 @@ class Field:
             offset = "((%d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
         else:
             has_offset_size = True
-            C("  guint offset_size = {fprefix}variant_ref_get_offset_size (v.size);");
-            C("  gsize last_end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, {table_i});", {'table_i': self.table_i });
+            C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);");
+            C("  gsize last_end = {FPREFIX}REF_READ_FRAME_OFFSET(v, {table_i});", {'table_i': self.table_i });
             offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
 
         if self.type.is_basic():
@@ -887,12 +888,12 @@ class Field:
             else:
                 if not has_offset_size:
                     has_offset_size = True
-                    C("  guint offset_size = {fprefix}variant_ref_get_offset_size (v.size);");
+                    C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);");
                 C("  gsize start = {offset};", {'offset': offset});
                 if self.last:
                     C("  gsize end = v.size - offset_size * {framing_offset_size};", {'framing_offset_size': self.struct.framing_offset_size })
                 else:
-                    C("  gsize end = {FPREFIX}VARIANT_REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
+                    C("  gsize end = {FPREFIX}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
                 C("  return ({typename}) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
         C("}}")
 
