@@ -267,13 +267,13 @@ static inline GVariant *
 static inline GString *
 {prefix_}variant_ref_format ({Prefix}VariantRef v, GString *s, gboolean type_annotate)
 {{
-#ifdef SHALLOW_VARIANT_FORMAT
+#ifdef {PREFIX_}DEEP_VARIANT_FORMAT
+  GVariant *gv = {prefix_}variant_ref_peek_as_variant (v);
+  return g_variant_print_string (gv, s, TRUE);
+#else
   const GVariantType  *type = {prefix_}variant_ref_get_type (v);
   g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
   return s;
-#else
-  GVariant *gv = {prefix_}variant_ref_peek_as_variant (v);
-  return g_variant_print_string (gv, s, TRUE);
 #endif
 }}
 
