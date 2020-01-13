@@ -198,11 +198,11 @@ __{fprefix}gstring_append_string (GString *string, const char *str)
   g_string_append_c (string, quote);
 }}
 
-/************** {tprefix}Variant *******************/
+/************** {tprefix}VariantRef *******************/
 
-typedef {tprefix}Ref {tprefix}Variant;
+typedef {tprefix}Ref {tprefix}VariantRef;
 static inline const GVariantType *
-{tprefix}Variant_get_type ({tprefix}Variant v)
+{tprefix}VariantRef_get_type ({tprefix}VariantRef v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
@@ -211,7 +211,7 @@ static inline const GVariantType *
 }}
 
 static inline {tprefix}Ref
-{tprefix}Variant_get_child ({tprefix}Variant v)
+{tprefix}VariantRef_get_child ({tprefix}VariantRef v)
 {{
   gsize size = v.size - 1;
   while (((guchar *)v.base)[size] != 0)
@@ -220,51 +220,51 @@ static inline {tprefix}Ref
 }}
 
 static inline GVariant *
-{tprefix}Variant_dup_to_gvariant ({tprefix}Variant v)
+{tprefix}VariantRef_dup_to_gvariant ({tprefix}VariantRef v)
 {{
   return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
-{tprefix}Variant_peek_as_gvariant ({tprefix}Variant v)
+{tprefix}VariantRef_peek_as_gvariant ({tprefix}VariantRef v)
 {{
   return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, NULL, NULL);
 }}
 
 static inline GVariant *
-{tprefix}Variant_dup_child_to_gvariant ({tprefix}Variant v)
+{tprefix}VariantRef_dup_child_to_gvariant ({tprefix}VariantRef v)
 {{
-  const GVariantType  *type = {tprefix}Variant_get_type (v);
-  {tprefix}Ref child = {tprefix}Variant_get_child (v);
+  const GVariantType  *type = {tprefix}VariantRef_get_type (v);
+  {tprefix}Ref child = {tprefix}VariantRef_get_child (v);
   return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
-{tprefix}Variant_peek_child_as_gvariant ({tprefix}Variant v)
+{tprefix}VariantRef_peek_child_as_gvariant ({tprefix}VariantRef v)
 {{
-  const GVariantType  *type = {tprefix}Variant_get_type (v);
-  {tprefix}Ref child = {tprefix}Variant_get_child (v);
+  const GVariantType  *type = {tprefix}VariantRef_get_type (v);
+  {tprefix}Ref child = {tprefix}VariantRef_get_child (v);
   return g_variant_new_from_data (type, child.base, child.size, TRUE, NULL, NULL);
 }}
 
 static inline GString *
-{tprefix}Variant_format ({tprefix}Variant v, GString *s, gboolean type_annotate)
+{tprefix}VariantRef_format ({tprefix}VariantRef v, GString *s, gboolean type_annotate)
 {{
 #ifdef SHALLOW_VARIANT_FORMAT
-  const GVariantType  *type = {tprefix}Variant_get_type (v);
+  const GVariantType  *type = {tprefix}VariantRef_get_type (v);
   g_string_append_printf (s, "<@%.*s>", (int)g_variant_type_get_string_length (type), (const char *)type);
   return s;
 #else
-  GVariant *gv = {tprefix}Variant_peek_as_gvariant (v);
+  GVariant *gv = {tprefix}VariantRef_peek_as_gvariant (v);
   return g_variant_print_string (gv, s, TRUE);
 #endif
 }}
 
 static inline char *
-{tprefix}Variant_print ({tprefix}Variant v, gboolean type_annotate)
+{tprefix}VariantRef_print ({tprefix}VariantRef v, gboolean type_annotate)
 {{
   GString *s = g_string_new ("");
-  {tprefix}Variant_format (v, s, type_annotate);
+  {tprefix}VariantRef_format (v, s, type_annotate);
   return g_string_free (s, FALSE);
 }}""", {'filename': filename})
 
@@ -360,46 +360,50 @@ class Type:
 '''
 /************** {typename} *******************/
 
-typedef {tprefix}Ref {typename};
+typedef {tprefix}Ref {typename}Ref;
 #define {typename}_typestring "{typestring}"
 #define {typename}_typeformat G_VARIANT_TYPE ({typename}_typestring)
-static inline {typename}
-{typename}_from_gvariant(GVariant *v)
+
+static inline {typename}Ref
+{typename}Ref_from_variant (GVariant *v)
 {{
     g_assert (g_variant_type_equal (g_variant_get_type (v), {typename}_typestring));
-    return ({typename}) {{ g_variant_get_data (v), g_variant_get_size (v) }};
+    return ({typename}Ref) {{ g_variant_get_data (v), g_variant_get_size (v) }};
 }}
+
 static inline GVariant *
-{typename}_dup_to_gvariant ({typename} v)
+{typename}Ref_dup_to_variant ({typename}Ref v)
 {{
   return g_variant_new_from_data ({typename}_typeformat, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
-static inline {typename}
-{typename}_from_variant({tprefix}Variant v) {{
-    g_assert (g_variant_type_equal({tprefix}Variant_get_type (v), {typename}_typestring));
-    return ({typename}) {tprefix}Variant_get_child (v);
-}}''')
+
+static inline {typename}Ref
+{typename}Ref_from_variant_ref ({tprefix}VariantRef v) {{
+    g_assert (g_variant_type_equal({tprefix}VariantRef_get_type (v), {typename}_typestring));
+    return ({typename}Ref) {tprefix}VariantRef_get_child (v);
+}}
+''')
 
     def generate_print(self):
         self.C (
 '''
 static inline char *
-{typename}_print ({typename} v, gboolean type_annotate)
+{typename}Ref_print ({typename}Ref v, gboolean type_annotate)
 {{
   GString *s = g_string_new ("");
-  {typename}_format (v, s, type_annotate);
+  {typename}Ref_format (v, s, type_annotate);
   return g_string_free (s, FALSE);
 }}
 ''')
 
     def get_ctype(self):
-         return self.typename
+         return self.typename + "Ref"
 
     def can_printf_format(self):
          return False
 
     def generate_append_value(self, value, with_type_annotate):
-        return self.genC("{typename}_format ({value}, s, {type_annotate});", {'value': value, 'type_annotate': with_type_annotate})
+        return self.genC("{typename}Ref_format ({value}, s, {type_annotate});", {'value': value, 'type_annotate': with_type_annotate})
 
 basic_types = {
     "boolean": ("b", True, 1, "gboolean", "", '%s'),
@@ -520,7 +524,7 @@ class ArrayType(Type):
         super().generate()
         C = self.C
         C("static inline gsize")
-        C("{typename}_get_length({typename} v)")
+        C("{typename}Ref_get_length({typename}Ref v)")
         C("{{")
         if self.element_type.is_fixed():
             C("  return v.size / {element_fixed_size};")
@@ -530,13 +534,13 @@ class ArrayType(Type):
             C("  return (v.size - last_end) / offset_size;")
         C("}}")
         C("static inline {element_ctype}")
-        C("{typename}_get_at({typename} v, gsize index)")
+        C("{typename}Ref_get_at({typename}Ref v, gsize index)")
         C("{{")
         if self.element_type.is_fixed():
             if self.element_type.is_basic():
                 C("  return ({element_ctype})G_STRUCT_MEMBER({element_read_ctype}, v.base, index * {element_fixed_size});")
             else:
-                C("  return ({element_typename}) {{ G_STRUCT_MEMBER_P(v.base, index * {element_fixed_size}), {element_fixed_size}}};")
+                C("  return ({element_typename}Ref) {{ G_STRUCT_MEMBER_P(v.base, index * {element_fixed_size}), {element_fixed_size}}};")
         else:
             # non-fixed size
             C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);")
@@ -552,14 +556,14 @@ class ArrayType(Type):
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
                 C("  return ((const char *)v.base) + start;")
             else:
-                C("  return ({element_typename}) {{ ((const char *)v.base) + start, end - start }};")
+                C("  return ({element_typename}Ref) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
         C(
 """static inline GString *
-{typename}_format ({typename} v, GString *s, gboolean type_annotate)
+{typename}Ref_format ({typename}Ref v, GString *s, gboolean type_annotate)
 {{
-  gsize len = {typename}_get_length(v);
+  gsize len = {typename}Ref_get_length(v);
   gsize i;
   if (len == 0 && type_annotate)
     g_string_append_printf (s, \"@%s \", {typename}_typestring);
@@ -572,11 +576,10 @@ class ArrayType(Type):
   g_string_append_c (s, ']');
   return s;
 }}""",  {
-    'append_element_code': escapeC(self.element_type.generate_append_value(self.genC("{typename}_get_at(v, i)"), "((i == 0) ? type_annotate : FALSE)"))
+    'append_element_code': escapeC(self.element_type.generate_append_value(self.genC("{typename}Ref_get_at(v, i)"), "((i == 0) ? type_annotate : FALSE)"))
 })
 
         self.generate_print()
-
 
 class DictType(Type):
     def __init__(self, key_type, value_type):
@@ -619,12 +622,13 @@ class DictType(Type):
             vars['key_read_ctype'] = self.key_type.get_read_ctype()
 
     def generate(self):
-        super().generate()
         C=self.C
-        C('typedef {tprefix}Ref {typename}Entry;')
+        super().generate()
+        C('typedef {tprefix}Ref {typename}EntryRef;')
+        C('')
 
         C("static inline gsize")
-        C("{typename}_get_length({typename} v)")
+        C("{typename}Ref_get_length ({typename}Ref v)")
         C("{{")
         if self.element_is_fixed():
             C("  return v.size / {element_fixed_size};")
@@ -634,11 +638,13 @@ class DictType(Type):
             C("  return (v.size - last_end) / offset_size;")
         C("}}")
 
-        C("static inline {typename}Entry")
-        C("{typename}_get_at({typename} v, gsize index)")
+        C('')
+
+        C("static inline {typename}EntryRef")
+        C("{typename}Ref_get_at ({typename}Ref v, gsize index)")
         C("{{")
         if self.element_is_fixed():
-            C("  return ({typename}Entry) {{ G_STRUCT_MEMBER_P(v.base, index * {element_fixed_size}), {element_fixed_size} }};")
+            C("  return ({typename}EntryRef) {{ G_STRUCT_MEMBER_P(v.base, index * {element_fixed_size}), {element_fixed_size} }};")
         else:
             # non-fixed size
             C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);")
@@ -650,11 +656,13 @@ class DictType(Type):
             C("    start = {FPREFIX}REF_READ_FRAME_OFFSET(v, len - index);")
             C("    start = {FPREFIX}REF_ALIGN(start, {alignment});")
             C("  }}");
-            C("  return ({typename}Entry) {{ ((const char *)v.base) + start, end - start }};")
+            C("  return ({typename}EntryRef) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
+        C('')
+
         C("static inline {key_ctype}")
-        C("{typename}Entry_get_key({typename}Entry v)")
+        C("{typename}EntryRef_get_key ({typename}EntryRef v)")
         C("{{")
         # Keys are always basic
         if self.key_type.is_fixed():
@@ -663,8 +671,10 @@ class DictType(Type):
             C("  return ({key_ctype})v.base;")
         C("}}")
 
+        C('')
+
         C("static inline {value_ctype}")
-        C("{typename}Entry_get_value({typename}Entry v)")
+        C("{typename}EntryRef_get_value ({typename}EntryRef v)")
         C("{{")
         if not self.key_type.is_fixed():
             C("  guint offset_size = {fprefix}ref_get_offset_size (v.size);")
@@ -683,25 +693,27 @@ class DictType(Type):
             else: # string-style
                 C("  return ({value_ctype})v.base + {offset};", {'offset': offset})
         else:
-            C("  return ({value_typename}) {{ (char *)v.base + {offset}, {end} - {offset} }};", {'offset': offset, 'end': end })
+            C("  return ({value_typename}Ref) {{ (char *)v.base + {offset}, {end} - {offset} }};", {'offset': offset, 'end': end })
 
         C("}}")
 
+        C('')
+
         C(
 """static inline gboolean
-{typename}_lookup({typename} v, {key_ctype} key, {value_ctype} *out)
+{typename}Ref_lookup({typename}Ref v, {key_ctype} key, {value_ctype} *out)
 {{
-  gsize len = {typename}_get_length(v);
+  gsize len = {typename}Ref_get_length(v);
   {key_ctype} canonical_key = {canonicalize};
   gsize i;
 
   for (i = 0; i < len; i++)
     {{
-        {typename}Entry e = {typename}_get_at(v, i);
-        {key_ctype} e_key = {typename}Entry_get_key(e);
+        {typename}EntryRef e = {typename}Ref_get_at(v, i);
+        {key_ctype} e_key = {typename}EntryRef_get_key(e);
         if ({equal})
           {{
-             *out = {typename}Entry_get_value (e);
+             *out = {typename}EntryRef_get_value (e);
              return TRUE;
           }}
     }}
@@ -712,17 +724,21 @@ class DictType(Type):
                 'canonicalize': self.key_type.canonicalize_code("key")
             })
 
+        C('')
+
         C(
 """static inline GString *
-{typename}_format ({typename} v, GString *s, gboolean type_annotate)
+{typename}Ref_format ({typename}Ref v, GString *s, gboolean type_annotate)
 {{
-  gsize len = {typename}_get_length(v);
+  gsize len = {typename}Ref_get_length(v);
   gsize i;
+
   if (len == 0 && type_annotate)
     g_string_append_printf (s, \"@%s \", {typename}_typestring);
+
   g_string_append_c (s, '{{');
   for (i = 0; i < len; i++) {{
-    {typename}Entry entry = {typename}_get_at(v, i);
+    {typename}EntryRef entry = {typename}Ref_get_at(v, i);
     if (i != 0)
       g_string_append (s, \", \");
     {append_key_code}
@@ -732,8 +748,8 @@ class DictType(Type):
   g_string_append_c (s, '}}');
   return s;
 }}""",{
-    'append_key_code': escapeC(self.key_type.generate_append_value(self.genC("{typename}Entry_get_key(entry)"), "type_annotate")),
-    'append_value_code': escapeC(self.value_type.generate_append_value(self.genC("{typename}Entry_get_value(entry)"), "type_annotate")),
+    'append_key_code': escapeC(self.key_type.generate_append_value(self.genC("{typename}EntryRef_get_key(entry)"), "type_annotate")),
+    'append_value_code': escapeC(self.value_type.generate_append_value(self.genC("{typename}EntryRef_get_value(entry)"), "type_annotate")),
 })
 
         self.generate_print()
@@ -771,14 +787,14 @@ class MaybeType(Type):
         # has_value
         C(
 """static inline gboolean
-{typename}_has_value({typename} v)
+{typename}Ref_has_value({typename}Ref v)
 {{
   return v.size != 0;
 }}""")
 
         # Getter
         C("static inline {element_ctype}")
-        C("{typename}_get_value({typename} v)")
+        C("{typename}Ref_get_value({typename}Ref v)")
         C("{{")
         C("  g_assert(v.size != 0);")
 
@@ -794,11 +810,11 @@ class MaybeType(Type):
             else:
                 # Otherwise, ignore extra zero byte
                 size = "(v.size - 1)"
-            C("  return ({element_typename}) {{ v.base, {size} }};", { 'size': size })
+            C("  return ({element_typename}Ref) {{ v.base, {size} }};", { 'size': size })
         C("}}")
 
         C("static inline GString *")
-        C("{typename}_format ({typename} v, GString *s, gboolean type_annotate)")
+        C("{typename}Ref_format ({typename}Ref v, GString *s, gboolean type_annotate)")
         C("{{")
         C("  if (type_annotate)")
         C('    g_string_append_printf (s, "@%s ", {typename}_typestring);')
@@ -807,7 +823,7 @@ class MaybeType(Type):
         if isinstance(self.element_type, MaybeType):
             C('      g_string_append (s, "just ");')
         C('      {append_element_code}', {
-            'append_element_code': escapeC(self.element_type.generate_append_value(self.genC("{typename}_get_value(v)"), "FALSE"))
+            'append_element_code': escapeC(self.element_type.generate_append_value(self.genC("{typename}Ref_get_value(v)"), "FALSE"))
         })
         C("    }}")
         C("  else")
@@ -866,7 +882,7 @@ class Field:
         C=self.C
         C("#define {structname}_indexof_{fieldname} {fieldindex}")
         C("static inline {ctype}")
-        C("{structname}_get_{fieldname}({structname} v)")
+        C("{structname}Ref_get_{fieldname}({structname}Ref v)")
         C("{{")
         has_offset_size = False
         if self.table_i == -1:
@@ -884,7 +900,7 @@ class Field:
                 C("  return &G_STRUCT_MEMBER(char, v.base, {offset});", {'offset': offset})
         else:
             if self.type.is_fixed():
-                C("  return ({typename}) {{ G_STRUCT_MEMBER_P(v.base, {offset}), {fixed_size} }};", {'offset': offset})
+                C("  return ({typename}Ref) {{ G_STRUCT_MEMBER_P(v.base, {offset}), {fixed_size} }};", {'offset': offset})
             else:
                 if not has_offset_size:
                     has_offset_size = True
@@ -894,7 +910,7 @@ class Field:
                     C("  gsize end = v.size - offset_size * {framing_offset_size};", {'framing_offset_size': self.struct.framing_offset_size })
                 else:
                     C("  gsize end = {FPREFIX}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
-                C("  return ({typename}) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
+                C("  return ({typename}Ref) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
         C("}}")
 
 class StructType(Type):
@@ -1007,7 +1023,7 @@ class StructType(Type):
             f.generate()
         C=self.C
         C("static inline GString *")
-        C("{typename}_format ({typename} v, GString *s, gboolean type_annotate)")
+        C("{typename}Ref_format ({typename}Ref v, GString *s, gboolean type_annotate)")
         C("{{")
 
         # Create runs of things we can combine into single printf
@@ -1038,14 +1054,14 @@ class StructType(Type):
                 for j, f in enumerate(run):
                     if f.type.get_type_annotation() != "":
                         C('                   type_annotate ? "%s" : "",' % (f.type.get_type_annotation()))
-                    value = f.type.convert_value_for_format("{structname}_get_{fieldname}(v)".format(structname=self.typename, fieldname=f.name))
+                    value = f.type.convert_value_for_format("{structname}Ref_get_{fieldname}(v)".format(structname=self.typename, fieldname=f.name))
                     C('                   %s%s' % (value, "," if j != len(run) - 1 else ");"))
             else:
                 # A run of container fields
                 if i == 0:
                     C('  g_string_append (s, "(");')
                 for f in run:
-                    C('  {append_field_code}', {'append_field_code': escapeC(f.type.generate_append_value(f.genC("{structname}_get_{fieldname}(v)"), "type_annotate"))})
+                    C('  {append_field_code}', {'append_field_code': escapeC(f.type.generate_append_value(f.genC("{structname}Ref_get_{fieldname}(v)"), "type_annotate"))})
                     if not f.last:
                         C('  g_string_append (s, ", ");')
                     elif len(self.fields) == 1:
