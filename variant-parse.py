@@ -401,6 +401,18 @@ static inline {TypeNameRef}
   return ({TypeNameRef}) {{ g_variant_get_data (v), g_variant_get_size (v) }};
 }}
 
+static inline {TypeNameRef}
+{type_name_ref_}from_bytes (GBytes *b)
+{{
+  return ({TypeNameRef}) {{ g_bytes_get_data (b, NULL), g_bytes_get_size (b) }};
+}}
+
+static inline {TypeNameRef}
+{type_name_ref_}from_data (gpointer data, gsize size)
+{{
+  return ({TypeNameRef}) {{ data, size }};
+}}
+
 static inline GVariant *
 {type_name_ref_}dup_to_variant ({TypeNameRef} v)
 {{
