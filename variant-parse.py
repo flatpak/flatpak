@@ -370,6 +370,8 @@ class Type:
             vars['type_name_'] = snake + '_'
             vars['TYPE_NAME_'] = snake.upper() + '_'
             vars['type_name_ref_'] = snake + '_ref_'
+        if self.is_fixed():
+            vars['fixed_ctype'] = self.get_fixed_ctype()
 
         if extra_vars:
             vars = {**vars, **extra_vars}
@@ -977,6 +979,40 @@ class Field:
                     C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
                 C("  return ({TypeNameRef}) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
         C("}}")
+        C("")
+
+        if self.type.is_fixed() and not self.type.is_basic():
+            C(
+"""static inline const {fixed_ctype} *
+{struct_name_ref_}peek_{fieldname}({StructName}Ref v) {{
+  return ({fixed_ctype} *){struct_name_ref_}get_{fieldname}(v).base;
+}}
+""")
+        elif isinstance(self.type, ArrayType) and self.type.element_type.is_fixed():
+            C(
+"""static inline const {element_fixed_ctype} *
+{struct_name_ref_}peek_{fieldname}({StructName}Ref v, gsize *len) {{
+  {ctype} a = {struct_name_ref_}get_{fieldname}(v);
+  if (len != NULL)
+    *len = {type_name_ref_}get_length(a);
+  return (const {element_fixed_ctype} *)a.base;
+}}
+""", {
+    'element_fixed_ctype': self.type.element_type.get_fixed_ctype(),
+})
+        elif isinstance(self.type, DictType) and self.type.element_is_fixed():
+            C(
+"""static inline const {element_fixed_ctype} *
+{struct_name_ref_}peek_{fieldname}({StructName}Ref v, gsize *len) {{
+  {ctype} a = {struct_name_ref_}get_{fieldname}(v);
+  if (len != NULL)
+    *len = {type_name_ref_}get_length(a);
+  return (const {element_fixed_ctype} *)a.base;
+}}
+""", {
+    'element_fixed_ctype': self.type.typename + "Entry",
+})
+
 
     def generate_fixed(self):
         self.C("  {field_type} {fieldname};", {'field_type': self.type.get_fixed_ctype()})
@@ -1110,6 +1146,14 @@ class StructType(Type):
 
 
         super().generate_standard_functions()
+
+        if self.is_fixed():
+            C(
+"""static inline const {fixed_ctype} *
+{type_name_ref_}peek ({TypeNameRef} v) {{
+  return (const {fixed_ctype} *)v.base;
+}}
+""");
 
         for f in self.fields:
             f.generate()
