@@ -18,8 +18,14 @@ named_types = {}
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
 
+output_file = None
 def writeC(code, continued = False):
-    print(code, end='' if continued else '\n')
+    if output_file:
+        output_file.write(code)
+        if not continued:
+            output_file.write('\n')
+    else:
+        print(code, end='' if continued else '\n')
 
 def genC(code, extra_vars = None):
     vars = {
@@ -1091,11 +1097,14 @@ def generate(typedefs, filename):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate variant accessors.')
     parser.add_argument('--prefix', help='prefix')
+    parser.add_argument('--outfile', help='output filename')
     parser.add_argument('file')
     args = parser.parse_args()
     if args.prefix:
         typename_prefix = args.prefix[0].upper() + args.prefix[1:]
         funcname_prefix = args.prefix + "_"
+    if args.outfile:
+        output_file = open(args.outfile, "w")
 
     with open(args.file, "r") as f:
         testdata = f.read()
