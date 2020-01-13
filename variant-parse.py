@@ -807,6 +807,8 @@ class Field:
         self.attributes = attributes
         self.type = type
         self.last = False
+        self.struct = None
+        self.index = None
 
     def __repr__(self):
          return "Field(%s, %s)" % (self.name, self.type)
@@ -857,6 +859,10 @@ class StructType(Type):
 
         if len(self.fields) > 0:
             self.fields[len(self.fields) - 1].last = True
+
+        for i, f in enumerate(self.fields):
+            f.struct = self
+            f.fieldindex = i
 
         framing_offset_size = 0
         fixed = True
