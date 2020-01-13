@@ -593,6 +593,8 @@ class ArrayType(Type):
         if self.element_type.is_fixed():
             C("  return v.size / {element_fixed_size};")
         else:
+            C("  if (v.size == 0)");
+            C("    return 0;");
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);");
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  return (v.size - last_end) / offset_size;")
@@ -720,6 +722,8 @@ class DictType(Type):
         if self.element_is_fixed():
             C("  return v.size / {element_fixed_size};")
         else:
+            C("  if (v.size == 0)");
+            C("    return 0;");
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);");
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  return (v.size - last_end) / offset_size;")
