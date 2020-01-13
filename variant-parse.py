@@ -423,8 +423,8 @@ static inline GVariant *
 
 static inline {TypeNameRef}
 {type_name_ref_}from_variant_ref ({Prefix}VariantRef v) {{
-    g_assert (g_variant_type_equal({prefix_}variant_ref_get_type (v), {TYPE_NAME_}TYPESTRING));
-    return ({TypeNameRef}) {prefix_}variant_ref_get_child (v);
+  g_assert (g_variant_type_equal({prefix_}variant_ref_get_type (v), {TYPE_NAME_}TYPESTRING));
+  return ({TypeNameRef}) {prefix_}variant_ref_get_child (v);
 }}
 ''')
 
