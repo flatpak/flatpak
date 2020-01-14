@@ -1,3 +1,4 @@
+#define SAMPLE_DEEP_VARIANT_FORMAT
 #include "sample.h"
 
 void
