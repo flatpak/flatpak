@@ -632,17 +632,11 @@ class ArrayType(Type):
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize len = (v.size - last_end) / offset_size;")
-            C("  gsize start = 0;")
-            if not self.element_type.is_basic():
-                C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);");
-            C("  if (index > 0)")
-            C("    {{")
-            C("      start = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index);")
-            C("      start = {PREFIX_}REF_ALIGN(start, {element_alignment});")
-            C("    }}");
+            C("  gsize start = (index > 0) ? {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - index), {element_alignment}) : 0;")
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
                 C("  return ((const char *)v.base) + start;")
             else:
+                C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);");
                 C("  return ({ElementTypenameRef}) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
@@ -766,13 +760,8 @@ class DictType(Type):
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize len = (v.size - last_end) / offset_size;")
-            C("  gsize start = 0;")
+            C("  gsize start = (index > 0) ? {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - index), {alignment}) : 0;")
             C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);");
-            C("  if (index > 0)")
-            C("    {{")
-            C("      start = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index);")
-            C("      start = {PREFIX_}REF_ALIGN(start, {alignment});")
-            C("    }}");
             C("  return ({TypeName}EntryRef) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
