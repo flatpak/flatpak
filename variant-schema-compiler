@@ -802,23 +802,55 @@ class DictType(Type):
 
         C('')
 
-        C(
+        if self.element_is_fixed():
+            C(
 """static inline gboolean
 {type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
 {{
-  gsize len = {type_name_ref_}get_length (v);
   {key_ctype} canonical_key = {canonicalize};
-  gsize i;
+  const guchar *p = v.base;
+  const guchar *end = p + v.size;
 
-  for (i = 0; i < len; i++)
+  while (p < end)
     {{
-        {TypeName}EntryRef e = {type_name_ref_}get_at (v, i);
+        {TypeName}EntryRef e = {{ p, {element_fixed_size} }};
         {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
         if ({equal})
           {{
              *out = {type_name_}entry_ref_get_value (e);
              return TRUE;
           }}
+         p += {element_fixed_size};
+    }}
+    return FALSE;
+}}""",
+            {
+                'equal': self.key_type.equal_code("canonical_key", "e_key"),
+                'canonicalize': self.key_type.canonicalize_code("key")
+            })
+        else: # non-fixed size
+           C(
+"""static inline gboolean
+{type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
+{{
+  guint offset_size = {prefix_}ref_get_offset_size (v.size);
+  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);
+  gsize len = (v.size - last_end) / offset_size;
+  {key_ctype} canonical_key = {canonicalize};
+  gsize start = 0;
+  gsize i;
+
+  for (i = 0; i < len; i++)
+    {{
+      gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - i - 1);
+      {TypeName}EntryRef e = {{ ((const guchar *)v.base) + start, end - start }};
+      {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
+      if ({equal})
+        {{
+           *out = {type_name_}entry_ref_get_value (e);
+           return TRUE;
+        }}
+      start = {PREFIX_}REF_ALIGN(end, {alignment});
     }}
     return FALSE;
 }}""",
