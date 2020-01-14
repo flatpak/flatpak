@@ -304,7 +304,9 @@ def add_named_type(name, type):
 
 def get_named_type(name):
     name = typename_prefix + name
-    assert name in named_types
+    if not name in named_types:
+        print ("Unknown type %s" % remove_prefix(name, typename_prefix))
+        sys.exit(1)
     return named_types[name]
 
 class TypeDef:
