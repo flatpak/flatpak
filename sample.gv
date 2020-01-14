@@ -26,7 +26,7 @@ type Test {
   bar: int32;
   v: variant;
   arr: []Var;
-  d1: 'D1 [int32]int32;
+  d1: [int32]int32;
   d1s: 'D1s [sorted int32]int32; /* Sorted, so we can test binary search fixed lookup */
   meta: Metadata;
   metas: SortedMetadata;

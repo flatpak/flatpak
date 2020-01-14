@@ -28,20 +28,20 @@ test_sample_variant (GVariant *v)
   varv = g_variant_get_variant (g_variant_get_child_value (v, SAMPLE_TEST_INDEXOF_V));
   g_assert_cmpstr (g_variant_print (varv, TRUE), ==, sample_var_ref_print (var, TRUE));
 
-  SampleD1Ref d1 = sample_test_ref_get_d1(t);
-  GVariant *v2 = sample_d1_ref_dup_to_variant(d1);
-  g_assert_cmpstr (g_variant_print (v2, TRUE), ==, sample_d1_ref_print(d1, FALSE));
+  SampleTestD1Ref d1 = sample_test_ref_get_d1(t);
+  GVariant *v2 = sample_test_d1_ref_dup_to_variant(d1);
+  g_assert_cmpstr (g_variant_print (v2, TRUE), ==, sample_test_d1_ref_print(d1, FALSE));
 
-  g_assert (!sample_d1_ref_lookup(d1, 0, &resi));
-  g_assert (sample_d1_ref_lookup(d1, 1, &resi));
+  g_assert (!sample_test_d1_ref_lookup(d1, 0, &resi));
+  g_assert (sample_test_d1_ref_lookup(d1, 1, &resi));
   g_assert_cmpint (resi, ==, 2);
-  g_assert (!sample_d1_ref_lookup(d1, 2, &resi));
-  g_assert (sample_d1_ref_lookup(d1, 3, &resi));
+  g_assert (!sample_test_d1_ref_lookup(d1, 2, &resi));
+  g_assert (sample_test_d1_ref_lookup(d1, 3, &resi));
   g_assert_cmpint (resi, ==, 4);
-  g_assert (!sample_d1_ref_lookup(d1, 4, &resi));
-  g_assert (sample_d1_ref_lookup(d1, 5, &resi));
+  g_assert (!sample_test_d1_ref_lookup(d1, 4, &resi));
+  g_assert (sample_test_d1_ref_lookup(d1, 5, &resi));
   g_assert_cmpint (resi, ==, 6);
-  g_assert (!sample_d1_ref_lookup(d1, 6, &resi));
+  g_assert (!sample_test_d1_ref_lookup(d1, 6, &resi));
 
   SampleD1sRef d1s = sample_test_ref_get_d1s(t);
   GVariant *v2s = sample_d1s_ref_dup_to_variant(d1s);
