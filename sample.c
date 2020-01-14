@@ -88,11 +88,13 @@ test_sample_variant (GVariant *v)
   g_assert_cmpstr (g_variant_print (metas_v, FALSE), ==, sample_sorted_metadata_ref_print (metas, FALSE));
   g_assert_cmpstr (g_variant_print (metas_v, TRUE), ==, sample_sorted_metadata_ref_print (metas, TRUE));
 
+  g_assert (!sample_sorted_metadata_ref_lookup(metas, "aaa", &resv));
   g_assert (sample_sorted_metadata_ref_lookup(metas, "bar", &resv));
   g_assert_cmpstr ("<1>", ==, sample_variant_ref_print (resv, TRUE));
+  g_assert (!sample_sorted_metadata_ref_lookup(metas, "ccc", &resv));
   g_assert (sample_sorted_metadata_ref_lookup(metas, "foo", &resv));
   g_assert_cmpstr ("<'s'>", ==, sample_variant_ref_print (resv, TRUE));
-  g_assert (!sample_sorted_metadata_ref_lookup(metas, "missing", &resv));
+  g_assert (!sample_sorted_metadata_ref_lookup(metas, "dddmissing", &resv));
 }
 
 int
