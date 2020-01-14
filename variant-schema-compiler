@@ -468,6 +468,9 @@ static inline char *
     def can_printf_format(self):
          return False
 
+    def can_compare(self):
+         return False
+
     def generate_append_value(self, value, with_type_annotate):
         return self.genC("{type_name_ref_}format ({value}, s, {type_annotate});", {'value': value, 'type_annotate': with_type_annotate})
 
@@ -550,6 +553,16 @@ class BasicType(Type):
                       'value': value
                   }
                 )
+    def can_compare(self):
+        return True
+    def compare_code(self, val1, val2):
+        if self.is_fixed():
+            if self.kind == "uint64" or self.kind == "int64":
+                return "((%s) < (%s) ? -1 : (((%s) == (%s) ? 0 : 1))" % (val1, val2, val1, val2)
+            else:
+                return "((%s) - (%s))" % (val1, val2)
+        else: # String type
+            return "strcmp(%s, %s)" % (val1, val2)
     def equal_code(self, val1, val2):
         if self.is_fixed():
             return "%s == %s" % (val1, val2)
@@ -803,8 +816,76 @@ class DictType(Type):
 
         C('')
 
-        if self.element_is_fixed():
-            C(
+        if "sorted" in self.attributes and self.key_type.can_compare():
+            if self.element_is_fixed():
+                C( # Sorted, fixed
+"""static inline gboolean
+{type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
+{{
+  {key_ctype} canonical_key = {canonicalize};
+  gsize len = v.size / {element_fixed_size};
+  gsize start = 0;
+  gsize end = len;
+
+  while (start < end)
+    {{
+      gsize mid = (end + start) / 2;
+      {TypeName}EntryRef e = {{ ((const char *)v.base) + mid * {element_fixed_size}, {element_fixed_size} }};
+      {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
+      gint32 cmp = {compare};
+      if (cmp == 0)
+        {{
+           *out = {type_name_}entry_ref_get_value (e);
+           return TRUE;
+        }}
+      if (cmp < 0)
+        end = mid; /* canonical_key < e_key */
+      else
+        start = mid + 1; /* canonical_key > e_key */
+    }}
+    return FALSE;
+}}""", {
+    'compare': self.key_type.compare_code("canonical_key", "e_key"),
+    'canonicalize': self.key_type.canonicalize_code("key")
+})
+            else:
+                C( # Sorted, non-fixed size
+"""static inline gboolean
+{type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
+{{
+  guint offset_size = {prefix_}ref_get_offset_size (v.size);
+  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);
+  gsize len = (v.size - last_end) / offset_size;
+  {key_ctype} canonical_key = {canonicalize};
+  gsize start = 0;
+  gsize end = len;
+
+  while (start < end)
+    {{
+      gsize mid = (end + start) / 2;
+      gsize mid_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - mid - 1);
+      gsize mid_start = mid == 0 ? 0 : {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - mid), {alignment});
+      {TypeName}EntryRef e = {{ ((const char *)v.base) + mid_start, mid_end - mid_start }};
+      {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
+      gint32 cmp = {compare};
+      if (cmp == 0)
+        {{
+           *out = {type_name_}entry_ref_get_value (e);
+           return TRUE;
+        }}
+      if (cmp < 0)
+        end = mid; /* canonical_key < e_key */
+      else
+        start = mid + 1; /* canonical_key > e_key */
+    }}
+    return FALSE;
+}}""", {
+    'compare': self.key_type.compare_code("canonical_key", "e_key"),
+    'canonicalize': self.key_type.canonicalize_code("key")
+})
+        else:
+            if self.element_is_fixed():
+                C( # Unsorted, fixed size
 """static inline gboolean
 {type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
 {{
@@ -824,13 +905,12 @@ class DictType(Type):
          p += {element_fixed_size};
     }}
     return FALSE;
-}}""",
-            {
-                'equal': self.key_type.equal_code("canonical_key", "e_key"),
-                'canonicalize': self.key_type.canonicalize_code("key")
-            })
-        else: # non-fixed size
-           C(
+}}""", {
+    'equal': self.key_type.equal_code("canonical_key", "e_key"),
+    'canonicalize': self.key_type.canonicalize_code("key")
+})
+            else: # Unsorted, non-fixed size
+                C(
 """static inline gboolean
 {type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
 {{
@@ -854,11 +934,10 @@ class DictType(Type):
       start = {PREFIX_}REF_ALIGN(end, {alignment});
     }}
     return FALSE;
-}}""",
-            {
-                'equal': self.key_type.equal_code("canonical_key", "e_key"),
-                'canonicalize': self.key_type.canonicalize_code("key")
-            })
+}}""", {
+    'equal': self.key_type.equal_code("canonical_key", "e_key"),
+    'canonicalize': self.key_type.canonicalize_code("key")
+})
 
         C('')
 
