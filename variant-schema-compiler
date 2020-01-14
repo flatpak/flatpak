@@ -657,8 +657,9 @@ class ArrayType(Type):
         self.generate_print()
 
 class DictType(Type):
-    def __init__(self, key_type, value_type):
+    def __init__(self, attributes, key_type, value_type):
         super().__init__()
+        self.attributes = list(attributes)
         self.key_type = key_type
         self.value_type = value_type
 
@@ -1306,7 +1307,9 @@ variantType = Keyword("variant").setParseAction(lambda toks: VariantType())
 
 arrayType = (LBRACK + RBRACK + typeSpec).setParseAction(lambda toks: ArrayType(toks[0]))
 
-dictType = (LBRACK + basicType + RBRACK + typeSpec).setParseAction(lambda toks: DictType(toks[0], toks[1]))
+indexAttribute = oneOf("sorted")
+
+dictType = (LBRACK + Group(ZeroOrMore(indexAttribute)) + basicType + RBRACK + typeSpec).setParseAction(lambda toks: DictType(toks[0], toks[1], toks[2]))
 
 maybeType = (Suppress("?") + typeSpec).setParseAction(lambda toks: MaybeType(toks[0]))
 
