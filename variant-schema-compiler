@@ -676,7 +676,13 @@ class ArrayType(Type):
             C("    return 0;");
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);");
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
-            C("  return (v.size - last_end) / offset_size;")
+            C("  gsize offsets_array_size;")
+            C("  if (last_end > v.size)")
+            C("    return 0;")
+            C("  offsets_array_size = v.size - last_end;")
+            C("  if (offsets_array_size % offset_size != 0)")
+            C("    return 0;")
+            C("  return offsets_array_size / offset_size;")
         C("}}")
         C("static inline {element_ctype}")
         C("{type_name_ref_}get_at ({TypeNameRef} v, gsize index)")
@@ -691,11 +697,13 @@ class ArrayType(Type):
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize len = (v.size - last_end) / offset_size;")
+            # Here we assume last_end is verified in get_length(), its not safe anyway to call get_at() without checking the length first
             C("  gsize start = (index > 0) ? {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - index), {element_alignment}) : 0;")
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
                 C("  return ((const char *)v.base) + start;")
             else:
-                C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);");
+                C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);")
+                C("  g_assert (start < end && end <= last_end);")
                 C("  return ({ElementTypenameRef}) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
