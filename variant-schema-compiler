@@ -221,23 +221,65 @@ typedef struct {{
  gconstpointer base;
  gsize size;
 }} {Prefix}VariantRef;
+
+static inline {Prefix}Ref
+{prefix_}variant_ref_get_child ({Prefix}VariantRef v, const GVariantType **out_type)
+{{
+  if (v.size)
+    {{
+      guchar *base = (guchar *)v.base;
+      gsize size = v.size - 1;
+
+      /* find '\\0' character */
+      while (size > 0 && base[size] != 0)
+        size--;
+
+      /* ensure we didn't just hit the start of the string */
+      if (base[size] == 0)
+       {{
+          const char *type_string = (char *) base + size + 1;
+          const char *limit = (char *)base + v.size;
+          const char *end;
+
+          if (g_variant_type_string_scan (type_string, limit, &end) && end == limit)
+            {{
+              if (out_type)
+                *out_type = (const GVariantType *)type_string;
+              return ({Prefix}Ref) {{ v.base, size }};
+            }}
+       }}
+    }}
+  if (out_type)
+    *out_type = G_VARIANT_TYPE_UNIT;
+  return  ({Prefix}Ref) {{ "\\0", 1 }};
+}}
+
 static inline const GVariantType *
 {prefix_}variant_ref_get_type ({Prefix}VariantRef v)
 {{
-  gsize size = v.size - 1;
-  while (((guchar *)v.base)[size] != 0)
-    size--;
-  return (const GVariantType *)((guchar *)v.base + size + 1);
+  if (v.size)
+    {{
+      guchar *base = (guchar *)v.base;
+      gsize size = v.size - 1;
+
+      /* find '\\0' character */
+      while (size > 0 && base[size] != 0)
+        size--;
+
+      /* ensure we didn't just hit the start of the string */
+      if (base[size] == 0)
+       {{
+          const char *type_string = (char *) base + size + 1;
+          const char *limit = (char *)base + v.size;
+          const char *end;
+
+          if (g_variant_type_string_scan (type_string, limit, &end) && end == limit)
+             return (const GVariantType *)type_string;
+       }}
+    }}
+  return  G_VARIANT_TYPE_UNIT;
 }}
 
-static inline {Prefix}Ref
-{prefix_}variant_ref_get_child ({Prefix}VariantRef v)
-{{
-  gsize size = v.size - 1;
-  while (((guchar *)v.base)[size] != 0)
-    size--;
-  return ({Prefix}Ref) {{ v.base, size }};
-}}
 
 static inline GVariant *
 {prefix_}variant_ref_dup_to_gvariant ({Prefix}VariantRef v)
@@ -254,16 +296,16 @@ static inline GVariant *
 static inline GVariant *
 {prefix_}variant_ref_dup_child_to_gvariant ({Prefix}VariantRef v)
 {{
-  const GVariantType  *type = {prefix_}variant_ref_get_type (v);
-  {Prefix}Ref child = {prefix_}variant_ref_get_child (v);
+  const GVariantType  *type;
+  {Prefix}Ref child = {prefix_}variant_ref_get_child (v, &type);
   return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
 {prefix_}variant_ref_peek_child_as_variant ({Prefix}VariantRef v)
 {{
-  const GVariantType  *type = {prefix_}variant_ref_get_type (v);
-  {Prefix}Ref child = {prefix_}variant_ref_get_child (v);
+  const GVariantType  *type;
+  {Prefix}Ref child = {prefix_}variant_ref_get_child (v, &type);
   return g_variant_new_from_data (type, child.base, child.size, TRUE, NULL, NULL);
 }}
 
@@ -443,8 +485,9 @@ static inline GVariant *
 
 static inline {TypeNameRef}
 {type_name_ref_}from_variant_ref ({Prefix}VariantRef v) {{
-  g_assert (g_variant_type_equal({prefix_}variant_ref_get_type (v), {TYPE_NAME_}TYPESTRING));
-  {Prefix}Ref child = {prefix_}variant_ref_get_child (v);
+  const GVariantType  *type;
+  {Prefix}Ref child = {prefix_}variant_ref_get_child (v, &type);
+  g_assert (g_variant_type_equal(type, {TYPE_NAME_}TYPESTRING));
   return ({TypeNameRef}) {{ child.base, child.size }};
 }}
 ''')
