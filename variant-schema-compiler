@@ -52,7 +52,10 @@ def genC(code, extra_vars = None):
     }
     if extra_vars:
         vars = {**vars, **extra_vars}
-    return code.format_map(vars)
+    res = code.format_map(vars)
+    if res[:1] == '\n':
+        res = res[1:]
+    return res
 def escapeC(s):
     return s.replace('{', '{{').replace('}', '}}')
 
@@ -429,8 +432,7 @@ class Type:
         writeC(self.genC(code, extra_vars), continued)
 
     def generate_types(self):
-        self.C(
-'''
+        self.C('''
 /************** {TypeName} *******************/
 
 #define {TYPE_NAME_}TYPESTRING "{typestring}"
@@ -442,8 +444,8 @@ typedef struct {{
 }} {TypeNameRef};''')
 
     def generate_standard_functions(self):
-        self.C(
-'''
+        self.C('''
+
 static inline {TypeNameRef}
 {type_name_ref_}from_variant (GVariant *v)
 {{
@@ -752,8 +754,8 @@ class DictType(Type):
     def generate(self):
         C=self.C
         super().generate_types()
-        C(
-'''typedef struct {{
+        C('''
+typedef struct {{
  gconstpointer base;
  gsize size;
 }} {TypeName}EntryRef;''')
