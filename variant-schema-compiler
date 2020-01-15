@@ -334,7 +334,7 @@ static inline char *
 }}""", {'filename': filename})
 
 def generate_footer(filename):
-    C('', {'filename': filename})
+    pass
 
 def align_down(value, alignment):
     return value & ~(alignment - 1)
@@ -433,6 +433,7 @@ class Type:
 
     def generate_types(self):
         self.C('''
+
 /************** {TypeName} *******************/
 
 #define {TYPE_NAME_}TYPESTRING "{typestring}"
@@ -515,8 +516,7 @@ static inline char *
   GString *s = g_string_new ("");
   {type_name_ref_}format (v, s, type_annotate);
   return g_string_free (s, FALSE);
-}}
-''')
+}}''')
 
     def get_ctype(self):
          return self.typename + "Ref"
