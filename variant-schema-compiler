@@ -1180,37 +1180,48 @@ class Field:
         C("static inline {ctype}")
         C("{struct_name_ref_}get_{fieldname} ({StructName}Ref v)")
         C("{{")
-        has_offset_size = False
+
+        if not self.type.is_fixed() or self.table_i >= 0:
+            C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);");
+
         if self.table_i == -1:
             offset = "((%d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
         else:
-            has_offset_size = True
-            C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);");
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, {table_i});", {'table_i': self.table_i });
             offset = "((last_end + %d) & (~(gsize)%d)) + %d" % (self.table_a + self.table_b, self.table_b, self.table_c)
+        C("  guint offset = {offset};", {'offset': offset});
 
         if self.type.is_basic():
             if self.type.is_fixed():
-                val = genC("({ctype})G_STRUCT_MEMBER({readctype}, v.base, {offset})", {'offset': offset})
+                if not self.struct.is_fixed():
+                    C("  g_assert (offset + {fixed_size} < v.size);");
+                val = genC("({ctype})G_STRUCT_MEMBER({readctype}, v.base, offset)")
                 if "bigendian" in self.attributes:
                     val = "%s_FROM_BE(%s)" % (self.type.get_ctype().upper(), val)
                 if "littleendian" in self.attributes:
                     val = "%s_FROM_LE(%s)" % (self.type.get_ctype().upper(), val)
                 C("  return {val};", {"val": val})
             else: # string
-                C("  return &G_STRUCT_MEMBER(char, v.base, {offset});", {'offset': offset})
-        else:
-            if self.type.is_fixed():
-                C("  return ({TypeNameRef}) {{ G_STRUCT_MEMBER_P(v.base, {offset}), {fixed_size} }};", {'offset': offset})
-            else:
-                if not has_offset_size:
-                    has_offset_size = True
-                    C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);");
-                C("  gsize start = {offset};", {'offset': offset});
+                C("  const char *base = (const char *)v.base;")
+                C("  gsize start = offset;");
                 if self.last:
                     C("  gsize end = v.size - offset_size * {framing_offset_size};", {'framing_offset_size': self.struct.framing_offset_size })
                 else:
                     C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
+                C("  g_assert (start <= end && end <= v.size && base[end-1] == 0);");
+                C("  return &G_STRUCT_MEMBER(const char, v.base, start);")
+        else:
+            if self.type.is_fixed():
+                if not self.struct.is_fixed():
+                    C("  g_assert (offset + {fixed_size} < v.size);");
+                C("  return ({TypeNameRef}) {{ G_STRUCT_MEMBER_P(v.base, offset), {fixed_size} }};")
+            else:
+                C("  gsize start = offset;");
+                if self.last:
+                    C("  gsize end = v.size - offset_size * {framing_offset_size};", {'framing_offset_size': self.struct.framing_offset_size })
+                else:
+                    C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
+                C("  g_assert (start <= end && end <= v.size);");
                 C("  return ({TypeNameRef}) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
         C("}}")
         C("")
