@@ -484,9 +484,9 @@ static inline GVariant *
 }}
 
 static inline GVariant *
-{type_name_ref_}ref_to_variant ({TypeNameRef} v,
-                                GDestroyNotify      notify,
-                                gpointer            user_data)
+{type_name_ref_}to_variant ({TypeNameRef} v,
+                             GDestroyNotify      notify,
+                             gpointer            user_data)
 {{
   return g_variant_new_from_data ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, TRUE, notify, user_data);
 }}
