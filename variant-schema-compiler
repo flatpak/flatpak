@@ -1078,13 +1078,21 @@ class MaybeType(Type):
         C("static inline {element_ctype}")
         C("{type_name_ref_}get_value ({TypeNameRef} v)")
         C("{{")
-        C("  g_assert(v.size != 0);")
+        if self.element_type.is_fixed():
+            C("  g_assert (v.size == {element_fixed_size});")
+        else:
+            if self.element_type.is_basic(): # string type
+                C("  g_assert (v.size >= 2);") # Must be at least extra zero byte plus a terminating zero
+            else:
+                C("  g_assert (v.size >= 1);") # Must be at least extra zero byte
 
         if self.element_type.is_basic():
             if self.element_type.is_fixed():
                 C("  return ({element_ctype})*(({element_read_ctype} *)v.base);")
             else: # string
-                C("  return ({element_ctype})v.base;")
+                C("  const char *base = (const char *)v.base;")
+                C("  g_assert (base[v.size - 2] == 0)")
+                C("  return base;")
         else:
             if self.element_type.is_fixed():
                 # Fixed means use whole size
