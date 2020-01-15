@@ -15,20 +15,20 @@ handle (char *filename)
 
   if (g_str_has_suffix (filename, ".commit"))
     {
-      OtCommitRef commit = ot_commit_ref_from_data (contents, size);
-      g_autofree char *s = ot_commit_ref_print (commit, TRUE);
+      OtCommitRef commit = ot_commit_from_data (contents, size);
+      g_autofree char *s = ot_commit_print (commit, TRUE);
       g_print ("%s: %s\n", filename, s);
     }
   else if (g_str_has_suffix (filename, ".dirtree"))
     {
-      OtTreeMetaRef tree = ot_tree_meta_ref_from_data (contents, size);
-      g_autofree char *s = ot_tree_meta_ref_print (tree, TRUE);
+      OtTreeMetaRef tree = ot_tree_meta_from_data (contents, size);
+      g_autofree char *s = ot_tree_meta_print (tree, TRUE);
       g_print ("%s: %s\n", filename, s);
     }
   else if (g_str_has_suffix (filename, "summary"))
     {
-      OtSummaryRef summary = ot_summary_ref_from_data (contents, size);
-      g_autofree char *s = ot_summary_ref_print (summary, TRUE);
+      OtSummaryRef summary = ot_summary_from_data (contents, size);
+      g_autofree char *s = ot_summary_print (summary, TRUE);
       g_print ("%s: %s\n", filename, s);
     }
   else

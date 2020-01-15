@@ -38,20 +38,20 @@ sum_generated (PerformanceContainerRef v)
   PerformanceItemRef item;
   gsize len, i;
 
-  tuple = performance_container_ref_get_tuple (v);
-  sum = performance_container_ref_get_a(v) +
-    performance_container_ref_get_b(v) +
-    strlen(performance_container_ref_get_c(v)) +
-    performance_container_ref_get_d(v) +
-    performance_tuple_ref_get_a (tuple) +
-    performance_tuple_ref_get_b (tuple);
+  tuple = performance_container_get_tuple (v);
+  sum = performance_container_get_a(v) +
+    performance_container_get_b(v) +
+    strlen(performance_container_get_c(v)) +
+    performance_container_get_d(v) +
+    performance_tuple_get_a (tuple) +
+    performance_tuple_get_b (tuple);
 
-  list = performance_container_ref_get_list (v);
-  len = performance_list_ref_get_length (list);
+  list = performance_container_get_list (v);
+  len = performance_list_get_length (list);
   for (i = 0; i < len; i++)
     {
-     item = performance_list_ref_get_at (list, i);
-     sum += performance_item_ref_get_a (item) + performance_item_ref_get_b (item);
+     item = performance_list_get_at (list, i);
+     sum += performance_item_get_a (item) + performance_item_get_b (item);
     }
 
   return sum;
@@ -98,7 +98,7 @@ main (int argc,
 
   g_print ("GVariant performance: %.1f kiloiterations per second\n", (count/1000.0)/g_timer_elapsed (timer, NULL));
 
-  c = performance_container_ref_from_variant (v);
+  c = performance_container_from_gvariant (v);
 
   /* Warmup */
   total = 0;

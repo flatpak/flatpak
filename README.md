@@ -15,26 +15,26 @@ type Gadget {
 
 You compile this like:
 ```
-variant-schema-compiler --prefix myapp --outfile gadget.h gadget.gv 
+variant-schema-compiler --prefix myapp --outfile gadget.h gadget.gv
 ```
 
 Which will generate a header file `gadget.h` that you can include in your code.
 
-This will define a structure MyappGadgetRef which you can create from a GVariant with 
-`myapp_gadget_ref_from_variant()` or directly from raw memory using `myapp_gadget_ref_from_bytes()` or 
-`myapp_gadget_ref_from_data()`. You can then use the generated accessor functions to get the fields
+This will define a structure MyappGadgetRef which you can create from a GVariant with
+`myapp_gadget_from_gvariant()` or directly from raw memory using `myapp_gadget_from_bytes()` or
+`myapp_gadget_from_data()`. You can then use the generated accessor functions to get the fields
 of the variant.
 
 As an example, here is a sample of accessors defined by the above:
 ```
-const char *myapp_gadget_ref_get_name (MyappGadgetRef v);
-MyappGadgetSizeRef myapp_gadget_ref_get_size (MyappGadgetRef v);
-MyappArrayofint32Ref myapp_gadget_ref_get_array (MyappGadgetRef v);
-const gint32 *myapp_gadget_ref_peek_array (MyappGadgetRef v, 
-                                           gsize *len);
-gboolean myapp_gadget_dict_ref_lookup (MyappGadgetDictRef v, 
-                                       const char * key, 
-                                       gint32 *out);
+const char *myapp_gadget_get_name (MyappGadgetRef v);
+MyappGadgetSizeRef myapp_gadget_get_size (MyappGadgetRef v);
+MyappArrayofint32Ref myapp_gadget_get_array (MyappGadgetRef v);
+const gint32 *myapp_gadget_peek_array (MyappGadgetRef v,
+                                       gsize *len);
+gboolean myapp_gadget_dict_lookup (MyappGadgetDictRef v,
+                                   const char * key,
+                                   gint32 *out);
 ```
 
 Using such accessors is much faster than working with the GVariant API for a number of reasons:
@@ -42,9 +42,9 @@ Using such accessors is much faster than working with the GVariant API for a num
  * No constant ref:ing and unref:ing of GVariants.
  * All the accessors are inlined and coded to be very efficient
  * Less validation than the generic GVariant APIs.
- 
+
 Additionally the APIs are just nicer to use due to using named fields of tuples/structs instead of indexes.
- 
+
 Of course there are some disadvantages, for instance:
   * Only pre-declared types are supported.
   * Less validation means you should not use it for untrusted data.
@@ -92,9 +92,9 @@ typedef struct {
   MyappFixedOther other;
 } MyappFixed;
 
-MyappFixed *myapp_fixed_ref_peek (MyappFixedRef v);
-const MyappFixed *myapp_user_ref_peek_one (MyappUserRef v);
-const MyappFixed *myapp_user_ref_peek_many (MyappUserRef v, gsize *len);
+MyappFixed *myapp_fixed_peek (MyappFixedRef v);
+const MyappFixed *myapp_user_peek_one (MyappUserRef v);
+const MyappFixed *myapp_user_peek_many (MyappUserRef v, gsize *len);
 ```
 
 Here are some more interesting features:
@@ -102,4 +102,3 @@ Here are some more interesting features:
  * Inline naming of subtypes.
  * Automatically generated formatters/printers.
  * Generation of gvariant typestrings and field index defines for the types
-
