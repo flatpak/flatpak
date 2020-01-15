@@ -283,6 +283,24 @@ static inline const GVariantType *
   return  G_VARIANT_TYPE_UNIT;
 }}
 
+static inline {Prefix}VariantRef
+{prefix_}variant_from_gvariant (GVariant *v)
+{{
+  g_assert (g_variant_type_equal (g_variant_get_type (v), G_VARIANT_TYPE_VARIANT));
+  return ({Prefix}VariantRef) {{ g_variant_get_data (v), g_variant_get_size (v) }};
+}}
+
+static inline {Prefix}VariantRef
+{prefix_}variant_from_bytes (GBytes *b)
+{{
+  return ({Prefix}VariantRef) {{ g_bytes_get_data (b, NULL), g_bytes_get_size (b) }};
+}}
+
+static inline {Prefix}VariantRef
+{prefix_}variant_from_data (gconstpointer data, gsize size)
+{{
+  return ({Prefix}VariantRef) {{ data, size }};
+}}
 
 static inline GVariant *
 {prefix_}variant_dup_to_gvariant ({Prefix}VariantRef v)
@@ -291,9 +309,33 @@ static inline GVariant *
 }}
 
 static inline GVariant *
+{prefix_}variant_to_gvariant ({Prefix}VariantRef v,
+                              GDestroyNotify      notify,
+                              gpointer            user_data)
+{{
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, notify, user_data);
+}}
+
+static inline GVariant *
+{prefix_}variant_to_owned_gvariant ({Prefix}VariantRef v,
+                                     GVariant *base)
+{{
+  return {prefix_}variant_to_gvariant (v, (GDestroyNotify)g_variant_unref, g_variant_ref (base));
+}}
+
+static inline GVariant *
 {prefix_}variant_peek_as_variant ({Prefix}VariantRef v)
 {{
   return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, NULL, NULL);
+}}
+
+static inline {Prefix}VariantRef
+{prefix_}variant_from_variant ({Prefix}VariantRef v)
+{{
+  const GVariantType  *type;
+  {Prefix}Ref child = {prefix_}variant_get_child (v, &type);
+  g_assert (g_variant_type_equal(type, G_VARIANT_TYPE_VARIANT));
+  return {prefix_}variant_from_data (child.base, child.size);
 }}
 
 static inline GVariant *
