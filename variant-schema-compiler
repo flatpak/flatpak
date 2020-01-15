@@ -703,7 +703,7 @@ class ArrayType(Type):
                 C("  return ((const char *)v.base) + start;")
             else:
                 C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);")
-                C("  g_assert (start < end && end <= last_end);")
+                C("  g_assert (start <= end && end <= last_end);")
                 C("  return ({ElementTypenameRef}) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
@@ -767,6 +767,7 @@ class DictType(Type):
         vars['value_alignment'] = self.value_type.alignment()
         if self.value_type.is_basic():
             vars['value_read_ctype'] = self.value_type.get_read_ctype()
+        vars['key_fixed_size'] = self.key_type.get_fixed_size()
         vars['key_ctype'] = self.key_type.get_ctype()
         if self.key_type.is_basic():
             vars['key_read_ctype'] = self.key_type.get_read_ctype()
@@ -812,7 +813,13 @@ typedef struct {{
             C("    return 0;");
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);");
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
-            C("  return (v.size - last_end) / offset_size;")
+            C("  gsize offsets_array_size;")
+            C("  if (last_end > v.size)")
+            C("    return 0;")
+            C("  offsets_array_size = v.size - last_end;")
+            C("  if (offsets_array_size % offset_size != 0)")
+            C("    return 0;")
+            C("  return offsets_array_size / offset_size;")
         C("}}")
 
         C('')
@@ -827,8 +834,10 @@ typedef struct {{
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
             C("  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize len = (v.size - last_end) / offset_size;")
+            # Here we assume last_end is verified in get_length(), its not safe anyway to call get_at() without checking the length first
             C("  gsize start = (index > 0) ? {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - index), {alignment}) : 0;")
             C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);");
+            C("  g_assert (start <= end && end <= last_end);")
             C("  return ({TypeName}EntryRef) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
@@ -839,9 +848,15 @@ typedef struct {{
         C("{{")
         # Keys are always basic
         if self.key_type.is_fixed():
+            if not self.element_is_fixed(): # No need to verify size if the entire element is fixed
+                C("  g_assert (v.size >= {key_fixed_size});")
             C("  return ({key_ctype})*(({key_read_ctype} *)v.base);")
         else: # string-style
-            C("  return ({key_ctype})v.base;")
+            C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
+            C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
+            C("  const char *base = (const char *)v.base;")
+            C("  g_assert (end < v.size && base[end-1] == 0);")
+            C("  return base;")
         C("}}")
 
         C('')
@@ -853,17 +868,24 @@ typedef struct {{
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
             C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize offset = {PREFIX_}REF_ALIGN(end, {value_alignment});")
+            if self.value_type.is_fixed():
+                C("  g_assert (offset == v.size - offset_size - {value_fixed_type})");
+            else:
+                C("  g_assert (offset <= v.size);")
             offset = "offset"
             end = "(v.size - offset_size)"
         else:
             # Fixed key, so known offset
             offset = align_up(self.key_type.get_fixed_size(), self.value_type.alignment())
             end = "v.size"
+            if not self.value_type.is_fixed():
+                C("  g_assert (v.size >= {offset});", {'offset': offset})
 
         if self.value_type.is_basic():
             if self.value_type.is_fixed():
                 C("  return ({value_ctype})*(({value_read_ctype} *)((char *)v.base + {offset}));", {'offset': offset})
             else: # string-style
+                C("  g_assert (((char *)v.base)[{end} - 1] == 0);", {'end': end })
                 C("  return ({value_ctype})v.base + {offset};", {'offset': offset})
         else:
             C("  return ({value_typename}Ref) {{ (char *)v.base + {offset}, {end} - {offset} }};", {'offset': offset, 'end': end })
@@ -872,13 +894,14 @@ typedef struct {{
 
         C('')
 
-        if "sorted" in self.attributes and self.key_type.can_compare():
-            if self.element_is_fixed():
-                C( # Sorted, fixed
-"""static inline gboolean
+        C("""
+static inline gboolean
 {type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
 {{
-  {key_ctype} canonical_key = {canonicalize};
+  {key_ctype} canonical_key = {canonicalize};""", { 'canonicalize': self.key_type.canonicalize_code("key") })
+        if self.element_is_fixed():
+            if "sorted" in self.attributes and self.key_type.can_compare(): # Sorted, fixed
+                C("""
   gsize len = v.size / {element_fixed_size};
   gsize start = 0;
   gsize end = len;
@@ -900,52 +923,9 @@ typedef struct {{
         start = mid + 1; /* canonical_key > e_key */
     }}
     return FALSE;
-}}""", {
-    'compare': self.key_type.compare_code("canonical_key", "e_key"),
-    'canonicalize': self.key_type.canonicalize_code("key")
-})
-            else:
-                C( # Sorted, non-fixed size
-"""static inline gboolean
-{type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
-{{
-  guint offset_size = {prefix_}ref_get_offset_size (v.size);
-  gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);
-  gsize len = (v.size - last_end) / offset_size;
-  {key_ctype} canonical_key = {canonicalize};
-  gsize start = 0;
-  gsize end = len;
-
-  while (start < end)
-    {{
-      gsize mid = (end + start) / 2;
-      gsize mid_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - mid - 1);
-      gsize mid_start = mid == 0 ? 0 : {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - mid), {alignment});
-      {TypeName}EntryRef e = {{ ((const char *)v.base) + mid_start, mid_end - mid_start }};
-      {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
-      gint32 cmp = {compare};
-      if (cmp == 0)
-        {{
-           *out = {type_name_}entry_ref_get_value (e);
-           return TRUE;
-        }}
-      if (cmp < 0)
-        end = mid; /* canonical_key < e_key */
-      else
-        start = mid + 1; /* canonical_key > e_key */
-    }}
-    return FALSE;
-}}""", {
-    'compare': self.key_type.compare_code("canonical_key", "e_key"),
-    'canonicalize': self.key_type.canonicalize_code("key")
-})
-        else:
-            if self.element_is_fixed():
-                C( # Unsorted, fixed size
-"""static inline gboolean
-{type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
-{{
-  {key_ctype} canonical_key = {canonicalize};
+}}""", {'compare': self.key_type.compare_code("canonical_key", "e_key")})
+            else: # Unsorted, fixed size
+                C("""
   const guchar *p = v.base;
   const guchar *end = p + v.size;
 
@@ -965,15 +945,44 @@ typedef struct {{
     'equal': self.key_type.equal_code("canonical_key", "e_key"),
     'canonicalize': self.key_type.canonicalize_code("key")
 })
-            else: # Unsorted, non-fixed size
-                C(
-"""static inline gboolean
-{type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
-{{
+        else:
+            C("""
   guint offset_size = {prefix_}ref_get_offset_size (v.size);
   gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);
-  gsize len = (v.size - last_end) / offset_size;
-  {key_ctype} canonical_key = {canonicalize};
+  if (last_end > v.size)
+    return FALSE;
+  gsize offsets_array_size = v.size - last_end;
+  if (offsets_array_size % offset_size != 0)
+    return FALSE;
+  gsize len = offsets_array_size / offset_size;""")
+            if "sorted" in self.attributes and self.key_type.can_compare(): # Sorted, non-fixed size
+                C("""
+  gsize start = 0;
+  gsize end = len;
+
+  while (start < end)
+    {{
+      gsize mid = (end + start) / 2;
+      gsize mid_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - mid - 1);
+      gsize mid_start = mid == 0 ? 0 : {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - mid), {alignment});
+      g_assert (mid_start <= mid_end && mid_end <= last_end);
+      {TypeName}EntryRef e = {{ ((const char *)v.base) + mid_start, mid_end - mid_start }};
+      {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
+      gint32 cmp = {compare};
+      if (cmp == 0)
+        {{
+           *out = {type_name_}entry_ref_get_value (e);
+           return TRUE;
+        }}
+      if (cmp < 0)
+        end = mid; /* canonical_key < e_key */
+      else
+        start = mid + 1; /* canonical_key > e_key */
+    }}
+    return FALSE;
+}}""", { 'compare': self.key_type.compare_code("canonical_key", "e_key")})
+            else: # Unsorted, non-fixed size
+                C("""
   gsize start = 0;
   gsize i;
 
@@ -981,6 +990,7 @@ typedef struct {{
     {{
       gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - i - 1);
       {TypeName}EntryRef e = {{ ((const guchar *)v.base) + start, end - start }};
+      g_assert (start <= end && end <= last_end);
       {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
       if ({equal})
         {{
@@ -990,10 +1000,7 @@ typedef struct {{
       start = {PREFIX_}REF_ALIGN(end, {alignment});
     }}
     return FALSE;
-}}""", {
-    'equal': self.key_type.equal_code("canonical_key", "e_key"),
-    'canonicalize': self.key_type.canonicalize_code("key")
-})
+}}""", { 'equal': self.key_type.equal_code("canonical_key", "e_key") })
 
         C('')
 
