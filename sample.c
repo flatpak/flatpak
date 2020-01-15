@@ -32,41 +32,41 @@ test_sample_variant (GVariant *v)
   GVariant *v2 = sample_test_d1_ref_dup_to_variant(d1);
   g_assert_cmpstr (g_variant_print (v2, TRUE), ==, sample_test_d1_ref_print(d1, FALSE));
 
-  g_assert (!sample_test_d1_ref_lookup(d1, 0, &resi));
-  g_assert (sample_test_d1_ref_lookup(d1, 1, &resi));
+  g_assert (!sample_test_d1_ref_lookup(d1, 0,NULL , &resi));
+  g_assert (sample_test_d1_ref_lookup(d1, 1,NULL , &resi));
   g_assert_cmpint (resi, ==, 2);
-  g_assert (!sample_test_d1_ref_lookup(d1, 2, &resi));
-  g_assert (sample_test_d1_ref_lookup(d1, 3, &resi));
+  g_assert (!sample_test_d1_ref_lookup(d1, 2,NULL , &resi));
+  g_assert (sample_test_d1_ref_lookup(d1, 3,NULL , &resi));
   g_assert_cmpint (resi, ==, 4);
-  g_assert (!sample_test_d1_ref_lookup(d1, 4, &resi));
-  g_assert (sample_test_d1_ref_lookup(d1, 5, &resi));
+  g_assert (!sample_test_d1_ref_lookup(d1, 4,NULL , &resi));
+  g_assert (sample_test_d1_ref_lookup(d1, 5,NULL , &resi));
   g_assert_cmpint (resi, ==, 6);
-  g_assert (!sample_test_d1_ref_lookup(d1, 6, &resi));
+  g_assert (!sample_test_d1_ref_lookup(d1, 6,NULL , &resi));
 
   SampleD1sRef d1s = sample_test_ref_get_d1s(t);
   GVariant *v2s = sample_d1s_ref_dup_to_variant(d1s);
   g_assert_cmpstr (g_variant_print (v2s, TRUE), ==, sample_d1s_ref_print(d1s, FALSE));
 
-  g_assert (!sample_d1s_ref_lookup(d1s, 0, &resi));
-  g_assert (sample_d1s_ref_lookup(d1s, 1, &resi));
+  g_assert (!sample_d1s_ref_lookup(d1s, 0,NULL , &resi));
+  g_assert (sample_d1s_ref_lookup(d1s, 1,NULL , &resi));
   g_assert_cmpint (resi, ==, 2);
-  g_assert (!sample_d1s_ref_lookup(d1s, 2, &resi));
-  g_assert (sample_d1s_ref_lookup(d1s, 3, &resi));
+  g_assert (!sample_d1s_ref_lookup(d1s, 2,NULL , &resi));
+  g_assert (sample_d1s_ref_lookup(d1s, 3,NULL , &resi));
   g_assert_cmpint (resi, ==, 4);
-  g_assert (!sample_d1s_ref_lookup(d1s, 4, &resi));
-  g_assert (sample_d1s_ref_lookup(d1s, 5, &resi));
+  g_assert (!sample_d1s_ref_lookup(d1s, 4,NULL , &resi));
+  g_assert (sample_d1s_ref_lookup(d1s, 5,NULL , &resi));
   g_assert_cmpint (resi, ==, 6);
-  g_assert (!sample_d1s_ref_lookup(d1s, 6, &resi));
+  g_assert (!sample_d1s_ref_lookup(d1s, 6,NULL , &resi));
 
   SampleD2Ref d2 = sample_test_ref_get_d2(t);
   GVariant *v3 = sample_d2_ref_dup_to_variant(d2);
   g_assert_cmpstr (g_variant_print (v3, TRUE), ==, sample_d2_ref_print(d2, FALSE));
 
-  g_assert (sample_d2_ref_lookup(d2, 1, &res));
+  g_assert (sample_d2_ref_lookup(d2, 1,NULL , &res));
   g_assert_cmpstr (res, ==, "a");
-  g_assert (sample_d2_ref_lookup(d2, 3, &res));
+  g_assert (sample_d2_ref_lookup(d2, 3,NULL , &res));
   g_assert_cmpstr (res, ==, "b");
-  g_assert (!sample_d2_ref_lookup(d2, 2, &res));
+  g_assert (!sample_d2_ref_lookup(d2, 2,NULL , &res));
 
   SampleMetadataRef meta = sample_test_ref_get_meta(t);
   GVariant *meta_v = sample_metadata_ref_dup_to_variant(meta);
@@ -75,11 +75,11 @@ test_sample_variant (GVariant *v)
   g_assert_cmpstr (g_variant_print (meta_v, FALSE), ==, sample_metadata_ref_print (meta, FALSE));
   g_assert_cmpstr (g_variant_print (meta_v, TRUE), ==, sample_metadata_ref_print (meta, TRUE));
 
-  g_assert (sample_metadata_ref_lookup(meta, "bar", &resv));
+  g_assert (sample_metadata_ref_lookup(meta, "bar",NULL , &resv));
   g_assert_cmpstr ("<1>", ==, sample_variant_ref_print (resv, TRUE));
-  g_assert (sample_metadata_ref_lookup(meta, "foo", &resv));
+  g_assert (sample_metadata_ref_lookup(meta, "foo",NULL , &resv));
   g_assert_cmpstr ("<'s'>", ==, sample_variant_ref_print (resv, TRUE));
-  g_assert (!sample_metadata_ref_lookup(meta, "missing", &resv));
+  g_assert (!sample_metadata_ref_lookup(meta, "missing",NULL , &resv));
 
   SampleSortedMetadataRef metas = sample_test_ref_get_metas(t);
   GVariant *metas_v = sample_sorted_metadata_ref_dup_to_variant(metas);
@@ -88,13 +88,13 @@ test_sample_variant (GVariant *v)
   g_assert_cmpstr (g_variant_print (metas_v, FALSE), ==, sample_sorted_metadata_ref_print (metas, FALSE));
   g_assert_cmpstr (g_variant_print (metas_v, TRUE), ==, sample_sorted_metadata_ref_print (metas, TRUE));
 
-  g_assert (!sample_sorted_metadata_ref_lookup(metas, "aaa", &resv));
-  g_assert (sample_sorted_metadata_ref_lookup(metas, "bar", &resv));
+  g_assert (!sample_sorted_metadata_ref_lookup(metas, "aaa",NULL , &resv));
+  g_assert (sample_sorted_metadata_ref_lookup(metas, "bar",NULL , &resv));
   g_assert_cmpstr ("<1>", ==, sample_variant_ref_print (resv, TRUE));
-  g_assert (!sample_sorted_metadata_ref_lookup(metas, "ccc", &resv));
-  g_assert (sample_sorted_metadata_ref_lookup(metas, "foo", &resv));
+  g_assert (!sample_sorted_metadata_ref_lookup(metas, "ccc",NULL , &resv));
+  g_assert (sample_sorted_metadata_ref_lookup(metas, "foo",NULL , &resv));
   g_assert_cmpstr ("<'s'>", ==, sample_variant_ref_print (resv, TRUE));
-  g_assert (!sample_sorted_metadata_ref_lookup(metas, "dddmissing", &resv));
+  g_assert (!sample_sorted_metadata_ref_lookup(metas, "dddmissing",NULL , &resv));
 }
 
 int

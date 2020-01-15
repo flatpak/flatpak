@@ -896,7 +896,7 @@ typedef struct {{
 
         C("""
 static inline gboolean
-{type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, {value_ctype} *out)
+{type_name_ref_}lookup ({TypeNameRef} v, {key_ctype} key, gsize *index_out, {value_ctype} *out)
 {{
   {key_ctype} canonical_key = {canonicalize};""", { 'canonicalize': self.key_type.canonicalize_code("key") })
         if self.element_is_fixed():
@@ -914,7 +914,10 @@ static inline gboolean
       gint32 cmp = {compare};
       if (cmp == 0)
         {{
-           *out = {type_name_}entry_ref_get_value (e);
+           if (index_out)
+             *index_out = mid;
+           if (out)
+             *out = {type_name_}entry_ref_get_value (e);
            return TRUE;
         }}
       if (cmp < 0)
@@ -928,6 +931,7 @@ static inline gboolean
                 C("""
   const guchar *p = v.base;
   const guchar *end = p + v.size;
+  gsize i = 0;
 
   while (p < end)
     {{
@@ -935,9 +939,13 @@ static inline gboolean
         {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
         if ({equal})
           {{
-             *out = {type_name_}entry_ref_get_value (e);
+             if (index_out)
+               *index_out = i;
+             if (out)
+               *out = {type_name_}entry_ref_get_value (e);
              return TRUE;
           }}
+         i++;
          p += {element_fixed_size};
     }}
     return FALSE;
@@ -971,7 +979,10 @@ static inline gboolean
       gint32 cmp = {compare};
       if (cmp == 0)
         {{
-           *out = {type_name_}entry_ref_get_value (e);
+           if (index_out)
+             *index_out = mid;
+           if (out)
+             *out = {type_name_}entry_ref_get_value (e);
            return TRUE;
         }}
       if (cmp < 0)
@@ -994,7 +1005,10 @@ static inline gboolean
       {key_ctype} e_key = {type_name_}entry_ref_get_key (e);
       if ({equal})
         {{
-           *out = {type_name_}entry_ref_get_value (e);
+           if (index_out)
+             *index_out = i;
+           if (out)
+             *out = {type_name_}entry_ref_get_value (e);
            return TRUE;
         }}
       start = {PREFIX_}REF_ALIGN(end, {alignment});
