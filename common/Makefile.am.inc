@@ -75,6 +75,12 @@ nodist_libflatpak_common_base_la_SOURCES = \
 BUILT_SOURCES += $(nodist_libflatpak_common_base_la_SOURCES)
 CLEANFILES += $(nodist_libflatpak_common_base_la_SOURCES)
 
+common/flatpak-variant-private.h common/flatpak-variant-impl-private.h: variant-schema-compiler/variant-schema-compiler  data/flatpak-variants.gv
+	$(AM_V_GEN) variant-schema-compiler/variant-schema-compiler --outfile-header common/flatpak-variant-private.h  --outfile common/flatpak-variant-impl-private.h --prefix var data/flatpak-variants.gv
+
+BUILT_SOURCES += common/flatpak-variant-private.h common/flatpak-variant-impl-private.h
+CLEANFILES += common/flatpak-variant-private.h common/flatpak-variant-impl-private.h
+
 libflatpak_common_base_la_SOURCES = \
 	common/flatpak-utils-base.c \
 	common/flatpak-utils-base-private.h \
@@ -150,6 +156,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-utils-private.h \
 	common/flatpak-utils.c \
 	common/valgrind-private.h \
+	common/flatpak-variant-private.h \
+	common/flatpak-variant-impl-private.h \
 	$(NULL)
 
 if HAVE_LIBMALCONTENT
