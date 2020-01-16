@@ -284,6 +284,12 @@ static inline const GVariantType *
   return  G_VARIANT_TYPE_UNIT;
 }}
 
+static inline gboolean
+{prefix_}variant_is_type ({Prefix}VariantRef v, const GVariantType *type)
+{{
+   return g_variant_type_equal ({prefix_}variant_get_type (v), type);
+}}
+
 static inline {Prefix}VariantRef
 {prefix_}variant_from_gvariant (GVariant *v)
 {{
