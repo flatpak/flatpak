@@ -973,7 +973,7 @@ typedef struct {{
                 C("  g_assert (v.size >= {offset});", {'offset': offset})
 
         if internal_validation:
-            C("  {prefix_}validate_child ({element_typeformat}, v.base, v.size, 1, v.base + {offset},  {end} - {offset});", {'offset': offset, 'end': end })
+            C("  {prefix_}validate_child ({element_typeformat}, v.base, v.size, 1, (char *)v.base + {offset},  {end} - {offset});", {'offset': offset, 'end': end })
 
         if self.value_type.is_basic():
             if self.value_type.is_fixed():
