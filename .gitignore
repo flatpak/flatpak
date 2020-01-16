@@ -38,6 +38,8 @@ flatpak-validate-icon
 *~
 profile/flatpak.sh
 *-dbus-generated.[ch]
+flatpak-variant-private.h
+flatpak-variant-impl-private.h
 flatpak-resources.[ch]
 flatpak-permission-dbus.[ch]
 flatpak-portal-dbus.[ch]

@@ -13,4 +13,5 @@ EXTRA_DIST += \
 	data/org.freedesktop.Flatpak.Authenticator.xml \
 	data/org.freedesktop.portal.Flatpak.xml \
 	data/flatpak-docker-seccomp.json \
+	data/flatpak-variants.gv \
 	$(NULL)

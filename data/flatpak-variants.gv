@@ -1,0 +1,46 @@
+/* Commanly used, give a name */
+type Metadata [string] variant;
+type Checksum []byte;
+
+type RefInfo {
+    commit_size: uint64;
+    checksum: Checksum;
+    metadata: Metadata;
+};
+
+/* Note: RefMaps are sorted by ref */
+type RefMap [] 'RefMapEntry {
+  ref: string;
+  info: RefInfo;
+};
+
+type Summary {
+    ref_map: RefMap;
+    metadata: Metadata;
+};
+
+type CollectionMap [sorted string] RefMap;
+
+type Commit {
+    metadata: Metadata;
+    patent: Checksum;
+    related: [] 'Related {
+        ref: string;
+        commit: Checksum;
+    };
+    subject: string;
+    body: string;
+    timestamp: bigendian uint64;
+    root_contents: Checksum;
+    root_metadata: Checksum;
+};
+
+type Cache [sorted string] 'CacheData {
+  installed_size: bigendian uint64;
+  download_size: bigendian uint64;
+  metadata: string;
+};
+
+type SparseCache [sorted string] Metadata;
+
+type CommitsCache []Checksum;
