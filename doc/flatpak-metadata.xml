@@ -182,8 +182,15 @@
 
                             <varlistentry><term><option>all</option></term>
                             <listitem><para>
-                                All device nodes in <filename>/dev</filename>.
+                                All device nodes in <filename>/dev</filename>, but not /dev/shm (which is separately specified).
                                 Available since 0.6.6.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>shm</option></term>
+                            <listitem><para>
+                                Access to the host /dev/shm
+                                (<filename>/dev/kvm</filename>).
+                                Available since 1.6.1.
                             </para></listitem></varlistentry>
 
                         </variablelist>
