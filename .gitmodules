@@ -9,3 +9,6 @@
 	path = dbus-proxy
 	url = https://github.com/flatpak/xdg-dbus-proxy.git
 	branch = master
+[submodule "variant-schema-compiler"]
+	path = variant-schema-compiler
+	url = https://gitlab.gnome.org/alexl/variant-schema-compiler.git
