@@ -8,6 +8,7 @@ from pyparsing import pyparsing_common as ppc
 
 typename_prefix = ""
 funcname_prefix = ""
+internal_validation = False
 
 LBRACK, RBRACK, LBRACE, RBRACE, COLON, SEMI = map(Suppress, "[]{}:;")
 
@@ -375,6 +376,28 @@ static inline char *
   return g_string_free (s, FALSE);
 }}""", {'filename': filename})
 
+    if internal_validation:
+        C("""
+static inline void
+{prefix_}validate_length (const GVariantType *type, gconstpointer base, gsize size, gsize length)
+{{
+  GVariant *v = g_variant_ref_sink (g_variant_new_from_data (type, base, size, FALSE, NULL, NULL));
+  g_assert (length == g_variant_n_children (v));
+  g_variant_unref (v);
+}}
+
+static inline void
+{prefix_}validate_child (const GVariantType *type, gconstpointer base, gsize size, gsize index, gconstpointer child_base, gsize child_size)
+{{
+  GVariant *v = g_variant_ref_sink (g_variant_new_from_data (type, base, size, FALSE, NULL, NULL));
+  GVariant *child = g_variant_get_child_value (v, index);
+  g_assert (child != NULL);
+  g_assert (child_size == g_variant_get_size (child));
+  g_assert (child_base == g_variant_get_data (child));
+  g_variant_unref (child);
+  g_variant_unref (v);
+}}""")
+
 def generate_footer(filename):
     pass
 
@@ -717,7 +740,7 @@ class ArrayType(Type):
         C("{type_name_}get_length ({TypeNameRef} v)")
         C("{{")
         if self.element_type.is_fixed():
-            C("  return v.size / {element_fixed_size};")
+            C("  gsize length = v.size / {element_fixed_size};")
         else:
             C("  if (v.size == 0)");
             C("    return 0;");
@@ -729,7 +752,10 @@ class ArrayType(Type):
             C("  offsets_array_size = v.size - last_end;")
             C("  if (offsets_array_size % offset_size != 0)")
             C("    return 0;")
-            C("  return offsets_array_size / offset_size;")
+            C("  gsize length  = offsets_array_size / offset_size;")
+        if internal_validation:
+            C("  {prefix_}validate_length ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, length);")
+        C("  return length;")
         C("}}")
         C("static inline {element_ctype}")
         C("{type_name_}get_at ({TypeNameRef} v, gsize index)")
@@ -746,11 +772,17 @@ class ArrayType(Type):
             C("  gsize len = (v.size - last_end) / offset_size;")
             # Here we assume last_end is verified in get_length(), its not safe anyway to call get_at() without checking the length first
             C("  gsize start = (index > 0) ? {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - index), {element_alignment}) : 0;")
+            C("  G_GNUC_UNUSED gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);")
+            C("  g_assert (start <= end && end <= last_end);")
+
+            if internal_validation:
+                C("  {prefix_}validate_child ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, index, ((const char *)v.base) + start, end - start);");
+
             if self.element_type.is_basic(): # non-fixed basic == Stringlike
-                C("  return ((const char *)v.base) + start;")
+                C("  const char *base = (const char *)v.base;")
+                C("  g_assert (base[end-1] == 0);")
+                C("  return base + start;")
             else:
-                C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);")
-                C("  g_assert (start <= end && end <= last_end);")
                 C("  return ({ElementTypenameRef}) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
@@ -808,6 +840,7 @@ class DictType(Type):
         return [self.key_type, self.value_type]
     def add_expansion_vars(self, vars):
         vars['element_fixed_size'] = self.element_fixed_size()
+        vars['element_typeformat'] = 'G_VARIANT_TYPE("' + self.typestring()[1:] + '")'
         vars['value_ctype'] = self.value_type.get_ctype()
         vars['value_typename'] = self.value_type.typename
         vars['value_fixed_size'] = self.value_type.get_fixed_size()
@@ -854,7 +887,7 @@ typedef struct {{
         C("{type_name_}get_length ({TypeNameRef} v)")
         C("{{")
         if self.element_is_fixed():
-            C("  return v.size / {element_fixed_size};")
+            C("  gsize length = v.size / {element_fixed_size};")
         else:
             C("  if (v.size == 0)");
             C("    return 0;");
@@ -866,7 +899,10 @@ typedef struct {{
             C("  offsets_array_size = v.size - last_end;")
             C("  if (offsets_array_size % offset_size != 0)")
             C("    return 0;")
-            C("  return offsets_array_size / offset_size;")
+            C("  gsize length = offsets_array_size / offset_size;")
+        if internal_validation:
+            C("  {prefix_}validate_length ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, length);")
+        C("  return length;")
         C("}}")
 
         C('')
@@ -874,8 +910,9 @@ typedef struct {{
         C("static inline {TypeName}EntryRef")
         C("{type_name_}get_at ({TypeNameRef} v, gsize index)")
         C("{{")
+        C("  {TypeName}EntryRef res;");
         if self.element_is_fixed():
-            C("  return ({TypeName}EntryRef) {{ G_STRUCT_MEMBER_P(v.base, index * {element_fixed_size}), {element_fixed_size} }};")
+            C("  res = ({TypeName}EntryRef) {{ G_STRUCT_MEMBER_P(v.base, index * {element_fixed_size}), {element_fixed_size} }};")
         else:
             # non-fixed size
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
@@ -885,7 +922,10 @@ typedef struct {{
             C("  gsize start = (index > 0) ? {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - index), {alignment}) : 0;")
             C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);");
             C("  g_assert (start <= end && end <= last_end);")
-            C("  return ({TypeName}EntryRef) {{ ((const char *)v.base) + start, end - start }};")
+            C("  res = ({TypeName}EntryRef) {{ ((const char *)v.base) + start, end - start }};")
+        if internal_validation:
+            C("  {prefix_}validate_child ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, index, res.base, res.size);")
+        C("  return res;")
         C("}}")
 
         C('')
@@ -897,12 +937,16 @@ typedef struct {{
         if self.key_type.is_fixed():
             if not self.element_is_fixed(): # No need to verify size if the entire element is fixed
                 C("  g_assert (v.size >= {key_fixed_size});")
+            if internal_validation:
+                C("  {prefix_}validate_child ({element_typeformat}, v.base, v.size, 0, v.base, {key_fixed_size});")
             C("  return ({key_ctype})*(({key_read_ctype} *)v.base);")
         else: # string-style
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
-            C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
+            C("  G_GNUC_UNUSED gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  const char *base = (const char *)v.base;")
             C("  g_assert (end < v.size && base[end-1] == 0);")
+            if internal_validation:
+                C("  {prefix_}validate_child ({element_typeformat}, v.base, v.size, 0, v.base, end);")
             C("  return base;")
         C("}}")
 
@@ -927,6 +971,9 @@ typedef struct {{
             end = "v.size"
             if not self.value_type.is_fixed():
                 C("  g_assert (v.size >= {offset});", {'offset': offset})
+
+        if internal_validation:
+            C("  {prefix_}validate_child ({element_typeformat}, v.base, v.size, 1, v.base + {offset},  {end} - {offset});", {'offset': offset, 'end': end })
 
         if self.value_type.is_basic():
             if self.value_type.is_fixed():
@@ -1161,6 +1208,8 @@ class MaybeType(Type):
             else:
                 # Otherwise, ignore extra zero byte
                 size = "(v.size - 1)"
+            if internal_validation:
+                C("  {prefix_}validate_child ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, 0, ((const char *)v.base), {size});", { 'size': size })
             C("  return ({ElementTypenameRef}) {{ v.base, {size} }};", { 'size': size })
         C("}}")
 
@@ -1266,10 +1315,12 @@ class Field:
                 C("  const char *base = (const char *)v.base;")
                 C("  gsize start = offset;");
                 if self.last:
-                    C("  gsize end = v.size - offset_size * {framing_offset_size};", {'framing_offset_size': self.struct.framing_offset_size })
+                    C("  G_GNUC_UNUSED gsize end = v.size - offset_size * {framing_offset_size};", {'framing_offset_size': self.struct.framing_offset_size })
                 else:
-                    C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
+                    C("  G_GNUC_UNUSED gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
                 C("  g_assert (start <= end && end <= v.size && base[end-1] == 0);");
+                if internal_validation:
+                    C("  {prefix_}validate_child ({STRUCT_NAME_}TYPEFORMAT, v.base, v.size, {fieldindex}, (const char *)v.base + start, end - start);")
                 C("  return &G_STRUCT_MEMBER(const char, v.base, start);")
         else:
             if self.type.is_fixed():
@@ -1283,6 +1334,8 @@ class Field:
                 else:
                     C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
                 C("  g_assert (start <= end && end <= v.size);");
+                if internal_validation:
+                    C("  {prefix_}validate_child ({STRUCT_NAME_}TYPEFORMAT, v.base, v.size, {fieldindex}, (const char *)v.base + start, end - start);")
                 C("  return ({TypeNameRef}) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
         C("}}")
         C("")
@@ -1569,6 +1622,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate variant accessors.')
     parser.add_argument('--prefix', help='prefix')
     parser.add_argument('--outfile', help='output filename')
+    parser.add_argument('--internal-validation', help='enable internal validation', action='store_true')
     parser.add_argument('file')
     args = parser.parse_args()
     if args.prefix:
@@ -1576,6 +1630,8 @@ if __name__ == "__main__":
         funcname_prefix = args.prefix + "_"
     if args.outfile:
         output_file = open(args.outfile, "w")
+
+    internal_validation = args.internal_validation
 
     with open(args.file, "r") as f:
         testdata = f.read()
