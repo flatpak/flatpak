@@ -69,6 +69,7 @@ const char *flatpak_context_devices[] = {
   "dri",
   "all",
   "kvm",
+  "shm",
   NULL
 };
 

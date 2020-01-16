@@ -1186,20 +1186,32 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
       flatpak_bwrap_add_args (bwrap,
                               "--dev-bind", "/dev", "/dev",
                               NULL);
-      /* Don't expose the host /dev/shm, just the device nodes */
+      /* Don't expose the host /dev/shm, just the device nodes, unless explicitly allowed */
       if (g_file_test ("/dev/shm", G_FILE_TEST_IS_DIR))
-        flatpak_bwrap_add_args (bwrap,
-                                "--tmpfs", "/dev/shm",
-                                NULL);
+        {
+          if ((context->devices & FLATPAK_CONTEXT_DEVICE_SHM) == 0)
+            flatpak_bwrap_add_args (bwrap,
+                                    "--tmpfs", "/dev/shm",
+                                    NULL);
+        }
       else if (g_file_test ("/dev/shm", G_FILE_TEST_IS_SYMLINK))
         {
           g_autofree char *link = flatpak_readlink ("/dev/shm", NULL);
+
           /* On debian (with sysv init) the host /dev/shm is a symlink to /run/shm, so we can't
              mount on top of it. */
           if (g_strcmp0 (link, "/run/shm") == 0)
-            flatpak_bwrap_add_args (bwrap,
-                                    "--dir", "/run/shm",
-                                    NULL);
+            {
+              if (context->devices & FLATPAK_CONTEXT_DEVICE_SHM &&
+                  g_file_test ("/run/shm", G_FILE_TEST_IS_DIR))
+                flatpak_bwrap_add_args (bwrap,
+                                        "--bind", "/run/shm", "/run/shm",
+                                        NULL);
+              else
+                flatpak_bwrap_add_args (bwrap,
+                                        "--dir", "/run/shm",
+                                        NULL);
+            }
           else
             g_warning ("Unexpected /dev/shm symlink %s", link);
         }
@@ -1249,6 +1261,16 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
           g_debug ("Allowing kvm access");
           if (g_file_test ("/dev/kvm", G_FILE_TEST_EXISTS))
             flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/kvm", "/dev/kvm", NULL);
+        }
+
+      if (context->devices & FLATPAK_CONTEXT_DEVICE_SHM)
+        {
+          /* This is a symlink to /run/shm on debian, so bind to real target */
+          g_autofree char *real_dev_shm = realpath ("/dev/shm", NULL);
+
+          g_debug ("Allowing /dev/shm access (as %s)", real_dev_shm);
+          if (real_dev_shm != NULL)
+              flatpak_bwrap_add_args (bwrap, "--bind", real_dev_shm, "/dev/shm", NULL);
         }
     }
 
