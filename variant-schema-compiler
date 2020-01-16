@@ -16,6 +16,23 @@ ident = Word(alphas + "_", alphanums + "_").setName("identifier")
 
 named_types = {}
 
+basic_types = {
+    "boolean": ("b", True, 1, "gboolean", "", '%s'),
+    "byte": ("y", True, 1, "guint8", "byte ", '0x%02x'),
+    "int16": ("n", True, 2, "gint16", "int16 ", '%"G_GINT16_FORMAT"'),
+    "uint16": ("q", True, 2, "guint16", "uint16 ", '%"G_GUINT16_FORMAT"'),
+    "int32": ("i", True, 4, "gint32", "", '%"G_GINT32_FORMAT"'),
+    "uint32": ("u", True, 4, "guint32", "uint32 ", '%"G_GUINT32_FORMAT"'),
+    "int64": ("x", True, 8, "gint64", "int64 ", '%"G_GINT64_FORMAT"'),
+    "uint64": ("t", True, 8, "guint64", "uint64 ", '%"G_GUINT64_FORMAT"'),
+    "handle": ("h", True, 4, "guint32", "handle ", '%"G_GINT32_FORMAT"'),
+    "double": ("d", True, 8, "double", "", None), # double formating is special
+    "string": ("s", False, 1, "const char *", "", None), # String formating is special
+    "objectpath": ("o", False, 1, "const char *", "objectpath ", "\\'%s\\'"),
+    "signature": ("g", False, 1, "const char *", "signature ", "\\'%s\\'"),
+}
+
+
 def snake_case_to_CamelCase(name):
     res = ""
     for run in name.split("_"):
@@ -382,6 +399,24 @@ static inline char *
   return g_string_free (s, FALSE);
 }}""", {'filename': filename})
 
+    for kind in basic_types.keys():
+        basic_type = basic_types[kind]
+        ctype = basic_type[3]
+        if kind == "boolean":
+            read_ctype = "guint8"
+        else:
+            read_ctype = ctype
+        fixed = basic_type[1]
+        C("""
+static inline {ctype}
+{prefix_}variant_get_{kind} ({Prefix}VariantRef v)
+{{""", {"kind": kind, 'ctype': ctype})
+        if fixed:
+            C("  return ({ctype})*(({read_ctype} *)v.base);", {'ctype': ctype, 'read_ctype': read_ctype})
+        else:
+            C("  return ({ctype})v.base;", {'ctype': ctype, 'read_ctype': read_ctype})
+        C("}}")
+
     if internal_validation:
         C("""
 static inline void
@@ -608,22 +643,6 @@ static inline char *
 
     def generate_append_value(self, value, with_type_annotate):
         return self.genC("{type_name_}format ({value}, s, {type_annotate});", {'value': value, 'type_annotate': with_type_annotate})
-
-basic_types = {
-    "boolean": ("b", True, 1, "gboolean", "", '%s'),
-    "byte": ("y", True, 1, "guint8", "byte ", '0x%02x'),
-    "int16": ("n", True, 2, "gint16", "int16 ", '%"G_GINT16_FORMAT"'),
-    "uint16": ("q", True, 2, "guint16", "uint16 ", '%"G_GUINT16_FORMAT"'),
-    "int32": ("i", True, 4, "gint32", "", '%"G_GINT32_FORMAT"'),
-    "uint32": ("u", True, 4, "guint32", "uint32 ", '%"G_GUINT32_FORMAT"'),
-    "int64": ("x", True, 8, "gint64", "int64 ", '%"G_GINT64_FORMAT"'),
-    "uint64": ("t", True, 8, "guint64", "uint64 ", '%"G_GUINT64_FORMAT"'),
-    "handle": ("h", True, 4, "guint32", "handle ", '%"G_GINT32_FORMAT"'),
-    "double": ("d", True, 8, "double", "", None), # double formating is special
-    "string": ("s", False, 1, "const char *", "", None), # String formating is special
-    "objectpath": ("o", False, 1, "const char *", "objectpath ", "\\'%s\\'"),
-    "signature": ("g", False, 1, "const char *", "signature ", "\\'%s\\'"),
-}
 
 class BasicType(Type):
     def __init__(self, kind):
