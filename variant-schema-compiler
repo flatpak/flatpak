@@ -811,6 +811,14 @@ class ArrayType(Type):
                 C("  return ({ElementTypenameRef}) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
+        if self.is_fixed():
+            C("""
+static inline const {element_fixed_type} *
+{type_name_}peek ({TypeNameRef} v) {{
+  return (const {element_fixed_type} *)v.base;
+}}
+""");
+
         C(
 """static inline GString *
 {type_name_}format ({TypeNameRef} v, GString *s, gboolean type_annotate)
@@ -954,6 +962,15 @@ typedef struct {{
         C("}}")
 
         C('')
+
+        if self.element_is_fixed():
+            C("""
+static inline const {TypeName}Entry *
+{type_name_}peek ({TypeNameRef} v) {{
+  return (const {TypeName}Entry *)v.base;
+}}
+""");
+
 
         C("static inline {key_ctype}")
         C("{type_name_}entry_get_key ({TypeName}EntryRef v)")
