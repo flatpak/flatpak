@@ -1619,7 +1619,7 @@ class StructType(Type):
 
 typeSpec = Forward()
 
-basicType = oneOf(basic_types.keys()).setParseAction(lambda toks: BasicType(toks[0]))
+basicType = oneOf(list(basic_types.keys())).setParseAction(lambda toks: BasicType(toks[0]))
 
 variantType = Keyword("variant").setParseAction(lambda toks: VariantType())
 
