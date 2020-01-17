@@ -1004,7 +1004,7 @@ static inline const {TypeName}Entry *
             C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize offset = {PREFIX_}REF_ALIGN(end, {value_alignment});")
             if self.value_type.is_fixed():
-                C("  g_assert (offset == v.size - offset_size - {value_fixed_type})");
+                C("  g_assert (offset == v.size - offset_size - {value_fixed_size})");
             else:
                 C("  g_assert (offset <= v.size);")
             offset = "offset"
