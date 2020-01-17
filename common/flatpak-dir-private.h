@@ -139,10 +139,6 @@ gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
                                           GError            **error);
 char **flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
                                            const char         *ref);
-gboolean flatpak_remote_state_lookup_repo_metadata (FlatpakRemoteState *self,
-                                                    const char         *key,
-                                                    const char         *format_string,
-                                                    ...);
 gboolean flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                             const char         *ref,
                                             guint64            *download_size,
