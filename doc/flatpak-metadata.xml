@@ -189,7 +189,7 @@
                             <varlistentry><term><option>shm</option></term>
                             <listitem><para>
                                 Access to the host /dev/shm
-                                (<filename>/dev/kvm</filename>).
+                                (<filename>/dev/shm</filename>).
                                 Available since 1.6.1.
                             </para></listitem></varlistentry>
 
