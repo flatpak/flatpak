@@ -53,6 +53,8 @@
 #include "flatpak-ref.h"
 #include "flatpak-run-private.h"
 #include "flatpak-utils-base-private.h"
+#include "flatpak-variant-private.h"
+#include "flatpak-variant-impl-private.h"
 #include "libglnx/libglnx.h"
 
 #ifdef HAVE_LIBMALCONTENT
@@ -441,71 +443,75 @@ flatpak_remote_state_lookup_repo_metadata (FlatpakRemoteState *self,
   return TRUE;
 }
 
+static gboolean
+flatpak_remote_state_get_cache (FlatpakRemoteState *self,
+                                VarCacheRef        *out,
+                                GError            **error)
+{
+  VarMetadataRef meta;
+  VarVariantRef cache_vv;
+  VarVariantRef cache_v;
+
+  if (!flatpak_remote_state_ensure_metadata (self, error))
+    return FALSE;
+
+  meta = var_metadata_from_gvariant (self->metadata);
+  if (!var_metadata_lookup (meta, "xa.cache", NULL, &cache_vv))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No summary or Flatpak cache available for remote %s"),
+                               self->remote_name);
+
+  /* For stupid historical reasons the xa.cache is double-wrapped in a variant */
+  cache_v = var_variant_from_variant (cache_vv);
+  *out = var_cache_from_variant (cache_v);
+  return TRUE;
+}
+
 gboolean
 flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                    const char         *ref,
                                    guint64            *download_size,
                                    guint64            *installed_size,
                                    const char        **metadata,
-                                   GVariant          **maybe_commit,
+                                   const guchar      **maybe_commit_bytes,
                                    GError            **error)
 {
-  g_autoptr(GVariant) cache_v = NULL;
-  g_autoptr(GVariant) cache = NULL;
-  g_autoptr(GVariant) commits = NULL;
-  g_autoptr(GVariant) res = NULL;
-  g_autoptr(GVariant) refdata = NULL;
-  int pos;
+  VarCacheRef cache;
+  VarCacheDataRef cache_data;
+  gsize pos;
 
-  if (!flatpak_remote_state_ensure_metadata (self, error))
+  if (!flatpak_remote_state_get_cache (self, &cache, error))
     return FALSE;
 
-  cache_v = g_variant_lookup_value (self->metadata, "xa.cache", NULL);
-  if (cache_v == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   _("No flatpak cache in remote '%s' summary"), self->remote_name);
-      return FALSE;
-    }
-
-  commits = g_variant_lookup_value (self->metadata, "xa.commits", NULL);
-
-  cache = g_variant_get_child_value (cache_v, 0);
-
-  if (!flatpak_variant_bsearch_str (cache, ref, &pos))
-    {
-      return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                 _("No entry for %s in remote '%s' summary flatpak cache "),
-                                 ref, self->remote_name);
-    }
-
-  refdata = g_variant_get_child_value (cache, pos);
-  res = g_variant_get_child_value (refdata, 1);
+  if (!var_cache_lookup (cache, ref, &pos, &cache_data))
+    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                               _("No entry for %s in remote '%s' summary flatpak cache "),
+                               ref, self->remote_name);
 
   if (installed_size)
-    {
-      guint64 v;
-      g_variant_get_child (res, 0, "t", &v);
-      *installed_size = GUINT64_FROM_BE (v);
-    }
+    *installed_size = var_cache_data_get_installed_size (cache_data);
 
   if (download_size)
-    {
-      guint64 v;
-      g_variant_get_child (res, 1, "t", &v);
-      *download_size = GUINT64_FROM_BE (v);
-    }
+    *download_size = var_cache_data_get_download_size (cache_data);
 
   if (metadata)
-    g_variant_get_child (res, 2, "&s", metadata);
+    *metadata = var_cache_data_get_metadata (cache_data);
 
-
-  if (maybe_commit)
+  if (maybe_commit_bytes)
     {
-      if (commits)
-        *maybe_commit = g_variant_get_child_value (commits, pos);
-      else
-        *maybe_commit = NULL;
+      VarMetadataRef meta = var_metadata_from_gvariant (self->metadata);
+      VarVariantRef commits_v;
+
+      *maybe_commit_bytes = NULL;
+      if (var_metadata_lookup (meta, "xa.commits", NULL, &commits_v))
+        {
+          VarCommitsCacheRef commits = var_commits_cache_from_variant (commits_v);
+          if (pos < var_commits_cache_get_length (commits))
+            {
+              VarChecksumRef checksum = var_commits_cache_get_at (commits, pos);
+              if (var_checksum_get_length (checksum) == OSTREE_SHA256_DIGEST_LEN)
+                *maybe_commit_bytes = var_checksum_peek (checksum);
+            }
+        }
     }
 
   return TRUE;
@@ -3778,20 +3784,20 @@ gboolean
 flatpak_dir_resolve_maybe_resolve_from_metadata (FlatpakDirResolve *resolve,
                                                  FlatpakRemoteState *state)
 {
-  g_autoptr(GVariant) metadata_checksum_v = NULL;
   guint64 download_size = 0;
   guint64 installed_size = 0;
   const char *xa_metadata = NULL;
   g_autoptr(GVariant) sparse_cache = NULL;
+  const guchar *metadata_checksum_bytes = NULL;
   g_autofree char *metadata_checksum = NULL;
 
-  if (!flatpak_remote_state_lookup_cache (state, resolve->ref, &download_size, &installed_size, &xa_metadata, &metadata_checksum_v, NULL))
+  if (!flatpak_remote_state_lookup_cache (state, resolve->ref, &download_size, &installed_size, &xa_metadata, &metadata_checksum_bytes, NULL))
     return FALSE;
 
-  if (metadata_checksum_v == NULL)
+  if (metadata_checksum_bytes == NULL)
     return FALSE; /* Commit unknown, old server version */
 
-  metadata_checksum = ostree_checksum_from_bytes_v (metadata_checksum_v);
+  metadata_checksum = ostree_checksum_from_bytes (metadata_checksum_bytes);
 
   /* If the latest available commit is the same as the one we have info on in the ostree-metadata
      then we can use the ostree-metadata to resolve the op without having to download the commit */
