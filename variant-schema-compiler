@@ -753,6 +753,8 @@ class ArrayType(Type):
         if self.element_type.typename:
             vars['ElementTypenameRef'] = self.element_type.typename + "Ref"
         vars['element_fixed_size'] = self.element_type.get_fixed_size()
+        if self.element_type.is_fixed():
+            vars['element_fixed_ctype'] = self.element_type.get_fixed_ctype()
         vars['element_alignment'] = self.element_type.alignment()
         if self.element_type.is_basic():
             vars['element_read_ctype'] = self.element_type.get_read_ctype()
@@ -811,11 +813,11 @@ class ArrayType(Type):
                 C("  return ({ElementTypenameRef}) {{ ((const char *)v.base) + start, end - start }};")
         C("}}")
 
-        if self.is_fixed():
+        if self.element_type.is_fixed():
             C("""
-static inline const {element_fixed_type} *
+static inline const {element_fixed_ctype} *
 {type_name_}peek ({TypeNameRef} v) {{
-  return (const {element_fixed_type} *)v.base;
+  return (const {element_fixed_ctype} *)v.base;
 }}
 """);
 
