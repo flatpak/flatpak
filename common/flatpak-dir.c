@@ -416,33 +416,6 @@ flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
 }
 
 
-gboolean
-flatpak_remote_state_lookup_repo_metadata (FlatpakRemoteState *self,
-                                           const char         *key,
-                                           const char         *format_string,
-                                           ...)
-{
-  g_autoptr(GVariant) value = NULL;
-  va_list args;
-
-  if (self->metadata == NULL)
-    return FALSE;
-
-  /* Extract the metadata from it, if set. */
-  value = g_variant_lookup_value (self->metadata, key, NULL);
-  if (value == NULL)
-    return FALSE;
-
-  if (!g_variant_check_format_string (value, format_string, FALSE))
-    return FALSE;
-
-  va_start (args, format_string);
-  g_variant_get_va (value, format_string, NULL, &args);
-  va_end (args);
-
-  return TRUE;
-}
-
 static gboolean
 flatpak_remote_state_get_cache (FlatpakRemoteState *self,
                                 VarCacheRef        *out,
