@@ -495,23 +495,25 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
                                           const char         *ref,
                                           GError            **error)
 {
-  g_autoptr(GVariant) cache = NULL;
-  int pos;
+  VarMetadataRef meta;
+  VarVariantRef sparse_cache_v;
 
   if (!flatpak_remote_state_ensure_metadata (self, error))
     return FALSE;
 
-  cache = g_variant_lookup_value (self->metadata, "xa.sparse-cache", NULL);
-  if (cache != NULL && flatpak_variant_bsearch_str (cache, ref, &pos))
+  meta = var_metadata_from_gvariant (self->metadata);
+  if (var_metadata_lookup (meta, "xa.sparse-cache", NULL, &sparse_cache_v))
     {
-      g_autoptr(GVariant) refdata = g_variant_get_child_value (cache, pos);
-      return g_variant_get_child_value (refdata, 1);
+      VarSparseCacheRef sparse_cache = var_sparse_cache_from_variant (sparse_cache_v);
+      VarMetadataRef v;
+      if (var_sparse_cache_lookup (sparse_cache, ref, NULL, &v))
+        return var_metadata_to_owned_gvariant (v, self->metadata);
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                _("No entry for %s in remote summary flatpak sparse cache "), ref);
 
-  return FALSE;
+  return NULL;
 }
 
 static gboolean
