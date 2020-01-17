@@ -11375,41 +11375,33 @@ flatpak_dir_remote_has_ref (FlatpakDir *self,
 }
 
 static void
-populate_hash_table_from_refs_map (GHashTable *ret_all_refs, GVariant *ref_map,
+populate_hash_table_from_refs_map (GHashTable *ret_all_refs, VarRefMapRef ref_map,
                                    const gchar *collection_id,
                                    FlatpakRemoteState *state)
 {
-  GVariant *value;
-  GVariantIter ref_iter;
+  gsize len, i;
 
-  g_variant_iter_init (&ref_iter, ref_map);
-  while ((value = g_variant_iter_next_value (&ref_iter)) != NULL)
+  len = var_ref_map_get_length (ref_map);
+  for (i = 0; i < len; i++)
     {
-      /* helper for being able to auto-free the value */
-      g_autoptr(GVariant) child = value;
-      const char *ref_name = NULL;
-
-      g_variant_get_child (child, 0, "&s", &ref_name);
-      if (ref_name == NULL)
-        continue;
+      VarRefMapEntryRef entry = var_ref_map_get_at (ref_map, i);
+      const char *ref_name = var_ref_map_entry_get_ref (entry);
+      const guint8 *csum_bytes;
+      gsize csum_len;
+      VarRefInfoRef info;
+      FlatpakCollectionRef *ref;
 
       if (!flatpak_remote_state_allow_ref (state, ref_name))
         continue;
 
-      g_autoptr(GVariant) csum_v = NULL;
-      char tmp_checksum[65];
-      const guchar *csum_bytes;
-      FlatpakCollectionRef *ref;
+      info = var_ref_map_entry_get_info (entry);
 
-      g_variant_get_child (child, 1, "(t@aya{sv})", NULL, &csum_v, NULL);
-      csum_bytes = ostree_checksum_bytes_peek_validate (csum_v, NULL);
-      if (csum_bytes == NULL)
+      csum_bytes = var_ref_info_peek_checksum (info, &csum_len);
+      if (csum_len != OSTREE_SHA256_DIGEST_LEN)
         continue;
 
       ref = flatpak_collection_ref_new (collection_id, ref_name);
-      ostree_checksum_inplace_from_bytes (csum_bytes, tmp_checksum);
-
-      g_hash_table_insert (ret_all_refs, ref, g_strdup (tmp_checksum));
+      g_hash_table_insert (ret_all_refs, ref, ostree_checksum_from_bytes (csum_bytes));
     }
 }
 
@@ -11423,11 +11415,11 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
                                   GError            **error)
 {
   g_autoptr(GHashTable) ret_all_refs = NULL;
-  g_autoptr(GVariant) ref_map = NULL;
-  g_autoptr(GVariant) exts = NULL;
-  g_autoptr(GVariant) collection_map = NULL;
   const gchar *collection_id;
-  GVariantIter iter;
+  VarSummaryRef summary;
+  VarMetadataRef exts;
+  VarRefMapRef ref_map;
+  VarVariantRef v;
 
   ret_all_refs = g_hash_table_new_full (flatpak_collection_ref_hash,
                                         flatpak_collection_ref_equal,
@@ -11439,29 +11431,21 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
    * list in that it lacks checksums). */
   if (state->collection_id != NULL && state->summary == NULL)
     {
-      g_autoptr(GVariant) xa_cache = NULL;
-      g_autoptr(GVariant) cache = NULL;
+      VarCacheRef cache;
       gsize i, n;
 
-      if (!flatpak_remote_state_ensure_metadata (state, error))
+      if (!flatpak_remote_state_get_cache (state, &cache, error))
         return FALSE;
 
-      if (!flatpak_remote_state_lookup_repo_metadata (state, "xa.cache", "@*", &xa_cache))
-        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No summary or Flatpak cache available for remote %s"),
-                                   state->remote_name);
-
-      cache = g_variant_get_child_value (xa_cache, 0);
-      n = g_variant_n_children (cache);
+      n = var_cache_get_length (cache);
       for (i = 0; i < n; i++)
         {
-          g_autoptr(GVariant) child = NULL;
-          g_autoptr(GVariant) cur_v = NULL;
           g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
+          VarCacheEntryRef entry;
           const char *ref;
 
-          child = g_variant_get_child_value (cache, i);
-          cur_v = g_variant_get_child_value (child, 0);
-          ref = g_variant_get_string (cur_v, NULL);
+          entry = var_cache_get_at (cache, i);
+          ref = var_cache_entry_get_key (entry);
 
           if (!flatpak_remote_state_allow_ref (state, ref))
             continue;
@@ -11476,26 +11460,37 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   if (!flatpak_remote_state_ensure_summary (state, error))
     return FALSE;
 
+  summary = var_summary_from_gvariant (state->summary);
+
+  exts = var_summary_get_metadata (summary);
+
+  collection_id = NULL;
+  if (var_metadata_lookup (exts, "ostree.summary.collection-id", NULL, &v) &&
+      var_variant_is_type (v, G_VARIANT_TYPE_STRING))
+    collection_id = var_variant_get_string (v);
+
+
   /* refs that match the main collection-id */
-  ref_map = g_variant_get_child_value (state->summary, 0);
-
-  exts = g_variant_get_child_value (state->summary, 1);
-
-  if (!g_variant_lookup (exts, "ostree.summary.collection-id", "&s", &collection_id))
-    collection_id = NULL;
-
+  ref_map = var_summary_get_ref_map (summary);
   populate_hash_table_from_refs_map (ret_all_refs, ref_map, collection_id, state);
 
   /* refs that match other collection-ids */
-  collection_map = g_variant_lookup_value (exts, "ostree.summary.collection-map",
-                                           G_VARIANT_TYPE ("a{sa(s(taya{sv}))}"));
-  if (collection_map != NULL)
+  if (var_metadata_lookup (exts, "ostree.summary.collection-map", NULL, &v))
     {
-      g_variant_iter_init (&iter, collection_map);
-      while (g_variant_iter_loop (&iter, "{&s@a(s(taya{sv}))}", &collection_id, &ref_map))
-        populate_hash_table_from_refs_map (ret_all_refs, ref_map, collection_id, state);
-    }
+      VarCollectionMapRef map = var_collection_map_from_variant (v);
+      gsize i, map_len;
 
+      map_len = var_collection_map_get_length (map);
+      for (i = 0; i < map_len; i++)
+        {
+          VarCollectionMapEntryRef entry = var_collection_map_get_at (map, i);
+          const char *collection_id = var_collection_map_entry_get_key (entry);
+          VarRefMapRef collection_ref_map;
+
+          collection_ref_map = var_collection_map_entry_get_value (entry);
+          populate_hash_table_from_refs_map (ret_all_refs, collection_ref_map, collection_id, state);
+        }
+    }
 
 out:
   *out_all_refs = g_steal_pointer (&ret_all_refs);
