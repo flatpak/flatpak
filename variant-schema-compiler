@@ -783,6 +783,7 @@ class ArrayType(Type):
             C("  {prefix_}validate_length ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, length);")
         C("  return length;")
         C("}}")
+        C("")
         C("static inline {element_ctype}")
         C("{type_name_}get_at ({TypeNameRef} v, gsize index)")
         C("{{")
@@ -814,14 +815,32 @@ class ArrayType(Type):
 
         if self.element_type.is_fixed():
             C("""
-static inline const {element_fixed_ctype} *
-{type_name_}peek ({TypeNameRef} v) {{
-  return (const {element_fixed_ctype} *)v.base;
-}}
-""");
 
-        C(
-"""static inline GString *
+static inline const {element_fixed_ctype} *
+{type_name_}peek ({TypeNameRef} v)
+{{
+  return (const {element_fixed_ctype} *)v.base;
+}}""");
+        elif self.element_type.is_basic(): # Array of string type
+            C("""
+
+static inline {element_ctype}*
+{type_name_}to_strv ({TypeNameRef} v)
+{{
+  gsize length = {type_name_}get_length (v);
+  gsize i;
+  const char **resv = g_new (const char *, length + 1);
+
+  for (i = 0; i < length; i++)
+    resv[i] = {type_name_}get_at (v, i);
+  resv[i] = NULL;
+
+  return resv;
+}}""");
+
+        C("""
+
+static inline GString *
 {type_name_}format ({TypeNameRef} v, GString *s, gboolean type_annotate)
 {{
   gsize len = {type_name_}get_length (v);
