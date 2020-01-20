@@ -2525,6 +2525,34 @@ flatpak_open_in_tmpdir_at (int             tmpdir_fd,
 }
 
 gboolean
+flatpak_bytes_save (GFile        *dest,
+                    GBytes       *bytes,
+                    GCancellable *cancellable,
+                    GError      **error)
+{
+  g_autoptr(GOutputStream) out = NULL;
+
+  out = (GOutputStream *) g_file_replace (dest, NULL, FALSE,
+                                          G_FILE_CREATE_REPLACE_DESTINATION,
+                                          cancellable, error);
+  if (out == NULL)
+    return FALSE;
+
+  if (!g_output_stream_write_all (out,
+                                  g_bytes_get_data (bytes, NULL),
+                                  g_bytes_get_size (bytes),
+                                  NULL,
+                                  cancellable,
+                                  error))
+    return FALSE;
+
+  if (!g_output_stream_close (out, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 flatpak_variant_save (GFile        *dest,
                       GVariant     *variant,
                       GCancellable *cancellable,
