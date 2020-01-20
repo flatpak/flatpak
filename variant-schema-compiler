@@ -52,12 +52,21 @@ def CamelCase_to_snake_case(name):
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
 
-output_file = None
+output_c_file = None
 def writeC(code, continued = False):
     if output_file:
         output_file.write(code)
         if not continued:
             output_file.write('\n')
+    else:
+        print(code, end='' if continued else '\n')
+
+output_h_file = None
+def writeH(code, continued = False):
+    if output_h_file:
+        output_h_file.write(code)
+        if not continued:
+            output_h_file.write('\n')
     else:
         print(code, end='' if continued else '\n')
 
@@ -79,19 +88,29 @@ def escapeC(s):
 def C(code, extra_vars = None, continued = False):
     writeC(genC(code, extra_vars), continued)
 
+def H(code, extra_vars = None, continued = False):
+    writeH(genC(code, extra_vars), continued)
+
 def generate_header(filename):
-    C(
-"""/* generated code for {filename} */
+    H("""
+#ifndef __{PREFIX_}__{FILENAME}__H__
+#define __{PREFIX_}__{FILENAME}__H__
+/* generated code for {filename} */
 #include <string.h>
 #include <glib.h>
 
-/********** Basic types and helpers *****************/
+/********** Basic types *****************/
 
 typedef struct {{
  gconstpointer base;
  gsize size;
 }} {Prefix}Ref;
+""", {
+    "filename": filename,
+    "FILENAME": filename.upper().replace(".", "_").replace(" ", "_").replace("-", "_"),
+} )
 
+    C("""
 #define {PREFIX_}REF_READ_FRAME_OFFSET(_v, _index) {prefix_}ref_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
 #define {PREFIX_}REF_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
 
@@ -234,14 +253,20 @@ __{prefix_}gstring_append_string (GString *string, const char *str)
 
   g_string_append_c (string, quote);
 }}
+""")
 
+    C("""
 /************** {Prefix}VariantRef *******************/
+""")
 
+    H("""
 typedef struct {{
  gconstpointer base;
  gsize size;
 }} {Prefix}VariantRef;
+""")
 
+    C("""
 static inline {Prefix}Ref
 {prefix_}variant_get_child ({Prefix}VariantRef v, const GVariantType **out_type)
 {{
@@ -439,7 +464,7 @@ static inline void
 }}""")
 
 def generate_footer(filename):
-    pass
+    H("#endif")
 
 def align_down(value, alignment):
     return value & ~(alignment - 1)
@@ -535,18 +560,23 @@ class Type:
     def C(self, code, extra_vars = None, continued=False):
         writeC(self.genC(code, extra_vars), continued)
 
+    def H(self, code, extra_vars = None, continued=False):
+        writeH(self.genC(code, extra_vars), continued)
+
     def generate_types(self):
         self.C('''
 
-/************** {TypeName} *******************/
+/************** {TypeName} *******************/''')
 
+        self.H('''
 #define {TYPE_NAME_}TYPESTRING "{typestring}"
 #define {TYPE_NAME_}TYPEFORMAT ((const GVariantType *) {TYPE_NAME_}TYPESTRING)
 
 typedef struct {{
  gconstpointer base;
  gsize size;
-}} {TypeNameRef};''')
+}} {TypeNameRef};
+''')
 
     def generate_standard_functions(self):
         C=self.C
@@ -910,31 +940,34 @@ class DictType(Type):
 
     def generate(self):
         C=self.C
+        H=self.H
         super().generate_types()
-        C('''
+        H('''
 typedef struct {{
  gconstpointer base;
  gsize size;
-}} {TypeName}EntryRef;''')
+}} {TypeName}EntryRef;
+''')
 
         if self.element_is_fixed():
-            C("typedef struct {{")
+            H("typedef struct {{")
             pad_index = 1;
             pos = 0
             for k, t in [("key", self.key_type), ("value", self.value_type)]:
                 old_pos = pos
                 pos = align_up(pos, t.alignment())
                 if pos > old_pos:
-                    C("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
+                    H("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
                     pad_index += 1
-                self.C("  {field_type} {fieldname};", {'field_type': t.get_fixed_ctype(), 'fieldname': k})
+                H("  {field_type} {fieldname};", {'field_type': t.get_fixed_ctype(), 'fieldname': k})
                 pos += t.get_fixed_size()
             old_pos = pos
             pos = align_up(pos, self.alignment())
             if pos > old_pos:
-                C("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
+                H("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
                 pad_index += 1
-            C("}} {TypeName}Entry;")
+            H("}} {TypeName}Entry;")
+            H("")
 
         super().generate_standard_functions()
         C('')
@@ -1369,12 +1402,16 @@ class Field:
     def C(self, code, extra_vars = None, continued = False):
         writeC(self.genC(code, extra_vars), continued=continued)
 
+    def H(self, code, extra_vars = None, continued = False):
+        writeH(self.genC(code, extra_vars), continued=continued)
+
     def generate(self):
         # Getter
         C=self.C
+        H=self.H
         genC=self.genC
-        C("#define {STRUCT_NAME_}INDEXOF_{FIELDNAME} {fieldindex}")
-        C("")
+        H("#define {STRUCT_NAME_}INDEXOF_{FIELDNAME} {fieldindex}")
+        H("")
         C("static inline {ctype}")
         C("{struct_name_}get_{fieldname} ({StructName}Ref v)")
         C("{{")
@@ -1466,7 +1503,7 @@ class Field:
             comments.append("big endian")
         if "littleendian" in self.attributes:
             comments.append("little endian")
-        self.C("  {field_type} {fieldname};{comment}", {
+        self.H("  {field_type} {fieldname};{comment}", {
             'field_type': self.type.get_fixed_ctype(),
             'comment': "" if len(comments) == 0 else "/* " +  ",".join(comments) + " */",
         })
@@ -1577,26 +1614,27 @@ class StructType(Type):
 
     def generate(self):
         C=self.C
+        H=self.H
         super().generate_types()
 
         if self.is_fixed():
-            C("typedef struct {{")
+            H("typedef struct {{")
             pos = 0
             pad_index = 1;
             for f in self.fields:
                 old_pos = pos
                 pos = align_up(pos, f.type.alignment())
                 if pos > old_pos:
-                    C("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
+                    H("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
                     pad_index += 1
                 f.generate_fixed()
                 pos += f.type.get_fixed_size()
             old_pos = pos
             pos = align_up(pos, self.alignment())
             if pos > old_pos:
-                C("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
+                H("  guchar _padding{pad_index}[{pad_count}];", {'pad_index': pad_index , 'pad_count': pos - old_pos})
                 pad_index += 1
-            C("}} {TypeName};")
+            H("}} {TypeName};")
 
 
         super().generate_standard_functions()
@@ -1710,6 +1748,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate variant accessors.')
     parser.add_argument('--prefix', help='prefix')
     parser.add_argument('--outfile', help='output filename')
+    parser.add_argument('--outfile-header', help='output filename')
     parser.add_argument('--internal-validation', help='enable internal validation', action='store_true')
     parser.add_argument('file')
     args = parser.parse_args()
@@ -1718,6 +1757,9 @@ if __name__ == "__main__":
         funcname_prefix = args.prefix + "_"
     if args.outfile:
         output_file = open(args.outfile, "w")
+        output_h_file = output_file
+    if args.outfile_header:
+        output_h_file = open(args.outfile_header, "w")
 
     internal_validation = args.internal_validation
 

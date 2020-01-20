@@ -1,7 +1,7 @@
 all: sample ostree_test performance
 
 sample.h: variant-schema-compiler sample.gv
-	./variant-schema-compiler --internal-validation --outfile sample.h --prefix=sample sample.gv
+	./variant-schema-compiler --internal-validation --outfile sample-impl.h --outfile-header=sample.h --prefix=sample sample.gv
 
 sample: sample.c sample.h
 	gcc `pkg-config --cflags --libs glib-2.0` -g -Wall -o sample sample.c

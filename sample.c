@@ -1,5 +1,6 @@
 #define SAMPLE_DEEP_VARIANT_FORMAT
 #include "sample.h"
+#include "sample-impl.h"
 
 void
 test_sample_variant (GVariant *v)
