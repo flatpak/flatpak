@@ -136,7 +136,7 @@ rerun_in_sandbox (const char *arg_width,
                   const char *arg_height,
                   const char *filename)
 {
-  const char * const usrmerged_dirs[] = { "bin", "lib64", "lib", "sbin" };
+  const char * const usrmerged_dirs[] = { "bin", "lib32", "lib64", "lib", "sbin" };
   int i;
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
   char validate_icon[PATH_MAX + 1];
