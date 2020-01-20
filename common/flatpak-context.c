@@ -78,6 +78,12 @@ const char *flatpak_context_features[] = {
   NULL
 };
 
+const char *flatpak_context_special_filesystems[] = {
+  "home",
+  "host",
+  NULL
+};
+
 FlatpakContext *
 flatpak_context_new (void)
 {
@@ -747,9 +753,7 @@ flatpak_context_verify_filesystem (const char *filesystem_and_mode,
 {
   g_autofree char *filesystem = parse_filesystem_flags (filesystem_and_mode, NULL);
 
-  if (strcmp (filesystem, "host") == 0)
-    return TRUE;
-  if (strcmp (filesystem, "home") == 0)
+  if (g_strv_contains (flatpak_context_special_filesystems, filesystem))
     return TRUE;
   if (get_xdg_user_dir_from_string (filesystem, NULL, NULL, NULL))
     return TRUE;
@@ -1997,8 +2001,7 @@ flatpak_context_export (FlatpakContext *context,
       const char *filesystem = key;
       FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-      if (strcmp (filesystem, "host") == 0 ||
-          strcmp (filesystem, "home") == 0)
+      if (g_strv_contains (flatpak_context_special_filesystems, filesystem))
         continue;
 
       if (g_str_has_prefix (filesystem, "xdg-"))
