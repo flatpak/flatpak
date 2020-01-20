@@ -279,14 +279,17 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
 
   if (exports->host_fs != 0)
     {
+      const char *host_bind_mode = "--bind";
+
+      if (exports->host_fs == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
+        host_bind_mode = "--ro-bind";
+
       if (g_file_test ("/usr", G_FILE_TEST_IS_DIR))
         flatpak_bwrap_add_args (bwrap,
-                                (exports->host_fs == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
-                                "/usr", "/run/host/usr", NULL);
+                                host_bind_mode, "/usr", "/run/host/usr", NULL);
       if (g_file_test ("/etc", G_FILE_TEST_IS_DIR))
         flatpak_bwrap_add_args (bwrap,
-                                (exports->host_fs == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
-                                "/etc", "/run/host/etc", NULL);
+                                host_bind_mode, "/etc", "/run/host/etc", NULL);
     }
 }
 
