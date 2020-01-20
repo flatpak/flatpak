@@ -49,9 +49,11 @@
 #include "flatpak-error.h"
 
 /* We don't want to export paths pointing into these, because they are readonly
-   (so we can't create mountpoints there) and don't match what's on the host anyway */
+   (so we can't create mountpoints there) and don't match what's on the host anyway.
+   flatpak_abs_usrmerged_dirs get the same treatment without having to be listed
+   here. */
 const char *dont_export_in[] = {
-  "/lib", "/lib32", "/lib64", "/bin", "/sbin", "/usr", "/etc", "/app", "/dev", "/proc", NULL
+  "/usr", "/etc", "/app", "/dev", "/proc", NULL
 };
 
 static char *
@@ -541,6 +543,16 @@ _exports_path_expose (FlatpakExports *exports,
          they are not the same as on the host, and we generally can't
          create the parents for them anyway */
       if (flatpak_has_path_prefix (path, dont_export_in[i]))
+        {
+          g_debug ("skipping export for path %s", path);
+          return FALSE;
+        }
+    }
+
+  for (i = 0; flatpak_abs_usrmerged_dirs[i] != NULL; i++)
+    {
+      /* Same as /usr, but for the directories that get merged into /usr */
+      if (flatpak_has_path_prefix (path, flatpak_abs_usrmerged_dirs[i]))
         {
           g_debug ("skipping export for path %s", path);
           return FALSE;

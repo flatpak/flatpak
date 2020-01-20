@@ -183,4 +183,6 @@ gboolean flatpak_run_app (const char     *app_ref,
                           GCancellable   *cancellable,
                           GError        **error);
 
+extern const char * const *flatpak_abs_usrmerged_dirs;
+
 #endif /* __FLATPAK_RUN_H__ */
