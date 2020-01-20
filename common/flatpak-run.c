@@ -64,6 +64,17 @@
 
 #define DEFAULT_SHELL "/bin/sh"
 
+const char * const abs_usrmerged_dirs[] =
+{
+  "/bin",
+  "/lib",
+  "/lib32",
+  "/lib64",
+  "/sbin",
+  NULL
+};
+const char * const *flatpak_abs_usrmerged_dirs = abs_usrmerged_dirs;
+
 static char *
 extract_unix_path_from_dbus_address (const char *address)
 {
@@ -2790,22 +2801,25 @@ static void
 flatpak_run_setup_usr_links (FlatpakBwrap *bwrap,
                              GFile        *runtime_files)
 {
-  const char *usr_links[] = {"lib", "lib32", "lib64", "bin", "sbin"};
   int i;
 
   if (runtime_files == NULL)
     return;
 
-  for (i = 0; i < G_N_ELEMENTS (usr_links); i++)
+  for (i = 0; flatpak_abs_usrmerged_dirs[i] != NULL; i++)
     {
-      const char *subdir = usr_links[i];
-      g_autoptr(GFile) runtime_subdir = g_file_get_child (runtime_files, subdir);
+      const char *subdir = flatpak_abs_usrmerged_dirs[i];
+      g_autoptr(GFile) runtime_subdir = NULL;
+
+      g_assert (subdir[0] == '/');
+      /* Skip the '/' when using as a subdirectory of the runtime */
+      runtime_subdir = g_file_get_child (runtime_files, subdir + 1);
+
       if (g_file_query_exists (runtime_subdir, NULL))
         {
-          g_autofree char *link = g_strconcat ("usr/", subdir, NULL);
-          g_autofree char *dest = g_strconcat ("/", subdir, NULL);
+          g_autofree char *link = g_strconcat ("usr", subdir, NULL);
           flatpak_bwrap_add_args (bwrap,
-                                  "--symlink", link, dest,
+                                  "--symlink", link, subdir,
                                   NULL);
         }
     }
