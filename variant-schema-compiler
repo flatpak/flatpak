@@ -825,7 +825,7 @@ static inline const {element_fixed_ctype} *
             C("""
 
 static inline {element_ctype}*
-{type_name_}to_strv ({TypeNameRef} v)
+{type_name_}to_strv ({TypeNameRef} v, gsize *length_out)
 {{
   gsize length = {type_name_}get_length (v);
   gsize i;
@@ -834,6 +834,9 @@ static inline {element_ctype}*
   for (i = 0; i < length; i++)
     resv[i] = {type_name_}get_at (v, i);
   resv[i] = NULL;
+
+  if (length_out)
+    *length_out = length;
 
   return resv;
 }}""");
