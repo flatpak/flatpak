@@ -1175,7 +1175,30 @@ static inline gboolean
     return FALSE;
 }}""", { 'equal': self.key_type.equal_code("canonical_key", "e_key") })
 
-        C('')
+            C('')
+
+            if isinstance(self.value_type, VariantType):
+                for kind in basic_types.keys():
+                    basic_type = basic_types[kind]
+                    ctype = basic_type[3]
+                    typechar = basic_type[0]
+                    C("""
+static inline {ctype}
+{type_name_}lookup_{kind} ({TypeNameRef} v, {key_ctype} key, {ctype} default_value)
+{{
+   {Prefix}VariantRef value_v;
+
+  if ({type_name_}lookup (v, key, NULL, &value_v) &&
+      *(const char *){prefix_}variant_get_type (value_v) == '{typechar}')
+    return {prefix_}variant_get_{kind} (value_v);
+  return default_value;
+}}
+""", {
+    'ctype': ctype,
+    'typechar': typechar,
+    "kind": kind
+})
+
 
         C(
 """static inline GString *
