@@ -357,33 +357,33 @@ gboolean       flatpak_remove_override_keyfile (const char *app_id,
                                                 gboolean    user,
                                                 GError    **error);
 
-int                 flatpak_deploy_data_get_version (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_origin (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_commit (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_appdata_content_rating_type (GVariant *deploy_data);
-GHashTable *        flatpak_deploy_data_get_appdata_content_rating (GVariant *deploy_data);
-const char **       flatpak_deploy_data_get_subpaths (GVariant *deploy_data);
-guint64             flatpak_deploy_data_get_installed_size (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_alt_id (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_eol (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_eol_rebase (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_runtime (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_extension_of (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_appdata_name (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_appdata_summary (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_appdata_version (GVariant *deploy_data);
-const char *        flatpak_deploy_data_get_appdata_license (GVariant *deploy_data);
-const char **       flatpak_deploy_data_get_previous_ids (GVariant *deploy_data,
+int                 flatpak_deploy_data_get_version (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_origin (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_commit (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_content_rating_type (GBytes *deploy_data);
+GHashTable *        flatpak_deploy_data_get_appdata_content_rating (GBytes *deploy_data);
+const char **       flatpak_deploy_data_get_subpaths (GBytes *deploy_data);
+guint64             flatpak_deploy_data_get_installed_size (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_alt_id (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_eol (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_eol_rebase (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_runtime (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_extension_of (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_name (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_summary (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_version (GBytes *deploy_data);
+const char *        flatpak_deploy_data_get_appdata_license (GBytes *deploy_data);
+const char **       flatpak_deploy_data_get_previous_ids (GBytes *deploy_data,
                                                           gsize    *length);
 
 
 GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
-GVariant *     flatpak_load_deploy_data (GFile        *deploy_dir,
+GBytes *       flatpak_load_deploy_data (GFile        *deploy_dir,
                                          const char   *ref,
                                          int           required_version,
                                          GCancellable *cancellable,
                                          GError      **error);
-GVariant *     flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
+GBytes *       flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
                                                int            required_version,
                                                GCancellable  *cancellable,
                                                GError       **error);
@@ -425,7 +425,7 @@ GFile *     flatpak_dir_get_unmaintained_extension_dir (FlatpakDir *self,
                                                         const char *name,
                                                         const char *arch,
                                                         const char *branch);
-GVariant *  flatpak_dir_get_deploy_data (FlatpakDir   *dir,
+GBytes *    flatpak_dir_get_deploy_data (FlatpakDir   *dir,
                                          const char   *ref,
                                          int           required_version,
                                          GCancellable *cancellable,

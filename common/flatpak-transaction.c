@@ -541,9 +541,9 @@ ref_is_installed (FlatpakTransaction *self,
 }
 
 static gboolean
-dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out, GVariant **deploy_data_out)
+dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out, GBytes **deploy_data_out)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
   if (deploy_data == NULL)
@@ -553,7 +553,7 @@ dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out, GVari
     *remote_out = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
 
   if (deploy_data_out)
-    *deploy_data_out = g_variant_ref (deploy_data);
+    *deploy_data_out = g_bytes_ref (deploy_data);
 
   return TRUE;
 }
@@ -2349,7 +2349,7 @@ emit_op_done (FlatpakTransaction          *self,
     commit = flatpak_dir_read_latest (priv->dir, op->remote, op->ref, NULL, NULL, NULL);
   else
     {
-      g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+      g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
       if (deploy_data)
         commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }
@@ -2372,7 +2372,7 @@ load_deployed_metadata (FlatpakTransaction *self, const char *ref, char **out_co
 
   if (out_commit)
     {
-      g_autoptr(GVariant) deploy_data = NULL;
+      g_autoptr(GBytes) deploy_data = NULL;
       deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
       if (deploy_data == NULL)
         return NULL;
@@ -3993,7 +3993,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE)
         {
-          g_autoptr(GVariant) deploy_data = NULL;
+          g_autoptr(GBytes) deploy_data = NULL;
 
           if (dir_ref_is_installed (priv->dir, op->ref, NULL, &deploy_data))
             {
@@ -4062,7 +4062,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
       if (res)
         {
-          g_autoptr(GVariant) deploy_data = NULL;
+          g_autoptr(GBytes) deploy_data = NULL;
           deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
           if (deploy_data)

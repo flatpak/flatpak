@@ -200,7 +200,7 @@ print_table_for_refs (gboolean      print_apps,
           g_auto(GStrv) parts = NULL;
           const char *repo = NULL;
           g_autoptr(FlatpakDeploy) deploy = NULL;
-          g_autoptr(GVariant) deploy_data = NULL;
+          g_autoptr(GBytes) deploy_data = NULL;
           const char *active;
           const char *alt_id;
           const char *eol;

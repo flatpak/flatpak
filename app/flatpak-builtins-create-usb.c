@@ -101,7 +101,7 @@ add_related (GHashTable   *all_refs,
              GCancellable *cancellable,
              GError      **error)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_auto(GStrv) parts = NULL;
@@ -132,7 +132,7 @@ add_related (GHashTable   *all_refs,
   for (l = extensions; l; l = l->next)
     {
       FlatpakExtension *ext = l->data;
-      g_autoptr(GVariant) ext_deploy_data = NULL;
+      g_autoptr(GBytes) ext_deploy_data = NULL;
       g_autoptr(OstreeCollectionRef) ext_collection_ref = NULL;
       g_autofree char *ext_collection_id = NULL;
       g_autofree const char **ext_subpaths = NULL;
@@ -190,8 +190,8 @@ add_runtime (GHashTable   *all_refs,
              GCancellable *cancellable,
              GError      **error)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
-  g_autoptr(GVariant) runtime_deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
+  g_autoptr(GBytes) runtime_deploy_data = NULL;
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(OstreeCollectionRef) runtime_collection_ref = NULL;
@@ -621,7 +621,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
 
       /* Add the main ref */
       {
-        g_autoptr(GVariant) deploy_data = NULL;
+        g_autoptr(GBytes) deploy_data = NULL;
         const char *commit;
         CommitAndSubpaths *c_s;
 

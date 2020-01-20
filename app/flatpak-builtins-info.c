@@ -85,7 +85,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GOptionContext) context = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
@@ -474,7 +474,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         {
           FlatpakExtension *ext = l->data;
           g_autofree const char **subpaths = NULL;
-          g_autoptr(GVariant) ext_deploy_data = NULL;
+          g_autoptr(GBytes) ext_deploy_data = NULL;
           g_autofree char *formatted = NULL;
           g_autofree char *formatted_size = NULL;
           g_autofree char *formatted_commit = NULL;

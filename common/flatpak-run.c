@@ -2187,10 +2187,10 @@ flatpak_run_add_dconf_args (FlatpakBwrap *bwrap,
 gboolean
 flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                GFile          *app_files,
-                               GVariant       *app_deploy_data,
+                               GBytes         *app_deploy_data,
                                const char     *app_extensions,
                                GFile          *runtime_files,
-                               GVariant       *runtime_deploy_data,
+                               GBytes         *runtime_deploy_data,
                                const char     *runtime_extensions,
                                const char     *app_id,
                                const char     *app_branch,
@@ -3180,8 +3180,8 @@ flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
 }
 
 static char *
-calculate_ld_cache_checksum (GVariant   *app_deploy_data,
-                             GVariant   *runtime_deploy_data,
+calculate_ld_cache_checksum (GBytes   *app_deploy_data,
+                             GBytes   *runtime_deploy_data,
                              const char *app_extensions,
                              const char *runtime_extensions)
 {
@@ -3479,8 +3479,8 @@ flatpak_run_app (const char     *app_ref,
                  GError        **error)
 {
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
-  g_autoptr(GVariant) runtime_deploy_data = NULL;
-  g_autoptr(GVariant) app_deploy_data = NULL;
+  g_autoptr(GBytes) runtime_deploy_data = NULL;
+  g_autoptr(GBytes) app_deploy_data = NULL;
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) bin_ldconfig = NULL;

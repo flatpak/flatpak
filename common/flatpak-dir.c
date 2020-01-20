@@ -163,9 +163,9 @@ static void flatpak_dir_log (FlatpakDir *self,
   (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, \
                      NULL, change, remote, ref, commit, old_commit, url, format, __VA_ARGS__)
 
-static GVariant *upgrade_deploy_data (GVariant   *deploy_data,
-                                      GFile      *deploy_dir,
-                                      const char *ref);
+static GBytes *upgrade_deploy_data (GBytes     *deploy_data,
+                                    GFile      *deploy_dir,
+                                    const char *ref);
 
 typedef struct
 {
@@ -634,7 +634,7 @@ flatpak_deploy_get_dir (FlatpakDeploy *deploy)
   return g_object_ref (deploy->dir);
 }
 
-GVariant *
+GBytes *
 flatpak_load_deploy_data (GFile        *deploy_dir,
                           const char   *ref,
                           int           required_version,
@@ -642,18 +642,16 @@ flatpak_load_deploy_data (GFile        *deploy_dir,
                           GError      **error)
 {
   g_autoptr(GFile) data_file = NULL;
-  char *data = NULL;
-  gsize data_size;
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
+  gchar *contents;
+  gsize len;
 
   data_file = g_file_get_child (deploy_dir, "deploy");
-  if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, error))
+
+  if (!g_file_load_contents (data_file, cancellable, &contents, &len, NULL, error))
     return NULL;
 
-  deploy_data = g_variant_ref_sink (g_variant_new_from_data (FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT,
-                                                             data, data_size,
-                                                             FALSE, g_free, data));
-
+  deploy_data = g_bytes_new_take (contents, len);
 
   if (flatpak_deploy_data_get_version (deploy_data) < required_version)
     return upgrade_deploy_data (deploy_data, deploy_dir, ref);
@@ -662,7 +660,7 @@ flatpak_load_deploy_data (GFile        *deploy_dir,
 }
 
 
-GVariant *
+GBytes *
 flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
                                 int            required_version,
                                 GCancellable  *cancellable,
@@ -2279,169 +2277,176 @@ flatpak_dir_repo_lock (FlatpakDir   *self,
   return glnx_make_lock_file (AT_FDCWD, lock_path, operation, lockfile, error);
 }
 
-
 const char *
-flatpak_deploy_data_get_origin (GVariant *deploy_data)
+flatpak_deploy_data_get_origin (GBytes *deploy_data)
 {
-  const char *origin;
-
-  g_variant_get_child (deploy_data, 0, "&s", &origin);
-  return origin;
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  return var_deploy_data_get_origin (ref);
 }
 
 const char *
-flatpak_deploy_data_get_commit (GVariant *deploy_data)
+flatpak_deploy_data_get_commit (GBytes *deploy_data)
 {
-  const char *commit;
-
-  g_variant_get_child (deploy_data, 1, "&s", &commit);
-  return commit;
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  return var_deploy_data_get_commit (ref);
 }
 
-int
-flatpak_deploy_data_get_version (GVariant *deploy_data)
+gint32
+flatpak_deploy_data_get_version (GBytes *deploy_data)
 {
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
-  int version = 0;
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  VarMetadataRef metadata = var_deploy_data_get_metadata (ref);
 
-  g_variant_lookup (metadata, "deploy-version", "i", &version);
-
-  return version;
+  return var_metadata_lookup_int32 (metadata, "deploy-version", 0);
 }
 
 static const char *
-flatpak_deploy_data_get_string (GVariant *deploy_data, const char *key)
+flatpak_deploy_data_get_string (GBytes *deploy_data, const char *key)
 {
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
-  const char *value = NULL;
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  VarMetadataRef metadata = var_deploy_data_get_metadata (ref);
 
-  g_variant_lookup (metadata, key, "&s", &value);
-
-  return value;
+  return var_metadata_lookup_string (metadata, key, NULL);
 }
 
 static const char *
-flatpak_deploy_data_get_localed_string (GVariant *deploy_data, const char *key)
+flatpak_deploy_data_get_localed_string (GBytes *deploy_data, const char *key)
 {
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  VarMetadataRef metadata = var_deploy_data_get_metadata (ref);
   const char * const * languages = g_get_language_names ();
-  const char *value = NULL;
   int i;
 
   for (i = 0; languages[i]; ++i)
     {
       g_autofree char *localed_key = NULL;
+      VarVariantRef value_v;
+
       if (strcmp (languages[i], "C") == 0)
         localed_key = g_strdup (key);
       else
         localed_key = g_strdup_printf ("%s@%s", key, languages[i]);
 
-      if (g_variant_lookup (metadata, localed_key, "&s", &value))
-        return value;
+      if (var_metadata_lookup (metadata, localed_key, NULL,  &value_v) &&
+          var_variant_is_type (value_v, G_VARIANT_TYPE_STRING))
+        return var_variant_get_string (value_v);
     }
 
   return NULL;
 }
 
 const char *
-flatpak_deploy_data_get_alt_id (GVariant *deploy_data)
+flatpak_deploy_data_get_alt_id (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_string (deploy_data, "alt-id");
 }
 
 const char *
-flatpak_deploy_data_get_eol (GVariant *deploy_data)
+flatpak_deploy_data_get_eol (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_string (deploy_data, "eol");
 }
 
 const char *
-flatpak_deploy_data_get_eol_rebase (GVariant *deploy_data)
+flatpak_deploy_data_get_eol_rebase (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_string (deploy_data, "eolr");
 }
 
 const char **
-flatpak_deploy_data_get_previous_ids (GVariant *deploy_data, gsize *length)
+flatpak_deploy_data_get_previous_ids (GBytes *deploy_data, gsize *length)
 {
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
-  g_autoptr(GVariant) previous_ids_v = NULL;
-  const char **previous_ids = NULL;
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  VarMetadataRef metadata = var_deploy_data_get_metadata (ref);
+  VarVariantRef previous_ids_v;
 
-  previous_ids_v = g_variant_lookup_value (metadata, "previous-ids", NULL);
-  if (previous_ids_v)
-    previous_ids = g_variant_get_strv (previous_ids_v, length);
-  else
-    {
-      if (length != NULL)
-        *length = 0;
-    }
+  if (var_metadata_lookup (metadata, "previous-ids", NULL,  &previous_ids_v))
+    return var_arrayofstring_to_strv (var_arrayofstring_from_variant (previous_ids_v), length);
 
-  return previous_ids;
+  if (length != NULL)
+    *length = 0;
+
+  return NULL;
 }
 
 const char *
-flatpak_deploy_data_get_runtime (GVariant *deploy_data)
+flatpak_deploy_data_get_runtime (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_string (deploy_data, "runtime");
 }
 
 const char *
-flatpak_deploy_data_get_extension_of (GVariant *deploy_data)
+flatpak_deploy_data_get_extension_of (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_string (deploy_data, "extension-of");
 }
 
 const char *
-flatpak_deploy_data_get_appdata_name (GVariant *deploy_data)
+flatpak_deploy_data_get_appdata_name (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_localed_string (deploy_data, "appdata-name");
 }
 
 const char *
-flatpak_deploy_data_get_appdata_summary (GVariant *deploy_data)
+flatpak_deploy_data_get_appdata_summary (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_localed_string (deploy_data, "appdata-summary");
 }
 
 const char *
-flatpak_deploy_data_get_appdata_version (GVariant *deploy_data)
+flatpak_deploy_data_get_appdata_version (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_string (deploy_data, "appdata-version");
 }
 
 const char *
-flatpak_deploy_data_get_appdata_license (GVariant *deploy_data)
+flatpak_deploy_data_get_appdata_license (GBytes *deploy_data)
 {
   return flatpak_deploy_data_get_string (deploy_data, "appdata-license");
 }
 
 const char *
-flatpak_deploy_data_get_appdata_content_rating_type (GVariant *deploy_data)
+flatpak_deploy_data_get_appdata_content_rating_type (GBytes *deploy_data)
 {
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
-  const char *value = NULL;
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  VarMetadataRef metadata = var_deploy_data_get_metadata (ref);
+  VarVariantRef rating_v;
 
-  g_variant_lookup (metadata, "appdata-content-rating", "(&s*)", &value, NULL);
+  if (var_metadata_lookup (metadata, "appdata-content-rating", NULL,  &rating_v))
+    {
+      VarContentRatingRef rating = var_content_rating_from_variant (rating_v);
+      return var_content_rating_get_rating_type (rating);
+    }
 
-  return value;
+  return NULL;
 }
 
 GHashTable *  /* (transfer container) (nullable) */
-flatpak_deploy_data_get_appdata_content_rating (GVariant *deploy_data)
+flatpak_deploy_data_get_appdata_content_rating (GBytes *deploy_data)
 {
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
-  const char *id = NULL, *val = NULL;
-  g_autoptr(GHashTable) content_rating = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
-  g_autoptr(GVariantIter) iter = NULL;
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  VarMetadataRef metadata = var_deploy_data_get_metadata (ref);
+  VarVariantRef rating_v;
+  g_autoptr(GHashTable) content_rating = NULL;
 
-  if (!g_variant_lookup (metadata, "appdata-content-rating", "(*a{ss})", NULL, &iter))
-    return NULL;
+  if (var_metadata_lookup (metadata, "appdata-content-rating", NULL,  &rating_v))
+    {
+      VarContentRatingRef rating = var_content_rating_from_variant (rating_v);
+      VarRatingsRef ratings = var_content_rating_get_ratings (rating);
+      gsize len, i;
 
-  while (g_variant_iter_loop (iter, "{&s&s}", &id, &val))
-    g_hash_table_insert (content_rating,
-                         (gpointer) g_intern_string (id),
-                         (gpointer) g_intern_string (val));
+      content_rating = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+
+      len = var_ratings_get_length (ratings);
+      for (i = 0; i < len; i++)
+        {
+          VarRatingsEntryRef entry = var_ratings_get_at (ratings, i);
+
+          g_hash_table_insert (content_rating,
+                               (gpointer) g_intern_string (var_ratings_entry_get_key (entry)),
+                               (gpointer) g_intern_string (var_ratings_entry_get_value (entry)));
+        }
+    }
 
   return g_steal_pointer (&content_rating);
 }
@@ -2452,21 +2457,17 @@ flatpak_deploy_data_get_appdata_content_rating (GVariant *deploy_data)
  * Returns: (array zero-terminated=1) (transfer container): an array of constant strings
  **/
 const char **
-flatpak_deploy_data_get_subpaths (GVariant *deploy_data)
+flatpak_deploy_data_get_subpaths (GBytes *deploy_data)
 {
-  const char **subpaths;
-
-  g_variant_get_child (deploy_data, 2, "^a&s", &subpaths);
-  return subpaths;
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  return var_arrayofstring_to_strv (var_deploy_data_get_subpaths (ref), NULL);
 }
 
 guint64
-flatpak_deploy_data_get_installed_size (GVariant *deploy_data)
+flatpak_deploy_data_get_installed_size (GBytes *deploy_data)
 {
-  guint64 size;
-
-  g_variant_get_child (deploy_data, 3, "t", &size);
-  return GUINT64_FROM_BE (size);
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  return var_deploy_data_get_installed_size (ref);
 }
 
 static char *
@@ -2581,7 +2582,7 @@ add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
     }
 }
 
-static GVariant *
+static GBytes *
 flatpak_dir_new_deploy_data (FlatpakDir         *self,
                              GFile              *deploy_dir,
                              GVariant           *commit_metadata,
@@ -2600,6 +2601,7 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
   const char *alt_id = NULL;
   const char *eol = NULL;
   const char *eol_rebase = NULL;
+  g_autoptr(GVariant) res = NULL;
 
   g_variant_lookup (commit_metadata, "xa.alt-id", "&s", &alt_id);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
@@ -2637,20 +2639,23 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
 
   add_appdata_to_deploy_data (&metadata_builder, deploy_dir, id);
 
-  return g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
-                                            origin,
-                                            commit,
-                                            subpaths ? subpaths : empty_subpaths,
-                                            GUINT64_TO_BE (installed_size),
-                                            g_variant_builder_end (&metadata_builder)));
+  res = g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
+                                           origin,
+                                           commit,
+                                           subpaths ? subpaths : empty_subpaths,
+                                           GUINT64_TO_BE (installed_size),
+                                           g_variant_builder_end (&metadata_builder)));
+  return g_variant_get_data_as_bytes (res);
 }
 
-static GVariant *
-upgrade_deploy_data (GVariant *deploy_data, GFile *deploy_dir, const char *ref)
+static GBytes *
+upgrade_deploy_data (GBytes *deploy_data, GFile *deploy_dir, const char *ref)
 {
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  VarDeployDataRef deploy_ref = var_deploy_data_from_bytes (deploy_data);
+  g_autoptr(GVariant) metadata = g_variant_ref_sink (var_metadata_peek_as_gvariant (var_deploy_data_get_metadata (deploy_ref)));
   GVariantBuilder metadata_builder;
   g_autofree const char **subpaths = NULL;
+  g_autoptr(GVariant) res = NULL;
   int i, n, old_version;
 
   g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
@@ -2670,7 +2675,6 @@ upgrade_deploy_data (GVariant *deploy_data, GFile *deploy_dir, const char *ref)
       g_variant_builder_add_value (&metadata_builder, child);
     }
 
-
   old_version = flatpak_deploy_data_get_version (deploy_data);
   if (old_version < 1)
     {
@@ -2680,15 +2684,16 @@ upgrade_deploy_data (GVariant *deploy_data, GFile *deploy_dir, const char *ref)
     }
 
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
-  return g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
-                                            flatpak_deploy_data_get_origin (deploy_data),
-                                            flatpak_deploy_data_get_commit (deploy_data),
-                                            subpaths,
-                                            GUINT64_TO_BE (flatpak_deploy_data_get_installed_size (deploy_data)),
-                                            g_variant_builder_end (&metadata_builder)));
+  res = g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
+                                           flatpak_deploy_data_get_origin (deploy_data),
+                                           flatpak_deploy_data_get_commit (deploy_data),
+                                           subpaths,
+                                           GUINT64_TO_BE (flatpak_deploy_data_get_installed_size (deploy_data)),
+                                           g_variant_builder_end (&metadata_builder)));
+  return g_variant_get_data_as_bytes (res);
 }
 
-GVariant *
+GBytes *
 flatpak_dir_get_deploy_data (FlatpakDir   *self,
                              const char   *ref,
                              int           required_version,
@@ -2719,7 +2724,7 @@ flatpak_dir_get_origin (FlatpakDir   *self,
                         GCancellable *cancellable,
                         GError      **error)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
                                              cancellable, error);
@@ -7761,7 +7766,7 @@ apply_extra_data (FlatpakDir   *self,
 static gboolean
 flatpak_dir_check_parental_controls (FlatpakDir    *self,
                                      const char    *ref,
-                                     GVariant      *deploy_data,
+                                     GBytes        *deploy_data,
                                      GCancellable  *cancellable,
                                      GError       **error)
 {
@@ -7922,7 +7927,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) files_etc = NULL;
   g_autoptr(GFile) deploy_data_file = NULL;
   g_autoptr(GVariant) commit_data = NULL;
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GFile) export = NULL;
   g_autoptr(GFile) extradir = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
@@ -8319,7 +8324,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
     return FALSE;
 
   deploy_data_file = g_file_get_child (checkoutdir, "deploy");
-  if (!flatpak_variant_save (deploy_data_file, deploy_data, cancellable, error))
+  if (!flatpak_bytes_save (deploy_data_file, deploy_data, cancellable, error))
     return FALSE;
 
   if (!glnx_opendirat (AT_FDCWD, checkoutdirpath, TRUE, &checkoutdir_dfd, error))
@@ -8406,7 +8411,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
 
       if (reinstall)
         {
-          g_autoptr(GVariant) old_deploy = NULL;
+          g_autoptr(GBytes) old_deploy = NULL;
           const char *old_origin;
 
           old_deploy = flatpak_load_deploy_data (old_deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
@@ -8498,7 +8503,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            GCancellable *cancellable,
                            GError      **error)
 {
-  g_autoptr(GVariant) old_deploy_data = NULL;
+  g_autoptr(GBytes) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
   g_autofree const char **old_subpaths = NULL;
   g_autofree char *old_active = NULL;
@@ -9128,7 +9133,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
 {
   g_autofree char *ref = NULL;
   gboolean created_remote = FALSE;
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *origin = NULL;
   g_autofree char *fp_metadata = NULL;
@@ -9272,7 +9277,7 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
                             GError      **error)
 {
   g_autofree char *ref = NULL;
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *origin = NULL;
   g_auto(GStrv) parts = NULL;
@@ -9427,7 +9432,7 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
                                                   const char  *target_commit,
                                                   const char **opt_subpaths)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
   const char **subpaths;
   g_autofree char *url = NULL;
@@ -9549,7 +9554,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     GCancellable                         *cancellable,
                     GError                              **error)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   const char **subpaths = NULL;
   g_autofree char *url = NULL;
   FlatpakPullFlags flatpak_flags;
@@ -9830,7 +9835,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   g_autofree char *old_active = NULL;
   g_auto(GStrv) parts = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   gboolean keep_ref = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
   gboolean force_remove = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
 
@@ -9879,7 +9884,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
       flatpak_dir_list_refs (self, "app", &app_refs, NULL, NULL);
       for (i = 0; app_refs != NULL && app_refs[i] != NULL; i++)
         {
-          g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+          g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
           if (deploy_data)
             {
@@ -11439,11 +11444,7 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
 
   exts = var_summary_get_metadata (summary);
 
-  collection_id = NULL;
-  if (var_metadata_lookup (exts, "ostree.summary.collection-id", NULL, &v) &&
-      var_variant_is_type (v, G_VARIANT_TYPE_STRING))
-    collection_id = var_variant_get_string (v);
-
+  collection_id = var_metadata_lookup_string (exts, "ostree.summary.collection-id", NULL);
 
   /* refs that match the main collection-id */
   ref_map = var_summary_get_ref_map (summary);
@@ -12084,7 +12085,7 @@ filter_out_deployed_refs (FlatpakDir *self,
     {
       const gchar *refspec = g_ptr_array_index (local_refspecs, i);
       g_autofree gchar *ref = NULL;
-      g_autoptr(GVariant) deploy_data = NULL;
+      g_autoptr(GBytes) deploy_data = NULL;
 
       if (!ostree_parse_refspec (refspec, NULL, &ref, error))
         return FALSE;
@@ -14040,7 +14041,7 @@ add_related (FlatpakDir *self,
              gboolean    autodelete,
              gboolean    locale_subset)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
   g_auto(GStrv) extra_subpaths = NULL;
   g_auto(GStrv) subpaths = NULL;
@@ -14540,7 +14541,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
             {
               g_autofree char *extension_ref = NULL;
               g_autofree char *checksum = NULL;
-              g_autoptr(GVariant) deploy_data = NULL;
+              g_autoptr(GBytes) deploy_data = NULL;
               const char *branch = branches[branch_i];
 
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
@@ -14574,7 +14575,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                   GLNX_HASH_TABLE_FOREACH (matches, const char *, match)
                     {
                       g_autofree char *match_checksum = NULL;
-                      g_autoptr(GVariant) match_deploy_data = NULL;
+                      g_autoptr(GBytes) match_deploy_data = NULL;
 
                       if (flatpak_repo_resolve_rev (self->repo,
                                                     collection_id,
@@ -14620,7 +14621,7 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
                                 GError      **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();

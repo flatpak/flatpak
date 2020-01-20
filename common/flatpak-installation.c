@@ -737,7 +737,7 @@ get_ref (FlatpakDir   *dir,
   g_autofree char *deploy_path = NULL;
   g_autofree char *latest_commit = NULL;
   g_autofree char *deploy_subdirname = NULL;
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autofree const char **subpaths = NULL;
   g_autofree char *collection_id = NULL;
   gboolean is_current = FALSE;
@@ -1151,7 +1151,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 
       if (flatpak_ref_get_kind (FLATPAK_REF (installed_ref)) == FLATPAK_REF_KIND_APP)
         {
-          g_autoptr(GVariant) deploy_data = NULL;
+          g_autoptr(GBytes) deploy_data = NULL;
 
           /* This checks if an already installed app has a missing runtime.
            * If so, return that installed ref in the updates list, so that FlatpakTransaction

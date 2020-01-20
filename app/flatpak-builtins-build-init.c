@@ -99,7 +99,7 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
                 {
                   g_autoptr(FlatpakDir) src_dir = NULL;
                   g_autoptr(GFile) deploy = NULL;
-                  g_autoptr(GVariant) deploy_data = NULL;
+                  g_autoptr(GBytes) deploy_data = NULL;
                   const char **subpaths;
 
                   deploy = flatpak_find_deploy_dir_for_ref (ext->ref, &src_dir, cancellable, error);
