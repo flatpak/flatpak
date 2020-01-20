@@ -44,3 +44,16 @@ type Cache [sorted string] 'CacheData {
 type SparseCache [sorted string] Metadata;
 
 type CommitsCache []Checksum;
+
+type DeployData {
+ origin: string;
+ commit: string;
+ subpaths: []string;
+ installed_size: bigendian uint64;
+ metadata: Metadata;
+};
+
+type ContentRating {
+ rating_type: string;
+ ratings: 'Ratings [string] string;
+};

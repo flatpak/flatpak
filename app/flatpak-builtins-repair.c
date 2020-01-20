@@ -252,7 +252,7 @@ transaction_add_local_ref (FlatpakDir         *dir,
                            FlatpakTransaction *transaction,
                            const char         *ref)
 {
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autofree char *repo_checksum = NULL;
   const char *origin;

@@ -4721,7 +4721,7 @@ flatpak_extension_new (const char *id,
                        gboolean    is_unmaintained)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
-  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
 
   ext->id = g_strdup (id);
   ext->installed_id = g_strdup (extension);
