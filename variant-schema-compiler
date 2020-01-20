@@ -541,7 +541,7 @@ class Type:
 /************** {TypeName} *******************/
 
 #define {TYPE_NAME_}TYPESTRING "{typestring}"
-#define {TYPE_NAME_}TYPEFORMAT G_VARIANT_TYPE ({TYPE_NAME_}TYPESTRING)
+#define {TYPE_NAME_}TYPEFORMAT ((const GVariantType *) {TYPE_NAME_}TYPESTRING)
 
 typedef struct {{
  gconstpointer base;
@@ -896,7 +896,7 @@ class DictType(Type):
         return [self.key_type, self.value_type]
     def add_expansion_vars(self, vars):
         vars['element_fixed_size'] = self.element_fixed_size()
-        vars['element_typeformat'] = 'G_VARIANT_TYPE("' + self.typestring()[1:] + '")'
+        vars['element_typeformat'] = '((const GVariantType *) "' + self.typestring()[1:] + '")'
         vars['value_ctype'] = self.value_type.get_ctype()
         vars['value_typename'] = self.value_type.typename
         vars['value_fixed_size'] = self.value_type.get_fixed_size()
