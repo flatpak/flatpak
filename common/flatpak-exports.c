@@ -282,6 +282,7 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
   if (exports->host_fs != 0)
     {
       const char *host_bind_mode = "--bind";
+      int i;
 
       if (exports->host_fs == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
         host_bind_mode = "--ro-bind";
@@ -289,6 +290,50 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
       if (g_file_test ("/usr", G_FILE_TEST_IS_DIR))
         flatpak_bwrap_add_args (bwrap,
                                 host_bind_mode, "/usr", "/run/host/usr", NULL);
+
+      for (i = 0; flatpak_abs_usrmerged_dirs[i] != NULL; i++)
+        {
+          const char *subdir = flatpak_abs_usrmerged_dirs[i];
+          g_autofree char *target = NULL;
+          g_autofree char *run_host_subdir = NULL;
+
+          g_assert (subdir[0] == '/');
+          /* e.g. /run/host/lib32 */
+          run_host_subdir = g_strconcat ("/run/host", subdir, NULL);
+          target = glnx_readlinkat_malloc (-1, subdir, NULL, NULL);
+
+          if (target != NULL &&
+              g_str_has_prefix (target, "usr/") &&
+              g_strcmp0 (target + 3, subdir) == 0)
+            {
+              /* e.g. /lib32 is a relative symlink to usr/lib32;
+               * keep it relative */
+              flatpak_bwrap_add_args (bwrap,
+                                      "--symlink", target, run_host_subdir,
+                                      NULL);
+            }
+          else if (target != NULL &&
+                   g_str_has_prefix (target, "/usr/") &&
+                   g_strcmp0 (target + 4, subdir) == 0)
+            {
+              /* e.g. /lib32 is an absolute symlink to /usr/lib32; make
+               * it a relative symlink to usr/lib32 instead by skipping
+               * the '/' */
+              flatpak_bwrap_add_args (bwrap,
+                                      "--symlink", target + 1, run_host_subdir,
+                                      NULL);
+            }
+          else if (g_file_test (subdir, G_FILE_TEST_IS_DIR))
+            {
+              /* e.g. /lib32 is a symlink to /opt/compat/ia32/lib,
+               * or is a plain directory because the host OS has not
+               * undergone the /usr merge; bind-mount the directory instead */
+              flatpak_bwrap_add_args (bwrap,
+                                      host_bind_mode, subdir, run_host_subdir,
+                                      NULL);
+            }
+        }
+
       if (g_file_test ("/etc", G_FILE_TEST_IS_DIR))
         flatpak_bwrap_add_args (bwrap,
                                 host_bind_mode, "/etc", "/run/host/etc", NULL);
