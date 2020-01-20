@@ -143,6 +143,11 @@ GBytes * flatpak_read_stream (GInputStream * in,
                               gboolean null_terminate,
                               GError      **error);
 
+gboolean flatpak_bytes_save (GFile        *dest,
+                             GBytes       *bytes,
+                             GCancellable *cancellable,
+                             GError      **error);
+
 gboolean flatpak_variant_save (GFile        *dest,
                                GVariant     *variant,
                                GCancellable *cancellable,
