@@ -3311,6 +3311,11 @@ flatpak_repo_collect_sizes (OstreeRepo   *repo,
                             GCancellable *cancellable,
                             GError      **error)
 {
+  /* Initialize the sums */
+  if (installed_size)
+    *installed_size = 0;
+  if (download_size)
+    *download_size = 0;
   return _flatpak_repo_collect_sizes (repo, root, NULL, installed_size, download_size, cancellable, error);
 }
 
