@@ -617,7 +617,7 @@ flatpak_exports_add_path_dir (FlatpakExports *exports,
 }
 
 void
-flatpak_exports_add_home_expose (FlatpakExports       *exports,
+flatpak_exports_add_host_expose (FlatpakExports       *exports,
                                  FlatpakFilesystemMode mode)
 {
   exports->host_fs = mode;

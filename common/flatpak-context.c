@@ -2085,7 +2085,7 @@ flatpak_context_export (FlatpakContext *context,
           closedir (dir);
         }
       flatpak_exports_add_path_expose (exports, fs_mode, "/run/media");
-      flatpak_exports_add_home_expose (exports, fs_mode);
+      flatpak_exports_add_host_expose (exports, fs_mode);
     }
 
   home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
