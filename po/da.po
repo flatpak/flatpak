@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-01-09 15:26+0000\n"
+"POT-Creation-Date: 2020-01-23 13:50+0100\n"
 "PO-Revision-Date: 2020-01-09 22:26+0200\n"
 "Last-Translator: scootergrisen\n"
 "Language-Team: Danish\n"
@@ -253,7 +253,7 @@ msgstr "Intet udvidelsespunkt matcher %s i %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Manglende '=' i bindingsmonteringstilvalget '%s'"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3860
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3882
 msgid "Unable to start app"
 msgstr "Kan ikke starte program"
 
@@ -3256,7 +3256,7 @@ msgstr "%s er allerede installeret"
 #: app/flatpak-cli-transaction.c:470 app/flatpak-cli-transaction.c:472
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
 #: common/flatpak-dir.c:2138 common/flatpak-dir.c:2723
-#: common/flatpak-dir.c:14642 common/flatpak-transaction.c:1981
+#: common/flatpak-dir.c:14643 common/flatpak-transaction.c:1981
 #: common/flatpak-transaction.c:2008 common/flatpak-utils.c:1724
 #: common/flatpak-utils.c:1817
 #, c-format
@@ -3740,37 +3740,37 @@ msgstr "Kunne ikke rebase %s til %s: %s\n"
 msgid "No authenticator configured for remote `%s`"
 msgstr "Ingen autentifikator konfigureret for eksternen `%s`"
 
-#: common/flatpak-context.c:180
+#: common/flatpak-context.c:181
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Ukendt delingstype %s, gyldige typer er: %s"
 
-#: common/flatpak-context.c:215
+#: common/flatpak-context.c:216
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Ukendt politiktype %s, gyldige typer er: %s"
 
-#: common/flatpak-context.c:253
+#: common/flatpak-context.c:254
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "Ugyldigt dbus-navn %s"
 
-#: common/flatpak-context.c:266
+#: common/flatpak-context.c:267
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Ukendt sokkeltype %s, gyldige typer er: %s"
 
-#: common/flatpak-context.c:295
+#: common/flatpak-context.c:296
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Ukendt enhedstype %s, gyldige typer er: %s"
 
-#: common/flatpak-context.c:323
+#: common/flatpak-context.c:324
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Ukendt funktionalitetstype %s, gyldige typer er: %s"
 
-#: common/flatpak-context.c:763
+#: common/flatpak-context.c:764
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, home, xdg-*[/…], "
@@ -3779,152 +3779,152 @@ msgstr ""
 "Ukendt filsystemplacering %s, gyldige placeringer er: vært, hjem, xdg-*[/ "
 "…], ~/mappe, /mappe"
 
-#: common/flatpak-context.c:1033
+#: common/flatpak-context.c:1034
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Ugyldigt miljøformat %s"
 
-#: common/flatpak-context.c:1146 common/flatpak-context.c:1154
+#: common/flatpak-context.c:1147 common/flatpak-context.c:1155
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy-argumenter skal være i formatet UNDERSYSTEM.NØGLE=VÆRDI"
 
-#: common/flatpak-context.c:1161
+#: common/flatpak-context.c:1162
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy-værdier må ikke begynde med \"!\""
 
-#: common/flatpak-context.c:1186 common/flatpak-context.c:1194
+#: common/flatpak-context.c:1187 common/flatpak-context.c:1195
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--remove-policy-argumenter skal være i formatet UNDERSYSTEM.NØGLE=VÆRDI"
 
-#: common/flatpak-context.c:1201
+#: common/flatpak-context.c:1202
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy må ikke begynde med \"!\""
 
-#: common/flatpak-context.c:1227
+#: common/flatpak-context.c:1228
 msgid "Share with host"
 msgstr "Del med vært"
 
-#: common/flatpak-context.c:1227 common/flatpak-context.c:1228
+#: common/flatpak-context.c:1228 common/flatpak-context.c:1229
 msgid "SHARE"
 msgstr "DEL"
 
-#: common/flatpak-context.c:1228
+#: common/flatpak-context.c:1229
 msgid "Unshare with host"
 msgstr "Stop deling med vært"
 
-#: common/flatpak-context.c:1229
+#: common/flatpak-context.c:1230
 msgid "Expose socket to app"
 msgstr "Eksponer sokkel til program"
 
-#: common/flatpak-context.c:1229 common/flatpak-context.c:1230
+#: common/flatpak-context.c:1230 common/flatpak-context.c:1231
 msgid "SOCKET"
 msgstr "SOKKEL"
 
-#: common/flatpak-context.c:1230
+#: common/flatpak-context.c:1231
 msgid "Don't expose socket to app"
 msgstr "Eksponer ikke sokkel til program"
 
-#: common/flatpak-context.c:1231
+#: common/flatpak-context.c:1232
 msgid "Expose device to app"
 msgstr "Eksponer enhed til program"
 
-#: common/flatpak-context.c:1231 common/flatpak-context.c:1232
+#: common/flatpak-context.c:1232 common/flatpak-context.c:1233
 msgid "DEVICE"
 msgstr "ENHED"
 
-#: common/flatpak-context.c:1232
+#: common/flatpak-context.c:1233
 msgid "Don't expose device to app"
 msgstr "Eksponer ikke enhed til program"
 
-#: common/flatpak-context.c:1233
+#: common/flatpak-context.c:1234
 msgid "Allow feature"
 msgstr "Tillad funktionalitet"
 
-#: common/flatpak-context.c:1233 common/flatpak-context.c:1234
+#: common/flatpak-context.c:1234 common/flatpak-context.c:1235
 msgid "FEATURE"
 msgstr "FUNKTIONALITET"
 
-#: common/flatpak-context.c:1234
+#: common/flatpak-context.c:1235
 msgid "Don't allow feature"
 msgstr "Tillad ikke funktionalitet"
 
-#: common/flatpak-context.c:1235
+#: common/flatpak-context.c:1236
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Eksponer filsystem til program (:ro for skrivebeskyttet)"
 
-#: common/flatpak-context.c:1235
+#: common/flatpak-context.c:1236
 msgid "FILESYSTEM[:ro]"
 msgstr "FILSYSTEM[:ro]"
 
-#: common/flatpak-context.c:1236
+#: common/flatpak-context.c:1237
 msgid "Don't expose filesystem to app"
 msgstr "Eksponer ikke filsystem til program"
 
-#: common/flatpak-context.c:1236
+#: common/flatpak-context.c:1237
 msgid "FILESYSTEM"
 msgstr "FILSYSTEM"
 
-#: common/flatpak-context.c:1237
+#: common/flatpak-context.c:1238
 msgid "Set environment variable"
 msgstr "Indstil miljøvariabel"
 
-#: common/flatpak-context.c:1237
+#: common/flatpak-context.c:1238
 msgid "VAR=VALUE"
 msgstr "VARIABEL=VÆRDI"
 
-#: common/flatpak-context.c:1238
+#: common/flatpak-context.c:1239
 msgid "Allow app to own name on the session bus"
 msgstr "Giv program tilladelse til eget navn på sessionsbussen"
 
-#: common/flatpak-context.c:1238 common/flatpak-context.c:1239
-#: common/flatpak-context.c:1240 common/flatpak-context.c:1241
-#: common/flatpak-context.c:1242 common/flatpak-context.c:1243
+#: common/flatpak-context.c:1239 common/flatpak-context.c:1240
+#: common/flatpak-context.c:1241 common/flatpak-context.c:1242
+#: common/flatpak-context.c:1243 common/flatpak-context.c:1244
 msgid "DBUS_NAME"
 msgstr "DBUS_NAVN"
 
-#: common/flatpak-context.c:1239
+#: common/flatpak-context.c:1240
 msgid "Allow app to talk to name on the session bus"
 msgstr "Giv program tilladelse til at snakke med navn på sessionsbussen"
 
-#: common/flatpak-context.c:1240
+#: common/flatpak-context.c:1241
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Giv ikke program tilladelse til at snakke med navn på sessionsbussen"
 
-#: common/flatpak-context.c:1241
+#: common/flatpak-context.c:1242
 msgid "Allow app to own name on the system bus"
 msgstr "Giv program tilladelse til eget navn på systembussen"
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1243
 msgid "Allow app to talk to name on the system bus"
 msgstr "Giv program tilladelse til at snakke med navn på systembussen"
 
-#: common/flatpak-context.c:1243
+#: common/flatpak-context.c:1244
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Giv ikke program tilladelse til at snakke med navn på systembussen"
 
-#: common/flatpak-context.c:1244
+#: common/flatpak-context.c:1245
 msgid "Add generic policy option"
 msgstr "Tilføj tilvalg for generisk politik"
 
-#: common/flatpak-context.c:1244 common/flatpak-context.c:1245
+#: common/flatpak-context.c:1245 common/flatpak-context.c:1246
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "UNDERSYSTEM.NØGLE=VÆRDI"
 
-#: common/flatpak-context.c:1245
+#: common/flatpak-context.c:1246
 msgid "Remove generic policy option"
 msgstr "Fjern tilvalg for generisk politik"
 
-#: common/flatpak-context.c:1246
+#: common/flatpak-context.c:1247
 msgid "Persist home directory subpath"
 msgstr "Vedvarende understi for hjemmemappe"
 
-#: common/flatpak-context.c:1246
+#: common/flatpak-context.c:1247
 msgid "FILENAME"
 msgstr "FILNAVN"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1248
+#: common/flatpak-context.c:1249
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Kræv ikke en kørende session (ingen cgroups-oprettelse)"
 
@@ -4089,7 +4089,7 @@ msgstr "Fjern-OCI-indeks har ikke nogen register-uri"
 msgid "%s commit %s already installed"
 msgstr "%s indsendelsen %s er allerede installeret"
 
-#: common/flatpak-dir.c:5395 common/flatpak-utils.c:5573
+#: common/flatpak-dir.c:5395 common/flatpak-utils.c:5578
 msgid "Image is not a manifest"
 msgstr "Aftrykket er ikke et manifest"
 
@@ -4117,7 +4117,7 @@ msgstr ""
 "GPG-underskrifter fundet for eksternen '%s', men ingen af dem er i betroet "
 "nøglering"
 
-#: common/flatpak-dir.c:5878 common/flatpak-utils.c:5479
+#: common/flatpak-dir.c:5878 common/flatpak-utils.c:5484
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "Fandt GPG-underskrifter, men ingen af dem i betroet nøglering"
 
@@ -4459,7 +4459,7 @@ msgstr "Der er ikke angivet nogen konfiguration for eksternen %s"
 msgid "No metadata branch for OCI"
 msgstr "Ingen metadata-gren for OCI"
 
-#: common/flatpak-dir.c:15176
+#: common/flatpak-dir.c:15177
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Springer over sletning af spejlreference (%s, %s) …\n"
@@ -4529,90 +4529,90 @@ msgstr "Kunne ikke synkronisere med dbus-proxy"
 msgid "Failed to determine parts from ref: %s"
 msgstr "Kunne ikke fastslå dele fra reference: %s"
 
-#: common/flatpak-run.c:1604
+#: common/flatpak-run.c:1626
 msgid "No systemd user session available, cgroups not available"
 msgstr "Ingen systemd-brugersession tilgængelig, cgroups er ikke tilgængelig"
 
-#: common/flatpak-run.c:2183
+#: common/flatpak-run.c:2205
 msgid "Unable to allocate instance id"
 msgstr "Kan ikke allokere instans-id"
 
-#: common/flatpak-run.c:2303 common/flatpak-run.c:2313
+#: common/flatpak-run.c:2325 common/flatpak-run.c:2335
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Kunne ikke åbne flatpak-info-filen: %s"
 
-#: common/flatpak-run.c:2333
+#: common/flatpak-run.c:2355
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Kunne ikke åbne bwrapinfo.json-filen: %s"
 
-#: common/flatpak-run.c:2644
+#: common/flatpak-run.c:2666
 msgid "Initialize seccomp failed"
 msgstr "Initiering af seccomp mislykkedes"
 
-#: common/flatpak-run.c:2683
+#: common/flatpak-run.c:2705
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Kunne ikke tilføje arkitektur til seccomp-filter"
 
-#: common/flatpak-run.c:2692
+#: common/flatpak-run.c:2714
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Kunne ikke tilføje multiarch-arkitektur til seccomp-filter"
 
 #. unknown syscall
-#: common/flatpak-run.c:2711 common/flatpak-run.c:2725
+#: common/flatpak-run.c:2733 common/flatpak-run.c:2747
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Kunne ikke blokere syskaldet %d"
 
-#: common/flatpak-run.c:2756
+#: common/flatpak-run.c:2778
 msgid "Failed to export bpf"
 msgstr "Kunne ikke eksportere bpf"
 
-#: common/flatpak-run.c:2811
+#: common/flatpak-run.c:2833
 #, c-format
 msgid "Invalid group: %d"
 msgstr "Ugyldig gruppe: %d"
 
-#: common/flatpak-run.c:2986
+#: common/flatpak-run.c:3008
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Kunne ikke åbne ‘%s’"
 
-#: common/flatpak-run.c:3264
+#: common/flatpak-run.c:3286
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig mislykkedes, afslutningsstatus %d"
 
-#: common/flatpak-run.c:3271
+#: common/flatpak-run.c:3293
 msgid "Can't open generated ld.so.cache"
 msgstr "Kan ikke åbne genererede ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3373
+#: common/flatpak-run.c:3395
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Kørsel af %s er ikke tilladt af politikken som er indstillet af din "
 "administrator"
 
-#: common/flatpak-run.c:3497
+#: common/flatpak-run.c:3519
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Forkert antal komponenter i runtimen %s"
 
-#: common/flatpak-run.c:3605
+#: common/flatpak-run.c:3627
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Kunne ikke migrere fra %s: %s"
 
-#: common/flatpak-run.c:3620
+#: common/flatpak-run.c:3642
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Kunne ikke migrere den gamle programdatamappe %s til det nye navn %s: %s"
 
-#: common/flatpak-run.c:3629
+#: common/flatpak-run.c:3651
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Kunne ikke oprette symlink under migrering af %s: %s"
@@ -4845,133 +4845,133 @@ msgstr "Ugyldig gpg-nøgle"
 msgid "No extra data sources"
 msgstr "Ingen ekstra-data-kilder"
 
-#: common/flatpak-utils.c:4251
+#: common/flatpak-utils.c:4256
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Fejl ved kopiering af 64x64-ikon for komponenten %s: %s\n"
 
-#: common/flatpak-utils.c:4257
+#: common/flatpak-utils.c:4262
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Fejl ved kopiering af 128x128-ikon for komponenten %s: %s\n"
 
-#: common/flatpak-utils.c:4518
+#: common/flatpak-utils.c:4523
 #, c-format
 msgid "%s is end-of-life, ignoring\n"
 msgstr "%s er end-of-life, ignorerer\n"
 
-#: common/flatpak-utils.c:4527
+#: common/flatpak-utils.c:4532
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Ingen appstream-data for %s: %s\n"
 
-#: common/flatpak-utils.c:5348
+#: common/flatpak-utils.c:5353
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Ugyldig bundle, ingen reference i metadata"
 
-#: common/flatpak-utils.c:5439
+#: common/flatpak-utils.c:5444
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr "Samlingen ‘%s’ af bundle matcher ikke samlingen ‘%s’ af ekstern"
 
-#: common/flatpak-utils.c:5518
+#: common/flatpak-utils.c:5523
 msgid "Metadata in header and app are inconsistent"
 msgstr "Metadata i header og program er uoverensstemmende"
 
-#: common/flatpak-utils.c:5665
+#: common/flatpak-utils.c:5670
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Ingen reference angivet for OCI-aftrykket %s"
 
-#: common/flatpak-utils.c:5671
+#: common/flatpak-utils.c:5676
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Forkert reference (%s) angivet for OCI-aftrykket %s, ventede %s"
 
-#: common/flatpak-utils.c:5740
+#: common/flatpak-utils.c:5745
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Forkert lag-checksum, ventede %s, var %s"
 
-#: common/flatpak-utils.c:6490
+#: common/flatpak-utils.c:6495
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "Downloader metadata: %u/(estimeret) %s"
 
-#: common/flatpak-utils.c:6514
+#: common/flatpak-utils.c:6519
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "Downloader: %s/%s"
 
-#: common/flatpak-utils.c:6534
+#: common/flatpak-utils.c:6539
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "Downloader ekstra-data: %s/%s"
 
-#: common/flatpak-utils.c:6539
+#: common/flatpak-utils.c:6544
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "Downloader filer: %d/%d %s"
 
-#: common/flatpak-utils.c:6769
+#: common/flatpak-utils.c:6774
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Ugyldigt require-flatpak-argument %s"
 
-#: common/flatpak-utils.c:6779 common/flatpak-utils.c:6798
+#: common/flatpak-utils.c:6784 common/flatpak-utils.c:6803
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s har brug for en nyere flatpak-version (%s)"
 
-#: common/flatpak-utils.c:6842
+#: common/flatpak-utils.c:6847
 msgid "Empty string is not a number"
 msgstr "Tom streng er ikke et tal"
 
-#: common/flatpak-utils.c:6868
+#: common/flatpak-utils.c:6873
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "“%s” er ikke et tal uden fortegn"
 
-#: common/flatpak-utils.c:6878
+#: common/flatpak-utils.c:6883
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Tallet “%s” er uden for afgrænsningerne [%s, %s]"
 
-#: portal/flatpak-portal.c:1723
+#: portal/flatpak-portal.c:1725
 msgid "No portal support found"
 msgstr "Fandt ingen understøttelse af portal"
 
-#: portal/flatpak-portal.c:1729
+#: portal/flatpak-portal.c:1731
 msgid "Deny"
 msgstr "Nægt"
 
-#: portal/flatpak-portal.c:1731
+#: portal/flatpak-portal.c:1733
 msgid "Update"
 msgstr "Opdater"
 
-#: portal/flatpak-portal.c:1736
+#: portal/flatpak-portal.c:1738
 #, c-format
 msgid "Update %s?"
 msgstr "Opdater %s?"
 
-#: portal/flatpak-portal.c:1748
+#: portal/flatpak-portal.c:1750
 msgid "The application wants to update itself."
 msgstr "Programmet vil opdatere sig selv."
 
-#: portal/flatpak-portal.c:1749
+#: portal/flatpak-portal.c:1751
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "Opdateringsadgang kan ændres når som helst fra privatlivsindstillingerne."
 
-#: portal/flatpak-portal.c:1774
+#: portal/flatpak-portal.c:1776
 msgid "Application update not allowed"
 msgstr "Programopdatering ikke tilladt"
 
-#: portal/flatpak-portal.c:1931
+#: portal/flatpak-portal.c:1933
 msgid "Self update not supported, new version requires new permissions"
 msgstr "Selvopdatering understøttes ikke – ny version kræver nye tilladelser"
 
-#: portal/flatpak-portal.c:2113 portal/flatpak-portal.c:2130
+#: portal/flatpak-portal.c:2115 portal/flatpak-portal.c:2132
 msgid "Update ended unexpectedly"
 msgstr "Opdatering sluttede uventet"
 
