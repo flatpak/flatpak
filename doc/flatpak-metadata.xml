@@ -232,6 +232,21 @@
                                 files in /sys available.
                             </para>
                             <para>
+                                Additionally, this keyword provides all of the
+                                same directories in
+                                <filename>/run/host</filename> as the
+                                <option>host-os</option> and
+                                <option>host-etc</option> keywords.
+                                If this keyword is used in conjunction
+                                with one of the <option>host-</option>
+                                keywords, whichever access level is higher
+                                (more permissive) will be used for the
+                                directories in <filename>/run/host</filename>:
+                                for example,
+                                <code>host:rw;host-os:ro;</code> is
+                                equivalent to <code>host:rw;</code>.
+                            </para>
+                            <para>
                                 These other reserved directories are
                                 currently excluded:
                                 <filename>/app</filename>,
@@ -251,6 +266,54 @@
                             </para>
                             <para>
                                 Available since 0.3.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>host-os</option></term>
+                            <listitem><para>
+                                The host operating system's libraries,
+                                executables and static data from
+                                <filename>/usr</filename>
+                                and the related directories
+                                <filename>/bin</filename>,
+                                <filename>/lib</filename>,
+                                <filename>/lib32</filename>,
+                                <filename>/lib64</filename>,
+                                <filename>/sbin</filename>.
+                                Additionally, this keyword provides access
+                                to a subset of <filename>/etc</filename> that
+                                is associated with packaged libraries and
+                                executables, even if the
+                                <option>host-etc</option> keyword
+                                was not used:
+                                <filename>/etc/ld.so.cache</filename>,
+                                (used by the dynamic linker) and
+                                <filename>/etc/alternatives</filename>
+                                (on operating systems that use it, such as
+                                Debian).
+                            </para>
+                            <para>
+                                To avoid conflicting with the Flatpak
+                                runtime, these are mounted in the sandbox
+                                at <filename>/run/host/usr</filename>,
+                                <filename>/run/host/etc/ld.so.cache</filename>
+                                and so on.
+                            </para>
+                            <para>
+                                Available since 1.7.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>host-etc</option></term>
+                            <listitem><para>
+                                The host operating system's configuration from
+                                <filename>/etc</filename>.
+                            </para>
+                            <para>
+                                To avoid conflicting with the Flatpak
+                                runtime, this is mounted in the sandbox
+                                at <filename>/run/host/etc</filename>.
+                            </para>
+                            <para>
+                                Available since 1.7.
                             </para></listitem></varlistentry>
 
                             <varlistentry><term><option>xdg-desktop</option>,
