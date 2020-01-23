@@ -1,3 +1,22 @@
+Changes in 1.6.1
+================
+
+This is a (mild) security update. Flatpak 1.6.0 added the ability for an application to request it to be
+updated, as long as the new version doesn't require new permissions. Unfortunately in some special cases,
+if an app had acces to the home directory, but not the rest of the filesystem it would still allow a
+self-update where the new version could access some files outside the home directory..
+
+This is fixed in this version, and all users of 1.6.0 are recommended to update.
+
+Other changes are:
+
+ * New permission --device=shm giving access to host /dev/shm, as needed for jack.
+ * Generated correct download size in build-commit-from
+ * sub-sandbox now allows the child to share the gpu of the caller has full device access
+ * Fix crash with disabled remotes
+ * Fix builds with older versions of glib
+ * Update translations
+
 Changes in 1.6.0
 ================
 
