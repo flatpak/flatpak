@@ -94,7 +94,8 @@ typedef struct
 struct _FlatpakExports
 {
   GHashTable           *hash;
-  FlatpakFilesystemMode host_fs;
+  FlatpakFilesystemMode host_etc;
+  FlatpakFilesystemMode host_os;
 };
 
 static void
@@ -221,6 +222,27 @@ path_is_symlink (const char *path)
   return S_ISLNK (s.st_mode);
 }
 
+/*
+ * @name: A file or directory below /etc
+ * @test: How we test whether it is suitable
+ *
+ * The paths in /etc that are required if we want to make use of the
+ * host /usr (and /lib, and so on).
+ */
+typedef struct
+{
+  const char *name;
+  GFileTest test;
+} LibsNeedEtc;
+
+static const LibsNeedEtc libs_need_etc[] =
+{
+  /* glibc */
+  { "ld.so.cache", G_FILE_TEST_IS_REGULAR },
+  /* Used for executables and a few libraries on e.g. Debian */
+  { "alternatives", G_FILE_TEST_IS_DIR }
+};
+
 void
 flatpak_exports_append_bwrap_args (FlatpakExports *exports,
                                    FlatpakBwrap   *bwrap)
@@ -279,17 +301,17 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
         }
     }
 
-  if (exports->host_fs != 0)
+  if (exports->host_os != 0)
     {
-      const char *host_bind_mode = "--bind";
+      const char *os_bind_mode = "--bind";
       int i;
 
-      if (exports->host_fs == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
-        host_bind_mode = "--ro-bind";
+      if (exports->host_os == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
+        os_bind_mode = "--ro-bind";
 
       if (g_file_test ("/usr", G_FILE_TEST_IS_DIR))
         flatpak_bwrap_add_args (bwrap,
-                                host_bind_mode, "/usr", "/run/host/usr", NULL);
+                                os_bind_mode, "/usr", "/run/host/usr", NULL);
 
       for (i = 0; flatpak_abs_usrmerged_dirs[i] != NULL; i++)
         {
@@ -329,14 +351,49 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
                * or is a plain directory because the host OS has not
                * undergone the /usr merge; bind-mount the directory instead */
               flatpak_bwrap_add_args (bwrap,
-                                      host_bind_mode, subdir, run_host_subdir,
+                                      os_bind_mode, subdir, run_host_subdir,
                                       NULL);
             }
         }
 
+      if (exports->host_etc == 0)
+        {
+          guint i;
+
+          /* We are exposing the host /usr (and friends) but not the
+           * host /etc. Additionally expose just enough of /etc to make
+           * things that want to read /usr work as expected.
+           *
+           * (If exports->host_etc is nonzero, we'll do this as part of
+           * /etc instead.) */
+
+          for (i = 0; i < G_N_ELEMENTS (libs_need_etc); i++)
+            {
+              const LibsNeedEtc *item = &libs_need_etc[i];
+              g_autofree gchar *host_path = g_strconcat ("/etc/", item->name, NULL);
+
+              if (g_file_test (host_path, item->test))
+                {
+                  g_autofree gchar *run_host_path = g_strconcat ("/run/host/etc/", item->name, NULL);
+
+                  flatpak_bwrap_add_args (bwrap,
+                                          os_bind_mode, host_path, run_host_path,
+                                          NULL);
+                }
+            }
+        }
+    }
+
+  if (exports->host_etc != 0)
+    {
+      const char *etc_bind_mode = "--bind";
+
+      if (exports->host_etc == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
+        etc_bind_mode = "--ro-bind";
+
       if (g_file_test ("/etc", G_FILE_TEST_IS_DIR))
         flatpak_bwrap_add_args (bwrap,
-                                host_bind_mode, "/etc", "/run/host/etc", NULL);
+                                etc_bind_mode, "/etc", "/run/host/etc", NULL);
     }
 }
 
@@ -677,8 +734,15 @@ flatpak_exports_add_path_dir (FlatpakExports *exports,
 }
 
 void
-flatpak_exports_add_host_expose (FlatpakExports       *exports,
-                                 FlatpakFilesystemMode mode)
+flatpak_exports_add_host_etc_expose (FlatpakExports       *exports,
+                                     FlatpakFilesystemMode mode)
 {
-  exports->host_fs = mode;
+  exports->host_etc = mode;
+}
+
+void
+flatpak_exports_add_host_os_expose (FlatpakExports       *exports,
+                                    FlatpakFilesystemMode mode)
+{
+  exports->host_os = mode;
 }
