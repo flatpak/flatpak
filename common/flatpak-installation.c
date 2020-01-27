@@ -1130,7 +1130,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       state = g_hash_table_lookup (remote_states, remote_name);
       if (state == NULL)
         {
-
           state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, &local_error);
           if (state == NULL)
             {
