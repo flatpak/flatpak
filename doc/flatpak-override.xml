@@ -209,6 +209,9 @@
                     The optional :ro suffix indicates that the location will be read-only.
                     The optional :create suffix indicates that the location will be read-write and created if it doesn't exist.
                     This option can be used multiple times.
+                    See the "[Context] filesystems" list in
+                    <citerefentry><refentrytitle>flatpak-metadata</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+                    for details of the meanings of these filesystems.
                 </para></listitem>
             </varlistentry>
 
