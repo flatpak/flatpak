@@ -499,7 +499,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
               size = flatpak_deploy_data_get_installed_size (ext_deploy_data);
               formatted = g_format_size (size);
               subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
-              if (subpaths && subpaths[0])
+              if (subpaths && subpaths[0] && size > 0)
                 formatted_size = g_strconcat ("<", formatted, NULL);
               else
                 formatted_size = g_steal_pointer (&formatted);
