@@ -70,6 +70,7 @@ const char *flatpak_context_devices[] = {
   "all",
   "kvm",
   "shm",
+  "snd",
   NULL
 };
 

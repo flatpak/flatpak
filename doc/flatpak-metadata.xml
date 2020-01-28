@@ -180,6 +180,13 @@
                                 Available since 0.6.12.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>snd</option></term>
+                            <listitem><para>
+                                Sound
+                                (<filename>/dev/snd</filename>).
+                                Available since 1.6.2.
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>all</option></term>
                             <listitem><para>
                                 All device nodes in <filename>/dev</filename>, but not /dev/shm (which is separately specified).

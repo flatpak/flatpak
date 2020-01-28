@@ -1272,6 +1272,13 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
           if (real_dev_shm != NULL)
               flatpak_bwrap_add_args (bwrap, "--bind", real_dev_shm, "/dev/shm", NULL);
         }
+
+      if (context->devices & FLATPAK_CONTEXT_DEVICE_SND)
+        {
+          g_debug ("Allowing snd access");
+          if (g_file_test ("/dev/snd", G_FILE_TEST_IS_DIR))
+            flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/snd", "/dev/snd", NULL);
+        }
     }
 
   flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, previous_app_id_dirs, &exports);
