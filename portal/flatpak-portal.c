@@ -50,6 +50,14 @@
 #include "portal-impl.h"
 #include "flatpak-permission-dbus.h"
 
+/* GLib 2.47.92 was the first release to define these in gdbus-codegen */
+#if !GLIB_CHECK_VERSION (2, 47, 92)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakProxy, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakSkeleton, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakUpdateMonitorProxy, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakUpdateMonitorSkeleton, g_object_unref)
+#endif
+
 #define IDLE_TIMEOUT_SECS 10 * 60
 
 static GHashTable *client_pid_data_hash = NULL;
