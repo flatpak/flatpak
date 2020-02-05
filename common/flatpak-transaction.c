@@ -2252,7 +2252,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
 
       if (updated)
         {
-          g_debug ("Got updatedo metadata for %s", remote);
+          g_debug ("Got updated metadata for %s", remote);
           some_updated = TRUE;
         }
     }
