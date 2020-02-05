@@ -2225,7 +2225,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
   g_auto(GStrv) remotes = NULL;
   int i;
   GList *l;
-  gboolean some_updated;
+  gboolean some_updated = FALSE;
   g_autoptr(GHashTable) ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   /* Collect all dir+remotes used in this transaction */
