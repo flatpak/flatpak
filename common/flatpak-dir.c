@@ -12764,7 +12764,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   gpg_data, cancellable, error))
     return NULL;
 
-  if (!_flatpak_dir_reload_config (self, cancellable, error))
+  if (new_config && !_flatpak_dir_reload_config (self, cancellable, error))
     return FALSE;
 
   if (changed_config)
