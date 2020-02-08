@@ -3287,6 +3287,11 @@ test_transaction_install_local (void)
 
   empty_installation (inst);
 
+  remote = flatpak_installation_get_remote_by_name (inst, "hello-origin", NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND);
+  g_assert_null (remote);
+  g_clear_error (&error);
+
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
@@ -3297,11 +3302,6 @@ test_transaction_install_local (void)
   res = flatpak_transaction_add_install (transaction, url, app, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
-
-  remote = flatpak_installation_get_remote_by_name (inst, "hello-origin", NULL, &error);
-  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND);
-  g_assert_null (remote);
-  g_clear_error (&error);
 
   res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
