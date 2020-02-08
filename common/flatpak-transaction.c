@@ -1954,6 +1954,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
 
   if (remote_name_is_file (remote))
     {
+      gboolean changed_config;
       origin_remote = flatpak_dir_create_origin_remote (priv->dir,
                                                         remote, /* uri */
                                                         parts[1],
@@ -1961,9 +1962,14 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
                                                         ref,
                                                         NULL,
                                                         NULL,
+                                                        &changed_config,
                                                         NULL, error);
       if (origin_remote == NULL)
         return FALSE;
+
+      /* Reload changed configuration */
+      if (changed_config)
+        flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
       g_ptr_array_add (priv->added_origin_remotes, g_strdup (origin_remote));
 
@@ -3684,10 +3690,8 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
       if (remote == NULL)
         return FALSE;
 
-      if (!flatpak_dir_recreate_repo (priv->dir, NULL, error))
-        return FALSE;
-
-      flatpak_installation_drop_caches (priv->installation, NULL, NULL);
+      if (created_remote)
+        flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
       if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, commit,
                                         FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE,

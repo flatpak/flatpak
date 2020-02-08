@@ -1968,17 +1968,19 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   g_autofree char *ref = NULL;
   g_autofree char *remote = NULL;
   FlatpakInstalledRef *result = NULL;
+  gboolean created_remote;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return NULL;
 
-  remote = flatpak_dir_ensure_bundle_remote (dir, file, NULL, &ref, NULL, NULL, NULL, cancellable, error);
+  remote = flatpak_dir_ensure_bundle_remote (dir, file, NULL, &ref, NULL, NULL, &created_remote, cancellable, error);
   if (remote == NULL)
     return NULL;
 
   /* Make sure we pick up the new config */
-  flatpak_installation_drop_caches (self, NULL, NULL);
+  if (created_remote)
+    flatpak_installation_drop_caches (self, NULL, NULL);
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
