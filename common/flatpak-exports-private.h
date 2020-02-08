@@ -37,7 +37,7 @@ void flatpak_exports_free (FlatpakExports *exports);
 FlatpakExports *flatpak_exports_new (void);
 void flatpak_exports_append_bwrap_args (FlatpakExports *exports,
                                         FlatpakBwrap   *bwrap);
-void flatpak_exports_add_home_expose (FlatpakExports       *exports,
+void flatpak_exports_add_host_expose (FlatpakExports       *exports,
                                       FlatpakFilesystemMode mode);
 void flatpak_exports_add_path_expose (FlatpakExports       *exports,
                                       FlatpakFilesystemMode mode,
