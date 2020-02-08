@@ -1,21 +1,21 @@
 # Indonesian translation for flatpak.
 # Copyright (C) 2017 flatpak's COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
-# Kukuh Syafaat <kukuhsyafaat@gnome.org>, 2017, 2018, 2019.
+# Kukuh Syafaat <kukuhsyafaat@gnome.org>, 2017-2020.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-01-23 13:50+0100\n"
-"PO-Revision-Date: 2019-10-10 12:32+0700\n"
+"POT-Creation-Date: 2020-01-26 03:25+0000\n"
+"PO-Revision-Date: 2020-01-26 17:12+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.2.4\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -340,13 +340,12 @@ msgstr "IDLAMA=IDBARU"
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
 msgid "Set type of token needed to install this commit"
-msgstr ""
+msgstr "Setel jenis token yang diperlukan untuk memasang komit ini"
 
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:71
-#, fuzzy
 msgid "VAL"
-msgstr "NILAI"
+msgstr "VAL"
 
 #: app/flatpak-builtins-build-commit-from.c:69
 msgid "Override the timestamp of the commit (NOW for current time)"
@@ -378,9 +377,8 @@ msgid ""
 msgstr "Jika --src-ref ditentukan, salah satu tujuan ref harus ditentukan"
 
 #: app/flatpak-builtins-build-commit-from.c:268
-#, fuzzy
 msgid "Either --src-repo or --src-ref must be specified"
-msgstr "Entah --src-repo atau --src-ref harus ditentukan."
+msgstr "Salah satu --src-repo atau --src-ref harus ditentukan"
 
 #: app/flatpak-builtins-build-commit-from.c:284
 msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
@@ -400,9 +398,8 @@ msgid "Could not parse '%s'"
 msgstr "Tidak dapat mengurai '%s'"
 
 #: app/flatpak-builtins-build-commit-from.c:466
-#, fuzzy
 msgid "Can't commit from partial source commit"
-msgstr "Tidak bisa melakukan komit dari sebagian sumber."
+msgstr "Tidak dapat melakukan komit dari komit sumber parsial"
 
 #: app/flatpak-builtins-build-commit-from.c:471
 #, c-format
@@ -957,31 +954,26 @@ msgid "Permanently deploy collection ID to client remote configurations"
 msgstr "Deploy ID koleksi secara permanen ke konfigurasi klien remote"
 
 #: app/flatpak-builtins-build-update-repo.c:72
-#, fuzzy
 msgid "Name of authenticator for this repository"
-msgstr "URL untuk ikon untuk repositori ini"
+msgstr "Nama autentikator untuk repositori ini"
 
 #: app/flatpak-builtins-build-update-repo.c:73
-#, fuzzy
 msgid "Autoinstall authenticator for this repository"
-msgstr "URL untuk ikon untuk repositori ini"
+msgstr "Pasang otomatis authenticator untuk repositori ini"
 
 #: app/flatpak-builtins-build-update-repo.c:74
-#, fuzzy
 msgid "Don't autoinstall authenticator for this repository"
-msgstr "Cabang bawaan yang akan digunakan untuk repositori ini"
+msgstr "Jangan pasang otomatis authenticator untuk repositori ini"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:82
-#, fuzzy
 msgid "Authenticator option"
-msgstr "Tampilkan opsi"
+msgstr "Opsi autentikator"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:89
-#, fuzzy
 msgid "KEY=VALUE"
-msgstr "NILAI"
+msgstr "KEY=VALUE"
 
 #: app/flatpak-builtins-build-update-repo.c:76
 msgid "Import new default GPG public key from FILE"
@@ -1090,9 +1082,9 @@ msgid "Unset configuration for KEY"
 msgstr "Batalkan konfigurasi untuk KUNCI"
 
 #: app/flatpak-builtins-config.c:149
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' does not look like a language/locale code"
-msgstr "'%s' tidak terlihat seperti kode bahasa"
+msgstr "'%s' tidak terlihat seperti kode bahasa/locale"
 
 #: app/flatpak-builtins-config.c:172
 #, c-format
@@ -1357,10 +1349,9 @@ msgid "FILE - Unexport a file to apps"
 msgstr "BERKAS - Tidak mengekspor berkas ke aplikasi"
 
 #: app/flatpak-builtins-enter.c:87
-#, fuzzy
 msgid "INSTANCE COMMAND [ARGUMENT…] - Run a command inside a running sandbox"
 msgstr ""
-"INSTANCE [PERINTAH [ARGUMEN...]] - Jalankan perintah di dalam sandbox yang "
+"INSTANCE PERINTAH [ARGUMEN...] - Jalankan perintah di dalam sandbox yang "
 "sedang berjalan"
 
 #: app/flatpak-builtins-enter.c:108
@@ -1368,13 +1359,15 @@ msgid "INSTANCE and COMMAND must be specified"
 msgstr "INSTANCE dan PERINTAH harus ditentukan"
 
 #: app/flatpak-builtins-enter.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "%s is neither a pid nor an application or instance ID"
-msgstr "%s bukan pid atau ID aplikasi atau instance"
+msgstr "%s bukan pid atau aplikasi atau ID instance"
 
 #: app/flatpak-builtins-enter.c:138
 msgid "entering not supported (need unprivileged user namespaces, or sudo -E)"
 msgstr ""
+"enter tidak didukung (perlu spasi nama pengguna yang tidak terjangkau, atau "
+"sudo -E)"
 
 #: app/flatpak-builtins-enter.c:139
 #, c-format
@@ -1406,7 +1399,7 @@ msgstr "Tidak dapat membuka namespace %s: %s"
 
 #: app/flatpak-builtins-enter.c:210
 msgid "entering not supported (need unprivileged user namespaces)"
-msgstr ""
+msgstr "enter tidak didukung (perlu spasi nama pengguna yang tidak terjangkau)"
 
 #: app/flatpak-builtins-enter.c:211
 #, c-format
@@ -1914,9 +1907,9 @@ msgid "Skipping: %s\n"
 msgstr "Melewatkan: %s\n"
 
 #: app/flatpak-builtins-kill.c:68
-#, fuzzy, c-format
+#, c-format
 msgid "%s is not running"
-msgstr "%s tidak berjalan."
+msgstr "%s tidak berjalan"
 
 #: app/flatpak-builtins-kill.c:82
 msgid "INSTANCE - Stop a running application"
@@ -2125,9 +2118,8 @@ msgid "Data"
 msgstr "Data"
 
 #: app/flatpak-builtins-permission-remove.c:120
-#, fuzzy
 msgid "TABLE ID [APP_ID] - Remove item from permission store"
-msgstr "TABEL ID - Hapus butir dari menyimpan perizinan"
+msgstr "TABEL ID [APP_ID] - Hapus butir dari menyimpan perizinan"
 
 #: app/flatpak-builtins-permission-remove.c:129
 #: app/flatpak-builtins-permission-set.c:120
@@ -2149,21 +2141,20 @@ msgstr "Jumlah argumen salah"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "Associate DATA with the entry"
-msgstr ""
+msgstr "Asosiasikan DATA dengan entri"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "DATA"
-msgstr ""
+msgstr "DATA"
 
 #: app/flatpak-builtins-permission-set.c:111
-#, fuzzy
 msgid "TABLE ID APP_ID [PERMISSION...] - Set permissions"
-msgstr "[TABEL] [ID] - Daftar izin"
+msgstr "TABEL ID APP_ID [IZIN ...] - Tetapkan izin"
 
 #: app/flatpak-builtins-permission-set.c:132
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse '%s' as GVariant: "
-msgstr "Gagal mengurai penyaring '%s'"
+msgstr "Gagal mengurai '%s' sebagai GVariant: "
 
 #: app/flatpak-builtins-permission-show.c:112
 msgid "APP_ID - Show permissions for an app"
@@ -2222,23 +2213,20 @@ msgid "Show the runtime commit"
 msgstr "Tampilkan komit runtime"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Active"
-msgstr "Komit aktif"
+msgstr "Aktif"
 
 #: app/flatpak-builtins-ps.c:57
-#, fuzzy
 msgid "Show whether the app is active"
-msgstr "Tampilkan saat perubahan itu terjadi"
+msgstr "Tampilkan apakah aplikasi aktif"
 
 #: app/flatpak-builtins-ps.c:58
 msgid "Background"
-msgstr ""
+msgstr "Latar Belakang"
 
 #: app/flatpak-builtins-ps.c:58
-#, fuzzy
 msgid "Show whether the app is background"
-msgstr "Tampilkan saat perubahan itu terjadi"
+msgstr "Tampilkan apakah aplikasi tersebut di latar belakang"
 
 #: app/flatpak-builtins-ps.c:238
 msgid " - Enumerate running sandboxes"
@@ -2310,17 +2298,15 @@ msgstr "Nonaktifkan remote"
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:88
 msgid "Name of authenticator"
-msgstr ""
+msgstr "Nama autentikator"
 
 #: app/flatpak-builtins-remote-add.c:83 app/flatpak-builtins-remote-modify.c:90
-#, fuzzy
 msgid "Autoinstall authenticator"
-msgstr "Nama dbus %s tidak valid"
+msgstr "Pasang otomatis authenticator"
 
 #: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:91
-#, fuzzy
 msgid "Don't autoinstall authenticator"
-msgstr "Jangan hapus ref terkait"
+msgstr "Jangan pasang otomatis authenticator"
 
 #: app/flatpak-builtins-remote-add.c:243 app/flatpak-builtins-remote-add.c:250
 #, c-format
@@ -2347,9 +2333,9 @@ msgstr "Remote %s sudah ada"
 
 #: app/flatpak-builtins-remote-add.c:387
 #: app/flatpak-builtins-remote-modify.c:305
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid authenticator name %s"
-msgstr "Nama dbus %s tidak valid"
+msgstr "Nama autentikator tidak valid %s"
 
 #: app/flatpak-builtins-remote-add.c:404
 #, c-format
@@ -2576,9 +2562,8 @@ msgid "Disable local filter"
 msgstr "Nonaktifkan penyaring lokal"
 
 #: app/flatpak-builtins-remote-modify.c:89
-#, fuzzy
 msgid "Authenticator options"
-msgstr "Tampilkan opsi"
+msgstr "Opsi autentikator"
 
 #: app/flatpak-builtins-remote-modify.c:271
 msgid "NAME - Modify a remote repository"
@@ -2764,22 +2749,22 @@ msgid "Deploy collection ID: %s\n"
 msgstr "Deploy ID koleksi: %s\n"
 
 #: app/flatpak-builtins-repo.c:123
-#, fuzzy, c-format
+#, c-format
 msgid "Authenticator name: %s\n"
-msgstr "Nama dbus %s tidak valid"
+msgstr "Nama autentikator: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
-#, fuzzy, c-format
+#, c-format
 msgid "Authenticator install: %s\n"
-msgstr "Tampilkan opsi"
+msgstr "Pasang autentikator: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "true"
-msgstr ""
+msgstr "true"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "false"
-msgstr ""
+msgstr "false"
 
 #: app/flatpak-builtins-repo.c:134
 #, c-format
@@ -2853,16 +2838,15 @@ msgstr "Jangan proksi aksesibilitas panggilan bus"
 
 #: app/flatpak-builtins-run.c:73
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
-msgstr ""
+msgstr "Panggilan bus aksesibilitas proksi (bawaan kecuali saat sandbox)"
 
 #: app/flatpak-builtins-run.c:74
-#, fuzzy
 msgid "Don't proxy session bus calls"
-msgstr "Jangan proksi aksesibilitas panggilan bus"
+msgstr "Jangan proksi panggilan bus sesi"
 
 #: app/flatpak-builtins-run.c:75
 msgid "Proxy session bus calls (default except when sandboxed)"
-msgstr ""
+msgstr "Panggilan bus sesi proksi (bawaan kecuali saat sandbox)"
 
 #: app/flatpak-builtins-run.c:76
 msgid "Don't start portals"
@@ -2886,11 +2870,11 @@ msgstr "Jalankan sepenuhnya di dalam sandbox"
 
 #: app/flatpak-builtins-run.c:82
 msgid "Use PID as parent pid for sharing namespaces"
-msgstr ""
+msgstr "Gunakan PID sebagai pid induk untuk berbagi spasi nama"
 
 #: app/flatpak-builtins-run.c:83
 msgid "Make processes visible in parent namespace"
-msgstr ""
+msgstr "Jadikan proses terlihat di spasi nama induk"
 
 #: app/flatpak-builtins-run.c:106
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3053,11 +3037,13 @@ msgid ""
 "Remote \"%s\" not found\n"
 "Hint: Use flatpak remote-add to add a remote"
 msgstr ""
+"Remote \"%s\" tidak ditemukan\n"
+"Petunjuk: Gunakan flatpak remote-add untuk menambahkan remote"
 
 #: app/flatpak-builtins-utils.c:369
-#, fuzzy, c-format
+#, c-format
 msgid "Remote \"%s\" not found in the %s installation"
-msgstr "Remote '%s' ditemukan pada beberapa pemasangan:"
+msgstr "Remote \"%s\" tidak ditemukan dalam pemasangan %s"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:418
@@ -3311,27 +3297,27 @@ msgid "Error:"
 msgstr "Galat:"
 
 #: app/flatpak-cli-transaction.c:519
-#, fuzzy, c-format
+#, c-format
 msgid "Authentication required for remote '%s'\n"
-msgstr "Autentikasi diperlukan untuk memutakhirkan info remote"
+msgstr "Diperlukan autentikasi untuk remote '%s'\n"
 
 #: app/flatpak-cli-transaction.c:520
 msgid "Open browser?"
-msgstr ""
+msgstr "Buka peramban?"
 
 #: app/flatpak-cli-transaction.c:571
 #, c-format
 msgid "Login required remote %s (realm %s)\n"
-msgstr ""
+msgstr "Diperlukan login jarak jauh %s (ranah %s)\n"
 
 #: app/flatpak-cli-transaction.c:576
 msgid "Password"
-msgstr ""
+msgstr "Kata sandi"
 
 #: app/flatpak-cli-transaction.c:597 app/flatpak-quiet-transaction.c:174
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s is end-of-life, in favor of %s\n"
-msgstr "Info: %s adalah akhir-masa-pakai, dalam preferensi %s\n"
+msgstr "Info: %s adalah akhir-masa-pakai, lebih disukai %s\n"
 
 #: app/flatpak-cli-transaction.c:599 app/flatpak-quiet-transaction.c:176
 #, c-format
@@ -3547,9 +3533,8 @@ msgid "Remove item from permission store"
 msgstr "Hapus butir dari menyimpan perizinan"
 
 #: app/flatpak-main.c:114
-#, fuzzy
 msgid "Set permissions"
-msgstr "Daftar izin"
+msgstr "Tetapkan izin"
 
 #: app/flatpak-main.c:115
 msgid "Show app permissions"
@@ -3763,9 +3748,9 @@ msgid "Failed to rebase %s to %s: %s\n"
 msgstr "Gagal rebase %s to %s: %s\n"
 
 #: common/flatpak-auth.c:54
-#, fuzzy, c-format
+#, c-format
 msgid "No authenticator configured for remote `%s`"
-msgstr "Autentikasi diperlukan untuk memutakhirkan info remote"
+msgstr "Tidak ada autentikator yang dikonfigurasikan untuk remote `%s`"
 
 #: common/flatpak-context.c:181
 #, c-format
@@ -3942,9 +3927,8 @@ msgid "Remove generic policy option"
 msgstr "Hapus opsi kebijakan umum"
 
 #: common/flatpak-context.c:1247
-#, fuzzy
 msgid "Persist home directory subpath"
-msgstr "Direktori home yang tetap"
+msgstr "Subpath direktori home persist"
 
 #: common/flatpak-context.c:1247
 msgid "FILENAME"
@@ -4485,9 +4469,9 @@ msgid "No metadata branch for OCI"
 msgstr "Tidak ada cabang metadata untuk OCI"
 
 #: common/flatpak-dir.c:15177
-#, fuzzy, c-format
+#, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
-msgstr "Melewati ref non-deployed %s...\n"
+msgstr "Melewati penghapusan mirror ref (%s, %s)…\n"
 
 #: common/flatpak-installation.c:837
 #, c-format
