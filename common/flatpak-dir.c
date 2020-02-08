@@ -9188,13 +9188,11 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
                                                  ref,
                                                  gpg_data,
                                                  collection_id,
+                                                 &created_remote,
                                                  cancellable,
                                                  error);
       if (remote == NULL)
         return NULL;
-
-      /* From here we need to goto out on error, to clean up */
-      created_remote = TRUE;
     }
 
   if (out_created_remote)
@@ -12752,6 +12750,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   const char   *main_ref,
                                   GBytes       *gpg_data,
                                   const char   *collection_id,
+                                  gboolean     *changed_config,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
@@ -12767,6 +12766,9 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
 
   if (!_flatpak_dir_reload_config (self, cancellable, error))
     return FALSE;
+
+  if (changed_config)
+    *changed_config = (new_config != NULL);
 
   return g_steal_pointer (&remote);
 }
@@ -12912,7 +12914,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
   if (remote == NULL)
     {
       remote = flatpak_dir_create_origin_remote (self, url, name, title, ref,
-                                                 gpg_data, collection_id, NULL, error);
+                                                 gpg_data, collection_id, NULL, NULL, error);
       if (remote == NULL)
         return FALSE;
     }

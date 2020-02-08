@@ -785,6 +785,7 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *main_ref,
                                              GBytes       *gpg_data,
                                              const char   *collection_id,
+                                             gboolean     *changed_config,
                                              GCancellable *cancellable,
                                              GError      **error);
 void       flatpak_dir_prune_origin_remote (FlatpakDir *self,
