@@ -1323,6 +1323,15 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
       flatpak_bwrap_unset_env (bwrap, "LD_LIBRARY_PATH");
     }
 
+  if (g_environ_getenv (bwrap->envp, "TMPDIR") != NULL)
+    {
+      /* TMPDIR is overridden for setuid helper, so pass it as cmdline arg */
+      flatpak_bwrap_add_args (bwrap,
+                              "--setenv", "TMPDIR", g_environ_getenv (bwrap->envp, "TMPDIR"),
+                              NULL);
+      flatpak_bwrap_unset_env (bwrap, "TMPDIR");
+    }
+
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
   if (!flatpak_run_in_transient_unit (app_id, &my_error))
