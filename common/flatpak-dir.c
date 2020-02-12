@@ -4944,6 +4944,16 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
   extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
   if (extra_data_sources == NULL)
     {
+      /* This is a gigantic hack where we download the commit in a temporary transaction
+       * which we then abort after having read the result. We do this to avoid creating
+       * a partial commit in the local repo and a ref that points to it, because that
+       * causes ostree to not use static deltas.
+       * See https://github.com/flatpak/flatpak/issues/3412 for details.
+       */
+
+      if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+        return FALSE;
+
       /* Pull the commits (and only the commits) to check for extra data
        * again. Here we don't pass the progress because we don't want any
        * reports coming out of it. */
@@ -4961,6 +4971,9 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
         return FALSE;
 
       extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
+
+      if (!ostree_repo_abort_transaction (repo, cancellable, error))
+        return FALSE;
     }
 
   n_extra_data = 0;
@@ -5601,9 +5614,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
       g_ptr_array_add (subdirs_arg, NULL);
     }
 
-  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
-    goto out;
-
   /* Setup extra data information before starting to pull, so we can have precise
    * progress reports */
   if (!flatpak_dir_setup_extra_data (self, repo, state->remote_name,
@@ -5612,6 +5622,10 @@ flatpak_dir_pull (FlatpakDir                           *self,
                                      progress,
                                      cancellable,
                                      error))
+    goto out;
+
+  /* Note, this has to start after setup_extra_data() because that also uses a transaction */
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     goto out;
 
   flatpak_repo_resolve_rev (repo, state->collection_id, state->remote_name, ref, TRUE,
