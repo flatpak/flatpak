@@ -3426,6 +3426,27 @@ open_namespace_fd_if_needed (const char *path, const char *type)
   return -1;
 }
 
+static gboolean
+check_sudo (GError **error)
+{
+  const char *sudo_command_env = g_getenv ("SUDO_COMMAND");
+  g_auto(GStrv) split_command = NULL;
+
+  /* This check exists to stop accidental usage of `sudo flatpak run`
+     and is not to prevent running as root.
+   */
+
+  if (!sudo_command_env)
+    return TRUE;
+
+  /* SUDO_COMMAND could be a value like `/usr/bin/flatpak run foo` */
+  split_command = g_strsplit (sudo_command_env, " ", 2);
+  if (g_str_has_suffix (split_command[0], "flatpak"))
+    return flatpak_fail_error (error, FLATPAK_ERROR, _("\"flatpak run\" is not intended to be ran with sudo"));
+
+  return TRUE;
+}
+
 gboolean
 flatpak_run_app (const char     *app_ref,
                  FlatpakDeploy  *app_deploy,
@@ -3481,6 +3502,9 @@ flatpak_run_app (const char     *app_ref,
   gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
 
   struct stat s;
+
+  if (!check_sudo (error))
+    return FALSE;
 
   app_ref_parts = flatpak_decompose_ref (app_ref, error);
   if (app_ref_parts == NULL)
