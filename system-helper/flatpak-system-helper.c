@@ -53,6 +53,9 @@ static gboolean on_session_bus = FALSE;
 static gboolean disable_revokefs = FALSE;
 static gboolean no_idle_exit = FALSE;
 
+static int opt_verbose;
+static gboolean opt_ostree_verbose;
+
 #define IDLE_TIMEOUT_SECS 10 * 60
 
 /* This uses a weird Auto prefix to avoid conflicts with later added polkit types.
@@ -2218,6 +2221,16 @@ message_handler (const gchar   *log_domain,
     g_printerr ("%s: %s\n", g_get_prgname (), message);
 }
 
+static gboolean
+opt_verbose_cb (const gchar *option_name,
+                const gchar *value,
+                gpointer     data,
+                GError     **error)
+{
+  opt_verbose++;
+  return TRUE;
+}
+
 int
 main (int    argc,
       char **argv)
@@ -2225,14 +2238,14 @@ main (int    argc,
   gchar exe_path[PATH_MAX + 1];
   ssize_t exe_path_len;
   gboolean replace;
-  gboolean verbose;
   gboolean show_version;
   GBusNameOwnerFlags flags;
   GOptionContext *context;
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
-    { "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,  "Enable debug output.", NULL },
+    { "verbose", 'v', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, &opt_verbose_cb, "Show debug information, -vv for more detail", NULL },
+    { "ostree-verbose", 0, 0, G_OPTION_ARG_NONE, &opt_ostree_verbose,"Show OSTree debug information", NULL },
     { "session", 0, 0, G_OPTION_ARG_NONE, &on_session_bus,  "Run in session, not system scope (for tests).", NULL },
     { "no-idle-exit", 0, 0, G_OPTION_ARG_NONE, &no_idle_exit,  "Don't exit when idle.", NULL },
     { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
@@ -2261,7 +2274,6 @@ main (int    argc,
   context = g_option_context_new ("");
 
   replace = FALSE;
-  verbose = FALSE;
   show_version = FALSE;
 
   g_option_context_set_summary (context, "Flatpak system helper");
@@ -2284,8 +2296,15 @@ main (int    argc,
       return 0;
     }
 
-  if (verbose)
+  flatpak_disable_fancy_output ();
+
+  if (opt_verbose > 0)
     g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+  if (opt_verbose > 1)
+    g_log_set_handler (G_LOG_DOMAIN "2", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+
+  if (opt_ostree_verbose)
+    g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
   if (!on_session_bus)
     {
