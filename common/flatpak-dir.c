@@ -13617,7 +13617,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
           if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags,
-                                 OSTREE_REPO_PULL_FLAGS_MIRROR,
+                                 0,
                                  progress, cancellable, error))
             return FALSE;
 
