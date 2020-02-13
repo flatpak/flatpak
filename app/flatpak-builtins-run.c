@@ -195,7 +195,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
       g_autoptr(GError) local_error2 = NULL;
       g_autoptr(GPtrArray) ref_dir_pairs = NULL;
-      RefDirPair *chosen_pair;
+      RefDirPair *chosen_pair = NULL;
 
       /* Whereas for apps we want to default to using the "current" one (see
        * flatpak-make-current(1)) runtimes don't have a concept of currentness.
