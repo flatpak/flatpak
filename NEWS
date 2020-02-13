@@ -1,3 +1,19 @@
+Changes in 1.6.2
+================
+
+Due to a combination of some behaviour in flatpak and recent versions of ostree we at some
+point lost the use of deltas for the initial install case, instead always falling back
+to a full ostree operation which is a lot less efficient for pulls with many small files
+like a runtime. This caused some very slow installs from e.g. flathub, so I recommend
+everyone update to this version to get better install performance.
+
+Other changes are:
+ * We now correctly handle TMPDIR env var overrides when bwrap is setuid
+ * Disallow running "flatpak run" under sudo (as it doesn't work and causes issues)
+ * Fix build with older versions of glib
+ * Minor documentation updates
+ * Updated translations
+
 Changes in 1.6.1
 ================
 
