@@ -1,3 +1,10 @@
+Changes in 1.4.4
+================
+
+This release contains backports from 1.6.2 that restores the ability
+for flatpak to use ostree static deltas on initial installation which
+allow much faster downloads.
+
 Changes in 1.4.3
 ================
  * Fix crash in revokefs.
