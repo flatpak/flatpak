@@ -3,7 +3,7 @@
 set -euo pipefail
 
 dir=$1
-cmd=${2:-python -m SimpleHTTPServer 0}
+cmd=${2:-python2 -m SimpleHTTPServer 0}
 test_tmpdir=$(pwd)
 
 [ "$dir" != "" ] && cd ${dir}

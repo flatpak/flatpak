@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 from wsgiref.handlers import format_date_time
 from email.utils import parsedate
