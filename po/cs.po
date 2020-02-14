@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-02-13 15:07+0100\n"
-"PO-Revision-Date: 2019-12-20 16:04+0100\n"
+"POT-Creation-Date: 2020-02-14 03:24+0000\n"
+"PO-Revision-Date: 2020-02-14 16:02+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -4568,7 +4568,7 @@ msgstr ""
 
 #: common/flatpak-run.c:3445
 msgid "\"flatpak run\" is not intended to be ran with sudo"
-msgstr ""
+msgstr "„flatpak run“ není určen pro běh se sudo"
 
 #: common/flatpak-run.c:3552
 #, c-format
