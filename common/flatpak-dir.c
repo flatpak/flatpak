@@ -2468,7 +2468,7 @@ flatpak_deploy_data_get_appdata_content_rating (GVariant *deploy_data)
 /*<private>
  * flatpak_deploy_data_get_subpaths:
  *
- * Returns: (array length=length zero-terminated=1) (transfer container): an array of constant strings
+ * Returns: (array zero-terminated=1) (transfer container): an array of constant strings
  **/
 const char **
 flatpak_deploy_data_get_subpaths (GVariant *deploy_data)
