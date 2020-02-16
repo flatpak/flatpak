@@ -1,15 +1,15 @@
 # Polish translation for flatpak.
-# Copyright © 2016-2019 the flatpak authors.
+# Copyright © 2016-2020 the flatpak authors.
 # This file is distributed under the same license as the flatpak package.
-# Piotr Drąg <piotrdrag@gmail.com>, 2016-2019.
-# Aviary.pl <community-poland@mozilla.org>, 2016-2019.
+# Piotr Drąg <piotrdrag@gmail.com>, 2016-2020.
+# Aviary.pl <community-poland@mozilla.org>, 2016-2020.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-02-13 15:07+0100\n"
-"PO-Revision-Date: 2019-12-21 15:28+0100\n"
+"POT-Creation-Date: 2020-02-16 12:04+0000\n"
+"PO-Revision-Date: 2020-02-16 13:05+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -4677,7 +4677,7 @@ msgstr ""
 
 #: common/flatpak-run.c:3445
 msgid "\"flatpak run\" is not intended to be ran with sudo"
-msgstr ""
+msgstr "Polecenie „flatpak run” nie powinno być wykonywane za pomocą sudo"
 
 #: common/flatpak-run.c:3552
 #, c-format
