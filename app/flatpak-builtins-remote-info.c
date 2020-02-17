@@ -80,7 +80,6 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   g_autoptr(GPtrArray) dirs = NULL;
   g_autoptr(FlatpakDir) preferred_dir = NULL;
   g_autoptr(GVariant) commit_v = NULL;
-  g_autoptr(GVariant) commit_metadata = NULL;
   const char *remote;
   const char *pref;
   g_autofree char *default_branch = NULL;
@@ -106,7 +105,6 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   g_autofree char *formatted_installed_size = NULL;
   g_autofree char *formatted_download_size = NULL;
   const gchar *subject = NULL;
-  const gchar *body = NULL;
   guint64 timestamp;
   g_autofree char *formatted_timestamp = NULL;
   VarMetadataRef sparse_cache;
@@ -212,14 +210,18 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
       if (commit_v)
         {
-          g_variant_get (commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
-                         &subject, &body, NULL, NULL, NULL);
+          VarCommitRef commit = var_commit_from_gvariant (commit_v);
+          VarMetadataRef commit_metadata;
 
+          subject = var_commit_get_subject (commit);
           parent = ostree_commit_get_parent (commit_v);
           timestamp = ostree_commit_get_timestamp (commit_v);
 
-          commit_metadata = g_variant_get_child_value (commit_v, 0);
-          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+          commit_metadata = var_commit_get_metadata (commit);
+          xa_metadata = var_metadata_lookup_string (commit_metadata, "xa.metadata", NULL);
+          if (xa_metadata == NULL)
+            g_printerr (_("Warning: Commit has no flatpak metadata\n"));
+
           if (xa_metadata == NULL)
             g_printerr (_("Warning: Commit has no flatpak metadata\n"));
           else
@@ -229,13 +231,10 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
                 return FALSE;
             }
 
-          g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
+          collection_id = var_metadata_lookup_string (commit_metadata, "ostree.collection-binding", NULL);
 
-          if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
-            installed_size = GUINT64_FROM_BE (installed_size);
-
-          if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
-            download_size = GUINT64_FROM_BE (download_size);
+          installed_size = GUINT64_FROM_BE (var_metadata_lookup_uint64 (commit_metadata, "xa.installed-size", 0));
+          download_size = GUINT64_FROM_BE (var_metadata_lookup_uint64 (commit_metadata, "xa.download-size", 0));
 
           formatted_installed_size = g_format_size (installed_size);
           formatted_download_size = g_format_size (download_size);
@@ -341,6 +340,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               guint64 p_timestamp;
               g_autofree char *p_formatted_timestamp = NULL;
               g_autoptr(GVariant) p_commit_v = NULL;
+              VarCommitRef p_commit;
 
               p_commit_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, p, NULL, cancellable, NULL);
               if (p_commit_v == NULL)
@@ -350,8 +350,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               p_timestamp = ostree_commit_get_timestamp (p_commit_v);
               p_formatted_timestamp = format_timestamp (p_timestamp);
 
-              g_variant_get (p_commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
-                             &p_subject, NULL, NULL, NULL, NULL);
+              p_commit = var_commit_from_gvariant (commit_v);
+              p_subject = var_commit_get_subject (p_commit);
 
               print_aligned (len, _(" Commit:"), p);
               print_aligned (len, _(" Subject:"), p_subject);

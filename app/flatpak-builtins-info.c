@@ -33,6 +33,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-run-private.h"
+#include "flatpak-variant-impl-private.h"
 
 static gboolean opt_user;
 static gboolean opt_system;
@@ -174,11 +175,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (friendly)
     {
       g_autoptr(GVariant) commit_v = NULL;
-      g_autoptr(GVariant) commit_metadata = NULL;
+      VarMetadataRef commit_metadata;
       guint64 timestamp;
       g_autofree char *formatted_timestamp = NULL;
       const gchar *subject = NULL;
-      const gchar *body = NULL;
       g_autofree char *parent = NULL;
       g_autofree char *latest = NULL;
       const char *xa_metadata = NULL;
@@ -200,18 +200,20 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
       if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), commit, &commit_v, NULL, NULL))
         {
-          g_variant_get (commit_v, "(a{sv}aya(say)&s&stayay)", NULL, NULL, NULL,
-                         &subject, &body, NULL, NULL, NULL);
+          VarCommitRef commit = var_commit_from_gvariant (commit_v);
+
+          subject = var_commit_get_subject (commit);
           parent = ostree_commit_get_parent (commit_v);
           timestamp = ostree_commit_get_timestamp (commit_v);
+
           formatted_timestamp = format_timestamp (timestamp);
 
-          commit_metadata = g_variant_get_child_value (commit_v, 0);
-          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+          commit_metadata = var_commit_get_metadata (commit);
+          xa_metadata = var_metadata_lookup_string (commit_metadata, "xa.metadata", NULL);
           if (xa_metadata == NULL)
             g_printerr (_("Warning: Commit has no flatpak metadata\n"));
 
-          g_variant_lookup (commit_metadata, "ostree.collection-binding", "&s", &collection_id);
+          collection_id = var_metadata_lookup_string (commit_metadata, "ostree.collection-binding", NULL);
         }
 
       len = 0;
