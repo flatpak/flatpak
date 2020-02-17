@@ -48,6 +48,8 @@
 #include "flatpak-run-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-variant-private.h"
+#include "flatpak-variant-impl-private.h"
 #include "libglnx/libglnx.h"
 #include "valgrind-private.h"
 
@@ -2581,18 +2583,20 @@ flatpak_variant_save (GFile        *dest,
   return TRUE;
 }
 
-gboolean
-flatpak_variant_bsearch_str (GVariant   *array,
-                             const char *str,
-                             int        *out_pos)
+/* This special cases the ref lookup which by doing a
+   bsearch since the array is sorted */
+static gboolean
+flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
+                                const char    *ref,
+                                VarRefInfoRef *out_info)
 {
   gsize imax, imin;
   gsize imid;
   gsize n;
 
-  g_return_val_if_fail (out_pos != NULL, FALSE);
+  g_return_val_if_fail (out_info != NULL, FALSE);
 
-  n = g_variant_n_children (array);
+  n = var_ref_map_get_length (ref_map);
   if (n == 0)
     return FALSE;
 
@@ -2600,18 +2604,16 @@ flatpak_variant_bsearch_str (GVariant   *array,
   imin = 0;
   while (imax >= imin)
     {
-      g_autoptr(GVariant) child = NULL;
-      g_autoptr(GVariant) cur_v = NULL;
+      VarRefMapEntryRef entry;
       const char *cur;
       int cmp;
 
       imid = (imin + imax) / 2;
 
-      child = g_variant_get_child_value (array, imid);
-      cur_v = g_variant_get_child_value (child, 0);
-      cur = g_variant_get_data (cur_v);
+      entry = var_ref_map_get_at (ref_map, imid);
+      cur = var_ref_map_entry_get_ref (entry);
 
-      cmp = strcmp (cur, str);
+      cmp = strcmp (cur, ref);
       if (cmp < 0)
         {
           imin = imid + 1;
@@ -2624,65 +2626,65 @@ flatpak_variant_bsearch_str (GVariant   *array,
         }
       else
         {
-          *out_pos = imid;
+          *out_info = var_ref_map_entry_get_info (entry);
           return TRUE;
         }
     }
 
-  *out_pos = imid;
   return FALSE;
 }
 
 /* Find the list of refs which belong to the given @collection_id in @summary.
  * If @collection_id is %NULL, the main refs list from the summary will be
  * returned. If @collection_id doesn’t match any collection IDs in the summary
- * file, %NULL will be returned. */
-static GVariant *
-summary_find_refs_list (GVariant   *summary,
-                        const char *collection_id)
+ * file, %FALSE will be returned. */
+static gboolean
+summary_find_ref_map (VarSummaryRef summary,
+                      const char *collection_id,
+                      VarRefMapRef *refs_out)
 {
-  g_autoptr(GVariant) refs = NULL;
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (summary, 1);
+  VarMetadataRef metadata = var_summary_get_metadata (summary);
   const char *summary_collection_id;
 
-  if (!g_variant_lookup (metadata, "ostree.summary.collection-id", "&s", &summary_collection_id))
-    summary_collection_id = NULL;
+  summary_collection_id = var_metadata_lookup_string (metadata, "ostree.summary.collection-id", NULL);
 
   if (collection_id == NULL || g_strcmp0 (collection_id, summary_collection_id) == 0)
     {
-      refs = g_variant_get_child_value (summary, 0);
+      *refs_out = var_summary_get_ref_map (summary);
+      return TRUE;
     }
   else if (collection_id != NULL)
     {
-      g_autoptr(GVariant) collection_map = NULL;
-
-      collection_map = g_variant_lookup_value (metadata, "ostree.summary.collection-map",
-                                               G_VARIANT_TYPE ("a{sa(s(taya{sv}))}"));
-      if (collection_map != NULL)
-        refs = g_variant_lookup_value (collection_map, collection_id, G_VARIANT_TYPE ("a(s(taya{sv}))"));
+      VarVariantRef collection_map_v;
+      if (var_metadata_lookup (metadata, "ostree.summary.collection-map", NULL, &collection_map_v))
+        {
+          VarCollectionMapRef collection_map = var_collection_map_from_variant (collection_map_v);
+          return var_collection_map_lookup (collection_map, collection_id, NULL, refs_out);
+        }
     }
 
-  return g_steal_pointer (&refs);
+  return FALSE;
 }
 
 /* This matches all refs from @collection_id that have ref, followed by '.'  as prefix */
 char **
-flatpak_summary_match_subrefs (GVariant   *summary,
+flatpak_summary_match_subrefs (GVariant   *summary_v,
                                const char *collection_id,
                                const char *ref)
 {
-  g_autoptr(GVariant) refs = NULL;
   GPtrArray *res = g_ptr_array_new ();
   gsize n, i;
   g_auto(GStrv) parts = NULL;
   g_autofree char *parts_prefix = NULL;
   g_autofree char *ref_prefix = NULL;
   g_autofree char *ref_suffix = NULL;
+  VarSummaryRef summary;
+  VarRefMapRef ref_map;
+
+  summary = var_summary_from_gvariant (summary_v);
 
   /* Work out which refs list to use, based on the @collection_id. */
-  refs = summary_find_refs_list (summary, collection_id);
-
-  if (refs != NULL)
+  if (summary_find_ref_map (summary, collection_id, &ref_map))
     {
       /* Match against the refs. */
       parts = g_strsplit (ref, "/", 0);
@@ -2691,17 +2693,14 @@ flatpak_summary_match_subrefs (GVariant   *summary,
       ref_prefix = g_strconcat (parts[0], "/", NULL);
       ref_suffix = g_strconcat ("/", parts[2], "/", parts[3], NULL);
 
-      n = g_variant_n_children (refs);
+      n = var_ref_map_get_length (ref_map);
       for (i = 0; i < n; i++)
         {
-          g_autoptr(GVariant) child = NULL;
-          g_autoptr(GVariant) cur_v = NULL;
+          VarRefMapEntryRef entry = var_ref_map_get_at (ref_map, i);
           const char *cur;
           const char *id_start;
 
-          child = g_variant_get_child_value (refs, i);
-          cur_v = g_variant_get_child_value (child, 0);
-          cur = g_variant_get_data (cur_v);
+          cur = var_ref_map_entry_get_ref (entry);
 
           /* Must match type */
           if (!g_str_has_prefix (cur, ref_prefix))
@@ -2728,38 +2727,36 @@ flatpak_summary_match_subrefs (GVariant   *summary,
 }
 
 gboolean
-flatpak_summary_lookup_ref (GVariant   *summary,
+flatpak_summary_lookup_ref (GVariant   *summary_v,
                             const char *collection_id,
                             const char *ref,
                             char      **out_checksum,
                             GVariant  **out_variant)
 {
-  g_autoptr(GVariant) refs = NULL;
-  int pos;
-  g_autoptr(GVariant) refdata = NULL;
-  g_autoptr(GVariant) reftargetdata = NULL;
-  guint64 commit_size;
-  g_autoptr(GVariant) commit_csum_v = NULL;
+  VarSummaryRef summary;
+  VarRefMapRef ref_map;
+  VarRefInfoRef info;
+  const guchar *checksum_bytes;
+  gsize checksum_bytes_len;
 
-  refs = summary_find_refs_list (summary, collection_id);
-  if (refs == NULL)
+  summary = var_summary_from_gvariant (summary_v);
+
+  /* Work out which refs list to use, based on the @collection_id. */
+  if (!summary_find_ref_map (summary, collection_id, &ref_map))
     return FALSE;
 
-  if (!flatpak_variant_bsearch_str (refs, ref, &pos))
+  if (!flatpak_var_ref_map_lookup_ref (ref_map, ref, &info))
     return FALSE;
 
-  refdata = g_variant_get_child_value (refs, pos);
-  reftargetdata = g_variant_get_child_value (refdata, 1);
-  g_variant_get (reftargetdata, "(t@ay@a{sv})", &commit_size, &commit_csum_v, NULL);
-
-  if (!ostree_validate_structureof_csum_v (commit_csum_v, NULL))
+  checksum_bytes = var_ref_info_peek_checksum (info, &checksum_bytes_len);
+  if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
     return FALSE;
 
   if (out_checksum)
-    *out_checksum = ostree_checksum_from_bytes_v (commit_csum_v);
+    *out_checksum = ostree_checksum_from_bytes (checksum_bytes);
 
   if (out_variant)
-    *out_variant = g_steal_pointer (&reftargetdata);
+    *out_variant = var_ref_info_dup_to_gvariant (info);
 
   return TRUE;
 }
