@@ -1,3 +1,5 @@
+PREFIX = /usr/local
+
 all: sample ostree_test performance
 
 sample.h: variant-schema-compiler sample.gv
@@ -20,3 +22,12 @@ ostree_test: ostree_test.c ostree_test.h
 
 clean:
 	rm -f sample.h sample performance.h performance ostree_test.h ostree_test
+
+.PHONY: install
+install: variant-schema-compiler
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	install -T $< $(DESTDIR)$(PREFIX)/bin/variant-schema-compiler
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/variant-schema-compiler
