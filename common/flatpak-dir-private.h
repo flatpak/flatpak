@@ -25,6 +25,7 @@
 
 #include "flatpak-common-types-private.h"
 #include "flatpak-context-private.h"
+#include "flatpak-variant-private.h"
 #include "libglnx/libglnx.h"
 
 /* Version history:
@@ -135,7 +136,8 @@ gboolean flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
 gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
                                           const char         *ref,
                                           char              **out_checksum,
-                                          GVariant          **out_variant,
+                                          gboolean           *out_has_info,
+                                          VarRefInfoRef      *out_info,
                                           GError            **error);
 char **flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
                                            const char         *ref);

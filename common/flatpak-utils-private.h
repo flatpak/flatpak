@@ -32,6 +32,7 @@
 #include "flatpak-context-private.h"
 #include "flatpak-error.h"
 #include "flatpak-utils-http-private.h"
+#include "flatpak-variant-private.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
 
@@ -157,11 +158,11 @@ GVariant *flatpak_repo_load_summary (OstreeRepo *repo,
 char **  flatpak_summary_match_subrefs (GVariant   *summary,
                                         const char *collection_id,
                                         const char *ref);
-gboolean flatpak_summary_lookup_ref (GVariant   *summary,
-                                     const char *collection_id,
-                                     const char *ref,
-                                     char      **out_checksum,
-                                     GVariant  **out_variant);
+gboolean flatpak_summary_lookup_ref (GVariant      *summary,
+                                     const char    *collection_id,
+                                     const char    *ref,
+                                     char         **out_checksum,
+                                     VarRefInfoRef *out_info);
 
 gboolean flatpak_name_matches_one_wildcard_prefix (const char         *string,
                                                    const char * const *maybe_wildcard_prefixes,
