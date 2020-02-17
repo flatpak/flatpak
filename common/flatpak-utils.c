@@ -48,7 +48,6 @@
 #include "flatpak-run-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
-#include "flatpak-variant-private.h"
 #include "flatpak-variant-impl-private.h"
 #include "libglnx/libglnx.h"
 #include "valgrind-private.h"
@@ -2727,11 +2726,11 @@ flatpak_summary_match_subrefs (GVariant   *summary_v,
 }
 
 gboolean
-flatpak_summary_lookup_ref (GVariant   *summary_v,
-                            const char *collection_id,
-                            const char *ref,
-                            char      **out_checksum,
-                            GVariant  **out_variant)
+flatpak_summary_lookup_ref (GVariant      *summary_v,
+                            const char    *collection_id,
+                            const char    *ref,
+                            char         **out_checksum,
+                            VarRefInfoRef *out_info)
 {
   VarSummaryRef summary;
   VarRefMapRef ref_map;
@@ -2755,8 +2754,8 @@ flatpak_summary_lookup_ref (GVariant   *summary_v,
   if (out_checksum)
     *out_checksum = ostree_checksum_from_bytes (checksum_bytes);
 
-  if (out_variant)
-    *out_variant = var_ref_info_dup_to_gvariant (info);
+  if (out_info)
+    *out_info = info;
 
   return TRUE;
 }

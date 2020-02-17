@@ -29,6 +29,7 @@
 #include "flatpak-installation-private.h"
 #include "flatpak-transaction-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-variant-impl-private.h"
 
 /**
  * SECTION:flatpak-transaction
@@ -2315,7 +2316,7 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
               g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
 
               if (state != NULL &&
-                  flatpak_remote_state_lookup_ref (state, ref, NULL, NULL, NULL))
+                  flatpak_remote_state_lookup_ref (state, ref, NULL, NULL, NULL, NULL))
                 {
                   g_debug ("Auto adding install of %s from remote %s", ref, remote);
                   if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, NULL,
@@ -2503,7 +2504,8 @@ resolve_op_from_metadata (FlatpakTransaction *self,
   const char *metadata = NULL;
   g_autoptr(GVariant) sparse_cache = NULL;
   g_autoptr(GError) local_error = NULL;
-  g_autoptr(GVariant) summary_metadata = NULL;
+  VarRefInfoRef info;
+  gboolean has_info;
 
   if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, NULL, &local_error))
     {
@@ -2513,9 +2515,8 @@ resolve_op_from_metadata (FlatpakTransaction *self,
   else
     metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
 
-  flatpak_remote_state_lookup_ref (state, op->ref, NULL, &summary_metadata, NULL);
-  if (summary_metadata)
-    op->summary_metadata = g_variant_get_child_value (summary_metadata, 2);
+  if (flatpak_remote_state_lookup_ref (state, op->ref, NULL, &has_info, &info, NULL) && has_info)
+    op->summary_metadata = var_metadata_dup_to_gvariant (var_ref_info_get_metadata (info));
 
   op->installed_size = installed_size;
   op->download_size = download_size;
