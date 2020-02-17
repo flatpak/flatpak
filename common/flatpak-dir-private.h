@@ -148,9 +148,10 @@ gboolean flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                             const char        **metadata,
                                             const guchar      **maybe_commit_bytes,
                                             GError            **error);
-GVariant *flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
-                                                    const char         *ref,
-                                                    GError            **error);
+gboolean flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
+                                                   const char         *ref,
+                                                   VarMetadataRef     *out_metadata,
+                                                   GError            **error);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)

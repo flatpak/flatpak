@@ -33,6 +33,7 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
+#include "flatpak-variant-impl-private.h"
 
 static char *opt_arch;
 static char *opt_commit;
@@ -94,12 +95,11 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   g_autofree char *commit = NULL;
   g_autofree char *parent = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
-  g_autoptr(GVariant) sparse = NULL;
-  const char *eol = NULL;
-  const char *eol_rebase = NULL;
   gboolean friendly = TRUE;
   const char *xa_metadata = NULL;
   const char *collection_id = NULL;
+  const char *eol = NULL;
+  const char *eol_rebase = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   guint64 installed_size = 0;
   guint64 download_size = 0;
@@ -109,6 +109,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   const gchar *body = NULL;
   guint64 timestamp;
   g_autofree char *formatted_timestamp = NULL;
+  VarMetadataRef sparse_cache;
 
   context = g_option_context_new (_(" REMOTE REF - Show information about an application or runtime in a remote"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -169,11 +170,10 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
         return FALSE;
     }
 
-  sparse = flatpak_remote_state_lookup_sparse_cache (state, ref, NULL);
-  if (sparse)
+  if (flatpak_remote_state_lookup_sparse_cache (state, ref, &sparse_cache, NULL))
     {
-      g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol);
-      g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol_rebase);
+      eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL);
+      eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL);
     }
 
   if (opt_show_ref || opt_show_commit || opt_show_parent || opt_show_metadata || opt_show_runtime || opt_show_sdk)

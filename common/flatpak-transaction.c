@@ -2502,7 +2502,7 @@ resolve_op_from_metadata (FlatpakTransaction *self,
   guint64 download_size = 0;
   guint64 installed_size = 0;
   const char *metadata = NULL;
-  g_autoptr(GVariant) sparse_cache = NULL;
+  VarMetadataRef sparse_cache;
   g_autoptr(GError) local_error = NULL;
   VarRefInfoRef info;
   gboolean has_info;
@@ -2523,12 +2523,11 @@ resolve_op_from_metadata (FlatpakTransaction *self,
 
   op->token_type = state->default_token_type;
 
-  sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, op->ref, NULL);
-  if (sparse_cache)
+  if (flatpak_remote_state_lookup_sparse_cache (state, op->ref, &sparse_cache, NULL))
     {
-      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "s", &op->eol);
-      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "s", &op->eol_rebase);
-      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, "i", &op->token_type);
+      op->eol = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL));
+      op->eol_rebase = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL));
+      op->token_type = var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, op->token_type);
     }
 
   resolve_op_end (self, op, checksum, metadata_bytes);
@@ -2615,7 +2614,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
       if (op_may_need_token (op))
         {
           g_autoptr(FlatpakRemoteState) state = NULL;
-          g_autoptr(GVariant) sparse_cache = NULL;
+          VarMetadataRef sparse_cache;
           gint32 token_type;
 
           state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
@@ -2624,9 +2623,8 @@ resolve_p2p_ops (FlatpakTransaction *self,
 
           token_type = state->default_token_type;
 
-          sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, op->ref, NULL);
-          if (sparse_cache)
-            g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, "i", &token_type);
+          if (flatpak_remote_state_lookup_sparse_cache (state, op->ref, &sparse_cache, NULL))
+            token_type = var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, token_type);
 
           if (token_type > 0)
             {
