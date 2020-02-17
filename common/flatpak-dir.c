@@ -499,9 +499,10 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
   return TRUE;
 }
 
-GVariant *
+gboolean
 flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
                                           const char         *ref,
+                                          VarMetadataRef     *out_metadata,
                                           GError            **error)
 {
   VarMetadataRef meta;
@@ -514,15 +515,13 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
   if (var_metadata_lookup (meta, "xa.sparse-cache", NULL, &sparse_cache_v))
     {
       VarSparseCacheRef sparse_cache = var_sparse_cache_from_variant (sparse_cache_v);
-      VarMetadataRef v;
-      if (var_sparse_cache_lookup (sparse_cache, ref, NULL, &v))
-        return var_metadata_to_owned_gvariant (v, self->metadata);
+      return var_sparse_cache_lookup (sparse_cache, ref, NULL, out_metadata);
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                _("No entry for %s in remote summary flatpak sparse cache "), ref);
 
-  return NULL;
+  return FALSE;
 }
 
 static gboolean
@@ -3776,9 +3775,9 @@ flatpak_dir_resolve_maybe_resolve_from_metadata (FlatpakDirResolve *resolve,
   guint64 download_size = 0;
   guint64 installed_size = 0;
   const char *xa_metadata = NULL;
-  g_autoptr(GVariant) sparse_cache = NULL;
   const guchar *metadata_checksum_bytes = NULL;
   g_autofree char *metadata_checksum = NULL;
+  VarMetadataRef sparse_cache;
 
   if (!flatpak_remote_state_lookup_cache (state, resolve->ref, &download_size, &installed_size, &xa_metadata, &metadata_checksum_bytes, NULL))
     return FALSE;
@@ -3798,12 +3797,11 @@ flatpak_dir_resolve_maybe_resolve_from_metadata (FlatpakDirResolve *resolve,
   resolve->installed_size = installed_size;
   resolve->download_size = download_size;
 
-  sparse_cache = flatpak_remote_state_lookup_sparse_cache (state, resolve->ref, NULL);
-  if (sparse_cache)
+  if (flatpak_remote_state_lookup_sparse_cache (state, resolve->ref, &sparse_cache, NULL))
     {
-      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "s", &resolve->eol);
-      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "s", &resolve->eol_rebase);
-      g_variant_lookup (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, "i", &resolve->token_type);
+      resolve->eol = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL));
+      resolve->eol_rebase = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL));
+      resolve->token_type = var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, 0);
     }
 
   return TRUE; /* Resolved */

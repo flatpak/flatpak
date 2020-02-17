@@ -26,6 +26,7 @@
 #include "flatpak-remote-ref-private.h"
 #include "flatpak-remote-ref.h"
 #include "flatpak-enum-types.h"
+#include "flatpak-variant-impl-private.h"
 
 /**
  * SECTION:flatpak-remote-ref
@@ -329,7 +330,7 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
   g_autoptr(GBytes) metadata_bytes = NULL;
   g_auto(GStrv) parts = NULL;
   FlatpakRemoteRef *ref;
-  g_autoptr(GVariant) sparse = NULL;
+  VarMetadataRef sparse_cache;
   const char *full_ref = coll_ref->ref_name;
   const char *eol = NULL;
   const char *eol_rebase = NULL;
@@ -349,13 +350,11 @@ flatpak_remote_ref_new (FlatpakCollectionRef *coll_ref,
   if (metadata)
     metadata_bytes = g_bytes_new (metadata, strlen (metadata));
 
-  if (state)
-    sparse = flatpak_remote_state_lookup_sparse_cache (state, full_ref, NULL);
-
-  if (sparse)
+  if (state &&
+      flatpak_remote_state_lookup_sparse_cache (state, full_ref, &sparse_cache, NULL))
     {
-      g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol);
-      g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol_rebase);
+      eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL);
+      eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL);
     }
 
   if (strcmp (parts[0], "app") != 0)
