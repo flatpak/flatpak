@@ -2830,16 +2830,12 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
 {
   g_autofree char *run_dir = NULL;
   g_autofree char *passwd_contents = NULL;
-  g_autofree char *group_contents = NULL;
+  g_autoptr(GString) group_contents = NULL;
   const char *pkcs11_conf_contents = NULL;
   struct group *g;
   gulong pers;
   gid_t gid = getgid ();
   g_autoptr(GFile) etc = NULL;
-
-  g = getgrgid (gid);
-  if (g == NULL)
-    return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Invalid group: %d"), gid);
 
   run_dir = g_strdup_printf ("/run/user/%d", getuid ());
 
@@ -2851,10 +2847,14 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                                      g_get_home_dir (),
                                      DEFAULT_SHELL);
 
-  group_contents = g_strdup_printf ("%s:x:%d:%s\n"
-                                    "nfsnobody:x:65534:\n",
-                                    g->gr_name,
-                                    gid, g_get_user_name ());
+  group_contents = g_string_new ("");
+  g = getgrgid (gid);
+  /* if NULL, the primary group is not known outside the container, so
+   * it might as well stay unknown inside the container... */
+  if (g != NULL)
+    g_string_append_printf (group_contents, "%s:x:%d:%s\n",
+                            g->gr_name, gid, g_get_user_name ());
+  g_string_append (group_contents, "nfsnobody:x:65534:\n");
 
   pkcs11_conf_contents =
     "# Disable user pkcs11 config, because the host modules don't work in the runtime\n"
@@ -2897,7 +2897,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   if (!flatpak_bwrap_add_args_data (bwrap, "passwd", passwd_contents, -1, "/etc/passwd", error))
     return FALSE;
 
-  if (!flatpak_bwrap_add_args_data (bwrap, "group", group_contents, -1, "/etc/group", error))
+  if (!flatpak_bwrap_add_args_data (bwrap, "group", group_contents->str, -1, "/etc/group", error))
     return FALSE;
 
   if (!flatpak_bwrap_add_args_data (bwrap, "pkcs11.conf", pkcs11_conf_contents, -1, "/etc/pkcs11/pkcs11.conf", error))
