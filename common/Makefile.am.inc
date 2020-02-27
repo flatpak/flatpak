@@ -76,7 +76,7 @@ BUILT_SOURCES += $(nodist_libflatpak_common_base_la_SOURCES)
 CLEANFILES += $(nodist_libflatpak_common_base_la_SOURCES)
 
 common/flatpak-variant-private.h common/flatpak-variant-impl-private.h: variant-schema-compiler/variant-schema-compiler  data/flatpak-variants.gv
-	$(AM_V_GEN) variant-schema-compiler/variant-schema-compiler --outfile-header common/flatpak-variant-private.h  --outfile common/flatpak-variant-impl-private.h --prefix var data/flatpak-variants.gv
+	$(AM_V_GEN) $(srcdir)/variant-schema-compiler/variant-schema-compiler --outfile-header common/flatpak-variant-private.h  --outfile common/flatpak-variant-impl-private.h --prefix var $(srcdir)/data/flatpak-variants.gv
 
 BUILT_SOURCES += common/flatpak-variant-private.h common/flatpak-variant-impl-private.h
 CLEANFILES += common/flatpak-variant-private.h common/flatpak-variant-impl-private.h
