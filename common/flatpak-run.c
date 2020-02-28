@@ -588,13 +588,13 @@ flatpak_run_add_journal_args (FlatpakBwrap *bwrap)
   if (g_file_test (journal_socket_socket, G_FILE_TEST_EXISTS))
     {
       flatpak_bwrap_add_args (bwrap,
-                              "--bind", journal_socket_socket, journal_socket_socket,
+                              "--ro-bind", journal_socket_socket, journal_socket_socket,
                               NULL);
     }
   if (g_file_test (journal_stdout_socket, G_FILE_TEST_EXISTS))
     {
       flatpak_bwrap_add_args (bwrap,
-                              "--bind", journal_stdout_socket, journal_stdout_socket,
+                              "--ro-bind", journal_stdout_socket, journal_stdout_socket,
                               NULL);
     }
 }
