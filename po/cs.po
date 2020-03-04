@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2020-02-14 03:24+0000\n"
-"PO-Revision-Date: 2020-02-14 15:02+0100\n"
+"PO-Revision-Date: 2020-03-04 16:06+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.2.4\n"
+"X-Generator: Poedit 2.3\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -3759,7 +3759,7 @@ msgstr "Neznámý typ zařízení %s, platné typy jsou: %s"
 #: common/flatpak-context.c:324
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
-msgstr "Neznámý typ vlastnosti %s, platné typy jsou: %s"
+msgstr "Neznámý typ funkce %s, platné typy jsou: %s"
 
 #: common/flatpak-context.c:764
 #, c-format
