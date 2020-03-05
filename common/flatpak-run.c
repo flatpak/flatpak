@@ -442,8 +442,7 @@ flatpak_run_add_gpg_args (FlatpakBwrap *bwrap)
 
   process = g_subprocess_new (G_SUBPROCESS_FLAGS_STDOUT_PIPE,
                     &gpgconf_error,
-                    "gpgconf", "--list-dirs", "|",
-                    "grep", "agent-socket", NULL);
+                    "gpgconf", "--list-dir", "agent-extra-socket", NULL);
 
   if (gpgconf_error)
     {
