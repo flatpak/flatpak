@@ -705,7 +705,7 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
                         run_flags,
                         NULL,
                         NULL,
-                        NULL, 0, 0,
+                        NULL, 0, -1,
                         &instance_dir,
                         cancellable, error))
     return FALSE;
