@@ -83,6 +83,9 @@ static gboolean update_monitors_timeout_running_thread = FALSE;
 #define PERMISSION_TABLE "flatpak"
 #define PERMISSION_ID "updates"
 
+/* Instance IDs are 32-bit unsigned integers */
+#define INSTANCE_ID_BUFFER_SIZE 16
+
 typedef enum { UNSET, ASK, YES, NO } Permission;
 typedef enum {
   PROGRESS_STATUS_RUNNING = 0,
@@ -201,6 +204,7 @@ typedef struct
   char    *client;
   guint    child_watch;
   gboolean watch_bus;
+  gboolean expose_pids;
 } PidData;
 
 static void
@@ -247,9 +251,194 @@ typedef struct
 {
   FdMapEntry *fd_map;
   int         fd_map_len;
+  int         instance_id_fd;
   gboolean    set_tty;
   int         tty;
 } ChildSetupData;
+
+typedef struct
+{
+  guint pid;
+  gchar buffer[INSTANCE_ID_BUFFER_SIZE];
+} InstanceIdReadData;
+
+typedef struct
+{
+  FlatpakInstance *instance;
+  guint            pid;
+  guint            timeout_index;
+} BwrapinfoWatcherData;
+
+static void
+bwrapinfo_watcher_data_free (BwrapinfoWatcherData* data)
+{
+  g_object_unref (data->instance);
+  g_free (data);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BwrapinfoWatcherData, bwrapinfo_watcher_data_free)
+
+static int
+get_child_pid_relative_to_parent_sandbox (int      pid,
+                                          GError **error)
+{
+  g_autofree char *status_file_path = NULL;
+  g_autoptr(GFile) status_file = NULL;
+  g_autoptr(GFileInputStream) input_stream = NULL;
+  g_autoptr(GDataInputStream) data_stream = NULL;
+  int relative_pid = 0;
+
+  status_file_path = g_strdup_printf ("/proc/%u/status", pid);
+  status_file = g_file_new_for_path (status_file_path);
+
+  input_stream = g_file_read (status_file, NULL, error);
+  if (input_stream == NULL)
+    return 0;
+
+  data_stream = g_data_input_stream_new (G_INPUT_STREAM (input_stream));
+
+  while (TRUE)
+    {
+      g_autofree char *line = g_data_input_stream_read_line_utf8 (data_stream, NULL, NULL, error);
+      if (line == NULL)
+        break;
+
+      g_strchug (line);
+
+      if (g_str_has_prefix (line, "NSpid:"))
+        {
+          g_auto(GStrv) fields = NULL;
+          guint nfields = 0;
+          char *endptr = NULL;
+
+          fields = g_strsplit (line, "\t", -1);
+          nfields = g_strv_length (fields);
+          if (nfields < 3)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                           "NSpid line has too few fields: %s", line);
+              return 0;
+            }
+
+          /* The second to last PID namespace is the one that spawned this process */
+          relative_pid = strtol (fields[nfields - 2], &endptr, 10);
+          if (*endptr)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                           "Invalid parent-relative PID in NSpid line: %s", line);
+              return 0;
+            }
+
+          return relative_pid;
+        }
+    }
+
+  if (*error == NULL)
+    /* EOF was reached while reading the file */
+    g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND, "NSpid not found");
+
+  return 0;
+}
+
+static int
+check_child_pid_status (void *user_data)
+{
+  /* Stores a sequence of the time interval to use until the child PID is checked again.
+     In general from testing, bwrapinfo is never ready before 25ms have passed at minimum,
+     thus 25ms is the first interval, doubling until a max interval of 100ms is reached. */
+  static gint timeouts[] = {25, 50, 100};
+
+  g_autoptr(GVariant) signal_variant = NULL;
+  g_autoptr(BwrapinfoWatcherData) data = user_data;
+  PidData *pid_data;
+  guint pid;
+  int child_pid;
+  int relative_child_pid = 0;
+
+  pid = data->pid;
+
+  pid_data = g_hash_table_lookup (client_pid_data_hash, GUINT_TO_POINTER (pid));
+
+  /* Process likely already exited if pid_data == NULL, so don't send the
+     signal to avoid an awkward out-of-order SpawnExited -> SpawnStarted. */
+  if (pid_data == NULL)
+    {
+      g_warning ("%u already exited, skipping SpawnStarted", pid);
+      return G_SOURCE_REMOVE;
+    }
+
+  child_pid = flatpak_instance_get_child_pid (data->instance);
+  if (child_pid == 0)
+    {
+      g_debug ("Failed to read child PID, trying again in %d ms", timeouts[data->timeout_index]);
+
+      if (data->timeout_index == G_N_ELEMENTS (timeouts))
+        /* Already at the max timeout, no need to change. */
+        return G_SOURCE_CONTINUE;
+
+      /* Re-add with the next timeout to use. */
+      g_timeout_add (timeouts[data->timeout_index++], check_child_pid_status, g_steal_pointer (&data));
+      return G_SOURCE_REMOVE;
+    }
+
+  /* Only send the child PID if it's exposed */
+  if (pid_data->expose_pids)
+    {
+      g_autoptr(GError) error = NULL;
+      relative_child_pid = get_child_pid_relative_to_parent_sandbox (child_pid, &error);
+      if (relative_child_pid == 0)
+        g_warning ("Failed to find relative PID for %d: %s", child_pid, error->message);
+    }
+
+  g_debug ("Emitting SpawnStarted(%u, %d)", pid, relative_child_pid);
+
+  signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", pid, relative_child_pid));
+  g_dbus_connection_emit_signal (session_bus,
+                                 pid_data->client,
+                                 "/org/freedesktop/portal/Flatpak",
+                                 "org.freedesktop.portal.Flatpak",
+                                 "SpawnStarted",
+                                 signal_variant,
+                                 NULL);
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+instance_id_read_finish (GObject      *source,
+                         GAsyncResult *res,
+                         gpointer      user_data)
+{
+  g_autoptr(GInputStream) stream = NULL;
+  g_autofree InstanceIdReadData *data = NULL;
+  g_autoptr(FlatpakInstance) instance = NULL;
+  g_autoptr(GError) error = NULL;
+  BwrapinfoWatcherData *watcher_data = NULL;
+  gssize bytes_read;
+
+  stream = G_INPUT_STREAM (source);
+  data = (InstanceIdReadData *) user_data;
+
+  bytes_read = g_input_stream_read_finish (stream, res, &error);
+  if (bytes_read <= 0)
+    {
+      /* 0 means EOF, so the process could never have been started. */
+      if (bytes_read == -1)
+        g_error ("Failed to read instance id: %s", error->message);
+
+      return;
+    }
+
+  data->buffer[bytes_read] = 0;
+
+  instance = flatpak_instance_new_for_id (data->buffer);
+
+  watcher_data = g_new0 (BwrapinfoWatcherData, 1);
+  watcher_data->instance = g_steal_pointer (&instance);
+  watcher_data->pid = data->pid;
+
+  check_child_pid_status (watcher_data);
+}
 
 static void
 drop_cloexec (int fd)
@@ -266,6 +455,9 @@ child_setup_func (gpointer user_data)
   int i;
 
   flatpak_close_fds_workaround (3);
+
+  if (data->instance_id_fd != -1)
+    drop_cloexec (data->instance_id_fd);
 
   /* Unblock all signals */
   sigemptyset (&set);
@@ -525,6 +717,7 @@ handle_spawn (PortalFlatpak         *object,
   ChildSetupData child_setup_data = { NULL };
   GPid pid;
   PidData *pid_data;
+  InstanceIdReadData *instance_id_read_data = NULL;
   gsize i, j, n_fds, n_envs;
   const gint *fds = NULL;
   gint fds_len = 0;
@@ -549,10 +742,14 @@ handle_spawn (PortalFlatpak         *object,
   g_auto(GStrv) sandbox_expose_ro = NULL;
   g_autoptr(GVariant) sandbox_expose_fd = NULL;
   g_autoptr(GVariant) sandbox_expose_fd_ro = NULL;
+  g_autoptr(GOutputStream) instance_id_out_stream = NULL;
   guint sandbox_flags = 0;
   gboolean sandboxed;
-  gboolean devel;
   gboolean expose_pids;
+  gboolean notify_start;
+  gboolean devel;
+
+  child_setup_data.instance_id_fd = -1;
 
   if (fd_list != NULL)
     fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
@@ -844,6 +1041,34 @@ handle_spawn (PortalFlatpak         *object,
       g_ptr_array_add (flatpak_argv, g_strdup ("--parent-expose-pids"));
     }
 
+  notify_start = (arg_flags & FLATPAK_SPAWN_FLAGS_NOTIFY_START) != 0;
+  if (notify_start)
+    {
+      int fds[2];
+      if (pipe (fds) == -1)
+        {
+          int errsv = errno;
+          g_dbus_method_invocation_return_error (invocation, G_IO_ERROR,
+                                                 g_io_error_from_errno (errsv),
+                                                 "Failed to create instance ID pipe: %s",
+                                                 g_strerror (errsv));
+          return TRUE;
+        }
+
+      GInputStream *in_stream = G_INPUT_STREAM (g_unix_input_stream_new (fds[0], TRUE));
+      /* This is saved to ensure the portal's end gets closed after the exec. */
+      instance_id_out_stream = G_OUTPUT_STREAM (g_unix_output_stream_new (fds[1], TRUE));
+
+      instance_id_read_data = g_new0 (InstanceIdReadData, 1);
+
+      g_input_stream_read_async (in_stream, instance_id_read_data->buffer,
+                                 INSTANCE_ID_BUFFER_SIZE - 1, G_PRIORITY_DEFAULT, NULL,
+                                 instance_id_read_finish, instance_id_read_data);
+
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--instance-id-fd=%d", fds[1]));
+      child_setup_data.instance_id_fd = fds[1];
+    }
+
   if (devel)
     g_ptr_array_add (flatpak_argv, g_strdup ("--devel"));
 
@@ -972,10 +1197,14 @@ handle_spawn (PortalFlatpak         *object,
       return TRUE;
     }
 
+  if (instance_id_read_data)
+    instance_id_read_data->pid = pid;
+
   pid_data = g_new0 (PidData, 1);
   pid_data->pid = pid;
   pid_data->client = g_strdup (g_dbus_method_invocation_get_sender (invocation));
   pid_data->watch_bus = (arg_flags & FLATPAK_SPAWN_FLAGS_WATCH_BUS) != 0;
+  pid_data->expose_pids = expose_pids;
   pid_data->child_watch = g_child_watch_add_full (G_PRIORITY_DEFAULT,
                                                   pid,
                                                   child_watch_died,
@@ -2377,7 +2606,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
-  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 3);
+  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 4);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
 
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);

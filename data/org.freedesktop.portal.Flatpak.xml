@@ -36,7 +36,7 @@
       bus name org.freedesktop.portal.Flatpak and the object path
       /org/freedesktop/portal/Flatpak.
 
-      This documentation describes version 3 of this interface.
+      This documentation describes version 4 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
     <property name="version" type="u" access="read"/>
@@ -109,6 +109,15 @@
                Expose the sandbox pids in the callers sandbox, only supported if using user namespaces for containers (not setuid), see the support property.
                </para><para>
                This was added in version 3 of this interface (available from flatpak 1.6.0 and later).
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>64</term>
+             <listitem><para>
+               Emit a SpawnStarted signal once the sandboxed process has been
+               fully started.
+               </para><para>
+               This was added in version 4 of this interface (available from flatpak 1.8.0 and later).
              </para></listitem>
            </varlistentry>
          </variablelist>
@@ -227,6 +236,28 @@
       <arg type='u' name='signal' direction='in'/>
       <arg type='b' name='to_process_group' direction='in'/>
     </method>
+
+    <!--
+        SpawnStarted:
+        @pid: the PID of the process that has been started
+        @relpid: the PID of the process relative to the current namespace.
+        This is only non-zero if the expose PIDs flag (32) was passed to
+        org.freedesktop.portal.Flatpak.Spawn(), and it may still be zero if
+        the process exits before its relative PID could be read.
+
+        Emitted when a process started by org.freedesktop.portal.Flatpak.Spawn()
+        has fully started. In other words, org.freedesktop.portal.Flatpak.Spawn() returns once the sandbox
+        has been started, and this signal is emitted once the process inside
+        itself is started.
+
+        Only emitted by version 4 of this interface (available from flatpak
+        1.8.0 and later) and if the notify start flag (64) was passed to
+        org.freedesktop.portal.Flatpak.Spawn().
+    -->
+    <signal name="SpawnStarted">
+      <arg type='u' name='pid' direction='out'/>
+      <arg type='u' name='relpid' direction='out'/>
+    </signal>
 
     <!--
         SpawnExited:

@@ -28,6 +28,7 @@ typedef enum {
   FLATPAK_SPAWN_FLAGS_NO_NETWORK = 1 << 3,
   FLATPAK_SPAWN_FLAGS_WATCH_BUS = 1 << 4,
   FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS = 1 << 5,
+  FLATPAK_SPAWN_FLAGS_NOTIFY_START = 1 << 6,
 } FlatpakSpawnFlags;
 
 typedef enum {
@@ -48,7 +49,8 @@ typedef enum {
                                  FLATPAK_SPAWN_FLAGS_SANDBOX | \
                                  FLATPAK_SPAWN_FLAGS_NO_NETWORK | \
                                  FLATPAK_SPAWN_FLAGS_WATCH_BUS | \
-                                 FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS)
+                                 FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS | \
+                                 FLATPAK_SPAWN_FLAGS_NOTIFY_START)
 
 #define FLATPAK_SPAWN_SANDBOX_FLAGS_ALL (FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_DISPLAY | \
                                          FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_SOUND | \
