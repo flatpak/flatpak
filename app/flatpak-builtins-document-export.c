@@ -37,6 +37,14 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 
+/* Flags accepted by org.freedesktop.portal.Documents.AddFull */
+enum {
+  XDP_ADD_FLAGS_REUSE_EXISTING             =  (1 << 0),
+  XDP_ADD_FLAGS_PERSISTENT                 =  (1 << 1),
+  XDP_ADD_FLAGS_AS_NEEDED_BY_APP           =  (1 << 2),
+  XDP_ADD_FLAGS_DIRECTORY                  =  (1 << 3),
+};
+
 static gboolean opt_unique = FALSE;
 static gboolean opt_transient = FALSE;
 static gboolean opt_noexist = FALSE;
@@ -86,6 +94,8 @@ flatpak_builtin_document_export (int argc, char **argv,
   int i;
   GUnixFDList *fd_list = NULL;
   const char *doc_id;
+  struct stat stbuf;
+  gboolean is_directory = FALSE;
 
   context = g_option_context_new (_("FILE - Export a file to apps"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -131,6 +141,36 @@ flatpak_builtin_document_export (int argc, char **argv,
       return FALSE;
     }
 
+  if (fstat (fd, &stbuf) == 0 && S_ISDIR (stbuf.st_mode))
+    is_directory = TRUE;
+
+  if (is_directory)
+    {
+      guint portal_version = 0;
+      g_autoptr(GVariant) ret = NULL;
+      g_autoptr(GVariant) v = NULL;
+
+      ret = g_dbus_connection_call_sync (session_bus,
+                                         "org.freedesktop.portal.Documents",
+                                         "/org/freedesktop/portal/documents",
+                                         "org.freedesktop.DBus.Properties",
+                                         "Get",
+                                         g_variant_new ("(ss)", "org.freedesktop.portal.Documents", "version"),
+                                         G_VARIANT_TYPE ("(v)"),
+                                         0,
+                                         G_MAXINT,
+                                         NULL,
+                                         NULL);
+      if (ret)
+        {
+          g_variant_get (ret, "(v)", &v);
+          g_variant_get (v, "u", &portal_version);
+
+          if (portal_version < 4)
+            return flatpak_fail (error, "Exporting directories needs version 4 of the document portal (have version %d)", portal_version);
+        }
+    }
+
   fd_list = g_unix_fd_list_new ();
   fd_id = g_unix_fd_list_append (fd_list, fd, error);
   close (fd);
@@ -152,25 +192,61 @@ flatpak_builtin_document_export (int argc, char **argv,
     }
   else
     {
-      reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
-                                                             "org.freedesktop.portal.Documents",
-                                                             "/org/freedesktop/portal/documents",
-                                                             "org.freedesktop.portal.Documents",
-                                                             "Add",
-                                                             g_variant_new ("(hbb)", fd_id, !opt_unique, !opt_transient),
-                                                             G_VARIANT_TYPE ("(s)"),
-                                                             G_DBUS_CALL_FLAGS_NONE,
-                                                             30000,
-                                                             fd_list, NULL,
-                                                             NULL,
-                                                             error);
+      if (is_directory)
+        {
+          guint flags = XDP_ADD_FLAGS_DIRECTORY;
+          const char *perms[] = {NULL};
+
+          if (!opt_unique)
+            flags |= XDP_ADD_FLAGS_REUSE_EXISTING;
+          if (!opt_transient)
+            flags |= XDP_ADD_FLAGS_PERSISTENT;
+
+          /* We only use AddFull for directories so that regular adds work with old portal versions */
+          reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
+                                                                 "org.freedesktop.portal.Documents",
+                                                                 "/org/freedesktop/portal/documents",
+                                                                 "org.freedesktop.portal.Documents",
+                                                                 "AddFull",
+                                                                 g_variant_new ("(@ahus^as)",
+                                                                                g_variant_new_fixed_array (G_VARIANT_TYPE_HANDLE, &fd_id, 1, sizeof (fd_id)),
+                                                                                flags,"", perms),
+                                                                 G_VARIANT_TYPE ("(asa{sv})"),
+                                                                 G_DBUS_CALL_FLAGS_NONE,
+                                                                 30000,
+                                                                 fd_list, NULL,
+                                                                 NULL,
+                                                                 error);
+        }
+      else
+        reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
+                                                               "org.freedesktop.portal.Documents",
+                                                               "/org/freedesktop/portal/documents",
+                                                               "org.freedesktop.portal.Documents",
+                                                               "Add",
+                                                               g_variant_new ("(hbb)", fd_id, !opt_unique, !opt_transient),
+                                                               G_VARIANT_TYPE ("(s)"),
+                                                               G_DBUS_CALL_FLAGS_NONE,
+                                                               30000,
+                                                               fd_list, NULL,
+                                                               NULL,
+                                                               error);
     }
   g_object_unref (fd_list);
 
   if (reply == NULL)
     return FALSE;
 
-  g_variant_get (reply, "(&s)", &doc_id);
+  if (is_directory)
+    {
+      g_autofree char **doc_ids = NULL;
+      g_variant_get (reply, "(^a&s@a{sv})", &doc_ids, NULL);
+      doc_id = doc_ids[0];
+    }
+  else
+    {
+      g_variant_get (reply, "(&s)", &doc_id);
+    }
 
   permissions = g_ptr_array_new ();
   if (opt_allow_read)
