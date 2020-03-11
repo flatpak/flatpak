@@ -9636,6 +9636,7 @@ flatpak_dir_update (FlatpakDir                           *self,
 
       if (no_pull)
         {
+          /* Nothing to do here */
         }
       else if (is_oci)
         {
