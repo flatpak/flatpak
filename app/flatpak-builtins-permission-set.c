@@ -194,10 +194,10 @@ flatpak_complete_permission_set (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
 
       {
-        const char **tables = get_known_permission_tables ();
-        for (i = 0; tables != NULL && tables[i] != NULL; i++)
+        const char **known_tables = get_known_permission_tables ();
+        for (i = 0; known_tables != NULL && known_tables[i] != NULL; i++)
           {
-            flatpak_complete_word (completion, "%s ", tables[i]);
+            flatpak_complete_word (completion, "%s ", known_tables[i]);
           }
       }
 

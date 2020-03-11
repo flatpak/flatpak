@@ -362,7 +362,7 @@ print_history (GPtrArray    *dirs,
 #endif
 
 static GDateTime *
-parse_time (const char *opt_since)
+parse_time (const char *since_opt)
 {
   g_autoptr(GDateTime) now = NULL;
   g_auto(GStrv) parts = NULL;
@@ -392,12 +392,12 @@ parse_time (const char *opt_since)
       tm.tm_min = 0;
       tm.tm_sec = 0;
 
-      rest = strptime (opt_since, fmts[i], &tm);
+      rest = strptime (since_opt, fmts[i], &tm);
       if (rest && *rest == '\0')
         return g_date_time_new_local (tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
     }
 
-  parts = g_strsplit (opt_since, " ", -1);
+  parts = g_strsplit (since_opt, " ", -1);
 
   for (i = 0; parts[i]; i++)
     {
