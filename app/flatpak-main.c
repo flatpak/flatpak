@@ -193,7 +193,7 @@ no_message_handler (const char     *log_domain,
 }
 
 static GOptionContext *
-flatpak_option_context_new_with_commands (FlatpakCommand *commands)
+flatpak_option_context_new_with_commands (FlatpakCommand *f_commands)
 {
   GOptionContext *context;
   GString *summary;
@@ -203,25 +203,25 @@ flatpak_option_context_new_with_commands (FlatpakCommand *commands)
 
   summary = g_string_new (_("Builtin Commands:"));
 
-  while (commands->name != NULL)
+  while (f_commands->name != NULL)
     {
-      if (!commands->deprecated)
+      if (!f_commands->deprecated)
         {
-          if (commands->fn != NULL)
+          if (f_commands->fn != NULL)
             {
-              g_string_append_printf (summary, "\n  %s", commands->name);
+              g_string_append_printf (summary, "\n  %s", f_commands->name);
               /* Note: the 23 is there to align command descriptions with
                * the option descriptions produced by GOptionContext.
                */
-              if (commands->description)
-                g_string_append_printf (summary, "%*s%s", (int) (23 - strlen (commands->name)), "", _(commands->description));
+              if (f_commands->description)
+                g_string_append_printf (summary, "%*s%s", (int) (23 - strlen (f_commands->name)), "", _(f_commands->description));
             }
           else
             {
-              g_string_append_printf (summary, "\n%s", _(commands->name));
+              g_string_append_printf (summary, "\n%s", _(f_commands->name));
             }
         }
-      commands++;
+      f_commands++;
     }
 
   g_option_context_set_summary (context, summary->str);
