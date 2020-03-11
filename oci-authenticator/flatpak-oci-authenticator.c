@@ -414,7 +414,7 @@ lookup_auth_from_config (const char *oci_registry_uri)
 
 /* Note: This runs on a thread, so we can just block */
 static gboolean
-handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
+handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
                            GDBusMethodInvocation *invocation,
                            const gchar *arg_handle_token,
                            GVariant *arg_authenticator_options,
@@ -469,7 +469,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
       return TRUE;
     }
 
-  flatpak_authenticator_complete_request_ref_tokens (authenticator, invocation, request_path);
+  flatpak_authenticator_complete_request_ref_tokens (f_authenticator, invocation, request_path);
 
   registry = flatpak_oci_registry_new (oci_registry_uri, FALSE, -1, NULL, &error);
   if (registry == NULL)
