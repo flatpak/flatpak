@@ -4755,14 +4755,14 @@ flatpak_extension_new (const char *id,
 
 gboolean
 flatpak_extension_matches_reason (const char *extension_id,
-                                  const char *reason,
+                                  const char *reasons,
                                   gboolean    default_value)
 {
   const char *extension_basename;
   g_auto(GStrv) reason_list = NULL;
   size_t i;
 
-  if (reason == NULL || *reason == 0)
+  if (reasons == NULL || *reasons == 0)
     return default_value;
 
   extension_basename = strrchr (extension_id, '.');
@@ -4770,7 +4770,7 @@ flatpak_extension_matches_reason (const char *extension_id,
     return FALSE;
   extension_basename += 1;
 
-  reason_list = g_strsplit (reason, ";", -1);
+  reason_list = g_strsplit (reasons, ";", -1);
 
   for (i = 0; reason_list[i]; ++i)
     {

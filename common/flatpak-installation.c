@@ -3006,13 +3006,13 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
   for (i = 0; i < related->len; i++)
     {
       FlatpakRelated *rel = g_ptr_array_index (related, i);
-      FlatpakRelatedRef *ref;
+      FlatpakRelatedRef *rel_ref;
 
-      ref = flatpak_related_ref_new (rel->collection_id, rel->ref, rel->commit,
-                                     rel->subpaths, rel->download, rel->delete);
+      rel_ref = flatpak_related_ref_new (rel->collection_id, rel->ref, rel->commit,
+                                         rel->subpaths, rel->download, rel->delete);
 
-      if (ref)
-        g_ptr_array_add (refs, ref);
+      if (rel_ref)
+        g_ptr_array_add (refs, rel_ref);
     }
 
   return g_steal_pointer (&refs);
@@ -3066,13 +3066,13 @@ flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self
   for (i = 0; i < related->len; i++)
     {
       FlatpakRelated *rel = g_ptr_array_index (related, i);
-      FlatpakRelatedRef *ref;
+      FlatpakRelatedRef *rel_ref;
 
-      ref = flatpak_related_ref_new (rel->collection_id, rel->ref, rel->commit,
-                                     rel->subpaths, rel->download, rel->delete);
+      rel_ref = flatpak_related_ref_new (rel->collection_id, rel->ref, rel->commit,
+                                         rel->subpaths, rel->download, rel->delete);
 
-      if (ref)
-        g_ptr_array_add (refs, ref);
+      if (rel_ref)
+        g_ptr_array_add (refs, rel_ref);
     }
 
   return g_steal_pointer (&refs);
