@@ -220,7 +220,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak build-init org.example.myapp /build/my-app org.gnome.Sdk org.gnome.Platform 3.36</command>
+            <command>$ flatpak build-init /build/my-app org.example.myapp org.gnome.Sdk org.gnome.Platform 3.36</command>
         </para>
 
     </refsect1>
