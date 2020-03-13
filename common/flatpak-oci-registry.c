@@ -949,8 +949,11 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
 
   auth_msg = soup_message_new_from_uri ("GET", auth_uri);
 
-  g_autofree char *basic_auth = g_strdup_printf ("Basic %s", auth);
-  soup_message_headers_replace (auth_msg->request_headers, "Authorization", basic_auth);
+  if (auth)
+    {
+      g_autofree char *basic_auth = g_strdup_printf ("Basic %s", auth);
+      soup_message_headers_replace (auth_msg->request_headers, "Authorization", basic_auth);
+    }
 
   auth_stream = soup_session_send (self->soup_session, auth_msg, NULL, error);
   if (auth_stream == NULL)
