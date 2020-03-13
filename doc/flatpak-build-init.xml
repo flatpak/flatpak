@@ -56,9 +56,9 @@
         <para>
             Initializes a directory as build directory which can be used as 
             target directory of <command>flatpak build</command>. It
-            create a <filename>metadata</filename> inside the given directory. 
+            creates a <filename>metadata</filename> inside the given directory. 
             Additionally, empty <filename>files</filename> and <filename>var</filename>
-            subdirectoriesa are created.
+            subdirectories are created.
         </para>
         <para>
             It is an error to run build-init on a directory that has already
