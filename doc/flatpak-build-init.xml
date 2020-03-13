@@ -44,19 +44,21 @@
         <title>Description</title>
 
         <para>
-            Initializes a directory for building an application.
+            Initializes a separate build directory.
             <arg choice="plain">DIRECTORY</arg> is the name of the directory.
             <arg choice="plain">APPNAME</arg> is the application id of the app
             that will be built.
             <arg choice="plain">SDK</arg> and <arg choice="plain">RUNTIME</arg>
             specify the sdk and runtime that the application should be built
             against and run in.
+            <arg choice="plain">BRANCH</arg> specify the version of sdk and runtime
         </para>
         <para>
-            The result of this command is that a <filename>metadata</filename>
-            file is created inside the given directory. Additionally, empty
-            <filename>files</filename> and <filename>var</filename> subdirectories
-            are created.
+            Initializes a directory as build directory which can be used as 
+            target directory of <command>flatpak build</command>. It
+            create a <filename>metadata</filename> inside the given directory. 
+            Additionally, empty <filename>files</filename> and <filename>var</filename>
+            subdirectoriesa are created.
         </para>
         <para>
             It is an error to run build-init on a directory that has already
@@ -218,7 +220,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak build-init /build/my-app org.gnome.Sdk org.gnome.Platform 3.16</command>
+            <command>$ flatpak build-init org.example.myapp /build/my-app org.gnome.Sdk org.gnome.Platform 3.36</command>
         </para>
 
     </refsect1>
