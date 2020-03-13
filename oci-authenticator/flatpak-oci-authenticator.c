@@ -428,6 +428,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   g_autoptr(GError) error = NULL;
   g_autoptr(AutoFlatpakAuthenticatorRequest) request = NULL;
   const char *auth = NULL;
+  gboolean have_auth;
   const char *oci_registry_uri = NULL;
   gsize n_refs, i;
   gboolean no_interaction = FALSE;
@@ -439,6 +440,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   g_debug ("handling Authenticator.RequestRefTokens");
 
   g_variant_lookup (arg_authenticator_options, "auth", "&s", &auth);
+  have_auth = auth != NULL;
 
   if (!g_variant_lookup (arg_options, "xa.oci-registry-uri", "&s", &oci_registry_uri))
     {
@@ -476,14 +478,29 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
     return error_request (request, sender, error->message);
 
 
-  if (auth == NULL)
+  /* Look up credentials in config files */
+  if (!have_auth)
     {
       g_debug ("Looking for %s in auth info", oci_registry_uri);
       auth = lookup_auth_from_config (oci_registry_uri);
+      have_auth = auth != NULL;
     }
 
+  /* Try to see if we can get a token without presenting credentials */
   n_refs = g_variant_n_children (arg_refs);
-  if (auth == NULL && n_refs > 0 &&
+  if (!have_auth && n_refs > 0)
+    {
+      g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
+      g_autofree char *token = NULL;
+
+      token = get_token_for_ref (registry, ref_data, NULL, &error);
+      if (token != NULL)
+        have_auth = TRUE;
+    }
+
+  /* Prompt the user for credentials */
+  n_refs = g_variant_n_children (arg_refs);
+  if (!have_auth && n_refs > 0 &&
       !no_interaction)
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
@@ -500,11 +517,14 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
 
           token = get_token_for_ref (registry, ref_data, test_auth, &error);
           if (token != NULL)
-            auth = g_steal_pointer (&test_auth);
+            {
+              auth = g_steal_pointer (&test_auth);
+              have_auth = TRUE;
+            }
         }
     }
 
-  if (auth == NULL)
+  if (!have_auth)
     return error_request (request, sender, "No authentication information available");
 
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
