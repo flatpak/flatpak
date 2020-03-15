@@ -45,4 +45,4 @@ void _glnx_test_auto_temp_dir_leave (_GLnxTestAutoTempDir *dir);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(_GLnxTestAutoTempDir, _glnx_test_auto_temp_dir_leave);
 
 #define _GLNX_TEST_SCOPED_TEMP_DIR \
-  g_autoptr(_GLnxTestAutoTempDir) temp_dir = _glnx_test_auto_temp_dir_enter ()
+  G_GNUC_UNUSED g_autoptr(_GLnxTestAutoTempDir) temp_dir = _glnx_test_auto_temp_dir_enter ()
