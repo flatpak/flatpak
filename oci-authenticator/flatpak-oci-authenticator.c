@@ -433,6 +433,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   gsize n_refs, i;
   gboolean no_interaction = FALSE;
   g_autoptr(FlatpakOciRegistry) registry = NULL;
+  g_autofree char *first_token = NULL;
   GVariantBuilder tokens;
   GVariantBuilder results;
   g_autofree char *sender = g_strdup (g_dbus_method_invocation_get_sender (invocation));
@@ -491,10 +492,9 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   if (!have_auth && n_refs > 0)
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
-      g_autofree char *token = NULL;
 
-      token = get_token_for_ref (registry, ref_data, NULL, &error);
-      if (token != NULL)
+      first_token = get_token_for_ref (registry, ref_data, NULL, &error);
+      if (first_token != NULL)
         have_auth = TRUE;
     }
 
@@ -504,7 +504,6 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
       !no_interaction)
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
-      g_autofree char *token = NULL;
 
       while (auth == NULL)
         {
@@ -515,8 +514,8 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
           if (test_auth == NULL)
             return cancel_request (request, sender);
 
-          token = get_token_for_ref (registry, ref_data, test_auth, &error);
-          if (token != NULL)
+          first_token = get_token_for_ref (registry, ref_data, test_auth, &error);
+          if (first_token != NULL)
             {
               auth = g_steal_pointer (&test_auth);
               have_auth = TRUE;
@@ -535,9 +534,16 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
       char *for_refs_strv[2] = { NULL, NULL};
       g_autofree char *token = NULL;
 
-      token = get_token_for_ref (registry, ref_data, auth, &error);
-      if (token == NULL)
-        return error_request (request, sender, error->message);
+      if (i == 0 && first_token != NULL)
+        {
+          token = g_steal_pointer (&first_token);
+        }
+      else
+        {
+          token = get_token_for_ref (registry, ref_data, auth, &error);
+          if (token == NULL)
+            return error_request (request, sender, error->message);
+        }
 
       g_variant_get_child (ref_data, 0, "&s", &for_refs_strv[0]);
       g_variant_builder_add (&tokens, "{s^as}", token, for_refs_strv);
