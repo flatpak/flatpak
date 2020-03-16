@@ -15153,7 +15153,7 @@ flatpak_dir_delete_mirror_refs (FlatpakDir    *self,
    * OS updates which Flatpak shouldn't touch.
    */
   remotes = ostree_repo_remote_list (repo, NULL);
-  for (i = 0; remotes[i] != NULL; i++)
+  for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
     {
       g_autofree char *remote_collection_id = NULL;
 
