@@ -177,7 +177,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-http-utils.sh \
 	tests/test-run.sh{{user+system+system-norevokefs},{nodeltas+deltas}} \
 	tests/test-info.sh{user+system} \
-	tests/test-repo.sh{user+system+system-norevokefs+collections+collections-server-only} \
+	tests/test-repo.sh{user+system+system-norevokefs} \
 	tests/test-default-remotes.sh \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh{user+system+system-norevokefs} \
@@ -187,7 +187,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \
 	tests/test-update-portal.sh \
-	tests/test-auth.sh{nocollections+collections} \
+	tests/test-auth.sh \
 	$(NULL)
 
 update-test-matrix:

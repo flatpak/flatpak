@@ -962,11 +962,6 @@ typedef struct
   char *ref;
   char *opt_commit;
 
-  /* Used during p2p resolve */
-  OstreeCollectionRef collection_ref; /* owns the collection_id member only, ref_name is from above */
-  char               *local_commit;
-  char               *latest_remote_commit;
-
   /* out */
   char   *resolved_commit;
   GBytes *resolved_metadata;
@@ -985,21 +980,6 @@ void                flatpak_dir_resolve_free (FlatpakDirResolve *resolve);
 
 gboolean flatpak_dir_resolve_maybe_resolve_from_metadata (FlatpakDirResolve *resolve,
                                                           FlatpakRemoteState *state);
-
-typedef struct _FlatpakDirP2PState FlatpakDirP2PState;
-void flatpak_dir_p2p_state_free (FlatpakDirP2PState *state);
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDirP2PState, flatpak_dir_p2p_state_free)
-
-FlatpakDirP2PState *flatpak_dir_prepare_resolve_p2p_refs (FlatpakDir          *self,
-                                                          FlatpakDirResolve  **resolves,
-                                                          GCancellable        *cancellable,
-                                                          GError             **error);
-gboolean            flatpak_dir_finish_resolve_p2p_refs  (FlatpakDir          *self,
-                                                          FlatpakDirResolve  **resolves,
-                                                          const char          *token,
-                                                          FlatpakDirP2PState  *state,
-                                                          GCancellable        *cancellable,
-                                                          GError             **error);
 
 char ** flatpak_dir_get_default_locales (FlatpakDir *self);
 char ** flatpak_dir_get_default_locale_languages (FlatpakDir *self);
