@@ -496,6 +496,8 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
       token = get_token_for_ref (registry, ref_data, NULL, &error);
       if (token != NULL)
         have_auth = TRUE;
+      else
+        g_clear_error (&error);
     }
 
   /* Prompt the user for credentials */
@@ -520,6 +522,11 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
             {
               auth = g_steal_pointer (&test_auth);
               have_auth = TRUE;
+            }
+          else
+            {
+              g_debug ("Failed to get token: %s", error->message);
+              g_clear_error (&error);
             }
         }
     }
