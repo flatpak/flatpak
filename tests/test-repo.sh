@@ -221,25 +221,24 @@ ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 if ${FLATPAK} ${U} install -y test-missing-gpg-repo org.test.Platform 2> install-error-log; then
     assert_not_reached "Should not be able to install with missing gpg key"
 fi
-assert_file_has_content install-error-log "GPG signatures found, but none are in trusted keyring"
-
+assert_log_has_gpg_signature_error install-error-log
 
 if ${FLATPAK} ${U} install test-missing-gpg-repo org.test.Hello 2> install-error-log; then
     assert_not_reached "Should not be able to install with missing gpg key"
 fi
-assert_file_has_content install-error-log "GPG signatures found, but none are in trusted keyring"
+assert_log_has_gpg_signature_error install-error-log
 
 echo "ok fail with missing gpg key"
 
 if ${FLATPAK} ${U} install test-wrong-gpg-repo org.test.Platform 2> install-error-log; then
     assert_not_reached "Should not be able to install with wrong gpg key"
 fi
-assert_file_has_content install-error-log "GPG signatures found, but none are in trusted keyring"
+assert_log_has_gpg_signature_error install-error-log
 
 if ${FLATPAK} ${U} install test-wrong-gpg-repo org.test.Hello 2> install-error-log; then
     assert_not_reached "Should not be able to install with wrong gpg key"
 fi
-assert_file_has_content install-error-log "GPG signatures found, but none are in trusted keyring"
+assert_log_has_gpg_signature_error install-error-log
 
 echo "ok fail with wrong gpg key"
 
