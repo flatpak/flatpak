@@ -2527,7 +2527,7 @@ resolve_op_from_metadata (FlatpakTransaction *self,
     {
       op->eol = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL));
       op->eol_rebase = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL));
-      op->token_type = var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, op->token_type);
+      op->token_type = GINT32_FROM_LE (var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, op->token_type));
     }
 
   resolve_op_end (self, op, checksum, metadata_bytes);
@@ -2624,7 +2624,7 @@ resolve_p2p_ops (FlatpakTransaction *self,
           token_type = state->default_token_type;
 
           if (flatpak_remote_state_lookup_sparse_cache (state, op->ref, &sparse_cache, NULL))
-            token_type = var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, token_type);
+            token_type = GINT32_FROM_LE (var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, token_type));
 
           if (token_type > 0)
             {

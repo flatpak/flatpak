@@ -1035,7 +1035,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_token_type >= 0)
     g_variant_dict_insert_value (&metadata_dict, "xa.token-type",
-                                 g_variant_new_int32 (opt_token_type));
+                                 g_variant_new_int32 (GINT32_TO_LE (opt_token_type)));
 
   metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
 
