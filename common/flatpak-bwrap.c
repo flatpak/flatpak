@@ -295,7 +295,6 @@ flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
     data_len +=  strlen (bwrap->argv->pdata[i]) + 1;
 
   data = g_new (gchar, data_len);
-  *data = 0;
   ptr = data;
   for (i = start; i < end; i++)
     ptr = g_stpcpy (ptr, bwrap->argv->pdata[i]) + 1;
