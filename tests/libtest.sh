@@ -166,6 +166,16 @@ assert_file_has_content () {
     fi
 }
 
+assert_log_has_gpg_signature_error () {
+    if ! grep -q -e "GPG signatures found, but none are in trusted keyring" "$1"; then
+        if ! grep -q -e "Can't check signature: public key not found" "$1"; then
+            sed -e 's/^/# /' < "$1" >&2
+            echo 1>&2 "File '$1' doesn't have gpg signature error"
+            exit 1
+        fi
+    fi
+}
+
 assert_symlink_has_content () {
     if ! readlink "$1" | grep -q -e "$2"; then
         readlink "$1" |sed -e 's/^/# /' >&2
