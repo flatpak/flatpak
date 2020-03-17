@@ -416,7 +416,8 @@ mkdir -p app/files/a-dir
 chmod a+rwx app/files/a-dir
 flatpak build-finish --command=hello.sh app
 # Note: not --canonical-permissions
-ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/stable app
+${FLATPAK} build-export -vv --disable-sandbox --files=files repos/test app stable
+ostree --repo=repos/test commit  --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/stable app
 update_repo
 
 # In the system-helper case this fails to install due to the permission canonicalization happening in the
@@ -435,7 +436,8 @@ touch app/files/exe
 chmod u+s app/files/exe
 flatpak build-finish --command=hello.sh app
 # Note: not --canonical-permissions
-ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/stable app
+${FLATPAK} build-export -vv --disable-sandbox --files=files repos/test app stable
+ostree -v --repo=repos/test commit --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/stable app
 update_repo
 
 if ${FLATPAK} ${U} install -y test-repo org.test.Setuid &> err2.txt; then
