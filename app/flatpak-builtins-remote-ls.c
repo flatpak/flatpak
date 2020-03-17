@@ -161,8 +161,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          FlatpakCollectionRef *coll_ref = key;
-          char *ref = coll_ref->ref_name;
+          char *ref = key;
           char *partial_ref;
           const char *slash = strchr (ref, '/');
 
@@ -179,8 +178,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          FlatpakCollectionRef *coll_ref = key;
-          const char *ref = coll_ref->ref_name;
+          const char *ref = key;
           const char *checksum = value;
           g_auto(GStrv) parts = NULL;
 
@@ -234,8 +232,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
               strcmp (arches[0], parts[2]) != 0)
             {
               g_autofree char *alt_arch_ref = g_strconcat (parts[0], "/", parts[1], "/", arches[0], "/", parts[3], NULL);
-              g_autoptr(FlatpakCollectionRef) alt_arch_coll_ref = flatpak_collection_ref_new (coll_ref->collection_id, alt_arch_ref);
-              if (g_hash_table_lookup (refs, alt_arch_coll_ref))
+              if (g_hash_table_lookup (refs, alt_arch_ref))
                 continue;
             }
 

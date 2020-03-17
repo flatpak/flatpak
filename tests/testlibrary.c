@@ -933,9 +933,6 @@ test_list_refs_in_remotes (void)
   g_autoptr(FlatpakRemote) remote = NULL;
   g_autofree char *repo_dir = g_build_filename (testdir, repo_name, NULL);
   g_autofree char *repo_uri = NULL;
-  g_autoptr(GHashTable) collection_ids = g_hash_table_new_full (g_str_hash,
-                                                                g_str_equal,
-                                                                NULL, NULL);
   g_autoptr(GHashTable) ref_specs = g_hash_table_new_full (g_str_hash,
                                                            g_str_equal,
                                                            g_free,
@@ -971,12 +968,8 @@ test_list_refs_in_remotes (void)
   for (guint i = 0; i < refs1->len; ++i)
     {
       FlatpakRef *ref = g_ptr_array_index (refs1, i);
-      g_hash_table_add (collection_ids, (gchar *) flatpak_ref_get_collection_id (ref));
       g_hash_table_add (ref_specs, flatpak_ref_format_ref (ref));
     }
-
-  /* we have a locale extension for each app, thus the 2 */
-  g_assert_cmpuint (2 * g_hash_table_size (collection_ids), ==, refs1->len);
 
   /* Ensure that listing the refs by using a remote's URI will get us the
    * same results as using the name */

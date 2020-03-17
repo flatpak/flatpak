@@ -104,6 +104,10 @@ typedef struct
 
 void         flatpak_related_free (FlatpakRelated *related);
 
+typedef struct {
+  OstreeRepo *repo;
+  GVariant   *summary;
+} FlatpakSideloadState;
 
 /* The remote state represent the state of the remote at a particular
    time, including the summary file and the metadata (which may be from
@@ -114,6 +118,7 @@ typedef struct
 {
   char     *remote_name;
   char     *collection_id;
+  char     *sideload_collection_id;
   GVariant *summary;
   GBytes   *summary_sig_bytes;
   GError   *summary_fetch_error;
@@ -123,6 +128,7 @@ typedef struct
   GRegex   *deny_refs;
   int       refcount;
   gint32    default_token_type;
+  GPtrArray *sideload_repos;
 } FlatpakRemoteState;
 
 FlatpakRemoteState *flatpak_remote_state_ref (FlatpakRemoteState *remote_state);
@@ -136,8 +142,9 @@ gboolean flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
 gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
                                           const char         *ref,
                                           char              **out_checksum,
-                                          gboolean           *out_has_info,
+                                          guint64            *out_timestamp,
                                           VarRefInfoRef      *out_info,
+                                          GFile             **out_sideload_path,
                                           GError            **error);
 char **flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
                                            const char         *ref);
@@ -152,6 +159,11 @@ gboolean flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
                                                    const char         *ref,
                                                    VarMetadataRef     *out_metadata,
                                                    GError            **error);
+GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
+                                                FlatpakDir         *dir,
+                                                const char         *ref,
+                                                const char         *commit,
+                                                GError            **error);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
@@ -561,8 +573,8 @@ gboolean    flatpak_dir_pull (FlatpakDir                           *self,
                               FlatpakRemoteState                   *state,
                               const char                           *ref,
                               const char                           *opt_rev,
-                              const OstreeRepoFinderResult * const *results,
                               const char                          **subpaths,
+                              GFile                                *sideload_repo,
                               GBytes                               *require_metadata,
                               const char                           *token,
                               OstreeRepo                           *repo,
@@ -669,6 +681,7 @@ gboolean   flatpak_dir_install (FlatpakDir          *self,
                                 const char          *opt_commit,
                                 const char         **subpaths,
                                 const char         **previous_ids,
+                                GFile              *sideload_repo,
                                 GBytes              *require_metadata,
                                 const char          *token,
                                 OstreeAsyncProgress *progress,
@@ -700,7 +713,6 @@ char * flatpak_dir_check_for_update (FlatpakDir               *self,
                                      const char               *checksum_or_latest,
                                      const char              **opt_subpaths,
                                      gboolean                  no_pull,
-                                     OstreeRepoFinderResult ***out_results,
                                      GCancellable             *cancellable,
                                      GError                  **error);
 gboolean   flatpak_dir_update (FlatpakDir                           *self,
@@ -713,9 +725,9 @@ gboolean   flatpak_dir_update (FlatpakDir                           *self,
                                FlatpakRemoteState                   *state,
                                const char                           *ref,
                                const char                           *checksum_or_latest,
-                               const OstreeRepoFinderResult * const *results,
                                const char                          **opt_subpaths,
                                const char                          **opt_previous_ids,
+                               GFile                                *sideload_repo,
                                GBytes                               *require_metadata,
                                const char                           *token,
                                OstreeAsyncProgress                  *progress,
@@ -804,8 +816,7 @@ gboolean   flatpak_dir_create_suggested_remote_for_ref_file (FlatpakDir *self,
                                                              GBytes     *data,
                                                              GError    **error);
 char      *flatpak_dir_find_remote_by_uri (FlatpakDir *self,
-                                           const char *uri,
-                                           const char *collection_id);
+                                           const char *uri);
 gboolean   flatpak_dir_has_remote (FlatpakDir *self,
                                    const char *remote_name,
                                    GError    **error);
@@ -826,6 +837,7 @@ gboolean   flatpak_dir_remove_remote (FlatpakDir   *self,
                                       const char   *remote_name,
                                       GCancellable *cancellable,
                                       GError      **error);
+char **   flatpak_dir_get_sideload_repo_paths (FlatpakDir *self);
 char **   flatpak_dir_list_remote_config_keys (FlatpakDir *self,
                                                const char *remote_name);
 char      *flatpak_dir_get_remote_title (FlatpakDir *self,
@@ -949,7 +961,8 @@ gboolean flatpak_dir_find_latest_rev (FlatpakDir               *self,
                                       const char               *ref,
                                       const char               *checksum_or_latest,
                                       char                    **out_rev,
-                                      OstreeRepoFinderResult ***out_results,
+                                      guint64                  *out_timestamp,
+                                      GFile                   **out_sideload_path,
                                       GCancellable             *cancellable,
                                       GError                  **error);
 GPtrArray * flatpak_dir_find_remote_auto_install_refs (FlatpakDir         *self,

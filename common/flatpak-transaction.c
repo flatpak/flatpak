@@ -109,6 +109,7 @@ struct _FlatpakTransactionOperation
 
   gboolean                        resolved;
   char                           *resolved_commit;
+  GFile                          *resolved_sideload_path;
   GBytes                         *resolved_metadata;
   GKeyFile                       *resolved_metakey;
   GBytes                         *resolved_old_metadata;
@@ -588,6 +589,8 @@ flatpak_transaction_operation_finalize (GObject *object)
   if (self->external_metadata)
     g_bytes_unref (self->external_metadata);
   g_free (self->resolved_commit);
+  if (self->resolved_sideload_path)
+    g_object_unref (self->resolved_sideload_path);
   if (self->resolved_metadata)
     g_bytes_unref (self->resolved_metadata);
   if (self->resolved_metakey)
@@ -2316,7 +2319,7 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
               g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
 
               if (state != NULL &&
-                  flatpak_remote_state_lookup_ref (state, ref, NULL, NULL, NULL, NULL))
+                  flatpak_remote_state_lookup_ref (state, ref, NULL, NULL, NULL, NULL, NULL))
                 {
                   g_debug ("Auto adding install of %s from remote %s", ref, remote);
                   if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, NULL,
@@ -2413,6 +2416,7 @@ emit_eol_and_maybe_skip (FlatpakTransaction          *self,
 static void
 mark_op_resolved (FlatpakTransactionOperation *op,
                   const char                  *commit,
+                  GFile                       *sideload_path,
                   GBytes                      *metadata,
                   GBytes                      *old_metadata)
 {
@@ -2424,6 +2428,10 @@ mark_op_resolved (FlatpakTransactionOperation *op,
 
   op->resolved = TRUE;
   op->resolved_commit = g_strdup (commit);
+
+  if (sideload_path)
+    op->resolved_sideload_path = g_object_ref (sideload_path);
+
   if (metadata)
     {
       g_autoptr(GKeyFile) metakey = g_key_file_new ();
@@ -2452,12 +2460,13 @@ static void
 resolve_op_end (FlatpakTransaction *self,
                 FlatpakTransactionOperation *op,
                 const char *checksum,
+                GFile *sideload_path,
                 GBytes *metadata_bytes)
 {
   g_autoptr(GBytes) old_metadata_bytes = NULL;
 
   old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL);
-  mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
+  mark_op_resolved (op, checksum, sideload_path, metadata_bytes, old_metadata_bytes);
   emit_eol_and_maybe_skip (self, op);
  }
 
@@ -2466,6 +2475,7 @@ static void
 resolve_op_from_commit (FlatpakTransaction *self,
                         FlatpakTransactionOperation *op,
                         const char *checksum,
+                        GFile *sideload_path,
                         GVariant *commit_data)
 {
   g_autoptr(GBytes) metadata_bytes = NULL;
@@ -2489,14 +2499,15 @@ resolve_op_from_commit (FlatpakTransaction *self,
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &op->eol);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &op->eol_rebase);
 
-  resolve_op_end (self, op, checksum, metadata_bytes);
+  resolve_op_end (self, op, checksum, sideload_path, metadata_bytes);
 }
 
-static void
-resolve_op_from_metadata (FlatpakTransaction *self,
-                          FlatpakTransactionOperation *op,
-                          const char *checksum,
-                          FlatpakRemoteState *state)
+static gboolean
+try_resolve_op_from_metadata (FlatpakTransaction *self,
+                              FlatpakTransactionOperation *op,
+                              const char *checksum,
+                              GFile *sideload_path,
+                              FlatpakRemoteState *state)
 {
   g_autoptr(GBytes) metadata_bytes = NULL;
   guint64 download_size = 0;
@@ -2505,17 +2516,22 @@ resolve_op_from_metadata (FlatpakTransaction *self,
   VarMetadataRef sparse_cache;
   g_autoptr(GError) local_error = NULL;
   VarRefInfoRef info;
-  gboolean has_info;
+  g_autofree char *summary_checksum = NULL;
 
-  if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, NULL, &local_error))
-    {
-      g_message (_("Warning: Can't find %s metadata for dependencies: %s"), op->ref, local_error->message);
-      g_clear_error (&local_error);
-    }
-  else
-    metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
+  /* Ref has to match the actual commit in the summary */
+  if (state->summary == NULL ||
+      !flatpak_summary_lookup_ref (state->summary, NULL, op->ref, &summary_checksum, NULL) ||
+      strcmp (summary_checksum, checksum) != 0)
+    return FALSE;
 
-  if (flatpak_remote_state_lookup_ref (state, op->ref, NULL, &has_info, &info, NULL) && has_info)
+  /* And, we must have the actual cached data in the summary */
+  if (!flatpak_remote_state_lookup_cache (state, op->ref,
+                                          &download_size, &installed_size, &metadata, NULL, NULL))
+      return FALSE;
+
+  metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
+
+  if (flatpak_remote_state_lookup_ref (state, op->ref, NULL, NULL, &info, NULL, NULL))
     op->summary_metadata = var_metadata_dup_to_gvariant (var_ref_info_get_metadata (info));
 
   op->installed_size = installed_size;
@@ -2530,7 +2546,8 @@ resolve_op_from_metadata (FlatpakTransaction *self,
       op->token_type = GINT32_FROM_LE (var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, op->token_type));
     }
 
-  resolve_op_end (self, op, checksum, metadata_bytes);
+  resolve_op_end (self, op, checksum, sideload_path, metadata_bytes);
+  return TRUE;
 }
 
 static gboolean
@@ -2553,14 +2570,12 @@ resolve_ops (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   GList *l;
-  g_autoptr(GList) collection_id_ops = NULL;
 
   for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
       g_autoptr(FlatpakRemoteState) state = NULL;
       g_autofree char *checksum = NULL;
-      g_autoptr(GVariant) commit_data = NULL;
       g_autoptr(GBytes) metadata_bytes = NULL;
 
       if (op->resolved)
@@ -2571,14 +2586,14 @@ resolve_ops (FlatpakTransaction *self,
           /* We resolve to the deployed metadata, because we need it to uninstall related ops */
 
           metadata_bytes = load_deployed_metadata (self, op->ref, &checksum);
-          mark_op_resolved (op, checksum, metadata_bytes, NULL);
+          mark_op_resolved (op, checksum, NULL, metadata_bytes, NULL);
           continue;
         }
 
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
         {
           g_assert (op->commit != NULL);
-          mark_op_resolved (op, op->commit, op->external_metadata, NULL);
+          mark_op_resolved (op, op->commit, NULL, op->external_metadata, NULL);
           continue;
         }
 
@@ -2604,39 +2619,76 @@ resolve_ops (FlatpakTransaction *self,
       /* Should we use local state */
       if (transaction_is_local_only (self, op->kind))
         {
-          commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref, &checksum, NULL, error);
+          g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref, &checksum, NULL, error);
           if (commit_data == NULL)
             return FALSE;
 
-          resolve_op_from_commit (self, op, checksum, commit_data);
+          resolve_op_from_commit (self, op, checksum, NULL, commit_data);
         }
       else
         {
           g_autoptr(GError) local_error = NULL;
+          g_autoptr(GFile) sideload_path = NULL;
 
           if (op->commit != NULL)
             checksum = g_strdup (op->commit);
-          else if (!flatpak_dir_find_latest_rev (priv->dir, state, op->ref, op->commit, &checksum,
-                                                 NULL, cancellable, &local_error))
+          else
             {
-              /* An unavailable remote summary shouldn't be fatal if we already have the ref */
-              commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref, &checksum, NULL, NULL);
-              if (commit_data == NULL)
+              g_autofree char *latest_checksum = NULL;
+              g_autoptr(GFile) latest_sideload_path = NULL;
+              g_autofree char *local_checksum = NULL;
+              guint64 latest_timestamp;
+              g_autoptr(GVariant) local_commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref, &local_checksum, NULL, NULL);
+
+              if (flatpak_dir_find_latest_rev (priv->dir, state, op->ref, op->commit,
+                                               &latest_checksum, &latest_timestamp, &latest_sideload_path,
+                                               cancellable, &local_error))
                 {
-                  g_propagate_error (error, g_steal_pointer (&local_error));
-                  return FALSE;
+                  /* If we found the latest in a sideload repo, it may be older that what is locally available, check timestamps.
+                   * Note: If the timestamps are equal (timestamp granularity issue), assume we want to update */
+                  if (latest_sideload_path != NULL && local_commit_data &&
+                      ostree_commit_get_timestamp (local_commit_data) > latest_timestamp)
+                    {
+                      g_debug ("Installed commit %s newer than sideloaded %s, ignoring", local_checksum, latest_checksum);
+                      checksum = g_steal_pointer (&local_checksum);
+                    }
+                  else
+                    {
+                      /* Otherwise, use whatever we found */
+                      checksum = g_steal_pointer (&latest_checksum);
+                      sideload_path = g_steal_pointer (&latest_sideload_path);
+                    }
                 }
               else
                 {
+                  /* Ref not available in the remote (maybe offline), resolve to local version if installed */
+                  if (local_commit_data == NULL)
+                    {
+                      g_propagate_error (error, g_steal_pointer (&local_error));
+                      return FALSE;
+                    }
+
                   g_message (_("Warning: Treating remote fetch error as non-fatal since %s is already installed: %s"),
                              op->ref, local_error->message);
                   g_clear_error (&local_error);
+
+                  checksum = g_steal_pointer (&local_checksum);
                 }
             }
 
-          /* TODO: This only gets the metadata for the latest only, we need to handle the case
-             where the user specified a commit, or p2p doesn't have the latest commit available */
-          resolve_op_from_metadata (self, op, checksum, state);
+          /* First try to resolve via metadata (if remote is available and its metadata matches the commit version) */
+          if (!try_resolve_op_from_metadata (self, op, checksum, sideload_path, state))
+            {
+              /* Else try to load the commit object */
+              g_autoptr(GVariant) commit_data = NULL;
+
+              commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
+                                                                  op->ref, checksum, error);
+              if (commit_data == NULL)
+                return FALSE;
+
+              resolve_op_from_commit (self, op, checksum, sideload_path, commit_data);
+            }
         }
     }
 
@@ -2927,9 +2979,6 @@ request_tokens_for_remote (FlatpakTransaction *self,
       copy_summary_data (extra_builder, state->summary, "xa.oci-registry-uri");
     }
 
-  if (state->collection_id)
-    g_variant_builder_add (extra_builder, "{sv}", "collection-id", g_variant_new_string (state->collection_id));
-
   if (flatpak_dir_get_no_interaction (priv->dir))
     g_variant_builder_add (extra_builder, "{sv}", "no-interaction", g_variant_new_boolean (TRUE));
 
@@ -3197,13 +3246,12 @@ flatpak_transaction_get_installation (FlatpakTransaction *self)
 
 static gboolean
 remote_is_already_configured (FlatpakTransaction *self,
-                              const char         *url,
-                              const char         *collection_id)
+                              const char         *url)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *old_remote = NULL;
 
-  old_remote = flatpak_dir_find_remote_by_uri (priv->dir, url, collection_id);
+  old_remote = flatpak_dir_find_remote_by_uri (priv->dir, url);
 
   /* Note: we don't check priv->extra_dependency_dirs because the transaction
    * can only operate on one installation so any install/update ops need to
@@ -3219,7 +3267,6 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
   g_autofree char *suggested_name = NULL;
   g_autofree char *name = NULL;
   g_autofree char *url = NULL;
-  g_autofree char *collection_id = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_key = NULL;
   gboolean res;
@@ -3237,11 +3284,7 @@ handle_suggested_remote_name (FlatpakTransaction *self, GKeyFile *keyfile, GErro
   if (url == NULL)
     return TRUE;
 
-  collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP, FLATPAK_REF_DEPLOY_COLLECTION_ID_KEY, NULL);
-  if (collection_id == NULL || *collection_id == '\0')
-    collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP, FLATPAK_REF_COLLECTION_ID_KEY, NULL);
-
-  if (remote_is_already_configured (self, url, collection_id))
+  if (remote_is_already_configured (self, url))
     return TRUE;
 
   /* The name is already used, ignore */
@@ -3288,7 +3331,6 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
   g_autoptr(GBytes) gpg_key = NULL;
   g_autofree char *group = NULL;
   g_autoptr(GError) local_error = NULL;
-  g_autofree char *runtime_collection_id = NULL;
   g_autoptr(SoupSession) soup_session = NULL;
   char *t;
   int i;
@@ -3367,9 +3409,8 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
   group = g_strdup_printf ("remote \"%s\"", new_remote);
   runtime_url = g_key_file_get_string (config, group, "url", NULL);
   g_assert (runtime_url != NULL);
-  runtime_collection_id = g_key_file_get_string (config, group, "collection-id", NULL);
 
-  if (remote_is_already_configured (self, runtime_url, runtime_collection_id))
+  if (remote_is_already_configured (self, runtime_url))
     return TRUE;
 
   res = FALSE;
@@ -3590,6 +3631,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                    remote_state, op->ref, op->resolved_commit,
                                    (const char **) op->subpaths,
                                    (const char **) op->previous_ids,
+                                   op->resolved_sideload_path,
                                    op->resolved_metadata,
                                    op->resolved_token,
                                    progress->ostree_progress,
@@ -3638,9 +3680,9 @@ _run_op_kind (FlatpakTransaction           *self,
                                       priv->max_op >= APP_UPDATE,
                                       priv->max_op == APP_INSTALL || priv->max_op == RUNTIME_INSTALL,
                                       remote_state, op->ref, op->resolved_commit,
-                                      NULL,
                                       (const char **) op->subpaths,
                                       (const char **) op->previous_ids,
+                                      op->resolved_sideload_path,
                                       op->resolved_metadata,
                                       op->resolved_token,
                                       progress->ostree_progress,

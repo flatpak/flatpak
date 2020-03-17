@@ -1055,11 +1055,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       if (flatpak_remote_get_disabled (remote))
         continue;
 
-      /* Remotes with collection IDs will be handled separately below */
-      collection_id = flatpak_remote_get_collection_id (remote);
-      if (collection_id != NULL)
-        continue;
-
       /* We ignore errors here. we don't want one remote to fail us */
       refs = flatpak_installation_list_remote_refs_sync (self,
                                                          remote_name,
@@ -1175,120 +1170,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
               if (deploy_dir == NULL)
                 g_ptr_array_add (updates, g_object_ref (installed_ref));
             }
-        }
-    }
-
-  collection_refs = g_ptr_array_new_with_free_func ((GDestroyNotify) _ostree_collection_ref_free0);
-
-  refs_str = g_string_new ("");
-  for (i = 0; i < installed->len; i++)
-    {
-      FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
-      g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
-      g_autofree char *collection_id = NULL;
-      const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
-
-      if (flatpak_dir_ref_is_masked (dir, ref))
-        continue;
-
-      collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
-      if (collection_id != NULL)
-        {
-          OstreeCollectionRef *c_r = ostree_collection_ref_new (collection_id, ref);
-          g_ptr_array_add (collection_refs, c_r);
-
-          if (refs_str->len > 0)
-            g_string_append (refs_str, ", ");
-          g_string_append_printf (refs_str, "(%s, %s)", collection_id, ref);
-        }
-    }
-
-  /* if we do not have any collection refs, then we shouldn't try to find
-   * dynamic remotes for them, to avoid extra unnecessary processing, and also
-   * because the refs array cannot be empty in ostree_repo_find_remotes_async
-   * (otherwise it early returns and we never get our callback called) */
-  if (collection_refs->len > 0)
-    {
-      g_autoptr(GMainContextPopDefault) context = NULL;
-
-      g_ptr_array_add (collection_refs, NULL);
-
-      context = flatpak_main_context_new_default ();
-
-      ostree_repo_find_remotes_async (flatpak_dir_get_repo (dir),
-                                      (const OstreeCollectionRef * const *) collection_refs->pdata,
-                                      NULL,  /* no options */
-                                      NULL, /* default finders */
-                                      NULL,  /* no progress */
-                                      cancellable,
-                                      async_result_cb,
-                                      &result);
-
-      while (result == NULL)
-        g_main_context_iteration (context, TRUE);
-
-      results = ostree_repo_find_remotes_finish (flatpak_dir_get_repo (dir), result, error);
-
-      if (results == NULL)
-        return NULL;
-
-      if (results[0] == NULL)
-        g_debug ("No remotes found which provide these refs: [%s]", refs_str->str);
-    }
-
-  for (i = 0; i < installed->len && results != NULL && results[0] != NULL; i++)
-    {
-      FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
-      const char *remote_name = flatpak_installed_ref_get_origin (installed_ref);
-      g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
-      g_autofree char *collection_id = NULL;
-      g_autoptr(OstreeCollectionRef) collection_ref = NULL;
-
-      collection_id = flatpak_dir_get_remote_collection_id (dir, remote_name);
-      collection_ref = ostree_collection_ref_new (collection_id, ref);
-
-      /* Look for matching remote refs that are updates */
-      for (j = 0; results[j] != NULL; j++)
-        {
-          const char *local_commit, *remote_commit;
-
-          local_commit = flatpak_installed_ref_get_latest_commit (installed_ref);
-          remote_commit = g_hash_table_lookup (results[j]->ref_to_checksum, collection_ref);
-          if (remote_commit == NULL || g_strcmp0 (remote_commit, local_commit) == 0)
-            continue;
-
-          /* The ref_to_checksum map only tells us if this remote is offering
-           * the latest commit of the available remotes; we have to check
-           * ref_to_timestamp to know if the commit is an update or a
-           * downgrade. If local_commit is NULL assume it's an update until
-           * proven otherwise.
-           */
-          if (local_commit != NULL)
-            {
-              guint64 local_timestamp = 0;
-              guint64 *remote_timestamp;
-              g_autoptr(GVariant) commit_v = NULL;
-
-              if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), local_commit, &commit_v, NULL, NULL))
-                local_timestamp = ostree_commit_get_timestamp (commit_v);
-
-              remote_timestamp = g_hash_table_lookup (results[j]->ref_to_timestamp, collection_ref);
-              *remote_timestamp = GUINT64_FROM_BE (*remote_timestamp);
-
-              g_debug ("%s: Comparing local timestamp %" G_GUINT64_FORMAT " to remote timestamp %"
-                       G_GUINT64_FORMAT " on ref (%s, %s)", G_STRFUNC, local_timestamp, *remote_timestamp,
-                       collection_ref->collection_id, collection_ref->ref_name);
-
-              /* The timestamp could be 0 due to an error reading it. Assume
-               * it's an update until proven otherwise. */
-              if (*remote_timestamp != 0 && *remote_timestamp <= local_timestamp)
-                continue;
-            }
-
-          g_ptr_array_add (updates, g_object_ref (installed_ref));
-
-          /* Move on to the next ref so we don't add duplicates */
-          break;
         }
     }
 
@@ -2049,8 +1930,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   if (!flatpak_installation_drop_caches (self, cancellable, error))
     return NULL;
 
-  coll_ref = flatpak_collection_ref_new (collection_id, ref);
-  return flatpak_remote_ref_new (coll_ref, NULL, remote, NULL);
+  return flatpak_remote_ref_new (ref, NULL, remote, NULL);
 }
 
 /**
@@ -2140,7 +2020,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
                             FALSE, FALSE, state,
-                            ref, NULL, (const char **) subpaths, NULL, NULL, NULL,
+                            ref, NULL, (const char **) subpaths, NULL, NULL, NULL, NULL,
                             ostree_progress, cancellable, error))
     return NULL;
 
@@ -2249,7 +2129,6 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   g_autofree char *remote_name = NULL;
   FlatpakInstalledRef *result = NULL;
   g_autofree char *target_commit = NULL;
-  g_auto(OstreeRepoFinderResultv) check_results = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
 
@@ -2280,7 +2159,6 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   target_commit = flatpak_dir_check_for_update (dir, state, ref, NULL,
                                                 (const char **) subpaths,
                                                 (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
-                                                &check_results,
                                                 cancellable, error);
   if (target_commit == NULL)
     return NULL;
@@ -2304,8 +2182,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
                            FALSE, FALSE, FALSE, state,
                            ref, target_commit,
-                           (const OstreeRepoFinderResult * const *) check_results,
-                           (const char **) subpaths, NULL, NULL, NULL,
+                           (const char **) subpaths, NULL, NULL, NULL, NULL,
                            ostree_progress, cancellable, error))
     return NULL;
 
@@ -2623,11 +2500,11 @@ flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
   g_hash_table_iter_init (&iter, ht);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      FlatpakRemoteRef *ref;
-      FlatpakCollectionRef *coll_ref = key;
+      const char *ref_name = key;
       const gchar *ref_commit = value;
+      FlatpakRemoteRef *ref;
 
-      ref = flatpak_remote_ref_new (coll_ref, ref_commit, remote_or_uri, state);
+      ref = flatpak_remote_ref_new (ref_name, ref_commit, remote_or_uri, state);
 
       if (ref)
         g_ptr_array_add (refs, ref);
@@ -2699,8 +2576,6 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   g_autoptr(GHashTable) ht = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *ref = NULL;
-  g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
-  g_autofree gchar *collection_id = NULL;
   const char *checksum;
 
   if (branch == NULL)
@@ -2718,12 +2593,6 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
                                      cancellable, error))
     return NULL;
 
-  /* FIXME: Rework to accept the collection ID as an input argument instead */
-  if (!ostree_repo_get_remote_option (flatpak_dir_get_repo (dir),
-                                      remote_name, "collection-id",
-                                      NULL, &collection_id, error))
-    return FALSE;
-
   if (kind == FLATPAK_REF_KIND_APP)
     ref = flatpak_build_app_ref (name,
                                  branch,
@@ -2733,102 +2602,10 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
                                      branch,
                                      arch);
 
-  coll_ref = flatpak_collection_ref_new (collection_id, ref);
-  checksum = g_hash_table_lookup (ht, coll_ref);
-
-  /* Check LAN/USB sources too in case we're offline */
-  if (checksum == NULL && collection_id != NULL && *collection_id != '\0')
-    {
-      OstreeRepo *repo;
-      const char * const *default_repo_finders;
-      g_autoptr(GAsyncResult) result = NULL;
-      OstreeCollectionRef ostree_coll_ref;
-      const OstreeCollectionRef *refs[2] = { NULL, };
-      OstreeRepoFinder *finders[3] = { NULL, };
-      guint finder_index = 0;
-      gsize i;
-      g_autoptr(GMainContextPopDefault) context = NULL;
-      g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
-
-      context = flatpak_main_context_new_default ();
-
-      ostree_coll_ref.collection_id = collection_id;
-      ostree_coll_ref.ref_name = ref;
-      refs[0] = &ostree_coll_ref;
-
-      if (!flatpak_dir_ensure_repo (dir, cancellable, error))
-        return NULL;
-      repo = flatpak_dir_get_repo (dir);
-      default_repo_finders = ostree_repo_get_default_repo_finders (repo);
-      if (default_repo_finders == NULL || g_strv_contains (default_repo_finders, "mount"))
-        {
-          finder_mount = OSTREE_REPO_FINDER (ostree_repo_finder_mount_new (NULL));
-          finders[finder_index++] = finder_mount;
-        }
-
-      if (default_repo_finders == NULL || g_strv_contains (default_repo_finders, "lan"))
-        {
-          g_autoptr(GError) local_error = NULL;
-          finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
-          finders[finder_index++] = finder_avahi;
-
-          /* The Avahi finder may fail to start on, for example, a CI server. */
-          ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), &local_error);
-          if (local_error != NULL)
-            {
-              finders[--finder_index] = NULL;
-              g_clear_object (&finder_avahi);
-            }
-        }
-
-      if (finders[0] != NULL)
-        {
-          g_auto(OstreeRepoFinderResultv) results = NULL;
-
-          ostree_repo_find_remotes_async (repo, (const OstreeCollectionRef * const *)refs,
-                                          NULL, finders, NULL, cancellable, async_result_cb, &result);
-          while (result == NULL)
-            g_main_context_iteration (context, TRUE);
-
-          results = ostree_repo_find_remotes_finish (repo, result, error);
-
-          if (finder_avahi != NULL)
-            ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
-
-          if (results == NULL)
-            return NULL;
-
-          for (i = 0; results[i] != NULL; i++)
-            {
-              checksum = g_hash_table_lookup (results[i]->ref_to_checksum, &ostree_coll_ref);
-              if (checksum != NULL)
-                break;
-            }
-        }
-    }
-
-  /* If there was not a match, it may be because the collection ID is
-   * not set in the local configuration, or it is wrong, so we resort to
-   * trying to match just the ref name */
-  if (checksum == NULL)
-    {
-      GHashTableIter iter;
-      gpointer key, value;
-
-      g_hash_table_iter_init (&iter, ht);
-      while (g_hash_table_iter_next (&iter, &key, &value))
-        {
-          FlatpakCollectionRef *current =  (FlatpakCollectionRef *) key;
-          if (g_strcmp0 (current->ref_name, ref) == 0)
-            {
-              checksum = (const gchar *) value;
-              break;
-            }
-        }
-    }
+  checksum = g_hash_table_lookup (ht, ref);
 
   if (checksum != NULL)
-    return flatpak_remote_ref_new (coll_ref, checksum, remote_name, state);
+    return flatpak_remote_ref_new (ref, checksum, remote_name, state);
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REF_NOT_FOUND,
                "Reference %s doesn't exist in remote", ref);

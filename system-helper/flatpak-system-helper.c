@@ -515,7 +515,6 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
       g_autoptr(FlatpakOciImage) image_config = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
-      FlatpakCollectionRef collection_ref;
       g_autoptr(GHashTable) remote_refs = NULL;
       g_autofree char *checksum = NULL;
       const char *verified_digest;
@@ -594,10 +593,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      collection_ref.collection_id = state->collection_id;
-      collection_ref.ref_name = (char *) arg_ref;
-
-      verified_digest = g_hash_table_lookup (remote_refs, &collection_ref);
+      verified_digest = g_hash_table_lookup (remote_refs, arg_ref);
       if (!verified_digest)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -674,7 +670,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-      if (!flatpak_dir_pull (system, state, arg_ref, NULL, NULL, (const char **) arg_subpaths, NULL, NULL, NULL,
+      if (!flatpak_dir_pull (system, state, arg_ref, NULL, (const char **) arg_subpaths, NULL, NULL, NULL, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &error))
         {
