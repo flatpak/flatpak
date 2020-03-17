@@ -1144,6 +1144,11 @@ test_dconf_paths (void)
     { "/org/gnome/Builder-2/", "/org/gnome/Builder_2/", 1 },
     { "/org/gnome/Builder/", "/org/gnome/Builder", 0 },
     { "/org/gnome/Builder/", "/org/gnome/Buildex/", 0 },
+    { "/org/gnome/Rhythmbox3/", "/org/gnome/rhythmbox/", 1 },
+    { "/org/gnome/Rhythmbox3/", "/org/gnome/rhythmbox", 0 },
+    { "/org/gnome1/Rhythmbox/", "/org/gnome/rhythmbox", 0 },
+    { "/org/gnome1/Rhythmbox", "/org/gnome/rhythmbox/", 0 },
+    { "/org/gnome/Rhythmbox3plus/", "/org/gnome/rhythmbox/", 0 },
   };
   int i;
 
