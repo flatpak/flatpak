@@ -570,6 +570,14 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--instance-id-fd</option></term>
+
+                <listitem><para>
+                    Write the instance ID string to the given file descriptor.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--file-forwarding</option></term>
 
                 <listitem><para>
