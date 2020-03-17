@@ -999,6 +999,32 @@ flatpak_get_user_base_dir_location (void)
   return g_object_ref ((GFile *) file);
 }
 
+static gboolean
+validate_commit_metadata (GVariant   *commit_data,
+                          const char *ref,
+                          const char *required_metadata,
+                          gboolean   require_xa_metadata,
+                          GError   **error)
+{
+  g_autoptr(GVariant) commit_metadata = NULL;
+  const char *xa_metadata = NULL;
+
+  commit_metadata = g_variant_get_child_value (commit_data, 0);
+
+  if (commit_metadata != NULL)
+    g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+
+  if ((xa_metadata == NULL && require_xa_metadata) ||
+      (xa_metadata != NULL && g_strcmp0 (required_metadata, xa_metadata) != 0))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                   _("Commit metadata for %s not matching expected metadata"), ref);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 /* This is a cache directory similar to ~/.cache/flatpak/system-cache,
  * but in /var/tmp. This is useful for things like the system child
  * repos, because it is more likely to be on the same filesystem as
@@ -3691,12 +3717,12 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
           /* No need to use an existing OstreeRepoFinderResult array, since
            * appstream updates do not need to be atomic wrt other updates. */
           used_branch = new_branch;
-          if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL,
+          if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL, NULL,
                                  child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, &first_error))
             {
               used_branch = old_branch;
-              if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL,
+              if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL, NULL,
                                      child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                      progress, cancellable, &second_error))
                 {
@@ -3749,12 +3775,12 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   /* No need to use an existing OstreeRepoFinderResult array, since
    * appstream updates do not need to be atomic wrt other updates. */
   used_branch = new_branch;
-  if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL, NULL,
+  if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL, NULL, NULL,
                          FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                          cancellable, &first_error))
     {
       used_branch = old_branch;
-      if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL, NULL,
+      if (!flatpak_dir_pull (self, state, used_branch, NULL, NULL, NULL, NULL, NULL, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                              cancellable, &second_error))
         {
@@ -4597,6 +4623,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
                   const char                           *opt_rev,
                   const OstreeRepoFinderResult * const *opt_results,
                   const char                          **subpaths,
+                  GBytes                               *require_metadata,
                   const char                           *token,
                   OstreeRepo                           *repo,
                   FlatpakPullFlags                      flatpak_flags,
@@ -4778,6 +4805,15 @@ flatpak_dir_pull (FlatpakDir                           *self,
     {
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, state->remote_name);
       goto out;
+    }
+
+
+  if (require_metadata)
+    {
+      g_autoptr(GVariant) commit_data = NULL;
+      if (!ostree_repo_load_commit (repo, rev, &commit_data, NULL, error) ||
+          !validate_commit_metadata (commit_data, ref, (const char *)g_bytes_get_data (require_metadata, NULL), TRUE, error))
+        return FALSE;
     }
 
   if (!flatpak_dir_pull_extra_data (self, repo,
@@ -6914,7 +6950,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   glnx_autofd int checkoutdir_dfd = -1;
   g_autoptr(GFile) tmp_dir_template = NULL;
   g_autofree char *tmp_dir_path = NULL;
-  const char *xa_metadata = NULL;
   const char *xa_ref = NULL;
   g_autofree char *checkout_basename = NULL;
   gboolean created_extra_data = FALSE;
@@ -6924,6 +6959,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *metadata_contents = NULL;
   g_auto(GStrv) ref_parts = NULL;
   gboolean is_app;
+  gboolean is_oci;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -7179,18 +7215,14 @@ flatpak_dir_deploy (FlatpakDir          *self,
     }
 
   /* Check the metadata in the commit to make sure it matches the actual
-     deployed metadata, in case we relied on the one in the commit for
-     a decision */
-  g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
-  if (xa_metadata != NULL)
-    {
-      if (g_strcmp0 (metadata_contents, xa_metadata) != 0)
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
-                       _("Deployed metadata does not match commit"));
-          return FALSE;
-        }
-    }
+   * deployed metadata, in case we relied on the one in the commit for
+   * a decision
+   * Note: For historical reason we don't enforce commits to contain xa.metadata
+   * since this was lacking in fedora builds.
+   */
+  is_oci = flatpak_dir_get_remote_oci (self, origin);
+  if (!validate_commit_metadata (commit_data, ref, metadata_contents, !is_oci, error))
+    return FALSE;
 
   dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
   if (!g_file_replace_contents (dotref, "", 0, NULL, FALSE,
@@ -7729,6 +7761,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      const char          *opt_commit,
                      const char         **opt_subpaths,
                      const char         **opt_previous_ids,
+                     GBytes              *require_metadata,
                      const char          *token,
                      OstreeAsyncProgress *progress,
                      GCancellable        *cancellable,
@@ -7827,7 +7860,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
-          if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, subpaths, token,
+          if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, subpaths, require_metadata, token,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -7868,7 +7901,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, opt_subpaths, token, NULL,
+      if (!flatpak_dir_pull (self, state, ref, opt_commit, NULL, opt_subpaths, require_metadata, token, NULL,
                              flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
@@ -8308,6 +8341,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     const OstreeRepoFinderResult * const *results,
                     const char                          **opt_subpaths,
                     const char                          **opt_previous_ids,
+                    GBytes                               *require_metadata,
                     const char                           *token,
                     OstreeAsyncProgress                  *progress,
                     GCancellable                         *cancellable,
@@ -8434,7 +8468,7 @@ flatpak_dir_update (FlatpakDir                           *self,
             return FALSE;
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
-          if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths, token,
+          if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths, require_metadata, token,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
@@ -8472,7 +8506,7 @@ flatpak_dir_update (FlatpakDir                           *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths, token,
+      if (!flatpak_dir_pull (self, state, ref, commit, results, subpaths, require_metadata, token,
                              NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
@@ -11972,7 +12006,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
           if (child_repo == NULL)
             return FALSE;
 
-          if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL,
+          if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL, NULL,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
@@ -12002,7 +12036,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
       return TRUE;
     }
 
-  if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL, NULL,
+  if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL, NULL, NULL,
                          flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                          progress, cancellable, error))
     return FALSE;
