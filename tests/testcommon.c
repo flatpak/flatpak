@@ -1152,7 +1152,12 @@ test_dconf_paths (void)
       gboolean result;
 
       result = flatpak_dconf_path_is_similar (tests[i].path1, tests[i].path2);
-      g_assert_cmpint (result, ==, tests[i].result);
+      if (result != tests[i].result)
+        g_error ("Unexpected %s: flatpak_dconf_path_is_similar (%s, %s) = %d",
+                 result ? "success" : "failure",
+                 tests[i].path1,
+                 tests[i].path2,
+                 result);
     }
 }
 
