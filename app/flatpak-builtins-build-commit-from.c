@@ -604,7 +604,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
 
       if (opt_token_type >= 0)
         g_variant_builder_add (&metadata_builder, "{sv}", "xa.token-type",
-                               g_variant_new_int32 (opt_token_type));
+                               g_variant_new_int32 (GINT32_TO_LE (opt_token_type)));
 
       timestamp = ostree_commit_get_timestamp (src_commitv);
       if (opt_timestamp)

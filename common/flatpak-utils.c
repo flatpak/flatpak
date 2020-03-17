@@ -3738,7 +3738,8 @@ flatpak_repo_update (OstreeRepo   *repo,
 
       g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
       g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
-      g_variant_lookup (commit_metadata, "xa.token-type", "i", &token_type);
+      if (g_variant_lookup (commit_metadata, "xa.token-type", "i", &token_type))
+        token_type = GINT32_FROM_LE(token_type);
       if (eol || eol_rebase || token_type >= 0)
         {
           g_auto(GVariantBuilder) sparse_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
@@ -3748,7 +3749,7 @@ flatpak_repo_update (OstreeRepo   *repo,
           if (eol_rebase)
             g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, g_variant_new_string (eol_rebase));
           if (token_type >= 0)
-            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, g_variant_new_int32 (token_type));
+            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, g_variant_new_int32 (GINT32_TO_LE(token_type)));
 
           rev_data->sparse_data = g_variant_ref_sink (g_variant_builder_end (&sparse_builder));
         }

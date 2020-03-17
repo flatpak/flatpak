@@ -3801,7 +3801,7 @@ flatpak_dir_resolve_maybe_resolve_from_metadata (FlatpakDirResolve *resolve,
     {
       resolve->eol = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL));
       resolve->eol_rebase = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL));
-      resolve->token_type = var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, 0);
+      resolve->token_type = GINT32_FROM_LE(var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, 0));
     }
 
   return TRUE; /* Resolved */
@@ -3833,7 +3833,8 @@ resolve_p2p_update_from_commit (FlatpakDirResolve *resolve,
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &resolve->eol);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &resolve->eol_rebase);
   /* NOTE: The transaction code already default or stored token_type from ostree-metadata here, but fix it up from the commit anyway */
-  g_variant_lookup (commit_metadata, "xa.token-type", "i", &resolve->token_type);
+  if (g_variant_lookup (commit_metadata, "xa.token-type", "i", &resolve->token_type))
+    resolve->token_type = GINT32_FROM_LE (resolve->token_type);
 }
 
 struct _FlatpakDirP2PState {
@@ -11282,7 +11283,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
     {
       gint32 token_type;
       if (g_variant_lookup (state->metadata, "xa.default-token-type", "i", &token_type))
-        state->default_token_type = token_type;
+        state->default_token_type = GINT32_FROM_LE (token_type);
     }
 
   return g_steal_pointer (&state);
