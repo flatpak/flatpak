@@ -2190,6 +2190,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                gboolean        build,
                                gboolean        devel,
                                char          **app_info_path_out,
+                               int             instance_id_fd,
                                char          **instance_id_host_dir_out,
                                GError        **error)
 {
@@ -2362,6 +2363,38 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
                    _("Failed to open bwrapinfo.json file: %s"), g_strerror (errsv));
       return FALSE;
+    }
+
+  /* NOTE: It is important that this takes place after bwrapinfo.json is created,
+     otherwise start notifications in the portal may not work. */
+  if (instance_id_fd != -1)
+    {
+      gsize instance_id_position = 0;
+      gsize instance_id_size = strlen (instance_id);
+
+      while (instance_id_size > 0)
+        {
+          gssize bytes_written = write (instance_id_fd, instance_id + instance_id_position, instance_id_size);
+          if (G_UNLIKELY (bytes_written <= 0))
+            {
+              int errsv = bytes_written == -1 ? errno : ENOSPC;
+              if (errsv == EINTR)
+                continue;
+
+              close (fd);
+              close (fd2);
+              close (fd3);
+
+              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
+                           _("Failed to write to instance id fd: %s"), g_strerror (errsv));
+              return FALSE;
+            }
+
+          instance_id_position += bytes_written;
+          instance_id_size -= bytes_written;
+        }
+
+      close (instance_id_fd);
     }
 
   flatpak_bwrap_add_args_data_fd (bwrap, "--info-fd", fd3, NULL);
@@ -3475,6 +3508,7 @@ flatpak_run_app (const char     *app_ref,
                  const char     *custom_command,
                  char           *args[],
                  int             n_args,
+                 int             instance_id_fd,
                  char          **instance_dir_out,
                  GCancellable   *cancellable,
                  GError        **error)
@@ -3793,7 +3827,8 @@ flatpak_run_app (const char     *app_ref,
                                       app_ref_parts[1], app_ref_parts[3],
                                       runtime_ref, app_id_dir, app_context, extra_context,
                                       sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
-                                      &app_info_path, &instance_id_host_dir, error))
+                                      &app_info_path, instance_id_fd, &instance_id_host_dir,
+                                      error))
     return FALSE;
 
   if (!flatpak_run_add_dconf_args (bwrap, app_ref_parts[1], metakey, error))

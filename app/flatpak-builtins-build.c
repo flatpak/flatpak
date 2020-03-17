@@ -537,7 +537,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       runtime_ref,
                                       app_id_dir, app_context, NULL,
                                       FALSE, TRUE, TRUE,
-                                      &app_info_path,
+                                      &app_info_path, 0,
                                       &instance_id_host_dir,
                                       error))
     return FALSE;
