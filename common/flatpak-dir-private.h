@@ -120,8 +120,6 @@ typedef struct
   GVariant *summary;
   GBytes   *summary_sig_bytes;
   GError   *summary_fetch_error;
-  GVariant *metadata;
-  GError   *metadata_fetch_error;
   GRegex   *allow_refs;
   GRegex   *deny_refs;
   int       refcount;

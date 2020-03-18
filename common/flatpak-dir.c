@@ -316,8 +316,6 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
       g_clear_pointer (&remote_state->summary, g_variant_unref);
       g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
       g_clear_error (&remote_state->summary_fetch_error);
-      g_clear_pointer (&remote_state->metadata, g_variant_unref);
-      g_clear_error (&remote_state->metadata_fetch_error);
       g_clear_pointer (&remote_state->allow_refs, g_regex_unref);
       g_clear_pointer (&remote_state->deny_refs, g_regex_unref);
       g_clear_pointer (&remote_state->sideload_repos, g_ptr_array_unref);
@@ -333,29 +331,6 @@ flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
   if (self->summary == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unable to load summary from remote %s: %s"), self->remote_name,
                                self->summary_fetch_error != NULL ? self->summary_fetch_error->message : "unknown error");
-
-  return TRUE;
-}
-
-gboolean
-flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
-                                      GError            **error)
-{
-  if (self->metadata == NULL)
-    {
-      g_autofree char *error_msg = NULL;
-
-      /* If the collection ID is NULL the metadata comes from the summary */
-      if (self->metadata_fetch_error != NULL)
-        error_msg = g_strdup (self->metadata_fetch_error->message);
-      else if (self->summary_fetch_error != NULL)
-        error_msg = g_strdup_printf ("summary fetch error: %s", self->summary_fetch_error->message);
-
-      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
-                                 _("Unable to load metadata from remote %s: %s"),
-                                 self->remote_name,
-                                 error_msg != NULL ? error_msg : "unknown error");
-    }
 
   return TRUE;
 }
@@ -505,11 +480,13 @@ flatpak_remote_state_get_cache (FlatpakRemoteState *self,
   VarMetadataRef meta;
   VarVariantRef cache_vv;
   VarVariantRef cache_v;
+  VarSummaryRef summary;
 
-  if (!flatpak_remote_state_ensure_metadata (self, error))
+  if (!flatpak_remote_state_ensure_summary (self, error))
     return FALSE;
 
-  meta = var_metadata_from_gvariant (self->metadata);
+  summary = var_summary_from_gvariant (self->summary);
+  meta = var_summary_get_metadata (summary);
   if (!var_metadata_lookup (meta, "xa.cache", NULL, &cache_vv))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No summary or Flatpak cache available for remote %s"),
@@ -555,7 +532,8 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
 
   if (maybe_commit_bytes)
     {
-      VarMetadataRef meta = var_metadata_from_gvariant (self->metadata);
+      VarSummaryRef summary = var_summary_from_gvariant (self->summary);
+      VarMetadataRef meta = var_summary_get_metadata (summary);
       VarVariantRef commits_v;
 
       *maybe_commit_bytes = NULL;
@@ -643,13 +621,15 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
                                           VarMetadataRef     *out_metadata,
                                           GError            **error)
 {
+  VarSummaryRef summary;
   VarMetadataRef meta;
   VarVariantRef sparse_cache_v;
 
-  if (!flatpak_remote_state_ensure_metadata (self, error))
+  if (!flatpak_remote_state_ensure_summary (self, error))
     return FALSE;
 
-  meta = var_metadata_from_gvariant (self->metadata);
+  summary = var_summary_from_gvariant (self->summary);
+  meta = var_summary_get_metadata (summary);
   if (var_metadata_lookup (meta, "xa.sparse-cache", NULL, &sparse_cache_v))
     {
       VarSparseCacheRef sparse_cache = var_sparse_cache_from_variant (sparse_cache_v);
@@ -10551,7 +10531,6 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
   if (local_only)
     {
       flatpak_fail (&state->summary_fetch_error, "Internal error, local_only state");
-      flatpak_fail (&state->metadata_fetch_error, "Internal error, local_only state");
       return g_steal_pointer (&state);
     }
 
@@ -10631,13 +10610,14 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
     }
 
   if (state->summary != NULL) /* In the optional case we might not have a summary */
-    state->metadata = g_variant_get_child_value (state->summary, 1);
-
-  if (state->metadata)
     {
-      gint32 token_type;
-      if (g_variant_lookup (state->metadata, "xa.default-token-type", "i", &token_type))
-        state->default_token_type = GINT32_FROM_LE (token_type);
+      VarSummaryRef summary = var_summary_from_gvariant (state->summary);
+      VarMetadataRef meta = var_summary_get_metadata (summary);
+      VarVariantRef res;
+
+      if (var_metadata_lookup (meta, "xa.default-token-type", NULL, &res) &&
+          var_variant_is_type (res, G_VARIANT_TYPE_INT32))
+        state->default_token_type = GINT32_FROM_LE (var_variant_get_int32 (res));
     }
 
   return g_steal_pointer (&state);
@@ -12821,15 +12801,18 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
     NULL
   };
   g_autoptr(GPtrArray) updated_params = NULL;
+  g_autoptr(GVariant) metadata = NULL;
   GVariantIter iter;
   g_autoptr(GBytes) gpg_keys = NULL;
 
   updated_params = g_ptr_array_new_with_free_func (g_free);
 
-  if (!flatpak_remote_state_ensure_metadata (remote_state, error))
+  if (!flatpak_remote_state_ensure_summary (remote_state, error))
     return FALSE;
 
-  g_variant_iter_init (&iter, remote_state->metadata);
+  metadata = g_variant_get_child_value (remote_state->summary, 1);
+
+  g_variant_iter_init (&iter, metadata);
   if (g_variant_iter_n_children (&iter) > 0)
     {
       GVariant *value_var = NULL;
