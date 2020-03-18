@@ -739,7 +739,7 @@ get_ref (FlatpakDir   *dir,
   g_autofree char *deploy_subdirname = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
   g_autofree const char **subpaths = NULL;
-  g_autofree char *collection_id = NULL;
+  g_autofree char *sideload_collection_id = NULL;
   gboolean is_current = FALSE;
   guint64 installed_size = 0;
 
@@ -769,12 +769,12 @@ get_ref (FlatpakDir   *dir,
 
   latest_commit = flatpak_dir_read_latest (dir, origin, full_ref, &latest_alt_id, NULL, NULL);
 
-  collection_id = flatpak_dir_get_remote_collection_id (dir, origin);
+  sideload_collection_id = flatpak_dir_get_remote_sideload_collection_id (dir, origin);
 
   return flatpak_installed_ref_new (full_ref,
                                     alt_id ? alt_id : commit,
                                     latest_alt_id ? latest_alt_id : latest_commit,
-                                    origin, collection_id, subpaths,
+                                    origin, sideload_collection_id, subpaths,
                                     deploy_path,
                                     installed_size,
                                     is_current,
@@ -992,16 +992,6 @@ async_result_cb (GObject      *obj,
   *result_out = g_object_ref (result);
 }
 
-/* Useful as the #GDestroyNotify in NULL-terminated pointer arrays. */
-static void
-_ostree_collection_ref_free0 (OstreeCollectionRef *ref)
-{
-  if (ref == NULL)
-    return;
-
-  ostree_collection_ref_free (ref);
-}
-
 /**
  * flatpak_installation_list_installed_refs_for_update:
  * @self: a #FlatpakInstallation
@@ -1033,10 +1023,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   g_autoptr(GHashTable) remote_states = NULL; /* (element-type utf8 FlatpakRemoteState) */
   int i, j;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_auto(OstreeRepoFinderResultv) results = NULL;
-  g_autoptr(GAsyncResult) result = NULL;
-  g_autoptr(GPtrArray) collection_refs = NULL; /* (element-type OstreeCollectionRef) */
-  g_autoptr(GString) refs_str = NULL;
 
   remote_commits = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
@@ -1049,7 +1035,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       FlatpakRemote *remote = g_ptr_array_index (remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GError) local_error = NULL;
-      g_autofree char *collection_id = NULL;
       const char *remote_name = flatpak_remote_get_name (remote);
 
       if (flatpak_remote_get_disabled (remote))
@@ -1912,7 +1897,6 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *collection_id = NULL;
-  g_autoptr(FlatpakCollectionRef) coll_ref = NULL;
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
 
   dir = flatpak_installation_get_dir (self, error);
@@ -1930,7 +1914,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   if (!flatpak_installation_drop_caches (self, cancellable, error))
     return NULL;
 
-  return flatpak_remote_ref_new (ref, NULL, remote, NULL);
+  return flatpak_remote_ref_new (ref, NULL, remote, collection_id, NULL);
 }
 
 /**
@@ -2504,7 +2488,7 @@ flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
       const gchar *ref_commit = value;
       FlatpakRemoteRef *ref;
 
-      ref = flatpak_remote_ref_new (ref_name, ref_commit, remote_or_uri, state);
+      ref = flatpak_remote_ref_new (ref_name, ref_commit, remote_or_uri, state->sideload_collection_id, state);
 
       if (ref)
         g_ptr_array_add (refs, ref);
@@ -2605,7 +2589,7 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   checksum = g_hash_table_lookup (ht, ref);
 
   if (checksum != NULL)
-    return flatpak_remote_ref_new (ref, checksum, remote_name, state);
+    return flatpak_remote_ref_new (ref, checksum, remote_name, state->sideload_collection_id, state);
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REF_NOT_FOUND,
                "Reference %s doesn't exist in remote", ref);
@@ -2785,7 +2769,7 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
       FlatpakRelated *rel = g_ptr_array_index (related, i);
       FlatpakRelatedRef *rel_ref;
 
-      rel_ref = flatpak_related_ref_new (rel->collection_id, rel->ref, rel->commit,
+      rel_ref = flatpak_related_ref_new (rel->ref, rel->commit,
                                          rel->subpaths, rel->download, rel->delete);
 
       if (rel_ref)
@@ -2845,7 +2829,7 @@ flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self
       FlatpakRelated *rel = g_ptr_array_index (related, i);
       FlatpakRelatedRef *rel_ref;
 
-      rel_ref = flatpak_related_ref_new (rel->collection_id, rel->ref, rel->commit,
+      rel_ref = flatpak_related_ref_new (rel->ref, rel->commit,
                                          rel->subpaths, rel->download, rel->delete);
 
       if (rel_ref)

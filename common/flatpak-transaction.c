@@ -2514,7 +2514,6 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
   guint64 installed_size = 0;
   const char *metadata = NULL;
   VarMetadataRef sparse_cache;
-  g_autoptr(GError) local_error = NULL;
   VarRefInfoRef info;
   g_autofree char *summary_checksum = NULL;
 

@@ -93,7 +93,6 @@ GType flatpak_deploy_get_type (void);
 
 typedef struct
 {
-  char    *collection_id;         /* (nullable) */
   char    *ref;
   char    *commit;
   char   **subpaths;
@@ -117,7 +116,6 @@ typedef struct {
 typedef struct
 {
   char     *remote_name;
-  char     *collection_id;
   char     *sideload_collection_id;
   GVariant *summary;
   GBytes   *summary_sig_bytes;
@@ -169,21 +167,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRelated, flatpak_related_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemoteState, flatpak_remote_state_unref)
-
-typedef struct
-{
-  char *collection_id;
-  char *ref_name;
-} FlatpakCollectionRef;
-
-FlatpakCollectionRef *    flatpak_collection_ref_new (const char *collection_id,
-                                                      const char *ref_name);
-void                      flatpak_collection_ref_free (FlatpakCollectionRef *ref);
-guint                     flatpak_collection_ref_hash (gconstpointer ref);
-gboolean                  flatpak_collection_ref_equal (gconstpointer ref1,
-                                                        gconstpointer ref2);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakCollectionRef, flatpak_collection_ref_free)
 
 typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_NONE = 0,
@@ -799,7 +782,7 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *title,
                                              const char   *main_ref,
                                              GBytes       *gpg_data,
-                                             const char   *collection_id,
+                                             const char   *sideload_collection_id,
                                              gboolean     *changed_config,
                                              GCancellable *cancellable,
                                              GError      **error);
@@ -809,7 +792,7 @@ gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
                                                    GKeyFile   *keyfile,
                                                    const char *default_arch,
                                                    char      **remote_name_out,
-                                                   char      **collection_id_out,
+                                                   char      **sideload_collection_id_out,
                                                    char      **ref_out,
                                                    GError    **error);
 gboolean   flatpak_dir_create_suggested_remote_for_ref_file (FlatpakDir *self,
@@ -854,6 +837,8 @@ char      *flatpak_dir_get_remote_icon (FlatpakDir *self,
                                         const char *remote_name);
 char      *flatpak_dir_get_remote_collection_id (FlatpakDir *self,
                                                  const char *remote_name);
+char      *flatpak_dir_get_remote_sideload_collection_id (FlatpakDir *self,
+                                                          const char *remote_name);
 char      *flatpak_dir_get_remote_main_ref (FlatpakDir *self,
                                             const char *remote_name);
 gboolean   flatpak_dir_get_remote_oci (FlatpakDir *self,

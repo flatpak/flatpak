@@ -1231,7 +1231,7 @@ handle_update_remote (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (summary_sig_bytes == NULL && state->collection_id == NULL)
+  if (summary_sig_bytes == NULL)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "UpdateRemote requires a summary signature");

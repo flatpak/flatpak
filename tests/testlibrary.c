@@ -623,10 +623,10 @@ test_remote (void)
   res = ostree_repo_open (repo, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
-  res = ostree_repo_get_remote_boolean_option (repo, repo_name, "gpg-verify-summary", TRUE, &gpg_verify_summary, &error);
+  res = ostree_repo_get_remote_boolean_option (repo, repo_name, "gpg-verify-summary", FALSE, &gpg_verify_summary, &error);
   g_assert_no_error (error);
   g_assert_true (res);
-  g_assert_false (gpg_verify_summary);
+  g_assert_true (gpg_verify_summary);
 
   /* Temporarily unset the collection ID */
   flatpak_remote_set_collection_id (remote, NULL);
