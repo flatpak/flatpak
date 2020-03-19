@@ -120,6 +120,9 @@ add_related (GHashTable   *all_refs,
   if (deploy_data == NULL)
     return FALSE;
 
+  if (flatpak_deploy_data_has_subpaths (deploy_data))
+    return flatpak_fail (error, _("Related ref '%s' is only partially installed"), ref);
+
   commit = flatpak_deploy_data_get_commit (deploy_data);
 
   deploy = flatpak_dir_load_deployed (dir, ref, commit, cancellable, error);
@@ -150,6 +153,13 @@ add_related (GHashTable   *all_refs,
       if (ext_deploy_data == NULL)
         {
           g_printerr (_("Warning: Omitting related ref ‘%s’ because it is not installed.\n"),
+                      ext->ref);
+          continue;
+        }
+
+      if (flatpak_deploy_data_has_subpaths (ext_deploy_data))
+        {
+          g_printerr (_("Warning: Omitting related ref ‘%s’ because it is partially installed.\n"),
                       ext->ref);
           continue;
         }
@@ -628,6 +638,11 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         deploy_data = flatpak_dir_get_deploy_data (dir, installed_ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
         if (deploy_data == NULL)
           return FALSE;
+
+        if (flatpak_deploy_data_has_subpaths (deploy_data))
+          return flatpak_fail (error,
+                               _("Ref '%s' is only partially installed"), installed_ref);
+
         commit = flatpak_deploy_data_get_commit (deploy_data);
         c_s = commit_and_subpaths_new (commit, NULL);
 
