@@ -53,7 +53,7 @@ assert_file_has_content $image "org\.freedesktop\.appstream\.appdata.*<summary>P
 assert_file_has_content $image "org\.freedesktop\.appstream\.icon-64"
 assert_file_has_content $image org.flatpak.ref.*app/org.test.Hello/x86_64/master
 
-echo "ok export oci"
+ok "export oci"
 
 ostree --repo=repo2 init --mode=archive-z2
 
@@ -65,4 +65,4 @@ assert_has_dir checked-out/files
 assert_has_file checked-out/files/bin/hello.sh
 assert_has_file checked-out/metadata
 
-echo "ok import oci"
+ok "import oci"

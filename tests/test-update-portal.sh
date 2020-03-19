@@ -66,15 +66,15 @@ done
 # Make sure monitor is dead
 kill -9 $MONITOR_PID
 
-echo "ok monitor updates"
+ok "monitor updates"
 
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid
 
-echo "ok update self"
+ok "update self"
 
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.pid
 
-echo "ok null-update self"
+ok "null-update self"
 
 make_updated_app test "" master UPDATE3
 
@@ -88,7 +88,7 @@ run_with_sandboxed_bus ${test_builddir}/test-update-portal update-fail monitor.p
 rm -rf repos/test/objects
 mv repos/test/orig-objects repos/test/objects
 
-echo "ok update fail"
+ok "update fail"
 
 ${FLATPAK} ${U} mask "org.test.Hello*"
 
@@ -108,7 +108,7 @@ run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.p
 
 ${FLATPAK} ${U} mask --remove "org.test.Hello*"
 
-echo "ok update vs masked"
+ok "update vs masked"
 
 BUILD_FINISH_ARGS="--filesystem=host" make_updated_app test "" master UPDATE41
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
@@ -125,4 +125,4 @@ run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monito
 make_updated_app test "" master UPDATE45
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid
 
-echo "ok update with changed permissions"
+ok "update with changed permissions"

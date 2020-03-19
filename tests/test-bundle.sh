@@ -35,14 +35,14 @@ assert_has_file bundles/hello.flatpak
 ${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform
 assert_has_file bundles/platform.flatpak
 
-echo "ok create bundles server-side"
+ok "create bundles server-side"
 
 rm bundles/hello.flatpak
 ${FLATPAK} ${U} install -y test-repo org.test.Hello
 ${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
 assert_has_file bundles/hello.flatpak
 
-echo "ok create bundles client-side"
+ok "create bundles client-side"
 
 ${FLATPAK} uninstall ${U} -y org.test.Hello
 ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak
@@ -90,7 +90,7 @@ $FLATPAK remote-list ${U} -d | grep hello-origin > /dev/null
 $FLATPAK remote-list ${U} -d | grep hello-origin | grep no-enumerate > /dev/null
 assert_has_file $FL_DIR/repo/hello-origin.trustedkeys.gpg
 
-echo "ok install app bundle"
+ok "install app bundle"
 
 ${FLATPAK} uninstall -y --force-remove ${U} org.test.Platform
 
@@ -123,12 +123,12 @@ $FLATPAK remote-list ${U} -d | grep platform-origin > /dev/null
 $FLATPAK remote-list ${U} -d | grep platform-origin | grep no-enumerate > /dev/null
 assert_has_file $FL_DIR/repo/platform-origin.trustedkeys.gpg
 
-echo "ok install runtime bundle"
+ok "install runtime bundle"
 
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
-echo "ok run"
+ok "run"
 
 
 OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
@@ -140,7 +140,7 @@ if [ x${USE_SYSTEMDIR-} != xyes ] ; then
     assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
 fi
 
-echo "ok null update"
+ok "null update"
 
 make_updated_app
 
@@ -153,7 +153,7 @@ assert_not_streq "$OLD_COMMIT" "$NEW_COMMIT"
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
-echo "ok update"
+ok "update"
 
 make_updated_app test org.test.Collection.test master UPDATED2
 
@@ -169,4 +169,4 @@ assert_not_streq "$NEW_COMMIT" "$NEW2_COMMIT"
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED2$'
 
-echo "ok update as bundle"
+ok "update as bundle"
