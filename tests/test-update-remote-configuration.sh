@@ -64,7 +64,7 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
 
-echo "ok 1 update repo config without deploying collection ID"
+ok "1 update repo config without deploying collection ID"
 
 # Now mark the collection ID as to be deployed. The client configuration should
 # be updated.
@@ -77,7 +77,7 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
-echo "ok 2 update repo config to deploy collection ID"
+ok "2 update repo config to deploy collection ID"
 
 # Try updating the collection ID to some other non-empty value on the server.
 # The client should ignore the update (otherwise we have a security vulnerability).
@@ -93,4 +93,4 @@ ${FLATPAK} ${U} update org.test.App master
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=net\.malicious\.NewCollection$'
 
-echo "ok 3 update repo config with different collection ID"
+ok "3 update repo config with different collection ID"

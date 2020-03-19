@@ -150,7 +150,7 @@ run_sh org.test.Hello "ls -lR /usr/foo/multiversion"
 assert_has_extension_file /usr multiversion/master/extension-org.test.Multiversion.master:master
 assert_has_extension_file /usr multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
-echo "ok runtime extensions"
+ok "runtime extensions"
 
 # Modify app metadata
 ostree checkout -U --repo=repos/test app/org.test.Hello/${ARCH}/master hello
@@ -174,4 +174,4 @@ assert_not_has_extension_file /app dir2/foo/exists
 assert_has_extension_file /app multiversion/master/extension-org.test.Multiversion.master:master
 assert_has_extension_file /app multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
-echo "ok app extensions"
+ok "app extensions"

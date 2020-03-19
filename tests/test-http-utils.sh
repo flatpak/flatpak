@@ -96,7 +96,7 @@ assert_ok "/?expires-past" $test_tmpdir/output
 assert_ok "/?expires-past" $test_tmpdir/output
 rm -f $test_tmpdir/output*
 
-echo 'ok http cache lifetimes'
+ok 'http cache lifetimes'
 
 # Revalation with an etag
 assert_ok "/?etag&no-cache" $test_tmpdir/output
@@ -108,7 +108,7 @@ assert_ok "/?modified-time&no-cache" $test_tmpdir/output
 assert_304 "/?modified-time&no-cache" $test_tmpdir/output
 rm -f $test_tmpdir/output*
 
-echo 'ok http revalidation'
+ok 'http revalidation'
 
 # Test compressd downloading and storage
 assert_ok --compressed "/compress" $test_tmpdir/output
@@ -116,7 +116,7 @@ contents=$(gunzip -c < $test_tmpdir/output)
 assert_streq $contents path=/compress
 rm -f $test_tmpdir/output*
 
-echo 'ok compressed download'
+ok 'compressed download'
 
 # Test uncompressed downloading with compressed storage
 assert_ok --compressed "/compress?ignore-accept-encoding" $test_tmpdir/output
@@ -124,18 +124,18 @@ contents=$(gunzip -c < $test_tmpdir/output)
 assert_streq $contents path=/compress?ignore-accept-encoding
 rm -f $test_tmpdir/output*
 
-echo 'ok compress after download'
+ok 'compress after download'
 
 # Testing that things work without xattr support
 
 if have_xattrs $test_tmpdir ; then
-    echo "ok no-xattrs # skip /tmp doesn't have user xattr support"
+    ok "no-xattrs # skip /tmp doesn't have user xattr support"
 else
     assert_ok "/?etag&no-cache" $test_tmpdir/output
     assert_has_file $test_tmpdir/output.flatpak.http
     assert_304 "/?etag&no-cache" $test_tmpdir/output
     rm -f $test_tmpdir/output*
-    echo "ok no-xattrs"
+    ok "no-xattrs"
 fi
 
 # Testing with xattr support
@@ -152,7 +152,7 @@ if have_xattrs $xattrs_tempdir ; then
     assert_not_has_file $xattrs_tempdir/output.flatpak.http
     assert_304 "/?etag&no-cache" $xattrs_tempdir/output
     rm -f $xattrs_tempdir/output*
-    echo "ok xattrs"
+    ok "xattrs"
 else
-    echo "ok xattrs # skip /var/tmp has user no xattr support"
+    ok "xattrs # skip /var/tmp has user no xattr support"
 fi

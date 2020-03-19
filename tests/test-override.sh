@@ -26,7 +26,7 @@ ${FLATPAK} override --user --show org.test.Hello > override
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^sockets=wayland;!ssh-auth;$"
 
-echo "ok override --socket"
+ok "override --socket"
 
 reset_overrides
 
@@ -37,7 +37,7 @@ ${FLATPAK} override --user --show org.test.Hello > override
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^devices=dri;!kvm;$"
 
-echo "ok override --device"
+ok "override --device"
 
 reset_overrides
 
@@ -48,7 +48,7 @@ ${FLATPAK} override --user --show org.test.Hello > override
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^shared=network;!ipc;$"
 
-echo "ok override --share"
+ok "override --share"
 
 reset_overrides
 
@@ -59,7 +59,7 @@ ${FLATPAK} override --user --show org.test.Hello > override
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^features=multiarch;!bluetooth;$"
 
-echo "ok override --allow"
+ok "override --allow"
 
 reset_overrides
 
@@ -71,7 +71,7 @@ assert_file_has_content override "^\[Environment\]$"
 assert_file_has_content override "^FOO=BAR$"
 assert_file_has_content override "^BAR=$"
 
-echo "ok override --env"
+ok "override --env"
 
 ${FLATPAK} override --user --filesystem=home org.test.Hello
 ${FLATPAK} override --user --filesystem=xdg-desktop/foo:create org.test.Hello
@@ -87,7 +87,7 @@ assert_file_has_content override "^filesystems=.*xdg-documents;.*$"
 assert_file_has_content override "^filesystems=.*xdg-desktop/foo:create;.*$"
 assert_file_has_content override "^filesystems=.*xdg-config:ro;.*$"
 
-echo "ok override --filesystem"
+ok "override --filesystem"
 
 reset_overrides
 
@@ -102,7 +102,7 @@ assert_file_has_content override "^org\.foo\.Own=own$"
 assert_file_has_content override "^org\.foo\.Talk=talk$"
 assert_file_has_content override "^org\.foo\.NoTalk=none$"
 
-echo "ok override session bus names"
+ok "override session bus names"
 
 reset_overrides
 
@@ -117,7 +117,7 @@ assert_file_has_content override "^org\.foo\.Own\.System=own$"
 assert_file_has_content override "^org\.foo\.Talk\.System=talk$"
 assert_file_has_content override "^org\.foo\.NoTalk\.System=none$"
 
-echo "ok override system bus names"
+ok "override system bus names"
 
 reset_overrides
 
@@ -132,9 +132,9 @@ elif [ -S "${XDG_RUNTIME_DIR}/wayland-0" ]; then
   ${FLATPAK} run --command=ls org.test.Hello -- /run/user/1000 > out
   assert_not_file_has_content out "wayland-0"
 
-  echo "ok sandbox wayland socket"
+  ok "sandbox wayland socket"
 else
-  echo "ok sandbox wayland socket # skip not supported without Wayland"
+  ok "sandbox wayland socket # skip not supported without Wayland"
 fi
 
 reset_overrides
@@ -150,9 +150,9 @@ elif [ -d "/dev/dri" ]; then
   ${FLATPAK} run --command=ls org.test.Hello -- /dev > out
   assert_not_file_has_content out "dri"
 
-  echo "ok sandbox dri device"
+  ok "sandbox dri device"
 else
-  echo "ok sandbox dri device # skip not supported without /dev/dri"
+  ok "sandbox dri device # skip not supported without /dev/dri"
 fi
 
 reset_overrides
@@ -165,7 +165,7 @@ if ! skip_one_without_bwrap "sandbox dri device"; then
   FOO=bar ${FLATPAK} run --command=sh org.test.Hello -c 'echo $FOO' > out
   assert_file_has_content out "BAR"
 
-  echo "ok sandbox env"
+  ok "sandbox env"
 fi
 
 reset_overrides
@@ -183,7 +183,7 @@ if ! skip_one_without_bwrap "sandbox filesystem"; then
 
   rm $HOME/example
 
-  echo "ok sandbox filesystem"
+  ok "sandbox filesystem"
 fi
 
 reset_overrides
@@ -193,5 +193,5 @@ if ! skip_one_without_bwrap "persist"; then
   ${FLATPAK} run --command=sh org.test.Hello -c "echo goodbye > $HOME/example/bye"
   assert_file_has_content $HOME/.var/app/org.test.Hello/example/bye goodbye
 
-  echo "ok persist"
+  ok "persist"
 fi
