@@ -2471,6 +2471,15 @@ flatpak_deploy_data_get_subpaths (GBytes *deploy_data)
   return var_arrayofstring_to_strv (var_deploy_data_get_subpaths (ref), NULL);
 }
 
+gboolean
+flatpak_deploy_data_has_subpaths (GBytes *deploy_data)
+{
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  VarArrayofstringRef subpaths = var_deploy_data_get_subpaths (ref);
+
+  return var_arrayofstring_get_length (subpaths) != 0;
+}
+
 guint64
 flatpak_deploy_data_get_installed_size (GBytes *deploy_data)
 {

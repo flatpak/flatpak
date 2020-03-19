@@ -366,6 +366,7 @@ const char *        flatpak_deploy_data_get_commit (GBytes *deploy_data);
 const char *        flatpak_deploy_data_get_appdata_content_rating_type (GBytes *deploy_data);
 GHashTable *        flatpak_deploy_data_get_appdata_content_rating (GBytes *deploy_data);
 const char **       flatpak_deploy_data_get_subpaths (GBytes *deploy_data);
+gboolean            flatpak_deploy_data_has_subpaths (GBytes *deploy_data);
 guint64             flatpak_deploy_data_get_installed_size (GBytes *deploy_data);
 const char *        flatpak_deploy_data_get_alt_id (GBytes *deploy_data);
 const char *        flatpak_deploy_data_get_eol (GBytes *deploy_data);
