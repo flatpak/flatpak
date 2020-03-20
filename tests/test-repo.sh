@@ -767,11 +767,11 @@ assert_not_file_has_content remote-ls-log "app/org\.test\.Hello"
 assert_not_file_has_content remote-ls-log "runtime/org\.test\.Hello\.Locale"
 assert_file_has_content remote-ls-log "runtime/org\.test\.Platform"
 
-if ${FLATPAK}  ${U} remote-info test-repo org.test.Hello > remote-ref-info; then
+if ${FLATPAK}  ${U} remote-info test-repo org.test.Hello > remote-ref-info 2> /dev/null; then
     assert_not_reached "flatpak remote-info test-repo org.test.Hello should fail due to filter"
 fi
 
-if ${FLATPAK} ${U} install -y test-repo org.test.Hello; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Hello 2> /dev/null; then
     assert_not_reached "should not be able to install org.test.Hello should fail due to filter"
 fi
 
