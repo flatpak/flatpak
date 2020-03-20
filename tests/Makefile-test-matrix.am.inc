@@ -26,7 +26,6 @@ TEST_MATRIX_DIST= \
 	tests/test-default-remotes.sh \
 	tests/test-extensions.sh \
 	tests/test-oci.sh \
-	tests/test-unsigned-summaries.sh \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \
 	tests/test-update-portal.sh \
