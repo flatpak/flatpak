@@ -11,6 +11,8 @@ TEST_MATRIX= \
 	tests/test-repo@user.wrap \
 	tests/test-repo@system.wrap \
 	tests/test-repo@system-norevokefs.wrap \
+	tests/test-sideload@user.wrap \
+	tests/test-sideload@system.wrap \
 	tests/test-bundle@user.wrap \
 	tests/test-bundle@system.wrap \
 	tests/test-bundle@system-norevokefs.wrap \
@@ -35,6 +37,7 @@ TEST_MATRIX_EXTRA_DIST= \
 	tests/test-run.sh \
 	tests/test-info.sh \
 	tests/test-repo.sh \
+	tests/test-sideload.sh \
 	tests/test-bundle.sh \
 	tests/test-oci-registry.sh \
 	$(NULL)
