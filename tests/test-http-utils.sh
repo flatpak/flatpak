@@ -98,19 +98,19 @@ rm -f $test_tmpdir/output*
 
 echo 'ok http cache lifetimes'
 
-# Revalation with an etag
+# Revalidation with an etag
 assert_ok "/?etag&no-cache" $test_tmpdir/output
 assert_304 "/?etag&no-cache" $test_tmpdir/output
 rm -f $test_tmpdir/output*
 
-# Revalation with an modified time
+# Revalidation with a modified time
 assert_ok "/?modified-time&no-cache" $test_tmpdir/output
 assert_304 "/?modified-time&no-cache" $test_tmpdir/output
 rm -f $test_tmpdir/output*
 
 echo 'ok http revalidation'
 
-# Test compressd downloading and storage
+# Test compressed downloading and storage
 assert_ok --compressed "/compress" $test_tmpdir/output
 contents=$(gunzip -c < $test_tmpdir/output)
 assert_streq $contents path=/compress
