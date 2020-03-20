@@ -642,40 +642,6 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
   return FALSE;
 }
 
-static gboolean
-flatpak_remote_state_save_summary (FlatpakRemoteState *self,
-                                   GFile              *dir,
-                                   GCancellable       *cancellable,
-                                   GError            **error)
-{
-  g_autoptr(GFile) summary_file = g_file_get_child (dir, "summary");
-  g_autoptr(GBytes) summary_bytes = NULL;
-
-  /* For non-p2p case we always require a summary */
-  if (!flatpak_remote_state_ensure_summary (self, error))
-    return FALSE;
-
-  summary_bytes = g_variant_get_data_as_bytes (self->summary);
-
-  if (!g_file_replace_contents (summary_file,
-                                g_bytes_get_data (summary_bytes, NULL),
-                                g_bytes_get_size (summary_bytes),
-                                NULL, FALSE, 0, NULL, cancellable, error))
-    return FALSE;
-
-  if (self->summary_sig_bytes != NULL)
-    {
-      g_autoptr(GFile) summary_sig_file = g_file_get_child (dir, "summary.sig");
-      if (!g_file_replace_contents (summary_sig_file,
-                                    g_bytes_get_data (self->summary_sig_bytes, NULL),
-                                    g_bytes_get_size (self->summary_sig_bytes),
-                                    NULL, FALSE, 0, NULL, cancellable, error))
-        return FALSE;
-    }
-
-  return TRUE;
-}
-
 static DirExtraData *
 dir_extra_data_new (const char           *id,
                     const char           *display_name,
@@ -3828,19 +3794,6 @@ flatpak_dir_resolve_free (FlatpakDirResolve *resolve)
 }
 
 static gboolean
-child_repo_ensure_summary (OstreeRepo         *child_repo,
-                           FlatpakRemoteState *state,
-                           GCancellable       *cancellable,
-                           GError            **error)
-{
-  if (!flatpak_remote_state_save_summary (state, ostree_repo_get_path (child_repo),
-                                          cancellable, error))
-    return FALSE;
-
-  return TRUE;
-}
-
-static gboolean
 get_mtime (GFile        *file,
            GTimeVal     *result,
            GCancellable *cancellable,
@@ -4125,15 +4078,12 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
             return FALSE;
 
           if (!flatpak_dir_pull (self, state, used_branch, appstream_commit, NULL, appstream_sideload_path, NULL, NULL,
-                                 child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                                 child_repo, FLATPAK_PULL_FLAGS_NONE, 0,
                                  progress, cancellable, error))
             {
               g_prefix_error (&first_error, "Error updating appstream: ");
               return FALSE;
             }
-
-          if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
-            return FALSE;
 
           if (!flatpak_repo_resolve_rev (child_repo, NULL, remote, used_branch, TRUE,
                                          &new_checksum, cancellable, error))
@@ -4356,7 +4306,7 @@ repo_pull (OstreeRepo                           *self,
 
       sideload_url = g_file_get_uri (sideload_repo);
 
-      g_debug ("Sideloading %s from %s during", ref_to_fetch, sideload_url);
+      g_debug ("Sideloading %s from %s in pull", ref_to_fetch, sideload_url);
 
       g_assert (sideload_collection_id != NULL);
 
@@ -5172,7 +5122,7 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify-summary",
-                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+                         g_variant_new_variant (g_variant_new_boolean (FALSE)));
   g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
   g_variant_builder_add (&builder, "{s@v}", "update-frequency",
@@ -5206,27 +5156,21 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                   GError             **error)
 {
   g_autoptr(GFile) path_file = g_file_new_for_path (src_path);
-  g_autoptr(GFile) summary_file = g_file_get_child (path_file, "summary");
-  g_autoptr(GFile) summary_sig_file = g_file_get_child (path_file, "summary.sig");
   g_autofree char *url = g_file_get_uri (path_file);
   g_autofree char *checksum = NULL;
   g_autofree char *current_checksum = NULL;
   gboolean gpg_verify_summary;
   gboolean gpg_verify;
-  char *summary_data = NULL;
-  char *summary_sig_data = NULL;
-  gsize summary_data_size, summary_sig_data_size;
-  g_autoptr(GBytes) summary_bytes = NULL;
-  g_autoptr(GBytes) summary_sig_bytes = NULL;
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
-  g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) old_commit = NULL;
   g_autoptr(OstreeRepo) src_repo = NULL;
   g_autoptr(GVariant) new_commit = NULL;
+  g_autoptr(GVariant) new_commit_metadata = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
   gboolean ret = FALSE;
+  g_autofree const char **ref_bindings = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -5252,38 +5196,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!gpg_verify_summary || !gpg_verify)
     return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
 
-  /* We verify the summary manually before anything else to make sure
-     we've got something right before looking too hard at the repo and
-     so we can check for a downgrade before pulling and updating the
-     ref */
-
-  if (!g_file_load_contents (summary_file, cancellable,
-                             &summary_data, &summary_data_size, NULL, NULL))
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No summary found"));
-  summary_bytes = g_bytes_new_take (summary_data, summary_data_size);
-
-  if (gpg_verify_summary)
-    {
-      if (!g_file_load_contents (summary_sig_file, cancellable,
-                                 &summary_sig_data, &summary_sig_data_size, NULL, NULL))
-        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG verification enabled, but no summary signatures found for remote '%s'"), remote_name);
-
-      summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_data_size);
-
-      gpg_result = ostree_repo_verify_summary (self->repo,
-                                               remote_name,
-                                               summary_bytes,
-                                               summary_sig_bytes,
-                                               cancellable, error);
-      if (gpg_result == NULL)
-        return FALSE;
-
-      if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
-        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found for remote '%s', but none are in trusted keyring"), remote_name);
-    }
-
-  g_clear_object (&gpg_result);
-
   if (!flatpak_repo_resolve_rev (self->repo, NULL, remote_name, ref, TRUE,
                                  &current_checksum, NULL, error))
     return FALSE;
@@ -5296,11 +5208,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!ostree_repo_open (src_repo, cancellable, error))
     return FALSE;
 
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
-  if (!flatpak_summary_lookup_ref (summary, NULL, ref, &checksum, NULL))
-    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                               _("No such ref '%s' in remote %s"),
-                               ref, remote_name);
+  if (!flatpak_repo_resolve_rev (src_repo, NULL, remote_name, ref, FALSE, &checksum, NULL, error))
+    return FALSE;
 
   if (gpg_verify)
     {
@@ -5317,6 +5226,23 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!ostree_repo_load_commit (src_repo, checksum, &new_commit, NULL, error))
     return FALSE;
 
+  /* Here we check that there is actually a ref binding, otherwise we
+     could allow installing a ref as another app, because both would
+     pass gpg validation. Note that ostree pull actually also verifies
+     the ref-bindings, but only if the exist. We could do only the
+     ref-binding exist check, but if we got something weird might as
+     well stop handling it early. */
+
+  new_commit_metadata = g_variant_get_child_value (new_commit, 0);
+  if (!g_variant_lookup (new_commit_metadata, OSTREE_COMMIT_META_KEY_REF_BINDING, "^a&s", &ref_bindings))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit for ‘%s’ has no ref binding"),  ref);
+
+  if (!g_strv_contains ((const char *const *) ref_bindings, ref))
+    {
+      g_autofree char *as_string = g_strjoinv (", ", (char **)ref_bindings);
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit for ‘%s’ is not in expected bound refs: %s"),  ref, as_string);
+    }
+
   if (old_commit)
     {
       guint64 old_timestamp;
@@ -5326,7 +5252,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       new_timestamp = ostree_commit_get_timestamp (new_commit);
 
       if (new_timestamp < old_timestamp)
-        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Not allowed to downgrade %s", ref);
+        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Not allowed to downgrade %s (old_commit: %s/%ld new_commit: %s/%ld ",
+                                   ref, current_checksum, old_timestamp, checksum, new_timestamp);
     }
 
   if (subpaths != NULL && subpaths[0] != NULL)
@@ -8410,22 +8337,8 @@ flatpak_dir_install (FlatpakDir          *self,
           if (!flatpak_dir_pull (self, state, ref, opt_commit, subpaths, sideload_repo, require_metadata, token,
                                  child_repo,
                                  flatpak_flags,
-                                 OSTREE_REPO_PULL_FLAGS_MIRROR,
+                                 0,
                                  progress, cancellable, error))
-            {
-              if (is_revokefs_pull)
-                {
-                  flatpak_dir_unmount_and_cancel_pull (self,
-                                                       FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
-                                                       cancellable,
-                                                       &child_repo, &child_repo_lock,
-                                                       mnt_dir, src_dir);
-                }
-
-              return FALSE;
-            }
-
-          if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             {
               if (is_revokefs_pull)
                 {
@@ -9101,22 +9014,8 @@ flatpak_dir_update (FlatpakDir                           *self,
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
           if (!flatpak_dir_pull (self, state, ref, commit, subpaths, sideload_repo, require_metadata, token,
                                  child_repo,
-                                 flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                                 flatpak_flags, 0,
                                  progress, cancellable, error))
-            {
-              if (is_revokefs_pull)
-                {
-                  flatpak_dir_unmount_and_cancel_pull (self,
-                                                       FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
-                                                       cancellable,
-                                                       &child_repo, &child_repo_lock,
-                                                       mnt_dir, src_dir);
-                }
-
-              return FALSE;
-            }
-
-          if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
             {
               if (is_revokefs_pull)
                 {
