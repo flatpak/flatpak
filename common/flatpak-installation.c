@@ -35,6 +35,7 @@
 #include "flatpak-installed-ref-private.h"
 #include "flatpak-instance-private.h"
 #include "flatpak-related-ref-private.h"
+#include "flatpak-progress-private.h"
 #include "flatpak-remote-private.h"
 #include "flatpak-remote-ref-private.h"
 #include "flatpak-run-private.h"
@@ -86,11 +87,6 @@ G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstallation, flatpak_installation, G_TYPE_OB
 enum {
   PROP_0,
 };
-
-static void
-no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
-{
-}
 
 static void
 flatpak_installation_finalize (GObject *object)
@@ -1769,7 +1765,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                                    const char             *arch,
                                    const char             *branch,
                                    const char * const     *subpaths,
-                                   FlatpakProgressCallback progress,
+                                   FlatpakProgressCallback progress_cb,
                                    gpointer                progress_data,
                                    GCancellable           *cancellable,
                                    GError                **error)
@@ -1777,10 +1773,9 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
+  g_autoptr(FlatpakProgress) progress = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
-  g_autoptr(GMainContextPopDefault) main_context = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -1807,13 +1802,8 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
-  /* Work around ostree-pull spinning the default main context for the sync calls */
-  main_context = flatpak_main_context_new_default ();
-
-  if (progress)
-    ostree_progress = flatpak_progress_new (progress, progress_data);
-  else
-    ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
+  if (progress_cb)
+      progress = flatpak_progress_new (progress_cb, progress_data);
 
   if (!flatpak_dir_install (dir_clone,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_PULL) != 0,
@@ -1821,7 +1811,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
                             FALSE, FALSE, state,
                             ref, NULL, (const char **) subpaths, NULL, NULL, NULL, NULL,
-                            ostree_progress, cancellable, error))
+                            progress, cancellable, error))
     return NULL;
 
   if (!(flags & FLATPAK_INSTALL_FLAGS_NO_TRIGGERS) &&
@@ -1928,7 +1918,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                                   const char             *arch,
                                   const char             *branch,
                                   const char * const     *subpaths,
-                                  FlatpakProgressCallback progress,
+                                  FlatpakProgressCallback progress_cb,
                                   gpointer                progress_data,
                                   GCancellable           *cancellable,
                                   GError                **error)
@@ -1937,12 +1927,11 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   g_autofree char *ref = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
+  g_autoptr(FlatpakProgress) progress = NULL;
   g_autofree char *remote_name = NULL;
   FlatpakInstalledRef *result = NULL;
   g_autofree char *target_commit = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
-  g_autoptr(GMainContextPopDefault) main_context = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -1980,13 +1969,8 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
-  /* Work around ostree-pull spinning the default main context for the sync calls */
-  main_context = flatpak_main_context_new_default ();
-
-  if (progress)
-    ostree_progress = flatpak_progress_new (progress, progress_data);
-  else
-    ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
+  if (progress_cb)
+    progress = flatpak_progress_new (progress_cb, progress_data);
 
   if (!flatpak_dir_update (dir_clone,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
@@ -1995,7 +1979,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            FALSE, FALSE, FALSE, state,
                            ref, target_commit,
                            (const char **) subpaths, NULL, NULL, NULL, NULL,
-                           ostree_progress, cancellable, error))
+                           progress, cancellable, error))
     return NULL;
 
   if (!(flags & FLATPAK_UPDATE_FLAGS_NO_TRIGGERS) &&
@@ -2009,7 +1993,6 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   /* We don't get prunable objects if not pulling or if NO_PRUNE is passed */
   if (!(flags & FLATPAK_UPDATE_FLAGS_NO_PULL) && !(flags & FLATPAK_UPDATE_FLAGS_NO_PRUNE))
     flatpak_dir_prune (dir_clone, cancellable, NULL);
-
 
   return result;
 }
@@ -2509,7 +2492,7 @@ gboolean
 flatpak_installation_update_appstream_full_sync (FlatpakInstallation    *self,
                                                  const char             *remote_name,
                                                  const char             *arch,
-                                                 FlatpakProgressCallback progress,
+                                                 FlatpakProgressCallback progress_cb,
                                                  gpointer                progress_data,
                                                  gboolean               *out_changed,
                                                  GCancellable           *cancellable,
@@ -2517,9 +2500,7 @@ flatpak_installation_update_appstream_full_sync (FlatpakInstallation    *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(OstreeAsyncProgressFinish) ostree_progress = NULL;
-  gboolean res;
-  g_autoptr(GMainContextPopDefault) main_context = NULL;
+  g_autoptr(FlatpakProgress) progress = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -2530,23 +2511,16 @@ flatpak_installation_update_appstream_full_sync (FlatpakInstallation    *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return FALSE;
 
-  /* Work around ostree-pull spinning the default main context for the sync calls */
-  main_context = flatpak_main_context_new_default ();
+  if (progress_cb)
+    progress = flatpak_progress_new (progress_cb, progress_data);
 
-  if (progress)
-    ostree_progress = flatpak_progress_new (progress, progress_data);
-  else
-    ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
-
-  res = flatpak_dir_update_appstream (dir_clone,
-                                      remote_name,
-                                      arch,
-                                      out_changed,
-                                      ostree_progress,
-                                      cancellable,
-                                      error);
-
-  return res;
+  return flatpak_dir_update_appstream (dir_clone,
+                                       remote_name,
+                                       arch,
+                                       out_changed,
+                                       progress,
+                                       cancellable,
+                                       error);
 }
 
 
