@@ -332,11 +332,10 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
           g_autofree char *text = NULL;
           int row;
 
-          formatted_max = g_format_size (max);
-          if (transferred < 1024) // avoid "bytes"
-            formatted = g_strdup ("1.0 kB");
-          else
-            formatted = g_format_size (transferred);
+          // avoid "bytes"
+          formatted = transferred < 1000 ? g_format_size (1000) : g_format_size (transferred);
+          formatted_max = max < 1000 ? g_format_size (1000) : g_format_size (max);
+
           text = g_strdup_printf ("%s / %s", formatted, formatted_max);
           row = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (op), "row"));
           flatpak_table_printer_set_decimal_cell (cli->printer, row, cli->download_col, text);
