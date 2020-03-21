@@ -50,6 +50,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-error.h"
 #include "flatpak-oci-registry-private.h"
+#include "flatpak-progress-private.h"
 #include "flatpak-ref.h"
 #include "flatpak-run-private.h"
 #include "flatpak-utils-base-private.h"
@@ -112,7 +113,7 @@ static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
                                         const char          *ref,
                                         const char          *skip_if_current_is,
                                         const char          *token,
-                                        OstreeAsyncProgress *progress,
+                                        FlatpakProgress     *progress,
                                         GCancellable        *cancellable,
                                         GError             **error);
 
@@ -3617,16 +3618,6 @@ static gboolean repo_get_remote_collection_id (OstreeRepo *repo,
                                                char      **collection_id_out,
                                                GError    **error);
 
-static void
-async_result_cb (GObject      *obj,
-                 GAsyncResult *result,
-                 gpointer      user_data)
-{
-  GAsyncResult **result_out = user_data;
-
-  *result_out = g_object_ref (result);
-}
-
 gboolean
 flatpak_dir_find_latest_rev (FlatpakDir               *self,
                              FlatpakRemoteState       *state,
@@ -3647,12 +3638,10 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
        * LAN and USB sources. */
       g_auto(GVariantBuilder) find_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
       g_autoptr(GVariant) find_options = NULL;
-      g_autoptr(GAsyncResult) find_result = NULL;
       g_auto(OstreeRepoFinderResultv) results = NULL;
       OstreeCollectionRef collection_ref = { state->collection_id, (char *) ref };
       OstreeCollectionRef *collection_refs_to_fetch[2] = { &collection_ref, NULL };
       gsize i;
-      g_autoptr(GMainContextPopDefault) context = NULL;
 
       /* Find options */
       g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
@@ -3665,18 +3654,13 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 
       find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-      context = flatpak_main_context_new_default ();
-
-      ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
-                                      find_options,
-                                      NULL /* default finders */,
-                                      NULL /* no progress reporting */,
-                                      cancellable, async_result_cb, &find_result);
-
-      while (find_result == NULL)
-        g_main_context_iteration (context, TRUE);
-
-      results = ostree_repo_find_remotes_finish (self->repo, find_result, error);
+      results =
+        flatpak_ostree_repo_find_remotes_sync (self->repo,
+                                               (const OstreeCollectionRef * const *) collection_refs_to_fetch,
+                                               find_options,
+                                               NULL /* default finders */,
+                                               /* progress = */ NULL,
+                                               cancellable, error);
 
       if (results == NULL)
         return FALSE;
@@ -3905,11 +3889,9 @@ flatpak_dir_prepare_resolve_p2p_refs_helper (FlatpakDir             *self,
 {
   g_autoptr(GPtrArray) collection_refs_to_fetch = g_ptr_array_new ();
   g_autoptr(GPtrArray) commit_ids_to_fetch = NULL;
-  g_autoptr(GAsyncResult) find_result = NULL;
   g_auto(OstreeRepoFinderResultv) results = NULL;
   g_autoptr(GVariant) find_options = NULL;
   g_auto(GVariantBuilder) find_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
-  g_autoptr(GMainContextPopDefault) main_context = NULL;
   g_autoptr(GString) refs_str = NULL;
   int i;
 
@@ -3946,19 +3928,13 @@ flatpak_dir_prepare_resolve_p2p_refs_helper (FlatpakDir             *self,
                                                                       commit_ids_to_fetch->len)));
   find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-  main_context = flatpak_main_context_new_default ();
-
-  ostree_repo_find_remotes_async (state->child_repo,
-                                  (const OstreeCollectionRef * const *) collection_refs_to_fetch->pdata,
-                                  find_options,
-                                  NULL /* default finders */,
-                                  NULL /* no progress reporting */,
-                                  cancellable, async_result_cb, &find_result);
-
-  while (find_result == NULL)
-    g_main_context_iteration (main_context, TRUE);
-
-  results = ostree_repo_find_remotes_finish (state->child_repo, find_result, error);
+  results =
+    flatpak_ostree_repo_find_remotes_sync (state->child_repo,
+                                           (const OstreeCollectionRef * const *) collection_refs_to_fetch->pdata,
+                                           find_options,
+                                           NULL /* default finders */,
+                                           /* progress = */ NULL, cancellable,
+                                           error);
   if (results == NULL)
     return FALSE;
 
@@ -4099,9 +4075,7 @@ flatpak_dir_finish_resolve_p2p_refs (FlatpakDir              *self,
   OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY;
   GVariantBuilder pull_builder, ref_keyring_map_builder;
   g_autoptr(GVariant) pull_options = NULL;
-  g_autoptr(GAsyncResult) pull_result = NULL;
   g_autoptr(FlatpakRepoTransaction) transaction = NULL;
-  g_autoptr(GMainContextPopDefault) main_context = NULL;
   int i;
 
   if (state->results->pdata[0] == NULL)
@@ -4148,8 +4122,6 @@ flatpak_dir_finish_resolve_p2p_refs (FlatpakDir              *self,
 
   pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
-  main_context = flatpak_main_context_new_default ();
-
   transaction = flatpak_repo_transaction_start (state->child_repo, cancellable, error);
   if (transaction == NULL)
     return FALSE;
@@ -4171,15 +4143,11 @@ flatpak_dir_finish_resolve_p2p_refs (FlatpakDir              *self,
         }
     }
 
-  ostree_repo_pull_from_remotes_async (state->child_repo, (const OstreeRepoFinderResult * const *) state->results->pdata,
-                                       pull_options, NULL,
-                                       cancellable, async_result_cb,
-                                       &pull_result);
-
-  while (pull_result == NULL)
-    g_main_context_iteration (main_context, TRUE);
-
-  if (!ostree_repo_pull_from_remotes_finish (state->child_repo, pull_result, error))
+  if (!flatpak_ostree_repo_pull_from_remotes_sync (state->child_repo,
+                                                   (const OstreeRepoFinderResult * const *) state->results->pdata,
+                                                   pull_options,
+                                                   /* progress = */ NULL,
+                                                   cancellable, error))
     return FALSE;
 
   for (i = 0; resolves[i] != NULL; i++)
@@ -4341,7 +4309,7 @@ flatpak_dir_update_appstream_oci (FlatpakDir          *self,
                                   const char          *remote,
                                   const char          *arch,
                                   gboolean            *out_changed,
-                                  OstreeAsyncProgress *progress,
+                                  FlatpakProgress     *progress,
                                   GCancellable        *cancellable,
                                   GError             **error)
 {
@@ -4419,7 +4387,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                               const char          *remote,
                               const char          *arch,
                               gboolean            *out_changed,
-                              OstreeAsyncProgress *progress,
+                              FlatpakProgress     *progress,
                               GCancellable        *cancellable,
                               GError             **error)
 {
@@ -4620,7 +4588,7 @@ get_common_pull_options (GVariantBuilder     *builder,
                          const char          *current_local_checksum,
                          gboolean             force_disable_deltas,
                          OstreeRepoPullFlags  flags,
-                         OstreeAsyncProgress *progress)
+                         FlatpakProgress     *progress)
 {
   guint32 update_interval = 0;
   GVariantBuilder hdr_builder;
@@ -4660,7 +4628,7 @@ get_common_pull_options (GVariantBuilder     *builder,
                          g_variant_new_variant (g_variant_new_string ("flatpak/" PACKAGE_VERSION)));
 
   if (progress != NULL)
-    update_interval = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-interval"));
+    update_interval = flatpak_progress_get_update_interval (progress);
   if (update_interval == 0)
     update_interval = FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
 
@@ -4694,7 +4662,7 @@ repo_pull (OstreeRepo                           *self,
            const OstreeRepoFinderResult * const *results_to_fetch, /* (nullable) */
            FlatpakPullFlags                      flatpak_flags,
            OstreeRepoPullFlags                   flags,
-           OstreeAsyncProgress                  *progress,
+           FlatpakProgress                      *progress,
            GCancellable                         *cancellable,
            GError                              **error)
 {
@@ -4730,16 +4698,10 @@ repo_pull (OstreeRepo                           *self,
 
   if (collection_id != NULL)
     {
-      g_autoptr(GAsyncResult) find_result = NULL, pull_result = NULL;
       g_auto(OstreeRepoFinderResultv) results = NULL;
       OstreeCollectionRef collection_ref;
       OstreeCollectionRef *collection_refs_to_fetch[2];
       guint32 update_interval = 0;
-      g_autoptr(GMainContextPopDefault) context = NULL;
-      g_autoptr(FlatpakAsyncProgressChained) chained_progress = NULL;
-
-      context = flatpak_main_context_new_default ();
-      chained_progress = flatpak_progress_chain (progress);
 
       if (results_to_fetch == NULL)
         {
@@ -4762,7 +4724,7 @@ repo_pull (OstreeRepo                           *self,
           collection_refs_to_fetch[1] = NULL;
 
           if (progress != NULL)
-            update_interval = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-interval"));
+            update_interval = flatpak_progress_get_update_interval (progress);
           if (update_interval == 0)
             update_interval = FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
 
@@ -4777,16 +4739,12 @@ repo_pull (OstreeRepo                           *self,
 
           find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-          ostree_repo_find_remotes_async (self, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
-                                          find_options,
-                                          NULL /* default finders */,
-                                          chained_progress, cancellable,
-                                          async_result_cb, &find_result);
-
-          while (find_result == NULL)
-            g_main_context_iteration (context, TRUE);
-
-          results = ostree_repo_find_remotes_finish (self, find_result, error);
+          results =
+            flatpak_ostree_repo_find_remotes_sync (self,
+                                                   (const OstreeCollectionRef * const *) collection_refs_to_fetch,
+                                                   find_options,
+                                                   NULL /* default finders */,
+                                                   progress, cancellable, error);
           results_to_fetch = (const OstreeRepoFinderResult * const *) results;
         }
 
@@ -4814,15 +4772,9 @@ repo_pull (OstreeRepo                           *self,
 
           pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
-          ostree_repo_pull_from_remotes_async (self, results_to_fetch,
-                                               pull_options, chained_progress,
-                                               cancellable, async_result_cb,
-                                               &pull_result);
-
-          while (pull_result == NULL)
-            g_main_context_iteration (context, TRUE);
-
-          res = ostree_repo_pull_from_remotes_finish (self, pull_result, error);
+          res = flatpak_ostree_repo_pull_from_remotes_sync (self, results_to_fetch,
+                                                            pull_options, progress,
+                                                            cancellable, error);
         }
       else
         res = FALSE;
@@ -4860,8 +4812,10 @@ repo_pull (OstreeRepo                           *self,
 
       options = g_variant_ref_sink (g_variant_builder_end (&builder));
 
+      g_autoptr(FlatpakMainContext) main_context = flatpak_progress_push_main_context (progress);
+
       if (!ostree_repo_pull_with_options (self, remote_name, options,
-                                          progress, cancellable, error))
+                                          main_context->ostree_progress, cancellable, error))
         return translate_ostree_repo_pull_errors (error);
     }
 
@@ -4897,21 +4851,14 @@ ensure_soup_session (FlatpakDir *self)
     }
 }
 
-typedef struct
-{
-  OstreeAsyncProgress *progress;
-  guint64              previous_dl;
-} ExtraDataProgress;
-
 static void
 extra_data_progress_report (guint64  downloaded_bytes,
                             gpointer user_data)
 {
-  ExtraDataProgress *extra_progress = user_data;
+  FlatpakProgress *progress = FLATPAK_PROGRESS (user_data);
 
-  if (extra_progress->progress)
-    ostree_async_progress_set_uint64 (extra_progress->progress, "transferred-extra-data-bytes",
-                                      extra_progress->previous_dl + downloaded_bytes);
+  if (progress)
+    flatpak_progress_update_extra_data (progress, downloaded_bytes);
 }
 
 static gboolean
@@ -4923,7 +4870,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                               const char                           *token,
                               const OstreeRepoFinderResult * const *results,
                               FlatpakPullFlags                      flatpak_flags,
-                              OstreeAsyncProgress                  *progress,
+                              FlatpakProgress                      *progress,
                               GCancellable                         *cancellable,
                               GError                              **error)
 {
@@ -5001,24 +4948,9 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
     }
 
   if (progress)
-    {
-      ostree_async_progress_set (progress,
-                                 "outstanding-extra-data", "t", n_extra_data,
-                                 "total-extra-data", "t", n_extra_data,
-                                 "total-extra-data-bytes", "t", total_download_size,
-                                 "transferred-extra-data-bytes", "t", (guint64) 0,
-                                 "downloading-extra-data", "u", 0,
-                                 NULL);
-    }
+    flatpak_progress_init_extra_data (progress, n_extra_data, total_download_size);
 
   return TRUE;
-}
-
-static inline void
-reset_async_progress_extra_data (OstreeAsyncProgress *progress)
-{
-  if (progress)
-    ostree_async_progress_set_uint (progress, "downloading-extra-data", 0);
 }
 
 static gboolean
@@ -5028,7 +4960,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
                              const char          *ref,
                              const char          *rev,
                              FlatpakPullFlags     flatpak_flags,
-                             OstreeAsyncProgress *progress,
+                             FlatpakProgress     *progress,
                              GCancellable        *cancellable,
                              GError             **error)
 {
@@ -5041,7 +4973,6 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   g_autoptr(GFile) base_dir = NULL;
   int i;
   gsize n_extra_data;
-  ExtraDataProgress extra_data_progress = { NULL };
 
   extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
   if (extra_data_sources == NULL)
@@ -5058,14 +4989,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
   /* Other fields were already set in flatpak_dir_setup_extra_data() */
   if (progress)
-    {
-      ostree_async_progress_set (progress,
-                                 "start-time-extra-data", "t", g_get_monotonic_time (),
-                                 "downloading-extra-data", "u", 1,
-                                 NULL);
-    }
-
-  extra_data_progress.progress = progress;
+    flatpak_progress_start_extra_data (progress);
 
   base_dir = flatpak_get_user_base_dir_location ();
 
@@ -5100,7 +5024,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       if (!g_str_has_prefix (extra_data_uri, "http:") &&
           !g_str_has_prefix (extra_data_uri, "https:"))
         {
-          reset_async_progress_extra_data (progress);
+          flatpak_progress_reset_extra_data (progress);
           return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unsupported extra data uri %s"), extra_data_uri);
         }
 
@@ -5126,31 +5050,30 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
         {
           ensure_soup_session (self);
           bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, 0, NULL,
-                                         extra_data_progress_report, &extra_data_progress,
+                                         extra_data_progress_report, progress,
                                          cancellable, error);
         }
 
       if (bytes == NULL)
         {
-          reset_async_progress_extra_data (progress);
+          flatpak_progress_reset_extra_data (progress);
           g_prefix_error (error, _("While downloading %s: "), extra_data_uri);
           return FALSE;
         }
 
       if (g_bytes_get_size (bytes) != download_size)
         {
-          reset_async_progress_extra_data (progress);
+          flatpak_progress_reset_extra_data (progress);
           return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong size for extra data %s"), extra_data_uri);
         }
 
-      extra_data_progress.previous_dl += download_size;
-      if (progress)
-        ostree_async_progress_set_uint64 (progress, "outstanding-extra-data", n_extra_data - i - 1);
+      guint64 n_extra_data_remaining = n_extra_data - i - 1;
+      flatpak_progress_complete_extra_data_download (progress, download_size, n_extra_data_remaining);
 
       sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
       if (strcmp (sha256, extra_data_sha256) != 0)
         {
-          reset_async_progress_extra_data (progress);
+          flatpak_progress_reset_extra_data (progress);
           return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data %s"), extra_data_uri);
         }
 
@@ -5162,7 +5085,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
   extra_data = g_variant_ref_sink (g_variant_builder_end (extra_data_builder));
 
-  reset_async_progress_extra_data (progress);
+  flatpak_progress_reset_extra_data (progress);
 
   if (!ostree_repo_read_commit_detached_metadata (repo, rev, &detached_metadata,
                                                   cancellable, error))
@@ -5218,64 +5141,14 @@ lookup_oci_registry_uri_from_summary (GVariant *summary,
 }
 
 static void
-oci_pull_init_progress (OstreeAsyncProgress *progress)
-{
-  guint64 start_time = g_get_monotonic_time () - 2;
-
-  if (progress == NULL)
-    return;
-
-  ostree_async_progress_set (progress,
-                             "outstanding-fetches", "u", 0,
-                             "outstanding-writes", "u", 0,
-                             "fetched", "u", 0,
-                             "requested", "u", 0,
-                             "scanning", "u", 0,
-                             "scanned-metadata", "u", 0,
-                             "bytes-transferred", "t", (guint64) 0,
-                             "start-time", "t", start_time,
-                             "outstanding-metadata-fetches", "u", 0,
-                             "metadata-fetched", "u", 0,
-                             "outstanding-extra-data", "t", (guint64) 0,
-                             "total-extra-data", "t", (guint64) 0,
-                             "total-extra-data-bytes", "t", (guint64) 0,
-                             "transferred-extra-data-bytes", "t", (guint64) 0,
-                             "downloading-extra-data", "u", 0,
-                             "fetched-delta-parts", "u", 0,
-                             "total-delta-parts", "u", 0,
-                             "fetched-delta-fallbacks", "u", 0,
-                             "total-delta-fallbacks", "u", 0,
-                             "fetched-delta-part-size", "t", (guint64) 0,
-                             "total-delta-part-size", "t", (guint64) 0,
-                             "total-delta-part-usize", "t", (guint64) 0,
-                             "total-delta-superblocks", "u", 0,
-                             "status", "s", "",
-                             "caught-error", "b", FALSE,
-                             NULL);
-}
-
-static void
 oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
                       guint32 n_layers, guint32 pulled_layers,
                       gpointer data)
 {
-  OstreeAsyncProgress *progress = data;
+  FlatpakProgress *progress = data;
 
-  if (progress == NULL)
-    return;
-
-  /* Deltas */
-  ostree_async_progress_set (progress,
-                             "outstanding-fetches", "u", n_layers - pulled_layers,
-                             "fetched-delta-parts", "u", pulled_layers,
-                             "total-delta-parts", "u", n_layers,
-                             "fetched-delta-fallbacks", "u", 0,
-                             "total-delta-fallbacks", "u", 0,
-                             "bytes-transferred", "t", pulled_size,
-                             "total-delta-part-size", "t", total_size,
-                             "total-delta-part-usize", "t", total_size,
-                             "total-delta-superblocks", "u", 0,
-                             NULL);
+  if (progress)
+    flatpak_progress_update_oci_pull (progress, total_size, pulled_size, n_layers, pulled_layers);
 }
 
 static gboolean
@@ -5285,7 +5158,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                         const char          *ref,
                         const char          *skip_if_current_is,
                         const char          *token,
-                        OstreeAsyncProgress *progress,
+                        FlatpakProgress     *progress,
                         GCancellable        *cancellable,
                         GError             **error)
 {
@@ -5329,8 +5202,8 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   flatpak_oci_registry_set_token (registry, token);
 
-  g_assert (progress != NULL);
-  oci_pull_init_progress (progress);
+  if (progress)
+    flatpak_progress_start_oci_pull (progress);
 
   g_debug ("Mirroring OCI image %s", oci_digest);
 
@@ -5351,7 +5224,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
                       FlatpakPullFlags     flatpak_flags,
                       OstreeRepoPullFlags  flags,
                       const char          *token,
-                      OstreeAsyncProgress *progress,
+                      FlatpakProgress     *progress,
                       GCancellable        *cancellable,
                       GError             **error)
 {
@@ -5418,8 +5291,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (repo == NULL)
     repo = self->repo;
 
-  g_assert (progress != NULL);
-  oci_pull_init_progress (progress);
+  if (progress)
+    flatpak_progress_start_oci_pull (progress);
 
   g_debug ("Pulling OCI image %s", oci_digest);
 
@@ -5457,7 +5330,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
                   OstreeRepo                           *repo,
                   FlatpakPullFlags                      flatpak_flags,
                   OstreeRepoPullFlags                   flags,
-                  OstreeAsyncProgress                  *progress,
+                  FlatpakProgress                      *progress,
                   GCancellable                         *cancellable,
                   GError                              **error)
 {
@@ -5499,8 +5372,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
   if (*url == 0)
     return TRUE; /* Empty url, silently disables updates */
 
-  g_assert (progress != NULL);
-
   /* We get the rev ahead of time so that we know it for looking up e.g. extra-data
      and to make sure we're atomically using a single rev if we happen to do multiple
      pulls (e.g. with subpaths) */
@@ -5515,14 +5386,11 @@ flatpak_dir_pull (FlatpakDir                           *self,
         {
           GVariantBuilder find_builder;
           g_autoptr(GVariant) find_options = NULL;
-          g_autoptr(GAsyncResult) find_result = NULL;
           OstreeCollectionRef collection_ref;
           OstreeCollectionRef *collection_refs_to_fetch[2];
           gboolean force_disable_deltas = (flatpak_flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
           guint update_interval = 0;
           gsize i;
-          g_autoptr(GMainContextPopDefault) context = NULL;
-          g_autoptr(FlatpakAsyncProgressChained) chained_progress = NULL;
 
           /* FIXME: It would be nice to break out a helper function from
            * flatpak_dir_do_resolve_p2p_refs() that would resolve refs to
@@ -5543,7 +5411,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
           collection_refs_to_fetch[1] = NULL;
 
           if (progress != NULL)
-            update_interval = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-interval"));
+            update_interval = flatpak_progress_get_update_interval(progress);
           if (update_interval == 0)
             update_interval = FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
 
@@ -5552,19 +5420,12 @@ flatpak_dir_pull (FlatpakDir                           *self,
 
           find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
 
-          context = flatpak_main_context_new_default ();
-          chained_progress = flatpak_progress_chain (progress);
-
-          ostree_repo_find_remotes_async (self->repo, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
-                                          find_options,
-                                          NULL /* default finders */,
-                                          chained_progress, cancellable,
-                                          async_result_cb, &find_result);
-
-          while (find_result == NULL)
-            g_main_context_iteration (context, TRUE);
-
-          allocated_results = ostree_repo_find_remotes_finish (self->repo, find_result, error);
+          allocated_results =
+            flatpak_ostree_repo_find_remotes_sync (self->repo,
+                                                   (const OstreeCollectionRef * const *) collection_refs_to_fetch,
+                                                   find_options,
+                                                   NULL /* default finders */,
+                                                   progress, cancellable, error);
 
           results = (const OstreeRepoFinderResult * const *) allocated_results;
           if (results == NULL)
@@ -5686,7 +5547,7 @@ repo_pull_local_untrusted (FlatpakDir          *self,
                            const char         **dirs_to_pull,
                            const char          *ref,
                            const char          *checksum,
-                           OstreeAsyncProgress *progress,
+                           FlatpakProgress     *progress,
                            GCancellable        *cancellable,
                            GError             **error)
 {
@@ -5705,8 +5566,6 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   /* The ostree fetcher asserts if error is NULL */
   if (error == NULL)
     error = &dummy_error;
-
-  g_assert (progress != NULL);
 
   if (!repo_get_remote_collection_id (repo, remote_name, &collection_id, error))
     return FALSE;
@@ -5752,8 +5611,9 @@ repo_pull_local_untrusted (FlatpakDir          *self,
     }
 
   options = g_variant_ref_sink (g_variant_builder_end (&builder));
+  g_autoptr(FlatpakMainContext) main_context = flatpak_progress_push_main_context (progress);
   res = ostree_repo_pull_with_options (repo, url, options,
-                                       progress, cancellable, error);
+                                       main_context->ostree_progress, cancellable, error);
   if (!res)
     translate_ostree_repo_pull_errors (error);
 
@@ -5766,7 +5626,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                   const char          *remote_name,
                                   const char          *ref,
                                   const char         **subpaths,
-                                  OstreeAsyncProgress *progress,
+                                  FlatpakProgress     *progress,
                                   GCancellable        *cancellable,
                                   GError             **error)
 {
@@ -8879,7 +8739,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      const char         **opt_subpaths,
                      const char         **opt_previous_ids,
                      const char          *token,
-                     OstreeAsyncProgress *progress,
+                     FlatpakProgress     *progress,
                      GCancellable        *cancellable,
                      GError             **error)
 {
@@ -9560,7 +9420,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     const char                          **opt_subpaths,
                     const char                          **opt_previous_ids,
                     const char                           *token,
-                    OstreeAsyncProgress                  *progress,
+                    FlatpakProgress                      *progress,
                     GCancellable                         *cancellable,
                     GError                              **error)
 {
@@ -13508,7 +13368,6 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
                                                  GCancellable       *cancellable,
                                                  GError            **error)
 {
-  g_autoptr(OstreeAsyncProgressFinish) progress = ostree_async_progress_new ();
   FlatpakPullFlags flatpak_flags;
   gboolean gpg_verify;
   g_autofree char *checksum_from_summary = NULL;
@@ -13610,7 +13469,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
                                  child_repo,
                                  flatpak_flags,
                                  0,
-                                 progress, cancellable, error))
+                                 /* progress = */ NULL, cancellable, error))
             return FALSE;
 
           if (!child_repo_ensure_summary (child_repo, state, cancellable, error))
@@ -13638,7 +13497,7 @@ _flatpak_dir_fetch_remote_state_metadata_branch (FlatpakDir         *self,
 
   if (!flatpak_dir_pull (self, state, OSTREE_REPO_METADATA_REF, NULL, NULL, NULL, NULL, NULL,
                          flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
-                         progress, cancellable, error))
+                         /* progress = */ NULL, cancellable, error))
     return FALSE;
 
   return TRUE;
