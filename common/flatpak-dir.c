@@ -312,7 +312,7 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
   if (remote_state->refcount == 0)
     {
       g_free (remote_state->remote_name);
-      g_free (remote_state->sideload_collection_id);
+      g_free (remote_state->collection_id);
       g_clear_pointer (&remote_state->summary, g_variant_unref);
       g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
       g_clear_error (&remote_state->summary_fetch_error);
@@ -422,7 +422,7 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
           g_autofree char *sideload_checksum = NULL;
           VarRefInfoRef sideload_info;
 
-          if (flatpak_summary_lookup_ref (ss->summary, self->sideload_collection_id, ref, &sideload_checksum, &sideload_info))
+          if (flatpak_summary_lookup_ref (ss->summary, self->collection_id, ref, &sideload_checksum, &sideload_info))
             {
               guint64 timestamp = get_timestamp_from_ref_info (sideload_info);
 
@@ -4162,24 +4162,6 @@ repo_get_remote_collection_id (OstreeRepo *repo,
   return TRUE;
 }
 
-static gboolean
-repo_get_remote_sideload_collection_id (OstreeRepo *repo,
-                                        const char *remote_name,
-                                        char      **collection_id_out,
-                                        GError    **error)
-{
-  if (collection_id_out != NULL)
-    {
-      if (!ostree_repo_get_remote_option (repo, remote_name, "xa.sideload-collection-id",
-                                          NULL, collection_id_out, error))
-        return FALSE;
-      if (*collection_id_out != NULL && **collection_id_out == '\0')
-        g_clear_pointer (collection_id_out, g_free);
-    }
-
-  return TRUE;
-}
-
 /* Get options for the OSTree pull operation which can be shared between
  * collection-based and normal pulls. Update @builder in place. */
 static void
@@ -4260,7 +4242,7 @@ repo_pull (OstreeRepo                           *self,
            const char                          **dirs_to_pull,
            const char                           *ref_to_fetch,
            const char                           *rev_to_fetch, /* (nullable) */
-           const char                           *sideload_collection_id,
+           const char                           *collection_id,
            GFile                                *sideload_repo,
            const char                           *token,
            FlatpakPullFlags                      flatpak_flags,
@@ -4308,10 +4290,10 @@ repo_pull (OstreeRepo                           *self,
 
       g_debug ("Sideloading %s from %s in pull", ref_to_fetch, sideload_url);
 
-      g_assert (sideload_collection_id != NULL);
+      g_assert (collection_id != NULL);
 
       g_variant_builder_init (&colref_builder, G_VARIANT_TYPE ("a(sss)"));
-      g_variant_builder_add (&colref_builder, "(sss)", sideload_collection_id, ref_to_fetch, rev_to_fetch);
+      g_variant_builder_add (&colref_builder, "(sss)", collection_id, ref_to_fetch, rev_to_fetch);
 
       g_variant_builder_add (&builder, "{s@v}", "collection-refs",
                              g_variant_new_variant (g_variant_builder_end (&colref_builder)));
@@ -5025,7 +5007,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
 
   if (!repo_pull (repo, state->remote_name,
                   subdirs_arg ? (const char **) subdirs_arg->pdata : NULL,
-                  ref, rev, state->sideload_collection_id, sideload_repo, token, flatpak_flags, flags,
+                  ref, rev, state->collection_id, sideload_repo, token, flatpak_flags, flags,
                   progress,
                   cancellable, error))
     {
@@ -8435,7 +8417,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
   GBytes *gpg_data = NULL;
   g_autofree char *to_checksum = NULL;
   g_autofree char *remote = NULL;
-  g_autofree char *sideload_collection_id = NULL;
+  g_autofree char *collection_id = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
@@ -8445,7 +8427,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
                                   &origin,
                                   NULL, &fp_metadata, NULL,
                                   &included_gpg_data,
-                                  &sideload_collection_id,
+                                  &collection_id,
                                   error);
   if (metadata == NULL)
     return NULL;
@@ -8483,7 +8465,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
                                                  basename,
                                                  ref,
                                                  gpg_data,
-                                                 sideload_collection_id,
+                                                 collection_id,
                                                  &created_remote,
                                                  cancellable,
                                                  error);
@@ -10419,7 +10401,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
     {
       if (!flatpak_dir_has_remote (self, remote_or_uri, error))
         return NULL;
-      if (!repo_get_remote_sideload_collection_id (self->repo, remote_or_uri, &state->sideload_collection_id, error))
+      if (!repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
         return NULL;
       if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, FALSE, NULL, &state->allow_refs, &state->deny_refs, error))
         return NULL;
@@ -10481,7 +10463,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
     }
 
-  if (state->sideload_collection_id)
+  if (state->collection_id)
     {
       g_auto(GStrv) sideload_paths = flatpak_dir_get_sideload_repo_paths (self);
       for (int i = 0; sideload_paths != NULL && sideload_paths[i] != NULL; i++)
@@ -10679,7 +10661,7 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
       ref_map = var_summary_get_ref_map (summary);
       populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, state);
     }
-  else if (state->sideload_collection_id)
+  else if (state->collection_id)
     {
       g_autoptr(GHashTable) ref_mtimes = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free); /* Keys owned by ret_all_refs */
 
@@ -10696,7 +10678,7 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
             {
               VarCollectionMapRef map = var_collection_map_from_variant (v);
 
-              if (var_collection_map_lookup (map, state->sideload_collection_id, NULL, &ref_map))
+              if (var_collection_map_lookup (map, state->collection_id, NULL, &ref_map))
                 populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, ref_map, state);
             }
         }
@@ -10921,20 +10903,6 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
     return NULL;
 
   repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL);
-
-  return collection_id;
-}
-
-char *
-flatpak_dir_get_remote_sideload_collection_id (FlatpakDir *self,
-                                               const char *remote_name)
-{
-  char *collection_id = NULL;
-
-  if (!flatpak_dir_ensure_repo (self, NULL, NULL))
-    return NULL;
-
-  repo_get_remote_sideload_collection_id (self->repo, remote_name, &collection_id, NULL);
 
   return collection_id;
 }
@@ -11876,7 +11844,7 @@ create_origin_remote_config (OstreeRepo *repo,
                              const char *title,
                              const char *main_ref,
                              gboolean    gpg_verify,
-                             const char *sideload_collection_id,
+                             const char *collection_id,
                              GKeyFile  **new_config)
 {
   g_autofree char *remote = NULL;
@@ -11923,8 +11891,8 @@ create_origin_remote_config (OstreeRepo *repo,
   if (main_ref)
     g_key_file_set_string (*new_config, group, "xa.main-ref", main_ref);
 
-  if (sideload_collection_id)
-    g_key_file_set_string (*new_config, group, "xa.sideload-collection-id", sideload_collection_id);
+  if (collection_id)
+    g_key_file_set_string (*new_config, group, "collection-id", collection_id);
 
   return g_steal_pointer (&remote);
 }
@@ -11936,7 +11904,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   const char   *title,
                                   const char   *main_ref,
                                   GBytes       *gpg_data,
-                                  const char   *sideload_collection_id,
+                                  const char   *collection_id,
                                   gboolean     *changed_config,
                                   GCancellable *cancellable,
                                   GError      **error)
@@ -11944,7 +11912,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_autofree char *remote = NULL;
 
-  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, gpg_data != NULL, sideload_collection_id, &new_config);
+  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, gpg_data != NULL, collection_id, &new_config);
 
   if (new_config &&
       !flatpak_dir_modify_remote (self, remote, new_config,
@@ -12063,7 +12031,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
                                         GKeyFile   *keyfile,
                                         const char *default_arch,
                                         char      **remote_name_out,
-                                        char      **sideload_collection_id_out,
+                                        char      **collection_id_out,
                                         char      **ref_out,
                                         GError    **error)
 {
@@ -12106,8 +12074,8 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
         return FALSE;
     }
 
-  if (sideload_collection_id_out != NULL)
-    *sideload_collection_id_out = g_steal_pointer (&collection_id);
+  if (collection_id_out != NULL)
+    *collection_id_out = g_steal_pointer (&collection_id);
 
   *remote_name_out = g_steal_pointer (&remote);
   *ref_out = (char *) g_steal_pointer (&ref);
@@ -12746,7 +12714,7 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
                       if (strcmp (key, "xa.redirect-url") == 0)
                         g_ptr_array_add (updated_params, g_strdup ("url"));
                       else if (strcmp (key, OSTREE_META_KEY_DEPLOY_COLLECTION_ID) == 0)
-                        g_ptr_array_add (updated_params, g_strdup ("xa.sideload-collection-id"));
+                        g_ptr_array_add (updated_params, g_strdup ("collection-id"));
                       else
                         g_ptr_array_add (updated_params, g_strdup (key));
                       g_ptr_array_add (updated_params, g_strdup (value));

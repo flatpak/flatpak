@@ -115,7 +115,7 @@ get_config_from_opts (GKeyFile *config,
     }
 
   if (opt_collection_id)
-    g_key_file_set_string (config, group, "xa.sideload-collection-id", opt_collection_id);
+    g_key_file_set_string (config, group, "collection-id", opt_collection_id);
 
   if (opt_title)
     {

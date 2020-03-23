@@ -47,7 +47,7 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^xa.sideload-collection-id='
+assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
 
 # Change its configuration to include a collection ID, update the repository,
 # but don’t mark the collection ID as to be deployed yet. Ensure it doesn’t
@@ -63,7 +63,7 @@ assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
-assert_not_file_has_content ${FL_DIR}/repo/config '^xa.sideload-collection-id='
+assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
 
 ok "1 update repo config without deploying collection ID"
 
@@ -76,8 +76,7 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
-assert_file_has_content ${FL_DIR}/repo/config '^xa.sideload-collection-id=org\.test\.Collection$'
+assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
 ok "2 update repo config to deploy collection ID"
 
@@ -92,7 +91,7 @@ ok "2 update repo config to deploy collection ID"
 ostree --repo=repos/test summary --update --add-metadata="ostree.deploy-collection-id='net.malicious.NewCollection'"
 ${FLATPAK} ${U} update org.test.App master
 
-assert_file_has_content ${FL_DIR}/repo/config '^xa.sideload-collection-id=org\.test\.Collection$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^xa.sideload-collection-id=net\.malicious\.NewCollection$'
+assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=net\.malicious\.NewCollection$'
 
 ok "3 update repo config with different collection ID"

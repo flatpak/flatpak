@@ -116,7 +116,7 @@ typedef struct {
 typedef struct
 {
   char     *remote_name;
-  char     *sideload_collection_id;
+  char     *collection_id;
   GVariant *summary;
   GBytes   *summary_sig_bytes;
   GError   *summary_fetch_error;
@@ -780,7 +780,7 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *title,
                                              const char   *main_ref,
                                              GBytes       *gpg_data,
-                                             const char   *sideload_collection_id,
+                                             const char   *collection_id,
                                              gboolean     *changed_config,
                                              GCancellable *cancellable,
                                              GError      **error);
@@ -790,7 +790,7 @@ gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
                                                    GKeyFile   *keyfile,
                                                    const char *default_arch,
                                                    char      **remote_name_out,
-                                                   char      **sideload_collection_id_out,
+                                                   char      **collection_id_out,
                                                    char      **ref_out,
                                                    GError    **error);
 gboolean   flatpak_dir_create_suggested_remote_for_ref_file (FlatpakDir *self,
@@ -835,8 +835,6 @@ char      *flatpak_dir_get_remote_icon (FlatpakDir *self,
                                         const char *remote_name);
 char      *flatpak_dir_get_remote_collection_id (FlatpakDir *self,
                                                  const char *remote_name);
-char      *flatpak_dir_get_remote_sideload_collection_id (FlatpakDir *self,
-                                                          const char *remote_name);
 char      *flatpak_dir_get_remote_main_ref (FlatpakDir *self,
                                             const char *remote_name);
 gboolean   flatpak_dir_get_remote_oci (FlatpakDir *self,

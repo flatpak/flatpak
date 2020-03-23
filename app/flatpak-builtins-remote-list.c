@@ -154,7 +154,7 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                 }
               else if (strcmp (columns[k].name, "collection") == 0)
                 {
-                  g_autofree char *id = flatpak_dir_get_remote_sideload_collection_id (dir, remote_name);
+                  g_autofree char *id = flatpak_dir_get_remote_collection_id (dir, remote_name);
                   if (id != NULL)
                     flatpak_table_printer_add_column (printer, id);
                   else

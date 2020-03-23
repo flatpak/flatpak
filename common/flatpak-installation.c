@@ -739,7 +739,7 @@ get_ref (FlatpakDir   *dir,
   g_autofree char *deploy_subdirname = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
   g_autofree const char **subpaths = NULL;
-  g_autofree char *sideload_collection_id = NULL;
+  g_autofree char *collection_id = NULL;
   gboolean is_current = FALSE;
   guint64 installed_size = 0;
 
@@ -769,12 +769,12 @@ get_ref (FlatpakDir   *dir,
 
   latest_commit = flatpak_dir_read_latest (dir, origin, full_ref, &latest_alt_id, NULL, NULL);
 
-  sideload_collection_id = flatpak_dir_get_remote_sideload_collection_id (dir, origin);
+  collection_id = flatpak_dir_get_remote_collection_id (dir, origin);
 
   return flatpak_installed_ref_new (full_ref,
                                     alt_id ? alt_id : commit,
                                     latest_alt_id ? latest_alt_id : latest_commit,
-                                    origin, sideload_collection_id, subpaths,
+                                    origin, collection_id, subpaths,
                                     deploy_path,
                                     installed_size,
                                     is_current,
@@ -2488,7 +2488,7 @@ flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
       const gchar *ref_commit = value;
       FlatpakRemoteRef *ref;
 
-      ref = flatpak_remote_ref_new (ref_name, ref_commit, remote_or_uri, state->sideload_collection_id, state);
+      ref = flatpak_remote_ref_new (ref_name, ref_commit, remote_or_uri, state->collection_id, state);
 
       if (ref)
         g_ptr_array_add (refs, ref);
@@ -2589,7 +2589,7 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   checksum = g_hash_table_lookup (ht, ref);
 
   if (checksum != NULL)
-    return flatpak_remote_ref_new (ref, checksum, remote_name, state->sideload_collection_id, state);
+    return flatpak_remote_ref_new (ref, checksum, remote_name, state->collection_id, state);
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REF_NOT_FOUND,
                "Reference %s doesn't exist in remote", ref);

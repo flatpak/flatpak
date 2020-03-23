@@ -322,7 +322,7 @@ FlatpakRemoteRef *
 flatpak_remote_ref_new (const char           *full_ref,
                         const char           *commit,
                         const char           *remote_name,
-                        const char           *sideload_collection_id,
+                        const char           *collection_id,
                         FlatpakRemoteState   *state)
 {
   FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
@@ -367,7 +367,7 @@ flatpak_remote_ref_new (const char           *full_ref,
                       "branch", parts[3],
                       "commit", commit,
                       "remote-name", remote_name,
-                      "collection-id", sideload_collection_id,
+                      "collection-id", collection_id,
                       "installed-size", installed_size,
                       "download-size", download_size,
                       "metadata", metadata_bytes,

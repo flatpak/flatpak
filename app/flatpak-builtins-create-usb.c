@@ -167,7 +167,7 @@ add_related (GHashTable   *all_refs,
       ext_remote = flatpak_deploy_data_get_origin (ext_deploy_data);
       if (ext_remote == NULL)
         return FALSE;
-      ext_collection_id = flatpak_dir_get_remote_sideload_collection_id (dir, ext_remote);
+      ext_collection_id = flatpak_dir_get_remote_collection_id (dir, ext_remote);
       if (ext_collection_id == NULL)
         {
           g_printerr (_("Warning: Omitting related ref ‘%s’ because its remote ‘%s’ does not have a collection ID set.\n"),
@@ -239,7 +239,7 @@ add_runtime (GHashTable   *all_refs,
   runtime_remote = flatpak_dir_get_origin (dir, runtime_ref, cancellable, error);
   if (runtime_remote == NULL)
     return FALSE;
-  runtime_collection_id = flatpak_dir_get_remote_sideload_collection_id (dir, runtime_remote);
+  runtime_collection_id = flatpak_dir_get_remote_collection_id (dir, runtime_remote);
   if (runtime_collection_id == NULL)
     return flatpak_fail (error,
                          _("Remote ‘%s’ does not have a collection ID set, which is required for P2P distribution of ‘%s’."),
@@ -605,7 +605,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       if (remote == NULL)
         return FALSE;
 
-      ref_collection_id = flatpak_dir_get_remote_sideload_collection_id (dir, remote);
+      ref_collection_id = flatpak_dir_get_remote_collection_id (dir, remote);
       if (ref_collection_id == NULL)
         return flatpak_fail (error,
                              _("Remote ‘%s’ does not have a collection ID set, which is required for P2P distribution of ‘%s’."),

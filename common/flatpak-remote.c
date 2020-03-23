@@ -368,7 +368,7 @@ flatpak_remote_get_collection_id (FlatpakRemote *self)
     return g_strdup (priv->local_collection_id);
 
   if (priv->dir)
-    return flatpak_dir_get_remote_sideload_collection_id (priv->dir, priv->name);
+    return flatpak_dir_get_remote_collection_id (priv->dir, priv->name);
 
   return NULL;
 }
@@ -1250,9 +1250,9 @@ flatpak_remote_commit (FlatpakRemote *self,
   if (priv->local_collection_id_set)
     {
       if (priv->local_collection_id != NULL)
-        g_key_file_set_string (config, group, "xa.sideload-collection-id", priv->local_collection_id);
+        g_key_file_set_string (config, group, "collection-id", priv->local_collection_id);
       else
-        g_key_file_remove_key (config, group, "xa.sideload-collection-id", NULL);
+        g_key_file_remove_key (config, group, "collection-id", NULL);
     }
 
   if (priv->local_title_set)
