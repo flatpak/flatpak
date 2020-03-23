@@ -350,6 +350,25 @@ get_timestamp_from_ref_info (VarRefInfoRef info)
   return GUINT64_FROM_BE(var_metadata_lookup_uint64 (metadata, OSTREE_COMMIT_TIMESTAMP, 0));
  }
 
+
+GFile *
+flatpak_remote_state_lookup_sideload_checksum (FlatpakRemoteState *self,
+                                               char               *checksum)
+{
+  for (int i = 0; i < self->sideload_repos->len; i++)
+    {
+      FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
+      OstreeRepoCommitState commit_state;
+
+      if (ostree_repo_load_commit (ss->repo, checksum, NULL, &commit_state, NULL) &&
+          commit_state == OSTREE_REPO_COMMIT_STATE_NORMAL)
+        return g_object_ref (ostree_repo_get_path (ss->repo));
+    }
+
+  return NULL;
+}
+
+
 /* Returns TRUE if the ref is found in the summary or cache.
  * out_checksum and out_variant are only set when the ref is found.
  */
@@ -4968,8 +4987,11 @@ flatpak_dir_pull (FlatpakDir                           *self,
         }
     }
 
-  g_debug ("%s: Using commit %s for pull of ref %s from remote %s",
-           G_STRFUNC, rev, ref, state->remote_name);
+  g_debug ("%s: Using commit %s for pull of ref %s from remote %s%s%s",
+           G_STRFUNC, rev, ref, state->remote_name,
+           sideload_repo ? "sideloaded from " : "",
+           sideload_repo ? flatpak_file_get_path_cached (sideload_repo) : ""
+           );
 
   if (repo == NULL)
     repo = self->repo;

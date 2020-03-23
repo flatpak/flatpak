@@ -2630,7 +2630,11 @@ resolve_ops (FlatpakTransaction *self,
           g_autoptr(GFile) sideload_path = NULL;
 
           if (op->commit != NULL)
-            checksum = g_strdup (op->commit);
+            {
+              checksum = g_strdup (op->commit);
+              /* Check if this is available offline and if so, use that */
+              sideload_path = flatpak_remote_state_lookup_sideload_checksum (state, op->commit);
+            }
           else
             {
               g_autofree char *latest_checksum = NULL;
