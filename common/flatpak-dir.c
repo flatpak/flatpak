@@ -2925,6 +2925,86 @@ flatpak_dir_ensure_path (FlatpakDir   *self,
     }
 }
 
+gboolean
+flatpak_dir_migrate_config (FlatpakDir   *self,
+                            gboolean     *changed,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  g_auto(GStrv) remotes = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+  int i;
+
+  if (changed != NULL)
+    *changed = FALSE;
+
+  /* Only do anything if it exists */
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, NULL))
+    return TRUE;
+
+  remotes = flatpak_dir_list_remotes (self, cancellable, NULL);
+  if (remotes == NULL)
+    return TRUE;
+
+  /* Enable gpg-verify-summary for all remotes with a collection id *and* gpg-verify set, because
+   * we want to use summary verification, but older versions of collection-id didn't work with it */
+  for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
+    {
+      g_autofree char *remote_collection_id = NULL;
+      const char *remote = remotes[i];
+      gboolean gpg_verify_summary;
+      gboolean gpg_verify;
+
+      if (flatpak_dir_get_remote_disabled (self, remote))
+        continue;
+
+      remote_collection_id = flatpak_dir_get_remote_collection_id (self, remotes[i]);
+      if (remote_collection_id == NULL)
+        continue;
+
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote, &gpg_verify_summary, NULL))
+        continue;
+
+      if (!ostree_repo_remote_get_gpg_verify (self->repo, remote, &gpg_verify, NULL))
+        continue;
+
+      if (gpg_verify && !gpg_verify_summary)
+        {
+          g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote);
+          if (config == NULL)
+            config = ostree_repo_copy_config (flatpak_dir_get_repo (self));
+
+          g_debug ("Migrating remote '%s' to gpg-verify-summary", remote);
+          g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
+        }
+    }
+
+  if (config != NULL)
+    {
+      if (flatpak_dir_use_system_helper (self, NULL))
+        {
+          g_autoptr(GError) local_error = NULL;
+          const char *installation = flatpak_dir_get_id (self);
+
+          if (!flatpak_dir_system_helper_call_ensure_repo (self,
+                                                           FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
+                                                           installation ? installation : "",
+                                                           NULL, &local_error))
+            g_debug ("Failed to migrate system config: %s", local_error->message);
+        }
+      else
+        {
+          if (!ostree_repo_write_config (self->repo, config, error))
+            return FALSE;
+        }
+
+      if (changed != NULL)
+        *changed = FALSE;
+    }
+
+  return TRUE;
+}
+
 /* Warning: This is not threadsafe, don't use in libflatpak */
 gboolean
 flatpak_dir_recreate_repo (FlatpakDir   *self,

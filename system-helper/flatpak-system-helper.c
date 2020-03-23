@@ -1353,6 +1353,7 @@ handle_ensure_repo (FlatpakSystemHelper   *object,
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
+  g_autoptr(GError) local_error = NULL;
 
   g_debug ("EnsureRepo %u %s", arg_flags, arg_installation);
 
@@ -1375,6 +1376,9 @@ handle_ensure_repo (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
+
+  if (!flatpak_dir_migrate_config (system, NULL, NULL, &local_error))
+    g_warning ("Failed to migrate configuration for installation %s: %s", arg_installation, local_error->message);
 
   flatpak_system_helper_complete_ensure_repo (object, invocation);
 

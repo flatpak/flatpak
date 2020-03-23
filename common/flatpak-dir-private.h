@@ -896,6 +896,10 @@ FlatpakRemoteState * flatpak_dir_get_remote_state_for_summary (FlatpakDir   *sel
                                                                GBytes       *opt_summary_sig,
                                                                GCancellable *cancellable,
                                                                GError      **error);
+gboolean flatpak_dir_migrate_config (FlatpakDir   *self,
+                                     gboolean     *changed,
+                                     GCancellable *cancellable,
+                                     GError      **error);
 gboolean flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                               const char   *remote,
                                               gboolean      only_cached,

@@ -2240,6 +2240,9 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
 
   /* Collect all dir+remotes used in this transaction */
 
+  if (!flatpak_dir_migrate_config (priv->dir, &some_updated, cancellable, error))
+    return FALSE;
+
   for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;

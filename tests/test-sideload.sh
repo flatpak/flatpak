@@ -27,7 +27,7 @@ USE_COLLECTIONS_IN_CLIENT=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..7"
+echo "1..8"
 
 #Regular repo
 setup_repo
@@ -161,3 +161,18 @@ assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"
 ${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
 
 ok "update offline to new version"
+
+assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+
+ostree --repo=$FL_DIR/repo config set --group='remote "test-repo"' gpg-verify-summary false
+
+assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+
+${FLATPAK} ${U} update -y
+
+assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+
+ok "migrate to gpg-verify-summary"
