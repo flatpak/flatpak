@@ -12801,18 +12801,6 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
                 {
                   has_changed = TRUE;
                   g_key_file_set_string (config, group, key, new_val);
-
-                  /* Special case for collection-id: if it’s set, gpg-verify-summary
-                   * must be set to false. The logic above ensures that the
-                   * collection-id is only set if we’re transitioning from an
-                   * unset to a set collection-ID. We *must not* allow the
-                   * collection ID to be changed from one set value to another
-                   * without the user manually verifying it; or a malicious
-                   * repository could assume the collection ID of another without
-                   * the user’s consent. */
-                  if (g_str_equal (key, "collection-id") &&
-                      new_val != NULL && *new_val != '\0')
-                    g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
                 }
             }
 

@@ -2876,7 +2876,7 @@ flatpak_parse_repofile (const char   *remote_name,
   /* If a collection ID is set, refs are verified from commit metadata rather
    * than the summary file. */
   g_key_file_set_boolean (config, group, "gpg-verify-summary",
-                          (gpg_key != NULL && collection_id == NULL));
+                          (gpg_key != NULL));
 
   authenticator_name = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                               FLATPAK_REPO_AUTHENTICATOR_NAME_KEY, NULL);
