@@ -27,14 +27,15 @@ USE_COLLECTIONS_IN_CLIENT=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..3"
+echo "1..7"
 
 #Regular repo
 setup_repo
 
-${FLATPAK} ${U} install -y test-repo org.test.Hello
 # Ensure we have the full locale extension:
-${FLATPAK} ${U} update -y --subpath=
+${FLATPAK} ${U} config  --set languages "*"
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
 
 mkdir usb_dir
 
@@ -80,3 +81,83 @@ ${FLATPAK} ${U} update --appstream test-repo
 assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml
 
 ok "updated sideloaded appstream"
+
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
+${FLATPAK} ${U} uninstall -y --all
+
+# Disable sideload repo and "break" online repo
+${FLATPAK} ${U} config --unset sideload-repos
+mv repos/test/objects repos/test/objects.disabled
+
+# Ensure this fails (but still loads summary)
+if ${FLATPAK} ${U} install -y test-repo org.test.Hello &> install-error-log; then
+    assert_not_reached "Disabled online install broken"
+fi
+assert_file_has_content install-error-log "Server returned status 404: Not Found"
+
+${FLATPAK} ${U} config --set sideload-repos ${SIDELOAD_REPO}
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
+
+# Re-enable online repo
+mv repos/test/objects.disabled repos/test/objects
+
+ok "installed sideloaded app when online"
+
+OLD_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/${ARCH}/master)
+
+make_updated_app
+update_repo
+
+NEW_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/$ARCH/master)
+
+${FLATPAK} ${U} update -y
+
+# Prepare sideload repo for NEW_COMMIT
+${FLATPAK} ${U} create-usb --destination-repo=repo2 usb_dir org.test.Hello
+
+UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"
+
+# Update again should do nothing
+${FLATPAK} ${U} update -y
+UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"
+
+# Ensure that offline update don't downgrade to older version
+${FLATPAK} ${U} remote-modify --url="http://no.127.0.0.1:${port}/test" test-repo
+${FLATPAK} ${U} update -y
+UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"
+
+ok "updates from sideload don't go backwards"
+
+if [ x${USE_SYSTEMDIR-} == xyes ]; then
+    # --commit + --system works only as root, so lets just "fake it" by installing the current sideload version
+    ${FLATPAK} ${U} uninstall -y --no-related org.test.Hello
+    ${FLATPAK} ${U} install -y org.test.Hello
+else
+    # Try (offline) to update to the old version
+    ${FLATPAK} ${U} update -y --commit $OLD_COMMIT org.test.Hello
+fi
+
+UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$OLD_COMMIT" "$UPDATED_COMMIT"
+
+ok "update to explicit old version"
+
+# Switch to updated usb repo
+mv usb_dir/repo usb_dir/repo.old
+mv usb_dir/repo2 usb_dir/repo
+
+# And update to it (offline)
+${FLATPAK} ${U} update -y
+
+UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"
+
+# Re enable (go online)
+${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
+
+ok "update offline to new version"
