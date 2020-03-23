@@ -45,7 +45,7 @@ ok () {
     # Wrap this to avoid set -x showing the echo commands
     {
         echo "ok $@";
-        echo "========================================================================";
+        echo "================ $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]} ================";
     } 2> /dev/null
 }
 
@@ -125,31 +125,31 @@ export FLATPAK="${CMD_PREFIX} flatpak"
 
 assert_streq () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    test "$1" = "$2" || (echo 1>&2 "$1 != $2"; exit 1)
+    test "$1" = "$2" || (echo 1>&2 "$1 != $2 at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
 assert_not_streq () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    (! test "$1" = "$2") || (echo 1>&2 "$1 == $2"; exit 1)
+    (! test "$1" = "$2") || (echo 1>&2 "$1 == $2 at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
 assert_has_file () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    test -f "$1" || (echo 1>&2 "Couldn't find '$1'"; exit 1)
+    test -f "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
 assert_has_symlink () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    test -L "$1" || (echo 1>&2 "Couldn't find '$1'"; exit 1)
+    test -L "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
 assert_has_dir () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    test -d "$1" || (echo 1>&2 "Couldn't find '$1'"; exit 1)
+    test -d "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
@@ -157,7 +157,7 @@ assert_not_has_file () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if test -f "$1"; then
         sed -e 's/^/# /' < "$1" >&2
-        echo 1>&2 "File '$1' exists"
+        echo 1>&2 "File '$1' exists at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -167,7 +167,7 @@ assert_not_file_has_content () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if grep -q -e "$2" "$1"; then
         sed -e 's/^/# /' < "$1" >&2
-        echo 1>&2 "File '$1' incorrectly matches regexp '$2'"
+        echo 1>&2 "File '$1' incorrectly matches regexp '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -177,7 +177,7 @@ assert_file_has_mode () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     mode=$(stat -c '%a' $1)
     if [ "$mode" != "$2" ]; then
-        echo 1>&2 "File '$1' has wrong mode: expected $2, but got $mode"
+        echo 1>&2 "File '$1' has wrong mode: expected $2, but got $mode at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -186,7 +186,7 @@ assert_file_has_mode () {
 assert_not_has_dir () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if test -d "$1"; then
-        echo 1>&2 "Directory '$1' exists"; exit 1
+        echo 1>&2 "Directory '$1' exists at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1
     fi
     } 3> /dev/null
 }
@@ -195,7 +195,7 @@ assert_file_has_content () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if ! grep -q -e "$2" "$1"; then
         sed -e 's/^/# /' < "$1" >&2
-        echo 1>&2 "File '$1' doesn't match regexp '$2'"
+        echo 1>&2 "File '$1' doesn't match regexp '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -206,7 +206,7 @@ assert_log_has_gpg_signature_error () {
     if ! grep -q -e "GPG signatures found, but none are in trusted keyring" "$1"; then
         if ! grep -q -e "Can't check signature: public key not found" "$1"; then
             sed -e 's/^/# /' < "$1" >&2
-            echo 1>&2 "File '$1' doesn't have gpg signature error"
+            echo 1>&2 "File '$1' doesn't have gpg signature error at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
             exit 1
         fi
     fi
@@ -217,7 +217,7 @@ assert_symlink_has_content () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if ! readlink "$1" | grep -q -e "$2"; then
         readlink "$1" |sed -e 's/^/# /' >&2
-        echo 1>&2 "Symlink '$1' doesn't match regexp '$2'"
+        echo 1>&2 "Symlink '$1' doesn't match regexp '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -227,7 +227,7 @@ assert_file_empty() {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if test -s "$1"; then
         sed -e 's/^/# /' < "$1" >&2
-        echo 1>&2 "File '$1' is not empty"
+        echo 1>&2 "File '$1' is not empty at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -243,7 +243,7 @@ assert_remote_has_config () {
 assert_remote_has_no_config () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if ostree config --repo=$FL_DIR/repo get --group 'remote "'"$1"'"' "$2" > /dev/null; then
-        echo 1>&2 "Remote '$1' unexpectedly has key '$2'"
+        echo 1>&2 "Remote '$1' unexpectedly has key '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
