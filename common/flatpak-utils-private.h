@@ -450,6 +450,9 @@ gboolean flatpak_repo_set_collection_id (OstreeRepo *repo,
 gboolean flatpak_repo_set_deploy_collection_id (OstreeRepo *repo,
                                                 gboolean    deploy_collection_id,
                                                 GError    **error);
+gboolean flatpak_repo_set_deploy_sideload_collection_id (OstreeRepo *repo,
+                                                         gboolean    deploy_collection_id,
+                                                         GError    **error);
 gboolean flatpak_repo_set_gpg_keys (OstreeRepo *repo,
                                     GBytes     *bytes,
                                     GError    **error);

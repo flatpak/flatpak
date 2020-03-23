@@ -12763,6 +12763,7 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
     "xa.authenticator-name",
     "xa.authenticator-install",
     OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
+    "xa.deploy-collection-id", /* This is a new version only supported in post p2p flatpak (1.7) */
     NULL
   };
   static const char *const supported_param_prefixes[] = {
@@ -12816,6 +12817,8 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
                       if (strcmp (key, "xa.redirect-url") == 0)
                         g_ptr_array_add (updated_params, g_strdup ("url"));
                       else if (strcmp (key, OSTREE_META_KEY_DEPLOY_COLLECTION_ID) == 0)
+                        g_ptr_array_add (updated_params, g_strdup ("collection-id"));
+                      else if (strcmp (key, "xa.deploy-collection-id") == 0)
                         g_ptr_array_add (updated_params, g_strdup ("collection-id"));
                       else
                         g_ptr_array_add (updated_params, g_strdup (key));

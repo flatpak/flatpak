@@ -41,6 +41,7 @@ static char *opt_icon;
 static char *opt_redirect_url;
 static char *opt_default_branch;
 static char *opt_collection_id = NULL;
+static gboolean opt_deploy_sideload_collection_id = FALSE;
 static gboolean opt_deploy_collection_id = FALSE;
 static char **opt_gpg_import;
 static char *opt_generate_delta_from;
@@ -68,6 +69,7 @@ static GOptionEntry options[] = {
   { "icon", 0, 0, G_OPTION_ARG_STRING, &opt_icon, N_("URL for an icon for this repository"), N_("URL") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
+  { "deploy-sideload-collection-id", 0, 0, G_OPTION_ARG_NONE, &opt_deploy_sideload_collection_id, N_("Permanently deploy collection ID to client remote configurations, only for sideload support"), NULL },
   { "deploy-collection-id", 0, 0, G_OPTION_ARG_NONE, &opt_deploy_collection_id, N_("Permanently deploy collection ID to client remote configurations"), NULL },
   { "authenticator-name", 0, 0, G_OPTION_ARG_STRING, &opt_authenticator_name, N_("Name of authenticator for this repository"), N_("NAME") },
   { "authenticator-install", 0, 0, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Autoinstall authenticator for this repository"), NULL },
@@ -576,6 +578,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       if (!flatpak_repo_set_collection_id (repo, new_collection_id, error))
         return FALSE;
     }
+
+  if (opt_deploy_sideload_collection_id &&
+      !flatpak_repo_set_deploy_sideload_collection_id (repo, TRUE, error))
+    return FALSE;
 
   if (opt_deploy_collection_id &&
       !flatpak_repo_set_deploy_collection_id (repo, TRUE, error))

@@ -70,12 +70,28 @@ ok "1 update repo config without deploying collection ID"
 # Now mark the collection ID as to be deployed. The client configuration should
 # be updated.
 UPDATE_REPO_ARGS="--collection-id=org.test.Collection --deploy-collection-id" update_repo
+assert_file_has_content repos/test/config '^deploy-collection-id=true$'
+
 ${FLATPAK} ${U} update -y org.test.App master
 
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+
+# Try the deploy for sideload only method
+sed -i "s/deploy-collection-id=true//" repos/test/config
+assert_not_file_has_content repos/test/config '^deploy-collection-id=true$'
+
+flatpak remote-modify --collection-id= test-repo
+assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+
+UPDATE_REPO_ARGS="--collection-id=org.test.Collection --deploy-sideload-collection-id" update_repo
+assert_file_has_content repos/test/config '^deploy-sideload-collection-id=true$'
+
+${FLATPAK} ${U} update -y org.test.App master
+
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
 ok "2 update repo config to deploy collection ID"
