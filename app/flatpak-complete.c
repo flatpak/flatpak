@@ -194,7 +194,7 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
 
   if (remote)
     {
-      refs = flatpak_dir_find_remote_refs (dir, completion->argv[1],
+      refs = flatpak_dir_find_remote_refs (dir, completion->argv[1], NULL,
                                            (element > 1) ? id : NULL,
                                            (element > 3) ? branch : NULL,
                                            NULL, /* default branch */

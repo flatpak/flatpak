@@ -135,7 +135,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
                                       &matched_kinds, &id, &arch, &branch, error))
     return FALSE;
 
-  ref = flatpak_dir_find_remote_ref (preferred_dir, remote, id, branch, default_branch, arch,
+  ref = flatpak_dir_find_remote_ref (preferred_dir, remote, NULL, id, branch, default_branch, arch,
                                      matched_kinds, &kind, cancellable, error);
   if (ref == NULL)
     return FALSE;

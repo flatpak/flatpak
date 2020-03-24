@@ -156,6 +156,7 @@ struct _FlatpakTransactionPrivate
   GHashTable                  *last_op_for_ref;
   GHashTable                  *remote_states; /* (element-type utf8 FlatpakRemoteState) */
   GPtrArray                   *extra_dependency_dirs;
+  GPtrArray                   *extra_sideload_repos;
   GList                       *ops;
   GPtrArray                   *added_origin_remotes;
 
@@ -478,6 +479,27 @@ flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
 
   g_ptr_array_add (priv->extra_dependency_dirs,
                    flatpak_installation_clone_dir_noensure (installation));
+}
+
+/**
+ * flatpak_transaction_add_sideload_repo:
+ * @self: a #FlatpakTransaction
+ * @path: a path to a local flatpak repository
+ *
+ * Adds an extra local ostree repo as source for installation. This is equivalent
+ * with setting the xa.sideload-repos global option, but can be done dynamically.
+ * If the option is set both sources are used.
+ *
+ * Since: 1.7.1
+ */
+void
+flatpak_transaction_add_sideload_repo (FlatpakTransaction  *self,
+                                       const char          *path)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  g_ptr_array_add (priv->extra_sideload_repos,
+                   g_strdup (path));
 }
 
 /**
@@ -873,6 +895,7 @@ flatpak_transaction_finalize (GObject *object)
   g_ptr_array_unref (priv->added_origin_remotes);
 
   g_ptr_array_free (priv->extra_dependency_dirs, TRUE);
+  g_ptr_array_free (priv->extra_sideload_repos, TRUE);
 
   G_OBJECT_CLASS (flatpak_transaction_parent_class)->finalize (object);
 }
@@ -1244,6 +1267,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
   priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) flatpak_remote_state_unref);
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
   priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
+  priv->extra_sideload_repos = g_ptr_array_new_with_free_func (g_free);
   priv->can_run = TRUE;
 }
 
@@ -1622,8 +1646,17 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
 
   state = flatpak_dir_get_remote_state_optional (priv->dir, remote, FALSE, NULL, error);
 
+  g_printerr ("flatpak_transaction_ensure_remote_state\n");
   if (state)
-    g_hash_table_insert (priv->remote_states, state->remote_name, flatpak_remote_state_ref (state));
+    {
+      g_hash_table_insert (priv->remote_states, state->remote_name, flatpak_remote_state_ref (state));
+
+      for (int i = 0; i < priv->extra_sideload_repos->len; i++)
+        {
+          const char *path = g_ptr_array_index (priv->extra_sideload_repos, i);
+          flatpak_remote_state_add_sideload_repo (state, path);
+        }
+    }
 
   return state;
 }

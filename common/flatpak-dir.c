@@ -324,6 +324,35 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
     }
 }
 
+void
+flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
+                                        const char          *path)
+{
+  g_autoptr(GFile) f = g_file_new_for_path (path);
+  g_autoptr(GFile) summary_path = g_file_get_child (f, "summary");
+  g_autoptr(GMappedFile) mfile = NULL;
+  g_autoptr(OstreeRepo) sideload_repo = ostree_repo_new (f);
+
+  /* Sideloading only works if collection id is set */
+  if (self->collection_id == NULL)
+    return;
+
+  /* TODO: The sideloadstates are duplicated for each remote with the collection id set, we should maybe reuse them */
+
+  mfile = g_mapped_file_new (flatpak_file_get_path_cached (summary_path), FALSE, NULL);
+  if (mfile != NULL && ostree_repo_open (sideload_repo, NULL, NULL))
+    {
+      g_autoptr(GBytes) summary_bytes = g_mapped_file_get_bytes (mfile);
+      FlatpakSideloadState *ss = g_new0 (FlatpakSideloadState, 1);
+
+      ss->repo = g_steal_pointer (&sideload_repo);
+      ss->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, TRUE));
+      g_ptr_array_add (self->sideload_repos, ss);
+
+      g_debug ("Using sideloaded repo %s for remote %s", path, self->remote_name);
+    }
+}
+
 gboolean
 flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                      GError            **error)
@@ -10506,6 +10535,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
                                GError      **error)
 {
   g_autoptr(FlatpakRemoteState) state = flatpak_remote_state_new ();
+  g_auto(GStrv) sideload_paths = NULL;
   g_autoptr(GError) my_error = NULL;
   gboolean is_local;
 
@@ -10583,32 +10613,9 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
     }
 
-  if (state->collection_id)
-    {
-      g_auto(GStrv) sideload_paths = flatpak_dir_get_sideload_repo_paths (self);
-      for (int i = 0; sideload_paths != NULL && sideload_paths[i] != NULL; i++)
-        {
-          g_autoptr(GFile) f = g_file_new_for_path (sideload_paths[i]);
-          g_autoptr(GFile) summary_path = g_file_get_child (f, "summary");
-          g_autoptr(GMappedFile) mfile = NULL;
-          g_autoptr(OstreeRepo) sideload_repo = ostree_repo_new (f);
-
-          /* TODO: The sideloadstates are duplicated for each remote with the collection id set, we should maybe reuse them */
-
-          mfile = g_mapped_file_new (flatpak_file_get_path_cached (summary_path), FALSE, NULL);
-          if (mfile != NULL && ostree_repo_open (sideload_repo, NULL, NULL))
-            {
-              g_autoptr(GBytes) summary_bytes = g_mapped_file_get_bytes (mfile);
-              FlatpakSideloadState *ss = g_new0 (FlatpakSideloadState, 1);
-
-              ss->repo = g_steal_pointer (&sideload_repo);
-              ss->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, TRUE));
-              g_ptr_array_add (state->sideload_repos, ss);
-
-              g_debug ("Using sideloaded repo %s for remote %s", sideload_paths[i], remote_or_uri);
-            }
-        }
-    }
+  sideload_paths = flatpak_dir_get_sideload_repo_paths (self);
+  for (int i = 0; sideload_paths != NULL && sideload_paths[i] != NULL; i++)
+    flatpak_remote_state_add_sideload_repo (state, sideload_paths[i]);
 
   if (state->summary != NULL) /* In the optional case we might not have a summary */
     {
@@ -11030,6 +11037,7 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
 char **
 flatpak_dir_find_remote_refs (FlatpakDir           *self,
                               const char           *remote,
+                              const char          **opt_sideload_repos,
                               const char           *name,
                               const char           *opt_branch,
                               const char           *opt_default_branch,
@@ -11047,6 +11055,9 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
   state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
+
+  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+    flatpak_remote_state_add_sideload_repo (state, opt_sideload_repos[i]);
 
   if (!flatpak_dir_list_all_remote_refs (self, state,
                                          &remote_refs, cancellable, error))
@@ -11130,6 +11141,7 @@ find_ref_for_refs_set (GHashTable   *refs,
 char *
 flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              const char   *remote,
+                             const char  **opt_sideload_repos,
                              const char   *name,
                              const char   *opt_branch,
                              const char   *opt_default_branch,
@@ -11147,6 +11159,9 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
   state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
   if (state == NULL)
     return NULL;
+
+  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+    flatpak_remote_state_add_sideload_repo (state, opt_sideload_repos[i]);
 
   if (!flatpak_dir_list_all_remote_refs (self, state,
                                          &remote_refs, cancellable, error))

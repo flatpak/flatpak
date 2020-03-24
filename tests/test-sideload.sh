@@ -27,7 +27,7 @@ USE_COLLECTIONS_IN_CLIENT=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..8"
+echo "1..9"
 
 #Regular repo
 setup_repo
@@ -70,6 +70,19 @@ assert_has_file $FL_DIR/repo/refs/remotes/test-repo/app/org.test.Hello/${ARCH}/m
 assert_not_has_file $FL_DIR/repo/refs/mirrors/org.test.Collection.test/app/org.test.Hello/${ARCH}/master
 
 ok "installed sideloaded app"
+
+${FLATPAK} ${U} config --unset sideload-repos
+
+${FLATPAK} ${U} uninstall -y org.test.Hello
+${FLATPAK} ${U} install --sideload-repo=${SIDELOAD_REPO} -y test-repo org.test.Hello
+
+assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
+assert_has_file $FL_DIR/repo/refs/remotes/test-repo/app/org.test.Hello/${ARCH}/master
+assert_not_has_file $FL_DIR/repo/refs/mirrors/org.test.Collection.test/app/org.test.Hello/${ARCH}/master
+
+${FLATPAK} ${U} config --set sideload-repos ${SIDELOAD_REPO}
+
+ok "installed w/ runtime sideload option"
 
 # Remove old appstream checkouts so we can update from the sideload
 rm -rf $FL_DIR/appstream/test-repo/$ARCH/
@@ -165,8 +178,11 @@ ok "update to explicit old version"
 mv usb_dir/repo usb_dir/repo.old
 mv usb_dir/repo2 usb_dir/repo
 
+# Try with --sideload-repo instead of config
+${FLATPAK} ${U} config --unset sideload-repos
+
 # And update to it (offline)
-${FLATPAK} ${U} update -y
+${FLATPAK} ${U} update -y --sideload-repo=${SIDELOAD_REPO}
 
 UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
 assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"

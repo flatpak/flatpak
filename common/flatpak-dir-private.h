@@ -162,6 +162,9 @@ GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                                 const char         *ref,
                                                 const char         *commit,
                                                 GError            **error);
+void flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
+                                             const char          *path);
+
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
@@ -457,6 +460,7 @@ gboolean    flatpak_dir_ref_is_masked (FlatpakDir *self,
                                        const char *ref);
 char *      flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                          const char   *remote,
+                                         const char  **opt_sideload_repos,
                                          const char   *name,
                                          const char   *opt_branch,
                                          const char   *opt_default_branch,
@@ -467,6 +471,7 @@ char *      flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                          GError      **error);
 char **     flatpak_dir_find_remote_refs (FlatpakDir           *self,
                                           const char           *remote,
+                                          const char          **opt_sideload_repos,
                                           const char           *name,
                                           const char           *opt_branch,
                                           const char           *opt_default_branch,

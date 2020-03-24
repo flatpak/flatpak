@@ -230,6 +230,9 @@ FLATPAK_EXTERN
 void                flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
                                                                FlatpakInstallation *installation);
 FLATPAK_EXTERN
+void                flatpak_transaction_add_sideload_repo (FlatpakTransaction  *self,
+                                                           const char          *path);
+FLATPAK_EXTERN
 void                flatpak_transaction_add_default_dependency_sources (FlatpakTransaction *self);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_run (FlatpakTransaction *transaction,
