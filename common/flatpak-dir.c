@@ -2528,6 +2528,16 @@ flatpak_deploy_data_get_version (GBytes *deploy_data)
   return var_metadata_lookup_int32 (metadata, "deploy-version", 0);
 }
 
+/* Note: This will return 0 if this is unset, which happens on deloy data updates, so ensure we handle that in all callers */
+guint64
+flatpak_deploy_data_get_timestamp (GBytes *deploy_data)
+{
+  VarDeployDataRef ref = var_deploy_data_from_bytes (deploy_data);
+  VarMetadataRef metadata = var_deploy_data_get_metadata (ref);
+
+  return var_metadata_lookup_uint64 (metadata, "timestamp", 0);
+}
+
 static const char *
 flatpak_deploy_data_get_string (GBytes *deploy_data, const char *key)
 {
@@ -2822,6 +2832,7 @@ add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
 static GBytes *
 flatpak_dir_new_deploy_data (FlatpakDir         *self,
                              GFile              *deploy_dir,
+                             GVariant           *commit_data,
                              GVariant           *commit_metadata,
                              GKeyFile           *metadata,
                              const char         *id,
@@ -2854,6 +2865,8 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
   g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&metadata_builder, "{s@v}", "deploy-version",
                          g_variant_new_variant (g_variant_new_int32 (FLATPAK_DEPLOY_VERSION_CURRENT)));
+  g_variant_builder_add (&metadata_builder, "{s@v}", "timestamp",
+                         g_variant_new_variant (g_variant_new_uint64 (ostree_commit_get_timestamp (commit_data))));
   if (alt_id)
     g_variant_builder_add (&metadata_builder, "{s@v}", "alt-id",
                            g_variant_new_variant (g_variant_new_string (alt_id)));
@@ -2918,6 +2931,13 @@ upgrade_deploy_data (GBytes *deploy_data, GFile *deploy_dir, const char *ref)
       g_auto(GStrv) ref_parts = NULL;
       ref_parts = g_strsplit (ref, "/", -1);
       add_appdata_to_deploy_data (&metadata_builder, deploy_dir, ref_parts[1]);
+    }
+
+  if (old_version < 3)
+    {
+      /* We don't know what timestamp to use here, use 0 and special case that for update checks */
+      g_variant_builder_add (&metadata_builder, "{s@v}", "timestamp",
+                             g_variant_new_variant (g_variant_new_uint64 (0)));
     }
 
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
@@ -7809,6 +7829,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   deploy_data = flatpak_dir_new_deploy_data (self,
                                              checkoutdir,
+                                             commit_data,
                                              commit_metadata,
                                              keyfile,
                                              ref_parts[1],

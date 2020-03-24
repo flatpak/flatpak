@@ -33,8 +33,9 @@
  *
  * Version 1 added appdata-name/summary/version/license
  * Version 2 added extension-of/appdata-content-rating
+ * Version 3 added timestamp
  */
-#define FLATPAK_DEPLOY_VERSION_CURRENT 2
+#define FLATPAK_DEPLOY_VERSION_CURRENT 3
 #define FLATPAK_DEPLOY_VERSION_ANY 0
 
 #define FLATPAK_TYPE_DIR flatpak_dir_get_type ()
@@ -371,6 +372,7 @@ GHashTable *        flatpak_deploy_data_get_appdata_content_rating (GBytes *depl
 const char **       flatpak_deploy_data_get_subpaths (GBytes *deploy_data);
 gboolean            flatpak_deploy_data_has_subpaths (GBytes *deploy_data);
 guint64             flatpak_deploy_data_get_installed_size (GBytes *deploy_data);
+guint64             flatpak_deploy_data_get_timestamp (GBytes *deploy_data);
 const char *        flatpak_deploy_data_get_alt_id (GBytes *deploy_data);
 const char *        flatpak_deploy_data_get_eol (GBytes *deploy_data);
 const char *        flatpak_deploy_data_get_eol_rebase (GBytes *deploy_data);
