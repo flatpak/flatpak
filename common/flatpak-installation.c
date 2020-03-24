@@ -2467,6 +2467,7 @@ flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GHashTable) ht = NULL;
+  g_autoptr(GError) local_error = NULL;
   GHashTableIter iter;
   gpointer key;
   gpointer value;
@@ -2475,13 +2476,27 @@ flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state (dir, remote_or_uri, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
+  if (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED)
+    state = flatpak_dir_get_remote_state_local_only (dir, remote_or_uri, cancellable, error);
+  else
+    state = flatpak_dir_get_remote_state (dir, remote_or_uri, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
   if (state == NULL)
     return NULL;
 
   if (!flatpak_dir_list_remote_refs (dir, state, &ht,
-                                     cancellable, error))
-    return NULL;
+                                     cancellable, &local_error))
+    {
+      if (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED)
+        {
+          /* Just return no sideloaded refs rather than a summary download failed error if there are none */
+          return g_steal_pointer (&refs);
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return NULL;
+        }
+    }
 
   g_hash_table_iter_init (&iter, ht);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -2571,7 +2586,10 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
+  if (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED)
+    state = flatpak_dir_get_remote_state_local_only (dir, remote_name, cancellable, error);
+  else
+    state = flatpak_dir_get_remote_state (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
   if (state == NULL)
     return NULL;
 
