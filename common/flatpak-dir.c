@@ -10559,6 +10559,10 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       state->default_token_type = flatpak_dir_get_remote_default_token_type (self, remote_or_uri);
     }
 
+  sideload_paths = flatpak_dir_get_sideload_repo_paths (self);
+  for (int i = 0; sideload_paths != NULL && sideload_paths[i] != NULL; i++)
+    flatpak_remote_state_add_sideload_repo (state, sideload_paths[i]);
+
   if (local_only)
     {
       flatpak_fail (&state->summary_fetch_error, "Internal error, local_only state");
@@ -10612,10 +10616,6 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
             }
         }
     }
-
-  sideload_paths = flatpak_dir_get_sideload_repo_paths (self);
-  for (int i = 0; sideload_paths != NULL && sideload_paths[i] != NULL; i++)
-    flatpak_remote_state_add_sideload_repo (state, sideload_paths[i]);
 
   if (state->summary != NULL) /* In the optional case we might not have a summary */
     {
