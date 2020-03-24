@@ -47,6 +47,7 @@ static gboolean opt_log;
 static gboolean opt_show_runtime;
 static gboolean opt_show_sdk;
 static gboolean opt_cached;
+static gboolean opt_sideloaded;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -61,6 +62,7 @@ static GOptionEntry options[] = {
   { "show-runtime", 0, 0, G_OPTION_ARG_NONE, &opt_show_runtime, N_("Show runtime"), NULL },
   { "show-sdk", 0, 0, G_OPTION_ARG_NONE, &opt_show_sdk, N_("Show sdk"), NULL },
   { "cached", 0, 0, G_OPTION_ARG_NONE, &opt_cached, N_("Use local caches even if they are stale"), NULL },
+  { "sideloaded", 0, 0, G_OPTION_ARG_NONE, &opt_sideloaded, N_("Only list refs available as sideloads"), NULL },
   { NULL }
 };
 
@@ -140,7 +142,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   if (ref == NULL)
     return FALSE;
 
-  state = get_remote_state (preferred_dir, remote, opt_cached, cancellable, error);
+  state = get_remote_state (preferred_dir, remote, opt_cached, opt_sideloaded, cancellable, error);
   if (state == NULL)
     return FALSE;
 

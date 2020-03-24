@@ -176,6 +176,7 @@ void print_wrapped (int         columns,
 FlatpakRemoteState * get_remote_state (FlatpakDir   *dir,
                                        const char   *remote,
                                        gboolean      cached,
+                                       gboolean      sideloaded,
                                        GCancellable *cancellable,
                                        GError      **error);
 
