@@ -397,6 +397,58 @@ flatpak_remote_state_lookup_sideload_checksum (FlatpakRemoteState *self,
   return NULL;
 }
 
+static gboolean
+flatpak_remote_state_resolve_sideloaded_ref (FlatpakRemoteState *self,
+                                             const char         *ref,
+                                             char              **out_checksum,
+                                             guint64            *out_timestamp,
+                                             VarRefInfoRef      *out_info,
+                                             FlatpakSideloadState  **out_sideload_state,
+                                             GError            **error)
+{
+  g_autofree char *latest_checksum = NULL;
+  guint64 latest_timestamp = 0;
+  FlatpakSideloadState *latest_ss = NULL;
+  VarRefInfoRef latest_sideload_info;
+
+  for (int i = 0; i < self->sideload_repos->len; i++)
+    {
+      FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
+      g_autofree char *sideload_checksum = NULL;
+      VarRefInfoRef sideload_info;
+
+      if (flatpak_summary_lookup_ref (ss->summary, self->collection_id, ref, &sideload_checksum, &sideload_info))
+        {
+          guint64 timestamp = get_timestamp_from_ref_info (sideload_info);
+
+          if (latest_checksum == NULL || latest_timestamp < timestamp)
+            {
+              g_free (latest_checksum);
+              latest_checksum = g_steal_pointer (&sideload_checksum);
+              latest_timestamp = timestamp;
+              latest_sideload_info = sideload_info;
+              latest_ss = ss;
+            }
+        }
+    }
+
+  if (latest_checksum == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                               _("No such ref '%s' in remote %s"),
+                               ref, self->remote_name);
+
+  if (out_checksum)
+    *out_checksum = g_steal_pointer (&latest_checksum);
+  if (out_timestamp)
+    *out_timestamp = latest_timestamp;
+  if (out_info)
+    *out_info = latest_sideload_info;
+  if (out_sideload_state)
+    *out_sideload_state = latest_ss;
+
+  return TRUE;
+}
+
 
 /* Returns TRUE if the ref is found in the summary or cache.
  * out_checksum and out_variant are only set when the ref is found.
@@ -459,47 +511,13 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
     }
   else
     {
-      g_autofree char *latest_checksum = NULL;
-      guint64 latest_timestamp = 0;
-      VarRefInfoRef latest_sideload_info;
-      g_autoptr(GFile) latest_sideload_path = NULL;
+      FlatpakSideloadState *ss = NULL;
 
-      for (int i = 0; i < self->sideload_repos->len; i++)
-        {
-          FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
-          g_autofree char *sideload_checksum = NULL;
-          VarRefInfoRef sideload_info;
+      if (!flatpak_remote_state_resolve_sideloaded_ref (self, ref, out_checksum, out_timestamp, out_info, &ss, error))
+        return FALSE;
 
-          if (flatpak_summary_lookup_ref (ss->summary, self->collection_id, ref, &sideload_checksum, &sideload_info))
-            {
-              guint64 timestamp = get_timestamp_from_ref_info (sideload_info);
-
-              if (latest_checksum == NULL || latest_timestamp < timestamp)
-                {
-                  g_free (latest_checksum);
-                  latest_checksum = g_steal_pointer (&sideload_checksum);
-                  latest_timestamp = timestamp;
-                  latest_sideload_info = sideload_info;
-                  g_set_object (&latest_sideload_path, ostree_repo_get_path (ss->repo));
-                }
-            }
-        }
-
-      if (latest_checksum)
-        {
-          if (out_checksum)
-            *out_checksum = g_steal_pointer (&latest_checksum);
-          if (out_timestamp)
-            *out_timestamp = latest_timestamp;
-          if (out_info)
-            *out_info = latest_sideload_info;
-          if (out_sideload_path)
-            *out_sideload_path = g_steal_pointer (&latest_sideload_path);
-        }
-      else
-        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                   _("No such ref '%s' in remote %s"),
-                                   ref, self->remote_name);
+      if (out_sideload_path)
+        *out_sideload_path = g_object_ref (ostree_repo_get_path (ss->repo));
     }
 
   return TRUE;
@@ -551,10 +569,9 @@ flatpak_remote_state_get_cache (FlatpakRemoteState *self,
 gboolean
 flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                    const char         *ref,
-                                   guint64            *download_size,
-                                   guint64            *installed_size,
-                                   const char        **metadata,
-                                   const guchar      **maybe_commit_bytes,
+                                   guint64            *out_download_size,
+                                   guint64            *out_installed_size,
+                                   const char        **out_metadata,
                                    GError            **error)
 {
   VarCacheRef cache;
@@ -569,36 +586,82 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                _("No entry for %s in remote '%s' summary flatpak cache "),
                                ref, self->remote_name);
 
-  if (installed_size)
-    *installed_size = var_cache_data_get_installed_size (cache_data);
+  if (out_installed_size)
+    *out_installed_size = var_cache_data_get_installed_size (cache_data);
 
-  if (download_size)
-    *download_size = var_cache_data_get_download_size (cache_data);
+  if (out_download_size)
+    *out_download_size = var_cache_data_get_download_size (cache_data);
 
-  if (metadata)
-    *metadata = var_cache_data_get_metadata (cache_data);
-
-  if (maybe_commit_bytes)
-    {
-      VarSummaryRef summary = var_summary_from_gvariant (self->summary);
-      VarMetadataRef meta = var_summary_get_metadata (summary);
-      VarVariantRef commits_v;
-
-      *maybe_commit_bytes = NULL;
-      if (var_metadata_lookup (meta, "xa.commits", NULL, &commits_v))
-        {
-          VarCommitsCacheRef commits = var_commits_cache_from_variant (commits_v);
-          if (pos < var_commits_cache_get_length (commits))
-            {
-              VarChecksumRef checksum = var_commits_cache_get_at (commits, pos);
-              if (var_checksum_get_length (checksum) == OSTREE_SHA256_DIGEST_LEN)
-                *maybe_commit_bytes = var_checksum_peek (checksum);
-            }
-        }
-    }
+  if (out_metadata)
+    *out_metadata = var_cache_data_get_metadata (cache_data);
 
   return TRUE;
 }
+
+gboolean
+flatpak_remote_state_load_data (FlatpakRemoteState *self,
+                                const char         *ref,
+                                guint64            *out_download_size,
+                                guint64            *out_installed_size,
+                                char              **out_metadata,
+                                GError            **error)
+{
+  if (self->summary)
+    {
+      const char *metadata = NULL;
+      if (!flatpak_remote_state_lookup_cache (self, ref, out_download_size, out_installed_size,&metadata, error))
+        return FALSE;
+
+      if (out_metadata)
+        *out_metadata = g_strdup (metadata);
+    }
+  else
+    {
+      /* Look up from sideload */
+      g_autofree char *checksum = NULL;
+      guint64 timestamp;
+      VarRefInfoRef info;
+      FlatpakSideloadState *ss = NULL;
+      g_autoptr(GVariant) commit_data = NULL;
+      g_autoptr(GVariant) commit_metadata = NULL;
+      const char *xa_metadata = NULL;
+      guint64 download_size = 0;
+      guint64 installed_size = 0;
+      g_autoptr(GBytes) metadata_bytes = NULL;
+
+      /* Use sideload refs if any */
+
+      if (!flatpak_remote_state_resolve_sideloaded_ref (self, ref, &checksum, &timestamp,
+                                                        &info, &ss, error))
+        return FALSE;
+
+      if (!ostree_repo_load_commit (ss->repo, checksum, &commit_data, NULL, error))
+        return FALSE;
+
+      commit_metadata = g_variant_get_child_value (commit_data, 0);
+      g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+      if (xa_metadata == NULL)
+        return flatpak_fail (error, "No xa.metadata in sideload commit %s ref %s", checksum, ref);
+
+      if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
+        download_size = GUINT64_FROM_BE (download_size);
+      if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
+        installed_size = GUINT64_FROM_BE (installed_size);
+
+      if (out_installed_size)
+        *out_installed_size = installed_size;
+
+      if (out_download_size)
+        *out_download_size = download_size;
+
+      if (out_metadata)
+        *out_metadata = g_strdup (xa_metadata);
+    }
+  return TRUE;
+}
+
+
+
 
 /* Tries to load the specified commit object that we resolved from
    this remote.  This either comes from the already available local
@@ -13439,7 +13502,7 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
                                  GCancellable       *cancellable,
                                  GError            **error)
 {
-  const char *metadata = NULL;
+  g_autofree char *metadata = NULL;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
@@ -13458,9 +13521,9 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
   if (*url == 0)
     return g_steal_pointer (&related);  /* Empty url, silently disables updates */
 
-  if (flatpak_remote_state_lookup_cache (state, ref,
-                                         NULL, NULL, &metadata,
-                                         NULL, NULL) &&
+  if (flatpak_remote_state_load_data (state, ref,
+                                      NULL, NULL, &metadata,
+                                      NULL) &&
       g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
     {
       g_ptr_array_unref (related);

@@ -2561,7 +2561,7 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
 
   /* And, we must have the actual cached data in the summary */
   if (!flatpak_remote_state_lookup_cache (state, op->ref,
-                                          &download_size, &installed_size, &metadata, NULL, NULL))
+                                          &download_size, &installed_size, &metadata, NULL))
       return FALSE;
 
   metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);

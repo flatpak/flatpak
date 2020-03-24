@@ -2369,9 +2369,9 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
   if (state == NULL)
     return FALSE;
 
-  return flatpak_remote_state_lookup_cache (state, full_ref,
-                                            download_size, installed_size, NULL,
-                                            NULL, error);
+  return flatpak_remote_state_load_data (state, full_ref,
+                                         download_size, installed_size, NULL,
+                                         error);
 }
 
 /**
@@ -2400,7 +2400,8 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
-  const char *res = NULL;
+  g_autofree char *res = NULL;
+  gsize len;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -2410,12 +2411,13 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
   if (state == NULL)
     return FALSE;
 
-  if (!flatpak_remote_state_lookup_cache (state, full_ref,
-                                          NULL, NULL, &res,
-                                          NULL, error))
+  if (!flatpak_remote_state_load_data (state, full_ref,
+                                       NULL, NULL, &res,
+                                       error))
     return NULL;
 
-  return g_bytes_new (res, strlen (res));
+  len = strlen (res);
+  return g_bytes_new_take (g_steal_pointer (&res), len);
 }
 
 /**
