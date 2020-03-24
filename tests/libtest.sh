@@ -302,8 +302,12 @@ httpd () {
 
     rm -f httpd-pipe
     mkfifo httpd-pipe
-    $(dirname $0)/$COMMAND "$DIR" 3> httpd-pipe &
+    PYTHONUNBUFFERED=1 $(dirname $0)/$COMMAND "$DIR" 3> httpd-pipe 2>&1 | tee --append httpd-log &
     read < httpd-pipe
+}
+
+httpd_clear_log () {
+    truncate -s 0 httpd-log
 }
 
 setup_repo_no_add () {
@@ -501,6 +505,12 @@ fi
 
 gdb_bt () {
     gdb -batch -ex "run" -ex "thread apply all bt" -ex "quit 1"  --args "$@"
+}
+
+commit_to_path () {
+    COMMIT=$1
+    EXT=$2
+    echo "objects/$(echo $COMMIT | cut -b 1-2)/$(echo $COMMIT | cut -b 3-)".${EXT}
 }
 
 cleanup () {

@@ -89,10 +89,15 @@ ${FLATPAK} ${U} uninstall -y --all
 ${FLATPAK} ${U} config --unset sideload-repos
 mv repos/test/objects repos/test/objects.disabled
 
+httpd_clear_log
+
 # Ensure this fails (but still loads summary)
 if ${FLATPAK} ${U} install -y test-repo org.test.Hello &> install-error-log; then
     assert_not_reached "Disabled online install broken"
 fi
+assert_file_has_content install-error-log "Server returned status 404: Not Found"
+assert_file_has_content httpd-log "GET .*commit .*404"
+
 assert_file_has_content install-error-log "Server returned status 404: Not Found"
 
 ${FLATPAK} ${U} config --set sideload-repos ${SIDELOAD_REPO}
@@ -107,12 +112,21 @@ ok "installed sideloaded app when online"
 
 OLD_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/${ARCH}/master)
 
+# Make new app version
 make_updated_app
 update_repo
 
 NEW_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/$ARCH/master)
 
-${FLATPAK} ${U} update -y
+# (Re)install the new version (online), ensure we used sideload repo for objects shared between new and old version
+SHARED_OBJECT=$(ostree ls --repo=repos/test -C app/org.test.Hello/$ARCH/master /files/share/applications/org.test.Hello.desktop | awk '{ print $5 }')
+SHARED_OBJECT_PATH=$(commit_to_path $SHARED_OBJECT filez)
+${FLATPAK} ${U} uninstall -y app/org.test.Hello/$ARCH/master
+
+httpd_clear_log
+${FLATPAK} ${U} install -y app/org.test.Hello/$ARCH/master
+
+assert_not_file_has_content httpd-log "GET /test/${SHARED_OBJECT_PATH}"
 
 # Prepare sideload repo for NEW_COMMIT
 ${FLATPAK} ${U} create-usb --destination-repo=repo2 usb_dir org.test.Hello

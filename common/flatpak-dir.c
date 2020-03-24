@@ -4337,11 +4337,10 @@ translate_ostree_repo_pull_errors (GError **error)
 
 static gboolean
 repo_pull (OstreeRepo                           *self,
-           const char                           *remote_name,
+           FlatpakRemoteState                   *state,
            const char                          **dirs_to_pull,
            const char                           *ref_to_fetch,
            const char                           *rev_to_fetch, /* (nullable) */
-           const char                           *collection_id,
            GFile                                *sideload_repo,
            const char                           *token,
            FlatpakPullFlags                      flatpak_flags,
@@ -4368,7 +4367,7 @@ repo_pull (OstreeRepo                           *self,
   /* We always want this on for every type of pull */
   flags |= OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
 
-  if (!flatpak_repo_resolve_rev (self, NULL, remote_name, ref_to_fetch, TRUE,
+  if (!flatpak_repo_resolve_rev (self, NULL, state->remote_name, ref_to_fetch, TRUE,
                                  &current_checksum, cancellable, error))
     return FALSE;
 
@@ -4389,15 +4388,15 @@ repo_pull (OstreeRepo                           *self,
 
       g_debug ("Sideloading %s from %s in pull", ref_to_fetch, sideload_url);
 
-      g_assert (collection_id != NULL);
+      g_assert (state->collection_id != NULL);
 
       g_variant_builder_init (&colref_builder, G_VARIANT_TYPE ("a(sss)"));
-      g_variant_builder_add (&colref_builder, "(sss)", collection_id, ref_to_fetch, rev_to_fetch);
+      g_variant_builder_add (&colref_builder, "(sss)", state->collection_id, ref_to_fetch, rev_to_fetch);
 
       g_variant_builder_add (&builder, "{s@v}", "collection-refs",
                              g_variant_new_variant (g_variant_builder_end (&colref_builder)));
       g_variant_builder_add (&builder, "{s@v}", "override-remote-name",
-                             g_variant_new_variant (g_variant_new_string (remote_name)));
+                             g_variant_new_variant (g_variant_new_string (state->remote_name)));
     }
   else
     {
@@ -4410,12 +4409,30 @@ repo_pull (OstreeRepo                           *self,
       revs_to_fetch[1] = NULL;
       g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
                              g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
+
+
+      if (state->sideload_repos->len > 0)
+        {
+          GVariantBuilder localcache_repos_builder;
+
+          g_variant_builder_init (&localcache_repos_builder, G_VARIANT_TYPE ("as"));
+          for (int i = 0; i < state->sideload_repos->len; i++)
+            {
+              FlatpakSideloadState *ss = g_ptr_array_index (state->sideload_repos, i);
+              GFile *sideload_path = ostree_repo_get_path (ss->repo);
+
+              g_variant_builder_add (&localcache_repos_builder, "s",
+                                     flatpak_file_get_path_cached (sideload_path));
+            }
+          g_variant_builder_add (&builder, "{s@v}", "localcache-repos",
+                                 g_variant_new_variant (g_variant_builder_end (&localcache_repos_builder)));
+        }
     }
 
   options = g_variant_ref_sink (g_variant_builder_end (&builder));
 
   if (!ostree_repo_pull_with_options (self,
-                                      sideload_url ? sideload_url : remote_name,
+                                      sideload_url ? sideload_url : state->remote_name,
                                       options, progress, cancellable, error))
     return translate_ostree_repo_pull_errors (error);
 
@@ -4506,11 +4523,11 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
           /* Pull the commits (and only the commits) to check for extra data
            * again. Here we don't pass the progress because we don't want any
            * reports coming out of it. */
-          if (!repo_pull (repo, state->remote_name,
+          if (!repo_pull (repo, state,
                           NULL,
                           ref,
                           rev,
-                          state->collection_id, sideload_repo,
+                          sideload_repo,
                           token,
                           flatpak_flags,
                           OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY,
@@ -5108,9 +5125,9 @@ flatpak_dir_pull (FlatpakDir                           *self,
   flatpak_repo_resolve_rev (repo, NULL, state->remote_name, ref, TRUE,
                             &current_checksum, NULL, NULL);
 
-  if (!repo_pull (repo, state->remote_name,
+  if (!repo_pull (repo, state,
                   subdirs_arg ? (const char **) subdirs_arg->pdata : NULL,
-                  ref, rev, state->collection_id, sideload_repo, token, flatpak_flags, flags,
+                  ref, rev, sideload_repo, token, flatpak_flags, flags,
                   progress,
                   cancellable, error))
     {
