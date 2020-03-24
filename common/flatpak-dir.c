@@ -4470,10 +4470,11 @@ extra_data_progress_report (guint64  downloaded_bytes,
 
 static gboolean
 flatpak_dir_setup_extra_data (FlatpakDir                           *self,
+                              FlatpakRemoteState                   *state,
                               OstreeRepo                           *repo,
-                              const char                           *repository,
                               const char                           *ref,
                               const char                           *rev,
+                              GFile                                *sideload_repo,
                               const char                           *token,
                               FlatpakPullFlags                      flatpak_flags,
                               OstreeAsyncProgress                  *progress,
@@ -4505,11 +4506,11 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
           /* Pull the commits (and only the commits) to check for extra data
            * again. Here we don't pass the progress because we don't want any
            * reports coming out of it. */
-          if (!repo_pull (repo, repository,
+          if (!repo_pull (repo, state->remote_name,
                           NULL,
                           ref,
                           rev,
-                          NULL, NULL,
+                          state->collection_id, sideload_repo,
                           token,
                           flatpak_flags,
                           OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY,
@@ -5092,8 +5093,8 @@ flatpak_dir_pull (FlatpakDir                           *self,
 
   /* Setup extra data information before starting to pull, so we can have precise
    * progress reports */
-  if (!flatpak_dir_setup_extra_data (self, repo, state->remote_name,
-                                     ref, rev, token,
+  if (!flatpak_dir_setup_extra_data (self, state, repo,
+                                     ref, rev, sideload_repo, token,
                                      flatpak_flags,
                                      progress,
                                      cancellable,
