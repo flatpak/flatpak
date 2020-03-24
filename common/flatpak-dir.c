@@ -627,7 +627,6 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
       const char *xa_metadata = NULL;
       guint64 download_size = 0;
       guint64 installed_size = 0;
-      g_autoptr(GBytes) metadata_bytes = NULL;
 
       /* Use sideload refs if any */
 
