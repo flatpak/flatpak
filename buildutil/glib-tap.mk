@@ -7,7 +7,7 @@ TESTS_ENVIRONMENT= \
 	G_DEBUG=gc-friendly 			\
 	MALLOC_CHECK_=2 			\
 	MALLOC_PERTURB_=$$(($${RANDOM:-256} % 256))
-LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/buildutil/tap-driver.sh
+LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/buildutil/tap-driver.sh --merge
 LOG_COMPILER = $(top_srcdir)/buildutil/tap-test
 
 TESTS =
