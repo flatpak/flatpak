@@ -38,12 +38,14 @@ static char *opt_arch;
 static char *opt_destination_repo;
 static gboolean opt_runtime;
 static gboolean opt_app;
+static gboolean opt_allow_partial;
 
 static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to copy"), N_("ARCH") },
   { "destination-repo", 0, 0, G_OPTION_ARG_FILENAME, &opt_destination_repo, "Use custom repository directory within the mount", N_("DEST") },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
+  { "allow-partial", 0, 0, G_OPTION_ARG_NONE, &opt_allow_partial, N_("Allow partial commits in the created repo"), NULL },
   { NULL }
 };
 
@@ -120,7 +122,7 @@ add_related (GHashTable   *all_refs,
   if (deploy_data == NULL)
     return FALSE;
 
-  if (flatpak_deploy_data_has_subpaths (deploy_data))
+  if (flatpak_deploy_data_has_subpaths (deploy_data) && !opt_allow_partial)
     return flatpak_fail (error, _("Related ref '%s' is only partially installed"), ref);
 
   commit = flatpak_deploy_data_get_commit (deploy_data);
@@ -639,7 +641,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         if (deploy_data == NULL)
           return FALSE;
 
-        if (flatpak_deploy_data_has_subpaths (deploy_data))
+        if (flatpak_deploy_data_has_subpaths (deploy_data) && !opt_allow_partial)
           return flatpak_fail (error,
                                _("Ref '%s' is only partially installed"), installed_ref);
 
