@@ -1625,6 +1625,7 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
  * See flatpak-build-bundle(1) for how to create bundles.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
+ * Deprecated: 1.7.0: Use flatpak_transaction_add_install_bundle() instead.
  */
 FlatpakInstalledRef *
 flatpak_installation_install_bundle (FlatpakInstallation    *self,
@@ -1695,6 +1696,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
  * on error.
  *
  * Since: 0.6.10
+ * Deprecated: 1.7.0: Use flatpak_transaction_add_install_flatpakref() instead.
  */
 FlatpakRemoteRef *
 flatpak_installation_install_ref_file (FlatpakInstallation *self,
@@ -1756,6 +1758,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
  * accordingly.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
+ * Deprecated: 1.7.0: Use flatpak_transaction_add_install() instead.
  */
 FlatpakInstalledRef *
 flatpak_installation_install_full (FlatpakInstallation    *self,
@@ -1866,6 +1869,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
  * accordingly.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
+ * Deprecated: 1.7.0: Use flatpak_transaction_add_install() instead.
  */
 FlatpakInstalledRef *
 flatpak_installation_install (FlatpakInstallation    *self,
@@ -1879,10 +1883,12 @@ flatpak_installation_install (FlatpakInstallation    *self,
                               GCancellable           *cancellable,
                               GError                **error)
 {
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   return flatpak_installation_install_full (self, FLATPAK_INSTALL_FLAGS_NONE,
                                             remote_name, kind, name, arch, branch,
                                             NULL, progress, progress_data,
                                             cancellable, error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 /**
@@ -1912,6 +1918,7 @@ flatpak_installation_install (FlatpakInstallation    *self,
  * already up to date, then %FLATPAK_ERROR_ALREADY_INSTALLED will be thrown.
  *
  * Returns: (transfer full): The ref for the newly updated app or %NULL on failure
+ * Deprecated: 1.7.0: Use flatpak_transaction_add_update() instead.
  */
 FlatpakInstalledRef *
 flatpak_installation_update_full (FlatpakInstallation    *self,
@@ -2033,6 +2040,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
  * already up to date, then %FLATPAK_ERROR_ALREADY_INSTALLED will be thrown.
  *
  * Returns: (transfer full): The ref for the newly updated app or %NULL on failure
+ * Deprecated: 1.7.0: Use flatpak_transaction_add_update() instead.
  */
 FlatpakInstalledRef *
 flatpak_installation_update (FlatpakInstallation    *self,
@@ -2046,9 +2054,11 @@ flatpak_installation_update (FlatpakInstallation    *self,
                              GCancellable           *cancellable,
                              GError                **error)
 {
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   return flatpak_installation_update_full (self, flags, kind, name, arch,
                                            branch, NULL, progress, progress_data,
                                            cancellable, error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 /**
@@ -2072,6 +2082,7 @@ flatpak_installation_update (FlatpakInstallation    *self,
  * Uninstall an application or runtime.
  *
  * Returns: %TRUE on success
+ * Deprecated: 1.7.0: Use flatpak_transaction_add_uninstall() instead.
  */
 FLATPAK_EXTERN gboolean
 flatpak_installation_uninstall (FlatpakInstallation    *self,
@@ -2084,10 +2095,12 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
                                 GCancellable           *cancellable,
                                 GError                **error)
 {
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   return flatpak_installation_uninstall_full (self, FLATPAK_UNINSTALL_FLAGS_NONE,
                                               kind, name, arch, branch,
                                               progress, progress_data,
                                               cancellable, error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 /**
@@ -2114,6 +2127,7 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
  * Returns: %TRUE on success
  *
  * Since: 0.11.8
+ * Deprecated: 1.7.0: Use flatpak_transaction_add_uninstall() instead.
  */
 gboolean
 flatpak_installation_uninstall_full (FlatpakInstallation    *self,

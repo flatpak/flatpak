@@ -119,6 +119,7 @@ main (int argc, char *argv[])
 
   if (argc == 3)
     {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       app1 = flatpak_installation_install (installation,
                                            argv[1],
                                            FLATPAK_REF_KIND_APP,
@@ -126,6 +127,7 @@ main (int argc, char *argv[])
                                            NULL, NULL,
                                            progress_cb, (gpointer) 0xdeadbeef,
                                            NULL, &error);
+      G_GNUC_END_IGNORE_DEPRECATIONS
       if (app1 == NULL)
         g_print ("Error: %s\n", error->message);
       else
@@ -137,6 +139,7 @@ main (int argc, char *argv[])
 
   if (argc == 2)
     {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       app1 = flatpak_installation_update (installation,
                                           FLATPAK_UPDATE_FLAGS_NONE,
                                           FLATPAK_REF_KIND_APP,
@@ -144,6 +147,7 @@ main (int argc, char *argv[])
                                           NULL, NULL,
                                           progress_cb, (gpointer) 0xdeadbeef,
                                           NULL, &error);
+      G_GNUC_END_IGNORE_DEPRECATIONS
       if (app1 == NULL)
         g_print ("Error: %s\n", error->message);
       else
