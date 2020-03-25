@@ -7532,27 +7532,58 @@ gboolean
 flatpak_dconf_path_is_similar (const char *path1,
                                const char *path2)
 {
-  int i;
+  int i, i1, i2;
+  int num_components = -1;
 
-  for (i = 0; path1[i]; i++)
+  for (i = 0; path1[i] != '\0'; i++)
     {
       if (path2[i] == '\0')
-        return FALSE;
+        break;
 
       if (tolower (path1[i]) == tolower (path2[i]))
-        continue;
+        {
+          if (path1[i] == '/')
+            num_components++;
+          continue;
+        }
 
       if ((path1[i] == '-' || path1[i] == '_') &&
           (path2[i] == '-' || path2[i] == '_'))
         continue;
 
-      return FALSE;
+      break;
     }
 
-  if (path2[i] != '\0')
+  /* Skip over any versioning if we have at least a TLD and
+   * domain name, so 2 components */
+  /* We need at least TLD, and domain name, so 2 components */
+  i1 = i2 = i;
+  if (num_components >= 2)
+    {
+      while (isdigit (path1[i1]))
+        i1++;
+      while (isdigit (path2[i2]))
+        i2++;
+    }
+
+  if (path1[i1] != path2[i2])
     return FALSE;
 
-  return TRUE;
+  /* Both strings finished? */
+  if (path1[i1] == '\0')
+    return TRUE;
+
+  /* Maybe a trailing slash in both strings */
+  if (path1[i1] == '/')
+    {
+      i1++;
+      i2++;
+    }
+
+  if (path1[i1] != path2[i2])
+    return FALSE;
+
+  return (path1[i1] == '\0');
 }
 
 

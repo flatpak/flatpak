@@ -1144,6 +1144,11 @@ test_dconf_paths (void)
     { "/org/gnome/Builder-2/", "/org/gnome/Builder_2/", 1 },
     { "/org/gnome/Builder/", "/org/gnome/Builder", 0 },
     { "/org/gnome/Builder/", "/org/gnome/Buildex/", 0 },
+    { "/org/gnome/Rhythmbox3/", "/org/gnome/rhythmbox/", 1 },
+    { "/org/gnome/Rhythmbox3/", "/org/gnome/rhythmbox", 0 },
+    { "/org/gnome1/Rhythmbox/", "/org/gnome/rhythmbox", 0 },
+    { "/org/gnome1/Rhythmbox", "/org/gnome/rhythmbox/", 0 },
+    { "/org/gnome/Rhythmbox3plus/", "/org/gnome/rhythmbox/", 0 },
   };
   int i;
 
@@ -1152,7 +1157,12 @@ test_dconf_paths (void)
       gboolean result;
 
       result = flatpak_dconf_path_is_similar (tests[i].path1, tests[i].path2);
-      g_assert_cmpint (result, ==, tests[i].result);
+      if (result != tests[i].result)
+        g_error ("Unexpected %s: flatpak_dconf_path_is_similar (%s, %s) = %d",
+                 result ? "success" : "failure",
+                 tests[i].path1,
+                 tests[i].path2,
+                 result);
     }
 }
 
