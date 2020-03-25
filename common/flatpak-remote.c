@@ -1037,40 +1037,6 @@ flatpak_remote_new_with_dir (const char *name,
   return self;
 }
 
-static FlatpakRemoteType
-repo_finder_to_remote_type (OstreeRepoFinder *repo_finder)
-{
-  if (OSTREE_IS_REPO_FINDER_AVAHI (repo_finder))
-    return FLATPAK_REMOTE_TYPE_LAN;
-  else if (OSTREE_IS_REPO_FINDER_MOUNT (repo_finder))
-    return FLATPAK_REMOTE_TYPE_USB;
-  else
-    return FLATPAK_REMOTE_TYPE_STATIC;
-}
-
-FlatpakRemote *
-flatpak_remote_new_from_ostree (OstreeRemote     *remote,
-                                OstreeRepoFinder *repo_finder,
-                                FlatpakDir       *dir)
-{
-  g_autofree gchar *url = NULL;
-  FlatpakRemotePrivate *priv;
-  FlatpakRemote *self = g_object_new (FLATPAK_TYPE_REMOTE,
-                                      "name", ostree_remote_get_name (remote),
-                                      "type", repo_finder_to_remote_type (repo_finder),
-                                      NULL);
-
-  priv = flatpak_remote_get_instance_private (self);
-  if (dir)
-    priv->dir = g_object_ref (dir);
-
-  url = ostree_remote_get_url (remote);
-  if (url != NULL)
-    flatpak_remote_set_url (self, url);
-
-  return self;
-}
-
 /**
  * flatpak_remote_new:
  * @name: a name

@@ -982,17 +982,6 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
   return g_steal_pointer (&refs);
 }
 
-static void
-async_result_cb (GObject      *obj,
-                 GAsyncResult *result,
-                 gpointer      user_data)
-{
-  GAsyncResult **result_out = user_data;
-
-  *result_out = g_object_ref (result);
-}
-
-
 static gboolean
 ref_check_for_update (FlatpakDir   *dir,
                       const char   *ref,
@@ -1118,112 +1107,6 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
  * have a repo.
  *
  * FIXME: If this were async, the parallelisation could be handled in the caller. */
-static gboolean
-list_remotes_for_configured_remote (const gchar         *remote_name,
-                                    FlatpakDir          *dir,
-                                    gboolean             types_filter[],
-                                    GPtrArray           *remotes /* (element-type FlatpakRemote) */,
-                                    GCancellable        *cancellable,
-                                    GError             **error)
-{
-  OstreeRepo *repo;
-  g_autofree gchar *collection_id = NULL;
-  OstreeCollectionRef ref;
-  OstreeCollectionRef ref2;
-  const OstreeCollectionRef *refs[3] = { NULL, };
-  g_autofree gchar *appstream_ref = NULL;
-  g_autofree gchar *appstream2_ref = NULL;
-  g_auto(OstreeRepoFinderResultv) results = NULL;
-  g_autoptr(GAsyncResult) result = NULL;
-  g_autoptr(OstreeRepoFinder) finder_mount = NULL, finder_avahi = NULL;
-  OstreeRepoFinder *finders[3] = { NULL, };
-  gsize i;
-  guint finder_index = 0;
-  g_autoptr(GMainContextPopDefault) context = NULL;
-
-  if (!types_filter[FLATPAK_REMOTE_TYPE_USB] &&
-      !types_filter[FLATPAK_REMOTE_TYPE_LAN])
-    return TRUE;
-
-  repo = flatpak_dir_get_repo (dir);
-  if (repo == NULL)
-    return TRUE;
-
-  /* Find the collection ID for @remote_name, or bail if there is none. */
-  if (!ostree_repo_get_remote_option (repo,
-                                      remote_name, "collection-id",
-                                      NULL, &collection_id, error))
-    return FALSE;
-  if (collection_id == NULL || *collection_id == '\0')
-    return TRUE;
-
-  context = flatpak_main_context_new_default ();
-
-  appstream_ref = g_strdup_printf ("appstream/%s", flatpak_get_arch ());
-  ref.collection_id = collection_id;
-  ref.ref_name = appstream_ref;
-  refs[0] = &ref;
-  appstream2_ref = g_strdup_printf ("appstream2/%s", flatpak_get_arch ());
-  ref2.collection_id = collection_id;
-  ref2.ref_name = appstream2_ref;
-  refs[1] = &ref2;
-
-  if (types_filter[FLATPAK_REMOTE_TYPE_USB])
-    {
-      finder_mount = OSTREE_REPO_FINDER (ostree_repo_finder_mount_new (NULL));
-      finders[finder_index++] = finder_mount;
-    }
-
-  if (types_filter[FLATPAK_REMOTE_TYPE_LAN])
-    {
-      g_autoptr(GError) local_error = NULL;
-      finder_avahi = OSTREE_REPO_FINDER (ostree_repo_finder_avahi_new (context));
-      finders[finder_index++] = finder_avahi;
-
-      /* The Avahi finder may fail to start on, for example, a CI server. */
-      ostree_repo_finder_avahi_start (OSTREE_REPO_FINDER_AVAHI (finder_avahi), &local_error);
-      if (local_error != NULL)
-        {
-          if (finder_index == 1)
-            return TRUE;
-          else
-            {
-              finders[--finder_index] = NULL;
-              g_clear_object (&finder_avahi);
-            }
-        }
-    }
-
-  ostree_repo_find_remotes_async (repo,
-                                  (const OstreeCollectionRef * const *) refs,
-                                  NULL,  /* no options */
-                                  finders,
-                                  NULL,  /* no progress */
-                                  cancellable,
-                                  async_result_cb,
-                                  &result);
-
-  while (result == NULL)
-    g_main_context_iteration (context, TRUE);
-
-  results = ostree_repo_find_remotes_finish (repo, result, error);
-
-  if (finder_avahi != NULL)
-    ostree_repo_finder_avahi_stop (OSTREE_REPO_FINDER_AVAHI (finder_avahi));
-
-  if (results == NULL)
-    return FALSE;
-
-  for (i = 0; results[i] != NULL; i++)
-    {
-      g_ptr_array_add (remotes,
-                       flatpak_remote_new_from_ostree (results[i]->remote,
-                                                       results[i]->finder,
-                                                       dir));
-    }
-
-  return TRUE;
-}
 
 /**
  * flatpak_installation_list_remotes_by_type:
@@ -1256,8 +1139,6 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
   const guint NUM_FLATPAK_REMOTE_TYPES = 3;
   gboolean types_filter[NUM_FLATPAK_REMOTE_TYPES];
   gsize i;
-  const char * const *default_repo_finders = NULL;
-  OstreeRepo *repo;
 
   remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
   if (remote_names == NULL)
@@ -1269,40 +1150,13 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
   if (!flatpak_dir_maybe_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
-  repo = flatpak_dir_get_repo (dir_clone);
-  if (repo != NULL)
-    default_repo_finders = ostree_repo_get_default_repo_finders (repo);
-
-  /* If NULL or an empty array of types is passed then we use the default set
-   * provided by ostree, or fall back to using all */
+  /* If NULL or an empty array of types is passed then we list all types */
   for (i = 0; i < NUM_FLATPAK_REMOTE_TYPES; ++i)
     {
-      if (num_types != 0)
+      if (types != NULL && num_types != 0)
         types_filter[i] = FALSE;
-      else if (default_repo_finders == NULL)
+      else
         types_filter[i] = TRUE;
-    }
-
-  if (default_repo_finders != NULL && num_types == 0)
-    {
-      g_autofree char *default_repo_finders_str = g_strjoinv (" ", (gchar **) default_repo_finders);
-      g_debug ("Using default repo finder list: %s", default_repo_finders_str);
-
-      for (const char * const *iter = default_repo_finders; iter && *iter; iter++)
-        {
-          const char *default_repo_finder = *iter;
-
-          if (strcmp (default_repo_finder, "config") == 0)
-            types_filter[FLATPAK_REMOTE_TYPE_STATIC] = TRUE;
-          else if (strcmp (default_repo_finder, "lan") == 0)
-            types_filter[FLATPAK_REMOTE_TYPE_LAN] = TRUE;
-          else if (strcmp (default_repo_finder, "mount") == 0)
-            types_filter[FLATPAK_REMOTE_TYPE_USB] = TRUE;
-          else
-            g_debug ("Unknown value in list returned by "
-                     "ostree_repo_get_default_repo_finders(): %s",
-                     default_repo_finder);
-        }
     }
 
   for (i = 0; i < num_types; ++i)
@@ -1313,17 +1167,10 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
 
   for (i = 0; remote_names[i] != NULL; ++i)
     {
-      g_autoptr(GError) local_error = NULL;
+      /* These days we only support static remotes */
       if (types_filter[FLATPAK_REMOTE_TYPE_STATIC])
         g_ptr_array_add (remotes, flatpak_remote_new_with_dir (remote_names[i],
                                                                dir_clone));
-
-      /* Add the dynamic mirrors of this remote. */
-      if (!list_remotes_for_configured_remote (remote_names[i], dir_clone,
-                                               types_filter, remotes,
-                                               cancellable, &local_error))
-        g_debug ("Couldn't find remotes for configured remote %s: %s",
-                 remote_names[i], local_error->message);
     }
 
   return g_steal_pointer (&remotes);
