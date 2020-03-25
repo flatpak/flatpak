@@ -702,6 +702,11 @@ gboolean flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
                                                            const char  *ref,
                                                            const char  *target_commit,
                                                            const char **opt_subpaths);
+gboolean flatpak_dir_check_if_installed_ref_needs_update (FlatpakDir               *self,
+                                                          FlatpakRemoteState       *state,
+                                                          const char               *ref,
+                                                          GBytes                   *deploy_data,
+                                                          GCancellable             *cancellable);
 char * flatpak_dir_check_for_update (FlatpakDir               *self,
                                      FlatpakRemoteState       *state,
                                      const char               *ref,
