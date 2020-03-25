@@ -1646,7 +1646,6 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
 
   state = flatpak_dir_get_remote_state_optional (priv->dir, remote, FALSE, NULL, error);
 
-  g_printerr ("flatpak_transaction_ensure_remote_state\n");
   if (state)
     {
       g_hash_table_insert (priv->remote_states, state->remote_name, flatpak_remote_state_ref (state));
