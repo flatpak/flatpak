@@ -1285,6 +1285,10 @@ list_remotes_for_configured_remote (const gchar         *remote_name,
  *
  * Lists only the remotes whose type is included in the @types argument.
  *
+ * Since flatpak 1.7 this will never return any types except FLATPAK_REMOTE_TYPE_STATIC.
+ * Equivalent functionallity to FLATPAK_REMOTE_TYPE_USB can be had by listing remote refs
+ * with FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED.
+ *
  * Returns: (transfer container) (element-type FlatpakRemote): a GPtrArray of
  *   #FlatpakRemote instances
  */
@@ -1816,6 +1820,10 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
+ * This is and old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_install_bundle()
+ * instead. It has a lot more interesting features.
+ *
  * Install an application or runtime from an flatpak bundle file.
  * See flatpak-build-bundle(1) for how to create bundles.
  *
@@ -1873,6 +1881,10 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
  * @ref_file_data: The ref file contents
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
+ *
+ * This is and old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_install_flatpakref()
+ * instead. It has a lot more interesting features.
  *
  * Creates a remote based on the passed in .flatpakref file contents
  * in @ref_file_data and returns the #FlatpakRemoteRef that can be used
@@ -1932,6 +1944,9 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
+ * This is and old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_install()
+ * instead. It has a lot more interesting features.
  * Install a new application or runtime.
  *
  * Note that this function was originally written to always return a
@@ -2038,6 +2053,11 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
+ * This is and old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_install()
+ * instead. It has a lot more interesting features.
+ * Install a new application or runtime.
+ *
  * Install a new application or runtime.
  *
  * Note that this function was originally written to always return a
@@ -2081,6 +2101,11 @@ flatpak_installation_install (FlatpakInstallation    *self,
  * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
+ *
+ * This is and old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_update()
+ * instead. It has a lot more interesting features.
+ * Install a new application or runtime.
  *
  * Update an application or runtime.
  *
@@ -2199,6 +2224,11 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
+ * This is and old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_update()
+ * instead. It has a lot more interesting features.
+ * Install a new application or runtime.
+ *
  * Update an application or runtime.
  *
  * If the specified package is not installed, then %FLATPAK_ERROR_NOT_INSTALLED
@@ -2240,6 +2270,11 @@ flatpak_installation_update (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
+ * This is and old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_unintstall()
+ * instead. It has a lot more interesting features.
+ * Install a new application or runtime.
+ *
  * Uninstall an application or runtime.
  *
  * Returns: %TRUE on success
@@ -2275,6 +2310,11 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
  * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
+ *
+ * This is and old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_unintstall()
+ * instead. It has a lot more interesting features.
+ * Install a new application or runtime.
  *
  * Uninstall an application or runtime.
  *
