@@ -101,7 +101,7 @@ $(dirname $0)/make-test-app.sh repos/test "" master "" > /dev/null
 # Modify platform metadata
 ostree checkout -U --repo=repos/test runtime/org.test.Platform/${ARCH}/master platform
 add_extensions platform
-ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --canonical-permissions  --branch=runtime/org.test.Platform/${ARCH}/master -s "modified metadata" platform
+${FLATPAK} build-export --disable-sandbox repos/test platform --files=files master
 ${FLATPAK} build-update-repo repos/test
 
 ${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test
@@ -150,12 +150,12 @@ run_sh org.test.Hello "ls -lR /usr/foo/multiversion"
 assert_has_extension_file /usr multiversion/master/extension-org.test.Multiversion.master:master
 assert_has_extension_file /usr multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
-echo "ok runtime extensions"
+ok "runtime extensions"
 
 # Modify app metadata
 ostree checkout -U --repo=repos/test app/org.test.Hello/${ARCH}/master hello
 add_extensions hello
-ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --canonical-permissions --branch=app/org.test.Hello/${ARCH}/master -s "modified metadata" hello
+${FLATPAK} build-export --disable-sandbox repos/test hello master
 ${FLATPAK} build-update-repo repos/test
 
 ${FLATPAK} --user update -y org.test.Hello master
@@ -174,4 +174,4 @@ assert_not_has_extension_file /app dir2/foo/exists
 assert_has_extension_file /app multiversion/master/extension-org.test.Multiversion.master:master
 assert_has_extension_file /app multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
-echo "ok app extensions"
+ok "app extensions"

@@ -256,6 +256,16 @@
                     Assume that all <arg choice="plain">REF</arg>s are runtimes if not explicitly specified.
                 </para></listitem>
             </varlistentry>
+ 
+            <varlistentry>
+                <term><option>--sideload-repo=PATH</option></term>
+
+                <listitem><para>
+                  Adds an extra local ostree repo as source for installation. This is equivalent
+                  with setting the xa.sideload-repos global option, but can be done without modifying the configuration.
+                  If the option is already set both sources are used.
+                </para></listitem>
+            </varlistentry>
 
             <varlistentry>
                 <term><option>-y</option></term>

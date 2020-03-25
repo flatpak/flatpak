@@ -2876,7 +2876,7 @@ flatpak_parse_repofile (const char   *remote_name,
   /* If a collection ID is set, refs are verified from commit metadata rather
    * than the summary file. */
   g_key_file_set_boolean (config, group, "gpg-verify-summary",
-                          (gpg_key != NULL && collection_id == NULL));
+                          (gpg_key != NULL));
 
   authenticator_name = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                               FLATPAK_REPO_AUTHENTICATOR_NAME_KEY, NULL);
@@ -3111,6 +3111,18 @@ flatpak_repo_set_deploy_collection_id (OstreeRepo *repo,
 
   config = ostree_repo_copy_config (repo);
   g_key_file_set_boolean (config, "flatpak", "deploy-collection-id", deploy_collection_id);
+  return ostree_repo_write_config (repo, config, error);
+}
+
+gboolean
+flatpak_repo_set_deploy_sideload_collection_id (OstreeRepo *repo,
+                                           gboolean    deploy_collection_id,
+                                           GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+  g_key_file_set_boolean (config, "flatpak", "deploy-sideload-collection-id", deploy_collection_id);
   return ostree_repo_write_config (repo, config, error);
 }
 
@@ -3534,6 +3546,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *old_ostree_metadata_checksum = NULL;
   g_autoptr(GVariant) old_ostree_metadata_v = NULL;
   gboolean deploy_collection_id = FALSE;
+  gboolean deploy_sideload_collection_id = FALSE;
 
   config = ostree_repo_get_config (repo);
 
@@ -3547,6 +3560,7 @@ flatpak_repo_update (OstreeRepo   *repo,
       default_branch = g_key_file_get_string (config, "flatpak", "default-branch", NULL);
       gpg_keys = g_key_file_get_string (config, "flatpak", "gpg-keys", NULL);
       redirect_url = g_key_file_get_string (config, "flatpak", "redirect-url", NULL);
+      deploy_sideload_collection_id = g_key_file_get_boolean (config, "flatpak", "deploy-sideload-collection-id", NULL);
       deploy_collection_id = g_key_file_get_boolean (config, "flatpak", "deploy-collection-id", NULL);
       authenticator_name = g_key_file_get_string (config, "flatpak", "authenticator-name", NULL);
       if (g_key_file_has_key (config, "flatpak", "authenticator-install", NULL))
@@ -3587,6 +3601,9 @@ flatpak_repo_update (OstreeRepo   *repo,
 
   if (deploy_collection_id && collection_id != NULL)
     g_variant_builder_add (builder, "{sv}", OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
+                           g_variant_new_string (collection_id));
+  else if (deploy_sideload_collection_id && collection_id != NULL)
+    g_variant_builder_add (builder, "{sv}", "xa.deploy-collection-id",
                            g_variant_new_string (collection_id));
   else if (deploy_collection_id)
     g_debug ("Ignoring deploy-collection-id=true because no collection ID is set.");

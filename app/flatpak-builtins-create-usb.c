@@ -38,12 +38,14 @@ static char *opt_arch;
 static char *opt_destination_repo;
 static gboolean opt_runtime;
 static gboolean opt_app;
+static gboolean opt_allow_partial;
 
 static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to copy"), N_("ARCH") },
   { "destination-repo", 0, 0, G_OPTION_ARG_FILENAME, &opt_destination_repo, "Use custom repository directory within the mount", N_("DEST") },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
+  { "allow-partial", 0, 0, G_OPTION_ARG_NONE, &opt_allow_partial, N_("Allow partial commits in the created repo"), NULL },
   { NULL }
 };
 
@@ -120,6 +122,9 @@ add_related (GHashTable   *all_refs,
   if (deploy_data == NULL)
     return FALSE;
 
+  if (flatpak_deploy_data_has_subpaths (deploy_data) && !opt_allow_partial)
+    return flatpak_fail (error, _("Related ref '%s' is only partially installed"), ref);
+
   commit = flatpak_deploy_data_get_commit (deploy_data);
 
   deploy = flatpak_dir_load_deployed (dir, ref, commit, cancellable, error);
@@ -150,6 +155,13 @@ add_related (GHashTable   *all_refs,
       if (ext_deploy_data == NULL)
         {
           g_printerr (_("Warning: Omitting related ref ‘%s’ because it is not installed.\n"),
+                      ext->ref);
+          continue;
+        }
+
+      if (flatpak_deploy_data_has_subpaths (ext_deploy_data))
+        {
+          g_printerr (_("Warning: Omitting related ref ‘%s’ because it is partially installed.\n"),
                       ext->ref);
           continue;
         }
@@ -628,6 +640,11 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         deploy_data = flatpak_dir_get_deploy_data (dir, installed_ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
         if (deploy_data == NULL)
           return FALSE;
+
+        if (flatpak_deploy_data_has_subpaths (deploy_data) && !opt_allow_partial)
+          return flatpak_fail (error,
+                               _("Ref '%s' is only partially installed"), installed_ref);
+
         commit = flatpak_deploy_data_get_commit (deploy_data);
         c_s = commit_and_subpaths_new (commit, NULL);
 
@@ -655,6 +672,8 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
     g_autoptr(OstreeCollectionRef) appstream2_collection_ref = NULL;
     g_autoptr(FlatpakRemoteState) state = NULL;
     g_autoptr(GError) local_error = NULL;
+    g_autofree char *appstream_refspec = NULL;
+    g_autofree char *appstream2_refspec = NULL;
     g_autofree char *appstream_ref = NULL;
     g_autofree char *appstream2_ref = NULL;
     const char **remote_arches;
@@ -669,10 +688,13 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         g_clear_error (&local_error);
       }
 
-    /* Add the ostree-metadata ref to the list */
+    /* Add the ostree-metadata ref to the list if available */
     metadata_collection_ref = ostree_collection_ref_new (collection_id, OSTREE_REPO_METADATA_REF);
-    g_hash_table_insert (all_refs, g_steal_pointer (&metadata_collection_ref),
-                         commit_and_subpaths_new (NULL, NULL));
+    if (ostree_repo_resolve_collection_ref (src_repo, metadata_collection_ref, FALSE,
+                                            OSTREE_REPO_RESOLVE_REV_EXT_NONE,
+                                            NULL, NULL, NULL))
+      g_hash_table_insert (all_refs, g_steal_pointer (&metadata_collection_ref),
+                           commit_and_subpaths_new (NULL, NULL));
 
     /* Add whatever appstream data is available for each arch */
     remote_arches = g_hash_table_lookup (remote_arch_map, remote_name);
@@ -682,6 +704,8 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         g_autoptr(GPtrArray) dirs = NULL;
         g_autoptr(GError) appstream_error = NULL;
         g_autoptr(GError) appstream2_error = NULL;
+        g_autofree char *commit = NULL;
+        g_autofree char *commit2 = NULL;
 
         /* Try to update the appstream data, but don't fail on error because we
          * want this to work offline. */
@@ -697,25 +721,25 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         /* Copy the appstream data if it exists. It's optional because without it
          * the USB will still be useful to the flatpak CLI even if GNOME Software
          * wouldn't display the contents. */
+        appstream_refspec = g_strdup_printf ("%s:appstream/%s", remote_name, current_arch);
         appstream_ref = g_strdup_printf ("appstream/%s", current_arch);
         appstream_collection_ref = ostree_collection_ref_new (collection_id, appstream_ref);
-        if (ostree_repo_resolve_collection_ref (src_repo, appstream_collection_ref, FALSE,
-                                                OSTREE_REPO_RESOLVE_REV_EXT_NONE,
-                                                NULL, cancellable, &appstream_error))
+        if (ostree_repo_resolve_rev (src_repo, appstream_refspec, FALSE,
+                                     &commit, &appstream_error))
           {
             g_hash_table_insert (all_refs, g_steal_pointer (&appstream_collection_ref),
-                                 commit_and_subpaths_new (NULL, NULL));
+                                 commit_and_subpaths_new (commit, NULL));
           }
 
         /* Copy the appstream2 data if it exists. */
+        appstream2_refspec = g_strdup_printf ("%s:appstream2/%s", remote_name, current_arch);
         appstream2_ref = g_strdup_printf ("appstream2/%s", current_arch);
         appstream2_collection_ref = ostree_collection_ref_new (collection_id, appstream2_ref);
-        if (ostree_repo_resolve_collection_ref (src_repo, appstream2_collection_ref, FALSE,
-                                                OSTREE_REPO_RESOLVE_REV_EXT_NONE,
-                                                NULL, cancellable, &appstream2_error))
+        if (ostree_repo_resolve_rev (src_repo, appstream2_refspec, FALSE,
+                                     &commit2, &appstream2_error))
           {
             g_hash_table_insert (all_refs, g_steal_pointer (&appstream2_collection_ref),
-                                 commit_and_subpaths_new (NULL, NULL));
+                                 commit_and_subpaths_new (commit2, NULL));
           }
         else
           {

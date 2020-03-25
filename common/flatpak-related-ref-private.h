@@ -28,8 +28,7 @@
 #include <flatpak-related-ref.h>
 #include <flatpak-dir-private.h>
 
-FlatpakRelatedRef *flatpak_related_ref_new (const char  *collection_id,
-                                            const char  *full_ref,
+FlatpakRelatedRef *flatpak_related_ref_new (const char  *full_ref,
                                             const char  *commit,
                                             char       **subpaths,
                                             gboolean download,

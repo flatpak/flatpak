@@ -63,21 +63,38 @@ assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
+assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
 
-echo "ok 1 update repo config without deploying collection ID"
+ok "1 update repo config without deploying collection ID"
 
 # Now mark the collection ID as to be deployed. The client configuration should
 # be updated.
 UPDATE_REPO_ARGS="--collection-id=org.test.Collection --deploy-collection-id" update_repo
+assert_file_has_content repos/test/config '^deploy-collection-id=true$'
+
 ${FLATPAK} ${U} update -y org.test.App master
 
-assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
-echo "ok 2 update repo config to deploy collection ID"
+# Try the deploy for sideload only method
+sed -i "s/deploy-collection-id=true//" repos/test/config
+assert_not_file_has_content repos/test/config '^deploy-collection-id=true$'
+
+flatpak remote-modify --collection-id= test-repo
+assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+
+UPDATE_REPO_ARGS="--collection-id=org.test.Collection --deploy-sideload-collection-id" update_repo
+assert_file_has_content repos/test/config '^deploy-sideload-collection-id=true$'
+
+${FLATPAK} ${U} update -y org.test.App master
+
+assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+
+ok "2 update repo config to deploy collection ID"
 
 # Try updating the collection ID to some other non-empty value on the server.
 # The client should ignore the update (otherwise we have a security vulnerability).
@@ -93,4 +110,4 @@ ${FLATPAK} ${U} update org.test.App master
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=net\.malicious\.NewCollection$'
 
-echo "ok 3 update repo config with different collection ID"
+ok "3 update repo config with different collection ID"

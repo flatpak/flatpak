@@ -41,6 +41,7 @@ static gboolean opt_app;
 static gboolean opt_all;
 static gboolean opt_only_updates;
 static gboolean opt_cached;
+static gboolean opt_sideloaded;
 static char *opt_arch;
 static char *opt_app_runtime;
 static const char **opt_cols;
@@ -55,6 +56,7 @@ static GOptionEntry options[] = {
   { "app-runtime", 0, 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
   { "cached", 0, 0, G_OPTION_ARG_NONE, &opt_cached, N_("Use local caches even if they are stale"), NULL },
+  { "sideloaded", 0, 0, G_OPTION_ARG_NONE, &opt_sideloaded, N_("Only list refs available as sideloads"), NULL },
   { NULL }
 };
 
@@ -161,8 +163,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          FlatpakCollectionRef *coll_ref = key;
-          char *ref = coll_ref->ref_name;
+          char *ref = key;
           char *partial_ref;
           const char *slash = strchr (ref, '/');
 
@@ -179,8 +180,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          FlatpakCollectionRef *coll_ref = key;
-          const char *ref = coll_ref->ref_name;
+          const char *ref = key;
           const char *checksum = value;
           g_auto(GStrv) parts = NULL;
 
@@ -234,8 +234,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
               strcmp (arches[0], parts[2]) != 0)
             {
               g_autofree char *alt_arch_ref = g_strconcat (parts[0], "/", parts[1], "/", arches[0], "/", parts[3], NULL);
-              g_autoptr(FlatpakCollectionRef) alt_arch_coll_ref = flatpak_collection_ref_new (coll_ref->collection_id, alt_arch_ref);
-              if (g_hash_table_lookup (refs, alt_arch_coll_ref))
+              if (g_hash_table_lookup (refs, alt_arch_ref))
                 continue;
             }
 
@@ -283,12 +282,12 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
           if (need_cache_data)
             {
-              const char *metadata = NULL;
+              g_autofree char *metadata = NULL;
               g_autoptr(GKeyFile) metakey = NULL;
 
-              if (!flatpak_remote_state_lookup_cache (state, ref,
-                                                      &download_size, &installed_size, &metadata,
-                                                      NULL, error))
+              if (!flatpak_remote_state_load_data (state, ref,
+                                                   &download_size, &installed_size, &metadata,
+                                                   error))
                 return FALSE;
 
               metakey = g_key_file_new ();
@@ -442,7 +441,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
             return FALSE;
         }
 
-      state = get_remote_state (preferred_dir, argv[1], opt_cached, cancellable, error);
+      state = get_remote_state (preferred_dir, argv[1], opt_cached, opt_sideloaded, cancellable, error);
       if (state == NULL)
         return FALSE;
 
@@ -477,7 +476,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
               if (flatpak_dir_get_remote_disabled (dir, remote_name))
                 continue;
 
-              state = get_remote_state (dir, remote_name, opt_cached,
+              state = get_remote_state (dir, remote_name, opt_cached, opt_sideloaded,
                                         cancellable, error);
               if (state == NULL)
                 return FALSE;

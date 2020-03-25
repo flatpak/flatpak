@@ -32,10 +32,6 @@
 FlatpakRemote *flatpak_remote_new_with_dir (const char *name,
                                             FlatpakDir *dir);
 
-FlatpakRemote *flatpak_remote_new_from_ostree (OstreeRemote     *remote,
-                                               OstreeRepoFinder *repo_finder,
-                                               FlatpakDir       *dir);
-
 gboolean flatpak_remote_commit (FlatpakRemote *self,
                                 FlatpakDir    *dir,
                                 GCancellable  *cancellable,

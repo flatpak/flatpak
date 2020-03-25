@@ -256,7 +256,6 @@ flatpak_related_ref_get_subpaths (FlatpakRelatedRef *self)
 
 /**
  * flatpak_related_ref_new:
- * @collection_id: (nullable): the collection ID
  * @full_ref: a full ref to refer to
  * @commit: (nullable): a commit ID to refer to
  * @subpaths: (nullable): a nul-terminated array of subpaths
@@ -268,8 +267,7 @@ flatpak_related_ref_get_subpaths (FlatpakRelatedRef *self)
  * Returns: a new ref
  */
 FlatpakRelatedRef *
-flatpak_related_ref_new (const char *collection_id,
-                         const char *full_ref,
+flatpak_related_ref_new (const char *full_ref,
                          const char *commit,
                          char      **subpaths,
                          gboolean    download,
@@ -297,7 +295,6 @@ flatpak_related_ref_new (const char *collection_id,
                       "subpaths", subpaths,
                       "should-download", download,
                       "should-delete", delete,
-                      "collection-id", collection_id,
                       NULL);
 
   return ref;

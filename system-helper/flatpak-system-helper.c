@@ -515,7 +515,6 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
       g_autoptr(FlatpakOciImage) image_config = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
-      FlatpakCollectionRef collection_ref;
       g_autoptr(GHashTable) remote_refs = NULL;
       g_autofree char *checksum = NULL;
       const char *verified_digest;
@@ -594,10 +593,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      collection_ref.collection_id = state->collection_id;
-      collection_ref.ref_name = (char *) arg_ref;
-
-      verified_digest = g_hash_table_lookup (remote_refs, &collection_ref);
+      verified_digest = g_hash_table_lookup (remote_refs, arg_ref);
       if (!verified_digest)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -674,7 +670,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-      if (!flatpak_dir_pull (system, state, arg_ref, NULL, NULL, (const char **) arg_subpaths, NULL, NULL,
+      if (!flatpak_dir_pull (system, state, arg_ref, NULL, (const char **) arg_subpaths, NULL, NULL, NULL, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &error))
         {
@@ -911,11 +907,11 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
       ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-      if (!flatpak_dir_pull (system, state, new_branch, NULL, NULL, NULL, NULL, NULL,
+      if (!flatpak_dir_pull (system, state, new_branch, NULL, NULL, NULL, NULL, NULL, NULL,
                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                              NULL, &first_error))
         {
-          if (!flatpak_dir_pull (system, state, old_branch, NULL, NULL, NULL, NULL, NULL,
+          if (!flatpak_dir_pull (system, state, old_branch, NULL, NULL, NULL, NULL, NULL, NULL,
                                  FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, ostree_progress,
                                  NULL, &second_error))
             {
@@ -1142,7 +1138,9 @@ handle_configure (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if ((strcmp (arg_key, "languages") != 0) && (strcmp (arg_key, "extra-languages") != 0))
+  if ((strcmp (arg_key, "languages") != 0) &&
+      (strcmp (arg_key, "extra-languages") != 0) &&
+      (strcmp (arg_key, "sideload-repos") != 0))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported key: %s", arg_key);
@@ -1235,7 +1233,7 @@ handle_update_remote (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (summary_sig_bytes == NULL && state->collection_id == NULL)
+  if (summary_sig_bytes == NULL)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "UpdateRemote requires a summary signature");
@@ -1355,6 +1353,7 @@ handle_ensure_repo (FlatpakSystemHelper   *object,
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
+  g_autoptr(GError) local_error = NULL;
 
   g_debug ("EnsureRepo %u %s", arg_flags, arg_installation);
 
@@ -1377,6 +1376,9 @@ handle_ensure_repo (FlatpakSystemHelper   *object,
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
+
+  if (!flatpak_dir_migrate_config (system, NULL, NULL, &local_error))
+    g_warning ("Failed to migrate configuration for installation %s: %s", arg_installation, local_error->message);
 
   flatpak_system_helper_complete_ensure_repo (object, invocation);
 
