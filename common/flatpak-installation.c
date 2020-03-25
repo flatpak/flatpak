@@ -1617,7 +1617,7 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * This is and old deprecated function, you should use
+ * This is an old deprecated function, you should use
  * #FlatpakTransaction and flatpak_transaction_add_install_bundle()
  * instead. It has a lot more interesting features.
  *
@@ -1679,7 +1679,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * This is and old deprecated function, you should use
+ * This is an old deprecated function, you should use
  * #FlatpakTransaction and flatpak_transaction_add_install_flatpakref()
  * instead. It has a lot more interesting features.
  *
@@ -1741,9 +1741,10 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * This is and old deprecated function, you should use
+ * This is an old deprecated function, you should use
  * #FlatpakTransaction and flatpak_transaction_add_install()
  * instead. It has a lot more interesting features.
+ *
  * Install a new application or runtime.
  *
  * Note that this function was originally written to always return a
@@ -1850,10 +1851,9 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * This is and old deprecated function, you should use
+ * This is an old deprecated function, you should use
  * #FlatpakTransaction and flatpak_transaction_add_install()
  * instead. It has a lot more interesting features.
- * Install a new application or runtime.
  *
  * Install a new application or runtime.
  *
@@ -1899,10 +1899,9 @@ flatpak_installation_install (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * This is and old deprecated function, you should use
+ * This is an old deprecated function, you should use
  * #FlatpakTransaction and flatpak_transaction_add_update()
  * instead. It has a lot more interesting features.
- * Install a new application or runtime.
  *
  * Update an application or runtime.
  *
@@ -2021,10 +2020,9 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * This is and old deprecated function, you should use
+ * This is an old deprecated function, you should use
  * #FlatpakTransaction and flatpak_transaction_add_update()
  * instead. It has a lot more interesting features.
- * Install a new application or runtime.
  *
  * Update an application or runtime.
  *
@@ -2067,10 +2065,9 @@ flatpak_installation_update (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * This is and old deprecated function, you should use
- * #FlatpakTransaction and flatpak_transaction_add_unintstall()
+ * This is an old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_uninstall()
  * instead. It has a lot more interesting features.
- * Install a new application or runtime.
  *
  * Uninstall an application or runtime.
  *
@@ -2108,10 +2105,9 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * This is and old deprecated function, you should use
- * #FlatpakTransaction and flatpak_transaction_add_unintstall()
+ * This is an old deprecated function, you should use
+ * #FlatpakTransaction and flatpak_transaction_add_uninstall()
  * instead. It has a lot more interesting features.
- * Install a new application or runtime.
  *
  * Uninstall an application or runtime.
  *
