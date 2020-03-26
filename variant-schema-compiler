@@ -140,13 +140,13 @@ G_GNUC_CONST static inline guint
 #endif
 }}
 
-G_GNUC_PURE static inline gsize
+G_GNUC_PURE static inline guint64
 {prefix_}ref_read_unaligned_le (guchar *bytes, guint   size)
 {{
   union
   {{
-    guchar bytes[GLIB_SIZEOF_SIZE_T];
-    gsize integer;
+    guchar bytes[8];
+    guint64 integer;
   }} tmpvalue;
 
   tmpvalue.integer = 0;
@@ -166,7 +166,7 @@ G_GNUC_PURE static inline gsize
         memcpy (&tmpvalue.bytes, bytes, 1);
     }}
 
-  return GSIZE_FROM_LE (tmpvalue.integer);
+  return GUINT64_FROM_LE (tmpvalue.integer);
 }}
 
 static inline void
