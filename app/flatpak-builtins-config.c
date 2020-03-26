@@ -199,18 +199,6 @@ get_lang_default (FlatpakDir *dir)
   return g_strjoinv (";", langs);
 }
 
-static char *
-parse_string (const char *value, GError **error)
-{
-  return g_strdup (value);
-}
-
-static char *
-print_string (const char *value)
-{
-  return g_strdup (value);
-}
-
 typedef struct
 {
   const char *name;
@@ -222,7 +210,6 @@ typedef struct
 ConfigKey keys[] = {
   { "languages", parse_lang, print_lang, get_lang_default },
   { "extra-languages", parse_locale, print_locale, NULL },
-  { "sideload-repos", parse_string, print_string, NULL },
 };
 
 static ConfigKey *
