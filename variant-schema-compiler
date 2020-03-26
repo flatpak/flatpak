@@ -830,7 +830,8 @@ class ArrayType(Type):
             # Here we assume last_end is verified in get_length(), its not safe anyway to call get_at() without checking the length first
             C("  gsize start = (index > 0) ? {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - index), {element_alignment}) : 0;")
             C("  G_GNUC_UNUSED gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);")
-            C("  g_assert (start <= end && end <= last_end);")
+            C("  g_assert (start <= end);")
+            C("  g_assert (end <= last_end);")
 
             if internal_validation:
                 C("  {prefix_}validate_child ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, index, ((const char *)v.base) + start, end - start);");
@@ -1010,7 +1011,8 @@ typedef struct {{
             # Here we assume last_end is verified in get_length(), its not safe anyway to call get_at() without checking the length first
             C("  gsize start = (index > 0) ? {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - index), {alignment}) : 0;")
             C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - index - 1);");
-            C("  g_assert (start <= end && end <= last_end);")
+            C("  g_assert (start <= end);")
+            C("  g_assert (end <= last_end);")
             C("  res = ({TypeName}EntryRef) {{ ((const char *)v.base) + start, end - start }};")
         if internal_validation:
             C("  {prefix_}validate_child ({TYPE_NAME_}TYPEFORMAT, v.base, v.size, index, res.base, res.size);")
@@ -1042,7 +1044,8 @@ static inline const {TypeName}Entry *
             C("  guint offset_size = {prefix_}ref_get_offset_size (v.size);")
             C("  G_GNUC_UNUSED gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  const char *base = (const char *)v.base;")
-            C("  g_assert (end < v.size && base[end-1] == 0);")
+            C("  g_assert (end < v.size);")
+            C("  g_assert (base[end-1] == 0);")
             if internal_validation:
                 C("  {prefix_}validate_child ({element_typeformat}, v.base, v.size, 0, v.base, end);")
             C("  return base;")
@@ -1165,7 +1168,8 @@ static inline gboolean
       gsize mid = (end + start) / 2;
       gsize mid_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - mid - 1);
       gsize mid_start = mid == 0 ? 0 : {PREFIX_}REF_ALIGN({PREFIX_}REF_READ_FRAME_OFFSET(v, len - mid), {alignment});
-      g_assert (mid_start <= mid_end && mid_end <= last_end);
+      g_assert (mid_start <= mid_end);
+      g_assert (mid_end <= last_end);
       {TypeName}EntryRef e = {{ ((const char *)v.base) + mid_start, mid_end - mid_start }};
       {key_ctype} e_key = {type_name_}entry_get_key (e);
       gint32 cmp = {compare};
@@ -1193,7 +1197,8 @@ static inline gboolean
     {{
       gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, len - i - 1);
       {TypeName}EntryRef e = {{ ((const guchar *)v.base) + start, end - start }};
-      g_assert (start <= end && end <= last_end);
+      g_assert (start <= end);
+      g_assert (end <= last_end);
       {key_ctype} e_key = {type_name_}entry_get_key (e);
       if ({equal})
         {{
@@ -1443,7 +1448,9 @@ class Field:
                     C("  G_GNUC_UNUSED gsize end = v.size - offset_size * {framing_offset_size};", {'framing_offset_size': self.struct.framing_offset_size })
                 else:
                     C("  G_GNUC_UNUSED gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
-                C("  g_assert (start <= end && end <= v.size && base[end-1] == 0);");
+                C("  g_assert (start <= end);");
+                C("  g_assert (end <= v.size);");
+                C("  g_assert (base[end-1] == 0);");
                 if internal_validation:
                     C("  {prefix_}validate_child ({STRUCT_NAME_}TYPEFORMAT, v.base, v.size, {fieldindex}, (const char *)v.base + start, end - start);")
                 C("  return &G_STRUCT_MEMBER(const char, v.base, start);")
@@ -1458,7 +1465,8 @@ class Field:
                     C("  gsize end = v.size - offset_size * {framing_offset_size};", {'framing_offset_size': self.struct.framing_offset_size })
                 else:
                     C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, %d);" % (self.table_i + 1));
-                C("  g_assert (start <= end && end <= v.size);");
+                C("  g_assert (start <= end);");
+                C("  g_assert (end <= v.size);");
                 if internal_validation:
                     C("  {prefix_}validate_child ({STRUCT_NAME_}TYPEFORMAT, v.base, v.size, {fieldindex}, (const char *)v.base + start, end - start);")
                 C("  return ({TypeNameRef}) {{ G_STRUCT_MEMBER_P(v.base, start), end - start }};")
