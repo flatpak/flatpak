@@ -1,4 +1,8 @@
 PREFIX = /usr/local
+CC ?= gcc
+CFLAGS ?= -g -Wall
+GLIB_CFLAGS = `pkg-config --cflags glib-2.0`
+GLIB_LIBS = `pkg-config --libs glib-2.0`
 
 all: sample ostree_test performance
 
@@ -6,19 +10,19 @@ sample.h: variant-schema-compiler sample.gv
 	./variant-schema-compiler --internal-validation --outfile sample-impl.h --outfile-header=sample.h --prefix=sample sample.gv
 
 sample: sample.c sample.h
-	gcc `pkg-config --cflags --libs glib-2.0` -g -Wall -o sample sample.c
+	$(CC) $(GLIB_CFLAGS) $(CFLAGS) -o sample sample.c $(GLIB_LIBS)
 
 performance.h: variant-schema-compiler performance.gv
 	./variant-schema-compiler --outfile performance.h --prefix=performance performance.gv
 
 performance: performance.c performance.h
-	gcc `pkg-config --cflags --libs glib-2.0` -O2 -o performance performance.c
+	$(CC) $(GLIB_CFLAGS) $(CFLAGS) -O2 -o performance performance.c $(GLIB_LIBS)
 
 ostree_test.h: variant-schema-compiler ostree.gv
 	./variant-schema-compiler --outfile ostree_test.h --prefix=ot ostree.gv
 
 ostree_test: ostree_test.c ostree_test.h
-	gcc `pkg-config --cflags --libs glib-2.0` -g -Wall -o ostree_test ostree_test.c
+	$(CC) $(GLIB_CFLAGS) $(CFLAGS) -o ostree_test ostree_test.c $(GLIB_LIBS)
 
 clean:
 	rm -f sample.h sample performance.h performance ostree_test.h ostree_test
