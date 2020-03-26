@@ -35,6 +35,7 @@ flatpak-*.tar.xz
 flatpak-session-helper
 flatpak-portal
 flatpak-validate-icon
+flatpak-oci-authenticator
 *~
 profile/flatpak.sh
 *-dbus-generated.[ch]
