@@ -5465,7 +5465,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       new_timestamp = ostree_commit_get_timestamp (new_commit);
 
       if (new_timestamp < old_timestamp)
-        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Not allowed to downgrade %s (old_commit: %s/%ld new_commit: %s/%ld ",
+        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Not allowed to downgrade %s (old_commit: %s/%" G_GINT64_FORMAT " new_commit: %s/%" G_GINT64_FORMAT ")",
                                    ref, current_checksum, old_timestamp, checksum, new_timestamp);
     }
 
