@@ -306,6 +306,7 @@ FLATPAK_EXTERN char *              flatpak_installation_load_app_overrides (Flat
                                                                             const char          *app_id,
                                                                             GCancellable        *cancellable,
                                                                             GError             **error);
+G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_install)
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install (FlatpakInstallation    *self,
                                                                    const char             *remote_name,
                                                                    FlatpakRefKind          kind,
@@ -316,6 +317,7 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install (FlatpakInstal
                                                                    gpointer                progress_data,
                                                                    GCancellable           *cancellable,
                                                                    GError                **error);
+G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_install)
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install_full (FlatpakInstallation    *self,
                                                                         FlatpakInstallFlags     flags,
                                                                         const char             *remote_name,
@@ -328,6 +330,7 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install_full (FlatpakI
                                                                         gpointer                progress_data,
                                                                         GCancellable           *cancellable,
                                                                         GError                **error);
+G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_update)
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update (FlatpakInstallation    *self,
                                                                   FlatpakUpdateFlags      flags,
                                                                   FlatpakRefKind          kind,
@@ -338,6 +341,7 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update (FlatpakInstall
                                                                   gpointer                progress_data,
                                                                   GCancellable           *cancellable,
                                                                   GError                **error);
+G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_update)
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update_full (FlatpakInstallation    *self,
                                                                        FlatpakUpdateFlags      flags,
                                                                        FlatpakRefKind          kind,
@@ -349,16 +353,19 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update_full (FlatpakIn
                                                                        gpointer                progress_data,
                                                                        GCancellable           *cancellable,
                                                                        GError                **error);
+G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_install_bundle)
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                                                           GFile                  *file,
                                                                           FlatpakProgressCallback progress,
                                                                           gpointer                progress_data,
                                                                           GCancellable           *cancellable,
                                                                           GError                **error);
+G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_install_flatpakref)
 FLATPAK_EXTERN FlatpakRemoteRef *   flatpak_installation_install_ref_file (FlatpakInstallation *self,
                                                                            GBytes              *ref_file_data,
                                                                            GCancellable        *cancellable,
                                                                            GError             **error);
+G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_uninstall)
 FLATPAK_EXTERN gboolean             flatpak_installation_uninstall (FlatpakInstallation    *self,
                                                                     FlatpakRefKind          kind,
                                                                     const char             *name,
@@ -369,6 +376,7 @@ FLATPAK_EXTERN gboolean             flatpak_installation_uninstall (FlatpakInsta
                                                                     GCancellable           *cancellable,
                                                                     GError                **error);
 
+G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_uninstall)
 FLATPAK_EXTERN gboolean             flatpak_installation_uninstall_full (FlatpakInstallation    *self,
                                                                          FlatpakUninstallFlags   flags,
                                                                          FlatpakRefKind          kind,
