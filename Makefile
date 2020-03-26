@@ -1,8 +1,9 @@
 PREFIX = /usr/local
 CC ?= gcc
 CFLAGS ?= -g -Wall
-GLIB_CFLAGS = `pkg-config --cflags glib-2.0`
-GLIB_LIBS = `pkg-config --libs glib-2.0`
+PKG_CONFIG ?= pkg-config
+GLIB_CFLAGS = `$(PKG_CONFIG) --cflags glib-2.0`
+GLIB_LIBS = `$(PKG_CONFIG) --libs glib-2.0`
 
 all: sample ostree_test performance
 
