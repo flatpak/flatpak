@@ -118,7 +118,7 @@ typedef struct {{
 G_GNUC_CONST static inline guint
 {prefix_}ref_get_offset_size (gsize size)
 {{
-#if defined(__GNUC__) && (__GNUC__ >= 4) && defined(__OPTIMIZE__)
+#if defined(__GNUC__) && (__GNUC__ >= 4) && defined(__OPTIMIZE__) && defined(__LP64__)
   /* Instead of using a lookup table we use nibbles in a lookup word */
   guint32 v = (guint32)0x88884421;
   return (v >> (((__builtin_clzl(size) ^ 63) / 8) * 4)) & 0xf;
