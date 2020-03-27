@@ -147,6 +147,7 @@ flatpak_progress_init (FlatpakProgress *self)
   self->ostree_status = g_strdup ("");
   self->estimating = TRUE;
   self->last_was_metadata = TRUE;
+  self->update_interval = FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
 }
 
 FlatpakProgress *
@@ -409,6 +410,8 @@ flatpak_progress_update_oci_pull (FlatpakProgress *self,
 guint32
 flatpak_progress_get_update_interval (FlatpakProgress *self)
 {
+  if (self == NULL)
+    return FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
   return self->update_interval;
 }
 

@@ -4421,10 +4421,7 @@ get_common_pull_options (GVariantBuilder     *builder,
   g_variant_builder_add (builder, "{s@v}", "append-user-agent",
                          g_variant_new_variant (g_variant_new_string ("flatpak/" PACKAGE_VERSION)));
 
-  if (progress != NULL)
-    update_interval = flatpak_progress_get_update_interval (progress);
-  if (update_interval == 0)
-    update_interval = FLATPAK_DEFAULT_UPDATE_INTERVAL_MS;
+  update_interval = flatpak_progress_get_update_interval (progress);
 
   g_variant_builder_add (builder, "{s@v}", "update-frequency",
                          g_variant_new_variant (g_variant_new_uint32 (update_interval)));

@@ -31,6 +31,7 @@
 G_DECLARE_FINAL_TYPE (FlatpakProgress, flatpak_progress, FLATPAK, PROGRESS, GObject);
 
 #define FLATKPAK_MAIN_CONTEXT_INIT {NULL}
+#define FLATPAK_DEFAULT_UPDATE_INTERVAL_MS 100
 
 struct _FlatpakMainContext {
   GMainContext        *context;
