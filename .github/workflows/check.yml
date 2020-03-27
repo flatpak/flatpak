@@ -98,8 +98,7 @@ jobs:
       with:
         submodules: true
     - name: configure
-      # We disable introspection because it fails with clang: https://bugzilla.redhat.com/show_bug.cgi?id=1543295
-      run: ./autogen.sh --disable-introspection
+      run: ./autogen.sh  --enable-gtk-doc --enable-gtk-doc-html
       env:
         CC: clang
         CFLAGS: -Werror=unused-variable
@@ -124,8 +123,7 @@ jobs:
       with:
         submodules: true
     - name: configure
-      # We disable introspection because it fails with clang: https://bugzilla.redhat.com/show_bug.cgi?id=1543295
-      run: ./autogen.sh --disable-introspection
+      run: ./autogen.sh
       env:
         CC: clang
         CFLAGS: -Werror=unused-variable
