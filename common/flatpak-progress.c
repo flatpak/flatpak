@@ -40,34 +40,30 @@ flatpak_main_context_wait (FlatpakMainContext *self,
 void
 flatpak_main_context_finish (FlatpakMainContext *self)
 {
-  if (self->progress)
-    flatpak_progress_revoke_ostree_progress (self->progress, self->ostree_progress);
+  if (self->context == NULL)
+    return;
+
+  if (self->flatpak_progress)
+    flatpak_progress_revoke_ostree_progress (self->flatpak_progress, self->ostree_progress);
   else
     g_object_unref (self->ostree_progress);
 
-  if (self->context)
-    g_main_context_pop_thread_default (self->context);
-
-  g_slice_free(FlatpakMainContext, self);
+  g_main_context_pop_thread_default (self->context);
 }
 
-FlatpakMainContext *
-flatpak_progress_push_main_context (FlatpakProgress *maybe_progress)
+void
+flatpak_progress_init_main_context (FlatpakProgress    *maybe_progress,
+                                    FlatpakMainContext *context)
 {
-  FlatpakMainContext *retval = g_slice_new0 (FlatpakMainContext);
-  retval->progress = maybe_progress;
+  context->context = g_main_context_new ();
+  g_main_context_push_thread_default (context->context);
 
-  retval->context = g_main_context_new ();
-  g_main_context_push_thread_default (retval->context);
-
+  context->flatpak_progress = maybe_progress;
   if (maybe_progress)
-    retval->ostree_progress = flatpak_progress_issue_ostree_progress (maybe_progress);
+    context->ostree_progress = flatpak_progress_issue_ostree_progress (maybe_progress);
   else
-    retval->ostree_progress = ostree_async_progress_new ();
-
-  return retval;
+    context->ostree_progress = ostree_async_progress_new ();
 }
-
 
 struct _FlatpakProgress
 {

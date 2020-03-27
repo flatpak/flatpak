@@ -794,11 +794,11 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
   if (is_oci)
     {
-      g_autoptr(FlatpakMainContext) context = NULL;
+      g_auto(FlatpakMainContext) context = FLATKPAK_MAIN_CONTEXT_INIT;
 
       /* This does soup http requests spinning the current mainloop, so we need one
          for this thread. */
-      context = flatpak_progress_push_main_context (NULL);
+      flatpak_progress_init_main_context (NULL, &context);
       /* In the OCI case, we just do the full update, including network i/o, in the
        * system helper, see comment in flatpak_dir_update_appstream()
        */

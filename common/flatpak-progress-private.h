@@ -30,9 +30,11 @@
 
 G_DECLARE_FINAL_TYPE (FlatpakProgress, flatpak_progress, FLATPAK, PROGRESS, GObject);
 
+#define FLATKPAK_MAIN_CONTEXT_INIT {NULL}
+
 struct _FlatpakMainContext {
-  FlatpakProgress     *progress;
   GMainContext        *context;
+  FlatpakProgress     *flatpak_progress;
   OstreeAsyncProgress *ostree_progress;
 };
 typedef struct _FlatpakMainContext FlatpakMainContext;
@@ -41,7 +43,7 @@ void flatpak_main_context_wait (FlatpakMainContext *self,
                                 gpointer           *watch_location);
 void flatpak_main_context_finish (FlatpakMainContext *self);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakMainContext, flatpak_main_context_finish);
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (FlatpakMainContext, flatpak_main_context_finish);
 
 FlatpakProgress *flatpak_progress_new (FlatpakProgressCallback callback,
                                        gpointer                user_data);
@@ -79,6 +81,7 @@ gboolean flatpak_progress_get_estimating (FlatpakProgress *self);
 gboolean flatpak_progress_is_done (FlatpakProgress *self);
 void flatpak_progress_done (FlatpakProgress *self);
 
-FlatpakMainContext *flatpak_progress_push_main_context (FlatpakProgress *maybe_progress);
+void flatpak_progress_init_main_context (FlatpakProgress *maybe_progress,
+                                         FlatpakMainContext *context);
 
 #endif  /* FLATPAK_PROGRESS_H */
