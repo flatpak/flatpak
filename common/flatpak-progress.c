@@ -116,11 +116,11 @@ struct _FlatpakProgress
   guint32 update_interval;
 
   /* Flags */
-  gboolean downloading_extra_data : 1;   /* whether extra-data files are being downloaded or not */
-  gboolean caught_error           : 1;
-  gboolean estimating             : 1;
-  gboolean last_was_metadata      : 1;
-  gboolean done                   : 1;
+  guint downloading_extra_data : 1;   /* whether extra-data files are being downloaded or not */
+  guint caught_error           : 1;
+  guint estimating             : 1;
+  guint last_was_metadata      : 1;
+  guint done                   : 1;
 };
 
 G_DEFINE_TYPE (FlatpakProgress, flatpak_progress, G_TYPE_OBJECT);
