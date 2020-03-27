@@ -4587,8 +4587,7 @@ extra_data_progress_report (guint64  downloaded_bytes,
 {
   FlatpakProgress *progress = FLATPAK_PROGRESS (user_data);
 
-  if (progress)
-    flatpak_progress_update_extra_data (progress, downloaded_bytes);
+  flatpak_progress_update_extra_data (progress, downloaded_bytes);
 }
 
 static gboolean
@@ -4675,8 +4674,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
         }
     }
 
-  if (progress)
-    flatpak_progress_init_extra_data (progress, n_extra_data, total_download_size);
+  flatpak_progress_init_extra_data (progress, n_extra_data, total_download_size);
 
   return TRUE;
 }
@@ -4716,8 +4714,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   extra_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ayay)"));
 
   /* Other fields were already set in flatpak_dir_setup_extra_data() */
-  if (progress)
-    flatpak_progress_start_extra_data (progress);
+  flatpak_progress_start_extra_data (progress);
 
   base_dir = flatpak_get_user_base_dir_location ();
 
@@ -4784,16 +4781,14 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
       if (bytes == NULL)
         {
-          if (progress)
-            flatpak_progress_reset_extra_data (progress);
+          flatpak_progress_reset_extra_data (progress);
           g_prefix_error (error, _("While downloading %s: "), extra_data_uri);
           return FALSE;
         }
 
       if (g_bytes_get_size (bytes) != download_size)
         {
-          if (progress)
-            flatpak_progress_reset_extra_data (progress);
+          flatpak_progress_reset_extra_data (progress);
           return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong size for extra data %s"), extra_data_uri);
         }
 
@@ -4803,8 +4798,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
       if (strcmp (sha256, extra_data_sha256) != 0)
         {
-          if (progress)
-            flatpak_progress_reset_extra_data (progress);
+          flatpak_progress_reset_extra_data (progress);
           return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data %s"), extra_data_uri);
         }
 
@@ -4816,8 +4810,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
   extra_data = g_variant_ref_sink (g_variant_builder_end (extra_data_builder));
 
-  if (progress)
-    flatpak_progress_reset_extra_data (progress);
+  flatpak_progress_reset_extra_data (progress);
 
   if (!ostree_repo_read_commit_detached_metadata (repo, rev, &detached_metadata,
                                                   cancellable, error))
@@ -4879,8 +4872,7 @@ oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
 {
   FlatpakProgress *progress = data;
 
-  if (progress)
-    flatpak_progress_update_oci_pull (progress, total_size, pulled_size, n_layers, pulled_layers);
+  flatpak_progress_update_oci_pull (progress, total_size, pulled_size, n_layers, pulled_layers);
 }
 
 static gboolean
@@ -4933,8 +4925,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   flatpak_oci_registry_set_token (registry, token);
 
-  if (progress)
-    flatpak_progress_start_oci_pull (progress);
+  flatpak_progress_start_oci_pull (progress);
 
   g_debug ("Mirroring OCI image %s", oci_digest);
 
@@ -5021,8 +5012,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (repo == NULL)
     repo = self->repo;
 
-  if (progress)
-    flatpak_progress_start_oci_pull (progress);
+  flatpak_progress_start_oci_pull (progress);
 
   g_debug ("Pulling OCI image %s", oci_digest);
 

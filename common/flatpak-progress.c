@@ -317,6 +317,9 @@ flatpak_progress_init_extra_data (FlatpakProgress *self,
                                   guint64          n_extra_data,
                                   guint64          total_download_size)
 {
+  if (self == NULL)
+    return;
+
   self->outstanding_extra_data = n_extra_data;
   self->total_extra_data = n_extra_data;
   self->transferred_extra_data_bytes = 0;
@@ -329,6 +332,9 @@ flatpak_progress_init_extra_data (FlatpakProgress *self,
 void
 flatpak_progress_start_extra_data (FlatpakProgress *self)
 {
+  if (self == NULL)
+    return;
+
   self->start_time_extra_data = g_get_monotonic_time ();
   self->downloading_extra_data = TRUE;
   update_status_progress_and_estimating (self);
@@ -337,6 +343,9 @@ flatpak_progress_start_extra_data (FlatpakProgress *self)
 void
 flatpak_progress_reset_extra_data (FlatpakProgress *self)
 {
+  if (self == NULL)
+    return;
+
   self->downloading_extra_data = FALSE;
   update_status_progress_and_estimating (self);
 }
@@ -345,6 +354,9 @@ void
 flatpak_progress_update_extra_data (FlatpakProgress *self,
                                     guint64          downloaded_bytes)
 {
+  if (self == NULL)
+    return;
+
   self->transferred_extra_data_bytes = self->extra_data_previous_dl + downloaded_bytes;
   update_status_progress_and_estimating (self);
 }
@@ -354,6 +366,9 @@ flatpak_progress_complete_extra_data_download (FlatpakProgress *self,
                                                guint64          download_size,
                                                guint64          n_extra_data_remaining)
 {
+  if (self == NULL)
+    return;
+
   self->extra_data_previous_dl += download_size;
   self->outstanding_extra_data = n_extra_data_remaining;
   update_status_progress_and_estimating (self);
@@ -362,6 +377,9 @@ flatpak_progress_complete_extra_data_download (FlatpakProgress *self,
 void
 flatpak_progress_start_oci_pull (FlatpakProgress *self)
 {
+  if (self == NULL)
+    return;
+
   self->start_time = g_get_monotonic_time () - 2;
   self->outstanding_fetches = 0;
   self->outstanding_writes = 0;
@@ -395,6 +413,9 @@ flatpak_progress_update_oci_pull (FlatpakProgress *self,
                                   guint32          n_layers,
                                   guint32          pulled_layers)
 {
+  if (self == NULL)
+    return;
+
   self->outstanding_fetches = n_layers - pulled_layers;
   self->fetched_delta_parts = pulled_layers;
   self->total_delta_parts = n_layers;
