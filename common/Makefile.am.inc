@@ -142,6 +142,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-oci-registry.c \
 	common/flatpak-portal-error.c \
 	common/flatpak-portal-error.h \
+	common/flatpak-progress-private.h \
+	common/flatpak-progress.c \
 	common/flatpak-ref.c \
 	common/flatpak-related-ref-private.h \
 	common/flatpak-related-ref.c \
