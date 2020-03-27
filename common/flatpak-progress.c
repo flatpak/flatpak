@@ -49,6 +49,7 @@ flatpak_main_context_finish (FlatpakMainContext *self)
     g_object_unref (self->ostree_progress);
 
   g_main_context_pop_thread_default (self->context);
+  g_main_context_unref (self->context);
 }
 
 void
