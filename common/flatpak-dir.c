@@ -4791,8 +4791,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
           return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong size for extra data %s"), extra_data_uri);
         }
 
-      guint64 n_extra_data_remaining = n_extra_data - i - 1;
-      flatpak_progress_complete_extra_data_download (progress, download_size, n_extra_data_remaining);
+      flatpak_progress_complete_extra_data_download (progress, download_size);
 
       sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
       if (strcmp (sha256, extra_data_sha256) != 0)

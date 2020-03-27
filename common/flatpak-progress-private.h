@@ -58,8 +58,7 @@ void flatpak_progress_reset_extra_data (FlatpakProgress *self);
 void flatpak_progress_update_extra_data (FlatpakProgress *self,
                                          guint64          downloaded_bytes);
 void flatpak_progress_complete_extra_data_download (FlatpakProgress *self,
-                                                    guint64          download_size,
-                                                    guint64          n_extra_data_remaining);
+                                                    guint64          download_size);
 
 void flatpak_progress_start_oci_pull (FlatpakProgress *self);
 void flatpak_progress_update_oci_pull (FlatpakProgress *self,

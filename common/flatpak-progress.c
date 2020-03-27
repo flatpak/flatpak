@@ -335,6 +335,8 @@ flatpak_progress_start_extra_data (FlatpakProgress *self)
   if (self == NULL)
     return;
 
+  g_assert (self->outstanding_extra_data > 0);
+
   self->start_time_extra_data = g_get_monotonic_time ();
   self->downloading_extra_data = TRUE;
   update_status_progress_and_estimating (self);
@@ -363,14 +365,15 @@ flatpak_progress_update_extra_data (FlatpakProgress *self,
 
 void
 flatpak_progress_complete_extra_data_download (FlatpakProgress *self,
-                                               guint64          download_size,
-                                               guint64          n_extra_data_remaining)
+                                               guint64          download_size)
 {
   if (self == NULL)
     return;
 
+  g_assert (self->outstanding_extra_data > 0);
+
   self->extra_data_previous_dl += download_size;
-  self->outstanding_extra_data = n_extra_data_remaining;
+  self->outstanding_extra_data--;
   update_status_progress_and_estimating (self);
 }
 
