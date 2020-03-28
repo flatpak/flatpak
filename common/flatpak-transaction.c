@@ -156,6 +156,7 @@ struct _FlatpakTransactionPrivate
   FlatpakDir                  *dir;
   GHashTable                  *last_op_for_ref;
   GHashTable                  *remote_states; /* (element-type utf8 FlatpakRemoteState) */
+  GHashTable                  *authenticator_op_for_remote;
   GPtrArray                   *extra_dependency_dirs;
   GPtrArray                   *extra_sideload_repos;
   GList                       *ops;
@@ -868,6 +869,7 @@ flatpak_transaction_finalize (GObject *object)
   g_free (priv->default_arch);
   g_hash_table_unref (priv->last_op_for_ref);
   g_hash_table_unref (priv->remote_states);
+  g_hash_table_unref (priv->authenticator_op_for_remote);
   g_list_free_full (priv->ops, (GDestroyNotify) g_object_unref);
   g_clear_object (&priv->dir);
 
@@ -1244,6 +1246,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
 
   priv->last_op_for_ref = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) flatpak_remote_state_unref);
+  priv->authenticator_op_for_remote = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
   priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
   priv->extra_sideload_repos = g_ptr_array_new_with_free_func (g_free);
@@ -2315,32 +2318,34 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
   for (int i = 0; remotes[i] != NULL; i++)
     {
       char *remote = remotes[i];
-      g_autoptr(GPtrArray) auto_install_refs = NULL;
+      g_autofree char *authenticator_ref = NULL;
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GFile) deploy = NULL;
+      FlatpakTransactionOperation *op = NULL;
 
       if (flatpak_dir_get_remote_disabled (priv->dir, remote))
         continue;
 
-      auto_install_refs = flatpak_dir_find_remote_auto_install_refs (priv->dir, remote);
-      for (int i = 0; i < auto_install_refs->len; i++)
+      authenticator_ref = flatpak_dir_find_remote_auto_install_authenticator_ref (priv->dir, remote);
+      if (authenticator_ref == NULL)
+        continue;
+
+      deploy = flatpak_dir_get_if_deployed (priv->dir, authenticator_ref, NULL, cancellable);
+      if (deploy == NULL)
         {
-          const char *ref = g_ptr_array_index (auto_install_refs, i);
-          g_autoptr(GError) local_error = NULL;
-          g_autoptr(GFile) deploy = NULL;
+          g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
 
-          deploy = flatpak_dir_get_if_deployed (priv->dir, ref, NULL, cancellable);
-          if (deploy == NULL)
+          if (state != NULL &&
+              flatpak_remote_state_lookup_ref (state, authenticator_ref, NULL, NULL, NULL, NULL, NULL))
             {
-              g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
-
-              if (state != NULL &&
-                  flatpak_remote_state_lookup_ref (state, ref, NULL, NULL, NULL, NULL, NULL))
+              g_debug ("Auto adding install of %s from remote %s", authenticator_ref, remote);
+              op = flatpak_transaction_add_op (self, remote, authenticator_ref, NULL, NULL, NULL, NULL,
+                                               FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
+              if (op == NULL)
+                g_debug ("Failed to add auto-install ref %s: %s", authenticator_ref, local_error->message);
+              else
                 {
-                  g_debug ("Auto adding install of %s from remote %s", ref, remote);
-                  if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, NULL,
-                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
-                                                    NULL, NULL,
-                                                    &local_error))
-                    g_debug ("Failed to add auto-install ref %s: %s", ref, local_error->message);
+                  g_hash_table_insert (priv->authenticator_op_for_remote, g_strdup(remote), op);
                 }
             }
         }
@@ -3079,6 +3084,45 @@ request_tokens_for_remote (FlatpakTransaction *self,
 
       op->resolved_token = *token == 0 ? NULL : g_strdup (token);
       op->requested_token = TRUE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+order_authed_operations (FlatpakTransaction *self,
+                        GCancellable        *cancellable,
+                        GError             **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  GList *l;
+
+  for (l = priv->ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakTransactionOperation *authenticator_op;
+
+      gboolean maybe_needs_token = FALSE;
+
+      /* Ensure we sort related refs that require tokens below the authenticator too */
+      if (op->fail_if_op_fails != NULL)
+        if (op->fail_if_op_fails->token_type != 0)
+          maybe_needs_token = TRUE;
+
+      if (!maybe_needs_token && op->token_type == 0)
+        continue;
+
+      if (!op_may_need_token (op) || op->requested_token)
+        continue;
+
+      authenticator_op = g_hash_table_lookup (priv->authenticator_op_for_remote, op->remote);
+
+      /* No authenticator to be installed for this remote, continue */
+      if (authenticator_op == NULL) {
+          continue;
+      }
+
+      run_operation_before (authenticator_op, op, 2);
     }
 
   return TRUE;
@@ -3857,12 +3901,12 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
         return FALSE;
     }
 
-  /* Resolve new ops */
-  if (!resolve_all_ops (self, cancellable, error))
+  /* Ensure authenticators are installed before ops that require them */
+  if (!order_authed_operations (self, cancellable, error))
     return FALSE;
 
-  /* Ensure we have all required tokens */
-  if (!request_required_tokens (self, NULL, cancellable, error))
+  /* Resolve new ops */
+  if (!resolve_all_ops (self, cancellable, error))
     return FALSE;
 
   sort_ops (self);
@@ -3937,6 +3981,10 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
         {
           res = FALSE;
         }
+
+      if (op_may_need_token (op) && op->token_type != 0 && !op->requested_token)
+        if (!request_required_tokens (self, op->remote, cancellable, &local_error))
+          res = FALSE;
 
       /* Here we execute the operation in a helper function */
       if (res && !_run_op_kind (self, op, state, &needs_prune, &needs_triggers, cancellable, &local_error))

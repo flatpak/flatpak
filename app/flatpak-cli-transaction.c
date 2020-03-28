@@ -512,6 +512,10 @@ webflow_start (FlatpakTransaction *transaction,
   const char *browser;
   g_autoptr(GError) local_error = NULL;
   const char *args[3] = { NULL, url, NULL };
+  gboolean raw_enabled = flatpak_is_raw_mode_enabled ();
+
+  if (raw_enabled)
+    flatpak_disable_raw_mode ();
 
   if (!self->disable_interaction)
     {
@@ -543,6 +547,9 @@ webflow_start (FlatpakTransaction *transaction,
 
   g_print ("Waiting for browser...\n");
 
+  if (raw_enabled)
+    flatpak_enable_raw_mode ();
+
   return TRUE;
 }
 
@@ -563,9 +570,13 @@ basic_auth_start (FlatpakTransaction *transaction,
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   char *user, *password;
+  gboolean raw_enabled = flatpak_is_raw_mode_enabled ();
 
   if (self->disable_interaction)
     return FALSE;
+
+  if (raw_enabled)
+    flatpak_disable_raw_mode ();
 
   g_print (_("Login required remote %s (realm %s)\n"), remote, realm);
   user = flatpak_prompt (FALSE, _("User"));
@@ -575,6 +586,9 @@ basic_auth_start (FlatpakTransaction *transaction,
   password = flatpak_password_prompt (_("Password"));
   if (password == NULL)
     return FALSE;
+
+  if (raw_enabled)
+    flatpak_enable_raw_mode ();
 
   flatpak_transaction_complete_basic_auth (transaction, id, user, password, NULL);
   return TRUE;

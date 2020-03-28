@@ -6727,6 +6727,16 @@ flatpak_disable_raw_mode (void)
   tcsetattr (STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
+gboolean
+flatpak_is_raw_mode_enabled (void)
+{
+  struct termios raw;
+
+  tcgetattr (STDIN_FILENO, &raw);
+
+  return (raw.c_lflag & (ECHO | ICANON)) == 0;
+}
+
 /* Wrapper that uses ostree_repo_resolve_collection_ref() and on failure falls
  * back to using ostree_repo_resolve_rev() for backwards compatibility. This
  * means we support refs/heads/, refs/remotes/, and refs/mirrors/. */

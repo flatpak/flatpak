@@ -969,8 +969,8 @@ gboolean flatpak_dir_find_latest_rev (FlatpakDir               *self,
                                       GFile                   **out_sideload_path,
                                       GCancellable             *cancellable,
                                       GError                  **error);
-GPtrArray * flatpak_dir_find_remote_auto_install_refs (FlatpakDir         *self,
-                                                       const char         *remote_name);
+char * flatpak_dir_find_remote_auto_install_authenticator_ref (FlatpakDir         *self,
+                                                               const char         *remote_name);
 
 typedef struct
 {

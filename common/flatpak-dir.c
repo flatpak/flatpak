@@ -13792,22 +13792,23 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
   return g_steal_pointer (&related);
 }
 
-GPtrArray *
-flatpak_dir_find_remote_auto_install_refs (FlatpakDir         *self,
-                                           const char         *remote_name)
+char *
+flatpak_dir_find_remote_auto_install_authenticator_ref (FlatpakDir         *self,
+                                                        const char         *remote_name)
 {
-  GPtrArray *auto_install_refs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
   g_autofree char *authenticator_name = NULL;
   g_autofree char *authenticator_ref = NULL;
 
   authenticator_name = flatpak_dir_get_remote_install_authenticator_name (self, remote_name);
-  if (authenticator_name != NULL)
-    authenticator_ref = g_strdup_printf ("app/%s/%s/autoinstall", authenticator_name, flatpak_get_arch ());
+  if (authenticator_name == NULL)
+    return NULL;
+
+  authenticator_ref = g_strdup_printf ("app/%s/%s/autoinstall", authenticator_name, flatpak_get_arch ());
 
   if (authenticator_ref)
-    g_ptr_array_add (auto_install_refs, g_steal_pointer (&authenticator_ref));
+    return g_steal_pointer (&authenticator_ref);
 
-  return auto_install_refs;
+  return NULL;
 }
 
 
