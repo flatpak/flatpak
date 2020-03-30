@@ -88,10 +88,12 @@ mkdir -p ${TEST_DATA_DIR}/home
 mkdir -p ${TEST_DATA_DIR}/runtime
 mkdir -p ${TEST_DATA_DIR}/system
 mkdir -p ${TEST_DATA_DIR}/config
+mkdir -p ${TEST_DATA_DIR}/run
 export FLATPAK_SYSTEM_DIR=${TEST_DATA_DIR}/system
 export FLATPAK_SYSTEM_CACHE_DIR=${TEST_DATA_DIR}/system-cache
 export FLATPAK_SYSTEM_HELPER_ON_SESSION=1
 export FLATPAK_CONFIG_DIR=${TEST_DATA_DIR}/config
+export FLATPAK_RUN_DIR=${TEST_DATA_DIR}/run
 export FLATPAK_FANCY_OUTPUT=0
 
 export HOME=${TEST_DATA_DIR}/home

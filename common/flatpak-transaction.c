@@ -1632,7 +1632,8 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
       for (int i = 0; i < priv->extra_sideload_repos->len; i++)
         {
           const char *path = g_ptr_array_index (priv->extra_sideload_repos, i);
-          flatpak_remote_state_add_sideload_repo (state, path);
+          g_autoptr(GFile) f = g_file_new_for_path (path);
+          flatpak_remote_state_add_sideload_repo (state, f);
         }
     }
 

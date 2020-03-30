@@ -1105,9 +1105,7 @@ handle_configure (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if ((strcmp (arg_key, "languages") != 0) &&
-      (strcmp (arg_key, "extra-languages") != 0) &&
-      (strcmp (arg_key, "sideload-repos") != 0))
+  if ((strcmp (arg_key, "languages") != 0) && (strcmp (arg_key, "extra-languages") != 0))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported key: %s", arg_key);

@@ -58,11 +58,15 @@ if ${FLATPAK} ${U} install -y test-repo org.test.Hello &> /dev/null; then
     assert_not_reached "Should not be able to install with wrong url"
 fi
 
-SIDELOAD_REPO=$(realpath usb_dir/repo)
-${FLATPAK} ${U} config --set sideload-repos ${SIDELOAD_REPO}
+mkdir $FL_DIR/sideload-repos
+SIDELOAD_REPO_LINK=$FL_DIR/sideload-repos/sideload1
+mkdir $FLATPAK_RUN_DIR/sideload-repos
+SIDELOAD_REPO_LINK2=$FLATPAK_RUN_DIR/sideload-repos/sideload1
 
-${FLATPAK} ${U} config --get sideload-repos > sideload-repos
-assert_file_has_content sideload-repos ${SIDELOAD_REPO}
+SIDELOAD_REPO=$(realpath usb_dir/repo)
+
+# This one uses the sideload repo in /run, the rest in the flatpak dir
+ln -s $SIDELOAD_REPO $SIDELOAD_REPO_LINK2
 
 ${FLATPAK} ${U} install -y test-repo org.test.Hello
 assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
@@ -71,7 +75,7 @@ assert_not_has_file $FL_DIR/repo/refs/mirrors/org.test.Collection.test/app/org.t
 
 ok "installed sideloaded app"
 
-${FLATPAK} ${U} config --unset sideload-repos
+rm $SIDELOAD_REPO_LINK2
 
 ${FLATPAK} ${U} uninstall -y org.test.Hello
 ${FLATPAK} ${U} install --sideload-repo=${SIDELOAD_REPO} -y test-repo org.test.Hello
@@ -80,7 +84,7 @@ assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/app/org.test.Hello/${ARCH}/master
 assert_not_has_file $FL_DIR/repo/refs/mirrors/org.test.Collection.test/app/org.test.Hello/${ARCH}/master
 
-${FLATPAK} ${U} config --set sideload-repos ${SIDELOAD_REPO}
+ln -s $SIDELOAD_REPO $SIDELOAD_REPO_LINK
 
 ok "installed w/ runtime sideload option"
 
@@ -99,7 +103,7 @@ ${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
 ${FLATPAK} ${U} uninstall -y --all
 
 # Disable sideload repo and "break" online repo
-${FLATPAK} ${U} config --unset sideload-repos
+rm $SIDELOAD_REPO_LINK
 mv repos/test/objects repos/test/objects.disabled
 
 httpd_clear_log
@@ -113,7 +117,7 @@ assert_file_has_content httpd-log "GET .*commit .*404"
 
 assert_file_has_content install-error-log "Server returned status 404: Not Found"
 
-${FLATPAK} ${U} config --set sideload-repos ${SIDELOAD_REPO}
+ln -s $SIDELOAD_REPO $SIDELOAD_REPO_LINK
 
 ${FLATPAK} ${U} install -y test-repo org.test.Hello
 assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
@@ -179,7 +183,7 @@ mv usb_dir/repo usb_dir/repo.old
 mv usb_dir/repo2 usb_dir/repo
 
 # Try with --sideload-repo instead of config
-${FLATPAK} ${U} config --unset sideload-repos
+rm $SIDELOAD_REPO_LINK
 
 # And update to it (offline)
 ${FLATPAK} ${U} update -y --sideload-repo=${SIDELOAD_REPO}
