@@ -79,6 +79,8 @@
 #define SYSCONF_REMOTES_DIR "remotes.d"
 #define SYSCONF_REMOTES_FILE_EXT ".flatpakrepo"
 
+#define SIDELOAD_REPOS_DIR_NAME "sideload-repos"
+
 #ifdef USE_SYSTEM_HELPER
 /* This uses a weird Auto prefix to avoid conflicts with later added polkit types.
  */
@@ -2474,14 +2476,14 @@ flatpak_dir_get_removed_dir (FlatpakDir *self)
 GFile *
 flatpak_dir_get_sideload_repos_dir (FlatpakDir *self)
 {
-  return g_file_get_child (self->basedir, "sideload-repos");
+  return g_file_get_child (self->basedir, SIDELOAD_REPOS_DIR_NAME);
 }
 
 GFile *
 flatpak_dir_get_runtime_sideload_repos_dir (FlatpakDir *self)
 {
   g_autoptr(GFile) base = g_file_new_for_path (get_run_dir_location ());
-  return g_file_get_child (base, "sideload-repos");
+  return g_file_get_child (base, SIDELOAD_REPOS_DIR_NAME);
 }
 
 OstreeRepo *
