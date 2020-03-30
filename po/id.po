@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-02-13 15:07+0100\n"
+"POT-Creation-Date: 2020-03-30 15:52+0200\n"
 "PO-Revision-Date: 2020-01-26 17:12+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -4493,17 +4493,17 @@ msgstr "Remote '%s' sudah ada"
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "Seperti yang diminta, %s hanya ditarik, tetapi tidak dipasang"
 
-#: common/flatpak-oci-registry.c:1866
+#: common/flatpak-oci-registry.c:1873
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr "Tidak ditemukan kunci gpg dengan ID %s (homedir: %s)"
 
-#: common/flatpak-oci-registry.c:1873
+#: common/flatpak-oci-registry.c:1880
 #, c-format
 msgid "Unable to lookup key ID %s: %d)"
 msgstr "Tidak dapat mencari ID kunci %s: %d)"
 
-#: common/flatpak-oci-registry.c:1881
+#: common/flatpak-oci-registry.c:1888
 #, c-format
 msgid "Error signing commit: %d"
 msgstr "Galat menandatangani komit: %d"
@@ -4577,11 +4577,6 @@ msgstr "Gagal memblokir syscall %d"
 #: common/flatpak-run.c:2787
 msgid "Failed to export bpf"
 msgstr "Gagal mengekspor bpf"
-
-#: common/flatpak-run.c:2842
-#, c-format
-msgid "Invalid group: %d"
-msgstr "Grup tidak valid: %d"
 
 #: common/flatpak-run.c:3017
 #, c-format
@@ -5207,6 +5202,10 @@ msgid ""
 msgstr ""
 "Autentikasi diperlukan untuk memasang perangkat lunak yang dibatasi oleh "
 "kebijakan kontrol orang tua Anda"
+
+#, c-format
+#~ msgid "Invalid group: %d"
+#~ msgstr "Grup tidak valid: %d"
 
 #~ msgid "Use OCI labels instead of annotations"
 #~ msgstr "Gunakan label OCI alih-alih anotasi"

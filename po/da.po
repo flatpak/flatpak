@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-02-13 15:07+0100\n"
+"POT-Creation-Date: 2020-03-30 15:52+0200\n"
 "PO-Revision-Date: 2020-01-09 22:26+0200\n"
 "Last-Translator: scootergrisen\n"
 "Language-Team: Danish\n"
@@ -4484,17 +4484,17 @@ msgstr "Eksternen '%s' findes allerede"
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "Som anmodet, blev %s kun pulled, men ikke installeret"
 
-#: common/flatpak-oci-registry.c:1866
+#: common/flatpak-oci-registry.c:1873
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr "Ingen gpg-nøgle fundet med id'et %s (hjemmemappe: %s)"
 
-#: common/flatpak-oci-registry.c:1873
+#: common/flatpak-oci-registry.c:1880
 #, c-format
 msgid "Unable to lookup key ID %s: %d)"
 msgstr "Kan ikke opslå nøgle-id'et %s: %d)"
 
-#: common/flatpak-oci-registry.c:1881
+#: common/flatpak-oci-registry.c:1888
 #, c-format
 msgid "Error signing commit: %d"
 msgstr "Fejl ved underskrivning af indsendelse: %d"
@@ -4568,11 +4568,6 @@ msgstr "Kunne ikke blokere syskaldet %d"
 #: common/flatpak-run.c:2787
 msgid "Failed to export bpf"
 msgstr "Kunne ikke eksportere bpf"
-
-#: common/flatpak-run.c:2842
-#, c-format
-msgid "Invalid group: %d"
-msgstr "Ugyldig gruppe: %d"
 
 #: common/flatpak-run.c:3017
 #, c-format
@@ -5196,3 +5191,7 @@ msgid ""
 msgstr ""
 "Der kræves autentifikation for at installere software som er begrænset af "
 "din politik for forælderstyringer"
+
+#, c-format
+#~ msgid "Invalid group: %d"
+#~ msgstr "Ugyldig gruppe: %d"

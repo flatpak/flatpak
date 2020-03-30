@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-02-16 12:04+0000\n"
+"POT-Creation-Date: 2020-03-30 15:52+0200\n"
 "PO-Revision-Date: 2020-02-16 13:05+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -4560,17 +4560,17 @@ msgstr "Repozytorium „%s” już istnieje"
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "Jak zażądano, %s zostało tylko pobrane, ale nie zainstalowane"
 
-#: common/flatpak-oci-registry.c:1866
+#: common/flatpak-oci-registry.c:1873
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr "Nie odnaleziono klucza GPG z identyfikatorem %s (katalog domowy: %s)"
 
-#: common/flatpak-oci-registry.c:1873
+#: common/flatpak-oci-registry.c:1880
 #, c-format
 msgid "Unable to lookup key ID %s: %d)"
 msgstr "Nie można wyszukać identyfikatora klucza %s: %d)"
 
-#: common/flatpak-oci-registry.c:1881
+#: common/flatpak-oci-registry.c:1888
 #, c-format
 msgid "Error signing commit: %d"
 msgstr "Błąd podczas podpisywania zatwierdzenia: %d"
@@ -4647,11 +4647,6 @@ msgstr "Zablokowanie wywołania systemowego %d się nie powiodło"
 #: common/flatpak-run.c:2787
 msgid "Failed to export bpf"
 msgstr "Wyeksportowanie bpf się nie powiodło"
-
-#: common/flatpak-run.c:2842
-#, c-format
-msgid "Invalid group: %d"
-msgstr "Nieprawidłowa grupa: %d"
 
 #: common/flatpak-run.c:3017
 #, c-format
@@ -5286,3 +5281,7 @@ msgid ""
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie ograniczane "
 "przez zasady kontroli rodzicielskiej"
+
+#, c-format
+#~ msgid "Invalid group: %d"
+#~ msgstr "Nieprawidłowa grupa: %d"

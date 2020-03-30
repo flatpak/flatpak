@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-02-14 03:24+0000\n"
+"POT-Creation-Date: 2020-03-30 15:52+0200\n"
 "PO-Revision-Date: 2020-03-04 16:08+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
@@ -4454,17 +4454,17 @@ msgstr "Vzdálený repozitář „%s“ již existuje"
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "Jak bylo požadováno, %s bylo pouze staženo, ale nebylo nainstalováno"
 
-#: common/flatpak-oci-registry.c:1866
+#: common/flatpak-oci-registry.c:1873
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1873
+#: common/flatpak-oci-registry.c:1880
 #, c-format
 msgid "Unable to lookup key ID %s: %d)"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1881
+#: common/flatpak-oci-registry.c:1888
 #, c-format
 msgid "Error signing commit: %d"
 msgstr "Chyba během podepisování commitu: %d"
@@ -4538,11 +4538,6 @@ msgstr "Selhalo blokování systémového volání %d"
 #: common/flatpak-run.c:2787
 msgid "Failed to export bpf"
 msgstr "Selhalo exportování bpf"
-
-#: common/flatpak-run.c:2842
-#, c-format
-msgid "Invalid group: %d"
-msgstr "Neplatná skupina: %d"
 
 #: common/flatpak-run.c:3017
 #, c-format
@@ -5163,6 +5158,10 @@ msgid ""
 msgstr ""
 "K instalaci softwaru, který je omezen bezpečnostní politikou rodičovské "
 "kontroly je vyžadováno ověření"
+
+#, c-format
+#~ msgid "Invalid group: %d"
+#~ msgstr "Neplatná skupina: %d"
 
 #~ msgid "OPTIONS"
 #~ msgstr "VOLBY"

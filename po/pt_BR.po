@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-02-13 15:07+0100\n"
+"POT-Creation-Date: 2020-03-30 15:52+0200\n"
 "PO-Revision-Date: 2019-12-24 10:42-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
@@ -4501,17 +4501,17 @@ msgstr "O remoto “%s” já existe"
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "Conforme requisitado, %s foi obtida, mas não instalada"
 
-#: common/flatpak-oci-registry.c:1866
+#: common/flatpak-oci-registry.c:1873
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr "Nenhuma chave gpg localizada com ID %s (homedir: %s)"
 
-#: common/flatpak-oci-registry.c:1873
+#: common/flatpak-oci-registry.c:1880
 #, c-format
 msgid "Unable to lookup key ID %s: %d)"
 msgstr "Não foi possível procurar o ID de chave %s: %d"
 
-#: common/flatpak-oci-registry.c:1881
+#: common/flatpak-oci-registry.c:1888
 #, c-format
 msgid "Error signing commit: %d"
 msgstr "Erro ao assinar o commit: %d"
@@ -4587,11 +4587,6 @@ msgstr "Falha ao bloquear a chamada de sistema %d"
 #: common/flatpak-run.c:2787
 msgid "Failed to export bpf"
 msgstr "Falha ao exportar bpf"
-
-#: common/flatpak-run.c:2842
-#, c-format
-msgid "Invalid group: %d"
-msgstr "Grupo inválido: %d"
 
 #: common/flatpak-run.c:3017
 #, c-format
@@ -5216,6 +5211,10 @@ msgid ""
 msgstr ""
 "Autenticação é necessária para instalar software que está restrito por sua "
 "política de controle parental"
+
+#, c-format
+#~ msgid "Invalid group: %d"
+#~ msgstr "Grupo inválido: %d"
 
 #~ msgid "Use OCI labels instead of annotations"
 #~ msgstr "Usa rótulos OCI em vez de anotações"
