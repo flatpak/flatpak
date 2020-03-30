@@ -4744,9 +4744,9 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       else
         {
           ensure_soup_session (self);
-          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, 0, NULL,
-                                         extra_data_progress_report, progress,
-                                         cancellable, error);
+          bytes = flatpak_load_uri (self->soup_session, extra_data_uri, 0, NULL,
+                                    extra_data_progress_report, progress,
+                                    cancellable, error);
         }
 
       if (bytes == NULL)
@@ -13099,9 +13099,9 @@ flatpak_dir_fetch_remote_object (FlatpakDir   *self,
 
   object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
 
-  bytes = flatpak_load_http_uri (self->soup_session, object_url, 0, NULL,
-                                 NULL, NULL,
-                                 cancellable, error);
+  bytes = flatpak_load_uri (self->soup_session, object_url, 0, NULL,
+                            NULL, NULL,
+                            cancellable, error);
   if (bytes == NULL)
     return NULL;
 

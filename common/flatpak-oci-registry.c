@@ -318,11 +318,11 @@ remote_load_file (SoupSession  *soup_session,
     }
 
   uri_s = soup_uri_to_string (uri, FALSE);
-  bytes = flatpak_load_http_uri (soup_session,
-                                 uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                                 token,
-                                 NULL, NULL,
-                                 cancellable, error);
+  bytes = flatpak_load_uri (soup_session,
+                            uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                            token,
+                            NULL, NULL,
+                            cancellable, error);
   if (bytes == NULL)
     return NULL;
 
