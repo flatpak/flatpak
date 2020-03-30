@@ -1,3 +1,41 @@
+Changes in 1.7.1
+================
+
+This is the first release in the 1.7.x unstable release series.
+
+A major change is that the support for the ostree peer-to-peer installation has been
+simplified. Flatpak no longer supports installing from local network peers, and sideloading
+from local usb stick is no longer automatic. To enable sideloading you have to configure
+a sideload repository by creating a symlink to it from /var/lib/flatpak/sideload-repos or
+/run/flatpak/sideload-repos. Due to this the flatpak code has been simplified internally
+and the p2p support is more efficient.
+
+Other major changes
+ * If an app has filesystem access, the host /lib is accessible as /run/host/lib, etc.
+ * New filesystem permission "host-etc" and "host-os" give access to system /usr and /etc.
+ * Flatpak now uses variant-schema-compiler to generate more efficient code for
+   parsing GVariant files from ostreee.
+ * libsystemd use is now optional in configure.
+ * Journal sockets are mounted readonly
+ * document-export now supports exporting directories (requires new portal version)
+ * DConf migration now allows version numbers in object paths
+
+Changes in 1.6.3
+================
+
+The main change in this version is a fix for a regression in the progress calculation
+for applications using extra-data. Additionally the bundled version of bubblewrap
+is updated to 0.4.1 which fixes a security issue in some cases. See
+  https://github.com/containers/bubblewrap/security/advisories/GHSA-j2qp-rvxj-43vj
+for details.
+
+Other changes:
+ * Updated translations
+ * Don't break if users primary gid is not in the nsswitch database
+ * Fix crash in flatpak repair if no remotes are configured
+ * Some updates to the oci authenticator
+ * Retry downloads of extra data
+
 Changes in 1.6.2
 ================
 
