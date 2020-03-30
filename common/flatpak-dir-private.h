@@ -167,6 +167,7 @@ GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                                 FlatpakDir         *dir,
                                                 const char         *ref,
                                                 const char         *commit,
+                                                const char         *token,
                                                 GError            **error);
 void flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
                                              const char          *path);
@@ -887,6 +888,7 @@ GVariant * flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
                                             const char   *remote_name,
                                             const char   *ref,
                                             const char   *opt_commit,
+                                            const char   *token,
                                             char        **out_commit,
                                             GCancellable *cancellable,
                                             GError      **error);

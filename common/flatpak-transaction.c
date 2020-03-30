@@ -2696,11 +2696,14 @@ resolve_ops (FlatpakTransaction *self,
           /* First try to resolve via metadata (if remote is available and its metadata matches the commit version) */
           if (!try_resolve_op_from_metadata (self, op, checksum, sideload_path, state))
             {
-              /* Else try to load the commit object */
+              /* Else try to load the commit object.
+               * Note, we don't have a token here, so this will not work for authenticated apps.
+               * However they still work when in summary metadata or sideloaded. */
               g_autoptr(GVariant) commit_data = NULL;
 
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
-                                                                  op->ref, checksum, error);
+                                                                  op->ref, checksum, /* token: */ NULL,
+                                                                  error);
               if (commit_data == NULL)
                 return FALSE;
 

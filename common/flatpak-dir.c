@@ -142,6 +142,7 @@ static GBytes * flatpak_dir_fetch_remote_object (FlatpakDir   *self,
                                                  const char   *remote_name,
                                                  const char   *checksum,
                                                  const char   *type,
+                                                 const char   *token,
                                                  GCancellable *cancellable,
                                                  GError      **error);
 
@@ -671,6 +672,7 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                       FlatpakDir         *dir,
                                       const char         *ref,
                                       const char         *commit,
+                                      const char         *token,
                                       GError            **error)
 {
   g_autoptr(GBytes) commit_bytes = NULL;
@@ -690,7 +692,7 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
     }
 
   commit_bytes = flatpak_dir_fetch_remote_object (dir, self->remote_name,
-                                                  commit, "commit",
+                                                  commit, "commit", token,
                                                   NULL, error);
   if (commit_bytes == NULL)
     return NULL;
@@ -4611,7 +4613,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
   /* ostree-metadata and appstreams never have extra data, so ignore those */
   if (g_str_has_prefix (ref, "app/") || g_str_has_prefix (ref, "runtime/"))
     {
-      g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, error);
+      g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, token, error);
       if (commitv == NULL)
         return FALSE;
 
@@ -13080,6 +13082,7 @@ flatpak_dir_fetch_remote_object (FlatpakDir   *self,
                                  const char   *remote_name,
                                  const char   *checksum,
                                  const char   *type,
+                                 const char   *token,
                                  GCancellable *cancellable,
                                  GError      **error)
 {
@@ -13099,7 +13102,7 @@ flatpak_dir_fetch_remote_object (FlatpakDir   *self,
 
   object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
 
-  bytes = flatpak_load_uri (self->soup_session, object_url, 0, NULL,
+  bytes = flatpak_load_uri (self->soup_session, object_url, 0, token,
                             NULL, NULL,
                             cancellable, error);
   if (bytes == NULL)
@@ -13113,6 +13116,7 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
                                  const char   *remote_name,
                                  const char   *ref,
                                  const char   *opt_commit,
+                                 const char   *token,
                                  char        **out_commit,
                                  GCancellable *cancellable,
                                  GError      **error)
@@ -13143,7 +13147,7 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
     }
 
   commit_bytes = flatpak_dir_fetch_remote_object (self, remote_name,
-                                                  opt_commit, "commit",
+                                                  opt_commit, "commit", token,
                                                   cancellable, error);
   if (commit_bytes == NULL)
     return NULL;
