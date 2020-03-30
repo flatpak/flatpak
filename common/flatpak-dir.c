@@ -3146,7 +3146,7 @@ flatpak_dir_migrate_config (FlatpakDir   *self,
         }
 
       if (changed != NULL)
-        *changed = FALSE;
+        *changed = TRUE;
     }
 
   return TRUE;
