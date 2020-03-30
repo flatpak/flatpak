@@ -11866,11 +11866,11 @@ GPtrArray *
 flatpak_dir_get_sideload_repo_paths (FlatpakDir *self)
 {
   g_autoptr(GFile) sideload_repos_dir = flatpak_dir_get_sideload_repos_dir (self);
-  g_autoptr(GFile) sideload_runtime_repos_dir = flatpak_dir_get_runtime_sideload_repos_dir (self);
+  g_autoptr(GFile) runtime_sideload_repos_dir = flatpak_dir_get_runtime_sideload_repos_dir (self);
   g_autoptr(GPtrArray) res = g_ptr_array_new_with_free_func (g_object_unref);
 
   add_subdirs (res, sideload_repos_dir);
-  add_subdirs (res, sideload_runtime_repos_dir);
+  add_subdirs (res, runtime_sideload_repos_dir);
 
   return g_steal_pointer (&res);
 }
