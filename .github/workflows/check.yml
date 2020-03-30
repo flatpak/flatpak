@@ -7,12 +7,14 @@ on:
     - flatpak-1.0.x
     - flatpak-1.2.x
     - flatpak-1.4.x
+    - flatpak-1.6.x
   pull_request:
     branches:
     - master
     - flatpak-1.0.x
     - flatpak-1.2.x
     - flatpak-1.4.x
+    - flatpak-1.6.x
 
 jobs:
   check:
