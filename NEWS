@@ -1,3 +1,19 @@
+Changes in 1.6.3
+================
+
+The main change in this version is a fix for a regression in the progress calculation
+for applications using extra-data. Additionally the bundled version of bubblewrap
+is updated to 0.4.1 which fixes a security issue in some cases. See
+  https://github.com/containers/bubblewrap/security/advisories/GHSA-j2qp-rvxj-43vj
+for details.
+
+Other changes:
+ * Updated translations
+ * Don't break if users primary gid is not in the nsswitch database
+ * Fix crash in flatpak repair if no remotes are configured
+ * Some updates to the oci authenticator
+ * Retry downloads of extra data
+
 Changes in 1.6.2
 ================
 
