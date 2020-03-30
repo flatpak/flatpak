@@ -165,7 +165,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
     }
   else
     {
-      commit_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, opt_commit, &commit, cancellable, error);
+      commit_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, opt_commit, NULL, &commit, cancellable, error);
       if (commit_v == NULL)
         return FALSE;
     }
@@ -344,7 +344,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               g_autoptr(GVariant) p_commit_v = NULL;
               VarCommitRef p_commit;
 
-              p_commit_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, p, NULL, cancellable, NULL);
+              p_commit_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, p, NULL, NULL, cancellable, NULL);
               if (p_commit_v == NULL)
                 break;
 
@@ -465,7 +465,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           c_v = NULL;
 
           if (c && opt_log)
-            c_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, c, NULL, cancellable, NULL);
+            c_v = flatpak_dir_fetch_remote_commit (preferred_dir, remote, ref, c, NULL, NULL, cancellable, NULL);
         }
       while (c_v != NULL);
     }

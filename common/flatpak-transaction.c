@@ -2696,11 +2696,14 @@ resolve_ops (FlatpakTransaction *self,
           /* First try to resolve via metadata (if remote is available and its metadata matches the commit version) */
           if (!try_resolve_op_from_metadata (self, op, checksum, sideload_path, state))
             {
-              /* Else try to load the commit object */
+              /* Else try to load the commit object.
+               * Note, we don't have a token here, so this will not work for authenticated apps.
+               * However they still work when in summary metadata or sideloaded. */
               g_autoptr(GVariant) commit_data = NULL;
 
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
-                                                                  op->ref, checksum, error);
+                                                                  op->ref, checksum, /* token: */ NULL,
+                                                                  error);
               if (commit_data == NULL)
                 return FALSE;
 
@@ -3356,35 +3359,17 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
   if (priv->disable_deps)
     return TRUE;
 
+  if (!g_str_has_prefix (dep_url, "http:") &&
+      !g_str_has_prefix (dep_url, "https:") &&
+      !g_str_has_prefix (dep_url, "file:"))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not file, HTTP or HTTPS"), dep_url);
 
-  if (g_str_has_prefix (dep_url, "file:"))
+  soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+  dep_data = flatpak_load_uri (soup_session, dep_url, 0, NULL, NULL, NULL, cancellable, error);
+  if (dep_data == NULL)
     {
-      g_autoptr(GFile) file = NULL;
-      g_autofree char *data = NULL;
-      gsize data_len;
-
-      file = g_file_new_for_uri (dep_url);
-
-      if (!g_file_load_contents (file, cancellable, &data, &data_len, NULL, error))
-        {
-          g_prefix_error (error, _("Can't load dependent file %s: "), dep_url);
-          return FALSE;
-        }
-
-      dep_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
-    }
-  else
-    {
-      if (!g_str_has_prefix (dep_url, "http:") && !g_str_has_prefix (dep_url, "https:"))
-        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not HTTP or HTTPS"), dep_url);
-
-      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-      dep_data = flatpak_load_http_uri (soup_session, dep_url, 0, NULL, NULL, NULL, cancellable, error);
-      if (dep_data == NULL)
-        {
-          g_prefix_error (error, _("Can't load dependent file %s: "), dep_url);
-          return FALSE;
-        }
+      g_prefix_error (error, _("Can't load dependent file %s: "), dep_url);
+      return FALSE;
     }
 
   if (!g_key_file_load_from_data (dep_keyfile,

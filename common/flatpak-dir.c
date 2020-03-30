@@ -142,6 +142,7 @@ static GBytes * flatpak_dir_fetch_remote_object (FlatpakDir   *self,
                                                  const char   *remote_name,
                                                  const char   *checksum,
                                                  const char   *type,
+                                                 const char   *token,
                                                  GCancellable *cancellable,
                                                  GError      **error);
 
@@ -671,6 +672,7 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                       FlatpakDir         *dir,
                                       const char         *ref,
                                       const char         *commit,
+                                      const char         *token,
                                       GError            **error)
 {
   g_autoptr(GBytes) commit_bytes = NULL;
@@ -690,7 +692,7 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
     }
 
   commit_bytes = flatpak_dir_fetch_remote_object (dir, self->remote_name,
-                                                  commit, "commit",
+                                                  commit, "commit", token,
                                                   NULL, error);
   if (commit_bytes == NULL)
     return NULL;
@@ -4611,40 +4613,11 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
   /* ostree-metadata and appstreams never have extra data, so ignore those */
   if (g_str_has_prefix (ref, "app/") || g_str_has_prefix (ref, "runtime/"))
     {
-      extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
-      if (extra_data_sources == NULL)
-        {
-          /* This is a gigantic hack where we download the commit in a temporary transaction
-           * which we then abort after having read the result. We do this to avoid creating
-           * a partial commit in the local repo and a ref that points to it, because that
-           * causes ostree to not use static deltas.
-           * See https://github.com/flatpak/flatpak/issues/3412 for details.
-           */
+      g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, token, error);
+      if (commitv == NULL)
+        return FALSE;
 
-          if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
-            return FALSE;
-
-          /* Pull the commits (and only the commits) to check for extra data
-           * again. Here we don't pass the progress because we don't want any
-           * reports coming out of it. */
-          if (!repo_pull (repo, state,
-                          NULL,
-                          ref,
-                          rev,
-                          sideload_repo,
-                          token,
-                          flatpak_flags,
-                          OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY,
-                          NULL,
-                          cancellable,
-                          error))
-            return FALSE;
-
-          extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
-
-          if (!ostree_repo_abort_transaction (repo, cancellable, error))
-            return FALSE;
-        }
+      extra_data_sources = flatpak_commit_get_extra_data_sources (commitv, NULL);
     }
 
   n_extra_data = 0;
@@ -4773,9 +4746,9 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       else
         {
           ensure_soup_session (self);
-          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, 0, NULL,
-                                         extra_data_progress_report, progress,
-                                         cancellable, error);
+          bytes = flatpak_load_uri (self->soup_session, extra_data_uri, 0, NULL,
+                                    extra_data_progress_report, progress,
+                                    cancellable, error);
         }
 
       if (bytes == NULL)
@@ -13109,6 +13082,7 @@ flatpak_dir_fetch_remote_object (FlatpakDir   *self,
                                  const char   *remote_name,
                                  const char   *checksum,
                                  const char   *type,
+                                 const char   *token,
                                  GCancellable *cancellable,
                                  GError      **error)
 {
@@ -13128,9 +13102,9 @@ flatpak_dir_fetch_remote_object (FlatpakDir   *self,
 
   object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
 
-  bytes = flatpak_load_http_uri (self->soup_session, object_url, 0, NULL,
-                                 NULL, NULL,
-                                 cancellable, error);
+  bytes = flatpak_load_uri (self->soup_session, object_url, 0, token,
+                            NULL, NULL,
+                            cancellable, error);
   if (bytes == NULL)
     return NULL;
 
@@ -13142,6 +13116,7 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
                                  const char   *remote_name,
                                  const char   *ref,
                                  const char   *opt_commit,
+                                 const char   *token,
                                  char        **out_commit,
                                  GCancellable *cancellable,
                                  GError      **error)
@@ -13172,7 +13147,7 @@ flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
     }
 
   commit_bytes = flatpak_dir_fetch_remote_object (self, remote_name,
-                                                  opt_commit, "commit",
+                                                  opt_commit, "commit", token,
                                                   cancellable, error);
   if (commit_bytes == NULL)
     return NULL;

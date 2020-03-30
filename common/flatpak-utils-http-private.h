@@ -36,14 +36,14 @@ typedef enum {
 typedef void (*FlatpakLoadUriProgress) (guint64  downloaded_bytes,
                                         gpointer user_data);
 
-GBytes * flatpak_load_http_uri (SoupSession           *soup_session,
-                                const char            *uri,
-                                FlatpakHTTPFlags       flags,
-                                const char            *token,
-                                FlatpakLoadUriProgress progress,
-                                gpointer               user_data,
-                                GCancellable          *cancellable,
-                                GError               **error);
+GBytes * flatpak_load_uri (SoupSession           *soup_session,
+                           const char            *uri,
+                           FlatpakHTTPFlags       flags,
+                           const char            *token,
+                           FlatpakLoadUriProgress progress,
+                           gpointer               user_data,
+                           GCancellable          *cancellable,
+                           GError               **error);
 gboolean flatpak_download_http_uri (SoupSession           *soup_session,
                                     const char            *uri,
                                     FlatpakHTTPFlags       flags,

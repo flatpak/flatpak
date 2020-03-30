@@ -646,17 +646,30 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
 }
 
 GBytes *
-flatpak_load_http_uri (SoupSession           *soup_session,
-                       const char            *uri,
-                       FlatpakHTTPFlags       flags,
-                       const char            *token,
-                       FlatpakLoadUriProgress progress,
-                       gpointer               user_data,
-                       GCancellable          *cancellable,
-                       GError               **error)
+flatpak_load_uri (SoupSession           *soup_session,
+                  const char            *uri,
+                  FlatpakHTTPFlags       flags,
+                  const char            *token,
+                  FlatpakLoadUriProgress progress,
+                  gpointer               user_data,
+                  GCancellable          *cancellable,
+                  GError               **error)
 {
   g_autoptr(GError) local_error = NULL;
   guint n_retries_remaining = DEFAULT_N_NETWORK_RETRIES;
+
+  /* Ensure we handle file: uris always */
+  if (g_ascii_strncasecmp (uri, "file:", 5) == 0)
+    {
+      g_autoptr(GFile) file = g_file_new_for_uri (uri);
+      gchar *contents;
+      gsize len;
+
+      if (!g_file_load_contents (file, cancellable, &contents, &len, NULL, error))
+        return NULL;
+
+      return g_bytes_new_take (g_steal_pointer (&contents), len);
+    }
 
   do
     {
