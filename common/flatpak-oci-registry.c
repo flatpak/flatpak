@@ -901,6 +901,7 @@ object_get_string_member_with_default (JsonNode *json,
 
 static char *
 get_token_for_www_auth (FlatpakOciRegistry *self,
+                        const char    *repository,
                         const char    *www_authenticate,
                         const char    *auth,
                         GCancellable  *cancellable,
@@ -911,6 +912,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   g_autoptr(GHashTable) params = NULL;
   g_autoptr(GHashTable) args = NULL;
   const char *realm, *service, *scope, *token;
+  g_autofree char *default_scope = NULL;
   g_autoptr(SoupURI) auth_uri = NULL;
   g_autoptr(GBytes) body = NULL;
   g_autoptr(JsonNode) json = NULL;
@@ -941,16 +943,21 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   service = g_hash_table_lookup (params, "service");
   if (service)
     g_hash_table_insert (args, "service", (char *)service);
+
   scope = g_hash_table_lookup (params, "scope");
-  if (scope)
-    g_hash_table_insert (args, "scope", (char *)scope);
+  if (scope == NULL)
+    scope = default_scope = g_strdup_printf("repository:%s:pull", repository);
+  g_hash_table_insert (args, "scope", (char *)scope);
 
   soup_uri_set_query_from_form (auth_uri, args);
 
   auth_msg = soup_message_new_from_uri ("GET", auth_uri);
 
-  g_autofree char *basic_auth = g_strdup_printf ("Basic %s", auth);
-  soup_message_headers_replace (auth_msg->request_headers, "Authorization", basic_auth);
+  if (auth)
+    {
+      g_autofree char *basic_auth = g_strdup_printf ("Basic %s", auth);
+      soup_message_headers_replace (auth_msg->request_headers, "Authorization", basic_auth);
+    }
 
   auth_stream = soup_session_send (self->soup_session, auth_msg, NULL, error);
   if (auth_stream == NULL)
@@ -1030,7 +1037,7 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
       return NULL;
     }
 
-  token = get_token_for_www_auth (self, www_authenticate, basic_auth, cancellable, error);
+  token = get_token_for_www_auth (self, repository, www_authenticate, basic_auth, cancellable, error);
   if (token == NULL)
     return NULL;
 
