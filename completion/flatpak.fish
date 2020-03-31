@@ -2,9 +2,7 @@ function __fish_complete_flatpak
     set current_cmd (commandline -p)
     set current_position (commandline -C)
     set current_token (commandline -ct)
-    echo "CMD \"$current_cmd\" POS \"$current_position\" TOK \"$current_token\"" >> /tmp/fish-flatpak-debug.txt
     command flatpak complete "$current_cmd" "$current_position" "$current_token" | while read fp_sugg
-        echo "SUG \"$fp_sugg\"" >> /tmp/fish-flatpak-debug.txt
         set sugg (string trim -- "$fp_sugg")
         switch "$sugg"
             case __FLATPAK_FILE
