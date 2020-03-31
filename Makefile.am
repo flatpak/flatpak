@@ -144,6 +144,10 @@ zshcompletiondir = $(datadir)/zsh/site-functions
 zshcompletion_DATA = completion/_flatpak
 EXTRA_DIST += $(zshcompletion_DATA)
 
+fishcompletiondir = $(datadir)/fish/vendor_completions.d
+fishcompletion_DATA = completion/flatpak.fish
+EXTRA_DIST += $(fishcompletion_DATA)
+
 profiledir = $(PROFILE_DIR)
 profile_DATA = profile/flatpak.sh
 EXTRA_DIST += $(profile_DATA)
