@@ -118,6 +118,7 @@ struct _FlatpakProgress
   guint estimating             : 1;
   guint last_was_metadata      : 1;
   guint done                   : 1;
+  guint reported_overflow      : 1;
 };
 
 G_DEFINE_TYPE (FlatpakProgress, flatpak_progress, G_TYPE_OBJECT);
@@ -305,6 +306,14 @@ out:
   if (new_progress < self->progress && self->last_total == total)
     new_progress = self->progress;
   self->last_total = total;
+
+  if (new_progress > 100)
+    {
+      if (!self->reported_overflow)
+        g_debug ("Unexpectedly got > 100%% progress, limiting");
+      self->reported_overflow = TRUE;
+      new_progress = 100;
+    }
 
   g_free (self->status);
   self->status = g_string_free (buf, FALSE);

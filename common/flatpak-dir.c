@@ -4647,40 +4647,11 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
   /* ostree-metadata and appstreams never have extra data, so ignore those */
   if (g_str_has_prefix (ref, "app/") || g_str_has_prefix (ref, "runtime/"))
     {
-      extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
-      if (extra_data_sources == NULL)
-        {
-          /* This is a gigantic hack where we download the commit in a temporary transaction
-           * which we then abort after having read the result. We do this to avoid creating
-           * a partial commit in the local repo and a ref that points to it, because that
-           * causes ostree to not use static deltas.
-           * See https://github.com/flatpak/flatpak/issues/3412 for details.
-           */
+      g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, token, error);
+      if (commitv == NULL)
+        return FALSE;
 
-          if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
-            return FALSE;
-
-          /* Pull the commits (and only the commits) to check for extra data
-           * again. Here we don't pass the progress because we don't want any
-           * reports coming out of it. */
-          if (!repo_pull (repo, state,
-                          NULL,
-                          ref,
-                          rev,
-                          sideload_repo,
-                          token,
-                          flatpak_flags,
-                          OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY,
-                          NULL,
-                          cancellable,
-                          error))
-            return FALSE;
-
-          extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
-
-          if (!ostree_repo_abort_transaction (repo, cancellable, error))
-            return FALSE;
-        }
+      extra_data_sources = flatpak_commit_get_extra_data_sources (commitv, NULL);
     }
 
   n_extra_data = 0;
@@ -5176,7 +5147,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
                                      error))
     goto out;
 
-  /* Note, this has to start after setup_extra_data() because that also uses a transaction */
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     goto out;
 
@@ -8190,16 +8160,21 @@ flatpak_dir_create_child_repo (FlatpakDir   *self,
      verify + fsync when importing to stable storage */
   ostree_repo_set_disable_fsync (repo, TRUE);
 
-  /* Create a commitpartial in the child repo to ensure we download everything, because
-     any commitpartial state in the parent will not be inherited */
+  /* Create a commitpartial in the child repo if needed to ensure we download everything, because
+     any commitpartial state in the parent will not otherwise be inherited */
   if (optional_commit)
     {
       g_autofree char *commitpartial_basename = g_strconcat (optional_commit, ".commitpartial", NULL);
-      g_autoptr(GFile) commitpartial =
-        flatpak_build_file (ostree_repo_get_path (repo),
+      g_autoptr(GFile) orig_commitpartial =
+        flatpak_build_file (ostree_repo_get_path (self->repo),
                             "state", commitpartial_basename, NULL);
-
-      g_file_replace_contents (commitpartial, "", 0, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, NULL);
+      if (g_file_query_exists (orig_commitpartial, NULL))
+        {
+          g_autoptr(GFile) commitpartial =
+            flatpak_build_file (ostree_repo_get_path (repo),
+                                "state", commitpartial_basename, NULL);
+          g_file_replace_contents (commitpartial, "", 0, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, NULL);
+        }
     }
   return g_steal_pointer (&repo);
 }
