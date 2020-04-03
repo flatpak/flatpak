@@ -5147,7 +5147,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
                                      error))
     goto out;
 
-  /* Note, this has to start after setup_extra_data() because that also uses a transaction */
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     goto out;
 
