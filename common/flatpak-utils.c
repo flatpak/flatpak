@@ -3445,15 +3445,23 @@ populate_commit_data_cache (GVariant   *metadata,
   g_autoptr(GVariant) cache = NULL;
   g_autoptr(GVariant) sparse_cache = NULL;
   gsize n, i;
+  guint32 cache_version = 0;
   const char *old_collection_id;
 
   if (!g_variant_lookup (metadata, "ostree.summary.collection-id", "&s", &old_collection_id))
     old_collection_id = NULL;
 
   cache_v = g_variant_lookup_value (metadata, "xa.cache", NULL);
-
   if (cache_v == NULL)
     return;
+
+  if (g_variant_lookup (metadata, "xa.cache-version", "u", &cache_version))
+    cache_version = GUINT32_FROM_LE (cache_version);
+  else
+    cache_version = 0;
+
+  if (cache_version < FLATPAK_XA_CACHE_VERSION)
+    return; /* We need to rebuild the cache with the current version */
 
   cache = g_variant_get_child_value (cache_v, 0);
 
@@ -3714,6 +3722,9 @@ flatpak_repo_update (OstreeRepo   *repo,
       const char *eol = NULL;
       const char *eol_rebase = NULL;
       int token_type = -1;
+      g_autoptr(GVariant) extra_data_sources = NULL;
+      guint32 n_extra_data = 0;
+      guint64 total_extra_data_download_size = 0;
 
       /* See if we already have the info on this revision */
       if (g_hash_table_lookup (commit_data_cache, rev))
@@ -3756,7 +3767,25 @@ flatpak_repo_update (OstreeRepo   *repo,
       g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
       if (g_variant_lookup (commit_metadata, "xa.token-type", "i", &token_type))
         token_type = GINT32_FROM_LE(token_type);
-      if (eol || eol_rebase || token_type >= 0)
+
+      extra_data_sources = flatpak_commit_get_extra_data_sources (commit_v, NULL);
+      if (extra_data_sources)
+        {
+          n_extra_data = g_variant_n_children (extra_data_sources);
+          for (int i = 0; i < n_extra_data; i++)
+            {
+              guint64 download_size;
+              flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
+                                                     NULL,
+                                                     &download_size,
+                                                     NULL,
+                                                     NULL,
+                                                     NULL);
+              total_extra_data_download_size += download_size;
+            }
+        }
+
+      if (eol || eol_rebase || token_type >= 0 || n_extra_data > 0)
         {
           g_auto(GVariantBuilder) sparse_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
           g_variant_builder_init (&sparse_builder, G_VARIANT_TYPE_VARDICT);
@@ -3766,6 +3795,9 @@ flatpak_repo_update (OstreeRepo   *repo,
             g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, g_variant_new_string (eol_rebase));
           if (token_type >= 0)
             g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, g_variant_new_int32 (GINT32_TO_LE(token_type)));
+          if (n_extra_data >= 0)
+            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE,
+                                   g_variant_new ("(ut)", GUINT32_TO_LE(n_extra_data), GUINT64_TO_LE(total_extra_data_download_size)));
 
           rev_data->sparse_data = g_variant_ref_sink (g_variant_builder_end (&sparse_builder));
         }
@@ -3799,6 +3831,8 @@ flatpak_repo_update (OstreeRepo   *repo,
    * too old to care about collection IDs anyway. */
   g_variant_builder_add (builder, "{sv}", "xa.cache",
                          g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
+  g_variant_builder_add (builder, "{sv}", "xa.cache-version",
+                         g_variant_new_uint32 (GUINT32_TO_LE (FLATPAK_XA_CACHE_VERSION)));
 
   g_variant_builder_add (builder, "{sv}", "xa.sparse-cache",
                          g_variant_builder_end (ref_sparse_data_builder));

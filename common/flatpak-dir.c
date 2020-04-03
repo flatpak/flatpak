@@ -559,6 +559,21 @@ flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
   return flatpak_summary_match_subrefs (self->summary, NULL, ref);
 }
 
+/* 0 if not specified */
+static guint32
+flatpak_remote_state_get_cache_version (FlatpakRemoteState *self)
+{
+  VarMetadataRef meta;
+  VarSummaryRef summary;
+
+  if (!flatpak_remote_state_ensure_summary (self, NULL))
+    return 0;
+
+  summary = var_summary_from_gvariant (self->summary);
+  meta = var_summary_get_metadata (summary);
+
+  return GUINT32_FROM_LE (var_metadata_lookup_uint32 (meta, "xa.cache-version", 0));
+}
 
 static gboolean
 flatpak_remote_state_get_cache (FlatpakRemoteState *self,
@@ -4626,6 +4641,37 @@ extra_data_progress_report (guint64  downloaded_bytes,
   flatpak_progress_update_extra_data (progress, downloaded_bytes);
 }
 
+static void
+compute_extra_data_download_size (GVariant *commitv,
+                                  guint64 *out_n_extra_data,
+                                  guint64 *out_total_download_size)
+{
+  guint64 i;
+  guint64 n_extra_data = 0;
+  guint64 total_download_size = 0;
+  g_autoptr(GVariant) extra_data_sources = NULL;
+
+  extra_data_sources = flatpak_commit_get_extra_data_sources (commitv, NULL);
+  if (extra_data_sources != NULL)
+    {
+      n_extra_data = g_variant_n_children (extra_data_sources);
+      for (i = 0; i < n_extra_data; i++)
+        {
+          guint64 download_size;
+          flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
+                                                 NULL,
+                                                 &download_size,
+                                                 NULL,
+                                                 NULL,
+                                                 NULL);
+          total_download_size += download_size;
+        }
+    }
+
+  *out_n_extra_data = n_extra_data;
+  *out_total_download_size = total_download_size;
+}
+
 static gboolean
 flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                               FlatpakRemoteState                   *state,
@@ -4639,46 +4685,50 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                               GCancellable                         *cancellable,
                               GError                              **error)
 {
-  g_autoptr(GVariant) extra_data_sources = NULL;
-  guint64 i;
-  guint64 n_extra_data;
-  guint64 total_download_size;
+  guint64 n_extra_data = 0;
+  guint64 total_download_size = 0;
 
   /* ostree-metadata and appstreams never have extra data, so ignore those */
   if (g_str_has_prefix (ref, "app/") || g_str_has_prefix (ref, "runtime/"))
     {
-      g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, token, error);
-      if (commitv == NULL)
-        return FALSE;
+      g_autofree char *summary_checksum = NULL;
 
-      extra_data_sources = flatpak_commit_get_extra_data_sources (commitv, NULL);
-    }
-
-  n_extra_data = 0;
-  total_download_size = 0;
-
-  if (extra_data_sources != NULL)
-    n_extra_data = g_variant_n_children (extra_data_sources);
-
-  if (n_extra_data > 0)
-    {
-      if ((flatpak_flags & FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA) == 0)
-        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Extra data not supported for non-gpg-verified local system installs"));
-
-      for (i = 0; i < n_extra_data; i++)
+      /* Version 1 added extra data details, so we can rely on it
+       * either being in the sparse cache or no extra data.  However,
+       * it only applies to the commit the summary contains, so verify
+       * that too.
+       */
+      if (state->summary &&
+          flatpak_summary_lookup_ref (state->summary, NULL, ref, &summary_checksum, NULL) &&
+          g_strcmp0 (rev, summary_checksum) == 0 &&
+          flatpak_remote_state_get_cache_version (state) >= 1)
         {
-          guint64 download_size;
+          VarMetadataRef metadata;
+          VarVariantRef res;
 
-          flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
-                                                 NULL,
-                                                 &download_size,
-                                                 NULL,
-                                                 NULL,
-                                                 NULL);
+          if (flatpak_remote_state_lookup_sparse_cache (state, ref, &metadata, NULL) &&
+              var_metadata_lookup (metadata, FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE, NULL, &res) &&
+              var_variant_is_type (res, VAR_EXTRA_DATA_SIZE_TYPEFORMAT))
+            {
+              VarExtraDataSizeRef eds = var_extra_data_size_from_variant (res);
+              n_extra_data = var_extra_data_size_get_n_extra_data (eds);
+              total_download_size = var_extra_data_size_get_total_size (eds);
+            }
+        }
+      else
+        {
+          /* No summary/cache or old cache version, download commit and get size from there */
+          g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, token, error);
+          if (commitv == NULL)
+            return FALSE;
 
-          total_download_size += download_size;
+          compute_extra_data_download_size (commitv, &n_extra_data, &total_download_size);
         }
     }
+
+  if (n_extra_data > 0 &&
+      (flatpak_flags & FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA) == 0)
+    return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Extra data not supported for non-gpg-verified local system installs"));
 
   flatpak_progress_init_extra_data (progress, n_extra_data, total_download_size);
 
