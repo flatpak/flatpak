@@ -41,7 +41,7 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev
+        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev libaccountsservice-dev
     - name: Check out flatpak
       uses: actions/checkout@v1
       with:
@@ -50,8 +50,8 @@ jobs:
       run: |
         git clone https://gitlab.freedesktop.org/pwithnall/malcontent.git ./malcontent
         pushd ./malcontent
-        git checkout tags/0.4.0
-        meson setup --prefix=/usr _build
+        git checkout tags/0.9.0
+        meson setup --prefix=/usr -Dui=disabled _build
         ninja -C _build
         sudo ninja -C _build install
         popd

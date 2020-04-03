@@ -3413,9 +3413,9 @@ check_parental_controls (FlatpakDecomposed *app_ref,
 
   manager = mct_manager_new (system_bus);
   app_filter = mct_manager_get_app_filter (manager, getuid (),
-                                           MCT_GET_APP_FILTER_FLAGS_INTERACTIVE,
+                                           MCT_MANAGER_GET_VALUE_FLAGS_INTERACTIVE,
                                            cancellable, &local_error);
-  if (g_error_matches (local_error, MCT_APP_FILTER_ERROR, MCT_APP_FILTER_ERROR_DISABLED))
+  if (g_error_matches (local_error, MCT_MANAGER_ERROR, MCT_MANAGER_ERROR_DISABLED))
     {
       g_debug ("Skipping parental controls check for %s since parental "
                "controls are disabled globally", flatpak_decomposed_get_ref (app_ref));
