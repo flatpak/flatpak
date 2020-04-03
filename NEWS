@@ -1,3 +1,13 @@
+Changes in 1.7.2
+================
+
+This fixes some regressions in progress reporting in 1.7.1, where it would report > 100%.
+
+Other changes:
+ * Completion support for fish shell
+ * Properly handle migration of remotes with collection ids
+ * The summary now has some extra-data download size info which can make downloads slightly more efficient
+
 Changes in 1.7.1
 ================
 
