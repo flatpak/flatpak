@@ -57,3 +57,8 @@ type ContentRating {
  rating_type: string;
  ratings: 'Ratings [string] string;
 };
+
+type ExtraDataSize {
+ n_extra_data: littleendian uint32;
+ total_size: littleendian uint64;
+};
