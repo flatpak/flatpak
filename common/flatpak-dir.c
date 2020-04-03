@@ -8160,16 +8160,21 @@ flatpak_dir_create_child_repo (FlatpakDir   *self,
      verify + fsync when importing to stable storage */
   ostree_repo_set_disable_fsync (repo, TRUE);
 
-  /* Create a commitpartial in the child repo to ensure we download everything, because
-     any commitpartial state in the parent will not be inherited */
+  /* Create a commitpartial in the child repo if needed to ensure we download everything, because
+     any commitpartial state in the parent will not otherwise be inherited */
   if (optional_commit)
     {
       g_autofree char *commitpartial_basename = g_strconcat (optional_commit, ".commitpartial", NULL);
-      g_autoptr(GFile) commitpartial =
-        flatpak_build_file (ostree_repo_get_path (repo),
+      g_autoptr(GFile) orig_commitpartial =
+        flatpak_build_file (ostree_repo_get_path (self->repo),
                             "state", commitpartial_basename, NULL);
-
-      g_file_replace_contents (commitpartial, "", 0, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, NULL);
+      if (g_file_query_exists (orig_commitpartial, NULL))
+        {
+          g_autoptr(GFile) commitpartial =
+            flatpak_build_file (ostree_repo_get_path (repo),
+                                "state", commitpartial_basename, NULL);
+          g_file_replace_contents (commitpartial, "", 0, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, NULL);
+        }
     }
   return g_steal_pointer (&repo);
 }
