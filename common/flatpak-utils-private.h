@@ -53,6 +53,9 @@
 #define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
 #define FLATPAK_ANSI_CLEAR "\x1b[0J"
 
+#define FLATPAK_XA_CACHE_VERSION 1
+/* version 1 added extra data download size */
+
 gboolean flatpak_set_tty_echo (gboolean echo);
 void flatpak_get_window_size (int *rows,
                               int *cols);
