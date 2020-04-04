@@ -1018,7 +1018,7 @@ msgstr ""
 
 #: app/flatpak-builtins-build-update-repo.c:84
 msgid "NUM-JOBS"
-msgstr "НОМЕР-РАБОТЫ"
+msgstr "КОЛИЧЕСТВО-ЗАДАЧ"
 
 #: app/flatpak-builtins-build-update-repo.c:85
 msgid "Don't create deltas matching refs"
@@ -1103,7 +1103,7 @@ msgstr "Удалить конфигурацию для КЛЮЧА"
 #: app/flatpak-builtins-config.c:149
 #, c-format
 msgid "'%s' does not look like a language/locale code"
-msgstr "'%s' не выглядит как язык/локаль кода"
+msgstr "'%s' не выглядит как код локали/языка"
 
 #: app/flatpak-builtins-config.c:172
 #, c-format
@@ -1178,8 +1178,8 @@ msgstr "Требуемая ссылка %s установлена частичн
 #, c-format
 msgid "Warning: Omitting related ref ‘%s’ because it is not installed.\n"
 msgstr ""
-"Предупреждение: опущена связанная ссылка '%s', потому что она не "
-"установлен.\n"
+"Предупреждение: пропуск связанной ссылки '%s', потому что она не "
+"установлена.\n"
 
 #: app/flatpak-builtins-create-usb.c:164
 #, c-format
