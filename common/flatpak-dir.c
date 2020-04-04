@@ -8210,6 +8210,15 @@ flatpak_dir_create_child_repo (FlatpakDir   *self,
      verify + fsync when importing to stable storage */
   ostree_repo_set_disable_fsync (repo, TRUE);
 
+  g_autoptr(GFile) user_cache_dir = flatpak_ensure_user_cache_dir_location (error);
+  if (user_cache_dir == NULL)
+    return FALSE;
+
+  if (!ostree_repo_set_cache_dir (repo, AT_FDCWD,
+                                  flatpak_file_get_path_cached (user_cache_dir),
+                                  NULL, error))
+    return FALSE;
+
   /* Create a commitpartial in the child repo if needed to ensure we download everything, because
      any commitpartial state in the parent will not otherwise be inherited */
   if (optional_commit)
