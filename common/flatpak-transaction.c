@@ -1983,6 +1983,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *origin = NULL;
   g_auto(GStrv) parts = NULL;
+  g_auto(GStrv) merged_subpaths = NULL;
   const char *pref;
   g_autofree char *origin_remote = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
@@ -2022,7 +2023,9 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   /* install or update */
   if (kind == FLATPAK_TRANSACTION_OPERATION_UPDATE)
     {
-      if (!dir_ref_is_installed (priv->dir, ref, &origin, NULL))
+      g_autoptr(GBytes) deploy_data = NULL;
+
+      if (!dir_ref_is_installed (priv->dir, ref, &origin, &deploy_data))
         return flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
                                    _("%s not installed"), pref);
 
@@ -2032,6 +2035,18 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
           return TRUE;
         }
       remote = origin;
+
+      /* As stated in the documentation for flatpak_transaction_add_update(),
+       * for locale extensions we merge existing subpaths with the set of
+       * configured languages, to match the behavior of add_related().
+       */
+      if (subpaths == NULL && g_str_has_suffix (parts[1], ".Locale"))
+        {
+          g_autofree const char **old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+          g_auto(GStrv) extra_subpaths = flatpak_dir_get_locale_subpaths (priv->dir);
+          merged_subpaths = flatpak_subpaths_merge ((char **)old_subpaths, extra_subpaths);
+          subpaths = (const char **)merged_subpaths;
+        }
     }
   else if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
     {
@@ -2216,7 +2231,8 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
  * @self: a #FlatpakTransaction
  * @ref: the ref
  * @subpaths: (nullable) (array zero-terminated=1): subpaths to install; %NULL
- *  to use the current set, or `{ "", NULL }` to pull all subpaths.
+ *  to use the current set plus the set of configured languages, or
+ *  `{ "", NULL }` to pull all subpaths.
  * @commit: (nullable): the commit to update to, or %NULL to use the latest
  * @error: return location for a #GError
  *
@@ -2239,6 +2255,7 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
   if (subpaths != NULL && subpaths[0] != NULL && subpaths[0][0] == 0)
     subpaths = all_paths;
 
+  /* Note: we implement the merge when subpaths == NULL in flatpak_transaction_add_ref() */
   return flatpak_transaction_add_ref (self, NULL, ref, subpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, error);
 }
 
