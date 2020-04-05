@@ -1070,7 +1070,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         const char *ref = refs_app[i];
         if (ref_check_for_update (dir, ref, remote_states, cancellable))
           {
-            g_printerr ("adding update %s\n", ref);
+            g_debug ("%s: Installed ref %s needs update", G_STRFUNC, ref);
             FlatpakInstalledRef *installed_ref = get_ref (dir, ref, cancellable, NULL);
             if (installed_ref)
               g_ptr_array_add (updates, g_object_ref (installed_ref));
@@ -1085,7 +1085,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         const char *ref = refs_runtime[i];
         if (ref_check_for_update (dir, ref, remote_states, cancellable))
           {
-            g_printerr ("adding update %s\n", ref);
+            g_debug ("%s: Installed ref %s needs update", G_STRFUNC, ref);
             FlatpakInstalledRef *installed_ref = get_ref (dir, ref, cancellable, NULL);
             if (installed_ref)
               g_ptr_array_add (updates, g_object_ref (installed_ref));
