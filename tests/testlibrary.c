@@ -239,11 +239,11 @@ test_installation_config (void)
 }
 
 static void
-configure_languages (void)
+configure_languages (const char *lang)
 {
-  char *argv[] = { "flatpak", "config", "--user", "--set", "languages", "de", NULL };
+  const char *argv[] = { "flatpak", "config", "--user", "--set", "languages", lang, NULL };
 
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+  run_test_subprocess ((char **)argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
@@ -333,7 +333,7 @@ test_languages_config (void)
 
   g_clear_pointer (&value, g_strfreev);
   clean_extra_languages ();
-  configure_languages ();
+  configure_languages ("de");
 }
 
 static void
@@ -1151,10 +1151,12 @@ test_update_related_refs (void)
   g_autoptr(GPtrArray) updatable_refs = NULL;
   g_autoptr(GPtrArray) related_refs = NULL;
   g_autoptr(GError) error = NULL;
-  FlatpakInstalledRef *iref = NULL;
+  g_autoptr(FlatpakInstalledRef) iref = NULL;
   g_autoptr(FlatpakInstalledRef) runtime_ref = NULL;
   gboolean res;
   g_autofree char *app = NULL;
+  g_autofree char *app_locale = NULL;
+  const char * const *subpaths;
 
   app = g_strdup_printf ("app/org.test.Hello/%s/master",
                          flatpak_get_default_arch ());
@@ -1187,13 +1189,14 @@ test_update_related_refs (void)
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
   g_assert (FLATPAK_IS_INSTALLED_REF (iref));
-  iref = NULL;
+  g_clear_object (&iref);
 
   /* We expect no installed related refs (i.e. org.test.Hello.Locale) at this point */
   related_refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, app, NULL, &error);
   g_assert_cmpint (related_refs->len, ==, 0);
 
   updatable_refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
+  g_assert_no_error (error);
   g_assert_cmpint (updatable_refs->len, ==, 1);
   iref = g_ptr_array_index (updatable_refs, 0);
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (iref)), ==, "org.test.Hello");
@@ -1215,6 +1218,58 @@ test_update_related_refs (void)
   iref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_RUNTIME, "org.test.Hello.Locale", NULL, NULL, NULL, &error);
   g_assert_nonnull (iref);
   g_assert_no_error (error);
+
+  /* Now check that when we have only subpaths of the locale extension
+   * installed and we change the configured languages, it shows as needing an
+   * update.
+   */
+  subpaths = flatpak_installed_ref_get_subpaths (iref);
+  g_assert_cmpint (g_strv_length ((char **) subpaths), ==, 1);
+  g_assert_cmpstr (subpaths[0], ==, "/de");
+  g_clear_object (&iref);
+
+  configure_languages ("es");
+  flatpak_installation_drop_caches (inst, NULL, &error);
+  g_assert_no_error (error);
+
+  g_clear_pointer (&updatable_refs, g_ptr_array_unref);
+  updatable_refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (updatable_refs->len, ==, 1);
+  iref = g_ptr_array_index (updatable_refs, 0);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (iref)), ==, "org.test.Hello.Locale");
+
+  /* Now update org.test.Hello.Locale and check that the subpaths are updated. */
+  g_clear_object (&transaction);
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  app_locale = g_strdup_printf ("runtime/org.test.Hello.Locale/%s/master",
+                                flatpak_get_default_arch ());
+
+  res = flatpak_transaction_add_update (transaction, app_locale, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  flatpak_installation_drop_caches (inst, NULL, &error);
+  g_assert_no_error (error);
+  iref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_RUNTIME, "org.test.Hello.Locale", NULL, NULL, NULL, &error);
+  g_assert_nonnull (iref);
+  g_assert_no_error (error);
+
+  subpaths = flatpak_installed_ref_get_subpaths (iref);
+  g_assert_cmpint (g_strv_length ((char **) subpaths), ==, 2);
+  g_assert_cmpstr (subpaths[0], ==, "/de");
+  g_assert_cmpstr (subpaths[1], ==, "/es");
+
+  /* Reset things */
+  configure_languages ("de");
+  empty_installation (inst);
 }
 
 static void
@@ -1298,8 +1353,8 @@ test_list_remote_related_refs (void)
   g_assert_true (should_delete);
   g_assert_false (should_autoprune);
 
-  configure_languages();
-  clean_extra_languages();
+  configure_languages ("de");
+  clean_extra_languages ();
 }
 
 static void
@@ -1564,6 +1619,7 @@ test_install_launch_uninstall (void)
 }
 
 static void update_test_app (void);
+static void update_test_runtime (void);
 static void update_repo (const char *update_repo_name);
 
 static const char *
@@ -1807,8 +1863,9 @@ test_list_updates (void)
   /* Add a previous-id to the deploy file */
   mangle_deploy_file (ref);
 
-  /* Update the test app and list the update */
+  /* Update the test app and the runtime and list the updates */
   update_test_app ();
+  update_test_runtime ();
   update_repo ("test");
 
   /* Drop all in-memory summary caches so we can find the new update */
@@ -1818,15 +1875,18 @@ test_list_updates (void)
   refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);
-  g_assert_cmpint (refs->len, ==, 2);
+  g_assert_cmpint (refs->len, ==, 3);
   update_ref = g_ptr_array_index (refs, 0);
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_APP);
   update_ref = g_ptr_array_index (refs, 1);
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello.Locale");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_RUNTIME);
+  update_ref = g_ptr_array_index (refs, 2);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Platform");
+  g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_RUNTIME);
 
-  /* Install the new update */
+  /* Install the app update */
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   updated_ref = flatpak_installation_update (inst,
                                              FLATPAK_UPDATE_FLAGS_NONE,
@@ -1861,6 +1921,82 @@ test_list_updates (void)
   res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
+}
+
+static void
+test_list_undeployed_updates (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  FlatpakInstalledRef *update_ref = NULL;
+  g_autoptr(FlatpakInstalledRef) updated_ref = NULL;
+  g_autofree gchar *app = NULL;
+  gboolean res;
+
+  app = g_strdup_printf ("app/org.test.Hello/%s/master",
+                         flatpak_get_default_arch ());
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  empty_installation (inst);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  /* install org.test.Hello, and have org.test.Hello.Locale and org.test.Platform
+   * added as deps/related
+   */
+  res = flatpak_transaction_add_install (transaction, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  g_clear_object (&transaction);
+
+  refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 3);
+  g_clear_pointer (&refs, g_ptr_array_unref);
+
+  update_test_app ();
+  update_repo ("test");
+
+  /* Drop all in-memory summary caches so we can find the new update */
+  flatpak_installation_drop_caches (inst, NULL, &error);
+  g_assert_no_error (error);
+
+  /* Install the app update but don't deploy it */
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  updated_ref = flatpak_installation_update (inst,
+                                             FLATPAK_UPDATE_FLAGS_NO_DEPLOY,
+                                             FLATPAK_REF_KIND_APP,
+                                             "org.test.Hello",
+                                             flatpak_get_default_arch (), "master",
+                                             NULL, NULL, NULL, &error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+  g_assert_no_error (error);
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (updated_ref));
+
+  refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 2);
+  update_ref = g_ptr_array_index (refs, 0);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello");
+  g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_APP);
+  update_ref = g_ptr_array_index (refs, 1);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello.Locale");
+  g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_RUNTIME);
+
+  /* Uninstall the runtime and app */
+  empty_installation (inst);
 }
 
 static void
@@ -2005,7 +2141,7 @@ make_test_runtime (const char *runtime_repo_name)
   g_autofree char *arg0 = NULL;
   g_autofree char *arg1 = NULL;
   char *argv[] = {
-    NULL, NULL, "org.test.Platform", "master", "", NULL
+    NULL, NULL, "org.test.Platform", "master", "", "", NULL
   };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
@@ -2040,6 +2176,19 @@ update_test_app (void)
   char *argv[] = { NULL, "repos/test", "", "master", "", "SPIN", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
+  argv[0] = arg0;
+  argv[4] = repo_collection_id;
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
+update_test_runtime (void)
+{
+  g_autofree char *arg0 = NULL;
+  char *argv[] = { NULL, "repos/test", "org.test.Platform", "master", "", "UPDATED", NULL };
+
+  arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
   argv[0] = arg0;
   argv[4] = repo_collection_id;
 
@@ -2230,7 +2379,7 @@ setup_repo (void)
   launch_httpd ();
   add_remote_user ("test");
   add_flatpakrepo ("test");
-  configure_languages ();
+  configure_languages ("de");
 
   /* another copy of the same repo, with different url */
   g_assert_cmpint (symlink ("test", "repos/copy-of-test"), ==, 0);
@@ -3904,8 +4053,8 @@ test_list_installed_related_refs (void)
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[1], ==, "/en");
 
-  configure_languages();
-  clean_extra_languages();
+  configure_languages ("de");
+  clean_extra_languages ();
 }
 
 static void
@@ -4113,6 +4262,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
   g_test_add_func ("/library/list-refs-in-remote", test_list_refs_in_remotes);
   g_test_add_func ("/library/list-updates", test_list_updates);
+  g_test_add_func ("/library/list-undeployed-updates", test_list_undeployed_updates);
   g_test_add_func ("/library/list-updates-offline", test_list_updates_offline);
   g_test_add_func ("/library/transaction", test_misc_transaction);
   g_test_add_func ("/library/transaction-install-uninstall", test_transaction_install_uninstall);

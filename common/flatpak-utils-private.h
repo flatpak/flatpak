@@ -872,6 +872,12 @@ gboolean flatpak_repo_resolve_rev (OstreeRepo    *repo,
                                    GCancellable  *cancellable,
                                    GError       **error);
 
+static inline void
+null_safe_g_object_unref (gpointer data)
+{
+  g_clear_object (&data);
+}
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */

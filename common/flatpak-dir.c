@@ -8970,80 +8970,6 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
   return FALSE;
 }
 
-/* This returns true if the remote version of the installed version is
- * newer than the installed, or if some related ref it relies on is
- * missing (which will be fixed by an update run of FlatpakTransaction). */
-gboolean
-flatpak_dir_check_if_installed_ref_needs_update (FlatpakDir               *self,
-                                                 FlatpakRemoteState       *state,
-                                                 const char               *ref,
-                                                 GBytes                   *deploy_data,
-                                                 GCancellable             *cancellable)
-{
-  g_autofree char *latest_commit = NULL;
-  guint64 latest_timestamp;
-  guint64 current_timestamp;
-  g_autoptr(GFile) deploy_dir = NULL;
-  const gchar *current_commit = NULL;
-
-  if (flatpak_dir_ref_is_masked (self, ref))
-    return FALSE;
-
-  current_commit = flatpak_deploy_data_get_commit (deploy_data);
-  current_timestamp = flatpak_deploy_data_get_timestamp (deploy_data);
-
-  if (!flatpak_remote_state_lookup_ref (state, ref, &latest_commit, &latest_timestamp, NULL, NULL, NULL))
-    return FALSE;
-
-  /* Check if the latest is newer than the current installed, if so update */
-  if (current_timestamp == 0)
-    {
-      /* This happens during deploy data updates, fall back to commit comparisons */
-      if (strcmp (current_commit, latest_commit) != 0)
-        return TRUE;
-    }
-  else
-    {
-      if (latest_timestamp > current_timestamp ||
-          (latest_timestamp == current_timestamp &&
-           strcmp (current_commit, latest_commit) != 0))
-        return TRUE;
-    }
-
-  /* The ref itself doesn't need update, but we do some extra checks
-   * for related refs that can trigger an update. */
-
-  /* Check if all "should-download" related refs for the ref are installed.
-   * If not, add the ref in @updates array so that it can be installed via
-   * FlatpakTransaction's update-op.
-   *
-   * This makes sure that the ref (maybe an app or runtime) remains in usable
-   * state and fixes itself through an update.
-   */
-  if (flatpak_dir_check_installed_ref_missing_related_ref (self, state, ref, cancellable))
-    return TRUE;
-
-  /* This checks if an already installed app has a missing runtime.
-   * If so, return that installed ref in the updates list, so that FlatpakTransaction
-   * can resolve one of its operation to install the runtime instead.
-   *
-   * Runtime of an app can go missing if an app upgrade makes an app dependent on a new runtime
-   * entirely. We had couple of cases like that in the past, for example, before it was updated
-   * to use FlatpakTransaction, updating an app in GNOME Software to a version which needs a
-   * different runtime would not install that new runtime, leaving the app unusable.
-   */
-  if (g_str_has_prefix (ref, "app/"))
-    {
-      const gchar *runtime = flatpak_deploy_data_get_runtime (deploy_data);
-      g_autofree gchar *full_runtime_ref = g_strconcat ("runtime/", runtime, NULL);
-      deploy_dir = flatpak_dir_get_if_deployed (self, full_runtime_ref, NULL, cancellable);
-      if (deploy_dir == NULL)
-        return TRUE;
-    }
-
-  return FALSE;
-}
-
 /* This is called by the old-school non-transaction flatpak_installation_update, so doesn't do a lot. */
 char *
 flatpak_dir_check_for_update (FlatpakDir               *self,
@@ -13563,42 +13489,6 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
     }
 
   return g_steal_pointer (&related);
-}
-
-gboolean
-flatpak_dir_check_installed_ref_missing_related_ref (FlatpakDir          *self,
-                                                     FlatpakRemoteState  *state,
-                                                     const gchar         *full_ref,
-                                                     GCancellable        *cancellable)
-{
-  g_autoptr(GPtrArray) remote_related_refs = NULL;
-  g_autoptr(GError) local_error = NULL;
-  guint j;
-
-  remote_related_refs = flatpak_dir_find_remote_related (self, state, full_ref,
-                                                         cancellable, &local_error);
-  if (remote_related_refs == NULL)
-    {
-      g_warning ("Unable to get remote related refs for %s: %s", full_ref, local_error->message);
-      return FALSE;
-    }
-
-  for (j = 0; j < remote_related_refs->len; j++)
-    {
-      FlatpakRelated *rel = g_ptr_array_index (remote_related_refs, j);
-      g_autoptr(GFile) deploy = NULL;
-
-      if (!rel->download || flatpak_dir_ref_is_masked (self, rel->ref))
-          continue;
-
-      deploy = flatpak_dir_get_if_deployed (self, rel->ref, NULL, cancellable);
-      /* If the related extension ref was meant to be auto-installed but was not found to be
-       * deployed, return TRUE. It will be pulled in via a FlatpakTransaction's update-op again. */
-      if (rel->download && deploy == NULL)
-          return TRUE;
-    }
-
-  return FALSE;
 }
 
 GPtrArray *

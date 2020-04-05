@@ -979,25 +979,48 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
 }
 
 static gboolean
-ref_check_for_update (FlatpakDir   *dir,
-                      const char   *ref,
-                      GHashTable   *remote_states,
-                      GCancellable *cancellable)
+transaction_ready (FlatpakTransaction  *transaction,
+                   GHashTable         **related_to_ops)
 {
-  g_autoptr(GBytes) deploy_data = NULL;
-  FlatpakRemoteState *state;
-  const char *origin = NULL;
+  GList *ops = flatpak_transaction_get_operations (transaction);
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, NULL);
-  if (deploy_data == NULL)
-    return FALSE;
+  for (GList *l = ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      FlatpakTransactionOperation *related_to_op = flatpak_transaction_operation_get_related_to_op (op);
+      FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
 
-  origin = flatpak_deploy_data_get_origin (deploy_data);
-  state = g_hash_table_lookup (remote_states, origin);
-  if (state == NULL)
-    return FALSE;
+      /* There is currently no way for a set of updates to lead to an
+       * uninstall, but check anyway.
+       */
+      if (type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+        {
+          const char *ref = flatpak_transaction_operation_get_ref (op);
+          g_warning ("Update transaction unexpectedly wants to uninstall %s", ref);
+          continue;
+        }
 
-  return flatpak_dir_check_if_installed_ref_needs_update (dir, state, ref, deploy_data, cancellable);
+      g_hash_table_insert (*related_to_ops,
+                           g_object_ref (op),
+                           related_to_op ? g_object_ref (related_to_op) : NULL);
+    }
+
+  g_list_free_full (ops, g_object_unref);
+
+  /* Abort the transaction; we only wanted to know what it would do */
+  return FALSE;
+}
+
+static gint
+installed_ref_compare (gconstpointer _iref_a,
+                       gconstpointer _iref_b)
+{
+  const FlatpakInstalledRef *iref_a = *(const FlatpakInstalledRef **)_iref_a;
+  const FlatpakInstalledRef *iref_b = *(const FlatpakInstalledRef **)_iref_b;
+  g_autofree char *ref_a = flatpak_ref_format_ref (FLATPAK_REF (iref_a));
+  g_autofree char *ref_b = flatpak_ref_format_ref (FLATPAK_REF (iref_b));
+
+  return strcmp (ref_a, ref_b);
 }
 
 /**
@@ -1006,15 +1029,17 @@ ref_check_for_update (FlatpakDir   *dir,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the installed references that has a remote update that is not
- * locally available. However, even though an app is not returned by this
- * it can have local updates available that has not been deployed. Look
- * at commit vs latest_commit on installed apps for this.
+ * Lists the installed apps and runtimes that have an update available, either
+ * from the configured remote or locally available but not deployed (see
+ * flatpak_transaction_set_no_deploy()).
  *
  * This also checks if any of #FlatpakInstalledRef has a missing #FlatpakRelatedRef
  * (which has `should-download` set to %TRUE) or runtime. If so, it adds the
  * ref to the returning #GPtrArray to pull in the #FlatpakRelatedRef or runtime
  * again via an update operation in #FlatpakTransaction.
+ *
+ * In case more than one app needs an update of the same runtime or extension,
+ * it is possible that only one of the apps will be returned by this function.
  *
  * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances, or %NULL on error
@@ -1024,76 +1049,123 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
                                                      GCancellable        *cancellable,
                                                      GError             **error)
 {
-  g_autoptr(FlatpakDir) dir_orig = flatpak_installation_get_dir_maybe_no_repo (self);
-  g_autoptr(FlatpakDir) dir = NULL;
-  g_auto(GStrv) remote_names = NULL;
-  g_autoptr(GPtrArray) updates = NULL; /* (element-type FlatpakInstalledRef) */
-  g_autoptr(GHashTable) remote_states = NULL; /* (element-type utf8 FlatpakRemoteState) */
-  g_auto(GStrv) refs_app = NULL;
-  g_auto(GStrv) refs_runtime = NULL;
+  g_autoptr(GPtrArray) installed_refs = NULL; /* (element-type FlatpakInstalledRef) */
+  g_autoptr(GHashTable) installed_refs_hash = NULL; /* (element-type utf8 FlatpakInstalledRef) */
+  g_autoptr(GPtrArray) installed_refs_for_update = NULL; /* (element-type FlatpakInstalledRef) */
+  g_autoptr(GHashTable) installed_refs_for_update_set = NULL; /* (element-type utf8) */
+  g_autoptr(GHashTable) related_to_ops = NULL; /* (element-type FlatpakTransactionOperation FlatpakTransactionOperation) */
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GError) local_error = NULL;
 
-  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
-     it has local changes */
-  dir = flatpak_dir_clone (dir_orig);
-  if (!flatpak_dir_maybe_ensure_repo (dir, cancellable, error))
+  installed_refs = flatpak_installation_list_installed_refs (self, cancellable, error);
+  if (installed_refs == NULL)
     return NULL;
 
-  remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
-  if (remote_names == NULL)
+  /* Here we use a FlatpakTransaction to determine what needs updating, and
+   * abort it before actually doing the updates. This ensures we are consistent
+   * with the CLI update command.
+   */
+  transaction = flatpak_transaction_new_for_installation (self, cancellable, error);
+  if (transaction == NULL)
     return NULL;
 
-  remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)flatpak_remote_state_unref);
-  for (int i = 0; remote_names[i] != NULL; ++i)
+  installed_refs_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  for (guint i = 0; i < installed_refs->len; i++)
     {
-      const char *remote = remote_names[i];
-      g_autoptr(FlatpakRemoteState) state = NULL;
-      g_autoptr(GError) local_error = NULL;
+      FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed_refs, i);
+      g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
 
-      if (flatpak_dir_get_remote_disabled (dir, remote))
+      /* This hash table will be used later for efficient search */
+      g_hash_table_insert (installed_refs_hash, g_strdup (ref), installed_ref);
+
+      if (flatpak_transaction_add_update (transaction, ref, NULL, NULL, &local_error))
         continue;
 
-      state = flatpak_dir_get_remote_state_optional (dir, remote, FALSE, NULL, &local_error);
-      if (state == NULL)
+      if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
         {
-          g_debug ("Update: Failed to read remote %s: %s", remote, local_error->message);
-          continue;
+          g_debug ("%s: Unable to update %s: %s", G_STRFUNC, ref, local_error->message);
+          g_clear_error (&local_error);
         }
-      g_hash_table_insert (remote_states, (char *)remote, g_steal_pointer (&state));
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return NULL;
+        }
     }
 
-  updates = g_ptr_array_new_with_free_func (g_object_unref);
+  related_to_ops = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, null_safe_g_object_unref);
 
-  if (flatpak_dir_list_refs (dir, "app", &refs_app, cancellable, error))
+  g_signal_connect (transaction, "ready", G_CALLBACK (transaction_ready), &related_to_ops);
+
+  flatpak_transaction_run (transaction, cancellable, &local_error);
+  g_assert (local_error != NULL);
+  if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
     {
-     for (int i = 0; refs_app[i] != NULL; i++)
-       {
-        const char *ref = refs_app[i];
-        if (ref_check_for_update (dir, ref, remote_states, cancellable))
-          {
-            g_debug ("%s: Installed ref %s needs update", G_STRFUNC, ref);
-            FlatpakInstalledRef *installed_ref = get_ref (dir, ref, cancellable, NULL);
-            if (installed_ref)
-              g_ptr_array_add (updates, g_object_ref (installed_ref));
-          }
-       }
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return NULL;
     }
+  g_clear_error (&local_error);
 
-  if (flatpak_dir_list_refs (dir, "runtime", &refs_runtime, cancellable, error))
+  installed_refs_for_update = g_ptr_array_new_with_free_func (g_object_unref);
+  installed_refs_for_update_set = g_hash_table_new (g_str_hash, g_str_equal);
+
+  /* For each ref that would be affected by the transaction, if it is
+   * installed, add it to the list to be returned and otherwise add the ref
+   * that caused it be added. We need to cover all of the following cases:
+   * 1. For an app or runtime that has an update available, add it to the list
+   *    (including a locale extension which needs more subpaths downloaded).
+   * 2. For an app or extension that has a missing runtime, add the
+   *    app/extension to the list.
+   * 3. For an app that's missing a "should-download" related ref, add the app
+   *    to the list.
+   */
+  GLNX_HASH_TABLE_FOREACH_KV (related_to_ops,
+                              FlatpakTransactionOperation *, op,
+                              FlatpakTransactionOperation *, related_to_op)
     {
-     for (int i = 0; refs_runtime[i] != NULL; i++)
-       {
-        const char *ref = refs_runtime[i];
-        if (ref_check_for_update (dir, ref, remote_states, cancellable))
-          {
-            g_debug ("%s: Installed ref %s needs update", G_STRFUNC, ref);
-            FlatpakInstalledRef *installed_ref = get_ref (dir, ref, cancellable, NULL);
-            if (installed_ref)
-              g_ptr_array_add (updates, g_object_ref (installed_ref));
-          }
-       }
+      const char *op_ref = flatpak_transaction_operation_get_ref (op);
+      FlatpakInstalledRef *installed_ref;
+
+      /* Here we use the existing installed_refs_hash instead of get_ref()
+       * since staying in memory should be more efficient than disk I/O
+       */
+      installed_ref = g_hash_table_lookup (installed_refs_hash, op_ref);
+      if (installed_ref != NULL)
+        {
+          if (!g_hash_table_contains (installed_refs_for_update_set, op_ref))
+            {
+              g_hash_table_add (installed_refs_for_update_set, (char *)op_ref);
+              g_debug ("%s: Installed ref %s needs update", G_STRFUNC, op_ref);
+              g_ptr_array_add (installed_refs_for_update,
+                               g_object_ref (installed_ref));
+            }
+        }
+      else if (related_to_op != NULL)
+        {
+          const char *related_op_ref = flatpak_transaction_operation_get_ref (related_to_op);
+          if (!g_hash_table_contains (installed_refs_for_update_set, related_op_ref))
+            {
+              installed_ref = g_hash_table_lookup (installed_refs_hash, related_op_ref);
+              if (installed_ref != NULL)
+                {
+                  g_hash_table_add (installed_refs_for_update_set, (char *)related_op_ref);
+                  g_debug ("%s: Installed ref %s needs update", G_STRFUNC, related_op_ref);
+                  g_ptr_array_add (installed_refs_for_update,
+                                   g_object_ref (installed_ref));
+                }
+            }
+        }
+
+      /* Note: installed_ref could be NULL if for example op is installing a
+       * related ref of a missing runtime.
+       */
     }
 
-  return g_steal_pointer (&updates);
+  /* Remove non-determinism for the sake of the unit tests */
+  g_ptr_array_sort (installed_refs_for_update, installed_ref_compare);
+
+  return g_steal_pointer (&installed_refs_for_update);
 }
 
 /* Find all USB and LAN repositories which share the same collection ID as
