@@ -1906,21 +1906,7 @@ test_list_updates (void)
                       "hello-again.desktop;net.example.Goodbye.Again.desktop;");
 
   /* Uninstall the runtime and app */
-  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
-  g_assert_no_error (error);
-  g_assert_nonnull (transaction);
-
-  res = flatpak_transaction_add_uninstall (transaction, app, &error);
-  g_assert_no_error (error);
-  g_assert_true (res);
-
-  res = flatpak_transaction_add_uninstall (transaction, runtime, &error);
-  g_assert_no_error (error);
-  g_assert_true (res);
-
-  res = flatpak_transaction_run (transaction, NULL, &error);
-  g_assert_no_error (error);
-  g_assert_true (res);
+  empty_installation (inst);
 }
 
 static void
