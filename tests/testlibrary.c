@@ -1185,7 +1185,7 @@ test_update_related_refs (void)
                                        FLATPAK_REF_KIND_APP,
                                        "org.test.Hello",
                                        NULL, "master", NULL, NULL, NULL,
-				                               &error);
+                                       &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
   g_assert (FLATPAK_IS_INSTALLED_REF (iref));
