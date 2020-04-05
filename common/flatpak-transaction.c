@@ -127,6 +127,7 @@ struct _FlatpakTransactionOperation
   int                             run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList                          *run_before_ops;
   FlatpakTransactionOperation    *fail_if_op_fails; /* main app/runtime for related extensions, runtime for apps */
+  FlatpakTransactionOperation    *related_to_op; /* main app/runtime for related extensions, app for runtimes */
 };
 
 typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
@@ -672,6 +673,26 @@ const char *
 flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
 {
   return self->ref;
+}
+
+/**
+ * flatpak_transaction_operation_get_related_to_op:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the operation which caused this operation to be added to the
+ * transaction. In the case of a runtime, it's the app whose runtime it is. In
+ * the case of a related ref such as an extension, it's the main app or
+ * runtime. In the case of a main app or something added to the transaction by
+ * flatpak_transaction_add_ref(), %NULL will be returned.
+ *
+ * Returns: (transfer none) (nullable): the #FlatpakTransactionOperation this
+ *   one is related to, or %NULL
+ * Since: 1.7.3
+ */
+FlatpakTransactionOperation *
+flatpak_transaction_operation_get_related_to_op (FlatpakTransactionOperation *self)
+{
+  return self->related_to_op;
 }
 
 /**
@@ -1782,6 +1803,7 @@ add_related (FlatpakTransaction          *self,
                                                    FLATPAK_TRANSACTION_OPERATION_UNINSTALL);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
+          related_op->related_to_op = op;
           run_operation_before (op, related_op, 1);
         }
     }
@@ -1801,6 +1823,7 @@ add_related (FlatpakTransaction          *self,
                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
+          related_op->related_to_op = op;
           run_operation_before (related_op, op, 1);
         }
     }
@@ -1938,6 +1961,7 @@ add_deps (FlatpakTransaction          *self,
                                    runtime_op->ref, op->ref);
 
       op->fail_if_op_fails = runtime_op;
+      runtime_op->related_to_op = op;
       run_operation_before (runtime_op, op, 2);
     }
 

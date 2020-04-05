@@ -174,6 +174,8 @@ FlatpakTransactionOperationType flatpak_transaction_operation_get_operation_type
 FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
+FlatpakTransactionOperation *   flatpak_transaction_operation_get_related_to_op (FlatpakTransactionOperation *self);
+FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_get_remote (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
 GFile *                         flatpak_transaction_operation_get_bundle_path (FlatpakTransactionOperation *self);
