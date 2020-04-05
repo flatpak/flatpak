@@ -706,11 +706,6 @@ gboolean flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
                                                            const char  *ref,
                                                            const char  *target_commit,
                                                            const char **opt_subpaths);
-gboolean flatpak_dir_check_if_installed_ref_needs_update (FlatpakDir               *self,
-                                                          FlatpakRemoteState       *state,
-                                                          const char               *ref,
-                                                          GBytes                   *deploy_data,
-                                                          GCancellable             *cancellable);
 char * flatpak_dir_check_for_update (FlatpakDir               *self,
                                      FlatpakRemoteState       *state,
                                      const char               *ref,
@@ -943,10 +938,6 @@ GPtrArray * flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *se
                                                           GKeyFile           *metakey,
                                                           GCancellable       *cancellable,
                                                           GError            **error);
-gboolean    flatpak_dir_check_installed_ref_missing_related_ref (FlatpakDir          *self,
-                                                                 FlatpakRemoteState  *state,
-                                                                 const gchar         *full_ref,
-                                                                 GCancellable        *cancellable);
 GPtrArray * flatpak_dir_find_remote_related (FlatpakDir         *dir,
                                              FlatpakRemoteState *state,
                                              const char         *ref,

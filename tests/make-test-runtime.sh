@@ -16,6 +16,9 @@ shift
 COLLECTION_ID=$1
 shift
 
+EXTRA="${1-}"
+shift
+
 mkdir ${DIR}/files
 mkdir ${DIR}/usr
 cat > ${DIR}/metadata <<EOF
@@ -73,6 +76,13 @@ for i in `cat $LIBS`; do
     cp "$i" ${DIR}/usr/lib/
 done
 ln -s bash ${DIR}/usr/bin/sh
+
+# This only exists so we can update the runtime
+cat > ${DIR}/usr/bin/runtime_hello.sh <<EOF
+#!/bin/sh
+echo "Hello world, from a runtime$EXTRA"
+EOF
+chmod a+x ${DIR}/usr/bin/runtime_hello.sh
 
 # We copy the C.UTF8 locale and call it en_US. Its a bit of a lie, but
 # the real en_US locale is often not available, because its in the
