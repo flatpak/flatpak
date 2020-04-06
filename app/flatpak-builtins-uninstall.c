@@ -307,12 +307,18 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
           if (ref_dir_pairs->len == 0)
             {
-              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                           _("%s/%s/%s not installed"),
-                           id ? id : "*unspecified*",
-                           arch ? arch : "*unspecified*",
-                           branch ? branch : "*unspecified*");
-              return FALSE;
+              if (n_prefs == 1)
+                {
+                  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                               _("%s/%s/%s not installed"),
+                               id ? id : "*unspecified*",
+                               arch ? arch : "*unspecified*",
+                               branch ? branch : "*unspecified*");
+                  return FALSE;
+                }
+
+              g_printerr (_("Warning: %s is not installed\n"), pref);
+              continue;
             }
 
           /* Don't show fuzzy matches if an exact match was found in any installation */
