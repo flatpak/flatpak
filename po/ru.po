@@ -279,7 +279,7 @@ msgstr "Ссылка на репозиторий"
 
 #: app/flatpak-builtins-build-commit-from.c:56
 msgid "SRC-REF"
-msgstr "ИСТООНИЧ-ССЫЛКИ"
+msgstr "ИСТОЧНИК-ССЫЛКИ"
 
 #: app/flatpak-builtins-build-commit-from.c:60
 #: app/flatpak-builtins-build-export.c:57
@@ -3712,15 +3712,15 @@ msgstr "Показать отладочную информацию OSTree"
 
 #: app/flatpak-main.c:163
 msgid "Print version information and exit"
-msgstr "Напечатать информацию о версии и выйти"
+msgstr "Вывести информацию о версии и выйти"
 
 #: app/flatpak-main.c:164
 msgid "Print default arch and exit"
-msgstr "Напечатать архитектуру по умолчанию и выйти"
+msgstr "Вывести архитектуру по умолчанию и выйти"
 
 #: app/flatpak-main.c:165
 msgid "Print supported arches and exit"
-msgstr "Напечатать поддерживаемые архитектуры и выйти"
+msgstr "Вывести поддерживаемые архитектуры и выйти"
 
 #: app/flatpak-main.c:166
 msgid "Print active gl drivers and exit"
@@ -3925,7 +3925,7 @@ msgstr "Убрать проброс устройства приложению"
 
 #: common/flatpak-context.c:1240
 msgid "Allow feature"
-msgstr "Разрешить функционал"
+msgstr "Разрешить использовать этот функционал"
 
 #: common/flatpak-context.c:1240 common/flatpak-context.c:1241
 msgid "FEATURE"
@@ -3933,7 +3933,7 @@ msgstr "ФУНКЦИОНАЛ"
 
 #: common/flatpak-context.c:1241
 msgid "Don't allow feature"
-msgstr "Запретить функционал"
+msgstr "Запретить использование этого функционала"
 
 #: common/flatpak-context.c:1242
 msgid "Expose filesystem to app (:ro for read-only)"
@@ -4862,7 +4862,7 @@ msgstr "Некорректный %s: Пропущен ключ '%s'"
 
 #: common/flatpak-utils.c:2849
 msgid "Invalid gpg key"
-msgstr "Некореектный ключ gpg"
+msgstr "Некорректный ключ gpg"
 
 #: common/flatpak-utils.c:3200
 msgid "No extra data sources"
