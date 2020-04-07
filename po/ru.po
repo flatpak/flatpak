@@ -3494,7 +3494,7 @@ msgstr "Удалить установленное приложение или с
 
 #: app/flatpak-main.c:80
 msgid "Mask out updates and automatic installation"
-msgstr "Маскировать обновление и автоматическую установку"
+msgstr "Маскировать обновления и автоматическую установку"
 
 #: app/flatpak-main.c:81
 msgid "List installed apps and/or runtimes"
