@@ -336,7 +336,7 @@ msgid ""
 "Mark refs matching the OLDID prefix as end-of-life, to be replaced with the "
 "given NEWID"
 msgstr ""
-"Пометить ссылки, соответствующие префиксу СТАРЫЙID, как конец срока службы, "
+"Пометить ссылки, соответствующие префиксу СТАРЫЙID, как конец срока службы поддержки, "
 "и заменить его на данный НОВЫЙID"
 
 #: app/flatpak-builtins-build-commit-from.c:67
@@ -447,7 +447,7 @@ msgstr "Исключенные файлы для добавления"
 #: app/flatpak-builtins-build-export.c:70
 msgid "Mark build as end-of-life, to be replaced with the given ID"
 msgstr ""
-"Пометить сборку как оконченную, и ее следует заменить данным идентификатором"
+"Пометить сборку как оконченную, и заменить её данным идентификатором"
 
 #: app/flatpak-builtins-build-export.c:70
 #: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:961
@@ -511,7 +511,7 @@ msgstr "Некорректный тип uri %s, поддерживается т�
 #: app/flatpak-builtins-build-export.c:696
 #, c-format
 msgid "Unable to find basename in %s, specify a name explicitly"
-msgstr "Невозможно найти базовое имя в %s, укажите имя явно"
+msgstr "Невозможно найти базовое имя в %s, укажите его"
 
 #: app/flatpak-builtins-build-export.c:705
 msgid "No slashes allowed in extra data name"
