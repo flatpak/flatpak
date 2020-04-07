@@ -3700,7 +3700,7 @@ msgstr "Создать новое изменение на базе сущест�
 
 #: app/flatpak-main.c:139
 msgid "Show information about a repo"
-msgstr "Получить информацию об репозитории"
+msgstr "Получить информацию о репозитории"
 
 #: app/flatpak-main.c:156
 msgid "Show debug information, -vv for more detail"
