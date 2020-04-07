@@ -3560,7 +3560,7 @@ msgstr "Войти в пространство имён запущенного �
 
 #: app/flatpak-main.c:98
 msgid "Enumerate running applications"
-msgstr "Enumerate running applications"
+msgstr "Перечислить запущенные приложения"
 
 #: app/flatpak-main.c:99
 msgid "Stop a running application"
