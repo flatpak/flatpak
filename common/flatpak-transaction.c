@@ -3194,7 +3194,7 @@ sort_ops (FlatpakTransaction *self)
   priv->ops = NULL;
 
   /* First mark runnable all jobs that depend on nothing.
-     Note that this seesntially reverses the original list, so these
+     Note that this essentially reverses the original list, so these
      are in the same order as specified */
   for (l = remaining; l != NULL; l = next)
     {
