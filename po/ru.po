@@ -3690,7 +3690,7 @@ msgstr "Получить информацию о репозитории"
 
 #: app/flatpak-main.c:156
 msgid "Show debug information, -vv for more detail"
-msgstr "Печатать отладочную информацию, -vv для подробных деталей"
+msgstr "Показать отладочную информацию, -vv для подробных деталей"
 
 #: app/flatpak-main.c:157
 msgid "Show OSTree debug information"
