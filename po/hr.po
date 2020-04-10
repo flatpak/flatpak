@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2020-04-03 17:06+0200\n"
-"PO-Revision-Date: 2020-01-30 19:42+0100\n"
+"PO-Revision-Date: 2020-04-10 18:41+0200\n"
 "Last-Translator: Milo Ivir <mail@milotype.de>\n"
 "Language-Team: Croatian <hr@li.org>\n"
 "Language: hr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 1.8.12\n"
+"X-Generator: Poedit 2.3\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -159,7 +159,7 @@ msgstr "„%s” nije ispravan repozitorij"
 #: app/flatpak-builtins-build-bundle.c:646
 #, c-format
 msgid "'%s' is not a valid repository: "
-msgstr "„%s” nije ispravan repozitorij:"
+msgstr "„%s” nije ispravan repozitorij: "
 
 #: app/flatpak-builtins-build-bundle.c:657 app/flatpak-builtins-build-sign.c:87
 #: common/flatpak-dir.c:10986 common/flatpak-utils.c:1533
@@ -570,7 +570,7 @@ msgstr "Sadržaja zapisano: %u\n"
 
 #: app/flatpak-builtins-build-export.c:1117
 msgid "Content Bytes Written:"
-msgstr "Bajtova sadržaja zapisano: %u"
+msgstr "Zapisani bajtovi sadržaja:"
 
 #: app/flatpak-builtins-build-finish.c:51
 msgid "Command to set"
@@ -956,13 +956,12 @@ msgid "COLLECTION-ID"
 msgstr "ZBIRKA-ID"
 
 #: app/flatpak-builtins-build-update-repo.c:72
-#, fuzzy
 msgid ""
 "Permanently deploy collection ID to client remote configurations, only for "
 "sideload support"
 msgstr ""
 "Trajno implementiraj ID zbirke u konfiguracije klijenta udaljenog "
-"repozitorija"
+"repozitorija, samo za podršku lokalnog preuzimanja"
 
 #: app/flatpak-builtins-build-update-repo.c:73
 msgid "Permanently deploy collection ID to client remote configurations"
@@ -1165,12 +1164,12 @@ msgstr "ODREDIŠTE"
 
 #: app/flatpak-builtins-create-usb.c:48
 msgid "Allow partial commits in the created repo"
-msgstr ""
+msgstr "Dozvoli djelomične izmjene u stvorenom repozitoriju"
 
 #: app/flatpak-builtins-create-usb.c:126
-#, fuzzy, c-format
+#, c-format
 msgid "Related ref '%s' is only partially installed"
-msgstr "Potrebno proširenje %s je samo djelomično instalirano"
+msgstr "Povezana referenca „%s” je samo djelomično instalirana"
 
 #: app/flatpak-builtins-create-usb.c:157
 #, c-format
@@ -1179,10 +1178,11 @@ msgstr ""
 "Upozorenje: Zanemaruje se povezana referenca „%s”, jer nije instalirana.\n"
 
 #: app/flatpak-builtins-create-usb.c:164
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Omitting related ref ‘%s’ because it is partially installed.\n"
 msgstr ""
-"Upozorenje: Zanemaruje se povezana referenca „%s”, jer nije instalirana.\n"
+"Upozorenje: Zanemaruje se povezana referenca „%s”, jer je djelomično "
+"instalirana.\n"
 
 #: app/flatpak-builtins-create-usb.c:175
 #, c-format
@@ -1226,9 +1226,9 @@ msgstr ""
 "%s)."
 
 #: app/flatpak-builtins-create-usb.c:646
-#, fuzzy, c-format
+#, c-format
 msgid "Ref '%s' is only partially installed"
-msgstr "Potrebno proširenje %s je samo djelomično instalirano"
+msgstr "Referenca „%s” je samo djelomično instalirana"
 
 #: app/flatpak-builtins-create-usb.c:686
 #, c-format
@@ -1900,7 +1900,7 @@ msgstr "Aktualiziraj instalaciju, ako je već instalirana"
 
 #: app/flatpak-builtins-install.c:77 app/flatpak-builtins-update.c:70
 msgid "Use this local repo for sideloads"
-msgstr ""
+msgstr "Koristi ovaj lokalni repozitorij za lokalno preuzimanje"
 
 #: app/flatpak-builtins-install.c:136
 msgid "Bundle filename must be specified"
@@ -2435,7 +2435,7 @@ msgstr "Koristi lokalnu predmemoriju, čak i ako je zastarjela"
 
 #: app/flatpak-builtins-remote-info.c:65 app/flatpak-builtins-remote-ls.c:59
 msgid "Only list refs available as sideloads"
-msgstr ""
+msgstr "Navedi samo reference koje su dostupne kao lokalna preuzimanja"
 
 #: app/flatpak-builtins-remote-info.c:114
 msgid ""
@@ -3410,7 +3410,7 @@ msgstr "%s dozvole:"
 
 #: app/flatpak-cli-transaction.c:881
 msgid "Warning: "
-msgstr "Upozorenje:"
+msgstr "Upozorenje: "
 
 #. translators: This is short for operation, the title of a one-char column
 #: app/flatpak-cli-transaction.c:973
@@ -3811,7 +3811,7 @@ msgstr "Neuspjelo premještanje %s na %s: %s\n"
 #: common/flatpak-auth.c:54
 #, c-format
 msgid "No authenticator configured for remote `%s`"
-msgstr "Nijedan autentifikator nije konfiguriran za udaljeni repozitorij „%s” "
+msgstr "Nijedan autentifikator nije konfiguriran za udaljeni repozitorij „%s”"
 
 #: common/flatpak-context.c:189
 #, c-format
@@ -3844,13 +3844,13 @@ msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Nepoznata vrsta funkcije %s, ispravne vrijednosti su: %s"
 
 #: common/flatpak-context.c:770
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
 "etc, home, xdg-*[/…], ~/dir, /dir"
 msgstr ""
-"Nepoznata lokacija datotečnog sustava %s, ispravne lookacije su: host, home, "
-"xdg-*[/…], ~/dir, /dir"
+"Nepoznata lokacija datotečnog sustava %s, ispravne lookacije su: host, host-"
+"os, host-etc, home, xdg-*[/…], ~/dir, /dir"
 
 #: common/flatpak-context.c:1040
 #, c-format
@@ -4038,7 +4038,7 @@ msgstr ""
 #: common/flatpak-dir.c:1326
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
-msgstr ""
+msgstr "Metapodaci izmjene za %s ne poklapaju se s očekivanim metapodacima"
 
 #: common/flatpak-dir.c:1592
 msgid "Unable to connect to system bus"
@@ -4164,15 +4164,14 @@ msgstr ""
 "za ključeve"
 
 #: common/flatpak-dir.c:5419
-#, fuzzy, c-format
+#, c-format
 msgid "Commit for ‘%s’ has no ref binding"
-msgstr ""
-"Izmjena nema potrebnu referencu „%s” u metapodacima za povezivanje reference"
+msgstr "Izmjena za „%s” nema povezivanje s referencom"
 
 #: common/flatpak-dir.c:5424
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
-msgstr ""
+msgstr "Izmjena za „%s” nije u očekivanoj povezanoj referenci: %s"
 
 #: common/flatpak-dir.c:6048
 msgid "Not enough memory"
@@ -4602,7 +4601,7 @@ msgstr "Neuspjelo otvaranje „%s”"
 #: common/flatpak-run.c:3309
 #, c-format
 msgid "ldconfig failed, exit status %d"
-msgstr "Idconfig neuspjelo, stanje izlaza %d"
+msgstr "ldconfig neuspjelo, stanje izlaza %d"
 
 #: common/flatpak-run.c:3316
 msgid "Can't open generated ld.so.cache"
@@ -4617,7 +4616,7 @@ msgstr ""
 
 #: common/flatpak-run.c:3459
 msgid "\"flatpak run\" is not intended to be ran with sudo"
-msgstr ""
+msgstr "\"flatpak run\" nije mišljen za pokretanje sa sudo"
 
 #: common/flatpak-run.c:3566
 #, c-format
@@ -4698,9 +4697,9 @@ msgstr ""
 "%s već instaliran: %s"
 
 #: common/flatpak-transaction.c:3366
-#, fuzzy, c-format
+#, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
-msgstr "URL %s Flatpak repozitorija nije HTTP ili HTTPS"
+msgstr "URL %s Flatpak repozitorija nije datoteka, HTTP ili HTTPS"
 
 #: common/flatpak-transaction.c:3372
 #, c-format
@@ -5196,85 +5195,3 @@ msgid ""
 msgstr ""
 "Potrebna je autentifikacija za instaliranje softvera, koja je ograničena "
 "tvojim pravilima roditeljskog nadzora"
-
-#, c-format
-#~ msgid "Unable to load metadata from remote %s: %s"
-#~ msgstr "Nije moguće učitati metapodatke s udaljenog repozitorija za %s: %s"
-
-#, c-format
-#~ msgid "No such ref (%s, %s) in remote %s"
-#~ msgstr "Nema ovakve reference (%s, %s) u udaljenom repozitoriju %s"
-
-#, c-format
-#~ msgid "No flatpak cache in remote '%s' summary"
-#~ msgstr "Nema flatpak predmemorije u sažetku udaljenog repozitorija „%s”"
-
-#, c-format
-#~ msgid "No such ref (%s, %s) in remote %s or elsewhere"
-#~ msgstr ""
-#~ "Nema ovakve reference (%s, %s) u udaljenom repozitoriju %s niti igdje "
-#~ "drugdje"
-
-#, c-format
-#~ msgid "No remotes found which provide these refs: [%s]"
-#~ msgstr "Nema udaljenih repozitorija koji navode ove reference: [%s]"
-
-#, c-format
-#~ msgid "No remotes found which provide the ref (%s, %s)"
-#~ msgstr "Nema udaljenih repozitorija koji navode referencu (%s, %s)"
-
-#~ msgid "No summary found"
-#~ msgstr "Nema sažetaka"
-
-#, c-format
-#~ msgid ""
-#~ "GPG verification enabled, but no summary signatures found for remote '%s'"
-#~ msgstr ""
-#~ "GPG provjera je aktivirana, ali nisu pronađeni potpisi sažetka za "
-#~ "udaljeni repozitorij „%s”"
-
-#, c-format
-#~ msgid ""
-#~ "GPG signatures found for remote '%s', but none are in trusted keyring"
-#~ msgstr ""
-#~ "GPG potpisi su pronađeni za udaljeni repozitorij „%s”, ali niti jedan se "
-#~ "ne nalazi u pouzdanom privjesku za ključeve"
-
-#~ msgid "Expected commit metadata to have ref binding information, found none"
-#~ msgstr ""
-#~ "Očekuje se da metapodaci izmjene sadrže informaciju za povezivanje "
-#~ "reference, nisu pronađeni"
-
-#~ msgid ""
-#~ "Expected commit metadata to have collection ID binding information, found "
-#~ "none"
-#~ msgstr ""
-#~ "Očekuje se da metapodaci izmjene sadrže informaciju za povezivanje ID-a "
-#~ "zbirke, nisu pronađeni"
-
-#, c-format
-#~ msgid ""
-#~ "Commit has collection ID ‘%s’ in collection binding metadata, while the "
-#~ "remote it came from has collection ID ‘%s’"
-#~ msgstr ""
-#~ "Izmjena sadrži ID zbirke „%s” u metapodacima za povezivanje zbirke, dok "
-#~ "udaljeni repozitorij iz kojega dolazi sadrži ID zbirke „%s”"
-
-#~ msgid "Deployed metadata does not match commit"
-#~ msgstr "Implementirani metapodaci se ne poklapaju s izmjenom"
-
-#, c-format
-#~ msgid "No repo metadata cached for remote '%s'"
-#~ msgstr ""
-#~ "Nema metapodataka repozitorija u predmemoriji za udaljeni repozitorij „%s”"
-
-#~ msgid "No metadata branch for OCI"
-#~ msgstr "Nema grane metapodataka za OCI"
-
-#, c-format
-#~ msgid "Invalid group: %d"
-#~ msgstr "Neispravna grupa: %d"
-
-#, c-format
-#~ msgid "Warning: Can't find %s metadata for dependencies: %s"
-#~ msgstr "Upozorenje: Nije moguće pronaći %s metapodatke za ovisnosti: %s"
