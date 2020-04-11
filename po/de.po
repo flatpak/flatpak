@@ -4,11 +4,12 @@
 # Wolfgang Stöggl <c72578@yahoo.de>, 2016.
 # Mario Blättermann <mario.blaettermann@gmail.com>, 2016-2017.
 # Christian Kirbach <christian.kirbach@gmail.com>, 2017.
+# Thomas Siegele <tsiegele@gmx.at>, 2019
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-04-03 17:06+0200\n"
+"POT-Creation-Date: 2020-04-11 16:50+0100\n"
 "PO-Revision-Date: 2017-11-03 20:24+0100\n"
 "Last-Translator: Christian Kirbach <christian.kirbach@gmail.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
@@ -187,7 +188,7 @@ msgstr "Plattform-Laufzeit eher verwenden als Sdk"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
-msgstr ""
+msgstr "Ziel mit nur Lesezugriff machen"
 
 #: app/flatpak-builtins-build.c:51
 msgid "Add bind mount"
@@ -328,7 +329,7 @@ msgstr ""
 #: app/flatpak-builtins-build-commit-from.c:66
 #: app/flatpak-builtins-build-export.c:69
 msgid "REASON"
-msgstr ""
+msgstr "GRUND"
 
 #: app/flatpak-builtins-build-commit-from.c:67
 msgid ""
@@ -486,7 +487,7 @@ msgstr "Temporäre Datei konnte nicht geöffnet werden: %s"
 #: app/flatpak-builtins-build-export.c:494
 #, c-format
 msgid "WARNING: Can't find Exec key in %s: %s\n"
-msgstr ""
+msgstr "ACHTUNG: Exec key in %s nicht gefunden: %s\n"
 
 #: app/flatpak-builtins-build-export.c:502
 #: app/flatpak-builtins-build-export.c:599
@@ -943,7 +944,7 @@ msgstr "Vorgabezweig für diese Quelle"
 #: app/flatpak-builtins-build-update-repo.c:67
 #: app/flatpak-builtins-remote-add.c:73 app/flatpak-builtins-remote-modify.c:79
 msgid "DESCRIPTION"
-msgstr ""
+msgstr "BESCHREIBUNG"
 
 #: app/flatpak-builtins-build-update-repo.c:68
 #, fuzzy
@@ -1117,12 +1118,12 @@ msgstr "Konfiguration für SCHLÜSSEL zurücksetzen"
 #: app/flatpak-builtins-config.c:149
 #, c-format
 msgid "'%s' does not look like a language/locale code"
-msgstr ""
+msgstr "'%s' sieht nicht aus wie ein Sprach- /Regionscode"
 
 #: app/flatpak-builtins-config.c:172
 #, c-format
 msgid "'%s' does not look like a language code"
-msgstr ""
+msgstr "'%s' sieht nicht aus wie ein Sprachcode"
 
 #: app/flatpak-builtins-config.c:226
 #, c-format
