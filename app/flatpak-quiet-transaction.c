@@ -34,6 +34,7 @@ struct _FlatpakQuietTransaction
 {
   FlatpakTransaction parent;
   gboolean got_error;
+  gboolean no_interaction_oldvalue;
 };
 
 struct _FlatpakQuietTransactionClass
@@ -218,6 +219,17 @@ flatpak_quiet_transaction_run (FlatpakTransaction *transaction,
   return TRUE;
 }
 
+static void
+flatpak_quiet_transaction_finalize (GObject *object)
+{
+  FlatpakQuietTransaction *self = FLATPAK_QUIET_TRANSACTION (object);
+  g_autoptr(FlatpakInstallation) installation = NULL;
+
+  installation = flatpak_transaction_get_installation (FLATPAK_TRANSACTION (self));
+  flatpak_installation_set_no_interaction (installation, self->no_interaction_oldvalue);
+
+  G_OBJECT_CLASS (flatpak_quiet_transaction_parent_class)->finalize (object);
+}
 
 static void
 flatpak_quiet_transaction_init (FlatpakQuietTransaction *transaction)
@@ -227,8 +239,10 @@ flatpak_quiet_transaction_init (FlatpakQuietTransaction *transaction)
 static void
 flatpak_quiet_transaction_class_init (FlatpakQuietTransactionClass *class)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (class);
   FlatpakTransactionClass *transaction_class = FLATPAK_TRANSACTION_CLASS (class);
 
+  object_class->finalize = flatpak_quiet_transaction_finalize;
   transaction_class->choose_remote_for_ref = choose_remote_for_ref;
   transaction_class->add_new_remote = add_new_remote;
   transaction_class->new_operation = new_operation;
@@ -243,11 +257,13 @@ flatpak_quiet_transaction_new (FlatpakDir *dir,
 {
   g_autoptr(FlatpakQuietTransaction) self = NULL;
   g_autoptr(FlatpakInstallation) installation = NULL;
+  gboolean no_interaction_oldvalue;
 
   installation = flatpak_installation_new_for_dir (dir, NULL, error);
   if (installation == NULL)
     return NULL;
 
+  no_interaction_oldvalue = flatpak_installation_get_no_interaction (installation);
   flatpak_installation_set_no_interaction (installation, TRUE);
 
   self = g_initable_new (FLATPAK_TYPE_QUIET_TRANSACTION,
@@ -257,6 +273,8 @@ flatpak_quiet_transaction_new (FlatpakDir *dir,
 
   if (self == NULL)
     return NULL;
+
+  self->no_interaction_oldvalue = no_interaction_oldvalue;
 
   flatpak_transaction_add_default_dependency_sources (FLATPAK_TRANSACTION (self));
 
