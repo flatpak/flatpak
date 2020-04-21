@@ -176,6 +176,8 @@ const char *                    flatpak_transaction_operation_get_ref (FlatpakTr
 FLATPAK_EXTERN
 FlatpakTransactionOperation *   flatpak_transaction_operation_get_related_to_op (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
+gboolean                        flatpak_transaction_operation_get_is_skipped (FlatpakTransactionOperation *self);
+FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_get_remote (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
 GFile *                         flatpak_transaction_operation_get_bundle_path (FlatpakTransactionOperation *self);
