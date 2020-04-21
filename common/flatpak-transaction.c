@@ -685,6 +685,10 @@ flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
  * runtime. In the case of a main app or something added to the transaction by
  * flatpak_transaction_add_ref(), %NULL will be returned.
  *
+ * Note that an op will be returned even if it’s marked as to be skipped when
+ * the transaction is run. Check that using
+ * flatpak_transaction_operation_get_is_skipped().
+ *
  * Returns: (transfer none) (nullable): the #FlatpakTransactionOperation this
  *   one is related to, or %NULL
  * Since: 1.7.3
@@ -875,7 +879,7 @@ flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *sel
  * flatpak_transaction_is_empty:
  * @self: a #FlatpakTransaction
  *
- * Returns whether the transaction contains any operations.
+ * Returns whether the transaction contains any non-skipped operations.
  *
  * Returns: %TRUE if the transaction is empty
  */
@@ -3271,7 +3275,7 @@ sort_ops (FlatpakTransaction *self)
  * flatpak_transaction_get_operations:
  * @self: a #FlatpakTransaction
  *
- * Gets the list of operations.
+ * Gets the list of operations. Skipped operations are not included.
  *
  * Returns: (transfer full) (element-type FlatpakTransactionOperation): a #GList of operations
  */
