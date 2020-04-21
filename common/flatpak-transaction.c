@@ -696,6 +696,27 @@ flatpak_transaction_operation_get_related_to_op (FlatpakTransactionOperation *se
 }
 
 /**
+ * flatpak_transaction_operation_get_is_skipped:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets whether this operation will be skipped when the transaction is run.
+ * Operations are skipped in some transaction situations, for example when an
+ * app has reached end of life and needs a rebase, or when it would have been
+ * updated but no update is available. By default, skipped
+ * operations are not returned by flatpak_transaction_get_operations() — but
+ * they can be accessed by traversing the operation graph using
+ * flatpak_transaction_operation_get_related_to_op().
+ *
+ * Returns: %TRUE if the operation has been marked as to skip, %FALSE otherwise
+ * Since: 1.7.3
+ */
+gboolean
+flatpak_transaction_operation_get_is_skipped (FlatpakTransactionOperation *self)
+{
+  return self->skip;
+}
+
+/**
  * flatpak_transaction_operation_get_remote:
  * @self: a #FlatpakTransactionOperation
  *
