@@ -3770,13 +3770,22 @@ flatpak_dir_resolve_free (FlatpakDirResolve *resolve)
 }
 
 static const char *
-find_latest_p2p_result (OstreeRepoFinderResult **results, OstreeCollectionRef *cr)
+find_latest_p2p_result (OstreeRepoFinderResult **results,
+                        OstreeCollectionRef     *cr,
+                        guint64                 *out_remote_timestamp)
 {
   const char *latest_rev = NULL;
   int i;
 
   for (i = 0; results[i] != NULL && latest_rev == NULL; i++)
-    latest_rev = g_hash_table_lookup (results[i]->ref_to_checksum, cr);
+    {
+      latest_rev = g_hash_table_lookup (results[i]->ref_to_checksum, cr);
+      if (latest_rev != NULL)
+        {
+          guint64 *remote_timestamp_pointer = g_hash_table_lookup (results[i]->ref_to_timestamp, cr);
+          *out_remote_timestamp = GUINT64_FROM_BE (*remote_timestamp_pointer);
+        }
+    }
 
   return latest_rev;
 }
@@ -3994,24 +4003,33 @@ flatpak_dir_prepare_resolve_p2p_refs_helper (FlatpakDir             *self,
     {
       FlatpakDirResolve *resolve = resolves->pdata[i];
       const char *latest_rev = NULL;
+      g_autoptr(GVariant) commit_data = NULL;
+      guint64 local_timestamp, remote_timestamp;
 
-      latest_rev = find_latest_p2p_result (results, &resolve->collection_ref);
+      latest_rev = find_latest_p2p_result (results, &resolve->collection_ref, &remote_timestamp);
       resolve->latest_remote_commit = g_strdup (latest_rev);
 
-      if (resolve->local_commit == NULL)
+      if (resolve->local_commit == NULL || latest_rev == NULL)
         continue;
 
-      if (g_strcmp0 (latest_rev, resolve->local_commit) == 0)
-        {
-          g_autoptr(GVariant) commit_data = NULL;
+      if (!ostree_repo_load_commit (state->child_repo, resolve->local_commit, &commit_data, NULL, NULL))
+        return FALSE;
 
+      local_timestamp = ostree_commit_get_timestamp (commit_data);
+      g_debug ("%s: Comparing local timestamp %" G_GUINT64_FORMAT " to remote timestamp %"
+               G_GUINT64_FORMAT " on ref (%s, %s)", G_STRFUNC, local_timestamp, remote_timestamp,
+               resolve->collection_ref.collection_id, resolve->collection_ref.ref_name);
+
+      /* The timestamp check is necessary in case the remote commit is a
+       * downgrade, but only if we're not overriding the commit. */
+      if (g_strcmp0 (latest_rev, resolve->local_commit) == 0 ||
+          (resolve->opt_commit == NULL &&
+           remote_timestamp != 0 &&
+           remote_timestamp < local_timestamp))
+        {
           /* We already have the latest commit, so resolve it from
            * the local commit and remove from all results. This way we
            * avoid pulling this ref from all remotes. */
-
-          if (!ostree_repo_load_commit (state->child_repo, resolve->local_commit, &commit_data, NULL, NULL))
-            return FALSE;
-
           resolve->resolved_commit = g_strdup (resolve->local_commit);
           resolve_p2p_update_from_commit (resolve, commit_data);
           remove_ref_from_p2p_results (results, &resolve->collection_ref);
