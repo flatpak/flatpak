@@ -802,7 +802,7 @@ flatpak_transaction_operation_get_commit (FlatpakTransactionOperation *self)
  * This information is available when the transaction is resolved,
  * i.e. when #FlatpakTransaction::ready is emitted.
  *
- * Returns: the download size
+ * Returns: the download size, in bytes
  * Since: 1.1.2
  */
 guint64
@@ -826,7 +826,7 @@ flatpak_transaction_operation_get_download_size (FlatpakTransactionOperation *se
  * This information is available when the transaction is resolved,
  * i.e. when #FlatpakTransaction::ready is emitted.
  *
- * Returns: the installed size
+ * Returns: the installed size, in bytes
  * Since: 1.1.2
  */
 guint64
