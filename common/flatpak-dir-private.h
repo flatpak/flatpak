@@ -914,6 +914,7 @@ FlatpakRemoteState * flatpak_dir_get_remote_state_for_summary (FlatpakDir   *sel
                                                                GCancellable *cancellable,
                                                                GError      **error);
 gboolean flatpak_dir_migrate_config (FlatpakDir   *self,
+                                     gboolean      no_interaction,
                                      gboolean     *changed,
                                      GCancellable *cancellable,
                                      GError      **error);

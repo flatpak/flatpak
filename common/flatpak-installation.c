@@ -80,6 +80,7 @@ struct _FlatpakInstallationPrivate
      done. */
   FlatpakDir *dir_unlocked;
   char       *display_name;
+  gboolean    no_interaction;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstallation, flatpak_installation, G_TYPE_OBJECT)
@@ -167,7 +168,9 @@ flatpak_installation_set_no_interaction (FlatpakInstallation *self,
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
-  flatpak_dir_set_no_interaction (priv->dir_unlocked, no_interaction);
+  /* Don’t propagate the flag to `priv->dir_unlocked` because it might be shared
+   * between multiple installation objects. */
+  priv->no_interaction = no_interaction;
 }
 
 /**
@@ -185,7 +188,7 @@ flatpak_installation_get_no_interaction (FlatpakInstallation *self)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
-  return flatpak_dir_get_no_interaction (priv->dir_unlocked);
+  return priv->no_interaction;
 }
 
 /**
