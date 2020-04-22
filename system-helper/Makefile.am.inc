@@ -35,8 +35,15 @@ polkit_policy_DATA =					\
 %.policy: %.policy.in
 	$(AM_V_GEN) $(MSGFMT) --xml -d $(top_srcdir)/po --template $< -o $@ || cp $< $@
 
-DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/org.freedesktop.Flatpak.rules system-helper/flatpak-system-helper.service system-helper/org.freedesktop.Flatpak.SystemHelper.service
+sysusers_DATA = system-helper/flatpak.conf
+
+%.conf: %.conf.in
+	$(AM_V_GEN) $(SED) \
+	  -e "s|\@SYSTEM_HELPER_USER\@|$(SYSTEM_HELPER_USER)|" \
+	  $< > $@
+
+DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/org.freedesktop.Flatpak.rules system-helper/flatpak-system-helper.service system-helper/org.freedesktop.Flatpak.SystemHelper.service system-helper/flatpak.conf
 
 endif
 
-EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf system-helper/org.freedesktop.Flatpak.rules.in system-helper/org.freedesktop.Flatpak.SystemHelper.service.in system-helper/flatpak-system-helper.service.in
+EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf system-helper/org.freedesktop.Flatpak.rules.in system-helper/org.freedesktop.Flatpak.SystemHelper.service.in system-helper/flatpak-system-helper.service.in system-helper/flatpak.conf.in

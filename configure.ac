@@ -342,6 +342,15 @@ AC_ARG_WITH(system-install-dir,
 SYSTEM_INSTALL_DIR=$with_system_install_dir
 AC_SUBST(SYSTEM_INSTALL_DIR)
 
+AC_ARG_WITH([sysusersdir],
+            [AS_HELP_STRING([--with-sysusersdir=DIR],
+                            [Directory for systemd sysusers.d configuration files (default=PREFIX/lib/sysusers.d)])],
+    [],
+    dnl This is deliberately not ${libdir}: systemd units always go in
+    dnl .../lib, never .../lib64 or .../lib/x86_64-linux-gnu
+    [with_sysusersdir='${prefix}/lib/sysusers.d'])
+AC_SUBST([sysusersdir], [$with_sysusersdir])
+
 AC_ARG_WITH(system-helper-user,
            [AS_HELP_STRING([--with-system-helper-user=USERNAME],
                            [Name of the system helper user])],
