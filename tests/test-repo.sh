@@ -460,7 +460,7 @@ assert_file_has_content list-log "org\.test\.Platform"
 
 ok "flatpak list --arch --columns works"
 
-if ${FLATPAK} ${INVERT_U} uninstall -y org.test.Platform org.test.Hello; then
+if ${FLATPAK} ${INVERT_U} uninstall -y org.test.Hello; then
     assert_not_reached "Should not be able to uninstall ${INVERT_U} when installed ${U}"
 fi
 
