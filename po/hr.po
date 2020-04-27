@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-04-03 17:06+0200\n"
-"PO-Revision-Date: 2020-04-10 18:41+0200\n"
+"POT-Creation-Date: 2020-04-27 03:27+0000\n"
+"PO-Revision-Date: 2020-04-27 07:25+0200\n"
 "Last-Translator: Milo Ivir <mail@milotype.de>\n"
 "Language-Team: Croatian <hr@li.org>\n"
 "Language: hr\n"
@@ -162,14 +162,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "„%s” nije ispravan repozitorij: "
 
 #: app/flatpak-builtins-build-bundle.c:657 app/flatpak-builtins-build-sign.c:87
-#: common/flatpak-dir.c:10986 common/flatpak-utils.c:1533
+#: common/flatpak-dir.c:10912 common/flatpak-utils.c:1533
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "„%s” nije ispravno ime: %s"
 
 #: app/flatpak-builtins-build-bundle.c:660
 #: app/flatpak-builtins-build-export.c:823 app/flatpak-builtins-build-sign.c:90
-#: common/flatpak-dir.c:10992 common/flatpak-utils.c:1539
+#: common/flatpak-dir.c:10918 common/flatpak-utils.c:1539
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "„%s” nije ispravno ime grane: %s"
@@ -208,7 +208,7 @@ msgstr "DIR"
 
 #: app/flatpak-builtins-build.c:53
 msgid "Where to look for custom sdk dir (defaults to 'usr')"
-msgstr "Gdje tražiti prilagođeni sdk (standardno je „usr”)"
+msgstr "Gdje tražiti prilagođeni sdk direktorij (standardno je „usr”)"
 
 #: app/flatpak-builtins-build.c:54 app/flatpak-builtins-build-export.c:64
 msgid "Use alternative file for the metadata"
@@ -257,7 +257,7 @@ msgstr "Nijedna točka proširenja se ne poklapa s %s u %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Nedostaje „=” u opciji „%s” za povezano montiranje"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3929
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3930
 msgid "Unable to start app"
 msgstr "Nije moguće pokrenuti program"
 
@@ -2450,7 +2450,7 @@ msgstr "UDALJENI_REPOZITORIJ i REFERENCA se moraju odrediti"
 
 #: app/flatpak-builtins-remote-info.c:160 common/flatpak-dir.c:4018
 #: common/flatpak-dir.c:4958 common/flatpak-dir.c:5029
-#: common/flatpak-dir.c:5157 common/flatpak-dir.c:13265
+#: common/flatpak-dir.c:5157 common/flatpak-dir.c:13191
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr ""
@@ -3022,10 +3022,15 @@ msgstr "Ne određuj REFERENCE kad koristiš --unused"
 msgid "Nothing unused to uninstall\n"
 msgstr "Ništa neupotrebljenog za deinstalirati\n"
 
-#: app/flatpak-builtins-uninstall.c:311 common/flatpak-dir.c:11496
+#: app/flatpak-builtins-uninstall.c:313 common/flatpak-dir.c:11422
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s nije instalirano"
+
+#: app/flatpak-builtins-uninstall.c:320
+#, c-format
+msgid "Warning: %s is not installed\n"
+msgstr "Upozorenje: %s nije instalirano\n"
 
 #: app/flatpak-builtins-update.c:56
 msgid "Arch to update for"
@@ -3270,19 +3275,19 @@ msgstr ""
 "  %s\n"
 "Konfiguriraj ovo kao novi udaljeni repozitorij „%s”"
 
-#: app/flatpak-cli-transaction.c:149 app/flatpak-quiet-transaction.c:100
+#: app/flatpak-cli-transaction.c:149 app/flatpak-quiet-transaction.c:101
 msgid "install"
 msgstr "instaliraj"
 
-#: app/flatpak-cli-transaction.c:152 app/flatpak-quiet-transaction.c:103
+#: app/flatpak-cli-transaction.c:152 app/flatpak-quiet-transaction.c:104
 msgid "update"
 msgstr "aktualiziraj"
 
-#: app/flatpak-cli-transaction.c:155 app/flatpak-quiet-transaction.c:106
+#: app/flatpak-cli-transaction.c:155 app/flatpak-quiet-transaction.c:107
 msgid "install bundle"
 msgstr "instaliraj paket"
 
-#: app/flatpak-cli-transaction.c:158 app/flatpak-quiet-transaction.c:109
+#: app/flatpak-cli-transaction.c:158 app/flatpak-quiet-transaction.c:110
 msgid "uninstall"
 msgstr "deinstaliraj"
 
@@ -3313,33 +3318,33 @@ msgstr "Deinstaliranje …"
 msgid "Uninstalling %d/%d…"
 msgstr "Deinstaliranje %d/%d …"
 
-#: app/flatpak-cli-transaction.c:449 app/flatpak-quiet-transaction.c:131
+#: app/flatpak-cli-transaction.c:449 app/flatpak-quiet-transaction.c:132
 #, c-format
 msgid "Info: %s was skipped"
 msgstr "Informacija: %s je preskočeno"
 
-#: app/flatpak-cli-transaction.c:467 app/flatpak-quiet-transaction.c:136
-#: common/flatpak-dir.c:9067
+#: app/flatpak-cli-transaction.c:467 app/flatpak-quiet-transaction.c:137
+#: common/flatpak-dir.c:8993
 #, c-format
 msgid "%s already installed"
 msgstr "%s već instalirano"
 
 #: app/flatpak-cli-transaction.c:469 app/flatpak-cli-transaction.c:471
-#: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
+#: app/flatpak-quiet-transaction.c:139 app/flatpak-quiet-transaction.c:141
 #: common/flatpak-dir.c:2383 common/flatpak-dir.c:3017
-#: common/flatpak-dir.c:13856 common/flatpak-transaction.c:2003
-#: common/flatpak-transaction.c:2030 common/flatpak-utils.c:1726
+#: common/flatpak-dir.c:13746 common/flatpak-transaction.c:2055
+#: common/flatpak-transaction.c:2094 common/flatpak-utils.c:1726
 #: common/flatpak-utils.c:1819
 #, c-format
 msgid "%s not installed"
 msgstr "%s još nije instalirano"
 
-#: app/flatpak-cli-transaction.c:473 app/flatpak-quiet-transaction.c:142
+#: app/flatpak-cli-transaction.c:473 app/flatpak-quiet-transaction.c:143
 #, c-format
 msgid "%s needs a later flatpak version"
 msgstr "%s treba noviju flatpak verziju"
 
-#: app/flatpak-cli-transaction.c:475 app/flatpak-quiet-transaction.c:144
+#: app/flatpak-cli-transaction.c:475 app/flatpak-quiet-transaction.c:145
 msgid "Not enough disk space to complete this operation"
 msgstr "Nema dovoljno prostora na disku za završavanje ove operacije"
 
@@ -3348,11 +3353,11 @@ msgstr "Nema dovoljno prostora na disku za završavanje ove operacije"
 msgid "Failed to %s %s: "
 msgstr "Neuspjelo %s %s: "
 
-#: app/flatpak-cli-transaction.c:485 app/flatpak-quiet-transaction.c:149
+#: app/flatpak-cli-transaction.c:485 app/flatpak-quiet-transaction.c:150
 msgid "Warning:"
 msgstr "Upozorenje:"
 
-#: app/flatpak-cli-transaction.c:485 app/flatpak-quiet-transaction.c:149
+#: app/flatpak-cli-transaction.c:485 app/flatpak-quiet-transaction.c:150
 msgid "Error:"
 msgstr "Greška:"
 
@@ -3374,12 +3379,12 @@ msgstr "Prijava zahtijeva udaljeni repozitorij %s (područje %s)\n"
 msgid "Password"
 msgstr "Lozinka"
 
-#: app/flatpak-cli-transaction.c:596 app/flatpak-quiet-transaction.c:174
+#: app/flatpak-cli-transaction.c:596 app/flatpak-quiet-transaction.c:175
 #, c-format
 msgid "Info: %s is end-of-life, in favor of %s\n"
 msgstr "Informacija: %s je kraj-života, namjesto %s\n"
 
-#: app/flatpak-cli-transaction.c:598 app/flatpak-quiet-transaction.c:176
+#: app/flatpak-cli-transaction.c:598 app/flatpak-quiet-transaction.c:177
 #, c-format
 msgid "Info: %s is end-of-life, with reason: %s\n"
 msgstr "Informacija: %s je kraj-života, s razlogom: %s\n"
@@ -3389,7 +3394,7 @@ msgstr "Informacija: %s je kraj-života, s razlogom: %s\n"
 msgid "Replace it with %s?"
 msgstr "Zamijeniti s %s?"
 
-#: app/flatpak-cli-transaction.c:608 app/flatpak-quiet-transaction.c:182
+#: app/flatpak-cli-transaction.c:608 app/flatpak-quiet-transaction.c:183
 msgid "Updating to rebased version\n"
 msgstr "Aktualiziranje na premještenu verziju\n"
 
@@ -3783,27 +3788,27 @@ msgstr "Nijedna naredba nije određena"
 msgid "error:"
 msgstr "greška:"
 
-#: app/flatpak-quiet-transaction.c:77
+#: app/flatpak-quiet-transaction.c:78
 #, c-format
 msgid "Installing %s\n"
 msgstr "Instaliranje programa %s\n"
 
-#: app/flatpak-quiet-transaction.c:81
+#: app/flatpak-quiet-transaction.c:82
 #, c-format
 msgid "Updating %s\n"
 msgstr "Aktualiziranje %s\n"
 
-#: app/flatpak-quiet-transaction.c:85
+#: app/flatpak-quiet-transaction.c:86
 #, c-format
 msgid "Uninstalling %s\n"
 msgstr "Deinstaliranje %s\n"
 
-#: app/flatpak-quiet-transaction.c:148
+#: app/flatpak-quiet-transaction.c:149
 #, c-format
 msgid "%s Failed to %s %s: %s\n"
 msgstr "%s Neuspjelo %s %s: %s\n"
 
-#: app/flatpak-quiet-transaction.c:187
+#: app/flatpak-quiet-transaction.c:188
 #, c-format
 msgid "Failed to rebase %s to %s: %s\n"
 msgstr "Neuspjelo premještanje %s na %s: %s\n"
@@ -4022,7 +4027,7 @@ msgstr ""
 msgid "No summary or Flatpak cache available for remote %s"
 msgstr "Nema sažetka ili Flatpak predmemorije za udaljeni repozitorij „%s”"
 
-#: common/flatpak-dir.c:757 common/flatpak-dir.c:13297
+#: common/flatpak-dir.c:757 common/flatpak-dir.c:13223
 #, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata"
 msgstr ""
@@ -4087,7 +4092,7 @@ msgid "Can't create deploy directory"
 msgstr "Nije moguće stvoriti direktorij za implementaciju"
 
 #: common/flatpak-dir.c:4333 common/flatpak-dir.c:5378
-#: common/flatpak-dir.c:8444 common/flatpak-dir.c:9215
+#: common/flatpak-dir.c:8444 common/flatpak-dir.c:9141
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr ""
 "Nije moguće povući s nepouzdanog ne-gpg provjerenog udaljenog repozitorija"
@@ -4143,7 +4148,7 @@ msgid "Remote OCI index has no registry uri"
 msgstr "OCI indeks udaljenog repozitorija nema uri registra"
 
 #: common/flatpak-dir.c:4964 common/flatpak-dir.c:7492
-#: common/flatpak-dir.c:9087
+#: common/flatpak-dir.c:9013
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s izmjena %s već instalirano"
@@ -4309,7 +4314,7 @@ msgstr "Implementirana referenca %s grana se ne poklapa s izmjenom (%s)"
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Implementirana referenca %s se ne poklapa s izmjenom (%s)"
 
-#: common/flatpak-dir.c:7924 common/flatpak-installation.c:1792
+#: common/flatpak-dir.c:7924 common/flatpak-installation.c:1864
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s grana %s već instalirano"
@@ -4324,56 +4329,56 @@ msgid "Can't change remote during bundle install"
 msgstr ""
 "Nije moguće promijeniti udaljeni repozitorij tijekom instaliranja paketa"
 
-#: common/flatpak-dir.c:9160
+#: common/flatpak-dir.c:9086
 msgid "Can't update to a specific commit without root permissions"
 msgstr ""
 "Nije moguće aktualizirati određenu izmjenu bez administratorskih dozvola"
 
-#: common/flatpak-dir.c:9443
+#: common/flatpak-dir.c:9369
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "Nije moguće ukloniti %s, mora postojati za: %s"
 
-#: common/flatpak-dir.c:9498 common/flatpak-installation.c:1948
+#: common/flatpak-dir.c:9424 common/flatpak-installation.c:2020
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s grana %s nije instalirano"
 
-#: common/flatpak-dir.c:9741
+#: common/flatpak-dir.c:9667
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s izmjena %s nije instalirano"
 
-#: common/flatpak-dir.c:10076
+#: common/flatpak-dir.c:10002
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Odrezivanje repozitorija neuspjelo: %s"
 
-#: common/flatpak-dir.c:10245 common/flatpak-dir.c:10251
+#: common/flatpak-dir.c:10171 common/flatpak-dir.c:10177
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "Neuspjelo učitavanje filtra „%s”"
 
-#: common/flatpak-dir.c:10257
+#: common/flatpak-dir.c:10183
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "Neuspjela obrada filtra „%s”"
 
-#: common/flatpak-dir.c:10533
+#: common/flatpak-dir.c:10459
 msgid "Failed to write summary cache: "
 msgstr "Neuspjelo zapisivanje predmemorije sažetka: "
 
-#: common/flatpak-dir.c:10552
+#: common/flatpak-dir.c:10478
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "Nema oci sažetka u predmemoriji za udaljeni repozitorij „%s”"
 
-#: common/flatpak-dir.c:10627
+#: common/flatpak-dir.c:10553
 #, c-format
 msgid "No summary cached for remote '%s'"
 msgstr "Nema sažetka u predmemoriji za udaljeni repozitorij „%s”"
 
-#: common/flatpak-dir.c:10645
+#: common/flatpak-dir.c:10571
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -4382,88 +4387,88 @@ msgstr ""
 "Popis za %s na udaljenom repozitoriju nije dostupan: poslužitelj nema "
 "datoteku sažetka. Provjeri ispravnost URL-a za remote-add."
 
-#: common/flatpak-dir.c:11129
+#: common/flatpak-dir.c:11055
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr "Dostupne su višestruke grane za %s, moraš odrediti jednu od: "
 
-#: common/flatpak-dir.c:11150
+#: common/flatpak-dir.c:11076
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Ništa se ne poklapa s %s"
 
-#: common/flatpak-dir.c:11266
+#: common/flatpak-dir.c:11192
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Nije moguće naći referencu %s%s%s%s%s"
 
-#: common/flatpak-dir.c:11315
+#: common/flatpak-dir.c:11241
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Greška pri traženju udaljenog repozitorija %s: %s"
 
-#: common/flatpak-dir.c:11370
+#: common/flatpak-dir.c:11296
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Greška pri traženju lokalnog repozitorija: %s"
 
-#: common/flatpak-dir.c:11705
+#: common/flatpak-dir.c:11631
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Nije bilo moguće naći instalaciju %s"
 
-#: common/flatpak-dir.c:12262
+#: common/flatpak-dir.c:12188
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "Neispravan datotečni format, nema %s grupe"
 
-#: common/flatpak-dir.c:12267 common/flatpak-utils.c:2817
+#: common/flatpak-dir.c:12193 common/flatpak-utils.c:2817
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Neispravna verzija %s, podržava se samo 1"
 
-#: common/flatpak-dir.c:12272 common/flatpak-dir.c:12277
+#: common/flatpak-dir.c:12198 common/flatpak-dir.c:12203
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "Neispravan datotečni format, %s nije određen"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:12300
+#: common/flatpak-dir.c:12226
 msgid "Invalid file format, gpg key invalid"
 msgstr "Neispravan datotečni format, gpg ključ neispravan"
 
-#: common/flatpak-dir.c:12318 common/flatpak-utils.c:2870
+#: common/flatpak-dir.c:12244 common/flatpak-utils.c:2870
 msgid "Collection ID requires GPG key to be provided"
 msgstr "ID zbirke zahtijeva GPG ključ"
 
-#: common/flatpak-dir.c:12362
+#: common/flatpak-dir.c:12288
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Okruženje %s, grana %s je već instalirano"
 
-#: common/flatpak-dir.c:12363
+#: common/flatpak-dir.c:12289
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Program %s, grana %s je već instaliran"
 
-#: common/flatpak-dir.c:12651
+#: common/flatpak-dir.c:12577
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 "Nije moguće ukloniti udaljeni repozitorij „%s” s instaliranom referencom %s "
 "(barem)"
 
-#: common/flatpak-dir.c:12751
+#: common/flatpak-dir.c:12677
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "Neispravan znak „/” u imenu udaljenog repozitorija: %s"
 
-#: common/flatpak-dir.c:12757
+#: common/flatpak-dir.c:12683
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "Nijedna konfiguracija za udaljeni repozitorij %s nije određena"
 
-#: common/flatpak-dir.c:14344
+#: common/flatpak-dir.c:14234
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Preskače se brisanje reference zrcaljenog repozitorija (%s, %s) …\n"
@@ -4478,12 +4483,12 @@ msgstr "Referenca „%s” nije instalirana"
 msgid "App %s not installed"
 msgstr "Program %s nije instaliran"
 
-#: common/flatpak-installation.c:1276
+#: common/flatpak-installation.c:1348
 #, c-format
 msgid "Remote '%s' already exists"
 msgstr "Udaljeni repozitorij „%s” već postoji"
 
-#: common/flatpak-installation.c:1827
+#: common/flatpak-installation.c:1899
 #, c-format
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "Kako je zatraženo, %s je samo povučen, ali nije instaliran"
@@ -4536,158 +4541,158 @@ msgstr "Url nije određen"
 msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "GPG provjera mora biti aktivirana, kad se postavlja ID oznaka zbirke"
 
-#: common/flatpak-run.c:855
+#: common/flatpak-run.c:856
 msgid "Failed to open app info file"
 msgstr "Neuspjelo otvaranje datoteke s informacijama o programu"
 
-#: common/flatpak-run.c:949
+#: common/flatpak-run.c:950
 msgid "Unable to create sync pipe"
 msgstr "Nije moguće stvoriti pipe za sinkronizaciju"
 
-#: common/flatpak-run.c:984
+#: common/flatpak-run.c:985
 msgid "Failed to sync with dbus proxy"
 msgstr "Neuspjela sinkronizacija s dbus proxijem"
 
-#: common/flatpak-run.c:1023
+#: common/flatpak-run.c:1024
 #, c-format
 msgid "Failed to determine parts from ref: %s"
 msgstr "Neuspjelo određivanje dijelova iz reference: %s"
 
-#: common/flatpak-run.c:1646
+#: common/flatpak-run.c:1647
 msgid "No systemd user session available, cgroups not available"
 msgstr "Nema korisničke sesije systemd, cgroups nije dostupno"
 
-#: common/flatpak-run.c:2225
+#: common/flatpak-run.c:2226
 msgid "Unable to allocate instance id"
 msgstr "Nije moguće alocirati id instance"
 
-#: common/flatpak-run.c:2345 common/flatpak-run.c:2355
+#: common/flatpak-run.c:2346 common/flatpak-run.c:2356
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Neuspjelo otvaranje datoteke flatpak-info: %s"
 
-#: common/flatpak-run.c:2375
+#: common/flatpak-run.c:2376
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Neuspjelo otvaranje datoteke bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2686
+#: common/flatpak-run.c:2687
 msgid "Initialize seccomp failed"
 msgstr "Inicijaliziraj seccomp neuspjelo"
 
-#: common/flatpak-run.c:2725
+#: common/flatpak-run.c:2726
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Neuspjelo dodavanje arhitekture seccomp filtru"
 
-#: common/flatpak-run.c:2734
+#: common/flatpak-run.c:2735
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Neuspjelo dodavanje arhitekture višestrukih arhitektura seccomp filtru"
 
 #. unknown syscall
-#: common/flatpak-run.c:2753 common/flatpak-run.c:2767
+#: common/flatpak-run.c:2754 common/flatpak-run.c:2768
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Neuspjelo blokiranje syscall %d"
 
-#: common/flatpak-run.c:2798
+#: common/flatpak-run.c:2799
 msgid "Failed to export bpf"
 msgstr "Neuspio bdf izvoz"
 
-#: common/flatpak-run.c:3031
+#: common/flatpak-run.c:3032
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Neuspjelo otvaranje „%s”"
 
-#: common/flatpak-run.c:3309
+#: common/flatpak-run.c:3310
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig neuspjelo, stanje izlaza %d"
 
-#: common/flatpak-run.c:3316
+#: common/flatpak-run.c:3317
 msgid "Can't open generated ld.so.cache"
 msgstr "Nije moguće otvoriti generirani ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3418
+#: common/flatpak-run.c:3419
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Pokretanje programa %s nije dozvoljeno na osnovi administratorskih pravila"
 
-#: common/flatpak-run.c:3459
+#: common/flatpak-run.c:3460
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr "\"flatpak run\" nije mišljen za pokretanje sa sudo"
 
-#: common/flatpak-run.c:3566
+#: common/flatpak-run.c:3567
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Krivi broj komponenata u okruženju %s"
 
-#: common/flatpak-run.c:3674
+#: common/flatpak-run.c:3675
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Neuspjelo migriranje iz %s: %s"
 
-#: common/flatpak-run.c:3689
+#: common/flatpak-run.c:3690
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Neuspjelo migriranje starog direktorija za podatke programa %s u novo ime "
 "%s: %s"
 
-#: common/flatpak-run.c:3698
+#: common/flatpak-run.c:3699
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr ""
 "Neuspjelo stvaranje simboličke veze (symlink) prilikom migriranja %s: %s"
 
-#: common/flatpak-transaction.c:1766
+#: common/flatpak-transaction.c:1812
 #, c-format
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "Upozorenje: Problem u treženju povezanih referenca: %s"
 
-#: common/flatpak-transaction.c:1835
+#: common/flatpak-transaction.c:1883
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
 msgstr "Program %s zahtijeva okruženje %s, koje nije pronađeno"
 
-#: common/flatpak-transaction.c:1851
+#: common/flatpak-transaction.c:1899
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "Program %s zahtijeva okruženje %s, koje nije instalirano"
 
-#: common/flatpak-transaction.c:1937
+#: common/flatpak-transaction.c:1985
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "Nije moguće deinstalirati %s, što %s zahtijeva"
 
-#: common/flatpak-transaction.c:2007
+#: common/flatpak-transaction.c:2059
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Udaljeni repozitorij „%s” deaktiviran, zanemaruje se %s aktualiziranje"
 
-#: common/flatpak-transaction.c:2019
+#: common/flatpak-transaction.c:2083
 #, c-format
 msgid "%s is already installed"
 msgstr "%s je već instalirano"
 
-#: common/flatpak-transaction.c:2022
+#: common/flatpak-transaction.c:2086
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s je već instalirano s udaljenog repozitorija %s"
 
-#: common/flatpak-transaction.c:2183
+#: common/flatpak-transaction.c:2247
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "Neispravni .flatpakref: %s"
 
-#: common/flatpak-transaction.c:2276
+#: common/flatpak-transaction.c:2342
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr ""
 "Greška pri aktualiziranju metapodataka udaljenog repozitorija za „%s”: %s"
 
-#: common/flatpak-transaction.c:2689
+#: common/flatpak-transaction.c:2755
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -4696,26 +4701,26 @@ msgstr ""
 "Upozorenje: Obradi greške u preuzimanju izmjena kao nekritične, budući da je "
 "%s već instaliran: %s"
 
-#: common/flatpak-transaction.c:3366
+#: common/flatpak-transaction.c:3432
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr "URL %s Flatpak repozitorija nije datoteka, HTTP ili HTTPS"
 
-#: common/flatpak-transaction.c:3372
+#: common/flatpak-transaction.c:3438
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "Nije moguće učitati ovisnu datoteku %s: "
 
-#: common/flatpak-transaction.c:3380
+#: common/flatpak-transaction.c:3446
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "Neispravni .flatpakrepo: %s"
 
-#: common/flatpak-transaction.c:3788
+#: common/flatpak-transaction.c:3854
 msgid "Transaction already executed"
 msgstr "Transakcija je već izvršena"
 
-#: common/flatpak-transaction.c:3803
+#: common/flatpak-transaction.c:3869
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -4723,16 +4728,16 @@ msgstr ""
 "Odbija raditi na korisničkoj instalaciji kao administrator! To može dovesti "
 "do krivih vlasništva nad datotekama i do grešaka u dozvolama."
 
-#: common/flatpak-transaction.c:3894
+#: common/flatpak-transaction.c:3960
 msgid "Aborted by user"
 msgstr "Prekinuto od korisnika"
 
-#: common/flatpak-transaction.c:3918
+#: common/flatpak-transaction.c:3984
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Preskače se %s zbog prethodne greške"
 
-#: common/flatpak-transaction.c:3969
+#: common/flatpak-transaction.c:4035
 msgid "Aborted due to failure"
 msgstr "Prekinuto zbog greške"
 
