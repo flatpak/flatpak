@@ -127,7 +127,10 @@ struct _FlatpakTransactionOperation
   int                             run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList                          *run_before_ops;
   FlatpakTransactionOperation    *fail_if_op_fails; /* main app/runtime for related extensions, runtime for apps */
-  FlatpakTransactionOperation    *related_to_op; /* main app/runtime for related extensions, app for runtimes */
+  /* main app/runtime for related extensions, app for runtimes; could be multiple
+   * related-to-ops if this op is for a runtime which is needed by multiple apps
+   * in the transaction: */
+  GPtrArray                      *related_to_ops;  /* (element-type FlatpakTransactionOperation) (nullable) */
 };
 
 typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
@@ -603,6 +606,8 @@ flatpak_transaction_operation_finalize (GObject *object)
     g_key_file_unref (self->resolved_old_metakey);
   g_free (self->resolved_token);
   g_list_free (self->run_before_ops);
+  if (self->related_to_ops)
+    g_ptr_array_unref (self->related_to_ops);
   if (self->summary_metadata)
     g_variant_unref (self->summary_metadata);
 
@@ -676,27 +681,41 @@ flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
 }
 
 /**
- * flatpak_transaction_operation_get_related_to_op:
+ * flatpak_transaction_operation_get_related_to_ops:
  * @self: a #FlatpakTransactionOperation
  *
- * Gets the operation which caused this operation to be added to the
- * transaction. In the case of a runtime, it's the app whose runtime it is. In
+ * Gets the operations which caused this operation to be added to the
+ * transaction. In the case of a runtime, it's the apps whose runtime it is (and
+ * this could be multiple apps, if they all require the same runtime). In
  * the case of a related ref such as an extension, it's the main app or
  * runtime. In the case of a main app or something added to the transaction by
- * flatpak_transaction_add_ref(), %NULL will be returned.
+ * flatpak_transaction_add_ref(), %NULL or an empty array will be returned.
  *
  * Note that an op will be returned even if it’s marked as to be skipped when
  * the transaction is run. Check that using
  * flatpak_transaction_operation_get_is_skipped().
  *
- * Returns: (transfer none) (nullable): the #FlatpakTransactionOperation this
- *   one is related to, or %NULL
+ * Elements in the returned array are only safe to access while the parent
+ * #FlatpakTransaction is alive.
+ *
+ * Returns: (transfer none) (element-type FlatpakTransactionOperation) (nullable): the
+ *   #FlatpakTransactionOperations this one is related to (may be %NULL or an
+ *   empty array, which are equivalent)
  * Since: 1.7.3
  */
-FlatpakTransactionOperation *
-flatpak_transaction_operation_get_related_to_op (FlatpakTransactionOperation *self)
+GPtrArray *
+flatpak_transaction_operation_get_related_to_ops (FlatpakTransactionOperation *self)
 {
-  return self->related_to_op;
+  return self->related_to_ops;
+}
+
+static void
+flatpak_transaction_operation_add_related_to_op (FlatpakTransactionOperation *op,
+                                                 FlatpakTransactionOperation *related_op)
+{
+  if (op->related_to_ops == NULL)
+    op->related_to_ops = g_ptr_array_new ();
+  g_ptr_array_add (op->related_to_ops, related_op);
 }
 
 /**
@@ -709,7 +728,7 @@ flatpak_transaction_operation_get_related_to_op (FlatpakTransactionOperation *se
  * updated but no update is available. By default, skipped
  * operations are not returned by flatpak_transaction_get_operations() — but
  * they can be accessed by traversing the operation graph using
- * flatpak_transaction_operation_get_related_to_op().
+ * flatpak_transaction_operation_get_related_to_ops().
  *
  * Returns: %TRUE if the operation has been marked as to skip, %FALSE otherwise
  * Since: 1.7.3
@@ -1828,7 +1847,7 @@ add_related (FlatpakTransaction          *self,
                                                    FLATPAK_TRANSACTION_OPERATION_UNINSTALL);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
-          related_op->related_to_op = op;
+          flatpak_transaction_operation_add_related_to_op (related_op, op);
           run_operation_before (op, related_op, 1);
         }
     }
@@ -1848,7 +1867,7 @@ add_related (FlatpakTransaction          *self,
                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
-          related_op->related_to_op = op;
+          flatpak_transaction_operation_add_related_to_op (related_op, op);
           run_operation_before (related_op, op, 1);
         }
     }
@@ -1986,7 +2005,7 @@ add_deps (FlatpakTransaction          *self,
                                    runtime_op->ref, op->ref);
 
       op->fail_if_op_fails = runtime_op;
-      runtime_op->related_to_op = op;
+      flatpak_transaction_operation_add_related_to_op (runtime_op, op);
       run_operation_before (runtime_op, op, 2);
     }
 

@@ -987,7 +987,7 @@ transaction_ready (FlatpakTransaction  *transaction,
   for (GList *l = ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
-      FlatpakTransactionOperation *related_to_op = flatpak_transaction_operation_get_related_to_op (op);
+      GPtrArray *op_related_to_ops = flatpak_transaction_operation_get_related_to_ops (op);  /* (element-type FlatpakTransactionOperation) */
       FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
 
       /* There is currently no way for a set of updates to lead to an
@@ -1002,7 +1002,7 @@ transaction_ready (FlatpakTransaction  *transaction,
 
       g_hash_table_insert (*related_to_ops,
                            g_object_ref (op),
-                           related_to_op ? g_object_ref (related_to_op) : NULL);
+                           op_related_to_ops ? g_ptr_array_ref (op_related_to_ops) : NULL);
     }
 
   g_list_free_full (ops, g_object_unref);
@@ -1039,7 +1039,7 @@ installed_ref_compare (gconstpointer _iref_a,
  * again via an update operation in #FlatpakTransaction.
  *
  * In case more than one app needs an update of the same runtime or extension,
- * it is possible that only one of the apps will be returned by this function.
+ * this function will return all of those apps.
  *
  * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances, or %NULL on error
@@ -1053,7 +1053,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   g_autoptr(GHashTable) installed_refs_hash = NULL; /* (element-type utf8 FlatpakInstalledRef) */
   g_autoptr(GPtrArray) installed_refs_for_update = NULL; /* (element-type FlatpakInstalledRef) */
   g_autoptr(GHashTable) installed_refs_for_update_set = NULL; /* (element-type utf8) */
-  g_autoptr(GHashTable) related_to_ops = NULL; /* (element-type FlatpakTransactionOperation FlatpakTransactionOperation) */
+  g_autoptr(GHashTable) related_to_ops = NULL; /* (element-type FlatpakTransactionOperation GPtrArray<FlatpakTransactionOperation>) */
   g_autoptr(FlatpakTransaction) transaction = NULL;
   g_autoptr(GError) local_error = NULL;
 
@@ -1094,7 +1094,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         }
     }
 
-  related_to_ops = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, null_safe_g_object_unref);
+  related_to_ops = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, null_safe_g_ptr_array_unref);
 
   g_signal_connect (transaction, "ready", G_CALLBACK (transaction_ready), &related_to_ops);
 
@@ -1122,7 +1122,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
    */
   GLNX_HASH_TABLE_FOREACH_KV (related_to_ops,
                               FlatpakTransactionOperation *, op,
-                              FlatpakTransactionOperation *, related_to_op)
+                              GPtrArray *, op_related_to_ops)
     {
       const char *op_ref = flatpak_transaction_operation_get_ref (op);
       FlatpakInstalledRef *installed_ref;
@@ -1141,18 +1141,23 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
                                g_object_ref (installed_ref));
             }
         }
-      else if (related_to_op != NULL)
+      else
         {
-          const char *related_op_ref = flatpak_transaction_operation_get_ref (related_to_op);
-          if (!g_hash_table_contains (installed_refs_for_update_set, related_op_ref))
+          for (gsize i = 0; op_related_to_ops != NULL && i < op_related_to_ops->len; i++)
             {
-              installed_ref = g_hash_table_lookup (installed_refs_hash, related_op_ref);
-              if (installed_ref != NULL)
+              FlatpakTransactionOperation *related_to_op = g_ptr_array_index (op_related_to_ops, i);
+
+              const char *related_op_ref = flatpak_transaction_operation_get_ref (related_to_op);
+              if (!g_hash_table_contains (installed_refs_for_update_set, related_op_ref))
                 {
-                  g_hash_table_add (installed_refs_for_update_set, (char *)related_op_ref);
-                  g_debug ("%s: Installed ref %s needs update", G_STRFUNC, related_op_ref);
-                  g_ptr_array_add (installed_refs_for_update,
-                                   g_object_ref (installed_ref));
+                  installed_ref = g_hash_table_lookup (installed_refs_hash, related_op_ref);
+                  if (installed_ref != NULL)
+                    {
+                      g_hash_table_add (installed_refs_for_update_set, (char *)related_op_ref);
+                      g_debug ("%s: Installed ref %s needs update", G_STRFUNC, related_op_ref);
+                      g_ptr_array_add (installed_refs_for_update,
+                                       g_object_ref (installed_ref));
+                    }
                 }
             }
         }
