@@ -677,6 +677,12 @@ flatpak_load_deploy_data (GFile        *deploy_dir,
   if (flatpak_deploy_data_get_version (deploy_data) < required_version)
     return upgrade_deploy_data (deploy_data, deploy_dir, ref);
 
+  /* Call g_variant_get_data() to serialize the GVariant internally, because
+   * during serialization the children are freed, and we need values from the
+   * children to remain valid for the lifetime of the GVariant since we use
+   * them in e.g. flatpak_deploy_data_get_string().
+   */
+  g_variant_get_data (deploy_data);
   return g_steal_pointer (&deploy_data);
 }
 
@@ -2668,6 +2674,7 @@ static GVariant *
 upgrade_deploy_data (GVariant *deploy_data, GFile *deploy_dir, const char *ref)
 {
   g_autoptr(GVariant) metadata = g_variant_get_child_value (deploy_data, 4);
+  g_autoptr(GVariant) upgraded_data = NULL;
   GVariantBuilder metadata_builder;
   g_autofree const char **subpaths = NULL;
   int i, n, old_version;
@@ -2699,12 +2706,20 @@ upgrade_deploy_data (GVariant *deploy_data, GFile *deploy_dir, const char *ref)
     }
 
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
-  return g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
-                                            flatpak_deploy_data_get_origin (deploy_data),
-                                            flatpak_deploy_data_get_commit (deploy_data),
-                                            subpaths,
-                                            GUINT64_TO_BE (flatpak_deploy_data_get_installed_size (deploy_data)),
-                                            g_variant_builder_end (&metadata_builder)));
+  upgraded_data = g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
+                                      flatpak_deploy_data_get_origin (deploy_data),
+                                      flatpak_deploy_data_get_commit (deploy_data),
+                                      subpaths,
+                                      GUINT64_TO_BE (flatpak_deploy_data_get_installed_size (deploy_data)),
+                                      g_variant_builder_end (&metadata_builder)));
+
+  /* Call g_variant_get_data() to serialize the GVariant internally, because
+   * during serialization the children are freed, and we need values from the
+   * children to remain valid for the lifetime of the GVariant since we use
+   * them in e.g. flatpak_deploy_data_get_string().
+   */
+  g_variant_get_data (upgraded_data);
+  return g_steal_pointer (&upgraded_data);
 }
 
 GVariant *
