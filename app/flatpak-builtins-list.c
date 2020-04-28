@@ -226,7 +226,7 @@ print_table_for_refs (gboolean      print_apps,
           if (deploy_data == NULL)
             continue;
 
-         runtime = flatpak_deploy_data_get_runtime (deploy_data);
+          runtime = flatpak_deploy_data_get_runtime (deploy_data);
 
           if (app_runtime)
             {
