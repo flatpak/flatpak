@@ -69,6 +69,7 @@ static GOptionEntry options[] = {
   { "icon", 0, 0, G_OPTION_ARG_STRING, &opt_icon, N_("URL for an icon for this repository"), N_("URL") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
+  /* Translators: A sideload is when you install from a local USB drive rather than the Internet. */
   { "deploy-sideload-collection-id", 0, 0, G_OPTION_ARG_NONE, &opt_deploy_sideload_collection_id, N_("Permanently deploy collection ID to client remote configurations, only for sideload support"), NULL },
   { "deploy-collection-id", 0, 0, G_OPTION_ARG_NONE, &opt_deploy_collection_id, N_("Permanently deploy collection ID to client remote configurations"), NULL },
   { "authenticator-name", 0, 0, G_OPTION_ARG_STRING, &opt_authenticator_name, N_("Name of authenticator for this repository"), N_("NAME") },
