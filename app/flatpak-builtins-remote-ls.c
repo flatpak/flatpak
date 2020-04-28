@@ -56,6 +56,7 @@ static GOptionEntry options[] = {
   { "app-runtime", 0, 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
   { "cached", 0, 0, G_OPTION_ARG_NONE, &opt_cached, N_("Use local caches even if they are stale"), NULL },
+  /* Translators: A sideload is when you install from a local USB drive rather than the Internet. */
   { "sideloaded", 0, 0, G_OPTION_ARG_NONE, &opt_sideloaded, N_("Only list refs available as sideloads"), NULL },
   { NULL }
 };

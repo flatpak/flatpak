@@ -62,6 +62,7 @@ static GOptionEntry options[] = {
   { "show-runtime", 0, 0, G_OPTION_ARG_NONE, &opt_show_runtime, N_("Show runtime"), NULL },
   { "show-sdk", 0, 0, G_OPTION_ARG_NONE, &opt_show_sdk, N_("Show sdk"), NULL },
   { "cached", 0, 0, G_OPTION_ARG_NONE, &opt_cached, N_("Use local caches even if they are stale"), NULL },
+  /* Translators: A sideload is when you install from a local USB drive rather than the Internet. */
   { "sideloaded", 0, 0, G_OPTION_ARG_NONE, &opt_sideloaded, N_("Only list refs available as sideloads"), NULL },
   { NULL }
 };

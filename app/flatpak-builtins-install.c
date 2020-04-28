@@ -74,6 +74,7 @@ static GOptionEntry options[] = {
   { "reinstall", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall, N_("Uninstall first if already installed"), NULL },
   { "noninteractive", 0, 0, G_OPTION_ARG_NONE, &opt_noninteractive, N_("Produce minimal output and don't ask questions"), NULL },
   { "or-update", 0, 0, G_OPTION_ARG_NONE, &opt_or_update, N_("Update install if already installed"), NULL },
+  /* Translators: A sideload is when you install from a local USB drive rather than the Internet. */
   { "sideload-repo", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_sideload_repos, N_("Use this local repo for sideloads"), N_("PATH") },
   { NULL }
 };
