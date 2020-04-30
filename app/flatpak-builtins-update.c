@@ -115,6 +115,10 @@ flatpak_builtin_update (int           argc,
       n_prefs = 1;
     }
 
+  /* It doesn't make sense to use the same commit for more than one thing */
+  if (opt_commit && n_prefs != 1)
+    return usage_error (context, _("With --commit, only one REF may be specified"), error);
+
   transactions = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
   /* Walk through the array backwards so we can safely remove */
