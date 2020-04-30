@@ -174,7 +174,7 @@ FlatpakTransactionOperationType flatpak_transaction_operation_get_operation_type
 FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
-FlatpakTransactionOperation *   flatpak_transaction_operation_get_related_to_op (FlatpakTransactionOperation *self);
+GPtrArray *                     flatpak_transaction_operation_get_related_to_ops (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
 gboolean                        flatpak_transaction_operation_get_is_skipped (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
