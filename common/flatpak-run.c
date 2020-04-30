@@ -1666,7 +1666,7 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
   if (!manager)
     goto out;
 
-  name = g_strdup_printf ("flatpak-%s-%d.scope", appid, getpid ());
+  name = g_strdup_printf ("apps-flatpak-%s-%d.scope", appid, getpid ());
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(sv)"));
 
