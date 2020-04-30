@@ -298,12 +298,12 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           g_autofree char *runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
           print_aligned (len, _("Runtime:"), runtime ? runtime : "-");
         }
-      g_print ("\n");
       if (strcmp (parts[0], "app") == 0 && metakey != NULL)
         {
           g_autofree char *sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
           print_aligned (len, _("Sdk:"), sdk ? sdk : "-");
         }
+      g_print ("\n");
       {
         g_autofree char *formatted_commit = ellipsize_string (commit, width);
         print_aligned (len, _("Commit:"), formatted_commit);
