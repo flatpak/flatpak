@@ -1015,6 +1015,9 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
 
   msg = soup_message_new_from_uri ("HEAD", uri);
 
+  soup_message_headers_replace (msg->request_headers, "Accept",
+                                FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
+
   stream = soup_session_send (self->soup_session, msg, NULL, error);
   if (stream == NULL)
     return NULL;
