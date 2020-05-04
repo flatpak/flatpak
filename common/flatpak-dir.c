@@ -10683,6 +10683,11 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
     }
 
+  if (flatpak_dir_get_remote_oci (self, remote_or_uri))
+    {
+      state->default_token_type = 1;
+    }
+
   if (state->summary != NULL) /* In the optional case we might not have a summary */
     {
       VarSummaryRef summary = var_summary_from_gvariant (state->summary);
