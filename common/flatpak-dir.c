@@ -689,6 +689,44 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
   return TRUE;
 }
 
+static char *
+lookup_oci_registry_uri_from_summary (GVariant *summary,
+                                      GError  **error)
+{
+  g_autoptr(GVariant) extensions = g_variant_get_child_value (summary, 1);
+  g_autofree char *registry_uri = NULL;
+
+  if (!g_variant_lookup (extensions, "xa.oci-registry-uri", "s", &registry_uri))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Remote OCI index has no registry uri"));
+      return NULL;
+    }
+
+  return g_steal_pointer (&registry_uri);
+}
+
+static FlatpakOciRegistry *
+flatpak_remote_state_new_oci_registry (FlatpakRemoteState *self,
+                                       const char   *token,
+                                       GCancellable *cancellable,
+                                       GError      **error)
+{
+  g_autofree char *registry_uri = NULL;
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
+
+  registry_uri = lookup_oci_registry_uri_from_summary (self->summary, error);
+  if (registry_uri == NULL)
+    return NULL;
+
+  registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, error);
+  if (registry == NULL)
+    return NULL;
+
+  flatpak_oci_registry_set_token (registry, token);
+
+  return g_steal_pointer (&registry);
+}
+
 static GVariant *
 flatpak_remote_state_fetch_commit_object (FlatpakRemoteState *self,
                                           FlatpakDir   *dir,
@@ -4948,22 +4986,6 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   return TRUE;
 }
 
-static char *
-lookup_oci_registry_uri_from_summary (GVariant *summary,
-                                      GError  **error)
-{
-  g_autoptr(GVariant) extensions = g_variant_get_child_value (summary, 1);
-  g_autofree char *registry_uri = NULL;
-
-  if (!g_variant_lookup (extensions, "xa.oci-registry-uri", "s", &registry_uri))
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Remote OCI index has no registry uri"));
-      return NULL;
-    }
-
-  return g_steal_pointer (&registry_uri);
-}
-
 static void
 oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
                       guint32 n_layers, guint32 pulled_layers,
@@ -4986,7 +5008,6 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                         GError             **error)
 {
   g_autoptr(FlatpakOciRegistry) registry = NULL;
-  g_autofree char *registry_uri = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *latest_rev = NULL;
   VarRefInfoRef latest_rev_info;
@@ -5014,15 +5035,9 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
 
-  registry_uri = lookup_oci_registry_uri_from_summary (state->summary, error);
-  if (registry_uri == NULL)
-    return FALSE;
-
-  registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, error);
+  registry = flatpak_remote_state_new_oci_registry (state, token, cancellable, error);
   if (registry == NULL)
     return FALSE;
-
-  flatpak_oci_registry_set_token (registry, token);
 
   flatpak_progress_start_oci_pull (progress);
 
@@ -5053,7 +5068,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   g_autoptr(FlatpakOciImage) image_config = NULL;
   g_autofree char *full_ref = NULL;
-  g_autofree char *registry_uri = NULL;
   const char *oci_repository = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *checksum = NULL;
@@ -5082,15 +5096,9 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
     return TRUE;
 
-  registry_uri = lookup_oci_registry_uri_from_summary (state->summary, error);
-  if (registry_uri == NULL)
-    return FALSE;
-
-  registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, error);
+  registry = flatpak_remote_state_new_oci_registry (state, token, cancellable, error);
   if (registry == NULL)
     return FALSE;
-
-  flatpak_oci_registry_set_token (registry, token);
 
   versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
                                                    NULL, cancellable, error);
@@ -5132,8 +5140,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     }
 
   (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, name,
-                     "pull oci", registry_uri, ref, NULL, NULL, NULL,
-                     "Pulled %s from %s", ref, registry_uri);
+                     "pull oci", flatpak_oci_registry_get_uri (registry), ref, NULL, NULL, NULL,
+                     "Pulled %s from %s", ref, flatpak_oci_registry_get_uri (registry));
 
   return TRUE;
 }
