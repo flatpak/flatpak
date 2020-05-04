@@ -728,6 +728,98 @@ flatpak_remote_state_new_oci_registry (FlatpakRemoteState *self,
 }
 
 static GVariant *
+flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+                                              FlatpakDir   *dir,
+                                              const char   *ref,
+                                              const char   *checksum,
+                                              const char   *token,
+                                              GCancellable *cancellable,
+                                              GError      **error)
+{
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
+  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+  g_autoptr(FlatpakOciImage) image_config = NULL;
+  g_autofree char *oci_digest = NULL;
+  g_autofree char *latest_rev = NULL;
+  VarRefInfoRef latest_rev_info;
+  VarMetadataRef metadata;
+  const char *oci_repository = NULL;
+  GHashTable *labels;
+  g_autofree char *subject = NULL;
+  g_autofree char *body = NULL;
+  g_autofree char *manifest_ref = NULL;
+  g_autofree char *parent = NULL;
+  guint64 timestamp = 0;
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  g_autoptr(GVariant) metadata_v = NULL;
+
+  registry = flatpak_remote_state_new_oci_registry (self, token, cancellable, error);
+  if (registry == NULL)
+    return NULL;
+
+  /* We extract the rev info from the latest, even if we don't use the latest digest, assuming refs don't move */
+  if (!flatpak_remote_state_lookup_ref (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+    return NULL;
+
+  if (latest_rev == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                          _("Couldn't find ref %s in remote %s"),
+                          ref, self->remote_name);
+      return NULL;
+    }
+
+  metadata = var_ref_info_get_metadata (latest_rev_info);
+  oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+
+  oci_digest = g_strconcat ("sha256:", checksum, NULL);
+
+  versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
+                                                   NULL, cancellable, error);
+  if (versioned == NULL)
+    return NULL;
+
+  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+      return NULL;
+    }
+
+  image_config = flatpak_oci_registry_load_image_config (registry, oci_repository,
+                                                         FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+                                                         NULL, cancellable, error);
+  if (image_config == NULL)
+    return NULL;
+
+  labels = flatpak_oci_image_get_labels (image_config);
+  if (labels)
+    flatpak_oci_parse_commit_labels (labels, &timestamp,
+                                     &subject, &body,
+                                     &manifest_ref, NULL, &parent,
+                                     metadata_builder);
+
+
+  if (strcmp (manifest_ref, ref) != 0)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
+      return NULL;
+    }
+
+  metadata_v = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
+
+  /* This isn't going to be exactly the same as the reconstructed one from the pull, because we don't have the contents, but its useful to get metadata */
+  return
+    g_variant_ref_sink (g_variant_new ("(@a{sv}@ay@a(say)sst@ay@ay)",
+                                       metadata_v,
+                                       parent ? ostree_checksum_to_bytes_v (parent) :  g_variant_new_from_data (G_VARIANT_TYPE ("ay"), NULL, 0, FALSE, NULL, NULL),
+                                       g_variant_new_array (G_VARIANT_TYPE ("(say)"), NULL, 0),
+                                       subject, body,
+                                       GUINT64_TO_BE (timestamp),
+                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
+                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));
+}
+
+static GVariant *
 flatpak_remote_state_fetch_commit_object (FlatpakRemoteState *self,
                                           FlatpakDir   *dir,
                                           const char   *ref,
@@ -835,8 +927,12 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
         return g_steal_pointer (&commit_data);
     }
 
-  commit_data = flatpak_remote_state_fetch_commit_object (self, dir, ref, commit, token,
-                                                          cancellable, error);
+  if (flatpak_dir_get_remote_oci (dir, self->remote_name))
+    commit_data = flatpak_remote_state_fetch_commit_object_oci (self, dir, ref, commit, token,
+                                                                cancellable, error);
+  else
+    commit_data = flatpak_remote_state_fetch_commit_object (self, dir, ref, commit, token,
+                                                            cancellable, error);
 
   if (out_commit)
     *out_commit = g_steal_pointer (&commit);
