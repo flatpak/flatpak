@@ -135,6 +135,9 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             else:
                 self.wfile.write(response_string.encode('utf-8'))
 
+    def do_HEAD(self):
+        return self.do_GET()
+
     def do_POST(self):
         if self.check_route('/testing/@repo_name/@tag'):
             repo_name = self.matches['repo_name']
