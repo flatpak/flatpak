@@ -493,11 +493,16 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
 
+      g_debug ("Trying anonymous authentication");
+
       first_token = get_token_for_ref (registry, ref_data, NULL, &error);
       if (first_token != NULL)
         have_auth = TRUE;
       else
-        g_clear_error (&error);
+        {
+          g_debug ("Anonymous authentication failed: %s", error->message);
+          g_clear_error (&error);
+        }
     }
 
   /* Prompt the user for credentials */
@@ -506,6 +511,8 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
       !no_interaction)
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
+
+      g_debug ("Trying user/password based authentication");
 
       while (auth == NULL)
         {
