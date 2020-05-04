@@ -113,6 +113,7 @@ static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
                                         FlatpakOciRegistry  *dst_registry,
                                         FlatpakRemoteState  *state,
                                         const char          *ref,
+                                        const char          *opt_rev,
                                         const char          *skip_if_current_is,
                                         const char          *token,
                                         FlatpakProgress     *progress,
@@ -5097,6 +5098,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                         FlatpakOciRegistry  *dst_registry,
                         FlatpakRemoteState  *state,
                         const char          *ref,
+                        const char          *opt_rev,
                         const char          *skip_if_current_is,
                         const char          *token,
                         FlatpakProgress     *progress,
@@ -5109,6 +5111,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   VarRefInfoRef latest_rev_info;
   VarMetadataRef metadata;
   const char *oci_repository = NULL;
+  const char *rev;
   gboolean res;
 
   /* We use the summary so that we can reuse any cached json */
@@ -5119,17 +5122,19 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                                _("Couldn't find latest checksum for ref %s in remote %s"),
                                ref, state->remote_name);
 
-  if (skip_if_current_is != NULL && strcmp (latest_rev, skip_if_current_is) == 0)
+  rev = opt_rev != NULL ? opt_rev : latest_rev;
+
+  if (skip_if_current_is != NULL && strcmp (rev, skip_if_current_is) == 0)
     {
       return flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
                                  _("%s commit %s already installed"),
-                                 ref, latest_rev);
+                                 ref, rev);
     }
 
   metadata = var_ref_info_get_metadata (latest_rev_info);
   oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
 
-  oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
+  oci_digest = g_strconcat ("sha256:", rev, NULL);
 
   registry = flatpak_remote_state_new_oci_registry (state, token, cancellable, error);
   if (registry == NULL)
@@ -5152,6 +5157,7 @@ static gboolean
 flatpak_dir_pull_oci (FlatpakDir          *self,
                       FlatpakRemoteState  *state,
                       const char          *ref,
+                      const char          *opt_rev,
                       OstreeRepo          *repo,
                       FlatpakPullFlags     flatpak_flags,
                       OstreeRepoPullFlags  flags,
@@ -5186,7 +5192,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   metadata = var_ref_info_get_metadata (latest_rev_info);
   oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
 
-  oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
+  oci_digest = g_strconcat ("sha256:", opt_rev != NULL ? opt_rev : latest_rev, NULL);
 
   /* Short circuit if we've already got this commit */
   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
@@ -5279,7 +5285,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
     return FALSE;
 
   if (flatpak_dir_get_remote_oci (self, state->remote_name))
-    return flatpak_dir_pull_oci (self, state, ref, repo, flatpak_flags,
+    return flatpak_dir_pull_oci (self, state, ref, opt_rev, repo, flatpak_flags,
                                  flags, token, progress, cancellable, error);
 
   if (!ostree_repo_remote_get_url (self->repo,
@@ -8584,7 +8590,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, token, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, ref, opt_commit, NULL, token, progress, cancellable, error))
             return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
@@ -9278,7 +9284,7 @@ flatpak_dir_update (FlatpakDir                           *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, ref, NULL, token, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, ref, commit, NULL, token, progress, cancellable, error))
             return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
