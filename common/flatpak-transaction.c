@@ -2789,7 +2789,7 @@ resolve_ops (FlatpakTransaction *self,
 
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
                                                                   op->ref, checksum, /* token: */ NULL,
-                                                                  error);
+                                                                  NULL, NULL, error);
               if (commit_data == NULL)
                 return FALSE;
 

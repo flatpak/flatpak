@@ -140,13 +140,6 @@ static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                                   GRegex    **allow_regex,
                                                   GRegex    **deny_regex,
                                                   GError **error);
-static GBytes * flatpak_dir_fetch_remote_object (FlatpakDir   *self,
-                                                 const char   *remote_name,
-                                                 const char   *checksum,
-                                                 const char   *type,
-                                                 const char   *token,
-                                                 GCancellable *cancellable,
-                                                 GError      **error);
 
 static void ensure_soup_session (FlatpakDir *self);
 
@@ -696,45 +689,41 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
   return TRUE;
 }
 
-
-
-
-/* Tries to load the specified commit object that we resolved from
-   this remote.  This either comes from the already available local
-   repo, or from one of the sideloading repos, and if not available we
-   download it from the actual remote. */
-GVariant *
-flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
-                                      FlatpakDir         *dir,
-                                      const char         *ref,
-                                      const char         *commit,
-                                      const char         *token,
-                                      GError            **error)
+static GVariant *
+flatpak_remote_state_fetch_commit_object (FlatpakRemoteState *self,
+                                          FlatpakDir   *dir,
+                                          const char   *ref,
+                                          const char   *checksum,
+                                          const char   *token,
+                                          GCancellable *cancellable,
+                                          GError      **error)
 {
-  g_autoptr(GBytes) commit_bytes = NULL;
+  g_autofree char *base_url = NULL;
+  g_autofree char *object_url = NULL;
+  g_autofree char *part1 = NULL;
+  g_autofree char *part2 = NULL;
+  g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
 
-  /* First try local availability */
-  if (ostree_repo_load_commit (dir->repo, commit, &commit_data, NULL, NULL))
-    return g_steal_pointer (&commit_data);
+  if (!ostree_repo_remote_get_url (dir->repo, self->remote_name, &base_url, error))
+    return NULL;
 
-  for (int i = 0; i < self->sideload_repos->len; i++)
-    {
-      FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
+  ensure_soup_session (dir);
 
-      if (ostree_repo_load_commit (ss->repo, commit, &commit_data, NULL, NULL))
-        return g_steal_pointer (&commit_data);
-    }
+  part1 = g_strndup (checksum, 2);
+  part2 = g_strdup_printf ("%s.commit", checksum + 2);
 
-  commit_bytes = flatpak_dir_fetch_remote_object (dir, self->remote_name,
-                                                  commit, "commit", token,
-                                                  NULL, error);
-  if (commit_bytes == NULL)
+  object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
+
+  bytes = flatpak_load_uri (dir->soup_session, object_url, 0, token,
+                            NULL, NULL,
+                            cancellable, error);
+  if (bytes == NULL)
     return NULL;
 
   commit_data = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_COMMIT_GVARIANT_FORMAT,
-                                                              commit_bytes, FALSE));
+                                                              bytes, FALSE));
 
   /* We downloaded this without validating the signature, so we do some basic verification
      of it. However, the signature will be checked when the download is done, and the final
@@ -758,6 +747,61 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
           return NULL;
         }
     }
+
+  return g_steal_pointer (&commit_data);
+}
+
+
+/* Tries to load the specified commit object that we resolved from
+   this remote.  This either comes from the already available local
+   repo, or from one of the sideloading repos, and if not available we
+   download it from the actual remote. */
+GVariant *
+flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
+                                      FlatpakDir         *dir,
+                                      const char         *ref,
+                                      const char         *opt_commit,
+                                      const char         *token,
+                                      char              **out_commit,
+                                      GCancellable       *cancellable,
+                                      GError            **error)
+{
+  g_autoptr(GVariant) commit_data = NULL;
+  g_autofree char *commit = NULL;
+
+  if (opt_commit == NULL)
+    {
+      if (!flatpak_remote_state_lookup_ref (self, ref, &commit, NULL, NULL, NULL, error))
+        return NULL;
+
+      if (commit == NULL)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                              _("Couldn't find latest checksum for ref %s in remote %s"),
+                              ref, self->remote_name);
+          return NULL;
+        }
+    }
+  else
+    commit = g_strdup (opt_commit);
+
+  /* First try local availability */
+  if (ostree_repo_load_commit (dir->repo, commit, &commit_data, NULL, NULL))
+    return g_steal_pointer (&commit_data);
+
+  for (int i = 0; i < self->sideload_repos->len; i++)
+    {
+      FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
+
+      if (ostree_repo_load_commit (ss->repo, commit, &commit_data, NULL, NULL))
+        return g_steal_pointer (&commit_data);
+    }
+
+  commit_data = flatpak_remote_state_fetch_commit_object (self, dir, ref, commit, token,
+                                                          cancellable, error);
+
+  if (out_commit)
+    *out_commit = g_steal_pointer (&commit);
 
   return g_steal_pointer (&commit_data);
 }
@@ -4718,7 +4762,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
       else
         {
           /* No summary/cache or old cache version, download commit and get size from there */
-          g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, token, error);
+          g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, token, NULL, cancellable, error);
           if (commitv == NULL)
             return FALSE;
 
@@ -13138,111 +13182,6 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
     }
 
   return flatpak_dir_update_remote_configuration_for_state (self, state, FALSE, updated_out, cancellable, error);
-}
-
-
-static GBytes *
-flatpak_dir_fetch_remote_object (FlatpakDir   *self,
-                                 const char   *remote_name,
-                                 const char   *checksum,
-                                 const char   *type,
-                                 const char   *token,
-                                 GCancellable *cancellable,
-                                 GError      **error)
-{
-  g_autofree char *base_url = NULL;
-  g_autofree char *object_url = NULL;
-  g_autofree char *part1 = NULL;
-  g_autofree char *part2 = NULL;
-  g_autoptr(GBytes) bytes = NULL;
-
-  if (!ostree_repo_remote_get_url (self->repo, remote_name, &base_url, error))
-    return NULL;
-
-  ensure_soup_session (self);
-
-  part1 = g_strndup (checksum, 2);
-  part2 = g_strdup_printf ("%s.%s", checksum + 2, type);
-
-  object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
-
-  bytes = flatpak_load_uri (self->soup_session, object_url, 0, token,
-                            NULL, NULL,
-                            cancellable, error);
-  if (bytes == NULL)
-    return NULL;
-
-  return g_steal_pointer (&bytes);
-}
-
-GVariant *
-flatpak_dir_fetch_remote_commit (FlatpakDir   *self,
-                                 const char   *remote_name,
-                                 const char   *ref,
-                                 const char   *opt_commit,
-                                 const char   *token,
-                                 char        **out_commit,
-                                 GCancellable *cancellable,
-                                 GError      **error)
-{
-  g_autoptr(GBytes) commit_bytes = NULL;
-  g_autoptr(GVariant) commit_variant = NULL;
-  g_autofree char *latest_commit = NULL;
-  g_autoptr(GVariant) commit_metadata = NULL;
-  g_autoptr(FlatpakRemoteState) state = NULL;
-
-  if (opt_commit == NULL)
-    {
-      state = flatpak_dir_get_remote_state (self, remote_name, FALSE, cancellable, error);
-      if (state == NULL)
-        return NULL;
-
-      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_commit, NULL, NULL, NULL, error))
-        return NULL;
-      if (latest_commit == NULL)
-        {
-          flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                              _("Couldn't find latest checksum for ref %s in remote %s"),
-                              ref, state->remote_name);
-          return NULL;
-        }
-
-      opt_commit = latest_commit;
-    }
-
-  commit_bytes = flatpak_dir_fetch_remote_object (self, remote_name,
-                                                  opt_commit, "commit", token,
-                                                  cancellable, error);
-  if (commit_bytes == NULL)
-    return NULL;
-
-  commit_variant = g_variant_new_from_bytes (OSTREE_COMMIT_GVARIANT_FORMAT,
-                                             commit_bytes, FALSE);
-  g_variant_ref_sink (commit_variant);
-
-  if (!ostree_validate_structureof_commit (commit_variant, error))
-    return NULL;
-
-  commit_metadata = g_variant_get_child_value (commit_variant, 0);
-  if (ref != NULL)
-    {
-      const char *xa_ref = NULL;
-      g_autofree const char **commit_refs = NULL;
-
-      if ((g_variant_lookup (commit_metadata, "xa.ref", "&s", &xa_ref) &&
-           g_strcmp0 (xa_ref, ref) != 0) ||
-          (g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_REF_BINDING, "^a&s", &commit_refs) &&
-           !g_strv_contains ((const char * const *) commit_refs, ref)))
-        {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
-          return NULL;
-        }
-    }
-
-  if (out_commit)
-    *out_commit = g_strdup (opt_commit);
-
-  return g_steal_pointer (&commit_variant);
 }
 
 void
