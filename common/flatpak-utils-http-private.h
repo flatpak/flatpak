@@ -27,6 +27,7 @@
 
 typedef enum {
   FLATPAK_HTTP_ERROR_NOT_CHANGED = 0,
+  FLATPAK_HTTP_ERROR_UNAUTHORIZED = 1,
 } FlatpakHttpErrorEnum;
 
 #define FLATPAK_HTTP_ERROR flatpak_http_error_quark ()

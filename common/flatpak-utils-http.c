@@ -437,6 +437,11 @@ load_uri_callback (GObject      *source_object,
           code = FLATPAK_HTTP_ERROR_NOT_CHANGED;
           break;
 
+        case 401:
+          domain = FLATPAK_HTTP_ERROR;
+          code = FLATPAK_HTTP_ERROR_UNAUTHORIZED;
+          break;
+
         case 403:
         case 404:
         case 410:
