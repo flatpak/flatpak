@@ -188,6 +188,7 @@ struct _FlatpakTransactionPrivate
   guint                        max_op;
 
   gboolean                     needs_resolve;
+  gboolean                     needs_tokens;
 };
 
 enum {
@@ -2527,6 +2528,7 @@ mark_op_resolved (FlatpakTransactionOperation *op,
   g_assert (commit != NULL);
 
   op->resolved = TRUE;
+  g_free (op->resolved_commit); /* This is already set if we retry resolving to get a token, so free first */
   op->resolved_commit = g_strdup (commit);
 
   if (sideload_path)
@@ -2784,14 +2786,37 @@ resolve_ops (FlatpakTransaction *self,
             {
               /* Else try to load the commit object.
                * Note, we don't have a token here, so this will not work for authenticated apps.
-               * However they still work when in summary metadata or sideloaded. */
+               * We handle this by catching the 401 http status and retrying. */
               g_autoptr(GVariant) commit_data = NULL;
+              VarRefInfoRef ref_info;
+
+              /* OCI needs this to get the oci repository for the ref to request the token, so lets always set it here */
+              if (op->summary_metadata == NULL &&
+                  flatpak_remote_state_lookup_ref (state, op->ref, NULL, NULL, &ref_info, NULL, NULL))
+                op->summary_metadata = var_metadata_dup_to_gvariant (var_ref_info_get_metadata (ref_info));
 
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
-                                                                  op->ref, checksum, /* token: */ NULL,
-                                                                  NULL, NULL, error);
+                                                                  op->ref, checksum, /* initially NULL */ op->resolved_token,
+                                                                  NULL, NULL, &local_error);
               if (commit_data == NULL)
-                return FALSE;
+                {
+                  if (g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_UNAUTHORIZED) && !op->requested_token)
+                    {
+
+                      g_debug ("Unauthorized access during resolve by commit of %s, retrying with token", op->ref);
+                      priv->needs_resolve = TRUE;
+                      priv->needs_tokens = TRUE;
+
+                      /* Token type maxint32 means we don't know the type */
+                      op->token_type = G_MAXINT32;
+                      op->resolved_commit = g_strdup (checksum);
+
+                      g_clear_error (&local_error);
+                      continue;
+                    }
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
 
               resolve_op_from_commit (self, op, checksum, sideload_path, commit_data);
             }
@@ -2811,8 +2836,17 @@ resolve_all_ops (FlatpakTransaction *self,
   while (priv->needs_resolve)
     {
       priv->needs_resolve = FALSE;
+      priv->needs_tokens = FALSE;
       if (!resolve_ops (self, cancellable, error))
         return FALSE;
+
+      /* We might need tokens early, if reading individual commits needs it,
+       * otherwise we try to delay to bunch the requests */
+      if (priv->needs_tokens)
+        {
+          if (!request_required_tokens (self, NULL, cancellable, error))
+            return FALSE;
+        }
     }
 
   return TRUE;
@@ -3932,7 +3966,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   if (!resolve_all_ops (self, cancellable, error))
     return FALSE;
 
-  /* Ensure we have all required tokens */
+  /* Ensure we have all required tokens, we do this after all resolves if possible to bunch requests */
   if (!request_required_tokens (self, NULL, cancellable, error))
     return FALSE;
 
