@@ -319,7 +319,7 @@ remote_load_file (SoupSession  *soup_session,
   bytes = flatpak_load_uri (soup_session,
                             uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                             token,
-                            NULL, NULL,
+                            NULL, NULL, NULL,
                             cancellable, error);
   if (bytes == NULL)
     return NULL;
