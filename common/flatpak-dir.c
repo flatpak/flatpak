@@ -800,7 +800,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
                                      metadata_builder);
 
 
-  if (strcmp (manifest_ref, ref) != 0)
+  if (g_strcmp0 (manifest_ref, ref) != 0)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
       return NULL;
