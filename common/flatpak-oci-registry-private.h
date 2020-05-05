@@ -80,6 +80,7 @@ GBytes             *   flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
                                                        const char         *repository,
                                                        gboolean            manifest,
                                                        const char         *digest,
+                                                       char              **out_content_type,
                                                        GCancellable       *cancellable,
                                                        GError            **error);
 char *                 flatpak_oci_registry_store_blob (FlatpakOciRegistry *self,

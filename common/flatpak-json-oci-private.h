@@ -99,8 +99,9 @@ struct _FlatpakOciVersionedClass
   FlatpakJsonClass parent_class;
 };
 
-FlatpakOciVersioned *flatpak_oci_versioned_from_json (GBytes  *bytes,
-                                                      GError **error);
+FlatpakOciVersioned *flatpak_oci_versioned_from_json (GBytes     *bytes,
+                                                      const char *content_type,
+                                                      GError    **error);
 const char *         flatpak_oci_versioned_get_mediatype (FlatpakOciVersioned *self);
 gint64               flatpak_oci_versioned_get_version (FlatpakOciVersioned *self);
 
