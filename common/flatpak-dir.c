@@ -4295,7 +4295,7 @@ flatpak_dir_update_oci_index (FlatpakDir   *self,
                                         index_cache, index_uri_out,
                                         cancellable, &local_error))
     {
-      if (!g_error_matches (local_error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED))
+      if (!g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_NOT_CHANGED))
         {
           g_propagate_error (error, g_steal_pointer (&local_error));
           return NULL;

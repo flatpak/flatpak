@@ -31,6 +31,8 @@
 /* copied from libostree */
 #define DEFAULT_N_NETWORK_RETRIES 5
 
+G_DEFINE_QUARK (flatpak_http_error, flatpak_http_error)
+
 typedef struct
 {
   char  *uri;
@@ -431,8 +433,8 @@ load_uri_callback (GObject      *source_object,
           if (data->cache_data)
             set_cache_http_data_from_headers (data->cache_data, msg);
 
-          domain = FLATPAK_OCI_ERROR;
-          code = FLATPAK_OCI_ERROR_NOT_CHANGED;
+          domain = FLATPAK_HTTP_ERROR;
+          code = FLATPAK_HTTP_ERROR_NOT_CHANGED;
           break;
 
         case 403:
@@ -887,8 +889,8 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
       if (cache_data->expires > now.tv_sec)
         {
           if (error)
-            *error = g_error_new (FLATPAK_OCI_ERROR,
-                                  FLATPAK_OCI_ERROR_NOT_CHANGED,
+            *error = g_error_new (FLATPAK_HTTP_ERROR,
+                                  FLATPAK_HTTP_ERROR_NOT_CHANGED,
                                   "Reusing cached value");
           return FALSE;
         }
@@ -949,8 +951,8 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
 
   if (data.error)
     {
-      if (data.error->domain == FLATPAK_OCI_ERROR &&
-          data.error->code == FLATPAK_OCI_ERROR_NOT_CHANGED)
+      if (data.error->domain == FLATPAK_HTTP_ERROR &&
+          data.error->code == FLATPAK_HTTP_ERROR_NOT_CHANGED)
         {
           GError *tmp_error = NULL;
 

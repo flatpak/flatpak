@@ -43,14 +43,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciRegistry, g_object_unref)
 
 GType flatpak_oci_layer_writer_get_type (void);
 
-typedef enum {
-  FLATPAK_OCI_ERROR_NOT_CHANGED = 0,
-} FlatpakOciErrorEnum;
-
-#define FLATPAK_OCI_ERROR flatpak_oci_error_quark ()
-
-FLATPAK_EXTERN GQuark  flatpak_oci_error_quark (void);
-
 typedef struct FlatpakOciLayerWriter FlatpakOciLayerWriter;
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciLayerWriter, g_object_unref)
