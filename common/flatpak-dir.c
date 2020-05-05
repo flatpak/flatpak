@@ -848,7 +848,7 @@ flatpak_remote_state_fetch_commit_object (FlatpakRemoteState *self,
   object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
 
   bytes = flatpak_load_uri (dir->soup_session, object_url, 0, token,
-                            NULL, NULL,
+                            NULL, NULL, NULL,
                             cancellable, error);
   if (bytes == NULL)
     return NULL;
@@ -5010,7 +5010,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
         {
           ensure_soup_session (self);
           bytes = flatpak_load_uri (self->soup_session, extra_data_uri, 0, NULL,
-                                    extra_data_progress_report, progress,
+                                    extra_data_progress_report, progress, NULL,
                                     cancellable, error);
         }
 

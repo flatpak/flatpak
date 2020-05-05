@@ -234,7 +234,7 @@ load_options (const char *remote_name,
       g_autoptr(SoupSession) soup_session = NULL;
 
       soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-      bytes = flatpak_load_uri (soup_session, filename, 0, NULL, NULL, NULL, NULL, &local_error);
+      bytes = flatpak_load_uri (soup_session, filename, 0, NULL, NULL, NULL, NULL, NULL, &local_error);
 
       if (bytes == NULL)
         {

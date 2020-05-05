@@ -3485,7 +3485,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not file, HTTP or HTTPS"), dep_url);
 
   soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-  dep_data = flatpak_load_uri (soup_session, dep_url, 0, NULL, NULL, NULL, cancellable, error);
+  dep_data = flatpak_load_uri (soup_session, dep_url, 0, NULL, NULL, NULL, NULL, cancellable, error);
   if (dep_data == NULL)
     {
       g_prefix_error (error, _("Can't load dependent file %s: "), dep_url);

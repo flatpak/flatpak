@@ -213,7 +213,7 @@ install_from (FlatpakDir *dir,
     {
       g_autoptr(SoupSession) soup_session = NULL;
       soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-      file_data = flatpak_load_uri (soup_session, filename, 0, NULL, NULL, NULL, cancellable, error);
+      file_data = flatpak_load_uri (soup_session, filename, 0, NULL, NULL, NULL, NULL, cancellable, error);
       if (file_data == NULL)
         {
           g_prefix_error (error, "Can't load uri %s: ", filename);

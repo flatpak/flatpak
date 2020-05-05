@@ -52,6 +52,7 @@ GBytes * flatpak_load_uri (SoupSession           *soup_session,
                            const char            *token,
                            FlatpakLoadUriProgress progress,
                            gpointer               user_data,
+                           char                 **out_content_type,
                            GCancellable          *cancellable,
                            GError               **error);
 gboolean flatpak_download_http_uri (SoupSession           *soup_session,

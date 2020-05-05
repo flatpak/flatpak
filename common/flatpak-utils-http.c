@@ -59,6 +59,7 @@ typedef struct
   gpointer               user_data;
   guint64                last_progress_time;
   CacheHttpData         *cache_data;
+  char                 **content_type_out;
 } LoadUriData;
 
 #define CACHE_HTTP_XATTR "user.flatpak.http"
@@ -484,6 +485,9 @@ load_uri_callback (GObject      *source_object,
   if (data->cache_data)
     set_cache_http_data_from_headers (data->cache_data, msg);
 
+  if (data->content_type_out)
+    *data->content_type_out = g_strdup (soup_message_headers_get_content_type (msg->response_headers, NULL));
+
   if (data->out_tmpfile)
     {
       g_autoptr(GOutputStream) out = NULL;
@@ -593,6 +597,7 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
                             const char            *token,
                             FlatpakLoadUriProgress progress,
                             gpointer               user_data,
+                            char                 **out_content_type,
                             GCancellable          *cancellable,
                             GError               **error)
 {
@@ -615,6 +620,7 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
   data.cancellable = cancellable;
   data.user_data = user_data;
   data.last_progress_time = g_get_monotonic_time ();
+  data.content_type_out = out_content_type;
 
   request = soup_session_request_http (soup_session, "GET",
                                        uri, error);
@@ -659,6 +665,7 @@ flatpak_load_uri (SoupSession           *soup_session,
                   const char            *token,
                   FlatpakLoadUriProgress progress,
                   gpointer               user_data,
+                  char                 **out_content_type,
                   GCancellable          *cancellable,
                   GError               **error)
 {
@@ -691,7 +698,7 @@ flatpak_load_uri (SoupSession           *soup_session,
         }
 
       bytes = flatpak_load_http_uri_once (soup_session, uri, flags,
-                                          token, progress, user_data,
+                                          token, progress, user_data, out_content_type,
                                           cancellable, &local_error);
 
       if (local_error == NULL)
