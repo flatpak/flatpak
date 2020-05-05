@@ -631,7 +631,7 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
 
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
     soup_message_headers_replace (m->request_headers, "Accept",
-                                  FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
+                                  FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2 ", " FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX);
 
 
   if (token)
