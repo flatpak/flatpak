@@ -300,6 +300,7 @@ remote_load_file (SoupSession  *soup_session,
                   SoupURI      *base,
                   const char   *subpath,
                   const char   *token,
+                  char        **out_content_type,
                   GCancellable *cancellable,
                   GError      **error)
 {
@@ -319,7 +320,7 @@ remote_load_file (SoupSession  *soup_session,
   bytes = flatpak_load_uri (soup_session,
                             uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                             token,
-                            NULL, NULL, NULL,
+                            NULL, NULL, out_content_type,
                             cancellable, error);
   if (bytes == NULL)
     return NULL;
@@ -330,13 +331,14 @@ remote_load_file (SoupSession  *soup_session,
 static GBytes *
 flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
                                 const char         *subpath,
+                                char              **out_content_type,
                                 GCancellable       *cancellable,
                                 GError            **error)
 {
   if (self->dfd != -1)
     return local_load_file (self->dfd, subpath, cancellable, error);
   else
-    return remote_load_file (self->soup_session, self->base_uri, subpath, self->token, cancellable, error);
+    return remote_load_file (self->soup_session, self->base_uri, subpath, self->token, out_content_type, cancellable, error);
 }
 
 static JsonNode *
@@ -545,7 +547,7 @@ flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
 
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_file (self, "index.json", cancellable, &local_error);
+  bytes = flatpak_oci_registry_load_file (self, "index.json", NULL, cancellable, &local_error);
   if (bytes == NULL)
     {
       g_propagate_error (error, g_steal_pointer (&local_error));
@@ -1050,6 +1052,7 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
                                 const char         *repository,
                                 gboolean            manifest,
                                 const char         *digest,
+                                char              **out_content_type,
                                 GCancellable       *cancellable,
                                 GError            **error)
 {
@@ -1063,7 +1066,7 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
   if (subpath == NULL)
     return NULL;
 
-  bytes = flatpak_oci_registry_load_file (self, subpath, cancellable, error);
+  bytes = flatpak_oci_registry_load_file (self, subpath, out_content_type, cancellable, error);
   if (bytes == NULL)
     return NULL;
 
@@ -1125,16 +1128,17 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry *self,
                                      GError            **error)
 {
   g_autoptr(GBytes) bytes = NULL;
+  g_autofree char *content_type = NULL;
 
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_blob (self, repository, TRUE, digest, cancellable, error);
+  bytes = flatpak_oci_registry_load_blob (self, repository, TRUE, digest, &content_type, cancellable, error);
   if (bytes == NULL)
     return NULL;
 
   if (out_size)
     *out_size = g_bytes_get_size (bytes);
-  return flatpak_oci_versioned_from_json (bytes, error);
+  return flatpak_oci_versioned_from_json (bytes, content_type, error);
 }
 
 FlatpakOciImage *
@@ -1149,7 +1153,7 @@ flatpak_oci_registry_load_image_config (FlatpakOciRegistry *self,
 
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_blob (self, repository, FALSE, digest, cancellable, error);
+  bytes = flatpak_oci_registry_load_blob (self, repository, FALSE, digest, NULL, cancellable, error);
   if (bytes == NULL)
     return NULL;
 

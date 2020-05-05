@@ -174,6 +174,7 @@ flatpak_oci_versioned_init (FlatpakOciVersioned *self)
 
 FlatpakOciVersioned *
 flatpak_oci_versioned_from_json (GBytes *bytes,
+                                 const char *content_type,
                                  GError **error)
 {
   g_autoptr(JsonParser) parser = NULL;
@@ -193,6 +194,8 @@ flatpak_oci_versioned_from_json (GBytes *bytes,
 
   if (json_object_has_member (object, "mediaType"))
     mediatype = json_object_get_string_member (object, "mediaType");
+  else
+    mediatype = content_type;
 
   if (mediatype == NULL)
     {
