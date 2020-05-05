@@ -32,8 +32,6 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
 
-G_DEFINE_QUARK (flatpak_oci_error, flatpak_oci_error)
-
 #define MAX_JSON_SIZE (1024 * 1024)
 
 typedef struct archive FlatpakAutoArchiveWrite;
@@ -2212,7 +2210,7 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
                                     cancellable, &local_error);
 
   if (success ||
-      g_error_matches (local_error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED))
+      g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_NOT_CHANGED))
     {
       if (index_uri_out)
         *index_uri_out = soup_uri_to_string (base_uri, FALSE);
@@ -2488,7 +2486,7 @@ add_icon_image (SoupSession  *soup_session,
                                    icons_dfd, icon_path,
                                    NULL, NULL,
                                    cancellable, &local_error) &&
-          !g_error_matches (local_error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED))
+          !g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_NOT_CHANGED))
         {
           g_propagate_error (error, g_steal_pointer (&local_error));
           return FALSE;
