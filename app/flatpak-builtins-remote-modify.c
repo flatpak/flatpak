@@ -43,6 +43,8 @@ static gboolean opt_enable;
 static gboolean opt_update_metadata;
 static gboolean opt_disable;
 static gboolean opt_no_filter;
+static gboolean opt_do_follow_redirect;
+static gboolean opt_no_follow_redirect;
 static int opt_prio = -1;
 static char *opt_filter;
 static char *opt_title;
@@ -89,6 +91,8 @@ static GOptionEntry common_options[] = {
   { "authenticator-option", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_authenticator_options, N_("Authenticator options"), N_("KEY=VALUE") },
   { "authenticator-install", 0, 0, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Autoinstall authenticator"), NULL },
   { "no-authenticator-install", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Don't autoinstall authenticator"), NULL },
+  { "follow-redirect", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_do_follow_redirect, N_("Follow the redirect set in the summary file"), NULL },
+  { "no-follow-redirect", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_no_follow_redirect, N_("Don't follow the redirect set in the summary file"), NULL },
   { NULL }
 };
 
@@ -253,6 +257,18 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
           else
             g_key_file_set_string (config, group, key, split[1]);
         }
+      *changed = TRUE;
+    }
+
+  if (opt_do_follow_redirect)
+    {
+      g_key_file_set_boolean (config, group, "url-is-set", FALSE);
+      *changed = TRUE;
+    }
+
+  if (opt_no_follow_redirect)
+    {
+      g_key_file_set_boolean (config, group, "url-is-set", TRUE);
       *changed = TRUE;
     }
 

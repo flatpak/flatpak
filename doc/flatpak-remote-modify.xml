@@ -302,6 +302,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--follow-redirect</option></term>
+
+                <listitem><para>
+                    Follow xa.redirect-url defined in the summary file.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-follow-redirect</option></term>
+
+                <listitem><para>
+                    Do not follow xa.redirect-url defined in the summary file.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
