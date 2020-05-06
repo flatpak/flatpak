@@ -56,6 +56,7 @@ static char **opt_gpg_import;
 static char *opt_authenticator_name = NULL;
 static char **opt_authenticator_options = NULL;
 static gboolean opt_authenticator_install = -1;
+static gboolean opt_no_follow_redirect;
 
 static GOptionEntry add_options[] = {
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, N_("Do nothing if the provided remote exists"), NULL },
@@ -82,6 +83,7 @@ static GOptionEntry common_options[] = {
   { "authenticator-option", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_authenticator_options, N_("Authenticator option"), N_("KEY=VALUE") },
   { "authenticator-install", 0, 0, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Autoinstall authenticator"), NULL },
   { "no-authenticator-install", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Don't autoinstall authenticator"), NULL },
+  { "no-follow_redirect", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_no_follow_redirect, N_("Don't follow the redirect set in the summary file"), NULL },
   { NULL }
 };
 
@@ -210,6 +212,9 @@ get_config_from_opts (GKeyFile *config,
             g_key_file_set_string (config, group, key, split[1]);
         }
     }
+
+  if (opt_no_follow_redirect)
+    g_key_file_set_boolean (config, group, "url-is-set", TRUE);
 
   return TRUE;
 }
