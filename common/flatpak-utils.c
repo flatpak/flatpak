@@ -5715,8 +5715,15 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                        GCancellable          *cancellable,
                        GError               **error)
 {
+  gboolean force_disable_deltas = (flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
   g_autoptr(GFile) archive_root = NULL;
+  g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
+  g_autofree char *old_checksum = NULL;
+  g_autoptr(GVariant) old_commit = NULL;
+  g_autoptr(GFile) old_root = NULL;
+  OstreeRepoCommitState old_state = 0;
+  g_autofree char *old_diffid = NULL;
   g_autofree char *commit_checksum = NULL;
   const char *parent = NULL;
   g_autofree char *subject = NULL;
@@ -5772,6 +5779,23 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
     g_variant_builder_add (metadata_builder, "{s@v}", "xa.diff-id",
                            g_variant_new_variant (g_variant_new_string (diffid + strlen ("sha256:"))));
 
+  /* Look for delta manifest, and if it exists, the current (old) commit and its recorded diffid */
+  if (!force_disable_deltas &&
+      flatpak_repo_resolve_rev (repo, NULL, remote, ref, FALSE, &old_checksum, NULL, NULL) &&
+      ostree_repo_load_commit (repo, old_checksum, &old_commit, &old_state, NULL) &&
+      (old_state == OSTREE_REPO_COMMIT_STATE_NORMAL) &&
+      ostree_repo_read_commit (repo, old_checksum, &old_root, NULL, NULL, NULL))
+    {
+      delta_manifest = flatpak_oci_registry_find_delta_manifest (registry, oci_repository, digest, cancellable);
+      if (delta_manifest)
+        {
+          VarMetadataRef commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (old_commit));
+          const char *raw_old_diffid = var_metadata_lookup_string (commit_metadata, "xa.diff-id", NULL);
+          if (raw_old_diffid != NULL)
+            old_diffid = g_strconcat ("sha256:", raw_old_diffid, NULL);
+        }
+    }
+
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return NULL;
 
@@ -5782,7 +5806,16 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   for (i = 0; manifest->layers[i] != NULL; i++)
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
-      progress_data.total_size += layer->size;
+      FlatpakOciDescriptor *delta_layer = NULL;
+
+      if (delta_manifest)
+        delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
+
+      if (delta_layer)
+        progress_data.total_size += delta_layer->size;
+      else
+        progress_data.total_size += layer->size;
+
       progress_data.n_layers++;
     }
 
@@ -5794,21 +5827,40 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   for (i = 0; manifest->layers[i] != NULL; i++)
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
+      FlatpakOciDescriptor *delta_layer = NULL;
       OstreeRepoImportArchiveOptions opts = { 0, };
       g_autoptr(FlatpakAutoArchiveRead) a = NULL;
       glnx_autofd int layer_fd = -1;
+      glnx_autofd int blob_fd = -1;
       g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
       const char *layer_checksum;
+      const char *expected_digest;
+
+      if (delta_manifest)
+        delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
 
       opts.autocreate_parents = TRUE;
       opts.ignore_unsupported_content = TRUE;
 
-      layer_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
-                                                     layer->digest,
-                                                     oci_layer_progress, &progress_data,
-                                                     cancellable, error);
-      if (layer_fd == -1)
+      blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+                                                    delta_layer ? delta_layer->digest : layer->digest,
+                                                    oci_layer_progress, &progress_data,
+                                                    cancellable, error);
+      if (blob_fd == -1)
         goto error;
+
+      if (delta_layer)
+        {
+          expected_digest = image_config->rootfs.diff_ids[i]; /* The delta recreates the uncompressed tar so use that digest */
+          layer_fd = flatpak_oci_registry_apply_delta (registry, blob_fd, old_root, cancellable, error);
+          if (layer_fd == -1)
+            goto error;
+        }
+      else
+        {
+          expected_digest = layer->digest;
+          layer_fd = glnx_steal_fd (&blob_fd);
+        }
 
       a = archive_read_new ();
 #ifdef HAVE_ARCHIVE_READ_SUPPORT_FILTER_ALL
@@ -5831,10 +5883,10 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
         }
 
       layer_checksum = g_checksum_get_string (checksum);
-      if (!g_str_has_prefix (layer->digest, "sha256:") ||
-          strcmp (layer->digest + strlen ("sha256:"), layer_checksum) != 0)
+      if (!g_str_has_prefix (expected_digest, "sha256:") ||
+          strcmp (expected_digest + strlen ("sha256:"), layer_checksum) != 0)
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong layer checksum, expected %s, was %s"), layer->digest, layer_checksum);
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong layer checksum, expected %s, was %s"), expected_digest, layer_checksum);
           goto error;
         }
 
