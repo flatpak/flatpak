@@ -5226,7 +5226,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_debug ("Pulling OCI image %s", oci_digest);
 
   checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, FLATPAK_OCI_MANIFEST (versioned), image_config,
-                                    state->remote_name, ref, oci_pull_progress_cb, progress, cancellable, error);
+                                    state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
 
   if (checksum == NULL)
     return FALSE;
