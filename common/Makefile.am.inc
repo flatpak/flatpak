@@ -178,6 +178,7 @@ libflatpak_common_la_CFLAGS = \
 	-I$(srcdir)/dbus-proxy \
 	$(AM_CFLAGS) \
 	$(ARCHIVE_CFLAGS) \
+	$(ZSTD_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(DCONF_CFLAGS) \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
@@ -195,6 +196,7 @@ libflatpak_common_la_CFLAGS = \
 libflatpak_common_la_LIBADD = \
 	$(AM_LIBADD) \
 	$(ARCHIVE_LIBS) \
+	$(ZSTD_LIBS) \
 	$(BASE_LIBS) \
 	$(DCONF_LIBS) \
 	$(INTERNAL_GPGME_LIBS) \

@@ -3,8 +3,10 @@
 #include "flatpak-zstd-decompressor-private.h"
 
 #include <errno.h>
-#include <zstd.h>
 #include <string.h>
+#ifdef HAVE_ZSTD
+#include <zstd.h>
+#endif
 
 static void flatpak_zstd_decompressor_iface_init  (GConverterIface *iface);
 
@@ -12,7 +14,9 @@ struct _FlatpakZstdDecompressor
 {
   GObject parent_instance;
 
+#ifdef HAVE_ZSTD
   ZSTD_DStream *dstream;
+#endif
 };
 
 G_DEFINE_TYPE_WITH_CODE (FlatpakZstdDecompressor, flatpak_zstd_decompressor, G_TYPE_OBJECT,
@@ -22,11 +26,13 @@ G_DEFINE_TYPE_WITH_CODE (FlatpakZstdDecompressor, flatpak_zstd_decompressor, G_T
 static void
 flatpak_zstd_decompressor_finalize (GObject *object)
 {
+#ifdef HAVE_ZSTD
   FlatpakZstdDecompressor *decompressor;
 
   decompressor = FLATPAK_ZSTD_DECOMPRESSOR (object);
 
   ZSTD_freeDStream (decompressor->dstream);
+#endif
 
   G_OBJECT_CLASS (flatpak_zstd_decompressor_parent_class)->finalize (object);
 }
@@ -34,7 +40,9 @@ flatpak_zstd_decompressor_finalize (GObject *object)
 static void
 flatpak_zstd_decompressor_init (FlatpakZstdDecompressor *decompressor)
 {
+#ifdef HAVE_ZSTD
   decompressor->dstream = ZSTD_createDStream ();
+#endif
 }
 
 static void
@@ -58,9 +66,11 @@ flatpak_zstd_decompressor_new (void)
 static void
 flatpak_zstd_decompressor_reset (GConverter *converter)
 {
+#ifdef HAVE_ZSTD
   FlatpakZstdDecompressor *decompressor = FLATPAK_ZSTD_DECOMPRESSOR (converter);
 
   ZSTD_initDStream (decompressor->dstream);
+#endif
 }
 
 static GConverterResult
@@ -74,6 +84,7 @@ flatpak_zstd_decompressor_convert (GConverter *converter,
                                    gsize      *bytes_written,
                                    GError    **error)
 {
+#ifdef HAVE_ZSTD
   FlatpakZstdDecompressor *decompressor;
   ZSTD_inBuffer input = { inbuf, inbuf_size, 0 };
   ZSTD_outBuffer output = {outbuf, outbuf_size, 0 };
@@ -84,10 +95,9 @@ flatpak_zstd_decompressor_convert (GConverter *converter,
   if (decompressor->dstream == NULL)
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Failed to initialize libzst");
+                           "Failed to initialize libzstd");
       return G_CONVERTER_ERROR;
     }
-
 
   res = ZSTD_decompressStream(decompressor->dstream, &output , &input);
   if (ZSTD_isError (res))
@@ -115,6 +125,12 @@ flatpak_zstd_decompressor_convert (GConverter *converter,
     }
 
   return G_CONVERTER_CONVERTED;
+
+#else
+  g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "libzstd not available");
+  return G_CONVERTER_ERROR;
+#endif
 }
 
 static void
