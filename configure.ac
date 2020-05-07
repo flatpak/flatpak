@@ -210,10 +210,14 @@ AC_SUBST([GDBUS_CODEGEN], [`$PKG_CONFIG --variable gdbus_codegen gio-2.0`])
 
 POLKIT_GOBJECT_REQUIRED=0.98
 
-PKG_CHECK_MODULES(ARCHIVE, [libarchive >= 2.8.0 libzstd])
+PKG_CHECK_MODULES(ARCHIVE, [libarchive >= 2.8.0])
 PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0])
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
 PKG_CHECK_MODULES(XML, [libxml-2.0 >= 2.4])
+PKG_CHECK_MODULES(ZSTD, [libzstd >= 0.8.1], [have_zstd=yes], [have_zstd=no])
+if test $have_zstd = yes; then
+  AC_DEFINE(HAVE_ZSTD, 1, [Define if libzstd is available])
+fi
 PKG_CHECK_MODULES(DCONF, [dconf >= 0.26], [have_dconf=yes], [have_dconf=no])
 if test $have_dconf = yes; then
   AC_DEFINE(HAVE_DCONF, 1, [Define if dconf is available])
@@ -555,4 +559,5 @@ echo "          Privilege mode:         $with_priv_mode"
 echo "          Use dconf:              $have_dconf"
 echo "          Use libsystemd:         $have_libsystemd"
 echo "          Use libmalcontent:      $have_libmalcontent"
+echo "          Use libzstd:            $have_zstd"
 echo ""

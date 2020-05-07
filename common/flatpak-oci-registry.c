@@ -1891,6 +1891,11 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
   g_autoptr(FlatpakOciVersioned) deltaindexv = NULL;
   FlatpakOciDescriptor *delta_desc;
 
+#ifndef HAVE_ZSTD
+  if (TRUE)
+    return NULL; /* Don't find deltas if we can't apply them */
+#endif
+
   deltaindexv = flatpak_oci_registry_load_versioned (registry, oci_repository, "_deltaindex",
                                                      NULL, cancellable, NULL);
   if (deltaindexv == NULL)
