@@ -720,6 +720,12 @@ flatpak_oci_image_set_layers (FlatpakOciImage *image,
   image->rootfs.diff_ids = g_strdupv ((char **) layers);
 }
 
+int
+flatpak_oci_image_get_n_layers (FlatpakOciImage *image)
+{
+  return ptrv_count ((gpointer *) image->rootfs.diff_ids);
+}
+
 GHashTable *
 flatpak_oci_image_get_labels (FlatpakOciImage *self)
 {

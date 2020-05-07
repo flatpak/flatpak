@@ -222,6 +222,7 @@ void             flatpak_oci_image_set_os (FlatpakOciImage *image,
                                            const char      *os);
 void             flatpak_oci_image_set_layers (FlatpakOciImage *image,
                                                const char     **layers);
+int              flatpak_oci_image_get_n_layers (FlatpakOciImage *image);
 void             flatpak_oci_image_set_layer (FlatpakOciImage *image,
                                               const char      *layer);
 GHashTable *     flatpak_oci_image_get_labels (FlatpakOciImage *self);
