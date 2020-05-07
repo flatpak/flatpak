@@ -33,6 +33,7 @@
 #include "flatpak-error.h"
 #include "flatpak-utils-http-private.h"
 #include "flatpak-variant-private.h"
+#include "flatpak-dir-private.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
 
@@ -538,6 +539,7 @@ char * flatpak_pull_from_oci (OstreeRepo            *repo,
                               FlatpakOciImage       *image_config,
                               const char            *remote,
                               const char            *ref,
+                              FlatpakPullFlags       flags,
                               FlatpakOciPullProgress progress_cb,
                               gpointer               progress_data,
                               GCancellable          *cancellable,
