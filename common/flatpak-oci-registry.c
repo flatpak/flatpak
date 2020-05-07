@@ -640,6 +640,7 @@ static char *
 get_digest_subpath (FlatpakOciRegistry *self,
                     const char         *repository,
                     gboolean            is_manifest,
+                    gboolean            allow_tag,
                     const char         *digest,
                     GError            **error)
 {
@@ -647,9 +648,19 @@ get_digest_subpath (FlatpakOciRegistry *self,
 
   if (!g_str_has_prefix (digest, "sha256:"))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Unsupported digest type %s", digest);
-      return NULL;
+      if (!allow_tag)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                       "Unsupported digest type %s", digest);
+          return NULL;
+        }
+
+      if (!self->is_docker)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                       "Tags not supported for local oci dirs");
+          return NULL;
+        }
     }
 
   if (self->is_docker)
@@ -671,6 +682,7 @@ get_digest_subpath (FlatpakOciRegistry *self,
     }
   else
     {
+      /* As per above checks this is guaranteed to be a digest */
       g_string_append (s, "blobs/sha256/");
       g_string_append (s, digest + strlen ("sha256:"));
     }
@@ -707,7 +719,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
 
   g_assert (self->valid);
 
-  subpath = get_digest_subpath (self, repository, manifest, digest, error);
+  subpath = get_digest_subpath (self, repository, manifest, FALSE, digest, error);
   if (subpath == NULL)
     return -1;
 
@@ -803,11 +815,11 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       return FALSE;
     }
 
-  src_subpath = get_digest_subpath (source_registry, repository, manifest, digest, error);
+  src_subpath = get_digest_subpath (source_registry, repository, manifest, FALSE, digest, error);
   if (src_subpath == NULL)
     return FALSE;
 
-  dst_subpath = get_digest_subpath (self, NULL, manifest, digest, error);
+  dst_subpath = get_digest_subpath (self, NULL, manifest, FALSE, digest, error);
   if (dst_subpath == NULL)
     return FALSE;
 
@@ -998,7 +1010,7 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
 
   g_assert (self->valid);
 
-  subpath = get_digest_subpath (self, repository, TRUE, digest, error);
+  subpath = get_digest_subpath (self, repository, TRUE, FALSE, digest, error);
   if (subpath == NULL)
     return NULL;
 
@@ -1051,7 +1063,7 @@ GBytes *
 flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
                                 const char         *repository,
                                 gboolean            manifest,
-                                const char         *digest,
+                                const char         *digest, /* Note: Can be tag for remote registries */
                                 char              **out_content_type,
                                 GCancellable       *cancellable,
                                 GError            **error)
@@ -1062,7 +1074,8 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
 
   g_assert (self->valid);
 
-  subpath = get_digest_subpath (self, repository, manifest, digest, error);
+  // Note: Allow tags here, means we have to check that its a digest before verifying below
+  subpath = get_digest_subpath (self, repository, manifest, TRUE, digest, error);
   if (subpath == NULL)
     return NULL;
 
@@ -1072,7 +1085,8 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
 
   json_checksum = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
 
-  if (strcmp (json_checksum, digest + strlen ("sha256:")) != 0)
+  if (g_str_has_prefix (digest, "sha256:") &&
+      strcmp (json_checksum, digest + strlen ("sha256:")) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
                    "Checksum for digest %s is wrong (was %s)", digest, json_checksum);
