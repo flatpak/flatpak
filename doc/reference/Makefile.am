@@ -40,6 +40,7 @@ IGNORE_HFILES = \
 	flatpak-auth-private.h \
 	flatpak-parental-controls-private.h \
 	flatpak-appdata-private.h \
+	flatpak-zstd-decompressor-private.h \
 	$(NULL)
 
 EXTRA_HFILES =
