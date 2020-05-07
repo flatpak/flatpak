@@ -135,6 +135,12 @@ const char *        flatpak_oci_manifest_get_layer_digest (FlatpakOciManifest *s
                                                            int                 i);
 GHashTable *        flatpak_oci_manifest_get_annotations (FlatpakOciManifest *self);
 
+/* Only useful for delta manifest */
+FlatpakOciDescriptor *flatpak_oci_manifest_find_delta_for (FlatpakOciManifest *deltamanifest,
+                                                           const char         *from_diffid,
+                                                           const char         *to_diffid);
+
+
 #define FLATPAK_TYPE_OCI_INDEX flatpak_oci_index_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciIndex, flatpak_oci_index, FLATPAK, OCI_INDEX, FlatpakOciVersioned)
 
@@ -161,6 +167,11 @@ FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest (FlatpakOciIndex *s
                                                               const char      *ref);
 FlatpakOciManifestDescriptor *flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self);
 int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
+
+/* Only useful for delta index */
+FlatpakOciDescriptor *flatpak_oci_index_find_delta_for (FlatpakOciIndex *delta_index,
+                                                        const char      *for_digest);
+
 
 #define FLATPAK_TYPE_OCI_IMAGE flatpak_oci_image_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciImage, flatpak_oci_image, FLATPAK, OCI_IMAGE, FlatpakJson)

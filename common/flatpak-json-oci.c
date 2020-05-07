@@ -375,6 +375,36 @@ flatpak_oci_manifest_get_annotations (FlatpakOciManifest *self)
   return self->annotations;
 }
 
+FlatpakOciDescriptor *
+flatpak_oci_manifest_find_delta_for (FlatpakOciManifest *delta_manifest,
+                                     const char         *from_diffid,
+                                     const char         *to_diffid)
+{
+  int i;
+
+  if (from_diffid == NULL || to_diffid == NULL)
+    return NULL;
+
+  for (i = 0; delta_manifest->layers != NULL && delta_manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = delta_manifest->layers[i];
+      const char *layer_from = NULL, *layer_to = NULL;
+
+      if (layer->annotations != NULL)
+        {
+          layer_from = g_hash_table_lookup (layer->annotations, "io.github.containers.delta.from");
+          layer_to = g_hash_table_lookup (layer->annotations, "io.github.containers.delta.to");
+
+          if (g_strcmp0 (layer_from, from_diffid) == 0 &&
+              g_strcmp0 (layer_to, to_diffid) == 0)
+            return layer;
+        }
+    }
+
+  return NULL;
+}
+
+
 G_DEFINE_TYPE (FlatpakOciIndex, flatpak_oci_index, FLATPAK_TYPE_OCI_VERSIONED);
 
 static void
@@ -558,6 +588,31 @@ flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
     self->manifests[i] = self->manifests[i + 1];
 
   return TRUE;
+}
+
+FlatpakOciDescriptor *
+flatpak_oci_index_find_delta_for (FlatpakOciIndex *delta_index,
+                                  const char      *for_digest)
+{
+  int i;
+
+  if (delta_index->manifests == NULL)
+    return NULL;
+
+  for (i = 0; delta_index->manifests[i] != NULL; i++)
+    {
+      FlatpakOciManifestDescriptor *d = delta_index->manifests[i];
+      const char *target;
+
+      if (d->parent.annotations == NULL)
+        continue;
+
+      target = g_hash_table_lookup (d->parent.annotations, "io.github.containers.delta.target");
+      if (g_strcmp0 (target, for_digest) == 0)
+        return &d->parent;
+    }
+
+  return NULL;
 }
 
 G_DEFINE_TYPE (FlatpakOciImage, flatpak_oci_image, FLATPAK_TYPE_JSON);
