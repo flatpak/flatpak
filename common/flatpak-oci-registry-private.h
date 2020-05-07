@@ -116,6 +116,16 @@ FlatpakOciLayerWriter *flatpak_oci_registry_write_layer (FlatpakOciRegistry *sel
                                                          GCancellable       *cancellable,
                                                          GError            **error);
 
+int                     flatpak_oci_registry_apply_delta (FlatpakOciRegistry    *self,
+                                                          int                    delta_fd,
+                                                          GFile                 *content_dir,
+                                                          GCancellable          *cancellable,
+                                                          GError               **error);
+FlatpakOciManifest *   flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
+                                                                 const char            *oci_repository,
+                                                                 const char            *for_digest,
+                                                                 GCancellable          *cancellable);
+
 struct archive *flatpak_oci_layer_writer_get_archive (FlatpakOciLayerWriter *self);
 gboolean        flatpak_oci_layer_writer_close (FlatpakOciLayerWriter *self,
                                                 char                 **uncompressed_digest_out,
