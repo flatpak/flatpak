@@ -1440,6 +1440,7 @@ typedef struct
   int        fd;
   GChecksum *checksum;
   char       buffer[16 * 1024];
+  gboolean   at_end;
 } FlatpakArchiveReadWithChecksum;
 
 static int
@@ -1447,7 +1448,6 @@ checksum_open_cb (struct archive *a, void *user_data)
 {
   return ARCHIVE_OK;
 }
-
 
 static ssize_t
 checksum_read_cb (struct archive *a, void *user_data, const void **buff)
@@ -1459,6 +1459,9 @@ checksum_read_cb (struct archive *a, void *user_data, const void **buff)
   do
     bytes_read = read (data->fd, &data->buffer, sizeof (data->buffer));
   while (G_UNLIKELY (bytes_read == -1 && errno == EINTR));
+
+  if (bytes_read <= 0)
+    data->at_end = TRUE; /* Failed or eof */
 
   if (bytes_read < 0)
     {
@@ -1489,6 +1492,23 @@ static int
 checksum_close_cb (struct archive *a, void *user_data)
 {
   FlatpakArchiveReadWithChecksum *data = user_data;
+
+  /* Checksum to the end to ensure we got everything, even if libarchive didn't read it all */
+  if (!data->at_end)
+    {
+      while (TRUE)
+        {
+          ssize_t bytes_read;
+          do
+            bytes_read = read (data->fd, &data->buffer, sizeof (data->buffer));
+          while (G_UNLIKELY (bytes_read == -1 && errno == EINTR));
+
+          if (bytes_read > 0)
+            g_checksum_update (data->checksum, (guchar *) data->buffer, bytes_read);
+          else
+            break;
+        }
+    }
 
   g_free (data);
 
