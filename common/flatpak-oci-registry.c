@@ -513,7 +513,7 @@ flatpak_oci_registry_initable_init (GInitable    *initable,
   gboolean res;
 
   if (self->tmp_dfd == -1 &&
-      !glnx_opendirat (AT_FDCWD, "/tmp", TRUE, &self->tmp_dfd, error))
+      !glnx_opendirat (AT_FDCWD, "/var/tmp", TRUE, &self->tmp_dfd, error))
     return FALSE;
 
   if (g_str_has_prefix (self->uri, "file:/"))
