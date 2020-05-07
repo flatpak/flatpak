@@ -5851,6 +5851,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
 
       if (delta_layer)
         {
+          g_debug ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
           expected_digest = image_config->rootfs.diff_ids[i]; /* The delta recreates the uncompressed tar so use that digest */
           layer_fd = flatpak_oci_registry_apply_delta (registry, blob_fd, old_root, cancellable, error);
           if (layer_fd == -1)
