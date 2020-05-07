@@ -5700,7 +5700,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   return TRUE;
 }
 
-
 char *
 flatpak_pull_from_oci (OstreeRepo            *repo,
                        FlatpakOciRegistry    *registry,
@@ -5723,11 +5722,13 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   g_autofree char *body = NULL;
   g_autofree char *manifest_ref = NULL;
   g_autofree char *full_ref = NULL;
+  const char *diffid;
   guint64 timestamp = 0;
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
   GHashTable *labels;
+  int n_layers;
   int i;
 
   g_assert (ref != NULL);
@@ -5754,6 +5755,21 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
 
   g_variant_builder_add (metadata_builder, "{s@v}", "xa.alt-id",
                          g_variant_new_variant (g_variant_new_string (digest + strlen ("sha256:"))));
+
+  /* For deltas we ensure that the diffid and regular layers exists and match up */
+  n_layers = flatpak_oci_manifest_get_n_layers (manifest);
+  if (n_layers == 0 || n_layers != flatpak_oci_image_get_n_layers (image_config))
+    {
+      flatpak_fail (error, _("Invalid OCI image config"));
+      return NULL;
+    }
+
+  /* Assuming everyting looks good, we record the uncompressed checksum (the diff-id) of the last layer,
+     because that is what we can read back easily from the deploy dir, and thus is easy to use for applying deltas */
+  diffid = image_config->rootfs.diff_ids[n_layers-1];
+  if (diffid != NULL && g_str_has_prefix (diffid, "sha256:"))
+    g_variant_builder_add (metadata_builder, "{s@v}", "xa.diff-id",
+                           g_variant_new_variant (g_variant_new_string (diffid + strlen ("sha256:"))));
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return NULL;
