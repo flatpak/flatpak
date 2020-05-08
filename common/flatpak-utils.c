@@ -5628,7 +5628,9 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                FlatpakOciRegistry    *registry,
                                const char            *oci_repository,
                                const char            *digest,
+                               const char            *remote,
                                const char            *ref,
+                               OstreeRepo            *repo,
                                FlatpakOciPullProgress progress_cb,
                                gpointer               progress_user_data,
                                GCancellable          *cancellable,
@@ -5638,8 +5640,16 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   FlatpakOciManifest *manifest = NULL;
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
+  g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
+  g_autofree char *old_checksum = NULL;
+  g_autoptr(GVariant) old_commit = NULL;
+  g_autoptr(GFile) old_root = NULL;
+  OstreeRepoCommitState old_state = 0;
+  g_autofree char *old_diffid = NULL;
   gsize versioned_size;
   g_autoptr(FlatpakOciIndex) index = NULL;
+  g_autoptr(FlatpakOciImage) image_config = NULL;
+  int n_layers;
   int i;
 
   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, cancellable, error))
@@ -5654,16 +5664,51 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
   manifest = FLATPAK_OCI_MANIFEST (versioned);
 
-  if (manifest->config.digest != NULL)
+  if (manifest->config.digest == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, NULL, NULL, cancellable, error))
+    return FALSE;
+
+  image_config = flatpak_oci_registry_load_image_config (dst_registry, NULL,
+                                                         manifest->config.digest,
+                                                         NULL, cancellable, error);
+  if (image_config == NULL)
+    return FALSE;
+
+  /* For deltas we ensure that the diffid and regular layers exists and match up */
+  n_layers = flatpak_oci_manifest_get_n_layers (manifest);
+  if (n_layers == 0 || n_layers != flatpak_oci_image_get_n_layers (image_config))
+    return flatpak_fail (error, _("Invalid OCI image config"));
+
+  /* Look for delta manifest, and if it exists, the current (old) commit and its recorded diffid */
+  if (flatpak_repo_resolve_rev (repo, NULL, remote, ref, FALSE, &old_checksum, NULL, NULL) &&
+      ostree_repo_load_commit (repo, old_checksum, &old_commit, &old_state, NULL) &&
+      (old_state == OSTREE_REPO_COMMIT_STATE_NORMAL) &&
+      ostree_repo_read_commit (repo, old_checksum, &old_root, NULL, NULL, NULL))
     {
-      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, NULL, NULL, cancellable, error))
-        return FALSE;
+      delta_manifest = flatpak_oci_registry_find_delta_manifest (registry, oci_repository, digest, cancellable);
+      if (delta_manifest)
+        {
+          VarMetadataRef commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (old_commit));
+          const char *raw_old_diffid = var_metadata_lookup_string (commit_metadata, "xa.diff-id", NULL);
+          if (raw_old_diffid != NULL)
+            old_diffid = g_strconcat ("sha256:", raw_old_diffid, NULL);
+        }
     }
 
   for (i = 0; manifest->layers[i] != NULL; i++)
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
-      progress_data.total_size += layer->size;
+      FlatpakOciDescriptor *delta_layer = NULL;
+
+      if (delta_manifest)
+        delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
+
+      if (delta_layer)
+        progress_data.total_size += delta_layer->size;
+      else
+        progress_data.total_size += layer->size;
       progress_data.n_layers++;
     }
 
@@ -5675,16 +5720,40 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   for (i = 0; manifest->layers[i] != NULL; i++)
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
+      FlatpakOciDescriptor *delta_layer = NULL;
 
-      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, layer->digest,
-                                             oci_layer_progress, &progress_data,
-                                             cancellable, error))
-        return FALSE;
+      if (delta_manifest)
+        delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
+
+      if (delta_layer)
+        {
+          g_debug ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
+          g_autofree char *delta_digest = NULL;
+          glnx_autofd int delta_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+                                                                         delta_layer->digest,
+                                                                         oci_layer_progress, &progress_data,
+                                                                         cancellable, error);
+          if (delta_fd == -1)
+            return FALSE;
+
+          delta_digest = flatpak_oci_registry_apply_delta_to_blob (dst_registry, delta_fd, old_root, cancellable, error);
+          if (delta_digest == NULL)
+            return FALSE;
+
+          if (g_strcmp0 (delta_digest, image_config->rootfs.diff_ids[i]) != 0)
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong layer checksum, expected %s, was %s"), image_config->rootfs.diff_ids[i], delta_digest);
+        }
+      else
+        {
+          if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, layer->digest,
+                                                 oci_layer_progress, &progress_data,
+                                                 cancellable, error))
+            return FALSE;
+        }
 
       progress_data.pulled_layers++;
-      progress_data.previous_layers_size += layer->size;
+      progress_data.previous_layers_size += delta_layer ? delta_layer->size : layer->size;
     }
-
 
   index = flatpak_oci_registry_load_index (dst_registry, NULL, NULL);
   if (index == NULL)
@@ -5781,6 +5850,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
 
   /* Look for delta manifest, and if it exists, the current (old) commit and its recorded diffid */
   if (!force_disable_deltas &&
+      !flatpak_oci_registry_is_local (registry) &&
       flatpak_repo_resolve_rev (repo, NULL, remote, ref, FALSE, &old_checksum, NULL, NULL) &&
       ostree_repo_load_commit (repo, old_checksum, &old_commit, &old_state, NULL) &&
       (old_state == OSTREE_REPO_COMMIT_STATE_NORMAL) &&
@@ -5833,6 +5903,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
       glnx_autofd int layer_fd = -1;
       glnx_autofd int blob_fd = -1;
       g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
+      g_autoptr(GError) local_error = NULL;
       const char *layer_checksum;
       const char *expected_digest;
 
@@ -5842,24 +5913,51 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
       opts.autocreate_parents = TRUE;
       opts.ignore_unsupported_content = TRUE;
 
-      blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
-                                                    delta_layer ? delta_layer->digest : layer->digest,
-                                                    oci_layer_progress, &progress_data,
-                                                    cancellable, error);
-      if (blob_fd == -1)
-        goto error;
-
       if (delta_layer)
         {
           g_debug ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
           expected_digest = image_config->rootfs.diff_ids[i]; /* The delta recreates the uncompressed tar so use that digest */
+        }
+      else
+        {
+          layer_fd = glnx_steal_fd (&blob_fd);
+          expected_digest = layer->digest;
+        }
+
+      blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+                                                    delta_layer ? delta_layer->digest : layer->digest,
+                                                    oci_layer_progress, &progress_data,
+                                                    cancellable, &local_error);
+
+      if (blob_fd == -1 && delta_layer == NULL &&
+          flatpak_oci_registry_is_local (registry) &&
+          g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          /* Pulling regular layer from local repo and its not there, try the uncompressed version.
+           * This happens when we deploy via system helper using oci deltas */
+          expected_digest = image_config->rootfs.diff_ids[i];
+          blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+                                                        image_config->rootfs.diff_ids[i],
+                                                        oci_layer_progress, &progress_data,
+                                                        cancellable, NULL); /* No error here, we report the first error if this failes */
+        }
+
+      if (blob_fd == -1)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          goto error;
+        }
+
+      g_clear_error (&local_error);
+
+      if (delta_layer)
+        {
           layer_fd = flatpak_oci_registry_apply_delta (registry, blob_fd, old_root, cancellable, error);
           if (layer_fd == -1)
             goto error;
         }
       else
         {
-          expected_digest = layer->digest;
           layer_fd = glnx_steal_fd (&blob_fd);
         }
 
