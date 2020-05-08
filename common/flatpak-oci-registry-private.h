@@ -122,6 +122,11 @@ int                     flatpak_oci_registry_apply_delta (FlatpakOciRegistry    
                                                           GFile                 *content_dir,
                                                           GCancellable          *cancellable,
                                                           GError               **error);
+char *                  flatpak_oci_registry_apply_delta_to_blob (FlatpakOciRegistry    *self,
+                                                                  int                    delta_fd,
+                                                                  GFile                 *content_dir,
+                                                                  GCancellable          *cancellable,
+                                                                  GError               **error);
 FlatpakOciManifest *   flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
                                                                  const char            *oci_repository,
                                                                  const char            *for_digest,

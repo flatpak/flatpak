@@ -1782,46 +1782,31 @@ copy_stream_to_file (FlatpakOciRegistry    *self,
   return g_steal_pointer (&res);
 }
 
-int
-flatpak_oci_registry_apply_delta (FlatpakOciRegistry    *self,
-                                  int                    delta_fd,
-                                  GFile                 *content_dir,
-                                  GCancellable          *cancellable,
-                                  GError               **error)
+static gboolean
+flatpak_oci_registry_apply_delta_stream (FlatpakOciRegistry    *self,
+                                         int                    delta_fd,
+                                         GFile                 *content_dir,
+                                         GOutputStream         *out,
+                                         GCancellable          *cancellable,
+                                         GError               **error)
 {
-  g_autoptr(GOutputStream) out = NULL;
-  g_autofree char *tmpfile_name = g_strdup_printf ("oci-delta-layer-XXXXXX");
   g_autoptr(GInputStream) in_raw = g_unix_input_stream_new (delta_fd, FALSE);
   g_autoptr(GInputStream) in = NULL;
   FlatpakZstdDecompressor *zstd;
-  glnx_autofd int fd = -1;
   char header[8];
   g_autofree guchar *buffer1 = g_malloc (DELTA_BUFFER_SIZE);
   g_autofree guchar *buffer2 = g_malloc (DELTA_BUFFER_SIZE);
   g_autoptr(GFileInputStream) content_file = NULL;
 
   if (!g_input_stream_read_all (in_raw, header, sizeof(header), NULL, cancellable, error))
-    return -1;
+    return FALSE;
 
   if (memcmp (header, DELTA_HEADER, DELTA_HEADER_LEN) != 0)
-    {
-      flatpak_fail (error, _("Invalid delta file format"));
-      return -1;
-    }
+    return flatpak_fail (error, _("Invalid delta file format"));
 
   zstd = flatpak_zstd_decompressor_new ();
   in = g_converter_input_stream_new (in_raw, G_CONVERTER (zstd));
   g_object_unref (zstd);
-
-  if (!flatpak_open_in_tmpdir_at (self->tmp_dfd, 0600, tmpfile_name,
-                                  &out, cancellable, error))
-    return -1;
-
-  // This is the read-only version we return
-  fd = local_open_file (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
-  (void) unlinkat (self->tmp_dfd, tmpfile_name, 0);
-  if (fd == -1)
-    return -1;
 
   while (TRUE)
     {
@@ -1837,23 +1822,23 @@ flatpak_oci_registry_apply_delta (FlatpakOciRegistry    *self,
           if (eof)
             break;
           g_propagate_error (error, g_steal_pointer (&local_error));
-          return -1;
+          return FALSE;
         }
 
       if (!delta_read_varuint (in, &size, cancellable, error))
-        return -1;
+        return FALSE;
 
       switch (op)
         {
         case DELTA_OP_DATA:
           if (!delta_copy_data (in, out, size, buffer1, cancellable, error))
-            return -1;
+            return FALSE;
           break;
 
         case DELTA_OP_OPEN:
           path = (char *)delta_read_data (in, size, cancellable, error);
           if (path == NULL)
-            return -1;
+            return FALSE;
           clean_path = delta_clean_path (path);
 
           g_clear_object (&content_file);
@@ -1864,43 +1849,115 @@ flatpak_oci_registry_apply_delta (FlatpakOciRegistry    *self,
 
             child_in = g_file_read (child, cancellable, error);
             if (child_in == NULL)
-              return -1;
+              return FALSE;
 
             /* We can't seek in the ostree repo file, so copy it to temp file */
             content_file = copy_stream_to_file (self, G_INPUT_STREAM (child_in), cancellable, error);
             if (content_file == NULL)
-              return -1;
+              return FALSE;
           }
           break;
 
         case DELTA_OP_COPY:
           if (!delta_ensure_file (content_file, error))
-            return -1;
+            return FALSE;
           if (!delta_copy_data (G_INPUT_STREAM (content_file), out, size, buffer1, cancellable, error))
-            return -1;
+            return FALSE;
           break;
 
         case DELTA_OP_ADD_DATA:
           if (!delta_ensure_file (content_file, error))
-            return -1;
+            return FALSE;
           if (!delta_add_data (G_INPUT_STREAM (content_file), in, out, size, buffer1, buffer2, cancellable, error))
-            return -1;
+            return FALSE;
           break;
 
         case DELTA_OP_SEEK:
           if (!delta_ensure_file (content_file, error))
-            return -1;
+            return FALSE;
           if (!g_seekable_seek (G_SEEKABLE (content_file), size, G_SEEK_SET, cancellable, error))
-            return -1;
+            return FALSE;
           break;
 
         default:
-          flatpak_fail (error, _("Invalid delta file format"));
-          return -1;
+          return flatpak_fail (error, _("Invalid delta file format"));
         }
     }
 
+  return TRUE;
+}
+
+int
+flatpak_oci_registry_apply_delta (FlatpakOciRegistry    *self,
+                                  int                    delta_fd,
+                                  GFile                 *content_dir,
+                                  GCancellable          *cancellable,
+                                  GError               **error)
+{
+  g_autoptr(GOutputStream) out = NULL;
+  g_autofree char *tmpfile_name = g_strdup_printf ("oci-delta-layer-XXXXXX");
+  glnx_autofd int fd = -1;
+
+  if (!flatpak_open_in_tmpdir_at (self->tmp_dfd, 0600, tmpfile_name,
+                                  &out, cancellable, error))
+    return -1;
+
+  // This is the read-only version we return
+  // Note: that we need to open this before we unlink it
+  fd = local_open_file (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
+  (void) unlinkat (self->tmp_dfd, tmpfile_name, 0);
+  if (fd == -1)
+    return -1;
+
+  if (!flatpak_oci_registry_apply_delta_stream (self, delta_fd, content_dir, out, cancellable, error))
+    return -1;
+
   return glnx_steal_fd (&fd);
+}
+
+char *
+flatpak_oci_registry_apply_delta_to_blob (FlatpakOciRegistry    *self,
+                                          int                    delta_fd,
+                                          GFile                 *content_dir,
+                                          GCancellable          *cancellable,
+                                          GError               **error)
+{
+  g_autofree char *dst_subpath = NULL;
+  g_autofree char *checksum = NULL;
+  g_autofree char *digest = NULL;
+  g_auto(GLnxTmpfile) tmpf = { 0 };
+  g_autoptr(GOutputStream) out = NULL;
+
+  if (!glnx_open_tmpfile_linkable_at (self->dfd, "blobs/sha256",
+                                      O_RDWR | O_CLOEXEC | O_NOCTTY,
+                                      &tmpf, error))
+    return NULL;
+
+  out = g_unix_output_stream_new (tmpf.fd, FALSE);
+
+  if (!flatpak_oci_registry_apply_delta_stream (self, delta_fd, content_dir, out, cancellable, error))
+    return NULL;
+
+  /* Seek to start to get checksum */
+  lseek (tmpf.fd, 0, SEEK_SET);
+
+  checksum = checksum_fd (tmpf.fd, cancellable, error);
+  if (checksum == NULL)
+    return FALSE;
+
+  digest = g_strconcat ("sha256:", checksum, NULL);
+
+  dst_subpath = get_digest_subpath (self, NULL, FALSE, FALSE, digest, error);
+  if (dst_subpath == NULL)
+    return FALSE;
+
+  if (!glnx_link_tmpfile_at (&tmpf,
+                             GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST,
+                             self->dfd, dst_subpath,
+                             error))
+    return FALSE;
+
+  return g_steal_pointer (&digest);
 }
 
 FlatpakOciManifest *
