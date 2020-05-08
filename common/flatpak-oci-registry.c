@@ -223,7 +223,14 @@ flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
 {
   g_free (self->token);
   self->token = g_strdup (token);
+
+  if (self->token)
+    (void)glnx_file_replace_contents_at (self->dfd, ".token",
+                                         (guchar *)self->token,
+                                         strlen (self->token),
+                                         0, NULL, NULL);
 }
+
 
 FlatpakOciRegistry *
 flatpak_oci_registry_new (const char   *uri,
@@ -415,6 +422,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
   int dfd;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GBytes) oci_layout_bytes = NULL;
+  g_autoptr(GBytes) token_bytes = NULL;
   gboolean not_json;
 
   if (self->dfd != -1)
@@ -475,6 +483,13 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
     }
   else if (!verify_oci_version (oci_layout_bytes, &not_json, cancellable, error))
     return FALSE;
+
+  if (self->dfd != -1)
+    {
+      token_bytes = local_load_file (self->dfd, ".token", cancellable, NULL);
+      if (token_bytes != NULL)
+        self->token = g_strndup (g_bytes_get_data (token_bytes, NULL), g_bytes_get_size (token_bytes));
+    }
 
   if (self->dfd == -1 && local_dfd != -1)
     self->dfd = glnx_steal_fd (&local_dfd);
