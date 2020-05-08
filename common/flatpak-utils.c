@@ -5892,7 +5892,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
         }
 
       progress_data.pulled_layers++;
-      progress_data.previous_layers_size += layer->size;
+      progress_data.previous_layers_size += delta_layer ? delta_layer->size : layer->size;
     }
 
   if (!ostree_repo_write_mtree (repo, archive_mtree, &archive_root, cancellable, error))
