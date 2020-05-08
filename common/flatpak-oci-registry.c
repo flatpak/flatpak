@@ -205,6 +205,12 @@ flatpak_oci_registry_init (FlatpakOciRegistry *self)
   self->tmp_dfd = -1;
 }
 
+gboolean
+flatpak_oci_registry_is_local (FlatpakOciRegistry *self)
+{
+  return self->dfd != -1;
+}
+
 const char *
 flatpak_oci_registry_get_uri (FlatpakOciRegistry *self)
 {
