@@ -97,6 +97,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
 
 static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
                                                                          GLnxLockFile *file_lock,
+                                                                         const char   *token,
                                                                          GError      **error);
 
 static OstreeRepo * flatpak_dir_create_child_repo (FlatpakDir   *self,
@@ -8216,6 +8217,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
 static FlatpakOciRegistry *
 flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
                                               GLnxLockFile *file_lock,
+                                              const char   *token,
                                               GError      **error)
 {
   g_autoptr(GFile) cache_dir = NULL;
@@ -8249,6 +8251,8 @@ flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
                                            NULL, error);
   if (new_registry == NULL)
     return NULL;
+
+  flatpak_oci_registry_set_token (new_registry, token);
 
   return g_steal_pointer (&new_registry);
 }
@@ -8582,7 +8586,7 @@ flatpak_dir_install (FlatpakDir          *self,
           g_autoptr(FlatpakOciRegistry) registry = NULL;
           g_autoptr(GFile) registry_file = NULL;
 
-          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, error);
+          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, token, error);
           if (registry == NULL)
             return FALSE;
 
@@ -9276,7 +9280,7 @@ flatpak_dir_update (FlatpakDir                           *self,
           g_autoptr(FlatpakOciRegistry) registry = NULL;
           g_autoptr(GFile) registry_file = NULL;
 
-          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, error);
+          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, token, error);
           if (registry == NULL)
             return FALSE;
 
