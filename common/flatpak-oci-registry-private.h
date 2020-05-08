@@ -54,6 +54,7 @@ FlatpakOciRegistry  *  flatpak_oci_registry_new (const char           *uri,
                                                  GError              **error);
 void                   flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
                                                        const char *token);
+gboolean               flatpak_oci_registry_is_local (FlatpakOciRegistry *self);
 const char          *  flatpak_oci_registry_get_uri (FlatpakOciRegistry *self);
 FlatpakOciIndex     *  flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
                                                         GCancellable       *cancellable,
