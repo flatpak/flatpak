@@ -74,6 +74,8 @@ static FlatpakCommand commands[] = {
   { N_(" Manage installed applications and runtimes") },
   { "install", N_("Install an application or runtime"), flatpak_builtin_install, flatpak_complete_install },
   { "update", N_("Update an installed application or runtime"), flatpak_builtin_update, flatpak_complete_update },
+  /* Alias upgrade to update to help users of yum/dnf */
+  { "upgrade", NULL, flatpak_builtin_update, flatpak_complete_update, TRUE },
   { "uninstall", N_("Uninstall an installed application or runtime"), flatpak_builtin_uninstall, flatpak_complete_uninstall },
   /* Alias remove to uninstall to help users of yum/dnf/apt */
   { "remove", NULL, flatpak_builtin_uninstall, flatpak_complete_uninstall, TRUE },
