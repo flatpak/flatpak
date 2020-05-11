@@ -1626,7 +1626,7 @@ static GString *
 systemd_unit_name_escape (const gchar *in)
 {
   /* Adapted from systemd source */
-  GString * const ret = g_string_sized_new (strlen (in) * 4 + 1);
+  GString * const ret = g_string_sized_new (strlen (in) * 4);
 
   for (; *in; in++)
     {
