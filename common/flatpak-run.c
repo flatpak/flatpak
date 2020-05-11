@@ -1623,17 +1623,20 @@ job_removed_cb (SystemdManager *manager,
 }
 
 static gchar *
-systemd_unit_name_escape (const gchar *in) {
+systemd_unit_name_escape (const gchar *in)
+{
   /* Adapted from systemd source */
   gchar * const ret = g_new (gchar, strlen (in) * 4 + 1);
   gchar *out = ret;
 
-  for (; *in; in++) {
-    if (g_ascii_isalnum (*in) || *in == ':' || *in == '_' || *in == '.')
-      *(out++) = *in;
-    else
-      out += g_snprintf (out, 4, "\\x%02x", *in);;
-  }
+  for (; *in; in++)
+    {
+      if (g_ascii_isalnum (*in) || *in == ':' || *in == '_' || *in == '.')
+        *(out++) = *in;
+      else
+        out += g_snprintf (out, 4, "\\x%02x", *in);
+      ;
+    }
 
   *out = 0;
   return ret;
