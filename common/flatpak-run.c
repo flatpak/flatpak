@@ -1622,20 +1622,20 @@ job_removed_cb (SystemdManager *manager,
     g_main_loop_quit (data->main_loop);
 }
 
-static GString *
+static gchar *
 systemd_unit_name_escape (const gchar *in)
 {
   /* Adapted from systemd source */
-  GString * const ret = g_string_sized_new (strlen (in));
+  GString * const str = g_string_sized_new (strlen (in));
 
   for (; *in; in++)
     {
       if (g_ascii_isalnum (*in) || *in == ':' || *in == '_' || *in == '.')
-        g_string_append_c (ret, *in);
+        g_string_append_c (str, *in);
       else
-        g_string_append_printf (ret, "\\x%02x", *in);
+        g_string_append_printf (str, "\\x%02x", *in);
     }
-  return ret;
+  return g_string_free (str, FALSE);
 }
 
 gboolean
@@ -1645,7 +1645,7 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
   g_autofree char *path = NULL;
   g_autofree char *address = NULL;
   g_autofree char *name = NULL;
-  g_autoptr(GString) appid_escaped = NULL;
+  g_autofree char *appid_escaped = NULL;
   g_autofree char *job = NULL;
   SystemdManager *manager = NULL;
   GVariantBuilder builder;
@@ -1684,7 +1684,7 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
     goto out;
 
   appid_escaped = systemd_unit_name_escape (appid);
-  name = g_strdup_printf ("app-flatpak-%s-%d.scope", appid_escaped->str, getpid ());
+  name = g_strdup_printf ("app-flatpak-%s-%d.scope", appid_escaped, getpid ());
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(sv)"));
 
