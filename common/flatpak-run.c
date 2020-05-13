@@ -3243,6 +3243,8 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_autoptr(GArray) combined_fd_array = NULL;
   g_autoptr(GFile) ld_so_cache = NULL;
+  g_autofree char *ld_so_cache_lock_file = NULL;
+  g_auto(GLnxLockFile) ld_so_cache_lock = { 0, };
   g_autofree char *sandbox_cache_path = NULL;
   g_auto(GStrv) minimal_envp = NULL;
   g_autofree char *commandline = NULL;
@@ -3259,6 +3261,10 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
     }
 
   ld_so_cache = g_file_get_child (ld_so_dir, checksum);
+  ld_so_cache_lock_file = g_strconcat (flatpak_file_get_path_cached (ld_so_cache), ".lock", NULL);
+  if (!glnx_make_lock_file (AT_FDCWD, ld_so_cache_lock_file, LOCK_EX, &ld_so_cache_lock, error))
+    return glnx_prefix_error (error, "Failed to lock %s", ld_so_cache_lock_file);
+
   ld_so_fd = open (flatpak_file_get_path_cached (ld_so_cache), O_RDONLY);
   if (ld_so_fd >= 0)
     return glnx_steal_fd (&ld_so_fd);
