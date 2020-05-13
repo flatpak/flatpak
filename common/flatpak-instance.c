@@ -429,29 +429,17 @@ flatpak_instance_new_for_id (const char *id)
   return flatpak_instance_new (dir);
 }
 
-/**
- * flatpak_instance_get_all:
- *
- * Gets FlatpakInstance objects for all running sandboxes in the current session.
- *
- * Returns: (transfer full) (element-type FlatpakInstance): a #GPtrArray of
- *   #FlatpakInstance objects
- *
- * Since: 1.1
- */
-GPtrArray *
-flatpak_instance_get_all (void)
+void
+flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances)
 {
-  g_autoptr(GPtrArray) instances = NULL;
-  g_autofree char *base_dir = NULL;
+
+  g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
   g_auto(GLnxDirFdIterator) iter = { 0 };
   struct dirent *dent;
 
-  instances = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-  base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
-
+  /* Clean up unused instances */
   if (!glnx_dirfd_iterator_init_at (AT_FDCWD, base_dir, FALSE, &iter, NULL))
-    return g_steal_pointer (&instances);
+    return;
 
   while (TRUE)
     {
@@ -485,9 +473,29 @@ flatpak_instance_get_all (void)
               continue;
             }
 
-          g_ptr_array_add (instances, flatpak_instance_new_for_id (dent->d_name));
+          if (out_instances != NULL)
+            g_ptr_array_add (out_instances, flatpak_instance_new_for_id (dent->d_name));
         }
     }
+}
+
+/**
+ * flatpak_instance_get_all:
+ *
+ * Gets FlatpakInstance objects for all running sandboxes in the current session.
+ *
+ * Returns: (transfer full) (element-type FlatpakInstance): a #GPtrArray of
+ *   #FlatpakInstance objects
+ *
+ * Since: 1.1
+ */
+GPtrArray *
+flatpak_instance_get_all (void)
+{
+  g_autoptr(GPtrArray) instances = NULL;
+
+  instances = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+  flatpak_instance_iterate_all_and_gc (instances);
 
   return g_steal_pointer (&instances);
 }
