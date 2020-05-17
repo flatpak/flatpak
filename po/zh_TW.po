@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2020-04-03 17:06+0200\n"
-"PO-Revision-Date: 2020-05-17 17:33+0800\n"
+"PO-Revision-Date: 2020-05-17 17:53+0000\n"
 "Last-Translator: Yi-Jyun Pan <pan93412@gmail.com>\n"
 "Language-Team: Chinese (Traditional) <zh-l10n@lists.linux.org.tw>\n"
 "Language: zh_TW\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Weblate 4.0.4\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
-msgstr "匯出執行階段環境而非程式"
+msgstr "匯出執行時期環境而非程式"
 
 #: app/flatpak-builtins-build-bundle.c:58
 msgid "Arch to bundle for"
@@ -58,7 +58,7 @@ msgstr "URL"
 
 #: app/flatpak-builtins-build-bundle.c:60
 msgid "Url for runtime flatpakrepo file"
-msgstr "執行階段環境 flatpakrepo 檔的 URL"
+msgstr "執行時期環境 flatpakrepo 檔的 URL"
 
 #: app/flatpak-builtins-build-bundle.c:61
 msgid "Add GPG key from FILE (- for stdin)"
@@ -182,7 +182,7 @@ msgstr "「%s」不是有效的檔名"
 
 #: app/flatpak-builtins-build.c:49
 msgid "Use Platform runtime rather than Sdk"
-msgstr "偏好使用平臺的執行階段環境更勝 SDK"
+msgstr "偏好使用平臺的執行時期環境更勝 SDK"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
@@ -244,7 +244,7 @@ msgstr "組建目錄 %s 尚未初始化，請使用 flatpak build-init"
 
 #: app/flatpak-builtins-build.c:258
 msgid "metadata invalid, not application or runtime"
-msgstr "中介資料無效，沒有應用程式或執行階段環境"
+msgstr "中介資料無效，沒有應用程式或執行時期環境"
 
 #: app/flatpak-builtins-build.c:389
 #, c-format
@@ -319,7 +319,7 @@ msgstr "用以簽署提交的 GPG 金鑰 ID"
 #: app/flatpak-builtins-build-commit-from.c:66
 #: app/flatpak-builtins-build-export.c:69
 msgid "Mark build as end-of-life"
-msgstr "將組建標為生命週期結束"
+msgstr "將組建標為 end-of-life"
 
 #: app/flatpak-builtins-build-commit-from.c:66
 #: app/flatpak-builtins-build-export.c:69
@@ -330,7 +330,7 @@ msgstr "REASON"
 msgid ""
 "Mark refs matching the OLDID prefix as end-of-life, to be replaced with the "
 "given NEWID"
-msgstr "將符合 OLDID 前綴的參照標為生命週期結束，會以提供的 NEWID 取代"
+msgstr "將符合 OLDID 前綴的參照標為 end-of-life，會以提供的 NEWID 取代"
 
 #: app/flatpak-builtins-build-commit-from.c:67
 msgid "OLDID=NEWID"
@@ -408,7 +408,7 @@ msgstr "要匯出的架構（必須與主機相容）"
 
 #: app/flatpak-builtins-build-export.c:60
 msgid "Commit runtime (/usr), not /app"
-msgstr "提交的執行階段環境 (/usr)，並非 /app"
+msgstr "提交的執行時期環境 (/usr)，並非 /app"
 
 #: app/flatpak-builtins-build-export.c:63
 msgid "Use alternative directory for the files"
@@ -434,7 +434,7 @@ msgstr "要納入的排除檔案"
 
 #: app/flatpak-builtins-build-export.c:70
 msgid "Mark build as end-of-life, to be replaced with the given ID"
-msgstr "將組建標為生命週期結束，會以提供的 ID 取代"
+msgstr "將組建標為 end-of-life，會以提供的 ID 取代"
 
 #: app/flatpak-builtins-build-export.c:70
 #: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:961
@@ -622,7 +622,7 @@ msgstr "SDK"
 
 #: app/flatpak-builtins-build-finish.c:59
 msgid "Change the runtime used for the app"
-msgstr "變更用於程式的執行階段環境"
+msgstr "變更用於程式的執行時期環境"
 
 #: app/flatpak-builtins-build-finish.c:59 app/flatpak-builtins-build-init.c:54
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
@@ -640,7 +640,7 @@ msgstr "GROUP=KEY[=VALUE]"
 
 #: app/flatpak-builtins-build-finish.c:61
 msgid "Don't inherit permissions from runtime"
-msgstr "不要從執行階段環境繼承權限"
+msgstr "不要從執行時期環境繼承權限"
 
 #: app/flatpak-builtins-build-finish.c:154
 #, c-format
@@ -755,7 +755,7 @@ msgstr "要使用的架構"
 
 #: app/flatpak-builtins-build-init.c:54
 msgid "Initialize var from named runtime"
-msgstr "根據命名的執行階段環境初始化變數"
+msgstr "根據命名的執行時期環境初始化變數"
 
 #: app/flatpak-builtins-build-init.c:55
 msgid "Initialize apps from named app"
@@ -864,11 +864,11 @@ msgstr "要安裝的架構"
 #: app/flatpak-builtins-install.c:67 app/flatpak-builtins-remote-info.c:55
 #: app/flatpak-builtins-uninstall.c:58 app/flatpak-builtins-update.c:64
 msgid "Look for runtime with the specified name"
-msgstr "以指定名稱查找執行階段環境"
+msgstr "以指定名稱查找執行時期環境"
 
 #: app/flatpak-builtins-build-sign.c:65
 msgid "LOCATION [ID [BRANCH]] - Sign an application or runtime"
-msgstr "LOCATION [ID [BRANCH]] - 簽署應用程式或執行階段環境"
+msgstr "LOCATION [ID [BRANCH]] - 簽署應用程式或執行時期環境"
 
 #: app/flatpak-builtins-build-sign.c:72
 #: app/flatpak-builtins-build-update-repo.c:492
@@ -895,7 +895,7 @@ msgstr "TITLE"
 
 #: app/flatpak-builtins-build-update-repo.c:66
 msgid "A one-line comment for this repository"
-msgstr "此軟體庫的一行註釋"
+msgstr "此軟體庫的一列評註"
 
 #: app/flatpak-builtins-build-update-repo.c:66
 #: app/flatpak-builtins-remote-add.c:72 app/flatpak-builtins-remote-modify.c:78
@@ -939,28 +939,28 @@ msgstr "COLLECTION-ID"
 msgid ""
 "Permanently deploy collection ID to client remote configurations, only for "
 "sideload support"
-msgstr "永久部屬收藏 ID 至用戶端遠端設定，僅供側載支援"
+msgstr "永久布署收藏 ID 至用戶端遠端設定，僅供側載支援"
 
 #: app/flatpak-builtins-build-update-repo.c:73
 msgid "Permanently deploy collection ID to client remote configurations"
-msgstr "永久部屬收藏 ID 到客戶端的遠端組態"
+msgstr "永久布署收藏 ID 到客戶端的遠端組態"
 
 #: app/flatpak-builtins-build-update-repo.c:74
 msgid "Name of authenticator for this repository"
-msgstr "此軟體庫的驗證器名稱"
+msgstr "此軟體庫的身分核對器名稱"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 msgid "Autoinstall authenticator for this repository"
-msgstr "自動安裝此軟體庫的驗證器"
+msgstr "自動安裝此軟體庫的身分核對器"
 
 #: app/flatpak-builtins-build-update-repo.c:76
 msgid "Don't autoinstall authenticator for this repository"
-msgstr "不要自動安裝此軟體庫的驗證器"
+msgstr "不要自動安裝此軟體庫的身分核對器"
 
 #: app/flatpak-builtins-build-update-repo.c:77
 #: app/flatpak-builtins-remote-add.c:82
 msgid "Authenticator option"
-msgstr "驗證器選項"
+msgstr "身分核對器選項"
 
 #: app/flatpak-builtins-build-update-repo.c:77
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:89
@@ -985,7 +985,7 @@ msgstr "不要更新 AppStream 分支"
 
 #: app/flatpak-builtins-build-update-repo.c:84
 msgid "Max parallel jobs when creating deltas (default: NUMCPUs)"
-msgstr "建立差異 (delta) 的最大並行作業數（預設值：CPU 數 (NUMCPUs)）"
+msgstr "建立增減檔的最大並行作業數（預設值：CPU 數 (NUMCPUs)）"
 
 #: app/flatpak-builtins-build-update-repo.c:84
 msgid "NUM-JOBS"
@@ -993,7 +993,7 @@ msgstr "NUM-JOBS"
 
 #: app/flatpak-builtins-build-update-repo.c:85
 msgid "Don't create deltas matching refs"
-msgstr "不建立符合參照的差異 (delta)"
+msgstr "不建立符合參照的增減檔"
 
 #: app/flatpak-builtins-build-update-repo.c:86
 msgid "Prune unused objects"
@@ -1169,7 +1169,7 @@ msgstr "「%s」遠端並沒有設定收藏 ID，但這在「%s」的 P2P 散布
 
 #: app/flatpak-builtins-create-usb.c:457
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
-msgstr "MOUNT-PATH [REF…] - 複製 App 或執行階段至可移除式媒體"
+msgstr "MOUNT-PATH [REF…] - 複製 App 或執行時期至可移除式媒體"
 
 #: app/flatpak-builtins-create-usb.c:466
 msgid "MOUNT-PATH and REF must be specified"
@@ -1457,7 +1457,7 @@ msgstr "顯示參照"
 
 #: app/flatpak-builtins-history.c:60
 msgid "Show the application/runtime ID"
-msgstr "顯示應用程式或執行階段環境 ID"
+msgstr "顯示應用程式或執行時期環境 ID"
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:62
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:69
@@ -1604,7 +1604,7 @@ msgstr "顯示中介資料"
 
 #: app/flatpak-builtins-info.c:64 app/flatpak-builtins-remote-info.c:62
 msgid "Show runtime"
-msgstr "顯示執行階段環境"
+msgstr "顯示執行時期環境"
 
 #: app/flatpak-builtins-info.c:65 app/flatpak-builtins-remote-info.c:63
 msgid "Show sdk"
@@ -1634,7 +1634,7 @@ msgstr "顯示位置"
 
 #: app/flatpak-builtins-info.c:117
 msgid "NAME [BRANCH] - Get info about an installed app or runtime"
-msgstr "NAME [BRANCH] - 取得已安裝程式或執行階段環境的相關資訊"
+msgstr "NAME [BRANCH] - 取得已安裝程式或執行時期環境的相關資訊"
 
 #: app/flatpak-builtins-info.c:124 app/flatpak-builtins-remote-add.c:297
 #: app/flatpak-builtins-remote-delete.c:63
@@ -1708,7 +1708,7 @@ msgstr "已安裝："
 #: app/flatpak-builtins-remote-info.c:263
 #: app/flatpak-builtins-remote-info.c:299
 msgid "Runtime:"
-msgstr "執行階段環境："
+msgstr "執行時期環境："
 
 #: app/flatpak-builtins-info.c:235 app/flatpak-builtins-info.c:291
 #: app/flatpak-builtins-remote-info.c:264
@@ -1757,7 +1757,7 @@ msgstr "Alt-id："
 #: app/flatpak-builtins-remote-info.c:274
 #: app/flatpak-builtins-remote-info.c:319
 msgid "End-of-life:"
-msgstr "生命週期結束："
+msgstr "End-of-life："
 
 #: app/flatpak-builtins-info.c:255 app/flatpak-builtins-info.c:333
 #: app/flatpak-builtins-remote-info.c:276
@@ -1797,7 +1797,7 @@ msgstr "不要拉入，僅從本機快取中安裝"
 
 #: app/flatpak-builtins-install.c:63 app/flatpak-builtins-update.c:60
 msgid "Don't deploy, only download to local cache"
-msgstr "不要部屬，僅下載到本機快取"
+msgstr "不要布署，僅下載到本機快取"
 
 #: app/flatpak-builtins-install.c:64
 msgid "Don't install related refs"
@@ -1805,7 +1805,7 @@ msgstr "不要安裝相關的參照"
 
 #: app/flatpak-builtins-install.c:65 app/flatpak-builtins-update.c:62
 msgid "Don't verify/install runtime dependencies"
-msgstr "不要驗證或安裝執行階段環境依賴"
+msgstr "不要核驗或安裝執行時期環境依賴"
 
 #: app/flatpak-builtins-install.c:66 app/flatpak-builtins-update.c:63
 msgid "Don't use static deltas"
@@ -1863,7 +1863,7 @@ msgstr "必須指定檔名或 URI"
 
 #: app/flatpak-builtins-install.c:281
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
-msgstr "[LOCATION/REMOTE] [REF…] - 安裝應用程式或執行階段"
+msgstr "[LOCATION/REMOTE] [REF…] - 安裝應用程式或執行時期"
 
 #: app/flatpak-builtins-install.c:307
 msgid "At least one REF must be specified"
@@ -1922,7 +1922,7 @@ msgstr "顯示額外資訊"
 
 #: app/flatpak-builtins-list.c:47
 msgid "List installed runtimes"
-msgstr "列出已安裝的執行階段環境"
+msgstr "列出已安裝的執行時期環境"
 
 #: app/flatpak-builtins-list.c:48
 msgid "List installed applications"
@@ -1978,11 +1978,11 @@ msgstr "顯示版本"
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-ps.c:54
 #: app/flatpak-builtins-remote-ls.c:73
 msgid "Runtime"
-msgstr "執行階段環境"
+msgstr "執行時期環境"
 
 #: app/flatpak-builtins-list.c:63
 msgid "Show the used runtime"
-msgstr "顯示使用的執行階段"
+msgstr "顯示使用的執行時期"
 
 #: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:70
 msgid "Show the origin remote"
@@ -2028,7 +2028,7 @@ msgstr "顯示選項"
 
 #: app/flatpak-builtins-list.c:427
 msgid " - List installed apps and/or runtimes"
-msgstr " - 列出已安裝的程式與或執行階段環境"
+msgstr " - 列出已安裝的程式與或執行時期環境"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -2186,7 +2186,7 @@ msgstr "顯示應用程式提交"
 
 #: app/flatpak-builtins-ps.c:54
 msgid "Show the runtime ID"
-msgstr "顯示執行階段環境 ID"
+msgstr "顯示執行時期環境 ID"
 
 #: app/flatpak-builtins-ps.c:55
 msgid "R.-Branch"
@@ -2194,7 +2194,7 @@ msgstr "R.-Branch"
 
 #: app/flatpak-builtins-ps.c:55
 msgid "Show the runtime branch"
-msgstr "顯示執行階段環境分支"
+msgstr "顯示執行時期環境分支"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "R.-Commit"
@@ -2202,7 +2202,7 @@ msgstr "R.-Commit"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "Show the runtime commit"
-msgstr "顯示執行階段環境提交"
+msgstr "顯示執行時期環境提交"
 
 #: app/flatpak-builtins-ps.c:57
 msgid "Active"
@@ -2258,7 +2258,7 @@ msgstr "用於此遠端的好讀名稱"
 
 #: app/flatpak-builtins-remote-add.c:72 app/flatpak-builtins-remote-modify.c:78
 msgid "A one-line comment for this remote"
-msgstr "此遠端的一行註釋"
+msgstr "此遠端的一列評註"
 
 #: app/flatpak-builtins-remote-add.c:73 app/flatpak-builtins-remote-modify.c:79
 msgid "A full-paragraph description for this remote"
@@ -2290,15 +2290,15 @@ msgstr "停用遠端"
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:88
 msgid "Name of authenticator"
-msgstr "驗證器名稱"
+msgstr "身分核對器名稱"
 
 #: app/flatpak-builtins-remote-add.c:83 app/flatpak-builtins-remote-modify.c:90
 msgid "Autoinstall authenticator"
-msgstr "自動安裝驗證器"
+msgstr "自動安裝身分核對器"
 
 #: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:91
 msgid "Don't autoinstall authenticator"
-msgstr "不自動安裝驗證器"
+msgstr "不自動安裝身分核對器"
 
 #: app/flatpak-builtins-remote-add.c:241 app/flatpak-builtins-remote-add.c:248
 #, c-format
@@ -2327,7 +2327,7 @@ msgstr "遠端 %s 已經存在"
 #: app/flatpak-builtins-remote-modify.c:304
 #, c-format
 msgid "Invalid authenticator name %s"
-msgstr "無效的驗證器名稱 %s"
+msgstr "無效的身分核對器名稱 %s"
 
 #: app/flatpak-builtins-remote-add.c:402
 #, c-format
@@ -2379,7 +2379,7 @@ msgstr "只列出能夠以側載使用的參照"
 #: app/flatpak-builtins-remote-info.c:114
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
-msgstr " REMOTE REF - 顯示遠端中應用程式或執行階段環境的相關資訊"
+msgstr " REMOTE REF - 顯示遠端中應用程式或執行時期環境的相關資訊"
 
 #: app/flatpak-builtins-remote-info.c:125
 msgid "REMOTE and REF must be specified"
@@ -2461,11 +2461,11 @@ msgstr "顯示優先權"
 
 #: app/flatpak-builtins-remote-list.c:56
 msgid "Comment"
-msgstr "留言"
+msgstr "評註"
 
 #: app/flatpak-builtins-remote-list.c:56
 msgid "Show comment"
-msgstr "顯示留言"
+msgstr "顯示評註"
 
 #: app/flatpak-builtins-remote-list.c:57
 msgid "Show description"
@@ -2497,7 +2497,7 @@ msgstr "顯示架構與分支"
 
 #: app/flatpak-builtins-remote-ls.c:51
 msgid "Show only runtimes"
-msgstr "僅顯示執行階段環境"
+msgstr "僅顯示執行時期環境"
 
 #: app/flatpak-builtins-remote-ls.c:52
 msgid "Show only apps"
@@ -2513,7 +2513,7 @@ msgstr "限制在這種架構（* 代表全部）"
 
 #: app/flatpak-builtins-remote-ls.c:73
 msgid "Show the runtime"
-msgstr "顯示執行階段環境"
+msgstr "顯示執行時期環境"
 
 #: app/flatpak-builtins-remote-ls.c:75
 msgid "Download size"
@@ -2525,7 +2525,7 @@ msgstr "顯示下載大小"
 
 #: app/flatpak-builtins-remote-ls.c:407
 msgid " [REMOTE or URI] - Show available runtimes and applications"
-msgstr " [REMOTE 或 URI] - 顯示可用的執行階段環境與應用程式"
+msgstr " [REMOTE 或 URI] - 顯示可用的執行時期環境與應用程式"
 
 #: app/flatpak-builtins-remote-modify.c:63
 msgid "Enable GPG verification"
@@ -2557,7 +2557,7 @@ msgstr "停用本機過濾器"
 
 #: app/flatpak-builtins-remote-modify.c:89
 msgid "Authenticator options"
-msgstr "驗證器選項"
+msgstr "身分核對器選項"
 
 #: app/flatpak-builtins-remote-modify.c:270
 msgid "NAME - Modify a remote repository"
@@ -2627,17 +2627,17 @@ msgstr "- 修復 flatpak 安裝"
 #: app/flatpak-builtins-repair.c:372
 #, c-format
 msgid "Removing non-deployed ref %s…\n"
-msgstr "正在移除未部屬的參照 %s…\n"
+msgstr "正在移除未布署的參照 %s…\n"
 
 #: app/flatpak-builtins-repair.c:376
 #, c-format
 msgid "Skipping non-deployed ref %s…\n"
-msgstr "正在跳過未部屬的參照 %s…\n"
+msgstr "正在跳過未布署的參照 %s…\n"
 
 #: app/flatpak-builtins-repair.c:382
 #, c-format
 msgid "Verifying %s…\n"
-msgstr "正在驗證 %s…\n"
+msgstr "正在核驗 %s…\n"
 
 #: app/flatpak-builtins-repair.c:390
 #, c-format
@@ -2688,7 +2688,7 @@ msgstr "當移除 %s 的 AppStream 時： "
 #: app/flatpak-builtins-repair.c:507
 #, c-format
 msgid "While deploying appstream for %s: "
-msgstr "當部屬 %s 的 AppStream 時： "
+msgstr "當布署 %s 的 AppStream 時： "
 
 #: app/flatpak-builtins-repo.c:93
 #, c-format
@@ -2703,7 +2703,7 @@ msgstr "標題：%s\n"
 #: app/flatpak-builtins-repo.c:99
 #, c-format
 msgid "Comment: %s\n"
-msgstr "註釋：%s\n"
+msgstr "評註：%s\n"
 
 #: app/flatpak-builtins-repo.c:102
 #, c-format
@@ -2738,17 +2738,17 @@ msgstr "重導 URL：%s\n"
 #: app/flatpak-builtins-repo.c:120
 #, c-format
 msgid "Deploy collection ID: %s\n"
-msgstr "部屬收藏 ID：%s\n"
+msgstr "布署收藏 ID：%s\n"
 
 #: app/flatpak-builtins-repo.c:123
 #, c-format
 msgid "Authenticator name: %s\n"
-msgstr "驗證器名稱：%s\n"
+msgstr "身分核對器名稱：%s\n"
 
 #: app/flatpak-builtins-repo.c:126
 #, c-format
 msgid "Authenticator install: %s\n"
-msgstr "驗證器安裝：%s\n"
+msgstr "身分核對器安裝：%s\n"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "true"
@@ -2810,15 +2810,15 @@ msgstr "要使用的分支"
 
 #: app/flatpak-builtins-run.c:66
 msgid "Use development runtime"
-msgstr "使用開發用執行階段環境"
+msgstr "使用開發用執行時期環境"
 
 #: app/flatpak-builtins-run.c:67
 msgid "Runtime to use"
-msgstr "要使用的執行階段環境"
+msgstr "要使用的執行時期環境"
 
 #: app/flatpak-builtins-run.c:68
 msgid "Runtime version to use"
-msgstr "要使用的執行階段環境"
+msgstr "要使用的執行時期環境"
 
 #: app/flatpak-builtins-run.c:71
 msgid "Log accessibility bus calls"
@@ -2854,7 +2854,7 @@ msgstr "執行指定的提交"
 
 #: app/flatpak-builtins-run.c:79
 msgid "Use specified runtime commit"
-msgstr "使用指定的執行階段環境提交"
+msgstr "使用指定的執行時期環境提交"
 
 #: app/flatpak-builtins-run.c:80
 msgid "Run completely sandboxed"
@@ -2875,7 +2875,7 @@ msgstr "APP [ARGUMENT…] - 執行 App"
 #: app/flatpak-builtins-run.c:259
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
-msgstr "執行階段/%s/%s/%s 未安裝"
+msgstr "執行時期/%s/%s/%s 未安裝"
 
 #: app/flatpak-builtins-search.c:36
 msgid "Arch to search for"
@@ -2891,7 +2891,7 @@ msgstr "顯示遠端"
 
 #: app/flatpak-builtins-search.c:275
 msgid "TEXT - Search remote apps/runtimes for text"
-msgstr "TEXT - 搜尋遠端程式或執行階段環境用的文字"
+msgstr "TEXT - 搜尋遠端程式或執行時期環境用的文字"
 
 #: app/flatpak-builtins-search.c:286
 msgid "TEXT must be specified"
@@ -2965,7 +2965,7 @@ msgstr "要更新的架構"
 
 #: app/flatpak-builtins-update.c:57
 msgid "Commit to deploy"
-msgstr "提交至部屬"
+msgstr "提交至布署"
 
 #: app/flatpak-builtins-update.c:58
 msgid "Remove old files even if running"
@@ -2989,7 +2989,7 @@ msgstr "僅更新此子路徑"
 
 #: app/flatpak-builtins-update.c:89
 msgid "[REF…] - Update applications or runtimes"
-msgstr "[REF...] - 更新應用程式或執行階段"
+msgstr "[REF...] - 更新應用程式或執行時期"
 
 #: app/flatpak-builtins-update.c:155
 msgid "Looking for updates…\n"
@@ -3153,7 +3153,7 @@ msgstr "在後方加上 :s[tart]、:m[iddle]、:e[nd] 或 :f[ull] 以變更「�
 #: app/flatpak-cli-transaction.c:85 app/flatpak-cli-transaction.c:91
 #, c-format
 msgid "Required runtime for %s (%s) found in remote %s\n"
-msgstr "%s (%s) 所要求的執行階段環境在 %s 遠端中有找到\n"
+msgstr "%s (%s) 所要求的執行時期環境在 %s 遠端中有找到\n"
 
 #: app/flatpak-cli-transaction.c:93
 msgid "Do you want to install it?"
@@ -3162,7 +3162,7 @@ msgstr "您想要安裝嗎？"
 #: app/flatpak-cli-transaction.c:99
 #, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
-msgstr "在遠端找到 %s (%s) 需要的執行階段："
+msgstr "在遠端找到 %s (%s) 需要的執行時期："
 
 #: app/flatpak-cli-transaction.c:101
 msgid "Which do you want to install (0 to abort)?"
@@ -3192,7 +3192,7 @@ msgid ""
 "  %s\n"
 "Configure this as new remote '%s'"
 msgstr ""
-"%s 應用程式依賴的執行階段環境來自：\n"
+"%s 應用程式依賴的執行時期環境來自：\n"
 "  %s\n"
 "設定這為新的「%s」遠端"
 
@@ -3267,7 +3267,7 @@ msgstr "%s 需要較新的 flatpak 版本"
 
 #: app/flatpak-cli-transaction.c:475 app/flatpak-quiet-transaction.c:144
 msgid "Not enough disk space to complete this operation"
-msgstr "磁碟空間不足以完成此動作"
+msgstr "磁碟空間不足以完成此操作"
 
 #: app/flatpak-cli-transaction.c:482
 #, c-format
@@ -3303,12 +3303,12 @@ msgstr "密碼"
 #: app/flatpak-cli-transaction.c:596 app/flatpak-quiet-transaction.c:174
 #, c-format
 msgid "Info: %s is end-of-life, in favor of %s\n"
-msgstr "資訊：%s 的生命週期已經結束，故偏好 %s\n"
+msgstr "資訊：%s 已經 end-of-life，故偏好 %s\n"
 
 #: app/flatpak-cli-transaction.c:598 app/flatpak-quiet-transaction.c:176
 #, c-format
 msgid "Info: %s is end-of-life, with reason: %s\n"
-msgstr "資訊：%s 的生命週期已經結束，理由是：%s\n"
+msgstr "資訊：%s 已經 end-of-life，理由是：%s\n"
 
 #: app/flatpak-cli-transaction.c:603
 #, c-format
@@ -3388,19 +3388,19 @@ msgstr "有一個或多個錯誤"
 #. translators: please keep the leading space
 #: app/flatpak-main.c:74
 msgid " Manage installed applications and runtimes"
-msgstr " 管理安裝的應用程式及執行階段"
+msgstr " 管理安裝的應用程式及執行時期"
 
 #: app/flatpak-main.c:75
 msgid "Install an application or runtime"
-msgstr "安裝應用程式或執行階段環境"
+msgstr "安裝應用程式或執行時期環境"
 
 #: app/flatpak-main.c:76
 msgid "Update an installed application or runtime"
-msgstr "更新已安裝的應用程式或執行階段環境"
+msgstr "更新已安裝的應用程式或執行時期環境"
 
 #: app/flatpak-main.c:77
 msgid "Uninstall an installed application or runtime"
-msgstr "解除安裝已安裝的應用程式或執行階段環境"
+msgstr "解除安裝已安裝的應用程式或執行時期環境"
 
 #: app/flatpak-main.c:80
 msgid "Mask out updates and automatic installation"
@@ -3408,11 +3408,11 @@ msgstr "隱藏掉更新及自動安裝"
 
 #: app/flatpak-main.c:81
 msgid "List installed apps and/or runtimes"
-msgstr "列出已安裝的程式與或執行階段環境"
+msgstr "列出已安裝的程式與或執行時期環境"
 
 #: app/flatpak-main.c:82
 msgid "Show info for installed app or runtime"
-msgstr "顯示已安裝程式或執行階段環境的資訊"
+msgstr "顯示已安裝程式或執行時期環境的資訊"
 
 #: app/flatpak-main.c:83
 msgid "Show history"
@@ -3428,7 +3428,7 @@ msgstr "修復 flatpak 安裝"
 
 #: app/flatpak-main.c:86
 msgid "Put applications or runtimes onto removable media"
-msgstr "將應用程式或執行階段放入可移除式媒體"
+msgstr "將應用程式或執行時期放入可移除式媒體"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:89
@@ -3437,11 +3437,11 @@ msgid ""
 " Finding applications and runtimes"
 msgstr ""
 "\n"
-"正在尋找應用程式與執行階段環境"
+"正在尋找應用程式與執行時期環境"
 
 #: app/flatpak-main.c:90
 msgid "Search for remote apps/runtimes"
-msgstr "搜尋遠端的程式或執行階段環境"
+msgstr "搜尋遠端的程式或執行時期環境"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:93
@@ -3561,7 +3561,7 @@ msgstr "列出已設定遠端的內容"
 
 #: app/flatpak-main.c:126
 msgid "Show information about a remote app or runtime"
-msgstr "顯示遠端程式或執行階段環境的相關資訊"
+msgstr "顯示遠端程式或執行時期環境的相關資訊"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:129
@@ -3598,7 +3598,7 @@ msgstr "匯入一個套組檔案"
 
 #: app/flatpak-main.c:136
 msgid "Sign an application or runtime"
-msgstr "簽署應用程式或執行階段環境"
+msgstr "簽署應用程式或執行時期環境"
 
 #: app/flatpak-main.c:137
 msgid "Update the summary file in a repository"
@@ -3733,7 +3733,7 @@ msgstr "無法重定 %s 的基底 (rebase) 至 %s：%s\n"
 #: common/flatpak-auth.c:54
 #, c-format
 msgid "No authenticator configured for remote `%s`"
-msgstr "未設定用於「%s」遠端的驗證器"
+msgstr "未設定用於「%s」遠端的身分核對器"
 
 #: common/flatpak-context.c:189
 #, c-format
@@ -3997,11 +3997,11 @@ msgstr "未設定 %s 設定鍵"
 
 #: common/flatpak-dir.c:3807
 msgid "No appstream commit to deploy"
-msgstr "沒有要部屬的 appstream 提交"
+msgstr "沒有要布署的 appstream 提交"
 
 #: common/flatpak-dir.c:3838 common/flatpak-dir.c:7501
 msgid "Can't create deploy directory"
-msgstr "無法建立部屬目錄"
+msgstr "無法建立布署目錄"
 
 #: common/flatpak-dir.c:4333 common/flatpak-dir.c:5378
 #: common/flatpak-dir.c:8444 common/flatpak-dir.c:9215
@@ -4188,7 +4188,7 @@ msgstr "當嘗試套用額外資料時："
 #: common/flatpak-dir.c:7633
 #, c-format
 msgid "Invalid deployed ref %s: "
-msgstr "無效的已部屬 %s 參照："
+msgstr "無效的已布署 %s 參照："
 
 #: common/flatpak-dir.c:7640
 #, c-format
@@ -4198,27 +4198,27 @@ msgstr "無效的 %s 參照提交："
 #: common/flatpak-dir.c:7648
 #, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
-msgstr "已部屬的 %s 參照類型與提交不符（%s）"
+msgstr "已布署的 %s 參照類型與提交不符（%s）"
 
 #: common/flatpak-dir.c:7656
 #, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
-msgstr "已部屬的 %s 參照名稱與提交不符（%s）"
+msgstr "已布署的 %s 參照名稱與提交不符（%s）"
 
 #: common/flatpak-dir.c:7664
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
-msgstr "已部屬的 %s 參照架構與提交不符（%s）"
+msgstr "已布署的 %s 參照架構與提交不符（%s）"
 
 #: common/flatpak-dir.c:7670
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
-msgstr "已部屬的 %s 參照分支與提交不符（%s）"
+msgstr "已布署的 %s 參照分支與提交不符（%s）"
 
 #: common/flatpak-dir.c:7676
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
-msgstr "已部屬的 %s 參照與提交不符（%s）"
+msgstr "已布署的 %s 參照與提交不符（%s）"
 
 #: common/flatpak-dir.c:7924 common/flatpak-installation.c:1792
 #, c-format
@@ -4348,7 +4348,7 @@ msgstr "收藏 ID 必須提供 GPG 金鑰"
 #: common/flatpak-dir.c:12362
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
-msgstr "已經安裝 %s 執行階段環境，%s 分支"
+msgstr "已經安裝 %s 執行時期環境，%s 分支"
 
 #: common/flatpak-dir.c:12363
 #, c-format
@@ -4527,7 +4527,7 @@ msgstr "「flatpak run」不應使用 sudo 執行"
 #: common/flatpak-run.c:3566
 #, c-format
 msgid "Wrong number of components in runtime %s"
-msgstr "%s 執行階段環境中的組件數量錯誤"
+msgstr "%s 執行時期環境中的組件數量錯誤"
 
 #: common/flatpak-run.c:3674
 #, c-format
@@ -4552,12 +4552,12 @@ msgstr "警告：尋找相關參照時發生問題：%s"
 #: common/flatpak-transaction.c:1835
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
-msgstr "%s 應用程式要求的 %s 執行階段環境找不到"
+msgstr "%s 應用程式要求的 %s 執行時期環境找不到"
 
 #: common/flatpak-transaction.c:1851
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
-msgstr "%s 應用程式要求的 %s 執行階段環境尚未安裝"
+msgstr "%s 應用程式要求的 %s 執行時期環境尚未安裝"
 
 #: common/flatpak-transaction.c:1937
 #, c-format
@@ -4703,22 +4703,22 @@ msgstr "「%c」glob 字元無效"
 #: common/flatpak-utils.c:1250
 #, c-format
 msgid "Missing glob on line %d"
-msgstr "第 %d 行沒有 glob"
+msgstr "第 %d 列沒有 glob"
 
 #: common/flatpak-utils.c:1254
 #, c-format
 msgid "Trailing text on line %d"
-msgstr "第 %d 行末尾有文字"
+msgstr "第 %d 列末尾有文字"
 
 #: common/flatpak-utils.c:1258
 #, c-format
 msgid "on line %d"
-msgstr "在第 %d 行"
+msgstr "在第 %d 列"
 
 #: common/flatpak-utils.c:1280
 #, c-format
 msgid "Unexpected word '%s' on line %d"
-msgstr "第 %2$d 行有非預期的「%1$s」單字"
+msgstr "第 %2$d 列有非預期的「%1$s」單字"
 
 #: common/flatpak-utils.c:1334
 #, c-format
@@ -4728,7 +4728,7 @@ msgstr "%s 中的組件數量錯誤"
 #: common/flatpak-utils.c:1340
 #, c-format
 msgid "%s is not application or runtime"
-msgstr "%s 不是應用程式或執行階段環境"
+msgstr "%s 不是應用程式或執行時期環境"
 
 #: common/flatpak-utils.c:1346
 #, c-format
@@ -4776,7 +4776,7 @@ msgstr "複製 %s 元件的 128x128 圖示時發生錯誤：%s\n"
 #: common/flatpak-utils.c:4598
 #, c-format
 msgid "%s is end-of-life, ignoring\n"
-msgstr "%s 的生命週期已經結束，故忽略\n"
+msgstr "%s 已經 end-of-life，故忽略\n"
 
 #: common/flatpak-utils.c:4607
 #, c-format
@@ -4893,7 +4893,7 @@ msgstr "安裝軟體時必須通過身分核對"
 #. in the wheel group to install without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:41
 msgid "Install signed runtime"
-msgstr "安裝已簽署的執行階段環境"
+msgstr "安裝已簽署的執行時期環境"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update an
@@ -4918,7 +4918,7 @@ msgstr "更新軟體時必須通過身分核對"
 #. updates.
 #: system-helper/org.freedesktop.Flatpak.policy.in:79
 msgid "Update signed runtime"
-msgstr "更新已簽署的執行階段環境"
+msgstr "更新已簽署的執行時期環境"
 
 #. SECURITY:
 #. - Normal users do not need authentication to update metadata
@@ -4962,7 +4962,7 @@ msgstr "從 $(path) 安裝軟體需要通過身分核對"
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:144
 msgid "Uninstall runtime"
-msgstr "解除安裝執行階段環境"
+msgstr "解除安裝執行時期環境"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:145
 msgid "Authentication is required to uninstall software"
