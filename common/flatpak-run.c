@@ -1730,7 +1730,6 @@ static void
 add_font_path_args (FlatpakBwrap *bwrap)
 {
   g_autoptr(GString) xml_snippet = g_string_new ("");
-  g_autoptr(GFile) home = NULL;
   g_autoptr(GFile) user_font1 = NULL;
   g_autoptr(GFile) user_font2 = NULL;
   g_autoptr(GFile) user_font_cache = NULL;
@@ -1787,9 +1786,8 @@ add_font_path_args (FlatpakBwrap *bwrap)
                               NULL);
     }
 
-  home = g_file_new_for_path (g_get_home_dir ());
-  user_font1 = g_file_resolve_relative_path (home, ".local/share/fonts");
-  user_font2 = g_file_resolve_relative_path (home, ".fonts");
+  user_font1 = g_file_new_build_filename (g_get_user_data_dir (), "fonts", NULL);
+  user_font2 = g_file_new_build_filename (g_get_home_dir (), ".fonts", NULL);
 
   if (g_file_query_exists (user_font1, NULL))
     {
@@ -1810,7 +1808,7 @@ add_font_path_args (FlatpakBwrap *bwrap)
                               flatpak_file_get_path_cached (user_font2));
     }
 
-  user_font_cache = g_file_resolve_relative_path (home, ".cache/fontconfig");
+  user_font_cache = g_file_new_build_filename (g_get_user_cache_dir (), "fontconfig", NULL);
   if (g_file_query_exists (user_font_cache, NULL))
     {
       flatpak_bwrap_add_args (bwrap,
@@ -1837,7 +1835,6 @@ add_font_path_args (FlatpakBwrap *bwrap)
 static void
 add_icon_path_args (FlatpakBwrap *bwrap)
 {
-  g_autoptr(GFile) home = NULL;
   g_autoptr(GFile) user_icons = NULL;
 
   if (g_file_test ("/usr/share/icons", G_FILE_TEST_IS_DIR))
@@ -1847,8 +1844,7 @@ add_icon_path_args (FlatpakBwrap *bwrap)
                               NULL);
     }
 
-  home = g_file_new_for_path (g_get_home_dir ());
-  user_icons = g_file_resolve_relative_path (home, ".local/share/icons");
+  user_icons = g_file_new_build_filename (g_get_user_data_dir (), "icons", NULL);
   if (g_file_query_exists (user_icons, NULL))
     {
       flatpak_bwrap_add_args (bwrap,
