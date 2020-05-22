@@ -170,7 +170,7 @@
                 <listitem><para>
                     This is similar to --deploy-collection-id, but it only applies the
                     deploy to clients newer than flatpak 1.7 which supports the new form
-                    of sideloades.
+                    of sideloads.
                 </para></listitem>
             </varlistentry>
 
