@@ -63,7 +63,7 @@ add_bin() {
     fi
 }
 
-for i in $@ bash ls cat echo readlink socat; do
+for i in $@ bash ls cat echo env grep readlink socat; do
     I=`which $i`
     add_bin $I
 done

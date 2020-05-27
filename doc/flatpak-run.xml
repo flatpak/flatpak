@@ -113,6 +113,11 @@
             ID of the running app.
         </para>
         <para>
+            Flatpak also parses <filename>os-release</filename> on the host, and for
+            each key-value pair sets an environment variable prefixed with service_host_.
+            Example: <envar>service_host_ID=debian</envar>
+        </para>
+        <para>
             If parental controls support is enabled, flatpak will check the
             current user’s parental controls settings, and will refuse to
             run an app if it is blacklisted for the current user.

@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..16"
+echo "1..17"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -79,6 +79,13 @@ assert_file_has_content runtime-fpi "[Runtime]"
 assert_file_has_content runtime-fpi "^runtime=runtime/org\.test\.Platform/$ARCH/stable$"
 
 ok "run a runtime"
+
+run_sh org.test.Platform env | grep service_host_ >runtime-os-release
+while read -r line; do
+assert_file_has_content runtime-os-release "service_host_$(eval "echo ${line}")"
+done < /etc/os-release
+
+ok "host os-release"
 
 if run org.test.Nonexistent 2> run-error-log; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"

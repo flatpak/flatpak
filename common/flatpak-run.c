@@ -2869,6 +2869,8 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   gulong pers;
   gid_t gid = getgid ();
   g_autoptr(GFile) etc = NULL;
+  g_autofree gchar *os_release = NULL;
+  gboolean ret;
 
   run_dir = g_strdup_printf ("/run/user/%d", getuid ());
 
@@ -2940,6 +2942,30 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
     flatpak_bwrap_add_args (bwrap, "--ro-bind", "/etc/machine-id", "/etc/machine-id", NULL);
   else if (g_file_test ("/var/lib/dbus/machine-id", G_FILE_TEST_EXISTS))
     flatpak_bwrap_add_args (bwrap, "--ro-bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
+
+  /* As per RFC for Container Interface proposed at https://github.com/systemd/systemd/issues/15878
+   * parse os-release and pass through all key-value pairs with a service_host_ prefix added to the key */
+  ret = g_file_get_contents ("/etc/os-release", &os_release, NULL, NULL);
+  if (!ret)
+    ret = g_file_get_contents ("/usr/lib/os-release", &os_release, NULL, NULL);
+  if (ret)
+    {
+      g_auto(GStrv) os_release_lines = g_strsplit (os_release, "\n", 0);
+      if (os_release_lines)
+        for (int i = 0; os_release_lines[i] != NULL && os_release_lines[i][0] != '\0'; ++i)
+          {
+            g_auto(GStrv) os_release_key_value = g_strsplit (os_release_lines[i], "=", 0);
+            if (!os_release_key_value || !os_release_key_value[0] || os_release_key_value[0][0] == '\0')
+              break;
+            g_autofree gchar *prefixed_key = g_strconcat ("service_host_", os_release_key_value[0], NULL);
+            if (!prefixed_key)
+              break;
+            g_autofree gchar *unquoted_value = g_shell_unquote (os_release_key_value[1], NULL);
+            if (!unquoted_value)
+              break;
+            flatpak_bwrap_set_env (bwrap, prefixed_key, unquoted_value, TRUE);
+          }
+  }
 
   if (runtime_files)
     etc = g_file_get_child (runtime_files, "etc");
