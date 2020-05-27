@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..16"
+echo "1..17"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -79,6 +79,28 @@ assert_file_has_content runtime-fpi "[Runtime]"
 assert_file_has_content runtime-fpi "^runtime=runtime/org\.test\.Platform/$ARCH/stable$"
 
 ok "run a runtime"
+
+if [ -f /etc/os-release ]; then
+    run_sh org.test.Platform cat /run/host/os-release >os-release
+    (cd /etc; md5sum os-release) | md5sum -c
+
+    ARGS="--filesystem=host-etc" run_sh org.test.Platform cat /run/host/os-release >os-release
+    (cd /etc; md5sum os-release) | md5sum -c
+
+    if run_sh org.test.Platform "echo test >> /run/host/os-release"; then exit 1; fi
+    if run_sh org.test.Platform "echo test >> /run/host/os-release"; then exit 1; fi
+elif [ -f /usr/lib/os-release ]; then
+    run_sh org.test.Platform cat /run/host/os-release >os-release
+    (cd /usr/lib; md5sum os-release) | md5sum -c
+
+    ARGS="--filesystem=host-os" run_sh org.test.Platform cat /run/host/os-release >os-release
+    (cd /usr/lib; md5sum os-release) | md5sum -c
+
+    if run_sh org.test.Platform "echo test >> /run/host/os-release"; then exit 1; fi
+    if run_sh org.test.Platform "echo test >> /run/host/os-release"; then exit 1; fi
+fi
+
+ok "host os-release"
 
 if run org.test.Nonexistent 2> run-error-log; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"

@@ -113,6 +113,13 @@
             ID of the running app.
         </para>
         <para>
+            Flatpak also bind-mounts as read-only the host's <filename>/etc/os-release</filename>
+            (if available, or <filename>/usr/lib/os-release</filename> as a fallback) to
+            <filename>/run/host/os-release</filename> in accordance with the
+            <ulink url="https://www.freedesktop.org/software/systemd/man/os-release.html">
+            os-release specification</ulink>.
+        </para>
+        <para>
             If parental controls support is enabled, flatpak will check the
             current user’s parental controls settings, and will refuse to
             run an app if it is blocklisted for the current user.

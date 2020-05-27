@@ -395,6 +395,14 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
         flatpak_bwrap_add_args (bwrap,
                                 etc_bind_mode, "/etc", "/run/host/etc", NULL);
     }
+
+  /* As per the os-release specification https://www.freedesktop.org/software/systemd/man/os-release.html
+   * always read-only bind-mount /etc/os-release if it exists, or /usr/lib/os-release as a fallback from
+   * the host into the application's /run/host */
+  if (g_file_test ("/etc/os-release", G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap, "--ro-bind", "/etc/os-release", "/run/host/os-release", NULL);
+  else if (g_file_test ("/usr/lib/os-release", G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap, "--ro-bind", "/usr/lib/os-release", "/run/host/os-release", NULL);
 }
 
 /* Returns 0 if not visible */
