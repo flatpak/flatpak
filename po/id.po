@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2020-05-14 03:26+0000\n"
-"PO-Revision-Date: 2020-05-21 16:30+0700\n"
+"PO-Revision-Date: 2020-05-30 17:22+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -1173,7 +1173,7 @@ msgstr "Peringatan: Menghilangkan ref terkait '%s' karena tidak dipasang.\n"
 #: app/flatpak-builtins-create-usb.c:164
 #, c-format
 msgid "Warning: Omitting related ref ‘%s’ because it is partially installed.\n"
-msgstr "Peringatan: Menghilangkan ref terkait ‘%s 'karena dipasang sebagian.\n"
+msgstr "Peringatan: Menghilangkan ref terkait ‘%s' karena dipasang sebagian.\n"
 
 #: app/flatpak-builtins-create-usb.c:175
 #, c-format
