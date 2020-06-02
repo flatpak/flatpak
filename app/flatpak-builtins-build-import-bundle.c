@@ -97,7 +97,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   oci_digest = desc->parent.digest;
 
   versioned = flatpak_oci_registry_load_versioned (registry, NULL,
-                                                   oci_digest, NULL,
+                                                   oci_digest, NULL, NULL,
                                                    cancellable, error);
   if (versioned == NULL)
     return NULL;
@@ -105,7 +105,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   manifest = FLATPAK_OCI_MANIFEST (versioned);
 
   image_config = flatpak_oci_registry_load_image_config (registry, NULL,
-                                                         manifest->config.digest,
+                                                         manifest->config.digest, NULL,
                                                          NULL, cancellable, error);
   if (image_config == NULL)
     return FALSE;

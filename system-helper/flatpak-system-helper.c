@@ -551,7 +551,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, NULL,
+      versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, (const char **)desc->parent.urls, NULL,
                                                        NULL, &error);
       if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
         {
@@ -562,6 +562,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
       image_config = flatpak_oci_registry_load_image_config (registry, NULL,
                                                              FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+                                                             (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
                                                              NULL, NULL, &error);
       if (image_config == NULL)
         {

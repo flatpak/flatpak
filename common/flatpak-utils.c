@@ -5652,10 +5652,10 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   int n_layers;
   int i;
 
-  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, cancellable, error))
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, NULL, cancellable, error))
     return FALSE;
 
-  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, &versioned_size, cancellable, error);
+  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, NULL, &versioned_size, cancellable, error);
   if (versioned == NULL)
     return FALSE;
 
@@ -5667,11 +5667,11 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   if (manifest->config.digest == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
 
-  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, NULL, NULL, cancellable, error))
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, (const char **)manifest->config.urls, NULL, NULL, cancellable, error))
     return FALSE;
 
   image_config = flatpak_oci_registry_load_image_config (dst_registry, NULL,
-                                                         manifest->config.digest,
+                                                         manifest->config.digest, NULL,
                                                          NULL, cancellable, error);
   if (image_config == NULL)
     return FALSE;
@@ -5730,7 +5730,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
           g_debug ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
           g_autofree char *delta_digest = NULL;
           glnx_autofd int delta_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
-                                                                         delta_layer->digest,
+                                                                         delta_layer->digest, (const char **)delta_layer->urls,
                                                                          oci_layer_progress, &progress_data,
                                                                          cancellable, error);
           if (delta_fd == -1)
@@ -5745,7 +5745,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
         }
       else
         {
-          if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, layer->digest,
+          if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, layer->digest, (const char **)layer->urls,
                                                  oci_layer_progress, &progress_data,
                                                  cancellable, error))
             return FALSE;
@@ -5926,6 +5926,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
 
       blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
                                                     delta_layer ? delta_layer->digest : layer->digest,
+                                                    (const char **)(delta_layer ? delta_layer->urls : layer->urls),
                                                     oci_layer_progress, &progress_data,
                                                     cancellable, &local_error);
 
@@ -5937,7 +5938,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
            * This happens when we deploy via system helper using oci deltas */
           expected_digest = image_config->rootfs.diff_ids[i];
           blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
-                                                        image_config->rootfs.diff_ids[i],
+                                                        image_config->rootfs.diff_ids[i], NULL,
                                                         oci_layer_progress, &progress_data,
                                                         cancellable, NULL); /* No error here, we report the first error if this failes */
         }
