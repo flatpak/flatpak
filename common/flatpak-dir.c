@@ -777,7 +777,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
   oci_digest = g_strconcat ("sha256:", checksum, NULL);
 
   versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
-                                                   NULL, cancellable, error);
+                                                   NULL, NULL, cancellable, error);
   if (versioned == NULL)
     return NULL;
 
@@ -789,6 +789,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
 
   image_config = flatpak_oci_registry_load_image_config (registry, oci_repository,
                                                          FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+                                                         (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
                                                          NULL, cancellable, error);
   if (image_config == NULL)
     return NULL;
@@ -5204,7 +5205,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     return FALSE;
 
   versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
-                                                   NULL, cancellable, error);
+                                                   NULL, NULL, cancellable, error);
   if (versioned == NULL)
     return FALSE;
 
@@ -5213,6 +5214,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   image_config = flatpak_oci_registry_load_image_config (registry, oci_repository,
                                                          FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+                                                         (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
                                                          NULL, cancellable, error);
   if (image_config == NULL)
     return FALSE;

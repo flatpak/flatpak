@@ -310,10 +310,31 @@ local_load_file (int           dfd,
   return bytes;
 }
 
+/* We just support the first http uri for now */
+static char *
+choose_alt_uri (SoupURI      *base_uri,
+                const char **alt_uris)
+{
+  int i;
+
+  if (alt_uris == NULL)
+    return NULL;
+
+  for (i = 0; alt_uris[i] != NULL; i++)
+    {
+      const char *alt_uri = alt_uris[i];
+      if (g_str_has_prefix (alt_uri, "http:") || g_str_has_prefix (alt_uri, "https:"))
+        return g_strdup (alt_uri);
+    }
+
+  return NULL;
+}
+
 static GBytes *
 remote_load_file (SoupSession  *soup_session,
                   SoupURI      *base,
                   const char   *subpath,
+                  const char  **alt_uris,
                   const char   *token,
                   char        **out_content_type,
                   GCancellable *cancellable,
@@ -323,15 +344,20 @@ remote_load_file (SoupSession  *soup_session,
   g_autoptr(GBytes) bytes = NULL;
   g_autofree char *uri_s = NULL;
 
-  uri = soup_uri_new_with_base (base, subpath);
-  if (uri == NULL)
+  uri_s = choose_alt_uri (base, alt_uris);
+  if (uri_s == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                   "Invalid relative url %s", subpath);
-      return NULL;
+      uri = soup_uri_new_with_base (base, subpath);
+      if (uri == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                       "Invalid relative url %s", subpath);
+          return NULL;
+        }
+
+      uri_s = soup_uri_to_string (uri, FALSE);
     }
 
-  uri_s = soup_uri_to_string (uri, FALSE);
   bytes = flatpak_load_uri (soup_session,
                             uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                             token,
@@ -346,6 +372,7 @@ remote_load_file (SoupSession  *soup_session,
 static GBytes *
 flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
                                 const char         *subpath,
+                                const char        **alt_uris,
                                 char              **out_content_type,
                                 GCancellable       *cancellable,
                                 GError            **error)
@@ -353,7 +380,7 @@ flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
   if (self->dfd != -1)
     return local_load_file (self->dfd, subpath, cancellable, error);
   else
-    return remote_load_file (self->soup_session, self->base_uri, subpath, self->token, out_content_type, cancellable, error);
+    return remote_load_file (self->soup_session, self->base_uri, subpath, alt_uris, self->token, out_content_type, cancellable, error);
 }
 
 static JsonNode *
@@ -570,7 +597,7 @@ flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
 
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_file (self, "index.json", NULL, cancellable, &local_error);
+  bytes = flatpak_oci_registry_load_file (self, "index.json", NULL, NULL, cancellable, &local_error);
   if (bytes == NULL)
     {
       g_propagate_error (error, g_steal_pointer (&local_error));
@@ -732,6 +759,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
                                     const char            *repository,
                                     gboolean               manifest,
                                     const char            *digest,
+                                    const char           **alt_uris,
                                     FlatpakLoadUriProgress progress_cb,
                                     gpointer               user_data,
                                     GCancellable          *cancellable,
@@ -763,15 +791,20 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
 
       /* remote case, download and verify */
 
-      uri = soup_uri_new_with_base (self->base_uri, subpath);
-      if (uri == NULL)
+      uri_s = choose_alt_uri (self->base_uri, alt_uris);
+      if (uri_s == NULL)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                       "Invalid relative url %s", subpath);
-          return -1;
+          uri = soup_uri_new_with_base (self->base_uri, subpath);
+          if (uri == NULL)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                           "Invalid relative url %s", subpath);
+              return -1;
+            }
+
+          uri_s = soup_uri_to_string (uri, FALSE);
         }
 
-      uri_s = soup_uri_to_string (uri, FALSE);
 
       if (!flatpak_open_in_tmpdir_at (self->tmp_dfd, 0600, tmpfile_name,
                                       &out_stream, cancellable, error))
@@ -817,6 +850,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
                                   const char            *repository,
                                   gboolean               manifest,
                                   const char            *digest,
+                                  const char           **alt_uris,
                                   FlatpakLoadUriProgress progress_cb,
                                   gpointer               user_data,
                                   GCancellable          *cancellable,
@@ -1087,6 +1121,7 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
                                 const char         *repository,
                                 gboolean            manifest,
                                 const char         *digest, /* Note: Can be tag for remote registries */
+                                const char        **alt_uris,
                                 char              **out_content_type,
                                 GCancellable       *cancellable,
                                 GError            **error)
@@ -1102,7 +1137,7 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
   if (subpath == NULL)
     return NULL;
 
-  bytes = flatpak_oci_registry_load_file (self, subpath, out_content_type, cancellable, error);
+  bytes = flatpak_oci_registry_load_file (self, subpath, alt_uris, out_content_type, cancellable, error);
   if (bytes == NULL)
     return NULL;
 
@@ -1160,6 +1195,7 @@ FlatpakOciVersioned *
 flatpak_oci_registry_load_versioned (FlatpakOciRegistry *self,
                                      const char         *repository,
                                      const char         *digest,
+                                     const char        **alt_uris,
                                      gsize              *out_size,
                                      GCancellable       *cancellable,
                                      GError            **error)
@@ -1169,7 +1205,7 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry *self,
 
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_blob (self, repository, TRUE, digest, &content_type, cancellable, error);
+  bytes = flatpak_oci_registry_load_blob (self, repository, TRUE, digest, alt_uris, &content_type, cancellable, error);
   if (bytes == NULL)
     return NULL;
 
@@ -1182,6 +1218,7 @@ FlatpakOciImage *
 flatpak_oci_registry_load_image_config (FlatpakOciRegistry *self,
                                         const char         *repository,
                                         const char         *digest,
+                                        const char        **alt_uris,
                                         gsize              *out_size,
                                         GCancellable       *cancellable,
                                         GError            **error)
@@ -1190,7 +1227,7 @@ flatpak_oci_registry_load_image_config (FlatpakOciRegistry *self,
 
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_blob (self, repository, FALSE, digest, NULL, cancellable, error);
+  bytes = flatpak_oci_registry_load_blob (self, repository, FALSE, digest, alt_uris, NULL, cancellable, error);
   if (bytes == NULL)
     return NULL;
 
@@ -1975,7 +2012,7 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
 #endif
 
   deltaindexv = flatpak_oci_registry_load_versioned (registry, oci_repository, "_deltaindex",
-                                                     NULL, cancellable, NULL);
+                                                     NULL, NULL, cancellable, NULL);
   if (deltaindexv == NULL)
     return NULL;
 
@@ -1989,7 +2026,7 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
       g_autoptr(FlatpakOciVersioned) deltamanifest = NULL;
 
       deltamanifest = flatpak_oci_registry_load_versioned (registry, oci_repository, delta_manifest_digest,
-                                                           NULL, cancellable, NULL);
+                                                           (const char **)delta_desc->urls, NULL, cancellable, NULL);
       if (deltamanifest != NULL && G_TYPE_CHECK_INSTANCE_TYPE (deltamanifest, FLATPAK_TYPE_OCI_MANIFEST))
         return (FlatpakOciManifest *)g_steal_pointer (&deltamanifest);
     }
