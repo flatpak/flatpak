@@ -4210,6 +4210,7 @@ static gboolean
 copy_icon (const char        *id,
            GFile             *icons_dir,
            OstreeRepo        *repo,
+           GFile             *root,
            OstreeMutableTree *size_mtree,
            const char        *size,
            GError           **error)
@@ -4217,7 +4218,10 @@ copy_icon (const char        *id,
   g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
   g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, size);
   g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
+  g_autoptr(GFileInfo) file_info = NULL;
+  g_autoptr(GFile) f = NULL;
   const char *checksum;
+  const char *target_icon_name = icon_name;
 
   if (!ostree_repo_file_ensure_resolved (OSTREE_REPO_FILE(icon_file), NULL))
     {
@@ -4225,8 +4229,19 @@ copy_icon (const char        *id,
       return TRUE;
     }
 
+  f = g_file_resolve_relative_path (root, g_file_get_path(icon_file) );
+  file_info = g_file_query_info (f, OSTREE_GIO_FAST_QUERYINFO,
+                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                 NULL, error);
+
+  if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_SYMBOLIC_LINK)
+  {
+      target_icon_name = g_file_info_get_attribute_byte_string (file_info, "standard::symlink-target");
+      icon_file = g_file_get_child (size_dir, target_icon_name);
+  }
+
   checksum = ostree_repo_file_get_checksum (OSTREE_REPO_FILE(icon_file));
-  if (!ostree_mutable_tree_replace_file (size_mtree, icon_name, checksum, error))
+  if (!ostree_mutable_tree_replace_file (size_mtree, target_icon_name, checksum, error))
     return FALSE;
 
   return TRUE;
@@ -4326,13 +4341,13 @@ extract_appstream (OstreeRepo   *repo,
           if (g_str_has_suffix (component_id_suffix, ".desktop"))
             component_id_suffix[strlen (component_id_suffix) - strlen (".desktop")] = 0;
 
-          if (!copy_icon (component_id_text, icons_dir, repo, size1_mtree, "64x64", &my_error))
+          if (!copy_icon (component_id_text, icons_dir, repo, root, size1_mtree, "64x64", &my_error))
             {
               g_print (_("Error copying 64x64 icon for component %s: %s\n"), component_id_text, my_error->message);
               g_clear_error (&my_error);
             }
 
-          if (!copy_icon (component_id_text, icons_dir, repo, size2_mtree, "128x128", &my_error))
+          if (!copy_icon (component_id_text, icons_dir, repo, root, size2_mtree, "128x128", &my_error))
              {
                g_print (_("Error copying 128x128 icon for component %s: %s\n"), component_id_text, my_error->message);
                g_clear_error (&my_error);
