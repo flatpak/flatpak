@@ -1,4 +1,4 @@
-libglnx is the successor to libgsystem: https://git.gnome.org/browse/libgsystem
+libglnx is the successor to [libgsystem](https://gitlab.gnome.org/Archive/libgsystem).
 
 It is for modules which depend on both GLib and Linux, intended to be
 used as a git submodule.
