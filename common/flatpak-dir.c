@@ -5116,6 +5116,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   VarRefInfoRef latest_rev_info;
   VarMetadataRef metadata;
   const char *oci_repository = NULL;
+  const char *delta_url = NULL;
   const char *rev;
   gboolean res;
 
@@ -5138,6 +5139,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   metadata = var_ref_info_get_metadata (latest_rev_info);
   oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+  delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
 
   oci_digest = g_strconcat ("sha256:", rev, NULL);
 
@@ -5149,7 +5151,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   g_debug ("Mirroring OCI image %s", oci_digest);
 
-  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, state->remote_name, ref, self->repo, oci_pull_progress_cb,
+  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, state->remote_name, ref, delta_url, self->repo, oci_pull_progress_cb,
                                        progress, cancellable, error);
 
   if (!res)
@@ -5176,6 +5178,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autoptr(FlatpakOciImage) image_config = NULL;
   g_autofree char *full_ref = NULL;
   const char *oci_repository = NULL;
+  const char *delta_url = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *checksum = NULL;
   VarRefInfoRef latest_rev_info;
@@ -5196,6 +5199,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   metadata = var_ref_info_get_metadata (latest_rev_info);
   oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+  delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
 
   oci_digest = g_strconcat ("sha256:", opt_rev != NULL ? opt_rev : latest_rev, NULL);
 
@@ -5231,7 +5235,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_debug ("Pulling OCI image %s", oci_digest);
 
-  checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, FLATPAK_OCI_MANIFEST (versioned), image_config,
+  checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, delta_url, FLATPAK_OCI_MANIFEST (versioned), image_config,
                                     state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
 
   if (checksum == NULL)

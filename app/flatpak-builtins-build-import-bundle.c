@@ -121,7 +121,7 @@ import_oci (OstreeRepo *repo, GFile *file,
       return NULL;
     }
 
-  commit_checksum = flatpak_pull_from_oci (repo, registry, NULL, oci_digest, manifest, image_config,
+  commit_checksum = flatpak_pull_from_oci (repo, registry, NULL, oci_digest, NULL, manifest, image_config,
                                            NULL, target_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, cancellable, error);
   if (commit_checksum == NULL)
     return NULL;
