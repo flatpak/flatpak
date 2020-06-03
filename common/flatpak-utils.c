@@ -5630,6 +5630,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                const char            *digest,
                                const char            *remote,
                                const char            *ref,
+                               const char            *delta_url,
                                OstreeRepo            *repo,
                                FlatpakOciPullProgress progress_cb,
                                gpointer               progress_user_data,
@@ -5687,7 +5688,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
       (old_state == OSTREE_REPO_COMMIT_STATE_NORMAL) &&
       ostree_repo_read_commit (repo, old_checksum, &old_root, NULL, NULL, NULL))
     {
-      delta_manifest = flatpak_oci_registry_find_delta_manifest (registry, oci_repository, digest, cancellable);
+      delta_manifest = flatpak_oci_registry_find_delta_manifest (registry, oci_repository, digest, delta_url, cancellable);
       if (delta_manifest)
         {
           VarMetadataRef commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (old_commit));
@@ -5774,6 +5775,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                        FlatpakOciRegistry    *registry,
                        const char            *oci_repository,
                        const char            *digest,
+                       const char            *delta_url,
                        FlatpakOciManifest    *manifest,
                        FlatpakOciImage       *image_config,
                        const char            *remote,
@@ -5856,7 +5858,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
       (old_state == OSTREE_REPO_COMMIT_STATE_NORMAL) &&
       ostree_repo_read_commit (repo, old_checksum, &old_root, NULL, NULL, NULL))
     {
-      delta_manifest = flatpak_oci_registry_find_delta_manifest (registry, oci_repository, digest, cancellable);
+      delta_manifest = flatpak_oci_registry_find_delta_manifest (registry, oci_repository, digest, delta_url, cancellable);
       if (delta_manifest)
         {
           VarMetadataRef commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (old_commit));

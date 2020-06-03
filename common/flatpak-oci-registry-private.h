@@ -135,6 +135,7 @@ char *                  flatpak_oci_registry_apply_delta_to_blob (FlatpakOciRegi
 FlatpakOciManifest *   flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
                                                                  const char            *oci_repository,
                                                                  const char            *for_digest,
+                                                                 const char            *delta_manifest_uri,
                                                                  GCancellable          *cancellable);
 
 struct archive *flatpak_oci_layer_writer_get_archive (FlatpakOciLayerWriter *self);

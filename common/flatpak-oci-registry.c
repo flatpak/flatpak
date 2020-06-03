@@ -2001,6 +2001,7 @@ FlatpakOciManifest *
 flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
                                           const char            *oci_repository,
                                           const char            *for_digest,
+                                          const char            *delta_manifest_url,
                                           GCancellable          *cancellable)
 {
   g_autoptr(FlatpakOciVersioned) deltaindexv = NULL;
@@ -2010,6 +2011,36 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
   if (TRUE)
     return NULL; /* Don't find deltas if we can't apply them */
 #endif
+
+  if (delta_manifest_url != NULL)
+    {
+      g_autoptr(SoupURI) soup_uri = soup_uri_new_with_base (registry->base_uri, delta_manifest_url);
+      g_autofree char *uri_s = soup_uri_to_string (soup_uri, FALSE);
+
+      g_autoptr(GBytes) bytes = flatpak_load_uri (registry->soup_session,
+                                                  uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                                  registry->token,
+                                                  NULL, NULL, NULL,
+                                                  cancellable, NULL);
+      if (bytes != NULL)
+        {
+          g_autoptr(FlatpakOciVersioned) versioned =
+            flatpak_oci_versioned_from_json (bytes, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST, NULL);
+
+          if (versioned != NULL && G_TYPE_CHECK_INSTANCE_TYPE (versioned, FLATPAK_TYPE_OCI_MANIFEST))
+            {
+              g_autoptr(FlatpakOciManifest) delta_manifest = (FlatpakOciManifest *)g_steal_pointer (&versioned);
+
+              /* We resolved using a mutable location (not via digest), so ensure its still valid for this target */
+              if (delta_manifest->annotations)
+                {
+                  const char *target = g_hash_table_lookup (delta_manifest->annotations, "io.github.containers.delta.target");
+                  if (g_strcmp0 (target, for_digest) == 0)
+                    return g_steal_pointer (&delta_manifest);
+                }
+            }
+        }
+    }
 
   deltaindexv = flatpak_oci_registry_load_versioned (registry, oci_repository, "_deltaindex",
                                                      NULL, NULL, cancellable, NULL);
@@ -2857,6 +2888,7 @@ flatpak_oci_index_make_summary (GFile        *index,
       const char *fake_commit;
       guint64 installed_size = 0;
       guint64 download_size = 0;
+      const char *delta_url;
       const char *installed_size_str;
       const char *download_size_str;
       const char *token_type_base64;
@@ -2895,6 +2927,11 @@ flatpak_oci_index_make_summary (GFile        *index,
 
       g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.oci-repository",
                              g_variant_new_string (info->repository));
+
+      delta_url = get_image_metadata (image, "io.github.containers.DeltaUrl");
+      if (delta_url)
+        g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.delta-url",
+                               g_variant_new_string (delta_url));
 
       g_variant_builder_add_value (refs_builder,
                                    g_variant_new ("(s(t@ay@a{sv}))", ref,
