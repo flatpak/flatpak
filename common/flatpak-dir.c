@@ -716,6 +716,9 @@ flatpak_remote_state_new_oci_registry (FlatpakRemoteState *self,
   g_autofree char *registry_uri = NULL;
   g_autoptr(FlatpakOciRegistry) registry = NULL;
 
+  if (!flatpak_remote_state_ensure_summary (self, error))
+    return NULL;
+
   registry_uri = lookup_oci_registry_uri_from_summary (self->summary, error);
   if (registry_uri == NULL)
     return NULL;
