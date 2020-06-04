@@ -8707,12 +8707,15 @@ flatpak_dir_install (FlatpakDir          *self,
           if (is_revokefs_pull &&
               !flatpak_dir_revokefs_fuse_unmount (&child_repo, &child_repo_lock, mnt_dir, &local_error))
             {
-              g_warning ("Could not unmount revokefs-fuse filesystem at %s: %s", mnt_dir, local_error->message);
-              flatpak_dir_unmount_and_cancel_pull (self,
-                                                   FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
-                                                   cancellable,
-                                                   &child_repo, &child_repo_lock,
-                                                   mnt_dir, src_dir);
+              g_propagate_prefixed_error (error, g_steal_pointer (&local_error), 
+                      _("Could not unmount revokefs-fuse filesystem at %s: "), mnt_dir);
+
+              if (src_dir &&
+                  !flatpak_dir_system_helper_call_cancel_pull (self,
+                                                               FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
+                                                               installation ? installation : "",
+                                                               src_dir, cancellable, &local_error))
+                g_warning ("Error cancelling ongoing pull at %s: %s", src_dir, local_error->message);
               return FALSE;
             }
         }
