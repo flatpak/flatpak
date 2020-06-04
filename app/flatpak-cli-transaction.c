@@ -473,8 +473,10 @@ operation_error (FlatpakTransaction            *transaction,
     msg = g_strdup_printf (_("%s needs a later flatpak version"), flatpak_ref_get_name (rref));
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_OUT_OF_SPACE))
     msg = g_strdup (_("Not enough disk space to complete this operation"));
-  else
+  else if (error)
     msg = g_strdup (error->message);
+  else
+    msg = g_strdup (_("(internal error, please report)"));
 
   if (!non_fatal && self->first_operation_error == NULL)
     g_propagate_prefixed_error (&self->first_operation_error,
