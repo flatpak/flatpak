@@ -287,7 +287,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
   g_option_context_add_main_entries (context, common_options, NULL);
 
   if (!flatpak_option_context_parse (context, add_options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
                                      &dirs, cancellable, error))
     return FALSE;
 
