@@ -206,7 +206,7 @@ ok "install via flatpakref"
 ${FLATPAK} ${U} -y uninstall org.test.Platform
 
 ${FLATPAK} remotes > remotes-list
-assert_not_file_has_content remotes '^platform-origin'
+assert_not_file_has_content remotes-list '^platform-origin'
 
 assert_not_has_file $base/oci/platform-origin.index.gz
 
