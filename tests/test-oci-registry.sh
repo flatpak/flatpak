@@ -170,7 +170,16 @@ assert_not_has_dir $base/appstream/oci-registry
 
 ok "delete remote"
 
-# Try installing the platform via a flatpakref file.
+# Try installing the platform via a flatpakref file. We use a different URL
+# for the runtime repo so we can test that the origin remote is pruned on
+# uninstall below.
+
+cat << EOF > runtime-repo.flatpakrepo
+[Flatpak Repo]
+Version=1
+Url=oci+http://localhost:${port}
+Title=The OCI Title
+EOF
 
 cat << EOF > org.test.Platform.flatpakref
 [Flatpak Ref]
@@ -179,6 +188,7 @@ Name=org.test.Platform
 Branch=master
 Url=oci+http://127.0.0.1:${port}
 IsRuntime=true
+RuntimeRepo=file://$(pwd)/runtime-repo.flatpakrepo
 EOF
 
 ${FLATPAK} ${U} install -y --from ./org.test.Platform.flatpakref
