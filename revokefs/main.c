@@ -20,7 +20,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#define FUSE_USE_VERSION 26
+#define FUSE_USE_VERSION 31
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,7 +60,7 @@ ENSURE_RELPATH (const char *path)
 }
 
 static int
-callback_getattr (const char *path, struct stat *st_data)
+callback_getattr (const char *path, struct stat *st_data, struct fuse_file_info *finfo)
 {
   path = ENSURE_RELPATH (path);
   if (!*path)
@@ -95,7 +95,7 @@ callback_readlink (const char *path, char *buf, size_t size)
 
 static int
 callback_readdir (const char *path, void *buf, fuse_fill_dir_t filler,
-                  off_t offset, struct fuse_file_info *fi)
+                  off_t offset, struct fuse_file_info *fi, enum fuse_readdir_flags flags)
 {
   DIR *dp;
   struct dirent *de;
@@ -128,7 +128,7 @@ callback_readdir (const char *path, void *buf, fuse_fill_dir_t filler,
       memset (&st, 0, sizeof (st));
       st.st_ino = de->d_ino;
       st.st_mode = de->d_type << 12;
-      if (filler (buf, de->d_name, &st, 0))
+      if (filler (buf, de->d_name, &st, 0, 0))
         break;
     }
 
@@ -185,12 +185,12 @@ callback_symlink (const char *from, const char *to)
 }
 
 static int
-callback_rename (const char *from, const char *to)
+callback_rename (const char *from, const char *to, unsigned int flags)
 {
   from = ENSURE_RELPATH (from);
   to = ENSURE_RELPATH (to);
 
-  return request_rename (writer_socket, from, to);
+  return request_rename (writer_socket, from, to, flags);
 }
 
 static int
@@ -203,28 +203,28 @@ callback_link (const char *from, const char *to)
 }
 
 static int
-callback_chmod (const char *path, mode_t mode)
+callback_chmod (const char *path, mode_t mode, struct fuse_file_info *finfo)
 {
   path = ENSURE_RELPATH (path);
   return request_chmod (writer_socket, path, mode);
 }
 
 static int
-callback_chown (const char *path, uid_t uid, gid_t gid)
+callback_chown (const char *path, uid_t uid, gid_t gid, struct fuse_file_info *finfo)
 {
   path = ENSURE_RELPATH (path);
   return request_chown (writer_socket, path, uid, gid);
 }
 
 static int
-callback_truncate (const char *path, off_t size)
+callback_truncate (const char *path, off_t size, struct fuse_file_info *finfo)
 {
   path = ENSURE_RELPATH (path);
   return request_truncate (writer_socket, path, size);
 }
 
 static int
-callback_utimens (const char *path, const struct timespec tv[2])
+callback_utimens (const char *path, const struct timespec tv[2], struct fuse_file_info *finfo)
 {
   path = ENSURE_RELPATH (path);
 
