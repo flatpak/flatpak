@@ -3212,7 +3212,9 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_autoptr(GArray) combined_fd_array = NULL;
   g_autoptr(GFile) ld_so_cache = NULL;
+  g_autoptr(GFile) ld_so_cache_tmp = NULL;
   g_autofree char *sandbox_cache_path = NULL;
+  g_autofree char *tmp_basename = NULL;
   g_auto(GStrv) minimal_envp = NULL;
   g_autofree char *commandline = NULL;
   int exit_status;
@@ -3254,7 +3256,11 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
                             "--symlink", "../usr/etc/ld.so.conf", "/etc/ld.so.conf",
                             NULL);
 
-  sandbox_cache_path = g_build_filename ("/run/ld-so-cache-dir", checksum, NULL);
+  tmp_basename = g_strconcat (checksum, ".XXXXXX", NULL);
+  glnx_gen_temp_name (tmp_basename);
+
+  sandbox_cache_path = g_build_filename ("/run/ld-so-cache-dir", tmp_basename, NULL);
+  ld_so_cache_tmp = g_file_get_child (ld_so_dir, tmp_basename);
 
   flatpak_bwrap_add_args (bwrap,
                           "--unshare-pid",
@@ -3298,7 +3304,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
       return -1;
     }
 
-  ld_so_fd = open (flatpak_file_get_path_cached (ld_so_cache), O_RDONLY);
+  ld_so_fd = open (flatpak_file_get_path_cached (ld_so_cache_tmp), O_RDONLY);
   if (ld_so_fd < 0)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Can't open generated ld.so.cache"));
@@ -3308,13 +3314,20 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   if (app_id_dir == NULL)
     {
       /* For runs without an app id dir we always regenerate the ld.so.cache */
-      unlink (flatpak_file_get_path_cached (ld_so_cache));
+      unlink (flatpak_file_get_path_cached (ld_so_cache_tmp));
     }
   else
     {
       g_autoptr(GFile) active = g_file_get_child (ld_so_dir, "active");
 
       /* For app-dirs we keep one checksum alive, by pointing the active symlink to it */
+
+      /* Rename to known name, possibly overwriting existing ref if race */
+      if (rename (flatpak_file_get_path_cached (ld_so_cache_tmp), flatpak_file_get_path_cached (ld_so_cache)) == -1)
+        {
+          glnx_set_error_from_errno (error);
+          return -1;
+        }
 
       if (!flatpak_switch_symlink_and_remove (flatpak_file_get_path_cached (active),
                                               checksum, error))
