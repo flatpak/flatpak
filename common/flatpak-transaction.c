@@ -1577,6 +1577,28 @@ flatpak_transaction_set_reinstall (FlatpakTransaction *self,
 }
 
 /**
+ * flatpak_transaction_set_no_interaction:
+ * @self: a #FlatpakTransaction
+ * @no_interaction: Whether to disallow interactive authorization for operations
+ *
+ * This method can be used to prevent interactive authorization dialogs to appear
+ * for operations on @self. This is useful for background operations that are not
+ * directly triggered by a user action.
+ *
+ * By default, the setting from the parent #FlatpakInstallation is used.
+ *
+ * Since: 1.7.3
+ */
+void
+flatpak_transaction_set_no_interaction (FlatpakTransaction *self,
+                                        gboolean            no_interaction)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  flatpak_dir_set_no_interaction (priv->dir, no_interaction);
+}
+
+/**
  * flatpak_transaction_set_force_uninstall:
  * @self: a #FlatpakTransaction
  * @force_uninstall: whether to force-uninstall refs

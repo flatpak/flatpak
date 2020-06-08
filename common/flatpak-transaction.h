@@ -220,6 +220,9 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_reinstall (FlatpakTransaction *self,
                                                        gboolean            reinstall);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_no_interaction (FlatpakTransaction *self,
+                                                            gboolean            no_interaction);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_force_uninstall (FlatpakTransaction *self,
                                                              gboolean            force_uninstall);
 FLATPAK_EXTERN

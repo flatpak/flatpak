@@ -1161,8 +1161,6 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   g_autoptr(FlatpakInstallation) installation = NULL;
   g_autoptr(FlatpakCliTransaction) self = NULL;
 
-  flatpak_dir_set_no_interaction (dir, disable_interaction);
-
   installation = flatpak_installation_new_for_dir (dir, NULL, error);
   if (installation == NULL)
     return NULL;
@@ -1178,6 +1176,7 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   self->stop_on_first_error = stop_on_first_error;
   self->non_default_arch = non_default_arch;
 
+  flatpak_transaction_set_no_interaction (FLATPAK_TRANSACTION (self), disable_interaction);
   flatpak_transaction_add_default_dependency_sources (FLATPAK_TRANSACTION (self));
 
   return (FlatpakTransaction *) g_steal_pointer (&self);
