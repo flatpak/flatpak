@@ -579,6 +579,14 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
     }
   else
     g_debug ("Could not find pulseaudio socket");
+
+  /* Also allow ALSA access. This was added in 1.8, and is not ideally named. However,
+   * since the practical permission of ALSA and PulseAudio are essentially the same, and
+   * since we don't want to add more permissions for something we plan to replace with
+   * portals/pipewire going forward we reinterpret pulseaudio to also mean ALSA.
+   */
+  if (g_file_test ("/dev/snd", G_FILE_TEST_IS_DIR))
+    flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/snd", "/dev/snd", NULL);
 }
 
 static void
