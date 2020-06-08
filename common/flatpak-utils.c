@@ -1928,13 +1928,14 @@ out:
 }
 
 /* This atomically replaces a symlink with a new value, removing the
- * existing symlink target, if any. This is atomic in the sense that
- * we're guaranteed to remove any existing symlink target (once),
- * independent of how many processes do the same operation in
- * parallele. However, it is still possible that we remove the old and
- * then fail to create the new symlink for some reason, ending up with
- * neither the old or the new target. That is fine if the reason for
- * the symlink is keeping a cache though.
+ * existing symlink target, if it exstis and is different from
+ * @target. This is atomic in the sense that we're guaranteed to
+ * remove any existing symlink target (once), independent of how many
+ * processes do the same operation in parallele. However, it is still
+ * possible that we remove the old and then fail to create the new
+ * symlink for some reason, ending up with neither the old or the new
+ * target. That is fine if the reason for the symlink is keeping a
+ * cache though.
  */
 gboolean
 flatpak_switch_symlink_and_remove (const char *symlink_path,
@@ -1975,10 +1976,14 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
       if (TEMP_FAILURE_RETRY (rename (symlink_path, tmp_path)) == 0)
         {
           /* The move succeeded, now we can remove the old target */
-          g_autofree char *old_target = flatpak_resolve_link (tmp_path, error);
+          g_autofree char *old_target = flatpak_readlink (tmp_path, error);
           if (old_target == NULL)
             return FALSE;
-          unlink (old_target);
+          if (strcmp (old_target, target) != 0) /* Don't remove old file if its the same as the new one */
+            {
+              g_autofree char *old_target_path = g_build_filename (symlink_dir, old_target, NULL);
+              unlink (old_target_path);
+            }
         }
       else if (errno != ENOENT)
         {
