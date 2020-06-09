@@ -1036,6 +1036,18 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   if (body == NULL)
     return NULL;
 
+  if (!SOUP_STATUS_IS_SUCCESSFUL (auth_msg->status_code))
+    {
+      if (auth_msg->status_code == SOUP_STATUS_UNAUTHORIZED)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_NOT_AUTHORIZED, _("Authorization failed: %s"), (char *)g_bytes_get_data (body, NULL));
+          return NULL;
+        }
+
+      flatpak_fail (error, _("Unexpected response status %d when requesting token: %s"), auth_msg->status_code, (char *)g_bytes_get_data (body, NULL));
+      return NULL;
+    }
+
   json = json_from_string ((char *)g_bytes_get_data (body, NULL), error);
   if (json == NULL)
     return NULL;
