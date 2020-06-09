@@ -988,7 +988,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
 
   if (g_ascii_strncasecmp (www_authenticate, "Bearer ", strlen ("Bearer ")) != 0)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Only Bearer authentication supported");
+      flatpak_fail (error, _("Only Bearer authentication supported"));
       return NULL;
     }
 
@@ -997,14 +997,14 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   realm = g_hash_table_lookup (params, "realm");
   if (realm == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Only realm in authentication request");
+      flatpak_fail (error, _("Only realm in authentication request"));
       return NULL;
     }
 
   auth_uri = soup_uri_new (realm);
   if (auth_uri == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid realm in authentication request");
+      flatpak_fail (error, _("Invalid realm in authentication request"));
       return NULL;
     }
 
@@ -1043,7 +1043,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   token = object_get_string_member_with_default (json, "token", NULL);
   if (token == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid authentication request response");
+      flatpak_fail (error, _("Invalid authentication request response"));
       return NULL;
     }
 
