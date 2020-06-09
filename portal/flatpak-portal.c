@@ -424,7 +424,7 @@ instance_id_read_finish (GObject      *source,
     {
       /* 0 means EOF, so the process could never have been started. */
       if (bytes_read == -1)
-        g_error ("Failed to read instance id: %s", error->message);
+        g_warning ("Failed to read instance id: %s", error->message);
 
       return;
     }
@@ -463,7 +463,7 @@ child_setup_func (gpointer user_data)
   sigemptyset (&set);
   if (pthread_sigmask (SIG_SETMASK, &set, NULL) == -1)
     {
-      g_error ("Failed to unblock signals when starting child");
+      g_warning ("Failed to unblock signals when starting child");
       return;
     }
 
