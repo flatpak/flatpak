@@ -980,7 +980,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   g_autoptr(SoupMessage) auth_msg = NULL;
   g_autoptr(GHashTable) params = NULL;
   g_autoptr(GHashTable) args = NULL;
-  const char *realm, *service, *scope, *token;
+  const char *realm, *service, *scope, *token, *body_data;
   g_autofree char *default_scope = NULL;
   g_autoptr(SoupURI) auth_uri = NULL;
   g_autoptr(GBytes) body = NULL;
@@ -1036,11 +1036,29 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   if (body == NULL)
     return NULL;
 
+  body_data = (char *)g_bytes_get_data (body, NULL);
+
   if (!SOUP_STATUS_IS_SUCCESSFUL (auth_msg->status_code))
     {
+      const char *error_detail = NULL;
+      json = json_from_string (body_data, NULL);
+      if (json)
+        {
+          error_detail = object_get_string_member_with_default (json, "details", NULL);
+          if (error_detail == NULL)
+            error_detail = object_get_string_member_with_default (json, "message", NULL);
+          if (error_detail == NULL)
+            error_detail = object_get_string_member_with_default (json, "error", NULL);
+        }
+      if (error_detail == NULL)
+        g_debug ("Unhandled error body format: %s", body_data);
+
       if (auth_msg->status_code == SOUP_STATUS_UNAUTHORIZED)
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_NOT_AUTHORIZED, _("Authorization failed: %s"), (char *)g_bytes_get_data (body, NULL));
+          if (error_detail)
+            flatpak_fail_error (error, FLATPAK_ERROR_NOT_AUTHORIZED, _("Authorization failed: %s"), error_detail);
+          else
+            flatpak_fail_error (error, FLATPAK_ERROR_NOT_AUTHORIZED, _("Authorization failed"));
           return NULL;
         }
 
@@ -1048,7 +1066,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
       return NULL;
     }
 
-  json = json_from_string ((char *)g_bytes_get_data (body, NULL), error);
+  json = json_from_string (body_data, error);
   if (json == NULL)
     return NULL;
 

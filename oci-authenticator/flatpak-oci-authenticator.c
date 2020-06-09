@@ -221,12 +221,21 @@ handle_request_ref_tokens_basic_auth_reply (FlatpakAuthenticatorRequest *object,
 static char *
 run_basic_auth (FlatpakAuthenticatorRequest *request,
                 const char *sender,
-                const char *realm)
+                const char *realm,
+                const char *previous_error)
 {
   BasicAuthData auth = { FALSE };
   int id1, id2;
   g_autofree char *combined = NULL;
-  g_autoptr(GVariant) options = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sv}"), NULL, 0));
+  g_autoptr(GVariant) options = NULL;
+  GVariantBuilder options_builder;
+
+  g_variant_builder_init (&options_builder, G_VARIANT_TYPE ("a{sv}"));
+
+  if (previous_error)
+    g_variant_builder_add (&options_builder, "{sv}", "previous-error", g_variant_new_string (previous_error));
+
+  options = g_variant_ref_sink (g_variant_builder_end (&options_builder));
 
   g_cond_init (&auth.cond);
   g_mutex_init (&auth.mutex);
@@ -534,7 +543,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
         {
           g_autofree char *test_auth = NULL;
 
-          test_auth = run_basic_auth (request, sender, oci_registry_uri);
+          test_auth = run_basic_auth (request, sender, oci_registry_uri, error ? error->message : NULL);
 
           if (test_auth == NULL)
             return cancel_request (request, sender);
