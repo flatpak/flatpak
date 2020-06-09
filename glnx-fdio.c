@@ -939,7 +939,7 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes)
 gboolean
 glnx_file_copy_at (int                   src_dfd,
                    const char           *src_subpath,
-                   struct stat          *src_stbuf,
+                   const struct stat    *src_stbuf,
                    int                   dest_dfd,
                    const char           *dest_subpath,
                    GLnxFileCopyFlags     copyflags,
