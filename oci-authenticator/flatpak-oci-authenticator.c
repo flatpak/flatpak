@@ -300,18 +300,33 @@ cancel_request (FlatpakAuthenticatorRequest *request,
 }
 
 static gboolean
-error_request (FlatpakAuthenticatorRequest *request,
-               const char *sender,
-               const char *error_message)
+error_request_raw (FlatpakAuthenticatorRequest *request,
+                   const char *sender,
+                   gint32 error_code,
+                   const char *error_message)
 {
   GVariantBuilder results;
 
   g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&results, "{sv}", "error-message", g_variant_new_string (error_message));
+  g_variant_builder_add (&results, "{sv}", "error-code", g_variant_new_int32 (error_code));
   flatpak_authenticator_request_emit_response (request,
                                                FLATPAK_AUTH_RESPONSE_ERROR,
                                                g_variant_builder_end (&results));
   return TRUE;
+}
+
+static gboolean
+error_request (FlatpakAuthenticatorRequest *request,
+               const char *sender,
+               GError *error)
+{
+  int error_code = -1;
+
+  if (error->domain == FLATPAK_ERROR)
+    error_code = error->code;
+
+  return error_request_raw (request, sender, error_code, error->message);
 }
 
 static char *
@@ -476,7 +491,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
 
   registry = flatpak_oci_registry_new (oci_registry_uri, FALSE, -1, NULL, &error);
   if (registry == NULL)
-    return error_request (request, sender, error->message);
+    return error_request (request, sender, error);
 
 
   /* Look up credentials in config files */
@@ -538,7 +553,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
     }
 
   if (!have_auth)
-    return error_request (request, sender, "No authentication information available");
+    return error_request_raw (request, sender, FLATPAK_ERROR_AUTHENTICATION_FAILED, "Authentication failed");
 
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
 
@@ -556,7 +571,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
         {
           token = get_token_for_ref (registry, ref_data, auth, &error);
           if (token == NULL)
-            return error_request (request, sender, error->message);
+            return error_request (request, sender, error);
         }
 
       g_variant_get_child (ref_data, 0, "&s", &for_refs_strv[0]);
