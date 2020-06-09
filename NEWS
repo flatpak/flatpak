@@ -1,3 +1,29 @@
+Changes in 1.7.3
+================
+
+ * Allow direct ALSA device access if app has pulseaudio access.
+ * Flatpak now ships a sysusers.d file for allowing systemd to create the required users.
+ * Fix issue in remote-delete where it failed to delete system remotes if it had to uninstall
+   something first.
+ * New library calls flatpak_transaction_operation_get_related_to_ops(), flatpak_transaction_operation_get_is_skipped() and
+   flatpak_transaction_set_no_interaction().
+ * New options --[no-]follow-redirect in remote-add/modify
+ * New spawn portal APIs to get real pid of launched app.
+ * By default, all OCI remotes now use the flatpak-oci-authenticator.
+ * Support flatpak remote-info and flatpak update --commit= to specific versions for OCI remotes.
+ * Initial work in progress on using deltas for OCI remotes.
+ * Fix race in the generation of ld.so.cache when starting copies of the same app at the same time.
+ * Minor fix in what locales are installed on update.
+ * Flatpak uninstall now doesn't fail if one ref (of many) was not installed.
+ * Flatpak systemd transient units now have an app-prefix to match new XDG spec for
+   cgroup names.
+ * In some cases we previously downloaded the summary twice.
+ * flatpak upgrade is now an alias for flatpak update.
+ * Fix to selinux module to work without unconfined module.
+ * Respect user XDG basedirs when finding users fonts and icons.
+ * Fix issue where thread were sometimes initialized causing flatpak enter to fail.
+ * Better error reporting when authentication goes wrong.
+
 Changes in 1.7.2
 ================
 
