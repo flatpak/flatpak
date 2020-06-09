@@ -564,10 +564,13 @@ basic_auth_start (FlatpakTransaction *transaction,
                   guint               id)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
-  char *user, *password;
+  char *user, *password, *previous_error = NULL;
 
   if (self->disable_interaction)
     return FALSE;
+
+  if (g_variant_lookup (options, "previous-error", "&s", &previous_error))
+    g_print ("%s\n", previous_error);
 
   g_print (_("Login required remote %s (realm %s)\n"), remote, realm);
   user = flatpak_prompt (FALSE, _("User"));
