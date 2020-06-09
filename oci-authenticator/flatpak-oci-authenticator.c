@@ -21,6 +21,7 @@
 #include "config.h"
 #include <locale.h>
 
+#include <glib/gi18n-lib.h>
 #include <json-glib/json-glib.h>
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-utils-http-private.h"
@@ -277,7 +278,7 @@ get_token_for_ref (FlatpakOciRegistry *registry,
 
   if (!g_variant_lookup (data, "summary.xa.oci-repository", "&s", &oci_repository))
     {
-      flatpak_fail (error, "Not a oci remote, missing summary.xa.oci-repository");
+      flatpak_fail (error, _("Not a oci remote, missing summary.xa.oci-repository"));
       return NULL;
     }
 
@@ -462,7 +463,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
-                                             "Not a OCI remote");
+                                             _("Not a OCI remote"));
       return TRUE;
     }
   g_variant_lookup (arg_options, "no-interaction", "b", &no_interaction);
@@ -473,7 +474,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
-                                             "Invalid token");
+                                             _("Invalid token"));
       return TRUE;
     }
 
@@ -553,7 +554,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
     }
 
   if (!have_auth)
-    return error_request_raw (request, sender, FLATPAK_ERROR_AUTHENTICATION_FAILED, "Authentication failed");
+    return error_request_raw (request, sender, FLATPAK_ERROR_AUTHENTICATION_FAILED, _("Authentication failed"));
 
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
 
