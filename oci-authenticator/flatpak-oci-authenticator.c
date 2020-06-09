@@ -539,6 +539,8 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
           if (test_auth == NULL)
             return cancel_request (request, sender);
 
+          g_clear_error (&error);
+
           first_token = get_token_for_ref (registry, ref_data, test_auth, &error);
           if (first_token != NULL)
             {
@@ -547,14 +549,19 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
             }
           else
             {
-              g_debug ("Failed to get token: %s", error->message);
-              g_clear_error (&error);
+              if (!g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_AUTHORIZED))
+                return error_request (request, sender, error);
+              else
+                {
+                  g_debug ("Auth failed getting token: %s", error->message);
+                  /* Keep error for reporting below, or clear on next iteration start */
+                }
             }
         }
     }
 
   if (!have_auth)
-    return error_request_raw (request, sender, FLATPAK_ERROR_AUTHENTICATION_FAILED, _("Authentication failed"));
+    return error_request (request, sender, error);
 
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
 
