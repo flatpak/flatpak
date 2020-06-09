@@ -115,7 +115,7 @@
         <para>
             If parental controls support is enabled, flatpak will check the
             current user’s parental controls settings, and will refuse to
-            run an app if it is blacklisted for the current user.
+            run an app if it is blocklisted for the current user.
         </para>
     </refsect1>
 
