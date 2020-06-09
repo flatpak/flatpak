@@ -61,6 +61,11 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_PERMISSION_DENIED: An operation was not allowed by the administrative policy.
  *                                   For example, an app is not allowed to be installed due
  *                                   to not complying with the parental controls policy. (Since: 1.5.1)
+ * @FLATPAK_ERROR_AUTHENTICATION_FAILED: An authentication operation failed, for example, no
+ *                                       correct password was supplied. (Since: 1.7.3)
+ * @FLATPAK_ERROR_NOT_AUTHORIZED: An operation tried to access a ref, or information about it that it
+ *                                was not authorized. For example, when succesfully authenticating with a
+ *                                server but the user doesn't have permissions for a private ref. (Since: 1.7.3)
  *
  * Error codes for library functions.
  */
@@ -88,6 +93,8 @@ typedef enum {
   FLATPAK_ERROR_NOT_CACHED,
   FLATPAK_ERROR_REF_NOT_FOUND,
   FLATPAK_ERROR_PERMISSION_DENIED,
+  FLATPAK_ERROR_AUTHENTICATION_FAILED,
+  FLATPAK_ERROR_NOT_AUTHORIZED,
 } FlatpakError;
 
 /**
