@@ -353,7 +353,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               p_timestamp = ostree_commit_get_timestamp (p_commit_v);
               p_formatted_timestamp = format_timestamp (p_timestamp);
 
-              p_commit = var_commit_from_gvariant (commit_v);
+              p_commit = var_commit_from_gvariant (p_commit_v);
               p_subject = var_commit_get_subject (p_commit);
 
               print_aligned (len, _(" Commit:"), p);
