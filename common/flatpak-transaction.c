@@ -2227,7 +2227,7 @@ flatpak_transaction_add_rebase (FlatpakTransaction *self,
 
   g_return_val_if_fail (ref != NULL, FALSE);
   g_return_val_if_fail (remote != NULL, FALSE);
-  /* flatpak_transaction_add_install_rebase without previous_ids doesn't make sense */
+  /* flatpak_transaction_add_rebase without previous_ids doesn't make sense */
   g_return_val_if_fail (previous_ids != NULL, FALSE);
 
   /* If we install with no special args pull all subpaths */
