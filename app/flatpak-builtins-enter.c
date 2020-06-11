@@ -61,6 +61,7 @@ flatpak_builtin_enter (int           argc,
   int rest_argv_start, rest_argc;
   const char *ns_name[] = { "user_base", "ipc", "net", "pid", "mnt", "user" };
   int ns_fd[G_N_ELEMENTS (ns_name)];
+  ino_t user_base_ino = 0;
   char *pid_s;
   int pid, i;
   g_autofree char *environment_path = NULL;
@@ -185,6 +186,13 @@ flatpak_builtin_enter (int           argc,
           return glnx_prefix_error (error, _("Invalid %s namespace for pid %d"), ns_name[i], pid);
         }
 
+      if (strcmp (ns_name[i], "user") == 0 && path_stat.st_ino == user_base_ino)
+        {
+          /* bubblewrap did not create an intermediate user namespace */
+          ns_fd[i] = -1;
+          continue;
+        }
+
       if (stat (self_path, &self_path_stat) != 0)
         return glnx_prefix_error (error, _("Invalid %s namespace for self"), ns_name[i]);
 
@@ -194,6 +202,9 @@ flatpak_builtin_enter (int           argc,
           ns_fd[i] = -1;
           continue;
         }
+
+      if (strcmp (ns_name[i], "user_base") == 0)
+        user_base_ino = path_stat.st_ino;
 
       ns_fd[i] = open (path, O_RDONLY);
       if (ns_fd[i] == -1)
