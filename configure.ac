@@ -223,7 +223,7 @@ if test $have_dconf = yes; then
   AC_DEFINE(HAVE_DCONF, 1, [Define if dconf is available])
 fi
 AC_ARG_WITH([systemd], AS_HELP_STRING([--with-systemd],
-    [Build without systemd support]), [], [with_systemd=auto],)
+    [Build with systemd support [default=auto]]), [], [with_systemd=auto],)
 if test "x$with_systemd" != "xno"; then
   PKG_CHECK_MODULES(SYSTEMD, [libsystemd], [have_libsystemd=yes], [have_libsystemd=no])
   if test $have_libsystemd = yes; then
