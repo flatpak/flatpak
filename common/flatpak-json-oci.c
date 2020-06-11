@@ -469,7 +469,8 @@ const char *
 flatpak_oci_manifest_descriptor_get_ref (FlatpakOciManifestDescriptor *m)
 {
   if (m->parent.mediatype == NULL ||
-      strcmp (m->parent.mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) != 0)
+      (strcmp (m->parent.mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) != 0 &&
+       strcmp (m->parent.mediatype, FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2) != 0))
     return NULL;
 
   if (m->parent.annotations == NULL)
