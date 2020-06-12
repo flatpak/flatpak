@@ -123,7 +123,8 @@ add_related (GHashTable   *all_refs,
     return FALSE;
 
   if (flatpak_deploy_data_has_subpaths (deploy_data) && !opt_allow_partial)
-    return flatpak_fail (error, _("Related ref '%s' is only partially installed"), ref);
+    g_printerr (_("Warning: Related ref ‘%s’ is partially installed. Use --allow-partial to suppress this message.\n"),
+                ref);
 
   commit = flatpak_deploy_data_get_commit (deploy_data);
 
@@ -161,9 +162,8 @@ add_related (GHashTable   *all_refs,
 
       if (flatpak_deploy_data_has_subpaths (ext_deploy_data) && !opt_allow_partial)
         {
-          g_printerr (_("Warning: Omitting related ref ‘%s’ because it is partially installed.\n"),
+          g_printerr (_("Warning: Related ref ‘%s’ is partially installed. Use --allow-partial to suppress this message.\n"),
                       ext->ref);
-          continue;
         }
 
       ext_remote = flatpak_deploy_data_get_origin (ext_deploy_data);
@@ -642,8 +642,8 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
           return FALSE;
 
         if (flatpak_deploy_data_has_subpaths (deploy_data) && !opt_allow_partial)
-          return flatpak_fail (error,
-                               _("Ref '%s' is only partially installed"), installed_ref);
+          g_printerr (_("Warning: Ref ‘%s’ is partially installed. Use --allow-partial to suppress this message.\n"),
+                      installed_ref);
 
         commit = flatpak_deploy_data_get_commit (deploy_data);
         c_s = commit_and_subpaths_new (commit, NULL);
