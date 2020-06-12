@@ -159,7 +159,7 @@ add_related (GHashTable   *all_refs,
           continue;
         }
 
-      if (flatpak_deploy_data_has_subpaths (ext_deploy_data))
+      if (flatpak_deploy_data_has_subpaths (ext_deploy_data) && !opt_allow_partial)
         {
           g_printerr (_("Warning: Omitting related ref ‘%s’ because it is partially installed.\n"),
                       ext->ref);
