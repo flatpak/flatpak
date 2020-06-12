@@ -163,8 +163,9 @@
                 <term><option>--allow-partial</option></term>
 
                 <listitem><para>
-                  Allow exporting partially installed commits, for example locale extensions without all languages. These can cause
-                  problems when installing them, for example if the language config is different on the installing side.
+                  Don't print a warning when exporting partially installed commits, for example locale extensions without all
+                  languages. These can cause problems when installing them, for example if the language config is different
+                  on the installing side.
                 </para></listitem>
             </varlistentry>
 
