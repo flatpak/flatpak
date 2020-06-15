@@ -4011,7 +4011,7 @@ flatpak_dir_prepare_resolve_p2p_refs_helper (FlatpakDir             *self,
       if (resolve->local_commit == NULL || latest_rev == NULL)
         continue;
 
-      if (!ostree_repo_load_commit (state->child_repo, resolve->local_commit, &commit_data, NULL, NULL))
+      if (!ostree_repo_load_commit (state->child_repo, resolve->local_commit, &commit_data, NULL, error))
         return FALSE;
 
       local_timestamp = ostree_commit_get_timestamp (commit_data);
