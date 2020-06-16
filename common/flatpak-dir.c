@@ -5546,7 +5546,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
     return FALSE;
 
   if (current_checksum != NULL &&
-      !ostree_repo_load_commit (self->repo, current_checksum, &old_commit, NULL, NULL))
+      !ostree_repo_load_commit (self->repo, current_checksum, &old_commit, NULL, error))
     return FALSE;
 
   src_repo = ostree_repo_new (path_file);
