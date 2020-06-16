@@ -295,6 +295,11 @@ if test "x$enable_xauth" = "xyes"; then
       [Define if using xauth])
 fi
 
+AC_ARG_ENABLE([gdm-env-file],
+              [AC_HELP_STRING([--enable-gdm-env-file], [Install gdm env.d file (not needed if systemd generators work)])],
+              install_gdm_env_file=$enableval, install_gdm_env_file=no)
+AM_CONDITIONAL(INSTALL_GDM_ENV_FILE, test x$install_gdm_env_file = xyes)
+
 AC_ARG_ENABLE([sandboxed-triggers],
               AC_HELP_STRING([--disable-sandboxed-triggers],
                              [Disable sandboxed triggers]),
