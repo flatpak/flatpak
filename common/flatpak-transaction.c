@@ -3962,20 +3962,35 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
   if (!priv->no_pull &&
       !flatpak_transaction_update_metadata (self, cancellable, error))
-    return FALSE;
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
 
   if (!flatpak_transaction_add_auto_install (self, cancellable, error))
-    return FALSE;
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
 
   if (!flatpak_transaction_resolve_flatpakrefs (self, cancellable, error))
-    return FALSE;
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
 
   if (!flatpak_transaction_resolve_bundles (self, cancellable, error))
-    return FALSE;
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
 
   /* Resolve initial ops */
   if (!resolve_all_ops (self, cancellable, error))
-    return FALSE;
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
 
   /* Add all app -> runtime dependencies */
   for (l = priv->ops; l != NULL; l = l->next)
@@ -3983,12 +3998,18 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       FlatpakTransactionOperation *op = l->data;
 
       if (!op->skip && !add_deps (self, op, error))
-        return FALSE;
+        {
+          g_assert (error == NULL || *error != NULL);
+          return FALSE;
+        }
     }
 
   /* Resolve new ops */
   if (!resolve_all_ops (self, cancellable, error))
-    return FALSE;
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
 
   /* Add all related extensions */
   for (l = priv->ops; l != NULL; l = l->next)
@@ -3996,16 +4017,25 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       FlatpakTransactionOperation *op = l->data;
 
       if (!op->skip && !add_related (self, op, error))
-        return FALSE;
+        {
+          g_assert (error == NULL || *error != NULL);
+          return FALSE;
+        }
     }
 
   /* Resolve new ops */
   if (!resolve_all_ops (self, cancellable, error))
-    return FALSE;
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
 
   /* Ensure we have all required tokens, we do this after all resolves if possible to bunch requests */
   if (!request_required_tokens (self, NULL, cancellable, error))
-    return FALSE;
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
 
   sort_ops (self);
 
