@@ -371,8 +371,11 @@ make_updated_app () {
         COLLECTION_ID=""
     fi
     BRANCH=${3:-master}
+    TEXT=${4:-UPDATED}
+    APP_ID=${5:-""}
+    RUNTIME_BRANCH=${6:-$BRANCH}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" ${4:-UPDATED} > /dev/null
+    RUNTIME_BRANCH=$RUNTIME_BRANCH GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "${APP_ID}" "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
