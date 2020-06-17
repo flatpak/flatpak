@@ -203,6 +203,7 @@ enum {
   WEBFLOW_START,
   WEBFLOW_DONE,
   BASIC_AUTH_START,
+  INSTALL_AUTHENTICATOR,
   LAST_SIGNAL
 };
 
@@ -1020,6 +1021,13 @@ flatpak_transaction_add_new_remote (FlatpakTransaction            *transaction,
   return FALSE;
 }
 
+static void
+flatpak_transaction_install_authenticator  (FlatpakTransaction *transaction,
+                                            const char         *remote,
+                                            const char         *authenticator_ref)
+{
+}
+
 static gboolean flatpak_transaction_real_run (FlatpakTransaction *transaction,
                                               GCancellable       *cancellable,
                                               GError            **error);
@@ -1031,6 +1039,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
 
   klass->ready = flatpak_transaction_ready;
   klass->add_new_remote = flatpak_transaction_add_new_remote;
+  klass->install_authenticator = flatpak_transaction_install_authenticator;
   klass->run = flatpak_transaction_real_run;
   object_class->finalize = flatpak_transaction_finalize;
   object_class->get_property = flatpak_transaction_get_property;
@@ -1216,6 +1225,33 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   g_signal_accumulator_first_wins, NULL,
                   NULL,
                   G_TYPE_BOOLEAN, 4, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+
+  /**
+   * FlatpakTransaction::install-authenticator:
+   * @object: A #FlatpakTransaction
+   * @remote: The remote name
+   * @authenticator_ref: The ref for the authenticator
+   *
+   * The ::install-authenticator signal gets emitted if, as part of
+   * resolving the transaction, we need to use an authenticator, but the authentication
+   * is not installed, but is available to be installed from the ref.
+   *
+   * The application can handle this signal, and if so create another transaction
+   * to install the authenticator.
+   *
+   * The default handler does nothing, and if the authenticator is not installed when
+   * the signal handler fails the transaction will error out.
+   *
+   * Since: 1.7.4
+   */
+  signals[INSTALL_AUTHENTICATOR] =
+    g_signal_new ("install-authenticator",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, install_authenticator),
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
 
   /**
    * FlatpakTransaction::webflow-start:
@@ -3096,6 +3132,21 @@ request_tokens_for_remote (FlatpakTransaction *self,
   g_autofree char *remote_url = NULL;
   g_autoptr(GVariantBuilder) extra_builder = NULL;
   FlatpakRemoteState *state;
+  g_autofree char *auto_install_ref = NULL;
+
+
+  auto_install_ref = flatpak_dir_get_remote_auto_install_authenticator_ref (priv->dir, remote);
+  if (auto_install_ref != NULL)
+    {
+      g_autoptr(GFile) deploy = NULL;
+      deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
+      if (deploy == NULL)
+        g_signal_emit (self, signals[INSTALL_AUTHENTICATOR], 0,
+                       remote, auto_install_ref);
+      deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
+      if (deploy == NULL)
+        return flatpak_fail (error, _("No authenticator installed for remote '%s'"), remote);
+    }
 
   if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (priv->dir), remote, &remote_url, error))
     return FALSE;
