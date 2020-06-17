@@ -146,7 +146,11 @@ struct _FlatpakTransactionClass
                                 const char         *realm,
                                 GVariant           *options,
                                 guint               id);
-  gpointer padding[5];
+  void (*install_authenticator)   (FlatpakTransaction *transaction,
+                                   const char         *remote,
+                                   const char         *authenticator_ref);
+
+  gpointer padding[4];
 };
 
 FLATPAK_EXTERN
