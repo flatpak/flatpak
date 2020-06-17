@@ -20,6 +20,8 @@ if [ x$APP_ID = x ]; then
     APP_ID=org.test.Hello
 fi
 
+RUNTIME_BRANCH=${RUNTIME_BRANCH:-$BRANCH}
+
 EXTRA="${1-}"
 
 ARCH=`flatpak --default-arch`
@@ -28,8 +30,8 @@ ARCH=`flatpak --default-arch`
 cat > ${DIR}/metadata <<EOF
 [Application]
 name=$APP_ID
-runtime=org.test.Platform/$ARCH/$BRANCH
-sdk=org.test.Platform/$ARCH/$BRANCH
+runtime=org.test.Platform/$ARCH/$RUNTIME_BRANCH
+sdk=org.test.Platform/$ARCH/$RUNTIME_BRANCH
 EOF
 
 if [ x${REQUIRED_VERSION-} != x ]; then
