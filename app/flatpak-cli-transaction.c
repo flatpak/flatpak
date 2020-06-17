@@ -140,6 +140,49 @@ add_new_remote (FlatpakTransaction            *transaction,
   return FALSE;
 }
 
+static void
+install_authenticator (FlatpakTransaction            *old_transaction,
+                       const char                    *remote,
+                       const char                    *ref)
+{
+  FlatpakCliTransaction *old_cli = FLATPAK_CLI_TRANSACTION (old_transaction);
+  g_autoptr(FlatpakTransaction)  transaction2 = NULL;
+  g_autoptr(GError) local_error = NULL;
+  FlatpakInstallation *installation = flatpak_transaction_get_installation (old_transaction);
+  FlatpakDir *dir = flatpak_installation_get_dir (installation, NULL);
+
+  if (dir == NULL)
+    {
+      /* This should not happen */
+      g_warning ("No dir in install_authenticator");
+      return;
+    }
+
+  transaction2 = flatpak_cli_transaction_new (dir, old_cli->disable_interaction, TRUE, FALSE, &local_error);
+  if (transaction2 == NULL)
+    {
+      g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+      return;
+    }
+
+  g_print ("Installing required authenticator for remote %s\n", remote);
+  if (!flatpak_transaction_add_install (transaction2, remote, ref, NULL, &local_error))
+    {
+      if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+        g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+      return;
+    }
+
+  if (!flatpak_transaction_run (transaction2, NULL, &local_error))
+    {
+      if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+      return;
+    }
+
+  return;
+}
+
 static char *
 op_type_to_string (FlatpakTransactionOperationType operation_type)
 {
@@ -1152,6 +1195,7 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   transaction_class->webflow_start = webflow_start;
   transaction_class->webflow_done = webflow_done;
   transaction_class->basic_auth_start = basic_auth_start;
+  transaction_class->install_authenticator = install_authenticator;
 }
 
 FlatpakTransaction *
