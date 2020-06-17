@@ -159,6 +159,47 @@ operation_error (FlatpakTransaction            *transaction,
   return non_fatal; /* Continue if non-fatal */
 }
 
+static void
+install_authenticator (FlatpakTransaction            *old_transaction,
+                       const char                    *remote,
+                       const char                    *ref)
+{
+  g_autoptr(FlatpakTransaction)  transaction2 = NULL;
+  g_autoptr(GError) local_error = NULL;
+  FlatpakInstallation *installation = flatpak_transaction_get_installation (old_transaction);
+  FlatpakDir *dir = flatpak_installation_get_dir (installation, NULL);
+
+  if (dir == NULL)
+    {
+      /* This should not happen */
+      g_warning ("No dir in install_authenticator");
+      return;
+    }
+
+  transaction2 = flatpak_quiet_transaction_new (dir, &local_error);
+  if (transaction2 == NULL)
+    {
+      g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+      return;
+    }
+
+  if (!flatpak_transaction_add_install (transaction2, remote, ref, NULL, &local_error))
+    {
+      if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+        g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+      return;
+    }
+
+  if (!flatpak_transaction_run (transaction2, NULL, &local_error))
+    {
+      if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+      return;
+    }
+
+  return;
+}
+
 static gboolean
 end_of_lifed_with_rebase (FlatpakTransaction *transaction,
                           const char         *remote,
@@ -247,6 +288,7 @@ flatpak_quiet_transaction_class_init (FlatpakQuietTransactionClass *class)
   transaction_class->operation_error = operation_error;
   transaction_class->end_of_lifed_with_rebase = end_of_lifed_with_rebase;
   transaction_class->run = flatpak_quiet_transaction_run;
+  transaction_class->install_authenticator = install_authenticator;
 }
 
 FlatpakTransaction *
