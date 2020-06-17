@@ -2424,32 +2424,31 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
   for (int i = 0; remotes[i] != NULL; i++)
     {
       char *remote = remotes[i];
-      g_autoptr(GPtrArray) auto_install_refs = NULL;
+      g_autofree char *auto_install_ref = NULL;
 
       if (flatpak_dir_get_remote_disabled (priv->dir, remote))
         continue;
 
-      auto_install_refs = flatpak_dir_find_remote_auto_install_refs (priv->dir, remote);
-      for (int i = 0; i < auto_install_refs->len; i++)
+      auto_install_ref = flatpak_dir_get_remote_auto_install_authenticator_ref (priv->dir, remote);
+      if (auto_install_ref != NULL)
         {
-          const char *ref = g_ptr_array_index (auto_install_refs, i);
           g_autoptr(GError) local_error = NULL;
           g_autoptr(GFile) deploy = NULL;
 
-          deploy = flatpak_dir_get_if_deployed (priv->dir, ref, NULL, cancellable);
+          deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
           if (deploy == NULL)
             {
               g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
 
               if (state != NULL &&
-                  flatpak_remote_state_lookup_ref (state, ref, NULL, NULL, NULL, NULL, NULL))
+                  flatpak_remote_state_lookup_ref (state, auto_install_ref, NULL, NULL, NULL, NULL, NULL))
                 {
-                  g_debug ("Auto adding install of %s from remote %s", ref, remote);
-                  if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, NULL,
+                  g_debug ("Auto adding install of %s from remote %s", auto_install_ref, remote);
+                  if (!flatpak_transaction_add_ref (self, remote, auto_install_ref, NULL, NULL, NULL,
                                                     FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
                                                     NULL, NULL,
                                                     &local_error))
-                    g_debug ("Failed to add auto-install ref %s: %s", ref, local_error->message);
+                    g_debug ("Failed to add auto-install ref %s: %s", auto_install_ref, local_error->message);
                 }
             }
         }
