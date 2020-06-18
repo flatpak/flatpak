@@ -220,8 +220,9 @@
 
                 <listitem><para>
                   Adds an extra local ostree repo as source for installation. This is equivalent
-                  with setting the xa.sideload-repos global option, but can be done without modifying the configuration.
-                  If the option is already set both sources are used.
+                  to using the sideload-repos directories (see flatpak(1)), but can be done on a
+                  per-command basis. Any path added here is used in addition to ones in those
+                  directories.
                 </para></listitem>
             </varlistentry>
 
