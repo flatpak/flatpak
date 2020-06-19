@@ -48,7 +48,11 @@ flatpak-dbus-proxy
 permission-store-dbus.[ch]
 flatpak-system-helper
 xdg-desktop-portal
-*.service
+oci-authenticator/*.service
+portal/*.service
+session-helper/*.service
+system-helper/*.service
+tests/*.service
 flatpak.conf
 flatpak.env
 flatpak.sh

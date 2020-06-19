@@ -1,0 +1,15 @@
+# This unit is intended to be installed in the systemd system instance, so that
+# flatpak-sideload-usb-repo.{path,service} can work in the user instance
+[Service]
+Type=oneshot
+ExecStart=/bin/mkdir -p /run/flatpak; /bin/mkdir -p -m 777 /run/flatpak/sideload-repos
+
+[Unit]
+# Use basic.target to guarantee we run before flatpak-sideload-usb-repos.path
+# in the user systemd instance
+Before=basic.target
+After=sysinit.target
+DefaultDependencies=no
+
+[Install]
+WantedBy=basic.target

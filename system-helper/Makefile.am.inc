@@ -12,7 +12,7 @@ dbusconfdir = $(DBUS_CONFIG_DIR)
 dist_dbusconf_DATA = system-helper/org.freedesktop.Flatpak.SystemHelper.conf
 
 service_in_files += system-helper/flatpak-system-helper.service.in
-systemdsystemunit_DATA = system-helper/flatpak-system-helper.service
+systemdsystemunit_DATA += system-helper/flatpak-system-helper.service
 
 flatpak_system_helper_SOURCES = \
 	system-helper/flatpak-system-helper.c	\

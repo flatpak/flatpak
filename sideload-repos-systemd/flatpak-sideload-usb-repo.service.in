@@ -1,0 +1,5 @@
+# This unit is intended to be installed in the systemd user instance; see the
+# docs in flatpak-sideload-usb-repo.path
+[Service]
+Type=oneshot
+ExecStart=@libexecdir@/flatpak-create-sideload-symlinks.sh @media_dir@/%u
