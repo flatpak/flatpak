@@ -97,7 +97,9 @@
             <filename>/var/lib/flatpak/sideload-repos</filename>). Additionally
             symlinks can be created in <filename>/run/flatpak/sideload-repos</filename>
             (overridable by <envar>FLATPAK_RUN_DIR</envar>) which is a better location
-            for non-persistent sources (as it is cleared on reboot).
+            for non-persistent sources (as it is cleared on reboot). These symlinks can point to either the
+            directory given to <command>flatpak create-usb</command> which by default writes to the subpath
+            <filename>.ostree/repo</filename>, or directly to an ostree repo.
         </para>
 
     </refsect1>

@@ -11885,7 +11885,8 @@ flatpak_dir_list_remote_config_keys (FlatpakDir *self,
 
 static void
 add_subdirs (GPtrArray *res,
-             GFile     *parent)
+             GFile     *parent,
+             gboolean   recurse)
 {
   g_autoptr(GFileEnumerator) dir_enum = NULL;
 
@@ -11906,8 +11907,37 @@ add_subdirs (GPtrArray *res,
           info == NULL)
         break;
 
+      /* Here we support either a plain repo or, if @recurse is TRUE, the root
+       * directory of a USB created with "flatpak create-usb"
+       */
       if (g_file_info_get_file_type (info) == G_FILE_TYPE_DIRECTORY)
-        g_ptr_array_add (res, g_object_ref (path));
+        {
+          g_autoptr(OstreeRepo) repo = ostree_repo_new (path);
+
+          if (ostree_repo_open (repo, NULL, NULL))
+            g_ptr_array_add (res, g_object_ref (path));
+          else if (recurse)
+            {
+              g_autoptr(GFile) ostree_repo_subpath = NULL;
+              g_autoptr(GFile) dot_ostree_repo_subpath = NULL;
+              g_autoptr(GFile) dot_ostree_repo_d_subpath = NULL;
+              g_autoptr(OstreeRepo) ostree_repo_subpath_repo = NULL;
+              g_autoptr(OstreeRepo) dot_ostree_repo_subpath_repo = NULL;
+
+              ostree_repo_subpath = g_file_resolve_relative_path (path, "ostree/repo");
+              ostree_repo_subpath_repo = ostree_repo_new (ostree_repo_subpath);
+              if (ostree_repo_open (ostree_repo_subpath_repo, NULL, NULL))
+                g_ptr_array_add (res, g_object_ref (ostree_repo_subpath));
+
+              dot_ostree_repo_subpath = g_file_resolve_relative_path (path, ".ostree/repo");
+              dot_ostree_repo_subpath_repo = ostree_repo_new (dot_ostree_repo_subpath);
+              if (ostree_repo_open (dot_ostree_repo_subpath_repo, NULL, NULL))
+                g_ptr_array_add (res, g_object_ref (dot_ostree_repo_subpath));
+
+              dot_ostree_repo_d_subpath = g_file_resolve_relative_path (path, ".ostree/repos.d");
+              add_subdirs (res, dot_ostree_repo_d_subpath, FALSE);
+            }
+        }
     }
 }
 
@@ -11918,8 +11948,8 @@ flatpak_dir_get_sideload_repo_paths (FlatpakDir *self)
   g_autoptr(GFile) runtime_sideload_repos_dir = flatpak_dir_get_runtime_sideload_repos_dir (self);
   g_autoptr(GPtrArray) res = g_ptr_array_new_with_free_func (g_object_unref);
 
-  add_subdirs (res, sideload_repos_dir);
-  add_subdirs (res, runtime_sideload_repos_dir);
+  add_subdirs (res, sideload_repos_dir, TRUE);
+  add_subdirs (res, runtime_sideload_repos_dir, TRUE);
 
   return g_steal_pointer (&res);
 }
