@@ -283,6 +283,10 @@ get_run_dir_location (void)
   if (g_once_init_enter (&path))
     {
       gsize setup_value = 0;
+      /* Note: $FLATPAK_RUN_DIR should only be set in the unit tests. At
+       * runtime, /run/flatpak is assumed by
+       * flatpak-create-sideload-symlinks.sh
+       */
       const char *config_dir = g_getenv ("FLATPAK_RUN_DIR");
       if (config_dir != NULL)
         setup_value = (gsize) config_dir;
