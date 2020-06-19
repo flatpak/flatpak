@@ -470,9 +470,10 @@ flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
  * @self: a #FlatpakTransaction
  * @path: a path to a local flatpak repository
  *
- * Adds an extra local ostree repo as source for installation. This is equivalent
- * with setting the xa.sideload-repos global option, but can be done dynamically.
- * If the option is set both sources are used.
+ * Adds an extra local ostree repo as source for installation. This is
+ * equivalent to using the sideload-repos directories (see flatpak(1)), but can
+ * be done dynamically. Any path added here is used in addition to ones in
+ * those directories.
  *
  * Since: 1.7.1
  */
