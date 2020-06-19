@@ -282,6 +282,13 @@ if test "x$enable_system_helper" = "xyes"; then
 fi
 AM_CONDITIONAL(BUILD_SYSTEM_HELPER, test x$enable_system_helper = xyes)
 
+AC_ARG_ENABLE([auto-sideloading],
+              AC_HELP_STRING([--enable-auto-sideloading],
+                             [Enable systemd units which make Flatpak sideload from inserted USB drives]),
+              [],
+              [enable_auto_sideloading=no])
+AM_CONDITIONAL(BUILD_AUTO_SIDELOADING, test x$enable_auto_sideloading = xyes)
+
 PKG_CHECK_MODULES(FUSE, fuse >= 2.9.2)
 
 AC_ARG_ENABLE([xauth],
@@ -350,6 +357,14 @@ AC_ARG_WITH(system-install-dir,
            [with_system_install_dir='$(localstatedir)/lib/flatpak'])
 SYSTEM_INSTALL_DIR=$with_system_install_dir
 AC_SUBST(SYSTEM_INSTALL_DIR)
+
+AC_ARG_WITH(run-media-dir,
+           [AS_HELP_STRING([--with-run-media-dir=DIR],
+                           [Location of auto-mounted USB drives [/run/media]])],
+           [],
+           [with_run_media_dir='/run/media'])
+RUN_MEDIA_DIR=$with_run_media_dir
+AC_SUBST(RUN_MEDIA_DIR)
 
 AC_ARG_WITH([sysusersdir],
             [AS_HELP_STRING([--with-sysusersdir=DIR],
@@ -565,4 +580,5 @@ echo "          Use dconf:              $have_dconf"
 echo "          Use libsystemd:         $have_libsystemd"
 echo "          Use libmalcontent:      $have_libmalcontent"
 echo "          Use libzstd:            $have_zstd"
+echo "          Use auto sideloading:   $enable_auto_sideloading"
 echo ""
