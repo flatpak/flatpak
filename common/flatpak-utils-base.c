@@ -34,10 +34,7 @@ flatpak_get_timezone (void)
   g_autofree gchar *symlink = NULL;
   gchar *etc_timezone = NULL;
   const gchar *tzdir;
-
-  tzdir = getenv ("TZDIR");
-  if (tzdir == NULL)
-    tzdir = "/usr/share/zoneinfo";
+  const gchar *default_tzdir = "/usr/share/zoneinfo";
 
   symlink = flatpak_resolve_link ("/etc/localtime", NULL);
   if (symlink != NULL)
@@ -47,9 +44,20 @@ flatpak_get_timezone (void)
       char *canonical_suffix;
 
       /* Strip the prefix and slashes if possible. */
-      if (g_str_has_prefix (canonical, tzdir))
+
+      tzdir = getenv ("TZDIR");
+      if (tzdir != NULL && g_str_has_prefix (canonical, tzdir))
         {
           canonical_suffix = canonical + strlen (tzdir);
+          while (*canonical_suffix == '/')
+            canonical_suffix++;
+
+          return g_strdup (canonical_suffix);
+        }
+
+      if (g_str_has_prefix (canonical, default_tzdir))
+        {
+          canonical_suffix = canonical + strlen (default_tzdir);
           while (*canonical_suffix == '/')
             canonical_suffix++;
 
