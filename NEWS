@@ -1,3 +1,13 @@
+Changes in 1.6.4
+================
+
+This release backports some of the OCI authenticator fixes from the 1.7 series, and
+should now be able to host flatpak images on e.g. docker hub.
+
+Other changes:
+ * Fix a use-after free in libflatpak
+ * Don't list p2p downgrades in list of available updates
+
 Changes in 1.6.3
 ================
 
