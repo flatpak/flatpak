@@ -2417,6 +2417,47 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 }
 
 static void
+add_tzdata_args (FlatpakBwrap *bwrap,
+                 GFile *runtime_files)
+{
+  g_autofree char *timezone = flatpak_get_timezone ();
+  g_autofree char *timezone_content = g_strdup_printf ("%s\n", timezone);
+  g_autofree char *localtime_content = g_strconcat ("../usr/share/zoneinfo/", timezone, NULL);
+  g_autoptr(GFile) runtime_zoneinfo = NULL;
+
+  if (runtime_files)
+    runtime_zoneinfo = g_file_resolve_relative_path (runtime_files, "share/zoneinfo");
+
+  /* Check for runtime /usr/share/zoneinfo */
+  if (runtime_zoneinfo != NULL && g_file_query_exists (runtime_zoneinfo, NULL))
+    {
+      /* Check for host /usr/share/zoneinfo */
+      if (g_file_test ("/usr/share/zoneinfo", G_FILE_TEST_IS_DIR))
+        {
+          /* Here we assume the host timezone file exist in the host data */
+          flatpak_bwrap_add_args (bwrap,
+                                  "--ro-bind", "/usr/share/zoneinfo", "/usr/share/zoneinfo",
+                                  "--symlink", localtime_content, "/etc/localtime",
+                                  NULL);
+        }
+      else
+        {
+          g_autoptr(GFile) runtime_tzfile = g_file_resolve_relative_path (runtime_zoneinfo, timezone);
+
+          /* Check if host timezone file exist in the runtime tzdata */
+          if (g_file_query_exists (runtime_tzfile, NULL))
+            flatpak_bwrap_add_args (bwrap,
+                                    "--symlink", localtime_content, "/etc/localtime",
+                                    NULL);
+        }
+    }
+
+  flatpak_bwrap_add_args_data (bwrap, "timezone",
+                               timezone_content, -1, "/etc/timezone",
+                               NULL);
+}
+
+static void
 add_monitor_path_args (gboolean      use_session_helper,
                        FlatpakBwrap *bwrap)
 {
@@ -2443,11 +2484,9 @@ add_monitor_path_args (gboolean      use_session_helper,
       if (g_variant_lookup (session_data, "path", "s", &monitor_path))
         flatpak_bwrap_add_args (bwrap,
                                 "--ro-bind", monitor_path, "/run/host/monitor",
-                                "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
                                 "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
                                 "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
                                 "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
-                                "--symlink", "/run/host/monitor/timezone", "/etc/timezone",
                                 NULL);
 
       if (g_variant_lookup (session_data, "pkcs11-socket", "s", &pkcs11_socket_path))
@@ -2470,50 +2509,6 @@ add_monitor_path_args (gboolean      use_session_helper,
     }
   else
     {
-      /* /etc/localtime and /etc/resolv.conf can not exist (or be symlinks to
-       * non-existing targets), in which case we don't want to attempt to create
-       * bogus symlinks or bind mounts, as that will cause flatpak run to fail.
-       */
-      if (g_file_test ("/etc/localtime", G_FILE_TEST_EXISTS))
-        {
-          g_autofree char *localtime = NULL;
-          gboolean is_reachable = FALSE;
-          g_autofree char *timezone = flatpak_get_timezone ();
-          g_autofree char *timezone_content = g_strdup_printf ("%s\n", timezone);
-
-          localtime = glnx_readlinkat_malloc (-1, "/etc/localtime", NULL, NULL);
-
-          if (localtime != NULL)
-            {
-              g_autoptr(GFile) base_file = NULL;
-              g_autoptr(GFile) target_file = NULL;
-              g_autofree char *target_canonical = NULL;
-
-              base_file = g_file_new_for_path ("/etc");
-              target_file = g_file_resolve_relative_path (base_file, localtime);
-              target_canonical = g_file_get_path (target_file);
-
-              is_reachable = g_str_has_prefix (target_canonical, "/usr/");
-            }
-
-          if (is_reachable)
-            {
-              flatpak_bwrap_add_args (bwrap,
-                                      "--symlink", localtime, "/etc/localtime",
-                                      NULL);
-            }
-          else
-            {
-              flatpak_bwrap_add_args (bwrap,
-                                      "--ro-bind", "/etc/localtime", "/etc/localtime",
-                                      NULL);
-            }
-
-          flatpak_bwrap_add_args_data (bwrap, "timezone",
-                                       timezone_content, -1, "/etc/timezone",
-                                       NULL);
-        }
-
       if (g_file_test ("/etc/resolv.conf", G_FILE_TEST_EXISTS))
         flatpak_bwrap_add_args (bwrap,
                                 "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
@@ -3019,6 +3014,8 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
     }
 
   flatpak_run_setup_usr_links (bwrap, runtime_files);
+
+  add_tzdata_args (bwrap, runtime_files);
 
   pers = PER_LINUX;
 
