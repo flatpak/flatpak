@@ -1,3 +1,21 @@
+Changes in 1.8.0
+================
+
+New stable release series 1.8.
+
+Changes:
+ * FlatpakTransaction has a new signal "install-authenticator" which clients can handle to
+   install authenticators needed for the transaction. This is done in the CLI commands.
+ * We now always expose the host timezone data, allowing us the expose the host /etc/localtime
+   in a way that works better, fixing several apps that had timezone issues.
+ * Fix flatpak enter which didn't work in some cases.
+ * We now ship a systemd unit (not installed by default) to automatically detect plugged in
+   usb sticks with sideload repos.
+ * By default we no longer install the gdm env.d file, as the systemd generators work better
+ * create-usb now exports partial commits by default
+ * Fix handling of docker media types in oci remotes
+ * Fix subjects in remote-info --log output
+
 Changes in 1.7.3
 ================
 
