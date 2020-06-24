@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2020-06-24 16:49+0200\n"
-"PO-Revision-Date: 2020-03-04 16:06+0100\n"
+"PO-Revision-Date: 2020-06-24 21:46+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.3.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -676,7 +676,7 @@ msgstr "Nenalezen žádný spustitelný soubor\n"
 #: app/flatpak-builtins-build-finish.c:501
 #, c-format
 msgid "Invalid --require-version argument: %s"
-msgstr ""
+msgstr "Neplatný --require-version argument: %s"
 
 #: app/flatpak-builtins-build-finish.c:533
 #, c-format
@@ -1144,15 +1144,16 @@ msgstr "CÍL"
 
 #: app/flatpak-builtins-create-usb.c:48
 msgid "Allow partial commits in the created repo"
-msgstr ""
+msgstr "Povolit částečné commity ve vytvořeném repozitáři"
 
 #: app/flatpak-builtins-create-usb.c:126 app/flatpak-builtins-create-usb.c:165
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Warning: Related ref ‘%s’ is partially installed. Use --allow-partial to "
 "suppress this message.\n"
 msgstr ""
-"Varování: Vynechává se související ref „%s“, protože není nainstalován.\n"
+"Varování: Související ref „%s“ je částečně nainstalován. Pro potlačení této "
+"zprávy použijte --allow-partial.\n"
 
 #: app/flatpak-builtins-create-usb.c:158
 #, c-format
@@ -1204,6 +1205,8 @@ msgid ""
 "Warning: Ref ‘%s’ is partially installed. Use --allow-partial to suppress "
 "this message.\n"
 msgstr ""
+"Varování: Ref „%s“ je částečně nainstalován. Pro potlačení této zprávy "
+"použijte --allow-partial.\n"
 
 #: app/flatpak-builtins-create-usb.c:686
 #, c-format
@@ -2598,9 +2601,8 @@ msgid "Authenticator options"
 msgstr "Volby autentikátoru"
 
 #: app/flatpak-builtins-remote-modify.c:94
-#, fuzzy
 msgid "Follow the redirect set in the summary file"
-msgstr "Aktualizovat dodatečná metadata ze souboru shrnutí"
+msgstr ""
 
 #: app/flatpak-builtins-remote-modify.c:289
 msgid "NAME - Modify a remote repository"
@@ -2795,11 +2797,11 @@ msgstr "Instalace autentikátoru: %s\n"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "true"
-msgstr ""
+msgstr "pravda"
 
 #: app/flatpak-builtins-repo.c:126
 msgid "false"
-msgstr ""
+msgstr "nepravda"
 
 #: app/flatpak-builtins-repo.c:134
 #, c-format
@@ -3007,9 +3009,9 @@ msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s nenainstalováno"
 
 #: app/flatpak-builtins-uninstall.c:320
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s is not installed\n"
-msgstr "%s větev %s není nainstalováno"
+msgstr "Varování: %s není nainstalováno\n"
 
 #: app/flatpak-builtins-update.c:56
 msgid "Arch to update for"
@@ -3044,9 +3046,8 @@ msgid "[REF…] - Update applications or runtimes"
 msgstr "[REF…] - Aktualizovat aplikace nebo prostředí"
 
 #: app/flatpak-builtins-update.c:121
-#, fuzzy
 msgid "With --commit, only one REF may be specified"
-msgstr "Alespoň jeden REF musí být určen"
+msgstr ""
 
 #: app/flatpak-builtins-update.c:160
 msgid "Looking for updates…\n"
@@ -3171,7 +3172,7 @@ msgstr "Vzdálený repozitář „%s“ nebyl nalezen"
 #: app/flatpak-builtins-utils.c:787
 #, c-format
 msgid "Ambiguous suffix: '%s'."
-msgstr ""
+msgstr "Nejednoznačná přípona: „%s“."
 
 #. Translators: don't translate the values
 #: app/flatpak-builtins-utils.c:789 app/flatpak-builtins-utils.c:804
@@ -3181,7 +3182,7 @@ msgstr ""
 #: app/flatpak-builtins-utils.c:802
 #, c-format
 msgid "Invalid suffix: '%s'."
-msgstr ""
+msgstr "Neplatná přípona: „%s“."
 
 #: app/flatpak-builtins-utils.c:837
 #, c-format
@@ -3827,13 +3828,13 @@ msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Neznámý typ funkce %s, platné typy jsou: %s"
 
 #: common/flatpak-context.c:770
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
 "etc, home, xdg-*[/…], ~/dir, /dir"
 msgstr ""
-"Neplatné umístění systému souborů %s, platná umístění jsou: host, home, xdg-"
-"*[/…], ~/dir, /dir"
+"Neplatné umístění systému souborů %s, platná umístění jsou: host, host-os, "
+"host-etc, home, xdg-*[/…], ~/dir, /dir"
 
 #: common/flatpak-context.c:1040
 #, c-format
@@ -4008,11 +4009,9 @@ msgid "Remote OCI index has no registry uri"
 msgstr ""
 
 #: common/flatpak-dir.c:776
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find ref %s in remote %s"
-msgstr ""
-"Nepodařilo se získat nejnovější kontrolní součet pro ref %s ve vzdáleném "
-"repozitáři %s"
+msgstr "Nepodařilo se nalézt ref %s ve vzdáleném repozitáři %s"
 
 #: common/flatpak-dir.c:793 common/flatpak-dir.c:5224
 #: common/flatpak-utils.c:5669 common/flatpak-utils.c:5674
@@ -4475,23 +4474,21 @@ msgid "Only Bearer authentication supported"
 msgstr ""
 
 #: common/flatpak-oci-registry.c:1000
-#, fuzzy
 msgid "Only realm in authentication request"
-msgstr "Neplatný název autentikátoru %s"
+msgstr ""
 
 #: common/flatpak-oci-registry.c:1007
-#, fuzzy
 msgid "Invalid realm in authentication request"
-msgstr "Neplatný název autentikátoru %s"
+msgstr ""
 
 #: common/flatpak-oci-registry.c:1059
-#, fuzzy, c-format
+#, c-format
 msgid "Authorization failed: %s"
-msgstr "Název autentikátoru: %s\n"
+msgstr "Autorizace selhala: %s"
 
 #: common/flatpak-oci-registry.c:1061
 msgid "Authorization failed"
-msgstr ""
+msgstr "Autorizace selhala"
 
 #: common/flatpak-oci-registry.c:1065
 #, c-format
@@ -4499,16 +4496,14 @@ msgid "Unexpected response status %d when requesting token: %s"
 msgstr ""
 
 #: common/flatpak-oci-registry.c:1076
-#, fuzzy
 msgid "Invalid authentication request response"
-msgstr "Neplatné volby autentikátoru: "
+msgstr ""
 
 #: common/flatpak-oci-registry.c:1679 common/flatpak-oci-registry.c:1732
 #: common/flatpak-oci-registry.c:1761 common/flatpak-oci-registry.c:1816
 #: common/flatpak-oci-registry.c:1872 common/flatpak-oci-registry.c:1950
-#, fuzzy
 msgid "Invalid delta file format"
-msgstr "Neplatný formát souboru"
+msgstr "Neplatný formát souboru delta"
 
 #: common/flatpak-oci-registry.c:2453
 #, c-format
@@ -4594,9 +4589,9 @@ msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Selhalo otevření souboru bwrapinfo.json: %s"
 
 #: common/flatpak-run.c:2397
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to write to instance id fd: %s"
-msgstr "Selhala migrace z %s: %s"
+msgstr ""
 
 #: common/flatpak-run.c:2710
 msgid "Initialize seccomp failed"
@@ -4719,24 +4714,23 @@ msgid ""
 msgstr ""
 
 #: common/flatpak-transaction.c:3149
-#, fuzzy, c-format
+#, c-format
 msgid "No authenticator installed for remote '%s'"
-msgstr "Nenastaven žádný autentikátor pro vzdálený repozitář „%s“"
+msgstr "Nenainstalován žádný autentikátor pro vzdálený repozitář „%s“"
 
 #: common/flatpak-transaction.c:3251 common/flatpak-transaction.c:3258
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get tokens for ref: %s"
-msgstr "Selhalo zjištění částí z refu: %s"
+msgstr "Selhalo získání tokenů pro ref: %s"
 
 #: common/flatpak-transaction.c:3253 common/flatpak-transaction.c:3260
-#, fuzzy
 msgid "Failed to get tokens for ref"
-msgstr "Selhalo zjištění částí z refu: %s"
+msgstr "Selhalo získání tokenů pro ref"
 
 #: common/flatpak-transaction.c:3573
-#, fuzzy, c-format
+#, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
-msgstr "Flatpakrepo URL %s není HTTP nebo HTTPS"
+msgstr "Flatpakrepo URL %s není soubor, HTTP nebo HTTPS"
 
 #: common/flatpak-transaction.c:3579
 #, c-format
@@ -4937,7 +4931,7 @@ msgstr "Metadata ve hlavičce a aplikaci jsou nekonzistentní"
 
 #: common/flatpak-utils.c:5688 common/flatpak-utils.c:5847
 msgid "Invalid OCI image config"
-msgstr ""
+msgstr "Neplatná konfigurace OCI obrazu"
 
 #: common/flatpak-utils.c:5750 common/flatpak-utils.c:5996
 #, c-format
@@ -4957,7 +4951,7 @@ msgstr "Špatný ref (%s) určen pro OCI obraz %s, očekáváno %s"
 #: common/flatpak-utils.c:6664
 #, c-format
 msgid "Invalid require-flatpak argument %s"
-msgstr ""
+msgstr "Neplatný require-flatpak argument %s"
 
 #: common/flatpak-utils.c:6674 common/flatpak-utils.c:6693
 #, c-format
@@ -4980,16 +4974,15 @@ msgstr ""
 
 #: oci-authenticator/flatpak-oci-authenticator.c:290
 msgid "Not a oci remote, missing summary.xa.oci-repository"
-msgstr ""
+msgstr "Není vzdálený repozitář oci, chybí summary.xa.oci-repository"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:475
 msgid "Not a OCI remote"
-msgstr ""
+msgstr "Není vzdálený repozitář OCI"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:486
-#, fuzzy
 msgid "Invalid token"
-msgstr "Neplatný klíč gpg"
+msgstr "Neplatný token"
 
 #: portal/flatpak-portal.c:1962
 msgid "No portal support found"
