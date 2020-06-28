@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2020-06-24 16:49+0200\n"
-"PO-Revision-Date: 2020-02-16 13:05+0100\n"
+"PO-Revision-Date: 2020-06-28 13:48+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -976,12 +976,12 @@ msgstr "IDENTYFIKATOR-KOLEKCJI"
 
 #. Translators: A sideload is when you install from a local USB drive rather than the Internet.
 #: app/flatpak-builtins-build-update-repo.c:73
-#, fuzzy
 msgid ""
 "Permanently deploy collection ID to client remote configurations, only for "
 "sideload support"
 msgstr ""
-"Trwale wdraża identyfikator kolekcji do konfiguracji repozytoriów klienta"
+"Trwale wdraża identyfikator kolekcji do konfiguracji repozytoriów klienta, "
+"tylko do obsługi wczytywania bocznego"
 
 #: app/flatpak-builtins-build-update-repo.c:74
 msgid "Permanently deploy collection ID to client remote configurations"
@@ -1186,16 +1186,16 @@ msgstr "CEL"
 
 #: app/flatpak-builtins-create-usb.c:48
 msgid "Allow partial commits in the created repo"
-msgstr ""
+msgstr "Zezwala na częściowe zatwierdzenia w utworzonym repozytorium"
 
 #: app/flatpak-builtins-create-usb.c:126 app/flatpak-builtins-create-usb.c:165
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Warning: Related ref ‘%s’ is partially installed. Use --allow-partial to "
 "suppress this message.\n"
 msgstr ""
-"Ostrzeżenie: pomijanie powiązanego odniesienia „%s”, ponieważ nie jest "
-"zainstalowane.\n"
+"Ostrzeżenie: powiązane odniesienie „%s” jest częściowo zainstalowane. Użycie "
+"opcji --allow-partial wyciszy ten komunikat.\n"
 
 #: app/flatpak-builtins-create-usb.c:158
 #, c-format
@@ -1251,6 +1251,8 @@ msgid ""
 "Warning: Ref ‘%s’ is partially installed. Use --allow-partial to suppress "
 "this message.\n"
 msgstr ""
+"Ostrzeżenie: odniesienie „%s” jest częściowo zainstalowane. Użycie opcji --"
+"allow-partial wyciszy ten komunikat.\n"
 
 #: app/flatpak-builtins-create-usb.c:686
 #, c-format
@@ -1927,7 +1929,7 @@ msgstr "Aktualizuje instalację, jeśli jest już zainstalowane"
 #. Translators: A sideload is when you install from a local USB drive rather than the Internet.
 #: app/flatpak-builtins-install.c:78 app/flatpak-builtins-update.c:71
 msgid "Use this local repo for sideloads"
-msgstr ""
+msgstr "Używa tego lokalnego repozytorium do wczytywania bocznego"
 
 #: app/flatpak-builtins-install.c:137
 msgid "Bundle filename must be specified"
@@ -2391,7 +2393,7 @@ msgstr "Bez automatycznego instalowania programu uwierzytelniającego"
 
 #: app/flatpak-builtins-remote-add.c:86 app/flatpak-builtins-remote-modify.c:95
 msgid "Don't follow the redirect set in the summary file"
-msgstr ""
+msgstr "Bez podążania za przekierowaniem ustawionym w pliku podsumowania"
 
 #: app/flatpak-builtins-remote-add.c:246 app/flatpak-builtins-remote-add.c:253
 #, c-format
@@ -2469,7 +2471,7 @@ msgstr "Używa lokalnych pamięci podręcznych, nawet jeśli są przeterminowane
 #. Translators: A sideload is when you install from a local USB drive rather than the Internet.
 #: app/flatpak-builtins-remote-info.c:66 app/flatpak-builtins-remote-ls.c:60
 msgid "Only list refs available as sideloads"
-msgstr ""
+msgstr "Wyświetla tylko odniesienia dostępne jako wczytywanie boczne"
 
 #: app/flatpak-builtins-remote-info.c:115
 msgid ""
@@ -2660,9 +2662,8 @@ msgid "Authenticator options"
 msgstr "Opcje programu uwierzytelniającego"
 
 #: app/flatpak-builtins-remote-modify.c:94
-#, fuzzy
 msgid "Follow the redirect set in the summary file"
-msgstr "Aktualizuje dodatkowe metadane z pliku podsumowania"
+msgstr "Podąża za przekierowaniem ustawionym w pliku podsumowania"
 
 #: app/flatpak-builtins-remote-modify.c:289
 msgid "NAME - Modify a remote repository"
@@ -2979,7 +2980,7 @@ msgstr "Sprawia, że procesy są widoczne w nadrzędnej przestrzeni nazw"
 
 #: app/flatpak-builtins-run.c:85
 msgid "Write the instance ID to the given file descriptor"
-msgstr ""
+msgstr "Zapisuje identyfikator wystąpienia do podanego deskryptora pliku"
 
 #: app/flatpak-builtins-run.c:108
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3075,9 +3076,9 @@ msgid "%s/%s/%s not installed"
 msgstr "Nie zainstalowano %s/%s/%s"
 
 #: app/flatpak-builtins-uninstall.c:320
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s is not installed\n"
-msgstr "Nie zainstalowano %s gałęzi %s"
+msgstr "Ostrzeżenie: %s nie jest zainstalowane\n"
 
 #: app/flatpak-builtins-update.c:56
 msgid "Arch to update for"
@@ -3112,9 +3113,8 @@ msgid "[REF…] - Update applications or runtimes"
 msgstr "[ODNIESIENIE…] — aktualizuje programy lub środowiska wykonawcze"
 
 #: app/flatpak-builtins-update.c:121
-#, fuzzy
 msgid "With --commit, only one REF may be specified"
-msgstr "Należy podać co najmniej jedno ODNIESIENIE"
+msgstr "Używając opcji --commit można podać tylko jedno ODNIESIENIE"
 
 #: app/flatpak-builtins-update.c:160
 msgid "Looking for updates…\n"
@@ -3405,7 +3405,7 @@ msgstr "Za mało miejsca na dysku, aby ukończyć to działanie"
 
 #: app/flatpak-cli-transaction.c:522
 msgid "(internal error, please report)"
-msgstr ""
+msgstr "(wewnętrzny błąd, prosimy go zgłosić)"
 
 #: app/flatpak-cli-transaction.c:527
 #, c-format
@@ -3910,13 +3910,13 @@ msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Nieznany typ funkcji %s, prawidłowe typy: %s"
 
 #: common/flatpak-context.c:770
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
 "etc, home, xdg-*[/…], ~/dir, /dir"
 msgstr ""
-"Nieznane położenie systemu plików %s, prawidłowe położenia: host, home, xdg-"
-"*[/…], ~/dir, /dir"
+"Nieznane położenie systemu plików %s, prawidłowe położenia: host, host-os, "
+"host-etc, home, xdg-*[/…], ~/dir, /dir"
 
 #: common/flatpak-context.c:1040
 #, c-format
@@ -4095,11 +4095,9 @@ msgid "Remote OCI index has no registry uri"
 msgstr "Indeks OCI repozytorium nie ma adresu URI rejestru"
 
 #: common/flatpak-dir.c:776
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find ref %s in remote %s"
-msgstr ""
-"Nie można odnaleźć najnowszej sumy kontrolnej dla odniesienia %s "
-"w repozytorium %s"
+msgstr "Nie można odnaleźć odniesienia %s w repozytorium %s"
 
 #: common/flatpak-dir.c:793 common/flatpak-dir.c:5224
 #: common/flatpak-utils.c:5669 common/flatpak-utils.c:5674
@@ -4124,6 +4122,7 @@ msgstr ""
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
 msgstr ""
+"Metadane zatwierdzenia dla %s nie zgadzają się z oczekiwanymi metadanymi"
 
 #: common/flatpak-dir.c:1780
 msgid "Unable to connect to system bus"
@@ -4239,16 +4238,15 @@ msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "Odnaleziono podpisy GPG, ale żadne nie są w zaufanej bazie kluczy"
 
 #: common/flatpak-dir.c:5587
-#, fuzzy, c-format
+#, c-format
 msgid "Commit for ‘%s’ has no ref binding"
-msgstr ""
-"Zatwierdzenie nie ma żądanego odniesienia „%s” w metadanych dowiązania "
-"odniesienia"
+msgstr "Zatwierdzenie dla „%s” nie ma dowiązania odniesienia"
 
 #: common/flatpak-dir.c:5592
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr ""
+"Zatwierdzenie dla „%s” nie jest w oczekiwanych dowiązanych odniesieniach: %s"
 
 #: common/flatpak-dir.c:6216
 msgid "Not enough memory"
@@ -4396,7 +4394,7 @@ msgstr "Już zainstalowano %s gałąź %s"
 #: common/flatpak-dir.c:8728
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
-msgstr ""
+msgstr "Nie można odmontować systemu plików revokefs-fuse w %s: "
 
 #: common/flatpak-dir.c:8993
 #, c-format
@@ -4573,43 +4571,39 @@ msgstr "Jak zażądano, %s zostało tylko pobrane, ale nie zainstalowane"
 
 #: common/flatpak-oci-registry.c:991
 msgid "Only Bearer authentication supported"
-msgstr ""
+msgstr "Obsługiwane jest tylko uwierzytelnianie na okaziciela"
 
 #: common/flatpak-oci-registry.c:1000
-#, fuzzy
 msgid "Only realm in authentication request"
-msgstr "Nieprawidłowa nazwa programu uwierzytelniającego %s"
+msgstr "Tylko obszar w żądaniu uwierzytelnienia"
 
 #: common/flatpak-oci-registry.c:1007
-#, fuzzy
 msgid "Invalid realm in authentication request"
-msgstr "Nieprawidłowa nazwa programu uwierzytelniającego %s"
+msgstr "Nieprawidłowy obszar w żądaniu uwierzytelnienia"
 
 #: common/flatpak-oci-registry.c:1059
-#, fuzzy, c-format
+#, c-format
 msgid "Authorization failed: %s"
-msgstr "Nazwa programu uwierzytelniającego: %s\n"
+msgstr "Upoważnienie się nie powiodło: %s"
 
 #: common/flatpak-oci-registry.c:1061
 msgid "Authorization failed"
-msgstr ""
+msgstr "Upoważnienie się nie powiodło"
 
 #: common/flatpak-oci-registry.c:1065
 #, c-format
 msgid "Unexpected response status %d when requesting token: %s"
-msgstr ""
+msgstr "Nieoczekiwany stan odpowiedzi %d podczas żądania tokena: %s"
 
 #: common/flatpak-oci-registry.c:1076
-#, fuzzy
 msgid "Invalid authentication request response"
-msgstr "Nieprawidłowa nazwa programu uwierzytelniającego %s"
+msgstr "Nieprawidłowa odpowiedź żądania uwierzytelnienia"
 
 #: common/flatpak-oci-registry.c:1679 common/flatpak-oci-registry.c:1732
 #: common/flatpak-oci-registry.c:1761 common/flatpak-oci-registry.c:1816
 #: common/flatpak-oci-registry.c:1872 common/flatpak-oci-registry.c:1950
-#, fuzzy
 msgid "Invalid delta file format"
-msgstr "Nieznany format środowiska %s"
+msgstr "Nieprawidłowy format pliku delty"
 
 #: common/flatpak-oci-registry.c:2453
 #, c-format
@@ -4697,9 +4691,9 @@ msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Otwarcie pliku „bwrapinfo.json” się nie powiodło: %s"
 
 #: common/flatpak-run.c:2397
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to write to instance id fd: %s"
-msgstr "Zapisanie pamięci podręcznej podsumowań się nie powiodło: "
+msgstr "Zapisanie do FD identyfikatora wystąpienia się nie powiodło: %s"
 
 #: common/flatpak-run.c:2710
 msgid "Initialize seccomp failed"
@@ -4829,24 +4823,24 @@ msgstr ""
 "ponieważ %s jest już zainstalowane: %s"
 
 #: common/flatpak-transaction.c:3149
-#, fuzzy, c-format
+#, c-format
 msgid "No authenticator installed for remote '%s'"
-msgstr "Nie skonfigurowano programu uwierzytelniającego dla repozytorium „%s”"
+msgstr "Nie zainstalowano programu uwierzytelniającego dla repozytorium „%s”"
 
 #: common/flatpak-transaction.c:3251 common/flatpak-transaction.c:3258
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get tokens for ref: %s"
-msgstr "Ustalenia części z odniesienia się nie powiodło: %s"
+msgstr "Uzyskanie tokenów dla odniesienia się nie powiodło: %s"
 
 #: common/flatpak-transaction.c:3253 common/flatpak-transaction.c:3260
-#, fuzzy
 msgid "Failed to get tokens for ref"
-msgstr "Ustalenia części z odniesienia się nie powiodło: %s"
+msgstr "Uzyskanie tokenów dla odniesienia się nie powiodło"
 
 #: common/flatpak-transaction.c:3573
-#, fuzzy, c-format
+#, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
-msgstr "Adres URL pliku repozytorium Flatpak %s nie jest HTTP ani HTTPS"
+msgstr ""
+"Adres URL repozytorium Flatpak %s nie jest adresem „file”, HTTP ani HTTPS"
 
 #: common/flatpak-transaction.c:3579
 #, c-format
@@ -5047,7 +5041,7 @@ msgstr "Metadane w nagłówku i programie są niespójne"
 
 #: common/flatpak-utils.c:5688 common/flatpak-utils.c:5847
 msgid "Invalid OCI image config"
-msgstr ""
+msgstr "Nieprawidłowa konfiguracja obrazu OCI"
 
 #: common/flatpak-utils.c:5750 common/flatpak-utils.c:5996
 #, c-format
@@ -5090,16 +5084,15 @@ msgstr "Liczba „%s” jest poza zakresem [%s, %s]"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:290
 msgid "Not a oci remote, missing summary.xa.oci-repository"
-msgstr ""
+msgstr "Nie jest repozytorium OCI, nie ma summary.xa.oci-repository"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:475
 msgid "Not a OCI remote"
-msgstr ""
+msgstr "Nie jest repozytorium OCI"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:486
-#, fuzzy
 msgid "Invalid token"
-msgstr "Nieprawidłowy klucz GPG"
+msgstr "Nieprawidłowy token"
 
 #: portal/flatpak-portal.c:1962
 msgid "No portal support found"
@@ -5364,92 +5357,3 @@ msgid ""
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie ograniczane "
 "przez zasady kontroli rodzicielskiej"
-
-#, fuzzy, c-format
-#~ msgid "Related ref '%s' is only partially installed"
-#~ msgstr "Żądane rozszerzenie %s jest tylko częściowo zainstalowane"
-
-#, fuzzy, c-format
-#~ msgid "Ref '%s' is only partially installed"
-#~ msgstr "Żądane rozszerzenie %s jest tylko częściowo zainstalowane"
-
-#, c-format
-#~ msgid "Unable to load metadata from remote %s: %s"
-#~ msgstr "Nie można wczytać metadanych z repozytorium %s: %s"
-
-#, c-format
-#~ msgid "No such ref (%s, %s) in remote %s"
-#~ msgstr "Brak odniesienia (%s, %s) w repozytorium %s"
-
-#, c-format
-#~ msgid "No flatpak cache in remote '%s' summary"
-#~ msgstr "Brak pamięci podręcznej Flatpak w podsumowaniu repozytorium „%s”"
-
-#, c-format
-#~ msgid "No such ref (%s, %s) in remote %s or elsewhere"
-#~ msgstr "Brak odniesienia (%s, %s) w repozytorium %s lub innym miejscu"
-
-#, c-format
-#~ msgid "No remotes found which provide these refs: [%s]"
-#~ msgstr "Nie odnaleziono repozytoriów dostarczających tych odniesień: [%s]"
-
-#, c-format
-#~ msgid "No remotes found which provide the ref (%s, %s)"
-#~ msgstr "Nie odnaleziono repozytoriów dostarczających odniesienie (%s, %s)"
-
-#~ msgid "No summary found"
-#~ msgstr "Nie odnaleziono podsumowania"
-
-#, c-format
-#~ msgid ""
-#~ "GPG verification enabled, but no summary signatures found for remote '%s'"
-#~ msgstr ""
-#~ "Włączono sprawdzanie przez GPG, ale nie odnaleziono podpisów podsumowań "
-#~ "dla repozytorium „%s”"
-
-#, c-format
-#~ msgid ""
-#~ "GPG signatures found for remote '%s', but none are in trusted keyring"
-#~ msgstr ""
-#~ "Odnaleziono podpisy GPG dla repozytorium „%s”, ale żadne nie są "
-#~ "w zaufanej bazie kluczy"
-
-#~ msgid "Expected commit metadata to have ref binding information, found none"
-#~ msgstr ""
-#~ "Oczekiwano, że metadane zatwierdzenia mają informacje o dowiązaniu "
-#~ "odniesienia, ale nie odnaleziono żadnych"
-
-#~ msgid ""
-#~ "Expected commit metadata to have collection ID binding information, found "
-#~ "none"
-#~ msgstr ""
-#~ "Oczekiwano, że metadane zatwierdzenia mają informacje o dowiązaniu "
-#~ "identyfikatora kolekcji, ale nie odnaleziono żadnych"
-
-#, c-format
-#~ msgid ""
-#~ "Commit has collection ID ‘%s’ in collection binding metadata, while the "
-#~ "remote it came from has collection ID ‘%s’"
-#~ msgstr ""
-#~ "Zatwierdzenie ma identyfikator kolekcji „%s” w metadanych dowiązania "
-#~ "kolekcji, ale repozytorium, z którego pochodzi ma identyfikator kolekcji "
-#~ "„%s”"
-
-#~ msgid "Deployed metadata does not match commit"
-#~ msgstr "Wdrożone metadane nie pasują do zatwierdzenia"
-
-#, c-format
-#~ msgid "No repo metadata cached for remote '%s'"
-#~ msgstr ""
-#~ "Brak metadanych repozytorium w pamięci podręcznej dla repozytorium „%s”"
-
-#~ msgid "No metadata branch for OCI"
-#~ msgstr "Brak gałęzi metadanych dla OCI"
-
-#, c-format
-#~ msgid "Invalid group: %d"
-#~ msgstr "Nieprawidłowa grupa: %d"
-
-#, c-format
-#~ msgid "Warning: Can't find %s metadata for dependencies: %s"
-#~ msgstr "Ostrzeżenie: nie można odnaleźć metadanych %s dla zależności: %s"
