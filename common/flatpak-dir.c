@@ -13780,7 +13780,8 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                 }
               else if ((deploy_data = flatpak_dir_get_deploy_data (self, extension_ref,
                                                                    FLATPAK_DEPLOY_VERSION_ANY,
-                                                                   NULL, NULL)) != NULL)
+                                                                   NULL, NULL)) != NULL &&
+                       g_strcmp0 (flatpak_deploy_data_get_origin (deploy_data), remote_name) == 0)
                 {
                   /* Here we're including extensions that are deployed but might
                    * not have a ref in the repo, as happens with remote-delete
@@ -13812,7 +13813,8 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                         }
                       else if ((match_deploy_data = flatpak_dir_get_deploy_data (self, match,
                                                                                  FLATPAK_DEPLOY_VERSION_ANY,
-                                                                                 NULL, NULL)) != NULL)
+                                                                                 NULL, NULL)) != NULL &&
+                               g_strcmp0 (flatpak_deploy_data_get_origin (match_deploy_data), remote_name) == 0)
                         {
                           /* Here again we're including extensions that are deployed but might
                            * not have a ref in the repo
