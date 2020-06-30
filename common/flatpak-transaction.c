@@ -3832,12 +3832,14 @@ _run_op_kind (FlatpakTransaction           *self,
   if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
     {
       g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
+      FlatpakTransactionResult result_details = 0;
+      g_autoptr(GError) local_error = NULL;
 
       emit_new_op (self, op, progress);
 
       g_assert (op->resolved_commit != NULL); /* We resolved this before */
 
-      if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, error))
+      if (op->resolved_metakey && !flatpak_check_required_version (op->ref, op->resolved_metakey, &local_error))
         res = FALSE;
       else
         res = flatpak_dir_install (priv->dir,
@@ -3853,12 +3855,27 @@ _run_op_kind (FlatpakTransaction           *self,
                                    op->resolved_metadata,
                                    op->resolved_token,
                                    progress->progress_obj,
-                                   cancellable, error);
+                                   cancellable, &local_error);
 
       flatpak_transaction_progress_done (progress);
+
+      /* Handle noop-installs (maybe we raced, or this was installed in install-authenticator)
+       * We do initial checks and fail with already installed in add_ref() for other cases. */
+      if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+        {
+          res = TRUE;
+          g_clear_error (&local_error);
+
+          result_details |= FLATPAK_TRANSACTION_RESULT_NO_CHANGE;
+        }
+      else if (!res)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+        }
+
       if (res)
         {
-          emit_op_done (self, op, 0);
+          emit_op_done (self, op, result_details);
 
           /* Normally we don't need to prune after install, because it makes no old objects
              stale. However if we reinstall, that is not true. */
