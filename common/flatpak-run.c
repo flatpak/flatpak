@@ -3462,18 +3462,19 @@ check_parental_controls (const char     *app_ref,
 }
 
 static int
-open_namespace_fd_if_needed (const char *path, const char *type)
-{
-  g_autofree char *self_path = g_strdup_printf ("/proc/self/ns/%s", type);
-  struct stat s, self_s;
+open_namespace_fd_if_needed (const char *path,
+                             const char *other_path) {
+  struct stat s, other_s;
 
   if (stat (path, &s) != 0)
     return -1; /* No such namespace, ignore */
 
-  if (stat (self_path, &self_s) != 0)
+  if (stat (other_path, &other_s) != 0)
     return -1; /* No such namespace, ignore */
 
-  if (s.st_ino != self_s.st_ino)
+  /* setns calls fail if the process is already in the desired namespace, hence the
+     check here to ensure the namespaces are different. */
+  if (s.st_ino != other_s.st_ino)
     return open (path, O_RDONLY|O_CLOEXEC);
 
   return -1;
@@ -3872,13 +3873,13 @@ flatpak_run_app (const char     *app_ref,
 
       userns_path = g_strdup_printf ("/proc/%d/root/run/.userns", parent_pid);
 
-      userns_fd = open_namespace_fd_if_needed (userns_path, "user");
+      userns_fd = open_namespace_fd_if_needed (userns_path, "/proc/self/ns/user");
       if (userns_fd != -1)
         {
           flatpak_bwrap_add_args_data_fd (bwrap, "--userns", userns_fd, NULL);
 
           userns2_path = g_strdup_printf ("/proc/%d/ns/user", parent_pid);
-          userns2_fd = open (userns2_path, O_RDONLY|O_CLOEXEC);
+          userns2_fd = open_namespace_fd_if_needed (userns2_path, userns_path);
           if (userns2_fd != -1)
             flatpak_bwrap_add_args_data_fd (bwrap, "--userns2", userns2_fd, NULL);
         }
