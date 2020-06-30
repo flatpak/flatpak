@@ -2715,6 +2715,7 @@ op_may_need_token (FlatpakTransactionOperation *op)
 {
   return
     !op->skip &&
+    !op->update_only_deploy &&
     (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
      op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE  ||
      op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
