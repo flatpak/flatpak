@@ -3306,6 +3306,9 @@ request_required_tokens (FlatpakTransaction *self,
   GList *l;
   g_autoptr(GHashTable) need_token_ht = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) g_list_free); /* remote name -> list of op */
 
+  /* Ensure all ops so far ar normalized so we don't request authentication for no-op updates */
+  flatpak_transaction_normalize_ops (self);
+
   for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
