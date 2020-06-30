@@ -8,6 +8,7 @@ on:
     - flatpak-1.2.x
     - flatpak-1.4.x
     - flatpak-1.6.x
+    - flatpak-1.8.x
   pull_request:
     branches:
     - master
@@ -15,6 +16,7 @@ on:
     - flatpak-1.2.x
     - flatpak-1.4.x
     - flatpak-1.6.x
+    - flatpak-1.8.x
 
 jobs:
   check:
