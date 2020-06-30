@@ -224,6 +224,7 @@ enum {
   LAST_PROGRESS_SIGNAL
 };
 
+static void flatpak_transaction_normalize_ops (FlatpakTransaction *self);
 static gboolean request_required_tokens (FlatpakTransaction *self,
                                          const char         *optional_remote,
                                          GCancellable       *cancellable,
@@ -3981,13 +3982,55 @@ _run_op_kind (FlatpakTransaction           *self,
   return res;
 }
 
+/* Ensure the operation kind is normalized and not no-op */
+static void
+flatpak_transaction_normalize_ops (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  GList *l, *next;
+
+  for (l = priv->ops; l != NULL; l = next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+      next = l->next;
+
+      if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE)
+        {
+          g_autoptr(GBytes) deploy_data = NULL;
+
+          if (dir_ref_is_installed (priv->dir, op->ref, NULL, &deploy_data))
+            {
+              /* Don't use the remote from related ref on update, always use
+                 the current remote. */
+              g_free (op->remote);
+              op->remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
+
+              op->kind = FLATPAK_TRANSACTION_OPERATION_UPDATE;
+            }
+          else
+            op->kind = FLATPAK_TRANSACTION_OPERATION_INSTALL;
+        }
+
+      if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE &&
+          !flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, op->ref, op->resolved_commit,
+                                                             (const char **) op->subpaths))
+        {
+          /* If this is a rebase, then at minimum a redeploy needs to happen */
+          if (op->previous_ids)
+            op->update_only_deploy = TRUE;
+          else
+            op->skip = TRUE;
+        }
+    }
+}
+
 static gboolean
 flatpak_transaction_real_run (FlatpakTransaction *self,
                               GCancellable       *cancellable,
                               GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  GList *l, *next;
+  GList *l;
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
   gboolean needs_triggers = FALSE;
@@ -4094,40 +4137,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   sort_ops (self);
 
   /* Ensure the operation kind is normalized and not no-op */
-  for (l = priv->ops; l != NULL; l = next)
-    {
-      FlatpakTransactionOperation *op = l->data;
-      next = l->next;
-
-      if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE)
-        {
-          g_autoptr(GBytes) deploy_data = NULL;
-
-          if (dir_ref_is_installed (priv->dir, op->ref, NULL, &deploy_data))
-            {
-              /* Don't use the remote from related ref on update, always use
-                 the current remote. */
-              g_free (op->remote);
-              op->remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
-
-              op->kind = FLATPAK_TRANSACTION_OPERATION_UPDATE;
-            }
-          else
-            op->kind = FLATPAK_TRANSACTION_OPERATION_INSTALL;
-        }
-
-      if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE &&
-          !flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, op->ref, op->resolved_commit,
-                                                             (const char **) op->subpaths))
-        {
-          /* If this is a rebase, then at minimum a redeploy needs to happen */
-          if (op->previous_ids)
-            op->update_only_deploy = TRUE;
-          else
-            op->skip = TRUE;
-        }
-    }
-
+  flatpak_transaction_normalize_ops (self);
 
   g_signal_emit (self, signals[READY], 0, &ready_res);
   if (!ready_res)
