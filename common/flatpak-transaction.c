@@ -3979,10 +3979,6 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   if (!resolve_all_ops (self, cancellable, error))
     return FALSE;
 
-  /* Ensure we have all required tokens */
-  if (!request_required_tokens (self, NULL, cancellable, error))
-    return FALSE;
-
   sort_ops (self);
 
   /* Ensure the operation kind is normalized and not no-op */
@@ -4019,6 +4015,10 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
             op->skip = TRUE;
         }
     }
+
+  /* Ensure we have all required tokens */
+  if (!request_required_tokens (self, NULL, cancellable, error))
+    return FALSE;
 
 
   g_signal_emit (self, signals[READY], 0, &ready_res);
