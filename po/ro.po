@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-06-30 15:26+0000\n"
+"POT-Creation-Date: 2020-07-03 14:01+0200\n"
 "PO-Revision-Date: 2020-07-02 15:35+0200\n"
 "Last-Translator: Florentina Mușat <florentina [dot] musat [dot] 28 [at] "
 "gmail [dot] com>\n"
@@ -260,7 +260,7 @@ msgstr "Nu există un punct de extensie care potrivește %s în %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Lipsește „=” în opțiunea de montare de legătură „%s”"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3970
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3971
 msgid "Unable to start app"
 msgstr "Nu se poate porni aplicația"
 
@@ -4726,28 +4726,28 @@ msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Rularea %s nu este permisă de politica stabilită de către administrator"
 
-#: common/flatpak-run.c:3498
+#: common/flatpak-run.c:3499
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr "„flatpak run” nu este intenționat să fie rulat cu sudo"
 
-#: common/flatpak-run.c:3606
+#: common/flatpak-run.c:3607
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Număr de componente greșit în executarea %s"
 
-#: common/flatpak-run.c:3714
+#: common/flatpak-run.c:3715
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Nu s-a putut migra de la %s: %s"
 
-#: common/flatpak-run.c:3729
+#: common/flatpak-run.c:3730
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Nu s-a putut migra directorul vechi de date %s al aplicației la numele nou "
 "%s: %s"
 
-#: common/flatpak-run.c:3738
+#: common/flatpak-run.c:3739
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Nu s-a putut crea legătura simbolică în timpul migrării %s: %s"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-06-24 16:49+0200\n"
+"POT-Creation-Date: 2020-07-03 14:01+0200\n"
 "PO-Revision-Date: 2020-04-27 20:25-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
@@ -257,7 +257,7 @@ msgstr "Nenhum ponto de extensão correspondendo %s em %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Faltando “=” na opção de montagem associativa “%s”"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3970
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3971
 msgid "Unable to start app"
 msgstr "Não foi possível iniciar o aplicativo"
 
@@ -3333,8 +3333,8 @@ msgstr "%s já instalado"
 #: app/flatpak-cli-transaction.c:512 app/flatpak-cli-transaction.c:514
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
 #: common/flatpak-dir.c:2571 common/flatpak-dir.c:3205
-#: common/flatpak-dir.c:13859 common/flatpak-transaction.c:2134
-#: common/flatpak-transaction.c:2173 common/flatpak-utils.c:1726
+#: common/flatpak-dir.c:13861 common/flatpak-transaction.c:2135
+#: common/flatpak-transaction.c:2174 common/flatpak-utils.c:1726
 #: common/flatpak-utils.c:1819
 #, c-format
 msgid "%s not installed"
@@ -4485,7 +4485,7 @@ msgstr "Caractere inválido “/” no nome do remoto: %s"
 msgid "No configuration for remote %s specified"
 msgstr "Nenhuma configuração para o remoto %s especificado"
 
-#: common/flatpak-dir.c:14342
+#: common/flatpak-dir.c:14344
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Ignorando exclusão de ref espelho (%s, %s)…\n"
@@ -4683,78 +4683,78 @@ msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "A execução de %s não é permitida pela política definida pelo administrador"
 
-#: common/flatpak-run.c:3498
+#: common/flatpak-run.c:3499
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr "“flatpak run” não se destina a ser executado com sudo"
 
-#: common/flatpak-run.c:3606
+#: common/flatpak-run.c:3607
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Número incorreto de componentes no runtime %s"
 
-#: common/flatpak-run.c:3714
+#: common/flatpak-run.c:3715
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Falha ao migrar de %s: %s"
 
-#: common/flatpak-run.c:3729
+#: common/flatpak-run.c:3730
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Falha ao migrar o diretório de dados antigo %s do aplicativo para o novo "
 "nome %s: %s"
 
-#: common/flatpak-run.c:3738
+#: common/flatpak-run.c:3739
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Falha ao criar link simbólico ao migrar %s: %s"
 
-#: common/flatpak-transaction.c:1891
+#: common/flatpak-transaction.c:1892
 #, c-format
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "Aviso: Problema ao procurar por refs relacionadas: %s"
 
-#: common/flatpak-transaction.c:1962
+#: common/flatpak-transaction.c:1963
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
 msgstr "O aplicativo %s requer o runtime %s, que não foi localizado"
 
-#: common/flatpak-transaction.c:1978
+#: common/flatpak-transaction.c:1979
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "O aplicativo %s requer o runtime %s, que não está instalado"
 
-#: common/flatpak-transaction.c:2064
+#: common/flatpak-transaction.c:2065
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "Não foi possível desinstalar %s, o qual é necessário para %s"
 
-#: common/flatpak-transaction.c:2138
+#: common/flatpak-transaction.c:2139
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Remoto %s desabilitado, ignorando atualização de %s"
 
-#: common/flatpak-transaction.c:2162
+#: common/flatpak-transaction.c:2163
 #, c-format
 msgid "%s is already installed"
 msgstr "%s já está instalado"
 
-#: common/flatpak-transaction.c:2165
+#: common/flatpak-transaction.c:2166
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s já está instalada pelo remoto %s"
 
-#: common/flatpak-transaction.c:2326
+#: common/flatpak-transaction.c:2327
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr ".flatpakref inválido: %s"
 
-#: common/flatpak-transaction.c:2421
+#: common/flatpak-transaction.c:2422
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Erro ao atualizar metadados de remoto para “%s”: %s"
 
-#: common/flatpak-transaction.c:2834
+#: common/flatpak-transaction.c:2836
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -4763,41 +4763,41 @@ msgstr ""
 "Aviso: Tratando erro de obtenção de remoto como não fatal, já que %s já está "
 "instalado: %s"
 
-#: common/flatpak-transaction.c:3149
+#: common/flatpak-transaction.c:3151
 #, fuzzy, c-format
 msgid "No authenticator installed for remote '%s'"
 msgstr "Nenhum autenticador configurador para remoto “%s”"
 
-#: common/flatpak-transaction.c:3251 common/flatpak-transaction.c:3258
+#: common/flatpak-transaction.c:3253 common/flatpak-transaction.c:3260
 #, fuzzy, c-format
 msgid "Failed to get tokens for ref: %s"
 msgstr "Falha ao determinar partes do ref: %s"
 
-#: common/flatpak-transaction.c:3253 common/flatpak-transaction.c:3260
+#: common/flatpak-transaction.c:3255 common/flatpak-transaction.c:3262
 #, fuzzy
 msgid "Failed to get tokens for ref"
 msgstr "Falha ao determinar partes do ref: %s"
 
-#: common/flatpak-transaction.c:3573
+#: common/flatpak-transaction.c:3578
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr "URL de Flatpakrepo %s não é arquivo, HTTP ou HTTPS"
 
-#: common/flatpak-transaction.c:3579
+#: common/flatpak-transaction.c:3584
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "Não foi possível carregar o arquivo dependente %s: "
 
-#: common/flatpak-transaction.c:3587
+#: common/flatpak-transaction.c:3592
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr ".flatpakrepo inválido: %s"
 
-#: common/flatpak-transaction.c:3998
+#: common/flatpak-transaction.c:4062
 msgid "Transaction already executed"
 msgstr "Transação já executada"
 
-#: common/flatpak-transaction.c:4013
+#: common/flatpak-transaction.c:4077
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -4805,16 +4805,16 @@ msgstr ""
 "Recusando-se a operar em uma instalação de usuário como root! Isso pode "
 "levar à propriedade incorreta do arquivo e a erros de permissão."
 
-#: common/flatpak-transaction.c:4134
+#: common/flatpak-transaction.c:4165
 msgid "Aborted by user"
 msgstr "Abortado pelo usuário"
 
-#: common/flatpak-transaction.c:4158
+#: common/flatpak-transaction.c:4189
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Ignorando %s por causa do erro anterior"
 
-#: common/flatpak-transaction.c:4209
+#: common/flatpak-transaction.c:4240
 msgid "Aborted due to failure"
 msgstr "Abortado por causa de falha"
 

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-06-24 16:49+0200\n"
+"POT-Creation-Date: 2020-07-03 14:01+0200\n"
 "PO-Revision-Date: 2020-01-09 22:26+0200\n"
 "Last-Translator: scootergrisen\n"
 "Language-Team: Danish\n"
@@ -253,7 +253,7 @@ msgstr "Intet udvidelsespunkt matcher %s i %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Manglende '=' i bindingsmonteringstilvalget '%s'"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3970
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3971
 msgid "Unable to start app"
 msgstr "Kan ikke starte program"
 
@@ -3318,8 +3318,8 @@ msgstr "%s er allerede installeret"
 #: app/flatpak-cli-transaction.c:512 app/flatpak-cli-transaction.c:514
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
 #: common/flatpak-dir.c:2571 common/flatpak-dir.c:3205
-#: common/flatpak-dir.c:13859 common/flatpak-transaction.c:2134
-#: common/flatpak-transaction.c:2173 common/flatpak-utils.c:1726
+#: common/flatpak-dir.c:13861 common/flatpak-transaction.c:2135
+#: common/flatpak-transaction.c:2174 common/flatpak-utils.c:1726
 #: common/flatpak-utils.c:1819
 #, c-format
 msgid "%s not installed"
@@ -4467,7 +4467,7 @@ msgstr "Ugyldigt tegn '/' i fjernnavn: %s"
 msgid "No configuration for remote %s specified"
 msgstr "Der er ikke angivet nogen konfiguration for eksternen %s"
 
-#: common/flatpak-dir.c:14342
+#: common/flatpak-dir.c:14344
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Springer over sletning af spejlreference (%s, %s) …\n"
@@ -4664,77 +4664,77 @@ msgstr ""
 "Kørsel af %s er ikke tilladt af politikken som er indstillet af din "
 "administrator"
 
-#: common/flatpak-run.c:3498
+#: common/flatpak-run.c:3499
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr ""
 
-#: common/flatpak-run.c:3606
+#: common/flatpak-run.c:3607
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Forkert antal komponenter i runtimen %s"
 
-#: common/flatpak-run.c:3714
+#: common/flatpak-run.c:3715
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Kunne ikke migrere fra %s: %s"
 
-#: common/flatpak-run.c:3729
+#: common/flatpak-run.c:3730
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Kunne ikke migrere den gamle programdatamappe %s til det nye navn %s: %s"
 
-#: common/flatpak-run.c:3738
+#: common/flatpak-run.c:3739
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Kunne ikke oprette symlink under migrering af %s: %s"
 
-#: common/flatpak-transaction.c:1891
+#: common/flatpak-transaction.c:1892
 #, c-format
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "Advarsel: Problem ved søgning efter relaterede referencer: %s"
 
-#: common/flatpak-transaction.c:1962
+#: common/flatpak-transaction.c:1963
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
 msgstr "Programmet %s kræver runtimen %s som ikke blev fundet"
 
-#: common/flatpak-transaction.c:1978
+#: common/flatpak-transaction.c:1979
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "Programmet %s kræver runtimen %s som ikke er installeret"
 
-#: common/flatpak-transaction.c:2064
+#: common/flatpak-transaction.c:2065
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "Kan ikke afinstallere %s som behøves af %s"
 
-#: common/flatpak-transaction.c:2138
+#: common/flatpak-transaction.c:2139
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Eksternen %s er deaktiveret, ignorerer opdatering af %s"
 
-#: common/flatpak-transaction.c:2162
+#: common/flatpak-transaction.c:2163
 #, c-format
 msgid "%s is already installed"
 msgstr "%s er allerede installeret"
 
-#: common/flatpak-transaction.c:2165
+#: common/flatpak-transaction.c:2166
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s er allerede installeret fra eksternen %s"
 
-#: common/flatpak-transaction.c:2326
+#: common/flatpak-transaction.c:2327
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "Ugyldig .flatpakref: %s"
 
-#: common/flatpak-transaction.c:2421
+#: common/flatpak-transaction.c:2422
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Fejl ved opdatering af fjern-metadata for '%s': %s"
 
-#: common/flatpak-transaction.c:2834
+#: common/flatpak-transaction.c:2836
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -4743,41 +4743,41 @@ msgstr ""
 "Advarsel: Behandler fejl ved fjern-fetch som ikke-fatale eftersom %s "
 "allerede er installeret: %s"
 
-#: common/flatpak-transaction.c:3149
+#: common/flatpak-transaction.c:3151
 #, fuzzy, c-format
 msgid "No authenticator installed for remote '%s'"
 msgstr "Ingen autentifikator konfigureret for eksternen `%s`"
 
-#: common/flatpak-transaction.c:3251 common/flatpak-transaction.c:3258
+#: common/flatpak-transaction.c:3253 common/flatpak-transaction.c:3260
 #, fuzzy, c-format
 msgid "Failed to get tokens for ref: %s"
 msgstr "Kunne ikke fastslå dele fra reference: %s"
 
-#: common/flatpak-transaction.c:3253 common/flatpak-transaction.c:3260
+#: common/flatpak-transaction.c:3255 common/flatpak-transaction.c:3262
 #, fuzzy
 msgid "Failed to get tokens for ref"
 msgstr "Kunne ikke fastslå dele fra reference: %s"
 
-#: common/flatpak-transaction.c:3573
+#: common/flatpak-transaction.c:3578
 #, fuzzy, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr "Flatpakrepo-URL'en %s er ikke HTTP eller HTTPS"
 
-#: common/flatpak-transaction.c:3579
+#: common/flatpak-transaction.c:3584
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "Kan ikke indlæse afhængig fil %s: "
 
-#: common/flatpak-transaction.c:3587
+#: common/flatpak-transaction.c:3592
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "Ugyldig .flatpakrepo: %s"
 
-#: common/flatpak-transaction.c:3998
+#: common/flatpak-transaction.c:4062
 msgid "Transaction already executed"
 msgstr "Transaktionen er allerede udført"
 
-#: common/flatpak-transaction.c:4013
+#: common/flatpak-transaction.c:4077
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -4785,16 +4785,16 @@ msgstr ""
 "Nægter er operere på en brugerinstallation som root! Det kan lede til fejl "
 "om ukorrekt filejerskab og -tilladelse."
 
-#: common/flatpak-transaction.c:4134
+#: common/flatpak-transaction.c:4165
 msgid "Aborted by user"
 msgstr "Afbrudt af bruger"
 
-#: common/flatpak-transaction.c:4158
+#: common/flatpak-transaction.c:4189
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Springer over %s pga. tidligere fejl"
 
-#: common/flatpak-transaction.c:4209
+#: common/flatpak-transaction.c:4240
 msgid "Aborted due to failure"
 msgstr "Afbrudt pga. fejl"
 
