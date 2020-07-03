@@ -1,3 +1,13 @@
+Changes in 1.8.1
+================
+
+ * Avoid calling authenticator in update if ref didn't change
+ * Don't fail transaction if ref is already installed (after transaction start)
+ * Fix flatpak run handling of userns in the --device=all case
+ * Fix handling of extensions from different remotes
+ * Fix flatpak run --no-session-bus
+ * Updated translations
+
 Changes in 1.8.0
 ================
 
