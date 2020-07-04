@@ -2946,6 +2946,9 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   else if (g_file_test ("/var/lib/dbus/machine-id", G_FILE_TEST_EXISTS))
     flatpak_bwrap_add_args (bwrap, "--ro-bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
 
+  if (g_file_test ("/etc/machine-info", G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap, "--ro-bind", "/etc/machine-info", "/etc/machine-info", NULL);
+
   if (runtime_files)
     etc = g_file_get_child (runtime_files, "etc");
   if (etc != NULL &&
@@ -2969,6 +2972,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
           if (strcmp (dent->d_name, "passwd") == 0 ||
               strcmp (dent->d_name, "group") == 0 ||
               strcmp (dent->d_name, "machine-id") == 0 ||
+              strcmp (dent->d_name, "machine-info") == 0 ||
               strcmp (dent->d_name, "resolv.conf") == 0 ||
               strcmp (dent->d_name, "host.conf") == 0 ||
               strcmp (dent->d_name, "hosts") == 0 ||
