@@ -3421,7 +3421,8 @@ sort_ops (FlatpakTransaction *self)
  * flatpak_transaction_get_operations:
  * @self: a #FlatpakTransaction
  *
- * Gets the list of operations. Skipped operations are not included.
+ * Gets the list of operations. Skipped operations are not included. The order
+ * of the list is the order in which the operations are executed.
  *
  * Returns: (transfer full) (element-type FlatpakTransactionOperation): a #GList of operations
  */
