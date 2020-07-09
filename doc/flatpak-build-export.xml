@@ -146,7 +146,7 @@
                 <term><option>--include=PATTERN</option></term>
 
                 <listitem><para>
-                    Don't exclude files matching <arg choice="plain">PATTERN</arg> from the commit, even if they match the <option>--export</option> patterns.
+                    Don't exclude files matching <arg choice="plain">PATTERN</arg> from the commit, even if they match the <option>--exclude</option> patterns.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
