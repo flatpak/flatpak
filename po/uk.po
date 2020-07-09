@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-06-24 16:49+0200\n"
-"PO-Revision-Date: 2020-06-08 19:25+0300\n"
+"POT-Creation-Date: 2020-07-04 03:26+0000\n"
+"PO-Revision-Date: 2020-07-04 14:48+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -259,7 +259,7 @@ msgstr "Немає точки розширення, яка відповідає 
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3970
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3971
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -1181,13 +1181,13 @@ msgid "Allow partial commits in the created repo"
 msgstr "Дозволити часткові внески до створеного сховища"
 
 #: app/flatpak-builtins-create-usb.c:126 app/flatpak-builtins-create-usb.c:165
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Warning: Related ref ‘%s’ is partially installed. Use --allow-partial to "
 "suppress this message.\n"
 msgstr ""
-"Попередження: пропускаємо пов'язане сховище «%s», оскільки його встановлено "
-"частково.\n"
+"Попередження: пов'язане посилання «%s» встановлено частково. Скористайтеся"
+" параметром --allow-partial, щоб придушити виведення цього повідомлення.\n"
 
 #: app/flatpak-builtins-create-usb.c:158
 #, c-format
@@ -1241,6 +1241,8 @@ msgid ""
 "Warning: Ref ‘%s’ is partially installed. Use --allow-partial to suppress "
 "this message.\n"
 msgstr ""
+"Попередження: посилання «%s» встановлено частково. Скористайтеся параметром"
+" --allow-partial, щоб придушити виведення цього повідомлення.\n"
 
 #: app/flatpak-builtins-create-usb.c:686
 #, c-format
@@ -2967,7 +2969,7 @@ msgstr "Зробити процеси видимими у батьківсько
 
 #: app/flatpak-builtins-run.c:85
 msgid "Write the instance ID to the given file descriptor"
-msgstr ""
+msgstr "Записати ідентифікатор екземпляра до вказаного дескриптора файла"
 
 #: app/flatpak-builtins-run.c:108
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3369,8 +3371,8 @@ msgstr "%s вже встановлено"
 #: app/flatpak-cli-transaction.c:512 app/flatpak-cli-transaction.c:514
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
 #: common/flatpak-dir.c:2571 common/flatpak-dir.c:3205
-#: common/flatpak-dir.c:13859 common/flatpak-transaction.c:2134
-#: common/flatpak-transaction.c:2173 common/flatpak-utils.c:1726
+#: common/flatpak-dir.c:13861 common/flatpak-transaction.c:2135
+#: common/flatpak-transaction.c:2174 common/flatpak-utils.c:1726
 #: common/flatpak-utils.c:1819
 #, c-format
 msgid "%s not installed"
@@ -4522,7 +4524,7 @@ msgstr "Некоректний символ, «/», у назві віддале
 msgid "No configuration for remote %s specified"
 msgstr "Не вказано налаштувань для віддаленого сховища %s"
 
-#: common/flatpak-dir.c:14342
+#: common/flatpak-dir.c:14344
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Пропускаємо вилучення посилання на дзеркало (%s, %s)…\n"
@@ -4549,36 +4551,34 @@ msgstr "Як і було наказано, лише отримали %s, без 
 
 #: common/flatpak-oci-registry.c:991
 msgid "Only Bearer authentication supported"
-msgstr ""
+msgstr "Передбачено підтримку лише розпізнавання Bearer"
 
 #: common/flatpak-oci-registry.c:1000
-#, fuzzy
 msgid "Only realm in authentication request"
-msgstr "Некоректна назва засобу розпізнавання, %s"
+msgstr "У запиті щодо розпізнавання вказано лише область"
 
 #: common/flatpak-oci-registry.c:1007
-#, fuzzy
 msgid "Invalid realm in authentication request"
-msgstr "Некоректна назва засобу розпізнавання, %s"
+msgstr "У запиті щодо розпізнавання вказано некоректну область"
 
 #: common/flatpak-oci-registry.c:1059
-#, fuzzy, c-format
+#, c-format
 msgid "Authorization failed: %s"
-msgstr "Назва засобу розпізнавання: %s\n"
+msgstr "Помилка під час спроби уповноваження: %s"
 
 #: common/flatpak-oci-registry.c:1061
 msgid "Authorization failed"
-msgstr ""
+msgstr "Помилка при авторизації"
 
 #: common/flatpak-oci-registry.c:1065
 #, c-format
 msgid "Unexpected response status %d when requesting token: %s"
 msgstr ""
+"Неочікуваний стан відповіді %d під час надсилання запиту щодо ключа: %s"
 
 #: common/flatpak-oci-registry.c:1076
-#, fuzzy
 msgid "Invalid authentication request response"
-msgstr "Некоректна назва засобу розпізнавання, %s"
+msgstr "Некоректне відповідь на запит щодо розпізнавання"
 
 #: common/flatpak-oci-registry.c:1679 common/flatpak-oci-registry.c:1732
 #: common/flatpak-oci-registry.c:1761 common/flatpak-oci-registry.c:1816
@@ -4671,9 +4671,9 @@ msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Не вдалося відкрити файл bwrapinfo.json: %s"
 
 #: common/flatpak-run.c:2397
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to write to instance id fd: %s"
-msgstr "Не вдалося записати кеш резюме: "
+msgstr "Не вдалося записати дескриптор файла до ідентифікатора екземпляра: %s"
 
 #: common/flatpak-run.c:2710
 msgid "Initialize seccomp failed"
@@ -4718,76 +4718,76 @@ msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Запуск %s заборонено правилами, які встановлено адміністратором вашої системи"
 
-#: common/flatpak-run.c:3498
+#: common/flatpak-run.c:3499
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr "«flatpak run» не призначено для запуску за допомогою sudo"
 
-#: common/flatpak-run.c:3606
+#: common/flatpak-run.c:3607
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Помилкова кількість компонентів у середовищі виконання %s"
 
-#: common/flatpak-run.c:3714
+#: common/flatpak-run.c:3715
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Не вдалося перенести з %s: %s"
 
-#: common/flatpak-run.c:3729
+#: common/flatpak-run.c:3730
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "Не вдалося перенести каталог даних старої програми %s до нового %s: %s"
 
-#: common/flatpak-run.c:3738
+#: common/flatpak-run.c:3739
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Не вдалося створити символічне посилання під час перенесення %s: %s"
 
-#: common/flatpak-transaction.c:1891
+#: common/flatpak-transaction.c:1892
 #, c-format
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "Попередження: проблема під час пошуку пов’язаних посилань: %s"
 
-#: common/flatpak-transaction.c:1962
+#: common/flatpak-transaction.c:1963
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
 msgstr "Програма %s потребує середовища виконання %s, яке не знайдено"
 
-#: common/flatpak-transaction.c:1978
+#: common/flatpak-transaction.c:1979
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "Програма %s потребує середовища виконання %s, яке не встановлено"
 
-#: common/flatpak-transaction.c:2064
+#: common/flatpak-transaction.c:2065
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "Не вдалося вилучити %s, оскільки цей запис потрібен для %s"
 
-#: common/flatpak-transaction.c:2138
+#: common/flatpak-transaction.c:2139
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Сховище %s вимкнено, ігноруємо оновлення %s"
 
-#: common/flatpak-transaction.c:2162
+#: common/flatpak-transaction.c:2163
 #, c-format
 msgid "%s is already installed"
 msgstr "%s вже встановлено"
 
-#: common/flatpak-transaction.c:2165
+#: common/flatpak-transaction.c:2166
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s вже встановлено із віддаленого сховища %s"
 
-#: common/flatpak-transaction.c:2326
+#: common/flatpak-transaction.c:2327
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "Некоректний .flatpakref: %s"
 
-#: common/flatpak-transaction.c:2421
+#: common/flatpak-transaction.c:2422
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Помилка під час оновлення метаданих сховища для «%s»: %s"
 
-#: common/flatpak-transaction.c:2834
+#: common/flatpak-transaction.c:2836
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -4796,42 +4796,41 @@ msgstr ""
 "Попередження: вважаємо помилку отримання даних віддаленого сховища "
 "некритичною, оскільки %s вже встановлено: %s"
 
-#: common/flatpak-transaction.c:3149
-#, fuzzy, c-format
+#: common/flatpak-transaction.c:3151
+#, c-format
 msgid "No authenticator installed for remote '%s'"
-msgstr "Для віддаленого сховища «%s» не налаштовано способу розпізнавання"
-
-#: common/flatpak-transaction.c:3251 common/flatpak-transaction.c:3258
-#, fuzzy, c-format
-msgid "Failed to get tokens for ref: %s"
-msgstr "Не вдалося визначити частини на основі посилання: %s"
+msgstr "Не встановлено засобу розпізнавання для віддаленого сховища «%s»"
 
 #: common/flatpak-transaction.c:3253 common/flatpak-transaction.c:3260
-#, fuzzy
-msgid "Failed to get tokens for ref"
-msgstr "Не вдалося визначити частини на основі посилання: %s"
+#, c-format
+msgid "Failed to get tokens for ref: %s"
+msgstr "Не вдалося отримати ключі для посилання: %s"
 
-#: common/flatpak-transaction.c:3573
+#: common/flatpak-transaction.c:3255 common/flatpak-transaction.c:3262
+msgid "Failed to get tokens for ref"
+msgstr "Не вдалося отримати ключі для посилання"
+
+#: common/flatpak-transaction.c:3578
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr ""
 "Адреса Flatpakrepo %s не є ні файлом, ні адресою HTTP, ні адресою HTTPS"
 
-#: common/flatpak-transaction.c:3579
+#: common/flatpak-transaction.c:3584
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "Не вдалося завантажити залежний файл %s: "
 
-#: common/flatpak-transaction.c:3587
+#: common/flatpak-transaction.c:3592
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "Некоректний .flatpakrepo: %s"
 
-#: common/flatpak-transaction.c:3998
+#: common/flatpak-transaction.c:4062
 msgid "Transaction already executed"
 msgstr "Операцію вже виконано"
 
-#: common/flatpak-transaction.c:4013
+#: common/flatpak-transaction.c:4077
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -4840,16 +4839,16 @@ msgstr ""
 "Виконання таких дій може призвести до помилок у визначенні власника об'єктів "
 "та прав доступу."
 
-#: common/flatpak-transaction.c:4134
+#: common/flatpak-transaction.c:4165
 msgid "Aborted by user"
 msgstr "Перервано користувачем"
 
-#: common/flatpak-transaction.c:4158
+#: common/flatpak-transaction.c:4189
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Пропускаємо %s через попередню помилку"
 
-#: common/flatpak-transaction.c:4209
+#: common/flatpak-transaction.c:4240
 msgid "Aborted due to failure"
 msgstr "Перервано через критичну помилку"
 
@@ -5060,16 +5059,15 @@ msgstr "Число «%s» не належить до діапазону [%s, %s]
 
 #: oci-authenticator/flatpak-oci-authenticator.c:290
 msgid "Not a oci remote, missing summary.xa.oci-repository"
-msgstr ""
+msgstr "Не є віддаленим сховищем oci, не вистачає summary.xa.oci-repository"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:475
 msgid "Not a OCI remote"
-msgstr ""
+msgstr "Не є віддаленим сховищем OCI"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:486
-#, fuzzy
 msgid "Invalid token"
-msgstr "Некоректний ключ gpg"
+msgstr "Некоректний ключ"
 
 #: portal/flatpak-portal.c:1962
 msgid "No portal support found"
@@ -5335,11 +5333,3 @@ msgid ""
 msgstr ""
 "Для встановлення програмного забезпечення, доступ до якого обмежено вашими "
 "правилами батьківського контролю, слід пройти розпізнавання"
-
-#, c-format
-#~ msgid "Related ref '%s' is only partially installed"
-#~ msgstr "Пов'язане сховище «%s» встановлено лише частково"
-
-#, c-format
-#~ msgid "Ref '%s' is only partially installed"
-#~ msgstr "Сховище «%s» встановлено лише частково"
