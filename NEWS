@@ -1,3 +1,11 @@
+Changes in 1.6.5
+================
+
+This is a minor fix to the authentication system that avoids
+unnecessary authentication when doing update and an app hasn't
+changed. This was problematic for the OCI backend as it now
+authenticates by default.
+
 Changes in 1.6.4
 ================
 
