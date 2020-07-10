@@ -52,6 +52,8 @@ oci-authenticator/*.service
 portal/*.service
 session-helper/*.service
 system-helper/*.service
+sideload-repos-systemd/flatpak-sideload-usb-repo.service
+sideload-repos-systemd/flatpak-sideload-usb-repo.path
 tests/*.service
 flatpak.conf
 flatpak.env
