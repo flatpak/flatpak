@@ -5578,8 +5578,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   /* Here we check that there is actually a ref binding, otherwise we
      could allow installing a ref as another app, because both would
      pass gpg validation. Note that ostree pull actually also verifies
-     the ref-bindings, but only if the exist. We could do only the
-     ref-binding exist check, but if we got something weird might as
+     the ref-bindings, but only if they exist. We could do only the
+     ref-binding existence check, but if we got something weird might as
      well stop handling it early. */
 
   new_commit_metadata = g_variant_get_child_value (new_commit, 0);
