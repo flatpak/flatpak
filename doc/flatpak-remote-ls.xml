@@ -228,7 +228,7 @@
                 <term>application</term>
 
                 <listitem><para>
-                    Show the application ID
+                    Show the application or runtime ID
                 </para></listitem>
             </varlistentry>
 
@@ -277,6 +277,14 @@
 
                 <listitem><para>
                     Show the active commit
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>runtime</term>
+
+                <listitem><para>
+                    Show the used runtime
                 </para></listitem>
             </varlistentry>
 
