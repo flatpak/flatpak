@@ -10771,7 +10771,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
 
   is_local = g_str_has_prefix (url, "file:");
 
-  /* No caching for local files */
+  /* No in-memory caching for local files */
   if (!is_local)
     {
       if (flatpak_dir_lookup_cached_summary (self, out_summary, out_summary_sig, name_or_uri, url))
