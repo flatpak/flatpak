@@ -71,7 +71,7 @@
 
 #define NO_SYSTEM_HELPER ((FlatpakSystemHelper *) (gpointer) 1)
 
-#define SUMMARY_CACHE_TIMEOUT_SEC 5 *60
+#define SUMMARY_CACHE_TIMEOUT_SEC (60 * 5)
 #define FILTER_MTIME_CHECK_TIMEOUT_MSEC 500
 
 #define SYSCONF_INSTALLATIONS_DIR "installations.d"
