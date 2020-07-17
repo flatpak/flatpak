@@ -120,7 +120,9 @@
 
                 <listitem><para>
                     Set the priority for the remote. Default is 1, higher is more prioritized. This is
-                    mainly used for graphical installation tools.
+                    mainly used for graphical installation tools. It is also used when searching for a
+                    remote to provide an app's runtime. The app's origin is checked before other
+                    remotes with the same priority.
                 </para></listitem>
             </varlistentry>
 

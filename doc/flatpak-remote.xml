@@ -104,7 +104,9 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>xa.prio</option> (integer)</term>
-                    <listitem><para>The priority for the remote. This is used when listing remotes. Defaults to 1.</para></listitem>
+                    <listitem><para>The priority for the remote. This is used when listing remotes, and when
+                    searching them for the runtime needed by an app. The remote providing the app is
+                    searched for its runtime before others with equal priority. Defaults to 1.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>xa.noenumerate</option> (boolean)</term>

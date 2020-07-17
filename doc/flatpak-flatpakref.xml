@@ -132,7 +132,9 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>RuntimeRepo</option> (string)</term>
-                    <listitem><para>The url for a .flatpakrepo file for the remote where the runtime can be found.</para></listitem>
+                    <listitem><para>The url for a .flatpakrepo file for the remote where the runtime can be found.
+                    Note that if the runtime is available in the remote providing the app, that remote may be
+                    used instead but the one specified by this option will still be added.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>SuggestRemoteName</option> (string)</term>
