@@ -462,10 +462,12 @@ GFile *     flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir   *
                                                                   GCancellable *cancellable);
 
 char **     flatpak_dir_search_for_local_dependency (FlatpakDir   *self,
+                                                     const char   *prioritized_remote,
                                                      const char   *runtime_ref,
                                                      GCancellable *cancellable,
                                                      GError      **error);
 char **     flatpak_dir_search_for_dependency (FlatpakDir   *self,
+                                               const char   *prioritized_remote,
                                                const char   *runtime_ref,
                                                GCancellable *cancellable,
                                                GError      **error);

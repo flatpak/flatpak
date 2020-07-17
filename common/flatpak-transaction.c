@@ -1939,6 +1939,7 @@ add_related (FlatpakTransaction          *self,
 static char *
 find_runtime_remote (FlatpakTransaction             *self,
                      const char                     *app_ref,
+                     const char                     *app_remote,
                      const char                     *runtime_ref,
                      FlatpakTransactionOperationType source_kind,
                      GError                        **error)
@@ -1952,10 +1953,11 @@ find_runtime_remote (FlatpakTransaction             *self,
   app_pref = strchr (app_ref, '/') + 1;
   runtime_pref = strchr (runtime_ref, '/') + 1;
 
+  /* Here we are passing along app_remote so it gets priority */
   if (transaction_is_local_only (self, source_kind))
-    remotes = flatpak_dir_search_for_local_dependency (priv->dir, runtime_ref, NULL, NULL);
+    remotes = flatpak_dir_search_for_local_dependency (priv->dir, app_remote, runtime_ref, NULL, NULL);
   else
-    remotes = flatpak_dir_search_for_dependency (priv->dir, runtime_ref, NULL, NULL);
+    remotes = flatpak_dir_search_for_dependency (priv->dir, app_remote, runtime_ref, NULL, NULL);
 
   if (remotes == NULL || *remotes == NULL)
     {
@@ -2037,7 +2039,7 @@ add_deps (FlatpakTransaction          *self,
               return FALSE;
             }
 
-          runtime_remote = find_runtime_remote (self, op->ref, full_runtime_ref, op->kind, error);
+          runtime_remote = find_runtime_remote (self, op->ref, op->remote, full_runtime_ref, op->kind, error);
           if (runtime_remote == NULL)
             return FALSE;
 

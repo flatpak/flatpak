@@ -2230,6 +2230,7 @@ launch_httpd (void)
 
 static void
 _add_remote (const char *remote_repo_name,
+             const char *remote_name_override,
              gboolean    system)
 {
   char *argv[] = { "flatpak", "remote-add", NULL, "--gpg-import=", "--collection-id=", "name", "url", NULL };
@@ -2240,7 +2241,10 @@ _add_remote (const char *remote_repo_name,
   gpgimport = g_strdup_printf ("--gpg-import=%s/pubring.gpg", gpg_homedir);
   repo_url = g_strdup_printf ("http://127.0.0.1:%s/%s", httpd_port, remote_repo_name);
   collection_id_arg = g_strdup_printf ("--collection-id=%s", repo_collection_id);
-  remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
+  if (remote_name_override != NULL)
+    remote_name = g_strdup (remote_name_override);
+  else
+    remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
 
   argv[2] = system ? "--system" : "--user";
   argv[3] = gpgimport;
@@ -2252,15 +2256,17 @@ _add_remote (const char *remote_repo_name,
 }
 
 static void
-add_remote_system (const char *remote_repo_name)
+add_remote_system (const char *remote_repo_name,
+                   const char *remote_name_override)
 {
-  _add_remote (remote_repo_name, TRUE);
+  _add_remote (remote_repo_name, remote_name_override, TRUE);
 }
 
 static void
-add_remote_user (const char *remote_repo_name)
+add_remote_user (const char *remote_repo_name,
+                 const char *remote_name_override)
 {
-  _add_remote (remote_repo_name, FALSE);
+  _add_remote (remote_repo_name, remote_name_override, FALSE);
 }
 
 static void
@@ -2366,7 +2372,7 @@ setup_repo (void)
   make_test_app ("test");
   update_repo ("test");
   launch_httpd ();
-  add_remote_user ("test");
+  add_remote_user ("test", NULL);
   add_flatpakrepo ("test");
   configure_languages ("de");
 
@@ -3262,8 +3268,8 @@ test_transaction_flatpakref_remote_creation (void)
 
   empty_installation (system_inst);
 
-  add_remote_system ("test-without-runtime");
-  add_remote_system ("test-runtime-only");
+  add_remote_system ("test-without-runtime", NULL);
+  add_remote_system ("test-runtime-only", NULL);
 
   user_inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -3465,6 +3471,68 @@ test_transaction_install_local (void)
   remote = flatpak_installation_get_remote_by_name (inst, "hello-origin", NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (remote);
+}
+
+/* Test that we pull the runtime from the same remote as the app even if
+ * another remote also provides the runtime and sorts earlier via strcmp() */
+static void
+test_transaction_app_runtime_same_remote (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(FlatpakInstalledRef) installed_runtime = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *app = NULL;
+  const char *runtime_origin;
+  gboolean res;
+  int old_prio;
+
+  app = g_strdup_printf ("app/org.test.Hello/%s/master",
+                         flatpak_get_default_arch ());
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  add_remote_user ("test-runtime-only", "aaatest-runtime-only-repo");
+
+  /* Drop caches so we find the new remote */
+  flatpak_installation_drop_caches (inst, NULL, &error);
+  g_assert_no_error (error);
+
+  /* Even with aaatest-runtime-only-repo sorting before test-repo, the runtime
+   * should come from test-repo */
+  g_assert_true (strcmp ("aaatest-runtime-only-repo", "test-repo") < 0);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_install (transaction, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  installed_runtime = flatpak_installation_get_installed_ref (inst,
+                                                              FLATPAK_REF_KIND_RUNTIME,
+                                                              "org.test.Platform",
+                                                              flatpak_get_default_arch (),
+                                                              "master", NULL, &error);
+  g_assert_nonnull (installed_runtime);
+  g_assert_no_error (error);
+
+  runtime_origin = flatpak_installed_ref_get_origin (installed_runtime);
+  g_assert_nonnull (runtime_origin);
+  g_assert_cmpstr (runtime_origin, ==, repo_name);
+
+  /* Reset things */
+  empty_installation (inst);
+  remove_remote_user ("aaatest-runtime-only");
 }
 
 typedef struct
@@ -4259,6 +4327,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-flatpakref-remote-creation", test_transaction_flatpakref_remote_creation);
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
   g_test_add_func ("/library/transaction-install-local", test_transaction_install_local);
+  g_test_add_func ("/library/transaction-app-runtime-same-remote", test_transaction_app_runtime_same_remote);
   g_test_add_func ("/library/instance", test_instance);
   g_test_add_func ("/library/update-subpaths", test_update_subpaths);
   g_test_add_func ("/library/overrides", test_overrides);

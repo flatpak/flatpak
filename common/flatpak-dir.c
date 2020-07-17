@@ -12703,19 +12703,61 @@ flatpak_dir_list_enumerated_remotes (FlatpakDir   *self,
   return (char **) g_ptr_array_free (g_steal_pointer (&res), FALSE);
 }
 
+typedef struct {
+  FlatpakDir *dir;
+  const char *prioritized_remote;
+} RemoteSortData;
+
+static gint
+cmp_remote_with_prioritized (gconstpointer a,
+                             gconstpointer b,
+                             gpointer      user_data)
+{
+  RemoteSortData *rsd = user_data;
+  FlatpakDir *self = rsd->dir;
+  const char *a_name = *(const char **) a;
+  const char *b_name = *(const char **) b;
+  int prio_a, prio_b;
+
+  prio_a = flatpak_dir_get_remote_prio (self, a_name);
+  prio_b = flatpak_dir_get_remote_prio (self, b_name);
+
+  /* Here we are assuming the array is already sorted by cmp_remote() and only
+   * putting a particular remote at the top of its priority level */
+  if (prio_b != prio_a)
+    return prio_b - prio_a;
+  else
+    {
+      if (strcmp (a_name, rsd->prioritized_remote) == 0)
+        return -1;
+      if (strcmp (b_name, rsd->prioritized_remote) == 0)
+        return 1;
+    }
+
+  return 0;
+}
+
 char **
 flatpak_dir_search_for_dependency (FlatpakDir   *self,
+                                   const char   *prioritized_remote,
                                    const char   *runtime_ref,
                                    GCancellable *cancellable,
                                    GError      **error)
 {
   g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
   g_auto(GStrv) remotes = NULL;
+  RemoteSortData rsd = { NULL };
   int i;
 
   remotes = flatpak_dir_list_enumerated_remotes (self, cancellable, error);
   if (remotes == NULL)
     return NULL;
+
+  /* Put @prioritized_remote before the others at its priority level */
+  rsd.dir = self;
+  rsd.prioritized_remote = prioritized_remote;
+  g_qsort_with_data (remotes, g_strv_length (remotes), sizeof (char *),
+                     cmp_remote_with_prioritized, &rsd);
 
   for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
     {
@@ -12735,17 +12777,25 @@ flatpak_dir_search_for_dependency (FlatpakDir   *self,
 
 char **
 flatpak_dir_search_for_local_dependency (FlatpakDir   *self,
+                                         const char   *prioritized_remote,
                                          const char   *runtime_ref,
                                          GCancellable *cancellable,
                                          GError      **error)
 {
   g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
   g_auto(GStrv) remotes = NULL;
+  RemoteSortData rsd = { NULL };
   int i;
 
   remotes = flatpak_dir_list_enumerated_remotes (self, cancellable, error);
   if (remotes == NULL)
     return NULL;
+
+  /* Put @prioritized_remote before the others at its priority level */
+  rsd.dir = self;
+  rsd.prioritized_remote = prioritized_remote;
+  g_qsort_with_data (remotes, g_strv_length (remotes), sizeof (char *),
+                     cmp_remote_with_prioritized, &rsd);
 
   for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
     {
