@@ -701,9 +701,12 @@ test_remote (void)
   g_assert_cmpstr (flatpak_remote_get_default_branch (remote), ==, "master");
 
   /* back to defaults */
+  flatpak_remote_set_title (remote, NULL);
+  flatpak_remote_set_prio (remote, 1);
   flatpak_remote_set_noenumerate (remote, FALSE);
   flatpak_remote_set_nodeps (remote, FALSE);
   flatpak_remote_set_disabled (remote, FALSE);
+  flatpak_remote_set_default_branch (remote, NULL);
   flatpak_remote_set_gpg_verify (remote, TRUE);
   flatpak_remote_set_collection_id (remote, repo_collection_id);
 

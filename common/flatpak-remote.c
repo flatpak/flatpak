@@ -423,7 +423,7 @@ flatpak_remote_get_title (FlatpakRemote *self)
 /**
  * flatpak_remote_set_title:
  * @self: a #FlatpakRemote
- * @title: The new title
+ * @title: The new title, or %NULL to unset
  *
  * Sets the repository title of this remote.
  *
@@ -709,7 +709,7 @@ flatpak_remote_get_default_branch (FlatpakRemote *self)
 /**
  * flatpak_remote_set_default_branch:
  * @self: a #FlatpakRemote
- * @default_branch: The new default_branch
+ * @default_branch: The new default_branch, or %NULL to unset
  *
  * Sets the default branch configured for this remote.
  *
@@ -1181,6 +1181,18 @@ flatpak_remote_commit_filter (FlatpakRemote *self,
   return TRUE;
 }
 
+static void
+_key_file_set_or_unset_string (GKeyFile   *config,
+                               const char *group,
+                               const char *key,
+                               const char *value)
+{
+  if (value != NULL)
+    g_key_file_set_string (config, group, key, value);
+  else
+    g_key_file_remove_key (config, group, key, NULL);
+}
+
 gboolean
 flatpak_remote_commit (FlatpakRemote *self,
                        FlatpakDir    *dir,
@@ -1214,15 +1226,10 @@ flatpak_remote_commit (FlatpakRemote *self,
     g_key_file_set_string (config, group, "url", priv->local_url);
 
   if (priv->local_collection_id_set)
-    {
-      if (priv->local_collection_id != NULL)
-        g_key_file_set_string (config, group, "collection-id", priv->local_collection_id);
-      else
-        g_key_file_remove_key (config, group, "collection-id", NULL);
-    }
+    _key_file_set_or_unset_string (config, group, "collection-id", priv->local_collection_id);
 
   if (priv->local_title_set)
-    g_key_file_set_string (config, group, "xa.title", priv->local_title);
+    _key_file_set_or_unset_string (config, group, "xa.title", priv->local_title);
 
   if (priv->local_filter_set)
     g_key_file_set_string (config, group, "xa.filter", priv->local_filter ? priv->local_filter : "");
@@ -1240,7 +1247,7 @@ flatpak_remote_commit (FlatpakRemote *self,
     g_key_file_set_string (config, group, "xa.icon", priv->local_icon);
 
   if (priv->local_default_branch_set)
-    g_key_file_set_string (config, group, "xa.default-branch", priv->local_default_branch);
+    _key_file_set_or_unset_string (config, group, "xa.default-branch", priv->local_default_branch);
 
   if (priv->local_main_ref_set)
     g_key_file_set_string (config, group, "xa.main-ref", priv->local_main_ref);
