@@ -110,7 +110,8 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>xa.noenumerate</option> (boolean)</term>
-                    <listitem><para>Whether this remote should be used when presenting available contents. Defaults to true.</para></listitem>
+                    <listitem><para>Whether this remote should be used when presenting available apps/runtimes,
+                    or when searching for a runtime dependency. Defaults to true.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>xa.nodeps</option> (boolean)</term>
