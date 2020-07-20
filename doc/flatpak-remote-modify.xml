@@ -125,7 +125,8 @@
                 <listitem><para>
                     Mark the remote as not enumerated. This means the remote will
                     not be used to list applications, for instance in graphical
-                    installation tools.
+                    installation tools. It will also not be used for runtime dependency
+                    resolution (as with <option>--no-use-for-deps</option>).
                 </para></listitem>
             </varlistentry>
 
