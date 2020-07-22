@@ -876,6 +876,7 @@ flatpak_remote_state_fetch_commit_object (FlatpakRemoteState *self,
   if (ref != NULL)
     {
       const char *xa_ref = NULL;
+      const char *collection_binding = NULL;
       g_autofree const char **commit_refs = NULL;
 
       if ((g_variant_lookup (commit_metadata, "xa.ref", "&s", &xa_ref) &&
@@ -885,6 +886,39 @@ flatpak_remote_state_fetch_commit_object (FlatpakRemoteState *self,
         {
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
           return NULL;
+        }
+
+      /* Check that the locally configured collection ID is correct by looking
+       * for it in the commit metadata */
+      if (self->collection_id != NULL &&
+          (!g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_COLLECTION_BINDING, "&s", &collection_binding) ||
+           g_strcmp0 (self->collection_id, collection_binding) != 0))
+        {
+          g_autoptr(GVariantIter) collection_refs_iter = NULL;
+          gboolean found_in_collection_refs_binding = FALSE;
+          /* Note: the OSTREE_COMMIT_META_... define for this is not yet merged
+           * in https://github.com/ostreedev/ostree/pull/1805 */
+          if (g_variant_lookup (commit_metadata, "ostree.collection-refs-binding", "a(ss)", &collection_refs_iter))
+            {
+              const gchar *crb_collection_id, *crb_ref_name;
+              while (g_variant_iter_loop (collection_refs_iter, "(&s&s)", &crb_collection_id, &crb_ref_name))
+                {
+                  if (g_strcmp0 (self->collection_id, crb_collection_id) == 0 &&
+                      g_strcmp0 (ref, crb_ref_name) == 0)
+                    {
+                      found_in_collection_refs_binding = TRUE;
+                      break;
+                    }
+                }
+            }
+
+          if (!found_in_collection_refs_binding)
+            {
+              flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                  _("Configured collection ID ‘%s’ not in binding metadata"),
+                                  self->collection_id);
+              return NULL;
+            }
         }
     }
 
