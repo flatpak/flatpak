@@ -392,8 +392,8 @@ if test x$enable_documentation = xyes; then
    fi
 
   dnl check for DocBook DTD in the local catalog
-  JH_CHECK_XML_CATALOG([-//OASIS//DTD DocBook XML V4.1.2//EN],
-     [DocBook XML DTD V4.1.2], [have_docbook_dtd=yes], [have_docbook_dtd=no])
+  JH_CHECK_XML_CATALOG([-//OASIS//DTD DocBook XML V4.5//EN],
+     [DocBook XML DTD V4.5], [have_docbook_dtd=yes], [have_docbook_dtd=no])
   if test "$have_docbook_dtd" != yes; then
     AC_MSG_ERROR([DocBook DTD is required for --enable-documentation])
   fi
