@@ -181,6 +181,8 @@ EXTRA_DIST += scripts/flatpak-bisect scripts/flatpak-coredumpctl
 
 EXTRA_DIST += variant-schema-compiler/variant-schema-compiler
 
+EXTRA_DIST += autogen.sh
+
 EXTRA_DIST += README.md
 
 EXTRA_DIST += flatpak.png
