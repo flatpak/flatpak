@@ -59,29 +59,29 @@ test_library_version (void)
 static void
 test_library_types (void)
 {
-  g_assert (g_type_is_a (FLATPAK_TYPE_REF, G_TYPE_OBJECT));
-  g_assert (g_type_is_a (FLATPAK_TYPE_INSTALLED_REF, FLATPAK_TYPE_REF));
-  g_assert (g_type_is_a (FLATPAK_TYPE_REMOTE_REF, FLATPAK_TYPE_REF));
-  g_assert (g_type_is_a (FLATPAK_TYPE_BUNDLE_REF, FLATPAK_TYPE_REF));
-  g_assert (g_type_is_a (FLATPAK_TYPE_RELATED_REF, FLATPAK_TYPE_REF));
-  g_assert (g_type_is_a (FLATPAK_TYPE_INSTALLATION, G_TYPE_OBJECT));
-  g_assert (g_type_is_a (FLATPAK_TYPE_INSTANCE, G_TYPE_OBJECT));
-  g_assert (g_type_is_a (FLATPAK_TYPE_REMOTE, G_TYPE_OBJECT));
-  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION, G_TYPE_OBJECT));
-  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_OPERATION, G_TYPE_OBJECT));
-  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_PROGRESS, G_TYPE_OBJECT));
-  g_assert (g_type_is_a (FLATPAK_TYPE_ERROR, G_TYPE_ENUM));
-  g_assert (g_type_is_a (FLATPAK_TYPE_PORTAL_ERROR, G_TYPE_ENUM));
-  g_assert (g_type_is_a (FLATPAK_TYPE_INSTALL_FLAGS, G_TYPE_FLAGS));
-  g_assert (g_type_is_a (FLATPAK_TYPE_UPDATE_FLAGS, G_TYPE_FLAGS));
-  g_assert (g_type_is_a (FLATPAK_TYPE_UNINSTALL_FLAGS, G_TYPE_FLAGS));
-  g_assert (g_type_is_a (FLATPAK_TYPE_STORAGE_TYPE, G_TYPE_ENUM));
-  g_assert (g_type_is_a (FLATPAK_TYPE_REF_KIND, G_TYPE_ENUM));
-  g_assert (g_type_is_a (FLATPAK_TYPE_REMOTE_TYPE, G_TYPE_ENUM));
-  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_OPERATION_TYPE, G_TYPE_ENUM));
-  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_ERROR_DETAILS, G_TYPE_FLAGS));
-  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_RESULT, G_TYPE_FLAGS));
-  g_assert (g_type_is_a (FLATPAK_TYPE_TRANSACTION_REMOTE_REASON, G_TYPE_ENUM));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_REF, G_TYPE_OBJECT));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_INSTALLED_REF, FLATPAK_TYPE_REF));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_REMOTE_REF, FLATPAK_TYPE_REF));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_BUNDLE_REF, FLATPAK_TYPE_REF));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_RELATED_REF, FLATPAK_TYPE_REF));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_INSTALLATION, G_TYPE_OBJECT));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_INSTANCE, G_TYPE_OBJECT));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_REMOTE, G_TYPE_OBJECT));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_TRANSACTION, G_TYPE_OBJECT));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_TRANSACTION_OPERATION, G_TYPE_OBJECT));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_TRANSACTION_PROGRESS, G_TYPE_OBJECT));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_ERROR, G_TYPE_ENUM));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_PORTAL_ERROR, G_TYPE_ENUM));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_INSTALL_FLAGS, G_TYPE_FLAGS));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_UPDATE_FLAGS, G_TYPE_FLAGS));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_UNINSTALL_FLAGS, G_TYPE_FLAGS));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_STORAGE_TYPE, G_TYPE_ENUM));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_REF_KIND, G_TYPE_ENUM));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_REMOTE_TYPE, G_TYPE_ENUM));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_TRANSACTION_OPERATION_TYPE, G_TYPE_ENUM));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_TRANSACTION_ERROR_DETAILS, G_TYPE_FLAGS));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_TRANSACTION_RESULT, G_TYPE_FLAGS));
+  g_assert_true (g_type_is_a (FLATPAK_TYPE_TRANSACTION_REMOTE_REASON, G_TYPE_ENUM));
 }
 
 static void
@@ -349,7 +349,7 @@ test_arches (void)
   g_assert_cmpstr (default_arch, !=, "");
 
   g_assert_nonnull (supported_arches);
-  g_assert (g_strv_contains (supported_arches, default_arch));
+  g_assert_true (g_strv_contains (supported_arches, default_arch));
 }
 
 static void
@@ -439,7 +439,7 @@ test_ref (void)
   valid = "app/org.flatpak.Hello/m68k/master";
   ref = flatpak_ref_parse (valid, &error);
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_REF (ref));
+  g_assert_true (FLATPAK_IS_REF (ref));
   g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_APP);
   g_assert_cmpstr (flatpak_ref_get_name (ref), ==, "org.flatpak.Hello");
   g_assert_cmpstr (flatpak_ref_get_arch (ref), ==, "m68k");
@@ -455,7 +455,7 @@ test_ref (void)
   valid = "runtime/org.gnome.Platform/m68k/stable";
   ref = flatpak_ref_parse (valid, &error);
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_REF (ref));
+  g_assert_true (FLATPAK_IS_REF (ref));
 
   g_object_get (ref,
                 "kind", &kind,
@@ -519,10 +519,10 @@ test_list_remotes (void)
   remotes = flatpak_installation_list_remotes (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (remotes);
-  g_assert (remotes->len == 1);
+  g_assert_true (remotes->len == 1);
 
   remote = g_ptr_array_index (remotes, 0);
-  g_assert (FLATPAK_IS_REMOTE (remote));
+  g_assert_true (FLATPAK_IS_REMOTE (remote));
 
   remotes2 = flatpak_installation_list_remotes_by_type (inst, types,
                                                         G_N_ELEMENTS (types),
@@ -565,7 +565,7 @@ test_remote_by_name (void)
   remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
 
-  g_assert (FLATPAK_IS_REMOTE (remote));
+  g_assert_true (FLATPAK_IS_REMOTE (remote));
   g_assert_cmpstr (flatpak_remote_get_name (remote), ==, repo_name);
   g_assert_cmpstr (flatpak_remote_get_url (remote), ==, repo_url);
   g_assert_cmpstr (flatpak_remote_get_title (remote), ==, NULL);
@@ -964,7 +964,7 @@ test_list_refs_in_remotes (void)
 
   g_assert_no_error (error);
   g_assert_nonnull (refs1);
-  g_assert (refs1->len > 1);
+  g_assert_true (refs1->len > 1);
 
   /* Ensure that the number of different collection IDs is the same as the
    * number of apps */
@@ -1020,7 +1020,7 @@ test_list_remote_refs (void)
       g_autofree char *eol = NULL;
       g_autofree char *eol_rebase = NULL;
 
-      g_assert (ref != NULL);
+      g_assert_true (ref != NULL);
 
       if (strcmp ("org.test.Hello", flatpak_ref_get_name (ref)) == 0)
         {
@@ -1048,12 +1048,12 @@ test_list_remote_refs (void)
       g_assert_cmpuint (flatpak_remote_ref_get_download_size (remote_ref), >, 0);
 
       metadata = flatpak_remote_ref_get_metadata (remote_ref);
-      g_assert (metadata != NULL);
+      g_assert_true (metadata != NULL);
 
       if (strcmp ("org.test.Hello", flatpak_ref_get_name (ref)) == 0)
-        g_assert (g_str_has_prefix ((char *) g_bytes_get_data (metadata, NULL), "[Application]"));
+        g_assert_true (g_str_has_prefix ((char *) g_bytes_get_data (metadata, NULL), "[Application]"));
       else
-        g_assert (g_str_has_prefix ((char *) g_bytes_get_data (metadata, NULL), "[Runtime]"));
+        g_assert_true (g_str_has_prefix ((char *) g_bytes_get_data (metadata, NULL), "[Runtime]"));
 
       g_object_get (ref,
                     "remote-name", &name,
@@ -1067,7 +1067,7 @@ test_list_remote_refs (void)
       g_assert_cmpstr (name, ==, repo_name);
       g_assert_cmpuint (installed_size, >, 0);
       g_assert_cmpuint (download_size, >, 0);
-      g_assert (metadata2 == metadata);
+      g_assert_true (metadata2 == metadata);
       g_assert_null (eol);
       g_assert_null (eol_rebase);
     }
@@ -1104,7 +1104,7 @@ test_update_installed_ref_if_missing_runtime (void)
                                        NULL, NULL, NULL, &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (iref));
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (iref));
   iref = NULL;
 
   /* Install the Locale extension */
@@ -1118,7 +1118,7 @@ test_update_installed_ref_if_missing_runtime (void)
                                        NULL, NULL, NULL, &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (iref));
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (iref));
   iref = NULL;
 
   updatable_refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
@@ -1180,7 +1180,7 @@ test_update_related_refs (void)
                                               &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (runtime_ref));
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (runtime_ref));
 
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   iref = flatpak_installation_install (inst,
@@ -1191,7 +1191,7 @@ test_update_related_refs (void)
                                        &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (iref));
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (iref));
   g_clear_object (&iref);
 
   /* We expect no installed related refs (i.e. org.test.Hello.Locale) at this point */
@@ -1304,7 +1304,7 @@ test_list_remote_related_refs (void)
   g_assert_true (flatpak_related_ref_should_download (ref));
   g_assert_true (flatpak_related_ref_should_delete (ref));
   g_assert_false (flatpak_related_ref_should_autoprune (ref));
-  g_assert (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 1);
+  g_assert_true (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 1);
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
 
   g_object_get (ref,
@@ -1314,7 +1314,7 @@ test_list_remote_related_refs (void)
                 "should-autoprune", &should_autoprune,
                 NULL);
 
-  g_assert (g_strv_length (subpaths) == 1);
+  g_assert_true (g_strv_length (subpaths) == 1);
   g_assert_cmpstr (subpaths[0], ==, "/de");
   g_assert_true (should_download);
   g_assert_true (should_delete);
@@ -1338,7 +1338,7 @@ test_list_remote_related_refs (void)
   g_assert_true (flatpak_related_ref_should_download (ref));
   g_assert_true (flatpak_related_ref_should_delete (ref));
   g_assert_false (flatpak_related_ref_should_autoprune (ref));
-  g_assert (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 2);
+  g_assert_true (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 2);
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[1], ==, "/en");
 
@@ -1349,7 +1349,7 @@ test_list_remote_related_refs (void)
                 "should-autoprune", &should_autoprune,
                 NULL);
 
-  g_assert (g_strv_length (subpaths) == 2);
+  g_assert_true (g_strv_length (subpaths) == 2);
   g_assert_cmpstr (subpaths[0], ==, "/de");
   g_assert_cmpstr (subpaths[1], ==, "/en");
   g_assert_true (should_download);
@@ -1442,7 +1442,7 @@ test_install_launch_uninstall (void)
 
   monitor = flatpak_installation_create_monitor (inst, NULL, &error);
   g_assert_no_error (error);
-  g_assert (G_IS_FILE_MONITOR (monitor));
+  g_assert_true (G_IS_FILE_MONITOR (monitor));
   g_file_monitor_set_rate_limit (monitor, 100);
 
   g_signal_connect (monitor, "changed", G_CALLBACK (changed_cb), &changed_count);
@@ -1468,7 +1468,7 @@ test_install_launch_uninstall (void)
                                       &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (ref));
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
   timeout_id = g_timeout_add (20000, timeout_cb, &timeout_reached);
@@ -1518,7 +1518,7 @@ test_install_launch_uninstall (void)
                                       &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (ref));
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
   timeout_id = g_timeout_add (20000, timeout_cb, &timeout_reached);
@@ -2014,7 +2014,7 @@ test_list_updates_offline (void)
                                               &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (runtime_ref));
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (runtime_ref));
 
   /* Note: here we could create an update for the runtime, but it won't be
    * found anyway since the URL will be wrong.
@@ -2571,10 +2571,10 @@ test_misc_transaction (void)
   g_assert_nonnull (transaction);
 
   g_object_get (transaction, "installation", &inst2, NULL);
-  g_assert (inst2 == inst);
+  g_assert_true (inst2 == inst);
 
   inst3 = flatpak_transaction_get_installation (transaction);
-  g_assert (inst3 == inst);
+  g_assert_true (inst3 == inst);
 
   op = flatpak_transaction_get_current_operation (transaction);
   g_assert_null (op);
@@ -2583,12 +2583,12 @@ test_misc_transaction (void)
   g_assert_null (list);
 
   flatpak_transaction_set_no_deploy (transaction, TRUE);
-  g_assert (flatpak_transaction_get_no_deploy (transaction) == TRUE);
+  g_assert_true (flatpak_transaction_get_no_deploy (transaction) == TRUE);
 
   flatpak_transaction_set_no_pull (transaction, TRUE);
-  g_assert (flatpak_transaction_get_no_pull (transaction) == TRUE);
+  g_assert_true (flatpak_transaction_get_no_pull (transaction) == TRUE);
 
-  g_assert (flatpak_transaction_is_empty (transaction));
+  g_assert_true (flatpak_transaction_is_empty (transaction));
 }
 
 static void
@@ -2712,7 +2712,7 @@ new_op (FlatpakTransaction          *transaction,
   new_op_count++;
 
   current = flatpak_transaction_get_current_operation (transaction);
-  g_assert (op == current);
+  g_assert_true (op == current);
 
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
   g_assert_true (g_strv_contains ((const gchar * const *) refs, flatpak_transaction_operation_get_ref (op)));
@@ -2828,7 +2828,7 @@ test_transaction_install_uninstall (void)
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
 
-  g_assert (flatpak_transaction_is_empty (transaction));
+  g_assert_true (flatpak_transaction_is_empty (transaction));
 
   res = flatpak_transaction_add_update (transaction, app, NULL, NULL, &error);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
@@ -2848,7 +2848,7 @@ test_transaction_install_uninstall (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  g_assert (!flatpak_transaction_is_empty (transaction));
+  g_assert_true (!flatpak_transaction_is_empty (transaction));
 
   list = flatpak_transaction_get_operations (transaction);
   g_assert_cmpint (g_list_length (list), ==, 1);
@@ -3228,14 +3228,14 @@ static void
 assert_remote_in_installation (FlatpakInstallation *installation,
                                const char          *remote_repo_name)
 {
-  g_assert (_is_remote_in_installation (installation, remote_repo_name));
+  g_assert_true (_is_remote_in_installation (installation, remote_repo_name));
 }
 
 static void
 assert_remote_not_in_installation (FlatpakInstallation *installation,
                                    const char          *remote_repo_name)
 {
-  g_assert (!_is_remote_in_installation (installation, remote_repo_name));
+  g_assert_true (!_is_remote_in_installation (installation, remote_repo_name));
 }
 
 static gboolean
@@ -3679,7 +3679,7 @@ test_instance (void)
 
   g_main_loop_unref (context.loop);
 
-  g_assert (context.hello_dead);
+  g_assert_true (context.hello_dead);
   g_assert_false (flatpak_instance_is_running (instance));
 
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
@@ -3900,7 +3900,7 @@ test_bundle (void)
   g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, "com.example.Test");
 
   file2 = flatpak_bundle_ref_get_file (ref);
-  g_assert (g_file_equal (file, file2));
+  g_assert_true (g_file_equal (file, file2));
 
   origin = flatpak_bundle_ref_get_origin (ref);
   g_assert_cmpstr (origin, ==, repo_url);
@@ -3927,7 +3927,7 @@ test_bundle (void)
   g_clear_object (&file2);
 
   g_object_get (ref, "file", &file2, NULL);
-  g_assert (g_file_equal (file, file2));
+  g_assert_true (g_file_equal (file, file2));
 }
 
 /* use the installation api to install a bundle */
@@ -4055,7 +4055,7 @@ test_list_installed_related_refs (void)
   g_assert_true (flatpak_related_ref_should_download (ref));
   g_assert_true (flatpak_related_ref_should_delete (ref));
   g_assert_false (flatpak_related_ref_should_autoprune (ref));
-  g_assert (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 1);
+  g_assert_true (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 1);
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
 
   // Make the test with extra-languages, instead of languages
@@ -4106,7 +4106,7 @@ test_list_installed_related_refs (void)
   g_assert_true (flatpak_related_ref_should_download (ref));
   g_assert_true (flatpak_related_ref_should_delete (ref));
   g_assert_false (flatpak_related_ref_should_autoprune (ref));
-  g_assert (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 2);
+  g_assert_true (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 2);
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[1], ==, "/en");
 

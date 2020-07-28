@@ -101,7 +101,7 @@ finish_request_ref_tokens (TokenRequestData *data)
   GVariantBuilder tokens;
   GVariantBuilder results;
 
-  g_assert (data->request != NULL);
+  g_assert_true (data->request != NULL);
 
   required_token = get_required_token ();
 
@@ -126,7 +126,7 @@ http_incoming (GSocketService    *service,
   TokenRequestData *data = user_data;
   g_autoptr(GVariant) options = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sv}"), NULL, 0));
 
-  g_assert (data->request != NULL);
+  g_assert_true (data->request != NULL);
 
   /* For the test, just assume any connection is a valid use of the web flow */
   g_debug ("handling incomming http request");
