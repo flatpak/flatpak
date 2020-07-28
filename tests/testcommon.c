@@ -958,7 +958,7 @@ test_parse_datetime (void)
 
   clock_gettime (CLOCK_REALTIME, &now);
   ret = parse_datetime (&ts, "NOW", NULL);
-  g_assert (ret);
+  g_assert_true (ret);
 
   g_assert_true (ts.tv_sec == now.tv_sec); // close enough
 
@@ -1019,9 +1019,9 @@ test_filter_parser (void)
 
       ret = flatpak_parse_filters (filters[i].filter, &allow_refs, &deny_refs, &error);
       g_assert_error (error, FLATPAK_ERROR, filters[i].expected_error);
-      g_assert (ret == FALSE);
-      g_assert (allow_refs == NULL);
-      g_assert (deny_refs == NULL);
+      g_assert_true (ret == FALSE);
+      g_assert_true (allow_refs == NULL);
+      g_assert_true (deny_refs == NULL);
     }
 }
 
@@ -1101,10 +1101,10 @@ test_filter (void)
 
   ret = flatpak_parse_filters (filter, &allow_refs, &deny_refs, &error);
   g_assert_no_error (error);
-  g_assert (ret == TRUE);
+  g_assert_true (ret == TRUE);
 
-  g_assert (allow_refs != NULL);
-  g_assert (deny_refs != NULL);
+  g_assert_true (allow_refs != NULL);
+  g_assert_true (deny_refs != NULL);
 
   for (i = 0; i < G_N_ELEMENTS(filter_refs); i++)
     g_assert_cmpint (flatpak_filters_allow_ref (allow_refs, deny_refs, filter_refs[i].ref), ==, filter_refs[i].expected_result);

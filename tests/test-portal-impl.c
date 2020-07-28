@@ -106,7 +106,7 @@ on_bus_acquired (GDBusConnection *connection,
                                                        (GDBusInterfaceInfo *) &access_interface_info,
                                                        &access_vtable,
                                                        NULL, NULL, &error);
-  g_assert (registration_id != 0);
+  g_assert_true (registration_id != 0);
 }
 
 static void
