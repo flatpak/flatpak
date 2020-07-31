@@ -18,6 +18,8 @@ TEST_MATRIX= \
 	tests/test-bundle@system-norevokefs.wrap \
 	tests/test-oci-registry@user.wrap \
 	tests/test-oci-registry@system.wrap \
+	tests/test-update-portal@user.wrap \
+	tests/test-update-portal@system.wrap \
 	$(NULL)
 TEST_MATRIX_DIST= \
 	tests/test-basic.sh \
@@ -30,7 +32,6 @@ TEST_MATRIX_DIST= \
 	tests/test-oci.sh \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \
-	tests/test-update-portal.sh \
 	tests/test-auth.sh \
 	$(NULL)
 TEST_MATRIX_EXTRA_DIST= \
@@ -40,4 +41,5 @@ TEST_MATRIX_EXTRA_DIST= \
 	tests/test-sideload.sh \
 	tests/test-bundle.sh \
 	tests/test-oci-registry.sh \
+	tests/test-update-portal.sh \
 	$(NULL)

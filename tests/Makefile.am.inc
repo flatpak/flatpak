@@ -190,7 +190,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-oci-registry.sh{user+system} \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \
-	tests/test-update-portal.sh \
+	tests/test-update-portal.sh{user+system} \
 	tests/test-auth.sh \
 	$(NULL)
 
