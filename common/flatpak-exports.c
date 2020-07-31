@@ -325,18 +325,17 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
           target = glnx_readlinkat_malloc (-1, subdir, NULL, NULL);
 
           if (target != NULL &&
-              g_str_has_prefix (target, "usr/") &&
-              g_strcmp0 (target + 3, subdir) == 0)
+              g_str_has_prefix (target, "usr/"))
             {
-              /* e.g. /lib32 is a relative symlink to usr/lib32;
+              /* e.g. /lib32 is a relative symlink to usr/lib32, or
+               * on Arch Linux, /lib64 is a relative symlink to usr/lib;
                * keep it relative */
               flatpak_bwrap_add_args (bwrap,
                                       "--symlink", target, run_host_subdir,
                                       NULL);
             }
           else if (target != NULL &&
-                   g_str_has_prefix (target, "/usr/") &&
-                   g_strcmp0 (target + 4, subdir) == 0)
+                   g_str_has_prefix (target, "/usr/"))
             {
               /* e.g. /lib32 is an absolute symlink to /usr/lib32; make
                * it a relative symlink to usr/lib32 instead by skipping
