@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..37"
+echo "1..38"
 
 #Regular repo
 setup_repo
@@ -586,6 +586,30 @@ ${FLATPAK} ${U} list -a --columns=application > list-log
 assert_not_file_has_content list-log "org\.test\.Platform"
 
 ok "uninstall --unused"
+
+${FLATPAK} ${U} install -y test-repo org.test.Platform
+
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_file_has_content list-log "org\.test\.Platform"
+
+# Check that the runtime won't be removed if it's pinned
+${FLATPAK} ${U} pin org.test.Platform
+${FLATPAK} ${U} pin > pins
+assert_file_has_content pins "org\.test\.Platform"
+rm pins
+
+${FLATPAK} ${U} uninstall -y --unused
+
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_file_has_content list-log "org\.test\.Platform"
+
+# Remove the pin and try again
+${FLATPAK} ${U} pin --remove "org.test.Platform"
+${FLATPAK} ${U} uninstall -y --unused
+${FLATPAK} ${U} list -a --columns=application > list-log
+assert_not_file_has_content list-log "org\.test\.Platform"
+
+ok "uninstall --unused ignores pinned runtimes"
 
 # Test that remote-ls works in all of the following cases:
 # * system remote, and --system is used

@@ -30,6 +30,7 @@ man1 = \
 	flatpak-update.1		\
 	flatpak-uninstall.1		\
 	flatpak-mask.1			\
+	flatpak-pin.1			\
 	flatpak-list.1			\
 	flatpak-info.1			\
 	flatpak-make-current.1		\

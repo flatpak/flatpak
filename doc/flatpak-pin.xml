@@ -1,0 +1,151 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-pin">
+
+    <refentryinfo>
+        <title>flatpak pin</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Matthew</firstname>
+                <surname>Leeds</surname>
+                <email>matthew.leeds@endlessm.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak pin</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-pin</refname>
+        <refpurpose>Pin runtimes to prevent automatic removal</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak pin</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain" rep="repeat">PATTERN</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+          Flatpak maintains a list of patterns that define which refs are pinned.
+          A pinned ref will never be automatically uninstalled (as are unused
+          runtimes periodically). This can be useful if for example you are using
+          a runtime for development purposes.
+        </para>
+        <para>
+          The patterns are just a partial ref, with the * character matching anything
+          within that part of the ref. Only runtimes can be pinned, not apps. Here
+          are some example patterns:
+<programlisting>
+org.some.Runtime
+org.some.Runtime//unstable
+runtime/org.domain.*
+org.some.Runtime/arm
+</programlisting>
+        </para>
+        <para>
+          To list the current set of pins, run this command without any patterns.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--remove</option></term>
+
+                <listitem><para>
+                  Instead of adding the patterns, remove matching patterns.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Pin refs in a per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Pin refs in the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Pin refs in a system-wide installation
+                    specified by <arg choice="plain">NAME</arg> among those defined in
+                    <filename>/etc/flatpak/installations.d/</filename>. Using
+                    <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak pin</command>
+        </para>
+        <para>
+            <command>$ flatpak pin org.freedesktop.Platform//19.08</command>
+        </para>
+        <para>
+            <command>$ flatpak pin --remove org.freedesktop.Platform//19.08</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-uninstall</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+        </para>
+
+    </refsect1>
+
+</refentry>
