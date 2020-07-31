@@ -1108,7 +1108,8 @@ handle_configure (FlatpakSystemHelper   *object,
 
   if ((strcmp (arg_key, "languages") != 0) &&
       (strcmp (arg_key, "extra-languages") != 0) &&
-      (strcmp (arg_key, "masked") != 0))
+      (strcmp (arg_key, "masked") != 0) &&
+      (strcmp (arg_key, "pinned") != 0))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported key: %s", arg_key);

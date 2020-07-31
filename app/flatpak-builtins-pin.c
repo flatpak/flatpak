@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Red Hat, Inc
+ * Copyright © 2020 Endless OS Foundation LLC
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Authors:
- *       Alexander Larsson <alexl@redhat.com>
+ *       Matthew Leeds <matthew.leeds@endlessm.com>
  */
 
 #include "config.h"
@@ -27,8 +27,6 @@
 
 #include <glib/gi18n.h>
 
-#include <gio/gunixinputstream.h>
-
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
@@ -37,12 +35,13 @@
 #include "flatpak-quiet-transaction.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
-#include "flatpak-chain-input-stream-private.h"
+
+/* Note: the code here is copied from flatpak-builtins-mask.c */
 
 static gboolean opt_remove;
 
 static GOptionEntry options[] = {
-  { "remove", 0, 0, G_OPTION_ARG_NONE, &opt_remove, N_("Remove matching masks"), NULL },
+  { "remove", 0, 0, G_OPTION_ARG_NONE, &opt_remove, N_("Remove matching pins"), NULL },
   { NULL }
 };
 
@@ -50,15 +49,15 @@ static GPtrArray *
 get_old_patterns (FlatpakDir *dir)
 {
   g_autoptr(GPtrArray) patterns = NULL;
-  g_autofree char *masked = NULL;
+  g_autofree char *pinned = NULL;
   int i;
 
   patterns = g_ptr_array_new_with_free_func (g_free);
 
-  masked = flatpak_dir_get_config (dir, "masked", NULL);
-  if (masked)
+  pinned = flatpak_dir_get_config (dir, "pinned", NULL);
+  if (pinned)
     {
-      g_auto(GStrv) oldv = g_strsplit (masked, ";", -1);
+      g_auto(GStrv) oldv = g_strsplit (pinned, ";", -1);
 
       for (i = 0; oldv[i] != NULL; i++)
         {
@@ -74,25 +73,24 @@ get_old_patterns (FlatpakDir *dir)
 
 
 gboolean
-flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_pin (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  FlatpakDir *dir;
   g_autofree char *merged_patterns = NULL;
   g_autoptr(GPtrArray) patterns = NULL;
   int i;
 
-  context = g_option_context_new (_("[PATTERN…] - disable updates and automatic installation matching patterns"));
+  context = g_option_context_new (_("[PATTERN…] - disable automatic removal of runtimes matching patterns"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
                                      &dirs, cancellable, error))
     return FALSE;
 
-  /* Start with the default or specified dir, this is fine for opt_bundle or opt_from */
-  dir = g_object_ref (g_ptr_array_index (dirs, 0));
+  dir = g_ptr_array_index (dirs, 0);
 
   patterns = get_old_patterns (dir);
 
@@ -100,11 +98,11 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
     {
       if (patterns->len == 0)
         {
-          g_print (_("No masked patterns\n"));
+          g_print (_("No pinned patterns\n"));
         }
       else
         {
-          g_print (_("Masked patterns:\n"));
+          g_print (_("Pinned patterns:\n"));
 
           for (i = 0; i < patterns->len; i++)
             {
@@ -130,7 +128,7 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
                 }
 
               if (j == patterns->len)
-                return flatpak_fail (error, _("No current mask matching %s"), pattern);
+                return flatpak_fail (error, _("No current pin matching %s"), pattern);
               else
                 g_ptr_array_remove_index (patterns, j);
             }
@@ -139,7 +137,7 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
               g_autofree char *regexp;
 
               regexp = flatpak_filter_glob_to_regexp (pattern,
-                                                      FALSE, /* match apps or runtimes */
+                                                      TRUE, /* only match runtimes */
                                                       error);
               if (regexp == NULL)
                 return FALSE;
@@ -154,7 +152,7 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
       g_ptr_array_add (patterns, NULL);
       merged_patterns = g_strjoinv (";", (char **)patterns->pdata);
 
-      if (!flatpak_dir_set_config (dir, "masked", merged_patterns, error))
+      if (!flatpak_dir_set_config (dir, "pinned", merged_patterns, error))
         return FALSE;
     }
 
@@ -162,7 +160,7 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
 }
 
 gboolean
-flatpak_complete_mask (FlatpakCompletion *completion)
+flatpak_complete_pin (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;

@@ -214,6 +214,7 @@ struct FlatpakDir
 
   /* Config cache, protected by config_cache lock */
   GRegex          *masked;
+  GRegex          *pinned;
 
   SoupSession     *soup_session;
 };
@@ -2260,6 +2261,7 @@ flatpak_dir_finalize (GObject *object)
   g_clear_pointer (&self->summary_cache, g_hash_table_unref);
   g_clear_pointer (&self->remote_filters, g_hash_table_unref);
   g_clear_pointer (&self->masked, g_regex_unref);
+  g_clear_pointer (&self->pinned, g_regex_unref);
 
   G_OBJECT_CLASS (flatpak_dir_parent_class)->finalize (object);
 }
@@ -3436,6 +3438,7 @@ flatpak_dir_recreate_repo (FlatpakDir   *self,
   G_LOCK (config_cache);
 
   g_clear_pointer (&self->masked, g_regex_unref);
+  g_clear_pointer (&self->pinned, g_regex_unref);
 
   G_UNLOCK (config_cache);
 
@@ -3841,6 +3844,7 @@ _flatpak_dir_reload_config (FlatpakDir   *self,
   G_LOCK (config_cache);
 
   g_clear_pointer (&self->masked, g_regex_unref);
+  g_clear_pointer (&self->pinned, g_regex_unref);
 
   G_UNLOCK (config_cache);
   return TRUE;
@@ -13603,7 +13607,7 @@ flatpak_dir_get_mask_regexp (FlatpakDir *self)
                 {
                   g_autofree char *regexp = NULL;
 
-                  regexp = flatpak_filter_glob_to_regexp (pattern, NULL);
+                  regexp = flatpak_filter_glob_to_regexp (pattern, FALSE, NULL);
                   if (regexp)
                     {
                       if (i != 0)
@@ -13633,6 +13637,66 @@ flatpak_dir_ref_is_masked (FlatpakDir *self,
   g_autoptr(GRegex) masked = flatpak_dir_get_mask_regexp (self);
 
   return !flatpak_filters_allow_ref (NULL, masked, ref);
+}
+
+static GRegex *
+flatpak_dir_get_pin_regexp (FlatpakDir *self)
+{
+  GRegex *res = NULL;
+
+  G_LOCK (config_cache);
+
+  if (self->pinned == NULL)
+    {
+      g_autofree char *pinned = NULL;
+
+      pinned = flatpak_dir_get_config (self, "pinned", NULL);
+      if (pinned)
+        {
+          g_auto(GStrv) patterns = g_strsplit (pinned, ";", -1);
+          g_autoptr(GString) deny_regexp = g_string_new ("^(");
+          int i;
+
+          for (i = 0; patterns[i] != NULL; i++)
+            {
+              const char *pattern = patterns[i];
+
+              if (*pattern != 0)
+                {
+                  g_autofree char *regexp = NULL;
+
+                  regexp = flatpak_filter_glob_to_regexp (pattern,
+                                                          TRUE, /* only match runtimes */
+                                                          NULL);
+                  if (regexp)
+                    {
+                      if (i != 0)
+                        g_string_append (deny_regexp, "|");
+                      g_string_append (deny_regexp, regexp);
+                    }
+                }
+            }
+
+          g_string_append (deny_regexp, ")$");
+          self->pinned = g_regex_new (deny_regexp->str, G_REGEX_DOLLAR_ENDONLY|G_REGEX_RAW|G_REGEX_OPTIMIZE, G_REGEX_MATCH_ANCHORED, NULL);
+        }
+    }
+
+  if (self->pinned)
+    res = g_regex_ref (self->pinned);
+
+  G_UNLOCK (config_cache);
+
+  return res;
+}
+
+gboolean
+flatpak_dir_ref_is_pinned (FlatpakDir *self,
+                           const char *ref)
+{
+  g_autoptr(GRegex) pinned = flatpak_dir_get_pin_regexp (self);
+
+  return !flatpak_filters_allow_ref (NULL, pinned, ref);
 }
 
 GPtrArray *

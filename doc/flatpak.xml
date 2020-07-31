@@ -216,6 +216,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-pin</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Pin runtimes to prevent automatic removal.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>

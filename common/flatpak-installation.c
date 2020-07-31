@@ -2926,6 +2926,7 @@ find_used_refs (FlatpakDir *dir,
  *
  * A reference is used if it is either an application, or an sdk,
  * or the runtime of a used ref, or an extension of a used ref.
+ * Pinned runtimes are also considered used; see flatpak-pin(1).
  *
  * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances
@@ -3029,6 +3030,12 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
 
       if (arch != NULL && strcmp (parts[2], arch) != 0)
         continue;
+
+      if (flatpak_dir_ref_is_pinned (dir, ref))
+        {
+          g_debug ("Ref %s is pinned, considering as used", ref);
+          continue;
+        }
 
       if (!g_hash_table_contains (used_refs, ref))
         {

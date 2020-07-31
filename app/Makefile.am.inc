@@ -81,6 +81,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-update.c \
 	app/flatpak-builtins-uninstall.c \
 	app/flatpak-builtins-mask.c \
+	app/flatpak-builtins-pin.c \
 	app/flatpak-builtins-list.c \
 	app/flatpak-builtins-info.c \
 	app/flatpak-builtins-config.c \

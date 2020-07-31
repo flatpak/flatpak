@@ -1131,7 +1131,9 @@ line_get_word (char **line)
 }
 
 char *
-flatpak_filter_glob_to_regexp (const char *glob, GError **error)
+flatpak_filter_glob_to_regexp (const char  *glob,
+                               gboolean     runtime_only,
+                               GError     **error)
 {
   g_autoptr(GString) regexp = g_string_new ("");
   int parts = 1;
@@ -1139,8 +1141,16 @@ flatpak_filter_glob_to_regexp (const char *glob, GError **error)
 
   if (g_str_has_prefix (glob, "app/"))
     {
-      glob += strlen ("app/");
-      g_string_append (regexp, "app/");
+      if (runtime_only)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Glob can't match apps"));
+          return NULL;
+        }
+      else
+        {
+          glob += strlen ("app/");
+          g_string_append (regexp, "app/");
+        }
     }
   else if (g_str_has_prefix (glob, "runtime/"))
     {
@@ -1148,7 +1158,12 @@ flatpak_filter_glob_to_regexp (const char *glob, GError **error)
       g_string_append (regexp, "runtime/");
     }
   else
-    g_string_append (regexp, "(app|runtime)/");
+    {
+      if (runtime_only)
+        g_string_append (regexp, "runtime/");
+      else
+        g_string_append (regexp, "(app|runtime)/");
+    }
 
   /* We really need an id part, the rest is optional */
   if (*glob == 0)
@@ -1253,7 +1268,7 @@ flatpak_parse_filters (const char *data,
           if (next != NULL)
             return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Trailing text on line %d"), i + 1);
 
-          ref_regexp = flatpak_filter_glob_to_regexp (glob, error);
+          ref_regexp = flatpak_filter_glob_to_regexp (glob, FALSE, error);
           if (ref_regexp == NULL)
             return glnx_prefix_error (error, _("on line %d"), i + 1);
 

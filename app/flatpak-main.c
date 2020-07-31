@@ -80,6 +80,7 @@ static FlatpakCommand commands[] = {
   /* Alias remove to uninstall to help users of yum/dnf/apt */
   { "remove", NULL, flatpak_builtin_uninstall, flatpak_complete_uninstall, TRUE },
   { "mask", N_("Mask out updates and automatic installation"), flatpak_builtin_mask, flatpak_complete_mask },
+  { "pin", N_("Pin a runtime to prevent automatic removal"), flatpak_builtin_pin, flatpak_complete_pin },
   { "list", N_("List installed apps and/or runtimes"), flatpak_builtin_list, flatpak_complete_list },
   { "info", N_("Show info for installed app or runtime"), flatpak_builtin_info, flatpak_complete_info },
   { "history", N_("Show history"), flatpak_builtin_history, flatpak_complete_history },
