@@ -987,6 +987,10 @@ start_dbus_proxy (FlatpakBwrap *app_bwrap,
                       NULL, error))
     return FALSE;
 
+  /* The write end can be closed now, otherwise the read below will hang of xdg-dbus-proxy
+     fails to start. */
+  g_clear_pointer (&proxy_bwrap, flatpak_bwrap_free);
+
   /* Sync with proxy, i.e. wait until its listening on the sockets */
   if (read (sync_fds[0], &x, 1) != 1)
     {
