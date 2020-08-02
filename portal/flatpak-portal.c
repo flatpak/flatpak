@@ -60,6 +60,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakUpdateMonitorSkeleton, g_object_unre
 
 #define IDLE_TIMEOUT_SECS 10 * 60
 
+/* Should be roughly 2 seconds */
+#define CHILD_STATUS_CHECK_ATTEMPTS 20
+
 static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
 static GNetworkMonitor *network_monitor = NULL;
@@ -266,7 +269,7 @@ typedef struct
 {
   FlatpakInstance *instance;
   guint            pid;
-  guint            timeout_index;
+  guint            attempt;
 } BwrapinfoWatcherData;
 
 static void
@@ -345,7 +348,10 @@ check_child_pid_status (void *user_data)
 {
   /* Stores a sequence of the time interval to use until the child PID is checked again.
      In general from testing, bwrapinfo is never ready before 25ms have passed at minimum,
-     thus 25ms is the first interval, doubling until a max interval of 100ms is reached. */
+     thus 25ms is the first interval, doubling until a max interval of 100ms is reached.
+
+     In addition, if the program is not available after 100ms for an extended period of time,
+     the timeout is further increased to a full second. */
   static gint timeouts[] = {25, 50, 100};
 
   g_autoptr(GVariant) signal_variant = NULL;
@@ -370,15 +376,35 @@ check_child_pid_status (void *user_data)
   child_pid = flatpak_instance_get_child_pid (data->instance);
   if (child_pid == 0)
     {
-      g_debug ("Failed to read child PID, trying again in %d ms", timeouts[data->timeout_index]);
+      gint timeout;
+      gboolean readd_timer = FALSE;
 
-      if (data->timeout_index == G_N_ELEMENTS (timeouts))
-        /* Already at the max timeout, no need to change. */
-        return G_SOURCE_CONTINUE;
+      if (data->attempt >= CHILD_STATUS_CHECK_ATTEMPTS)
+        /* If too many attempts, use a 1 second timeout */
+        timeout = 1000;
+      else
+        timeout = timeouts[MIN (data->attempt, G_N_ELEMENTS (timeouts) - 1)];
 
-      /* Re-add with the next timeout to use. */
-      g_timeout_add (timeouts[data->timeout_index++], check_child_pid_status, g_steal_pointer (&data));
-      return G_SOURCE_REMOVE;
+      g_debug ("Failed to read child PID, trying again in %d ms", timeout);
+
+      /* The timer source only needs to be re-added if the timeout has changed,
+          which won't happen while staying on the 100 or 1000ms timeouts.
+
+          This test must happen *before* the attempt counter is incremented, since the
+          attempt counter represents the *current* timeout. */
+      readd_timer = data->attempt <= G_N_ELEMENTS (timeouts) || data->attempt == CHILD_STATUS_CHECK_ATTEMPTS;
+      data->attempt++;
+
+      /* Make sure the data isn't destroyed */
+      data = NULL;
+
+      if (readd_timer)
+        {
+          g_timeout_add (timeout, check_child_pid_status, user_data);
+          return G_SOURCE_REMOVE;
+        }
+
+      return G_SOURCE_CONTINUE;
     }
 
   /* Only send the child PID if it's exposed */
