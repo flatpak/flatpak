@@ -27,8 +27,6 @@
 
 #include <glib/gi18n.h>
 
-#include <gio/gunixinputstream.h>
-
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
@@ -37,7 +35,6 @@
 #include "flatpak-quiet-transaction.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
-#include "flatpak-chain-input-stream-private.h"
 
 static gboolean opt_remove;
 
@@ -78,7 +75,7 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
+  FlatpakDir *dir;
   g_autofree char *merged_patterns = NULL;
   g_autoptr(GPtrArray) patterns = NULL;
   int i;
@@ -87,12 +84,11 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
-                                     FLATPAK_BUILTIN_FLAG_ALL_DIRS | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
+                                     FLATPAK_BUILTIN_FLAG_ONE_DIR,
                                      &dirs, cancellable, error))
     return FALSE;
 
-  /* Start with the default or specified dir, this is fine for opt_bundle or opt_from */
-  dir = g_object_ref (g_ptr_array_index (dirs, 0));
+  dir = g_ptr_array_index (dirs, 0);
 
   patterns = get_old_patterns (dir);
 
