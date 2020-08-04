@@ -212,7 +212,7 @@
                 <term><citerefentry><refentrytitle>flatpak-mask</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Mask out updates and automatic installation
+                    Mask out updates and automatic installation.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
