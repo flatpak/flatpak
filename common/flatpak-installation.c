@@ -2926,7 +2926,8 @@ find_used_refs (FlatpakDir *dir,
  *
  * A reference is used if it is either an application, or an sdk,
  * or the runtime of a used ref, or an extension of a used ref.
- * Pinned runtimes are also considered used; see flatpak-pin(1).
+ * Pinned runtimes are also considered used; see flatpak-pin(1) and
+ * flatpak_installation_list_pinned_refs().
  *
  * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances
@@ -3042,6 +3043,60 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
           if (g_hash_table_add (refs_hash, (gpointer) ref))
             g_ptr_array_add (refs, get_ref (dir, ref, NULL, NULL));
         }
+    }
+
+  return g_steal_pointer (&refs);
+}
+
+/**
+ * flatpak_installation_list_pinned_refs:
+ * @self: a #FlatpakInstallation
+ * @arch: (nullable): if non-%NULL, the architecture of refs to collect
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the installed references that are pinned, meaning they will not be
+ * returned by flatpak_installation_list_unused_refs() and won't be removed
+ * unless explicitly specified for removal.
+ *
+ * Refs appear here either because they have been pinned automatically by
+ * Flatpak or because the user pinned them; see flatpak-pin(1).
+ *
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
+ *   #FlatpakInstalledRef instances
+ *
+ * Since: 1.9.0
+ */
+GPtrArray *
+flatpak_installation_list_pinned_refs (FlatpakInstallation *self,
+                                       const char          *arch,
+                                       GCancellable        *cancellable,
+                                       GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) refs =  NULL;
+  g_auto(GStrv) runtime_refs = NULL;
+  int i;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  if (!flatpak_dir_list_refs (dir, "runtime", &runtime_refs, cancellable, error))
+    return NULL;
+
+  refs = g_ptr_array_new_with_free_func (g_object_unref);
+
+  for (i = 0; runtime_refs[i] != NULL; i++)
+    {
+      const char *ref = runtime_refs[i];
+      g_auto(GStrv) parts = g_strsplit (ref, "/", -1);
+
+      if (arch != NULL && strcmp (parts[2], arch) != 0)
+        continue;
+
+      if (flatpak_dir_ref_is_pinned (dir, ref))
+        g_ptr_array_add (refs, get_ref (dir, ref, NULL, NULL));
     }
 
   return g_steal_pointer (&refs);
