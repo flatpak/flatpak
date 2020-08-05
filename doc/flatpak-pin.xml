@@ -46,6 +46,10 @@
           a runtime for development purposes.
         </para>
         <para>
+          Runtimes that are explicitly installed, rather than installed as a
+          dependency of something else, are automatically pinned.
+        </para>
+        <para>
           The patterns are just a partial ref, with the * character matching anything
           within that part of the ref. Only runtimes can be pinned, not apps. Here
           are some example patterns:

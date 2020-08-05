@@ -4292,6 +4292,46 @@ test_installation_unused_refs (void)
   g_assert_cmpint (refs->len, ==, 0);
 }
 
+static void
+test_installation_unused_refs_excludes_pins (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *runtime = NULL;
+  gboolean res;
+
+  runtime = g_strdup_printf ("runtime/org.test.Platform/%s/master",
+                             flatpak_get_default_arch ());
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (inst);
+
+  empty_installation (inst);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  res = flatpak_transaction_add_install (transaction, repo_name, runtime, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  /* Even though the runtime is unused, it shouldn't show up in
+   * list_unused_refs() because it was installed explicitly not as a dependency
+   * of an app */
+  refs = flatpak_installation_list_unused_refs (inst, NULL, NULL, &error);
+  g_assert_nonnull (refs);
+  g_assert_no_error (error);
+  g_assert_cmpint (refs->len, ==, 0);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -4342,6 +4382,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-no-runtime", test_transaction_no_runtime);
   g_test_add_func ("/library/installation-no-interaction", test_installation_no_interaction);
   g_test_add_func ("/library/installation-unused-refs", test_installation_unused_refs);
+  g_test_add_func ("/library/installation-unused-refs-excludes-pins", test_installation_unused_refs_excludes_pins);
 
   global_setup ();
 
