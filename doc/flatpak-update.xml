@@ -66,7 +66,7 @@
         <para>
             Normally, this command updates the application to the tip
             of its branch. But it is possible to check out another commit,
-            with the --commit option.
+            with the <option>--commit</option> option.
         </para>
         <para>
             If the configured remote for a ref being updated has a collection ID configured on it,
