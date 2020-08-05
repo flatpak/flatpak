@@ -2382,7 +2382,14 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (unshare)},
     {SCMP_SYS (mount)},
     {SCMP_SYS (pivot_root)},
+#if defined(__s390__) || defined(__s390x__) || defined(__CRIS__)
+    /* Architectures with CONFIG_CLONE_BACKWARDS2: the child stack
+     * and flags arguments are reversed so the flags come second */
+    {SCMP_SYS (clone), &SCMP_A1 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+#else
+    /* Normally the flags come first */
     {SCMP_SYS (clone), &SCMP_A0 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+#endif
 
     /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
     {SCMP_SYS (ioctl), &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCSTI)},
