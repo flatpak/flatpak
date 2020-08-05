@@ -245,6 +245,10 @@ FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_unused_refs (Flatp
                                                                            const char          *arch,
                                                                            GCancellable        *cancellable,
                                                                            GError             **error);
+FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_pinned_refs (FlatpakInstallation *self,
+                                                                           const char          *arch,
+                                                                           GCancellable        *cancellable,
+                                                                           GError             **error);
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_get_installed_ref (FlatpakInstallation *self,
                                                                              FlatpakRefKind       kind,
                                                                              const char          *name,
