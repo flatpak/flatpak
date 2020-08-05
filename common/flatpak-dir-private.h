@@ -552,10 +552,22 @@ gboolean    flatpak_dir_maybe_ensure_repo (FlatpakDir   *self,
 char *      flatpak_dir_get_config (FlatpakDir *self,
                                     const char *key,
                                     GError    **error);
+GPtrArray * flatpak_dir_get_config_patterns (FlatpakDir *self,
+                                             const char *key);
 gboolean    flatpak_dir_set_config (FlatpakDir *self,
                                     const char *key,
                                     const char *value,
                                     GError    **error);
+gboolean    flatpak_dir_config_append_pattern (FlatpakDir *self,
+                                               const char *key,
+                                               const char *pattern,
+                                               gboolean    runtime_only,
+                                               gboolean   *out_already_present,
+                                               GError    **error);
+gboolean    flatpak_dir_config_remove_pattern (FlatpakDir *self,
+                                               const char *key,
+                                               const char *pattern,
+                                               GError    **error);
 gboolean    flatpak_dir_mark_changed (FlatpakDir *self,
                                       GError    **error);
 gboolean    flatpak_dir_remove_appstream (FlatpakDir   *self,

@@ -3874,6 +3874,32 @@ flatpak_dir_get_config (FlatpakDir *self,
   return g_key_file_get_string (config, "core", ostree_key, error);
 }
 
+GPtrArray *
+flatpak_dir_get_config_patterns (FlatpakDir *dir, const char *key)
+{
+  g_autoptr(GPtrArray) patterns = NULL;
+  g_autofree char *key_value = NULL;
+  int i;
+
+  patterns = g_ptr_array_new_with_free_func (g_free);
+
+  key_value = flatpak_dir_get_config (dir, key, NULL);
+  if (key_value)
+    {
+      g_auto(GStrv) oldv = g_strsplit (key_value, ";", -1);
+
+      for (i = 0; oldv[i] != NULL; i++)
+        {
+          const char *old = oldv[i];
+
+          if (*old != 0 && !flatpak_g_ptr_array_contains_string (patterns, old))
+            g_ptr_array_add (patterns, g_strdup (old));
+        }
+    }
+
+  return g_steal_pointer (&patterns);
+}
+
 gboolean
 flatpak_dir_set_config (FlatpakDir *self,
                         const char *key,
@@ -3921,6 +3947,64 @@ flatpak_dir_set_config (FlatpakDir *self,
     return FALSE;
 
   return TRUE;
+}
+
+gboolean
+flatpak_dir_config_append_pattern (FlatpakDir *self,
+                                   const char *key,
+                                   const char *pattern,
+                                   gboolean    runtime_only,
+                                   gboolean   *out_already_present,
+                                   GError    **error)
+{
+  g_autoptr(GPtrArray) patterns = flatpak_dir_get_config_patterns (self, key);
+  g_autofree char *regexp;
+  gboolean already_present;
+  g_autofree char *merged_patterns = NULL;
+
+  regexp = flatpak_filter_glob_to_regexp (pattern, runtime_only, error);
+  if (regexp == NULL)
+    return FALSE;
+
+  if (!(already_present = flatpak_g_ptr_array_contains_string (patterns, pattern)))
+    g_ptr_array_add (patterns, g_strdup (pattern));
+
+  if (out_already_present)
+    *out_already_present = already_present;
+
+  g_ptr_array_sort (patterns, flatpak_strcmp0_ptr);
+
+  g_ptr_array_add (patterns, NULL);
+  merged_patterns = g_strjoinv (";", (char **)patterns->pdata);
+
+  return flatpak_dir_set_config (self, key, merged_patterns, error);
+}
+
+gboolean
+flatpak_dir_config_remove_pattern (FlatpakDir *self,
+                                   const char *key,
+                                   const char *pattern,
+                                   GError    **error)
+{
+  g_autoptr(GPtrArray) patterns = flatpak_dir_get_config_patterns (self, key);
+  g_autofree char *merged_patterns = NULL;
+  int j;
+
+  for (j = 0; j < patterns->len; j++)
+    {
+      if (strcmp (g_ptr_array_index (patterns, j), pattern) == 0)
+        break;
+    }
+
+  if (j == patterns->len)
+    return flatpak_fail (error, _("No current %s pattern matching %s"), key, pattern);
+  else
+    g_ptr_array_remove_index (patterns, j);
+
+  g_ptr_array_add (patterns, NULL);
+  merged_patterns = g_strjoinv (";", (char **)patterns->pdata);
+
+  return flatpak_dir_set_config (self, key, merged_patterns, error);
 }
 
 gboolean

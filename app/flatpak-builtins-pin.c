@@ -45,40 +45,12 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static GPtrArray *
-get_old_patterns (FlatpakDir *dir)
-{
-  g_autoptr(GPtrArray) patterns = NULL;
-  g_autofree char *pinned = NULL;
-  int i;
-
-  patterns = g_ptr_array_new_with_free_func (g_free);
-
-  pinned = flatpak_dir_get_config (dir, "pinned", NULL);
-  if (pinned)
-    {
-      g_auto(GStrv) oldv = g_strsplit (pinned, ";", -1);
-
-      for (i = 0; oldv[i] != NULL; i++)
-        {
-          const char *old = oldv[i];
-
-          if (*old != 0 && !flatpak_g_ptr_array_contains_string (patterns, old))
-            g_ptr_array_add (patterns, g_strdup (old));
-        }
-    }
-
-  return g_steal_pointer (&patterns);
-}
-
-
 gboolean
 flatpak_builtin_pin (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakDir *dir;
-  g_autofree char *merged_patterns = NULL;
   g_autoptr(GPtrArray) patterns = NULL;
   int i;
 
@@ -92,7 +64,7 @@ flatpak_builtin_pin (int argc, char **argv, GCancellable *cancellable, GError **
 
   dir = g_ptr_array_index (dirs, 0);
 
-  patterns = get_old_patterns (dir);
+  patterns = flatpak_dir_get_config_patterns (dir, "pinned");
 
   if (argc == 1)
     {
@@ -119,41 +91,14 @@ flatpak_builtin_pin (int argc, char **argv, GCancellable *cancellable, GError **
 
           if (opt_remove)
             {
-              int j;
-
-              for (j = 0; j < patterns->len; j++)
-                {
-                  if (strcmp (g_ptr_array_index (patterns, j), pattern) == 0)
-                    break;
-                }
-
-              if (j == patterns->len)
-                return flatpak_fail (error, _("No current pin matching %s"), pattern);
-              else
-                g_ptr_array_remove_index (patterns, j);
-            }
-          else
-            {
-              g_autofree char *regexp;
-
-              regexp = flatpak_filter_glob_to_regexp (pattern,
-                                                      TRUE, /* only match runtimes */
-                                                      error);
-              if (regexp == NULL)
+              if (!flatpak_dir_config_remove_pattern (dir, "pinned", pattern, error))
                 return FALSE;
-
-              if (!flatpak_g_ptr_array_contains_string (patterns, pattern))
-                g_ptr_array_add (patterns, g_strdup (pattern));
             }
+          else if (!flatpak_dir_config_append_pattern (dir, "pinned", pattern,
+                                                       TRUE, /* only match runtimes */
+                                                       NULL, error))
+            return FALSE;
         }
-
-      g_ptr_array_sort (patterns, flatpak_strcmp0_ptr);
-
-      g_ptr_array_add (patterns, NULL);
-      merged_patterns = g_strjoinv (";", (char **)patterns->pdata);
-
-      if (!flatpak_dir_set_config (dir, "pinned", merged_patterns, error))
-        return FALSE;
     }
 
   return TRUE;

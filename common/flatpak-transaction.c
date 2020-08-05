@@ -164,6 +164,7 @@ struct _FlatpakTransactionPrivate
   GPtrArray                   *extra_sideload_repos;
   GList                       *ops;
   GPtrArray                   *added_origin_remotes;
+  GPtrArray                   *added_pinned_runtimes;
 
   GList                       *flatpakrefs; /* GKeyFiles */
   GList                       *bundles; /* BundleData */
@@ -940,6 +941,7 @@ flatpak_transaction_finalize (GObject *object)
   g_clear_object (&priv->dir);
 
   g_ptr_array_unref (priv->added_origin_remotes);
+  g_ptr_array_unref (priv->added_pinned_runtimes);
 
   g_ptr_array_free (priv->extra_dependency_dirs, TRUE);
   g_ptr_array_free (priv->extra_sideload_repos, TRUE);
@@ -1348,6 +1350,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
   priv->last_op_for_ref = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) flatpak_remote_state_unref);
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
+  priv->added_pinned_runtimes = g_ptr_array_new_with_free_func (g_free);
   priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
   priv->extra_sideload_repos = g_ptr_array_new_with_free_func (g_free);
   priv->can_run = TRUE;
@@ -2213,6 +2216,7 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
                                  const char        **subpaths,
                                  GError            **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   const char *all_paths[] = { NULL };
 
   g_return_val_if_fail (ref != NULL, FALSE);
@@ -2222,7 +2226,26 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
   if (subpaths == NULL)
     subpaths = all_paths;
 
-  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL, NULL, NULL, error);
+  if (!flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL, NULL, NULL, error))
+    return FALSE;
+
+  /* Pin runtimes that are installed explicitly rather than pulled as
+   * dependencies so they are not automatically removed. */
+  if (g_str_has_prefix (ref, "runtime/"))
+    {
+      gboolean already_pinned;
+
+      if (!flatpak_dir_config_append_pattern (priv->dir, "pinned", ref, TRUE, &already_pinned, error))
+        return FALSE;
+
+      if (!already_pinned)
+        {
+          g_ptr_array_add (priv->added_pinned_runtimes, g_strdup (ref));
+          flatpak_installation_drop_caches (priv->installation, NULL, NULL);
+        }
+    }
+
+  return TRUE;
 }
 
 /**
@@ -4254,6 +4277,16 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
   for (i = 0; i < priv->added_origin_remotes->len; i++)
     flatpak_dir_prune_origin_remote (priv->dir, g_ptr_array_index (priv->added_origin_remotes, i));
+
+  for (i = 0; i < priv->added_pinned_runtimes->len; i++)
+    {
+      const char *pinned_runtime = g_ptr_array_index (priv->added_pinned_runtimes, i);
+      if (!dir_ref_is_installed (priv->dir, pinned_runtime, NULL, NULL))
+        {
+          flatpak_dir_config_remove_pattern (priv->dir, "pinned", pinned_runtime, NULL);
+          flatpak_installation_drop_caches (priv->installation, NULL, NULL);
+        }
+    }
 
   return succeeded;
 }
