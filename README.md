@@ -11,7 +11,7 @@ See https://flatpak.org/ for more information.
 
 Community discussion happens in [#flatpak on Freenode](ircs://chat.freenode.net/flatpak), on [the mailing list](https://lists.freedesktop.org/mailman/listinfo/flatpak), and on [the Flathub Discourse](https://discourse.flathub.org/).
 
-Read documentation for [Flatpak](http://docs.flatpak.org/en/latest/introduction.html), its [commandline tools](http://docs.flatpak.org/en/latest/flatpak-command-reference.html), and for the libflatpak [library API](http://flatpak.github.io/flatpak/reference/html/index.html).
+Read documentation for Flatpak [here](https://docs.flatpak.org/en/latest/index.html).
 
 # Contributing
 
