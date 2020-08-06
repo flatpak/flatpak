@@ -70,11 +70,13 @@ flatpak_builtin_pin (int argc, char **argv, GCancellable *cancellable, GError **
     {
       if (patterns->len == 0)
         {
-          g_print (_("No pinned patterns\n"));
+          if (flatpak_fancy_output ())
+            g_print (_("No pinned patterns\n"));
         }
       else
         {
-          g_print (_("Pinned patterns:\n"));
+          if (flatpak_fancy_output ())
+            g_print (_("Pinned patterns:\n"));
 
           for (i = 0; i < patterns->len; i++)
             {

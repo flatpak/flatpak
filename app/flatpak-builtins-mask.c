@@ -68,11 +68,13 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
     {
       if (patterns->len == 0)
         {
-          g_print (_("No masked patterns\n"));
+          if (flatpak_fancy_output ())
+            g_print (_("No masked patterns\n"));
         }
       else
         {
-          g_print (_("Masked patterns:\n"));
+          if (flatpak_fancy_output ())
+            g_print (_("Masked patterns:\n"));
 
           for (i = 0; i < patterns->len; i++)
             {
