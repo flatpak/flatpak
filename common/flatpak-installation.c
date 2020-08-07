@@ -2924,8 +2924,8 @@ find_used_refs (FlatpakDir *dir,
  *
  * Lists the installed references that are not 'used'.
  *
- * A reference is used if it is either an application, or an sdk,
- * or the runtime of a used ref, or an extension of a used ref.
+ * A reference is used if it is either an application,
+ * or the runtime or sdk of a used ref, or an extension of a used ref.
  * Pinned runtimes are also considered used; see flatpak-pin(1) and
  * flatpak_installation_list_pinned_refs().
  *
