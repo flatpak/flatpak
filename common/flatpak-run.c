@@ -2620,7 +2620,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
    * If you make any changes here, I suggest sending the changes along
    * to other sandbox maintainers.  Using the libseccomp list is also
    * an appropriate venue:
-   * https://groups.google.com/forum/#!topic/libseccomp
+   * https://groups.google.com/forum/#!forum/libseccomp
    *
    * A non-exhaustive list of links to container tooling that might
    * want to share this blocklist:
