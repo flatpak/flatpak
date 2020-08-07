@@ -2395,6 +2395,7 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
   GList *l;
   gboolean some_updated = FALSE;
   g_autoptr(GHashTable) ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  gboolean local_only = TRUE;
 
   /* Collect all dir+remotes used in this transaction */
 
@@ -2405,9 +2406,15 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
     {
       FlatpakTransactionOperation *op = l->data;
       g_hash_table_add (ht, g_strdup (op->remote));
+      local_only = local_only && transaction_is_local_only (self, op->kind);
     }
   remotes = (char **) g_hash_table_get_keys_as_array (ht, NULL);
   g_hash_table_steal_all (ht); /* Move ownership to remotes */
+
+  /* Bail early if the entire transaction is local-only, as in that case we
+   * don’t need updated metadata. */
+  if (local_only)
+    return TRUE;
 
   /* Update metadata for said remotes */
   for (i = 0; remotes[i] != NULL; i++)
