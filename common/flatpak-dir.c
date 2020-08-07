@@ -3676,7 +3676,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
           return FALSE;
         }
 
-      /* Create .changes file early to avoid polling non-existing file in monitor */
+      /* Create .changed file early to avoid polling non-existing file in monitor */
       if (!flatpak_dir_mark_changed (self, &my_error))
         {
           g_warning ("Error marking directory as changed: %s", my_error->message);
