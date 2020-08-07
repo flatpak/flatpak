@@ -4678,6 +4678,7 @@ repo_get_remote_collection_id (OstreeRepo *repo,
  * collection-based and normal pulls. Update @builder in place. */
 static void
 get_common_pull_options (GVariantBuilder     *builder,
+                         FlatpakRemoteState  *state,
                          const char          *ref_to_fetch,
                          const char          *token,
                          const gchar * const *dirs_to_pull,
@@ -4688,6 +4689,14 @@ get_common_pull_options (GVariantBuilder     *builder,
 {
   guint32 update_interval = 0;
   GVariantBuilder hdr_builder;
+
+  if (state->summary_bytes && state->summary_sig_bytes)
+    {
+      g_variant_builder_add (builder, "{s@v}", "summary-bytes",
+                             g_variant_new_variant (g_variant_new_from_bytes (G_VARIANT_TYPE ("ay"), state->summary_bytes, TRUE)));
+      g_variant_builder_add (builder, "{s@v}", "summary-sig-bytes",
+                             g_variant_new_variant (g_variant_new_from_bytes (G_VARIANT_TYPE ("ay"), state->summary_sig_bytes, TRUE)));
+    }
 
   if (dirs_to_pull)
     {
@@ -4787,7 +4796,7 @@ repo_pull (OstreeRepo                           *self,
 
   /* Pull options */
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
-  get_common_pull_options (&builder, ref_to_fetch, token, dirs_to_pull, current_checksum,
+  get_common_pull_options (&builder, state, ref_to_fetch, token, dirs_to_pull, current_checksum,
                            force_disable_deltas, flags, progress);
 
   if (sideload_repo)
