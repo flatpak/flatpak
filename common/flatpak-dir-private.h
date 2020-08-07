@@ -120,6 +120,7 @@ typedef struct
   char     *remote_name;
   char     *collection_id;
   GVariant *summary;
+  GBytes   *summary_bytes;
   GBytes   *summary_sig_bytes;
   GError   *summary_fetch_error;
   GRegex   *allow_refs;

@@ -335,6 +335,7 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
       g_free (remote_state->remote_name);
       g_free (remote_state->collection_id);
       g_clear_pointer (&remote_state->summary, g_variant_unref);
+      g_clear_pointer (&remote_state->summary_bytes, g_bytes_unref);
       g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
       g_clear_error (&remote_state->summary_fetch_error);
       g_clear_pointer (&remote_state->allow_refs, g_regex_unref);
@@ -10899,6 +10900,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 
           state->summary_sig_bytes = g_bytes_ref (opt_summary_sig);
         }
+      state->summary_bytes = g_bytes_ref (opt_summary);
       state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                                      opt_summary, FALSE));
     }
@@ -10914,6 +10916,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
           state->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
           state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                                          summary_bytes, FALSE));
+          state->summary_bytes = g_steal_pointer (&summary_bytes);
         }
       else
         {
