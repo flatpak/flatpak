@@ -3614,7 +3614,7 @@ test_instance (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  flatpak_transaction_run (transaction, NULL, &error);
+  res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
@@ -3724,7 +3724,7 @@ test_update_subpaths (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  flatpak_transaction_run (transaction, NULL, &error);
+  res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
@@ -4038,7 +4038,7 @@ test_list_installed_related_refs (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  flatpak_transaction_run (transaction, NULL, &error);
+  res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
@@ -4089,7 +4089,7 @@ test_list_installed_related_refs (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  flatpak_transaction_run (transaction, NULL, &error);
+  res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
 
