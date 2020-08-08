@@ -963,6 +963,7 @@ GPtrArray * flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                                          GError      **error);
 GPtrArray * flatpak_dir_find_local_related (FlatpakDir   *self,
                                             const char   *ref,
+                                            FlatpakDir   *ref_dir,
                                             const char   *remote_name,
                                             gboolean      deployed,
                                             GCancellable *cancellable,

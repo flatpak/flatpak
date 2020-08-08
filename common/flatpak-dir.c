@@ -14124,6 +14124,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
 GPtrArray *
 flatpak_dir_find_local_related (FlatpakDir   *self,
                                 const char   *ref,
+                                FlatpakDir   *ref_dir,
                                 const char   *remote_name,
                                 gboolean      deployed,
                                 GCancellable *cancellable,
@@ -14140,9 +14141,14 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return NULL;
 
+  /* If @ref_dir is non-NULL it will be used for getting the metadata for @ref
+   * but not for finding related refs */
+  if (ref_dir != NULL && !flatpak_dir_ensure_repo (ref_dir, cancellable, error))
+    return NULL;
+
   if (deployed)
     {
-      deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+      deploy_dir = flatpak_dir_get_if_deployed (ref_dir ? ref_dir : self, ref, NULL, cancellable);
       if (deploy_dir == NULL)
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
@@ -14165,7 +14171,7 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
     }
   else
     {
-      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, ref, &checksum, NULL, NULL);
+      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (ref_dir ? ref_dir : self, remote_name, ref, &checksum, NULL, NULL);
       if (commit_data)
         {
           g_autoptr(GVariant) commit_metadata = g_variant_get_child_value (commit_data, 0);
