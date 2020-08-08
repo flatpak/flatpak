@@ -45,18 +45,20 @@
             media mounted at <arg choice="plain">MOUNT-PATH</arg>, along with all the dependencies and
             metadata needed for installing them. This is one way of transferring flatpaks
             between computers that doesn't require an Internet connection. After using
-            this command, the USB drive can be connected to another computer and
-            <command>flatpak install</command> will prefer to install from it rather than
-            the Internet if (a) each ref comes from a configured remote whose GPG keyring will be
-            used for verification and (b) the refs on the drive are at least as new as what's
-            available elsewhere (e.g. the Internet if you're online). For this process to work a
-            collection ID must be configured on the relevant remotes on both the source and
-            destination computers, and on the remote server.
+            this command, the USB drive can be connected to another computer which already has the
+            relevant remote(s) configured, and Flatpak will install or update from the drive offline
+            (see below). If online, the drive will be used as a cache, meaning some objects will be
+            pulled from it and others from the Internet. For this process to work a collection ID
+            must be configured on the relevant remotes on both the source and destination computers,
+            and on the remote server.
         </para>
         <para>
-            On the destination computer one can install from the USB (or any mounted filesystem) the
-            same way you would install from the Internet, e.g. with
-            <command>flatpak install flathub org.gnome.Builder</command> or using a GUI.
+            On the destination computer one can install from the USB (or any mounted filesystem)
+            using the <option>--sideload-repo</option> option with <command>flatpak install</command>.
+            It's also possible to configure sideload paths using symlinks; see
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+            Flatpak also includes systemd units to automatically sideload from hot-plugged USB drives,
+            but these may or may not be enabled depending on your Linux distribution.
         </para>
         <para>
             Each <arg choice="plain">REF</arg> argument is a full or partial identifier in the
