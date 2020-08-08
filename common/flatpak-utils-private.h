@@ -322,6 +322,33 @@ g_key_file_load_from_bytes (GKeyFile     *key_file,
 }
 #endif
 
+#if !GLIB_CHECK_VERSION (2, 54, 0)
+static inline gboolean
+g_ptr_array_find_with_equal_func (GPtrArray     *haystack,
+                                  gconstpointer  needle,
+                                  GEqualFunc     equal_func,
+                                  guint         *index_)
+{
+  guint i;
+
+  g_return_val_if_fail (haystack != NULL, FALSE);
+
+  if (equal_func == NULL)
+    equal_func = g_direct_equal;
+
+  for (i = 0; i < haystack->len; i++)
+    {
+      if (equal_func (g_ptr_array_index (haystack, i), needle))
+        {
+          if (index_ != NULL)
+            *index_ = i;
+          return TRUE;
+        }
+    }
+
+  return FALSE;
+}
+#endif
 
 #if !GLIB_CHECK_VERSION (2, 56, 0)
 GDateTime *flatpak_g_date_time_new_from_iso8601 (const gchar *text,
