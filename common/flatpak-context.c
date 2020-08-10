@@ -826,6 +826,22 @@ flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
       return TRUE;
     }
 
+  if (strcmp (filesystem, "~") == 0)
+    {
+      if (filesystem_out != NULL)
+        *filesystem_out = g_strdup ("home");
+
+      return TRUE;
+    }
+
+  if (g_str_has_prefix (filesystem, "home/"))
+    {
+      if (filesystem_out != NULL)
+        *filesystem_out = g_strconcat ("~/", filesystem + 5, NULL);
+
+      return TRUE;
+    }
+
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                _("Unknown filesystem location %s, valid locations are: host, host-os, host-etc, home, xdg-*[/…], ~/dir, /dir"), filesystem);
   return FALSE;
