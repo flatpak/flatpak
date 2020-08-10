@@ -32,7 +32,7 @@ typedef enum {
 
 #define FLATPAK_HTTP_ERROR flatpak_http_error_quark ()
 
-FLATPAK_EXTERN GQuark  flatpak_http_error_quark (void);
+GQuark flatpak_http_error_quark (void);
 
 
 SoupSession * flatpak_create_soup_session (const char *user_agent);
