@@ -210,6 +210,14 @@
                                 Available since 0.3.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>home/<replaceable>path</replaceable></option></term><listitem><para>
+                                  Alias for <filename>~/path</filename>
+                                  Available since 1.10.
+                                  For better compatibility with older
+                                  Flatpak versions, prefer to write this
+                                  as <filename>~/path</filename>.
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>host</option></term>
                             <listitem><para>
                                 The entire host file system, except for
@@ -380,6 +388,15 @@
                             </term><listitem><para>
                                 An arbitrary path relative to the home
                                 directory. Available since 0.3.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>~</option></term>
+                            <listitem><para>
+                                  The same as <option>home</option>.
+                                  Available since 1.10.
+                                  For better compatibility with older
+                                  Flatpak versions, prefer to write this
+                                  as <option>home</option>.
                             </para></listitem></varlistentry>
 
                             <varlistentry><term>
