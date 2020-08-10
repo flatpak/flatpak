@@ -97,6 +97,7 @@ flatpak_context_new (void)
   context = g_slice_new0 (FlatpakContext);
   context->env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  /* filename or special filesystem name => FlatpakFilesystemMode */
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->session_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -752,19 +753,23 @@ parse_filesystem_flags (const char            *filesystem,
 }
 
 static gboolean
-flatpak_context_verify_filesystem (const char *filesystem_and_mode,
-                                   GError    **error)
+flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
+                                  char                  **filesystem_out,
+                                  FlatpakFilesystemMode  *mode_out,
+                                  GError                **error)
 {
-  g_autofree char *filesystem = parse_filesystem_flags (filesystem_and_mode, NULL);
+  g_autofree char *filesystem = parse_filesystem_flags (filesystem_and_mode, mode_out);
 
-  if (g_strv_contains (flatpak_context_special_filesystems, filesystem))
-    return TRUE;
-  if (get_xdg_user_dir_from_string (filesystem, NULL, NULL, NULL))
-    return TRUE;
-  if (g_str_has_prefix (filesystem, "~/"))
-    return TRUE;
-  if (g_str_has_prefix (filesystem, "/"))
-    return TRUE;
+  if (g_strv_contains (flatpak_context_special_filesystems, filesystem) ||
+      get_xdg_user_dir_from_string (filesystem, NULL, NULL, NULL) ||
+      g_str_has_prefix (filesystem, "~/") ||
+      g_str_has_prefix (filesystem, "/"))
+    {
+      if (filesystem_out != NULL)
+        *filesystem_out = g_steal_pointer (&filesystem);
+
+      return TRUE;
+    }
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                _("Unknown filesystem location %s, valid locations are: host, host-os, host-etc, home, xdg-*[/…], ~/dir, /dir"), filesystem);
@@ -772,22 +777,11 @@ flatpak_context_verify_filesystem (const char *filesystem_and_mode,
 }
 
 static void
-flatpak_context_add_filesystem (FlatpakContext *context,
-                                const char     *what)
+flatpak_context_take_filesystem (FlatpakContext        *context,
+                                 char                  *fs,
+                                 FlatpakFilesystemMode  mode)
 {
-  FlatpakFilesystemMode mode;
-  char *fs = parse_filesystem_flags (what, &mode);
-
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
-}
-
-static void
-flatpak_context_remove_filesystem (FlatpakContext *context,
-                                   const char     *what)
-{
-  g_hash_table_insert (context->filesystems,
-                       parse_filesystem_flags (what, NULL),
-                       NULL);
 }
 
 void
@@ -1002,11 +996,13 @@ option_filesystem_cb (const gchar *option_name,
                       GError     **error)
 {
   FlatpakContext *context = data;
+  g_autofree char *fs = NULL;
+  FlatpakFilesystemMode mode;
 
-  if (!flatpak_context_verify_filesystem (value, error))
+  if (!flatpak_context_parse_filesystem (value, &fs, &mode, error))
     return FALSE;
 
-  flatpak_context_add_filesystem (context, value);
+  flatpak_context_take_filesystem (context, g_steal_pointer (&fs), mode);
   return TRUE;
 }
 
@@ -1017,11 +1013,14 @@ option_nofilesystem_cb (const gchar *option_name,
                         GError     **error)
 {
   FlatpakContext *context = data;
+  g_autofree char *fs = NULL;
+  FlatpakFilesystemMode mode;
 
-  if (!flatpak_context_verify_filesystem (value, error))
+  if (!flatpak_context_parse_filesystem (value, &fs, &mode, error))
     return FALSE;
 
-  flatpak_context_remove_filesystem (context, value);
+  flatpak_context_take_filesystem (context, g_steal_pointer (&fs),
+                                   FLATPAK_FILESYSTEM_MODE_NONE);
   return TRUE;
 }
 
@@ -1414,14 +1413,18 @@ flatpak_context_load_metadata (FlatpakContext *context,
       for (i = 0; filesystems[i] != NULL; i++)
         {
           const char *fs = parse_negated (filesystems[i], &remove);
-          if (!flatpak_context_verify_filesystem (fs, NULL))
+          g_autofree char *filesystem = NULL;
+          FlatpakFilesystemMode mode;
+
+          if (!flatpak_context_parse_filesystem (fs, &filesystem, &mode, NULL))
             g_debug ("Unknown filesystem type %s", filesystems[i]);
           else
             {
               if (remove)
-                flatpak_context_remove_filesystem (context, fs);
+                flatpak_context_take_filesystem (context, g_steal_pointer (&filesystem),
+                                                 FLATPAK_FILESYSTEM_MODE_NONE);
               else
-                flatpak_context_add_filesystem (context, fs);
+                flatpak_context_take_filesystem (context, g_steal_pointer (&filesystem), mode);
             }
         }
     }
@@ -1647,7 +1650,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
         {
           FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-          if (mode != 0)
+          if (mode != FLATPAK_FILESYSTEM_MODE_NONE)
             g_ptr_array_add (array, unparse_filesystem_flags (key, mode));
           else
             g_ptr_array_add (array, g_strconcat ("!", key, NULL));
@@ -1760,7 +1763,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
 void
 flatpak_context_allow_host_fs (FlatpakContext *context)
 {
-  flatpak_context_add_filesystem (context, "host");
+  flatpak_context_take_filesystem (context, g_strdup ("host"), FLATPAK_FILESYSTEM_MODE_READ_WRITE);
 }
 
 gboolean
@@ -1947,7 +1950,7 @@ flatpak_context_to_args (FlatpakContext *context,
     {
       FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-      if (mode != 0)
+      if (mode != FLATPAK_FILESYSTEM_MODE_NONE)
         {
           g_autofree char *fs = unparse_filesystem_flags (key, mode);
           g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", fs));
@@ -2066,7 +2069,7 @@ flatpak_context_export (FlatpakContext *context,
   gpointer key, value;
 
   fs_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "host");
-  if (fs_mode != 0)
+  if (fs_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     {
       DIR *dir;
       struct dirent *dirent;
@@ -2096,17 +2099,17 @@ flatpak_context_export (FlatpakContext *context,
   os_mode = MAX ((FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "host-os"),
                    fs_mode);
 
-  if (os_mode != 0)
+  if (os_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_host_os_expose (exports, os_mode);
 
   etc_mode = MAX ((FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "host-etc"),
                    fs_mode);
 
-  if (etc_mode != 0)
+  if (etc_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_host_etc_expose (exports, etc_mode);
 
   home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
-  if (home_mode != 0)
+  if (home_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     {
       g_debug ("Allowing homedir access");
       home_access = TRUE;
