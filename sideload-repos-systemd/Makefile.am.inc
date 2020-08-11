@@ -15,4 +15,4 @@ systemdsystemunit_DATA += sideload-repos-systemd/flatpak-sideload-repos-dir.serv
 
 endif
 
-EXTRA_DIST += sideload-repos-systemd/flatpak-sideload-usb-repo.path.in sideload-repos-systemd/flatpak-sideload-repos-dir.service
+EXTRA_DIST += sideload-repos-systemd/flatpak-sideload-usb-repo.path.in sideload-repos-systemd/flatpak-sideload-usb-repo.service.in sideload-repos-systemd/flatpak-sideload-repos-dir.service
