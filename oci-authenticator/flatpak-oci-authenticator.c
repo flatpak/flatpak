@@ -525,8 +525,21 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
         have_auth = TRUE;
       else
         {
-          g_debug ("Anonymous authentication failed: %s", error->message);
-          g_clear_error (&error);
+          if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_AUTHORIZED))
+            {
+              g_debug ("Anonymous authentication failed: %s", error->message);
+              g_clear_error (&error);
+
+              /* Continue trying with authentication below */
+            }
+          else
+            {
+              /* We failed with some weird reason (network issue maybe?) and it is unlikely
+               * that adding some authentication will fix it. It will just cause a bad UX like
+               * described in #3753, so just return the error early.
+               */
+              return error_request (request, sender, error);
+            }
         }
     }
 
