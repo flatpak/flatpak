@@ -25,6 +25,12 @@ handle (char *filename)
       g_autofree char *s = ot_tree_meta_print (tree, TRUE);
       g_print ("%s: %s\n", filename, s);
     }
+  else if (g_str_has_suffix (filename, ".dirmeta"))
+    {
+      OtDirMetaRef dir = ot_dir_meta_from_data (contents, size);
+      g_autofree char *s = ot_dir_meta_print (dir, TRUE);
+      g_print ("%s: %s\n", filename, s);
+    }
   else if (g_str_has_suffix (filename, "summary"))
     {
       OtSummaryRef summary = ot_summary_from_data (contents, size);
