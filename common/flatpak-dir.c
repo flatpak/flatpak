@@ -14158,30 +14158,41 @@ flatpak_dir_get_config_strv (FlatpakDir *self, char *key)
   return NULL;
 }
 
-static void
-get_system_locales (FlatpakDir *self, GPtrArray *langs)
+static const GPtrArray *
+get_system_locales (FlatpakDir *self)
 {
-  g_autoptr(GDBusProxy) localed_proxy = NULL;
-  g_autoptr(GDBusProxy) accounts_proxy = NULL;
+  static GPtrArray *cached = NULL;
 
-  /* Get the system default locales */
-  localed_proxy = get_localed_dbus_proxy ();
-  if (localed_proxy != NULL)
-    get_locale_langs_from_localed_dbus (localed_proxy, langs);
+  if (g_once_init_enter (&cached))
+    {
+      GPtrArray *langs = g_ptr_array_new_with_free_func (g_free);
+      g_autoptr(GDBusProxy) localed_proxy = NULL;
+      g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
-  /* Now add the user account locales from AccountsService. If accounts_proxy is
-   * not NULL, it means that AccountsService exists */
-  accounts_proxy = get_accounts_dbus_proxy ();
-  if (accounts_proxy != NULL)
-    get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
-  g_ptr_array_add (langs, NULL);
+      /* Get the system default locales */
+      localed_proxy = get_localed_dbus_proxy ();
+      if (localed_proxy != NULL)
+        get_locale_langs_from_localed_dbus (localed_proxy, langs);
+
+      /* Now add the user account locales from AccountsService. If accounts_proxy is
+       * not NULL, it means that AccountsService exists */
+      accounts_proxy = get_accounts_dbus_proxy ();
+      if (accounts_proxy != NULL)
+        get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
+
+      g_ptr_array_add (langs, NULL);
+
+      g_once_init_leave (&cached, langs);
+    }
+
+  return (const GPtrArray *)cached;
 }
 
 char **
 flatpak_dir_get_default_locales (FlatpakDir *self)
 {
-  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
   g_auto(GStrv) extra_languages = NULL;
+  const GPtrArray *langs;
 
   extra_languages = flatpak_dir_get_config_strv (self, "xa.extra-languages");
 
@@ -14193,7 +14204,7 @@ flatpak_dir_get_default_locales (FlatpakDir *self)
     }
 
   /* Then get the system default locales */
-  get_system_locales (self, langs);
+  langs = get_system_locales (self);
 
   return sort_strv (flatpak_strv_merge (extra_languages, (char **) langs->pdata));
 }
@@ -14201,8 +14212,8 @@ flatpak_dir_get_default_locales (FlatpakDir *self)
 char **
 flatpak_dir_get_default_locale_languages (FlatpakDir *self)
 {
-  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
   g_auto(GStrv) extra_languages = NULL;
+  const GPtrArray *langs;
   int i;
 
   extra_languages = flatpak_dir_get_config_strv (self, "xa.extra-languages");
@@ -14222,7 +14233,7 @@ flatpak_dir_get_default_locale_languages (FlatpakDir *self)
     }
 
   /* Then get the system default locales */
-  get_system_locales (self, langs);
+  langs = get_system_locales (self);
 
   return sort_strv (flatpak_strv_merge (extra_languages, (char **) langs->pdata));
 }
