@@ -1434,7 +1434,7 @@ class Field:
         if self.type.is_basic():
             if self.type.is_fixed():
                 if not self.struct.is_fixed():
-                    C("  g_assert (offset + {fixed_size} < v.size);");
+                    C("  g_assert (offset + {fixed_size} <= v.size);");
                 val = genC("({ctype})G_STRUCT_MEMBER({readctype}, v.base, offset)")
                 if "bigendian" in self.attributes:
                     val = "%s_FROM_BE(%s)" % (self.type.get_ctype().upper(), val)
@@ -1457,7 +1457,7 @@ class Field:
         else:
             if self.type.is_fixed():
                 if not self.struct.is_fixed():
-                    C("  g_assert (offset + {fixed_size} < v.size);");
+                    C("  g_assert (offset + {fixed_size} <= v.size);");
                 C("  return ({TypeNameRef}) {{ G_STRUCT_MEMBER_P(v.base, offset), {fixed_size} }};")
             else:
                 C("  gsize start = offset;");
