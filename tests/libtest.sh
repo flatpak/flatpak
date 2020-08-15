@@ -273,7 +273,9 @@ make_runtime () {
     GPGARGS="$4"
 
     RUNTIME_REF="runtime/org.test.Platform/$(flatpak --default-arch)/${BRANCH}"
-    if [ -f ${test_builddir}/runtime-repo/${RUNTIME_REF} ]; then
+    if [ ! -z "${SRC_RUNTIME_REPO:-}" ]; then
+        RUNTIME_REPO=repos/${SRC_RUNTIME_REPO}
+    elif [ -f ${test_builddir}/runtime-repo/${RUNTIME_REF} ]; then
         RUNTIME_REPO=${test_builddir}/runtime-repo
     else
         RUNTIME_REPO=${TEST_DATA_DIR}/runtime-repo
@@ -376,6 +378,20 @@ make_updated_app () {
     RUNTIME_BRANCH=${6:-$BRANCH}
 
     RUNTIME_BRANCH=$RUNTIME_BRANCH GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "${APP_ID}" "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
+    update_repo $REPONAME "${COLLECTION_ID}"
+}
+
+make_updated_runtime () {
+    REPONAME=${1:-test}
+    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+        COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
+    else
+        COLLECTION_ID=""
+    fi
+    BRANCH=${3:-master}
+    TEXT=${4:-UPDATED}
+
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Platform "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 

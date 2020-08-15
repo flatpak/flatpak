@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..38"
+echo "1..40"
 
 #Regular repo
 setup_repo
@@ -424,11 +424,57 @@ ${FLATPAK} ${U} uninstall -y org.test.NewHello org.test.Platform
 
 ok "eol-rebase"
 
+# Remove any pin of the runtime from an earlier test
+${FLATPAK} ${U} pin --remove runtime/org.test.Platform/$ARCH/master 2>/dev/null || true
+
+EXPORT_ARGS="--end-of-life=Reason3" make_updated_runtime
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+${FLATPAK} ${U} list -d > list-log
+assert_file_has_content list-log "org\.test\.Hello"
+assert_file_has_content list-log "org\.test\.Platform"
+
+${FLATPAK} ${U} uninstall -y org.test.Hello
+
+${FLATPAK} ${U} list -d -a > list-log
+assert_not_file_has_content list-log "org\.test\.Hello"
+assert_not_file_has_content list-log "org\.test\.Platform"
+assert_not_file_has_content list-log "org\.test\.Platform.Locale"
+
+ok "eol runtime uninstalled with app"
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+
+${FLATPAK} ${U} info org.test.Platform > info-log
+assert_file_has_content info-log "End-of-life: Reason3"
+
+assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
+
+# Update the app to a different runtime branch
+make_updated_runtime "" "" "mainline" ""
+make_updated_app "" "" "" "UPDATED99" "" "mainline"
+
+${FLATPAK} ${U} update -y org.test.Hello
+
+# The previous runtime should have been removed during the update
+assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/mainline/active/files
+assert_not_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
+
+# Revert things for future tests
+EXPORT_ARGS="" make_updated_runtime
+make_updated_app "" "" "" "UPDATED100" "" "master"
+${FLATPAK} ${U} uninstall -y --all
+ostree refs --repo=repos/test --delete runtime/org.test.Platform/$ARCH/mainline
+ostree refs --repo=repos/test --delete runtime/org.test.Platform.Locale/$ARCH/mainline
+update_repo
+
+ok "eol runtime uninstalled on app update to different runtime"
+
 ${FLATPAK} ${U} install -y test-repo org.test.Platform
 
 port=$(cat httpd-port)
 UPDATE_REPO_ARGS="--redirect-url=http://127.0.0.1:${port}/test-gpg3 --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg" update_repo
-GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo_no_add test-gpg3 org.test.Collection.test master
+SRC_RUNTIME_REPO="test" GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo_no_add test-gpg3 org.test.Collection.test master
 
 ${FLATPAK} ${U} update -y org.test.Platform
 # Ensure we have the new uri

@@ -990,13 +990,13 @@ transaction_ready (FlatpakTransaction  *transaction,
       GPtrArray *op_related_to_ops = flatpak_transaction_operation_get_related_to_ops (op);  /* (element-type FlatpakTransactionOperation) */
       FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
 
-      /* There is currently no way for a set of updates to lead to an
-       * uninstall, but check anyway.
+      /* There may be an uninstall op if a runtime will now be considered
+       * unused after the updates
        */
       if (type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         {
           const char *ref = flatpak_transaction_operation_get_ref (op);
-          g_warning ("Update transaction unexpectedly wants to uninstall %s", ref);
+          g_debug ("Update transaction wants to uninstall %s", ref);
           continue;
         }
 
@@ -3075,6 +3075,56 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
                                        GCancellable        *cancellable,
                                        GError             **error)
 {
+  return flatpak_installation_list_unused_refs_with_options (self, arch, NULL, cancellable, error);
+}
+
+static void
+prune_excluded_refs (char **full_refs,
+                     char **refs_to_exclude)
+{
+  guint len = g_strv_length (full_refs);
+  for (guint i = 0; i < len; i++)
+    {
+      if (g_strv_contains ((const gchar * const*)refs_to_exclude, full_refs[i]))
+        {
+          g_free (full_refs[i]);
+          full_refs[i] = full_refs[len - 1];
+          full_refs[len - 1] = NULL;
+          len--;
+        }
+    }
+}
+
+/**
+ * flatpak_installation_list_unused_refs_with_options:
+ * @self: a #FlatpakInstallation
+ * @arch: (nullable): if non-%NULL, the architecture of refs to collect
+ * @options: (nullable): if non-%NULL, a GVariant a{sv} with an extensible set
+ *                       of options
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Like flatpak_installation_list_unused_refs() but supports an extensible set
+ * of options. The following are currently defined:
+ *
+ *   * exclude-refs (as): Act as if these refs are not installed even if they
+ *       are when determining the set of unused refs
+ *   * filter-by-eol (b): Only return refs as unused if they are End-Of-Life.
+ *       Note that if this option is combined with other filters (of which there
+ *       are none currently) non-EOL refs may also be returned.
+ *
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
+ *   #FlatpakInstalledRef instances
+ *
+ * Since: 1.9.0
+ */
+GPtrArray *
+flatpak_installation_list_unused_refs_with_options (FlatpakInstallation *self,
+                                                    const char          *arch,
+                                                    GVariant            *options,
+                                                    GCancellable        *cancellable,
+                                                    GError             **error)
+{
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GHashTable) refs_hash = NULL;
   g_autoptr(GPtrArray) refs =  NULL;
@@ -3082,7 +3132,15 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
   g_auto(GStrv) runtime_refs = NULL;
   g_autoptr(GHashTable) used_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   g_autoptr(GHashTable) used_runtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_autofree char **refs_to_exclude = NULL;
+  gboolean filter_by_eol = FALSE;
   int i;
+
+  if (options)
+    {
+      (void) g_variant_lookup (options, "exclude-refs", "^a&s", &refs_to_exclude);
+      (void) g_variant_lookup (options, "filter-by-eol", "b", &filter_by_eol);
+    }
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -3093,6 +3151,12 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
 
   if (!flatpak_dir_list_refs (dir, "runtime", &runtime_refs, cancellable, error))
     return NULL;
+
+  if (refs_to_exclude != NULL)
+    {
+      prune_excluded_refs (app_refs, refs_to_exclude);
+      prune_excluded_refs (runtime_refs, refs_to_exclude);
+    }
 
   refs_hash = g_hash_table_new (g_str_hash, g_str_equal);
   refs = g_ptr_array_new_with_free_func (g_object_unref);
@@ -3152,10 +3216,27 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
           continue;
         }
 
-      if (!g_hash_table_contains (used_refs, ref))
+      if (!g_hash_table_contains (used_refs, ref) &&
+          g_hash_table_add (refs_hash, (gpointer) ref))
         {
-          if (g_hash_table_add (refs_hash, (gpointer) ref))
+          if (!filter_by_eol)
             g_ptr_array_add (refs, get_ref (dir, ref, NULL, NULL));
+          else
+            {
+              g_autoptr(GBytes) deploy_data = NULL;
+              deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY,
+                                                         cancellable, error);
+              if (deploy_data == NULL)
+                return NULL;
+              if (flatpak_deploy_data_get_eol (deploy_data) == NULL &&
+                  flatpak_deploy_data_get_eol_rebase (deploy_data) == NULL)
+                {
+                  g_debug ("Ref %s is not EOL, considering as used", ref);
+                  continue;
+                }
+              else
+                g_ptr_array_add (refs, get_ref (dir, ref, NULL, NULL));
+            }
         }
     }
 
