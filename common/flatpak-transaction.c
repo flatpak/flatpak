@@ -2018,7 +2018,7 @@ add_deps (FlatpakTransaction          *self,
     {
       /* If the runtime this app uses is already to be uninstalled, then this uninstall must happen before
          the runtime is uninstalled */
-      if (runtime_op && op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+      if (runtime_op && runtime_op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         run_operation_before (op, runtime_op, 1);
 
       return TRUE;
