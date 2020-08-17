@@ -7383,6 +7383,8 @@ apply_extra_data (FlatpakDir   *self,
                           NULL);
 
   if (!flatpak_run_setup_base_argv (bwrap, runtime_files, NULL, runtime_ref_parts[2],
+                                    /* Might need multiarch in apply_extra (see e.g. #3742). Should be pretty safe in this limited context */
+                                    FLATPAK_RUN_FLAG_MULTIARCH |
                                     FLATPAK_RUN_FLAG_NO_SESSION_HELPER | FLATPAK_RUN_FLAG_NO_PROC,
                                     error))
     return FALSE;
