@@ -167,7 +167,9 @@ gboolean flatpak_summary_lookup_ref (GVariant      *summary,
                                      const char    *ref,
                                      char         **out_checksum,
                                      VarRefInfoRef *out_info);
-
+gboolean flatpak_summary_find_ref_map (VarSummaryRef  summary,
+                                       const char    *collection_id,
+                                       VarRefMapRef  *refs_out);
 gboolean flatpak_name_matches_one_wildcard_prefix (const char         *string,
                                                    const char * const *maybe_wildcard_prefixes,
                                                    gboolean            require_exact_match);
