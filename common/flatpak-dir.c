@@ -345,6 +345,21 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
     }
 }
 
+static gboolean
+_validate_summary_for_collection_id (GVariant    *summary_v,
+                                     const char  *collection_id,
+                                     GError     **error)
+{
+  VarSummaryRef summary;
+  summary = var_summary_from_gvariant (summary_v);
+
+  if (!flatpak_summary_find_ref_map (summary, collection_id, NULL))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                               _("Configured collection ID ‘%s’ not in summary file"), collection_id);
+
+  return TRUE;
+}
+
 void
 flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
                                         GFile *dir)
@@ -363,14 +378,27 @@ flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
   mfile = g_mapped_file_new (flatpak_file_get_path_cached (summary_path), FALSE, NULL);
   if (mfile != NULL && ostree_repo_open (sideload_repo, NULL, NULL))
     {
+      g_autoptr(GError) local_error = NULL;
       g_autoptr(GBytes) summary_bytes = g_mapped_file_get_bytes (mfile);
       FlatpakSideloadState *ss = g_new0 (FlatpakSideloadState, 1);
 
       ss->repo = g_steal_pointer (&sideload_repo);
       ss->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, TRUE));
-      g_ptr_array_add (self->sideload_repos, ss);
 
-      g_debug ("Using sideloaded repo %s for remote %s", flatpak_file_get_path_cached (dir), self->remote_name);
+      if (!_validate_summary_for_collection_id (ss->summary, self->collection_id, &local_error))
+        {
+          /* We expect to hit this code path when the repo is providing things
+           * from other remotes
+           */
+          g_debug ("Sideload repo at path %s not valid for remote %s: %s",
+                   flatpak_file_get_path_cached (dir), self->remote_name, local_error->message);
+          flatpak_sideload_state_free (ss);
+        }
+      else
+        {
+          g_ptr_array_add (self->sideload_repos, ss);
+          g_debug ("Using sideloaded repo %s for remote %s", flatpak_file_get_path_cached (dir), self->remote_name);
+        }
     }
 }
 
@@ -10892,6 +10920,11 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
             }
         }
     }
+
+  if (state->collection_id != NULL &&
+      state->summary != NULL &&
+      !_validate_summary_for_collection_id (state->summary, state->collection_id, error))
+    return NULL;
 
   if (flatpak_dir_get_remote_oci (self, remote_or_uri))
     {
