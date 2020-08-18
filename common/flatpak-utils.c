@@ -2643,10 +2643,10 @@ flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
  * If @collection_id is %NULL, the main refs list from the summary will be
  * returned. If @collection_id doesn’t match any collection IDs in the summary
  * file, %FALSE will be returned. */
-static gboolean
-summary_find_ref_map (VarSummaryRef summary,
-                      const char *collection_id,
-                      VarRefMapRef *refs_out)
+gboolean
+flatpak_summary_find_ref_map (VarSummaryRef summary,
+                              const char *collection_id,
+                              VarRefMapRef *refs_out)
 {
   VarMetadataRef metadata = var_summary_get_metadata (summary);
   const char *summary_collection_id;
@@ -2655,7 +2655,8 @@ summary_find_ref_map (VarSummaryRef summary,
 
   if (collection_id == NULL || g_strcmp0 (collection_id, summary_collection_id) == 0)
     {
-      *refs_out = var_summary_get_ref_map (summary);
+      if (refs_out)
+        *refs_out = var_summary_get_ref_map (summary);
       return TRUE;
     }
   else if (collection_id != NULL)
@@ -2689,7 +2690,7 @@ flatpak_summary_match_subrefs (GVariant   *summary_v,
   summary = var_summary_from_gvariant (summary_v);
 
   /* Work out which refs list to use, based on the @collection_id. */
-  if (summary_find_ref_map (summary, collection_id, &ref_map))
+  if (flatpak_summary_find_ref_map (summary, collection_id, &ref_map))
     {
       /* Match against the refs. */
       parts = g_strsplit (ref, "/", 0);
@@ -2747,7 +2748,7 @@ flatpak_summary_lookup_ref (GVariant      *summary_v,
   summary = var_summary_from_gvariant (summary_v);
 
   /* Work out which refs list to use, based on the @collection_id. */
-  if (!summary_find_ref_map (summary, collection_id, &ref_map))
+  if (!flatpak_summary_find_ref_map (summary, collection_id, &ref_map))
     return FALSE;
 
   if (!flatpak_var_ref_map_lookup_ref (ref_map, ref, &info))
