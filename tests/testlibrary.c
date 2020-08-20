@@ -3485,7 +3485,6 @@ test_transaction_app_runtime_same_remote (void)
   g_autofree char *app = NULL;
   const char *runtime_origin;
   gboolean res;
-  int old_prio;
 
   app = g_strdup_printf ("app/org.test.Hello/%s/master",
                          flatpak_get_default_arch ());
