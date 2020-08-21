@@ -156,6 +156,15 @@
   fun:_check_support_reflink
 }
 
+# Some unsupported ioctl
+{
+   ignore_ostree_write_ioctl
+   Memcheck:Param
+   ioctl(generic)
+   fun:ioctl
+   obj:*/libostree-1.so.1.0.0
+}
+
 # ostree pthread_create issue
 {
    ostree_pthread_create_issue
