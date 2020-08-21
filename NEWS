@@ -1,3 +1,16 @@
+Changes in 1.8.2
+================
+
+ * Added validation of collection id settins for remotes
+ * Fix seccomp filters on s390
+ * Robustness fixes to the spawn portal
+ * Fix support for masking update in the system installation
+ * Better support for distros with uncommon models of merged /usr
+ * Cache responses from localed/AccoutService
+ * Fix hangs in cases where xdg-dbus-proxy fails to start
+ * Fix double-free in cups socket detection
+ * OCI authenticator now doesn't ask for auth in case of http errors
+
 Changes in 1.8.1
 ================
 
