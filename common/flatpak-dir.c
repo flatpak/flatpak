@@ -10606,6 +10606,15 @@ flatpak_dir_lookup_cached_summary (FlatpakDir *self,
                 *bytes_sig_out = NULL;
             }
           res = TRUE;
+
+          /* Bump the cache expiry time */
+          summary->time = now;
+        }
+      else
+        {
+          /* Timed out or URL has changed; remove the entry */
+          g_hash_table_remove (self->summary_cache, name);
+          res = FALSE;
         }
     }
 
