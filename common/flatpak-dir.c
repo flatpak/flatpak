@@ -10593,7 +10593,7 @@ flatpak_dir_lookup_cached_summary (FlatpakDir *self,
   if (summary)
     {
       guint64 now = g_get_monotonic_time ();
-      if ((now - summary->time) < (1000 * 1000 * (SUMMARY_CACHE_TIMEOUT_SEC)) &&
+      if ((now - summary->time) / G_USEC_PER_SEC < SUMMARY_CACHE_TIMEOUT_SEC &&
           strcmp (url, summary->url) == 0)
         {
           /* g_debug ("Using cached summary for remote %s", name); */
