@@ -185,6 +185,7 @@ struct _FlatpakTransactionPrivate
   gboolean                     reinstall;
   gboolean                     force_uninstall;
   gboolean                     can_run;
+  gboolean                     include_unused_uninstall_ops;
   char                        *default_arch;
   guint                        max_op;
 
@@ -1670,6 +1671,50 @@ flatpak_transaction_set_default_arch (FlatpakTransaction *self,
 
   g_free (priv->default_arch);
   priv->default_arch = g_strdup (arch);
+}
+
+/**
+ * flatpak_transaction_set_include_unused_uninstall_ops:
+ * @self: a #FlatpakTransaction
+ * @include_unused_uninstall_ops: whether to include unused uninstall ops
+ *
+ * When this is set to %TRUE, Flatpak will add uninstall operations to the
+ * transaction for each runtime it considers unused. This is used by the
+ * "update" CLI command to garbage collect runtimes and free disk space.
+ *
+ * No guarantees are made about the exact hueristic used; e.g. only end-of-life
+ * unused runtimes may be uninstalled with this set. To see the full list of
+ * unused runtimes in an installation, use
+ * flatpak_installation_list_unused_refs().
+ *
+ * Since: 1.9.0
+ */
+void
+flatpak_transaction_set_include_unused_uninstall_ops (FlatpakTransaction *self,
+                                                      gboolean            include_unused_uninstall_ops)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->include_unused_uninstall_ops = include_unused_uninstall_ops;
+}
+
+/**
+ * flatpak_transaction_get_include_unused_uninstall_ops:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets the value set by
+ * flatpak_transaction_set_include_unused_uninstall_ops().
+ *
+ * Returns: %TRUE if include_unused_uninstall_ops is set, %FALSE otherwise
+ *
+ * Since: 1.9.0
+ */
+gboolean
+flatpak_transaction_get_include_unused_uninstall_ops (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->include_unused_uninstall_ops;
 }
 
 static FlatpakTransactionOperation *
@@ -4185,6 +4230,41 @@ prune_maybe_unused_list (FlatpakTransaction  *self,
 }
 
 static gboolean
+populate_maybe_unused_list (FlatpakTransaction  *self,
+                            GHashTable          *maybe_unused_runtimes,
+                            GCancellable        *cancellable,
+                            GError             **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  GVariantBuilder builder;
+  g_autoptr(GVariant) list_unused_options = NULL;
+  g_autoptr(GPtrArray) unused_refs = NULL;
+  int i;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&builder, "{s@v}", "filter-by-eol",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+  list_unused_options = g_variant_ref_sink (g_variant_builder_end (&builder));
+
+  unused_refs = flatpak_installation_list_unused_refs_with_options (priv->installation,
+                                                                    NULL, /* arch */
+                                                                    list_unused_options,
+                                                                    cancellable, error);
+  if (unused_refs == NULL)
+    return FALSE;
+
+  for (i = 0; i < unused_refs->len; i++)
+    {
+      FlatpakInstalledRef *iref = g_ptr_array_index (unused_refs, i);
+      g_hash_table_replace (maybe_unused_runtimes,
+                            flatpak_ref_format_ref (FLATPAK_REF (iref)),
+                            NULL);
+    }
+
+  return TRUE;
+}
+
+static gboolean
 add_uninstall_unused_ops (FlatpakTransaction  *self,
                           GCancellable        *cancellable,
                           GError             **error)
@@ -4202,7 +4282,9 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
 
   /* This is the set of runtimes which are no longer needed by something in the
    * transaction (an uninstall or update). The values are either the relevant
-   * remote name or %NULL. */
+   * remote name or %NULL. In case priv->include_unused_uninstall_ops is set,
+   * this is initialized to the set of unused runtimes at the start of the
+   * transaction.*/
   maybe_unused_runtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
   /* This is the set of runtimes being used by an install or update operation
@@ -4217,6 +4299,10 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
   /* These are the set of operations which may need to be executed before the
    * uninstall operations added by this function. */
   run_after_ops = g_ptr_array_new ();
+
+  if (priv->include_unused_uninstall_ops &&
+      !populate_maybe_unused_list (self, maybe_unused_runtimes, cancellable, error))
+    return FALSE;
 
   for (l = priv->ops; l != NULL; l = next)
     {
@@ -4345,6 +4431,15 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
     {
       g_autofree char *resolved_remote = NULL;
       FlatpakTransactionOperation *unused_op = NULL;
+
+      if (priv->default_arch)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (runtime_ref, error);
+          if (parts == NULL)
+            return FALSE;
+          if (g_strcmp0 (parts[2], priv->default_arch) != 0)
+            continue;
+        }
 
       if (remote == NULL)
         g_assert (dir_ref_is_installed (priv->dir, runtime_ref, &resolved_remote, NULL));

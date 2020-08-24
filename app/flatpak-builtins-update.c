@@ -147,6 +147,8 @@ flatpak_builtin_update (int           argc,
       flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
       flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
       flatpak_transaction_set_disable_related (transaction, opt_no_related);
+      if (opt_arch)
+        flatpak_transaction_set_default_arch (transaction, opt_arch);
 
       for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
         flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
@@ -272,6 +274,23 @@ flatpak_builtin_update (int           argc,
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                        "%s not installed", pref);
           return FALSE;
+        }
+    }
+
+  /* Add uninstall operations for any runtimes that are unused and EOL.
+   * Strictly speaking these are not updates but "update" is the command people
+   * run to keep their system maintained. It would be possible to do this in
+   * the transaction that updates them to being EOL, but doing it here seems
+   * more future-proof since we may want to use additional conditions to
+   * determine if something is unused. See
+   * https://github.com/flatpak/flatpak/issues/3799
+   */
+  if ((kinds & FLATPAK_KINDS_RUNTIME) && n_prefs == 0 && !opt_no_deps)
+    {
+      for (k = 0; k < dirs->len; k++)
+        {
+          FlatpakTransaction *transaction = g_ptr_array_index (transactions, k);
+          flatpak_transaction_set_include_unused_uninstall_ops (transaction, TRUE);
         }
     }
 
