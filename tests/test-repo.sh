@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..40"
+echo "1..41"
 
 #Regular repo
 setup_repo
@@ -469,6 +469,27 @@ ostree refs --repo=repos/test --delete runtime/org.test.Platform.Locale/$ARCH/ma
 update_repo
 
 ok "eol runtime uninstalled on app update to different runtime"
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+
+# Runtime isn't EOL at time of app uninstall, so it's left alone
+${FLATPAK} ${U} uninstall -y org.test.Hello
+assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
+
+EXPORT_ARGS="--end-of-life=Reason4" make_updated_runtime
+${FLATPAK} ${U} update -y org.test.Platform
+${FLATPAK} ${U} info org.test.Platform > info-log
+assert_file_has_content info-log "End-of-life: Reason4"
+
+# Now that the runtime is EOL and unused it should be uninstalled by the update command
+${FLATPAK} ${U} update -y
+assert_not_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
+
+# Revert things for future tests
+EXPORT_ARGS="" make_updated_runtime
+${FLATPAK} ${U} uninstall -y --all
+
+ok "eol runtime uninstalled during update run"
 
 ${FLATPAK} ${U} install -y test-repo org.test.Platform
 
