@@ -272,6 +272,9 @@ typedef struct
 static const NotFilesystem not_filesystems[] =
 {
   { "homework", G_OPTION_ERROR_FAILED },
+  { "xdg-download/foo/bar/..", G_OPTION_ERROR_BAD_VALUE },
+  { "xdg-download/../foo/bar", G_OPTION_ERROR_BAD_VALUE },
+  { "xdg-download/foo/../bar", G_OPTION_ERROR_BAD_VALUE },
   { "xdg-run", G_OPTION_ERROR_FAILED },
 };
 
@@ -319,6 +322,8 @@ static const Filesystem filesystems[] =
   { "xdg-cache/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-config", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-config/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
+  { "xdg-config/././///.///././.", FLATPAK_FILESYSTEM_MODE_READ_WRITE, "xdg-config" },
+  { "xdg-config/////", FLATPAK_FILESYSTEM_MODE_READ_WRITE, "xdg-config" },
   { "xdg-run/dbus", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
 };
 
