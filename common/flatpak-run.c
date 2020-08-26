@@ -2365,6 +2365,17 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                           "--symlink", "../../../.flatpak-info", old_dest,
                           NULL);
 
+  /* Tell the application that it's running under Flatpak in a generic way. */
+  flatpak_bwrap_add_args (bwrap,
+                          "--setenv", "container", "flatpak",
+                          NULL);
+  if (!flatpak_bwrap_add_args_data (bwrap,
+                                    "container-manager",
+                                    "flatpak\n", -1,
+                                    "/run/host/container-manager",
+                                    error))
+    return FALSE;
+
   bwrapinfo_path = g_build_filename (instance_id_host_dir, "bwrapinfo.json", NULL);
   fd3 = open (bwrapinfo_path, O_RDWR | O_CREAT, 0644);
   if (fd3 == -1)
