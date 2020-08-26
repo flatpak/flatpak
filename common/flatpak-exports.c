@@ -85,6 +85,15 @@ make_relative (const char *base, const char *path)
 #define FAKE_MODE_TMPFS FLATPAK_FILESYSTEM_MODE_NONE
 #define FAKE_MODE_SYMLINK G_MAXINT
 
+static inline gboolean
+is_export_mode (int mode)
+{
+  return ((mode >= FLATPAK_FILESYSTEM_MODE_NONE
+           && mode <= FLATPAK_FILESYSTEM_MODE_LAST)
+          || mode == FAKE_MODE_DIR
+          || mode == FAKE_MODE_SYMLINK);
+}
+
 typedef struct
 {
   char *path;
@@ -138,6 +147,8 @@ path_parent_is_mapped (const char **keys,
       const char *mounted_path = keys[i];
       ExportedPath *ep = g_hash_table_lookup (hash_table, mounted_path);
 
+      g_assert (is_export_mode (ep->mode));
+
       if (flatpak_has_path_prefix (path, mounted_path) &&
           (strcmp (path, mounted_path) != 0))
         {
@@ -168,6 +179,8 @@ path_is_mapped (const char **keys,
     {
       const char *mounted_path = keys[i];
       ExportedPath *ep = g_hash_table_lookup (hash_table, mounted_path);
+
+      g_assert (is_export_mode (ep->mode));
 
       if (flatpak_has_path_prefix (path, mounted_path))
         {
@@ -262,6 +275,8 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
       ExportedPath *ep = l->data;
       const char *path = ep->path;
 
+      g_assert (is_export_mode (ep->mode));
+
       if (ep->mode == FAKE_MODE_SYMLINK)
         {
           if (!path_parent_is_mapped (keys, n_keys, exports->hash, path))
@@ -300,6 +315,9 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
                                   path, path, NULL);
         }
     }
+
+  g_assert (exports->host_os >= FLATPAK_FILESYSTEM_MODE_NONE);
+  g_assert (exports->host_os <= FLATPAK_FILESYSTEM_MODE_LAST);
 
   if (exports->host_os != FLATPAK_FILESYSTEM_MODE_NONE)
     {
@@ -382,6 +400,9 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
             }
         }
     }
+
+  g_assert (exports->host_etc >= FLATPAK_FILESYSTEM_MODE_NONE);
+  g_assert (exports->host_etc <= FLATPAK_FILESYSTEM_MODE_LAST);
 
   if (exports->host_etc != FLATPAK_FILESYSTEM_MODE_NONE)
     {
@@ -509,6 +530,8 @@ do_export_path (FlatpakExports *exports,
   ExportedPath *old_ep = g_hash_table_lookup (exports->hash, path);
   ExportedPath *ep;
 
+  g_return_if_fail (is_export_mode (mode));
+
   ep = g_new0 (ExportedPath, 1);
   ep->path = g_strdup (path);
 
@@ -603,6 +626,8 @@ _exports_path_expose (FlatpakExports *exports,
   char *slash;
   int i;
   glnx_autofd int o_path_fd = -1;
+
+  g_return_val_if_fail (is_export_mode (mode), FALSE);
 
   if (level > 40) /* 40 is the current kernel ELOOP check */
     {
@@ -712,6 +737,8 @@ flatpak_exports_add_path_expose (FlatpakExports       *exports,
                                  FlatpakFilesystemMode mode,
                                  const char           *path)
 {
+  g_return_if_fail (mode > FLATPAK_FILESYSTEM_MODE_NONE);
+  g_return_if_fail (mode <= FLATPAK_FILESYSTEM_MODE_LAST);
   _exports_path_expose (exports, mode, path, 0);
 }
 
@@ -727,6 +754,9 @@ flatpak_exports_add_path_expose_or_hide (FlatpakExports       *exports,
                                          FlatpakFilesystemMode mode,
                                          const char           *path)
 {
+  g_return_if_fail (mode >= FLATPAK_FILESYSTEM_MODE_NONE);
+  g_return_if_fail (mode <= FLATPAK_FILESYSTEM_MODE_LAST);
+
   if (mode == FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_path_tmpfs (exports, path);
   else
@@ -744,6 +774,9 @@ void
 flatpak_exports_add_host_etc_expose (FlatpakExports       *exports,
                                      FlatpakFilesystemMode mode)
 {
+  g_return_if_fail (mode > FLATPAK_FILESYSTEM_MODE_NONE);
+  g_return_if_fail (mode <= FLATPAK_FILESYSTEM_MODE_LAST);
+
   exports->host_etc = mode;
 }
 
@@ -751,5 +784,8 @@ void
 flatpak_exports_add_host_os_expose (FlatpakExports       *exports,
                                     FlatpakFilesystemMode mode)
 {
+  g_return_if_fail (mode > FLATPAK_FILESYSTEM_MODE_NONE);
+  g_return_if_fail (mode <= FLATPAK_FILESYSTEM_MODE_LAST);
+
   exports->host_os = mode;
 }

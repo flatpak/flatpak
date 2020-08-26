@@ -30,6 +30,7 @@ typedef enum {
   FLATPAK_FILESYSTEM_MODE_READ_ONLY    = 1,
   FLATPAK_FILESYSTEM_MODE_READ_WRITE   = 2,
   FLATPAK_FILESYSTEM_MODE_CREATE       = 3,
+  FLATPAK_FILESYSTEM_MODE_LAST         = FLATPAK_FILESYSTEM_MODE_CREATE
 } FlatpakFilesystemMode;
 
 typedef struct _FlatpakExports FlatpakExports;
