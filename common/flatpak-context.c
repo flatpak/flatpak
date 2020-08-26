@@ -752,7 +752,7 @@ parse_filesystem_flags (const char            *filesystem,
   return g_string_free (g_steal_pointer (&s), FALSE);
 }
 
-static gboolean
+gboolean
 flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
                                   char                  **filesystem_out,
                                   FlatpakFilesystemMode  *mode_out,
