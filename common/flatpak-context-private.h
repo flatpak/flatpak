@@ -79,6 +79,11 @@ extern const char *flatpak_context_devices[];
 extern const char *flatpak_context_features[];
 extern const char *flatpak_context_shares[];
 
+gboolean       flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
+                                                 char                  **filesystem_out,
+                                                 FlatpakFilesystemMode  *mode_out,
+                                                 GError                **error);
+
 FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
 void           flatpak_context_merge (FlatpakContext *context,
