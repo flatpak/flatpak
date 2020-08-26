@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..17"
+echo "1..18"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -101,6 +101,14 @@ elif [ -f /usr/lib/os-release ]; then
 fi
 
 ok "host os-release"
+
+run_sh org.test.Platform 'cat /run/host/container-manager' > container-manager
+echo flatpak > expected
+diff -u expected container-manager
+run_sh org.test.Platform 'echo "${container}"' > container-manager
+diff -u expected container-manager
+
+ok "host container-manager"
 
 if run org.test.Nonexistent 2> run-error-log; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"
