@@ -802,6 +802,17 @@ flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
           else
             break;
         }
+
+      if (filesystem[0] == '/' && filesystem[1] == '\0')
+        {
+          /* We don't allow --filesystem=/ as equivalent to host, because
+           * it doesn't do what you'd think: --filesystem=host mounts some
+           * host directories in /run/host, not in the root. */
+          g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                       _("--filesystem=/ is not available, "
+                         "use --filesystem=host for a similar result"));
+          return FALSE;
+        }
     }
 
   if (g_strv_contains (flatpak_context_special_filesystems, filesystem) ||
