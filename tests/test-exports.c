@@ -271,11 +271,14 @@ typedef struct
 
 static const NotFilesystem not_filesystems[] =
 {
+  { "", G_OPTION_ERROR_FAILED },
   { "homework", G_OPTION_ERROR_FAILED },
   { "xdg-download/foo/bar/..", G_OPTION_ERROR_BAD_VALUE },
   { "xdg-download/../foo/bar", G_OPTION_ERROR_BAD_VALUE },
   { "xdg-download/foo/../bar", G_OPTION_ERROR_BAD_VALUE },
   { "xdg-run", G_OPTION_ERROR_FAILED },
+  { "/", G_OPTION_ERROR_BAD_VALUE },
+  { "/////././././././//////", G_OPTION_ERROR_BAD_VALUE },
 };
 
 typedef struct
