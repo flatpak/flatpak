@@ -187,6 +187,9 @@ test_full_context (void)
   g_autoptr(FlatpakExports) exports = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autofree gchar *text = NULL;
+  g_auto(GStrv) strv = NULL;
+  gsize i, n;
 
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
@@ -208,7 +211,7 @@ test_full_context (void)
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_FILESYSTEMS,
-                        "host;/home;");
+                        "host;/home;!/opt");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_PERSISTENT,
@@ -272,6 +275,169 @@ test_full_context (void)
                                            &exports);
   print_bwrap (bwrap);
   g_assert_nonnull (exports);
+
+  g_clear_pointer (&keyfile, g_key_file_unref);
+  keyfile = g_key_file_new ();
+  flatpak_context_save_metadata (context, FALSE, keyfile);
+  text = g_key_file_to_data (keyfile, NULL, NULL);
+  g_test_message ("Saved:\n%s", text);
+  g_clear_pointer (&text, g_free);
+
+  /* Test that keys round-trip back into the file */
+  strv = g_key_file_get_string_list (keyfile, FLATPAK_METADATA_GROUP_CONTEXT,
+                                     FLATPAK_METADATA_KEY_FILESYSTEMS,
+                                     &n, &error);
+  g_assert_nonnull (strv);
+  /* The order is undefined, so sort them first */
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "!/opt");
+  g_assert_cmpstr (strv[i++], ==, "/home");
+  g_assert_cmpstr (strv[i++], ==, "host");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  strv = g_key_file_get_string_list (keyfile, FLATPAK_METADATA_GROUP_CONTEXT,
+                                     FLATPAK_METADATA_KEY_SHARED,
+                                     &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "ipc");
+  g_assert_cmpstr (strv[i++], ==, "network");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  strv = g_key_file_get_string_list (keyfile, FLATPAK_METADATA_GROUP_CONTEXT,
+                                     FLATPAK_METADATA_KEY_SOCKETS,
+                                     &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "fallback-x11");
+  g_assert_cmpstr (strv[i++], ==, "pulseaudio");
+  g_assert_cmpstr (strv[i++], ==, "session-bus");
+  g_assert_cmpstr (strv[i++], ==, "ssh-auth");
+  g_assert_cmpstr (strv[i++], ==, "system-bus");
+  g_assert_cmpstr (strv[i++], ==, "wayland");
+  g_assert_cmpstr (strv[i++], ==, "x11");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  strv = g_key_file_get_string_list (keyfile, FLATPAK_METADATA_GROUP_CONTEXT,
+                                     FLATPAK_METADATA_KEY_DEVICES,
+                                     &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "all");
+  g_assert_cmpstr (strv[i++], ==, "dri");
+  g_assert_cmpstr (strv[i++], ==, "kvm");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  strv = g_key_file_get_string_list (keyfile, FLATPAK_METADATA_GROUP_CONTEXT,
+                                     FLATPAK_METADATA_KEY_PERSISTENT,
+                                     &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, ".openarena");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  strv = g_key_file_get_keys (keyfile, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
+                              &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "org.example.SessionService");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  text = g_key_file_get_string (keyfile, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
+                                "org.example.SessionService", &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (text, ==, "own");
+  g_clear_pointer (&text, g_free);
+
+  strv = g_key_file_get_keys (keyfile, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY,
+                              &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "net.example.SystemService");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  text = g_key_file_get_string (keyfile, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY,
+                                "net.example.SystemService", &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (text, ==, "talk");
+  g_clear_pointer (&text, g_free);
+
+  strv = g_key_file_get_keys (keyfile, FLATPAK_METADATA_GROUP_ENVIRONMENT,
+                              &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "HYPOTHETICAL_PATH");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  text = g_key_file_get_string (keyfile, FLATPAK_METADATA_GROUP_ENVIRONMENT,
+                                "HYPOTHETICAL_PATH", &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (text, ==, "/foo:/bar");
+  g_clear_pointer (&text, g_free);
+
+  strv = g_key_file_get_keys (keyfile, FLATPAK_METADATA_GROUP_PREFIX_POLICY "MyPolicy",
+                              &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "Colours");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  strv = g_key_file_get_string_list (keyfile, FLATPAK_METADATA_GROUP_PREFIX_POLICY "MyPolicy",
+                                     "Colours", &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "blue");
+  g_assert_cmpstr (strv[i++], ==, "green");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
 }
 
 typedef struct
