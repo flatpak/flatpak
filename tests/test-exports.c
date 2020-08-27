@@ -162,6 +162,31 @@ assert_next_is_bind (FlatpakBwrap *bwrap,
   return i;
 }
 
+/* Assert that arguments starting from @i are --symlink @rel_target @path,
+ * where @rel_target goes up from @path to the root and back down to the
+ * target of the symlink. Return the new @i. */
+G_GNUC_WARN_UNUSED_RESULT static gsize
+assert_next_is_symlink (FlatpakBwrap *bwrap,
+                      gsize i,
+                      const char *target,
+                      const char *path)
+{
+  const char *got_target;
+
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "--symlink");
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+
+  got_target = bwrap->argv->pdata[i++];
+  g_assert_true (g_str_has_prefix (got_target, "../../../../"));
+  g_assert_true (g_str_has_suffix (got_target, target));
+  /* TODO: Assert that it resolves to the same place as target */
+
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, path);
+  return i;
+}
+
 /* Print the arguments of a call to bwrap. */
 static void
 print_bwrap (FlatpakBwrap *bwrap)
@@ -631,13 +656,34 @@ test_full (void)
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autofree gchar *subdir = g_build_filename (testdir, "test_full", NULL);
   g_autofree gchar *expose_rw = g_build_filename (subdir, "expose-rw", NULL);
+  g_autofree gchar *in_expose_rw = g_build_filename (subdir, "expose-rw",
+                                                     "file", NULL);
+  g_autofree gchar *dangling_link_in_expose_rw = g_build_filename (subdir,
+                                                                   "expose-rw",
+                                                                   "dangling",
+                                                                   NULL);
   g_autofree gchar *expose_ro = g_build_filename (subdir, "expose-ro", NULL);
+  g_autofree gchar *in_expose_ro = g_build_filename (subdir, "expose-ro",
+                                                     "file", NULL);
   g_autofree gchar *hide = g_build_filename (subdir, "hide", NULL);
   g_autofree gchar *dont_hide = g_build_filename (subdir, "dont-hide", NULL);
   g_autofree gchar *hide_below_expose = g_build_filename (subdir,
                                                           "expose-ro",
                                                           "hide-me",
                                                           NULL);
+  g_autofree gchar *enoent = g_build_filename (subdir, "ENOENT", NULL);
+  g_autofree gchar *one = g_build_filename (subdir, "1", NULL);
+  g_autofree gchar *rel_link = g_build_filename (subdir, "1", "rel-link", NULL);
+  g_autofree gchar *abs_link = g_build_filename (subdir, "1", "abs-link", NULL);
+  g_autofree gchar *in_abs_link = g_build_filename (subdir, "1", "abs-link",
+                                                    "file", NULL);
+  g_autofree gchar *dangling = g_build_filename (subdir, "1", "dangling", NULL);
+  g_autofree gchar *in_dangling = g_build_filename (subdir, "1", "dangling",
+                                                    "file", NULL);
+  g_autofree gchar *abs_target = g_build_filename (subdir, "2", "abs-target", NULL);
+  g_autofree gchar *target = g_build_filename (subdir, "2", "target", NULL);
+  g_autofree gchar *create_dir = g_build_filename (subdir, "create-dir", NULL);
+  g_autofree gchar *create_dir2 = g_build_filename (subdir, "create-dir2", NULL);
   gsize i;
 
   glnx_shutil_rm_rf_at (-1, subdir, NULL, &error);
@@ -663,6 +709,33 @@ test_full (void)
   if (g_mkdir_with_parents (dont_hide, S_IRWXU) != 0)
     g_error ("mkdir: %s", g_strerror (errno));
 
+  if (g_mkdir_with_parents (dont_hide, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (g_mkdir_with_parents (abs_target, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (g_mkdir_with_parents (target, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (g_mkdir_with_parents (one, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (g_mkdir_with_parents (create_dir, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (symlink (abs_target, abs_link) != 0)
+    g_error ("symlink: %s", g_strerror (errno));
+
+  if (symlink ("nope", dangling) != 0)
+    g_error ("symlink: %s", g_strerror (errno));
+
+  if (symlink ("nope", dangling_link_in_expose_rw) != 0)
+    g_error ("symlink: %s", g_strerror (errno));
+
+  if (symlink ("../2/target", rel_link) != 0)
+    g_error ("symlink: %s", g_strerror (errno));
+
   flatpak_exports_add_host_etc_expose (exports,
                                        FLATPAK_FILESYSTEM_MODE_READ_WRITE);
   flatpak_exports_add_host_os_expose (exports,
@@ -680,6 +753,45 @@ test_full (void)
   flatpak_exports_add_path_expose_or_hide (exports,
                                            FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                            dont_hide);
+  flatpak_exports_add_path_expose_or_hide (exports,
+                                           FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                           enoent);
+  flatpak_exports_add_path_expose_or_hide (exports,
+                                           FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                           rel_link);
+  flatpak_exports_add_path_expose_or_hide (exports,
+                                           FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                           abs_link);
+  flatpak_exports_add_path_dir (exports, create_dir);
+  flatpak_exports_add_path_dir (exports, create_dir2);
+
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, expose_rw), ==,
+                    FLATPAK_FILESYSTEM_MODE_READ_WRITE);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, expose_ro), ==,
+                    FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, hide_below_expose), ==,
+                    FLATPAK_FILESYSTEM_MODE_NONE);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, hide), ==,
+                    FLATPAK_FILESYSTEM_MODE_NONE);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, dont_hide), ==,
+                    FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+  /* It knows enoent didn't really exist */
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, enoent), ==,
+                    FLATPAK_FILESYSTEM_MODE_NONE);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, abs_link), ==,
+                    FLATPAK_FILESYSTEM_MODE_READ_WRITE);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, rel_link), ==,
+                    FLATPAK_FILESYSTEM_MODE_READ_WRITE);
+
+  /* Files the app would be allowed to create count as exposed */
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, in_expose_ro), ==,
+                    FLATPAK_FILESYSTEM_MODE_NONE);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, in_expose_rw), ==,
+                    FLATPAK_FILESYSTEM_MODE_READ_WRITE);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, in_abs_link), ==,
+                    FLATPAK_FILESYSTEM_MODE_READ_WRITE);
+  g_assert_cmpuint (flatpak_exports_path_get_mode (exports, in_dangling), ==,
+                    FLATPAK_FILESYSTEM_MODE_NONE);
 
   flatpak_bwrap_add_arg (bwrap, "bwrap");
   flatpak_exports_append_bwrap_args (exports, bwrap);
@@ -689,6 +801,20 @@ test_full (void)
   i = 0;
   g_assert_cmpuint (i, <, bwrap->argv->len);
   g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
+
+  i = assert_next_is_symlink (bwrap, i, abs_target, abs_link);
+  i = assert_next_is_symlink (bwrap, i, "../2/target", rel_link);
+  i = assert_next_is_bind (bwrap, i, "--bind", abs_target);
+  i = assert_next_is_bind (bwrap, i, "--bind", target);
+  i = assert_next_is_dir (bwrap, i, create_dir);
+
+  /* create_dir2 is not currently created with --dir inside the container
+   * because it doesn't exist outside the container.
+   * (Is this correct? For now, tolerate either way) */
+  if (i + 2 < bwrap->argv->len &&
+      g_strcmp0 (bwrap->argv->pdata[i], "--dir") == 0 &&
+      g_strcmp0 (bwrap->argv->pdata[i + 1], create_dir2) == 0)
+    i += 2;
 
   i = assert_next_is_bind (bwrap, i, "--ro-bind", dont_hide);
   i = assert_next_is_bind (bwrap, i, "--ro-bind", expose_ro);
@@ -728,6 +854,86 @@ test_full (void)
     }
 }
 
+static void
+test_exports_ignored (void)
+{
+  g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+  g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
+  gsize i;
+
+  /* These paths are chosen so that they probably exist, with the
+   * exception of /app */
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/app");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/etc");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/etc/passwd");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/usr");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/usr/bin/env");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/dev");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/dev/full");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/proc");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/proc/1");
+
+  /* These probably exist, and are merged into /usr on systems with
+   * the /usr merge */
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/bin");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/bin/sh");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/lib");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/lib/ld-linux.so.2");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/lib64");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/lib64/ld-linux-x86-64.so.2");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/sbin");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/sbin/ldconfig");
+
+  flatpak_bwrap_add_arg (bwrap, "bwrap");
+  flatpak_exports_append_bwrap_args (exports, bwrap);
+  flatpak_bwrap_finish (bwrap);
+  print_bwrap (bwrap);
+
+  i = 0;
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
+
+  i = assert_next_is_os_release (bwrap, i);
+
+  g_assert_cmpuint (i, ==, bwrap->argv->len - 1);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, NULL);
+  g_assert_cmpuint (i, ==, bwrap->argv->len);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -742,6 +948,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/full", test_full_context);
   g_test_add_func ("/exports/empty", test_empty);
   g_test_add_func ("/exports/full", test_full);
+  g_test_add_func ("/exports/ignored", test_exports_ignored);
 
   res = g_test_run ();
 
