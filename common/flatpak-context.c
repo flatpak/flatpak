@@ -701,6 +701,10 @@ unparse_filesystem_flags (const char           *path,
     case FLATPAK_FILESYSTEM_MODE_READ_WRITE:
       break;
 
+    case FLATPAK_FILESYSTEM_MODE_NONE:
+      g_string_insert_c (s, 0, '!');
+      break;
+
     default:
       g_warning ("Unexpected filesystem mode %d", mode);
       break;
@@ -1781,10 +1785,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
         {
           FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-          if (mode != FLATPAK_FILESYSTEM_MODE_NONE)
-            g_ptr_array_add (array, unparse_filesystem_flags (key, mode));
-          else
-            g_ptr_array_add (array, g_strconcat ("!", key, NULL));
+          g_ptr_array_add (array, unparse_filesystem_flags (key, mode));
         }
 
       g_key_file_set_string_list (metakey,
