@@ -28,17 +28,63 @@
 #include "flatpak-exports-private.h"
 #include "flatpak-run-private.h"
 
-/* This differs from g_file_test (path, G_FILE_TEST_IS_DIR) which
-   returns true if the path is a symlink to a dir */
-static gboolean
-path_is_dir (const char *path)
+static char *testdir;
+
+static void
+global_setup (void)
 {
-  struct stat s;
+  g_autofree char *cachedir = NULL;
+  g_autofree char *configdir = NULL;
+  g_autofree char *datadir = NULL;
+  g_autofree char *homedir = NULL;
+  g_autofree char *runtimedir = NULL;
 
-  if (lstat (path, &s) != 0)
-    return FALSE;
+  testdir = g_strdup ("/tmp/flatpak-test-XXXXXX");
+  g_mkdtemp (testdir);
+  g_test_message ("testdir: %s", testdir);
 
-  return S_ISDIR (s.st_mode);
+  homedir = g_strconcat (testdir, "/home", NULL);
+  g_mkdir_with_parents (homedir, S_IRWXU | S_IRWXG | S_IRWXO);
+
+  g_setenv ("HOME", homedir, TRUE);
+  g_test_message ("setting HOME=%s", homedir);
+
+  cachedir = g_strconcat (testdir, "/home/cache", NULL);
+  g_mkdir_with_parents (cachedir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_setenv ("XDG_CACHE_HOME", cachedir, TRUE);
+  g_test_message ("setting XDG_CACHE_HOME=%s", cachedir);
+
+  configdir = g_strconcat (testdir, "/home/config", NULL);
+  g_mkdir_with_parents (configdir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_setenv ("XDG_CONFIG_HOME", configdir, TRUE);
+  g_test_message ("setting XDG_CONFIG_HOME=%s", configdir);
+
+  datadir = g_strconcat (testdir, "/home/share", NULL);
+  g_mkdir_with_parents (datadir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_setenv ("XDG_DATA_HOME", datadir, TRUE);
+  g_test_message ("setting XDG_DATA_HOME=%s", datadir);
+
+  runtimedir = g_strconcat (testdir, "/runtime", NULL);
+  g_mkdir_with_parents (runtimedir, S_IRWXU);
+  g_setenv ("XDG_RUNTIME_DIR", runtimedir, TRUE);
+  g_test_message ("setting XDG_RUNTIME_DIR=%s", runtimedir);
+
+  g_reload_user_special_dirs_cache ();
+
+  g_assert_cmpstr (g_get_user_cache_dir (), ==, cachedir);
+  g_assert_cmpstr (g_get_user_config_dir (), ==, configdir);
+  g_assert_cmpstr (g_get_user_data_dir (), ==, datadir);
+  g_assert_cmpstr (g_get_user_runtime_dir (), ==, runtimedir);
+}
+
+static void
+global_teardown (void)
+{
+  if (g_getenv ("SKIP_TEARDOWN"))
+    return;
+
+  glnx_shutil_rm_rf_at (-1, testdir, NULL, NULL);
+  g_free (testdir);
 }
 
 /* Assert that arguments starting from @i are --dir @dir.
@@ -358,23 +404,56 @@ test_empty (void)
 static void
 test_full (void)
 {
+  g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
+  g_autofree gchar *subdir = g_build_filename (testdir, "test_full", NULL);
+  g_autofree gchar *expose_rw = g_build_filename (subdir, "expose-rw", NULL);
+  g_autofree gchar *expose_ro = g_build_filename (subdir, "expose-ro", NULL);
+  g_autofree gchar *hide = g_build_filename (subdir, "hide", NULL);
+  g_autofree gchar *dont_hide = g_build_filename (subdir, "dont-hide", NULL);
+  g_autofree gchar *hide_below_expose = g_build_filename (subdir,
+                                                          "expose-ro",
+                                                          "hide-me",
+                                                          NULL);
   gsize i;
+
+  glnx_shutil_rm_rf_at (-1, subdir, NULL, &error);
+
+  if (error != NULL)
+    {
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_clear_error (&error);
+    }
+
+  if (g_mkdir_with_parents (expose_rw, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (g_mkdir_with_parents (expose_ro, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (g_mkdir_with_parents (hide_below_expose, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (g_mkdir_with_parents (hide, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  if (g_mkdir_with_parents (dont_hide, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
 
   flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_WRITE,
-                                   "/tmp");
+                                   expose_rw);
   flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
-                                   "/var");
-  flatpak_exports_add_path_tmpfs (exports, "/var/tmp");
+                                   expose_ro);
+  flatpak_exports_add_path_tmpfs (exports, hide_below_expose);
   flatpak_exports_add_path_expose_or_hide (exports,
                                            FLATPAK_FILESYSTEM_MODE_NONE,
-                                           "/home");
+                                           hide);
   flatpak_exports_add_path_expose_or_hide (exports,
                                            FLATPAK_FILESYSTEM_MODE_READ_ONLY,
-                                           "/srv");
+                                           dont_hide);
 
   flatpak_bwrap_add_arg (bwrap, "bwrap");
   flatpak_exports_append_bwrap_args (exports, bwrap);
@@ -385,24 +464,20 @@ test_full (void)
   g_assert_cmpuint (i, <, bwrap->argv->len);
   g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
 
-  /* Hiding /home just uses --dir because / is not exposed. */
-  if (path_is_dir ("/home"))
-    i = assert_next_is_dir (bwrap, i, "/home");
-
-  if (path_is_dir ("/srv"))
-    i = assert_next_is_bind (bwrap, i, "--ro-bind", "/srv");
-
-  if (path_is_dir ("/tmp"))
-    i = assert_next_is_bind (bwrap, i, "--bind", "/tmp");
-
-  if (path_is_dir ("/var"))
-    i = assert_next_is_bind (bwrap, i, "--ro-bind", "/var");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", dont_hide);
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", expose_ro);
 
   /* We don't create a FAKE_MODE_TMPFS in the container unless there is
    * a directory on the host to mount it on.
-   * Hiding /var/tmp has to use --tmpfs because /var *is* exposed. */
-  if (path_is_dir ("/var") && path_is_dir ("/var/tmp"))
-    i = assert_next_is_tmpfs (bwrap, i, "/var/tmp");
+   * Hiding $subdir/expose-ro/hide-me has to use --tmpfs because
+   * $subdir/expose-ro *is* exposed. */
+  i = assert_next_is_tmpfs (bwrap, i, hide_below_expose);
+
+  i = assert_next_is_bind (bwrap, i, "--bind", expose_rw);
+
+  /* Hiding $subdir/hide just uses --dir, because $subdir is not
+   * exposed. */
+  i = assert_next_is_dir (bwrap, i, hide);
 
   while (i < bwrap->argv->len && bwrap->argv->pdata[i] != NULL)
     {
@@ -417,12 +492,22 @@ test_full (void)
   g_assert_cmpuint (i, ==, bwrap->argv->len - 1);
   g_assert_cmpstr (bwrap->argv->pdata[i++], ==, NULL);
   g_assert_cmpuint (i, ==, bwrap->argv->len);
+
+  glnx_shutil_rm_rf_at (-1, subdir, NULL, &error);
+
+  if (error != NULL)
+    {
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_clear_error (&error);
+    }
 }
 
 int
 main (int argc, char *argv[])
 {
   int res;
+
+  global_setup ();
 
   g_test_init (&argc, &argv, NULL);
 
@@ -433,6 +518,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/exports/full", test_full);
 
   res = g_test_run ();
+
+  global_teardown ();
 
   return res;
 }
