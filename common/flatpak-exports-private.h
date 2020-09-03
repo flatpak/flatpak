@@ -61,5 +61,8 @@ FlatpakFilesystemMode flatpak_exports_path_get_mode (FlatpakExports *exports,
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 
+void flatpak_exports_take_host_fd (FlatpakExports *exports,
+                                   int             fd);
+
 
 #endif /* __FLATPAK_EXPORTS_H__ */
