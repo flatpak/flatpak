@@ -27,6 +27,7 @@
 #include "flatpak-context-private.h"
 #include "flatpak-exports-private.h"
 #include "flatpak-run-private.h"
+#include "flatpak-utils-base-private.h"
 
 static char *testdir;
 
@@ -173,15 +174,32 @@ assert_next_is_symlink (FlatpakBwrap *bwrap,
                       const char *path)
 {
   const char *got_target;
+  g_autofree gchar *dir = NULL;
+  g_autofree gchar *resolved = NULL;
+  g_autofree gchar *canon = NULL;
+  g_autofree gchar *resolved_target = NULL;
+  g_autofree gchar *expected = NULL;
 
   g_assert_cmpuint (i, <, bwrap->argv->len);
   g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "--symlink");
   g_assert_cmpuint (i, <, bwrap->argv->len);
 
   got_target = bwrap->argv->pdata[i++];
-  g_assert_true (g_str_has_prefix (got_target, "../../../../"));
+  g_assert_false (g_path_is_absolute (got_target));
+  dir = g_path_get_dirname (path);
+
+  resolved = g_build_filename (dir, got_target, NULL);
+  canon = flatpak_canonicalize_filename (resolved);
+
+  if (g_path_is_absolute (target))
+    resolved_target = g_strdup (target);
+  else
+    resolved_target = g_build_filename (dir, target, NULL);
+
+  expected = flatpak_canonicalize_filename (resolved_target);
+
+  g_assert_cmpstr (canon, ==, expected);
   g_assert_true (g_str_has_suffix (got_target, target));
-  /* TODO: Assert that it resolves to the same place as target */
 
   g_assert_cmpuint (i, <, bwrap->argv->len);
   g_assert_cmpstr (bwrap->argv->pdata[i++], ==, path);
