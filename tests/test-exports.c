@@ -151,14 +151,15 @@ G_GNUC_WARN_UNUSED_RESULT static gsize
 assert_next_is_bind (FlatpakBwrap *bwrap,
                      gsize i,
                      const char *how,
-                     const char *path)
+                     const char *path,
+                     const char *dest)
 {
   g_assert_cmpuint (i, <, bwrap->argv->len);
   g_assert_cmpstr (bwrap->argv->pdata[i++], ==, how);
   g_assert_cmpuint (i, <, bwrap->argv->len);
   g_assert_cmpstr (bwrap->argv->pdata[i++], ==, path);
   g_assert_cmpuint (i, <, bwrap->argv->len);
-  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, path);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, dest);
   return i;
 }
 
@@ -804,8 +805,8 @@ test_full (void)
 
   i = assert_next_is_symlink (bwrap, i, abs_target, abs_link);
   i = assert_next_is_symlink (bwrap, i, "../2/target", rel_link);
-  i = assert_next_is_bind (bwrap, i, "--bind", abs_target);
-  i = assert_next_is_bind (bwrap, i, "--bind", target);
+  i = assert_next_is_bind (bwrap, i, "--bind", abs_target, abs_target);
+  i = assert_next_is_bind (bwrap, i, "--bind", target, target);
   i = assert_next_is_dir (bwrap, i, create_dir);
 
   /* create_dir2 is not currently created with --dir inside the container
@@ -816,8 +817,8 @@ test_full (void)
       g_strcmp0 (bwrap->argv->pdata[i + 1], create_dir2) == 0)
     i += 2;
 
-  i = assert_next_is_bind (bwrap, i, "--ro-bind", dont_hide);
-  i = assert_next_is_bind (bwrap, i, "--ro-bind", expose_ro);
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", dont_hide, dont_hide);
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", expose_ro, expose_ro);
 
   /* We don't create a FAKE_MODE_TMPFS in the container unless there is
    * a directory on the host to mount it on.
@@ -825,7 +826,7 @@ test_full (void)
    * $subdir/expose-ro *is* exposed. */
   i = assert_next_is_tmpfs (bwrap, i, hide_below_expose);
 
-  i = assert_next_is_bind (bwrap, i, "--bind", expose_rw);
+  i = assert_next_is_bind (bwrap, i, "--bind", expose_rw, expose_rw);
 
   /* Hiding $subdir/hide just uses --dir, because $subdir is not
    * exposed. */
