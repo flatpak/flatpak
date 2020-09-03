@@ -873,6 +873,265 @@ test_full (void)
     }
 }
 
+typedef enum
+{
+  FAKE_DIR,
+  FAKE_FILE,
+  FAKE_SYMLINK,
+} FakeFileType;
+
+typedef struct
+{
+  const char *name;
+  FakeFileType type;
+  const char *target;
+} FakeFile;
+
+static void
+create_fake_files (const FakeFile *files)
+{
+  gsize i;
+
+  for (i = 0; files[i].name != NULL; i++)
+    {
+      g_autoptr(GError) error = NULL;
+      g_autofree gchar *path = g_build_filename (testdir, "host",
+                                                 files[i].name, NULL);
+
+      g_assert (files[i].name[0] != '/');
+
+      switch (files[i].type)
+        {
+          case FAKE_DIR:
+            if (g_mkdir_with_parents (path, S_IRWXU) != 0)
+              g_error ("mkdir: %s", g_strerror (errno));
+
+            break;
+
+          case FAKE_FILE:
+            g_file_set_contents (path, "", 0, &error);
+            g_assert_no_error (error);
+            break;
+
+
+          case FAKE_SYMLINK:
+            g_assert (files[i].target != NULL);
+
+            if (symlink (files[i].target, path) != 0)
+              g_error ("symlink: %s", g_strerror (errno));
+
+            break;
+
+
+          default:
+            g_return_if_reached ();
+        }
+    }
+}
+
+static void
+test_host_exports (const FakeFile *files,
+                   FlatpakBwrap *bwrap,
+                   FlatpakFilesystemMode etc_mode,
+                   FlatpakFilesystemMode os_mode)
+{
+  g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
+  g_autoptr(GError) error = NULL;
+  g_autofree gchar *host = g_build_filename (testdir, "host", NULL);
+  glnx_autofd int fd = -1;
+
+  glnx_shutil_rm_rf_at (-1, host, NULL, &error);
+
+  if (error != NULL)
+    {
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_clear_error (&error);
+    }
+
+  create_fake_files (files);
+  glnx_openat_rdonly (AT_FDCWD, host, TRUE, &fd, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (fd, >=, 0);
+  flatpak_exports_take_host_fd (exports, glnx_steal_fd (&fd));
+
+  if (etc_mode > FLATPAK_FILESYSTEM_MODE_NONE)
+    flatpak_exports_add_host_etc_expose (exports, etc_mode);
+
+  if (os_mode > FLATPAK_FILESYSTEM_MODE_NONE)
+    flatpak_exports_add_host_os_expose (exports, os_mode);
+
+  flatpak_bwrap_add_arg (bwrap, "bwrap");
+  flatpak_exports_append_bwrap_args (exports, bwrap);
+  flatpak_bwrap_finish (bwrap);
+  print_bwrap (bwrap);
+
+  glnx_shutil_rm_rf_at (-1, host, NULL, &error);
+
+  if (error != NULL)
+    {
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_clear_error (&error);
+    }
+}
+
+/*
+ * Test --filesystem=host-os with an OS that looks like Arch Linux.
+ */
+static void
+test_exports_arch (void)
+{
+  static const FakeFile files[] =
+  {
+    { "etc", FAKE_DIR },
+    { "etc/ld.so.cache", FAKE_FILE },
+    { "etc/ld.so.conf", FAKE_FILE },
+    { "etc/ld.so.conf.d", FAKE_DIR },
+    { "bin", FAKE_SYMLINK, "usr/bin" },
+    { "lib", FAKE_SYMLINK, "usr/lib" },
+    { "lib64", FAKE_SYMLINK, "usr/lib" },
+    { "sbin", FAKE_SYMLINK, "usr/bin" },
+    { "usr/bin", FAKE_DIR },
+    { "usr/lib", FAKE_DIR },
+    { "usr/lib32", FAKE_DIR },
+    { "usr/lib64", FAKE_SYMLINK, "lib" },
+    { "usr/sbin", FAKE_SYMLINK, "bin" },
+    { "usr/share", FAKE_DIR },
+    { NULL }
+  };
+  g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+  gsize i;
+
+  test_host_exports (files, bwrap, FLATPAK_FILESYSTEM_MODE_NONE,
+                     FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+
+  i = 0;
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
+
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/usr", "/run/host/usr");
+  i = assert_next_is_symlink (bwrap, i, "usr/bin", "/run/host/bin");
+  i = assert_next_is_symlink (bwrap, i, "usr/lib", "/run/host/lib");
+  i = assert_next_is_symlink (bwrap, i, "usr/lib", "/run/host/lib64");
+  i = assert_next_is_symlink (bwrap, i, "usr/bin", "/run/host/sbin");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/etc/ld.so.cache",
+                           "/run/host/etc/ld.so.cache");
+
+  g_assert_cmpuint (i, ==, bwrap->argv->len - 1);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, NULL);
+  g_assert_cmpuint (i, ==, bwrap->argv->len);
+}
+
+/*
+ * Test --filesystem=host-os with an OS that looks like Debian,
+ * without the /usr merge, and with x86 and x32 multilib.
+ */
+static void
+test_exports_debian (void)
+{
+  static const FakeFile files[] =
+  {
+    { "etc", FAKE_DIR },
+    { "etc/alternatives", FAKE_DIR },
+    { "etc/ld.so.cache", FAKE_FILE },
+    { "etc/ld.so.conf", FAKE_FILE },
+    { "etc/ld.so.conf.d", FAKE_DIR },
+    { "etc/os-release", FAKE_FILE },
+    { "bin", FAKE_DIR },
+    { "lib", FAKE_DIR },
+    { "lib32", FAKE_DIR },
+    { "lib64", FAKE_DIR },
+    { "libx32", FAKE_DIR },
+    { "sbin", FAKE_DIR },
+    { "usr/bin", FAKE_DIR },
+    { "usr/lib", FAKE_DIR },
+    { "usr/lib/os-release", FAKE_FILE },
+    { "usr/lib32", FAKE_DIR },
+    { "usr/lib64", FAKE_DIR },
+    { "usr/libexec", FAKE_DIR },
+    { "usr/libx32", FAKE_DIR },
+    { "usr/sbin", FAKE_DIR },
+    { "usr/share", FAKE_DIR },
+    { NULL }
+  };
+  g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+  gsize i;
+
+  test_host_exports (files, bwrap, FLATPAK_FILESYSTEM_MODE_NONE,
+                     FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+
+  i = 0;
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
+
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/usr", "/run/host/usr");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/bin", "/run/host/bin");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/lib", "/run/host/lib");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/lib32", "/run/host/lib32");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/lib64", "/run/host/lib64");
+  /* libx32 is not currently implemented */
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/sbin", "/run/host/sbin");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/etc/ld.so.cache",
+                           "/run/host/etc/ld.so.cache");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/etc/alternatives",
+                           "/run/host/etc/alternatives");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/etc/os-release",
+                           "/run/host/os-release");
+
+  g_assert_cmpuint (i, ==, bwrap->argv->len - 1);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, NULL);
+  g_assert_cmpuint (i, ==, bwrap->argv->len);
+}
+
+/*
+ * Test --filesystem=host-os and --filesystem=host-etc with an OS that
+ * looks like Debian, with the /usr merge.
+ */
+static void
+test_exports_debian_merged (void)
+{
+  static const FakeFile files[] =
+  {
+    { "etc", FAKE_DIR },
+    { "etc/alternatives", FAKE_DIR },
+    { "etc/ld.so.cache", FAKE_FILE },
+    { "etc/ld.so.conf", FAKE_FILE },
+    { "etc/ld.so.conf.d", FAKE_DIR },
+    { "bin", FAKE_SYMLINK, "usr/bin" },
+    { "lib", FAKE_SYMLINK, "usr/lib" },
+    /* This one uses an absolute symlink just to check that we handle
+     * that correctly */
+    { "sbin", FAKE_SYMLINK, "/usr/sbin" },
+    { "usr/bin", FAKE_DIR },
+    { "usr/lib", FAKE_DIR },
+    { "usr/lib/os-release", FAKE_FILE },
+    { "usr/libexec", FAKE_DIR },
+    { "usr/sbin", FAKE_DIR },
+    { "usr/share", FAKE_DIR },
+    { NULL }
+  };
+  g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+  gsize i;
+
+  test_host_exports (files, bwrap, FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                     FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+
+  i = 0;
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
+
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/usr", "/run/host/usr");
+  i = assert_next_is_symlink (bwrap, i, "usr/bin", "/run/host/bin");
+  i = assert_next_is_symlink (bwrap, i, "usr/lib", "/run/host/lib");
+  i = assert_next_is_symlink (bwrap, i, "usr/sbin", "/run/host/sbin");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/etc", "/run/host/etc");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/usr/lib/os-release",
+                           "/run/host/os-release");
+
+  g_assert_cmpuint (i, ==, bwrap->argv->len - 1);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, NULL);
+  g_assert_cmpuint (i, ==, bwrap->argv->len);
+}
+
 static void
 test_exports_ignored (void)
 {
@@ -967,6 +1226,9 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/full", test_full_context);
   g_test_add_func ("/exports/empty", test_empty);
   g_test_add_func ("/exports/full", test_full);
+  g_test_add_func ("/exports/host/arch", test_exports_arch);
+  g_test_add_func ("/exports/host/debian", test_exports_debian);
+  g_test_add_func ("/exports/host/debian-usrmerge", test_exports_debian_merged);
   g_test_add_func ("/exports/ignored", test_exports_ignored);
 
   res = g_test_run ();
