@@ -271,10 +271,10 @@ flatpak_builtin_enter (int           argc,
 
   session_bus_path = g_strdup_printf ("/run/user/%d/bus", uid);
   if (g_file_test (session_bus_path, G_FILE_TEST_EXISTS))
-    g_ptr_array_add (envp_array, g_strdup_printf ("DBUS_SESSION_BUS_ADDRESS=unix:%s", session_bus_path));
+    g_ptr_array_add (envp_array, g_strdup_printf ("DBUS_SESSION_BUS_ADDRESS=unix:path=%s", session_bus_path));
 
   if (g_file_test ("/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
-    g_ptr_array_add (envp_array, g_strdup ("DBUS_SYSTEM_BUS_ADDRESS=unix:/run/dbus/system_bus_socket"));
+    g_ptr_array_add (envp_array, g_strdup ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket"));
 
   g_ptr_array_add (envp_array, NULL);
 
