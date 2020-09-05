@@ -29,6 +29,7 @@ app/flatpak-builtins-permission-remove.c
 app/flatpak-builtins-permission-reset.c
 app/flatpak-builtins-permission-set.c
 app/flatpak-builtins-permission-show.c
+app/flatpak-builtins-pin.c
 app/flatpak-builtins-ps.c
 app/flatpak-builtins-remote-add.c
 app/flatpak-builtins-remote-delete.c
