@@ -7540,6 +7540,13 @@ flatpak_dconf_path_is_similar (const char *path1,
       if (path2[i2] == '\0')
         break;
 
+      if (isupper(path1[i1]) &&
+          (path2[i2] == '-' || path2[i2] == '_'))
+        i2++;
+
+      if (path2[i2] == '\0')
+        break;
+
       if (tolower (path1[i1]) == tolower (path2[i2]))
         {
           if (path1[i1] == '/')
