@@ -7394,23 +7394,23 @@ gboolean
 flatpak_dconf_path_is_similar (const char *path1,
                                const char *path2)
 {
-  int i, i1, i2;
+  int i1, i2;
   int num_components = -1;
 
-  for (i = 0; path1[i] != '\0'; i++)
+  for (i1 = i2 = 0; path1[i1] != '\0'; i1++, i2++)
     {
-      if (path2[i] == '\0')
+      if (path2[i2] == '\0')
         break;
 
-      if (tolower (path1[i]) == tolower (path2[i]))
+      if (tolower (path1[i1]) == tolower (path2[i2]))
         {
-          if (path1[i] == '/')
+          if (path1[i1] == '/')
             num_components++;
           continue;
         }
 
-      if ((path1[i] == '-' || path1[i] == '_') &&
-          (path2[i] == '-' || path2[i] == '_'))
+      if ((path1[i1] == '-' || path1[i1] == '_') &&
+          (path2[i2] == '-' || path2[i2] == '_'))
         continue;
 
       break;
@@ -7419,7 +7419,6 @@ flatpak_dconf_path_is_similar (const char *path1,
   /* Skip over any versioning if we have at least a TLD and
    * domain name, so 2 components */
   /* We need at least TLD, and domain name, so 2 components */
-  i1 = i2 = i;
   if (num_components >= 2)
     {
       while (isdigit (path1[i1]))
