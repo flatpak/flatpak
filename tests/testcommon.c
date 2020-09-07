@@ -1149,6 +1149,10 @@ test_dconf_paths (void)
     { "/org/gnome1/Rhythmbox/", "/org/gnome/rhythmbox", 0 },
     { "/org/gnome1/Rhythmbox", "/org/gnome/rhythmbox/", 0 },
     { "/org/gnome/Rhythmbox3plus/", "/org/gnome/rhythmbox/", 0 },
+    { "/org/gnome/SoundJuicer/", "/org/gnome/sound-juicer/", 1 },
+    { "/org/gnome/Sound-Juicer/", "/org/gnome/sound-juicer/", 1 },
+    { "/org/gnome/Soundjuicer/", "/org/gnome/sound-juicer/", 0 },
+    { "/org/gnome/Soundjuicer/", "/org/gnome/soundjuicer/", 1 },
   };
   int i;
 
