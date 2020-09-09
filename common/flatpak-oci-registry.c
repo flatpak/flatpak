@@ -3120,7 +3120,8 @@ add_image_to_appstream (SoupSession               *soup_session,
     return;
 
   ref_parts = g_strsplit (ref, "/", -1);
-  if (g_strv_length (ref_parts) != 4 || strcmp (ref_parts[0], "app") != 0)
+  if (g_strv_length (ref_parts) != 4 ||
+      (strcmp (ref_parts[0], "app") != 0 && strcmp (ref_parts[0], "runtime") != 0))
     return;
 
   id = ref_parts[1];
