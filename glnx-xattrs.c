@@ -283,7 +283,7 @@ set_all_xattrs_for_path (const char    *path,
       const guint8* value_data = g_variant_get_fixed_array (value, &value_len, 1);
 
       if (lsetxattr (path, (char*)name, (char*)value_data, value_len, 0) < 0)
-        return glnx_throw_errno_prefix (error, "lsetxattr");
+        return glnx_throw_errno_prefix (error, "lsetxattr(%s)", name);
     }
 
   return TRUE;
@@ -351,7 +351,7 @@ glnx_fd_set_all_xattrs (int            fd,
       const guint8* value_data = g_variant_get_fixed_array (value, &value_len, 1);
 
       if (TEMP_FAILURE_RETRY (fsetxattr (fd, (char*)name, (char*)value_data, value_len, 0)) < 0)
-        return glnx_throw_errno_prefix (error, "fsetxattr");
+        return glnx_throw_errno_prefix (error, "Setting xattrs: fsetxattr(%s)", name);
     }
 
   return TRUE;
@@ -378,11 +378,11 @@ glnx_lgetxattrat (int            dfd,
 
   ssize_t bytes_read, real_size;
   if (TEMP_FAILURE_RETRY (bytes_read = lgetxattr (pathbuf, attribute, NULL, 0)) < 0)
-    return glnx_null_throw_errno_prefix (error, "lgetxattr");
+    return glnx_null_throw_errno_prefix (error, "lgetxattr(%s)", attribute);
 
   g_autofree guint8 *buf = g_malloc (bytes_read);
   if (TEMP_FAILURE_RETRY (real_size = lgetxattr (pathbuf, attribute, buf, bytes_read)) < 0)
-    return glnx_null_throw_errno_prefix (error, "lgetxattr");
+    return glnx_null_throw_errno_prefix (error, "lgetxattr(%s)", attribute);
 
   return g_bytes_new_take (g_steal_pointer (&buf), real_size);
 }
@@ -403,11 +403,11 @@ glnx_fgetxattr_bytes (int            fd,
   ssize_t bytes_read, real_size;
 
   if (TEMP_FAILURE_RETRY (bytes_read = fgetxattr (fd, attribute, NULL, 0)) < 0)
-    return glnx_null_throw_errno_prefix (error, "fgetxattr");
+    return glnx_null_throw_errno_prefix (error, "fgetxattr(%s)", attribute);
 
   g_autofree guint8 *buf = g_malloc (bytes_read);
   if (TEMP_FAILURE_RETRY (real_size = fgetxattr (fd, attribute, buf, bytes_read)) < 0)
-    return glnx_null_throw_errno_prefix (error, "fgetxattr");
+    return glnx_null_throw_errno_prefix (error, "fgetxattr(%s)", attribute);
 
   return g_bytes_new_take (g_steal_pointer (&buf), real_size);
 }
@@ -437,7 +437,7 @@ glnx_lsetxattrat (int            dfd,
   snprintf (pathbuf, sizeof (pathbuf), "/proc/self/fd/%d/%s", dfd, subpath);
 
   if (TEMP_FAILURE_RETRY (lsetxattr (subpath, attribute, value, len, flags)) < 0)
-    return glnx_throw_errno_prefix (error, "lsetxattr");
+    return glnx_throw_errno_prefix (error, "lsetxattr(%s)", attribute);
 
   return TRUE;
 }
