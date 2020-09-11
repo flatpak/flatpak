@@ -2742,6 +2742,18 @@ resolve_ops (FlatpakTransaction *self,
       if (op->resolved)
         continue;
 
+      if (op->skip)
+        {
+          /* We're not yet resolved, but marked skip anyway, this can happen if during
+           * request_required_tokens() we were normalized away even though not fully resolved.
+           * For example we got the checksum but need to auth to get the commit, but the
+           * checksum we got was the version already installed.
+           */
+          g_assert (op->resolved_commit != NULL);
+          mark_op_resolved (op, op->resolved_commit, NULL, NULL, NULL);
+          continue;
+        }
+
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         {
           /* We resolve to the deployed metadata, because we need it to uninstall related ops */
