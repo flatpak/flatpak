@@ -428,6 +428,7 @@ flatpak_progress_update_oci_pull (FlatpakProgress *self,
   if (self == NULL)
     return;
 
+  self->requested = n_layers; /* Need to set this to trigger start of progress reporting, see update_status_progress_and_estimating() */
   self->outstanding_fetches = n_layers - pulled_layers;
   self->fetched_delta_parts = pulled_layers;
   self->total_delta_parts = n_layers;
@@ -438,6 +439,8 @@ flatpak_progress_update_oci_pull (FlatpakProgress *self,
   self->total_delta_part_usize = total_size;
   self->total_delta_superblocks = 0;
   update_status_progress_and_estimating (self);
+
+  self->callback (self->status, self->progress, self->estimating, self->user_data);
 }
 
 guint32
