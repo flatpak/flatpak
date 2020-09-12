@@ -222,8 +222,6 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
           commit_metadata = var_commit_get_metadata (var_commit);
           xa_metadata = var_metadata_lookup_string (commit_metadata, "xa.metadata", NULL);
-          if (xa_metadata == NULL)
-            g_printerr (_("Warning: Commit has no flatpak metadata\n"));
 
           if (xa_metadata == NULL)
             g_printerr (_("Warning: Commit has no flatpak metadata\n"));
