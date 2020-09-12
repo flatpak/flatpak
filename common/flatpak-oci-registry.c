@@ -1394,8 +1394,8 @@ flatpak_oci_layer_writer_compress (FlatpakOciLayerWriter *self,
       to_write = compressed_buffer;
       while (to_write_len > 0)
         {
-          ssize_t res = write (self->tmpf.fd, to_write, to_write_len);
-          if (res <= 0)
+          ssize_t result = write (self->tmpf.fd, to_write, to_write_len);
+          if (result <= 0)
             {
               if (errno == EINTR)
                 continue;
@@ -1403,8 +1403,8 @@ flatpak_oci_layer_writer_compress (FlatpakOciLayerWriter *self,
               return -1;
             }
 
-          to_write_len -= res;
-          to_write += res;
+          to_write_len -= result;
+          to_write += result;
         }
 
       total_bytes_read += bytes_read;

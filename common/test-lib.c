@@ -33,7 +33,7 @@ main (int argc, char *argv[])
   FlatpakInstalledRef *app2;
   FlatpakRemoteRef *remote_ref;
   g_autoptr(GPtrArray) remotes = NULL;
-  GError *error = NULL;
+  g_autoptr(GError) error = NULL;
   int i, j, k;
 
   installation = flatpak_installation_new_user (NULL, &error);
@@ -54,7 +54,7 @@ main (int argc, char *argv[])
 
           for (k = 0; k < 2; k++)
             {
-              g_autoptr(GError) error = NULL;
+              g_autoptr(GError) local_error = NULL;
               g_autoptr(GPtrArray) related = NULL;
 
 
@@ -63,17 +63,17 @@ main (int argc, char *argv[])
                                                                               list[j],
                                                                               list[j + 1],
                                                                               NULL,
-                                                                              &error);
+                                                                              &local_error);
               else
                 related = flatpak_installation_list_installed_related_refs_sync (installation,
                                                                                  list[j],
                                                                                  list[j + 1],
                                                                                  NULL,
-                                                                                 &error);
+                                                                                 &local_error);
 
               if (related == NULL)
                 {
-                  g_warning ("Error: %s", error->message);
+                  g_warning ("Error: %s", local_error->message);
                   continue;
                 }
 

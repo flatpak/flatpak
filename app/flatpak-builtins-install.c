@@ -328,22 +328,23 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     }
   else
     {
-      g_autoptr(GError) local_error = NULL;
-
       /* If the remote was used, and no single dir was specified, find which
        * one based on the remote. If the remote isn't found assume it's a ref
        * and we should auto-detect the remote. */
-      if (!auto_remote &&
-          !flatpak_resolve_duplicate_remotes (dirs, argv[1], &dir_with_remote, cancellable, &local_error))
+      if (!auto_remote)
         {
-          if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
+          g_autoptr(GError) local_error = NULL;
+          if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], &dir_with_remote, cancellable, &local_error))
             {
-              auto_remote = TRUE;
-            }
-          else
-            {
-              g_propagate_error (error, g_steal_pointer (&local_error));
-              return FALSE;
+              if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
+                {
+                  auto_remote = TRUE;
+                }
+              else
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
             }
         }
 

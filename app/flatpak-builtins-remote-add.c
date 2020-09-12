@@ -364,11 +364,11 @@ flatpak_builtin_remote_add (int argc, char **argv,
 
           if (!flatpak_dir_compare_remote_filter (dir, remote_name, new_filter))
             {
-              g_autoptr(GKeyFile) config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+              g_autoptr(GKeyFile) new_config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
 
-              g_key_file_set_string (config, group, "xa.filter", new_filter ? new_filter : "");
+              g_key_file_set_string (new_config, group, "xa.filter", new_filter ? new_filter : "");
 
-              if (!flatpak_dir_modify_remote (dir, remote_name, config, NULL, cancellable, error))
+              if (!flatpak_dir_modify_remote (dir, remote_name, new_config, NULL, cancellable, error))
                 return FALSE;
             }
 

@@ -1384,7 +1384,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
 {
   gboolean remove;
   g_auto(GStrv) groups = NULL;
-  int i;
+  gsize i;
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_SHARED, NULL))
     {
@@ -1518,7 +1518,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
   if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY))
     {
       g_auto(GStrv) keys = NULL;
-      gsize i, keys_count;
+      gsize keys_count;
 
       keys = g_key_file_get_keys (metakey, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY, &keys_count, NULL);
       for (i = 0; i < keys_count; i++)
@@ -1539,7 +1539,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
   if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY))
     {
       g_auto(GStrv) keys = NULL;
-      gsize i, keys_count;
+      gsize keys_count;
 
       keys = g_key_file_get_keys (metakey, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY, &keys_count, NULL);
       for (i = 0; i < keys_count; i++)
@@ -1560,7 +1560,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
   if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT))
     {
       g_auto(GStrv) keys = NULL;
-      gsize i, keys_count;
+      gsize keys_count;
 
       keys = g_key_file_get_keys (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, &keys_count, NULL);
       for (i = 0; i < keys_count; i++)

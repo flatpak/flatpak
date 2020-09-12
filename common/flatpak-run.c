@@ -2435,9 +2435,9 @@ static void
 add_tzdata_args (FlatpakBwrap *bwrap,
                  GFile *runtime_files)
 {
-  g_autofree char *timezone = flatpak_get_timezone ();
-  g_autofree char *timezone_content = g_strdup_printf ("%s\n", timezone);
-  g_autofree char *localtime_content = g_strconcat ("../usr/share/zoneinfo/", timezone, NULL);
+  g_autofree char *raw_timezone = flatpak_get_timezone ();
+  g_autofree char *timezone_content = g_strdup_printf ("%s\n", raw_timezone);
+  g_autofree char *localtime_content = g_strconcat ("../usr/share/zoneinfo/", raw_timezone, NULL);
   g_autoptr(GFile) runtime_zoneinfo = NULL;
 
   if (runtime_files)
@@ -2457,7 +2457,7 @@ add_tzdata_args (FlatpakBwrap *bwrap,
         }
       else
         {
-          g_autoptr(GFile) runtime_tzfile = g_file_resolve_relative_path (runtime_zoneinfo, timezone);
+          g_autoptr(GFile) runtime_tzfile = g_file_resolve_relative_path (runtime_zoneinfo, raw_timezone);
 
           /* Check if host timezone file exist in the runtime tzdata */
           if (g_file_query_exists (runtime_tzfile, NULL))
@@ -2772,7 +2772,6 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 
           if (multiarch && extra_arches != NULL)
             {
-              unsigned i;
               for (i = 0; extra_arches[i] != 0; i++)
                 {
                   r = seccomp_arch_add (seccomp, extra_arches[i]);
@@ -3692,7 +3691,6 @@ flatpak_run_app (const char     *app_ref,
       g_autofree const char **previous_ids = NULL;
       gsize len = 0;
       gboolean do_migrate;
-      int i;
 
       real_app_id_dir = flatpak_get_data_dir (app_ref_parts[1]);
       app_files = flatpak_deploy_get_files (app_deploy);

@@ -184,7 +184,6 @@ flatpak_builtin_permission_list (int argc, char **argv,
     }
   else
     {
-      int i;
       g_auto(GStrv) tables = get_permission_tables (store);
 
       for (i = 0; tables[i]; i++)

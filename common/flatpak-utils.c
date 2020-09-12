@@ -315,7 +315,7 @@ flatpak_path_match_prefix (const char *pattern,
           /* special case * at end */
           if (c == 0)
             {
-              char *tmp = strchr (string, '/');
+              tmp = strchr (string, '/');
               if (tmp != NULL)
                 return tmp;
               return string + strlen (string);
@@ -3795,14 +3795,14 @@ flatpak_repo_update (OstreeRepo   *repo,
           n_extra_data = g_variant_n_children (extra_data_sources);
           for (int i = 0; i < n_extra_data; i++)
             {
-              guint64 download_size;
+              guint64 extra_download_size;
               flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
                                                      NULL,
-                                                     &download_size,
+                                                     &extra_download_size,
                                                      NULL,
                                                      NULL,
                                                      NULL);
-              total_extra_data_download_size += download_size;
+              total_extra_data_download_size += extra_download_size;
             }
         }
 
@@ -4716,11 +4716,9 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
             if (gpg_key_ids)
               {
-                int i;
-
-                for (i = 0; gpg_key_ids[i] != NULL; i++)
+                for (int j = 0; gpg_key_ids[j] != NULL; j++)
                   {
-                    const char *keyid = gpg_key_ids[i];
+                    const char *keyid = gpg_key_ids[j];
 
                     if (!ostree_repo_sign_commit (repo,
                                                   commit_checksum,

@@ -430,8 +430,6 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
 
       if (exports->host_etc == FLATPAK_FILESYSTEM_MODE_NONE)
         {
-          guint i;
-
           /* We are exposing the host /usr (and friends) but not the
            * host /etc. Additionally expose just enough of /etc to make
            * things that want to read /usr work as expected.

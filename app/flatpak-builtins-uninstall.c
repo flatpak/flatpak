@@ -342,7 +342,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           if (found_exact_name_match)
             {
               /* Walk through the array backwards so we can safely remove */
-              for (guint i = ref_dir_pairs->len; i > 0; i--)
+              for (i = ref_dir_pairs->len; i > 0; i--)
                 {
                   RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i - 1);
                   g_auto(GStrv) parts = NULL;

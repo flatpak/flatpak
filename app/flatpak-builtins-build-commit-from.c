@@ -671,7 +671,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       /* Copy + Rewrite any deltas */
       {
         const char *from[2];
-        gsize j, n_from = 0;
+        gsize n_from = 0;
 
         if (dst_parent != NULL)
           from[n_from++] = dst_parent;

@@ -461,7 +461,6 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
         {
           Cell *cell = g_ptr_array_index (row->cells, j);
           TableColumn *col = peek_table_column (printer, j);
-          int width;
 
           if (col && col->skip)
             continue;
