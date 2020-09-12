@@ -23,7 +23,7 @@ type CollectionMap [sorted string] RefMap;
 
 type Commit {
     metadata: Metadata;
-    patent: Checksum;
+    parent: Checksum;
     related: [] 'Related {
         ref: string;
         commit: Checksum;
