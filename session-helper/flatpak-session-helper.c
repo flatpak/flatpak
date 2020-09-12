@@ -627,8 +627,8 @@ file_monitor_do (MonitorData *data)
        * correct form "../usr/share/zoneinfo/$timezone". So, instead we use the old debian
        * /etc/timezone file for telling the sandbox the timezone. */
       char *dest = g_build_filename (monitor_dir, "timezone", NULL);
-      g_autofree char *timezone = flatpak_get_timezone ();
-      g_autofree char *timezone_content = g_strdup_printf ("%s\n", timezone);
+      g_autofree char *raw_timezone = flatpak_get_timezone ();
+      g_autofree char *timezone_content = g_strdup_printf ("%s\n", raw_timezone);
 
       g_file_set_contents (dest, timezone_content, -1, NULL);
     }

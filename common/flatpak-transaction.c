@@ -3308,12 +3308,12 @@ request_tokens_for_remote (FlatpakTransaction *self,
       GVariantIter iter;
       const char *token = NULL;
       const char *token_for_refs;
-      g_autofree const char **refs;
+      g_autofree const char **refs_strv;
 
       g_variant_iter_init (&iter, tokens);
-      while (g_variant_iter_next (&iter, "{&s^a&s}", &token_for_refs, &refs))
+      while (g_variant_iter_next (&iter, "{&s^a&s}", &token_for_refs, &refs_strv))
         {
-          if (g_strv_contains (refs, op->ref))
+          if (g_strv_contains (refs_strv, op->ref))
             {
               token = token_for_refs;
               break;

@@ -64,6 +64,7 @@ dnl This list is shared with https://github.com/ostreedev/ostree
 CC_CHECK_FLAGS_APPEND([WARN_CFLAGS], [CFLAGS], [\
 -pipe \
 -Wall \
+-Werror=shadow \
 -Werror=empty-body \
 -Werror=strict-prototypes \
 -Werror=missing-prototypes \

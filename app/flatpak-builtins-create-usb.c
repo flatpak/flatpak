@@ -527,11 +527,11 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       dirs_with_ref = g_ptr_array_new ();
       for (j = 0; j < dirs->len; j++)
         {
-          FlatpakDir *dir = g_ptr_array_index (dirs, j);
+          FlatpakDir *candidate_dir = g_ptr_array_index (dirs, j);
           g_autofree char *ref = NULL;
           FlatpakKinds kind;
 
-          ref = flatpak_dir_find_installed_ref (dir, id, branch, arch,
+          ref = flatpak_dir_find_installed_ref (candidate_dir, id, branch, arch,
                                                 kinds, &kind, &local_error);
           if (ref == NULL)
             {
@@ -549,7 +549,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
             }
           else
             {
-              g_ptr_array_add (dirs_with_ref, dir);
+              g_ptr_array_add (dirs_with_ref, candidate_dir);
               if (installed_ref == NULL)
                 {
                   installed_ref = g_strdup (ref);
@@ -571,8 +571,8 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
           g_autoptr(GString) dir_names = g_string_new ("");
           for (j = 0; j < dirs_with_ref->len; j++)
             {
-              FlatpakDir *dir = g_ptr_array_index (dirs_with_ref, j);
-              g_autofree char *dir_name = flatpak_dir_get_name (dir);
+              FlatpakDir *dir_with_ref = g_ptr_array_index (dirs_with_ref, j);
+              g_autofree char *dir_name = flatpak_dir_get_name (dir_with_ref);
               if (j > 0)
                 g_string_append (dir_names, ", ");
               g_string_append (dir_names, dir_name);
@@ -701,7 +701,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
     for (const char **iter = remote_arches; iter != NULL && *iter != NULL; ++iter)
       {
         const char *current_arch = *iter;
-        g_autoptr(GPtrArray) dirs = NULL;
+        g_autoptr(GPtrArray) appstream_dirs = NULL;
         g_autoptr(GError) appstream_error = NULL;
         g_autoptr(GError) appstream2_error = NULL;
         g_autofree char *commit = NULL;
@@ -709,9 +709,9 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
 
         /* Try to update the appstream data, but don't fail on error because we
          * want this to work offline. */
-        dirs = g_ptr_array_new ();
-        g_ptr_array_add (dirs, dir);
-        if (!update_appstream (dirs, remote_name, current_arch, 0, TRUE, cancellable, &local_error))
+        appstream_dirs = g_ptr_array_new ();
+        g_ptr_array_add (appstream_dirs, dir);
+        if (!update_appstream (appstream_dirs, remote_name, current_arch, 0, TRUE, cancellable, &local_error))
           {
             g_printerr (_("Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"),
                         remote_name, current_arch, local_error->message);

@@ -6717,8 +6717,6 @@ export_desktop_file (const char         *app,
           g_autoptr(GPtrArray) merged = g_ptr_array_new_with_free_func (g_free);
           g_autoptr(GHashTable) seen = g_hash_table_new (g_str_hash, g_str_equal);
           const char *new_suffix;
-          gsize i;
-
 
           for (i = 0; renamed_from != NULL && renamed_from[i] != NULL; i++)
             {
@@ -6791,15 +6789,15 @@ export_desktop_file (const char         *app,
       old_exec = g_key_file_get_string (keyfile, groups[i], "Exec", NULL);
       if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
         {
-          int i;
+          int j;
           g_autofree char *command = maybe_quote (old_argv[0]);
 
           g_string_append_printf (new_exec, " --command=%s", command);
 
-          for (i = 1; i < old_argc; i++)
+          for (j = 1; j < old_argc; j++)
             {
-              if (strcasecmp (old_argv[i], "%f") == 0 ||
-                  strcasecmp (old_argv[i], "%u") == 0)
+              if (strcasecmp (old_argv[j], "%f") == 0 ||
+                  strcasecmp (old_argv[j], "%u") == 0)
                 {
                   g_string_append (new_exec, " --file-forwarding");
                   break;
@@ -6809,9 +6807,9 @@ export_desktop_file (const char         *app,
           g_string_append (new_exec, " ");
           g_string_append (new_exec, escaped_app);
 
-          for (i = 1; i < old_argc; i++)
+          for (j = 1; j < old_argc; j++)
             {
-              g_autofree char *arg = maybe_quote (old_argv[i]);
+              g_autofree char *arg = maybe_quote (old_argv[j]);
 
               if (strcasecmp (arg, "%f") == 0)
                 g_string_append_printf (new_exec, " @@ %s @@", arg);
@@ -7802,12 +7800,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
     }
   else
     {
-      g_autoptr(GFile) root = NULL;
-      g_autofree char *commit = NULL;
-
       checksum = checksum_or_latest;
       g_debug ("Looking for checksum %s in local repo", checksum);
-      if (!ostree_repo_read_commit (self->repo, checksum, &root, &commit, cancellable, NULL))
+      if (!ostree_repo_read_commit (self->repo, checksum, NULL, NULL, cancellable, NULL))
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("%s is not available"), ref);
     }
 
@@ -7863,19 +7858,13 @@ flatpak_dir_deploy (FlatpakDir          *self,
     }
   else
     {
-      g_autofree char *checkoutdirpath = g_file_get_path (checkoutdir);
       g_autoptr(GFile) files = g_file_get_child (checkoutdir, "files");
-      g_autoptr(GFile) root = NULL;
-      g_autofree char *commit = NULL;
       int i;
 
       if (!g_file_make_directory_with_parents (files, cancellable, error))
         return FALSE;
 
       options.subpath = "/metadata";
-
-      if (!ostree_repo_read_commit (self->repo, checksum, &root,  &commit, cancellable, error))
-        return FALSE;
 
       if (!ostree_repo_checkout_at (self->repo, &options,
                                     AT_FDCWD, checkoutdirpath,
@@ -9422,7 +9411,6 @@ flatpak_dir_update (FlatpakDir                           *self,
       g_auto(GLnxLockFile) child_repo_lock = { 0, };
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
-      g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
       gboolean is_revokefs_pull = FALSE;
@@ -9432,12 +9420,6 @@ flatpak_dir_update (FlatpakDir                           *self,
                                    _("Can't update to a specific commit without root permissions"));
 
       if (!flatpak_dir_ensure_repo (self, cancellable, error))
-        return FALSE;
-
-      if (!ostree_repo_remote_get_url (self->repo,
-                                       state->remote_name,
-                                       &url,
-                                       error))
         return FALSE;
 
       helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
@@ -9696,11 +9678,11 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
       flatpak_dir_list_refs (self, "app", &app_refs, NULL, NULL);
       for (i = 0; app_refs != NULL && app_refs[i] != NULL; i++)
         {
-          g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+          g_autoptr(GBytes) app_deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
-          if (deploy_data)
+          if (app_deploy_data)
             {
-              const char *app_runtime = flatpak_deploy_data_get_runtime (deploy_data);
+              const char *app_runtime = flatpak_deploy_data_get_runtime (app_deploy_data);
 
               if (g_strcmp0 (app_runtime, pref) == 0)
                 g_ptr_array_add (blocking, g_strdup (app_refs[i] + strlen ("app/")));

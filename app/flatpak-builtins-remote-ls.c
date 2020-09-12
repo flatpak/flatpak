@@ -107,12 +107,6 @@ static gboolean
 ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, Column *columns, GCancellable *cancellable, GError **error)
 {
   FlatpakTablePrinter *printer;
-  GHashTableIter refs_iter;
-  GHashTableIter iter;
-  gpointer refs_key;
-  gpointer refs_value;
-  gpointer key;
-  gpointer value;
   guint n_keys;
   g_autofree const char **keys = NULL;
   int i, j;
@@ -150,21 +144,16 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
         need_appstream_data = TRUE;
     }
 
-  g_hash_table_iter_init (&refs_iter, refs_hash);
-  while (g_hash_table_iter_next (&refs_iter, &refs_key, &refs_value))
+  GLNX_HASH_TABLE_FOREACH_KV (refs_hash, GHashTable *, refs, RemoteStateDirPair *, remote_state_dir_pair)
     {
-      GHashTable *refs = refs_key;
-      RemoteStateDirPair *remote_state_dir_pair = refs_value;
       FlatpakDir *dir = remote_state_dir_pair->dir;
       FlatpakRemoteState *state = remote_state_dir_pair->state;
       const char *remote = state->remote_name;
       g_autoptr(AsStore) store = NULL;
       g_autoptr(GHashTable) names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-      g_hash_table_iter_init (&iter, refs);
-      while (g_hash_table_iter_next (&iter, &key, &value))
+      GLNX_HASH_TABLE_FOREACH (refs, char *, ref)
         {
-          char *ref = key;
           char *partial_ref;
           const char *slash = strchr (ref, '/');
 
@@ -178,11 +167,8 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
           g_hash_table_insert (pref_hash, partial_ref, ref);
         }
 
-      g_hash_table_iter_init (&iter, refs);
-      while (g_hash_table_iter_next (&iter, &key, &value))
+      GLNX_HASH_TABLE_FOREACH_KV (refs, const char *, ref, const char *, checksum)
         {
-          const char *ref = key;
-          const char *checksum = value;
           g_auto(GStrv) parts = NULL;
 
           parts = flatpak_decompose_ref (ref, NULL);

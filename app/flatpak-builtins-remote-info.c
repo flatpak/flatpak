@@ -213,14 +213,14 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
       if (commit_v)
         {
-          VarCommitRef commit = var_commit_from_gvariant (commit_v);
+          VarCommitRef var_commit = var_commit_from_gvariant (commit_v);
           VarMetadataRef commit_metadata;
 
-          subject = var_commit_get_subject (commit);
+          subject = var_commit_get_subject (var_commit);
           parent = ostree_commit_get_parent (commit_v);
           timestamp = ostree_commit_get_timestamp (commit_v);
 
-          commit_metadata = var_commit_get_metadata (commit);
+          commit_metadata = var_commit_get_metadata (var_commit);
           xa_metadata = var_metadata_lookup_string (commit_metadata, "xa.metadata", NULL);
           if (xa_metadata == NULL)
             g_printerr (_("Warning: Commit has no flatpak metadata\n"));

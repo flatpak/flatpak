@@ -1070,8 +1070,8 @@ handle_spawn (PortalFlatpak         *object,
   notify_start = (arg_flags & FLATPAK_SPAWN_FLAGS_NOTIFY_START) != 0;
   if (notify_start)
     {
-      int fds[2];
-      if (pipe (fds) == -1)
+      int pipe_fds[2];
+      if (pipe (pipe_fds) == -1)
         {
           int errsv = errno;
           g_dbus_method_invocation_return_error (invocation, G_IO_ERROR,
@@ -1081,9 +1081,9 @@ handle_spawn (PortalFlatpak         *object,
           return TRUE;
         }
 
-      GInputStream *in_stream = G_INPUT_STREAM (g_unix_input_stream_new (fds[0], TRUE));
+      GInputStream *in_stream = G_INPUT_STREAM (g_unix_input_stream_new (pipe_fds[0], TRUE));
       /* This is saved to ensure the portal's end gets closed after the exec. */
-      instance_id_out_stream = G_OUTPUT_STREAM (g_unix_output_stream_new (fds[1], TRUE));
+      instance_id_out_stream = G_OUTPUT_STREAM (g_unix_output_stream_new (pipe_fds[1], TRUE));
 
       instance_id_read_data = g_new0 (InstanceIdReadData, 1);
 
@@ -1091,8 +1091,8 @@ handle_spawn (PortalFlatpak         *object,
                                  INSTANCE_ID_BUFFER_SIZE - 1, G_PRIORITY_DEFAULT, NULL,
                                  instance_id_read_finish, instance_id_read_data);
 
-      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--instance-id-fd=%d", fds[1]));
-      child_setup_data.instance_id_fd = fds[1];
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--instance-id-fd=%d", pipe_fds[1]));
+      child_setup_data.instance_id_fd = pipe_fds[1];
     }
 
   if (devel)
@@ -1188,7 +1188,6 @@ handle_spawn (PortalFlatpak         *object,
   if (opt_verbose)
     {
       g_autoptr(GString) cmd = g_string_new ("");
-      int i;
 
       for (i = 0; flatpak_argv->pdata[i] != NULL; i++)
         {
@@ -1635,7 +1634,6 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
     {
       GVariantBuilder builder;
       gboolean is_closed;
-      g_autoptr(GError) error = NULL;
 
       g_free (m->reported_local_commit);
       m->reported_local_commit = g_strdup (local_commit);
@@ -1666,6 +1664,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
                                           &error))
         {
           g_warning ("Failed to emit UpdateAvailable: %s", error->message);
+          g_clear_error (&error);
         }
     }
 }

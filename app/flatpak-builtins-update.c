@@ -148,7 +148,7 @@ flatpak_builtin_update (int           argc,
       flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
       flatpak_transaction_set_disable_related (transaction, opt_no_related);
 
-      for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+      for (i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
         flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
 
       g_ptr_array_insert (transactions, 0, transaction);

@@ -18,9 +18,8 @@ static char *flatpak_configdir;
 static char *flatpak_installationsdir;
 static char *gpg_homedir;
 static char *gpg_args;
-static char *repo_url;
 static char *repo_collection_id;
-static char *httpd_port;
+static char *httpd_port; /* TODO: leaked? */
 int httpd_pid = -1;
 
 static const char *gpg_id = "7B0961FD";
@@ -558,12 +557,15 @@ test_remote_by_name (void)
   g_autofree char *name = NULL;
   FlatpakRemoteType type;
   g_autoptr(GFile) file = NULL;
+  g_autofree char *repo_url = NULL;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
 
   remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
+
+  repo_url = g_strdup_printf ("http://127.0.0.1:%s/test", httpd_port);
 
   g_assert_true (FLATPAK_IS_REMOTE (remote));
   g_assert_cmpstr (flatpak_remote_get_name (remote), ==, repo_name);
@@ -927,14 +929,14 @@ create_multi_collection_id_repo (const char *repo_dir)
 static void
 test_list_refs_in_remotes (void)
 {
-  const char *repo_name = "multi-refs-repo";
+  const char *repo_name2 = "multi-refs-repo";
   g_autofree char *repo_url = NULL;
   g_autoptr(GPtrArray) refs1 = NULL;
   g_autoptr(GPtrArray) refs2 = NULL;
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakRemote) remote = NULL;
-  g_autofree char *repo_dir = g_build_filename (testdir, repo_name, NULL);
+  g_autofree char *repo_dir = g_build_filename (testdir, repo_name2, NULL);
   g_autofree char *repo_uri = NULL;
   g_autoptr(GHashTable) ref_specs = g_hash_table_new_full (g_str_hash,
                                                            g_str_equal,
@@ -946,7 +948,7 @@ test_list_refs_in_remotes (void)
   repo_url = g_strdup_printf ("file://%s", repo_dir);
 
   const char *argv[] = { "flatpak", "remote-add", "--user", "--no-gpg-verify",
-                         repo_name, repo_url, NULL };
+                         repo_name2, repo_url, NULL };
 
   /* Add the repo we created above, which holds one collection ID per ref */
   run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
@@ -955,12 +957,12 @@ test_list_refs_in_remotes (void)
   g_assert_no_error (error);
 
   /* Ensure the remote can be successfully found */
-  remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
+  remote = flatpak_installation_get_remote_by_name (inst, repo_name2, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (remote);
 
   /* List the refs in the remote we've just added */
-  refs1 = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
+  refs1 = flatpak_installation_list_remote_refs_sync (inst, repo_name2, NULL, &error);
 
   g_assert_no_error (error);
   g_assert_nonnull (refs1);
@@ -2237,6 +2239,7 @@ _add_remote (const char *remote_repo_name,
   g_autofree char *gpgimport = NULL;
   g_autofree char *collection_id_arg = NULL;
   g_autofree char *remote_name = NULL;
+  g_autofree char *repo_url = NULL;
 
   gpgimport = g_strdup_printf ("--gpg-import=%s/pubring.gpg", gpg_homedir);
   repo_url = g_strdup_printf ("http://127.0.0.1:%s/%s", httpd_port, remote_repo_name);

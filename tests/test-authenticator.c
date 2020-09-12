@@ -26,7 +26,7 @@
 
 static GMainLoop *main_loop;
 static guint name_owner_id = 0;
-FlatpakAuthenticator *authenticator;
+FlatpakAuthenticator *global_authenticator;
 
 typedef struct {
   FlatpakAuthenticatorRequest *request;
@@ -191,7 +191,6 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   g_autofree char *uri = NULL;
   g_autofree char *request_path = NULL;
   guint16 port;
-  TokenRequestData *data;
   g_autoptr(GPtrArray) refs = NULL;
   gsize n_refs, i;
   g_autofree char *options_s = NULL;
@@ -248,6 +247,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
     }
   g_ptr_array_add (refs, NULL);
 
+  TokenRequestData *data;
   data = token_request_data_new (request, server, (const char *const*)refs->pdata);
 
   g_signal_connect (server, "incoming", (GCallback)http_incoming, data);
@@ -282,12 +282,12 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_dbus_connection_set_exit_on_close (connection, FALSE);
 
-  authenticator = flatpak_authenticator_skeleton_new ();
-  flatpak_authenticator_set_version (authenticator, 0);
+  global_authenticator = flatpak_authenticator_skeleton_new ();
+  flatpak_authenticator_set_version (global_authenticator, 0);
 
-  g_signal_connect (authenticator, "handle-request-ref-tokens", G_CALLBACK (handle_request_ref_tokens), NULL);
+  g_signal_connect (global_authenticator, "handle-request-ref-tokens", G_CALLBACK (handle_request_ref_tokens), NULL);
 
-  if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (authenticator),
+  if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (global_authenticator),
                                          connection,
                                          FLATPAK_AUTHENTICATOR_OBJECT_PATH,
                                          &error))

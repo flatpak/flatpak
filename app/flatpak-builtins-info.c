@@ -200,15 +200,15 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
       if (ostree_repo_load_commit (flatpak_dir_get_repo (dir), commit, &commit_v, NULL, NULL))
         {
-          VarCommitRef commit = var_commit_from_gvariant (commit_v);
+          VarCommitRef var_commit = var_commit_from_gvariant (commit_v);
 
-          subject = var_commit_get_subject (commit);
+          subject = var_commit_get_subject (var_commit);
           parent = ostree_commit_get_parent (commit_v);
           timestamp = ostree_commit_get_timestamp (commit_v);
 
           formatted_timestamp = format_timestamp (timestamp);
 
-          commit_metadata = var_commit_get_metadata (commit);
+          commit_metadata = var_commit_get_metadata (var_commit);
           xa_metadata = var_metadata_lookup_string (commit_metadata, "xa.metadata", NULL);
           if (xa_metadata == NULL)
             g_printerr (_("Warning: Commit has no flatpak metadata\n"));
@@ -420,18 +420,18 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
       if (opt_show_permissions || opt_file_access)
         {
-          g_autoptr(FlatpakContext) context = NULL;
+          g_autoptr(FlatpakContext) app_context = NULL;
           g_autoptr(GKeyFile) keyfile = NULL;
           g_autofree gchar *contents = NULL;
 
-          context = flatpak_context_load_for_deploy (deploy, error);
-          if (context == NULL)
+          app_context = flatpak_context_load_for_deploy (deploy, error);
+          if (app_context == NULL)
             return FALSE;
 
           if (opt_show_permissions)
             {
               keyfile = g_key_file_new ();
-              flatpak_context_save_metadata (context, TRUE, keyfile);
+              flatpak_context_save_metadata (app_context, TRUE, keyfile);
               contents = g_key_file_to_data (keyfile, NULL, error);
               if (contents == NULL)
                 return FALSE;
@@ -441,7 +441,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
           if (opt_file_access)
             {
-              g_autoptr(FlatpakExports) exports = flatpak_context_get_exports (context, parts[1]);
+              g_autoptr(FlatpakExports) exports = flatpak_context_get_exports (app_context, parts[1]);
               FlatpakFilesystemMode mode;
 
               mode = flatpak_exports_path_get_mode (exports, opt_file_access);
@@ -473,10 +473,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       for (l = extensions; l; l = l->next)
         {
           FlatpakExtension *ext = l->data;
-          g_autofree const char **subpaths = NULL;
+          g_autofree const char **ext_subpaths = NULL;
           g_autoptr(GBytes) ext_deploy_data = NULL;
           g_autofree char *formatted = NULL;
-          g_autofree char *formatted_size = NULL;
+          g_autofree char *ext_formatted_size = NULL;
           g_autofree char *formatted_commit = NULL;
 
           if (ext->is_unmaintained)
@@ -484,8 +484,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
               formatted_commit = g_strdup (_("unmaintained"));
               origin = NULL;
               size = 0;
-              formatted_size = g_strdup (_("unknown"));
-              subpaths = NULL;
+              ext_formatted_size = g_strdup (_("unknown"));
+              ext_subpaths = NULL;
             }
           else
             {
@@ -498,11 +498,11 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
               origin = flatpak_deploy_data_get_origin (ext_deploy_data);
               size = flatpak_deploy_data_get_installed_size (ext_deploy_data);
               formatted = g_format_size (size);
-              subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
-              if (subpaths && subpaths[0] && size > 0)
-                formatted_size = g_strconcat ("<", formatted, NULL);
+              ext_subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
+              if (ext_subpaths && ext_subpaths[0] && size > 0)
+                ext_formatted_size = g_strconcat ("<", formatted, NULL);
               else
-                formatted_size = g_steal_pointer (&formatted);
+                ext_formatted_size = g_steal_pointer (&formatted);
             }
 
           g_print ("\n");
@@ -510,11 +510,11 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           print_aligned (len, _("ID:"), ext->id);
           print_aligned (len, _("Origin:"), origin ? origin : "-");
           print_aligned (len, _("Commit:"), formatted_commit);
-          print_aligned (len, _("Installed:"), formatted_size);
+          print_aligned (len, _("Installed:"), ext_formatted_size);
 
-          if (subpaths && subpaths[0])
+          if (ext_subpaths && ext_subpaths[0])
             {
-              g_autofree char *s = g_strjoinv (",", (char **) subpaths);
+              g_autofree char *s = g_strjoinv (",", (char **) ext_subpaths);
               print_aligned (len, _("Subpaths:"), s);
             }
         }

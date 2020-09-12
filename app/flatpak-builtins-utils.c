@@ -104,8 +104,6 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
   g_autofree char *ref = NULL;
   FlatpakKinds kind = 0;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
   g_autoptr(GPtrArray) system_dirs = NULL;
 
   if (!flatpak_split_partial_ref_arg (pref, kinds, default_arch, default_branch,
@@ -114,7 +112,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
 
   if (search_user || search_all)
     {
-      user_dir = flatpak_dir_get_user ();
+      g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
 
       ref = flatpak_dir_find_installed_ref (user_dir,
                                             id,
@@ -206,7 +204,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
 
       if (ref == NULL && search_system)
         {
-          system_dir = flatpak_dir_get_system_default ();
+          g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system_default ();
 
           g_clear_error (&lookup_error);
 
