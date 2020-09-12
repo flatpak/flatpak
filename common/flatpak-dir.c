@@ -9419,9 +9419,6 @@ flatpak_dir_update (FlatpakDir                           *self,
         return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE,
                                    _("Can't update to a specific commit without root permissions"));
 
-      if (!flatpak_dir_ensure_repo (self, cancellable, error))
-        return FALSE;
-
       helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
 
       if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote_name,
