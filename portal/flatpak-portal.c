@@ -1527,11 +1527,10 @@ lookup_installation_for_path (GFile *path, GError **error)
   installation = g_hash_table_lookup (installation_cache, path);
   if (installation == NULL)
     {
-      g_autoptr(GError) error = NULL;
       g_autoptr(FlatpakDir) dir = NULL;
 
       dir = flatpak_dir_get_by_path (path);
-      installation = flatpak_installation_new_for_dir (dir, NULL, &error);
+      installation = flatpak_installation_new_for_dir (dir, NULL, error);
       if (installation == NULL)
         return NULL;
 
