@@ -145,7 +145,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (deploy_data == NULL)
     return FALSE;
 
-  deploy = flatpak_find_deploy_for_ref (ref, NULL, NULL, error);
+  deploy = flatpak_dir_load_deployed (dir, ref, NULL, cancellable, error);
   if (deploy == NULL)
     return FALSE;
 
@@ -406,12 +406,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
       if (opt_show_metadata)
         {
-          g_autoptr(GFile) deploy_dir = NULL;
           g_autoptr(GFile) file = NULL;
           g_autofree char *data = NULL;
           gsize data_size;
 
-          deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
           file = g_file_get_child (deploy_dir, "metadata");
 
           if (!g_file_load_contents (file, cancellable, &data, &data_size, NULL, error))
