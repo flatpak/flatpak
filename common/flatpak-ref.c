@@ -99,22 +99,22 @@ flatpak_ref_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_NAME:
-      g_clear_pointer (&priv->name, g_free);
+      g_assert (priv->name == NULL); /* Construct-only */
       priv->name = g_value_dup_string (value);
       break;
 
     case PROP_ARCH:
-      g_clear_pointer (&priv->arch, g_free);
+      g_assert (priv->arch == NULL); /* Construct-only */
       priv->arch = g_value_dup_string (value);
       break;
 
     case PROP_BRANCH:
-      g_clear_pointer (&priv->branch, g_free);
+      g_assert (priv->branch == NULL); /* Construct-only */
       priv->branch = g_value_dup_string (value);
       break;
 
     case PROP_COMMIT:
-      g_clear_pointer (&priv->commit, g_free);
+      g_assert (priv->commit == NULL); /* Construct-only */
       priv->commit = g_value_dup_string (value);
       break;
 
@@ -123,7 +123,7 @@ flatpak_ref_set_property (GObject      *object,
       break;
 
     case PROP_COLLECTION_ID:
-      g_clear_pointer (&priv->collection_id, g_free);
+      g_assert (priv->collection_id == NULL); /* Construct-only */
       priv->collection_id = g_value_dup_string (value);
       break;
 
