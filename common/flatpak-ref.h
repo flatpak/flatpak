@@ -68,6 +68,7 @@ FLATPAK_EXTERN const char *  flatpak_ref_get_branch (FlatpakRef *self);
 FLATPAK_EXTERN const char *  flatpak_ref_get_commit (FlatpakRef *self);
 FLATPAK_EXTERN FlatpakRefKind flatpak_ref_get_kind (FlatpakRef *self);
 FLATPAK_EXTERN char *        flatpak_ref_format_ref (FlatpakRef *self);
+FLATPAK_EXTERN const char *   flatpak_ref_format_ref_cached (FlatpakRef *self);
 FLATPAK_EXTERN FlatpakRef *   flatpak_ref_parse (const char *ref,
                                                  GError    **error);
 FLATPAK_EXTERN const char *   flatpak_ref_get_collection_id (FlatpakRef *self);

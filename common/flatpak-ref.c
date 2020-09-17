@@ -341,6 +341,32 @@ flatpak_ref_format_ref (FlatpakRef *self)
 }
 
 /**
+ * flatpak_ref_format_ref_cached:
+ * @self: a #FlatpakRef
+ *
+ * Like flatpak_ref_format_ref() but this returns the same string each time
+ * it's called rather than allocating a new one.
+ *
+ * Returns: (transfer none): string representation
+ *
+ * Since: 1.9.1
+ */
+const char *
+flatpak_ref_format_ref_cached (FlatpakRef *self)
+{
+  char *full_ref;
+
+  full_ref = g_object_get_data (G_OBJECT (self), "cached-full-ref");
+  if (!full_ref)
+    {
+      full_ref = flatpak_ref_format_ref (self);
+      g_object_set_data_full (G_OBJECT (self), "cached-full-ref", full_ref, g_free);
+    }
+
+  return (const char *) full_ref;
+}
+
+/**
  * flatpak_ref_parse:
  * @ref: A string ref name, such as "app/org.test.App/x86_64/master"
  * @error: return location for a #GError
