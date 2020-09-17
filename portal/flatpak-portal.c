@@ -1568,7 +1568,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
   const char *remote_commit;
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autofree char *ref = NULL;
+  const char *ref;
 
   installation_path = update_monitor_get_installation_path (monitor);
 
@@ -1595,7 +1595,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
   if (dir == NULL)
     return;
 
-  ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
+  ref = flatpak_ref_format_ref_cached (FLATPAK_REF (installed_ref));
   if (flatpak_dir_ref_is_masked (dir, ref))
     return; /* Never report updates for masked refs */
 

@@ -940,7 +940,7 @@ test_list_refs_in_remotes (void)
   g_autofree char *repo_uri = NULL;
   g_autoptr(GHashTable) ref_specs = g_hash_table_new_full (g_str_hash,
                                                            g_str_equal,
-                                                           g_free,
+                                                           NULL,
                                                            NULL);
 
   create_multi_collection_id_repo (repo_dir);
@@ -973,7 +973,7 @@ test_list_refs_in_remotes (void)
   for (guint i = 0; i < refs1->len; ++i)
     {
       FlatpakRef *ref = g_ptr_array_index (refs1, i);
-      g_hash_table_add (ref_specs, flatpak_ref_format_ref (ref));
+      g_hash_table_add (ref_specs, flatpak_ref_format_ref_cached (ref));
     }
 
   /* Ensure that listing the refs by using a remote's URI will get us the
@@ -988,7 +988,7 @@ test_list_refs_in_remotes (void)
   for (guint i = 0; i < refs2->len; ++i)
     {
       FlatpakRef *ref = g_ptr_array_index (refs2, i);
-      g_autofree char *ref_spec = flatpak_ref_format_ref (ref);
+      const char *ref_spec = flatpak_ref_format_ref_cached (ref);
       g_assert_nonnull (g_hash_table_lookup (ref_specs, ref_spec));
     }
 }

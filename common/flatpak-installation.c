@@ -1017,8 +1017,8 @@ installed_ref_compare (gconstpointer _iref_a,
 {
   const FlatpakInstalledRef *iref_a = *(const FlatpakInstalledRef **)_iref_a;
   const FlatpakInstalledRef *iref_b = *(const FlatpakInstalledRef **)_iref_b;
-  g_autofree char *ref_a = flatpak_ref_format_ref (FLATPAK_REF (iref_a));
-  g_autofree char *ref_b = flatpak_ref_format_ref (FLATPAK_REF (iref_b));
+  const char *ref_a = flatpak_ref_format_ref_cached (FLATPAK_REF (iref_a));
+  const char *ref_b = flatpak_ref_format_ref_cached (FLATPAK_REF (iref_b));
 
   return strcmp (ref_a, ref_b);
 }
@@ -1074,7 +1074,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   for (guint i = 0; i < installed_refs->len; i++)
     {
       FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed_refs, i);
-      g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
+      const char *ref = flatpak_ref_format_ref_cached (FLATPAK_REF (installed_ref));
 
       /* This hash table will be used later for efficient search */
       g_hash_table_insert (installed_refs_hash, g_strdup (ref), installed_ref);
@@ -2266,7 +2266,7 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
-  g_autofree char *full_ref = flatpak_ref_format_ref (ref);
+  const char *full_ref = flatpak_ref_format_ref_cached (ref);
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -2306,7 +2306,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
-  g_autofree char *full_ref = flatpak_ref_format_ref (ref);
+  const char *full_ref = flatpak_ref_format_ref_cached (ref);
   g_autofree char *res = NULL;
   gsize len;
 

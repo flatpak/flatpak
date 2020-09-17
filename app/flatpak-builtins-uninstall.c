@@ -238,7 +238,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
               for (i = 0; i < pinned->len; i++)
                 {
                   FlatpakInstalledRef *rref = g_ptr_array_index (pinned, i);
-                  g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (rref));
+                  const char *ref = flatpak_ref_format_ref_cached (FLATPAK_REF (rref));
                   g_print ("  %s\n", ref);
                 }
             }
@@ -252,7 +252,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           for (i = 0; i < unused->len; i++)
             {
               FlatpakInstalledRef *rref = g_ptr_array_index (unused, i);
-              g_autofree char *ref = flatpak_ref_format_ref (FLATPAK_REF (rref));
+              const char *ref = flatpak_ref_format_ref_cached (FLATPAK_REF (rref));
 
               uninstall_dir_add_ref (udir, ref);
               found_something_to_uninstall = TRUE;
