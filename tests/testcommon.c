@@ -1153,6 +1153,7 @@ test_dconf_paths (void)
     { "/org/gnome/Sound-Juicer/", "/org/gnome/sound-juicer/", 1 },
     { "/org/gnome/Soundjuicer/", "/org/gnome/sound-juicer/", 0 },
     { "/org/gnome/Soundjuicer/", "/org/gnome/soundjuicer/", 1 },
+    { "/org/gnome/sound-juicer/", "/org/gnome/SoundJuicer/", 1 },
   };
   int i;
 
