@@ -5,7 +5,6 @@
 # have flatpaks on them, both when a new drive is inserted and at the start of
 # the user session.
 [Path]
-PathExists=@media_dir@/%u
 PathChanged=@media_dir@/%u
 
 [Install]
