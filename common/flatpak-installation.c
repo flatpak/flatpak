@@ -3065,7 +3065,7 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
  * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances
  *
- * Since: 1.9.0
+ * Since: 1.9.1
  */
 GPtrArray *
 flatpak_installation_list_pinned_refs (FlatpakInstallation *self,
