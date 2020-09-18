@@ -956,7 +956,6 @@ GPtrArray * flatpak_dir_find_remote_related (FlatpakDir         *dir,
                                              GError            **error);
 GPtrArray * flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                                          const char   *ref,
-                                                         const char   *commit,
                                                          const char   *remote_name,
                                                          GKeyFile     *metakey,
                                                          GCancellable *cancellable,
