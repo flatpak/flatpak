@@ -3,3 +3,6 @@
 [Service]
 Type=oneshot
 ExecStart=@libexecdir@/flatpak-create-sideload-symlinks.sh @media_dir@/%u
+
+[Install]
+WantedBy=default.target

@@ -2,6 +2,8 @@
 
 # This script is intended to be run by flatpak-sideload-usb-repo.service
 
+shopt -s nullglob
+
 if ! test $# -eq 1 || ! test -d "$1"; then
   echo "Error: first argument must be a directory"
   exit 1
@@ -15,7 +17,7 @@ for f in "$1"/*; do
     if ! test -d "$f"; then
         continue
     fi
-    unique_name=automount-$(echo "$f" | sha256sum | cut -f 1 -d ' ')
+    unique_name=automount$(systemd-escape "$f")
     if test -e "/run/flatpak/sideload-repos/$unique_name"; then
         continue
     fi
@@ -23,7 +25,11 @@ for f in "$1"/*; do
 done
 
 # Remove any broken symlinks e.g. from drives that were removed
-for f in /run/flatpak/sideload-repos/automount-*; do
+for f in /run/flatpak/sideload-repos/automount*; do
+    OWNER=$(stat -c '%u' "$f")
+    if [ "$UID" != "$OWNER" ]; then
+        continue
+    fi
     if ! test -e "$f"; then
         rm "$f"
     fi
