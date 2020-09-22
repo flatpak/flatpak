@@ -26,6 +26,10 @@ done
 
 # Remove any broken symlinks e.g. from drives that were removed
 for f in /run/flatpak/sideload-repos/automount*; do
+    OWNER=$(stat -c '%u' "$f")
+    if [ "$UID" != "$OWNER" ]; then
+        continue
+    fi
     if ! test -e "$f"; then
         rm "$f"
     fi
