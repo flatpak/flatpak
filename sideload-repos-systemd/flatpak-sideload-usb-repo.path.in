@@ -1,6 +1,6 @@
 # This unit is intended to be installed in the systemd user instance, and
-# depends on flatpak-sideload-repos-dir.service being in the system instance
-# and running first. The idea here is that we add any USB drive mounts to the
+# depends on /run/flatpak/sideload-repos having been created via
+# systemd-tmpfiles. The idea here is that we add any USB drive mounts to the
 # appropriate directory so Flatpak can find and pull from them in case they
 # have flatpaks on them, both when a new drive is inserted and at the start of
 # the user session.
