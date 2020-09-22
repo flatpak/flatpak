@@ -17,7 +17,7 @@ for f in "$1"/*; do
     if ! test -d "$f"; then
         continue
     fi
-    unique_name=automount-$(echo "$f" | sha256sum | cut -f 1 -d ' ')
+    unique_name=automount$(systemd-escape "$f")
     if test -e "/run/flatpak/sideload-repos/$unique_name"; then
         continue
     fi
@@ -25,7 +25,7 @@ for f in "$1"/*; do
 done
 
 # Remove any broken symlinks e.g. from drives that were removed
-for f in /run/flatpak/sideload-repos/automount-*; do
+for f in /run/flatpak/sideload-repos/automount*; do
     if ! test -e "$f"; then
         rm "$f"
     fi
