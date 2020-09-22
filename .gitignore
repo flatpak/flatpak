@@ -54,7 +54,7 @@ session-helper/*.service
 system-helper/*.service
 sideload-repos-systemd/flatpak-sideload-usb-repo.service
 sideload-repos-systemd/flatpak-sideload-usb-repo.path
-tests/*.service
+tests/services
 flatpak.conf
 flatpak.env
 flatpak.sh
