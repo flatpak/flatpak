@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This script is intended to be run by flatpak-sideload-usb-repo.service
+
 shopt -s nullglob
 
 if ! test $# -eq 1 || ! test -d "$1"; then
