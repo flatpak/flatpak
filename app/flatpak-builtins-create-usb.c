@@ -680,7 +680,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
 
     /* Try to update the repo metadata by creating a FlatpakRemoteState object,
      * but don't fail on error because we want this to work offline. */
-    state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, &local_error);
+    state = flatpak_dir_get_remote_state_optional (dir, remote_name, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, &local_error);
     if (state == NULL)
       {
         g_printerr (_("Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"),

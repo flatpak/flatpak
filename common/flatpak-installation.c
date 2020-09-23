@@ -1870,7 +1870,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
       return NULL;
     }
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2030,7 +2030,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (remote_name == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2272,7 +2272,7 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return FALSE;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -2314,7 +2314,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -2386,7 +2386,7 @@ flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
   if (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED)
     state = flatpak_dir_get_remote_state_local_only (dir, remote_or_uri, cancellable, error);
   else
-    state = flatpak_dir_get_remote_state (dir, remote_or_uri, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
+    state = flatpak_dir_get_remote_state (dir, remote_or_uri, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) ? FLATPAK_CACHE_ONLY : FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2496,7 +2496,7 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   if (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED)
     state = flatpak_dir_get_remote_state_local_only (dir, remote_name, cancellable, error);
   else
-    state = flatpak_dir_get_remote_state (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
+    state = flatpak_dir_get_remote_state (dir, remote_name, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) ? FLATPAK_CACHE_ONLY : FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -2673,7 +2673,7 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return NULL;
 

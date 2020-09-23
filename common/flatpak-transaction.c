@@ -1751,7 +1751,7 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
   if (state)
     return flatpak_remote_state_ref (state);
 
-  state = flatpak_dir_get_remote_state_optional (priv->dir, remote, FALSE, NULL, error);
+  state = flatpak_dir_get_remote_state_optional (priv->dir, remote, FLATPAK_CACHE_ALWAYS_REFRESH, NULL, error);
 
   if (state)
     {

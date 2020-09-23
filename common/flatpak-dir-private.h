@@ -336,6 +336,23 @@ typedef enum {
   FIND_MATCHING_REFS_FLAGS_FUZZY = (1 << 1),
 } FindMatchingRefsFlags;
 
+/**
+ * FlatpakCachePolicy:
+ * @FLATPAK_CACHE_ALWAYS_REFRESH: Always do a small amount of network I/O to
+ *    check the cache freshness against the server (and update it if necessary).
+ * @FLATPAK_CACHE_ONLY: Use the cache if available, and error otherwise.
+ *
+ * Cache query policy, determining how a function will interact with the cache
+ * and the network. Typically this is used for caching of the repository’s
+ * `summary` file.
+ *
+ * Since: 1.9.1
+ */
+typedef enum {
+  FLATPAK_CACHE_ALWAYS_REFRESH = 0,
+  FLATPAK_CACHE_ONLY = 1,
+} FlatpakCachePolicy;
+
 GQuark       flatpak_dir_error_quark (void);
 
 /**
@@ -915,7 +932,7 @@ gboolean flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *
                                                             GError            **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state (FlatpakDir   *self,
                                                    const char   *remote,
-                                                   gboolean      only_cached,
+                                                   FlatpakCachePolicy cache_policy,
                                                    GCancellable *cancellable,
                                                    GError      **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
@@ -930,13 +947,13 @@ gboolean flatpak_dir_migrate_config (FlatpakDir   *self,
                                      GError      **error);
 gboolean flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                               const char   *remote,
-                                              gboolean      only_cached,
+                                              FlatpakCachePolicy cache_policy,
                                               GBytes      **out_summary,
                                               GCancellable *cancellable,
                                               GError      **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                                             const char   *remote,
-                                                            gboolean      only_cached,
+                                                            FlatpakCachePolicy cache_policy,
                                                             GCancellable *cancellable,
                                                             GError      **error);
 FlatpakRemoteState * flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,

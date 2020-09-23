@@ -1351,11 +1351,11 @@ get_remote_state (FlatpakDir   *dir,
     }
   else
     {
-      state = flatpak_dir_get_remote_state (dir, remote, cached, cancellable, &local_error);
+      state = flatpak_dir_get_remote_state (dir, remote, cached ? FLATPAK_CACHE_ONLY : FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, &local_error);
       if (state == NULL && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED))
         {
           g_clear_error (&local_error);
-          state = flatpak_dir_get_remote_state (dir, remote, FALSE, cancellable, &local_error);
+          state = flatpak_dir_get_remote_state (dir, remote, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, &local_error);
         }
 
       if (state == NULL)

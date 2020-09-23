@@ -123,7 +123,7 @@ static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
 
 static gboolean flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                                   const char   *name,
-                                                  gboolean      only_cached,
+                                                  FlatpakCachePolicy cache_policy,
                                                   GBytes      **out_summary,
                                                   GBytes      **out_summary_sig,
                                                   GCancellable *cancellable,
@@ -4608,7 +4608,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   is_oci = flatpak_dir_get_remote_oci (self, remote);
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return FALSE;
 
@@ -10728,7 +10728,7 @@ flatpak_dir_cache_summary (FlatpakDir *self,
 gboolean
 flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
                                      const char   *remote,
-                                     gboolean      only_cached,
+                                     FlatpakCachePolicy cache_policy,
                                      GBytes      **out_summary,
                                      GCancellable *cancellable,
                                      GError      **error)
@@ -10748,7 +10748,7 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
       const char *installation = flatpak_dir_get_id (self);
       FlatpakHelperGenerateOciSummaryFlags flags = FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NONE;
 
-      if (only_cached)
+      if (cache_policy == FLATPAK_CACHE_ONLY)
         flags |= FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ONLY_CACHED;
 
       if (!flatpak_dir_system_helper_call_generate_oci_summary (self,
@@ -10774,7 +10774,7 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
       if (summary_cache == NULL)
         return FALSE;
 
-      if (!only_cached && !check_destination_mtime (index_cache, summary_cache, cancellable))
+      if (cache_policy != FLATPAK_CACHE_ONLY && !check_destination_mtime (index_cache, summary_cache, cancellable))
         {
           summary = flatpak_oci_index_make_summary (index_cache, index_uri, cancellable, &local_error);
           if (summary == NULL)
@@ -10805,7 +10805,7 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
       mfile = g_mapped_file_new (flatpak_file_get_path_cached (summary_cache), FALSE, error);
       if (mfile == NULL)
         {
-          if (only_cached)
+          if (cache_policy == FLATPAK_CACHE_ONLY)
             {
               g_clear_error (error);
               g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED,
@@ -10825,7 +10825,7 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
 static gboolean
 flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                   const char   *name_or_uri,
-                                  gboolean      only_cached,
+                                  FlatpakCachePolicy cache_policy,
                                   GBytes      **out_summary,
                                   GBytes      **out_summary_sig,
                                   GCancellable *cancellable,
@@ -10863,7 +10863,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   if (flatpak_dir_get_remote_oci (self, name_or_uri))
     {
       if (!flatpak_dir_remote_make_oci_summary (self, name_or_uri,
-                                                only_cached,
+                                                cache_policy == FLATPAK_CACHE_ONLY,
                                                 &summary,
                                                 cancellable,
                                                 error))
@@ -10872,7 +10872,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   else
     {
       g_debug ("Fetching summary file for remote ‘%s’", name_or_uri);
-      if (only_cached)
+      if (cache_policy == FLATPAK_CACHE_ONLY)
         {
           g_autofree char *sig_name = g_strconcat (name_or_uri, ".sig", NULL);
           g_autoptr(GFile) summary_cache_file = flatpak_build_file (self->cache_dir, "summaries", name_or_uri, NULL);
@@ -10904,7 +10904,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   if (summary == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Remote listing for %s not available; server has no summary file. Check the URL passed to remote-add was valid."), name_or_uri);
 
-  if (!is_local && !only_cached)
+  if (!is_local && cache_policy != FLATPAK_CACHE_ONLY)
     flatpak_dir_cache_summary (self, summary, summary_sig, name_or_uri, url);
 
   *out_summary = g_steal_pointer (&summary);
@@ -10919,7 +10919,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
                                const char   *remote_or_uri,
                                gboolean      optional,
                                gboolean      local_only,
-                               gboolean      only_cached,
+                               FlatpakCachePolicy cache_policy,
                                GBytes       *opt_summary,
                                GBytes       *opt_summary_sig,
                                GCancellable *cancellable,
@@ -10987,7 +10987,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       g_autoptr(GBytes) summary_bytes = NULL;
       g_autoptr(GBytes) summary_sig_bytes = NULL;
 
-      if (flatpak_dir_remote_fetch_summary (self, remote_or_uri, only_cached, &summary_bytes, &summary_sig_bytes,
+      if (flatpak_dir_remote_fetch_summary (self, remote_or_uri, cache_policy, &summary_bytes, &summary_sig_bytes,
                                             cancellable, &local_error))
         {
           state->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
@@ -11037,11 +11037,11 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 FlatpakRemoteState *
 flatpak_dir_get_remote_state (FlatpakDir   *self,
                               const char   *remote,
-                              gboolean      only_cached,
+                              FlatpakCachePolicy cache_policy,
                               GCancellable *cancellable,
                               GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, only_cached, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, cache_policy, NULL, NULL, cancellable, error);
 }
 
 /* This is an alternative way to get the state where the summary is
@@ -11059,7 +11059,7 @@ flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
                                           GCancellable *cancellable,
                                           GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, FALSE, opt_summary, opt_summary_sig, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, FLATPAK_CACHE_ALWAYS_REFRESH, opt_summary, opt_summary_sig, cancellable, error);
 }
 
 /* This is an alternative way to get the remote state that doesn't
@@ -11073,11 +11073,11 @@ flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
 FlatpakRemoteState *
 flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                        const char   *remote,
-                                       gboolean      only_cached,
+                                       FlatpakCachePolicy cache_policy,
                                        GCancellable *cancellable,
                                        GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, TRUE, FALSE, only_cached, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, FALSE, cache_policy, NULL, NULL, cancellable, error);
 }
 
 
@@ -11089,7 +11089,7 @@ flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, TRUE, TRUE, FALSE, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, TRUE, FLATPAK_CACHE_ALWAYS_REFRESH, NULL, NULL, cancellable, error);
 }
 
 static gboolean
@@ -11100,7 +11100,7 @@ flatpak_dir_remote_has_ref (FlatpakDir *self,
   g_autoptr(GError) local_error = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, NULL, &local_error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, FLATPAK_CACHE_ALWAYS_REFRESH, NULL, &local_error);
   if (state == NULL)
     {
       g_debug ("Can't get state for remote %s: %s", remote, local_error->message);
@@ -11455,7 +11455,7 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
   g_autoptr(FlatpakRemoteState) state = NULL;
   GPtrArray *matched_refs;
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -11562,7 +11562,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
+  state = flatpak_dir_get_remote_state_optional (self, remote, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
   if (state == NULL)
     return NULL;
 
@@ -13473,7 +13473,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
     state = optional_remote_state;
   else
     {
-      local_state = flatpak_dir_get_remote_state (self, remote, FALSE, cancellable, error);
+      local_state = flatpak_dir_get_remote_state (self, remote, FLATPAK_CACHE_ALWAYS_REFRESH, cancellable, error);
       if (local_state == NULL)
         return FALSE;
       state = local_state;

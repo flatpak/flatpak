@@ -571,7 +571,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      state = flatpak_dir_get_remote_state (system, arg_origin, FALSE, NULL, &error);
+      state = flatpak_dir_get_remote_state (system, arg_origin, FLATPAK_CACHE_ALWAYS_REFRESH, NULL, &error);
       if (state == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -645,7 +645,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      state = flatpak_dir_get_remote_state_optional (system, arg_origin, FALSE, NULL, &error);
+      state = flatpak_dir_get_remote_state_optional (system, arg_origin, FLATPAK_CACHE_ALWAYS_REFRESH, NULL, &error);
       if (state == NULL)
         {
           flatpak_invocation_return_error (invocation, error, "Error getting remote state");
@@ -868,7 +868,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      state = flatpak_dir_get_remote_state_optional (system, arg_origin, FALSE, NULL, &error);
+      state = flatpak_dir_get_remote_state_optional (system, arg_origin, FLATPAK_CACHE_ALWAYS_REFRESH, NULL, &error);
       if (state == NULL)
         {
           flatpak_invocation_return_error (invocation, error, "Error getting remote state");
@@ -1794,7 +1794,7 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
-  gboolean only_cached;
+  FlatpakCachePolicy cache_policy;
   gboolean is_oci;
 
   g_debug ("GenerateOciSummary %u %s %s", arg_flags, arg_origin, arg_installation);
@@ -1813,7 +1813,7 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  only_cached = (arg_flags & FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ONLY_CACHED) != 0;
+  cache_policy = (arg_flags & FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ONLY_CACHED) ? FLATPAK_CACHE_ONLY : FLATPAK_CACHE_ALWAYS_REFRESH;
 
   if (!flatpak_dir_ensure_repo (system, NULL, &error))
     {
@@ -1830,7 +1830,7 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (!flatpak_dir_remote_make_oci_summary (system, arg_origin, only_cached, NULL, NULL, &error))
+  if (!flatpak_dir_remote_make_oci_summary (system, arg_origin, cache_policy, NULL, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Failed to update OCI summary");
       return TRUE;
