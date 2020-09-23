@@ -3,17 +3,13 @@
 # This script is intended to be run by flatpak-sideload-usb-repo.service
 
 shopt -s nullglob
-
-if ! test $# -eq 1 || ! test -d "$1"; then
-  echo "Error: first argument must be a directory"
-  exit 1
-fi
+media_dir=${1:?path to media directory is required}
 
 # Add a link to any newly inserted drives which might have been copied to with
 # "flatpak create-usb". If we were to check for a repo on the drive that would
 # break the case of using it for sideloading directly after copying to it (e.g.
 # for testing).
-for f in "$1"/*; do
+for f in "$media_dir"/*; do
     if ! test -d "$f"; then
         continue
     fi
