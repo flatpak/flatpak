@@ -46,7 +46,8 @@
  * The dependency resolution that is the first step of executing a transaction can
  * be influenced by flatpak_transaction_set_disable_dependencies(),
  * flatpak_transaction_set_disable_related(), flatpak_transaction_add_dependency_source()
- * and flatpak_transaction_add_default_dependency_sources().
+ * and flatpak_transaction_add_default_dependency_sources(). At this point, the
+ * remote summaries are queried and cached for the duration of the transaction.
  *
  * The underlying operations that get orchestrated by a FlatpakTransaction are: pulling
  * new data from remote repositories, deploying newer applications or runtimes and pruning
@@ -1737,6 +1738,7 @@ kind_to_str (FlatpakTransactionOperationType kind)
 static FlatpakRemoteState *
 flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
                                          FlatpakTransactionOperationType kind,
+                                         FlatpakCachePolicy              cache_policy,
                                          const char                     *remote,
                                          GError                        **error)
 {
@@ -1751,7 +1753,7 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
   if (state)
     return flatpak_remote_state_ref (state);
 
-  state = flatpak_dir_get_remote_state_optional (priv->dir, remote, FLATPAK_CACHE_ALWAYS_REFRESH, NULL, error);
+  state = flatpak_dir_get_remote_state_optional (priv->dir, remote, cache_policy, NULL, error);
 
   if (state)
     {
@@ -1872,7 +1874,7 @@ add_related (FlatpakTransaction          *self,
 
   if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
-      state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
+      state = flatpak_transaction_ensure_remote_state (self, op->kind, FLATPAK_CACHE_ONLY, op->remote, error);
       if (state == NULL)
         return FALSE;
     }
@@ -2179,7 +2181,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
    * remote to be fatal */
   if (kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
-      state = flatpak_transaction_ensure_remote_state (self, kind, remote, error);
+      state = flatpak_transaction_ensure_remote_state (self, kind, FLATPAK_CACHE_ONLY, remote, error);
       if (state == NULL)
         return FALSE;
     }
@@ -2432,13 +2434,13 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
   if (local_only)
     return TRUE;
 
-  /* Update metadata for said remotes */
+  /* Update metadata and summary files for said remotes */
   for (i = 0; remotes[i] != NULL; i++)
     {
       char *remote = remotes[i];
       gboolean updated = FALSE;
       g_autoptr(GError) my_error = NULL;
-      g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
+      g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, FLATPAK_CACHE_ALWAYS_REFRESH, remote, NULL);
 
       g_debug ("Looking for remote metadata updates for %s", remote);
       if (!flatpak_dir_update_remote_configuration (priv->dir, remote, state, &updated, cancellable, &my_error))
@@ -2499,7 +2501,7 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
           deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
           if (deploy == NULL)
             {
-              g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
+              g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, FLATPAK_CACHE_ONLY, remote, NULL);
 
               if (state != NULL &&
                   flatpak_remote_state_lookup_ref (state, auto_install_ref, NULL, NULL, NULL, NULL, NULL))
@@ -2808,7 +2810,7 @@ resolve_ops (FlatpakTransaction *self,
             priv->max_op = MAX (priv->max_op, RUNTIME_INSTALL);
         }
 
-      state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, error);
+      state = flatpak_transaction_ensure_remote_state (self, op->kind, FLATPAK_CACHE_ONLY, op->remote, error);
       if (state == NULL)
         return FALSE;
 
@@ -4226,7 +4228,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
           res = FALSE;
         }
       else if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL &&
-               (state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, &local_error)) == NULL)
+               (state = flatpak_transaction_ensure_remote_state (self, op->kind, FLATPAK_CACHE_ONLY, op->remote, &local_error)) == NULL)
         {
           res = FALSE;
         }
