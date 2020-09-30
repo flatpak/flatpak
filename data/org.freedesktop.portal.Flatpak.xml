@@ -226,14 +226,15 @@
 
     <!--
         SpawnSignal:
-        @pid: the PID of the process to send the signal to
-        @signal: the signal to send (see signal(7))
+        @pid: the PID inside the container to signal
+        @signal: the signal to send (see <citerefentry><refentrytitle>signal</refentrytitle><manvolnum>7</manvolnum></citerefentry>)
         @to_process_group: whether to send the signal to the process group
 
         This method lets you send a Unix signal to a process
         that was started with org.freedesktop.portal.Flatpak.Spawn().
         The @pid argument here should be the PID that is returned
-        by the Spawn() call.
+        by the Spawn() call: it is not necessarily valid in the caller's
+        PID namespace.
       -->
     <method name="SpawnSignal">
       <arg type='u' name='pid' direction='in'/>
@@ -266,10 +267,18 @@
     <!--
         SpawnExited:
         @pid: the PID of the process that has ended
-        @exit_status: the exit status (see waitpid(2))
+        @exit_status: the wait status (see <citerefentry><refentrytitle>waitpid</refentrytitle><manvolnum>2</manvolnum></citerefentry>)
 
         Emitted when a process started by org.freedesktop.portal.Flatpak.Spawn()
         exits.
+        Use g_spawn_check_exit_status(), or the macros such as
+        WIFEXITED documented in
+        <citerefentry><refentrytitle>waitpid</refentrytitle><manvolnum>2</manvolnum></citerefentry>,
+        to interpret the @exit_status.
+
+        This signal is not emitted for processes that were not launched
+        directly by Spawn(), for example if a process launched by
+        Spawn() runs foreground or background child processes.
     -->
     <signal name="SpawnExited">
       <arg type='u' name='pid' direction='out'/>
