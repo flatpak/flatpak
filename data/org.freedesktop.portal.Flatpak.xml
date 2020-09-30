@@ -47,7 +47,7 @@
          The following flags values are supported:
          <variablelist>
            <varlistentry>
-             <term>1</term>
+             <term>1 (FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS)</term>
              <listitem><para>
                Supports the expose sandbox pids flag of Spawn.
              </para></listitem>
@@ -74,37 +74,37 @@
          The following flags values are supported:
          <variablelist>
            <varlistentry>
-             <term>1</term>
+             <term>1 (FLATPAK_SPAWN_FLAGS_CLEAR_ENV)</term>
              <listitem><para>
                Clear the environment.
              </para></listitem>
            </varlistentry>
            <varlistentry>
-             <term>2</term>
+             <term>2 (FLATPAK_SPAWN_FLAGS_LATEST_VERSION)</term>
              <listitem><para>
                Spawn the latest version of the app.
              </para></listitem>
            </varlistentry>
            <varlistentry>
-             <term>4</term>
+             <term>4 (FLATPAK_SPAWN_FLAGS_SANDBOX)</term>
              <listitem><para>
                Spawn in a sandbox (equivalent of the sandbox option of flatpak run).
              </para></listitem>
            </varlistentry>
            <varlistentry>
-             <term>8</term>
+             <term>8 (FLATPAK_SPAWN_FLAGS_NO_NETWORK)</term>
              <listitem><para>
                Spawn without network (equivalent of the unshare=network option of flatpak run).
              </para></listitem>
            </varlistentry>
            <varlistentry>
-             <term>16</term>
+             <term>16 (FLATPAK_SPAWN_FLAGS_WATCH_BUS)</term>
              <listitem><para>
                Kill the sandbox when the caller disappears from the session bus.
              </para></listitem>
            </varlistentry>
            <varlistentry>
-             <term>32</term>
+             <term>32 (FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS)</term>
              <listitem><para>
                Expose the sandbox pids in the callers sandbox, only supported if using user namespaces for containers (not setuid), see the support property.
                </para><para>
@@ -112,7 +112,7 @@
              </para></listitem>
            </varlistentry>
            <varlistentry>
-             <term>64</term>
+             <term>64 (FLATPAK_SPAWN_FLAGS_NOTIFY_START)</term>
              <listitem><para>
                Emit a SpawnStarted signal once the sandboxed process has been
                fully started.
