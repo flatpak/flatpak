@@ -68,7 +68,7 @@
          @options: Vardict with optional further information
          @pid: the PID of the new process
 
-         This methods let you start a new instance of your
+         This method lets you start a new instance of your
          application, optionally enabling a tighter sandbox.
 
          The following flags values are supported:
@@ -226,7 +226,7 @@
         @signal: the signal to send (see signal(7))
         @to_process_group: whether to send the signal to the process group
 
-        This methods let you send a Unix signal to a process
+        This method lets you send a Unix signal to a process
         that was started with org.freedesktop.portal.Flatpak.Spawn().
         The @pid argument here should be the PID that is returned
         by the Spawn() call.
