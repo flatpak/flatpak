@@ -70,14 +70,78 @@
     </method>
   </interface>
 
+  <!--
+      org.freedesktop.Flatpak.Development:
+      @short_description: Flatpak development interface
+
+      The Development interface lets any client, possibly in a sandbox if
+      it has access to the session helper, spawn a process on the host,
+      outside any sandbox.
+
+      Clearly this is not something you typically want a sandboxed app to
+      do: it is a sandbox escape allowing arbitrary code execution,
+      and must not be allowed for applications where sandboxing is
+      intended to be a security boundary.
+
+      However, it is very useful when using Flatpak for distribution and
+      choice of runtime library stack, without intending to create a
+      security boundary. For instance, if an IDE like GNOME Builder is
+      distributed as a trusted Flatpak app and will be used to build other
+      Flatpak apps, it needs to use this facility to launch a Flatpak
+      build operation inside the sandbox, because otherwise recursive
+      calls to flatpak will not work.
+
+      This interface is provided on the D-Bus session bus by the
+      well-known D-Bus name org.freedesktop.Flatpak,
+      at the object path /org/freedesktop/Flatpak/Development.
+
+      This documentation describes version 1 of this interface.
+  -->
   <interface name='org.freedesktop.Flatpak.Development'>
+    <!--
+        version:
+
+        The API version number.
+        This documentation describes version 1 of this interface.
+    -->
     <property name="version" type="u" access="read"/>
 
-    <!-- This methods let you start processes, sandboxed or not on the
-         host, so its not generally safe to allow access to it to any
-         application. However, at times it is very useful to be able
-         to do this. For instance for developer tools this lets you
-         build flatpaks from inside a flatpak. -->
+    <!--
+        HostCommand:
+        @cwd_path: the working directory for the new process
+        @argv: the argv for the new process, starting with the executable to launch
+        @fds: an array of file descriptors to pass to the new process
+        @envs: an array of variable/value pairs for the environment of the new process
+        @flags: flags
+        @pid: the PID of the new process
+
+        This method lets trusted applications (insider or outside a
+        sandbox) run arbitrary commands in the user's session, outside
+        any sandbox.
+
+        The following flags values are supported:
+
+        <variablelist>
+          <varlistentry>
+            <term>1 (FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV)</term>
+            <listitem><para>
+              Clear the environment.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>2 (FLATPAK_HOST_COMMAND_FLAGS_WATCH_BUS)</term>
+            <listitem><para>
+              Kill the sandbox when the caller disappears from the session bus.
+            </para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        Unknown (unsupported) flags are an error and will cause HostCommand()
+        to fail.
+
+        Note that unlike org.freedesktop.portal.Flatpak.Spawn(), there
+        is no options parameter here.
+    -->
     <method name="HostCommand">
       <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
       <arg type='ay' name='cwd_path' direction='in'/>
@@ -87,11 +151,41 @@
       <arg type='u' name='flags' direction='in'/>
       <arg type='u' name='pid' direction='out'/>
     </method>
+
+    <!--
+        HostCommandSignal:
+        @pid: the process ID on the host system
+        @signal: the signal to send (see <citerefentry><refentrytitle>signal</refentrytitle><manvolnum>7</manvolnum></citerefentry>)
+        @to_process_group: whether to send the signal to the process group
+
+        This method lets you send a Unix signal to a process
+        that was started with org.freedesktop.Flatpak.Development.HostCommand().
+        The @pid argument here must be a PID that was returned by a
+        call to HostCommand() from the same sender: terminating unrelated
+        processes is not allowed.
+    -->
     <method name="HostCommandSignal">
       <arg type='u' name='pid' direction='in'/>
       <arg type='u' name='signal' direction='in'/>
       <arg type='b' name='to_process_group' direction='in'/>
     </method>
+
+    <!--
+        HostCommandExited:
+        @pid: the PID of the process that has ended
+        @exit_status: the wait status (see <citerefentry><refentrytitle>waitpid</refentrytitle><manvolnum>2</manvolnum></citerefentry>)
+
+        Emitted when a process started by
+        org.freedesktop.Flatpak.Development.HostCommand() exits.
+        Use g_spawn_check_exit_status(), or the macros such as
+        WIFEXITED documented in
+        <citerefentry><refentrytitle>waitpid</refentrytitle><manvolnum>2</manvolnum></citerefentry>,
+        to interpret the @exit_status.
+
+        This signal is not emitted for processes that were not launched
+        directly by HostCommand(), for example if a process launched by
+        HostCommand() runs foreground or background child processes.
+    -->
     <signal name="HostCommandExited">
       <arg type='u' name='pid' direction='out'/>
       <arg type='u' name='exit_status' direction='out'/>
