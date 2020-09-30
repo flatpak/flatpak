@@ -193,6 +193,30 @@
 
   </interface>
 
+  <!--
+      org.freedesktop.Flatpak.SystemHelper:
+      @short_description: Flatpak system service
+
+      The Flatpak system service is used by the libflatpak library
+      to manipulate Flatpak applications and runtimes that are installed
+      system-wide, for example when implementing
+      <command>flatpak install</command>.
+      It is not intended to be contacted by third-party applications
+      or libraries. See the Flatpak source code for more
+      details of this interface's methods.
+
+      This interface is provided on the D-Bus system bus by the
+      well-known D-Bus name org.freedesktop.Flatpak.SystemHelper,
+      at the object path /org/freedesktop/Flatpak/SystemHelper.
+
+      The system helper runs as a privileged user at the system level,
+      and receives method calls from less-privileged users.
+      Authorization for method calls on this interface is mediated by
+      polkit (formerly PolicyKit) using the policy configuration
+      org.freedesktop.Flatpak.policy, and can be configured by
+      system administrators in the same way as for any other system service
+      that uses polkit.
+  -->
   <interface name='org.freedesktop.Flatpak.SystemHelper'>
     <property name="version" type="u" access="read"/>
 
