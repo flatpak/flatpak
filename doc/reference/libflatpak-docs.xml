@@ -30,6 +30,18 @@
     <xi:include href="xml/flatpak-version-macros.xml"/>
   </chapter>
 
+  <chapter>
+    <title>D-Bus APIs</title>
+    <xi:include href="dbus-org.freedesktop.Flatpak.Authenticator.xml"/>
+    <xi:include href="dbus-org.freedesktop.Flatpak.Development.xml"/>
+    <xi:include href="dbus-org.freedesktop.Flatpak.SessionHelper.xml"/>
+    <xi:include href="dbus-org.freedesktop.Flatpak.SystemHelper.xml"/>
+    <xi:include href="dbus-org.freedesktop.impl.portal.PermissionStore.xml"/>
+    <xi:include href="dbus-org.freedesktop.portal.Documents.xml"/>
+    <xi:include href="dbus-org.freedesktop.portal.Flatpak.xml"/>
+    <xi:include href="dbus-org.freedesktop.portal.Flatpak.UpdateMonitor.xml"/>
+  </chapter>
+
   <chapter id="object-tree">
     <title>Object Hierarchy</title>
     <xi:include href="xml/tree_index.sgml"/>

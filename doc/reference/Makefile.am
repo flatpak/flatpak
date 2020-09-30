@@ -47,7 +47,13 @@ EXTRA_HFILES =
 
 HTML_IMAGES =
 
-content_files =
+content_files = \
+	dbus-org.freedesktop.Flatpak.Authenticator.stamp \
+	dbus-org.freedesktop.Flatpak.stamp \
+	dbus-org.freedesktop.impl.portal.PermissionStore.stamp \
+	dbus-org.freedesktop.portal.Documents.stamp \
+	dbus-org.freedesktop.portal.Flatpak.stamp \
+	$(NULL)
 expand_content_files = 
 
 AM_CPPFLAGS = -I$(top_srcdir)/common -I$(top_builddir)/common $(BASE_CFLAGS)
@@ -67,3 +73,5 @@ endif
 libflatpak-docs.html: libflatpak-docs.xml docs
 	$(AM_V_GEN) $(XMLTO) $(XMLTO_FLAGS) --skip-validation xhtml-nochunks -m $(srcdir)/../xmlto-config.xsl $<
 
+dbus-%.stamp: $(top_srcdir)/data/%.xml
+	$(AM_V_GEN)$(GDBUS_CODEGEN) --generate-docbook=dbus $<
