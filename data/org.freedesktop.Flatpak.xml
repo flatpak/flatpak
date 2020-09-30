@@ -24,9 +24,47 @@
 -->
 
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+  <!--
+      org.freedesktop.Flatpak.SessionHelper:
+      @short_description: Flatpak session service
+
+      The Flatpak session service is used by the
+      <command>flatpak run</command> command
+      to bridge various resources from the host system into Flatpak
+      sandboxes. It is not intended to be contacted by third-party
+      applications or libraries.
+
+      This interface is provided on the D-Bus session bus by the
+      well-known D-Bus name org.freedesktop.Flatpak,
+      at the object path /org/freedesktop/Flatpak/SessionHelper.
+
+      Note that the service owning the org.freedesktop.Flatpak
+      well-known name also exports the
+      org.freedesktop.Flatpak.Development interface. As a result,
+      letting a sandboxed application contact that well-known name
+      is a sandbox escape, which must only be allowed for trusted
+      applications where there is not intended to be any security
+      boundary between sandbox and host system.
+
+      This documentation describes version 1 of this interface.
+  -->
   <interface name='org.freedesktop.Flatpak.SessionHelper'>
+    <!--
+        version:
+
+        The API version number.
+        This documentation describes version 1 of this interface.
+    -->
     <property name="version" type="u" access="read"/>
 
+    <!--
+        RequestSession:
+        @data: Information about the new session
+
+        Set up monitoring and resources for a
+        <command>flatpak run</command> session.
+        See the Flatpak source code for details.
+    -->
     <method name="RequestSession">
       <arg type='a{sv}' name='data' direction='out'/>
     </method>
