@@ -303,8 +303,8 @@ glnx_open_anonymous_tmpfile_full (int          flags,
 }
 
 /* A variant of `glnx_open_tmpfile_linkable_at()` which doesn't support linking.
- * Useful for true temporary storage. The fd will be allocated in `/var/tmp`
- * (or `$TMPDIR` if `/var/tmp` doesn't exist) to ensure maximum storage space.
+ * Useful for true temporary storage. The fd will be allocated in `$TMPDIR` if
+ * set or `/var/tmp` otherwise.
  *
  * If you need the file on a specific filesystem use glnx_open_anonymous_tmpfile_full()
  * which lets you pass a directory.
@@ -314,37 +314,10 @@ glnx_open_anonymous_tmpfile (int          flags,
                              GLnxTmpfile *out_tmpf,
                              GError     **error)
 {
-  if (glnx_open_anonymous_tmpfile_full (flags, "/var/tmp", out_tmpf, error))
-    return TRUE;
-  else if ((*error)->code == G_IO_ERROR_NOT_FOUND)
-    {
-      /* If /var/tmp doesn't exist, such as in a NixOS build or
-       * other constrained systems, this will fail.
-       *
-       * Therefore, we try again using the directory in $TMPDIR if possible.
-       */
-      const char *tmpdir = getenv("TMPDIR");
-      if (tmpdir == NULL)
-        return FALSE;
-
-      GError *tmp_error;
-      tmp_error = NULL;
-      if (!glnx_open_anonymous_tmpfile_full (flags, tmpdir,
-                                             out_tmpf, &tmp_error))
-        {
-          g_propagate_error (error, tmp_error);
-          return FALSE;
-        }
-      else
-        {
-          // Don't leave the error from the first call to
-          // glnx_open_anonymous_tmpfile_full in `error`.
-          g_clear_error(error);
-          return TRUE;
-        }
-    }
-  else
-    return FALSE;
+  return glnx_open_anonymous_tmpfile_full (flags,
+                                           getenv("TMPDIR") ?: "/var/tmp",
+                                           out_tmpf,
+                                           error);
 }
 
 /* Use this after calling glnx_open_tmpfile_linkable_at() to give
