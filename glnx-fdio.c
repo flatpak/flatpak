@@ -303,8 +303,8 @@ glnx_open_anonymous_tmpfile_full (int          flags,
 }
 
 /* A variant of `glnx_open_tmpfile_linkable_at()` which doesn't support linking.
- * Useful for true temporary storage. The fd will be allocated in /var/tmp to
- * ensure maximum storage space.
+ * Useful for true temporary storage. The fd will be allocated in `$TMPDIR` if
+ * set or `/var/tmp` otherwise.
  *
  * If you need the file on a specific filesystem use glnx_open_anonymous_tmpfile_full()
  * which lets you pass a directory.
@@ -314,7 +314,10 @@ glnx_open_anonymous_tmpfile (int          flags,
                              GLnxTmpfile *out_tmpf,
                              GError     **error)
 {
-  return glnx_open_anonymous_tmpfile_full (flags, "/var/tmp", out_tmpf, error);
+  return glnx_open_anonymous_tmpfile_full (flags,
+                                           getenv("TMPDIR") ?: "/var/tmp",
+                                           out_tmpf,
+                                           error);
 }
 
 /* Use this after calling glnx_open_tmpfile_linkable_at() to give
