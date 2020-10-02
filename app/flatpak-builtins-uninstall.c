@@ -219,7 +219,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           FlatpakDir *dir = g_ptr_array_index (dirs, j);
           g_autoptr(FlatpakInstallation) installation = NULL;
           UninstallDir *udir;
-          g_autoptr(GPtrArray) unused = NULL;
+          g_auto(GStrv) unused = NULL;
           g_autoptr(GPtrArray) pinned = NULL;
 
           flatpak_dir_maybe_ensure_repo (dir, NULL, NULL);
@@ -245,15 +245,13 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
           udir = uninstall_dir_ensure (uninstall_dirs, dir);
 
-          unused = flatpak_installation_list_unused_refs (installation, opt_arch, cancellable, error);
+          unused = flatpak_dir_list_unused_refs_with_options (dir, opt_arch, NULL, NULL, FALSE, cancellable, error);
           if (unused == NULL)
             return FALSE;
 
-          for (i = 0; i < unused->len; i++)
+          for (char **iter = unused; iter && *iter; iter++)
             {
-              FlatpakInstalledRef *rref = g_ptr_array_index (unused, i);
-              const char *ref = flatpak_ref_format_ref_cached (FLATPAK_REF (rref));
-
+              const char *ref = *iter;
               uninstall_dir_add_ref (udir, ref);
               found_something_to_uninstall = TRUE;
             }
