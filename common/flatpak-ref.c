@@ -57,6 +57,7 @@ struct _FlatpakRefPrivate
   char          *commit;
   FlatpakRefKind kind;
   char          *collection_id;
+  volatile char *cached_full_ref;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRef, flatpak_ref, G_TYPE_OBJECT)
@@ -83,6 +84,7 @@ flatpak_ref_finalize (GObject *object)
   g_free (priv->branch);
   g_free (priv->commit);
   g_free (priv->collection_id);
+  g_free ((char *)g_atomic_pointer_get (&priv->cached_full_ref));
 
   G_OBJECT_CLASS (flatpak_ref_parent_class)->finalize (object);
 }
@@ -354,16 +356,21 @@ flatpak_ref_format_ref (FlatpakRef *self)
 const char *
 flatpak_ref_format_ref_cached (FlatpakRef *self)
 {
-  char *full_ref;
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
+  const char *full_ref;
+  char *full_ref_new;
 
-  full_ref = g_object_get_data (G_OBJECT (self), "cached-full-ref");
-  if (!full_ref)
+  full_ref = (const char *)g_atomic_pointer_get (&priv->cached_full_ref);
+  if (full_ref == NULL)
     {
-      full_ref = flatpak_ref_format_ref (self);
-      g_object_set_data_full (G_OBJECT (self), "cached-full-ref", full_ref, g_free);
+      full_ref_new = flatpak_ref_format_ref (self);
+      if (!g_atomic_pointer_compare_and_exchange (&priv->cached_full_ref, NULL, full_ref_new))
+        g_free (full_ref_new); /* Raced with someone, free our version */
+
+      full_ref = (const char *)g_atomic_pointer_get (&priv->cached_full_ref); /* Now guaranteed to be non-NULL */
     }
 
-  return (const char *) full_ref;
+  return full_ref;
 }
 
 /**
