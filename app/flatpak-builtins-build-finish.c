@@ -588,6 +588,12 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
           goto out;
         }
 
+      if (!flatpak_is_valid_name (elements[0], error))
+        {
+          glnx_prefix_error (error, _("Invalid extension name %s"), elements[0]);
+          goto out;
+        }
+
       groupname = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION,
                                elements[0], NULL);
 

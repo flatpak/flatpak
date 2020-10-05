@@ -449,6 +449,9 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
       if (g_strv_length (elements) < 2)
         return flatpak_fail (error, _("Too few elements in --extension argument %s, format should be NAME=VAR[=VALUE]"), opt_extensions[i]);
 
+      if (!flatpak_is_valid_name (elements[0], error))
+        return glnx_prefix_error (error, _("Invalid extension name %s"), elements[0]);
+
       groupname = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION,
                                elements[0], NULL);
 
