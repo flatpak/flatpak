@@ -350,6 +350,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   if (!ostree_repo_list_refs (repo, NULL, &all_refs, cancellable, error))
     return FALSE;
 
+  i = 0;
   GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, refspec, const char *, checksum)
   {
     g_autofree char *remote = NULL;
@@ -379,11 +380,23 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
           }
       }
 
-    g_print (_("Verifying %s…\n"), refspec);
+    /* When printing progress, we have to print a newline character at the end, otherwise errors printing in
+       sections of the code that we don't control won't have a leading newline. Therefore, the status line will
+       always print a trailing newline, and here we just go up a line back onto the previous progress line.
+
+       This does also mean that other areas of this code section that print errors will need to print a trailing
+       newline as well, otherwise the output will overwrite any errors. */
+    if (flatpak_fancy_output ())
+      g_print ("\033[A\r\033[K");
+
+    g_print (_("[%d/%d] Verifying %s…\n"), ++i, g_hash_table_size (all_refs), refspec);
 
     status = fsck_commit (repo, checksum, object_status_cache);
-    if (status != FSCK_STATUS_OK && !opt_dry_run)
+    if (status != FSCK_STATUS_OK)
       {
+        if (opt_dry_run)
+          g_printerr (_("Dry run: "));
+
         switch (status)
           {
           case FSCK_STATUS_HAS_MISSING_OBJECTS:
@@ -398,9 +411,18 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
             g_printerr (_("Deleting ref %s due to %d\n"), refspec, status);
             break;
           }
-        (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+
+        if (!opt_dry_run)
+          (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+
+        /* If using fancy output, print another trailing newline, so the next progress line won't overwrite
+           these errors. */
+        if (flatpak_fancy_output () && i < g_hash_table_size (all_refs))
+          g_print ("\n");
       }
   }
+
+  g_print (_("Checking remotes...\n"));
 
   GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, refspec, const char *, checksum)
   {
