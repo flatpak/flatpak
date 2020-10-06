@@ -14629,227 +14629,278 @@ flatpak_dir_delete_mirror_refs (FlatpakDir    *self,
   return TRUE;
 }
 
-static gboolean
-maybe_get_metakey_and_origin (FlatpakDir  *dir,
-                              const char  *ref,
-                              GHashTable  *metadata_injection,
-                              GKeyFile   **out_metakey,
-                              char       **out_origin)
-{
-  g_autoptr(GKeyFile) metakey = NULL;
-  g_autofree char *origin = NULL;
 
-  origin = flatpak_dir_get_origin (dir, ref, NULL, NULL);
-  if (origin == NULL)
+static gboolean
+dir_get_origin_and_metadata (FlatpakDir  *dir,
+                             const char  *ref,
+                             GKeyFile   **out_metakey,
+                             char       **out_origin)
+{
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autofree char *metadata_contents = NULL;
+  gsize metadata_size;
+
+  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
+  if (deploy_dir == NULL)
     return FALSE;
 
-  if (metadata_injection != NULL)
-    metakey = g_hash_table_lookup (metadata_injection, ref);
-  if (metakey != NULL)
-    g_key_file_ref (metakey);
-  else
-    {
-      g_autoptr(FlatpakDeploy) deploy = flatpak_dir_load_deployed (dir, ref, NULL, NULL, NULL);
-      if (deploy == NULL)
-        return FALSE;
-      metakey = flatpak_deploy_get_metadata (deploy);
-    }
+  deploy_data = flatpak_load_deploy_data (deploy_dir,
+                                          ref,
+                                          FLATPAK_DEPLOY_VERSION_ANY,
+                                          NULL, NULL);
+  if (deploy_data == NULL)
+    return FALSE;
 
-  if (out_metakey)
-    *out_metakey = g_steal_pointer (&metakey);
-  if (out_origin)
-    *out_origin = g_steal_pointer (&origin);
+  metadata = g_file_get_child (deploy_dir, "metadata");
+  if (!g_file_load_contents (metadata, NULL, &metadata_contents, &metadata_size, NULL, NULL))
+    return FALSE;
+
+  metakey = g_key_file_new ();
+  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, NULL))
+    return FALSE;
+
+  *out_origin = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
+  *out_metakey = g_steal_pointer (&metakey);
 
   return TRUE;
 }
 
-static void
-find_used_related_refs (FlatpakDir *dir,
-                        FlatpakDir *system_dir, /* nullable */
-                        GHashTable *used_refs,
-                        GHashTable *metadata_injection,
-                        const char *ref,
-                        GKeyFile   *metakey,
-                        const char *origin)
+static gboolean
+maybe_get_metakey_and_origin (FlatpakDir  *dir,
+                              FlatpakDir  *shadowing_dir,
+                              const char  *ref,
+                              GHashTable  *metadata_injection,
+                              GKeyFile   **out_metakey,
+                              char       **out_origin,
+                              gboolean    *out_ref_is_shadowed)
 {
-  g_autoptr(GPtrArray) related = NULL;
-  int i;
+  g_autofree char *origin = NULL;
 
-  if (system_dir == NULL)
-    g_hash_table_add (used_refs, g_strdup (ref));
+  if (shadowing_dir &&
+      dir_get_origin_and_metadata (shadowing_dir, ref, out_metakey, out_origin))
+    {
+      *out_ref_is_shadowed = TRUE;
+      return TRUE;
+    }
 
-  /* If @system_dir is non-NULL, that means @ref exists in @dir but we should
-   * look in @system_dir for related things */
-  if (system_dir != NULL)
-    related = flatpak_dir_find_local_related_for_metadata (system_dir, ref, origin, metakey, NULL, NULL);
-  else
-    related = flatpak_dir_find_local_related_for_metadata (dir, ref, origin, metakey, NULL, NULL);
+  if (metadata_injection != NULL)
+    {
+      GKeyFile *injected_metakey = g_hash_table_lookup (metadata_injection, ref);
+      if (injected_metakey != NULL)
+        {
+          /* TODO: What do we use for origin here, it may not be installed, or
+           * the injection could come from another origin */
+          origin = flatpak_dir_get_origin (dir, ref, NULL, NULL);
+          if (origin != NULL)
+            {
+              *out_ref_is_shadowed = FALSE;
+              *out_metakey = g_key_file_ref (injected_metakey);
+              *out_origin = g_steal_pointer (&origin);
+              return TRUE;
+            }
+        }
+    }
 
-  if (related == NULL)
+  if (dir_get_origin_and_metadata (dir, ref, out_metakey, out_origin))
+    {
+      *out_ref_is_shadowed = FALSE;
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
+static gboolean
+ref_is_arch (const char *ref,
+             const char *arch)
+{
+  char *p;
+  gsize arch_len;
+
+  if (arch == NULL)
+    return TRUE; /* NULL => match any arch */
+
+  /* Skip app/ or runtime/ */
+  p = strchr (ref, '/');
+  if (p == NULL)
+    return FALSE;
+  p++;
+
+  /* Skip app/rutime id */
+  p = strchr (p, '/');
+  if (p == NULL)
+    return FALSE;
+  p++;
+
+  arch_len = strlen (arch);
+  return strncmp (p, arch, arch_len) == 0 && p[arch_len] == '/';
+}
+
+static void
+queue_ref_for_analysis (const char *ref,
+                        const char *arch,
+                        GHashTable *analyzed_refs,
+                        GQueue     *refs_to_analyze)
+{
+  char *ref_copy;
+
+  if (!ref_is_arch (ref, arch))
     return;
 
-  for (i = 0; i < related->len; i++)
-    {
-      FlatpakRelated *rel = g_ptr_array_index (related, i);
+  if (g_hash_table_lookup (analyzed_refs, ref) != NULL)
+    return;
 
-      /* Check if this related ref is present in @dir, which implies the one
-       * in @system_dir is NOT the one being used. */
-      if (system_dir != NULL)
+  ref_copy = g_strdup (ref);
+  g_hash_table_add (analyzed_refs, ref_copy);
+  g_queue_push_tail (refs_to_analyze, ref_copy); /* owned by analyzed_refs */
+}
+
+/* This traverses from all the "root" refs and into for any recursive dependencies in @self
+ * that they use. In the regular case we just consider the @self installation,
+ * but we can also handle the case where another directory "shadows" self. For example
+ * we might be looking for used refs in the "system" dir, and the "user" dir is
+ * shadowing it, meaning that if a ref is installed in the user dir it is considered used
+ * from there instead of @self. So, analyzed refs from @shadowing_dir are *not* put
+ * in @used_ref (although their dependencies may).
+ *
+ * Notes:
+ *  The "root" refs come from @shadowing_dir if not %NULL and @self otherwise.
+ *  refs_to_exclude, and metadata_injection both only affect @self, not @shadowing_dir
+ */
+static GHashTable *
+find_used_refs (FlatpakDir         *self,
+                FlatpakDir         *shadowing_dir, /* nullable */
+                const char         *arch,
+                GHashTable         *metadata_injection,
+                GHashTable         *refs_to_exclude,
+                GHashTable         *used_refs, /* This is filled in */
+                GCancellable       *cancellable,
+                GError            **error)
+{
+  g_auto(GStrv) root_app_refs = NULL;
+  g_auto(GStrv) root_runtime_refs = NULL;
+  g_autoptr(GHashTable) analyzed_refs = NULL;
+  g_autoptr(GQueue) refs_to_analyze = NULL;
+  FlatpakDir *root_ref_dir;
+  const char *ref_to_analyze;
+  int i;
+
+  refs_to_analyze = g_queue_new ();
+  analyzed_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  if (shadowing_dir)
+    root_ref_dir = shadowing_dir;
+  else
+    root_ref_dir = self;
+
+  if (!flatpak_dir_list_refs (root_ref_dir, "app", &root_app_refs, cancellable, error))
+    return NULL;
+
+  for (i = 0; root_app_refs[i] != NULL; i++)
+    queue_ref_for_analysis (root_app_refs[i], arch, analyzed_refs, refs_to_analyze);
+
+  if (!flatpak_dir_list_refs (root_ref_dir, "runtime", &root_runtime_refs, cancellable, error))
+    return NULL;
+
+  for (i = 0; root_runtime_refs[i] != NULL; i++)
+    {
+      /* Consider all shadow dir runtimes as roots because we don't really do full analysis for shadowing_dir.
+       * For example a system installed app could end up using the user version of a runtime, which in turn
+       * uses a system gl extension.
+       *
+       * However, for non-shadowed runtime refs, only pinned ones are roots */
+      if (root_ref_dir == shadowing_dir ||
+          flatpak_dir_ref_is_pinned (root_ref_dir, root_runtime_refs[i]))
+        queue_ref_for_analysis (root_runtime_refs[i], arch, analyzed_refs, refs_to_analyze);
+    }
+
+  /* Any injected refs are considered used, because this is used by transaction
+   * to emulate installing a new ref, and we never want the new ref:s dependencies
+   * seem ununsed. */
+  if (metadata_injection)
+    {
+      GLNX_HASH_TABLE_FOREACH (metadata_injection, const char *, injected_ref)
         {
-          g_autoptr(FlatpakDeploy) user_related_deploy = flatpak_dir_load_deployed (dir, rel->ref, NULL, NULL, NULL);
-          if (user_related_deploy != NULL)
+          queue_ref_for_analysis (injected_ref, arch, analyzed_refs, refs_to_analyze);
+        }
+    }
+
+  while ((ref_to_analyze = g_queue_pop_head (refs_to_analyze)) != NULL)
+    {
+      g_autofree char *origin = NULL;
+      g_autoptr(GKeyFile) metakey = NULL;
+      gboolean ref_is_shadowed;
+      gboolean is_app;
+      g_autoptr(GPtrArray) related = NULL;
+      const char *sdk;
+
+      if (!maybe_get_metakey_and_origin (self, shadowing_dir, ref_to_analyze, metadata_injection,
+                                         &metakey, &origin, &ref_is_shadowed))
+        continue; /* Something used something we could not find, that is fine and happens for instance with sdk dependencies */
+
+      if (!ref_is_shadowed)
+        {
+          /* Mark the analyzed ref used as it wasn't shadowed */
+          if (!g_hash_table_contains (used_refs, ref_to_analyze))
+            g_hash_table_add (used_refs, g_strdup (ref_to_analyze));
+
+          /* For excluded refs we mark them as used (above) so that they don't get listed as
+           * unused, but we don't analyze them for any dependencies. Note that refs_to_exclude only
+           * affects the base dir, so does not affect shadowed refs */
+          if (refs_to_exclude != NULL && g_hash_table_contains (refs_to_exclude, ref_to_analyze))
             continue;
         }
 
-      if (!rel->auto_prune && !g_hash_table_contains (used_refs, rel->ref))
+      /************************************************
+       * Find all dependencies and queue for analysis *
+       ***********************************************/
+
+      is_app = g_str_has_prefix (ref_to_analyze, "app/");
+
+      /* App directly depends on its runtime */
+      if (is_app)
         {
-          g_autofree char *related_origin = NULL;
-          g_autoptr(GKeyFile) related_metakey = NULL;
-
-          g_hash_table_add (used_refs, g_strdup (rel->ref));
-
-          if (system_dir != NULL &&
-              maybe_get_metakey_and_origin (system_dir, rel->ref, NULL, &related_metakey, &related_origin))
-            find_used_related_refs (system_dir, NULL, used_refs, NULL,
-                                    rel->ref, related_metakey, related_origin);
-          else if (maybe_get_metakey_and_origin (dir, rel->ref, metadata_injection, &related_metakey, &related_origin))
-            find_used_related_refs (dir, NULL, used_refs, metadata_injection,
-                                    rel->ref, related_metakey, related_origin);
-        }
-    }
-}
-
-static void
-find_used_refs_for_apps (FlatpakDir  *dir,
-                         FlatpakDir  *system_dir, /* nullable */
-                         char       **app_refs,
-                         const char  *arch,
-                         GHashTable  *metadata_injection,
-                         GHashTable  *used_runtimes,
-                         GHashTable  *used_refs)
-{
-  /* Check for related refs and runtimes and sdks for each app in @app_refs.
-   * The apps exist in @dir but if @system_dir is set that's where we check for
-   * the related/runtime/sdk, and if @system_dir is set we check that said
-   * runtime does not exist in @dir, so the one in @system_dir is probably the
-   * one being used. */
-  int i;
-  for (i = 0; app_refs[i] != NULL; i++)
-    {
-      const char *ref = app_refs[i];
-      g_autofree char *origin = NULL;
-      g_autofree char *runtime = NULL;
-      g_autofree char *sdk = NULL;
-      g_autoptr(GKeyFile) metakey = NULL;
-      g_auto(GStrv) parts = g_strsplit (ref, "/", -1);
-
-      if (arch != NULL && strcmp (parts[2], arch) != 0)
-        continue;
-
-      if (!maybe_get_metakey_and_origin (dir, ref, metadata_injection, &metakey, &origin))
-        continue;
-
-      find_used_related_refs (dir, system_dir, used_refs, metadata_injection, ref, metakey, origin);
-
-      runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
-      if (runtime)
-        {
-          g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
-          g_autoptr(FlatpakDeploy) user_runtime_deploy = NULL;
-          if (system_dir != NULL)
+          const char *runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+          if (runtime)
             {
               g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
-              runtime_deploy = flatpak_dir_load_deployed (system_dir, runtime_ref, NULL, NULL, NULL);
-              user_runtime_deploy = flatpak_dir_load_deployed (dir, runtime_ref, NULL, NULL, NULL);
+              queue_ref_for_analysis (runtime_ref, arch, analyzed_refs, refs_to_analyze);
             }
-
-          if (system_dir == NULL || (runtime_deploy != NULL && user_runtime_deploy == NULL))
-            g_hash_table_add (used_runtimes, g_steal_pointer (&runtime));
         }
 
-      sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
-      if (sdk)
-        {
-          g_autoptr(FlatpakDeploy) sdk_deploy = NULL;
-          g_autoptr(FlatpakDeploy) user_sdk_deploy = NULL;
-          if (system_dir != NULL)
-            {
-              g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
-              sdk_deploy = flatpak_dir_load_deployed (system_dir, sdk_ref, NULL, NULL, NULL);
-              user_sdk_deploy = flatpak_dir_load_deployed (dir, sdk_ref, NULL, NULL, NULL);
-            }
-
-          if (system_dir == NULL || (sdk_deploy != NULL && user_sdk_deploy == NULL))
-            g_hash_table_add (used_runtimes, g_steal_pointer (&sdk));
-        }
-    }
-}
-
-static void
-find_used_refs_for_runtimes (FlatpakDir *dir,
-                             FlatpakDir *system_dir,
-                             GHashTable *metadata_injection,
-                             GHashTable *runtimes,
-                             GHashTable *used_refs)
-{
-  /* For each runtime in @runtimes, if it's in @dir, add the related refs and
-   * sdk to @used_refs. If @system_dir is set that's where we look for
-   * related refs and sdk related refs; the sdk could be in either dir. */
-  GLNX_HASH_TABLE_FOREACH (runtimes, const char *, runtime)
-    {
-      g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
-      g_autofree char *origin = NULL;
-      g_autofree char *sdk = NULL;
-      g_autoptr(GKeyFile) metakey = NULL;
-
-      if (!maybe_get_metakey_and_origin (dir, runtime_ref, metadata_injection,
-                                         &metakey, &origin))
-        continue;
-
-      find_used_related_refs (dir, system_dir, used_refs, metadata_injection,
-                              runtime_ref, metakey, origin);
-
-      sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
+      /* Both apps and runtims directly depends on its sdk, to avoid suddenly uninstalling something you use to develop the app */
+      sdk = g_key_file_get_string (metakey, is_app ? "Application" : "Runtime", "sdk", NULL);
       if (sdk)
         {
           g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
-          g_autofree char *sdk_origin = NULL;
-          g_autoptr(GKeyFile) sdk_metakey = NULL;
-
-          if (maybe_get_metakey_and_origin (dir, sdk_ref, metadata_injection,
-                                            &sdk_metakey, &sdk_origin))
-            find_used_related_refs (dir, system_dir, used_refs, metadata_injection,
-                                    sdk_ref, sdk_metakey, sdk_origin);
-
-          if (system_dir != NULL && sdk_origin == NULL)
-            {
-              g_autofree char *system_sdk_origin = NULL;;
-              g_autoptr(GKeyFile) system_sdk_metakey = NULL;
-              if (maybe_get_metakey_and_origin (system_dir, sdk_ref, NULL,
-                                                &system_sdk_metakey, &system_sdk_origin))
-                find_used_related_refs (system_dir, NULL, used_refs, NULL,
-                                        sdk_ref, system_sdk_metakey, system_sdk_origin);
-            }
+          queue_ref_for_analysis (sdk_ref, arch, analyzed_refs, refs_to_analyze);
         }
-    }
-}
 
-static void
-prune_excluded_refs (char              **full_refs,
-                     const char * const *refs_to_exclude)
-{
-  guint len = g_strv_length (full_refs);
-  for (guint i = 0; i < len; i++)
-    {
-      if (g_strv_contains (refs_to_exclude, full_refs[i]))
+      /* Extensions with extra data, that are not specially marked NoRuntime needs the runtime at install.
+       * Lets keep it around to not re-download it next update */
+      if (!is_app &&
+          g_key_file_has_group (metakey, "Extra Data") &&
+          !g_key_file_get_boolean (metakey, "Extra Data", "NoRuntime", NULL))
         {
-          g_free (full_refs[i]);
-          full_refs[i] = full_refs[len - 1];
-          full_refs[len - 1] = NULL;
-          len--;
-          i--;
+          const char *extension_runtime_ref = g_key_file_get_string (metakey, "ExtensionOf", "runtime", NULL);
+          if (extension_runtime_ref != NULL)
+            queue_ref_for_analysis (extension_runtime_ref, arch, analyzed_refs, refs_to_analyze);
+        }
+
+      related = flatpak_dir_find_local_related_for_metadata (self, ref_to_analyze, origin, metakey, NULL, NULL);
+      for (i = 0; related != NULL && i < related->len; i++)
+        {
+          FlatpakRelated *rel = g_ptr_array_index (related, i);
+
+          if (!rel->auto_prune)
+            queue_ref_for_analysis (rel->ref, arch, analyzed_refs, refs_to_analyze);
         }
     }
+
+  return g_steal_pointer (&used_refs);
 }
 
 /* See the documentation for
@@ -14864,31 +14915,25 @@ flatpak_dir_list_unused_refs_with_options (FlatpakDir         *self,
                                            GCancellable       *cancellable,
                                            GError            **error)
 {
-  g_autoptr(GHashTable) refs_hash = NULL;
+  g_autoptr(GHashTable) used_refs = NULL;
+  g_autoptr(GHashTable) excluded_refs_ht = NULL;
   g_autoptr(GPtrArray) refs =  NULL;
-  g_auto(GStrv) app_refs = NULL;
   g_auto(GStrv) runtime_refs = NULL;
-  g_autoptr(GHashTable) used_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  g_autoptr(GHashTable) used_runtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   int i;
 
-  if (!flatpak_dir_list_refs (self, "app", &app_refs, cancellable, error))
-    return NULL;
-
-  if (!flatpak_dir_list_refs (self, "runtime", &runtime_refs, cancellable, error))
-    return NULL;
-
-  if (refs_to_exclude != NULL)
+  /* Convert refs_to_exclude to hashtable for fast repeated lookups */
+  if (refs_to_exclude)
     {
-      prune_excluded_refs (app_refs, refs_to_exclude);
-      prune_excluded_refs (runtime_refs, refs_to_exclude);
+      excluded_refs_ht = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+      for (i = 0; refs_to_exclude[i] != NULL; i++)
+        g_hash_table_add (excluded_refs_ht, (char *)refs_to_exclude[i]);
     }
 
-  refs_hash = g_hash_table_new (g_str_hash, g_str_equal);
-  refs = g_ptr_array_new_with_free_func (g_free);
+  used_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
-  /* For each app, note the runtime, sdk, and related refs */
-  find_used_refs_for_apps (self, NULL, app_refs, arch, metadata_injection, used_runtimes, used_refs);
+  if (!find_used_refs (self, NULL, arch, metadata_injection, excluded_refs_ht,
+                       used_refs, cancellable, error))
+    return NULL;
 
   /* If @self is a system installation, also check the per-user installation
    * for any apps there using runtimes in the system installation or runtimes
@@ -14899,72 +14944,48 @@ flatpak_dir_list_unused_refs_with_options (FlatpakDir         *self,
   if (!flatpak_dir_is_user (self))
     {
       g_autoptr(GFile) user_base_dir = flatpak_get_user_base_dir_location ();
-
       if (g_file_query_exists (user_base_dir, cancellable))
         {
           g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
-          g_auto(GStrv) user_app_refs = NULL;
-          g_auto(GStrv) user_runtime_refs = NULL;
-          g_autoptr(GHashTable) user_runtimes = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
-          if (!flatpak_dir_list_refs (user_dir, "app", &user_app_refs, cancellable, error))
+          if (!find_used_refs (self, user_dir, arch, metadata_injection, excluded_refs_ht,
+                               used_refs, cancellable, error))
             return NULL;
-
-          /* metadata_injection is NULL because it's not for this installation */
-          find_used_refs_for_apps (user_dir, self, user_app_refs, arch, NULL, used_runtimes, used_refs);
-
-          if (!flatpak_dir_list_refs (user_dir, "runtime", &user_runtime_refs, cancellable, error))
-            return NULL;
-
-          for (i = 0; user_runtime_refs[i] != NULL; i++)
-            {
-              const char *ref = user_runtime_refs[i];
-              g_assert (g_str_has_prefix (ref, "runtime/"));
-              g_hash_table_add (user_runtimes, (char *)ref + strlen ("runtime/"));
-            }
-
-          find_used_refs_for_runtimes (user_dir, self, NULL, user_runtimes, used_refs);
         }
     }
 
-  find_used_refs_for_runtimes (self, NULL, metadata_injection, used_runtimes, used_refs);
+  if (!flatpak_dir_list_refs (self, "runtime", &runtime_refs, cancellable, error))
+    return NULL;
+
+  refs = g_ptr_array_new_with_free_func (g_free);
 
   for (i = 0; runtime_refs[i] != NULL; i++)
     {
       const char *ref = runtime_refs[i];
-      g_auto(GStrv) parts = g_strsplit (ref, "/", -1);
 
-      if (arch != NULL && strcmp (parts[2], arch) != 0)
+      if (g_hash_table_contains (used_refs, ref))
         continue;
 
-      if (flatpak_dir_ref_is_pinned (self, ref))
-        {
-          g_debug ("Ref %s is pinned, considering as used", ref);
-          continue;
-        }
+      if (!ref_is_arch (ref, arch))
+        continue;
 
-      if (!g_hash_table_contains (used_refs, ref) &&
-          g_hash_table_add (refs_hash, (gpointer) ref))
+      if (filter_by_eol)
         {
-          if (!filter_by_eol)
-            g_ptr_array_add (refs, g_strdup (ref));
-          else
+          g_autoptr(GBytes) deploy_data = NULL;
+          deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
+                                                     cancellable, error);
+          if (deploy_data == NULL)
+            return NULL;
+
+          if (flatpak_deploy_data_get_eol (deploy_data) == NULL &&
+              flatpak_deploy_data_get_eol_rebase (deploy_data) == NULL)
             {
-              g_autoptr(GBytes) deploy_data = NULL;
-              deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
-                                                         cancellable, error);
-              if (deploy_data == NULL)
-                return NULL;
-              if (flatpak_deploy_data_get_eol (deploy_data) == NULL &&
-                  flatpak_deploy_data_get_eol_rebase (deploy_data) == NULL)
-                {
-                  g_debug ("Ref %s is not EOL, considering as used", ref);
-                  continue;
-                }
-              else
-                g_ptr_array_add (refs, g_strdup (ref));
+              g_debug ("Ref %s is not EOL, considering as used", ref);
+              continue;
             }
         }
+
+      g_ptr_array_add (refs, g_strdup (ref));
     }
 
   g_ptr_array_add (refs, NULL);
