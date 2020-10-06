@@ -352,6 +352,38 @@ setup_repo () {
     flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
 }
 
+setup_empty_repo () {
+    REPONAME=${1:-test}
+    COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
+
+    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+        COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
+    else
+        COLLECTION_ID=
+    fi
+
+    mkdir -p repos
+    ostree --repo=repos/${REPONAME} init --mode=archive-z2
+    update_repo $REPONAME "${COLLECTION_ID}"
+    if [ $REPONAME == "test" ]; then
+        httpd
+    fi
+
+    port=$(cat httpd-port)
+    if [ x${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} != x ]; then
+        import_args=--gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}
+    else
+        import_args=
+    fi
+    if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
+        collection_args=--collection-id=${COLLECTION_ID}
+    else
+        collection_args=
+    fi
+
+    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
+}
+
 update_repo () {
     REPONAME=${1:-test}
     COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}

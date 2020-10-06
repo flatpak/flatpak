@@ -89,6 +89,12 @@ tests_test_authenticator_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) \
 tests_test_authenticator_LDADD = $(AM_LDADD) $(BASE_LIBS) libflatpak-common.la libflatpak-common-base.la libglnx.la
 tests_test_authenticator_SOURCES = tests/test-authenticator.c
 
+tests_list_unused_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+	-DLOCALEDIR=\"$(localedir)\"
+tests_list_unused_LDADD = $(AM_LDADD) $(BASE_LIBS) $(BASE_LIBS) $(OSTREE_LIBS) libflatpak-common.la libflatpak-common-base.la libglnx.la
+tests_list_unused_SOURCES = tests/list-unused.c
+
 tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.Flatpak.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
@@ -197,6 +203,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-override.sh \
 	tests/test-update-portal.sh{user+system} \
 	tests/test-auth.sh \
+	tests/test-unused.sh \
 	$(NULL)
 
 update-test-matrix:
@@ -221,7 +228,7 @@ dist_test_scripts = ${TEST_MATRIX_DIST}
 dist_installed_test_extra_scripts += ${TEST_MATRIX_EXTRA_DIST}
 
 test_programs = testlibrary testcommon test-exports
-test_extra_programs = tests/httpcache tests/test-update-portal tests/test-portal-impl tests/test-authenticator
+test_extra_programs = tests/httpcache tests/test-update-portal tests/test-portal-impl tests/test-authenticator tests/list-unused
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
