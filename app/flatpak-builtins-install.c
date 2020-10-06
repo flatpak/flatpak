@@ -56,6 +56,7 @@ static gboolean opt_yes;
 static gboolean opt_reinstall;
 static gboolean opt_noninteractive;
 static gboolean opt_or_update;
+static gboolean opt_no_auto_pin;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -63,6 +64,7 @@ static GOptionEntry options[] = {
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't install related refs"), NULL },
   { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
+  { "no-auto-pin", 0, 0, G_OPTION_ARG_NONE, &opt_no_auto_pin, N_("Don't automatically pin explicit installs"), NULL },
   { "no-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_no_static_deltas, N_("Don't use static deltas"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
@@ -166,6 +168,7 @@ install_bundle (FlatpakDir *dir,
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
   flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
   flatpak_transaction_set_disable_related (transaction, opt_no_related);
+  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
   flatpak_transaction_set_reinstall (transaction, opt_reinstall);
 
   for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
@@ -242,6 +245,7 @@ install_from (FlatpakDir *dir,
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
   flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
   flatpak_transaction_set_disable_related (transaction, opt_no_related);
+  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
   flatpak_transaction_set_reinstall (transaction, opt_reinstall);
   flatpak_transaction_set_default_arch (transaction, opt_arch);
 
@@ -467,6 +471,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
   flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
   flatpak_transaction_set_disable_related (transaction, opt_no_related);
+  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
   flatpak_transaction_set_reinstall (transaction, opt_reinstall);
 
   for (i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
