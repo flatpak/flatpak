@@ -33,6 +33,7 @@ TEST_MATRIX_DIST= \
 	tests/test-update-remote-configuration.sh \
 	tests/test-override.sh \
 	tests/test-auth.sh \
+	tests/test-unused.sh \
 	$(NULL)
 TEST_MATRIX_EXTRA_DIST= \
 	tests/test-run.sh \
