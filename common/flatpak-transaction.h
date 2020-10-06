@@ -221,6 +221,9 @@ FLATPAK_EXTERN
 void                flatpak_transaction_set_disable_related (FlatpakTransaction *self,
                                                              gboolean            disable_related);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_disable_auto_pin  (FlatpakTransaction *self,
+                                                               gboolean            disable_pin);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_reinstall (FlatpakTransaction *self,
                                                        gboolean            reinstall);
 FLATPAK_EXTERN

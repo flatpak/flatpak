@@ -178,6 +178,7 @@ struct _FlatpakTransactionPrivate
   char                        *parent_window;
   gboolean                     no_pull;
   gboolean                     no_deploy;
+  gboolean                     disable_auto_pin;
   gboolean                     disable_static_deltas;
   gboolean                     disable_prune;
   gboolean                     disable_deps;
@@ -1566,6 +1567,26 @@ flatpak_transaction_set_disable_prune (FlatpakTransaction *self,
 }
 
 /**
+ * flatpak_transaction_set_disable_auto_pin:
+ * @self: a #FlatpakTransaction
+ * @disable_pin: whether to disable auto-pinning
+ *
+ * Normally the transaction pins any explicit installations so they will not
+ * be automatically removed. But this can be disabled if you don't want this
+ * behaviour.
+ *
+ * Since: 1.9.1
+ */
+void
+flatpak_transaction_set_disable_auto_pin  (FlatpakTransaction *self,
+                                           gboolean            disable_pin)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->disable_auto_pin = disable_pin;
+}
+
+/**
  * flatpak_transaction_set_disable_dependencies:
  * @self: a #FlatpakTransaction
  * @disable_dependencies: whether to disable runtime dependencies
@@ -2306,7 +2327,7 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
 
   /* Pin runtimes that are installed explicitly rather than pulled as
    * dependencies so they are not automatically removed. */
-  if (g_str_has_prefix (ref, "runtime/"))
+  if (g_str_has_prefix (ref, "runtime/") && !priv->disable_auto_pin)
     {
       gboolean already_pinned;
 
