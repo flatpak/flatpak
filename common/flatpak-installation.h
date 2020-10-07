@@ -127,7 +127,8 @@ typedef enum {
  * @FLATPAK_QUERY_FLAGS_ONLY_CACHED: Don't do any network i/o, but only return cached data.
  * This can return stale data, or a #FLATPAK_ERROR_NOT_CACHED error, however it is a
  * lot more efficient if you're doing many requests.
- * @FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED: Only list refs available from any eventuall sideload repos. (Snce: 1.7)
+ * @FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED: Only list refs available from sideload
+ * repos; see flatpak(1). (Snce: 1.7)
  *
  * Flags to alter the behavior of e.g flatpak_installation_list_remote_refs_sync_full().
  *
