@@ -2961,7 +2961,7 @@ flatpak_installation_list_unused_refs_with_options (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  refs_strv = flatpak_dir_list_unused_refs (dir, arch, metadata_injection,
+  refs_strv = flatpak_dir_list_unused_refs (dir, arch, metadata_injection, NULL,
                                             (const char * const *)refs_to_exclude, filter_by_eol,
                                             cancellable, error);
   if (refs_strv == NULL)

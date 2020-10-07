@@ -14909,6 +14909,7 @@ char **
 flatpak_dir_list_unused_refs (FlatpakDir         *self,
                               const char         *arch,
                               GHashTable         *metadata_injection,
+                              GHashTable         *eol_injection,
                               const char * const *refs_to_exclude,
                               gboolean            filter_by_eol,
                               GCancellable       *cancellable,
@@ -14970,14 +14971,24 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
 
       if (filter_by_eol)
         {
-          g_autoptr(GBytes) deploy_data = NULL;
-          deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
-                                                     cancellable, error);
-          if (deploy_data == NULL)
-            return NULL;
+          gboolean is_eol = FALSE;
 
-          if (flatpak_deploy_data_get_eol (deploy_data) == NULL &&
-              flatpak_deploy_data_get_eol_rebase (deploy_data) == NULL)
+          if (eol_injection && g_hash_table_contains (eol_injection, ref))
+            {
+              is_eol = GPOINTER_TO_INT (g_hash_table_lookup (eol_injection, ref));
+            }
+          else
+            {
+              g_autoptr(GBytes) deploy_data = NULL;
+
+              deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
+                                                         cancellable, NULL);
+              is_eol = deploy_data != NULL &&
+                (flatpak_deploy_data_get_eol (deploy_data) != NULL ||
+                 flatpak_deploy_data_get_eol_rebase (deploy_data));
+            }
+
+          if (!is_eol)
             {
               g_debug ("Ref %s is not EOL, considering as used", ref);
               continue;
