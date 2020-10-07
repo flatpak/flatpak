@@ -4203,6 +4203,7 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
   g_autoptr(GHashTable) maybe_unused_runtimes = NULL;
   g_autoptr(GHashTable) newly_used_runtimes = NULL;
   g_autoptr(GHashTable) metadata_injection = NULL;
+  g_autoptr(GHashTable) eol_injection = NULL;
   g_autoptr(GPtrArray) to_be_excluded = NULL;
   g_autoptr(GPtrArray) run_after_ops = NULL;
   g_auto(GStrv) old_unused_refs = NULL;
@@ -4219,6 +4220,7 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
       old_unused_refs = flatpak_dir_list_unused_refs (priv->dir,
                                                       NULL, /* arch */
                                                       NULL, /* metadata_injection */
+                                                      NULL, /* eol_injection */
                                                       NULL, /* exclude_refs */
                                                       TRUE, /* filter_by_eol */
                                                       cancellable, error);
@@ -4232,6 +4234,8 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
    * executed. For example an app update may drop an extension point and
    * thereby make an installed extension become unused. */
   metadata_injection = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+
+  eol_injection = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
   /* This is the set of runtimes and apps scheduled for uninstallation and
    * which are therefore excluded when calculating used refs. */
@@ -4258,6 +4262,8 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
         {
           if (op->resolved_metakey)
             g_hash_table_insert (metadata_injection, op->ref, op->resolved_metakey);
+          g_hash_table_insert (eol_injection, op->ref,
+                               GINT_TO_POINTER (op->eol != NULL || op->eol_rebase != NULL));
         }
     }
 
@@ -4270,8 +4276,9 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
   /* These are the refs that will be unused & eol after the transaction */
   unused_refs = flatpak_dir_list_unused_refs (priv->dir,
                                               NULL, /* arch */
-                                              metadata_injection, /* metadata_injection */
-                                              to_be_excluded_strv, /* exclude_refs */
+                                              metadata_injection,
+                                              eol_injection,
+                                              to_be_excluded_strv,
                                               TRUE, /* filter_by_eol */
                                               cancellable, error);
   if (unused_refs == NULL)
