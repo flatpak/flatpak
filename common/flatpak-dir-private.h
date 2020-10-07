@@ -1019,12 +1019,12 @@ gboolean flatpak_dir_delete_mirror_refs (FlatpakDir    *self,
                                          GCancellable  *cancellable,
                                          GError       **error);
 
-char ** flatpak_dir_list_unused_refs_with_options (FlatpakDir         *self,
-                                                   const char         *arch,
-                                                   GHashTable         *metadata_injection,
-                                                   const char * const *refs_to_exclude,
-                                                   gboolean            filter_by_eol,
-                                                   GCancellable       *cancellable,
-                                                   GError            **error);
+char ** flatpak_dir_list_unused_refs (FlatpakDir         *self,
+                                      const char         *arch,
+                                      GHashTable         *metadata_injection,
+                                      const char * const *refs_to_exclude,
+                                      gboolean            filter_by_eol,
+                                      GCancellable       *cancellable,
+                                      GError            **error);
 
 #endif /* __FLATPAK_DIR_H__ */

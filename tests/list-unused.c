@@ -35,7 +35,7 @@ main (int argc, char *argv[])
   else
     dir = flatpak_dir_get_system_default ();
 
-  refs = flatpak_dir_list_unused_refs_with_options (dir, NULL, NULL, (const char * const *)opt_exclude_refs, FALSE, NULL, &error);
+  refs = flatpak_dir_list_unused_refs (dir, NULL, NULL, (const char * const *)opt_exclude_refs, FALSE, NULL, &error);
   g_assert_nonnull (refs);
   g_assert_no_error (error);
 
