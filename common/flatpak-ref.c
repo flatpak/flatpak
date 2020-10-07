@@ -57,7 +57,7 @@ struct _FlatpakRefPrivate
   char          *commit;
   FlatpakRefKind kind;
   char          *collection_id;
-  volatile char *cached_full_ref;
+  char          *cached_full_ref;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRef, flatpak_ref, G_TYPE_OBJECT)
@@ -364,7 +364,7 @@ flatpak_ref_format_ref_cached (FlatpakRef *self)
   if (full_ref == NULL)
     {
       full_ref_new = flatpak_ref_format_ref (self);
-      if (!g_atomic_pointer_compare_and_exchange (&priv->cached_full_ref, NULL, full_ref_new))
+      if (!g_atomic_pointer_compare_and_exchange ((void**) &priv->cached_full_ref, NULL, full_ref_new))
         g_free (full_ref_new); /* Raced with someone, free our version */
 
       full_ref = (const char *)g_atomic_pointer_get (&priv->cached_full_ref); /* Now guaranteed to be non-NULL */
