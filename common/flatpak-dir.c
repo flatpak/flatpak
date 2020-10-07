@@ -13924,7 +13924,9 @@ local_match_prefix (FlatpakDir *self,
   parts = g_strsplit (extension_ref, "/", -1);
   parts_prefix = g_strconcat (parts[1], ".", NULL);
 
-  list_prefix = g_strdup_printf ("%s:%s", remote, parts[0]);
+  if (remote)
+    list_prefix = g_strdup_printf ("%s:%s", remote, parts[0]);
+
   if (ostree_repo_list_refs (self->repo, list_prefix, &refs, NULL, NULL))
     {
       GHashTableIter hash_iter;
@@ -13934,10 +13936,24 @@ local_match_prefix (FlatpakDir *self,
       while (g_hash_table_iter_next (&hash_iter, &key, NULL))
         {
           const char *partial_ref_and_origin = key;
-          g_autofree char *partial_ref = NULL;
+          g_autofree char *partial_ref_store = NULL;
+          const char *partial_ref;
           g_auto(GStrv) cur_parts = NULL;
 
-          ostree_parse_refspec (partial_ref_and_origin, NULL, &partial_ref, NULL);
+          ostree_parse_refspec (partial_ref_and_origin, NULL, &partial_ref_store, NULL);
+          if (remote == NULL)
+            {
+              /* If we're not filtering via list_prefix we need to filter by part[0] manually */
+              char *slash = strchr (partial_ref_store, '/');
+              if (slash == NULL)
+                continue;
+              *slash = 0;
+              if (strcmp (partial_ref_store, parts[0]) != 0)
+                continue;
+              partial_ref = slash + 1;
+            }
+          else
+            partial_ref = partial_ref_store;
 
           cur_parts = g_strsplit (partial_ref, "/", -1);
 
@@ -13961,10 +13977,11 @@ local_match_prefix (FlatpakDir *self,
   return matches;
 }
 
+/* Finds all the locally installed ref related to ref, if remote_name is set it is limited to refs from that remote */
 GPtrArray *
 flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                                              const char   *ref,
-                                             const char   *remote_name,
+                                             const char   *remote_name, /* nullable */
                                              GKeyFile     *metakey,
                                              GCancellable *cancellable,
                                              GError      **error)
@@ -14033,7 +14050,8 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
               const char *branch = branches[branch_i];
 
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
-              if (flatpak_repo_resolve_rev (self->repo,
+              if (remote_name != NULL &&
+                  flatpak_repo_resolve_rev (self->repo,
                                             NULL,
                                             remote_name,
                                             extension_ref,
@@ -14048,7 +14066,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
               else if ((deploy_data = flatpak_dir_get_deploy_data (self, extension_ref,
                                                                    FLATPAK_DEPLOY_VERSION_ANY,
                                                                    NULL, NULL)) != NULL &&
-                       g_strcmp0 (flatpak_deploy_data_get_origin (deploy_data), remote_name) == 0)
+                       (remote_name == NULL || g_strcmp0 (flatpak_deploy_data_get_origin (deploy_data), remote_name) == 0))
                 {
                   /* Here we're including extensions that are deployed but might
                    * not have a ref in the repo, as happens with remote-delete
@@ -14066,7 +14084,8 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                       g_autofree char *match_checksum = NULL;
                       g_autoptr(GBytes) match_deploy_data = NULL;
 
-                      if (flatpak_repo_resolve_rev (self->repo,
+                      if (remote_name != NULL &&
+                          flatpak_repo_resolve_rev (self->repo,
                                                     NULL,
                                                     remote_name,
                                                     match,
@@ -14081,7 +14100,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                       else if ((match_deploy_data = flatpak_dir_get_deploy_data (self, match,
                                                                                  FLATPAK_DEPLOY_VERSION_ANY,
                                                                                  NULL, NULL)) != NULL &&
-                               g_strcmp0 (flatpak_deploy_data_get_origin (match_deploy_data), remote_name) == 0)
+                               (remote_name == NULL || g_strcmp0 (flatpak_deploy_data_get_origin (match_deploy_data), remote_name) == 0))
                         {
                           /* Here again we're including extensions that are deployed but might
                            * not have a ref in the repo
@@ -14631,13 +14650,11 @@ flatpak_dir_delete_mirror_refs (FlatpakDir    *self,
 
 
 static gboolean
-dir_get_origin_and_metadata (FlatpakDir  *dir,
-                             const char  *ref,
-                             GKeyFile   **out_metakey,
-                             char       **out_origin)
+dir_get_metadata (FlatpakDir  *dir,
+                  const char  *ref,
+                  GKeyFile   **out_metakey)
 {
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
@@ -14645,13 +14662,6 @@ dir_get_origin_and_metadata (FlatpakDir  *dir,
 
   deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
   if (deploy_dir == NULL)
-    return FALSE;
-
-  deploy_data = flatpak_load_deploy_data (deploy_dir,
-                                          ref,
-                                          FLATPAK_DEPLOY_VERSION_ANY,
-                                          NULL, NULL);
-  if (deploy_data == NULL)
     return FALSE;
 
   metadata = g_file_get_child (deploy_dir, "metadata");
@@ -14662,25 +14672,21 @@ dir_get_origin_and_metadata (FlatpakDir  *dir,
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, NULL))
     return FALSE;
 
-  *out_origin = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
   *out_metakey = g_steal_pointer (&metakey);
 
   return TRUE;
 }
 
 static gboolean
-maybe_get_metakey_and_origin (FlatpakDir  *dir,
-                              FlatpakDir  *shadowing_dir,
-                              const char  *ref,
-                              GHashTable  *metadata_injection,
-                              GKeyFile   **out_metakey,
-                              char       **out_origin,
-                              gboolean    *out_ref_is_shadowed)
+maybe_get_metakey (FlatpakDir  *dir,
+                   FlatpakDir  *shadowing_dir,
+                   const char  *ref,
+                   GHashTable  *metadata_injection,
+                   GKeyFile   **out_metakey,
+                   gboolean    *out_ref_is_shadowed)
 {
-  g_autofree char *origin = NULL;
-
   if (shadowing_dir &&
-      dir_get_origin_and_metadata (shadowing_dir, ref, out_metakey, out_origin))
+      dir_get_metadata (shadowing_dir, ref, out_metakey))
     {
       *out_ref_is_shadowed = TRUE;
       return TRUE;
@@ -14691,20 +14697,13 @@ maybe_get_metakey_and_origin (FlatpakDir  *dir,
       GKeyFile *injected_metakey = g_hash_table_lookup (metadata_injection, ref);
       if (injected_metakey != NULL)
         {
-          /* TODO: What do we use for origin here, it may not be installed, or
-           * the injection could come from another origin */
-          origin = flatpak_dir_get_origin (dir, ref, NULL, NULL);
-          if (origin != NULL)
-            {
-              *out_ref_is_shadowed = FALSE;
-              *out_metakey = g_key_file_ref (injected_metakey);
-              *out_origin = g_steal_pointer (&origin);
-              return TRUE;
-            }
+          *out_ref_is_shadowed = FALSE;
+          *out_metakey = g_key_file_ref (injected_metakey);
+          return TRUE;
         }
     }
 
-  if (dir_get_origin_and_metadata (dir, ref, out_metakey, out_origin))
+  if (dir_get_metadata (dir, ref, out_metakey))
     {
       *out_ref_is_shadowed = FALSE;
       return TRUE;
@@ -14830,15 +14829,14 @@ find_used_refs (FlatpakDir         *self,
 
   while ((ref_to_analyze = g_queue_pop_head (refs_to_analyze)) != NULL)
     {
-      g_autofree char *origin = NULL;
       g_autoptr(GKeyFile) metakey = NULL;
       gboolean ref_is_shadowed;
       gboolean is_app;
       g_autoptr(GPtrArray) related = NULL;
       const char *sdk;
 
-      if (!maybe_get_metakey_and_origin (self, shadowing_dir, ref_to_analyze, metadata_injection,
-                                         &metakey, &origin, &ref_is_shadowed))
+      if (!maybe_get_metakey (self, shadowing_dir, ref_to_analyze, metadata_injection,
+                              &metakey, &ref_is_shadowed))
         continue; /* Something used something we could not find, that is fine and happens for instance with sdk dependencies */
 
       if (!ref_is_shadowed)
@@ -14890,7 +14888,8 @@ find_used_refs (FlatpakDir         *self,
             queue_ref_for_analysis (extension_runtime_ref, arch, analyzed_refs, refs_to_analyze);
         }
 
-      related = flatpak_dir_find_local_related_for_metadata (self, ref_to_analyze, origin, metakey, NULL, NULL);
+      /* We pass NULL for remote-name here, because we want to consider related refs from all remotes */
+      related = flatpak_dir_find_local_related_for_metadata (self, ref_to_analyze, NULL, metakey, NULL, NULL);
       for (i = 0; related != NULL && i < related->len; i++)
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
