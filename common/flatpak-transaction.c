@@ -4200,12 +4200,9 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
                           GError             **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_autoptr(GHashTable) maybe_unused_runtimes = NULL;
-  g_autoptr(GHashTable) newly_used_runtimes = NULL;
   g_autoptr(GHashTable) metadata_injection = NULL;
   g_autoptr(GHashTable) eol_injection = NULL;
   g_autoptr(GPtrArray) to_be_excluded = NULL;
-  g_autoptr(GPtrArray) run_after_ops = NULL;
   g_auto(GStrv) old_unused_refs = NULL;
   g_auto(GStrv) unused_refs = NULL;
   const char * const *to_be_excluded_strv = NULL;

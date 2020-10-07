@@ -973,7 +973,7 @@ test_list_refs_in_remotes (void)
   for (guint i = 0; i < refs1->len; ++i)
     {
       FlatpakRef *ref = g_ptr_array_index (refs1, i);
-      g_hash_table_add (ref_specs, flatpak_ref_format_ref_cached (ref));
+      g_hash_table_add (ref_specs, (gpointer)flatpak_ref_format_ref_cached (ref));
     }
 
   /* Ensure that listing the refs by using a remote's URI will get us the
