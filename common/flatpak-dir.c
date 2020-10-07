@@ -14906,13 +14906,13 @@ find_used_refs (FlatpakDir         *self,
  * flatpak_installation_list_unused_refs_with_options().
  * The returned pointer array is transfer full. */
 char **
-flatpak_dir_list_unused_refs_with_options (FlatpakDir         *self,
-                                           const char         *arch,
-                                           GHashTable         *metadata_injection,
-                                           const char * const *refs_to_exclude,
-                                           gboolean            filter_by_eol,
-                                           GCancellable       *cancellable,
-                                           GError            **error)
+flatpak_dir_list_unused_refs (FlatpakDir         *self,
+                              const char         *arch,
+                              GHashTable         *metadata_injection,
+                              const char * const *refs_to_exclude,
+                              gboolean            filter_by_eol,
+                              GCancellable       *cancellable,
+                              GError            **error)
 {
   g_autoptr(GHashTable) used_refs = NULL;
   g_autoptr(GHashTable) excluded_refs_ht = NULL;

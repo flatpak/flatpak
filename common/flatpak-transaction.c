@@ -126,6 +126,7 @@ struct _FlatpakTransactionOperation
   int                             run_after_count;
   int                             run_after_prio; /* Higher => run later (when it becomes runnable). Used to run related ops (runtime extensions) before deps (apps using the runtime) */
   GList                          *run_before_ops;
+  gboolean                        run_last;  /* Run this after all the other apps that are not run_last */
   FlatpakTransactionOperation    *fail_if_op_fails; /* main app/runtime for related extensions, runtime for apps */
   /* main app/runtime for related extensions, app for runtimes; could be multiple
    * related-to-ops if this op is for a runtime which is needed by multiple apps
@@ -1922,6 +1923,12 @@ run_operation_before (FlatpakTransactionOperation *op,
   before_this->run_after_prio = MAX (before_this->run_after_prio, prio);
 }
 
+static void
+run_operation_last (FlatpakTransactionOperation *op)
+{
+  op->run_last = TRUE;
+}
+
 static gboolean
 op_get_related (FlatpakTransaction           *self,
                 FlatpakTransactionOperation  *op,
@@ -3477,6 +3484,13 @@ compare_op_ref (FlatpakTransactionOperation *a, FlatpakTransactionOperation *b)
   char *aa = strchr (a->ref, '/');
   char *bb = strchr (b->ref, '/');
 
+  if (a->run_last != b->run_last)
+    {
+      if (a->run_last)
+        return 1;
+      return -1;
+    }
+
   return g_strcmp0 (aa, bb);
 }
 
@@ -4180,102 +4194,6 @@ flatpak_transaction_normalize_ops (FlatpakTransaction *self)
     }
 }
 
-static GPtrArray *
-find_related_from_deploy (FlatpakTransaction  *self,
-                          const char          *ref,
-                          char               **out_remote)
-{
-  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_autoptr(GBytes) metadata_bytes = NULL;
-  g_autoptr(GKeyFile) metakey = NULL;
-  g_autofree char *checksum = NULL;
-  g_autofree char *remote = NULL;
-  g_autoptr(GError) related_error = NULL;
-  g_autoptr(GPtrArray) related = NULL;
-
-  metadata_bytes = load_deployed_metadata (self, ref, &checksum, &remote);
-  if (metadata_bytes == NULL)
-    return NULL;
-
-  if (out_remote)
-    *out_remote = g_strdup (remote);
-
-  metakey = g_key_file_new ();
-  if (!g_key_file_load_from_bytes (metakey, metadata_bytes, G_KEY_FILE_NONE, NULL))
-    {
-      g_message ("Warning: Failed to parse metadata for %s\n", ref);
-      return NULL;
-    }
-
-  related = flatpak_dir_find_local_related_for_metadata (priv->dir, ref,
-                                                         remote, metakey,
-                                                         NULL, &related_error);
-  if (related_error != NULL)
-    g_message (_("Warning: Problem looking for related refs: %s"), related_error->message);
-
-  return g_steal_pointer (&related);
-}
-
-static gboolean
-prune_maybe_unused_list (FlatpakTransaction  *self,
-                         GHashTable          *maybe_unused_runtimes,
-                         GHashTable          *metadata_injection,
-                         GPtrArray           *to_be_excluded,
-                         GCancellable        *cancellable,
-                         GError             **error)
-{
-  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_auto(GStrv) unused_refs = NULL;
-  const char * const *to_be_excluded_strv = NULL;
-
-  if (to_be_excluded->len > 0)
-    {
-      g_ptr_array_add (to_be_excluded, NULL);
-      to_be_excluded_strv = (const char * const *) to_be_excluded->pdata;
-    }
-
-  unused_refs = flatpak_dir_list_unused_refs_with_options (priv->dir,
-                                                           NULL, /* arch */
-                                                           metadata_injection,
-                                                           to_be_excluded_strv,
-                                                           TRUE, /* filter_by_eol */
-                                                           cancellable, error);
-  if (unused_refs == NULL)
-    return FALSE;
-
-  GLNX_HASH_TABLE_FOREACH_IT (maybe_unused_runtimes, hashiter, const char *, runtime, const char *, remote)
-    {
-      if (!g_strv_contains ((const gchar * const *)unused_refs, runtime))
-        g_hash_table_iter_remove (&hashiter);
-    }
-
-  return TRUE;
-}
-
-static gboolean
-populate_maybe_unused_list (FlatpakTransaction  *self,
-                            GHashTable          *maybe_unused_runtimes,
-                            GCancellable        *cancellable,
-                            GError             **error)
-{
-  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_auto(GStrv) unused_refs = NULL;
-
-  unused_refs = flatpak_dir_list_unused_refs_with_options (priv->dir,
-                                                           NULL, /* arch */
-                                                           NULL, /* metadata_injection */
-                                                           NULL, /* refs_to_exclude */
-                                                           TRUE, /* filter_by_eol */
-                                                           cancellable, error);
-  if (unused_refs == NULL)
-    return FALSE;
-
-  for (char **iter = unused_refs; iter && *iter; iter++)
-    g_hash_table_replace (maybe_unused_runtimes, g_strdup (*iter), NULL);
-
-  return TRUE;
-}
-
 static gboolean
 add_uninstall_unused_ops (FlatpakTransaction  *self,
                           GCancellable        *cancellable,
@@ -4287,22 +4205,26 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
   g_autoptr(GHashTable) metadata_injection = NULL;
   g_autoptr(GPtrArray) to_be_excluded = NULL;
   g_autoptr(GPtrArray) run_after_ops = NULL;
+  g_auto(GStrv) old_unused_refs = NULL;
+  g_auto(GStrv) unused_refs = NULL;
+  const char * const *to_be_excluded_strv = NULL;
   GList *l, *next;
   int i;
 
   if (priv->disable_deps)
     return TRUE;
 
-  /* This is the set of runtimes which are no longer needed by something in the
-   * transaction (an uninstall or update). The values are either the relevant
-   * remote name or %NULL. In case priv->include_unused_uninstall_ops is set,
-   * this is initialized to the set of unused runtimes at the start of the
-   * transaction.*/
-  maybe_unused_runtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
-  /* This is the set of runtimes being used by an install or update operation
-   * in the transaction. */
-  newly_used_runtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  if (!priv->include_unused_uninstall_ops)
+    {
+      old_unused_refs = flatpak_dir_list_unused_refs (priv->dir,
+                                                      NULL, /* arch */
+                                                      NULL, /* metadata_injection */
+                                                      NULL, /* exclude_refs */
+                                                      TRUE, /* filter_by_eol */
+                                                      cancellable, error);
+      if (old_unused_refs == NULL)
+        return FALSE;
+    }
 
   /* This is a mapping from refs to #GKeyFile metadata objects, for each ref
    * being installed or updated by the transaction. This will allows us to
@@ -4315,20 +4237,10 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
    * which are therefore excluded when calculating used refs. */
   to_be_excluded = g_ptr_array_new ();
 
-  /* These are the set of operations which may need to be executed before the
-   * uninstall operations added by this function. */
-  run_after_ops = g_ptr_array_new ();
-
-  if (priv->include_unused_uninstall_ops &&
-      !populate_maybe_unused_list (self, maybe_unused_runtimes, cancellable, error))
-    return FALSE;
-
   for (l = priv->ops; l != NULL; l = next)
     {
       FlatpakTransactionOperation *op = l->data;
       FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
-      g_autofree char *runtime_ref = NULL;
-      g_autoptr(GBytes) deploy_data = NULL;
 
       next = l->next;
 
@@ -4342,172 +4254,49 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
 
       if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         g_ptr_array_add (to_be_excluded, op->ref);
-      else if (op->resolved_metakey)
-        g_hash_table_insert (metadata_injection, op->ref, op->resolved_metakey);
-
-      if ((op_type == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
-           op_type == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE) &&
-          g_str_has_prefix (op->ref, "runtime/"))
-        g_hash_table_add (newly_used_runtimes, g_strdup (op->ref));
-
-      if ((op_type == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
-           op_type == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE) &&
-          !priv->disable_related)
+      else
         {
-          g_autoptr(GPtrArray) related = NULL;
-          if (!op_get_related (self, op, &related, error))
-            return FALSE;
-
-          for (i = 0; related && i < related->len; i++)
-            {
-              FlatpakRelated *rel = g_ptr_array_index (related, i);
-              if (rel->delete)
-                g_hash_table_add (newly_used_runtimes, g_strdup (rel->ref));
-            }
-        }
-
-      runtime_ref = op_get_runtime_ref (op);
-      if (runtime_ref != NULL)
-        {
-          g_autoptr(GPtrArray) runtime_related = NULL;
-          g_autofree char *runtime_remote = NULL;
-
-          if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-            {
-              runtime_related = find_related_from_deploy (self, runtime_ref, &runtime_remote);
-            }
-          else
-            {
-              FlatpakTransactionOperation *runtime_op = NULL;
-              runtime_op = flatpak_transaction_get_last_op_for_ref (self, runtime_ref);
-              if (runtime_op != NULL)
-                {
-                  runtime_remote = g_strdup (runtime_op->remote);
-                  if (!priv->disable_related && !op_get_related (self, runtime_op, &runtime_related, error))
-                    return FALSE;
-                }
-              else
-                runtime_related = find_related_from_deploy (self, runtime_ref, &runtime_remote);
-            }
-
-          if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-            {
-              g_hash_table_replace (maybe_unused_runtimes, g_strdup (runtime_ref), g_strdup (runtime_remote));
-              g_ptr_array_add (run_after_ops, op);
-            }
-          else
-            g_hash_table_add (newly_used_runtimes, g_strdup (runtime_ref));
-
-          if (!priv->disable_related)
-            {
-              for (i = 0; runtime_related && i < runtime_related->len; i++)
-                {
-                  FlatpakRelated *rel = g_ptr_array_index (runtime_related, i);
-
-                  if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-                    {
-                      if (rel->delete)
-                        g_hash_table_replace (maybe_unused_runtimes, g_strdup (rel->ref), g_strdup (runtime_remote));
-                    }
-                  else
-                    g_hash_table_add (newly_used_runtimes, g_strdup (rel->ref));
-                }
-            }
-        }
-
-      if (op_type == FLATPAK_TRANSACTION_OPERATION_UPDATE &&
-          dir_ref_is_installed (priv->dir, op->ref, NULL, &deploy_data))
-        {
-          g_autofree char *full_previous_runtime = NULL;
-          g_autofree char *prev_runtime_remote = NULL;
-          g_autoptr(GPtrArray) runtime_related = NULL;
-          g_autoptr(GPtrArray) ref_related = NULL;
-
-          g_ptr_array_add (run_after_ops, op);
-
-          /* The related refs of the op might now be unused */
-          if (!priv->disable_related)
-            {
-              ref_related = find_related_from_deploy (self, op->ref, NULL);
-              for (i = 0; ref_related && i < ref_related->len; i++)
-                {
-                  FlatpakRelated *rel = g_ptr_array_index (ref_related, i);
-                  if (rel->delete)
-                    g_hash_table_replace (maybe_unused_runtimes, g_strdup (rel->ref), g_strdup (op->remote));
-                }
-            }
-
-          /* If the op is changing to a different runtime, the previous one and
-           * its related refs might now be unused */
-          const char *previous_runtime = flatpak_deploy_data_get_runtime (deploy_data);
-
-          if (previous_runtime == NULL || *previous_runtime == '\0')
-            continue;
-
-          full_previous_runtime = g_strconcat ("runtime/", previous_runtime, NULL);
-          if (g_strcmp0 (full_previous_runtime, runtime_ref) == 0)
-            continue;
-
-          runtime_related = find_related_from_deploy (self, full_previous_runtime, &prev_runtime_remote);
-
-          g_hash_table_replace (maybe_unused_runtimes,
-                                g_strdup (full_previous_runtime),
-                                g_strdup (prev_runtime_remote));
-
-          if (priv->disable_related)
-            continue;
-
-          for (i = 0; runtime_related && i < runtime_related->len; i++)
-            {
-              FlatpakRelated *rel = g_ptr_array_index (runtime_related, i);
-              if (rel->delete)
-                g_hash_table_replace (maybe_unused_runtimes, g_strdup (rel->ref), g_strdup (prev_runtime_remote));
-            }
+          if (op->resolved_metakey)
+            g_hash_table_insert (metadata_injection, op->ref, op->resolved_metakey);
         }
     }
 
-  /* Subtract newly_used_runtimes from maybe_unused_runtimes */
-  GLNX_HASH_TABLE_FOREACH (newly_used_runtimes, const char *, runtime_ref)
-    g_hash_table_remove (maybe_unused_runtimes, runtime_ref);
+  if (to_be_excluded->len > 0)
+    {
+      g_ptr_array_add (to_be_excluded, NULL);
+      to_be_excluded_strv = (const char * const *) to_be_excluded->pdata;
+    }
 
-  if (g_hash_table_size (maybe_unused_runtimes) == 0)
-    return TRUE;
-
-  /* Check which things in maybe_unused_runtimes will be unused after the
-   * ops in the transaction are executed. Note that
-   * maybe_unused_runtimes and to_be_excluded are modified in this helper */
-  if (!prune_maybe_unused_list (self, maybe_unused_runtimes, metadata_injection, to_be_excluded,
-                                cancellable, error))
+  /* These are the refs that will be unused & eol after the transaction */
+  unused_refs = flatpak_dir_list_unused_refs (priv->dir,
+                                              NULL, /* arch */
+                                              metadata_injection, /* metadata_injection */
+                                              to_be_excluded_strv, /* exclude_refs */
+                                              TRUE, /* filter_by_eol */
+                                              cancellable, error);
+  if (unused_refs == NULL)
     return FALSE;
 
   /* Schedule each unused runtime to be uninstalled */
-  GLNX_HASH_TABLE_FOREACH_KV (maybe_unused_runtimes, const char *, runtime_ref, const char *, remote)
+  for (i = 0; unused_refs[i] != NULL; i++)
     {
-      g_autofree char *resolved_remote = NULL;
-      FlatpakTransactionOperation *unused_op = NULL;
+      FlatpakTransactionOperation *uninstall_op;
+      const char *unused_ref = unused_refs[i];
+      g_autofree char *origin = NULL;
 
-      if (priv->default_arch)
+      /* Don't uninstall refs that were already unused before the transaction (unless include_unused_uninstall_ops is set) */
+      if (old_unused_refs &&
+          g_strv_contains ((const char * const*)old_unused_refs, unused_ref))
+        continue;
+
+      origin = flatpak_dir_get_origin (priv->dir, unused_ref, NULL, NULL);
+      if (origin)
         {
-          g_auto(GStrv) parts = flatpak_decompose_ref (runtime_ref, error);
-          if (parts == NULL)
-            return FALSE;
-          if (g_strcmp0 (parts[2], priv->default_arch) != 0)
-            continue;
-        }
-
-      if (remote == NULL)
-        g_assert (dir_ref_is_installed (priv->dir, runtime_ref, &resolved_remote, NULL));
-      else
-        resolved_remote = g_strdup (remote);
-
-      unused_op = flatpak_transaction_add_op (self, resolved_remote, runtime_ref,
-                                              NULL, NULL, NULL, NULL,
-                                              FLATPAK_TRANSACTION_OPERATION_UNINSTALL);
-
-      for (i = 0; i < run_after_ops->len; i++)
-        {
-          FlatpakTransactionOperation *op = g_ptr_array_index (run_after_ops, i);
-          run_operation_before (op, unused_op, 1);
+          /* These get added last and have no dependencies, so will run last */
+          uninstall_op = flatpak_transaction_add_op (self, origin, unused_ref,
+                                                     NULL, NULL, NULL, NULL,
+                                                     FLATPAK_TRANSACTION_OPERATION_UNINSTALL);
+          run_operation_last (uninstall_op);
         }
     }
 
@@ -4629,7 +4418,8 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
   /* Add uninstall ops for things that are made unused by this transaction (and
    * which match a heuristic). We don't need to do another round of
-   * resolve_all_ops() since uninstalls don't require that. */
+   * resolve_all_ops() since uninstalls don't require that.
+   */
   if (!add_uninstall_unused_ops (self, cancellable, error))
     {
       g_assert (error == NULL || *error != NULL);
