@@ -58,6 +58,8 @@ struct _FlatpakCliTransaction
   int                  progress_row;
   char                *progress_msg;
   int                  speed_len;
+
+  gboolean             did_interaction;
 };
 
 struct _FlatpakCliTransactionClass
@@ -79,6 +81,8 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
   const char *pref;
 
   pref = strchr (for_ref, '/') + 1;
+
+  self->did_interaction = TRUE;
 
   if (self->disable_interaction)
     {
@@ -113,6 +117,8 @@ add_new_remote (FlatpakTransaction            *transaction,
                 const char                    *url)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+
+  self->did_interaction = TRUE;
 
   if (self->disable_interaction)
     {
@@ -157,6 +163,8 @@ install_authenticator (FlatpakTransaction            *old_transaction,
       g_warning ("No dir in install_authenticator");
       return;
     }
+
+  old_cli->did_interaction = TRUE;
 
   transaction2 = flatpak_cli_transaction_new (dir, old_cli->disable_interaction, TRUE, FALSE, &local_error);
   if (transaction2 == NULL)
@@ -558,6 +566,8 @@ webflow_start (FlatpakTransaction *transaction,
   g_autoptr(GError) local_error = NULL;
   const char *args[3] = { NULL, url, NULL };
 
+  self->did_interaction = TRUE;
+
   if (!self->disable_interaction)
     {
       g_print (_("Authentication required for remote '%s'\n"), remote);
@@ -612,6 +622,8 @@ basic_auth_start (FlatpakTransaction *transaction,
   if (self->disable_interaction)
     return FALSE;
 
+  self->did_interaction = TRUE;
+
   if (g_variant_lookup (options, "previous-error", "&s", &previous_error))
     g_print ("%s\n", previous_error);
 
@@ -639,6 +651,8 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
+
+  self->did_interaction = TRUE;
 
   if (rebased_to_ref)
     g_print (_("Info: %s is end-of-life, in favor of %s\n"), flatpak_ref_get_name (rref), rebased_to_ref);
@@ -941,7 +955,7 @@ message_handler (const gchar   *log_domain,
 }
 
 static gboolean
-transaction_ready (FlatpakTransaction *transaction)
+transaction_ready_pre_auth (FlatpakTransaction *transaction)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   GList *ops = flatpak_transaction_get_operations (transaction);
@@ -1124,6 +1138,32 @@ transaction_ready (FlatpakTransaction *transaction)
   else
     g_print ("\n\n");
 
+  self->did_interaction = FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+transaction_ready (FlatpakTransaction *transaction)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  GList *ops = flatpak_transaction_get_operations (transaction);
+  GList *l;
+  FlatpakTablePrinter *printer;
+
+  if (ops == NULL)
+    return TRUE;
+
+  printer = self->printer;
+
+  if (self->did_interaction)
+    {
+      /* We did some interaction since ready_pre_auth which messes up the formating, so re-print table */
+      flatpak_table_printer_print_full (printer, 0, self->cols,
+                                        &self->table_height, &self->table_width);
+      g_print ("\n\n");
+    }
+
   for (l = ops; l; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
@@ -1186,6 +1226,7 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   object_class->finalize = flatpak_cli_transaction_finalize;
   transaction_class->add_new_remote = add_new_remote;
   transaction_class->ready = transaction_ready;
+  transaction_class->ready_pre_auth = transaction_ready_pre_auth;
   transaction_class->new_operation = new_operation;
   transaction_class->operation_done = operation_done;
   transaction_class->operation_error = operation_error;
