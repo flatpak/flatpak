@@ -451,6 +451,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
 {
   g_autofree char *request_path = NULL;
   g_autoptr(GError) error = NULL;
+  g_autoptr(GError) anon_error = NULL;
   g_autoptr(AutoFlatpakAuthenticatorRequest) request = NULL;
   const char *auth = NULL;
   gboolean have_auth;
@@ -520,15 +521,14 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
 
       g_debug ("Trying anonymous authentication");
 
-      first_token = get_token_for_ref (registry, ref_data, NULL, &error);
+      first_token = get_token_for_ref (registry, ref_data, NULL, &anon_error);
       if (first_token != NULL)
         have_auth = TRUE;
       else
         {
-          if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_AUTHORIZED))
+          if (g_error_matches (anon_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_AUTHORIZED))
             {
-              g_debug ("Anonymous authentication failed: %s", error->message);
-              g_clear_error (&error);
+              g_debug ("Anonymous authentication failed: %s", anon_error->message);
 
               /* Continue trying with authentication below */
             }
@@ -538,7 +538,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
                * that adding some authentication will fix it. It will just cause a bad UX like
                * described in #3753, so just return the error early.
                */
-              return error_request (request, sender, error);
+              return error_request (request, sender, anon_error);
             }
         }
     }
@@ -582,8 +582,8 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
         }
     }
 
-  if (!have_auth)
-    return error_request (request, sender, error);
+  if (!have_auth && n_refs > 0)
+    return error_request (request, sender, error ? error : anon_error);
 
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
 
