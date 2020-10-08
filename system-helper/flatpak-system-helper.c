@@ -511,6 +511,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciImage) image_config = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
       g_autoptr(GHashTable) remote_refs = NULL;
+      FlatpakCollectionRef collection_ref;
       g_autofree char *checksum = NULL;
       const char *verified_digest;
       g_autofree char *upstream_url = NULL;
@@ -589,7 +590,10 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      verified_digest = g_hash_table_lookup (remote_refs, arg_ref);
+      collection_ref.collection_id = state->collection_id;
+      collection_ref.ref_name = (char *) arg_ref;
+
+      verified_digest = g_hash_table_lookup (remote_refs, &collection_ref);
       if (!verified_digest)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,

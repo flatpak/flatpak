@@ -182,6 +182,21 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRelated, flatpak_related_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemoteState, flatpak_remote_state_unref)
 
+typedef struct
+{
+  char *collection_id;
+  char *ref_name;
+} FlatpakCollectionRef;
+
+FlatpakCollectionRef *    flatpak_collection_ref_new (const char *collection_id,
+                                                      const char *ref_name);
+void                      flatpak_collection_ref_free (FlatpakCollectionRef *ref);
+guint                     flatpak_collection_ref_hash (gconstpointer ref);
+gboolean                  flatpak_collection_ref_equal (gconstpointer ref1,
+                                                        gconstpointer ref2);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakCollectionRef, flatpak_collection_ref_free)
+
 typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_NONE = 0,
   FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE = 1 << 0,
