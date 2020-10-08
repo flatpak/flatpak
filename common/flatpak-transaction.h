@@ -150,7 +150,9 @@ struct _FlatpakTransactionClass
                                    const char         *remote,
                                    const char         *authenticator_ref);
 
-  gpointer padding[4];
+  gboolean (*ready_pre_auth) (FlatpakTransaction *transaction);
+
+  gpointer padding[3];
 };
 
 FLATPAK_EXTERN
@@ -195,6 +197,8 @@ FLATPAK_EXTERN
 GKeyFile *                      flatpak_transaction_operation_get_metadata (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
 GKeyFile *                      flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *self);
+FLATPAK_EXTERN
+gboolean                        flatpak_transaction_operation_get_requires_authentication (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_type_to_string (FlatpakTransactionOperationType kind);
 
