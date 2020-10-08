@@ -3262,7 +3262,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
       if (g_variant_lookup (results, "error-code", "i", &error_code) && error_code != -1)
         {
           if (error_message)
-            flatpak_fail_error (error, error_code, _("Failed to get tokens for ref: %s"), error_message);
+            return flatpak_fail_error (error, error_code, _("Failed to get tokens for ref: %s"), error_message);
           else
             return flatpak_fail_error (error, error_code, _("Failed to get tokens for ref"));
         }
