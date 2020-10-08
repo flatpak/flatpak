@@ -203,6 +203,7 @@ enum {
   END_OF_LIFED,
   END_OF_LIFED_WITH_REBASE,
   READY,
+  READY_PRE_AUTH,
   ADD_NEW_REMOTE,
   WEBFLOW_START,
   WEBFLOW_DONE,
@@ -227,6 +228,8 @@ enum {
   CHANGED,
   LAST_PROGRESS_SIGNAL
 };
+
+static gboolean op_may_need_token (FlatpakTransactionOperation *op);
 
 static void flatpak_transaction_normalize_ops (FlatpakTransaction *self);
 static gboolean request_required_tokens (FlatpakTransaction *self,
@@ -902,6 +905,28 @@ flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *sel
 }
 
 /**
+ * flatpak_transaction_operation_get_requires_authentication:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the metadata current metadata for the ref that @self works on.
+ * Also see flatpak_transaction_operation_get_metadata().
+ *
+ * This information is available when the transaction is resolved,
+ * i.e. when #FlatpakTransaction::ready is emitted.
+ *
+ * Returns: (transfer none): the old metadata #GKeyFile
+ * Since: 1.9.1
+ */
+gboolean
+flatpak_transaction_operation_get_requires_authentication (FlatpakTransactionOperation *self)
+{
+  return
+    op_may_need_token (self) &&
+    self->token_type != 0 &&
+    !self->requested_token;
+}
+
+/**
  * flatpak_transaction_is_empty:
  * @self: a #FlatpakTransaction
  *
@@ -1018,6 +1043,12 @@ flatpak_transaction_ready (FlatpakTransaction *transaction)
 }
 
 static gboolean
+flatpak_transaction_ready_pre_auth (FlatpakTransaction *transaction)
+{
+  return TRUE;
+}
+
+static gboolean
 flatpak_transaction_add_new_remote (FlatpakTransaction            *transaction,
                                     FlatpakTransactionRemoteReason reason,
                                     const char                    *from_id,
@@ -1044,6 +1075,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   klass->ready = flatpak_transaction_ready;
+  klass->ready_pre_auth = flatpak_transaction_ready_pre_auth;
   klass->add_new_remote = flatpak_transaction_add_new_remote;
   klass->install_authenticator = flatpak_transaction_install_authenticator;
   klass->run = flatpak_transaction_real_run;
@@ -1194,9 +1226,9 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * @object: A #FlatpakTransaction
    *
    * The ::ready signal is emitted when all the refs involved in the operation
-   * have been resolved to commits. At this point flatpak_transaction_get_operations()
-   * will return all the operations that will be executed as part of the
-   * transaction.
+   * have been resolved to commits, and the required authentication for all ops is gotten.
+   * At this point flatpak_transaction_get_operations() will return all the operations
+   * that will be executed as part of the transaction.
    *
    * Returns: %TRUE to carry on with the transaction, %FALSE to abort
    */
@@ -1205,6 +1237,31 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   G_TYPE_FROM_CLASS (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (FlatpakTransactionClass, ready),
+                  signal_accumulator_false_abort, NULL,
+                  NULL,
+                  G_TYPE_BOOLEAN, 0);
+
+  /**
+   * FlatpakTransaction::ready-pre-auth:
+   * @object: A #FlatpakTransaction
+   *
+   * The ::ready-pre-auth signal is emitted when all the refs involved in the operation
+   * have been resolved to commits, but all we might not necessarily have asked for authenticaion
+   * for all there required operations. This is very similar to the ::ready signal, and you can
+   * chose which one (or both) to use depending on how you want to handle authentication in your user
+   * interface.
+   *
+   * At this point flatpak_transaction_get_operations() will return all the operations
+   * that will be executed as part of the transaction. You can call flatpak_transaction_operation_get_requires_authentication()
+   * to see which will require authentication.
+   *
+   * Returns: %TRUE to carry on with the transaction, %FALSE to abort
+   */
+  signals[READY_PRE_AUTH] =
+    g_signal_new ("ready-pre-auth",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, ready_pre_auth),
                   signal_accumulator_false_abort, NULL,
                   NULL,
                   G_TYPE_BOOLEAN, 0);
@@ -3477,7 +3534,7 @@ request_required_tokens (FlatpakTransaction *self,
       FlatpakTransactionOperation *op = l->data;
       GList *old;
 
-      if (!op_may_need_token (op) || op->token_type == 0 || op->requested_token)
+      if (!flatpak_transaction_operation_get_requires_authentication (op))
         continue;
 
       if (optional_remote != NULL && g_strcmp0 (op->remote, optional_remote) != 0)
@@ -4433,13 +4490,6 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       return FALSE;
     }
 
-  /* Ensure we have all required tokens, we do this after all resolves if possible to bunch requests */
-  if (!request_required_tokens (self, NULL, cancellable, error))
-    {
-      g_assert (error == NULL || *error != NULL);
-      return FALSE;
-    }
-
   /* Ensure the operation kind is normalized and not no-op */
   flatpak_transaction_normalize_ops (self);
 
@@ -4455,6 +4505,19 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
   sort_ops (self);
 
+  ready_res = FALSE;
+  g_signal_emit (self, signals[READY_PRE_AUTH], 0, &ready_res);
+  if (!ready_res)
+    return flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Aborted by user"));
+
+  /* Ensure we have all required tokens, we do this after all resolves if possible to bunch requests. */
+  if (!request_required_tokens (self, NULL, cancellable, error))
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
+
+  ready_res = FALSE;
   g_signal_emit (self, signals[READY], 0, &ready_res);
   if (!ready_res)
     return flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Aborted by user"));
