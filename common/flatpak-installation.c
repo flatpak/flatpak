@@ -1096,7 +1096,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 
   related_to_ops = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, null_safe_g_ptr_array_unref);
 
-  g_signal_connect (transaction, "ready", G_CALLBACK (transaction_ready), &related_to_ops);
+  g_signal_connect (transaction, "ready-pre-auth", G_CALLBACK (transaction_ready), &related_to_ops);
 
   flatpak_transaction_run (transaction, cancellable, &local_error);
   g_assert (local_error != NULL);
