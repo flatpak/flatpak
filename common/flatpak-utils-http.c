@@ -462,6 +462,11 @@ load_uri_callback (GObject      *source_object,
           code = G_IO_ERROR_HOST_NOT_FOUND;
           break;
 
+        case SOUP_STATUS_INTERNAL_SERVER_ERROR:
+          /* The server did return something, but it was useless to us, so that’s basically equivalent to not returning */
+          code = G_IO_ERROR_HOST_UNREACHABLE;
+          break;
+
         case SOUP_STATUS_IO_ERROR:
 #if !GLIB_CHECK_VERSION(2, 44, 0)
           code = G_IO_ERROR_BROKEN_PIPE;
