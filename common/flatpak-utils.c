@@ -3526,6 +3526,225 @@ populate_commit_data_cache (GVariant   *metadata,
     }
 }
 
+static gboolean
+is_flatpak_ref (const char *ref)
+{
+  return
+    g_str_has_prefix (ref, "appstream/") ||
+    g_str_has_prefix (ref, "appstream2/") ||
+    g_str_has_prefix (ref, "app/") ||
+    g_str_has_prefix (ref, "runtime/");
+}
+
+static CommitData *
+read_commit_data (OstreeRepo   *repo,
+                  const char   *ref,
+                  const char   *rev,
+                  GCancellable *cancellable,
+                  GError      **error)
+{
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  guint64 installed_size = 0;
+  guint64 download_size = 0;
+  g_autofree char *metadata_contents = NULL;
+  g_autofree char *commit = NULL;
+  g_autoptr(GVariant) commit_v = NULL;
+  g_autoptr(GVariant) commit_metadata = NULL;
+  CommitData *rev_data;
+  const char *eol = NULL;
+  const char *eol_rebase = NULL;
+  int token_type = -1;
+  g_autoptr(GVariant) extra_data_sources = NULL;
+  guint32 n_extra_data = 0;
+  guint64 total_extra_data_download_size = 0;
+
+  if (!ostree_repo_read_commit (repo, rev, &root, &commit, NULL, error))
+    return NULL;
+
+  if (!ostree_repo_load_commit (repo, commit, &commit_v, NULL, error))
+    return NULL;
+
+  commit_metadata = g_variant_get_child_value (commit_v, 0);
+  if (!g_variant_lookup (commit_metadata, "xa.metadata", "s", &metadata_contents))
+    {
+      metadata = g_file_get_child (root, "metadata");
+      if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
+        metadata_contents = g_strdup ("");
+    }
+
+  if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size) &&
+      g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
+    {
+      installed_size = GUINT64_FROM_BE (installed_size);
+      download_size = GUINT64_FROM_BE (download_size);
+    }
+  else
+    {
+      if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
+        return NULL;
+    }
+
+  flatpak_repo_collect_extra_data_sizes (repo, rev, &installed_size, &download_size);
+
+  rev_data = g_new0 (CommitData, 1);
+  rev_data->installed_size = installed_size;
+  rev_data->download_size = download_size;
+  rev_data->metadata_contents = g_steal_pointer (&metadata_contents);
+
+  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
+  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
+  if (g_variant_lookup (commit_metadata, "xa.token-type", "i", &token_type))
+    token_type = GINT32_FROM_LE(token_type);
+
+  extra_data_sources = flatpak_commit_get_extra_data_sources (commit_v, NULL);
+  if (extra_data_sources)
+    {
+      n_extra_data = g_variant_n_children (extra_data_sources);
+      for (int i = 0; i < n_extra_data; i++)
+        {
+          guint64 extra_download_size;
+          flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
+                                                 NULL,
+                                                 &extra_download_size,
+                                                 NULL,
+                                                 NULL,
+                                                 NULL);
+          total_extra_data_download_size += extra_download_size;
+        }
+    }
+
+  if (eol || eol_rebase || token_type >= 0 || n_extra_data > 0)
+    {
+      g_auto(GVariantBuilder) sparse_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+      g_variant_builder_init (&sparse_builder, G_VARIANT_TYPE_VARDICT);
+      if (eol)
+        g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, g_variant_new_string (eol));
+      if (eol_rebase)
+        g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, g_variant_new_string (eol_rebase));
+      if (token_type >= 0)
+        g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, g_variant_new_int32 (GINT32_TO_LE(token_type)));
+      if (n_extra_data >= 0)
+        g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE,
+                               g_variant_new ("(ut)", GUINT32_TO_LE(n_extra_data), GUINT64_TO_LE(total_extra_data_download_size)));
+
+      rev_data->sparse_data = g_variant_ref_sink (g_variant_builder_end (&sparse_builder));
+    }
+
+  return rev_data;
+}
+
+static void
+_ostree_parse_delta_name (const char *delta_name,
+                          char      **out_from,
+                          char      **out_to)
+{
+  g_auto(GStrv) parts = g_strsplit (delta_name, "-", 2);
+
+  if (parts[0] && parts[1])
+    {
+      *out_from = g_steal_pointer (&parts[0]);
+      *out_to = g_steal_pointer (&parts[1]);
+    }
+  else
+    {
+      *out_from = NULL;
+      *out_to = g_steal_pointer (&parts[0]);
+    }
+}
+
+static GString *
+static_delta_path_base (const char *dir,
+                        const char *from,
+                        const char *to)
+{
+  guint8 csum_to[OSTREE_SHA256_DIGEST_LEN];
+  char to_b64[44];
+  guint8 csum_to_copy[OSTREE_SHA256_DIGEST_LEN];
+  GString *ret = g_string_new (dir);
+
+  ostree_checksum_inplace_to_bytes (to, csum_to);
+  ostree_checksum_b64_inplace_from_bytes (csum_to, to_b64);
+  ostree_checksum_b64_inplace_to_bytes (to_b64, csum_to_copy);
+
+  g_assert (memcmp (csum_to, csum_to_copy, OSTREE_SHA256_DIGEST_LEN) == 0);
+
+  if (from != NULL)
+    {
+      guint8 csum_from[OSTREE_SHA256_DIGEST_LEN];
+      char from_b64[44];
+
+      ostree_checksum_inplace_to_bytes (from, csum_from);
+      ostree_checksum_b64_inplace_from_bytes (csum_from, from_b64);
+
+      g_string_append_c (ret, from_b64[0]);
+      g_string_append_c (ret, from_b64[1]);
+      g_string_append_c (ret, '/');
+      g_string_append (ret, from_b64 + 2);
+      g_string_append_c (ret, '-');
+    }
+
+  g_string_append_c (ret, to_b64[0]);
+  g_string_append_c (ret, to_b64[1]);
+  if (from == NULL)
+    g_string_append_c (ret, '/');
+  g_string_append (ret, to_b64 + 2);
+
+  return ret;
+}
+
+static char *
+_ostree_get_relative_static_delta_path (const char *from,
+                                        const char *to,
+                                        const char *target)
+{
+  GString *ret = static_delta_path_base ("deltas/", from, to);
+
+  if (target != NULL)
+    {
+      g_string_append_c (ret, '/');
+      g_string_append (ret, target);
+    }
+
+  return g_string_free (ret, FALSE);
+}
+
+static char *
+_ostree_get_relative_static_delta_superblock_path (const char        *from,
+                                                   const char        *to)
+{
+  return _ostree_get_relative_static_delta_path (from, to, "superblock");
+}
+
+static GVariant *
+_ostree_repo_static_delta_superblock_digest (OstreeRepo    *repo,
+                                             const char    *from,
+                                             const char    *to,
+                                             GCancellable  *cancellable,
+                                             GError       **error)
+{
+  g_autofree char *superblock = _ostree_get_relative_static_delta_superblock_path ((from && from[0]) ? from : NULL, to);
+  glnx_autofd int fd = -1;
+  guint8 digest[OSTREE_SHA256_DIGEST_LEN];
+  gsize len;
+
+  if (!glnx_openat_rdonly (ostree_repo_get_dfd (repo), superblock, TRUE, &fd, error))
+    return NULL;
+
+  g_autoptr(GBytes) superblock_content = glnx_fd_readall_bytes (fd, cancellable, error);
+  if (!superblock_content)
+    return NULL;
+
+  g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
+  g_checksum_update (checksum, g_bytes_get_data (superblock_content, NULL), g_bytes_get_size (superblock_content));
+  len = sizeof digest;
+  g_checksum_get_digest (checksum, digest, &len);
+
+  return g_variant_new_from_data (G_VARIANT_TYPE ("ay"),
+                                  g_memdup (digest, len), len,
+                                  FALSE, g_free, FALSE);
+}
+
 /* Update the metadata in the summary file for @repo, and then re-sign the file.
  * If the repo has a collection ID set, additionally store the metadata on a
  * contentless commit in a well-known branch, which is the preferred way of
@@ -3546,10 +3765,11 @@ flatpak_repo_update (OstreeRepo   *repo,
                      GCancellable *cancellable,
                      GError      **error)
 {
-  g_autoptr(GVariantBuilder) builder = g_variant_builder_new (G_VARIANT_TYPE_VARDICT);
-  g_autoptr(GVariantBuilder) commits_builder = g_variant_builder_new (G_VARIANT_TYPE ("aay"));
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE_VARDICT);
   g_autoptr(GVariantBuilder) ref_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(tts)}"));
   g_autoptr(GVariantBuilder) ref_sparse_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sa{sv}}"));
+  g_autoptr(GVariantBuilder) refs_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(s(taya{sv}))"));
+  g_autoptr(GVariantBuilder) summary_builder = g_variant_builder_new (OSTREE_SUMMARY_GVARIANT_FORMAT);
   GKeyFile *config;
   g_autofree char *title = NULL;
   g_autofree char *comment = NULL;
@@ -3558,6 +3778,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *icon = NULL;
   g_autofree char *redirect_url = NULL;
   g_autofree char *default_branch = NULL;
+  g_autofree char *remote_mode_str = NULL;
   g_autofree char *authenticator_name = NULL;
   g_autofree char *gpg_keys = NULL;
   g_auto(GStrv) config_keys = NULL;
@@ -3565,21 +3786,22 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
-  const char *prefixes[] = { "appstream", "appstream2", "app", "runtime", NULL };
-  const char **prefix;
   g_autoptr(GList) ordered_keys = NULL;
   GList *l = NULL;
   g_autoptr(GHashTable) commit_data_cache = NULL;
   const char *collection_id;
-  g_autofree char *old_ostree_metadata_checksum = NULL;
-  g_autoptr(GVariant) old_ostree_metadata_v = NULL;
   gboolean deploy_collection_id = FALSE;
   gboolean deploy_sideload_collection_id = FALSE;
+  gboolean tombstone_commits = FALSE;
+  int repo_dfd;
 
   config = ostree_repo_get_config (repo);
 
   if (config)
     {
+      remote_mode_str = g_key_file_get_string (config, "core", "mode", NULL);
+      tombstone_commits = g_key_file_get_boolean (config, "core", "tombstone-commits", NULL);
+
       title = g_key_file_get_string (config, "flatpak", "title", NULL);
       comment = g_key_file_get_string (config, "flatpak", "comment", NULL);
       description = g_key_file_get_string (config, "flatpak", "description", NULL);
@@ -3599,49 +3821,62 @@ flatpak_repo_update (OstreeRepo   *repo,
 
   collection_id = ostree_repo_get_collection_id (repo);
 
+  g_variant_builder_add (metadata_builder, "{sv}", "ostree.summary.mode",
+                         g_variant_new_string (remote_mode_str ? remote_mode_str : "bare"));
+  g_variant_builder_add (metadata_builder, "{sv}", "ostree.summary.tombstone-commits",
+                         g_variant_new_boolean (tombstone_commits));
+  g_variant_builder_add (metadata_builder, "{sv}", "ostree.summary.indexed-deltas",
+                         g_variant_new_boolean (TRUE));
+  g_variant_builder_add (metadata_builder, "{sv}", "ostree.summary.last-modified",
+                         g_variant_new_uint64 (GUINT64_TO_BE (g_get_real_time () / G_USEC_PER_SEC)));
+
+  if (collection_id)
+    g_variant_builder_add (metadata_builder, "{sv}", "ostree.summary.collection-id",
+                           g_variant_new_string (collection_id));
+
   if (title)
-    g_variant_builder_add (builder, "{sv}", "xa.title",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.title",
                            g_variant_new_string (title));
 
   if (comment)
-    g_variant_builder_add (builder, "{sv}", "xa.comment",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.comment",
                            g_variant_new_string (comment));
 
   if (description)
-    g_variant_builder_add (builder, "{sv}", "xa.description",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.description",
                            g_variant_new_string (description));
 
   if (homepage)
-    g_variant_builder_add (builder, "{sv}", "xa.homepage",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.homepage",
                            g_variant_new_string (homepage));
 
   if (icon)
-    g_variant_builder_add (builder, "{sv}", "xa.icon",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.icon",
                            g_variant_new_string (icon));
 
   if (redirect_url)
-    g_variant_builder_add (builder, "{sv}", "xa.redirect-url",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.redirect-url",
                            g_variant_new_string (redirect_url));
 
   if (default_branch)
-    g_variant_builder_add (builder, "{sv}", "xa.default-branch",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.default-branch",
                            g_variant_new_string (default_branch));
 
   if (deploy_collection_id && collection_id != NULL)
-    g_variant_builder_add (builder, "{sv}", OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
+    g_variant_builder_add (metadata_builder, "{sv}", OSTREE_META_KEY_DEPLOY_COLLECTION_ID,
                            g_variant_new_string (collection_id));
   else if (deploy_sideload_collection_id && collection_id != NULL)
-    g_variant_builder_add (builder, "{sv}", "xa.deploy-collection-id",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.deploy-collection-id",
                            g_variant_new_string (collection_id));
   else if (deploy_collection_id)
     g_debug ("Ignoring deploy-collection-id=true because no collection ID is set.");
 
   if (authenticator_name)
-    g_variant_builder_add (builder, "{sv}", "xa.authenticator-name",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.authenticator-name",
                            g_variant_new_string (authenticator_name));
 
   if (authenticator_install != -1)
-    g_variant_builder_add (builder, "{sv}", "xa.authenticator-install",
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.authenticator-install",
                            g_variant_new_boolean (authenticator_install));
 
   if (config_keys != NULL)
@@ -3660,7 +3895,7 @@ flatpak_repo_update (OstreeRepo   *repo,
             continue;
 
           xa_key = g_strconcat ("xa.", key, NULL);
-          g_variant_builder_add (builder, "{sv}", xa_key,
+          g_variant_builder_add (metadata_builder, "{sv}", xa_key,
                                  g_variant_new_string (value));
         }
     }
@@ -3673,57 +3908,26 @@ flatpak_repo_update (OstreeRepo   *repo,
       gpg_keys = g_strstrip (gpg_keys);
       decoded = g_base64_decode (gpg_keys, &decoded_len);
 
-      g_variant_builder_add (builder, "{sv}", "xa.gpg-keys",
+      g_variant_builder_add (metadata_builder, "{sv}", "xa.gpg-keys",
                              g_variant_new_from_data (G_VARIANT_TYPE ("ay"), decoded, decoded_len,
                                                       TRUE, (GDestroyNotify) g_free, decoded));
-    }
-
-  /* Only operate on flatpak relevant refs */
-  refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-  for (prefix = prefixes; *prefix != NULL; prefix++)
-    {
-      g_autoptr(GHashTable) prefix_refs = NULL;
-      GHashTableIter hashiter;
-      gpointer key, value;
-
-      if (!ostree_repo_list_refs_ext (repo, *prefix, &prefix_refs,
-                                      OSTREE_REPO_LIST_REFS_EXT_NONE,
-                                      cancellable, error))
-        return FALSE;
-
-      /* Merge the prefix refs to the full refs table */
-      g_hash_table_iter_init (&hashiter, prefix_refs);
-      while (g_hash_table_iter_next (&hashiter, &key, &value))
-        {
-          char *ref = g_strdup (key);
-          char *rev = g_strdup (value);
-          g_hash_table_replace (refs, ref, rev);
-        }
     }
 
   commit_data_cache = g_hash_table_new_full (g_str_hash, g_str_equal,
                                              g_free, commit_data_free);
 
   old_summary = flatpak_repo_load_summary (repo, NULL);
-
-  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, OSTREE_REPO_METADATA_REF,
-                                 TRUE, &old_ostree_metadata_checksum, cancellable, error))
-    return FALSE;
-
-  if (old_summary != NULL &&
-      old_ostree_metadata_checksum != NULL &&
-      ostree_repo_load_commit (repo, old_ostree_metadata_checksum, &old_ostree_metadata_v, NULL, NULL))
-    {
-      g_autoptr(GVariant) metadata = g_variant_get_child_value (old_ostree_metadata_v, 0);
-
-      populate_commit_data_cache (metadata, old_summary, commit_data_cache);
-    }
-  else if (old_summary != NULL)
+  if (old_summary != NULL)
     {
       g_autoptr(GVariant) extensions = g_variant_get_child_value (old_summary, 1);
-
       populate_commit_data_cache (extensions, old_summary, commit_data_cache);
     }
+
+
+  if (!ostree_repo_list_refs_ext (repo, NULL, &refs,
+                                  OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_REMOTES | OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_MIRRORS,
+                                  cancellable, error))
+    return FALSE;
 
   ordered_keys = g_hash_table_get_keys (refs);
   ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
@@ -3731,118 +3935,81 @@ flatpak_repo_update (OstreeRepo   *repo,
     {
       const char *ref = l->data;
       const char *rev = g_hash_table_lookup (refs, ref);
-      g_autoptr(GFile) root = NULL;
-      g_autoptr(GFile) metadata = NULL;
-      guint64 installed_size = 0;
-      guint64 download_size = 0;
-      g_autofree char *metadata_contents = NULL;
-      g_autofree char *commit = NULL;
-      g_autoptr(GVariant) commit_v = NULL;
-      g_autoptr(GVariant) commit_metadata = NULL;
       CommitData *rev_data;
-      const char *eol = NULL;
-      const char *eol_rebase = NULL;
-      int token_type = -1;
-      g_autoptr(GVariant) extra_data_sources = NULL;
-      guint32 n_extra_data = 0;
-      guint64 total_extra_data_download_size = 0;
 
-      /* See if we already have the info on this revision */
-      if (g_hash_table_lookup (commit_data_cache, rev))
+      /* Only process flatpak refs */
+      if (!is_flatpak_ref (ref))
         continue;
 
-      if (!ostree_repo_read_commit (repo, rev, &root, &commit, NULL, error))
-        return FALSE;
-
-      if (!ostree_repo_load_commit (repo, commit, &commit_v, NULL, error))
-        return FALSE;
-
-      commit_metadata = g_variant_get_child_value (commit_v, 0);
-      if (!g_variant_lookup (commit_metadata, "xa.metadata", "s", &metadata_contents))
+      if (g_hash_table_lookup (commit_data_cache, rev) == NULL)
         {
-          metadata = g_file_get_child (root, "metadata");
-          if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
-            metadata_contents = g_strdup ("");
-        }
-
-      if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size) &&
-          g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
-        {
-          installed_size = GUINT64_FROM_BE (installed_size);
-          download_size = GUINT64_FROM_BE (download_size);
-        }
-      else
-        {
-          if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
+          rev_data = read_commit_data (repo, ref, rev, cancellable, error);
+          if (rev_data == NULL)
             return FALSE;
+          g_hash_table_insert (commit_data_cache, g_strdup (rev), rev_data);
         }
-
-      flatpak_repo_collect_extra_data_sizes (repo, rev, &installed_size, &download_size);
-
-      rev_data = g_new0 (CommitData, 1);
-      rev_data->installed_size = installed_size;
-      rev_data->download_size = download_size;
-      rev_data->metadata_contents = g_steal_pointer (&metadata_contents);
-
-      g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
-      g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
-      if (g_variant_lookup (commit_metadata, "xa.token-type", "i", &token_type))
-        token_type = GINT32_FROM_LE(token_type);
-
-      extra_data_sources = flatpak_commit_get_extra_data_sources (commit_v, NULL);
-      if (extra_data_sources)
-        {
-          n_extra_data = g_variant_n_children (extra_data_sources);
-          for (int i = 0; i < n_extra_data; i++)
-            {
-              guint64 extra_download_size;
-              flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
-                                                     NULL,
-                                                     &extra_download_size,
-                                                     NULL,
-                                                     NULL,
-                                                     NULL);
-              total_extra_data_download_size += extra_download_size;
-            }
-        }
-
-      if (eol || eol_rebase || token_type >= 0 || n_extra_data > 0)
-        {
-          g_auto(GVariantBuilder) sparse_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
-          g_variant_builder_init (&sparse_builder, G_VARIANT_TYPE_VARDICT);
-          if (eol)
-            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, g_variant_new_string (eol));
-          if (eol_rebase)
-            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, g_variant_new_string (eol_rebase));
-          if (token_type >= 0)
-            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, g_variant_new_int32 (GINT32_TO_LE(token_type)));
-          if (n_extra_data >= 0)
-            g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE,
-                                   g_variant_new ("(ut)", GUINT32_TO_LE(n_extra_data), GUINT64_TO_LE(total_extra_data_download_size)));
-
-          rev_data->sparse_data = g_variant_ref_sink (g_variant_builder_end (&sparse_builder));
-        }
-
-      g_hash_table_insert (commit_data_cache, g_strdup (rev), rev_data);
     }
 
   for (l = ordered_keys; l; l = l->next)
     {
       const char *ref = l->data;
       const char *rev = g_hash_table_lookup (refs, ref);
-      const CommitData *rev_data = g_hash_table_lookup (commit_data_cache,
-                                                        rev);
+      g_auto(GVariantDict) commit_metadata_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+      g_autoptr(GVariant) commit_obj = NULL;
 
-      g_variant_builder_add (ref_data_builder, "{s(tts)}",
-                             ref,
-                             GUINT64_TO_BE (rev_data->installed_size),
-                             GUINT64_TO_BE (rev_data->download_size),
-                             rev_data->metadata_contents);
-      if (rev_data->sparse_data)
-        g_variant_builder_add (ref_sparse_data_builder, "{s@a{sv}}",
-                               ref, rev_data->sparse_data);
-      g_variant_builder_add (commits_builder, "@ay", ostree_checksum_to_bytes_v (rev));
+      if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, rev, &commit_obj, error))
+        return FALSE;
+
+      g_variant_dict_init (&commit_metadata_builder, NULL);
+      g_variant_builder_add_value (refs_builder,
+                                   g_variant_new ("(s(t@ay@a{sv}))", ref,
+                                                  (guint64) g_variant_get_size (commit_obj),
+                                                  ostree_checksum_to_bytes_v (rev),
+                                                  g_variant_dict_end (&commit_metadata_builder)));
+
+      /* Only add CommitData for flatpak refs */
+      if (is_flatpak_ref (ref))
+        {
+          const CommitData *rev_data = g_hash_table_lookup (commit_data_cache, rev);
+          g_variant_builder_add (ref_data_builder, "{s(tts)}",
+                                 ref,
+                                 GUINT64_TO_BE (rev_data->installed_size),
+                                 GUINT64_TO_BE (rev_data->download_size),
+                                 rev_data->metadata_contents);
+          if (rev_data->sparse_data)
+            g_variant_builder_add (ref_sparse_data_builder, "{s@a{sv}}",
+                                   ref, rev_data->sparse_data);
+        }
     }
+
+  {
+    g_autoptr(GPtrArray) delta_names = NULL;
+    g_auto(GVariantDict) deltas_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+
+    if (!ostree_repo_list_static_delta_names (repo, &delta_names, cancellable, error))
+      return FALSE;
+
+    g_variant_dict_init (&deltas_builder, NULL);
+    for (guint i = 0; i < delta_names->len; i++)
+      {
+        g_autofree char *from = NULL;
+        g_autofree char *to = NULL;
+        GVariant *digest;
+
+        _ostree_parse_delta_name (delta_names->pdata[i], &from, &to);
+
+        digest = _ostree_repo_static_delta_superblock_digest (repo,
+                                                              (from && from[0]) ? from : NULL,
+                                                              to, cancellable, error);
+        if (digest == NULL)
+          return FALSE;
+
+        g_variant_dict_insert_value (&deltas_builder, delta_names->pdata[i], digest);
+      }
+
+    if (delta_names->len > 0)
+      g_variant_builder_add (metadata_builder, "{sv}", "ostree.static-deltas", g_variant_dict_end (&deltas_builder));
+  }
 
   /* Note: xa.cache doesn’t need to support collection IDs for the refs listed
    * in it, because the xa.cache metadata is stored on the ostree-metadata ref,
@@ -3850,80 +4017,35 @@ flatpak_repo_update (OstreeRepo   *repo,
    * is bound to all the refs in xa.cache. If a client is using the xa.cache
    * data from a summary file (rather than an ostree-metadata branch), they are
    * too old to care about collection IDs anyway. */
-  g_variant_builder_add (builder, "{sv}", "xa.cache",
+  g_variant_builder_add (metadata_builder, "{sv}", "xa.cache",
                          g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
-  g_variant_builder_add (builder, "{sv}", "xa.cache-version",
+  g_variant_builder_add (metadata_builder, "{sv}", "xa.cache-version",
                          g_variant_new_uint32 (GUINT32_TO_LE (FLATPAK_XA_CACHE_VERSION)));
-
-  g_variant_builder_add (builder, "{sv}", "xa.sparse-cache",
+  g_variant_builder_add (metadata_builder, "{sv}", "xa.sparse-cache",
                          g_variant_builder_end (ref_sparse_data_builder));
 
-  new_summary = g_variant_ref_sink (g_variant_builder_end (builder));
+  g_variant_builder_add_value (summary_builder, g_variant_builder_end (refs_builder));
+  g_variant_builder_add_value (summary_builder, g_variant_builder_end (metadata_builder));
+  new_summary = g_variant_ref_sink (g_variant_builder_end (summary_builder));
 
-  /* Write out a new metadata commit for the repository. */
-  if (collection_id != NULL)
-    {
-      OstreeCollectionRef collection_ref = { (gchar *) collection_id, (gchar *) OSTREE_REPO_METADATA_REF };
-      g_autofree gchar *new_ostree_metadata_checksum = NULL;
-      g_autoptr(OstreeMutableTree) mtree = NULL;
-      g_autoptr(OstreeRepoFile) repo_file = NULL;
-      g_autoptr(GVariantDict) new_summary_commit_dict = NULL;
-      g_autoptr(GVariant) new_summary_commit = NULL;
-
-      /* Add bindings to the metadata. */
-      new_summary_commit_dict = g_variant_dict_new (new_summary);
-      g_variant_dict_insert_value (new_summary_commit_dict, "xa.commits",
-                                   g_variant_builder_end (commits_builder));
-      g_variant_dict_insert (new_summary_commit_dict, "ostree.collection-binding",
-                             "s", collection_ref.collection_id);
-      g_variant_dict_insert_value (new_summary_commit_dict, "ostree.ref-binding",
-                                   g_variant_new_strv ((const gchar * const *) &collection_ref.ref_name, 1));
-      new_summary_commit = g_variant_ref_sink (g_variant_dict_end (new_summary_commit_dict));
-
-      if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
-        goto out;
-
-      /* Set up an empty mtree. */
-      mtree = ostree_mutable_tree_new ();
-      if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
-        goto out;
-      if (!ostree_repo_write_mtree (repo, mtree, (GFile **) &repo_file, NULL, error))
-        goto out;
-
-      if (!ostree_repo_write_commit (repo, old_ostree_metadata_checksum,
-                                     NULL /* subject */, NULL /* body */,
-                                     new_summary_commit, repo_file, &new_ostree_metadata_checksum,
-                                     NULL, error))
-        goto out;
-
-      if (gpg_key_ids != NULL)
-        {
-          const char * const *iter;
-
-          for (iter = gpg_key_ids; iter != NULL && *iter != NULL; iter++)
-            {
-              const char *key_id = *iter;
-
-              if (!ostree_repo_sign_commit (repo,
-                                            new_ostree_metadata_checksum,
-                                            key_id,
-                                            gpg_homedir,
-                                            cancellable,
-                                            error))
-                goto out;
-            }
-        }
-
-      ostree_repo_transaction_set_collection_ref (repo, &collection_ref,
-                                                  new_ostree_metadata_checksum);
-
-      if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
-        goto out;
-    }
-
-  /* Regenerate and re-sign the summary file. */
-  if (!ostree_repo_regenerate_summary (repo, new_summary, cancellable, error))
+  if (!ostree_repo_static_delta_reindex (repo, 0, NULL, cancellable, error))
     return FALSE;
+
+  repo_dfd = ostree_repo_get_dfd (repo);
+
+  if (!glnx_file_replace_contents_at (repo_dfd, "summary",
+                                      g_variant_get_data (new_summary),
+                                      g_variant_get_size (new_summary),
+                                      ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                      cancellable, error))
+    return FALSE;
+
+  if (unlinkat (repo_dfd, "summary.sig", 0) != 0 &&
+      G_UNLIKELY (errno != ENOENT))
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
 
   if (gpg_key_ids)
     {
@@ -3936,11 +4058,6 @@ flatpak_repo_update (OstreeRepo   *repo,
     }
 
   return TRUE;
-
-out:
-  if (repo != NULL)
-    ostree_repo_abort_transaction (repo, cancellable, NULL);
-  return FALSE;
 }
 
 gboolean
