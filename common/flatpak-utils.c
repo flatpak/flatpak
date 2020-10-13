@@ -3455,6 +3455,8 @@ commit_data_free (gpointer data)
   g_free (rev_data);
 }
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (CommitData, commit_data_free)
+
 /* For all the refs listed in @cache_v (an xa.cache value) which exist in the
  * @summary, insert their data into @commit_data_cache if it isn’t already there. */
 static void
@@ -3745,6 +3747,37 @@ _ostree_repo_static_delta_superblock_digest (OstreeRepo    *repo,
                                   FALSE, g_free, FALSE);
 }
 
+static char *
+flatpak_get_arch_for_ref (const char *ref)
+{
+  if (g_str_has_prefix (ref, "appstream/") ||
+      g_str_has_prefix (ref, "appstream2/"))
+    {
+      const char *slash = strchr (ref, '/') + 1; /* Guaranteed to exist per above check */
+      return g_strdup (slash);
+    }
+    else if (g_str_has_prefix (ref, "app/") ||
+      g_str_has_prefix (ref, "runtime/"))
+    {
+      const char *slash;
+      const char *arch;
+
+      slash = strchr (ref, '/') + 1; /* Guaranteed to exist per above check */
+      slash = strchr (slash, '/'); /* Skip id */
+      if (slash == NULL)
+        return NULL;
+      arch = slash + 1;
+
+      slash = strchr (arch, '/'); /* skip to end arch */
+      if (slash == NULL)
+        return NULL;
+
+      return g_strndup (arch, slash - arch);
+    }
+
+  return NULL;
+}
+
 /* Update the metadata in the summary file for @repo, and then re-sign the file.
  * If the repo has a collection ID set, additionally store the metadata on a
  * contentless commit in a well-known branch, which is the preferred way of
@@ -3782,10 +3815,13 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *authenticator_name = NULL;
   g_autofree char *gpg_keys = NULL;
   g_auto(GStrv) config_keys = NULL;
+  g_auto(GStrv) summary_arches = NULL;
+  g_autoptr(GHashTable) summary_arches_ht = NULL;
   int authenticator_install = -1;
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
+  g_autoptr(GHashTable) commits = NULL;
   g_autoptr(GList) ordered_keys = NULL;
   GList *l = NULL;
   g_autoptr(GHashTable) commit_data_cache = NULL;
@@ -3815,6 +3851,8 @@ flatpak_repo_update (OstreeRepo   *repo,
       authenticator_name = g_key_file_get_string (config, "flatpak", "authenticator-name", NULL);
       if (g_key_file_has_key (config, "flatpak", "authenticator-install", NULL))
         authenticator_install = g_key_file_get_boolean (config, "flatpak", "authenticator-install", NULL);
+
+      summary_arches = g_key_file_get_string_list (config, "flatpak", "summary-arches", NULL, NULL);
 
       config_keys = g_key_file_get_keys (config, "flatpak", NULL, NULL);
     }
@@ -3923,7 +3961,6 @@ flatpak_repo_update (OstreeRepo   *repo,
       populate_commit_data_cache (extensions, old_summary, commit_data_cache);
     }
 
-
   if (!ostree_repo_list_refs_ext (repo, NULL, &refs,
                                   OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_REMOTES | OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_MIRRORS,
                                   cancellable, error))
@@ -3931,31 +3968,49 @@ flatpak_repo_update (OstreeRepo   *repo,
 
   ordered_keys = g_hash_table_get_keys (refs);
   ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
+
+  if (summary_arches)
+    {
+      summary_arches_ht = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+      for (int i = 0; summary_arches[i] != NULL; i++)
+        {
+          const char *arch = summary_arches[i];
+          const char *compat_arch = flatpak_get_compat_arch (arch);
+
+          g_hash_table_add (summary_arches_ht, (char *)arch);
+          if (compat_arch)
+            g_hash_table_add (summary_arches_ht, (char *)compat_arch);
+        }
+    }
+
+  /* Compute which commits to keep */
+  commits = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL); /* strings owned by ref */
   for (l = ordered_keys; l; l = l->next)
     {
       const char *ref = l->data;
       const char *rev = g_hash_table_lookup (refs, ref);
-      CommitData *rev_data;
+      g_autofree char *arch = NULL;
 
-      /* Only process flatpak refs */
-      if (!is_flatpak_ref (ref))
-        continue;
-
-      if (g_hash_table_lookup (commit_data_cache, rev) == NULL)
+      if (summary_arches)
         {
-          rev_data = read_commit_data (repo, ref, rev, cancellable, error);
-          if (rev_data == NULL)
-            return FALSE;
-          g_hash_table_insert (commit_data_cache, g_strdup (rev), rev_data);
+          arch = flatpak_get_arch_for_ref (ref);
+          if (arch != NULL && !g_hash_table_contains (summary_arches_ht, arch))
+            continue; /* Filter this ref by arch */
         }
+
+      g_hash_table_add (commits, (char *)rev);
     }
 
+  /* Create refs list, metadata and sparse_data */
   for (l = ordered_keys; l; l = l->next)
     {
       const char *ref = l->data;
       const char *rev = g_hash_table_lookup (refs, ref);
       g_auto(GVariantDict) commit_metadata_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
       g_autoptr(GVariant) commit_obj = NULL;
+
+      if (!g_hash_table_contains (commits, rev))
+        continue; /* Filter out commit (by arch) */
 
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, rev, &commit_obj, error))
         return FALSE;
@@ -3970,7 +4025,17 @@ flatpak_repo_update (OstreeRepo   *repo,
       /* Only add CommitData for flatpak refs */
       if (is_flatpak_ref (ref))
         {
+          g_autoptr(CommitData) free_rev_data = NULL;
           const CommitData *rev_data = g_hash_table_lookup (commit_data_cache, rev);
+
+          if (rev_data == NULL)
+            {
+              free_rev_data = read_commit_data (repo, ref, rev, cancellable, error);
+              if (free_rev_data == NULL)
+                return FALSE;
+              rev_data = free_rev_data;
+            }
+
           g_variant_builder_add (ref_data_builder, "{s(tts)}",
                                  ref,
                                  GUINT64_TO_BE (rev_data->installed_size),
@@ -3997,6 +4062,11 @@ flatpak_repo_update (OstreeRepo   *repo,
         GVariant *digest;
 
         _ostree_parse_delta_name (delta_names->pdata[i], &from, &to);
+
+        /* Only keep deltas going to a ref that is in the summary
+         * (i.e. not arch filtered or random) */
+        if (!g_hash_table_contains (commits, to))
+          continue;
 
         digest = _ostree_repo_static_delta_superblock_digest (repo,
                                                               (from && from[0]) ? from : NULL,
