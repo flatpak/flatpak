@@ -70,9 +70,8 @@ ostree_repo_mode_to_string (OstreeRepoMode mode,
 
 static void
 print_info (OstreeRepo *repo,
-            GVariant   *meta)
+            GVariant   *summary)
 {
-  g_autoptr(GVariant) cache = NULL;
   const char *title;
   const char *comment;
   const char *description;
@@ -87,10 +86,14 @@ print_info (OstreeRepo *repo,
   g_autoptr(GVariant) gpg_keys = NULL;
   OstreeRepoMode mode;
   const char *mode_string = "unknown";
+  g_autoptr(GVariant) meta = NULL;
+  g_autoptr(GVariant) refs = NULL;
 
   mode = ostree_repo_get_mode (repo);
   ostree_repo_mode_to_string (mode, &mode_string, NULL);
   g_print (_("Repo mode: %s\n"), mode_string);
+
+  meta = g_variant_get_child_value (summary, 1);
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
     g_print (_("Title: %s\n"), title);
@@ -134,44 +137,50 @@ print_info (OstreeRepo *repo,
       g_print (_("GPG key hash: %s\n"), gpg_data_checksum);
     }
 
-  cache = g_variant_lookup_value (meta, "xa.cache", NULL);
-  if (cache)
-    {
-      g_autoptr(GVariant) refdata = NULL;
-
-      refdata = g_variant_get_variant (cache);
-      g_print (_("%zd branches\n"), g_variant_n_children (refdata));
-    }
+  refs = g_variant_get_child_value (summary, 0);
+  g_print (_("%zd branches\n"), g_variant_n_children (refs));
 }
 
 static void
-print_branches (GVariant *meta)
+print_branches (GVariant *summary)
 {
-  g_autoptr(GVariant) cache = NULL;
-  g_autoptr(GVariant) sparse_cache = NULL;
+  g_autoptr(GVariant) meta = NULL;
+  guint summary_version = 0;
+  FlatpakTablePrinter *printer;
 
-  g_variant_lookup (meta, "xa.sparse-cache", "@a{sa{sv}}", &sparse_cache);
-  cache = g_variant_lookup_value (meta, "xa.cache", NULL);
-  if (cache)
+  meta = g_variant_get_child_value (summary, 1);
+
+  g_variant_lookup (meta, "xa.summary-version", "u", &summary_version);
+
+  printer = flatpak_table_printer_new ();
+  flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
+  flatpak_table_printer_set_column_title (printer, 1, _("Installed"));
+  flatpak_table_printer_set_column_title (printer, 2, _("Download"));
+  flatpak_table_printer_set_column_title (printer, 3, _("Options"));
+
+  if (summary_version == 1)
     {
-      g_autoptr(GVariant) refdata = NULL;
+      g_autoptr(GVariant) refs = g_variant_get_child_value (summary, 0);
       GVariantIter iter;
       const char *ref;
-      guint64 installed_size;
-      guint64 download_size;
-      const char *metadata;
-      FlatpakTablePrinter *printer;
+      GVariant *refdata_iter = NULL;
 
-      printer = flatpak_table_printer_new ();
-      flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
-      flatpak_table_printer_set_column_title (printer, 1, _("Installed"));
-      flatpak_table_printer_set_column_title (printer, 2, _("Download"));
-      flatpak_table_printer_set_column_title (printer, 3, _("Options"));
-
-      refdata = g_variant_get_variant (cache);
-      g_variant_iter_init (&iter, refdata);
-      while (g_variant_iter_next (&iter, "{&s(tt&s)}", &ref, &installed_size, &download_size, &metadata))
+      g_variant_iter_init (&iter, refs);
+      while (g_variant_iter_next (&iter, "(&s@(taya{sv}))", &ref, &refdata_iter))
         {
+          g_autoptr(GVariant) refdata = refdata_iter;
+          g_autoptr(GVariant) ref_meta = g_variant_get_child_value (refdata, 2);
+          g_autoptr(GVariant) data = g_variant_lookup_value (ref_meta, "xa.data", NULL);
+          guint64 installed_size;
+          guint64 download_size;
+          const char *metadata;
+          const char *eol;
+
+          if (data == NULL)
+            continue;
+
+          g_variant_get (data, "(tt&s)", &installed_size, &download_size, &metadata);
+
           g_autofree char *installed = g_format_size (GUINT64_FROM_BE (installed_size));
           g_autofree char *download = g_format_size (GUINT64_FROM_BE (download_size));
 
@@ -181,49 +190,120 @@ print_branches (GVariant *meta)
 
           flatpak_table_printer_add_column (printer, ""); /* Options */
 
-          if (sparse_cache)
-            {
-              g_autoptr(GVariant) sparse = NULL;
-              if (g_variant_lookup (sparse_cache, ref, "@a{sv}", &sparse))
-                {
-                  const char *eol;
-                  if (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol))
-                    flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
-                  if (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol))
-                    flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
-                }
-            }
+          if (g_variant_lookup (ref_meta, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol))
+            flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
+          if (g_variant_lookup (ref_meta, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol))
+            flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
 
           flatpak_table_printer_finish_row (printer);
         }
-
-      flatpak_table_printer_print (printer);
-      flatpak_table_printer_free (printer);
     }
+  else
+    {
+      g_autoptr(GVariant) cache = NULL;
+      g_autoptr(GVariant) sparse_cache = NULL;
+
+      g_variant_lookup (meta, "xa.sparse-cache", "@a{sa{sv}}", &sparse_cache);
+      cache = g_variant_lookup_value (meta, "xa.cache", NULL);
+      if (cache)
+        {
+          g_autoptr(GVariant) refdata = NULL;
+          GVariantIter iter;
+          const char *ref;
+          guint64 installed_size;
+          guint64 download_size;
+          const char *metadata;
+
+          refdata = g_variant_get_variant (cache);
+          g_variant_iter_init (&iter, refdata);
+          while (g_variant_iter_next (&iter, "{&s(tt&s)}", &ref, &installed_size, &download_size, &metadata))
+            {
+              g_autofree char *installed = g_format_size (GUINT64_FROM_BE (installed_size));
+              g_autofree char *download = g_format_size (GUINT64_FROM_BE (download_size));
+
+              flatpak_table_printer_add_column (printer, ref);
+              flatpak_table_printer_add_decimal_column (printer, installed);
+              flatpak_table_printer_add_decimal_column (printer, download);
+
+              flatpak_table_printer_add_column (printer, ""); /* Options */
+
+              if (sparse_cache)
+                {
+                  g_autoptr(GVariant) sparse = NULL;
+                  if (g_variant_lookup (sparse_cache, ref, "@a{sv}", &sparse))
+                    {
+                      const char *eol;
+                      if (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol))
+                        flatpak_table_printer_append_with_comma_printf (printer, "eol=%s", eol);
+                      if (g_variant_lookup (sparse, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol))
+                        flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
+                    }
+                }
+
+              flatpak_table_printer_finish_row (printer);
+            }
+
+        }
+    }
+
+  flatpak_table_printer_print (printer);
+  flatpak_table_printer_free (printer);
 }
 
 static void
-print_metadata (GVariant   *meta,
+print_metadata (GVariant   *summary,
                 const char *branch)
 {
-  g_autoptr(GVariant) cache = NULL;
+  g_autoptr(GVariant) meta = NULL;
+  guint summary_version = 0;
+  guint64 installed_size;
+  guint64 download_size;
+  const char *metadata;
+  GVariantIter iter;
+  const char *ref;
 
-  cache = g_variant_lookup_value (meta, "xa.cache", NULL);
-  if (cache)
+  meta = g_variant_get_child_value (summary, 1);
+
+  g_variant_lookup (meta, "xa.summary-version", "u", &summary_version);
+
+  if (summary_version == 1)
     {
-      g_autoptr(GVariant) refdata = NULL;
-      GVariantIter iter;
-      const char *ref;
-      guint64 installed_size;
-      guint64 download_size;
-      const char *metadata;
+      g_autoptr(GVariant) refs = g_variant_get_child_value (summary, 0);
+      GVariant *refdata_iter = NULL;
 
-      refdata = g_variant_get_variant (cache);
-      g_variant_iter_init (&iter, refdata);
-      while (g_variant_iter_next (&iter, "{&s(tt&s)}", &ref, &installed_size, &download_size, &metadata))
+      g_variant_iter_init (&iter, refs);
+      while (g_variant_iter_next (&iter, "(&s@(taya{sv}))", &ref, &refdata_iter))
         {
+          g_autoptr(GVariant) refdata = refdata_iter;
+          g_autoptr(GVariant) ref_meta = g_variant_get_child_value (refdata, 2);
+
           if (strcmp (branch, ref) == 0)
-            g_print ("%s\n", metadata);
+            {
+              g_autoptr(GVariant) data = g_variant_lookup_value (ref_meta, "xa.data", NULL);
+              if (data)
+                {
+                  g_variant_get (data, "(tt&s)", &installed_size, &download_size, &metadata);
+                  g_print ("%s\n", metadata);
+                  break;
+                }
+            }
+        }
+    }
+  else /* Version 0 */
+    {
+      g_autoptr(GVariant) cache = g_variant_lookup_value (meta, "xa.cache", NULL);
+      if (cache)
+        {
+          g_autoptr(GVariant) refdata = g_variant_get_variant (cache);
+          g_variant_iter_init (&iter, refdata);
+          while (g_variant_iter_next (&iter, "{&s(tt&s)}", &ref, &installed_size, &download_size, &metadata))
+            {
+              if (strcmp (branch, ref) == 0)
+                {
+                  g_print ("%s\n", metadata);
+                  break;
+                }
+            }
         }
     }
 }
@@ -419,10 +499,8 @@ flatpak_builtin_repo (int argc, char **argv,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) location = NULL;
-  g_autoptr(GVariant) meta = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
-  const char *ostree_metadata_ref = NULL;
-  g_autofree char *ostree_metadata_checksum = NULL;
+  g_autoptr(GVariant) summary = NULL;
   const char *collection_id;
 
   context = g_option_context_new (_("LOCATION - Repository maintenance"));
@@ -441,38 +519,11 @@ flatpak_builtin_repo (int argc, char **argv,
 
   collection_id = ostree_repo_get_collection_id (repo);
 
-  /* Try loading the metadata from the ostree-metadata branch first. If that
-   * fails, fall back to the summary file. */
-  ostree_metadata_ref = OSTREE_REPO_METADATA_REF;
-  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, ostree_metadata_ref,
-                                 TRUE, &ostree_metadata_checksum, cancellable, error))
-    return FALSE;
-
-  if (ostree_metadata_checksum != NULL)
+  summary = flatpak_repo_load_summary (repo, error);
+  if (summary == NULL)
     {
-      g_autoptr(GVariant) commit_v = NULL;
-
-      if (!ostree_repo_load_commit (repo, ostree_metadata_checksum, &commit_v, NULL, error))
-        {
-          g_prefix_error (error, "Error getting repository metadata from %s ref: ", ostree_metadata_ref);
-          return FALSE;
-        }
-
-      meta = g_variant_get_child_value (commit_v, 0);
-      g_debug ("Using repository metadata from the ostree-metadata branch");
-    }
-  else
-    {
-      g_autoptr(GVariant) summary = NULL;
-
-      summary = flatpak_repo_load_summary (repo, error);
-      if (summary == NULL)
-        {
-          g_prefix_error (error, "Error getting repository metadata from summary file: ");
-          return FALSE;
-        }
-      meta = g_variant_get_child_value (summary, 1);
-      g_debug ("Using repository metadata from the summary file");
+      g_prefix_error (error, "Error getting repository metadata from summary file: ");
+      return FALSE;
     }
 
   if (!opt_info && !opt_branches && !opt_metadata_branch && !opt_commits_branch)
@@ -480,13 +531,13 @@ flatpak_builtin_repo (int argc, char **argv,
 
   /* Print out the metadata. */
   if (opt_info)
-    print_info (repo, meta);
+    print_info (repo, summary);
 
   if (opt_branches)
-    print_branches (meta);
+    print_branches (summary);
 
   if (opt_metadata_branch)
-    print_metadata (meta, opt_metadata_branch);
+    print_metadata (summary, opt_metadata_branch);
 
   if (opt_commits_branch)
     {

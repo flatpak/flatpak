@@ -2605,7 +2605,7 @@ flatpak_variant_save (GFile        *dest,
 
 /* This special cases the ref lookup which by doing a
    bsearch since the array is sorted */
-static gboolean
+gboolean
 flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
                                 const char    *ref,
                                 VarRefInfoRef *out_info)
@@ -3469,6 +3469,7 @@ populate_commit_data_cache (GVariant   *metadata,
   g_autoptr(GVariant) sparse_cache = NULL;
   gsize n, i;
   guint32 cache_version = 0;
+  guint32 summary_version = 0;
   const char *old_collection_id;
 
   if (!g_variant_lookup (metadata, "ostree.summary.collection-id", "&s", &old_collection_id))
@@ -3485,6 +3486,11 @@ populate_commit_data_cache (GVariant   *metadata,
 
   if (cache_version < FLATPAK_XA_CACHE_VERSION)
     return; /* We need to rebuild the cache with the current version */
+
+  if (g_variant_lookup (metadata, "xa.summary-version", "u", &summary_version))
+    summary_version = GUINT32_FROM_LE (summary_version);
+  else
+    summary_version = 0;
 
   cache = g_variant_get_child_value (cache_v, 0);
 
@@ -3778,11 +3784,33 @@ flatpak_get_arch_for_ref (const char *ref)
   return NULL;
 }
 
+static void
+variant_dict_merge (GVariantDict *dict,
+                    GVariant *to_merge)
+{
+  GVariantIter iter;
+  gchar *key;
+  GVariant *value;
+
+  if (to_merge)
+    {
+      g_variant_iter_init (&iter, to_merge);
+      while (g_variant_iter_next (&iter, "{sv}", &key, &value))
+        {
+          g_variant_dict_insert_value (dict, key, value);
+          g_variant_unref (value);
+          g_free (key);
+        }
+    }
+}
+
 static GVariant *
 generate_summary (OstreeRepo   *repo,
+                  gboolean      compat_format,
                   GHashTable   *refs,
                   GHashTable   *commit_data_cache,
                   GPtrArray    *delta_names,
+                  const char  **summary_arches,
                   const char  **gpg_key_ids,
                   const char   *gpg_homedir,
                   GCancellable *cancellable,
@@ -3805,7 +3833,6 @@ generate_summary (OstreeRepo   *repo,
   g_autofree char *authenticator_name = NULL;
   g_autofree char *gpg_keys = NULL;
   g_auto(GStrv) config_keys = NULL;
-  g_auto(GStrv) summary_arches = NULL;
   g_autoptr(GHashTable) summary_arches_ht = NULL;
   int authenticator_install = -1;
   g_autoptr(GHashTable) commits = NULL;
@@ -3837,7 +3864,6 @@ generate_summary (OstreeRepo   *repo,
       if (g_key_file_has_key (config, "flatpak", "authenticator-install", NULL))
         authenticator_install = g_key_file_get_boolean (config, "flatpak", "authenticator-install", NULL);
 
-      summary_arches = g_key_file_get_string_list (config, "flatpak", "summary-arches", NULL, NULL);
 
       config_keys = g_key_file_get_keys (config, "flatpak", NULL, NULL);
     }
@@ -3976,6 +4002,7 @@ generate_summary (OstreeRepo   *repo,
     {
       const char *ref = l->data;
       const char *rev = g_hash_table_lookup (refs, ref);
+      const CommitData *rev_data = NULL;
       g_auto(GVariantDict) commit_metadata_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
       g_autoptr(GVariant) commit_obj = NULL;
 
@@ -3985,18 +4012,10 @@ generate_summary (OstreeRepo   *repo,
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, rev, &commit_obj, error))
         return NULL;
 
-      g_variant_dict_init (&commit_metadata_builder, NULL);
-      g_variant_builder_add_value (refs_builder,
-                                   g_variant_new ("(s(t@ay@a{sv}))", ref,
-                                                  (guint64) g_variant_get_size (commit_obj),
-                                                  ostree_checksum_to_bytes_v (rev),
-                                                  g_variant_dict_end (&commit_metadata_builder)));
-
       /* Only add CommitData for flatpak refs */
       if (is_flatpak_ref (ref))
         {
-          const CommitData *rev_data = g_hash_table_lookup (commit_data_cache, rev);
-
+          rev_data = g_hash_table_lookup (commit_data_cache, rev);
           if (rev_data == NULL)
             {
               rev_data = read_commit_data (repo, ref, rev, cancellable, error);
@@ -4005,7 +4024,25 @@ generate_summary (OstreeRepo   *repo,
 
               g_hash_table_insert (commit_data_cache, g_strdup (rev), (CommitData *)rev_data);
             }
+        }
 
+      g_variant_dict_init (&commit_metadata_builder, NULL);
+      if (!compat_format && rev_data)
+        {
+          g_variant_dict_insert (&commit_metadata_builder, "xa.data", "(tts)",
+                                 GUINT64_TO_BE (rev_data->installed_size),
+                                 GUINT64_TO_BE (rev_data->download_size),
+                                 rev_data->metadata_contents);
+          variant_dict_merge (&commit_metadata_builder, rev_data->sparse_data);
+        }
+      g_variant_builder_add_value (refs_builder,
+                                   g_variant_new ("(s(t@ay@a{sv}))", ref,
+                                                  (guint64) g_variant_get_size (commit_obj),
+                                                  ostree_checksum_to_bytes_v (rev),
+                                                  g_variant_dict_end (&commit_metadata_builder)));
+
+      if (compat_format && rev_data)
+        {
           g_variant_builder_add (ref_data_builder, "{s(tts)}",
                                  ref,
                                  GUINT64_TO_BE (rev_data->installed_size),
@@ -4017,48 +4054,57 @@ generate_summary (OstreeRepo   *repo,
         }
     }
 
-  {
-    g_auto(GVariantDict) deltas_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+  if (delta_names)
+    {
+      g_auto(GVariantDict) deltas_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
 
-    g_variant_dict_init (&deltas_builder, NULL);
-    for (guint i = 0; i < delta_names->len; i++)
-      {
-        g_autofree char *from = NULL;
-        g_autofree char *to = NULL;
-        GVariant *digest;
+      g_variant_dict_init (&deltas_builder, NULL);
+      for (guint i = 0; i < delta_names->len; i++)
+        {
+          g_autofree char *from = NULL;
+          g_autofree char *to = NULL;
+          GVariant *digest;
 
-        _ostree_parse_delta_name (delta_names->pdata[i], &from, &to);
+          _ostree_parse_delta_name (delta_names->pdata[i], &from, &to);
 
-        /* Only keep deltas going to a ref that is in the summary
-         * (i.e. not arch filtered or random) */
-        if (!g_hash_table_contains (commits, to))
-          continue;
+          /* Only keep deltas going to a ref that is in the summary
+           * (i.e. not arch filtered or random) */
+          if (!g_hash_table_contains (commits, to))
+            continue;
 
-        digest = _ostree_repo_static_delta_superblock_digest (repo,
-                                                              (from && from[0]) ? from : NULL,
-                                                              to, cancellable, error);
-        if (digest == NULL)
-          return FALSE;
+          digest = _ostree_repo_static_delta_superblock_digest (repo,
+                                                                (from && from[0]) ? from : NULL,
+                                                                to, cancellable, error);
+          if (digest == NULL)
+            return FALSE;
 
-        g_variant_dict_insert_value (&deltas_builder, delta_names->pdata[i], digest);
-      }
+          g_variant_dict_insert_value (&deltas_builder, delta_names->pdata[i], digest);
+        }
 
-    if (delta_names->len > 0)
-      g_variant_builder_add (metadata_builder, "{sv}", "ostree.static-deltas", g_variant_dict_end (&deltas_builder));
-  }
+      if (delta_names->len > 0)
+        g_variant_builder_add (metadata_builder, "{sv}", "ostree.static-deltas", g_variant_dict_end (&deltas_builder));
+    }
 
-  /* Note: xa.cache doesn’t need to support collection IDs for the refs listed
-   * in it, because the xa.cache metadata is stored on the ostree-metadata ref,
-   * which is itself strongly bound to a collection ID — so that collection ID
-   * is bound to all the refs in xa.cache. If a client is using the xa.cache
-   * data from a summary file (rather than an ostree-metadata branch), they are
-   * too old to care about collection IDs anyway. */
-  g_variant_builder_add (metadata_builder, "{sv}", "xa.cache",
-                         g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
+  if (compat_format)
+    {
+      /* Note: xa.cache doesn’t need to support collection IDs for the refs listed
+       * in it, because the xa.cache metadata is stored on the ostree-metadata ref,
+       * which is itself strongly bound to a collection ID — so that collection ID
+       * is bound to all the refs in xa.cache. If a client is using the xa.cache
+       * data from a summary file (rather than an ostree-metadata branch), they are
+       * too old to care about collection IDs anyway. */
+      g_variant_builder_add (metadata_builder, "{sv}", "xa.cache",
+                             g_variant_new_variant (g_variant_builder_end (ref_data_builder)));
+      g_variant_builder_add (metadata_builder, "{sv}", "xa.sparse-cache",
+                             g_variant_builder_end (ref_sparse_data_builder));
+    }
+  else
+    {
+      g_variant_builder_add (metadata_builder, "{sv}", "xa.summary-version",
+                             g_variant_new_uint32 (GUINT32_TO_LE (FLATPAK_XA_SUMMARY_VERSION)));
+    }
   g_variant_builder_add (metadata_builder, "{sv}", "xa.cache-version",
                          g_variant_new_uint32 (GUINT32_TO_LE (FLATPAK_XA_CACHE_VERSION)));
-  g_variant_builder_add (metadata_builder, "{sv}", "xa.sparse-cache",
-                         g_variant_builder_end (ref_sparse_data_builder));
 
   g_variant_builder_add_value (summary_builder, g_variant_builder_end (refs_builder));
   g_variant_builder_add_value (summary_builder, g_variant_builder_end (metadata_builder));
@@ -4091,8 +4137,12 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GPtrArray) delta_names = NULL;
+  g_auto(GStrv) summary_arches = NULL;
   g_autoptr(GHashTable) refs = NULL;
+  GKeyFile *config;
   int repo_dfd;
+
+  config = ostree_repo_get_config (repo);
 
   if (!ostree_repo_list_refs_ext (repo, NULL, &refs,
                                   OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_REMOTES | OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_MIRRORS,
@@ -4112,7 +4162,10 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (!ostree_repo_list_static_delta_names (repo, &delta_names, cancellable, error))
     return FALSE;
 
-  new_summary = generate_summary (repo, refs, commit_data_cache, delta_names,
+  if (config)
+    summary_arches = g_key_file_get_string_list (config, "flatpak", "summary-arches", NULL, NULL);
+
+  new_summary = generate_summary (repo, TRUE, refs, commit_data_cache, delta_names, (const char **)summary_arches,
                                   gpg_key_ids, gpg_homedir, cancellable, error);
   if (new_summary == NULL)
     return FALSE;

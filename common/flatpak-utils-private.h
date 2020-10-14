@@ -57,6 +57,11 @@
 #define FLATPAK_XA_CACHE_VERSION 1
 /* version 1 added extra data download size */
 
+#define FLATPAK_XA_SUMMARY_VERSION 1
+/* version 0/missing is standard ostree summary,
+ * version 1 is compact format with inline cache and no deltas
+ */
+
 gboolean flatpak_set_tty_echo (gboolean echo);
 void flatpak_get_window_size (int *rows,
                               int *cols);
@@ -170,6 +175,9 @@ gboolean flatpak_summary_lookup_ref (GVariant      *summary,
 gboolean flatpak_summary_find_ref_map (VarSummaryRef  summary,
                                        const char    *collection_id,
                                        VarRefMapRef  *refs_out);
+gboolean flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
+                                         const char    *ref,
+                                         VarRefInfoRef *out_info);
 gboolean flatpak_name_matches_one_wildcard_prefix (const char         *string,
                                                    const char * const *maybe_wildcard_prefixes,
                                                    gboolean            require_exact_match);
