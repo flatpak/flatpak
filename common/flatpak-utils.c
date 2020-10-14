@@ -3778,25 +3778,15 @@ flatpak_get_arch_for_ref (const char *ref)
   return NULL;
 }
 
-/* Update the metadata in the summary file for @repo, and then re-sign the file.
- * If the repo has a collection ID set, additionally store the metadata on a
- * contentless commit in a well-known branch, which is the preferred way of
- * broadcasting per-repo metadata (putting it in the summary file is deprecated,
- * but kept for backwards compatibility).
- *
- * Note that there are two keys for the collection ID: collection-id, and
- * ostree.deploy-collection-id. If a client does not currently have a
- * collection ID configured for this remote, it will *only* update its
- * configuration from ostree.deploy-collection-id.  This allows phased
- * deployment of collection-based repositories. Clients will only update their
- * configuration from an unset to a set collection ID once (otherwise the
- * security properties of collection IDs are broken). */
-gboolean
-flatpak_repo_update (OstreeRepo   *repo,
-                     const char  **gpg_key_ids,
-                     const char   *gpg_homedir,
-                     GCancellable *cancellable,
-                     GError      **error)
+static GVariant *
+generate_summary (OstreeRepo   *repo,
+                  GHashTable   *refs,
+                  GHashTable   *commit_data_cache,
+                  GPtrArray    *delta_names,
+                  const char  **gpg_key_ids,
+                  const char   *gpg_homedir,
+                  GCancellable *cancellable,
+                  GError      **error)
 {
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE_VARDICT);
   g_autoptr(GVariantBuilder) ref_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(tts)}"));
@@ -3818,18 +3808,13 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_auto(GStrv) summary_arches = NULL;
   g_autoptr(GHashTable) summary_arches_ht = NULL;
   int authenticator_install = -1;
-  g_autoptr(GVariant) old_summary = NULL;
-  g_autoptr(GVariant) new_summary = NULL;
-  g_autoptr(GHashTable) refs = NULL;
   g_autoptr(GHashTable) commits = NULL;
   g_autoptr(GList) ordered_keys = NULL;
   GList *l = NULL;
-  g_autoptr(GHashTable) commit_data_cache = NULL;
   const char *collection_id;
   gboolean deploy_collection_id = FALSE;
   gboolean deploy_sideload_collection_id = FALSE;
   gboolean tombstone_commits = FALSE;
-  int repo_dfd;
 
   config = ostree_repo_get_config (repo);
 
@@ -3951,21 +3936,6 @@ flatpak_repo_update (OstreeRepo   *repo,
                                                       TRUE, (GDestroyNotify) g_free, decoded));
     }
 
-  commit_data_cache = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                             g_free, commit_data_free);
-
-  old_summary = flatpak_repo_load_summary (repo, NULL);
-  if (old_summary != NULL)
-    {
-      g_autoptr(GVariant) extensions = g_variant_get_child_value (old_summary, 1);
-      populate_commit_data_cache (extensions, old_summary, commit_data_cache);
-    }
-
-  if (!ostree_repo_list_refs_ext (repo, NULL, &refs,
-                                  OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_REMOTES | OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_MIRRORS,
-                                  cancellable, error))
-    return FALSE;
-
   ordered_keys = g_hash_table_get_keys (refs);
   ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
 
@@ -4013,7 +3983,7 @@ flatpak_repo_update (OstreeRepo   *repo,
         continue; /* Filter out commit (by arch) */
 
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, rev, &commit_obj, error))
-        return FALSE;
+        return NULL;
 
       g_variant_dict_init (&commit_metadata_builder, NULL);
       g_variant_builder_add_value (refs_builder,
@@ -4025,15 +3995,15 @@ flatpak_repo_update (OstreeRepo   *repo,
       /* Only add CommitData for flatpak refs */
       if (is_flatpak_ref (ref))
         {
-          g_autoptr(CommitData) free_rev_data = NULL;
           const CommitData *rev_data = g_hash_table_lookup (commit_data_cache, rev);
 
           if (rev_data == NULL)
             {
-              free_rev_data = read_commit_data (repo, ref, rev, cancellable, error);
-              if (free_rev_data == NULL)
-                return FALSE;
-              rev_data = free_rev_data;
+              rev_data = read_commit_data (repo, ref, rev, cancellable, error);
+              if (rev_data == NULL)
+                return NULL;
+
+              g_hash_table_insert (commit_data_cache, g_strdup (rev), (CommitData *)rev_data);
             }
 
           g_variant_builder_add (ref_data_builder, "{s(tts)}",
@@ -4048,11 +4018,7 @@ flatpak_repo_update (OstreeRepo   *repo,
     }
 
   {
-    g_autoptr(GPtrArray) delta_names = NULL;
     g_auto(GVariantDict) deltas_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
-
-    if (!ostree_repo_list_static_delta_names (repo, &delta_names, cancellable, error))
-      return FALSE;
 
     g_variant_dict_init (&deltas_builder, NULL);
     for (guint i = 0; i < delta_names->len; i++)
@@ -4096,7 +4062,60 @@ flatpak_repo_update (OstreeRepo   *repo,
 
   g_variant_builder_add_value (summary_builder, g_variant_builder_end (refs_builder));
   g_variant_builder_add_value (summary_builder, g_variant_builder_end (metadata_builder));
-  new_summary = g_variant_ref_sink (g_variant_builder_end (summary_builder));
+
+  return g_variant_ref_sink (g_variant_builder_end (summary_builder));
+}
+
+
+/* Update the metadata in the summary file for @repo, and then re-sign the file.
+ * If the repo has a collection ID set, additionally store the metadata on a
+ * contentless commit in a well-known branch, which is the preferred way of
+ * broadcasting per-repo metadata (putting it in the summary file is deprecated,
+ * but kept for backwards compatibility).
+ *
+ * Note that there are two keys for the collection ID: collection-id, and
+ * ostree.deploy-collection-id. If a client does not currently have a
+ * collection ID configured for this remote, it will *only* update its
+ * configuration from ostree.deploy-collection-id.  This allows phased
+ * deployment of collection-based repositories. Clients will only update their
+ * configuration from an unset to a set collection ID once (otherwise the
+ * security properties of collection IDs are broken). */
+gboolean
+flatpak_repo_update (OstreeRepo   *repo,
+                     const char  **gpg_key_ids,
+                     const char   *gpg_homedir,
+                     GCancellable *cancellable,
+                     GError      **error)
+{
+  g_autoptr(GHashTable) commit_data_cache = NULL;
+  g_autoptr(GVariant) old_summary = NULL;
+  g_autoptr(GVariant) new_summary = NULL;
+  g_autoptr(GPtrArray) delta_names = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+  int repo_dfd;
+
+  if (!ostree_repo_list_refs_ext (repo, NULL, &refs,
+                                  OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_REMOTES | OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_MIRRORS,
+                                  cancellable, error))
+    return FALSE;
+
+  commit_data_cache = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                             g_free, commit_data_free);
+
+  old_summary = flatpak_repo_load_summary (repo, NULL);
+  if (old_summary != NULL)
+    {
+      g_autoptr(GVariant) extensions = g_variant_get_child_value (old_summary, 1);
+      populate_commit_data_cache (extensions, old_summary, commit_data_cache);
+    }
+
+  if (!ostree_repo_list_static_delta_names (repo, &delta_names, cancellable, error))
+    return FALSE;
+
+  new_summary = generate_summary (repo, refs, commit_data_cache, delta_names,
+                                  gpg_key_ids, gpg_homedir, cancellable, error);
+  if (new_summary == NULL)
+    return FALSE;
 
   if (!ostree_repo_static_delta_reindex (repo, 0, NULL, cancellable, error))
     return FALSE;
