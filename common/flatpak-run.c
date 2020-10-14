@@ -3432,6 +3432,13 @@ check_parental_controls (const char     *app_ref,
                "controls are disabled globally", app_ref);
       return TRUE;
     }
+  else if (g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_SERVICE_UNKNOWN) ||
+           g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_NAME_HAS_NO_OWNER))
+    {
+      g_debug ("Skipping parental controls check for %s since a required "
+               "service was not found", app_ref);
+      return TRUE;
+    }
   else if (local_error != NULL)
     {
       g_propagate_error (error, g_steal_pointer (&local_error));
