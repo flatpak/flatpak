@@ -119,6 +119,7 @@ typedef struct
 {
   char     *remote_name;
   char     *collection_id;
+  guint     summary_version;
   GVariant *summary;
   GBytes   *summary_bytes;
   GBytes   *summary_sig_bytes;

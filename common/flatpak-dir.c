@@ -604,34 +604,6 @@ flatpak_remote_state_get_cache_version (FlatpakRemoteState *self)
   return GUINT32_FROM_LE (var_metadata_lookup_uint32 (meta, "xa.cache-version", 0));
 }
 
-static gboolean
-flatpak_remote_state_get_cache (FlatpakRemoteState *self,
-                                VarCacheRef        *out,
-                                GError            **error)
-{
-  VarMetadataRef meta;
-  VarVariantRef cache_vv;
-  VarVariantRef cache_v;
-  VarSummaryRef summary;
-
-  if (!flatpak_remote_state_ensure_summary (self, error))
-    return FALSE;
-
-  summary = var_summary_from_gvariant (self->summary);
-  meta = var_summary_get_metadata (summary);
-  if (!var_metadata_lookup (meta, "xa.cache", NULL, &cache_vv))
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No summary or Flatpak cache available for remote %s"),
-                          self->remote_name);
-      return FALSE;
-    }
-
-  /* For stupid historical reasons the xa.cache is double-wrapped in a variant */
-  cache_v = var_variant_from_variant (cache_vv);
-  *out = var_cache_from_variant (cache_v);
-  return TRUE;
-}
-
 gboolean
 flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                    const char         *ref,
@@ -640,17 +612,66 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                    const char        **out_metadata,
                                    GError            **error)
 {
-  VarCacheRef cache;
   VarCacheDataRef cache_data;
-  gsize pos;
+  VarMetadataRef meta;
+  VarSummaryRef summary;
+  guint32 summary_version;
 
-  if (!flatpak_remote_state_get_cache (self, &cache, error))
+  if (!flatpak_remote_state_ensure_summary (self, error))
     return FALSE;
 
-  if (!var_cache_lookup (cache, ref, &pos, &cache_data))
-    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                               _("No entry for %s in remote '%s' summary flatpak cache "),
-                               ref, self->remote_name);
+  summary = var_summary_from_gvariant (self->summary);
+  meta = var_summary_get_metadata (summary);
+
+  summary_version = GUINT32_FROM_LE (var_metadata_lookup_uint32 (meta, "xa.summary-version", 0));
+
+  if (summary_version == 0)
+    {
+      VarCacheRef cache;
+      gsize pos;
+      VarVariantRef cache_vv;
+      VarVariantRef cache_v;
+
+      if (!var_metadata_lookup (meta, "xa.cache", NULL, &cache_vv))
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No summary or Flatpak cache available for remote %s"),
+                              self->remote_name);
+          return FALSE;
+        }
+
+      /* For stupid historical reasons the xa.cache is double-wrapped in a variant */
+      cache_v = var_variant_from_variant (cache_vv);
+      cache = var_cache_from_variant (cache_v);
+
+      if (!var_cache_lookup (cache, ref, &pos, &cache_data))
+        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                                   _("No entry for %s in remote '%s' summary flatpak cache "),
+                                   ref, self->remote_name);
+    }
+  else if (summary_version == 1)
+    {
+      VarRefMapRef ref_map = var_summary_get_ref_map (summary);
+      VarRefInfoRef info;
+      VarMetadataRef commit_metadata;
+      VarVariantRef cache_data_v;
+
+      if (!flatpak_var_ref_map_lookup_ref (ref_map, ref, &info))
+        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                                   _("No entry for %s in remote '%s' summary cache "),
+                                   ref, self->remote_name);
+
+      commit_metadata = var_ref_info_get_metadata (info);
+      if (!var_metadata_lookup (commit_metadata, "xa.data", NULL, &cache_data_v))
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Missing xa.data in summary for remote %s"),
+                                   self->remote_name);
+      cache_data = var_cache_data_from_variant (cache_data_v);
+    }
+  else
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unsupported summary version %d for remote %s"),
+                          summary_version, self->remote_name);
+      return FALSE;
+    }
 
   if (out_installed_size)
     *out_installed_size = var_cache_data_get_installed_size (cache_data);
@@ -1025,22 +1046,45 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
   VarSummaryRef summary;
   VarMetadataRef meta;
   VarVariantRef sparse_cache_v;
+  guint32 summary_version;
 
   if (!flatpak_remote_state_ensure_summary (self, error))
     return FALSE;
 
   summary = var_summary_from_gvariant (self->summary);
   meta = var_summary_get_metadata (summary);
-  if (var_metadata_lookup (meta, "xa.sparse-cache", NULL, &sparse_cache_v))
+
+  summary_version = GUINT32_FROM_LE (var_metadata_lookup_uint32 (meta, "xa.summary-version", 0));
+
+  if (summary_version == 0)
     {
-      VarSparseCacheRef sparse_cache = var_sparse_cache_from_variant (sparse_cache_v);
-      return var_sparse_cache_lookup (sparse_cache, ref, NULL, out_metadata);
+      if (var_metadata_lookup (meta, "xa.sparse-cache", NULL, &sparse_cache_v))
+        {
+          VarSparseCacheRef sparse_cache = var_sparse_cache_from_variant (sparse_cache_v);
+          if (var_sparse_cache_lookup (sparse_cache, ref, NULL, out_metadata))
+            return TRUE;
+        }
+    }
+  else if (summary_version == 1)
+    {
+      VarRefMapRef ref_map = var_summary_get_ref_map (summary);
+      VarRefInfoRef info;
+
+      if (flatpak_var_ref_map_lookup_ref (ref_map, ref, &info))
+        {
+          *out_metadata = var_ref_info_get_metadata (info);
+          return TRUE;
+        }
+    }
+  else
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unsupported summary version %d for remote %s"),
+                          summary_version, self->remote_name);
+      return FALSE;
     }
 
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-               _("No entry for %s in remote summary flatpak sparse cache "), ref);
-
-  return FALSE;
+  return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                             _("No entry for %s in remote summary flatpak sparse cache "), ref);
 }
 
 static DirExtraData *
