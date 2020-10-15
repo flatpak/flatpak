@@ -458,7 +458,8 @@ static inline void
   GVariant *child = g_variant_get_child_value (v, index);
   g_assert (child != NULL);
   g_assert (child_size == g_variant_get_size (child));
-  g_assert (child_base == g_variant_get_data (child));
+  gconstpointer child_data = g_variant_get_data (child);
+  g_assert (child_base == child_data || (child_data == NULL && child_size == 0));
   g_variant_unref (child);
   g_variant_unref (v);
 }}""")
@@ -1150,6 +1151,8 @@ static inline gboolean
 })
         else:
             C("""
+  if (v.size == 0)
+    return FALSE;
   guint offset_size = {prefix_}ref_get_offset_size (v.size);
   gsize last_end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);
   if (last_end > v.size)
