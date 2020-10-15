@@ -32,7 +32,7 @@ echo "1..2"
 setup_empty_repo &> /dev/null > /dev/null
 
 # Manually add the user remote too
-flatpak remote-add --user --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
+$FLATPAK remote-add --user --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
 
 
 # This tests the detection of unused refs. Used refs are any that have
@@ -83,8 +83,8 @@ sdk=${SDK}/$ARCH/$BRANCH
 EOF
     fi
 
-    flatpak build-finish $DIR ${finish_args[$ID]:-} &> /dev/null > /dev/null
-    flatpak build-export ${FL_GPGARGS} --disable-sandbox --runtime repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
+    $FLATPAK build-finish $DIR ${finish_args[$ID]:-} &> /dev/null > /dev/null
+    $FLATPAK build-export -v ${FL_GPGARGS} --disable-sandbox --runtime repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
     rm -rf ${DIR}
 }
 
@@ -110,9 +110,9 @@ EOF
     fi
 
     set -x
-    flatpak build-finish ${DIR}  ${finish_args[$ID]:-} &> /dev/null > /dev/null
+    $FLATPAK build-finish ${DIR}  ${finish_args[$ID]:-} &> /dev/null > /dev/null
 
-   flatpak build-export ${FL_GPGARGS} --disable-sandbox repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
+    $FLATPAK build-export ${FL_GPGARGS} --disable-sandbox repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
     rm -rf ${DIR}
 }
 
