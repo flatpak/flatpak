@@ -49,7 +49,7 @@ jobs:
     - name: Create logs dir
       run: mkdir test-logs
     - name: autogen.sh
-      run: NOCONFIGURE=1 ./autogen.sh
+      run: NOCONFIGURE=1 ./autogen.sh --enable-internal-checks
     - name: configure
       # TODO: Enable gtk-doc builds
       run: |

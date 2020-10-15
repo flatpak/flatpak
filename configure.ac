@@ -508,6 +508,17 @@ if test x$use_lcov = xyes; then
   LDFLAGS="$LDFLAGS -lgcov"
 fi
 
+AC_ARG_ENABLE(internal-checks,
+  AS_HELP_STRING([--enable-internal-checks],
+                 [enable internal checking]),
+  [use_internal_checks=$enableval], [use_internal_checks=no])
+
+if test x$use_internal_checks = xyes; then
+   AM_CONDITIONAL([ENABLE_INTERNAL_CHECKS], [true])
+else
+   AM_CONDITIONAL([ENABLE_INTERNAL_CHECKS], [false])
+fi
+
 GLIB_TESTS
 
 FLATPAK_MAJOR_VERSION=flatpak_major_version
