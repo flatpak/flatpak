@@ -3411,7 +3411,7 @@ flatpak_repo_collect_extra_data_sizes (OstreeRepo *repo,
     }
 }
 
-/* Loads a summary file from a local repo */
+/* Loads the old compat summary file from a local repo */
 GVariant *
 flatpak_repo_load_summary (OstreeRepo *repo,
                            GError    **error)
@@ -3436,102 +3436,163 @@ flatpak_repo_load_summary (OstreeRepo *repo,
   return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, TRUE));
 }
 
-typedef struct
+static GVariant *
+flatpak_repo_load_summary_index (OstreeRepo *repo,
+                                 GError    **error)
 {
-  guint64   installed_size;
-  guint64   download_size;
-  char     *metadata_contents;
-  GVariant *sparse_data;
-} CommitData;
+  glnx_autofd int fd = -1;
+  g_autoptr(GMappedFile) mfile = NULL;
+  g_autoptr(GBytes) bytes = NULL;
 
-static void
-commit_data_free (gpointer data)
-{
-  CommitData *rev_data = data;
+  fd = openat (ostree_repo_get_dfd (repo), "summary.idx", O_RDONLY | O_CLOEXEC);
+  if (fd < 0)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
 
-  g_free (rev_data->metadata_contents);
-  if (rev_data->sparse_data)
-    g_variant_unref (rev_data->sparse_data);
-  g_free (rev_data);
+  mfile = g_mapped_file_new_from_fd (fd, FALSE, error);
+  if (!mfile)
+    return NULL;
+
+  bytes = g_mapped_file_get_bytes (mfile);
+
+  return g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT, bytes, TRUE));
 }
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (CommitData, commit_data_free)
 
-/* For all the refs listed in @cache_v (an xa.cache value) which exist in the
- * @summary, insert their data into @commit_data_cache if it isn’t already there. */
-static void
-populate_commit_data_cache (GVariant   *metadata,
-                            GVariant   *summary,
-                            GHashTable *commit_data_cache /* (element-type utf8 CommitData) */)
+static gboolean
+flatpak_repo_save_compat_summary (OstreeRepo   *repo,
+                                  GVariant     *summary,
+                                  GCancellable *cancellable,
+                                  GError      **error)
 {
-  g_autoptr(GVariant) cache_v = NULL;
-  g_autoptr(GVariant) cache = NULL;
-  g_autoptr(GVariant) sparse_cache = NULL;
-  gsize n, i;
-  guint32 cache_version = 0;
-  guint32 summary_version = 0;
-  const char *old_collection_id;
+  int repo_dfd = ostree_repo_get_dfd (repo);
 
-  if (!g_variant_lookup (metadata, "ostree.summary.collection-id", "&s", &old_collection_id))
-    old_collection_id = NULL;
+  if (!glnx_file_replace_contents_at (repo_dfd, "summary",
+                                      g_variant_get_data (summary),
+                                      g_variant_get_size (summary),
+                                      ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                      cancellable, error))
+    return FALSE;
 
-  cache_v = g_variant_lookup_value (metadata, "xa.cache", NULL);
-  if (cache_v == NULL)
-    return;
-
-  if (g_variant_lookup (metadata, "xa.cache-version", "u", &cache_version))
-    cache_version = GUINT32_FROM_LE (cache_version);
-  else
-    cache_version = 0;
-
-  if (cache_version < FLATPAK_XA_CACHE_VERSION)
-    return; /* We need to rebuild the cache with the current version */
-
-  if (g_variant_lookup (metadata, "xa.summary-version", "u", &summary_version))
-    summary_version = GUINT32_FROM_LE (summary_version);
-  else
-    summary_version = 0;
-
-  cache = g_variant_get_child_value (cache_v, 0);
-
-  sparse_cache = g_variant_lookup_value (metadata, "xa.sparse-cache", NULL);
-
-  n = g_variant_n_children (cache);
-  for (i = 0; i < n; i++)
+  if (unlinkat (repo_dfd, "summary.sig", 0) != 0 &&
+      G_UNLIKELY (errno != ENOENT))
     {
-      g_autoptr(GVariant) old_element = g_variant_get_child_value (cache, i);
-      g_autoptr(GVariant) old_ref_v = g_variant_get_child_value (old_element, 0);
-      const char *old_ref = g_variant_get_string (old_ref_v, NULL);
-      g_autofree char *old_rev = NULL;
-      g_autoptr(GVariant) old_commit_data_v = g_variant_get_child_value (old_element, 1);
-      CommitData *old_rev_data;
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
 
-      if (flatpak_summary_lookup_ref (summary, old_collection_id, old_ref, &old_rev, NULL))
+  return TRUE;
+}
+
+static gboolean
+flatpak_repo_save_summary_index (OstreeRepo   *repo,
+                                 GVariant     *index,
+                                 GBytes       *index_sig,
+                                 GCancellable *cancellable,
+                                 GError      **error)
+{
+  int repo_dfd = ostree_repo_get_dfd (repo);
+
+  if (!glnx_file_replace_contents_at (repo_dfd, "summary.idx",
+                                      g_variant_get_data (index),
+                                      g_variant_get_size (index),
+                                      ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                      cancellable, error))
+    return FALSE;
+
+  if (index_sig)
+    {
+      if (!glnx_file_replace_contents_at (repo_dfd, "summary.idx.sig",
+                                          g_bytes_get_data (index_sig, NULL),
+                                          g_bytes_get_size (index_sig),
+                                          ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                          cancellable, error))
+        return FALSE;
+    }
+  else
+    {
+      if (unlinkat (repo_dfd, "summary.idx.sig", 0) != 0 &&
+          G_UNLIKELY (errno != ENOENT))
         {
-          guint64 old_installed_size, old_download_size;
-          g_autofree char *old_metadata = NULL;
-
-          /* See if we already have the info on this revision */
-          if (g_hash_table_lookup (commit_data_cache, old_rev))
-            continue;
-
-          g_variant_get_child (old_commit_data_v, 0, "t", &old_installed_size);
-          old_installed_size = GUINT64_FROM_BE (old_installed_size);
-          g_variant_get_child (old_commit_data_v, 1, "t", &old_download_size);
-          old_download_size = GUINT64_FROM_BE (old_download_size);
-          g_variant_get_child (old_commit_data_v, 2, "s", &old_metadata);
-
-          old_rev_data = g_new0 (CommitData, 1);
-          old_rev_data->installed_size = old_installed_size;
-          old_rev_data->download_size = old_download_size;
-          old_rev_data->metadata_contents = g_steal_pointer (&old_metadata);
-
-          if (sparse_cache)
-            old_rev_data->sparse_data = g_variant_lookup_value (sparse_cache, old_ref, G_VARIANT_TYPE_VARDICT);
-
-          g_hash_table_insert (commit_data_cache, g_steal_pointer (&old_rev), old_rev_data);
+          glnx_set_error_from_errno (error);
+          return FALSE;
         }
     }
+
+  return TRUE;
+}
+
+static GVariant *
+flatpak_repo_load_digested_summary (OstreeRepo *repo,
+                                   const char *digest,
+                                   GError    **error)
+{
+  glnx_autofd int fd = -1;
+  g_autoptr(GMappedFile) mfile = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autofree char *path = NULL;
+
+  path = g_build_filename ("summaries", digest, NULL);
+
+  fd = openat (ostree_repo_get_dfd (repo), path, O_RDONLY | O_CLOEXEC);
+  if (fd < 0)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
+
+  mfile = g_mapped_file_new_from_fd (fd, FALSE, error);
+  if (!mfile)
+    return NULL;
+
+  bytes = g_mapped_file_get_bytes (mfile);
+
+  return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, TRUE));
+}
+
+static char *
+flatpak_repo_save_digested_summary (OstreeRepo   *repo,
+                                    const char   *name,
+                                    GVariant     *summary,
+                                    GCancellable *cancellable,
+                                    GError      **error)
+{
+  int repo_dfd = ostree_repo_get_dfd (repo);
+  g_autofree char *digest = NULL;
+  g_autofree char *path = NULL;
+  struct stat stbuf;
+
+  if (!glnx_shutil_mkdir_p_at (repo_dfd, "summaries",
+                               0775,
+                               cancellable,
+                               error))
+    return NULL;
+
+  digest = g_compute_checksum_for_data (G_CHECKSUM_SHA256,
+                                        g_variant_get_data (summary),
+                                        g_variant_get_size (summary));
+
+  path = g_build_filename ("summaries", digest, NULL);
+
+  /* Check for pre-existing copy of same size and avoid re-writing it */
+  if (fstatat (repo_dfd, path, &stbuf, 0) == 0 &&
+      stbuf.st_size == g_variant_get_size (summary))
+    {
+      g_debug ("Reusing digested summary at %s for %s", path, name);
+      return g_steal_pointer (&digest);
+    }
+
+  if (!glnx_file_replace_contents_at (repo_dfd, path,
+                                      g_variant_get_data (summary),
+                                      g_variant_get_size (summary),
+                                      ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                      cancellable, error))
+    return NULL;
+
+  g_debug ("Wrote digested summary at %s for %s", path, name);
+  return g_steal_pointer (&digest);
 }
 
 static gboolean
@@ -3542,6 +3603,176 @@ is_flatpak_ref (const char *ref)
     g_str_has_prefix (ref, "appstream2/") ||
     g_str_has_prefix (ref, "app/") ||
     g_str_has_prefix (ref, "runtime/");
+}
+
+typedef struct
+{
+  guint64    installed_size;
+  guint64    download_size;
+  char      *metadata_contents;
+  GPtrArray *subsets;
+  GVariant  *sparse_data;
+  gsize      commit_size;
+} CommitData;
+
+static void
+commit_data_free (gpointer data)
+{
+  CommitData *rev_data = data;
+
+  if (rev_data->subsets)
+    g_ptr_array_unref (rev_data->subsets);
+  g_free (rev_data->metadata_contents);
+  if (rev_data->sparse_data)
+    g_variant_unref (rev_data->sparse_data);
+  g_free (rev_data);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (CommitData, commit_data_free);
+
+static GHashTable *
+commit_data_cache_new (void)
+{
+  return g_hash_table_new_full (g_str_hash, g_str_equal, g_free, commit_data_free);
+}
+
+static GHashTable *
+populate_commit_data_cache (OstreeRepo *repo,
+                            GVariant *index_v)
+{
+
+  VarSummaryIndexRef index = var_summary_index_from_gvariant (index_v);
+  VarMetadataRef index_metadata = var_summary_index_get_metadata (index);
+  VarSummaryIndexSubsummariesRef subsummaries = var_summary_index_get_subsummaries (index);
+  gsize n_subsummaries = var_summary_index_subsummaries_get_length (subsummaries);
+  guint32 cache_version;
+  g_autoptr(GHashTable) commit_data_cache = commit_data_cache_new ();
+
+  cache_version = GUINT32_FROM_LE (var_metadata_lookup_uint32 (index_metadata, "xa.cache-version", 0));
+  if (cache_version < FLATPAK_XA_CACHE_VERSION)
+    {
+      /* Need to re-index to get all data */
+      g_debug ("Old summary cache version %d, not using cache", cache_version);
+      return NULL;
+    }
+
+  for (gsize i = 0; i < n_subsummaries; i++)
+    {
+      VarSummaryIndexSubsummariesEntryRef entry = var_summary_index_subsummaries_get_at (subsummaries, i);
+      const char *name = var_summary_index_subsummaries_entry_get_key (entry);
+      const char *s;
+      g_autofree char *subset = NULL;
+      VarSubsummaryRef subsummary = var_summary_index_subsummaries_entry_get_value (entry);
+      gsize checksum_bytes_len;
+      const guchar *checksum_bytes;
+      g_autofree char *digest = NULL;
+      g_autoptr(GVariant) summary_v = NULL;
+      VarSummaryRef summary;
+      VarRefMapRef ref_map;
+      gsize n_refs;
+
+      checksum_bytes = var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
+      if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
+        {
+          g_debug ("Invalid checksum for digested summary, not using cache");
+          return NULL;
+        }
+      digest = ostree_checksum_from_bytes (checksum_bytes);
+
+      s = strchr (name, '-');
+      if (s != NULL)
+        subset = g_strndup (name, s - name);
+      else
+        subset = g_strdup ("");
+
+      summary_v = flatpak_repo_load_digested_summary (repo, digest, NULL);
+      if (summary_v == NULL)
+        {
+          g_debug ("Failed to load digested summary %s, not using cache", digest);
+          return NULL;
+        }
+
+      /* Note that all summaries refered to by the index is in new format */
+      summary = var_summary_from_gvariant (summary_v);
+      ref_map = var_summary_get_ref_map (summary);
+      n_refs = var_ref_map_get_length (ref_map);
+      for (gsize j = 0; j < n_refs; j++)
+        {
+          VarRefMapEntryRef e = var_ref_map_get_at (ref_map, j);
+          const char *ref = var_ref_map_entry_get_ref (e);
+          VarRefInfoRef info = var_ref_map_entry_get_info (e);
+          VarMetadataRef commit_metadata = var_ref_info_get_metadata (info);
+          guint64 commit_size = var_ref_info_get_commit_size (info);
+          const guchar *commit_bytes;
+          gsize commit_bytes_len;
+          g_autofree char *rev = NULL;
+          CommitData *rev_data;
+          VarVariantRef xa_data_v;
+          VarCacheDataRef xa_data;
+
+          if (!is_flatpak_ref (ref))
+            continue;
+
+          commit_bytes = var_ref_info_peek_checksum (info, &commit_bytes_len);
+          if (G_UNLIKELY (commit_bytes_len != OSTREE_SHA256_DIGEST_LEN))
+            continue;
+
+          if (!var_metadata_lookup (commit_metadata, "xa.data", NULL, &xa_data_v) ||
+              !var_variant_is_type (xa_data_v, G_VARIANT_TYPE ("(tts)")))
+            {
+              g_debug ("Missing xa.data for ref %s, not using cache", ref);
+              return NULL;
+            }
+
+          xa_data = var_cache_data_from_variant (xa_data_v);
+
+          rev = ostree_checksum_from_bytes (commit_bytes);
+          rev_data = g_hash_table_lookup (commit_data_cache, rev);
+          if (rev_data == NULL)
+            {
+              g_auto(GVariantBuilder) sparse_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+              g_variant_builder_init (&sparse_builder, G_VARIANT_TYPE_VARDICT);
+              gboolean has_sparse = FALSE;
+
+              rev_data = g_new0 (CommitData, 1);
+              rev_data->installed_size = var_cache_data_get_installed_size (xa_data);
+              rev_data->download_size = var_cache_data_get_download_size (xa_data);
+              rev_data->metadata_contents = g_strdup (var_cache_data_get_metadata (xa_data));
+              rev_data->commit_size = commit_size;
+
+              /* Get sparse data */
+              gsize len = var_metadata_get_length (commit_metadata);
+              for (gsize k = 0; k < len; k++)
+                {
+                  VarMetadataEntryRef m = var_metadata_get_at (commit_metadata, k);
+                  const char *m_key = var_metadata_entry_get_key (m);
+                  if (!g_str_has_prefix (m_key, "ostree.") && strcmp (m_key, "xa.data") != 0)
+                    {
+                      VarVariantRef v = var_metadata_entry_get_value (m);
+                      GVariant *vv = var_variant_dup_to_gvariant (v);
+                      g_variant_builder_add (&sparse_builder, "{sv}", m_key, g_variant_get_child_value (vv, 0));
+                      has_sparse = TRUE;
+                    }
+                }
+
+              if (has_sparse)
+                rev_data->sparse_data = g_variant_ref_sink (g_variant_builder_end (&sparse_builder));
+
+              g_hash_table_insert (commit_data_cache, g_strdup (rev), (CommitData *)rev_data);
+            }
+
+          if (*subset != 0)
+            {
+              if (rev_data->subsets == NULL)
+                rev_data->subsets = g_ptr_array_new_with_free_func (g_free);
+
+              if (!flatpak_g_ptr_array_contains_string (rev_data->subsets, subset))
+                g_ptr_array_add (rev_data->subsets, g_strdup (subset));
+            }
+        }
+    }
+
+  return g_steal_pointer (&commit_data_cache);
 }
 
 static CommitData *
@@ -3559,6 +3790,7 @@ read_commit_data (OstreeRepo   *repo,
   g_autofree char *commit = NULL;
   g_autoptr(GVariant) commit_v = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
+  g_autoptr(GPtrArray) subsets = NULL;
   CommitData *rev_data;
   const char *eol = NULL;
   const char *eol_rebase = NULL;
@@ -3566,6 +3798,7 @@ read_commit_data (OstreeRepo   *repo,
   g_autoptr(GVariant) extra_data_sources = NULL;
   guint32 n_extra_data = 0;
   guint64 total_extra_data_download_size = 0;
+  g_autoptr(GVariantIter) subsets_iter = NULL;
 
   if (!ostree_repo_read_commit (repo, rev, &root, &commit, NULL, error))
     return NULL;
@@ -3593,12 +3826,22 @@ read_commit_data (OstreeRepo   *repo,
         return NULL;
     }
 
+  if (g_variant_lookup (commit_metadata, "xa.subsets", "as", &subsets_iter))
+    {
+      const char *subset;
+      subsets = g_ptr_array_new_with_free_func (g_free);
+      while (g_variant_iter_next (subsets_iter, "&s", &subset))
+        g_ptr_array_add (subsets, g_strdup (subset));
+    }
+
   flatpak_repo_collect_extra_data_sizes (repo, rev, &installed_size, &download_size);
 
   rev_data = g_new0 (CommitData, 1);
   rev_data->installed_size = installed_size;
   rev_data->download_size = download_size;
   rev_data->metadata_contents = g_steal_pointer (&metadata_contents);
+  rev_data->subsets = g_steal_pointer (&subsets);
+  rev_data->commit_size = g_variant_get_size (commit_v);
 
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
@@ -3632,7 +3875,7 @@ read_commit_data (OstreeRepo   *repo,
         g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, g_variant_new_string (eol_rebase));
       if (token_type >= 0)
         g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, g_variant_new_int32 (GINT32_TO_LE(token_type)));
-      if (n_extra_data >= 0)
+      if (n_extra_data > 0)
         g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE,
                                g_variant_new ("(ut)", GUINT32_TO_LE(n_extra_data), GUINT64_TO_LE(total_extra_data_download_size)));
 
@@ -3804,23 +4047,10 @@ variant_dict_merge (GVariantDict *dict,
     }
 }
 
-static GVariant *
-generate_summary (OstreeRepo   *repo,
-                  gboolean      compat_format,
-                  GHashTable   *refs,
-                  GHashTable   *commit_data_cache,
-                  GPtrArray    *delta_names,
-                  const char  **summary_arches,
-                  const char  **gpg_key_ids,
-                  const char   *gpg_homedir,
-                  GCancellable *cancellable,
-                  GError      **error)
+static void
+add_summary_metadata (OstreeRepo   *repo,
+                      GVariantBuilder *metadata_builder)
 {
-  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE_VARDICT);
-  g_autoptr(GVariantBuilder) ref_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(tts)}"));
-  g_autoptr(GVariantBuilder) ref_sparse_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sa{sv}}"));
-  g_autoptr(GVariantBuilder) refs_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(s(taya{sv}))"));
-  g_autoptr(GVariantBuilder) summary_builder = g_variant_builder_new (OSTREE_SUMMARY_GVARIANT_FORMAT);
   GKeyFile *config;
   g_autofree char *title = NULL;
   g_autofree char *comment = NULL;
@@ -3833,11 +4063,7 @@ generate_summary (OstreeRepo   *repo,
   g_autofree char *authenticator_name = NULL;
   g_autofree char *gpg_keys = NULL;
   g_auto(GStrv) config_keys = NULL;
-  g_autoptr(GHashTable) summary_arches_ht = NULL;
   int authenticator_install = -1;
-  g_autoptr(GHashTable) commits = NULL;
-  g_autoptr(GList) ordered_keys = NULL;
-  GList *l = NULL;
   const char *collection_id;
   gboolean deploy_collection_id = FALSE;
   gboolean deploy_sideload_collection_id = FALSE;
@@ -3863,7 +4089,6 @@ generate_summary (OstreeRepo   *repo,
       authenticator_name = g_key_file_get_string (config, "flatpak", "authenticator-name", NULL);
       if (g_key_file_has_key (config, "flatpak", "authenticator-install", NULL))
         authenticator_install = g_key_file_get_boolean (config, "flatpak", "authenticator-install", NULL);
-
 
       config_keys = g_key_file_get_keys (config, "flatpak", NULL, NULL);
     }
@@ -3928,6 +4153,9 @@ generate_summary (OstreeRepo   *repo,
     g_variant_builder_add (metadata_builder, "{sv}", "xa.authenticator-install",
                            g_variant_new_boolean (authenticator_install));
 
+  g_variant_builder_add (metadata_builder, "{sv}", "xa.cache-version",
+                         g_variant_new_uint32 (GUINT32_TO_LE (FLATPAK_XA_CACHE_VERSION)));
+
   if (config_keys != NULL)
     {
       for (int i = 0; config_keys[i] != NULL; i++)
@@ -3961,6 +4189,32 @@ generate_summary (OstreeRepo   *repo,
                              g_variant_new_from_data (G_VARIANT_TYPE ("ay"), decoded, decoded_len,
                                                       TRUE, (GDestroyNotify) g_free, decoded));
     }
+}
+
+static GVariant *
+generate_summary (OstreeRepo   *repo,
+                  gboolean      compat_format,
+                  GHashTable   *refs,
+                  GHashTable   *commit_data_cache,
+                  GPtrArray    *delta_names,
+                  const char   *subset,
+                  const char  **summary_arches,
+                  GCancellable *cancellable,
+                  GError      **error)
+{
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE_VARDICT);
+  g_autoptr(GVariantBuilder) ref_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(tts)}"));
+  g_autoptr(GVariantBuilder) ref_sparse_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sa{sv}}"));
+  g_autoptr(GVariantBuilder) refs_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(s(taya{sv}))"));
+  g_autoptr(GVariantBuilder) summary_builder = g_variant_builder_new (OSTREE_SUMMARY_GVARIANT_FORMAT);
+  g_autoptr(GHashTable) summary_arches_ht = NULL;
+  g_autoptr(GHashTable) commits = NULL;
+  g_autoptr(GList) ordered_keys = NULL;
+  GList *l = NULL;
+
+  /* In the new format this goes in the summary index instead */
+  if (compat_format)
+    add_summary_metadata (repo, metadata_builder);
 
   ordered_keys = g_hash_table_get_keys (refs);
   ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
@@ -3986,12 +4240,22 @@ generate_summary (OstreeRepo   *repo,
       const char *ref = l->data;
       const char *rev = g_hash_table_lookup (refs, ref);
       g_autofree char *arch = NULL;
+      const CommitData *rev_data = NULL;
 
       if (summary_arches)
         {
+          /* NOTE: Non-arched (unknown) refs get into all summary versions */
           arch = flatpak_get_arch_for_ref (ref);
           if (arch != NULL && !g_hash_table_contains (summary_arches_ht, arch))
             continue; /* Filter this ref by arch */
+        }
+
+      rev_data = g_hash_table_lookup (commit_data_cache, rev);
+      if (rev_data && *subset != 0)
+        {
+          if (rev_data->subsets == NULL ||
+              !flatpak_g_ptr_array_contains_string (rev_data->subsets, subset))
+            continue; /* Ref is not in this subset */
         }
 
       g_hash_table_add (commits, (char *)rev);
@@ -4004,26 +4268,22 @@ generate_summary (OstreeRepo   *repo,
       const char *rev = g_hash_table_lookup (refs, ref);
       const CommitData *rev_data = NULL;
       g_auto(GVariantDict) commit_metadata_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
-      g_autoptr(GVariant) commit_obj = NULL;
+      guint64 commit_size;
 
       if (!g_hash_table_contains (commits, rev))
         continue; /* Filter out commit (by arch) */
 
-      if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, rev, &commit_obj, error))
-        return NULL;
-
-      /* Only add CommitData for flatpak refs */
       if (is_flatpak_ref (ref))
-        {
-          rev_data = g_hash_table_lookup (commit_data_cache, rev);
-          if (rev_data == NULL)
-            {
-              rev_data = read_commit_data (repo, ref, rev, cancellable, error);
-              if (rev_data == NULL)
-                return NULL;
+        rev_data = g_hash_table_lookup (commit_data_cache, rev);
 
-              g_hash_table_insert (commit_data_cache, g_strdup (rev), (CommitData *)rev_data);
-            }
+      if (rev_data != NULL)
+        commit_size = rev_data->commit_size;
+      else
+        {
+          g_autoptr(GVariant) commit_obj = NULL;
+          if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, rev, &commit_obj, error))
+            return NULL;
+          commit_size = g_variant_get_size (commit_obj);
         }
 
       g_variant_dict_init (&commit_metadata_builder, NULL);
@@ -4037,7 +4297,7 @@ generate_summary (OstreeRepo   *repo,
         }
       g_variant_builder_add_value (refs_builder,
                                    g_variant_new ("(s(t@ay@a{sv}))", ref,
-                                                  (guint64) g_variant_get_size (commit_obj),
+                                                  commit_size,
                                                   ostree_checksum_to_bytes_v (rev),
                                                   g_variant_dict_end (&commit_metadata_builder)));
 
@@ -4103,13 +4363,92 @@ generate_summary (OstreeRepo   *repo,
       g_variant_builder_add (metadata_builder, "{sv}", "xa.summary-version",
                              g_variant_new_uint32 (GUINT32_TO_LE (FLATPAK_XA_SUMMARY_VERSION)));
     }
-  g_variant_builder_add (metadata_builder, "{sv}", "xa.cache-version",
-                         g_variant_new_uint32 (GUINT32_TO_LE (FLATPAK_XA_CACHE_VERSION)));
 
   g_variant_builder_add_value (summary_builder, g_variant_builder_end (refs_builder));
   g_variant_builder_add_value (summary_builder, g_variant_builder_end (metadata_builder));
 
   return g_variant_ref_sink (g_variant_builder_end (summary_builder));
+}
+
+static GVariant *
+generate_summary_index (OstreeRepo   *repo,
+                        GVariant     *old_index_v,
+                        GHashTable   *summaries,
+                        const char  **gpg_key_ids,
+                        const char   *gpg_homedir,
+                        GCancellable *cancellable,
+                        GError      **error)
+{
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE_VARDICT);
+  g_autoptr(GVariantBuilder) subsummary_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{s(ayaaya{sv})}"));
+  g_autoptr(GVariantBuilder) index_builder = g_variant_builder_new (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT);
+  g_autoptr(GVariant) index = NULL;
+  g_autoptr(GList) ordered_summaries = NULL;
+  int max_history_length = 16;
+  GList *l;
+
+  add_summary_metadata (repo, metadata_builder);
+
+  ordered_summaries = g_hash_table_get_keys (summaries);
+  ordered_summaries = g_list_sort (ordered_summaries, (GCompareFunc) strcmp);
+  for (l = ordered_summaries; l; l = l->next)
+    {
+      g_auto(GVariantDict) subsummary_metadata_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+      const char *subsummary = l->data;
+      const char *digest = g_hash_table_lookup (summaries, subsummary);
+      g_autoptr(GVariant) digest_v = g_variant_ref_sink (ostree_checksum_to_bytes_v (digest));
+      g_autoptr(GVariantBuilder) history_builder = g_variant_builder_new (G_VARIANT_TYPE ("aay"));
+
+      if (old_index_v)
+        {
+          VarSummaryIndexRef old_index = var_summary_index_from_gvariant (old_index_v);
+          VarSummaryIndexSubsummariesRef old_subsummaries = var_summary_index_get_subsummaries (old_index);
+          VarSubsummaryRef old_subsummary;
+          int history_len = 0;
+
+          if (var_summary_index_subsummaries_lookup (old_subsummaries, subsummary, NULL, &old_subsummary))
+            {
+              VarChecksumRef parent = var_subsummary_get_checksum (old_subsummary);
+              g_autoptr(GVariant) parent_v = g_variant_ref_sink (var_checksum_dup_to_gvariant (parent));
+
+              /* Don't add parent to history if its the same as the new one, we don't want repeats */
+              if (!g_variant_equal (parent_v, digest_v))
+                {
+                  history_len++;
+                  g_variant_builder_add_value (history_builder, parent_v);
+                }
+
+              /* Add previous history */
+              VarArrayofChecksumRef history = var_subsummary_get_history (old_subsummary);
+              gsize len = var_arrayof_checksum_get_length (history);
+              for (gsize i = 0; i < len; i++)
+                {
+                  VarChecksumRef c = var_arrayof_checksum_get_at (history, i);
+                  if (history_len < max_history_length)
+                    {
+                      history_len++;
+                      g_variant_builder_add_value (history_builder,
+                                                   var_checksum_dup_to_gvariant (c));
+                    }
+                }
+            }
+
+        }
+
+      g_variant_dict_init (&subsummary_metadata_builder, NULL);
+      g_variant_builder_add (subsummary_builder, "{s(@ay@aay@a{sv})}",
+                             subsummary,
+                             digest_v,
+                             g_variant_builder_end (history_builder),
+                             g_variant_dict_end (&subsummary_metadata_builder));
+    }
+
+  g_variant_builder_add_value (index_builder, g_variant_builder_end (subsummary_builder));
+  g_variant_builder_add_value (index_builder, g_variant_builder_end (metadata_builder));
+
+  index = g_variant_ref_sink (g_variant_builder_end (index_builder));
+
+  return g_steal_pointer (&index);
 }
 
 
@@ -4134,13 +4473,17 @@ flatpak_repo_update (OstreeRepo   *repo,
                      GError      **error)
 {
   g_autoptr(GHashTable) commit_data_cache = NULL;
-  g_autoptr(GVariant) old_summary = NULL;
-  g_autoptr(GVariant) new_summary = NULL;
+  g_autoptr(GVariant) compat_summary = NULL;
+  g_autoptr(GVariant) summary_index = NULL;
+  g_autoptr(GVariant) old_index = NULL;
   g_autoptr(GPtrArray) delta_names = NULL;
   g_auto(GStrv) summary_arches = NULL;
   g_autoptr(GHashTable) refs = NULL;
+  g_autoptr(GHashTable) arches = NULL;
+  g_autoptr(GHashTable) subsets = NULL;
+  g_autoptr(GHashTable) summaries = NULL;
+  g_autoptr(GBytes) index_sig = NULL;
   GKeyFile *config;
-  int repo_dfd;
 
   config = ostree_repo_get_config (repo);
 
@@ -4149,15 +4492,12 @@ flatpak_repo_update (OstreeRepo   *repo,
                                   cancellable, error))
     return FALSE;
 
-  commit_data_cache = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                             g_free, commit_data_free);
+  old_index = flatpak_repo_load_summary_index (repo, NULL);
+  if (old_index)
+    commit_data_cache = populate_commit_data_cache (repo, old_index);
 
-  old_summary = flatpak_repo_load_summary (repo, NULL);
-  if (old_summary != NULL)
-    {
-      g_autoptr(GVariant) extensions = g_variant_get_child_value (old_summary, 1);
-      populate_commit_data_cache (extensions, old_summary, commit_data_cache);
-    }
+  if (commit_data_cache == NULL) /* No index or failed to load it */
+    commit_data_cache = commit_data_cache_new ();
 
   if (!ostree_repo_list_static_delta_names (repo, &delta_names, cancellable, error))
     return FALSE;
@@ -4165,29 +4505,103 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (config)
     summary_arches = g_key_file_get_string_list (config, "flatpak", "summary-arches", NULL, NULL);
 
-  new_summary = generate_summary (repo, TRUE, refs, commit_data_cache, delta_names, (const char **)summary_arches,
-                                  gpg_key_ids, gpg_homedir, cancellable, error);
-  if (new_summary == NULL)
+  summaries = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+  arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  subsets = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_hash_table_add (subsets, g_strdup ("")); /* Always have everything subset */
+
+  GLNX_HASH_TABLE_FOREACH_KV (refs, const char *, ref, const char *, rev)
+    {
+      g_autofree char *arch = flatpak_get_arch_for_ref (ref);
+      CommitData *rev_data = NULL;
+
+      if (arch != NULL &&
+          !g_hash_table_contains (arches, arch))
+        g_hash_table_add (arches, g_steal_pointer (&arch));
+
+      /* Add CommitData for flatpak refs that we didn't already pre-populate */
+      if (is_flatpak_ref (ref))
+        {
+          rev_data = g_hash_table_lookup (commit_data_cache, rev);
+          if (rev_data == NULL)
+            {
+              rev_data = read_commit_data (repo, ref, rev, cancellable, error);
+              if (rev_data == NULL)
+                return FALSE;
+
+              g_hash_table_insert (commit_data_cache, g_strdup (rev), (CommitData *)rev_data);
+            }
+
+          for (int i = 0; rev_data->subsets != NULL && i < rev_data->subsets->len; i++)
+            {
+              const char *subset = g_ptr_array_index (rev_data->subsets, i);
+              if (!g_hash_table_contains (subsets, subset))
+                g_hash_table_add (subsets, g_strdup (subset));
+            }
+        }
+    }
+
+  compat_summary = generate_summary (repo, TRUE, refs, commit_data_cache, delta_names,
+                                     "", (const char **)summary_arches,
+                                     cancellable, error);
+  if (compat_summary == NULL)
+    return FALSE;
+
+  GLNX_HASH_TABLE_FOREACH (subsets, const char *, subset)
+    {
+      GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
+        {
+          const char *arch_v[] = { arch, NULL };
+          g_autofree char *name = NULL;
+          g_autofree char *digest = NULL;
+
+          if (*subset == 0)
+            name = g_strdup (arch);
+          else
+            name = g_strconcat (subset, "-", arch, NULL);
+
+          g_autoptr(GVariant) arch_summary = generate_summary (repo, FALSE, refs, commit_data_cache, NULL, subset, arch_v,
+                                                               cancellable, error);
+          if (arch_summary == NULL)
+            return FALSE;
+
+          digest = flatpak_repo_save_digested_summary (repo, name, arch_summary, cancellable, error);
+          if (digest == NULL)
+            return FALSE;
+
+          g_hash_table_insert (summaries, g_steal_pointer (&name), g_steal_pointer (&digest));
+        }
+    }
+
+  summary_index = generate_summary_index (repo, old_index, summaries,
+                                          gpg_key_ids, gpg_homedir,
+                                          cancellable, error);
+  if (summary_index == NULL)
     return FALSE;
 
   if (!ostree_repo_static_delta_reindex (repo, 0, NULL, cancellable, error))
     return FALSE;
 
-  repo_dfd = ostree_repo_get_dfd (repo);
+  if (gpg_key_ids)
+    {
+      g_autoptr(GBytes) index_bytes = g_variant_get_data_as_bytes (summary_index);
 
-  if (!glnx_file_replace_contents_at (repo_dfd, "summary",
-                                      g_variant_get_data (new_summary),
-                                      g_variant_get_size (new_summary),
-                                      ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
-                                      cancellable, error))
+      if (!ostree_repo_gpg_sign_data (repo, index_bytes,
+                                      NULL,
+                                      gpg_key_ids,
+                                      gpg_homedir,
+                                      &index_sig,
+                                      cancellable,
+                                      error))
+        return FALSE;
+    }
+
+  if (!flatpak_repo_save_summary_index (repo, summary_index, index_sig, cancellable, error))
     return FALSE;
 
-  if (unlinkat (repo_dfd, "summary.sig", 0) != 0 &&
-      G_UNLIKELY (errno != ENOENT))
-    {
-      glnx_set_error_from_errno (error);
-      return FALSE;
-    }
+  if (!flatpak_repo_save_compat_summary (repo, compat_summary, cancellable, error))
+    return FALSE;
 
   if (gpg_key_ids)
     {
@@ -4875,7 +5289,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
         g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
         if (eol || eol_rebase)
           {
-            g_print (_("%s is end-of-life, ignoring\n"), ref);
+            g_print (_("%s is end-of-life, ignoring for appstream\n"), ref);
             continue;
           }
 

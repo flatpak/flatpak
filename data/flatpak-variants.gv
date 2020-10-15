@@ -62,3 +62,14 @@ type ExtraDataSize {
  n_extra_data: littleendian uint32;
  total_size: littleendian uint64;
 };
+
+type Subsummary {
+  checksum: Checksum;
+  history: []Checksum;
+  metadata: Metadata;
+};
+
+type SummaryIndex {
+ subsummaries: [sorted string]Subsummary;
+ metadata: Metadata;
+};
