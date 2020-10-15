@@ -1061,7 +1061,7 @@ static inline const {TypeName}Entry *
             C("  gsize end = {PREFIX_}REF_READ_FRAME_OFFSET(v, 0);");
             C("  gsize offset = {PREFIX_}REF_ALIGN(end, {value_alignment});")
             if self.value_type.is_fixed():
-                C("  g_assert (offset == v.size - offset_size - {value_fixed_size})");
+                C("  g_assert (offset == v.size - offset_size - {value_fixed_size});");
             else:
                 C("  g_assert (offset <= v.size);")
             offset = "offset"
@@ -1325,7 +1325,7 @@ class MaybeType(Type):
                 C("  return ({element_ctype})*(({element_read_ctype} *)v.base);")
             else: # string
                 C("  const char *base = (const char *)v.base;")
-                C("  g_assert (base[v.size - 2] == 0)")
+                C("  g_assert (base[v.size - 2] == 0);")
                 C("  return base;")
         else:
             if self.element_type.is_fixed():
