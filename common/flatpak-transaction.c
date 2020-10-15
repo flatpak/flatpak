@@ -908,13 +908,11 @@ flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *sel
  * flatpak_transaction_operation_get_requires_authentication:
  * @self: a #FlatpakTransactionOperation
  *
- * Gets the metadata current metadata for the ref that @self works on.
- * Also see flatpak_transaction_operation_get_metadata().
+ * Gets whether the given operation will require authentication to acquire
+ * needed tokens. See also the documentation for
+ * #FlatpakTransaction::ready-pre-auth.
  *
- * This information is available when the transaction is resolved,
- * i.e. when #FlatpakTransaction::ready is emitted.
- *
- * Returns: the old metadata #GKeyFile
+ * Returns: whether @self requires authentication
  * Since: 1.9.1
  */
 gboolean
@@ -1245,9 +1243,9 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * FlatpakTransaction::ready-pre-auth:
    * @object: A #FlatpakTransaction
    *
-   * The ::ready-pre-auth signal is emitted when all the refs involved in the operation
-   * have been resolved to commits, but all we might not necessarily have asked for authenticaion
-   * for all there required operations. This is very similar to the ::ready signal, and you can
+   * The ::ready-pre-auth signal is emitted when all the refs involved in the transaction
+   * have been resolved to commits, but we might not necessarily have asked for authenticaion
+   * for all their required operations. This is very similar to the ::ready signal, and you can
    * chose which one (or both) to use depending on how you want to handle authentication in your user
    * interface.
    *
@@ -4510,7 +4508,8 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   if (!ready_res)
     return flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Aborted by user"));
 
-  /* Ensure we have all required tokens, we do this after all resolves if possible to bunch requests. */
+  /* Ensure we have all required tokens; we do this after all resolves if
+   * possible to bunch requests. */
   if (!request_required_tokens (self, NULL, cancellable, error))
     {
       g_assert (error == NULL || *error != NULL);
