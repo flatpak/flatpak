@@ -1924,7 +1924,15 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
             is_install = TRUE;
           else
             {
-              g_autoptr(FlatpakDir) system = dir_get_system (installation, 0, NULL);
+              g_autoptr(GError) error = NULL;
+              g_autoptr(FlatpakDir) system = dir_get_system (installation, 0, &error);
+
+              if (system == NULL)
+                {
+                  g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                         "Error getting installation %s: %s", installation, error->message);
+                  return FALSE;
+                }
 
               is_install = !dir_ref_is_installed (system, ref);
             }
@@ -2005,9 +2013,17 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
         {
           g_autoptr(FlatpakDir) system = NULL;
           g_autoptr(GBytes) deploy_data = NULL;
+          g_autoptr(GError) error = NULL;
           const char *name = NULL;
 
-          system = dir_get_system (installation, 0, NULL);
+          system = dir_get_system (installation, 0, &error);
+          if (system == NULL)
+            {
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                     "Error getting installation %s: %s", installation, error->message);
+              return FALSE;
+            }
+
           deploy_data = flatpak_dir_get_deploy_data (system, ref, FLATPAK_DEPLOY_VERSION_CURRENT, NULL, NULL);
           if (deploy_data != NULL)
             name = flatpak_deploy_data_get_appdata_name (deploy_data);
