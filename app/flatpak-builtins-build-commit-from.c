@@ -47,6 +47,7 @@ static char *opt_gpg_homedir;
 static char *opt_endoflife;
 static char **opt_endoflife_rebase;
 static char **opt_endoflife_rebase_new;
+static char **opt_subsets;
 static char *opt_timestamp;
 static char **opt_extra_collection_ids;
 static int opt_token_type = -1;
@@ -57,6 +58,7 @@ static GOptionEntry options[] = {
   { "untrusted", 0, 0, G_OPTION_ARG_NONE, &opt_untrusted, "Do not trust SRC-REPO", NULL },
   { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force, "Always commit, even if same content", NULL },
   { "extra-collection-id", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_collection_ids, "Add an extra collection id ref and binding", "COLLECTION-ID" },
+  { "subset", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_subsets, "Add to a named subset", "SUBSET" },
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, N_("One line subject"), N_("SUBJECT") },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, N_("Full description"), N_("BODY") },
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
@@ -219,6 +221,32 @@ rewrite_delta (OstreeRepo *src_repo,
   if (!flatpak_variant_save (dst_delta_file, dst_superblock, NULL, error))
     return FALSE;
 
+  return TRUE;
+}
+
+static gboolean
+get_subsets (char **subsets, GVariant **out)
+{
+  g_autoptr(GVariantBuilder) builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+  gboolean found = FALSE;
+
+  if (subsets == NULL)
+    return FALSE;
+
+  for (int i = 0; subsets[i] != NULL; i++)
+    {
+      const char *subset = subsets[i];
+      if (*subset != 0)
+        {
+          found = TRUE;
+          g_variant_builder_add (builder, "s", subset);
+        }
+    }
+
+  if (!found)
+    return FALSE;
+
+  *out = g_variant_ref_sink (g_variant_builder_end (builder));
   return TRUE;
 }
 
@@ -433,6 +461,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       g_autoptr(GFile) src_ref_root = NULL;
       g_autoptr(GVariant) src_commitv = NULL;
       g_autoptr(GVariant) dst_commitv = NULL;
+      g_autoptr(GVariant) subsets_v = NULL;
       g_autoptr(OstreeMutableTree) mtree = NULL;
       g_autoptr(GFile) dst_root = NULL;
       g_autoptr(GVariant) commitv_metadata = NULL;
@@ -575,6 +604,9 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
           if (opt_token_type >= 0 && strcmp (key, "xa.token-type") == 0)
             continue;
 
+          if (opt_subsets != NULL && strcmp (key, "xa.subsets") == 0)
+            continue;
+
           g_variant_builder_add_value (&metadata_builder, child);
         }
 
@@ -605,6 +637,13 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       if (opt_token_type >= 0)
         g_variant_builder_add (&metadata_builder, "{sv}", "xa.token-type",
                                g_variant_new_int32 (GINT32_TO_LE (opt_token_type)));
+
+      /* Skip "" subsets as they mean everything. This way --subsets= causes old subsets to be stripped from the original commit */
+      if (get_subsets (opt_subsets, &subsets_v))
+        {
+          g_print ("subsets: %s\n", g_variant_print (subsets_v, FALSE));
+          g_variant_builder_add (&metadata_builder, "{sv}", "xa.subsets", subsets_v);
+        }
 
       timestamp = ostree_commit_get_timestamp (src_commitv);
       if (opt_timestamp)
