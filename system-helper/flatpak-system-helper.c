@@ -1976,12 +1976,14 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
     }
   else if (g_strcmp0 (method_name, "Uninstall") == 0)
     {
+      const char *installation;
       const char *ref;
       gboolean is_app;
       guint32 flags;
 
       g_variant_get_child (parameters, 0, "u", &flags);
       g_variant_get_child (parameters, 1, "&s", &ref);
+      g_variant_get_child (parameters, 2, "&s", &installation);
 
       is_app = g_str_has_prefix (ref, "app/");
       if (is_app)
@@ -1990,7 +1992,28 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
         action = "org.freedesktop.Flatpak.runtime-uninstall";
       no_interaction = (flags & FLATPAK_HELPER_UNINSTALL_FLAGS_NO_INTERACTION) != 0;
 
-      polkit_details_insert (details, "ref", ref);
+      /* For the app-uninstall action the message shown to the user includes
+       * the app, so let's get the human friendly name if possible. Unlike some
+       * of the other actions, app-uninstall isn't implied by any other, and
+       * only implies runtime-uninstall, so it seems alright to include what
+       * app is being uninstalled. */
+      if (is_app)
+        {
+          g_autoptr(FlatpakDir) system = NULL;
+          g_autoptr(GBytes) deploy_data = NULL;
+          const char *name = NULL;
+
+          system = dir_get_system (installation, 0, NULL);
+          deploy_data = flatpak_dir_get_deploy_data (system, ref, FLATPAK_DEPLOY_VERSION_CURRENT, NULL, NULL);
+          if (deploy_data != NULL)
+            name = flatpak_deploy_data_get_appdata_name (deploy_data);
+          if (name != NULL && *name != '\0')
+            polkit_details_insert (details, "ref", name);
+          else
+            polkit_details_insert (details, "ref", ref);
+        }
+      else
+        polkit_details_insert (details, "ref", ref);
     }
   else if (g_strcmp0 (method_name, "ConfigureRemote") == 0)
     {
