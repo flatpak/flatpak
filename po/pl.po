@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-08-21 14:28+0200\n"
-"PO-Revision-Date: 2020-06-28 13:48+0200\n"
+"POT-Creation-Date: 2020-10-18 03:25+0000\n"
+"PO-Revision-Date: 2020-10-18 12:52+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -4070,6 +4070,7 @@ msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 #, c-format
 msgid "Configured collection ID ‘%s’ not in summary file"
 msgstr ""
+"Skonfigurowany identyfikator kolekcji „%s” nie jest w pliku podsumowania"
 
 #: common/flatpak-dir.c:410
 #, c-format
@@ -4117,11 +4118,10 @@ msgstr ""
 "odniesienia"
 
 #: common/flatpak-dir.c:946
-#, fuzzy, c-format
+#, c-format
 msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr ""
-"Zatwierdzenie nie ma żądanego odniesienia „%s” w metadanych dowiązania "
-"odniesienia"
+"Skonfigurowany identyfikator kolekcji „%s” nie jest w metadanych dowiązania"
 
 #: common/flatpak-dir.c:1038
 #, c-format
