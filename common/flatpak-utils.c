@@ -472,7 +472,7 @@ flatpak_get_compat_arch (const char *kernel_arch)
   return NULL;
 }
 
-static const char *
+const char *
 flatpak_get_compat_arch_reverse (const char *compat_arch)
 {
   int i;
@@ -3747,7 +3747,7 @@ _ostree_repo_static_delta_superblock_digest (OstreeRepo    *repo,
                                   FALSE, g_free, FALSE);
 }
 
-static char *
+char *
 flatpak_get_arch_for_ref (const char *ref)
 {
   if (g_str_has_prefix (ref, "appstream/") ||

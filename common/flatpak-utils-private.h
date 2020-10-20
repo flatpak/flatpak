@@ -193,6 +193,8 @@ gboolean flatpak_id_has_subref_suffix (const char *id);
 
 char **flatpak_decompose_ref (const char *ref,
                               GError    **error);
+char * flatpak_get_arch_for_ref (const char *ref);
+const char *flatpak_get_compat_arch_reverse (const char *compat_arch);
 
 char * flatpak_filter_glob_to_regexp (const char *glob, gboolean runtime_only, GError **error);
 gboolean flatpak_parse_filters (const char *data,
