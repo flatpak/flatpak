@@ -12320,6 +12320,20 @@ flatpak_dir_get_remote_nodeps (FlatpakDir *self,
   return TRUE;
 }
 
+char *
+flatpak_dir_get_remote_subset (FlatpakDir *self,
+                               const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+  g_autofree char *url = NULL;
+
+  if (config == NULL)
+    return NULL;
+
+  return g_key_file_get_string (config, group, "xa.subset", NULL);
+}
+
 gboolean
 flatpak_dir_get_remote_disabled (FlatpakDir *self,
                                  const char *remote_name)

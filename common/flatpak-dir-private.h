@@ -886,6 +886,8 @@ gboolean   flatpak_dir_get_remote_nodeps (FlatpakDir *self,
                                           const char *remote_name);
 char      *flatpak_dir_get_remote_filter (FlatpakDir *self,
                                           const char *remote_name);
+char      *flatpak_dir_get_remote_subset (FlatpakDir *self,
+                                          const char *remote_name);
 gboolean   flatpak_dir_compare_remote_filter (FlatpakDir *self,
                                               const char *remote_name,
                                               const char *filter);
