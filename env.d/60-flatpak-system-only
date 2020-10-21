@@ -1,0 +1,2 @@
+#!/bin/sh
+exec flatpak --print-updated-env --print-system-only
