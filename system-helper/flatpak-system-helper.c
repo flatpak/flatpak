@@ -1154,6 +1154,7 @@ handle_update_remote (FlatpakSystemHelper   *object,
   gsize summary_sig_size;
   g_autoptr(GBytes) summary_sig_bytes = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
+  gboolean summary_is_index = (arg_flags & FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_SUMMARY_IS_INDEX) != 0;
 
   g_debug ("UpdateRemote %u %s %s %s %s", arg_flags, arg_remote, arg_installation, arg_summary_path, arg_summary_sig_path);
 
@@ -1195,7 +1196,10 @@ handle_update_remote (FlatpakSystemHelper   *object,
       summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_size);
     }
 
-  state = flatpak_dir_get_remote_state_for_summary (system, arg_remote, summary_bytes, summary_sig_bytes, NULL, &error);
+  if (summary_is_index)
+    state = flatpak_dir_get_remote_state_for_index (system, arg_remote, summary_bytes, summary_sig_bytes, NULL, &error);
+  else
+    state = flatpak_dir_get_remote_state_for_summary (system, arg_remote, summary_bytes, summary_sig_bytes, NULL, &error);
   if (state == NULL)
     {
       flatpak_invocation_return_error (invocation, error, "Error getting remote state");

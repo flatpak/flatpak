@@ -2886,8 +2886,8 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
   g_autofree char *summary_checksum = NULL;
 
   /* Ref has to match the actual commit in the summary */
-  if (state->summary == NULL ||
-      !flatpak_summary_lookup_ref (state->summary, NULL, op->ref, &summary_checksum, NULL) ||
+  if ((state->summary == NULL && state->index == NULL) ||
+      !flatpak_remote_state_lookup_ref (state, op->ref, &summary_checksum, NULL, NULL, NULL, NULL) ||
       strcmp (summary_checksum, checksum) != 0)
     return FALSE;
 
@@ -3030,7 +3030,7 @@ resolve_ops (FlatpakTransaction *self,
                 {
                   /* If we found the latest in a sideload repo, it may be older that what is locally available, check timestamps.
                    * Note: If the timestamps are equal (timestamp granularity issue), assume we want to update */
-                  if (latest_sideload_path != NULL && local_commit_data &&
+                  if (latest_sideload_path != NULL && local_commit_data && latest_timestamp != 0 &&
                       ostree_commit_get_timestamp (local_commit_data) > latest_timestamp)
                     {
                       g_debug ("Installed commit %s newer than sideloaded %s, ignoring", local_checksum, latest_checksum);
