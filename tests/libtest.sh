@@ -275,7 +275,7 @@ make_runtime () {
     RUNTIME_REF="runtime/org.test.Platform/$(flatpak --default-arch)/${BRANCH}"
     if [ ! -z "${SRC_RUNTIME_REPO:-}" ]; then
         RUNTIME_REPO=repos/${SRC_RUNTIME_REPO}
-    elif [ -f ${test_builddir}/runtime-repo/${RUNTIME_REF} ]; then
+    elif [ -f ${test_builddir}/runtime-repo/refs/heads/${RUNTIME_REF} ]; then
         RUNTIME_REPO=${test_builddir}/runtime-repo
     else
         RUNTIME_REPO=${TEST_DATA_DIR}/runtime-repo
