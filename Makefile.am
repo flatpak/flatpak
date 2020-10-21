@@ -168,8 +168,8 @@ flatpak.env: env.d/flatpak.env.in
 	$(AM_V_GEN) $(SED) -e "s|\@localstatedir\@|$(localstatedir)|" \
 		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
 
-envgendir = $(systemduserenvgendir)
-envgen_SCRIPTS = env.d/60-flatpak
+userenvgendir = $(systemduserenvgendir)
+userenvgen_SCRIPTS = env.d/60-flatpak
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = flatpak.pc
