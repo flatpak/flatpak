@@ -43,6 +43,7 @@ static char *opt_default_branch;
 static char *opt_collection_id = NULL;
 static gboolean opt_deploy_sideload_collection_id = FALSE;
 static gboolean opt_deploy_collection_id = FALSE;
+static gboolean opt_no_summary_index = FALSE;
 static char **opt_gpg_import;
 static char *opt_generate_delta_from;
 static char *opt_generate_delta_to;
@@ -89,6 +90,7 @@ static GOptionEntry options[] = {
   { "generate-static-delta-from", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_from, NULL, NULL },
   { "generate-static-delta-to", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_to, NULL, NULL },
   { "generate-static-delta-ref", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_ref, NULL, NULL },
+  { "no-summary-index", 0, 0, G_OPTION_ARG_NONE, &opt_no_summary_index, N_("Don't generate a summary index"), NULL },
   { NULL }
 };
 
@@ -624,8 +626,13 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
   if (!opt_no_update_summary)
     {
+      FlatpakRepoUpdateFlags flags = FLATPAK_REPO_UPDATE_FLAG_NONE;
+
+      if (opt_no_summary_index)
+        flags |= FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX;
+
       g_print (_("Updating summary\n"));
-      if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+      if (!flatpak_repo_update (repo, flags, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
         return FALSE;
     }
 

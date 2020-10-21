@@ -3495,6 +3495,24 @@ flatpak_repo_save_summary_index (OstreeRepo   *repo,
 {
   int repo_dfd = ostree_repo_get_dfd (repo);
 
+  if (index == NULL)
+    {
+      if (unlinkat (repo_dfd, "summary.idx", 0) != 0 &&
+          G_UNLIKELY (errno != ENOENT))
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+      if (unlinkat (repo_dfd, "summary.idx.sig", 0) != 0 &&
+          G_UNLIKELY (errno != ENOENT))
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+
+      return TRUE;
+    }
+
   if (!glnx_file_replace_contents_at (repo_dfd, "summary.idx",
                                       g_variant_get_data (index),
                                       g_variant_get_size (index),
@@ -4467,6 +4485,7 @@ generate_summary_index (OstreeRepo   *repo,
  * security properties of collection IDs are broken). */
 gboolean
 flatpak_repo_update (OstreeRepo   *repo,
+                     FlatpakRepoUpdateFlags flags,
                      const char  **gpg_key_ids,
                      const char   *gpg_homedir,
                      GCancellable *cancellable,
@@ -4484,6 +4503,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autoptr(GHashTable) summaries = NULL;
   g_autoptr(GBytes) index_sig = NULL;
   GKeyFile *config;
+  gboolean disable_index = (flags & FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX) != 0;
 
   config = ostree_repo_get_config (repo);
 
@@ -4548,42 +4568,45 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (compat_summary == NULL)
     return FALSE;
 
-  GLNX_HASH_TABLE_FOREACH (subsets, const char *, subset)
+  if (!disable_index)
     {
-      GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
+      GLNX_HASH_TABLE_FOREACH (subsets, const char *, subset)
         {
-          const char *arch_v[] = { arch, NULL };
-          g_autofree char *name = NULL;
-          g_autofree char *digest = NULL;
+          GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
+            {
+              const char *arch_v[] = { arch, NULL };
+              g_autofree char *name = NULL;
+              g_autofree char *digest = NULL;
 
-          if (*subset == 0)
-            name = g_strdup (arch);
-          else
-            name = g_strconcat (subset, "-", arch, NULL);
+              if (*subset == 0)
+                name = g_strdup (arch);
+              else
+                name = g_strconcat (subset, "-", arch, NULL);
 
-          g_autoptr(GVariant) arch_summary = generate_summary (repo, FALSE, refs, commit_data_cache, NULL, subset, arch_v,
-                                                               cancellable, error);
-          if (arch_summary == NULL)
-            return FALSE;
+              g_autoptr(GVariant) arch_summary = generate_summary (repo, FALSE, refs, commit_data_cache, NULL, subset, arch_v,
+                                                                   cancellable, error);
+              if (arch_summary == NULL)
+                return FALSE;
 
-          digest = flatpak_repo_save_digested_summary (repo, name, arch_summary, cancellable, error);
-          if (digest == NULL)
-            return FALSE;
+              digest = flatpak_repo_save_digested_summary (repo, name, arch_summary, cancellable, error);
+              if (digest == NULL)
+                return FALSE;
 
-          g_hash_table_insert (summaries, g_steal_pointer (&name), g_steal_pointer (&digest));
+              g_hash_table_insert (summaries, g_steal_pointer (&name), g_steal_pointer (&digest));
+            }
         }
-    }
 
-  summary_index = generate_summary_index (repo, old_index, summaries,
-                                          gpg_key_ids, gpg_homedir,
-                                          cancellable, error);
-  if (summary_index == NULL)
-    return FALSE;
+      summary_index = generate_summary_index (repo, old_index, summaries,
+                                              gpg_key_ids, gpg_homedir,
+                                              cancellable, error);
+      if (summary_index == NULL)
+        return FALSE;
+    }
 
   if (!ostree_repo_static_delta_reindex (repo, 0, NULL, cancellable, error))
     return FALSE;
 
-  if (gpg_key_ids)
+  if (summary_index && gpg_key_ids)
     {
       g_autoptr(GBytes) index_bytes = g_variant_get_data_as_bytes (summary_index);
 

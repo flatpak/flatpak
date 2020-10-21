@@ -499,11 +499,18 @@ gboolean flatpak_repo_set_deploy_sideload_collection_id (OstreeRepo *repo,
 gboolean flatpak_repo_set_gpg_keys (OstreeRepo *repo,
                                     GBytes     *bytes,
                                     GError    **error);
-gboolean flatpak_repo_update (OstreeRepo   *repo,
-                              const char  **gpg_key_ids,
-                              const char   *gpg_homedir,
-                              GCancellable *cancellable,
-                              GError      **error);
+
+typedef enum {
+  FLATPAK_REPO_UPDATE_FLAG_NONE = 0,
+  FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX = 1 << 0,
+} FlatpakRepoUpdateFlags;
+
+gboolean flatpak_repo_update (OstreeRepo            *repo,
+                              FlatpakRepoUpdateFlags flags,
+                              const char           **gpg_key_ids,
+                              const char            *gpg_homedir,
+                              GCancellable          *cancellable,
+                              GError               **error);
 gboolean flatpak_repo_collect_sizes (OstreeRepo   *repo,
                                      GFile        *root,
                                      guint64      *installed_size,
