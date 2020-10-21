@@ -52,6 +52,7 @@ static char *opt_endoflife;
 static char *opt_endoflife_rebase;
 static char *opt_collection_id = NULL;
 static int opt_token_type = -1;
+static gboolean opt_no_summary_index = FALSE;
 
 static GOptionEntry options[] = {
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, N_("One line subject"), N_("SUBJECT") },
@@ -73,6 +74,7 @@ static GOptionEntry options[] = {
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), "COLLECTION-ID" },
   { "disable-fsync", 0, 0, G_OPTION_ARG_NONE, &opt_disable_fsync, "Do not invoke fsync()", NULL },
   { "disable-sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_disable_sandbox, "Do not sandbox icon validator", NULL },
+  { "no-summary-index", 0, 0, G_OPTION_ARG_NONE, &opt_no_summary_index, N_("Don't generate a summary index"), NULL },
 
   { NULL }
 };
@@ -1099,13 +1101,21 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
                                         (opt_timestamp != NULL) ? ts.tv_sec : 0, cancellable, error))
     return FALSE;
 
-  if (!opt_no_update_summary &&
-      !flatpak_repo_update (repo,
-                            (const char **) opt_gpg_key_ids,
-                            opt_gpg_homedir,
-                            cancellable,
-                            error))
-    goto out;
+  if (!opt_no_update_summary)
+    {
+      FlatpakRepoUpdateFlags flags = FLATPAK_REPO_UPDATE_FLAG_NONE;
+
+      if (opt_no_summary_index)
+        flags |= FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX;
+
+      g_debug ("Updating summary");
+      if (!flatpak_repo_update (repo, flags,
+                                (const char **) opt_gpg_key_ids,
+                                opt_gpg_homedir,
+                                cancellable,
+                                error))
+        goto out;
+    }
 
   format_size = g_format_size (stats.content_bytes_written);
 

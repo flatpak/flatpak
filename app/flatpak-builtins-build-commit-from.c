@@ -51,6 +51,7 @@ static char **opt_subsets;
 static char *opt_timestamp;
 static char **opt_extra_collection_ids;
 static int opt_token_type = -1;
+static gboolean opt_no_summary_index = FALSE;
 
 static GOptionEntry options[] = {
   { "src-repo", 0, 0, G_OPTION_ARG_STRING, &opt_src_repo, N_("Source repo dir"), N_("SRC-REPO") },
@@ -70,6 +71,7 @@ static GOptionEntry options[] = {
   { "token-type", 0, 0, G_OPTION_ARG_INT, &opt_token_type, N_("Set type of token needed to install this commit"), N_("VAL") },
   { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, N_("Override the timestamp of the commit (NOW for current time)"), N_("TIMESTAMP") },
   { "disable-fsync", 0, 0, G_OPTION_ARG_NONE, &opt_disable_fsync, "Do not invoke fsync()", NULL },
+  { "no-summary-index", 0, 0, G_OPTION_ARG_NONE, &opt_no_summary_index, N_("Don't generate a summary index"), NULL },
   { NULL }
 };
 
@@ -732,13 +734,21 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       !flatpak_repo_generate_appstream (dst_repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
     return FALSE;
 
-  if (!opt_no_update_summary &&
-      !flatpak_repo_update (dst_repo,
-                            (const char **) opt_gpg_key_ids,
-                            opt_gpg_homedir,
-                            cancellable,
-                            error))
-    return FALSE;
+  if (!opt_no_update_summary)
+    {
+      FlatpakRepoUpdateFlags flags = FLATPAK_REPO_UPDATE_FLAG_NONE;
+
+      if (opt_no_summary_index)
+        flags |= FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX;
+
+      g_debug ("Updating summary");
+      if (!flatpak_repo_update (dst_repo, flags,
+                                (const char **) opt_gpg_key_ids,
+                                opt_gpg_homedir,
+                                cancellable,
+                                error))
+        return FALSE;
+    }
 
   return TRUE;
 }
