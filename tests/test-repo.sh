@@ -77,7 +77,7 @@ fi
 
 # Remove new appstream branch so we can test deploying the old one
 rm -rf repos/test/refs/heads/appstream2
-${FLATPAK} build-update-repo --no-update-appstream ${FL_GPGARGS} repos/test
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} --no-update-appstream ${FL_GPGARGS} repos/test
 
 flatpak ${U} --appstream update test-repo
 
@@ -720,7 +720,7 @@ fi
 ok "remote-ls"
 
 # Test that remote-ls can take a file:// URI
-${FLATPAK} build-update-repo --no-update-appstream repos/test
+${FLATPAK} build-update-repo  ${BUILD_UPDATE_REPO_FLAGS-} --no-update-appstream repos/test
 ${FLATPAK} remote-ls file://`pwd`/repos/test > repo-list
 assert_file_has_content repo-list "org\.test\.Hello"
 

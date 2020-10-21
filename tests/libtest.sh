@@ -109,6 +109,10 @@ export USERDIR=${TEST_DATA_DIR}/home/share/flatpak
 export SYSTEMDIR=${TEST_DATA_DIR}/system
 export ARCH=`flatpak --default-arch`
 
+if [ x${SUMMARY_FORMAT-} == xold ] ; then
+    export BUILD_UPDATE_REPO_FLAGS="--no-summary-index"
+fi
+
 if [ x${USE_SYSTEMDIR-} == xyes ] ; then
     export FL_DIR=${SYSTEMDIR}
     export U=
@@ -394,7 +398,12 @@ update_repo () {
         collection_args=
     fi
 
-    ${FLATPAK} build-update-repo ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
+    ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
+    if [ x${SUMMARY_FORMAT-} == xold ] ; then
+        assert_not_has_file repos/${REPONAME}/summary.idx
+    else
+        assert_has_file repos/${REPONAME}/summary.idx
+    fi
 }
 
 make_updated_app () {
