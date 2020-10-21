@@ -122,6 +122,15 @@ AC_ARG_WITH([systemdsystemunitdir],
     [with_systemdsystemunitdir='${prefix}/lib/systemd/system'])
 AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
 
+AC_ARG_WITH([systemdsystemenvgendir],
+            [AS_HELP_STRING([--with-systemdsystemenvgendir=DIR],
+                            [Directory for systemd system environment generators (default=PREFIX/lib/systemd/system-environment-generators)])],
+    [],
+    dnl This is deliberately not ${libdir}: systemd units always go in
+    dnl .../lib, never .../lib64 or .../lib/x86_64-linux-gnu
+    [with_systemdsystemenvgendir='${prefix}/lib/systemd/system-environment-generators'])
+AC_SUBST([systemdsystemenvgendir], [$with_systemdsystemenvgendir])
+
 AC_ARG_WITH([systemduserenvgendir],
             [AS_HELP_STRING([--with-systemduserenvgendir=DIR],
                             [Directory for systemd user environment generators (default=PREFIX/lib/systemd/user-environment-generators)])],
