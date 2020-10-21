@@ -119,11 +119,20 @@ typedef struct
 {
   char     *remote_name;
   char     *collection_id;
-  guint     summary_version;
+
+  /* New format summary */
+
+  GVariant   *index;
+  GBytes     *index_sig_bytes;
+  GHashTable *index_ht; /* Arch -> subsummary digest (filtered by subsystem) */
+  GHashTable *subsummaries; /* digest -> GVariant */
+
+  /* Compat summary */
   GVariant *summary;
   GBytes   *summary_bytes;
   GBytes   *summary_sig_bytes;
   GError   *summary_fetch_error;
+
   GRegex   *allow_refs;
   GRegex   *deny_refs;
   int       refcount;
@@ -135,8 +144,11 @@ FlatpakRemoteState *flatpak_remote_state_ref (FlatpakRemoteState *remote_state);
 void flatpak_remote_state_unref (FlatpakRemoteState *remote_state);
 gboolean flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                               GError            **error);
-gboolean flatpak_remote_state_ensure_metadata (FlatpakRemoteState *self,
-                                               GError            **error);
+gboolean flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
+                                                 FlatpakDir         *dir,
+                                                 const char         *arch,
+                                                 GCancellable       *cancellable,
+                                                 GError            **error);
 gboolean flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
                                          const char *ref);
 gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
@@ -235,9 +247,11 @@ typedef enum {
 typedef enum {
   FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NONE = 0,
   FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION = 1 << 0,
+  FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_SUMMARY_IS_INDEX = 1 << 1,
 } FlatpakHelperUpdateRemoteFlags;
 
-#define FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_ALL (FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION)
+#define FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_ALL (FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION | \
+                                                FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_SUMMARY_IS_INDEX)
 
 typedef enum {
   FLATPAK_HELPER_GET_REVOKEFS_FD_FLAGS_NONE = 0,
@@ -943,6 +957,12 @@ FlatpakRemoteState * flatpak_dir_get_remote_state_for_summary (FlatpakDir   *sel
                                                                GBytes       *opt_summary_sig,
                                                                GCancellable *cancellable,
                                                                GError      **error);
+FlatpakRemoteState * flatpak_dir_get_remote_state_for_index (FlatpakDir   *self,
+                                                             const char   *remote,
+                                                             GBytes       *opt_index,
+                                                             GBytes       *opt_index_sig,
+                                                             GCancellable *cancellable,
+                                                             GError      **error);
 gboolean flatpak_dir_migrate_config (FlatpakDir   *self,
                                      gboolean     *changed,
                                      GCancellable *cancellable,

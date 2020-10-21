@@ -129,6 +129,22 @@ static gboolean flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                                   GCancellable *cancellable,
                                                   GError      **error);
 
+static gboolean flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
+                                                        const char   *name_or_uri,
+                                                        gboolean      only_cached,
+                                                        GBytes      **out_index,
+                                                        GBytes      **out_index_sig,
+                                                        GCancellable *cancellable,
+                                                        GError      **error);
+
+static gboolean flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
+                                                          const char   *name_or_uri,
+                                                          const char   *checksum,
+                                                          gboolean      only_cached,
+                                                          GBytes      **out_summary,
+                                                          GCancellable *cancellable,
+                                                          GError      **error);
+
 static gboolean flatpak_dir_cleanup_remote_for_url_change (FlatpakDir   *self,
                                                            const char   *remote_name,
                                                            const char   *url,
@@ -307,6 +323,13 @@ flatpak_sideload_state_free (FlatpakSideloadState *sideload_state)
   g_free (sideload_state);
 }
 
+static void
+variant_maybe_unref (GVariant *variant)
+{
+  if (variant)
+    g_variant_unref (variant);
+}
+
 static FlatpakRemoteState *
 flatpak_remote_state_new (void)
 {
@@ -314,6 +337,7 @@ flatpak_remote_state_new (void)
 
   state->refcount = 1;
   state->sideload_repos = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_sideload_state_free);
+  state->subsummaries = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)variant_maybe_unref);
   return state;
 }
 
@@ -335,6 +359,10 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
     {
       g_free (remote_state->remote_name);
       g_free (remote_state->collection_id);
+      g_clear_pointer (&remote_state->index, g_variant_unref);
+      g_clear_pointer (&remote_state->index_ht, g_hash_table_unref);
+      g_clear_pointer (&remote_state->index_sig_bytes, g_bytes_unref);
+      g_clear_pointer (&remote_state->subsummaries, g_hash_table_unref);
       g_clear_pointer (&remote_state->summary, g_variant_unref);
       g_clear_pointer (&remote_state->summary_bytes, g_bytes_unref);
       g_clear_pointer (&remote_state->summary_sig_bytes, g_bytes_unref);
@@ -408,9 +436,52 @@ gboolean
 flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
                                      GError            **error)
 {
-  if (self->summary == NULL)
+  if (self->index == NULL && self->summary == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unable to load summary from remote %s: %s"), self->remote_name,
                                self->summary_fetch_error != NULL ? self->summary_fetch_error->message : "unknown error");
+
+  return TRUE;
+}
+
+gboolean
+flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
+                                        FlatpakDir         *dir,
+                                        const char         *arch,
+                                        GCancellable       *cancellable,
+                                        GError            **error)
+{
+  GVariant *subsummary;
+  const char *digest;
+  const char *alt_arch;
+
+  g_autoptr(GBytes) bytes = NULL;
+
+  if (self->summary != NULL)
+    return TRUE; /* We have them all anyway */
+
+  if (self->index == NULL)
+    return TRUE; /* Don't fail unnecessarily in e.g. the sideload case */
+
+  if (g_hash_table_contains (self->subsummaries, arch))
+    return TRUE;
+
+  /* If i.e. we already loaded x86_64 subsummary (which has i386 refs),
+   * don't load i386 one */
+  alt_arch = flatpak_get_compat_arch_reverse (arch);
+  if (alt_arch != NULL &&
+      g_hash_table_contains (self->subsummaries, alt_arch))
+    return TRUE;
+
+  digest = g_hash_table_lookup (self->index_ht, arch);
+  if (digest == NULL)
+    return TRUE; /* No refs for this arch */
+
+  if (!flatpak_dir_remote_fetch_indexed_summary (dir, self->remote_name, digest, FALSE,
+                                                 &bytes, cancellable, error))
+    return FALSE;
+
+  subsummary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, FALSE));
+  g_hash_table_insert (self->subsummaries, g_strdup (arch), subsummary);
 
   return TRUE;
 }
@@ -472,7 +543,7 @@ flatpak_remote_state_resolve_sideloaded_ref (FlatpakRemoteState *self,
         {
           guint64 timestamp = get_timestamp_from_ref_info (sideload_info);
 
-          if (latest_checksum == NULL || latest_timestamp < timestamp)
+          if (latest_checksum == 0 || latest_timestamp < timestamp)
             {
               g_free (latest_checksum);
               latest_checksum = g_steal_pointer (&sideload_checksum);
@@ -500,6 +571,27 @@ flatpak_remote_state_resolve_sideloaded_ref (FlatpakRemoteState *self,
   return TRUE;
 }
 
+static GVariant *
+get_summary_for_ref (FlatpakRemoteState *self,
+                     const char *ref)
+{
+  GVariant *summary;
+  if (self->index != NULL)
+    {
+      g_autofree char * arch = flatpak_get_arch_for_ref (ref);
+
+      summary = g_hash_table_lookup (self->subsummaries, arch);
+      if (summary == NULL)
+        {
+          const char *non_compat_arch = flatpak_get_compat_arch_reverse (arch);
+          summary = g_hash_table_lookup (self->subsummaries, non_compat_arch);
+        }
+    }
+  else
+    summary = self->summary;
+
+  return summary;
+}
 
 /* Returns TRUE if the ref is found in the summary or cache.
  * out_checksum and out_variant are only set when the ref is found.
@@ -521,12 +613,15 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
     }
 
   /* If there is a summary we use it for metadata and for latest. We may later install from a sideloaded source though */
-  if (self->summary != NULL)
+  if (self->summary != NULL || self->index != NULL)
     {
       VarRefInfoRef info;
       g_autofree char *checksum = NULL;
+      GVariant *summary;
 
-      if (!flatpak_summary_lookup_ref (self->summary, NULL, ref, &checksum, &info))
+      summary = get_summary_for_ref (self, ref);
+      if (summary == NULL ||
+          !flatpak_summary_lookup_ref (summary, NULL, ref, &checksum, &info))
         return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
                                    _("No such ref '%s' in remote %s"),
                                    ref, self->remote_name);
@@ -578,14 +673,20 @@ char **
 flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
                                     const char         *ref)
 {
-  if (self->summary == NULL)
+  GVariant *summary;
+  const char *empty[] = { NULL };
+
+  if (self->summary == NULL && self->index == NULL)
     {
-      const char *empty[] = { NULL };
       g_debug ("flatpak_remote_state_match_subrefs with no summary");
       return g_strdupv ((char **) empty);
     }
 
-  return flatpak_summary_match_subrefs (self->summary, NULL, ref);
+  summary = get_summary_for_ref (self, ref);
+  if (summary == NULL)
+    return g_strdupv ((char **) empty);
+
+  return flatpak_summary_match_subrefs (summary, NULL, ref);
 }
 
 /* 0 if not specified */
@@ -594,12 +695,21 @@ flatpak_remote_state_get_cache_version (FlatpakRemoteState *self)
 {
   VarMetadataRef meta;
   VarSummaryRef summary;
+  VarSummaryIndexRef index;
 
   if (!flatpak_remote_state_ensure_summary (self, NULL))
     return 0;
 
-  summary = var_summary_from_gvariant (self->summary);
-  meta = var_summary_get_metadata (summary);
+  if (self->index)
+    {
+      index = var_summary_index_from_gvariant (self->index);
+      meta = var_summary_index_get_metadata (index);
+    }
+  else
+    {
+      summary = var_summary_from_gvariant (self->summary);
+      meta = var_summary_get_metadata (summary);
+    }
 
   return GUINT32_FROM_LE (var_metadata_lookup_uint32 (meta, "xa.cache-version", 0));
 }
@@ -616,11 +726,19 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
   VarMetadataRef meta;
   VarSummaryRef summary;
   guint32 summary_version;
+  GVariant *summary_v;
 
   if (!flatpak_remote_state_ensure_summary (self, error))
     return FALSE;
 
-  summary = var_summary_from_gvariant (self->summary);
+  summary_v = get_summary_for_ref (self, ref);
+  if (summary_v == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                               _("No entry for %s in remote '%s' summary flatpak cache "),
+                               ref, self->remote_name);
+
+
+  summary = var_summary_from_gvariant (summary_v);
   meta = var_summary_get_metadata (summary);
 
   summary_version = GUINT32_FROM_LE (var_metadata_lookup_uint32 (meta, "xa.summary-version", 0));
@@ -693,10 +811,10 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
                                 char              **out_metadata,
                                 GError            **error)
 {
-  if (self->summary)
+  if (self->summary || self->index)
     {
       const char *metadata = NULL;
-      if (!flatpak_remote_state_lookup_cache (self, ref, out_download_size, out_installed_size,&metadata, error))
+      if (!flatpak_remote_state_lookup_cache (self, ref, out_download_size, out_installed_size, &metadata, error))
         return FALSE;
 
       if (out_metadata)
@@ -1047,11 +1165,17 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
   VarMetadataRef meta;
   VarVariantRef sparse_cache_v;
   guint32 summary_version;
+  GVariant *summary_v;
 
   if (!flatpak_remote_state_ensure_summary (self, error))
     return FALSE;
 
-  summary = var_summary_from_gvariant (self->summary);
+  summary_v = get_summary_for_ref (self, ref);
+  if (summary_v == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                             _("No entry for %s in remote summary flatpak sparse cache "), ref);
+
+  summary = var_summary_from_gvariant (summary_v);
   meta = var_summary_get_metadata (summary);
 
   summary_version = GUINT32_FROM_LE (var_metadata_lookup_uint32 (meta, "xa.summary-version", 0));
@@ -5085,14 +5209,16 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
   if (g_str_has_prefix (ref, "app/") || g_str_has_prefix (ref, "runtime/"))
     {
       g_autofree char *summary_checksum = NULL;
+      GVariant *summary;
 
       /* Version 1 added extra data details, so we can rely on it
        * either being in the sparse cache or no extra data.  However,
        * it only applies to the commit the summary contains, so verify
        * that too.
        */
-      if (state->summary &&
-          flatpak_summary_lookup_ref (state->summary, NULL, ref, &summary_checksum, NULL) &&
+      summary = get_summary_for_ref (state, ref);
+      if (summary != NULL &&
+          flatpak_summary_lookup_ref (summary, NULL, ref, &summary_checksum, NULL) &&
           g_strcmp0 (rev, summary_checksum) == 0 &&
           flatpak_remote_state_get_cache_version (state) >= 1)
         {
@@ -10874,6 +11000,87 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
 }
 
 static gboolean
+flatpak_dir_remote_save_cached_summary (FlatpakDir   *self,
+                                        const char   *basename,
+                                        const char   *main_ext,
+                                        const char   *sig_ext,
+                                        GBytes       *main,
+                                        GBytes       *sig,
+                                        GCancellable *cancellable,
+                                        GError      **error)
+{
+  g_autofree char *main_file_name = g_strconcat (basename, main_ext, NULL);
+  g_autofree char *sig_file_name = g_strconcat (basename, sig_ext, NULL);
+  g_autoptr(GFile) cache_dir = flatpak_build_file (self->cache_dir, "summaries", NULL);
+  g_autoptr(GFile) main_cache_file = flatpak_build_file (cache_dir, main_file_name, NULL);
+  g_autoptr(GFile) sig_cache_file = flatpak_build_file (cache_dir, sig_file_name, NULL);
+  g_autoptr(GError) local_error = NULL;
+
+  if (!flatpak_mkdir_p (cache_dir, cancellable, error))
+    return FALSE;
+
+  if (!g_file_replace_contents (main_cache_file, g_bytes_get_data (main, NULL), g_bytes_get_size (main), NULL, FALSE,
+                                G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
+    return FALSE;
+
+  if (sig_ext)
+    {
+      if (sig)
+        {
+          if (!g_file_replace_contents (sig_cache_file, g_bytes_get_data (sig, NULL), g_bytes_get_size (sig), NULL, FALSE,
+                                        G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
+            return FALSE;
+        }
+      else
+        {
+          if (!g_file_delete (sig_cache_file, NULL, &local_error) &&
+              !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+        }
+    }
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_dir_remote_load_cached_summary (FlatpakDir   *self,
+                                        const char   *basename,
+                                        const char   *main_ext,
+                                        const char   *sig_ext,
+                                        GBytes      **out_main,
+                                        GBytes      **out_sig,
+                                        GCancellable *cancellable,
+                                        GError      **error)
+{
+  g_autofree char *main_file_name = g_strconcat (basename, main_ext, NULL);
+  g_autofree char *sig_file_name = g_strconcat (basename, sig_ext, NULL);
+  g_autoptr(GFile) main_cache_file = flatpak_build_file (self->cache_dir, "summaries", main_file_name, NULL);
+  g_autoptr(GFile) sig_cache_file = flatpak_build_file (self->cache_dir, "summaries", sig_file_name, NULL);
+  g_autoptr(GMappedFile) mfile = NULL;
+  g_autoptr(GMappedFile) sig_mfile = NULL;
+
+  mfile = g_mapped_file_new (flatpak_file_get_path_cached (main_cache_file), FALSE, NULL);
+  if (mfile == NULL)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED,
+                   _("No cached summary for remote '%s'"), basename);
+      return FALSE;
+    }
+
+  if (out_sig)
+    sig_mfile = g_mapped_file_new (flatpak_file_get_path_cached (sig_cache_file), FALSE, NULL);
+
+  *out_main = g_mapped_file_get_bytes (mfile);
+  if (sig_mfile)
+    *out_sig = g_mapped_file_get_bytes (sig_mfile);
+
+  return TRUE;
+}
+
+static gboolean
 flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                   const char   *name_or_uri,
                                   gboolean      only_cached,
@@ -10887,6 +11094,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GBytes) summary = NULL;
   g_autoptr(GBytes) summary_sig = NULL;
+  g_autofree char *cache_key = NULL;
 
   if (!ostree_repo_remote_get_url (self->repo, name_or_uri, &url, error))
     return FALSE;
@@ -10903,7 +11111,8 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   /* No in-memory caching for local files */
   if (!is_local)
     {
-      if (flatpak_dir_lookup_cached_summary (self, out_summary, out_summary_sig, name_or_uri, url))
+      cache_key = g_strconcat ("summary-", name_or_uri, NULL);
+      if (flatpak_dir_lookup_cached_summary (self, out_summary, out_summary_sig, cache_key, url))
         return TRUE;
     }
 
@@ -10925,25 +11134,9 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
       g_debug ("Fetching summary file for remote ‘%s’", name_or_uri);
       if (only_cached)
         {
-          g_autofree char *sig_name = g_strconcat (name_or_uri, ".sig", NULL);
-          g_autoptr(GFile) summary_cache_file = flatpak_build_file (self->cache_dir, "summaries", name_or_uri, NULL);
-          g_autoptr(GFile) summary_sig_cache_file = flatpak_build_file (self->cache_dir, "summaries", sig_name, NULL);
-          g_autoptr(GMappedFile) mfile = NULL;
-          g_autoptr(GMappedFile) sig_mfile = NULL;
-
-          mfile = g_mapped_file_new (flatpak_file_get_path_cached (summary_cache_file), FALSE, NULL);
-          if (mfile == NULL)
-            {
-              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED,
-                           _("No summary cached for remote '%s'"), name_or_uri);
-              return FALSE;
-            }
-
-          sig_mfile = g_mapped_file_new (flatpak_file_get_path_cached (summary_sig_cache_file), FALSE, NULL);
-
-          summary = g_mapped_file_get_bytes (mfile);
-          if (sig_mfile)
-            summary_sig = g_mapped_file_get_bytes (sig_mfile);
+          if (!flatpak_dir_remote_load_cached_summary (self, name_or_uri, NULL, ".sig",
+                                                       &summary, &summary_sig, cancellable, error))
+            return FALSE;
         }
       else if (!ostree_repo_remote_fetch_summary (self->repo, name_or_uri,
                                                   &summary, &summary_sig,
@@ -10956,11 +11149,294 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Remote listing for %s not available; server has no summary file. Check the URL passed to remote-add was valid."), name_or_uri);
 
   if (!is_local && !only_cached)
-    flatpak_dir_cache_summary (self, summary, summary_sig, name_or_uri, url);
+    flatpak_dir_cache_summary (self, summary, summary_sig, cache_key, url);
 
   *out_summary = g_steal_pointer (&summary);
   if (out_summary_sig)
     *out_summary_sig = g_steal_pointer (&summary_sig);
+
+  return TRUE;
+}
+
+static gboolean
+remote_verify_signature (OstreeRepo *repo,
+                         const char *remote_name,
+                         GBytes *data,
+                         GBytes *sig_file,
+                         GCancellable *cancellable,
+                         GError **error)
+{
+  g_autoptr(GVariant) signatures_variant = NULL;
+  g_autoptr(GVariant) signaturedata = NULL;
+  g_autoptr (GBytes) signatures = NULL;
+  g_autoptr(GByteArray) buffer = NULL;
+  g_autoptr(OstreeGpgVerifyResult) verify_result = NULL;
+  GVariantIter iter;
+  GVariant *child;
+
+  signatures_variant = g_variant_new_from_bytes (OSTREE_SUMMARY_SIG_GVARIANT_FORMAT,
+                                                 sig_file, FALSE);
+  signaturedata = g_variant_lookup_value (signatures_variant, "ostree.gpgsigs", G_VARIANT_TYPE ("aay"));
+  if (signaturedata == NULL)
+    {
+      g_set_error_literal (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_NO_SIGNATURE,
+                           "GPG verification enabled, but no signatures found (use gpg-verify=false in remote config to disable)");
+      return FALSE;
+    }
+
+  buffer = g_byte_array_new ();
+  g_variant_iter_init (&iter, signaturedata);
+  while ((child = g_variant_iter_next_value (&iter)) != NULL)
+    {
+      g_byte_array_append (buffer,
+                           g_variant_get_data (child),
+                           g_variant_get_size (child));
+      g_variant_unref (child);
+    }
+  signatures = g_byte_array_free_to_bytes (g_steal_pointer (&buffer));
+
+  verify_result = ostree_repo_gpg_verify_data (repo,
+                                               remote_name,
+                                               data,
+                                               signatures,
+                                               NULL, NULL,
+                                               cancellable, error);
+  if (!ostree_gpg_verify_result_require_valid_signature (verify_result, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
+                                        const char   *name_or_uri,
+                                        gboolean      only_cached,
+                                        GBytes      **out_index,
+                                        GBytes      **out_index_sig,
+                                        GCancellable *cancellable,
+                                        GError      **error)
+{
+  g_autofree char *url = NULL;
+  gboolean is_local;
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GError) cache_error = NULL;
+  g_autoptr(GBytes) cached_index = NULL;
+  g_autoptr(GBytes) cached_index_sig = NULL;
+  g_autoptr(GBytes) index = NULL;
+  g_autoptr(GBytes) index_sig = NULL;
+  g_autofree char *cache_key = NULL;
+  gboolean gpg_verify_summary;
+
+  ensure_soup_session (self);
+
+  if (!ostree_repo_remote_get_url (self->repo, name_or_uri, &url, error))
+    return FALSE;
+
+  if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, name_or_uri, &gpg_verify_summary, NULL))
+    return FALSE;
+
+  if (!g_str_has_prefix (name_or_uri, "file:") && flatpak_dir_get_remote_disabled (self, name_or_uri))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                   "Can't fetch summary from disabled remote ‘%s’", name_or_uri);
+      return FALSE;
+    }
+
+  if (flatpak_dir_get_remote_oci (self, name_or_uri))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "No index in OCI remote ‘%s’", name_or_uri);
+      return FALSE;
+    }
+
+  is_local = g_str_has_prefix (url, "file:");
+
+  /* No in-memory caching for local files */
+  if (!is_local)
+    {
+      cache_key = g_strconcat ("index-", name_or_uri, NULL);
+      if (flatpak_dir_lookup_cached_summary (self, out_index, out_index_sig, cache_key, url))
+        return TRUE;
+    }
+
+  /* Seems ostree asserts if this is NULL */
+  if (error == NULL)
+    error = &local_error;
+
+  flatpak_dir_remote_load_cached_summary (self, name_or_uri, ".idx", ".idx.sig",
+                                          &cached_index, &cached_index_sig, cancellable, &cache_error);
+
+  g_debug ("Fetching summary index file for remote ‘%s’", name_or_uri);
+  if (only_cached)
+    {
+      if (cached_index == NULL)
+        {
+          g_propagate_error (error, g_steal_pointer (&cache_error));
+          return FALSE;
+        }
+
+      index = g_steal_pointer (&cached_index);
+      index_sig = g_steal_pointer (&cached_index_sig);
+    }
+  else
+    {
+      g_autofree char *index_url = g_build_filename (url, "summary.idx", NULL);
+
+      if (gpg_verify_summary)
+        {
+          g_autofree char *index_sig_url = g_build_filename (url, "summary.idx.sig", NULL);
+          g_autoptr(GError) local_error2 = NULL;
+          g_autoptr (GBytes) dl_index_sig = NULL;
+
+          dl_index_sig = flatpak_load_uri (self->soup_session, index_sig_url, 0, NULL,
+                                           NULL, NULL, NULL,
+                                           cancellable, &local_error2);
+          if (dl_index_sig == NULL)
+            {
+              /* We report i/o errors here, and if it just doens't exist we report that
+                 below, and we want to report errors from the real summary dl instead */
+              if (!g_error_matches (local_error2, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error2));
+                  return FALSE;
+                }
+            }
+
+          /* If the downloaded sig is the same as the cached one we need not re-download or
+           * re-verify, just use the cache (which we verified before) */
+          if (dl_index_sig != NULL &&
+              cached_index != NULL && cached_index_sig != NULL &&
+              g_bytes_equal (cached_index_sig, dl_index_sig))
+            {
+              index = g_steal_pointer (&cached_index);
+              index_sig = g_steal_pointer (&cached_index_sig);
+            }
+          else
+            {
+              index_sig = g_steal_pointer (&dl_index_sig);
+            }
+        }
+
+      if (index == NULL)
+        {
+          index = flatpak_load_uri (self->soup_session, index_url, 0, NULL,
+                                    NULL, NULL, NULL,
+                                    cancellable, error);
+          if (index == NULL)
+            return FALSE;
+
+          if (gpg_verify_summary)
+            {
+              if (index_sig == NULL)
+                {
+                  g_set_error (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_NO_SIGNATURE,
+                               "GPG verification enabled, but no summary signatures found (use gpg-verify-summary=false in remote config to disable)");
+                  return FALSE;
+                }
+              else
+                {
+                  if (!remote_verify_signature (self->repo, name_or_uri,
+                                                index, index_sig,
+                                                cancellable, error))
+                    return FALSE;
+                }
+            }
+        }
+
+      g_assert (index != NULL);
+      if (gpg_verify_summary)
+        g_assert (index_sig != NULL);
+
+      if (!is_local &&
+          !flatpak_dir_remote_save_cached_summary (self, name_or_uri, ".idx", ".idx.sig",
+                                                   index, index_sig, cancellable, error))
+        return FALSE;
+    }
+
+  /* Cache in memory */
+  if (!is_local && !only_cached)
+    flatpak_dir_cache_summary (self, index, index_sig, cache_key, url);
+
+  *out_index = g_steal_pointer (&index);
+  if (out_index_sig)
+    *out_index_sig = g_steal_pointer (&index_sig);
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
+                                          const char   *name_or_uri,
+                                          const char   *checksum,
+                                          gboolean      only_cached,
+                                          GBytes      **out_summary,
+                                          GCancellable *cancellable,
+                                          GError      **error)
+{
+  g_autofree char *url = NULL;
+  gboolean is_local;
+  g_autoptr(GError) cache_error = NULL;
+  g_autoptr(GBytes) summary = NULL;
+  g_autofree char *sha256 = NULL;
+  g_autofree char *cache_name = g_strconcat (name_or_uri, "-", checksum, NULL);
+
+  ensure_soup_session (self);
+
+  if (!ostree_repo_remote_get_url (self->repo, name_or_uri, &url, error))
+    return FALSE;
+
+  if (!g_str_has_prefix (name_or_uri, "file:") && flatpak_dir_get_remote_disabled (self, name_or_uri))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                   "Can't fetch summary from disabled remote ‘%s’", name_or_uri);
+      return FALSE;
+    }
+
+  is_local = g_str_has_prefix (url, "file:");
+
+  /* No in-memory caching for local files */
+  if (!is_local)
+    {
+      if (flatpak_dir_lookup_cached_summary (self, out_summary, NULL, checksum, url))
+        return TRUE;
+    }
+
+  /* First look for an on-disk cache */
+  if (!flatpak_dir_remote_load_cached_summary (self, cache_name, ".sub", NULL,
+                                               &summary, NULL, cancellable, &cache_error))
+    {
+      /* Else fetch it */
+      if (only_cached)
+        {
+          g_propagate_error (error, g_steal_pointer (&cache_error));
+          return FALSE;
+        }
+
+      g_debug ("Fetching indexed summary file %s for remote ‘%s’", checksum, name_or_uri);
+      g_autofree char *subsummary_url = g_build_filename (url, "summaries", checksum, NULL);
+      summary = flatpak_load_uri (self->soup_session, subsummary_url, 0, NULL,
+                                  NULL, NULL, NULL,
+                                  cancellable, error);
+      if (summary == NULL)
+        return FALSE;
+
+      sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, summary);
+      if (strcmp (sha256, checksum) != 0)
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for indexed summary %s for remote '%s'"), checksum, name_or_uri);
+
+      /* Save to disk */
+      if (!is_local &&
+          !flatpak_dir_remote_save_cached_summary (self, cache_name, ".sub", NULL,
+                                                   summary, NULL,
+                                                   cancellable, error))
+        return FALSE;
+    }
+
+  /* Cache in memory */
+  if (!is_local && !only_cached)
+    flatpak_dir_cache_summary (self, summary, NULL, checksum, url);
+
+  *out_summary = g_steal_pointer (&summary);
 
   return TRUE;
 }
@@ -10971,6 +11447,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
                                gboolean      optional,
                                gboolean      local_only,
                                gboolean      only_cached,
+                               gboolean      opt_summary_is_index,
                                GBytes       *opt_summary,
                                GBytes       *opt_summary_sig,
                                GCancellable *cancellable,
@@ -10980,6 +11457,8 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
   g_autoptr(GPtrArray) sideload_paths = NULL;
   g_autoptr(GError) my_error = NULL;
   gboolean is_local;
+  gboolean got_summary = FALSE;
+  const char *arch = flatpak_get_default_arch ();
 
   if (error == NULL)
     error = &my_error;
@@ -11026,14 +11505,67 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
               !ostree_gpg_verify_result_require_valid_signature (gpg_result, error))
             return NULL;
 
-          state->summary_sig_bytes = g_bytes_ref (opt_summary_sig);
         }
-      state->summary_bytes = g_bytes_ref (opt_summary);
-      state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                                     opt_summary, FALSE));
+
+      if (opt_summary_is_index)
+        {
+          if (opt_summary_sig)
+            state->index_sig_bytes = g_bytes_ref (opt_summary_sig);
+          state->index = g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT,
+                                                                       opt_summary, FALSE));
+        }
+      else
+        {
+          if (opt_summary_sig)
+            state->summary_sig_bytes = g_bytes_ref (opt_summary_sig);
+          state->summary_bytes = g_bytes_ref (opt_summary);
+          state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                                         opt_summary, FALSE));
+        }
+      got_summary = TRUE;
     }
-  else
+
+
+  /* First look for an indexed summary */
+  if (!got_summary)
     {
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GBytes) index_bytes = NULL;
+      g_autoptr(GBytes) index_sig_bytes = NULL;
+
+      if (flatpak_dir_remote_fetch_summary_index (self, remote_or_uri, only_cached, &index_bytes, &index_sig_bytes,
+                                                  cancellable, &local_error))
+        {
+          got_summary = TRUE;
+          state->index = g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT,
+                                                                       index_bytes, FALSE));
+          state->index_sig_bytes = g_steal_pointer (&index_sig_bytes);
+        }
+      else
+        {
+          if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
+              !g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED))
+            {
+              /* We got an error other than not-found, assume we're indexed but there is some network error */
+              got_summary = TRUE;
+              if (optional && !g_cancellable_is_cancelled (cancellable))
+                {
+                  g_debug ("Failed to download optional summary index: %s", local_error->message);
+                  state->summary_fetch_error = g_steal_pointer (&local_error);
+                }
+              else
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return NULL;
+                }
+            }
+        }
+    }
+
+  if (!got_summary)
+    {
+      /* No index, fall back to full summary */
+      got_summary = TRUE;
       g_autoptr(GError) local_error = NULL;
       g_autoptr(GBytes) summary_bytes = NULL;
       g_autoptr(GBytes) summary_sig_bytes = NULL;
@@ -11059,6 +11591,62 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
               return NULL;
             }
         }
+    }
+
+  if (state->index)
+    {
+      g_autofree char *require_subset = flatpak_dir_get_remote_subset (self, state->remote_name);
+      VarSummaryIndexRef index = var_summary_index_from_gvariant (state->index);
+      VarSummaryIndexSubsummariesRef subsummaries = var_summary_index_get_subsummaries (index);
+      gsize n_subsummaries = var_summary_index_subsummaries_get_length (subsummaries);
+
+      state->index_ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+      for (gsize i = 0; i < n_subsummaries; i++)
+        {
+          VarSummaryIndexSubsummariesEntryRef entry = var_summary_index_subsummaries_get_at (subsummaries, i);
+          const char *name = var_summary_index_subsummaries_entry_get_key (entry);
+          VarSubsummaryRef subsummary = var_summary_index_subsummaries_entry_get_value (entry);
+          gsize checksum_bytes_len;
+          const guchar *checksum_bytes;
+          g_autofree char *digest = NULL;
+          const char *dash, *subsummary_arch;
+
+          dash = strchr (name, '-');
+          subsummary_arch = dash == NULL ? name : dash + 1;
+
+          if (dash == NULL) /* No subset */
+            {
+              if (require_subset != NULL)
+                continue;
+            }
+          else /* Subset */
+            {
+              if (require_subset == NULL)
+                continue;
+              else
+                {
+                  g_autofree char *subset = g_strndup (name, dash - name);
+                  if (strcmp (require_subset, subset) != 0)
+                    continue;
+                }
+            }
+
+          checksum_bytes = var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
+          if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
+            {
+              g_debug ("Invalid checksum for digested summary, not using cache");
+              continue;
+            }
+          digest = ostree_checksum_from_bytes (checksum_bytes);
+
+          g_hash_table_insert (state->index_ht, g_strdup (subsummary_arch), g_steal_pointer (&digest));
+        }
+
+      /* Always load default (or specified) arch subsummary. Further arches can be manually loaded with flatpak_remote_state_ensure_subsummary. */
+      if (opt_summary == NULL &&
+          !flatpak_remote_state_ensure_subsummary (state, self, arch, cancellable, error))
+        return NULL;
     }
 
   if (state->collection_id != NULL &&
@@ -11092,7 +11680,7 @@ flatpak_dir_get_remote_state (FlatpakDir   *self,
                               GCancellable *cancellable,
                               GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, only_cached, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, only_cached, FALSE, NULL, NULL, cancellable, error);
 }
 
 /* This is an alternative way to get the state where the summary is
@@ -11110,7 +11698,18 @@ flatpak_dir_get_remote_state_for_summary (FlatpakDir   *self,
                                           GCancellable *cancellable,
                                           GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, FALSE, opt_summary, opt_summary_sig, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, FALSE, FALSE, opt_summary, opt_summary_sig, cancellable, error);
+}
+
+FlatpakRemoteState *
+flatpak_dir_get_remote_state_for_index (FlatpakDir   *self,
+                                        const char   *remote,
+                                        GBytes       *opt_index,
+                                        GBytes       *opt_index_sig,
+                                        GCancellable *cancellable,
+                                        GError      **error)
+{
+  return _flatpak_dir_get_remote_state (self, remote, FALSE, FALSE, FALSE, TRUE, opt_index, opt_index_sig, cancellable, error);
 }
 
 /* This is an alternative way to get the remote state that doesn't
@@ -11128,7 +11727,7 @@ flatpak_dir_get_remote_state_optional (FlatpakDir   *self,
                                        GCancellable *cancellable,
                                        GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, TRUE, FALSE, only_cached, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, FALSE, only_cached, FALSE, NULL, NULL, cancellable, error);
 }
 
 
@@ -11140,7 +11739,7 @@ flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error)
 {
-  return _flatpak_dir_get_remote_state (self, remote, TRUE, TRUE, FALSE, NULL, NULL, cancellable, error);
+  return _flatpak_dir_get_remote_state (self, remote, TRUE, TRUE, FALSE, FALSE, NULL, NULL, cancellable, error);
 }
 
 static gboolean
@@ -11230,7 +11829,17 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   /* This is  ref->commit */
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-  if (state->summary != NULL)
+  if (state->index != NULL)
+    {
+      /* We're online, so report only the refs from the summary */
+      GLNX_HASH_TABLE_FOREACH_KV (state->subsummaries, const char *, arch, GVariant *, subsummary)
+        {
+          summary = var_summary_from_gvariant (subsummary);
+          ref_map = var_summary_get_ref_map (summary);
+          populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, state);
+        }
+    }
+  else if (state->summary != NULL)
     {
       /* We're online, so report only the refs from the summary */
 
@@ -11265,13 +11874,10 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         }
     }
 
-  if (state->summary == NULL &&
-      g_hash_table_size (ret_all_refs) == 0)
-    {
-      /* No sideloaded refs, might as well return the summary error */
-      if (!flatpak_remote_state_ensure_summary (state, error))
-        return FALSE;
-    }
+  /* If no sideloaded refs, might as well return the summary error if set */
+  if (g_hash_table_size (ret_all_refs) == 0 &&
+      !flatpak_remote_state_ensure_summary (state, error))
+    return FALSE;
 
   *out_all_refs = g_steal_pointer (&ret_all_refs);
 
@@ -12370,7 +12976,6 @@ flatpak_dir_get_remote_subset (FlatpakDir *self,
 {
   GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
-  g_autofree char *url = NULL;
 
   if (config == NULL)
     return NULL;
@@ -13397,7 +14002,10 @@ flatpak_dir_update_remote_configuration_for_state (FlatpakDir         *self,
   if (!flatpak_remote_state_ensure_summary (remote_state, error))
     return FALSE;
 
-  metadata = g_variant_get_child_value (remote_state->summary, 1);
+  if (remote_state->index)
+    metadata = g_variant_get_child_value (remote_state->index, 1);
+  else
+    metadata = g_variant_get_child_value (remote_state->summary, 1);
 
   g_variant_iter_init (&iter, metadata);
   if (g_variant_iter_n_children (&iter) > 0)
@@ -13562,23 +14170,29 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
           return TRUE;
         }
 
-      if (!flatpak_dir_update_remote_configuration_for_state (self, state, TRUE, &has_changed, cancellable, error))
-        return FALSE;
-
-      if (state->summary_sig_bytes == NULL)
+      if ((state->summary != NULL && state->summary_sig_bytes == NULL) ||
+          (state->index != NULL && state->index_sig_bytes == NULL))
         {
           g_debug ("Can't update remote configuration as user, no GPG signature");
           return TRUE;
         }
 
+      if (!flatpak_dir_update_remote_configuration_for_state (self, state, TRUE, &has_changed, cancellable, error))
+        return FALSE;
+
       if (has_changed)
         {
-          g_autoptr(GBytes) bytes = g_variant_get_data_as_bytes (state->summary);
+          g_autoptr(GBytes) bytes = g_variant_get_data_as_bytes (state->index ? state->index : state->summary);
+          GBytes *sig_bytes = state->index ? state->index_sig_bytes : state->summary_sig_bytes;
           glnx_autofd int summary_fd = -1;
           g_autofree char *summary_path = NULL;
           glnx_autofd int summary_sig_fd = -1;
           g_autofree char *summary_sig_path = NULL;
           const char *installation;
+          FlatpakHelperUpdateRemoteFlags flags = 0;
+
+          if (state->index)
+            flags |= FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_SUMMARY_IS_INDEX;
 
           summary_fd = g_file_open_tmp ("remote-summary.XXXXXX", &summary_path, error);
           if (summary_fd == -1)
@@ -13586,18 +14200,18 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
           if (glnx_loop_write (summary_fd, g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes)) < 0)
             return glnx_throw_errno (error);
 
-          if (state->summary_sig_bytes != NULL)
+          if (sig_bytes != NULL)
             {
               summary_sig_fd = g_file_open_tmp ("remote-summary-sig.XXXXXX", &summary_sig_path, error);
               if (summary_sig_fd == -1)
                 return FALSE;
-              if (glnx_loop_write (summary_sig_fd, g_bytes_get_data (state->summary_sig_bytes, NULL), g_bytes_get_size (state->summary_sig_bytes)) < 0)
+              if (glnx_loop_write (summary_sig_fd, g_bytes_get_data (sig_bytes, NULL), g_bytes_get_size (sig_bytes)) < 0)
                 return glnx_throw_errno (error);
             }
 
           installation = flatpak_dir_get_id (self);
 
-          if (!flatpak_dir_system_helper_call_update_remote (self, 0, remote,
+          if (!flatpak_dir_system_helper_call_update_remote (self, flags, remote,
                                                              installation ? installation : "",
                                                              summary_path, summary_sig_path ? summary_sig_path : "",
                                                              cancellable, error))
