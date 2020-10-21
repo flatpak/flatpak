@@ -15,6 +15,12 @@ for feature in $(echo $1 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
         deltas)
             export USE_DELTAS=yes
             ;;
+        newsummary)
+            export SUMMARY_FORMAT=new
+            ;;
+        oldsummary)
+            export SUMMARY_FORMAT=old
+            ;;
         nodeltas)
             export USE_DELTAS=no
             ;;
