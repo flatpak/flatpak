@@ -45,7 +45,7 @@ ok () {
     # Wrap this to avoid set -x showing the echo commands
     {
         echo "ok $@";
-        echo "================ $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]} ================";
+        echo "================ $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]} - $@ ================";
     } 2> /dev/null
 }
 
