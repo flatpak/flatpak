@@ -447,6 +447,7 @@ gboolean
 flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
                                         FlatpakDir         *dir,
                                         const char         *arch,
+                                        gboolean            only_cached,
                                         GCancellable       *cancellable,
                                         GError            **error)
 {
@@ -476,7 +477,7 @@ flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
   if (digest == NULL)
     return TRUE; /* No refs for this arch */
 
-  if (!flatpak_dir_remote_fetch_indexed_summary (dir, self->remote_name, digest, FALSE,
+  if (!flatpak_dir_remote_fetch_indexed_summary (dir, self->remote_name, digest, only_cached,
                                                  &bytes, cancellable, error))
     return FALSE;
 
@@ -689,28 +690,40 @@ flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
   return flatpak_summary_match_subrefs (summary, NULL, ref);
 }
 
-/* 0 if not specified */
-static guint32
-flatpak_remote_state_get_cache_version (FlatpakRemoteState *self)
+static VarMetadataRef
+flatpak_remote_state_get_main_metadata (FlatpakRemoteState *self)
 {
-  VarMetadataRef meta;
   VarSummaryRef summary;
   VarSummaryIndexRef index;
-
-  if (!flatpak_remote_state_ensure_summary (self, NULL))
-    return 0;
+  VarMetadataRef meta;
 
   if (self->index)
     {
       index = var_summary_index_from_gvariant (self->index);
       meta = var_summary_index_get_metadata (index);
     }
-  else
+  else if (self->summary)
     {
       summary = var_summary_from_gvariant (self->summary);
       meta = var_summary_get_metadata (summary);
     }
+  else
+    g_assert_not_reached ();
 
+  return meta;
+}
+
+
+/* 0 if not specified */
+static guint32
+flatpak_remote_state_get_cache_version (FlatpakRemoteState *self)
+{
+  VarMetadataRef meta;
+
+  if (!flatpak_remote_state_ensure_summary (self, NULL))
+    return 0;
+
+  meta = flatpak_remote_state_get_main_metadata (self);
   return GUINT32_FROM_LE (var_metadata_lookup_uint32 (meta, "xa.cache-version", 0));
 }
 
@@ -11653,7 +11666,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 
       /* Always load default (or specified) arch subsummary. Further arches can be manually loaded with flatpak_remote_state_ensure_subsummary. */
       if (opt_summary == NULL &&
-          !flatpak_remote_state_ensure_subsummary (state, self, arch, cancellable, error))
+          !flatpak_remote_state_ensure_subsummary (state, self, arch, only_cached, cancellable, error))
         return NULL;
     }
 
@@ -11667,10 +11680,9 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       state->default_token_type = 1;
     }
 
-  if (state->summary != NULL) /* In the optional case we might not have a summary */
+  if (state->summary != NULL || state->index != NULL) /* In the optional case we might not have a summary */
     {
-      VarSummaryRef summary = var_summary_from_gvariant (state->summary);
-      VarMetadataRef meta = var_summary_get_metadata (summary);
+      VarMetadataRef meta = flatpak_remote_state_get_main_metadata (state);
       VarVariantRef res;
 
       if (var_metadata_lookup (meta, "xa.default-token-type", NULL, &res) &&
@@ -12104,8 +12116,7 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
 
 char **
 flatpak_dir_find_remote_refs (FlatpakDir           *self,
-                              const char           *remote,
-                              const char          **opt_sideload_repos,
+                              FlatpakRemoteState   *state,
                               const char           *name,
                               const char           *opt_branch,
                               const char           *opt_default_branch,
@@ -12117,18 +12128,7 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
                               GError              **error)
 {
   g_autoptr(GHashTable) remote_refs = NULL;
-  g_autoptr(FlatpakRemoteState) state = NULL;
   GPtrArray *matched_refs;
-
-  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
-  if (state == NULL)
-    return NULL;
-
-  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
-    {
-      g_autoptr(GFile) f = g_file_new_for_path (opt_sideload_repos[i]);
-      flatpak_remote_state_add_sideload_repo (state, f);
-    }
 
   if (!flatpak_dir_list_all_remote_refs (self, state,
                                          &remote_refs, cancellable, error))
@@ -12211,8 +12211,7 @@ find_ref_for_refs_set (GHashTable   *refs,
 
 char *
 flatpak_dir_find_remote_ref (FlatpakDir   *self,
-                             const char   *remote,
-                             const char  **opt_sideload_repos,
+                             FlatpakRemoteState *state,
                              const char   *name,
                              const char   *opt_branch,
                              const char   *opt_default_branch,
@@ -12224,17 +12223,18 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
 {
   g_autofree char *remote_ref = NULL;
   g_autoptr(GHashTable) remote_refs = NULL;
-  g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, cancellable, error);
-  if (state == NULL)
-    return NULL;
-
-  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+  /* Avoid work if the entire ref was specified */
+  if (opt_branch != NULL && opt_arch != NULL && (kinds == FLATPAK_KINDS_APP || kinds == FLATPAK_KINDS_RUNTIME))
     {
-      g_autoptr(GFile) f = g_file_new_for_path (opt_sideload_repos[i]);
-      flatpak_remote_state_add_sideload_repo (state, f);
+      if (out_kind)
+        *out_kind = kinds;
+
+      if (kinds == FLATPAK_KINDS_APP)
+        return flatpak_build_app_ref (name, opt_branch, opt_arch);
+      else
+        return flatpak_build_runtime_ref (name, opt_branch, opt_arch);
     }
 
   if (!flatpak_dir_list_all_remote_refs (self, state,
@@ -12250,7 +12250,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                        _("Error searching remote %s: %s"),
-                       remote,
+                       state->remote_name,
                        my_error->message);
           return NULL;
         }

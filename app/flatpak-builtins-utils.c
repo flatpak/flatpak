@@ -1336,14 +1336,17 @@ FlatpakRemoteState *
 get_remote_state (FlatpakDir   *dir,
                   const char   *remote,
                   gboolean      cached,
-                  gboolean      sideloaded,
+                  gboolean      only_sideloaded,
+                  const char   *opt_arch,
+                  const char  **opt_sideload_repos,
                   GCancellable *cancellable,
                   GError      **error)
 {
   g_autoptr(GError) local_error = NULL;
+  g_autoptr(GError) local_error2 = NULL;
   FlatpakRemoteState *state = NULL;
 
-  if (sideloaded)
+  if (only_sideloaded)
     {
       state = flatpak_dir_get_remote_state_local_only (dir, remote, cancellable, error);
       if (state == NULL)
@@ -1351,11 +1354,11 @@ get_remote_state (FlatpakDir   *dir,
     }
   else
     {
-      state = flatpak_dir_get_remote_state (dir, remote, cached, cancellable, &local_error);
+      state = flatpak_dir_get_remote_state_optional (dir, remote, cached, cancellable, &local_error);
       if (state == NULL && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED))
         {
           g_clear_error (&local_error);
-          state = flatpak_dir_get_remote_state (dir, remote, FALSE, cancellable, &local_error);
+          state = flatpak_dir_get_remote_state_optional (dir, remote, FALSE, cancellable, &local_error);
         }
 
       if (state == NULL)
@@ -1365,5 +1368,75 @@ get_remote_state (FlatpakDir   *dir,
         }
     }
 
+  if (opt_arch != NULL &&
+      !ensure_remote_state_arch (dir, state, opt_arch, cached, only_sideloaded, cancellable, &local_error))
+    return NULL;
+
+  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+     {
+      g_autoptr(GFile) f = g_file_new_for_path (opt_sideload_repos[i]);
+      flatpak_remote_state_add_sideload_repo (state, f);
+     }
+
   return state;
+}
+
+gboolean
+ensure_remote_state_arch (FlatpakDir         *dir,
+                          FlatpakRemoteState *state,
+                          const char         *arch,
+                          gboolean            cached,
+                          gboolean            only_sideloaded,
+                          GCancellable       *cancellable,
+                          GError            **error)
+{
+  g_autoptr(GError) local_error = NULL;
+
+  if (only_sideloaded)
+    return TRUE;
+
+  if (flatpak_remote_state_ensure_subsummary (state, dir, arch, cached, cancellable, &local_error))
+    return TRUE;
+
+  if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  return flatpak_remote_state_ensure_subsummary (state, dir, arch, FALSE, cancellable, error);
+}
+
+gboolean
+ensure_remote_state_arch_for_ref (FlatpakDir         *dir,
+                                  FlatpakRemoteState *state,
+                                  const char         *ref,
+                                  gboolean            cached,
+                                  gboolean            only_sideloaded,
+                                  GCancellable       *cancellable,
+                                  GError            **error)
+{
+  g_autofree char *ref_arch = flatpak_get_arch_for_ref (ref);
+  return ensure_remote_state_arch (dir, state, ref_arch, cached, only_sideloaded,cancellable, error);
+}
+
+gboolean
+ensure_remote_state_all_arches (FlatpakDir         *dir,
+                                FlatpakRemoteState *state,
+                                gboolean            cached,
+                                gboolean            only_sideloaded,
+                                GCancellable       *cancellable,
+                                GError            **error)
+{
+  if (state->index_ht == NULL)
+    return TRUE;
+
+  GLNX_HASH_TABLE_FOREACH (state->index_ht, const char *, arch)
+    {
+      if (!ensure_remote_state_arch (dir, state, arch,
+                                     cached, only_sideloaded,
+                                     cancellable, error))
+        return FALSE;
+    }
+  return TRUE;
 }

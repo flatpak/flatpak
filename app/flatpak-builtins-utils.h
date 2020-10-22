@@ -176,8 +176,31 @@ void print_wrapped (int         columns,
 FlatpakRemoteState * get_remote_state (FlatpakDir   *dir,
                                        const char   *remote,
                                        gboolean      cached,
-                                       gboolean      sideloaded,
+                                       gboolean      only_sideloaded,
+                                       const char   *opt_arch,
+                                       const char  **opt_sideload_repos,
                                        GCancellable *cancellable,
                                        GError      **error);
+
+gboolean ensure_remote_state_arch (FlatpakDir         *dir,
+                                   FlatpakRemoteState *state,
+                                   const char         *arch,
+                                   gboolean            cached,
+                                   gboolean            only_sideloaded,
+                                   GCancellable       *cancellable,
+                                   GError            **error);
+gboolean ensure_remote_state_arch_for_ref (FlatpakDir         *dir,
+                                           FlatpakRemoteState *state,
+                                           const char         *ref,
+                                           gboolean            cached,
+                                           gboolean            only_sideloaded,
+                                           GCancellable       *cancellable,
+                                           GError            **error);
+gboolean ensure_remote_state_all_arches (FlatpakDir         *dir,
+                                         FlatpakRemoteState *state,
+                                         gboolean            cached,
+                                         gboolean            only_sideloaded,
+                                         GCancellable       *cancellable,
+                                         GError            **error);
 
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */

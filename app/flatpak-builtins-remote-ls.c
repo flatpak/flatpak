@@ -411,6 +411,17 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
 
   has_remote = (argc == 2);
 
+  if (opt_arch != NULL)
+    {
+      if (strcmp (opt_arch, "*") == 0)
+        arches = NULL;
+      else
+        {
+          opt_arches[0] = opt_arch;
+          arches = opt_arches;
+        }
+    }
+
   if (has_remote)
     {
       g_autoptr(FlatpakDir) preferred_dir = NULL;
@@ -428,8 +439,12 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
             return FALSE;
         }
 
-      state = get_remote_state (preferred_dir, argv[1], opt_cached, opt_sideloaded, cancellable, error);
+      state = get_remote_state (preferred_dir, argv[1], opt_cached, opt_sideloaded, opt_arches[0], NULL, cancellable, error);
       if (state == NULL)
+        return FALSE;
+
+      if (arches == NULL &&
+          !ensure_remote_state_all_arches (preferred_dir, state, opt_cached, opt_sideloaded, cancellable, error))
         return FALSE;
 
       if (!flatpak_dir_list_remote_refs (preferred_dir, state, &refs,
@@ -463,9 +478,13 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
               if (flatpak_dir_get_remote_disabled (dir, remote_name))
                 continue;
 
-              state = get_remote_state (dir, remote_name, opt_cached, opt_sideloaded,
+              state = get_remote_state (dir, remote_name, opt_cached, opt_sideloaded, opt_arches[0], NULL,
                                         cancellable, error);
               if (state == NULL)
+                return FALSE;
+
+              if (arches == NULL &&
+                  !ensure_remote_state_all_arches (dir, state, opt_cached, opt_sideloaded, cancellable, error))
                 return FALSE;
 
               if (!flatpak_dir_list_remote_refs (dir, state, &refs,
@@ -475,17 +494,6 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
               remote_state_dir_pair = remote_state_dir_pair_new (dir, g_steal_pointer (&state));
               g_hash_table_insert (refs_hash, g_steal_pointer (&refs), remote_state_dir_pair);
             }
-        }
-    }
-
-  if (opt_arch != NULL)
-    {
-      if (strcmp (opt_arch, "*") == 0)
-        arches = NULL;
-      else
-        {
-          opt_arches[0] = opt_arch;
-          arches = opt_arches;
         }
     }
 
