@@ -33,6 +33,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
+#include "flatpak-transaction-private.h"
 #include "flatpak-cli-transaction.h"
 #include "flatpak-quiet-transaction.h"
 #include "flatpak-utils-private.h"
@@ -406,15 +407,22 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                                         matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
                                                         cancellable, &local_error);
                   else
-                    refs = flatpak_dir_find_remote_refs (this_dir, this_remote, (const char **)opt_sideload_repos, id, branch, this_default_branch, arch,
-                                                         flatpak_get_default_arch (),
-                                                         matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
-                                                         cancellable, &local_error);
-
-                  if (refs == NULL)
                     {
-                      g_warning ("An error was encountered searching remote ‘%s’ for ‘%s’: %s", this_remote, argv[1], local_error->message);
-                      continue;
+                      g_autoptr(FlatpakRemoteState) state = get_remote_state (this_dir, this_remote, FALSE, FALSE,
+                                                                              arch, (const char **)opt_sideload_repos,
+                                                                              cancellable, error);
+                      if (state == NULL)
+                        return FALSE;
+
+                      refs = flatpak_dir_find_remote_refs (this_dir, state, id, branch, this_default_branch, arch,
+                                                           flatpak_get_default_arch (),
+                                                           matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                                           cancellable, &local_error);
+                      if (refs == NULL)
+                        {
+                          g_warning ("An error was encountered searching remote ‘%s’ for ‘%s’: %s", this_remote, argv[1], local_error->message);
+                          continue;
+                        }
                     }
 
                   if (g_strv_length (refs) == 0)
@@ -502,12 +510,25 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                             matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
                                             cancellable, error);
       else
-        refs = flatpak_dir_find_remote_refs (dir, remote, (const char **)opt_sideload_repos, id, branch, default_branch, arch,
-                                             flatpak_get_default_arch (),
-                                             matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
-                                             cancellable, error);
-      if (refs == NULL)
-        return FALSE;
+        {
+          g_autoptr(FlatpakRemoteState) state = NULL;
+
+          state = flatpak_transaction_ensure_remote_state (transaction, FLATPAK_TRANSACTION_OPERATION_INSTALL,
+                                                           remote, error);
+          if (state == NULL)
+            return FALSE;
+
+          if (arch != NULL &&
+              !flatpak_remote_state_ensure_subsummary (state, dir, arch, FALSE, cancellable, error))
+            return FALSE;
+
+          refs = flatpak_dir_find_remote_refs (dir, state, id, branch, default_branch, arch,
+                                               flatpak_get_default_arch (),
+                                               matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                               cancellable, error);
+          if (refs == NULL)
+            return FALSE;
+        }
 
       refs_len = g_strv_length (refs);
       if (refs_len == 0)

@@ -107,6 +107,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   guint64 download_size = 0;
   g_autofree char *formatted_installed_size = NULL;
   g_autofree char *formatted_download_size = NULL;
+  g_autofree char *ref_arch = NULL;
   const gchar *subject = NULL;
   guint64 timestamp;
   g_autofree char *formatted_timestamp = NULL;
@@ -138,13 +139,13 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
                                       &matched_kinds, &id, &arch, &branch, error))
     return FALSE;
 
-  ref = flatpak_dir_find_remote_ref (preferred_dir, remote, NULL, id, branch, default_branch, arch,
-                                     matched_kinds, &kind, cancellable, error);
-  if (ref == NULL)
+  state = get_remote_state (preferred_dir, remote, opt_cached, opt_sideloaded, arch, NULL, NULL, error);
+  if (state == NULL)
     return FALSE;
 
-  state = get_remote_state (preferred_dir, remote, opt_cached, opt_sideloaded, cancellable, error);
-  if (state == NULL)
+  ref = flatpak_dir_find_remote_ref (preferred_dir, state, id, branch, default_branch, arch,
+                                     matched_kinds, &kind, cancellable, error);
+  if (ref == NULL)
     return FALSE;
 
   if (opt_cached)
