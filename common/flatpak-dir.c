@@ -11131,18 +11131,22 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     }
   else
     {
-      g_debug ("Fetching summary file for remote ‘%s’", name_or_uri);
       if (only_cached)
         {
           if (!flatpak_dir_remote_load_cached_summary (self, name_or_uri, NULL, ".sig",
                                                        &summary, &summary_sig, cancellable, error))
             return FALSE;
+          g_debug ("Loaded summary from cache for remote ‘%s’", name_or_uri);
         }
-      else if (!ostree_repo_remote_fetch_summary (self->repo, name_or_uri,
-                                                  &summary, &summary_sig,
-                                                  cancellable,
-                                                  error))
-        return FALSE;
+      else
+        {
+          g_debug ("Fetching summary file for remote ‘%s’", name_or_uri);
+          if (!ostree_repo_remote_fetch_summary (self->repo, name_or_uri,
+                                                 &summary, &summary_sig,
+                                                 cancellable,
+                                                 error))
+            return FALSE;
+        }
     }
 
   if (summary == NULL)
@@ -11266,7 +11270,6 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
   flatpak_dir_remote_load_cached_summary (self, name_or_uri, ".idx", ".idx.sig",
                                           &cached_index, &cached_index_sig, cancellable, &cache_error);
 
-  g_debug ("Fetching summary index file for remote ‘%s’", name_or_uri);
   if (only_cached)
     {
       if (cached_index == NULL)
@@ -11274,6 +11277,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
           g_propagate_error (error, g_steal_pointer (&cache_error));
           return FALSE;
         }
+      g_debug ("Loaded summary index from cache for remote ‘%s’", name_or_uri);
 
       index = g_steal_pointer (&cached_index);
       index_sig = g_steal_pointer (&cached_index_sig);
@@ -11281,6 +11285,8 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
   else
     {
       g_autofree char *index_url = g_build_filename (url, "summary.idx", NULL);
+
+      g_debug ("Fetching summary index file for remote ‘%s’", name_or_uri);
 
       if (gpg_verify_summary)
         {
@@ -11431,6 +11437,8 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
                                                    cancellable, error))
         return FALSE;
     }
+  else
+    g_debug ("Loaded indexed summary file %s from cache for remote ‘%s’", checksum, name_or_uri);
 
   /* Cache in memory */
   if (!is_local && !only_cached)
