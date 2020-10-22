@@ -23,6 +23,11 @@
 
 #include "flatpak-transaction.h"
 
+FlatpakRemoteState *flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
+                                                             FlatpakTransactionOperationType kind,
+                                                             const char                     *remote,
+                                                             GError                        **error);
+
 #include "flatpak-dir-private.h"
 
 #endif /* __FLATPAK_TRANSACTION_PRIVATE_H__ */

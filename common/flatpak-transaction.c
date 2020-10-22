@@ -1858,7 +1858,7 @@ kind_to_str (FlatpakTransactionOperationType kind)
     }
 }
 
-static FlatpakRemoteState *
+FlatpakRemoteState *
 flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
                                          FlatpakTransactionOperationType kind,
                                          const char                     *remote,
