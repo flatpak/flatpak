@@ -62,6 +62,10 @@
  * version 1 is compact format with inline cache and no deltas
  */
 
+#define FLATPAK_SUMMARY_DIFF_HEADER "xadf"
+
+#define FLATPAK_SUMMARY_HISTORY_LENGTH_DEFAULT 16
+
 gboolean flatpak_set_tty_echo (gboolean echo);
 void flatpak_get_window_size (int *rows,
                               int *cols);
@@ -496,9 +500,19 @@ gboolean flatpak_repo_set_deploy_collection_id (OstreeRepo *repo,
 gboolean flatpak_repo_set_deploy_sideload_collection_id (OstreeRepo *repo,
                                                          gboolean    deploy_collection_id,
                                                          GError    **error);
+gboolean flatpak_repo_set_summary_history_length (OstreeRepo *repo,
+                                                  guint       length,
+                                                  GError    **error);
+guint    flatpak_repo_get_summary_history_length (OstreeRepo *repo);
 gboolean flatpak_repo_set_gpg_keys (OstreeRepo *repo,
                                     GBytes     *bytes,
                                     GError    **error);
+
+GBytes *flatpak_zlib_compress_bytes   (GBytes  *bytes,
+                                       int      level,
+                                       GError **error);
+GBytes *flatpak_zlib_decompress_bytes (GBytes  *bytes,
+                                       GError **error);
 
 typedef enum {
   FLATPAK_REPO_UPDATE_FLAG_NONE = 0,

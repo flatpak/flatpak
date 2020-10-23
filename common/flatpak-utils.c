@@ -200,6 +200,53 @@ flatpak_splice_update_checksum (GOutputStream         *out,
 }
 
 GBytes *
+flatpak_zlib_compress_bytes (GBytes *bytes,
+                             int level,
+                             GError **error)
+{
+  g_autoptr(GZlibCompressor) compressor = NULL;
+  g_autoptr(GOutputStream) out = NULL;
+  g_autoptr(GOutputStream) mem = NULL;
+
+  mem = g_memory_output_stream_new_resizable ();
+
+  compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, level);
+  out = g_converter_output_stream_new (mem, G_CONVERTER (compressor));
+
+  if (!g_output_stream_write_all (out, g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes),
+                                  NULL, NULL, error))
+    return NULL;
+
+  if (!g_output_stream_close (out, NULL, error))
+    return NULL;
+
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem));
+}
+
+GBytes *
+flatpak_zlib_decompress_bytes (GBytes *bytes,
+                               GError **error)
+{
+  g_autoptr(GZlibDecompressor) decompressor = NULL;
+  g_autoptr(GOutputStream) out = NULL;
+  g_autoptr(GOutputStream) mem = NULL;
+
+  mem = g_memory_output_stream_new_resizable ();
+
+  decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+  out = g_converter_output_stream_new (mem, G_CONVERTER (decompressor));
+
+  if (!g_output_stream_write_all (out, g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes),
+                                  NULL, NULL, error))
+    return NULL;
+
+  if (!g_output_stream_close (out, NULL, error))
+    return NULL;
+
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem));
+}
+
+GBytes *
 flatpak_read_stream (GInputStream *in,
                      gboolean      null_terminate,
                      GError      **error)
@@ -3203,6 +3250,40 @@ flatpak_repo_set_collection_id (OstreeRepo *repo,
   return TRUE;
 }
 
+gboolean
+flatpak_repo_set_summary_history_length (OstreeRepo *repo,
+                                         guint       length,
+                                         GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (length)
+    g_key_file_set_integer (config, "flatpak", "summary-history-length", length);
+  else
+    g_key_file_remove_key (config, "flatpak", "summary-history-length", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+guint
+flatpak_repo_get_summary_history_length (OstreeRepo *repo)
+{
+  GKeyFile *config = ostree_repo_get_config (repo);
+  int length;
+
+  length = g_key_file_get_integer (config, "flatpak", "sumary-history-length", NULL);
+
+  if (length <= 0)
+    return FLATPAK_SUMMARY_HISTORY_LENGTH_DEFAULT;
+
+  return length;
+}
+
 GVariant *
 flatpak_commit_get_extra_data_sources (GVariant *commitv,
                                        GError  **error)
@@ -3460,7 +3541,6 @@ flatpak_repo_load_summary_index (OstreeRepo *repo,
   return g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT, bytes, TRUE));
 }
 
-
 static gboolean
 flatpak_repo_save_compat_summary (OstreeRepo   *repo,
                                   GVariant     *summary,
@@ -3550,9 +3630,12 @@ flatpak_repo_load_digested_summary (OstreeRepo *repo,
   glnx_autofd int fd = -1;
   g_autoptr(GMappedFile) mfile = NULL;
   g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GBytes) compressed_bytes = NULL;
   g_autofree char *path = NULL;
+  g_autofree char *filename = NULL;
 
-  path = g_build_filename ("summaries", digest, NULL);
+  filename = g_strconcat (digest, ".gz", NULL);
+  path = g_build_filename ("summaries", filename, NULL);
 
   fd = openat (ostree_repo_get_dfd (repo), path, O_RDONLY | O_CLOEXEC);
   if (fd < 0)
@@ -3565,7 +3648,10 @@ flatpak_repo_load_digested_summary (OstreeRepo *repo,
   if (!mfile)
     return NULL;
 
-  bytes = g_mapped_file_get_bytes (mfile);
+  compressed_bytes = g_mapped_file_get_bytes (mfile);
+  bytes = flatpak_zlib_decompress_bytes (compressed_bytes, error);
+  if (bytes == NULL)
+    return NULL;
 
   return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, TRUE));
 }
@@ -3579,7 +3665,10 @@ flatpak_repo_save_digested_summary (OstreeRepo   *repo,
 {
   int repo_dfd = ostree_repo_get_dfd (repo);
   g_autofree char *digest = NULL;
+  g_autofree char *filename = NULL;
   g_autofree char *path = NULL;
+  g_autoptr(GBytes) data = NULL;
+  g_autoptr(GBytes) compressed_data = NULL;
   struct stat stbuf;
 
   if (!glnx_shutil_mkdir_p_at (repo_dfd, "summaries",
@@ -3591,20 +3680,26 @@ flatpak_repo_save_digested_summary (OstreeRepo   *repo,
   digest = g_compute_checksum_for_data (G_CHECKSUM_SHA256,
                                         g_variant_get_data (summary),
                                         g_variant_get_size (summary));
+  filename = g_strconcat (digest, ".gz", NULL);
 
-  path = g_build_filename ("summaries", digest, NULL);
+  path = g_build_filename ("summaries", filename, NULL);
 
-  /* Check for pre-existing copy of same size and avoid re-writing it */
+  /* Check for pre-existing (non-truncated) copy and avoid re-writing it */
   if (fstatat (repo_dfd, path, &stbuf, 0) == 0 &&
-      stbuf.st_size == g_variant_get_size (summary))
+      stbuf.st_size != 0)
     {
       g_debug ("Reusing digested summary at %s for %s", path, name);
       return g_steal_pointer (&digest);
     }
 
+  data = g_variant_get_data_as_bytes (summary);
+  compressed_data = flatpak_zlib_compress_bytes (data, -1, error);
+  if (compressed_data == NULL)
+    return NULL;
+
   if (!glnx_file_replace_contents_at (repo_dfd, path,
-                                      g_variant_get_data (summary),
-                                      g_variant_get_size (summary),
+                                      g_bytes_get_data (compressed_data, NULL),
+                                      g_bytes_get_size (compressed_data),
                                       ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
                                       cancellable, error))
     return NULL;
@@ -3612,6 +3707,47 @@ flatpak_repo_save_digested_summary (OstreeRepo   *repo,
   g_debug ("Wrote digested summary at %s for %s", path, name);
   return g_steal_pointer (&digest);
 }
+
+static gboolean
+flatpak_repo_save_digested_summary_delta (OstreeRepo   *repo,
+                                          const char   *from_digest,
+                                          const char   *to_digest,
+                                          GBytes       *delta,
+                                          GCancellable *cancellable,
+                                          GError      **error)
+{
+  int repo_dfd = ostree_repo_get_dfd (repo);
+  g_autofree char *path = NULL;
+  g_autofree char *filename = g_strconcat (from_digest, "-", to_digest, ".delta", NULL);
+  struct stat stbuf;
+
+  if (!glnx_shutil_mkdir_p_at (repo_dfd, "summaries",
+                               0775,
+                               cancellable,
+                               error))
+    return FALSE;
+
+  path = g_build_filename ("summaries", filename, NULL);
+
+  /* Check for pre-existing copy of same size and avoid re-writing it */
+  if (fstatat (repo_dfd, path, &stbuf, 0) == 0 &&
+      stbuf.st_size == g_bytes_get_size (delta))
+    {
+      g_debug ("Reusing digested summary-diff for %s", filename);
+      return TRUE;
+    }
+
+  if (!glnx_file_replace_contents_at (repo_dfd, path,
+                                      g_bytes_get_data (delta, NULL),
+                                      g_bytes_get_size (delta),
+                                      ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                      cancellable, error))
+    return FALSE;
+
+  g_debug ("Wrote digested summary delta at %s", path);
+  return TRUE;
+}
+
 
 static gboolean
 is_flatpak_ref (const char *ref)
@@ -4045,6 +4181,467 @@ flatpak_get_arch_for_ref (const char *ref)
   return NULL;
 }
 
+typedef enum {
+  DIFF_OP_KIND_RESUSE_OLD,
+  DIFF_OP_KIND_SKIP_OLD,
+  DIFF_OP_KIND_DATA,
+} DiffOpKind;
+
+typedef struct {
+  DiffOpKind kind;
+  gsize size;
+} DiffOp;
+
+typedef struct {
+  const guchar *old_data;
+  const guchar *new_data;
+
+  GArray *ops;
+  GArray *data;
+
+  gsize last_old_offset;
+  gsize last_new_offset;
+} DiffData;
+
+static gsize
+match_bytes_at_start (const guchar *data1,
+                      gsize data1_len,
+                      const guchar *data2,
+                      gsize data2_len)
+{
+  gsize len = 0;
+  gsize max_len = MIN (data1_len, data2_len);
+
+  while (len < max_len)
+    {
+      if (*data1 != *data2)
+        break;
+      data1++;
+      data2++;
+      len++;
+    }
+  return len;
+}
+
+static gsize
+match_bytes_at_end (const guchar *data1,
+                    gsize data1_len,
+                    const guchar *data2,
+                    gsize data2_len)
+{
+  gsize len = 0;
+  gsize max_len = MIN (data1_len, data2_len);
+
+  data1 += data1_len - 1;
+  data2 += data2_len - 1;
+
+  while (len < max_len)
+    {
+      if (*data1 != *data2)
+        break;
+      data1--;
+      data2--;
+      len++;
+    }
+  return len;
+}
+
+static DiffOp *
+diff_ensure_op (DiffData *data,
+                DiffOpKind kind)
+{
+  if (data->ops->len == 0 ||
+      g_array_index (data->ops, DiffOp, data->ops->len-1).kind != kind)
+    {
+      DiffOp op = {kind, 0};
+      g_array_append_val (data->ops, op);
+    }
+
+  return &g_array_index (data->ops, DiffOp, data->ops->len-1);
+}
+
+static void
+diff_emit_reuse (DiffData *data,
+                 gsize size)
+{
+  DiffOp *op;
+
+  if (size == 0)
+    return;
+
+  op = diff_ensure_op (data, DIFF_OP_KIND_RESUSE_OLD);
+  op->size += size;
+}
+
+static void
+diff_emit_skip (DiffData *data,
+                gsize size)
+{
+  DiffOp *op;
+
+  if (size == 0)
+    return;
+
+  op = diff_ensure_op (data, DIFF_OP_KIND_SKIP_OLD);
+  op->size += size;
+}
+
+static void
+diff_emit_data (DiffData *data,
+                gsize size,
+                const guchar *new_data)
+{
+  DiffOp *op;
+
+  if (size == 0)
+    return;
+
+  op = diff_ensure_op (data, DIFF_OP_KIND_DATA);
+  op->size += size;
+
+  g_array_append_vals (data->data, new_data, size);
+}
+
+static GBytes *
+diff_encode (DiffData *data, GError **error)
+{
+  g_autoptr(GOutputStream) mem = g_memory_output_stream_new_resizable ();
+  g_autoptr(GDataOutputStream) out = g_data_output_stream_new (mem);
+  gsize ops_count = 0;
+
+  g_data_output_stream_set_byte_order (out, G_DATA_STREAM_BYTE_ORDER_LITTLE_ENDIAN);
+
+  /* Header */
+  if (!g_output_stream_write_all (G_OUTPUT_STREAM (out),
+                                  FLATPAK_SUMMARY_DIFF_HEADER, 4,
+                                  NULL, NULL, error))
+    return NULL;
+
+  /* Write the ops count placeholder */
+  if (!g_data_output_stream_put_uint32 (out, 0, NULL, error))
+    return NULL;
+
+  for (gsize i = 0; i < data->ops->len; i++)
+    {
+      DiffOp *op = &g_array_index (data->ops, DiffOp, i);
+      gsize size = op->size;
+
+      while (size > 0)
+        {
+          /* We leave a nibble at the top for the op */
+          guint32 opdata = (guint64)size & 0x0fffffff;
+          size -= opdata;
+
+          opdata = opdata | ((0xf & op->kind) << 28);
+
+          if (!g_data_output_stream_put_uint32 (out, opdata, NULL, error))
+            return NULL;
+          ops_count++;
+        }
+    }
+
+  /* Then add the data */
+  if (data->data->len > 0 &&
+      !g_output_stream_write_all (G_OUTPUT_STREAM (out),
+                                  data->data->data, data->data->len,
+                                  NULL, NULL, error))
+    return NULL;
+
+  /* Back-patch in the ops count */
+  if (!g_seekable_seek (G_SEEKABLE(out), 4, G_SEEK_SET, NULL, error))
+    return NULL;
+
+  if (!g_data_output_stream_put_uint32 (out, ops_count, NULL, error))
+    return NULL;
+
+  if (!g_output_stream_close (G_OUTPUT_STREAM (out), NULL, error))
+    return NULL;
+
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem));
+}
+
+static void
+diff_consume_block2 (DiffData *data,
+                     gsize consume_old_offset,
+                     gsize consume_old_size,
+                     gsize produce_new_offset,
+                     gsize produce_new_size)
+{
+  /* We consumed $consume_old_size bytes from $consume_old_offset to
+     produce $produce_new_size bytes at $produce_new_size */
+
+  /* First we copy old data for any matching prefix of the block */
+
+  gsize prefix_len = match_bytes_at_start (data->old_data + consume_old_offset, consume_old_size,
+                                           data->new_data + produce_new_offset, produce_new_size);
+  diff_emit_reuse (data, prefix_len);
+
+  consume_old_size -= prefix_len;
+  consume_old_offset += prefix_len;
+
+  produce_new_size -= prefix_len;
+  produce_new_offset += prefix_len;
+
+  /* Then we find the matching suffix for the rest */
+  gsize suffix_len = match_bytes_at_end (data->old_data + consume_old_offset, consume_old_size,
+                                         data->new_data + produce_new_offset, produce_new_size);
+
+  /* Skip source data until suffix match */
+  diff_emit_skip (data, consume_old_size - suffix_len);
+
+  /* Copy new data until suffix match */
+  diff_emit_data (data, produce_new_size - suffix_len, data->new_data + produce_new_offset);
+
+  diff_emit_reuse (data, suffix_len);
+}
+
+static void
+diff_consume_block (DiffData *data,
+                    gssize consume_old_offset,
+                    gsize consume_old_size,
+                    gssize produce_new_offset,
+                    gsize produce_new_size)
+{
+  if (consume_old_offset == -1)
+    consume_old_offset = data->last_old_offset;
+  if (produce_new_offset == -1)
+    produce_new_offset = data->last_new_offset;
+
+  /* We consumed $consume_old_size bytes from $consume_old_offset to
+   * produce $produce_new_size bytes at $produce_new_size, however
+   * while the emitted blocks are in order they may not cover the
+   * every byte, so we emit the inbetwen blocks separately. */
+
+  if (consume_old_offset != data->last_old_offset ||
+      produce_new_offset != data->last_new_offset)
+    diff_consume_block2 (data,
+                         data->last_old_offset, consume_old_offset - data->last_old_offset ,
+                         data->last_new_offset, produce_new_offset - data->last_new_offset);
+
+  diff_consume_block2 (data,
+                       consume_old_offset, consume_old_size,
+                       produce_new_offset, produce_new_size);
+
+  data->last_old_offset = consume_old_offset + consume_old_size;
+  data->last_new_offset = produce_new_offset + produce_new_size;
+}
+
+static GBytes *
+flatpak_summary_apply_diff (GBytes *old,
+                            GBytes *diff,
+                            GError **error)
+{
+  g_autoptr(GBytes) uncompressed = NULL;
+  const guchar *diffdata;
+  gsize diff_size;
+  guint32 *ops;
+  guint32 n_ops;
+  gsize data_offset;
+  gsize data_size;
+  const guchar *data;
+  const guchar *old_data = g_bytes_get_data (old, NULL);
+  gsize old_size = g_bytes_get_size (old);
+  g_autoptr(GByteArray) res = g_byte_array_new ();
+
+  uncompressed = flatpak_zlib_decompress_bytes (diff, error);
+  if (uncompressed == NULL)
+    {
+      g_prefix_error (error, "Invalid summary diff: ");
+      return NULL;
+    }
+
+  diffdata = g_bytes_get_data (uncompressed, NULL);
+  diff_size = g_bytes_get_size (uncompressed);
+
+  if (diff_size < 8 ||
+      memcmp (diffdata, FLATPAK_SUMMARY_DIFF_HEADER, 4) != 0)
+    {
+      flatpak_fail (error, "Invalid summary diff");
+      return NULL;
+    }
+
+  n_ops = GUINT32_FROM_LE (*(guint32 *)(diffdata+4));
+  ops = (guint32 *)(diffdata+8);
+
+  data_offset = 4 + 4 + 4 * n_ops;
+
+  /* All ops must fit in diff, and avoid wrapping the multiply */
+  if (data_offset > diff_size ||
+      (data_offset - 4 - 4) / 4 != n_ops)
+    {
+      flatpak_fail (error, "Invalid summary diff");
+      return NULL;
+    }
+
+  data = diffdata + data_offset;
+  data_size = diff_size - data_offset;
+
+  for (gsize i = 0; i < n_ops; i++)
+    {
+      guint32 opdata = GUINT32_FROM_LE (ops[i]);
+      guint32 kind = (opdata & 0xf0000000) >> 28;
+      guint32 size = opdata & 0x0fffffff;
+
+      switch (kind)
+        {
+        case DIFF_OP_KIND_RESUSE_OLD:
+          if (size > old_size)
+            {
+              flatpak_fail (error, "Invalid summary diff");
+              return NULL;
+            }
+          g_byte_array_append (res, old_data, size);
+          old_data += size;
+          old_size -= size;
+          break;
+        case DIFF_OP_KIND_SKIP_OLD:
+          if (size > old_size)
+            {
+              flatpak_fail (error, "Invalid summary diff");
+              return NULL;
+            }
+          old_data += size;
+          old_size -= size;
+          break;
+        case DIFF_OP_KIND_DATA:
+          if (size > data_size)
+            {
+              flatpak_fail (error, "Invalid summary diff");
+              return NULL;
+            }
+          g_byte_array_append (res, data, size);
+          data += size;
+          data_size -= size;
+          break;
+        default:
+          flatpak_fail (error, "Invalid summary diff");
+          return NULL;
+        }
+    }
+
+  return g_byte_array_free_to_bytes (g_steal_pointer (&res));
+}
+
+
+static GBytes *
+flatpak_summary_generate_diff (GVariant *old_v,
+                               GVariant *new_v,
+                               GError **error)
+{
+  VarSummaryRef new, old;
+  VarRefMapRef new_refs, old_refs;
+  VarRefMapEntryRef new_entry, old_entry;
+  gsize new_len, old_len;
+  int new_i, old_i;
+  const char *old_ref, *new_ref;
+  g_autoptr(GArray) ops = g_array_new (FALSE, TRUE, sizeof (DiffOp));
+  g_autoptr(GArray) data_bytes = g_array_new (FALSE, TRUE, 1);
+  g_autoptr(GBytes) diff_uncompressed = NULL;
+  g_autoptr(GBytes) diff_compressed = NULL;
+  DiffData data = {
+    g_variant_get_data (old_v),
+    g_variant_get_data (new_v),
+    ops,
+    data_bytes,
+  };
+
+  new = var_summary_from_gvariant (new_v);
+  old = var_summary_from_gvariant (old_v);
+
+  new_refs = var_summary_get_ref_map (new);
+  old_refs = var_summary_get_ref_map (old);
+
+  new_len = var_ref_map_get_length (new_refs);
+  old_len = var_ref_map_get_length (old_refs);
+
+  new_i = old_i = 0;
+  while (new_i < new_len && old_i < old_len)
+    {
+      if (new_i == new_len)
+        {
+          /* Just old left */
+          old_entry = var_ref_map_get_at (old_refs, old_i);
+          old_ref = var_ref_map_entry_get_ref (old_entry);
+          old_i++;
+          diff_consume_block (&data,
+                              -1, 0,
+                              (const guchar *)new_entry.base - (const guchar *)new.base, new_entry.size);
+        }
+      else if (old_i == old_len)
+        {
+          /* Just new left */
+          new_entry = var_ref_map_get_at (new_refs, new_i);
+          new_ref = var_ref_map_entry_get_ref (new_entry);
+          diff_consume_block (&data,
+                              (const guchar *)old_entry.base - (const guchar *)old.base, old_entry.size,
+                              -1, 0);
+
+          new_i++;
+        }
+      else
+        {
+          new_entry = var_ref_map_get_at (new_refs, new_i);
+          new_ref = var_ref_map_entry_get_ref (new_entry);
+
+          old_entry = var_ref_map_get_at (old_refs, old_i);
+          old_ref = var_ref_map_entry_get_ref (old_entry);
+
+          int cmp = strcmp (new_ref, old_ref);
+          if (cmp == 0)
+            {
+              /* same ref */
+              diff_consume_block (&data,
+                                  (const guchar *)old_entry.base - (const guchar *)old.base, old_entry.size,
+                                  (const guchar *)new_entry.base - (const guchar *)new.base, new_entry.size);
+              old_i++;
+              new_i++;
+            }
+          else if (cmp < 0)
+            {
+              /* new added */
+              diff_consume_block (&data,
+                                  -1, 0,
+                                  (const guchar *)new_entry.base - (const guchar *)new.base, new_entry.size);
+              new_i++;
+            }
+          else
+            {
+              /* old removed */
+              diff_consume_block (&data,
+                                  (const guchar *)old_entry.base - (const guchar *)old.base, old_entry.size,
+                                  -1, 0);
+              old_i++;
+            }
+        }
+    }
+
+  /* Flush till the end */
+  diff_consume_block2 (&data,
+                       data.last_old_offset, old.size - data.last_old_offset,
+                       data.last_new_offset, new.size - data.last_new_offset);
+
+  diff_uncompressed = diff_encode (&data, error);
+  if (diff_uncompressed == NULL)
+    return NULL;
+
+  diff_compressed = flatpak_zlib_compress_bytes (diff_uncompressed, 9, error);
+  if (diff_compressed == NULL)
+    return NULL;
+
+#ifdef VALIDATE_DIFF
+  {
+    g_autoptr(GError) apply_error = NULL;
+    g_autoptr(GBytes) old_bytes = g_variant_get_data_as_bytes (old_v);
+    g_autoptr(GBytes) new_bytes = g_variant_get_data_as_bytes (new_v);
+    g_autoptr(GBytes) applied = flatpak_summary_apply_diff (old_bytes, diff_compressed, &apply_error);
+    g_assert (applied != NULL);
+    g_assert (g_bytes_equal (applied, new_bytes));
+  }
+#endif
+
+  return g_steal_pointer (&diff_compressed);
+}
+
 static void
 variant_dict_merge (GVariantDict *dict,
                     GVariant *to_merge)
@@ -4389,9 +4986,81 @@ generate_summary (OstreeRepo   *repo,
 }
 
 static GVariant *
+read_digested_summary (OstreeRepo   *repo,
+                       const char   *digest,
+                       GHashTable   *digested_summary_cache,
+                       GCancellable *cancellable,
+                       GError      **error)
+{
+  GVariant *cached;
+  g_autoptr(GVariant) loaded = NULL;
+
+  cached = g_hash_table_lookup (digested_summary_cache, digest);
+  if (cached)
+    return g_variant_ref (cached);
+
+  loaded = flatpak_repo_load_digested_summary (repo, digest, error);
+  if (loaded == NULL)
+    return NULL;
+
+  g_hash_table_insert (digested_summary_cache, g_strdup (digest), g_variant_ref (loaded));
+
+  return g_steal_pointer (&loaded);
+}
+
+static gboolean
+add_to_history (OstreeRepo      *repo,
+                GVariantBuilder *history_builder,
+                VarChecksumRef   old_digest_vv,
+                GVariant        *current_digest_v,
+                GVariant        *current_content,
+                GHashTable      *digested_summary_cache,
+                guint           *history_len,
+                guint            max_history_length,
+                GCancellable    *cancellable,
+                GError         **error)
+{
+  g_autoptr(GVariant) old_digest_v = g_variant_ref_sink (var_checksum_dup_to_gvariant (old_digest_vv));
+  g_autofree char *old_digest = NULL;
+  g_autoptr(GVariant) old_content = NULL;
+  g_autofree char *current_digest = NULL;
+  g_autoptr(GBytes) subsummary_diff = NULL;
+
+  /* Limit history length */
+  if (*history_len >= max_history_length)
+    return TRUE;
+
+  /* Avoid repeats in the history (in case nothing changed in subsummary) */
+  if (g_variant_equal (old_digest_v, current_digest_v))
+    return TRUE;
+
+  old_digest = ostree_checksum_from_bytes_v (old_digest_v);
+  old_content = read_digested_summary (repo, old_digest, digested_summary_cache, cancellable, NULL);
+  if  (old_content == NULL)
+    return TRUE; /* Only add parents that still exist */
+
+  subsummary_diff = flatpak_summary_generate_diff (old_content, current_content, error);
+  if  (subsummary_diff == NULL)
+    return FALSE;
+
+  current_digest = ostree_checksum_from_bytes_v (current_digest_v);
+
+  if (!flatpak_repo_save_digested_summary_delta (repo, old_digest, current_digest,
+                                                 subsummary_diff, cancellable, error))
+    return FALSE;
+
+  *history_len += 1;
+  g_variant_builder_add_value (history_builder, old_digest_v);
+
+  return TRUE;
+}
+
+static GVariant *
 generate_summary_index (OstreeRepo   *repo,
                         GVariant     *old_index_v,
                         GHashTable   *summaries,
+                        GHashTable   *digested_summaries,
+                        GHashTable   *digested_summary_cache,
                         const char  **gpg_key_ids,
                         const char   *gpg_homedir,
                         GCancellable *cancellable,
@@ -4402,7 +5071,7 @@ generate_summary_index (OstreeRepo   *repo,
   g_autoptr(GVariantBuilder) index_builder = g_variant_builder_new (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT);
   g_autoptr(GVariant) index = NULL;
   g_autoptr(GList) ordered_summaries = NULL;
-  int max_history_length = 16;
+  guint max_history_length = flatpak_repo_get_summary_history_length (repo);
   GList *l;
 
   add_summary_metadata (repo, metadata_builder);
@@ -4416,25 +5085,27 @@ generate_summary_index (OstreeRepo   *repo,
       const char *digest = g_hash_table_lookup (summaries, subsummary);
       g_autoptr(GVariant) digest_v = g_variant_ref_sink (ostree_checksum_to_bytes_v (digest));
       g_autoptr(GVariantBuilder) history_builder = g_variant_builder_new (G_VARIANT_TYPE ("aay"));
+      g_autoptr(GVariant) subsummary_content = NULL;
+
+      subsummary_content = read_digested_summary (repo, digest, digested_summary_cache, cancellable, error);
+      if  (subsummary_content == NULL)
+        return NULL;  /* This really should always be there as we're supposed to index it */
 
       if (old_index_v)
         {
           VarSummaryIndexRef old_index = var_summary_index_from_gvariant (old_index_v);
           VarSummaryIndexSubsummariesRef old_subsummaries = var_summary_index_get_subsummaries (old_index);
           VarSubsummaryRef old_subsummary;
-          int history_len = 0;
+          guint history_len = 0;
 
           if (var_summary_index_subsummaries_lookup (old_subsummaries, subsummary, NULL, &old_subsummary))
             {
               VarChecksumRef parent = var_subsummary_get_checksum (old_subsummary);
-              g_autoptr(GVariant) parent_v = g_variant_ref_sink (var_checksum_dup_to_gvariant (parent));
 
-              /* Don't add parent to history if its the same as the new one, we don't want repeats */
-              if (!g_variant_equal (parent_v, digest_v))
-                {
-                  history_len++;
-                  g_variant_builder_add_value (history_builder, parent_v);
-                }
+              /* Add current as first in history */
+              if (!add_to_history (repo, history_builder, parent, digest_v, subsummary_content, digested_summary_cache,
+                                   &history_len, max_history_length, cancellable, error))
+                return FALSE;
 
               /* Add previous history */
               VarArrayofChecksumRef history = var_subsummary_get_history (old_subsummary);
@@ -4442,15 +5113,11 @@ generate_summary_index (OstreeRepo   *repo,
               for (gsize i = 0; i < len; i++)
                 {
                   VarChecksumRef c = var_arrayof_checksum_get_at (history, i);
-                  if (history_len < max_history_length)
-                    {
-                      history_len++;
-                      g_variant_builder_add_value (history_builder,
-                                                   var_checksum_dup_to_gvariant (c));
-                    }
+                  if (!add_to_history (repo, history_builder, c, digest_v, subsummary_content, digested_summary_cache,
+                                       &history_len, max_history_length, cancellable, error))
+                    return FALSE;
                 }
             }
-
         }
 
       g_variant_dict_init (&subsummary_metadata_builder, NULL);
@@ -4467,6 +5134,93 @@ generate_summary_index (OstreeRepo   *repo,
   index = g_variant_ref_sink (g_variant_builder_end (index_builder));
 
   return g_steal_pointer (&index);
+}
+
+static gboolean
+flatpak_repo_gc_digested_summaries (OstreeRepo *repo,
+                                    GHashTable *digested_summaries,     /* generated */
+                                    GHashTable *digested_summary_cache, /* generated + referenced */
+                                    GCancellable *cancellable,
+                                    GError **error)
+{
+  g_auto(GLnxDirFdIterator) iter = {0};
+  int repo_fd = ostree_repo_get_dfd (repo);
+  struct dirent *dent;
+  const char *ext;
+  g_autoptr(GError) local_error = NULL;
+
+  if (!glnx_dirfd_iterator_init_at (repo_fd, "summaries", FALSE, &iter, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        return TRUE;
+
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  while (TRUE)
+    {
+      gboolean remove = FALSE;
+
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&iter, &dent, cancellable, error))
+        return FALSE;
+
+      if (dent == NULL)
+        break;
+
+      if (dent->d_type != DT_REG)
+        continue;
+
+      /* Keep it if its an unexpected type */
+      ext = strchr (dent->d_name, '.');
+      if (ext != NULL)
+        {
+          if (strcmp (ext, ".gz") == 0 && strlen (dent->d_name) == 64 + 3)
+            {
+              char *sha256 = g_strndup (dent->d_name, 64);
+
+              /* Keep all the referenced summaries */
+              if (g_hash_table_contains (digested_summary_cache, sha256))
+                {
+                  g_debug ("Keeping referenced summary %s", dent->d_name);
+                  continue;
+                }
+              /* Remove rest */
+              remove = TRUE;
+            }
+          else if (strcmp (ext, ".delta") == 0)
+            {
+              const char *dash = strchr (dent->d_name, '-');
+              if (dash != NULL && dash < ext && (ext - dash) == 1 + 64)
+                {
+                  char *to_sha256 = g_strndup (dash + 1, 64);
+
+                  /* Only keep deltas going to a generated summary */
+                  if (g_hash_table_contains (digested_summaries, to_sha256))
+                    {
+                      g_debug ("Keeping delta to generated summary %s", dent->d_name);
+                      continue;
+                    }
+                  /* Remove rest */
+                  remove = TRUE;
+                }
+            }
+        }
+
+      if (remove)
+        {
+          g_debug ("Removing old digested summary file %s", dent->d_name);
+          if (unlinkat (iter.fd, dent->d_name, 0) != 0)
+            {
+              glnx_set_error_from_errno (error);
+              return FALSE;
+            }
+        }
+      else
+        g_debug ("Keeping unexpected summary file %s", dent->d_name);
+    }
+
+  return TRUE;
 }
 
 
@@ -4501,6 +5255,8 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autoptr(GHashTable) arches = NULL;
   g_autoptr(GHashTable) subsets = NULL;
   g_autoptr(GHashTable) summaries = NULL;
+  g_autoptr(GHashTable) digested_summaries = NULL;
+  g_autoptr(GHashTable) digested_summary_cache = NULL;
   g_autoptr(GBytes) index_sig = NULL;
   GKeyFile *config;
   gboolean disable_index = (flags & FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX) != 0;
@@ -4526,6 +5282,10 @@ flatpak_repo_update (OstreeRepo   *repo,
     summary_arches = g_key_file_get_string_list (config, "flatpak", "summary-arches", NULL, NULL);
 
   summaries = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  /* These are the ones we generated */
+  digested_summaries = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)g_variant_unref);
+  /* These are the ones generated or references */
+  digested_summary_cache = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)g_variant_unref);
 
   arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   subsets = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -4592,11 +5352,14 @@ flatpak_repo_update (OstreeRepo   *repo,
               if (digest == NULL)
                 return FALSE;
 
+              g_hash_table_insert (digested_summaries, g_strdup (digest), g_variant_ref (arch_summary));
+              /* Prime summary cache with generated summaries */
+              g_hash_table_insert (digested_summary_cache, g_strdup (digest), g_variant_ref (arch_summary));
               g_hash_table_insert (summaries, g_steal_pointer (&name), g_steal_pointer (&digest));
             }
         }
 
-      summary_index = generate_summary_index (repo, old_index, summaries,
+      summary_index = generate_summary_index (repo, old_index, summaries, digested_summaries, digested_summary_cache,
                                               gpg_key_ids, gpg_homedir,
                                               cancellable, error);
       if (summary_index == NULL)
@@ -4635,6 +5398,10 @@ flatpak_repo_update (OstreeRepo   *repo,
                                                   error))
         return FALSE;
     }
+
+  if (!disable_index &&
+      !flatpak_repo_gc_digested_summaries (repo, digested_summaries, digested_summary_cache, cancellable, error))
+    return FALSE;
 
   return TRUE;
 }

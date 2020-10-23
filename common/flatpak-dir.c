@@ -11395,6 +11395,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
   g_autofree char *url = NULL;
   gboolean is_local;
   g_autoptr(GError) cache_error = NULL;
+  g_autoptr(GBytes) summary_z = NULL;
   g_autoptr(GBytes) summary = NULL;
   g_autofree char *sha256 = NULL;
   g_autofree char *cache_name = g_strconcat (name_or_uri, "-", checksum, NULL);
@@ -11431,11 +11432,16 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
           return FALSE;
         }
 
-      g_debug ("Fetching indexed summary file %s for remote ‘%s’", checksum, name_or_uri);
-      g_autofree char *subsummary_url = g_build_filename (url, "summaries", checksum, NULL);
-      summary = flatpak_load_uri (self->soup_session, subsummary_url, 0, NULL,
-                                  NULL, NULL, NULL,
-                                  cancellable, error);
+      g_autofree char *filename = g_strconcat (checksum, ".gz", NULL);
+      g_debug ("Fetching indexed summary file %s for remote ‘%s’", filename, name_or_uri);
+      g_autofree char *subsummary_url = g_build_filename (url, "summaries", filename, NULL);
+      summary_z = flatpak_load_uri (self->soup_session, subsummary_url, 0, NULL,
+                                    NULL, NULL, NULL,
+                                    cancellable, error);
+      if (summary_z == NULL)
+        return FALSE;
+
+      summary = flatpak_zlib_decompress_bytes (summary_z, error);
       if (summary == NULL)
         return FALSE;
 
