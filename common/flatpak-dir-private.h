@@ -150,6 +150,8 @@ gboolean flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
                                                  gboolean            only_cached,
                                                  GCancellable       *cancellable,
                                                  GError            **error);
+void     flatpak_remote_state_prune_subsummaries (FlatpakRemoteState *self,
+                                                  FlatpakDir         *dir);
 gboolean flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
                                          const char *ref);
 gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
