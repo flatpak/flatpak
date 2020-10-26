@@ -514,6 +514,10 @@ GBytes *flatpak_zlib_compress_bytes   (GBytes  *bytes,
 GBytes *flatpak_zlib_decompress_bytes (GBytes  *bytes,
                                        GError **error);
 
+GBytes *flatpak_summary_apply_diff (GBytes *old,
+                                    GBytes *diff,
+                                    GError **error);
+
 typedef enum {
   FLATPAK_REPO_UPDATE_FLAG_NONE = 0,
   FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX = 1 << 0,

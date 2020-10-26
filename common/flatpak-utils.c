@@ -4426,7 +4426,7 @@ diff_consume_block (DiffData *data,
   data->last_new_offset = produce_new_offset + produce_new_size;
 }
 
-static GBytes *
+GBytes *
 flatpak_summary_apply_diff (GBytes *old,
                             GBytes *diff,
                             GError **error)
