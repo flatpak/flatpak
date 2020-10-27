@@ -4369,6 +4369,9 @@ test_installation_unused_refs_across_installations (void)
   g_assert_no_error (error);
   g_assert_nonnull (transaction);
 
+  /* We don't want the runtime pinned in this case */
+  flatpak_transaction_set_disable_auto_pin (transaction, TRUE);
+
   res = flatpak_transaction_add_install (transaction, "test-runtime-only-repo", runtime, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
@@ -4377,12 +4380,6 @@ test_installation_unused_refs_across_installations (void)
   g_assert_no_error (error);
   g_assert_true (res);
   g_clear_object (&transaction);
-
-  /* Undo the pinning that happened as a side effect of the install */
-  const char *argv[] = { "flatpak", "pin", "--system", "--remove", runtime, NULL };
-  run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
-  flatpak_installation_drop_caches (system_inst, NULL, &error);
-  g_assert_no_error (error);
 
   /* The runtime should show as unused */
   refs = flatpak_installation_list_unused_refs (system_inst, NULL, NULL, &error);
