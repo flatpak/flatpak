@@ -3517,7 +3517,7 @@ flatpak_repo_load_summary (OstreeRepo *repo,
   return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, TRUE));
 }
 
-static GVariant *
+GVariant *
 flatpak_repo_load_summary_index (OstreeRepo *repo,
                                  GError    **error)
 {
@@ -3622,7 +3622,7 @@ flatpak_repo_save_summary_index (OstreeRepo   *repo,
   return TRUE;
 }
 
-static GVariant *
+GVariant *
 flatpak_repo_load_digested_summary (OstreeRepo *repo,
                                    const char *digest,
                                    GError    **error)

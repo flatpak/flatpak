@@ -168,6 +168,11 @@ gboolean flatpak_variant_save (GFile        *dest,
                                GError      **error);
 GVariant *flatpak_repo_load_summary (OstreeRepo *repo,
                                      GError    **error);
+GVariant *flatpak_repo_load_summary_index (OstreeRepo *repo,
+                                           GError    **error);
+GVariant *flatpak_repo_load_digested_summary (OstreeRepo *repo,
+                                              const char *digest,
+                                              GError    **error);
 char **  flatpak_summary_match_subrefs (GVariant   *summary,
                                         const char *collection_id,
                                         const char *ref);
