@@ -10,6 +10,15 @@ on:
     - flatpak-1.6.x
     - flatpak-1.8.x
   pull_request:
+    paths-ignore:
+    - README.md
+    - NEWS
+    - INSTALL
+    - COPYING
+    - CODE_OF_CONDUCT.md
+    - .lgtm.yml
+    - uncrustify.cfg
+    - uncrustify.sh
     branches:
     - master
     - flatpak-1.0.x
