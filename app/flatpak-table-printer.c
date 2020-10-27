@@ -85,6 +85,7 @@ struct FlatpakTablePrinter
 {
   GPtrArray *columns;
   GPtrArray *rows;
+  GHashTable *rows_ht;
   char      *key;
   GPtrArray *current;
   int        n_columns;
@@ -97,6 +98,7 @@ flatpak_table_printer_new (void)
 
   printer->columns = g_ptr_array_new_with_free_func (free_column);
   printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify) free_row);
+  printer->rows_ht = g_hash_table_new (g_str_hash, g_str_equal);
   printer->current = g_ptr_array_new_with_free_func (free_cell);
 
   return printer;
@@ -107,6 +109,7 @@ flatpak_table_printer_free (FlatpakTablePrinter *printer)
 {
   g_ptr_array_free (printer->columns, TRUE);
   g_ptr_array_free (printer->rows, TRUE);
+  g_hash_table_destroy (printer->rows_ht);
   g_ptr_array_free (printer->current, TRUE);
   g_free (printer->key);
   g_free (printer);
@@ -222,6 +225,14 @@ flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
 }
 
 void
+flatpak_table_printer_take_column (FlatpakTablePrinter *printer,
+                                   char                *text)
+{
+  flatpak_table_printer_add_aligned_column (printer, text, -1);
+  g_free (text);
+}
+
+void
 flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
                                       const char          *text,
                                       gsize                len)
@@ -302,10 +313,22 @@ flatpak_table_printer_sort (FlatpakTablePrinter *printer, GCompareFunc cmp)
   g_ptr_array_sort_with_data (printer->rows, cmp_row, cmp);
 }
 
+int
+flatpak_table_printer_lookup_row (FlatpakTablePrinter *printer, const char *key)
+{
+  gpointer value;
+
+  if (g_hash_table_lookup_extended (printer->rows_ht, key, NULL, &value))
+    return GPOINTER_TO_INT(value);
+
+  return -1;
+}
+
 void
 flatpak_table_printer_finish_row (FlatpakTablePrinter *printer)
 {
   Row *row;
+  int row_nr = flatpak_table_printer_get_current_row (printer);
 
   if (printer->current->len == 0)
     return; /* Ignore empty rows */
@@ -315,6 +338,8 @@ flatpak_table_printer_finish_row (FlatpakTablePrinter *printer)
   row->cells = g_steal_pointer (&printer->current);
   row->key = g_steal_pointer (&printer->key);
   g_ptr_array_add (printer->rows, row);
+  if (row->key)
+    g_hash_table_insert (printer->rows_ht, row->key, GINT_TO_POINTER (row_nr));
   printer->current = g_ptr_array_new_with_free_func (free_cell);
 }
 
@@ -706,10 +731,12 @@ set_cell (FlatpakTablePrinter *printer,
           int                  r,
           int                  c,
           const char          *text,
-          int                  align)
+          int                  align,
+          int                  append)
 {
   Row *row;
   Cell *cell;
+  char *old;
 
   row = (Row *) g_ptr_array_index (printer->rows, r);
 
@@ -718,9 +745,19 @@ set_cell (FlatpakTablePrinter *printer,
   cell = (Cell *) g_ptr_array_index (row->cells, c);
   g_assert (cell);
 
-  g_free (cell->text);
-  cell->text = g_strdup (text);
+  old = cell->text;
+  if (old != NULL && append)
+    {
+      if (append == 2 && *old != 0)
+        cell->text = g_strconcat (old, ", ", text, NULL);
+      else
+        cell->text = g_strconcat (old, text, NULL);
+    }
+  else
+    cell->text = g_strdup (text);
   cell->align = align;
+
+  g_free (old);
 }
 
 void
@@ -729,7 +766,25 @@ flatpak_table_printer_set_cell (FlatpakTablePrinter *printer,
                                 int                  c,
                                 const char          *text)
 {
-  set_cell (printer, r, c, text, -1);
+  set_cell (printer, r, c, text, -1, 0);
+}
+
+void
+flatpak_table_printer_append_cell (FlatpakTablePrinter *printer,
+                                   int                  r,
+                                   int                  c,
+                                   const char          *text)
+{
+  set_cell (printer, r, c, text, -1, 1);
+}
+
+void
+flatpak_table_printer_append_cell_with_comma (FlatpakTablePrinter *printer,
+                                              int                  r,
+                                              int                  c,
+                                              const char          *text)
+{
+  set_cell (printer, r, c, text, -1, 2);
 }
 
 void
@@ -744,7 +799,7 @@ flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter *printer,
   if (decimal)
     align = decimal - text;
 
-  set_cell (printer, r, c, text, align);
+  set_cell (printer, r, c, text, align, 0);
 }
 
 void
