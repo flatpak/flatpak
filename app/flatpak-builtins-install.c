@@ -459,7 +459,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     }
 
   /* Backwards compat for old "REMOTE NAME [BRANCH]" argument version */
-  if (argc == 4 && flatpak_is_valid_name (argv[2], NULL) && looks_like_branch (argv[3]))
+  if (argc == 4 && flatpak_is_valid_name (argv[2], -1, NULL) && looks_like_branch (argv[3]))
     {
       target_branch = g_strdup (argv[3]);
       n_prefs = 1;
@@ -501,7 +501,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                                 &matched_kinds, &id, &arch, &branch);
 
       /* We used _novalidate so that the id can be partial, but we can still validate the branch */
-      if (branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
+      if (branch != NULL && !flatpak_is_valid_branch (branch, -1, &local_error))
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), branch, local_error->message);
 
       if (opt_no_pull)

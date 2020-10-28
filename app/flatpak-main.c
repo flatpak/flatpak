@@ -550,7 +550,7 @@ find_similar_command (const char *word,
       if (!commands[i].fn)
         continue;
 
-      int d1 = flatpak_levenshtein_distance (word, commands[i].name);
+      int d1 = flatpak_levenshtein_distance (word, -1, commands[i].name, -1);
       if (d1 < d)
         {
           d = d1;
@@ -563,7 +563,7 @@ find_similar_command (const char *word,
     {
       for (i = 0; entries[k][i].long_name; i++)
         {
-          int d1 = flatpak_levenshtein_distance (word, entries[k][i].long_name);
+          int d1 = flatpak_levenshtein_distance (word, -1, entries[k][i].long_name, -1);
           if (d1 < d)
             {
               d = d1;

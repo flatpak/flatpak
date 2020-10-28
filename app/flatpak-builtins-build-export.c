@@ -820,7 +820,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       goto out;
     }
 
-  if (!flatpak_is_valid_branch (branch, &my_error))
+  if (!flatpak_is_valid_branch (branch, -1, &my_error))
     {
       flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
       goto out;
@@ -1028,7 +1028,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       g_auto(GStrv) full_ref_parts = g_strsplit (full_branch, "/", 0);
       g_autofree char *rebased_ref = g_build_filename (full_ref_parts[0], opt_endoflife_rebase, full_ref_parts[2], full_ref_parts[3], NULL);
 
-      if (!flatpak_is_valid_name (opt_endoflife_rebase, error))
+      if (!flatpak_is_valid_name (opt_endoflife_rebase, -1, error))
         return glnx_prefix_error (error, "Invalid name in --end-of-life-rebase");
 
       g_variant_dict_insert_value (&metadata_dict, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE,

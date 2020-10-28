@@ -75,7 +75,7 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
   if (argc >= 2)
     {
       app = argv[1];
-      if (!flatpak_is_valid_name (app, &my_error))
+      if (!flatpak_is_valid_name (app, -1, &my_error))
         return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app, my_error->message);
     }
   else
