@@ -350,8 +350,7 @@ typedef enum {
 
 typedef enum {
   FIND_MATCHING_REFS_FLAGS_NONE = 0,
-  FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE = (1 << 0),
-  FIND_MATCHING_REFS_FLAGS_FUZZY = (1 << 1),
+  FIND_MATCHING_REFS_FLAGS_FUZZY = (1 << 0),
 } FindMatchingRefsFlags;
 
 GQuark       flatpak_dir_error_quark (void);
@@ -935,6 +934,11 @@ gboolean   flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
                                              GHashTable        **out_all_refs,
                                              GCancellable       *cancellable,
                                              GError            **error);
+gboolean   flatpak_dir_list_all_remote_refs_decomposed (FlatpakDir         *self,
+                                                        FlatpakRemoteState *state,
+                                                        GHashTable        **out_all_refs,
+                                                        GCancellable       *cancellable,
+                                                        GError            **error);
 gboolean flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                                   const char   *remote,
                                                   FlatpakRemoteState *optional_remote_state,
