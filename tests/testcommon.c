@@ -100,6 +100,152 @@ test_valid_name (void)
   g_assert_true (flatpak_is_valid_name ("org.flat_pak__.te--st", -1, NULL));
 }
 
+static void
+test_decompose (void)
+{
+  g_autoptr(FlatpakDecomposed) app_ref = NULL;
+  g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
+  g_autoptr(FlatpakDecomposed) refspec = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *app_id = NULL;
+  g_autofree char *app_arch = NULL;
+  g_autofree char *app_branch = NULL;
+  g_autofree char *runtime_id = NULL;
+  g_autofree char *runtime_arch = NULL;
+  g_autofree char *runtime_branch = NULL;
+
+  g_assert_null (flatpak_decomposed_new_from_ref ("app/wrong/x86_64/master", &error));
+  g_assert (error != NULL);
+  g_assert (error->domain == FLATPAK_ERROR);
+  g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  g_assert_null (flatpak_decomposed_new_from_ref ("app/org.the.app//master", &error));
+  g_assert (error != NULL);
+  g_assert (error->domain == FLATPAK_ERROR);
+  g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  g_assert_null (flatpak_decomposed_new_from_ref ("app/org.the.app/x86_64/@foo", &error));
+  g_assert (error != NULL);
+  g_assert (error->domain == FLATPAK_ERROR);
+  g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  g_assert_null (flatpak_decomposed_new_from_ref ("wrong/org.the.wrong/x86_64/master", &error));
+  g_assert (error != NULL);
+  g_assert (error->domain == FLATPAK_ERROR);
+  g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  g_assert_null (flatpak_decomposed_new_from_ref ("app/org.the.app/x86_64/master/extra", &error));
+  g_assert (error != NULL);
+  g_assert (error->domain == FLATPAK_ERROR);
+  g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  g_assert_null (flatpak_decomposed_new_from_ref ("app/org.the.app/x86_64", &error));
+  g_assert (error != NULL);
+  g_assert (error->domain == FLATPAK_ERROR);
+  g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  runtime_ref = flatpak_decomposed_new_from_ref ("runtime/org.the.runtime/x86_64/master", &error);
+  g_assert (runtime_ref != NULL);
+  g_assert_null (error);
+
+  g_assert_cmpstr (flatpak_decomposed_peek_ref (runtime_ref), ==, "runtime/org.the.runtime/x86_64/master");
+  g_assert_cmpstr (flatpak_decomposed_peek_refspec (runtime_ref), ==, "runtime/org.the.runtime/x86_64/master");
+  g_assert (flatpak_decomposed_equal (runtime_ref, runtime_ref));
+  g_assert (flatpak_decomposed_hash (runtime_ref) == g_str_hash ("runtime/org.the.runtime/x86_64/master"));
+  g_assert (!flatpak_decomposed_is_app (runtime_ref));
+  g_assert (flatpak_decomposed_is_runtime (runtime_ref));
+  g_assert (flatpak_decomposed_get_kind (runtime_ref) == FLATPAK_KINDS_RUNTIME);
+
+  g_assert_cmpstr (flatpak_decomposed_peek_id (runtime_ref), ==, "org.the.runtime/x86_64/master");
+  runtime_id = flatpak_decomposed_get_id (runtime_ref);
+  g_assert_cmpstr (runtime_id, ==, "org.the.runtime");
+  g_assert (flatpak_decomposed_is_id (runtime_ref, "org.the.runtime"));
+  g_assert (!flatpak_decomposed_is_id (runtime_ref, "org.the.runtim"));
+  g_assert (!flatpak_decomposed_is_id (runtime_ref, "org.the.runtimee"));
+
+  g_assert_cmpstr (flatpak_decomposed_peek_arch (runtime_ref), ==, "x86_64/master");
+  runtime_arch = flatpak_decomposed_get_arch (runtime_ref);
+  g_assert_cmpstr (runtime_arch, ==, "x86_64");
+  g_assert (flatpak_decomposed_is_arch (runtime_ref, "x86_64"));
+  g_assert (!flatpak_decomposed_is_arch (runtime_ref, "x86_6"));
+  g_assert (!flatpak_decomposed_is_arch (runtime_ref, "x86_644"));
+
+  g_assert_cmpstr (flatpak_decomposed_peek_branch (runtime_ref), ==, "master");
+  runtime_branch = flatpak_decomposed_get_branch (runtime_ref);
+  g_assert_cmpstr (runtime_branch, ==, "master");
+  g_assert (flatpak_decomposed_is_branch (runtime_ref, "master"));
+  g_assert (!flatpak_decomposed_is_arch (runtime_ref, "maste"));
+  g_assert (!flatpak_decomposed_is_arch (runtime_ref, "masterr"));
+
+  app_ref = flatpak_decomposed_new_from_ref ("app/org.the.app/x86_64/master", &error);
+  g_assert (app_ref != NULL);
+  g_assert_null (error);
+
+  g_assert_cmpstr (flatpak_decomposed_peek_ref (app_ref), ==, "app/org.the.app/x86_64/master");
+  g_assert_cmpstr (flatpak_decomposed_peek_refspec (app_ref), ==, "app/org.the.app/x86_64/master");
+  g_assert (flatpak_decomposed_equal (app_ref, app_ref));
+  g_assert (!flatpak_decomposed_equal (app_ref, runtime_ref));
+  g_assert (flatpak_decomposed_hash (app_ref) == g_str_hash ("app/org.the.app/x86_64/master"));
+  g_assert (flatpak_decomposed_is_app (app_ref));
+  g_assert (!flatpak_decomposed_is_runtime (app_ref));
+  g_assert (flatpak_decomposed_get_kind (app_ref) == FLATPAK_KINDS_APP);
+
+  g_assert_cmpstr (flatpak_decomposed_peek_id (app_ref), ==, "org.the.app/x86_64/master");
+  app_id = flatpak_decomposed_get_id (app_ref);
+  g_assert_cmpstr (app_id, ==, "org.the.app");
+  g_assert (flatpak_decomposed_is_id (app_ref, "org.the.app"));
+  g_assert (!flatpak_decomposed_is_id (app_ref, "org.the.ap"));
+  g_assert (!flatpak_decomposed_is_id (app_ref, "org.the.appp"));
+
+  g_assert_cmpstr (flatpak_decomposed_peek_arch (app_ref), ==, "x86_64/master");
+  app_arch = flatpak_decomposed_get_arch (app_ref);
+  g_assert_cmpstr (app_arch, ==, "x86_64");
+  g_assert (flatpak_decomposed_is_arch (app_ref, "x86_64"));
+  g_assert (!flatpak_decomposed_is_arch (app_ref, "x86_6"));
+  g_assert (!flatpak_decomposed_is_arch (app_ref, "x86_644"));
+
+  g_assert_cmpstr (flatpak_decomposed_peek_branch (app_ref), ==, "master");
+  app_branch = flatpak_decomposed_get_branch (app_ref);
+  g_assert_cmpstr (app_branch, ==, "master");
+  g_assert (flatpak_decomposed_is_branch (app_ref, "master"));
+  g_assert (!flatpak_decomposed_is_arch (app_ref, "maste"));
+  g_assert (!flatpak_decomposed_is_arch (app_ref, "masterr"));
+
+  refspec = flatpak_decomposed_new_from_ref ("remote:app/org.the.app/x86_64/master", &error);
+  g_assert (refspec == NULL);
+  g_assert (error != NULL);
+  g_assert (error->domain == FLATPAK_ERROR);
+  g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  refspec = flatpak_decomposed_new_from_refspec ("remote/broken:app/org.the.app/x86_64/master", &error);
+  g_assert (refspec == NULL);
+  g_assert (error != NULL);
+  g_assert (error->domain == FLATPAK_ERROR);
+  g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+  g_clear_error (&error);
+
+  refspec = flatpak_decomposed_new_from_refspec ("remote:app/org.the.app/x86_64/master", &error);
+  g_assert (refspec != NULL);
+  g_assert_null (error);
+
+  g_assert_cmpstr (flatpak_decomposed_peek_ref (refspec), ==, "app/org.the.app/x86_64/master");
+  g_assert_cmpstr (flatpak_decomposed_peek_refspec (refspec), ==, "remote:app/org.the.app/x86_64/master");
+  g_autofree char *refspec_remote = flatpak_decomposed_get_remote (refspec);
+  g_assert_cmpstr (refspec_remote, ==, "remote");
+  g_autofree char *refspec_ref = flatpak_decomposed_get_ref (refspec);
+  g_assert_cmpstr (refspec_ref, ==, "app/org.the.app/x86_64/master");
+  g_autofree char *refspec_refspec = flatpak_decomposed_get_refspec (refspec);
+  g_assert_cmpstr (refspec_refspec, ==, "remote:app/org.the.app/x86_64/master");
+}
+
+
 typedef struct
 {
   const gchar *str;
@@ -1202,6 +1348,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/filter", test_filter);
   g_test_add_func ("/common/dconf-app-id", test_dconf_app_id);
   g_test_add_func ("/common/dconf-paths", test_dconf_paths);
+  g_test_add_func ("/common/decompose-ref", test_decompose);
 
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);

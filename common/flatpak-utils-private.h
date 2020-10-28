@@ -216,6 +216,49 @@ char **flatpak_decompose_ref (const char *ref,
 char * flatpak_get_arch_for_ref (const char *ref);
 const char *flatpak_get_compat_arch_reverse (const char *compat_arch);
 
+
+typedef struct _FlatpakDecomposed FlatpakDecomposed;
+FlatpakDecomposed *flatpak_decomposed_new_from_ref          (const char         *ref,
+                                                             GError            **error);
+FlatpakDecomposed *flatpak_decomposed_new_from_refspec      (const char         *refspec,
+                                                             GError            **error);
+FlatpakDecomposed *flatpak_decomposed_new_from_ref_take     (char               *ref,
+                                                             GError            **error);
+FlatpakDecomposed *flatpak_decomposed_new_from_refspec_take (char               *refspec,
+                                                             GError            **error);
+FlatpakDecomposed *flatpak_decomposed_ref                   (FlatpakDecomposed  *ref);
+void               flatpak_decomposed_unref                 (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_peek_ref              (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_peek_refspec          (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_get_ref               (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_get_refspec           (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_get_remote            (FlatpakDecomposed  *ref);
+gboolean           flatpak_decomposed_equal                 (FlatpakDecomposed  *ref_a,
+                                                             FlatpakDecomposed  *ref_b);
+guint              flatpak_decomposed_hash                  (FlatpakDecomposed  *ref);
+gboolean           flatpak_decomposed_is_app                (FlatpakDecomposed  *ref);
+gboolean           flatpak_decomposed_is_runtime            (FlatpakDecomposed  *ref);
+FlatpakKinds       flatpak_decomposed_get_kind              (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_peek_id               (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_get_id                (FlatpakDecomposed  *ref);
+gboolean           flatpak_decomposed_is_id                 (FlatpakDecomposed  *ref,
+                                                             const char         *id);
+gboolean           flatpak_decomposed_is_id_fuzzy           (FlatpakDecomposed  *ref,
+                                                             const char         *id);
+gboolean           flatpak_decomposed_id_is_subref          (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_peek_arch             (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_get_arch              (FlatpakDecomposed  *ref);
+gboolean           flatpak_decomposed_is_arch               (FlatpakDecomposed  *ref,
+                                                             const char         *arch);
+gboolean           flatpak_decomposed_is_arches             (FlatpakDecomposed  *ref,
+                                                             const char        **arches);
+const char *       flatpak_decomposed_peek_branch           (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_get_branch            (FlatpakDecomposed  *ref);
+gboolean           flatpak_decomposed_is_branch             (FlatpakDecomposed  *ref,
+                                                             const char         *branch);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDecomposed, flatpak_decomposed_unref)
+
 char * flatpak_filter_glob_to_regexp (const char *glob, gboolean runtime_only, GError **error);
 gboolean flatpak_parse_filters (const char *data,
                                 GRegex **allow_refs_out,
