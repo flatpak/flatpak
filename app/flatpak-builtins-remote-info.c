@@ -107,7 +107,6 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   guint64 download_size = 0;
   g_autofree char *formatted_installed_size = NULL;
   g_autofree char *formatted_download_size = NULL;
-  g_autofree char *ref_arch = NULL;
   const gchar *subject = NULL;
   guint64 timestamp;
   g_autofree char *formatted_timestamp = NULL;
