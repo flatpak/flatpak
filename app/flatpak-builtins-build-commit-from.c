@@ -316,10 +316,10 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
           *rebase_new = 0;
           rebase_new++;
 
-          if (!flatpak_is_valid_name (rebase_old, error))
+          if (!flatpak_is_valid_name (rebase_old, -1, error))
             return glnx_prefix_error (error, _("Invalid name %s in --end-of-life-rebase"), rebase_old);
 
-          if (!flatpak_is_valid_name (rebase_new, error))
+          if (!flatpak_is_valid_name (rebase_new, -1, error))
             return glnx_prefix_error (error, _("Invalid name %s in --end-of-life-rebase"), rebase_new);
 
           opt_endoflife_rebase_new[i] = rebase_new;

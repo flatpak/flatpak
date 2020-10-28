@@ -83,10 +83,10 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   else
     branch = "master";
 
-  if (id != NULL && !flatpak_is_valid_name (id, &my_error))
+  if (id != NULL && !flatpak_is_valid_name (id, -1, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid name: %s"), id, my_error->message);
 
-  if (!flatpak_is_valid_branch (branch, &my_error))
+  if (!flatpak_is_valid_branch (branch, -1, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
 
   if (opt_gpg_key_ids == NULL)

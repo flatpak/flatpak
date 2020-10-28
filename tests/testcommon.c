@@ -77,23 +77,27 @@ test_extension_matches (void)
 static void
 test_valid_name (void)
 {
-  g_assert_false (flatpak_is_valid_name ("", NULL));
-  g_assert_false (flatpak_is_valid_name ("org", NULL));
-  g_assert_false (flatpak_is_valid_name ("org.", NULL));
-  g_assert_false (flatpak_is_valid_name ("org..", NULL));
-  g_assert_false (flatpak_is_valid_name ("org..test", NULL));
-  g_assert_false (flatpak_is_valid_name ("org.flatpak", NULL));
-  g_assert_false (flatpak_is_valid_name ("org.1flatpak.test", NULL));
-  g_assert_false (flatpak_is_valid_name ("org.flat-pak.test", NULL));
-  g_assert_false (flatpak_is_valid_name ("org.-flatpak.test", NULL));
-  g_assert_false (flatpak_is_valid_name ("org.flat,pak.test", NULL));
+  g_assert_false (flatpak_is_valid_name ("", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org..", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org..test", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.flatpak", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.1flatpak.test", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.flat-pak.test", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.-flatpak.test", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.flat,pak.test", -1, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.flatpak.test", 0, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.flatpak.test", 3, NULL));
+  g_assert_false (flatpak_is_valid_name ("org.flatpak.test", 4, NULL));
 
-  g_assert_true (flatpak_is_valid_name ("org.flatpak.test", NULL));
-  g_assert_true (flatpak_is_valid_name ("org.FlatPak.TEST", NULL));
-  g_assert_true (flatpak_is_valid_name ("org0.f1atpak.test", NULL));
-  g_assert_true (flatpak_is_valid_name ("org.flatpak.-test", NULL));
-  g_assert_true (flatpak_is_valid_name ("org.flatpak._test", NULL));
-  g_assert_true (flatpak_is_valid_name ("org.flat_pak__.te--st", NULL));
+  g_assert_true (flatpak_is_valid_name ("org.flatpak.test", -1, NULL));
+  g_assert_true (flatpak_is_valid_name ("org.flatpak.test", strlen("org.flatpak.test"), NULL));
+  g_assert_true (flatpak_is_valid_name ("org.FlatPak.TEST", -1, NULL));
+  g_assert_true (flatpak_is_valid_name ("org0.f1atpak.test", -1, NULL));
+  g_assert_true (flatpak_is_valid_name ("org.flatpak.-test", -1, NULL));
+  g_assert_true (flatpak_is_valid_name ("org.flatpak._test", -1, NULL));
+  g_assert_true (flatpak_is_valid_name ("org.flat_pak__.te--st", -1, NULL));
 }
 
 typedef struct
@@ -201,8 +205,8 @@ test_levenshtein (void)
     {
       Levenshtein *data = &levenshtein_tests[idx];
 
-      g_assert_cmpint (flatpak_levenshtein_distance (data->a, data->b), ==, data->distance);
-      g_assert_cmpint (flatpak_levenshtein_distance (data->b, data->a), ==, data->distance);
+      g_assert_cmpint (flatpak_levenshtein_distance (data->a, -1, data->b, -1), ==, data->distance);
+      g_assert_cmpint (flatpak_levenshtein_distance (data->b, -1, data->a, -1), ==, data->distance);
     }
 }
 

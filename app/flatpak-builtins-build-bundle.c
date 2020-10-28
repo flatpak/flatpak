@@ -653,10 +653,10 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
     full_branch = g_strdup (name);
   else
     {
-      if (!flatpak_is_valid_name (name, &my_error))
+      if (!flatpak_is_valid_name (name, -1, &my_error))
         return flatpak_fail (error, _("'%s' is not a valid name: %s"), name, my_error->message);
 
-      if (!flatpak_is_valid_branch (branch, &my_error))
+      if (!flatpak_is_valid_branch (branch, -1, &my_error))
         return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
 
       if (opt_runtime)

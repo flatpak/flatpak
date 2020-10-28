@@ -706,9 +706,23 @@ is_valid_name_character (gint c, gboolean allow_dash)
     (c >= '0' && c <= '9');
 }
 
+static const char *
+find_last_char (const char *str, gsize len, int c)
+{
+  const char *p = str + len - 1;
+  while (p >= str)
+    {
+      if (*p == c)
+        return p;
+      p--;
+    }
+  return NULL;
+}
+
 /**
  * flatpak_is_valid_name:
  * @string: The string to check
+ * @len: The string length, or -1 for null-terminated
  * @error: Return location for an error
  *
  * Checks if @string is a valid application name.
@@ -735,9 +749,9 @@ is_valid_name_character (gint c, gboolean allow_dash)
  */
 gboolean
 flatpak_is_valid_name (const char *string,
+                       gssize      len,
                        GError    **error)
 {
-  guint len;
   gboolean ret;
   const gchar *s;
   const gchar *end;
@@ -749,7 +763,8 @@ flatpak_is_valid_name (const char *string,
 
   ret = FALSE;
 
-  len = strlen (string);
+  if (len < 0)
+    len = strlen (string);
   if (G_UNLIKELY (len == 0))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
@@ -766,7 +781,7 @@ flatpak_is_valid_name (const char *string,
 
   end = string + len;
 
-  last_dot = strrchr (string, '.');
+  last_dot = find_last_char (string, len, '.');
   last_element = FALSE;
 
   s = string;
@@ -1004,6 +1019,7 @@ is_valid_branch_character (gint c)
 /**
  * flatpak_is_valid_branch:
  * @string: The string to check
+ * @len: The string length, or -1 for null-terminated
  * @error: return location for an error
  *
  * Checks if @string is a valid branch name.
@@ -1019,9 +1035,9 @@ is_valid_branch_character (gint c)
  */
 gboolean
 flatpak_is_valid_branch (const char *string,
+                         gssize      len,
                          GError    **error)
 {
-  guint len;
   gboolean ret;
   const gchar *s;
   const gchar *end;
@@ -1030,7 +1046,8 @@ flatpak_is_valid_branch (const char *string,
 
   ret = FALSE;
 
-  len = strlen (string);
+  if (len < 0)
+    len = strlen (string);
   if (G_UNLIKELY (len == 0))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
@@ -1086,13 +1103,31 @@ flatpak_make_valid_id_prefix (const char *orig_id)
   return id;
 }
 
-gboolean
-flatpak_id_has_subref_suffix (const char *id)
+static gboolean
+str_has_suffix (const gchar *str, gsize str_len,
+                const gchar *suffix)
 {
+  gsize suffix_len;
+
+  suffix_len = strlen (suffix);
+  if (str_len < suffix_len)
+    return FALSE;
+
+  return strcmp (str + str_len - suffix_len, suffix) == 0;
+}
+
+
+gboolean
+flatpak_id_has_subref_suffix (const char *id,
+                              gssize id_len)
+{
+  if (id_len < 0)
+    id_len = strlen (id);
+
   return
-    g_str_has_suffix (id, ".Locale") ||
-    g_str_has_suffix (id, ".Debug") ||
-    g_str_has_suffix (id, ".Sources");
+    str_has_suffix (id, id_len, ".Locale") ||
+    str_has_suffix (id, id_len, ".Debug") ||
+    str_has_suffix (id, id_len, ".Sources");
 }
 
 
@@ -1403,7 +1438,7 @@ flatpak_decompose_ref (const char *full_ref,
       return NULL;
     }
 
-  if (!flatpak_is_valid_name (parts[1], &local_error))
+  if (!flatpak_is_valid_name (parts[1], -1, &local_error))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid name %s: %s"), parts[1], local_error->message);
       return NULL;
@@ -1415,7 +1450,7 @@ flatpak_decompose_ref (const char *full_ref,
       return NULL;
     }
 
-  if (!flatpak_is_valid_branch (parts[3], &local_error))
+  if (!flatpak_is_valid_branch (parts[3], -1, &local_error))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), parts[3], local_error->message);
       return NULL;
@@ -1503,7 +1538,7 @@ _flatpak_split_partial_ref_arg (const char   *partial_ref,
   id_end = next_element (&partial_ref);
   id = g_strndup (id_start, id_end - id_start);
 
-  if (validate && !flatpak_is_valid_name (id, &local_error))
+  if (validate && !flatpak_is_valid_name (id, -1, &local_error))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid id %s: %s"), id, local_error->message);
 
   arch_start = partial_ref;
@@ -1520,7 +1555,7 @@ _flatpak_split_partial_ref_arg (const char   *partial_ref,
   else
     branch = g_strdup (default_branch);
 
-  if (validate && branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
+  if (validate && branch != NULL && !flatpak_is_valid_branch (branch, -1, &local_error))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), branch, local_error->message);
 
   if (out_kinds)
@@ -1590,13 +1625,13 @@ flatpak_compose_ref (gboolean    app,
 {
   g_autoptr(GError) local_error = NULL;
 
-  if (!flatpak_is_valid_name (name, &local_error))
+  if (!flatpak_is_valid_name (name, -1, &local_error))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid name: %s"), name, local_error->message);
       return NULL;
     }
 
-  if (branch && !flatpak_is_valid_branch (branch, &local_error))
+  if (branch && !flatpak_is_valid_branch (branch, -1, &local_error))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid branch name: %s"), branch, local_error->message);
       return NULL;
@@ -8290,12 +8325,19 @@ dist (const char *s, int ls, const char *t, int lt, int i, int j, int *d)
 }
 
 int
-flatpak_levenshtein_distance (const char *s, const char *t)
+flatpak_levenshtein_distance (const char *s,
+                              gssize ls,
+                              const char *t,
+                              gssize lt)
 {
-  int ls = strlen (s);
-  int lt = strlen (t);
   int i, j;
   int *d;
+
+  if (ls < 0)
+    ls = strlen (s);
+
+  if (lt < 0)
+    lt = strlen (t);
 
   d = alloca (sizeof (int) * (ls + 1) * (lt + 1));
 

@@ -173,7 +173,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   n_prefs = argc - 1;
 
   /* Backwards compat for old "NAME [BRANCH]" argument version */
-  if (argc == 3 && flatpak_is_valid_name (argv[1], NULL) && looks_like_branch (argv[2]))
+  if (argc == 3 && flatpak_is_valid_name (argv[1], -1, NULL) && looks_like_branch (argv[2]))
     {
       default_branch = argv[2];
       n_prefs = 1;
@@ -287,7 +287,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
                                                     &matched_kinds, &id, &arch, &branch);
 
           /* We used _novalidate so that the id can be partial, but we can still validate the branch */
-          if (branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
+          if (branch != NULL && !flatpak_is_valid_branch (branch, -1, &local_error))
             return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), branch, local_error->message);
 
           ref_dir_pairs = g_ptr_array_new_with_free_func ((GDestroyNotify) ref_dir_pair_free);

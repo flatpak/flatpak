@@ -12097,13 +12097,13 @@ find_matching_refs (GHashTable           *refs,
     arches = opt_arches;
 
   if (opt_name && !(flags & FIND_MATCHING_REFS_FLAGS_FUZZY) &&
-      !flatpak_is_valid_name (opt_name, &local_error))
+      !flatpak_is_valid_name (opt_name, -1, &local_error))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid name: %s"), opt_name, local_error->message);
       return NULL;
     }
 
-  if (opt_branch && !flatpak_is_valid_branch (opt_branch, &local_error))
+  if (opt_branch && !flatpak_is_valid_branch (opt_branch, -1, &local_error))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid branch name: %s"), opt_branch, local_error->message);
       return NULL;
@@ -12136,12 +12136,12 @@ find_matching_refs (GHashTable           *refs,
       if (parts == NULL)
         continue;
 
-      if ((flags & FIND_MATCHING_REFS_FLAGS_FUZZY) && !flatpak_id_has_subref_suffix (parts[1]))
+      if ((flags & FIND_MATCHING_REFS_FLAGS_FUZZY) && !flatpak_id_has_subref_suffix (parts[1], -1))
         {
           /* See if the given name looks similar to this ref name. The
            * Levenshtein distance constant was chosen pretty arbitrarily. */
           if (opt_name != NULL && strcasestr (parts[1], opt_name) == NULL &&
-              flatpak_levenshtein_distance (opt_name, parts[1]) > 2)
+              flatpak_levenshtein_distance (opt_name, -1, parts[1], -1) > 2)
             continue;
         }
       else

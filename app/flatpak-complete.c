@@ -231,7 +231,7 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
       if (!g_str_has_prefix (parts[element], cur_parts[element]))
         continue;
 
-      if (flatpak_id_has_subref_suffix (parts[element]))
+      if (flatpak_id_has_subref_suffix (parts[element], -1))
         {
           char *last_dot = strrchr (parts[element], '.');
 

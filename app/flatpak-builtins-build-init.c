@@ -232,7 +232,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   else
     is_app = TRUE;
 
-  if (!flatpak_is_valid_name (app_id, &my_error))
+  if (!flatpak_is_valid_name (app_id, -1, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app_id, my_error->message);
 
 
@@ -449,7 +449,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
       if (g_strv_length (elements) < 2)
         return flatpak_fail (error, _("Too few elements in --extension argument %s, format should be NAME=VAR[=VALUE]"), opt_extensions[i]);
 
-      if (!flatpak_is_valid_name (elements[0], error))
+      if (!flatpak_is_valid_name (elements[0], -1, error))
         return glnx_prefix_error (error, _("Invalid extension name %s"), elements[0]);
 
       groupname = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION,

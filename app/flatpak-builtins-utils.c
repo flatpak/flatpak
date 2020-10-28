@@ -76,7 +76,7 @@ looks_like_branch (const char *branch)
   /* In particular, / is not a valid branch char, so
      this lets us distinguish full or partial refs as
      non-branches. */
-  if (!flatpak_is_valid_branch (branch, NULL))
+  if (!flatpak_is_valid_branch (branch, -1, NULL))
     return FALSE;
 
   /* Dots are allowed in branches, but not really used much, while

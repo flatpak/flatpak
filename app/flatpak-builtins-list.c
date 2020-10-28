@@ -241,7 +241,7 @@ print_table_for_refs (gboolean      print_apps,
             }
 
           if (!opt_all && strcmp (parts[0], "runtime") == 0 &&
-              flatpak_id_has_subref_suffix (parts[1]))
+              flatpak_id_has_subref_suffix (parts[1], -1))
             {
               g_autofree char *prefix_partial_ref = NULL;
               char *last_dot = strrchr (parts[1], '.');

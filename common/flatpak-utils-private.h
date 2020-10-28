@@ -199,14 +199,17 @@ gboolean flatpak_get_allowed_exports (const char     *source_path,
                                       gboolean       *require_exact_match_out);
 
 gboolean flatpak_is_valid_name (const char *string,
+                                gssize      len,
                                 GError    **error);
 gboolean flatpak_is_valid_branch (const char *string,
+                                  gssize      len,
                                   GError    **error);
 gboolean flatpak_has_name_prefix (const char *string,
                                   const char *name);
 
 char * flatpak_make_valid_id_prefix (const char *orig_id);
-gboolean flatpak_id_has_subref_suffix (const char *id);
+gboolean flatpak_id_has_subref_suffix (const char *id,
+                                       gssize      id_len);
 
 char **flatpak_decompose_ref (const char *ref,
                               GError    **error);
@@ -932,7 +935,9 @@ gboolean flatpak_check_required_version (const char *ref,
                                          GError    **error);
 
 int flatpak_levenshtein_distance (const char *s,
-                                  const char *t);
+                                  gssize      ls,
+                                  const char *t,
+                                  gssize      lt);
 
 char *   flatpak_dconf_path_for_app_id (const char *app_id);
 gboolean flatpak_dconf_path_is_similar (const char *path1,

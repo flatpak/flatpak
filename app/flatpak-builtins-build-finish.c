@@ -588,7 +588,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
           goto out;
         }
 
-      if (!flatpak_is_valid_name (elements[0], error))
+      if (!flatpak_is_valid_name (elements[0], -1, error))
         {
           glnx_prefix_error (error, _("Invalid extension name %s"), elements[0]);
           goto out;
