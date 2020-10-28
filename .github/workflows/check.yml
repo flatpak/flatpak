@@ -32,7 +32,7 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev
+        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev
     - name: Check out flatpak
       uses: actions/checkout@v1
       with:
@@ -45,6 +45,15 @@ jobs:
         meson setup --prefix=/usr _build
         ninja -C _build
         sudo ninja -C _build install
+        popd
+    - name: Build ostree dependency
+      run: |
+        git clone https://github.com/ostreedev/ostree.git ./ostree
+        pushd ./ostree
+        git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
+        ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
+        make -j $(getconf _NPROCESSORS_ONLN)
+        sudo make install
         popd
     - name: Create logs dir
       run: mkdir test-logs
@@ -92,7 +101,16 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang
+        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang e2fslibs-dev
+    - name: Build ostree dependency
+      run: |
+        git clone https://github.com/ostreedev/ostree.git ./ostree
+        pushd ./ostree
+        git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
+        ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
+        make -j $(getconf _NPROCESSORS_ONLN)
+        sudo make install
+        popd
     - name: Check out flatpak
       uses: actions/checkout@v1
       with:
@@ -117,11 +135,20 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang
+        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang e2fslibs-dev
     - name: Check out flatpak
       uses: actions/checkout@v1
       with:
         submodules: true
+    - name: Build ostree dependency
+      run: |
+        git clone https://github.com/ostreedev/ostree.git ./ostree
+        pushd ./ostree
+        git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
+        ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
+        make -j $(getconf _NPROCESSORS_ONLN)
+        sudo make install
+        popd
     - name: configure
       run: ./autogen.sh
       env:
@@ -143,11 +170,20 @@ jobs:
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev \
-        valgrind
+        valgrind e2fslibs-dev
     - name: Check out flatpak
       uses: actions/checkout@v1
       with:
         submodules: true
+    - name: Build ostree dependency
+      run: |
+        git clone https://github.com/ostreedev/ostree.git ./ostree
+        pushd ./ostree
+        git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
+        ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
+        make -j $(getconf _NPROCESSORS_ONLN)
+        sudo make install
+        popd
     - name: Create logs dir
       run: mkdir test-logs
     - name: autogen.sh
