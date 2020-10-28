@@ -1343,7 +1343,6 @@ get_remote_state (FlatpakDir   *dir,
                   GError      **error)
 {
   g_autoptr(GError) local_error = NULL;
-  g_autoptr(GError) local_error2 = NULL;
   FlatpakRemoteState *state = NULL;
 
   if (only_sideloaded)
